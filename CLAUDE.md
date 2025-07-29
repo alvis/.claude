@@ -8,13 +8,33 @@
 This is the Theriety monorepo containing multiple clients, services, libraries, data controllers, and infrastructure code, all written in TypeScript.
 </system_context>
 
+<action_compliance>
+
+## 🔴 CRITICAL: Action Workflow Compliance
+
+**🚨 MANDATORY REQUIREMENT:** When performing any action listed in the workflow references below, you MUST:
+
+1. **Consult the corresponding action file FIRST** before beginning work
+2. **Follow every step** in the detailed workflow and standards specified
+3. **Complete all requirements** - the action files contain comprehensive checklists
+4. **Never skip or modify** the established workflows without explicit user permission
+
+**⚠️ WORKFLOW OVERRIDE:** Detailed action file instructions take precedence over any general guidance in this file.
+
+**📋 BEFORE STARTING ANY TASK:** Check if your task maps to an action workflow below and read the complete action file.
+
+</action_compliance>
+
 <critical_notes>
 
-* IMPORTANT: Always run `npm run test` and `npm run lint` before committing
-* YOU MUST follow TDD practices - write tests BEFORE implementation
-* NEVER use `--no-verify` when committing code
-* Do NOT create files unless absolutely necessary - prefer editing existing files
-* Do NOT proactively create documentation files unless explicitly requested
+**📋 MOVED TO ACTION FILES:** All detailed critical instructions are now in the corresponding action files:
+
+* **Commit rules** → `constitutions/actions/project-operations.md` (commit-with-git workflow)
+* **TDD requirements** → `constitutions/actions/general-coding.md` (write-code workflow)  
+* **File creation rules** → `constitutions/actions/general-coding.md` (file organization section)
+
+**⚠️ REMINDER:** Check the action compliance section above before starting any work.
+
 </critical_notes>
 
 <paved_path>
@@ -58,25 +78,29 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 <workflow_references>
 
-## 🔄 Available Workflows
+## 🔄 MANDATORY Action Workflows
+
+**🚨 CRITICAL:** Each workflow below requires following the complete step-by-step process in the corresponding action file.
 
 ### Development Workflows
 
-* **write-code** → `constitutions/actions/general-coding.md` - Complete feature implementation with TDD
-* **build-component** → `constitutions/actions/react-frontend.md` - React component development including tests and stories
-* **build-service** → `constitutions/actions/service-backend.md` - API design and implementation
-* **build-data-controller** → `constitutions/actions/data-operations.md` - Data repository patterns
+* **write-code** → `constitutions/actions/general-coding.md` - **MANDATORY TDD workflow** - Complete feature implementation
+* **build-component** → `constitutions/actions/react-frontend.md` - **COMPREHENSIVE process** - React component with tests and stories  
+* **build-service** → `constitutions/actions/service-backend.md` - **FULL API standards** - Complete service design and implementation
+* **build-data-controller** → `constitutions/actions/data-operations.md` - **COMPLETE patterns** - Data repository implementation
 
 ### Code Quality Workflows  
 
-* **prepare-coding** → `constitutions/actions/general-coding.md` - Pre-coding verification checklist
-* **review-code** → `constitutions/actions/code-review-quality.md` - Code review process and standards
-* **approve-pr** → `constitutions/actions/code-review-quality.md` - Pull request approval checklist
+* **prepare-coding** → `constitutions/actions/general-coding.md` - **REQUIRED checklist** - Pre-coding verification steps
+* **review-code** → `constitutions/actions/code-review-quality.md` - **COMPREHENSIVE review** - Complete code review standards
+* **approve-pr** → `constitutions/actions/code-review-quality.md` - **MANDATORY gates** - PR approval requirements
 
 ### Project Management Workflows
 
-* **commit-with-git** → `constitutions/actions/project-operations.md` - Git workflow and branch management
-* **create-pr** → `constitutions/actions/project-operations.md` - Pull request creation and management
+* **commit-with-git** → `constitutions/actions/project-operations.md` - **CRITICAL rules** - Git workflow compliance
+* **create-pr** → `constitutions/actions/project-operations.md` - **COMPLETE process** - PR creation standards
+
+**⚠️ WARNING:** Skipping action file workflows will result in incomplete or non-compliant implementations.
 
 </workflow_references>
 

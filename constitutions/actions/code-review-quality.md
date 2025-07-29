@@ -24,6 +24,13 @@ When reviewing tests, verify:
 - BDD style descriptions: "should [expected behavior]"
 - Proper Arrange → Act → Assert structure
 
+### Critical Test Quality Standards
+
+- **Minimize test quantity**: Add minimal meaningful tests that cover everything, but not more
+- **Maximize test reuse**: Ultrathink how to minimize complexity and maximize reuse
+- **Use `const` over `let`**: Prefer immutable test data
+- **Avoid `beforeEach`**: Keep tests self-contained when possible
+
 ### Review Test Patterns
 
 ```typescript
@@ -48,6 +55,9 @@ describe('fn:fetchUserProfile', () => {
 ✅ Covers edge cases and error scenarios?
 ✅ No `any` types used in tests?
 ✅ Expected values declared before result?
+✅ **Uses `const` instead of `let` and avoids `beforeEach`**?
+✅ **Minimal meaningful tests** - covers everything but not more?
+✅ **Test complexity minimized** with maximum reuse?
 
 ### Mocking Review
 

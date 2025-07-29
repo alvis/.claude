@@ -74,13 +74,17 @@ Use lowercase-kebab-case only.
    - Implement code to pass tests
    - Commit frequently with descriptive messages
 
-3. **Pre-commit Verification**
+3. **Pre-commit Verification** (MANDATORY)
+
+   **🔴 CRITICAL: Always run these commands before committing:**
 
    ```bash
    npm run lint             # Fix linting issues
    npm run test            # Ensure tests pass
-   npm run typecheck       # Verify types
+   npm run typecheck       # Verify types (if available)
    ```
+
+   **⚠️ NEVER proceed with commit if any of these fail**
 
 4. **Commit and Push**
 
@@ -99,9 +103,17 @@ Use lowercase-kebab-case only.
 
 ### Critical Rules
 
-- **NEVER use `--no-verify`** when committing
+**🚨 ABSOLUTE PROHIBITIONS:**
+
+- **NEVER use `--no-verify`** when committing - this bypasses essential quality gates
+- **NEVER commit without running** `npm run test` and `npm run lint` first
+- **NEVER commit failing tests or linting errors**
+
+**📋 COMMIT REQUIREMENTS:**
+
 - All commits must pass linting and tests
 - Keep commit messages clear and atomic
+- Follow TDD practices (see general-coding.md)
 
 </version_control>
 

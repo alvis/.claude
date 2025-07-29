@@ -37,7 +37,8 @@
 ### Strict Configuration
 
 - Strict mode ALWAYS (`strict: true`)
-- NO `any` type - use `unknown` or specific types
+- **NO `any` type** - use `unknown` or specific types
+- **For testing errors only**: use `// @ts-expect-error` comment when necessary
 - Prefer `readonly` for immutable data
 - Use `#private` over `private` keyword
 - American English throughout
@@ -130,6 +131,8 @@ import type { FeatureProps } from '#types/feature';
 - **Single Responsibility** - Functions <60 lines
 - **Pure Functions Preferred** - No side effects when possible
 - **Always declare return types explicitly**
+- **Prefer Functions Over Classes** - Make function out of a class as much as possible
+- **Extract Static Methods** - A class method must be out of a class if it doesn't access `this`
 
 ### Parameter Patterns
 
@@ -188,6 +191,12 @@ function processUser(options?: UserOptions) {
 
 ## 📁 File Organization
 
+**🚨 CRITICAL FILE CREATION RULES:**
+
+- **Do NOT create files unless absolutely necessary** - prefer editing existing files
+- **Do NOT proactively create documentation files** unless explicitly requested
+- Always check for existing components before creating new ones
+
 ### "Name as Exported" Principle
 
 - **emitter.ts** - exports object/class representing an emitter
@@ -237,7 +246,8 @@ const addToTotal = (n: number) => { total += n; };
 
 ### Immutability Rules
 
-- Use `const` by default
+- **Use `const` by default** - avoid `let` whenever possible
+- **Use const and pure functions as much as possible**
 - Never mutate parameters
 - Use spread operators, map, filter
 - Local mutation OK for performance only
@@ -277,6 +287,8 @@ const message = [
 
 ## 🧪 Test-Driven Development (TDD)
 
+**🔴 CRITICAL REQUIREMENT: YOU MUST follow TDD practices - write tests BEFORE implementation**
+
 <workflow name="write-code">
 
 ### Full Development Workflow
@@ -284,12 +296,14 @@ const message = [
 **Complete process for implementing any feature:**
 
 1. **Plan Tests** - Write test descriptions for expected behavior
-2. **Write Tests** - Create failing test cases  
+2. **Write Tests** - Create failing test cases FIRST  
 3. **Write Skeleton** - Add minimal type-conforming code
 4. **Implement** - Write code to pass tests
 5. **Verify** - Run `npx tsc --noEmit`, `npm run test` and `npm run lint`
 6. **Fix Issues** - Fix any issues without modifying tests
 7. **Commit** - Commit with descriptive message following git standards
+
+**⚠️ NO EXCEPTIONS: Tests must be written before any implementation code**
 
 </workflow>
 
