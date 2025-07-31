@@ -32,7 +32,7 @@ jobs:
   test:
     needs: lint
     steps:
-      - run: pnpm run test -- --coverage --reporter=github-actions
+      - run: pnpm run coverage -- --reporter=github-actions
       - uses: codecov/codecov-action@v3
 
   build:
@@ -43,10 +43,10 @@ jobs:
 
 ## Key Checks
 
-* Lint must pass
-* Tests must pass with coverage
-* Build must succeed
-* No secrets in code
+- Lint must pass
+- Tests must pass with coverage
+- Build must succeed
+- No secrets in code
 
 </cicd>
 
@@ -54,16 +54,16 @@ jobs:
 
 ## Pulumi (IaC)
 
-* Infrastructure defined in `infrastructure/`
-* Use TypeScript for all IaC
-* Environment-specific stacks
-* Secrets in Pulumi config only
+- Infrastructure defined in `infrastructure/`
+- Use TypeScript for all IaC
+- Environment-specific stacks
+- Secrets in Pulumi config only
 
 ## Environments
 
-* `development` - Dev testing
-* `staging` - Pre-production
-* `production` - Live environment
+- `development` - Dev testing
+- `staging` - Pre-production
+- `production` - Live environment
 
 </infrastructure>
 
@@ -83,10 +83,10 @@ app.get('/health', (req, res) => {
 
 ## Alerts
 
-* Error rate > 1%
-* Response time > 1s
-* Memory usage > 80%
-* Failed deployments
+- Error rate > 1%
+- Response time > 1s
+- Memory usage > 80%
+- Failed deployments
 
 </monitoring>
 
