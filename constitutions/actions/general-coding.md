@@ -299,7 +299,7 @@ const message = [
 2. **Write Tests** - Create failing test cases FIRST  
 3. **Write Skeleton** - Add minimal type-conforming code
 4. **Implement** - Write code to pass tests
-5. **Verify** - Run `npx tsc --noEmit`, `npm run test` and `npm run lint`
+5. **Verify** - Run `npx tsc --noEmit`, `npm run coverage` and `npm run lint`
 6. **Fix Issues** - Fix any issues without modifying tests
 7. **Commit** - Commit with descriptive message following git standards
 
