@@ -80,7 +80,7 @@ Use lowercase-kebab-case only.
 
    ```bash
    npm run lint             # Fix linting issues
-   npm run test            # Ensure tests pass
+   npm run coverage            # Ensure tests pass
    npm run typecheck       # Verify types (if available)
    ```
 
@@ -106,7 +106,7 @@ Use lowercase-kebab-case only.
 **🚨 ABSOLUTE PROHIBITIONS:**
 
 - **NEVER use `--no-verify`** when committing - this bypasses essential quality gates
-- **NEVER commit without running** `npm run test` and `npm run lint` first
+- **NEVER commit without running** `npm run coverage` and `npm run lint` first
 - **NEVER commit failing tests or linting errors**
 
 **📋 COMMIT REQUIREMENTS:**
@@ -236,7 +236,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run test -- --coverage
+      - run: npm run coverage
       - run: npm run build
 
   deploy:
@@ -343,7 +343,7 @@ project/
    ```bash
    npm run typecheck        # Verify TypeScript
    npm run lint             # Check code quality
-   npm run test            # Run test suite
+   npm run coverage            # Run test suite
    npm run build           # Build project
    ```
 
@@ -614,7 +614,7 @@ fi
 echo "Running initial checks..."
 npm run typecheck
 npm run lint
-npm run test
+npm run coverage
 
 echo "Development environment setup complete!"
 ```
@@ -644,7 +644,7 @@ fi
 echo "Running full test suite..."
 npm run typecheck
 npm run lint
-npm run test -- --coverage
+npm run coverage
 
 # Build production
 echo "Building for production..."

@@ -29,7 +29,7 @@
 pnpm run build
 
 # Test
-pnpm run test -- --coverage
+pnpm run coverage
 pnpm --filter <project> test
 
 # Lint & Format
@@ -56,9 +56,9 @@ npm run db:seed       # Seed data
 
 <import_rules>
 
-* ALWAYS use `#*` subpath imports from package.json
-* NO tsconfig path aliases
-* Example: `import { emit } from '#emit';`
+- ALWAYS use `#*` subpath imports from package.json
+- NO tsconfig path aliases
+- Example: `import { emit } from '#emit';`
 </import_rules>
 
 <workspace>
