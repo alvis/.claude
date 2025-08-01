@@ -1,6 +1,6 @@
 # Commit Message Examples & References
 
-*Reference examples of good and bad commit messages with detailed patterns*
+_Reference examples of good and bad commit messages with detailed patterns_
 
 ## Table of Contents
 
@@ -133,7 +133,7 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ❌ fix: DB health survey update limit
 ✅ fix(survey): use stream to update health survey sendAt
 
-❌ fix: warn users when they try to join a deleted office  
+❌ fix: warn users when they try to join a deleted office
 ✅ fix(officelyfm): warn users when they try to join a deleted office
 
 ❌ fix: handle unhandled error and log body
@@ -149,7 +149,7 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ❌ feat(onboarding): rename neighborhood
 ✅ feat(onboarding): use neighborhood in American spelling
 
-❌ fix(setting): ignore removed neighborhoods  
+❌ fix(setting): ignore removed neighborhoods
 ✅ fix(user): ignore deleted favorite neighborhoods in preference
 
 ❌ fix(receiver): handle unhandled error and log body
@@ -167,7 +167,7 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ✅ feat: rename neighborhood to neighborhood
 
 ❌ feat(auth, profile): add login and update user settings
-✅ feat(auth): add OAuth login functionality  
+✅ feat(auth): add OAuth login functionality
 ✅ feat(profile): add user settings update
 ```
 
@@ -177,7 +177,7 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ❌ fix(getbestneighborhood): fix recurring booking
 ✅ fix(recurring): skip booking if favorite neighborhoods get deleted
 
-❌ docs: correct broken link  
+❌ docs: correct broken link
 ✅ docs(readme): correct broken link
 
 ❌ fix(app): log error with more context, including userId, workspaceId
@@ -221,7 +221,7 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ```plaintext
 # Service/Module scopes
 feat(auth): implement login
-fix(profile): correct validation  
+fix(profile): correct validation
 refactor(dashboard): simplify layout
 
 # Directory scopes
@@ -242,7 +242,7 @@ ci: add GitHub Actions workflow
 fix(auth): resolve login timeout (fixes #123)
 feat(dashboard): add export feature (closes #456)
 
-# Multiple issues  
+# Multiple issues
 fix(profile): handle edge cases (#123, #456)
 feat(api): add bulk operations (closes #789, #012)
 ```
@@ -275,7 +275,7 @@ Add support for Google and GitHub OAuth providers.
 Includes user account linking and automatic profile creation.
 
 - Add OAuth2 client configuration
-- Implement provider-specific handlers  
+- Implement provider-specific handlers
 - Add user account merge logic
 - Update login UI with provider buttons
 
@@ -299,7 +299,7 @@ Fixes #234
 ### Breaking Change
 
 ```plaintext
-feat(api)!: standardize error response format  
+feat(api)!: standardize error response format
 
 BREAKING CHANGE: Error responses now use consistent format.
 All API errors return { error: { code, message, details } }
@@ -317,7 +317,7 @@ Migration guide: docs/api-v2-migration.md
 ### Commit Types Quick List
 
 - `feat` - New feature
-- `fix` - Bug fix  
+- `fix` - Bug fix
 - `docs` - Documentation
 - `style` - Code formatting
 - `refactor` - Code restructuring

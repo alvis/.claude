@@ -1,6 +1,6 @@
 # Code Review & Quality Standards
 
-*Standards for code review, testing, documentation, and quality assurance*
+_Standards for code review, testing, documentation, and quality assurance_
 
 ## Table of Contents
 
@@ -35,12 +35,12 @@ When reviewing tests, verify:
 
 ```typescript
 // ✅ Good test structure
-describe('fn:fetchUserProfile', () => {
-  it('should return user data when given valid id', () => {
-    const expected = { id: '123', name: 'John' };
-    
-    const result = fetchUserProfile('123');
-    
+describe("fn:fetchUserProfile", () => {
+  it("should return user data when given valid id", () => {
+    const expected = { id: "123", name: "John" };
+
+    const result = fetchUserProfile("123");
+
     expect(result).toEqual(expected);
   });
 });
@@ -68,9 +68,13 @@ const { functionName } = vi.hoisted(() => ({
   functionName: vi.fn(),
 }));
 
-vi.mock('#module', () => ({
-  functionName,
-}) satisfies Partial<typeof import('#module')>);
+vi.mock(
+  "#module",
+  () =>
+    ({
+      functionName,
+    }) satisfies Partial<typeof import("#module")>,
+);
 ```
 
 </testing_review_standards>

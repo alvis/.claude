@@ -1,6 +1,6 @@
 # Folder Structure Standards
 
-*Standards for organizing code files, directories, and maintaining a scalable project structure*
+_Standards for organizing code files, directories, and maintaining a scalable project structure_
 
 ## Core Principles
 
@@ -97,11 +97,11 @@ components/
 
 ```typescript
 // components/Button/index.ts
-export { Button } from './Button';
-export type { ButtonProps } from './Button';
+export { Button } from "./Button";
+export type { ButtonProps } from "./Button";
 
 // Usage remains clean
-import { Button, ButtonProps } from '#components/Button';
+import { Button, ButtonProps } from "#components/Button";
 ```
 
 ## Project Root Structure
@@ -129,6 +129,7 @@ project-root/
 ### Directory Descriptions
 
 #### src/features/
+
 Domain-specific modules containing all related code:
 
 ```plaintext
@@ -147,6 +148,7 @@ features/
 ```
 
 #### src/lib/
+
 Core functionality and integrations:
 
 ```plaintext
@@ -159,6 +161,7 @@ lib/
 ```
 
 #### src/services/
+
 External service integrations:
 
 ```plaintext
@@ -199,16 +202,16 @@ Use index files sparingly for public APIs:
 ```typescript
 // ✅ Good: Clean public API
 // user/index.ts
-export { UserService } from './user.service';
-export { UserRepository } from './user.repository';
-export type { User, CreateUserData } from './user.types';
+export { UserService } from "./user.service";
+export { UserRepository } from "./user.repository";
+export type { User, CreateUserData } from "./user.types";
 
 // ❌ Bad: Exposing internals
 // user/index.ts
-export * from './user.service';
-export * from './user.repository';
-export * from './user.validation';
-export * from './user.utils';
+export * from "./user.service";
+export * from "./user.repository";
+export * from "./user.validation";
+export * from "./user.utils";
 ```
 
 ## Special Directories
@@ -268,22 +271,22 @@ jest.config.js
 ```typescript
 // ✅ Good: Organized imports
 // External
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { z } from 'zod';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { z } from "zod";
 
 // Internal aliases
-import { Button } from '#components/Button';
-import { useAuth } from '#hooks/useAuth';
-import { api } from '#lib/api';
+import { Button } from "#components/Button";
+import { useAuth } from "#hooks/useAuth";
+import { api } from "#lib/api";
 
 // Relative imports
-import { UserProfile } from './UserProfile';
-import { formatUserName } from './utils';
+import { UserProfile } from "./UserProfile";
+import { formatUserName } from "./utils";
 
 // Type imports
-import type { User } from '#types/user';
-import type { UserProfileProps } from './UserProfile';
+import type { User } from "#types/user";
+import type { UserProfileProps } from "./UserProfile";
 ```
 
 ## Scaling Patterns
@@ -360,19 +363,19 @@ Avoid circular dependencies through proper structure:
 ```typescript
 // ❌ Bad: Circular dependency
 // user/user.service.ts
-import { OrderService } from '../order/order.service';
+import { OrderService } from "../order/order.service";
 
 // order/order.service.ts
-import { UserService } from '../user/user.service';
+import { UserService } from "../user/user.service";
 
 // ✅ Good: Use dependency injection or events
 // user/user.service.ts
 export class UserService {
   constructor(private eventBus: EventBus) {}
-  
+
   async createUser(data: CreateUserData) {
     const user = await this.repository.create(data);
-    this.eventBus.emit('user.created', user);
+    this.eventBus.emit("user.created", user);
     return user;
   }
 }
@@ -417,16 +420,19 @@ src/
 This module handles all user-related functionality.
 
 ## Structure
+
 - `components/` - User-specific React components
 - `services/` - Business logic for user operations
 - `types/` - TypeScript interfaces and types
 
 ## Key Files
+
 - `user.service.ts` - Main service for user operations
 - `user.repository.ts` - Database access layer
 - `user.validation.ts` - Input validation schemas
 
 ## Dependencies
+
 - Auth feature (for authentication)
 - Email service (for notifications)
 ```

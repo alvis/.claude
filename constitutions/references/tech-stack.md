@@ -59,7 +59,7 @@ npm run db:seed       # Seed data
 - ALWAYS use `#*` subpath imports from package.json
 - NO tsconfig path aliases
 - Example: `import { emit } from '#emit';`
-</import_rules>
+  </import_rules>
 
 <workspace>
 * Dependencies organized in pnpm-workspace.yaml catalogs

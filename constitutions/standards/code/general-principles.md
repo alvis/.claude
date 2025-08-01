@@ -1,6 +1,6 @@
 # General Coding Principles
 
-*Core principles that guide all development work across the codebase*
+_Core principles that guide all development work across the codebase_
 
 ## Fundamental Principles
 
@@ -33,10 +33,10 @@ class EmailSender {
 
 // ❌ Bad: Multiple responsibilities
 class EmailManager {
-  validate(email: string): boolean { }
-  send(to: string, subject: string, body: string): void { }
-  saveToDatabase(email: Email): void { }
-  generateTemplate(type: string): string { }
+  validate(email: string): boolean {}
+  send(to: string, subject: string, body: string): void {}
+  saveToDatabase(email: Email): void {}
+  generateTemplate(type: string): string {}
 }
 ```
 
@@ -47,14 +47,14 @@ Eliminate code duplication through abstraction:
 ```typescript
 // ❌ Bad: Repeated logic
 function calculateUserDiscount(user: User): number {
-  if (user.membershipLevel === 'gold') {
+  if (user.membershipLevel === "gold") {
     return user.purchaseAmount * 0.2;
   }
   return user.purchaseAmount * 0.1;
 }
 
 function calculateProductDiscount(product: Product): number {
-  if (product.category === 'premium') {
+  if (product.category === "premium") {
     return product.price * 0.2;
   }
   return product.price * 0.1;
@@ -68,16 +68,13 @@ function calculateDiscount(amount: number, isPremium: boolean): number {
 
 function calculateUserDiscount(user: User): number {
   return calculateDiscount(
-    user.purchaseAmount, 
-    user.membershipLevel === 'gold'
+    user.purchaseAmount,
+    user.membershipLevel === "gold",
   );
 }
 
 function calculateProductDiscount(product: Product): number {
-  return calculateDiscount(
-    product.price, 
-    product.category === 'premium'
-  );
+  return calculateDiscount(product.price, product.category === "premium");
 }
 ```
 
@@ -100,7 +97,7 @@ function isValidUser(user: User | null): boolean {
   if (!user || !user.email) {
     return false;
   }
-  
+
   return Number(user.age) >= 18;
 }
 ```
@@ -112,15 +109,15 @@ Structure code for easy modification:
 ```typescript
 // ✅ Good: Configurable and maintainable
 const UserRoles = {
-  ADMIN: 'admin',
-  EDITOR: 'editor',
-  VIEWER: 'viewer'
+  ADMIN: "admin",
+  EDITOR: "editor",
+  VIEWER: "viewer",
 } as const;
 
 const RolePermissions = {
-  [UserRoles.ADMIN]: ['read', 'write', 'delete', 'manage'],
-  [UserRoles.EDITOR]: ['read', 'write'],
-  [UserRoles.VIEWER]: ['read']
+  [UserRoles.ADMIN]: ["read", "write", "delete", "manage"],
+  [UserRoles.EDITOR]: ["read", "write"],
+  [UserRoles.VIEWER]: ["read"],
 } as const;
 
 function hasPermission(role: string, permission: string): boolean {
@@ -129,13 +126,13 @@ function hasPermission(role: string, permission: string): boolean {
 
 // ❌ Bad: Hard to maintain
 function hasPermission(role: string, permission: string): boolean {
-  if (role === 'admin') {
+  if (role === "admin") {
     return true;
   }
-  if (role === 'editor' && (permission === 'read' || permission === 'write')) {
+  if (role === "editor" && (permission === "read" || permission === "write")) {
     return true;
   }
-  if (role === 'viewer' && permission === 'read') {
+  if (role === "viewer" && permission === "read") {
     return true;
   }
   return false;
@@ -166,11 +163,11 @@ class PayPalProcessor implements PaymentProcessor {
 
 class PaymentService {
   private processors: Map<string, PaymentProcessor> = new Map();
-  
+
   registerProcessor(name: string, processor: PaymentProcessor): void {
     this.processors.set(name, processor);
   }
-  
+
   async processPayment(method: string, amount: number): Promise<PaymentResult> {
     const processor = this.processors.get(method);
     if (!processor) {
@@ -187,14 +184,14 @@ Write tests alongside implementation:
 
 ```typescript
 // 1. Write test first
-describe('fn:calculateDiscount', () => {
-  it('should apply 20% discount for premium customers', () => {
+describe("fn:calculateDiscount", () => {
+  it("should apply 20% discount for premium customers", () => {
     const amount = 100;
     const isPremium = true;
     const expected = 20;
-    
+
     const result = calculateDiscount(amount, isPremium);
-    
+
     expect(result).toBe(expected);
   });
 });
@@ -220,7 +217,7 @@ Before implementing something new:
 // If the codebase uses this pattern for services:
 class UserService {
   constructor(private repository: UserRepository) {}
-  
+
   async findById(id: string): Promise<User | null> {
     return this.repository.findOne(id);
   }
@@ -229,7 +226,7 @@ class UserService {
 // ✅ Good: Follow the same pattern
 class ProductService {
   constructor(private repository: ProductRepository) {}
-  
+
   async findById(id: string): Promise<Product | null> {
     return this.repository.findOne(id);
   }
@@ -253,9 +250,9 @@ Keep related functionality together:
 export class UserService {
   constructor(
     private repository: UserRepository,
-    private emailService: EmailService
+    private emailService: EmailService,
   ) {}
-  
+
   async createUser(data: CreateUserDto): Promise<User> {
     const user = await this.repository.create(data);
     await this.emailService.sendWelcome(user.email);
@@ -302,8 +299,8 @@ const city = user?.address?.city;
 const port = process.env.PORT ?? 3000;
 
 // Array methods
-const activeUsers = users.filter(user => user.isActive);
-const userNames = users.map(user => user.name);
+const activeUsers = users.filter((user) => user.isActive);
+const userNames = users.map((user) => user.name);
 ```
 
 ### Avoid Deprecated Patterns
@@ -312,13 +309,14 @@ Stay current with best practices:
 
 ```typescript
 // ❌ Bad: Deprecated patterns
-var name = 'John';  // Use const/let
-arguments.callee    // Deprecated
-with (obj) {}       // Deprecated
+var name = "John"; // Use const/let
+arguments.callee; // Deprecated
+with (obj) {
+} // Deprecated
 
 // ✅ Good: Modern alternatives
-const name = 'John';
-const args = [...arguments];  // Or use rest parameters
+const name = "John";
+const args = [...arguments]; // Or use rest parameters
 // Use explicit property access instead of 'with'
 ```
 
@@ -332,17 +330,17 @@ Anticipate and handle edge cases:
 // ✅ Good: Defensive checks
 function divide(a: number, b: number): number {
   if (b === 0) {
-    throw new Error('Division by zero');
+    throw new Error("Division by zero");
   }
   return a / b;
 }
 
 function processUser(user: User | null | undefined): void {
   if (!user) {
-    console.warn('No user provided');
+    console.warn("No user provided");
     return;
   }
-  
+
   // Process user safely
 }
 
@@ -350,16 +348,16 @@ function processUser(user: User | null | undefined): void {
 function calculatePrice(
   basePrice: number,
   discount?: number,
-  tax?: number
+  tax?: number,
 ): number {
   if (basePrice < 0) {
-    throw new Error('Base price cannot be negative');
+    throw new Error("Base price cannot be negative");
   }
-  
+
   const discountAmount = (discount ?? 0) * basePrice;
   const subtotal = basePrice - discountAmount;
   const taxAmount = (tax ?? 0) * subtotal;
-  
+
   return subtotal + taxAmount;
 }
 ```
@@ -375,14 +373,14 @@ Don't optimize prematurely, but be aware of performance:
 // Cache expensive computations
 const fibonacci = (() => {
   const cache = new Map<number, number>();
-  
+
   return function fib(n: number): number {
     if (n <= 1) return n;
-    
+
     if (cache.has(n)) {
       return cache.get(n)!;
     }
-    
+
     const result = fib(n - 1) + fib(n - 2);
     cache.set(n, result);
     return result;

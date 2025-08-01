@@ -1,6 +1,6 @@
 # General Coding Standards
 
-*Core standards for day-to-day code writing across all languages and frameworks*
+_Core standards for day-to-day code writing across all languages and frameworks_
 
 ## Table of Contents
 
@@ -55,14 +55,14 @@
 
 ```typescript
 // Code imports
-import { readFile } from 'node:fs/promises';
-import { useState } from 'react';
-import { useFeature } from '#hooks/useFeature';
-import { helper } from '../utils';
+import { readFile } from "node:fs/promises";
+import { useState } from "react";
+import { useFeature } from "#hooks/useFeature";
+import { helper } from "../utils";
 
 // Type imports (separate)
-import type { FC } from 'react';
-import type { FeatureProps } from '#types/feature';
+import type { FC } from "react";
+import type { FeatureProps } from "#types/feature";
 ```
 
 ### Rules
@@ -143,7 +143,7 @@ import type { FeatureProps } from '#types/feature';
 - Intuitive, natural order
 - All parameters required
 - Parameter order commonly understood
-**Use Object (≥3 parameters) when:**
+  **Use Object (≥3 parameters) when:**
 - Optional values or config-style flags
 - Parameters closely related
 - Need named arguments for clarity
@@ -177,11 +177,11 @@ When destructuring optional parameters, use object spread for safety:
 
 ```typescript
 // ❌ Bad: Direct destructuring can fail if undefined
-function processUser({ name, role = 'user' }: UserOptions) { }
+function processUser({ name, role = "user" }: UserOptions) {}
 
 // ✅ Good: Safe destructuring with spread
 function processUser(options?: UserOptions) {
-  const { name, role = 'user' } = { ...options };
+  const { name, role = "user" } = { ...options };
 }
 ```
 
@@ -241,7 +241,9 @@ const add = (a: number, b: number) => a + b;
 
 // ❌ Impure - modifies external state
 let total = 0;
-const addToTotal = (n: number) => { total += n; };
+const addToTotal = (n: number) => {
+  total += n;
+};
 ```
 
 ### Immutability Rules
@@ -260,11 +262,11 @@ Group related keys and alphabetize within groups:
 {
   // index //
   id: '123',
-  
+
   // display //
   email: 'user@example.com',
   name: 'John Doe',
-  
+
   // flags //
   isActive: true,
 }
@@ -274,11 +276,9 @@ Group related keys and alphabetize within groups:
 
 ```typescript
 // Multi-line text with conditional parts
-const message = [
-  'Hello',
-  userName && `Welcome ${userName}`,
-  'Please login',
-].filter(Boolean).join('\n');
+const message = ["Hello", userName && `Welcome ${userName}`, "Please login"]
+  .filter(Boolean)
+  .join("\n");
 ```
 
 </code_quality>
@@ -296,7 +296,7 @@ const message = [
 **Complete process for implementing any feature:**
 
 1. **Plan Tests** - Write test descriptions for expected behavior
-2. **Write Tests** - Create failing test cases FIRST  
+2. **Write Tests** - Create failing test cases FIRST
 3. **Write Skeleton** - Add minimal type-conforming code
 4. **Implement** - Write code to pass tests
 5. **Verify** - Run `npx tsc --noEmit`, `npm run coverage` and `npm run lint`
@@ -318,12 +318,12 @@ const message = [
 ### Test Format (BDD Style)
 
 ```typescript
-describe('fn:fetchUserProfile', () => {
-  it('should return user data when given valid id', () => {
-    const expected = { id: '123', name: 'John' };
-    
-    const result = fetchUserProfile('123');
-    
+describe("fn:fetchUserProfile", () => {
+  it("should return user data when given valid id", () => {
+    const expected = { id: "123", name: "John" };
+
+    const result = fetchUserProfile("123");
+
     expect(result).toEqual(expected);
   });
 });
@@ -397,7 +397,7 @@ interface ApiConfig {
 - `// FIXME:` - Broken code needs fixing
 - `// DEBUG:` - Debug code to remove
 - `// TEMP:` - Temporary code/stubs
-**Documentation Tags (Can stay):**
+  **Documentation Tags (Can stay):**
 - `// HACK:` - Non-ideal solution to refactor later
 - `// WORKAROUND:` - Bypasses external issue
 - `// NOTE:` - Important context/explanation
@@ -418,16 +418,19 @@ interface ApiConfig {
 ```typescript
 // Use specific error classes
 class ValidationError extends Error {
-  constructor(message: string, public field: string) {
+  constructor(
+    message: string,
+    public field: string,
+  ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
 class NotFoundError extends Error {
   constructor(resource: string, id: string) {
     super(`${resource} with id ${id} not found`);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 ```
@@ -444,11 +447,11 @@ class NotFoundError extends Error {
 
 ```typescript
 // Structured logging with context
-logger.error('User validation failed', {
+logger.error("User validation failed", {
   error: error.message,
   userId,
   requestId,
-  field: error.field
+  field: error.field,
 });
 ```
 

@@ -23,7 +23,7 @@ Set up the component file structure:
 ```bash
 # Create component files
 touch components/ComponentName.tsx
-touch components/ComponentName.spec.tsx  
+touch components/ComponentName.spec.tsx
 touch components/ComponentName.stories.tsx
 ```
 
@@ -55,16 +55,16 @@ export interface ComponentNameProps {
 }
 
 // ✅ ALWAYS use arrow functions with FC type
-export const ComponentName: FC<ComponentNameProps> = ({ 
+export const ComponentName: FC<ComponentNameProps> = ({
   variant = 'primary',
   onClick,
   'aria-label': ariaLabel,
   disabled = false,
-  children 
+  children
 }) => {
   return (
-    <button 
-      className={variant} 
+    <button
+      className={variant}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled}
@@ -95,7 +95,7 @@ describe('rc:ComponentName', () => {
 
   it('should call onClick when clicked', () => {
     const mockClick = vi.fn();
- 
+
     render(<ComponentName onClick={mockClick}>Click</ComponentName>);
     fireEvent.click(screen.getByRole('button'));
 
@@ -104,9 +104,9 @@ describe('rc:ComponentName', () => {
 
   it('should apply accessibility attributes', () => {
     const ariaLabel = 'Custom label';
-    
+
     render(<ComponentName aria-label={ariaLabel}>Button</ComponentName>);
-    
+
     expect(screen.getByRole('button')).toHaveAttribute('aria-label', ariaLabel);
   });
 });
@@ -117,20 +117,20 @@ describe('rc:ComponentName', () => {
 Build Storybook stories for documentation:
 
 ```typescript
-import type { Meta, StoryObj } from '@storybook/react';
-import { ComponentName } from './ComponentName';
+import type { Meta, StoryObj } from "@storybook/react";
+import { ComponentName } from "./ComponentName";
 
 const meta: Meta<typeof ComponentName> = {
-  title: 'Components/ComponentName',
+  title: "Components/ComponentName",
   component: ComponentName,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: { type: 'select' },
-      options: ['primary', 'secondary'],
+      control: { type: "select" },
+      options: ["primary", "secondary"],
     },
   },
 };
@@ -140,22 +140,22 @@ type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
   args: {
-    variant: 'primary',
-    children: 'Primary Button',
+    variant: "primary",
+    children: "Primary Button",
   },
 };
 
 export const Secondary: Story = {
   args: {
-    variant: 'secondary',
-    children: 'Secondary Button',
+    variant: "secondary",
+    children: "Secondary Button",
   },
 };
 
 export const Disabled: Story = {
   args: {
     disabled: true,
-    children: 'Disabled Button',
+    children: "Disabled Button",
   },
 };
 ```
@@ -185,7 +185,7 @@ export const ExpensiveComponent = memo(({ items }: Props) => {
 });
 
 // Use useMemo for expensive calculations
-const sortedItems = useMemo(() => 
+const sortedItems = useMemo(() =>
   items.sort((a, b) => b.score - a.score),
   [items]
 );

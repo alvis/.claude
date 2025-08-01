@@ -16,11 +16,11 @@ interface EntityRepository<T, K = string> {
   search(options: QueryOptions): Promise<T[]>;
   list(filter: Partial<T>): Promise<T[]>;
   get(identifier: K | { [key: string]: unknown }): Promise<T | null>;
-  
+
   // Write operations
   set(entity: T): Promise<T>;
   drop(identifier: K): Promise<void>;
-  
+
   // Batch operations
   setBatch(entities: T[]): Promise<T[]>;
   dropBatch(identifiers: K[]): Promise<void>;
@@ -30,6 +30,7 @@ interface EntityRepository<T, K = string> {
 ### 2. Implement Repository
 
 Create the database repository implementation:
+
 - Use standard query structure with QueryOptions
 - Handle both single and batch operations
 - Include proper error handling and logging
@@ -38,6 +39,7 @@ Create the database repository implementation:
 ### 3. Create Data Controller
 
 Build the controller layer that orchestrates business logic:
+
 - Implement validation for all inputs
 - Add structured logging with context
 - Handle errors with appropriate classification
@@ -46,6 +48,7 @@ Build the controller layer that orchestrates business logic:
 ### 4. Add Validation Layer
 
 Create input validation:
+
 - Validate query options and filters
 - Check required fields and formats
 - Provide specific error messages with field names
@@ -54,6 +57,7 @@ Create input validation:
 ### 5. Write Tests
 
 Create comprehensive test coverage:
+
 - Unit tests for repository methods
 - Controller integration tests
 - Validation edge cases
@@ -62,6 +66,7 @@ Create comprehensive test coverage:
 ### 6. Verify Implementation
 
 Ensure the implementation follows standards:
+
 - Repository methods use correct naming (search/list/get/set/drop)
 - QueryOptions structure is consistent
 - Error handling uses specific error classes

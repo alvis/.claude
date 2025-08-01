@@ -1,6 +1,6 @@
 # API Design Standards
 
-*Standards for RESTful API design, request/response patterns, and service architecture*
+_Standards for RESTful API design, request/response patterns, and service architecture_
 
 ## RESTful Conventions
 
@@ -9,7 +9,7 @@
 ```typescript
 // ✅ Good: Resource-based URLs
 GET    /api/users           # List users
-GET    /api/users/:id       # Get specific user  
+GET    /api/users/:id       # Get specific user
 POST   /api/users           # Create user
 PUT    /api/users/:id       # Update user
 DELETE /api/users/:id       # Delete user
@@ -52,7 +52,7 @@ POST   /api/updateUserStatus
 
 ```typescript
 interface ApiResponse<T> {
-  status: 'success' | 'error';
+  status: "success" | "error";
   data?: T;
   error?: {
     code: string;
@@ -141,7 +141,7 @@ interface PaginationMeta {
 {
   "status": "error",
   "error": {
-    "code": "INSUFFICIENT_PERMISSIONS", 
+    "code": "INSUFFICIENT_PERMISSIONS",
     "message": "Insufficient permissions for this action"
   }
 }
@@ -166,7 +166,7 @@ interface HandlerOptions {
 type HandlerFunction<TParams, TResult> = (
   params: TParams,
   context: HandlerContext,
-  options?: HandlerOptions
+  options?: HandlerOptions,
 ) => Promise<ApiResponse<TResult>>;
 ```
 
@@ -176,21 +176,21 @@ type HandlerFunction<TParams, TResult> = (
 export async function getUserHandler(
   params: { userId: string },
   context: HandlerContext,
-  options: HandlerOptions = {}
+  options: HandlerOptions = {},
 ): Promise<ApiResponse<User>> {
   try {
     // 1. Validate input
     validateUserId(params.userId);
-    
+
     // 2. Check authorization
-    await requirePermission('user:read', context);
-    
+    await requirePermission("user:read", context);
+
     // 3. Execute business logic
     const user = await userService.getUser(params.userId);
-    
+
     // 4. Return success response
     return {
-      status: 'success',
+      status: "success",
       data: user,
       meta: {
         timestamp: new Date().toISOString(),
@@ -213,10 +213,10 @@ class UserHandler {
   async getUser(req: Request, res: Response): Promise<void> {
     const result = await getUserHandler(
       { userId: req.params.id },
-      { userId: req.user.id, requestId: req.id }
+      { userId: req.user.id, requestId: req.id },
     );
-    
-    if (result.status === 'error') {
+
+    if (result.status === "error") {
       res.status(getHttpStatusCode(result.error?.code)).json(result);
     } else {
       res.status(200).json(result);
@@ -228,17 +228,17 @@ class UserHandler {
 class UserService {
   constructor(
     private userRepository: UserRepository,
-    private validator: UserValidator
+    private validator: UserValidator,
   ) {}
 
   async getUser(userId: string): Promise<User> {
     this.validator.validateId(userId);
-    
+
     const user = await this.userRepository.get({ id: userId });
     if (!user) {
-      throw new NotFoundError('User', userId);
+      throw new NotFoundError("User", userId);
     }
-    
+
     return user;
   }
 }
@@ -246,11 +246,10 @@ class UserService {
 // Repository Layer - Data access
 class UserRepository {
   async get(identifier: { id: string }): Promise<User | null> {
-    const result = await this.db.query(
-      'SELECT * FROM users WHERE id = $1',
-      [identifier.id]
-    );
-    
+    const result = await this.db.query("SELECT * FROM users WHERE id = $1", [
+      identifier.id,
+    ]);
+
     return result.rows[0] ? this.mapToUser(result.rows[0]) : null;
   }
 }
@@ -293,21 +292,21 @@ services/auth/
 ```typescript
 interface QueryParams {
   // Pagination
-  page?: number;        // Page number (1-based)
-  limit?: number;       // Items per page
-  offset?: number;      // Items to skip
-  
+  page?: number; // Page number (1-based)
+  limit?: number; // Items per page
+  offset?: number; // Items to skip
+
   // Sorting
-  sort?: string;        // Sort field
-  order?: 'asc' | 'desc'; // Sort direction
-  
+  sort?: string; // Sort field
+  order?: "asc" | "desc"; // Sort direction
+
   // Filtering
-  filter?: string;      // JSON-encoded filter object
-  search?: string;      // Search query
-  
+  filter?: string; // JSON-encoded filter object
+  search?: string; // Search query
+
   // Response formatting
-  fields?: string;      // Comma-separated field list
-  include?: string;     // Related resources to include
+  fields?: string; // Comma-separated field list
+  include?: string; // Related resources to include
 }
 ```
 
@@ -408,10 +407,10 @@ X-API-Version: v2
 
 ```typescript
 interface RateLimitHeaders {
-  'X-RateLimit-Limit': string;     // Total requests allowed
-  'X-RateLimit-Remaining': string; // Requests remaining
-  'X-RateLimit-Reset': string;     // Reset timestamp
-  'X-RateLimit-Window': string;    // Window duration
+  "X-RateLimit-Limit": string; // Total requests allowed
+  "X-RateLimit-Remaining": string; // Requests remaining
+  "X-RateLimit-Reset": string; // Reset timestamp
+  "X-RateLimit-Window": string; // Window duration
 }
 ```
 
@@ -438,6 +437,7 @@ interface RateLimitHeaders {
 ### OpenAPI/Swagger
 
 Document all endpoints with:
+
 - Request/response schemas
 - Authentication requirements
 - Error responses
@@ -463,11 +463,11 @@ Document all endpoints with:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserResponse'
+              $ref: "#/components/schemas/UserResponse"
       404:
         description: User not found
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ErrorResponse'
+              $ref: "#/components/schemas/ErrorResponse"
 ```

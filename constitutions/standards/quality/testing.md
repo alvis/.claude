@@ -1,6 +1,6 @@
 # Testing Standards
 
-*Comprehensive testing standards for quality assurance and TDD compliance*
+_Comprehensive testing standards for quality assurance and TDD compliance_
 
 ## Core Testing Principles
 
@@ -36,14 +36,14 @@
 
 ```typescript
 // ✅ Good: Proper test organization
-describe('fn:calculateOrderTotal', () => {
-  it('should return correct total with tax and shipping', () => {
+describe("fn:calculateOrderTotal", () => {
+  it("should return correct total with tax and shipping", () => {
     // Test implementation
   });
 });
 
-describe('rc:UserProfile', () => {
-  it('should render user information correctly', () => {
+describe("rc:UserProfile", () => {
+  it("should render user information correctly", () => {
     // Test implementation
   });
 });
@@ -63,24 +63,24 @@ All tests must follow the AAA pattern with proper spacing:
 
 ```typescript
 // ✅ Good: Clear AAA structure
-describe('fn:formatCurrency', () => {
-  it('should format number as USD currency', () => {
+describe("fn:formatCurrency", () => {
+  it("should format number as USD currency", () => {
     // Arrange
     const amount = 1234.56;
-    const expected = '$1,234.56';
-    
+    const expected = "$1,234.56";
+
     // Act
-    const result = formatCurrency(amount, 'USD');
-    
+    const result = formatCurrency(amount, "USD");
+
     // Assert
     expect(result).toBe(expected);
   });
 });
 
 // ❌ Bad: Unclear structure
-describe('fn:formatCurrency', () => {
-  it('should format currency', () => {
-    expect(formatCurrency(1234.56, 'USD')).toBe('$1,234.56');
+describe("fn:formatCurrency", () => {
+  it("should format currency", () => {
+    expect(formatCurrency(1234.56, "USD")).toBe("$1,234.56");
   });
 });
 ```
@@ -91,31 +91,31 @@ describe('fn:formatCurrency', () => {
 
 ```typescript
 // ✅ Good: Immutable test data
-describe('fn:processUser', () => {
-  it('should validate user email format', () => {
+describe("fn:processUser", () => {
+  it("should validate user email format", () => {
     const userData = {
-      id: '123',
-      name: 'John Doe',
-      email: 'john@example.com'
+      id: "123",
+      name: "John Doe",
+      email: "john@example.com",
     };
     const expected = { isValid: true, errors: [] };
-    
+
     const result = processUser(userData);
-    
+
     expect(result).toEqual(expected);
   });
 });
 
 // ❌ Bad: Mutable test data
-describe('fn:processUser', () => {
+describe("fn:processUser", () => {
   let userData = {
-    id: '123',
-    name: 'John Doe',
-    email: 'john@example.com'
+    id: "123",
+    name: "John Doe",
+    email: "john@example.com",
   };
-  
-  it('should validate user email format', () => {
-    userData.email = 'test@example.com'; // Mutating shared data
+
+  it("should validate user email format", () => {
+    userData.email = "test@example.com"; // Mutating shared data
     const result = processUser(userData);
     expect(result.isValid).toBe(true);
   });
@@ -128,37 +128,37 @@ Keep tests self-contained when possible:
 
 ```typescript
 // ✅ Good: Self-contained tests
-describe('cl:UserService', () => {
-  it('should create user with valid data', () => {
+describe("cl:UserService", () => {
+  it("should create user with valid data", () => {
     const mockRepository = createMockUserRepository();
     const service = new UserService(mockRepository);
-    const userData = { name: 'John', email: 'john@example.com' };
-    
+    const userData = { name: "John", email: "john@example.com" };
+
     const result = service.createUser(userData);
-    
+
     expect(result).toBeDefined();
   });
-  
-  it('should throw error with invalid email', () => {
+
+  it("should throw error with invalid email", () => {
     const mockRepository = createMockUserRepository();
     const service = new UserService(mockRepository);
-    const userData = { name: 'John', email: 'invalid-email' };
-    
+    const userData = { name: "John", email: "invalid-email" };
+
     expect(() => service.createUser(userData)).toThrow();
   });
 });
 
 // ❌ Avoid: beforeEach when not necessary
-describe('cl:UserService', () => {
+describe("cl:UserService", () => {
   let service: UserService;
   let mockRepository: MockUserRepository;
-  
+
   beforeEach(() => {
     mockRepository = createMockUserRepository();
     service = new UserService(mockRepository);
   });
-  
-  it('should create user with valid data', () => {
+
+  it("should create user with valid data", () => {
     // Test implementation
   });
 });
@@ -176,19 +176,23 @@ const { fetchUser } = vi.hoisted(() => ({
   fetchUser: vi.fn(),
 }));
 
-vi.mock('#services/userService', () => ({
-  fetchUser,
-}) satisfies Partial<typeof import('#services/userService')>);
+vi.mock(
+  "#services/userService",
+  () =>
+    ({
+      fetchUser,
+    }) satisfies Partial<typeof import("#services/userService")>,
+);
 
-describe('fn:getUserProfile', () => {
-  it('should return user profile when user exists', () => {
-    const expectedUser = { id: '123', name: 'John' };
+describe("fn:getUserProfile", () => {
+  it("should return user profile when user exists", () => {
+    const expectedUser = { id: "123", name: "John" };
     fetchUser.mockResolvedValue(expectedUser);
-    
-    const result = getUserProfile('123');
-    
+
+    const result = getUserProfile("123");
+
     expect(result).resolves.toEqual(expectedUser);
-    expect(fetchUser).toHaveBeenCalledWith('123');
+    expect(fetchUser).toHaveBeenCalledWith("123");
   });
 });
 ```
@@ -197,14 +201,14 @@ describe('fn:getUserProfile', () => {
 
 ```typescript
 // ✅ Good: Proper mock cleanup
-describe('fn:apiCall', () => {
+describe("fn:apiCall", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
-  
-  it('should handle successful response', () => {
-    fetchUser.mockResolvedValue({ id: '123' });
-    
+
+  it("should handle successful response", () => {
+    fetchUser.mockResolvedValue({ id: "123" });
+
     // Test implementation
   });
 });
@@ -226,21 +230,21 @@ describe('rc:UserCard', () => {
       name: 'John Doe',
       email: 'john@example.com'
     };
-    
+
     render(<UserCard user={user} />);
-    
+
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
   });
-  
+
   it('should call onEdit when edit button is clicked', () => {
     const user = { id: '123', name: 'John' };
     const mockOnEdit = vi.fn();
-    
+
     render(<UserCard user={user} onEdit={mockOnEdit} />);
-    
+
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
-    
+
     expect(mockOnEdit).toHaveBeenCalledWith('123');
   });
 });
@@ -253,19 +257,19 @@ describe('rc:UserCard', () => {
 describe('rc:LoginForm', () => {
   it('should submit form with valid credentials', async () => {
     const mockOnSubmit = vi.fn();
-    
+
     render(<LoginForm onSubmit={mockOnSubmit} />);
-    
+
     // Arrange user inputs
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole('button', { name: /login/i });
-    
+
     // Act - simulate user interaction
     await user.type(emailInput, 'test@example.com');
     await user.type(passwordInput, 'password123');
     await user.click(submitButton);
-    
+
     // Assert
     expect(mockOnSubmit).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -281,34 +285,34 @@ describe('rc:LoginForm', () => {
 
 ```typescript
 // ✅ Good: Service testing
-describe('sv:UserService', () => {
-  it('should create user and return success result', async () => {
+describe("sv:UserService", () => {
+  it("should create user and return success result", async () => {
     const mockRepository = {
-      save: vi.fn().mockResolvedValue({ id: '123', name: 'John' }),
+      save: vi.fn().mockResolvedValue({ id: "123", name: "John" }),
       findById: vi.fn(),
-      findAll: vi.fn()
+      findAll: vi.fn(),
     };
     const service = new UserService(mockRepository);
-    const userData = { name: 'John', email: 'john@example.com' };
-    const expected = { success: true, data: { id: '123', name: 'John' } };
-    
+    const userData = { name: "John", email: "john@example.com" };
+    const expected = { success: true, data: { id: "123", name: "John" } };
+
     const result = await service.createUser(userData);
-    
+
     expect(result).toEqual(expected);
     expect(mockRepository.save).toHaveBeenCalledWith(userData);
   });
-  
-  it('should return error result when repository fails', async () => {
+
+  it("should return error result when repository fails", async () => {
     const mockRepository = {
-      save: vi.fn().mockRejectedValue(new Error('Database error')),
+      save: vi.fn().mockRejectedValue(new Error("Database error")),
       findById: vi.fn(),
-      findAll: vi.fn()
+      findAll: vi.fn(),
     };
     const service = new UserService(mockRepository);
-    const userData = { name: 'John', email: 'invalid' };
-    
+    const userData = { name: "John", email: "invalid" };
+
     const result = await service.createUser(userData);
-    
+
     expect(result.success).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
   });
@@ -321,30 +325,26 @@ describe('sv:UserService', () => {
 
 ```typescript
 // ✅ Good: Error condition testing
-describe('fn:validateUser', () => {
-  it('should throw ValidationError for invalid email', () => {
-    const invalidUser = { name: 'John', email: 'invalid-email' };
-    
-    expect(() => validateUser(invalidUser))
-      .toThrow('Invalid email format');
+describe("fn:validateUser", () => {
+  it("should throw ValidationError for invalid email", () => {
+    const invalidUser = { name: "John", email: "invalid-email" };
+
+    expect(() => validateUser(invalidUser)).toThrow("Invalid email format");
   });
-  
-  it('should throw ValidationError for missing name', () => {
-    const invalidUser = { name: '', email: 'john@example.com' };
-    
-    expect(() => validateUser(invalidUser))
-      .toThrow('Name is required');
+
+  it("should throw ValidationError for missing name", () => {
+    const invalidUser = { name: "", email: "john@example.com" };
+
+    expect(() => validateUser(invalidUser)).toThrow("Name is required");
   });
 });
 
 // ✅ Good: Async error testing
-describe('fn:fetchUserData', () => {
-  it('should reject with error when user not found', async () => {
-    const userId = 'nonexistent';
-    
-    await expect(fetchUserData(userId))
-      .rejects
-      .toThrow('User not found');
+describe("fn:fetchUserData", () => {
+  it("should reject with error when user not found", async () => {
+    const userId = "nonexistent";
+
+    await expect(fetchUserData(userId)).rejects.toThrow("User not found");
   });
 });
 ```
@@ -363,23 +363,23 @@ describe('fn:fetchUserData', () => {
 ```json
 // vitest.config.ts coverage settings
 {
-  coverage: {
-    provider: 'v8',
-    reporter: ['text', 'json', 'html'],
-    thresholds: {
-      global: {
-        branches: 100,
-        functions: 100,
-        lines: 100,
-        statements: 100
+  "coverage": {
+    "provider": "v8",
+    "reporter": ["text", "json", "html"],
+    "thresholds": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
       }
     },
-    exclude: [
-      'node_modules/**',
-      'dist/**',
-      '**/*.d.ts',
-      '**/*.config.*',
-      '**/coverage/**'
+    "exclude": [
+      "node_modules/**",
+      "dist/**",
+      "**/*.d.ts",
+      "**/*.config.*",
+      "**/coverage/**"
     ]
   }
 }
@@ -396,28 +396,28 @@ describe('fn:fetchUserData', () => {
 
 ```typescript
 // ✅ Good: Fast, isolated tests
-describe('fn:calculateDiscount', () => {
-  it('should calculate 10% discount for premium users', () => {
-    const result = calculateDiscount(100, 'premium');
+describe("fn:calculateDiscount", () => {
+  it("should calculate 10% discount for premium users", () => {
+    const result = calculateDiscount(100, "premium");
     expect(result).toBe(90);
   });
-  
-  it('should calculate 5% discount for regular users', () => {
-    const result = calculateDiscount(100, 'regular');
+
+  it("should calculate 5% discount for regular users", () => {
+    const result = calculateDiscount(100, "regular");
     expect(result).toBe(95);
   });
 });
 
 // ❌ Bad: Slow, interdependent tests
-describe('UserService Integration', () => {
-  it('should create user in database', async () => {
+describe("UserService Integration", () => {
+  it("should create user in database", async () => {
     // Slow database operation
     await database.connect();
     const user = await service.createUser(userData);
     globalTestUser = user; // Creates dependency
   });
-  
-  it('should find user created in previous test', async () => {
+
+  it("should find user created in previous test", async () => {
     // Depends on previous test
     const user = await service.findUser(globalTestUser.id);
     expect(user).toBeDefined();
@@ -431,18 +431,18 @@ describe('UserService Integration', () => {
 
 ```typescript
 // ✅ Good: Descriptive test names
-describe('fn:processPayment', () => {
-  it('should process payment successfully with valid card', () => {});
-  it('should reject payment when card is expired', () => {});
-  it('should retry payment up to 3 times on network failure', () => {});
-  it('should handle insufficient funds gracefully', () => {});
+describe("fn:processPayment", () => {
+  it("should process payment successfully with valid card", () => {});
+  it("should reject payment when card is expired", () => {});
+  it("should retry payment up to 3 times on network failure", () => {});
+  it("should handle insufficient funds gracefully", () => {});
 });
 
 // ❌ Bad: Vague test names
-describe('fn:processPayment', () => {
-  it('should work', () => {});
-  it('should fail', () => {});
-  it('should retry', () => {});
+describe("fn:processPayment", () => {
+  it("should work", () => {});
+  it("should fail", () => {});
+  it("should retry", () => {});
 });
 ```
 
@@ -450,27 +450,27 @@ describe('fn:processPayment', () => {
 
 ```typescript
 // ✅ Good: Document complex test scenarios
-describe('fn:complexBusinessLogic', () => {
-  it('should calculate tier pricing based on volume and customer history', () => {
+describe("fn:complexBusinessLogic", () => {
+  it("should calculate tier pricing based on volume and customer history", () => {
     // This test verifies the complex pricing algorithm that considers:
     // 1. Current order volume (>$1000 gets tier 1 pricing)
     // 2. Customer loyalty status (premium customers get additional 5% off)
     // 3. Seasonal promotions (active during Q4)
-    
+
     const orderData = {
       amount: 1500,
-      customerId: 'premium-customer-123',
-      date: new Date('2023-12-15') // Q4 date
+      customerId: "premium-customer-123",
+      date: new Date("2023-12-15"), // Q4 date
     };
     const expected = {
       basePrice: 1500,
-      tierDiscount: 150,    // 10% tier 1 discount
-      loyaltyDiscount: 75,  // 5% loyalty discount  
-      finalPrice: 1275
+      tierDiscount: 150, // 10% tier 1 discount
+      loyaltyDiscount: 75, // 5% loyalty discount
+      finalPrice: 1275,
     };
-    
+
     const result = calculateTierPricing(orderData);
-    
+
     expect(result).toEqual(expected);
   });
 });
@@ -511,9 +511,9 @@ describe('fn:processOrder', () => {
 describe('rc:UserList', () => {
   it('should display user names when users are provided', () => {
     const users = [{ id: '1', name: 'John' }, { id: '2', name: 'Jane' }];
-    
+
     render(<UserList users={users} />);
-    
+
     expect(screen.getByText('John')).toBeInTheDocument();
     expect(screen.getByText('Jane')).toBeInTheDocument();
   });

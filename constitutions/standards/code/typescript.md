@@ -1,6 +1,6 @@
 # TypeScript Standards
 
-*Core TypeScript standards for type safety, imports, and language usage*
+_Core TypeScript standards for type safety, imports, and language usage_
 
 ## Strict Configuration
 
@@ -69,7 +69,7 @@ interface User {
 }
 
 // ✅ Good: Use types for unions and computed types
-type Status = 'active' | 'inactive' | 'pending';
+type Status = "active" | "inactive" | "pending";
 type UserWithStatus = User & { status: Status };
 
 // ✅ Good: Use types for function signatures
@@ -86,25 +86,25 @@ All interfaces must be fully documented with JSDoc comments:
 interface User {
   /** unique identifier */
   id: string;
-  
+
   /** user's full name */
   name: string;
-  
+
   /** email address for authentication */
   email: string;
-  
+
   /** account creation timestamp */
   createdAt: Date;
-  
+
   /** last profile update timestamp */
   updatedAt: Date;
-  
+
   /** whether the user has verified their email */
   isVerified: boolean;
-  
+
   /** user's subscription tier */
-  subscriptionLevel: 'free' | 'pro' | 'enterprise';
-  
+  subscriptionLevel: "free" | "pro" | "enterprise";
+
   /** optional profile settings */
   preferences?: UserPreferences;
 }
@@ -116,7 +116,7 @@ interface ApiResponse<T> {
   data: T;
   /** pagination metadata if applicable */
   pagination?: PaginationInfo;
-  
+
   // response metadata //
   /** http status code */
   status: number;
@@ -124,7 +124,7 @@ interface ApiResponse<T> {
   timestamp: string;
   /** request tracking id */
   requestId: string;
-  
+
   // error information //
   /** error details if request failed */
   error?: ErrorInfo;
@@ -160,11 +160,11 @@ function parseJson(input: string): unknown {
 // ✅ Good: Type guards for unknown values
 function isUser(value: unknown): value is User {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    'name' in value &&
-    'email' in value
+    "id" in value &&
+    "name" in value &&
+    "email" in value
   );
 }
 
@@ -179,7 +179,7 @@ interface ReadonlyConfig {
 class UserService {
   #repository: UserRepository;
   #cache: Map<string, User> = new Map();
-  
+
   constructor(repository: UserRepository) {
     this.#repository = repository;
   }
@@ -203,25 +203,25 @@ class UserService {
 ```typescript
 // ✅ Good: Proper import order
 // 1. Node built-ins
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 // 2. Third-party libraries
-import { useState, useEffect } from 'react';
-import { z } from 'zod';
+import { useState, useEffect } from "react";
+import { z } from "zod";
 
 // 3. Project modules with subpath imports
-import { useFeature } from '#hooks/useFeature';
-import { validateEmail } from '#utils/validation';
+import { useFeature } from "#hooks/useFeature";
+import { validateEmail } from "#utils/validation";
 
 // 4. Relative imports (closest last)
-import { helper } from '../utils/helper';
-import { config } from './config';
+import { helper } from "../utils/helper";
+import { config } from "./config";
 
 // Type imports (separate section)
-import type { FC } from 'react';
-import type { User } from '#types/user';
-import type { Config } from './types';
+import type { FC } from "react";
+import type { User } from "#types/user";
+import type { Config } from "./types";
 ```
 
 ### Import Rules
@@ -234,21 +234,21 @@ import type { Config } from './types';
 
 ```typescript
 // ✅ Good: Named imports
-import { useState, useEffect } from 'react';
-import { UserService } from '#services/user';
+import { useState, useEffect } from "react";
+import { UserService } from "#services/user";
 
 // ✅ Good: Separate type imports
-import type { User } from '#types/user';
-import type { FC } from 'react';
+import type { User } from "#types/user";
+import type { FC } from "react";
 
 // ❌ Bad: Mixed imports
-import React, { useState, type FC } from 'react';
+import React, { useState, type FC } from "react";
 
 // ❌ Bad: Namespace imports
-import * as React from 'react';
+import * as React from "react";
 
 // ❌ Bad: Default imports when named available
-import React from 'react';
+import React from "react";
 ```
 
 ## Generic Types
@@ -263,26 +263,26 @@ interface Repository<T extends { id: string }> {
 }
 
 // ✅ Good: Multiple constraints
-function merge<T extends Record<string, unknown>, U extends Record<string, unknown>>(
-  obj1: T, 
-  obj2: U
-): T & U {
+function merge<
+  T extends Record<string, unknown>,
+  U extends Record<string, unknown>,
+>(obj1: T, obj2: U): T & U {
   return { ...obj1, ...obj2 };
 }
 
 // ✅ Good: Conditional types
-type ApiResponse<T> = T extends Error 
-  ? { status: 'error'; error: T } 
-  : { status: 'success'; data: T };
+type ApiResponse<T> = T extends Error
+  ? { status: "error"; error: T }
+  : { status: "success"; data: T };
 ```
 
 ### Utility Types
 
 ```typescript
 // ✅ Good: Use built-in utility types
-type CreateUser = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
-type UpdateUser = Partial<Pick<User, 'name' | 'email'>>;
-type UserEmail = User['email'];
+type CreateUser = Omit<User, "id" | "createdAt" | "updatedAt">;
+type UpdateUser = Partial<Pick<User, "name" | "email">>;
+type UserEmail = User["email"];
 
 // ✅ Good: Custom utility types
 type NonNullable<T> = T extends null | undefined ? never : T;
@@ -297,7 +297,7 @@ type DeepReadonly<T> = {
 
 ```typescript
 // ✅ Good: Discriminated union for results
-type Result<T, E = Error> = 
+type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
@@ -306,10 +306,10 @@ class ValidationError extends Error {
   constructor(
     message: string,
     public readonly field: string,
-    public readonly value: unknown
+    public readonly value: unknown,
   ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
@@ -318,10 +318,10 @@ function parseUser(input: unknown): Result<User, ValidationError> {
   if (!isValidUserInput(input)) {
     return {
       success: false,
-      error: new ValidationError('Invalid user input', 'input', input)
+      error: new ValidationError("Invalid user input", "input", input),
     };
   }
-  
+
   return { success: true, data: input };
 }
 ```
@@ -332,12 +332,12 @@ function parseUser(input: unknown): Result<User, ValidationError> {
 
 ```typescript
 // ✅ Good: Template literal types for API routes
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 type ApiRoute = `/api/${string}`;
 type ApiEndpoint = `${HttpMethod} ${ApiRoute}`;
 
 // Usage
-const endpoint: ApiEndpoint = 'GET /api/users';
+const endpoint: ApiEndpoint = "GET /api/users";
 ```
 
 ### Mapped Types
@@ -349,9 +349,9 @@ type Optional<T> = {
 };
 
 type Serialized<T> = {
-  [K in keyof T]: T[K] extends Date 
-    ? string 
-    : T[K] extends object 
+  [K in keyof T]: T[K] extends Date
+    ? string
+    : T[K] extends object
       ? Serialized<T[K]>
       : T[K];
 };
@@ -368,17 +368,17 @@ type SerializedUser = Serialized<User>;
 ```typescript
 // ✅ Good: Proper type guards
 function isString(value: unknown): value is string {
-  return typeof value === 'string';
+  return typeof value === "string";
 }
 
 function isUser(value: unknown): value is User {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    typeof (value as any).id === 'string' &&
-    'name' in value &&
-    typeof (value as any).name === 'string'
+    "id" in value &&
+    typeof (value as any).id === "string" &&
+    "name" in value &&
+    typeof (value as any).name === "string"
   );
 }
 
@@ -394,9 +394,9 @@ function isStringArray(value: unknown): value is string[] {
 // ✅ Good: Use type guards instead of assertions
 function processUser(input: unknown): void {
   if (!isUser(input)) {
-    throw new Error('Invalid user input');
+    throw new Error("Invalid user input");
   }
-  
+
   // TypeScript now knows input is User
   console.log(input.name);
 }
@@ -420,9 +420,9 @@ export const validateEmail = (email: string): boolean => {
 };
 
 // ✅ Good: Re-exports
-export { UserRepository } from './user-repository';
-export { EmailService } from './email-service';
-export type { User, CreateUser, UpdateUser } from './types';
+export { UserRepository } from "./user-repository";
+export { EmailService } from "./email-service";
+export type { User, CreateUser, UpdateUser } from "./types";
 
 // ❌ Avoid: Default exports unless required
 export default userService; // Only when library requires it
@@ -432,11 +432,11 @@ export default userService; // Only when library requires it
 
 ```typescript
 // index.ts - Barrel export file
-export { UserService } from './user-service';
-export { UserRepository } from './user-repository';
-export { validateUser } from './validation';
+export { UserService } from "./user-service";
+export { UserRepository } from "./user-repository";
+export { validateUser } from "./validation";
 
-export type { User, CreateUser, UpdateUser } from './types';
+export type { User, CreateUser, UpdateUser } from "./types";
 ```
 
 ## Configuration and Environment Types
@@ -446,7 +446,7 @@ export type { User, CreateUser, UpdateUser } from './types';
 ```typescript
 // ✅ Good: Typed environment configuration
 interface EnvironmentConfig {
-  readonly NODE_ENV: 'development' | 'staging' | 'production';
+  readonly NODE_ENV: "development" | "staging" | "production";
   readonly PORT: number;
   readonly DATABASE_URL: string;
   readonly JWT_SECRET: string;
@@ -454,15 +454,15 @@ interface EnvironmentConfig {
 
 function loadConfig(): EnvironmentConfig {
   const config = {
-    NODE_ENV: process.env.NODE_ENV as EnvironmentConfig['NODE_ENV'],
-    PORT: parseInt(process.env.PORT || '3000', 10),
+    NODE_ENV: process.env.NODE_ENV as EnvironmentConfig["NODE_ENV"],
+    PORT: parseInt(process.env.PORT || "3000", 10),
     DATABASE_URL: process.env.DATABASE_URL,
     JWT_SECRET: process.env.JWT_SECRET,
   };
 
   // Validate required fields
   if (!config.DATABASE_URL || !config.JWT_SECRET) {
-    throw new Error('Missing required environment variables');
+    throw new Error("Missing required environment variables");
   }
 
   return config;
@@ -481,9 +481,9 @@ type MockRepository<T> = jest.Mocked<Repository<T>>;
 // ✅ Good: Test data factories
 function createTestUser(overrides: Partial<User> = {}): User {
   return {
-    id: 'test-user-id',
-    name: 'Test User',
-    email: 'test@example.com',
+    id: "test-user-id",
+    name: "Test User",
+    email: "test@example.com",
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -493,7 +493,7 @@ function createTestUser(overrides: Partial<User> = {}): User {
 // ✅ Good: Type-safe test assertions
 function assertIsUser(value: unknown): asserts value is User {
   if (!isUser(value)) {
-    throw new Error('Expected User object');
+    throw new Error("Expected User object");
   }
 }
 ```

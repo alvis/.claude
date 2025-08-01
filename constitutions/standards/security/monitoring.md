@@ -1,10 +1,11 @@
 # Security Monitoring Standards
 
-*Standards for security event logging, alerting, and incident response*
+_Standards for security event logging, alerting, and incident response_
 
 ## Core Monitoring Principles
 
 ### MUST Follow Rules
+
 - **MUST log all security events** - Authentication, authorization, and suspicious activities
 - **MUST protect log integrity** - Logs must be tamper-proof
 - **MUST monitor in real-time** - Critical events need immediate attention
@@ -12,6 +13,7 @@
 - **MUST sanitize log data** - Never log passwords or sensitive data
 
 ### SHOULD Follow Guidelines
+
 - **SHOULD aggregate logs centrally** - Single source of truth
 - **SHOULD implement alerting rules** - Automated incident detection
 - **SHOULD track metrics** - Security KPIs and trends
@@ -24,39 +26,39 @@
 ```typescript
 enum SecurityEventType {
   // Authentication Events
-  AUTH_SUCCESS = 'auth_success',
-  AUTH_FAILURE = 'auth_failure',
-  AUTH_LOCKOUT = 'auth_lockout',
-  PASSWORD_RESET = 'password_reset',
-  MFA_CHALLENGE = 'mfa_challenge',
-  
+  AUTH_SUCCESS = "auth_success",
+  AUTH_FAILURE = "auth_failure",
+  AUTH_LOCKOUT = "auth_lockout",
+  PASSWORD_RESET = "password_reset",
+  MFA_CHALLENGE = "mfa_challenge",
+
   // Authorization Events
-  AUTHZ_FAILURE = 'authz_failure',
-  PRIVILEGE_ESCALATION = 'privilege_escalation',
-  ROLE_CHANGE = 'role_change',
-  
+  AUTHZ_FAILURE = "authz_failure",
+  PRIVILEGE_ESCALATION = "privilege_escalation",
+  ROLE_CHANGE = "role_change",
+
   // Security Violations
-  RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded',
-  INVALID_TOKEN = 'invalid_token',
-  SUSPICIOUS_ACTIVITY = 'suspicious_activity',
-  SQL_INJECTION_ATTEMPT = 'sql_injection_attempt',
-  XSS_ATTEMPT = 'xss_attempt',
-  
+  RATE_LIMIT_EXCEEDED = "rate_limit_exceeded",
+  INVALID_TOKEN = "invalid_token",
+  SUSPICIOUS_ACTIVITY = "suspicious_activity",
+  SQL_INJECTION_ATTEMPT = "sql_injection_attempt",
+  XSS_ATTEMPT = "xss_attempt",
+
   // Data Events
-  DATA_ACCESS = 'data_access',
-  DATA_MODIFICATION = 'data_modification',
-  DATA_EXPORT = 'data_export',
-  
+  DATA_ACCESS = "data_access",
+  DATA_MODIFICATION = "data_modification",
+  DATA_EXPORT = "data_export",
+
   // System Events
-  CONFIG_CHANGE = 'config_change',
-  SERVICE_START = 'service_start',
-  SERVICE_STOP = 'service_stop'
+  CONFIG_CHANGE = "config_change",
+  SERVICE_START = "service_start",
+  SERVICE_STOP = "service_stop",
 }
 
 interface SecurityEvent {
   id: string;
   type: SecurityEventType;
-  severity: 'info' | 'warning' | 'error' | 'critical';
+  severity: "info" | "warning" | "error" | "critical";
   timestamp: string;
   source: {
     ip: string;
@@ -87,8 +89,8 @@ interface SecurityEvent {
 ### Core Logger
 
 ```typescript
-import winston from 'winston';
-import { ElasticsearchTransport } from 'winston-elasticsearch';
+import winston from "winston";
+import { ElasticsearchTransport } from "winston-elasticsearch";
 
 class SecurityLogger {
   private logger: winston.Logger;
@@ -96,44 +98,46 @@ class SecurityLogger {
 
   constructor() {
     this.logger = winston.createLogger({
-      level: 'info',
+      level: "info",
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
-        winston.format.json()
+        winston.format.json(),
       ),
-      defaultMeta: { service: 'security' },
+      defaultMeta: { service: "security" },
       transports: [
         // File transport for audit trail
         new winston.transports.File({
-          filename: 'security.log',
-          level: 'info',
+          filename: "security.log",
+          level: "info",
           maxsize: 10485760, // 10MB
           maxFiles: 30,
-          tailable: true
+          tailable: true,
         }),
-        
+
         // Elasticsearch for analysis
         new ElasticsearchTransport({
-          level: 'info',
+          level: "info",
           clientOpts: {
             node: process.env.ELASTICSEARCH_URL,
             auth: {
               username: process.env.ELASTICSEARCH_USER,
-              password: process.env.ELASTICSEARCH_PASS
-            }
+              password: process.env.ELASTICSEARCH_PASS,
+            },
           },
-          index: 'security-logs',
-          dataStream: true
+          index: "security-logs",
+          dataStream: true,
         }),
-        
+
         // Console for development
-        ...(process.env.NODE_ENV !== 'production' ? [
-          new winston.transports.Console({
-            format: winston.format.simple()
-          })
-        ] : [])
-      ]
+        ...(process.env.NODE_ENV !== "production"
+          ? [
+              new winston.transports.Console({
+                format: winston.format.simple(),
+              }),
+            ]
+          : []),
+      ],
     });
 
     this.alertManager = new AlertManager();
@@ -143,18 +147,18 @@ class SecurityLogger {
     const fullEvent: SecurityEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
-      severity: 'info',
+      severity: "info",
       ...event,
       type: event.type!,
       source: event.source!,
-      details: event.details || {}
+      details: event.details || {},
     };
 
     // Log the event
     this.logger.log({
       level: this.mapSeverityToLevel(fullEvent.severity),
       message: `Security Event: ${fullEvent.type}`,
-      ...fullEvent
+      ...fullEvent,
     });
 
     // Check if alerting is needed
@@ -168,21 +172,21 @@ class SecurityLogger {
 
   private mapSeverityToLevel(severity: string): string {
     const mapping: Record<string, string> = {
-      'info': 'info',
-      'warning': 'warn',
-      'error': 'error',
-      'critical': 'error'
+      info: "info",
+      warning: "warn",
+      error: "error",
+      critical: "error",
     };
-    return mapping[severity] || 'info';
+    return mapping[severity] || "info";
   }
 
   private async checkAlertConditions(event: SecurityEvent): Promise<void> {
     // Critical events always alert
-    if (event.severity === 'critical') {
+    if (event.severity === "critical") {
       await this.alertManager.sendAlert({
-        type: 'immediate',
+        type: "immediate",
         event,
-        channel: ['email', 'slack', 'pagerduty']
+        channel: ["email", "slack", "pagerduty"],
       });
     }
 
@@ -195,20 +199,20 @@ class SecurityLogger {
     if (event.type === SecurityEventType.AUTH_FAILURE) {
       const recentFailures = await this.getRecentEvents({
         type: SecurityEventType.AUTH_FAILURE,
-        'source.ip': event.source.ip,
-        since: new Date(Date.now() - 15 * 60 * 1000) // Last 15 minutes
+        "source.ip": event.source.ip,
+        since: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
       });
 
       if (recentFailures.length >= 5) {
         await this.logSecurityEvent({
           type: SecurityEventType.SUSPICIOUS_ACTIVITY,
-          severity: 'warning',
+          severity: "warning",
           source: event.source,
           details: {
-            pattern: 'brute_force_attempt',
+            pattern: "brute_force_attempt",
             failureCount: recentFailures.length,
-            timeWindow: '15m'
-          }
+            timeWindow: "15m",
+          },
         });
       }
     }
@@ -217,20 +221,20 @@ class SecurityLogger {
     if (event.type === SecurityEventType.AUTHZ_FAILURE) {
       const recentAuthzFailures = await this.getRecentEvents({
         type: SecurityEventType.AUTHZ_FAILURE,
-        'user.id': event.user?.id,
-        since: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
+        "user.id": event.user?.id,
+        since: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
       });
 
       if (recentAuthzFailures.length >= 3) {
         await this.logSecurityEvent({
           type: SecurityEventType.SUSPICIOUS_ACTIVITY,
-          severity: 'error',
+          severity: "error",
           source: event.source,
           user: event.user,
           details: {
-            pattern: 'privilege_escalation_attempt',
-            failureCount: recentAuthzFailures.length
-          }
+            pattern: "privilege_escalation_attempt",
+            failureCount: recentAuthzFailures.length,
+          },
         });
       }
     }
@@ -239,15 +243,15 @@ class SecurityLogger {
   private async sendToSIEM(event: SecurityEvent): Promise<void> {
     try {
       await fetch(process.env.SIEM_ENDPOINT!, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SIEM_TOKEN}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.SIEM_TOKEN}`,
         },
-        body: JSON.stringify(event)
+        body: JSON.stringify(event),
       });
     } catch (error) {
-      this.logger.error('Failed to send event to SIEM', { error, event });
+      this.logger.error("Failed to send event to SIEM", { error, event });
     }
   }
 }
@@ -279,7 +283,7 @@ interface AlertCondition {
 }
 
 interface AlertAction {
-  type: 'email' | 'slack' | 'webhook' | 'pagerduty';
+  type: "email" | "slack" | "webhook" | "pagerduty";
   config: Record<string, unknown>;
   template?: string;
 }
@@ -287,40 +291,40 @@ interface AlertAction {
 class AlertManager {
   private rules: AlertRule[] = [
     {
-      id: 'brute-force',
-      name: 'Brute Force Attack Detection',
+      id: "brute-force",
+      name: "Brute Force Attack Detection",
       condition: {
         eventType: [SecurityEventType.AUTH_FAILURE],
-        threshold: { count: 5, window: 15 }
+        threshold: { count: 5, window: 15 },
       },
       actions: [
         {
-          type: 'slack',
-          config: { channel: '#security-alerts' },
-          template: 'Brute force attack detected from {{source.ip}}'
+          type: "slack",
+          config: { channel: "#security-alerts" },
+          template: "Brute force attack detected from {{source.ip}}",
         },
         {
-          type: 'email',
-          config: { to: 'security@example.com' }
-        }
+          type: "email",
+          config: { to: "security@example.com" },
+        },
       ],
       cooldown: 30,
-      enabled: true
+      enabled: true,
     },
     {
-      id: 'critical-security',
-      name: 'Critical Security Event',
+      id: "critical-security",
+      name: "Critical Security Event",
       condition: {
-        severity: ['critical']
+        severity: ["critical"],
       },
       actions: [
         {
-          type: 'pagerduty',
-          config: { serviceKey: process.env.PAGERDUTY_KEY }
-        }
+          type: "pagerduty",
+          config: { serviceKey: process.env.PAGERDUTY_KEY },
+        },
       ],
-      enabled: true
-    }
+      enabled: true,
+    },
   ];
 
   async sendAlert(alert: {
@@ -330,13 +334,13 @@ class AlertManager {
   }): Promise<void> {
     for (const channelType of alert.channel) {
       switch (channelType) {
-        case 'email':
+        case "email":
           await this.sendEmailAlert(alert.event);
           break;
-        case 'slack':
+        case "slack":
           await this.sendSlackAlert(alert.event);
           break;
-        case 'pagerduty':
+        case "pagerduty":
           await this.sendPagerDutyAlert(alert.event);
           break;
       }
@@ -345,35 +349,37 @@ class AlertManager {
 
   private async sendSlackAlert(event: SecurityEvent): Promise<void> {
     const webhook = process.env.SLACK_WEBHOOK_URL;
-    
+
     await fetch(webhook!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: `Security Alert: ${event.type}`,
-        attachments: [{
-          color: this.getSeverityColor(event.severity),
-          fields: [
-            { title: 'Type', value: event.type, short: true },
-            { title: 'Severity', value: event.severity, short: true },
-            { title: 'Source IP', value: event.source.ip, short: true },
-            { title: 'User', value: event.user?.email || 'N/A', short: true },
-            { title: 'Details', value: JSON.stringify(event.details) }
-          ],
-          timestamp: Math.floor(Date.now() / 1000)
-        }]
-      })
+        attachments: [
+          {
+            color: this.getSeverityColor(event.severity),
+            fields: [
+              { title: "Type", value: event.type, short: true },
+              { title: "Severity", value: event.severity, short: true },
+              { title: "Source IP", value: event.source.ip, short: true },
+              { title: "User", value: event.user?.email || "N/A", short: true },
+              { title: "Details", value: JSON.stringify(event.details) },
+            ],
+            timestamp: Math.floor(Date.now() / 1000),
+          },
+        ],
+      }),
     });
   }
 
   private getSeverityColor(severity: string): string {
     const colors: Record<string, string> = {
-      'info': '#36a64f',
-      'warning': '#ff9900',
-      'error': '#ff0000',
-      'critical': '#ff0000'
+      info: "#36a64f",
+      warning: "#ff9900",
+      error: "#ff0000",
+      critical: "#ff0000",
     };
-    return colors[severity] || '#808080';
+    return colors[severity] || "#808080";
   }
 }
 ```
@@ -422,26 +428,26 @@ class SecurityMetricsCollector {
   async collectMetrics(): Promise<SecurityMetrics> {
     return {
       authenticationMetrics: {
-        successfulLogins: this.metrics.get('auth.success') || 0,
-        failedLogins: this.metrics.get('auth.failure') || 0,
-        averageLoginTime: this.metrics.get('auth.duration.avg') || 0,
-        uniqueUsers: await this.getUniqueUsers()
+        successfulLogins: this.metrics.get("auth.success") || 0,
+        failedLogins: this.metrics.get("auth.failure") || 0,
+        averageLoginTime: this.metrics.get("auth.duration.avg") || 0,
+        uniqueUsers: await this.getUniqueUsers(),
       },
       authorizationMetrics: {
-        deniedRequests: this.metrics.get('authz.denied') || 0,
-        privilegedAccess: this.metrics.get('authz.privileged') || 0,
-        roleChanges: this.metrics.get('authz.role_changes') || 0
+        deniedRequests: this.metrics.get("authz.denied") || 0,
+        privilegedAccess: this.metrics.get("authz.privileged") || 0,
+        roleChanges: this.metrics.get("authz.role_changes") || 0,
       },
       securityViolations: {
-        rateLimitViolations: this.metrics.get('security.rate_limit') || 0,
-        injectionAttempts: this.metrics.get('security.injection') || 0,
-        suspiciousActivities: this.metrics.get('security.suspicious') || 0
+        rateLimitViolations: this.metrics.get("security.rate_limit") || 0,
+        injectionAttempts: this.metrics.get("security.injection") || 0,
+        suspiciousActivities: this.metrics.get("security.suspicious") || 0,
       },
       systemHealth: {
         activeUsers: await this.getActiveUsers(),
         activeSessions: await this.getActiveSessions(),
-        apiLatency: this.metrics.get('api.latency.p95') || 0
-      }
+        apiLatency: this.metrics.get("api.latency.p95") || 0,
+      },
     };
   }
 
@@ -477,27 +483,26 @@ class IncidentResponseManager {
   private responses: IncidentResponse[] = [
     {
       trigger: SecurityEventType.SUSPICIOUS_ACTIVITY,
-      condition: (event) => 
-        event.details.pattern === 'brute_force_attempt',
+      condition: (event) => event.details.pattern === "brute_force_attempt",
       action: async (event) => {
         // Block IP address
         await this.blockIP(event.source.ip, 3600); // 1 hour
-        
+
         // Invalidate all sessions from this IP
         await this.invalidateSessionsByIP(event.source.ip);
-        
+
         // Log the action
         await securityLogger.logSecurityEvent({
           type: SecurityEventType.SUSPICIOUS_ACTIVITY,
-          severity: 'warning',
+          severity: "warning",
           source: event.source,
           details: {
-            action: 'ip_blocked',
+            action: "ip_blocked",
             duration: 3600,
-            reason: 'brute_force_attempt'
-          }
+            reason: "brute_force_attempt",
+          },
         });
-      }
+      },
     },
     {
       trigger: SecurityEventType.SQL_INJECTION_ATTEMPT,
@@ -505,15 +510,15 @@ class IncidentResponseManager {
       action: async (event) => {
         // Block request immediately
         await this.blockIP(event.source.ip, 86400); // 24 hours
-        
+
         // Alert security team
         await this.alertSecurityTeam({
-          priority: 'high',
+          priority: "high",
           event,
-          message: 'SQL injection attempt detected'
+          message: "SQL injection attempt detected",
         });
-      }
-    }
+      },
+    },
   ];
 
   async handleIncident(event: SecurityEvent): Promise<void> {
@@ -526,7 +531,7 @@ class IncidentResponseManager {
 
   private async blockIP(ip: string, duration: number): Promise<void> {
     // Add IP to blocklist
-    await redis.setex(`blocked_ip:${ip}`, duration, '1');
+    await redis.setex(`blocked_ip:${ip}`, duration, "1");
   }
 
   private async invalidateSessionsByIP(ip: string): Promise<void> {
@@ -552,20 +557,26 @@ interface LogRetentionPolicy {
 }
 
 const retentionPolicy: LogRetentionPolicy = {
-  security: 365,    // 1 year
-  audit: 2555,      // 7 years
+  security: 365, // 1 year
+  audit: 2555, // 7 years
   compliance: 1825, // 5 years
-  operational: 90   // 3 months
+  operational: 90, // 3 months
 };
 
 // Implement log rotation
 class LogRotationService {
   async rotateLogs(): Promise<void> {
     const cutoffDates = {
-      security: new Date(Date.now() - retentionPolicy.security * 24 * 60 * 60 * 1000),
+      security: new Date(
+        Date.now() - retentionPolicy.security * 24 * 60 * 60 * 1000,
+      ),
       audit: new Date(Date.now() - retentionPolicy.audit * 24 * 60 * 60 * 1000),
-      compliance: new Date(Date.now() - retentionPolicy.compliance * 24 * 60 * 60 * 1000),
-      operational: new Date(Date.now() - retentionPolicy.operational * 24 * 60 * 60 * 1000)
+      compliance: new Date(
+        Date.now() - retentionPolicy.compliance * 24 * 60 * 60 * 1000,
+      ),
+      operational: new Date(
+        Date.now() - retentionPolicy.operational * 24 * 60 * 60 * 1000,
+      ),
     };
 
     // Archive old logs
@@ -583,58 +594,58 @@ class LogRotationService {
 ## Testing Security Monitoring
 
 ```typescript
-describe('Security Monitoring', () => {
+describe("Security Monitoring", () => {
   let logger: SecurityLogger;
   let alertManager: AlertManager;
 
-  describe('Event Logging', () => {
-    it('should log authentication failures', async () => {
+  describe("Event Logging", () => {
+    it("should log authentication failures", async () => {
       const event: Partial<SecurityEvent> = {
         type: SecurityEventType.AUTH_FAILURE,
-        source: { ip: '192.168.1.1' },
-        user: { email: 'test@example.com' }
+        source: { ip: "192.168.1.1" },
+        user: { email: "test@example.com" },
       };
 
       await logger.logSecurityEvent(event);
-      
+
       const logs = await getRecentLogs();
       expect(logs).toContainEqual(
-        expect.objectContaining({ type: SecurityEventType.AUTH_FAILURE })
+        expect.objectContaining({ type: SecurityEventType.AUTH_FAILURE }),
       );
     });
 
-    it('should sanitize sensitive data', async () => {
+    it("should sanitize sensitive data", async () => {
       const event: Partial<SecurityEvent> = {
         type: SecurityEventType.AUTH_SUCCESS,
         details: {
-          password: 'secret123',
-          token: 'jwt-token'
-        }
+          password: "secret123",
+          token: "jwt-token",
+        },
       };
 
       await logger.logSecurityEvent(event);
-      
+
       const logs = await getRecentLogs();
-      expect(logs[0].details.password).toBe('[REDACTED]');
-      expect(logs[0].details.token).toBe('[REDACTED]');
+      expect(logs[0].details.password).toBe("[REDACTED]");
+      expect(logs[0].details.token).toBe("[REDACTED]");
     });
   });
 
-  describe('Alert Detection', () => {
-    it('should detect brute force attempts', async () => {
+  describe("Alert Detection", () => {
+    it("should detect brute force attempts", async () => {
       // Simulate multiple failed logins
       for (let i = 0; i < 6; i++) {
         await logger.logSecurityEvent({
           type: SecurityEventType.AUTH_FAILURE,
-          source: { ip: '10.0.0.1' }
+          source: { ip: "10.0.0.1" },
         });
       }
 
       const alerts = await getRecentAlerts();
       expect(alerts).toContainEqual(
         expect.objectContaining({
-          pattern: 'brute_force_attempt'
-        })
+          pattern: "brute_force_attempt",
+        }),
       );
     });
   });

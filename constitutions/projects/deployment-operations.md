@@ -72,11 +72,11 @@ jobs:
 ## Health Checks
 
 ```typescript
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
-    status: 'healthy',
+    status: "healthy",
     version: process.env.VERSION,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 ```
@@ -98,4 +98,4 @@ app.get('/health', (req, res) => {
 4. Environment variables updated
 5. Monitoring alerts configured
 6. Rollback plan documented
-</deployment_checklist>
+   </deployment_checklist>

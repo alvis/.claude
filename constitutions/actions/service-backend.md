@@ -1,6 +1,6 @@
 # Service & Backend Coding Standards
 
-*Specific standards for backend services, APIs, and server-side development*
+_Specific standards for backend services, APIs, and server-side development_
 
 ## Table of Contents
 
@@ -77,7 +77,7 @@ DELETE /api/users/:id       # Delete user
 ```typescript
 // Standard API response
 interface ApiResponse<T> {
-  status: 'success' | 'error';
+  status: "success" | "error";
   data?: T;
   error?: {
     code: string;
@@ -116,13 +116,13 @@ interface HandlerOptions {
 export async function getUserHandler(
   params: { userId: string },
   context: HandlerContext,
-  options: HandlerOptions = {}
+  options: HandlerOptions = {},
 ): Promise<ApiResponse<User>> {
   try {
     const user = await userService.getUser(params.userId);
-    
+
     return {
-      status: 'success',
+      status: "success",
       data: user,
       meta: {
         timestamp: new Date().toISOString(),
@@ -130,10 +130,10 @@ export async function getUserHandler(
     };
   } catch (error) {
     return {
-      status: 'error',
+      status: "error",
       error: {
-        code: 'USER_NOT_FOUND',
-        message: 'User not found',
+        code: "USER_NOT_FOUND",
+        message: "User not found",
         details: error,
       },
     };
@@ -152,7 +152,7 @@ export async function getUserHandler(
 ### Operation Naming
 
 - `Search<Entity>` - NLP-enhanced search queries
-- `List<Entity>` - Filter-only structured queries  
+- `List<Entity>` - Filter-only structured queries
 - `Get<Entity>` - Single entity retrieval
 - `Set<Entity>` - Create/update (upsert)
 - `Drop<Entity>` - Delete operations
@@ -179,7 +179,7 @@ interface QueryOptions {
   /** sorting criteria */
   sort?: Array<{
     field: string;
-    order: 'asc' | 'desc';
+    order: "asc" | "desc";
   }>;
 }
 ```
@@ -197,11 +197,10 @@ interface UserRepository {
 
 class DatabaseUserRepository implements UserRepository {
   async getUser(id: string): Promise<User | null> {
-    const result = await this.db.query(
-      'SELECT * FROM users WHERE id = $1',
-      [id]
-    );
-    
+    const result = await this.db.query("SELECT * FROM users WHERE id = $1", [
+      id,
+    ]);
+
     return result.rows[0] || null;
   }
 
@@ -228,23 +227,26 @@ class DatabaseUserRepository implements UserRepository {
 ```typescript
 // Use specific error classes
 class ValidationError extends Error {
-  constructor(message: string, public field: string) {
+  constructor(
+    message: string,
+    public field: string,
+  ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
 class NotFoundError extends Error {
   constructor(resource: string, id: string) {
     super(`${resource} with id ${id} not found`);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
 class AuthenticationError extends Error {
-  constructor(message: string = 'Authentication required') {
+  constructor(message: string = "Authentication required") {
     super(message);
-    this.name = 'AuthenticationError';
+    this.name = "AuthenticationError";
   }
 }
 ```
@@ -256,7 +258,7 @@ class AuthenticationError extends Error {
 export function transformError(error: unknown): ApiError {
   if (error instanceof ValidationError) {
     return {
-      code: 'VALIDATION_ERROR',
+      code: "VALIDATION_ERROR",
       message: error.message,
       statusCode: 400,
       details: { field: error.field },
@@ -265,7 +267,7 @@ export function transformError(error: unknown): ApiError {
 
   if (error instanceof NotFoundError) {
     return {
-      code: 'NOT_FOUND',
+      code: "NOT_FOUND",
       message: error.message,
       statusCode: 404,
     };
@@ -273,8 +275,8 @@ export function transformError(error: unknown): ApiError {
 
   // Default to internal server error
   return {
-    code: 'INTERNAL_ERROR',
-    message: 'An unexpected error occurred',
+    code: "INTERNAL_ERROR",
+    message: "An unexpected error occurred",
     statusCode: 500,
   };
 }
@@ -329,15 +331,15 @@ interface JWTPayload {
 async function verifyToken(token: string): Promise<JWTPayload> {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
-    
+
     // Check expiration
     if (Date.now() >= payload.exp * 1000) {
-      throw new AuthenticationError('Token expired');
+      throw new AuthenticationError("Token expired");
     }
-    
+
     return payload;
   } catch (error) {
-    throw new AuthenticationError('Invalid token');
+    throw new AuthenticationError("Invalid token");
   }
 }
 ```
@@ -417,17 +419,17 @@ class DatabaseService {
 
 ```typescript
 async function executeTransaction<T>(
-  operations: (client: PoolClient) => Promise<T>
+  operations: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   const client = await pool.connect();
-  
+
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
     const result = await operations(client);
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
@@ -444,7 +446,7 @@ async function executeTransaction<T>(
 ### Integration Test Setup
 
 ```typescript
-describe('op:getUserProfile', () => {
+describe("op:getUserProfile", () => {
   let testDb: TestDatabase;
   let userService: UserService;
 
@@ -457,12 +459,12 @@ describe('op:getUserProfile', () => {
     await testDb.cleanup();
   });
 
-  it('should return user profile for valid id', async () => {
+  it("should return user profile for valid id", async () => {
     const testUser = await testDb.createUser({
-      name: 'John Doe',
-      email: 'john@example.com',
+      name: "John Doe",
+      email: "john@example.com",
     });
-    const expected = { id: testUser.id, name: 'John Doe' };
+    const expected = { id: testUser.id, name: "John Doe" };
 
     const result = await userService.getUserProfile(testUser.id);
 
@@ -480,7 +482,7 @@ const mockAxios = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock('axios', () => ({
+vi.mock("axios", () => ({
   default: mockAxios,
 }));
 
@@ -490,7 +492,7 @@ const mockRepository = vi.hoisted(() => ({
   setUser: vi.fn(),
 }));
 
-vi.mock('#repositories/userRepository', () => ({
+vi.mock("#repositories/userRepository", () => ({
   userRepository: mockRepository,
 }));
 ```
@@ -514,9 +516,13 @@ interface RequestMetrics {
   userId?: string;
 }
 
-function trackRequestMetrics(req: Request, res: Response, duration: number): void {
+function trackRequestMetrics(
+  req: Request,
+  res: Response,
+  duration: number,
+): void {
   const metrics: RequestMetrics = {
-    requestId: req.headers['x-request-id'] as string,
+    requestId: req.headers["x-request-id"] as string,
     method: req.method,
     path: req.path,
     statusCode: res.statusCode,
@@ -526,7 +532,7 @@ function trackRequestMetrics(req: Request, res: Response, duration: number): voi
   };
 
   // Send to monitoring service
-  metricsService.track('http_request', metrics);
+  metricsService.track("http_request", metrics);
 }
 ```
 
@@ -534,7 +540,7 @@ function trackRequestMetrics(req: Request, res: Response, duration: number): voi
 
 ```typescript
 interface HealthStatus {
-  status: 'healthy' | 'unhealthy' | 'degraded';
+  status: "healthy" | "unhealthy" | "degraded";
   checks: {
     database: boolean;
     cache: boolean;
@@ -551,14 +557,14 @@ export async function healthCheck(): Promise<HealthStatus> {
   ]);
 
   const [database, cache, externalApi] = checks.map(
-    result => result.status === 'fulfilled' && result.value
+    (result) => result.status === "fulfilled" && result.value,
   );
 
   const allHealthy = database && cache && externalApi;
   const anyHealthy = database || cache || externalApi;
 
   return {
-    status: allHealthy ? 'healthy' : anyHealthy ? 'degraded' : 'unhealthy',
+    status: allHealthy ? "healthy" : anyHealthy ? "degraded" : "unhealthy",
     checks: { database, cache, externalApi },
     timestamp: new Date().toISOString(),
   };

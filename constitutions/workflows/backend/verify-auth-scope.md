@@ -14,15 +14,15 @@ Validate the authentication token:
 async function verifyToken(token: string): Promise<JWTPayload> {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
-    
+
     // Check expiration
     if (Date.now() >= payload.exp * 1000) {
-      throw new AuthenticationError('Token expired');
+      throw new AuthenticationError("Token expired");
     }
-    
+
     return payload;
   } catch (error) {
-    throw new AuthenticationError('Invalid token');
+    throw new AuthenticationError("Invalid token");
   }
 }
 ```
@@ -42,7 +42,7 @@ async function buildAuthContext(token: string): Promise<AuthContext> {
   const user = await verifyToken(token);
   const roles = await getUserRoles(user.userId);
   const permissions = await getUserPermissions(user.userId);
-  
+
   return { user, roles, permissions };
 }
 ```
@@ -62,7 +62,7 @@ function requireRole(requiredRole: string) {
 
 // Usage in handler
 const authContext = await buildAuthContext(authToken);
-requireRole('admin')(authContext);
+requireRole("admin")(authContext);
 ```
 
 ### 4. Check Specific Permissions
@@ -79,7 +79,7 @@ function requirePermission(permission: string) {
 }
 
 // Usage in handler
-requirePermission('user:read')(authContext);
+requirePermission("user:read")(authContext);
 ```
 
 ### 5. Resource-Level Authorization
@@ -88,20 +88,20 @@ Check if user can access specific resources:
 
 ```typescript
 async function canAccessResource(
-  userId: string, 
-  resourceId: string, 
-  action: string
+  userId: string,
+  resourceId: string,
+  action: string,
 ): Promise<boolean> {
   // Check if user owns the resource
   if (await isResourceOwner(userId, resourceId)) {
     return true;
   }
-  
+
   // Check if user has admin role
-  if (await hasRole(userId, 'admin')) {
+  if (await hasRole(userId, "admin")) {
     return true;
   }
-  
+
   // Check specific permission for this resource type
   const permission = `${getResourceType(resourceId)}:${action}`;
   return hasPermission(userId, permission);
@@ -115,27 +115,29 @@ Apply auth checks in handler functions:
 ```typescript
 export async function getUserHandler(
   params: { userId: string },
-  context: HandlerContext
+  context: HandlerContext,
 ): Promise<ApiResponse<User>> {
   try {
     // 1. Verify authentication
     const authContext = await buildAuthContext(context.authToken);
-    
+
     // 2. Check permission
-    requirePermission('user:read')(authContext);
-    
+    requirePermission("user:read")(authContext);
+
     // 3. Check resource access
-    if (!await canAccessResource(authContext.user.userId, params.userId, 'read')) {
-      throw new ForbiddenError('Cannot access this user');
+    if (
+      !(await canAccessResource(authContext.user.userId, params.userId, "read"))
+    ) {
+      throw new ForbiddenError("Cannot access this user");
     }
-    
+
     // 4. Execute business logic
     const user = await userService.getUser(params.userId);
-    
+
     return {
-      status: 'success',
+      status: "success",
       data: user,
-      meta: { timestamp: new Date().toISOString() }
+      meta: { timestamp: new Date().toISOString() },
     };
   } catch (error) {
     return transformError(error);
@@ -151,31 +153,31 @@ Transform auth errors to appropriate HTTP responses:
 function transformAuthError(error: unknown): ApiResponse<never> {
   if (error instanceof AuthenticationError) {
     return {
-      status: 'error',
+      status: "error",
       error: {
-        code: 'AUTHENTICATION_REQUIRED',
-        message: 'Valid authentication token required',
-      }
+        code: "AUTHENTICATION_REQUIRED",
+        message: "Valid authentication token required",
+      },
     };
   }
 
   if (error instanceof AuthorizationError) {
     return {
-      status: 'error',
+      status: "error",
       error: {
-        code: 'INSUFFICIENT_PERMISSIONS',
-        message: 'Insufficient permissions for this action',
-      }
+        code: "INSUFFICIENT_PERMISSIONS",
+        message: "Insufficient permissions for this action",
+      },
     };
   }
 
   // Default to internal server error
   return {
-    status: 'error',
+    status: "error",
     error: {
-      code: 'INTERNAL_ERROR',
-      message: 'An unexpected error occurred',
-    }
+      code: "INTERNAL_ERROR",
+      message: "An unexpected error occurred",
+    },
   };
 }
 ```
@@ -186,19 +188,19 @@ Log authentication and authorization events:
 
 ```typescript
 function logAuthEvent(
-  event: 'auth_success' | 'auth_failure' | 'authz_failure',
+  event: "auth_success" | "auth_failure" | "authz_failure",
   context: {
     userId?: string;
     action: string;
     resource?: string;
     ip?: string;
     userAgent?: string;
-  }
+  },
 ): void {
   logger.info(`Security event: ${event}`, {
     event,
     timestamp: new Date().toISOString(),
-    ...context
+    ...context,
   });
 }
 ```

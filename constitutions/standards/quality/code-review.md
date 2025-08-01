@@ -1,6 +1,6 @@
 # Code Review Standards
 
-*Standards for conducting effective, constructive code reviews that improve code quality and team knowledge*
+_Standards for conducting effective, constructive code reviews that improve code quality and team knowledge_
 
 ## Core Review Principles
 
@@ -35,7 +35,7 @@ First priority - does the code work correctly?
 // - Race conditions
 
 // Example feedback:
-// "This function doesn't handle the case where `items` is empty. 
+// "This function doesn't handle the case where `items` is empty.
 // Consider adding a guard clause: `if (items.length === 0) return defaultValue;`"
 ```
 
@@ -69,7 +69,7 @@ Performance impact assessment:
 
 ```typescript
 // Example feedback:
-// "PERFORMANCE: This nested loop creates O(n²) complexity. 
+// "PERFORMANCE: This nested loop creates O(n²) complexity.
 // Consider using a Map for O(1) lookups:
 // const userMap = new Map(users.map(u => [u.id, u]));"
 ```
@@ -86,8 +86,8 @@ Long-term code health:
 
 ```typescript
 // Example feedback:
-// "suggestion: This function is doing too many things. Consider extracting 
-// the validation logic into a separate `validateUserInput()` function 
+// "suggestion: This function is doing too many things. Consider extracting
+// the validation logic into a separate `validateUserInput()` function
 // for better separation of concerns."
 ```
 
@@ -127,22 +127,22 @@ Use standard prefixes for clarity:
 
 ```typescript
 // nit: Minor style issue (optional)
-"nit: Consider using object destructuring here for cleaner code"
+"nit: Consider using object destructuring here for cleaner code";
 
 // question: Seeking clarification
-"question: Why do we need to sort the array twice? Is this intentional?"
+"question: Why do we need to sort the array twice? Is this intentional?";
 
 // suggestion: Recommended improvement
-"suggestion: Consider extracting this into a reusable utility function"
+"suggestion: Consider extracting this into a reusable utility function";
 
 // issue: Must be addressed
-"issue: This will throw an error if `user.profile` is undefined"
+"issue: This will throw an error if `user.profile` is undefined";
 
 // praise: Positive feedback
-"praise: Great use of TypeScript discriminated unions here! Very clean."
+"praise: Great use of TypeScript discriminated unions here! Very clean.";
 
 // thought: Discussion starter
-"thought: Have we considered using a state machine for this complex flow?"
+"thought: Have we considered using a state machine for this complex flow?";
 ```
 
 ### Effective Feedback Examples
@@ -151,25 +151,25 @@ Use standard prefixes for clarity:
 
 ```typescript
 // ✅ Specific and actionable
-"The `calculateDiscount` function doesn't validate that the discount 
-percentage is between 0 and 100. This could lead to negative prices. 
+"The `calculateDiscount` function doesn't validate that the discount
+percentage is between 0 and 100. This could lead to negative prices.
 Consider adding: `if (discount < 0 || discount > 100) throw new Error('Invalid discount')`"
 
 // ✅ Explains the why
-"Using `any` type here bypasses TypeScript's type checking. 
-This could hide runtime errors. Can we define a proper interface 
+"Using `any` type here bypasses TypeScript's type checking.
+This could hide runtime errors. Can we define a proper interface
 for the API response instead?"
 
 // ✅ Provides alternative
 "Instead of nested ternary operators which are hard to read:
 `return a ? b ? c : d : e`
-Consider using if/else statements or extracting to a function 
+Consider using if/else statements or extracting to a function
 with early returns for better readability."
 
 // ✅ Acknowledges context
-"I see you're optimizing for performance here. While the mutation 
-improves speed, it makes the function harder to test. Have you 
-considered the trade-off? If performance is critical, please add 
+"I see you're optimizing for performance here. While the mutation
+improves speed, it makes the function harder to test. Have you
+considered the trade-off? If performance is critical, please add
 a comment explaining why mutation is necessary."
 ```
 
@@ -177,19 +177,19 @@ a comment explaining why mutation is necessary."
 
 ```typescript
 // ❌ Too vague
-"This code is confusing"
+"This code is confusing";
 
 // ❌ Personal preference without justification
-"I don't like this approach"
+"I don't like this approach";
 
 // ❌ Overly critical
-"This is wrong. Did you even test this?"
+"This is wrong. Did you even test this?";
 
 // ❌ Nitpicking without value
-"Add a period at the end of this comment"
+"Add a period at the end of this comment";
 
 // ❌ Solution without explanation
-"Change this to `map` instead of `forEach`"
+"Change this to `map` instead of `forEach`";
 ```
 
 ## Review Process Standards
@@ -275,16 +275,16 @@ a comment explaining why mutation is necessary."
 
 ```typescript
 // ✅ Good responses
-"Good catch! I've added validation for the edge case."
-"I chose this approach because [explanation]. Does that make sense?"
-"You're right, I'll refactor this to be more maintainable."
-"I've added tests for those scenarios."
+"Good catch! I've added validation for the edge case.";
+"I chose this approach because [explanation]. Does that make sense?";
+"You're right, I'll refactor this to be more maintainable.";
+"I've added tests for those scenarios.";
 
 // ❌ Poor responses
-"It works on my machine"
-"I've always done it this way"
-"That's not important"
-"I'll fix it later"
+"It works on my machine";
+"I've always done it this way";
+"That's not important";
+"I'll fix it later";
 ```
 
 ## Code Review Anti-Patterns
@@ -301,13 +301,13 @@ a comment explaining why mutation is necessary."
 
 ```typescript
 // ❌ Being a gatekeeper
-"This isn't how we do things here"
+"This isn't how we do things here";
 
 // ❌ Making it personal
-"You always make this mistake"
+"You always make this mistake";
 
 // ❌ Being dismissive
-"This is obviously wrong"
+"This is obviously wrong";
 
 // ❌ Overwhelming with comments
 // Adding 50+ minor style comments on a PR
@@ -329,11 +329,11 @@ a comment explaining why mutation is necessary."
 
 ```typescript
 // Share knowledge in reviews
-"TIL: JavaScript's Array.sort() mutates the original array. 
+"TIL: JavaScript's Array.sort() mutates the original array.
 Using [...array].sort() creates a copy first. Thanks for teaching me this!"
 
 // Explain domain knowledge
-"Context: We validate emails this way because our email provider 
+"Context: We validate emails this way because our email provider
 has specific requirements for the '+' character in addresses."
 
 // Reference documentation

@@ -1,6 +1,6 @@
 # References Directory
 
-*Quick lookup information and technical references*
+_Quick lookup information and technical references_
 
 This directory contains reference materials for quick lookup during development. References provide immediate access to commands, examples, and technical details without the full context of standards or workflows.
 
@@ -8,19 +8,19 @@ This directory contains reference materials for quick lookup during development.
 
 ### 📚 **Current References**
 
-| Reference | Purpose | Content |
-|-----------|---------|---------|
-| [Commit Examples](./commit-examples.md) | Git commit message patterns | Good/bad examples, formatting rules |
-| [Tech Stack](./tech-stack.md) | Technology commands and dependencies | Build commands, package info, tool usage |
+| Reference                               | Purpose                              | Content                                  |
+| --------------------------------------- | ------------------------------------ | ---------------------------------------- |
+| [Commit Examples](./commit-examples.md) | Git commit message patterns          | Good/bad examples, formatting rules      |
+| [Tech Stack](./tech-stack.md)           | Technology commands and dependencies | Build commands, package info, tool usage |
 
 ### 🔄 **Planned References**
 
-| Reference | Purpose | Status |
-|-----------|---------|--------|
-| [TypeScript Quick Reference](./typescript-quick-ref.md) | Common TypeScript patterns | *Coming Soon* |
-| [Testing Quick Reference](./testing-quick-ref.md) | Test command and patterns | *Coming Soon* |
-| [React Quick Reference](./react-quick-ref.md) | Component and hook patterns | *Coming Soon* |
-| [API Quick Reference](./api-quick-ref.md) | HTTP status codes and patterns | *Coming Soon* |
+| Reference                                               | Purpose                        | Status        |
+| ------------------------------------------------------- | ------------------------------ | ------------- |
+| [TypeScript Quick Reference](./typescript-quick-ref.md) | Common TypeScript patterns     | _Coming Soon_ |
+| [Testing Quick Reference](./testing-quick-ref.md)       | Test command and patterns      | _Coming Soon_ |
+| [React Quick Reference](./react-quick-ref.md)           | Component and hook patterns    | _Coming Soon_ |
+| [API Quick Reference](./api-quick-ref.md)               | HTTP status codes and patterns | _Coming Soon_ |
 
 ## Reference Categories
 
@@ -152,29 +152,29 @@ When you need complete implementation examples beyond the reference snippet.
 
 - **Git**: [Commit Examples](./commit-examples.md)
 - **Node.js/npm**: [Tech Stack](./tech-stack.md)
-- **TypeScript**: *Coming Soon*
-- **React**: *Coming Soon*
-- **Testing**: *Coming Soon*
+- **TypeScript**: _Coming Soon_
+- **React**: _Coming Soon_
+- **Testing**: _Coming Soon_
 
 ### **By Use Case**
 
 - **Starting Development**: [Tech Stack](./tech-stack.md) for setup commands
 - **Making Commits**: [Commit Examples](./commit-examples.md) for message formats
-- **Writing Code**: *TypeScript/React references coming soon*
-- **Writing Tests**: *Testing reference coming soon*
+- **Writing Code**: _TypeScript/React references coming soon_
+- **Writing Tests**: _Testing reference coming soon_
 
 ### **By Role**
 
 - **All Engineers**: [Commit Examples](./commit-examples.md), [Tech Stack](./tech-stack.md)
-- **Frontend Engineers**: React and TypeScript references *(coming soon)*
-- **Backend Engineers**: API and data operation references *(coming soon)*
+- **Frontend Engineers**: React and TypeScript references _(coming soon)_
+- **Backend Engineers**: API and data operation references _(coming soon)_
 
 ## Need More Detail?
 
 References provide quick answers, but for comprehensive information:
 
 - **Complete technical requirements**: See [Standards](../standards/)
-- **Step-by-step processes**: See [Workflows](../workflows/)  
+- **Step-by-step processes**: See [Workflows](../workflows/)
 - **Implementation examples**: See [Patterns](../patterns/)
 - **Project context**: See main [CLAUDE.md](../../CLAUDE.md)
 

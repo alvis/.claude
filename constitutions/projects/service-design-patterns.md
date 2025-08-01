@@ -22,9 +22,9 @@ data/          # Data controllers
 
 Each service must have:
 
-* Corresponding manifest defining operations
-* Matching data controller for DB operations
-* Clear domain boundaries
+- Corresponding manifest defining operations
+- Matching data controller for DB operations
+- Clear domain boundaries
 
 </architecture>
 
@@ -32,11 +32,11 @@ Each service must have:
 
 ## Data Operation Names
 
-* `get<Entity>` - Single entity
-* `list<Entities>` - Multiple entities
-* `set<Entity>` - Create/update
-* `drop<Entity>` - Delete
-* `search<Entities>` - Query
+- `get<Entity>` - Single entity
+- `list<Entities>` - Multiple entities
+- `set<Entity>` - Create/update
+- `drop<Entity>` - Delete
+- `search<Entities>` - Query
 
 ## Example
 
@@ -60,16 +60,16 @@ export interface ProfileOperations {
 // Request with action context
 export async function getProfile(
   userId: string,
-  action: Action
+  action: Action,
 ): Promise<Profile> {
-  action.log.info('fetching profile', { userId });
+  action.log.info("fetching profile", { userId });
   // implementation
 }
 
 // Batch operations
 export async function listProfiles(
   filter: ProfileFilter,
-  action: Action
+  action: Action,
 ): Promise<Profile[]> {
   // implementation
 }
@@ -77,20 +77,20 @@ export async function listProfiles(
 
 ## Response Format
 
-* Single entity: Return entity or null
-* List: Return array (empty if none)
-* Mutations: Return updated entity
-* Deletions: Return void
+- Single entity: Return entity or null
+- List: Return array (empty if none)
+- Mutations: Return updated entity
+- Deletions: Return void
 
 </request_response>
 
 <error_patterns>
 
-* `MissingDataError` - Entity not found
-* `ValidationError` - Invalid input
-* `ConflictError` - Duplicate/conflict
-* `UnauthorizedError` - Access denied
-</error_patterns>
+- `MissingDataError` - Entity not found
+- `ValidationError` - Invalid input
+- `ConflictError` - Duplicate/conflict
+- `UnauthorizedError` - Access denied
+  </error_patterns>
 
 <authentication>
 * All operations receive `Action` context

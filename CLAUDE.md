@@ -73,22 +73,22 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 ### Task Routing Rules
 
-| Task Type | Primary Agent | Secondary Support | Auto-Parallel |
-|-----------|---------------|-------------------|----------------|
-| **Frontend Development** | `lily-wong-ui-implementation` | `sophie-laurent-design-systems` | ✅ |
-| **Backend Services** | `james-mitchell-service-implementation` | `ethan-kumar-data-architect` | ✅ |
-| **Full-Stack Features** | `priya-sharma-fullstack` | `raj-patel-techlead` | ✅ |
-| **Architecture Design** | `alex-chen-architect` | `maya-rodriguez-principal` | ❌ |
-| **API Design** | `jordan-lee-api-designer` | `james-mitchell-service-implementation` | ✅ |
-| **UX/UI Design** | `leo-yamamoto-ux-designer` | `sophie-laurent-design-systems` | ✅ |
-| **Testing & Quality** | `ava-thompson-testing-evangelist` | `marcus-williams-code-quality` | ✅ |
-| **Performance Optimization** | `diego-martinez-performance-optimizer` | `luna-park-sre` | ✅ |
-| **Security Review** | `nina-petrov-security-champion` | `marcus-williams-code-quality` | ❌ |
-| **DevOps & Deployment** | `felix-anderson-devops` | `isabella-costa-cloud-architect` | ✅ |
-| **Documentation** | `sam-taylor-documentation` | `morgan-davis-developer-advocate` | ✅ |
-| **Innovation & Research** | `phoenix-wright-innovation-catalyst` | `nova-chen-research-engineer` | ✅ |
-| **Data & ML** | `oliver-singh-data-scientist` | `zara-ahmad-ml-engineer` | ✅ |
-| **Prototyping** | `river-blake-prototype-builder` | `phoenix-wright-innovation-catalyst` | ✅ |
+| Task Type                    | Primary Agent                           | Secondary Support                       | Auto-Parallel |
+| ---------------------------- | --------------------------------------- | --------------------------------------- | ------------- |
+| **Frontend Development**     | `lily-wong-ui-implementation`           | `sophie-laurent-design-systems`         | ✅            |
+| **Backend Services**         | `james-mitchell-service-implementation` | `ethan-kumar-data-architect`            | ✅            |
+| **Full-Stack Features**      | `priya-sharma-fullstack`                | `raj-patel-techlead`                    | ✅            |
+| **Architecture Design**      | `alex-chen-architect`                   | `maya-rodriguez-principal`              | ❌            |
+| **API Design**               | `jordan-lee-api-designer`               | `james-mitchell-service-implementation` | ✅            |
+| **UX/UI Design**             | `leo-yamamoto-ux-designer`              | `sophie-laurent-design-systems`         | ✅            |
+| **Testing & Quality**        | `ava-thompson-testing-evangelist`       | `marcus-williams-code-quality`          | ✅            |
+| **Performance Optimization** | `diego-martinez-performance-optimizer`  | `luna-park-sre`                         | ✅            |
+| **Security Review**          | `nina-petrov-security-champion`         | `marcus-williams-code-quality`          | ❌            |
+| **DevOps & Deployment**      | `felix-anderson-devops`                 | `isabella-costa-cloud-architect`        | ✅            |
+| **Documentation**            | `sam-taylor-documentation`              | `morgan-davis-developer-advocate`       | ✅            |
+| **Innovation & Research**    | `phoenix-wright-innovation-catalyst`    | `nova-chen-research-engineer`           | ✅            |
+| **Data & ML**                | `oliver-singh-data-scientist`           | `zara-ahmad-ml-engineer`                | ✅            |
+| **Prototyping**              | `river-blake-prototype-builder`         | `phoenix-wright-innovation-catalyst`    | ✅            |
 
 ### Approval Workflow
 
