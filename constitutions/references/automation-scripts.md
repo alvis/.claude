@@ -1,6 +1,6 @@
 # Automation Scripts Reference
 
-*Collection of useful automation scripts for development and deployment*
+_Collection of useful automation scripts for development and deployment_
 
 ## Development Scripts
 
@@ -162,7 +162,7 @@ if [ -z "$previous_tag" ]; then
   git log --pretty=format:"- %s (%h)" > CHANGELOG.md
 else
   echo "Generating changelog from $previous_tag to HEAD..."
-  
+
   {
     echo "# Changelog"
     echo ""
@@ -171,13 +171,13 @@ else
     git log $previous_tag..HEAD --pretty=format:"- %s (%h)" --reverse
     echo ""
     echo ""
-    
+
     # Append existing changelog if it exists
     if [ -f CHANGELOG.md ]; then
       tail -n +2 CHANGELOG.md
     fi
   } > CHANGELOG.tmp
-  
+
   mv CHANGELOG.tmp CHANGELOG.md
 fi
 
@@ -232,7 +232,7 @@ for i in $(seq 1 $max_attempts); do
     echo "Service is healthy after $i attempts"
     exit 0
   fi
-  
+
   echo "Attempt $i/$max_attempts failed, waiting $wait_time seconds..."
   sleep $wait_time
 done

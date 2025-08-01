@@ -1,6 +1,6 @@
 # Deployment Standards
 
-*Standards for environment configuration, deployment pipelines, and operational monitoring*
+_Standards for environment configuration, deployment pipelines, and operational monitoring_
 
 ## Environment Configuration
 
@@ -14,11 +14,11 @@
 
 ```typescript
 interface EnvironmentConfig {
-  NODE_ENV: 'development' | 'staging' | 'production';
+  NODE_ENV: "development" | "staging" | "production";
   PORT: number;
   DATABASE_URL: string;
   REDIS_URL?: string;
-  LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
+  LOG_LEVEL: "debug" | "info" | "warn" | "error";
   SECRET_KEY: string;
   API_BASE_URL: string;
 }
@@ -29,17 +29,18 @@ interface EnvironmentConfig {
 ```typescript
 function validateEnvironment(): EnvironmentConfig {
   const config = {
-    NODE_ENV: process.env.NODE_ENV as EnvironmentConfig['NODE_ENV'],
-    PORT: parseInt(process.env.PORT || '3000', 10),
+    NODE_ENV: process.env.NODE_ENV as EnvironmentConfig["NODE_ENV"],
+    PORT: parseInt(process.env.PORT || "3000", 10),
     DATABASE_URL: process.env.DATABASE_URL,
     REDIS_URL: process.env.REDIS_URL,
-    LOG_LEVEL: process.env.LOG_LEVEL as EnvironmentConfig['LOG_LEVEL'] || 'info',
+    LOG_LEVEL:
+      (process.env.LOG_LEVEL as EnvironmentConfig["LOG_LEVEL"]) || "info",
     SECRET_KEY: process.env.SECRET_KEY,
     API_BASE_URL: process.env.API_BASE_URL,
   };
 
   // Validate required fields
-  const required = ['DATABASE_URL', 'SECRET_KEY', 'API_BASE_URL'];
+  const required = ["DATABASE_URL", "SECRET_KEY", "API_BASE_URL"];
   for (const field of required) {
     if (!config[field as keyof EnvironmentConfig]) {
       throw new Error(`Missing required environment variable: ${field}`);
@@ -71,9 +72,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "18"
+          cache: "npm"
+
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -131,7 +132,7 @@ All deployments must pass:
 
 ```typescript
 interface HealthCheck {
-  status: 'healthy' | 'unhealthy' | 'degraded';
+  status: "healthy" | "unhealthy" | "degraded";
   version: string;
   uptime: number;
   checks: {
@@ -148,7 +149,7 @@ interface HealthCheck {
 ```typescript
 export async function healthCheck(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   const checks = await Promise.allSettled([
     checkDatabase(),
     checkCache(),
@@ -156,15 +157,15 @@ export async function healthCheck(): Promise<HealthCheck> {
   ]);
 
   const [database, cache, external_api] = checks.map(
-    result => result.status === 'fulfilled' && result.value
+    (result) => result.status === "fulfilled" && result.value,
   );
 
   const allHealthy = database && cache && external_api;
   const anyHealthy = database || cache || external_api;
 
   return {
-    status: allHealthy ? 'healthy' : anyHealthy ? 'degraded' : 'unhealthy',
-    version: process.env.npm_package_version || 'unknown',
+    status: allHealthy ? "healthy" : anyHealthy ? "degraded" : "unhealthy",
+    version: process.env.npm_package_version || "unknown",
     uptime: process.uptime(),
     checks: { database, cache, external_api },
     timestamp: new Date().toISOString(),
@@ -200,11 +201,11 @@ class Logger {
   }
 
   info(message: string, data?: Record<string, unknown>): void {
-    this.log('info', message, data);
+    this.log("info", message, data);
   }
 
   error(message: string, error?: Error, data?: Record<string, unknown>): void {
-    this.log('error', message, {
+    this.log("error", message, {
       ...data,
       error: {
         name: error?.name,
@@ -214,7 +215,11 @@ class Logger {
     });
   }
 
-  private log(level: string, message: string, data?: Record<string, unknown>): void {
+  private log(
+    level: string,
+    message: string,
+    data?: Record<string, unknown>,
+  ): void {
     const logEntry = {
       level,
       message,
@@ -243,7 +248,7 @@ class PerformanceMonitor {
   async measure<T>(
     operation: string,
     fn: () => Promise<T>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     const start = Date.now();
     let success = false;
@@ -254,7 +259,7 @@ class PerformanceMonitor {
       return result;
     } finally {
       const duration = Date.now() - start;
-      
+
       const metrics: PerformanceMetrics = {
         operation,
         duration,
@@ -269,7 +274,7 @@ class PerformanceMonitor {
 
   private recordMetrics(metrics: PerformanceMetrics): void {
     // Send to monitoring service
-    console.log('METRICS:', JSON.stringify(metrics));
+    console.log("METRICS:", JSON.stringify(metrics));
   }
 }
 ```
@@ -302,7 +307,7 @@ class EnvironmentSecretManager implements SecretManager {
   }
 
   private generateSecret(): string {
-    return require('crypto').randomBytes(32).toString('hex');
+    return require("crypto").randomBytes(32).toString("hex");
   }
 }
 ```
@@ -311,20 +316,21 @@ class EnvironmentSecretManager implements SecretManager {
 
 ```typescript
 interface SecurityHeaders {
-  'Content-Security-Policy': string;
-  'X-Frame-Options': string;
-  'X-Content-Type-Options': string;
-  'Referrer-Policy': string;
-  'Permissions-Policy': string;
+  "Content-Security-Policy": string;
+  "X-Frame-Options": string;
+  "X-Content-Type-Options": string;
+  "Referrer-Policy": string;
+  "Permissions-Policy": string;
 }
 
 export function getSecurityHeaders(): SecurityHeaders {
   return {
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline';",
-    'X-Frame-Options': 'DENY',
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'self' 'unsafe-inline';",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   };
 }
 ```

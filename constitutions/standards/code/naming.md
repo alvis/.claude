@@ -1,6 +1,6 @@
 # Naming Conventions - Overview
 
-*This file has been reorganized into focused, context-specific naming standards for better navigation.*
+_This file has been reorganized into focused, context-specific naming standards for better navigation._
 
 ## 📁 Naming Standards Have Moved
 
@@ -8,24 +8,24 @@ The comprehensive naming standards have been split into specialized files for ea
 
 ### Core Naming Standards
 
-| Standard | Purpose | Location |
-|----------|---------|----------|
+| Standard      | Purpose                                     | Location                                       |
+| ------------- | ------------------------------------------- | ---------------------------------------------- |
 | **Variables** | Variables, constants, collections, booleans | [→ naming/variables.md](./naming/variables.md) |
-| **Functions** | Functions, methods, async patterns | [→ naming/functions.md](./naming/functions.md) |
-| **Types** | Interfaces, classes, types, enums | [→ naming/types.md](./naming/types.md) |
-| **Files** | Files, directories, modules | [→ naming/files.md](./naming/files.md) |
-| **Patterns** | Common patterns and anti-patterns | [→ naming/patterns.md](./naming/patterns.md) |
+| **Functions** | Functions, methods, async patterns          | [→ naming/functions.md](./naming/functions.md) |
+| **Types**     | Interfaces, classes, types, enums           | [→ naming/types.md](./naming/types.md)         |
+| **Files**     | Files, directories, modules                 | [→ naming/files.md](./naming/files.md)         |
+| **Patterns**  | Common patterns and anti-patterns           | [→ naming/patterns.md](./naming/patterns.md)   |
 
 ## Quick Reference
 
 ### Case Standards Summary
 
-| Case Style | Usage | Example | Details |
-|------------|-------|---------|---------|
-| `camelCase` | Variables, functions, methods | `userName`, `getUserById()` | [Variables](./naming/variables.md), [Functions](./naming/functions.md) |
-| `PascalCase` | Types, interfaces, classes | `UserService`, `ApiResponse` | [Types](./naming/types.md) |
-| `kebab-case` | File names, URLs | `user-service.ts` | [Files](./naming/files.md) |
-| `UPPER_SNAKE_CASE` | Constants, env vars | `MAX_RETRIES`, `API_KEY` | [Variables](./naming/variables.md#constant-naming) |
+| Case Style         | Usage                         | Example                      | Details                                                                |
+| ------------------ | ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| `camelCase`        | Variables, functions, methods | `userName`, `getUserById()`  | [Variables](./naming/variables.md), [Functions](./naming/functions.md) |
+| `PascalCase`       | Types, interfaces, classes    | `UserService`, `ApiResponse` | [Types](./naming/types.md)                                             |
+| `kebab-case`       | File names, URLs              | `user-service.ts`            | [Files](./naming/files.md)                                             |
+| `UPPER_SNAKE_CASE` | Constants, env vars           | `MAX_RETRIES`, `API_KEY`     | [Variables](./naming/variables.md#constant-naming)                     |
 
 ### Common Patterns Quick Links
 
@@ -56,6 +56,7 @@ The comprehensive naming standards have been split into specialized files for ea
 ## Core Principles (Summary)
 
 ### 1. Clarity Over Brevity
+
 ```typescript
 // ✅ Good
 const userAuthenticationToken = generateToken();
@@ -65,15 +66,17 @@ const tok = generateToken();
 ```
 
 ### 2. Consistency Throughout
+
 ```typescript
 // ✅ Good - Same pattern everywhere
-getUserById(), getProductById(), getOrderById()
+(getUserById(), getProductById(), getOrderById());
 
 // ❌ Bad - Mixed patterns
-getUserById(), fetchProduct(), orderDetails()
+(getUserById(), fetchProduct(), orderDetails());
 ```
 
 ### 3. Domain Vocabulary
+
 ```typescript
 // ✅ Good - Matches business domain
 const shoppingCart = new ShoppingCart();
@@ -81,12 +84,13 @@ const patientRecord = new PatientRecord();
 ```
 
 ### 4. Self-Documenting
+
 ```typescript
 // ✅ Good - Purpose is clear
-function validateEmailFormat(email: string): boolean
+function validateEmailFormat(email: string): boolean;
 
 // ❌ Bad - Unclear purpose
-function check(str: string): boolean
+function check(str: string): boolean;
 ```
 
 ## Migration Guide

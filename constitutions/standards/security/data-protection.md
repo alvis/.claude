@@ -1,10 +1,11 @@
 # Data Protection Standards
 
-*Standards for input validation, data encryption, sanitization, and secure data handling*
+_Standards for input validation, data encryption, sanitization, and secure data handling_
 
 ## Core Data Protection Principles
 
 ### MUST Follow Rules
+
 - **MUST validate all user input** - Never trust data from external sources
 - **MUST sanitize data for output context** - Prevent XSS and injection attacks
 - **MUST encrypt sensitive data at rest** - Use AES-256 or stronger
@@ -12,6 +13,7 @@
 - **MUST sanitize logs** - Never log passwords, tokens, or PII
 
 ### SHOULD Follow Guidelines
+
 - **SHOULD implement field-level encryption** - For highly sensitive data
 - **SHOULD use content security policies** - Additional XSS protection
 - **SHOULD validate data types and ranges** - Not just format
@@ -42,87 +44,91 @@ class ValidationPipeline<T> {
 ### Common Validators
 
 ```typescript
-import validator from 'validator';
+import validator from "validator";
 
 class Validators {
   static email(): ValidationRule<string> {
     return {
       validate(value: unknown): string {
-        if (typeof value !== 'string') {
-          throw new ValidationError('Email must be a string');
+        if (typeof value !== "string") {
+          throw new ValidationError("Email must be a string");
         }
         if (!validator.isEmail(value)) {
-          throw new ValidationError('Invalid email format');
+          throw new ValidationError("Invalid email format");
         }
         return value;
       },
       sanitize(value: string): string {
         return value.toLowerCase().trim();
-      }
+      },
     };
   }
 
-  static string(options: {
-    minLength?: number;
-    maxLength?: number;
-    pattern?: RegExp;
-    trim?: boolean;
-  } = {}): ValidationRule<string> {
+  static string(
+    options: {
+      minLength?: number;
+      maxLength?: number;
+      pattern?: RegExp;
+      trim?: boolean;
+    } = {},
+  ): ValidationRule<string> {
     return {
       validate(value: unknown): string {
-        if (typeof value !== 'string') {
-          throw new ValidationError('Value must be a string');
+        if (typeof value !== "string") {
+          throw new ValidationError("Value must be a string");
         }
 
         const str = options.trim !== false ? value.trim() : value;
 
         if (options.minLength && str.length < options.minLength) {
           throw new ValidationError(
-            `Must be at least ${options.minLength} characters`
+            `Must be at least ${options.minLength} characters`,
           );
         }
 
         if (options.maxLength && str.length > options.maxLength) {
           throw new ValidationError(
-            `Must be no more than ${options.maxLength} characters`
+            `Must be no more than ${options.maxLength} characters`,
           );
         }
 
         if (options.pattern && !options.pattern.test(str)) {
-          throw new ValidationError('Invalid format');
+          throw new ValidationError("Invalid format");
         }
 
         return str;
-      }
+      },
     };
   }
 
   static uuid(): ValidationRule<string> {
     return {
       validate(value: unknown): string {
-        if (typeof value !== 'string' || !validator.isUUID(value)) {
-          throw new ValidationError('Invalid UUID format');
+        if (typeof value !== "string" || !validator.isUUID(value)) {
+          throw new ValidationError("Invalid UUID format");
         }
         return value;
-      }
+      },
     };
   }
 
-  static number(options: {
-    min?: number;
-    max?: number;
-    integer?: boolean;
-  } = {}): ValidationRule<number> {
+  static number(
+    options: {
+      min?: number;
+      max?: number;
+      integer?: boolean;
+    } = {},
+  ): ValidationRule<number> {
     return {
       validate(value: unknown): number {
         const num = Number(value);
-        
+
         if (isNaN(num)) {
-          throw new ValidationError('Must be a number');
+          throw new ValidationError("Must be a number");
         }
 
         if (options.integer && !Number.isInteger(num)) {
-          throw new ValidationError('Must be an integer');
+          throw new ValidationError("Must be an integer");
         }
 
         if (options.min !== undefined && num < options.min) {
@@ -134,7 +140,7 @@ class Validators {
         }
 
         return num;
-      }
+      },
     };
   }
 }
@@ -187,15 +193,16 @@ function validateRequest(schema: RequestValidator) {
 }
 
 // Usage
-router.post('/users',
+router.post(
+  "/users",
   validateRequest({
     body: {
       email: Validators.email(),
       name: Validators.string({ minLength: 2, maxLength: 100 }),
-      age: Validators.number({ min: 18, max: 120, integer: true })
-    }
+      age: Validators.number({ min: 18, max: 120, integer: true }),
+    },
   }),
-  createUser
+  createUser,
 );
 ```
 
@@ -207,7 +214,7 @@ router.post('/users',
 class DatabaseService {
   // ✅ Good: Parameterized query
   async findUserByEmail(email: string): Promise<User | null> {
-    const query = 'SELECT * FROM users WHERE email = $1';
+    const query = "SELECT * FROM users WHERE email = $1";
     const result = await this.pool.query(query, [email]);
     return result.rows[0] || null;
   }
@@ -238,7 +245,7 @@ class DatabaseService {
 
     const query = `
       SELECT * FROM users
-      ${conditions.length ? 'WHERE ' + conditions.join(' AND ') : ''}
+      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
       ORDER BY created_at DESC
     `;
 
@@ -261,25 +268,25 @@ class DatabaseService {
 // Using Knex.js for safe query building
 class UserRepository {
   async findWithFilters(filters: UserFilters): Promise<User[]> {
-    let query = this.knex('users');
+    let query = this.knex("users");
 
     if (filters.name) {
-      query = query.where('name', 'like', `%${filters.name}%`);
+      query = query.where("name", "like", `%${filters.name}%`);
     }
 
     if (filters.email) {
-      query = query.where('email', filters.email);
+      query = query.where("email", filters.email);
     }
 
     if (filters.roles && filters.roles.length > 0) {
-      query = query.whereIn('role', filters.roles);
+      query = query.whereIn("role", filters.roles);
     }
 
     if (filters.createdAfter) {
-      query = query.where('created_at', '>=', filters.createdAfter);
+      query = query.where("created_at", ">=", filters.createdAfter);
     }
 
-    return query.orderBy('created_at', 'desc');
+    return query.orderBy("created_at", "desc");
   }
 }
 ```
@@ -293,25 +300,25 @@ class XSSProtection {
   // HTML context
   static escapeHtml(str: string): string {
     const map: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#x27;',
-      '/': '&#x2F;',
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#x27;",
+      "/": "&#x2F;",
     };
-    return str.replace(/[&<>"'/]/g, char => map[char]);
+    return str.replace(/[&<>"'/]/g, (char) => map[char]);
   }
 
   // JavaScript context
   static escapeJs(str: string): string {
     return str
-      .replace(/\\/g, '\\\\')
+      .replace(/\\/g, "\\\\")
       .replace(/'/g, "\\'")
       .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t');
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
   }
 
   // URL context
@@ -321,8 +328,9 @@ class XSSProtection {
 
   // CSS context
   static escapeCss(str: string): string {
-    return str.replace(/[^\w]/g, char => 
-      '\\' + char.charCodeAt(0).toString(16).padStart(6, '0')
+    return str.replace(
+      /[^\w]/g,
+      (char) => "\\" + char.charCodeAt(0).toString(16).padStart(6, "0"),
     );
   }
 }
@@ -348,10 +356,12 @@ const cspDirectives = {
   manifestSrc: ["'self'"],
 };
 
-app.use(helmet.contentSecurityPolicy({
-  directives: cspDirectives,
-  reportOnly: false,
-}));
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: cspDirectives,
+    reportOnly: false,
+  }),
+);
 ```
 
 ## Data Encryption
@@ -359,10 +369,10 @@ app.use(helmet.contentSecurityPolicy({
 ### Encryption Service
 
 ```typescript
-import crypto from 'crypto';
+import crypto from "crypto";
 
 class EncryptionService {
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = "aes-256-gcm";
   private readonly keyLength = 32;
   private readonly ivLength = 16;
   private readonly tagLength = 16;
@@ -370,49 +380,57 @@ class EncryptionService {
   private readonly iterations = 100000;
 
   private deriveKey(password: string, salt: Buffer): Buffer {
-    return crypto.pbkdf2Sync(password, salt, this.iterations, this.keyLength, 'sha256');
+    return crypto.pbkdf2Sync(
+      password,
+      salt,
+      this.iterations,
+      this.keyLength,
+      "sha256",
+    );
   }
 
   encrypt(text: string, password: string): string {
     const salt = crypto.randomBytes(this.saltLength);
     const key = this.deriveKey(password, salt);
     const iv = crypto.randomBytes(this.ivLength);
-    
+
     const cipher = crypto.createCipheriv(this.algorithm, key, iv);
-    
+
     const encrypted = Buffer.concat([
-      cipher.update(text, 'utf8'),
-      cipher.final()
+      cipher.update(text, "utf8"),
+      cipher.final(),
     ]);
-    
+
     const tag = cipher.getAuthTag();
-    
+
     const combined = Buffer.concat([salt, iv, tag, encrypted]);
-    return combined.toString('base64');
+    return combined.toString("base64");
   }
 
   decrypt(encryptedData: string, password: string): string {
-    const combined = Buffer.from(encryptedData, 'base64');
-    
+    const combined = Buffer.from(encryptedData, "base64");
+
     const salt = combined.slice(0, this.saltLength);
     const iv = combined.slice(this.saltLength, this.saltLength + this.ivLength);
     const tag = combined.slice(
       this.saltLength + this.ivLength,
-      this.saltLength + this.ivLength + this.tagLength
+      this.saltLength + this.ivLength + this.tagLength,
     );
-    const encrypted = combined.slice(this.saltLength + this.ivLength + this.tagLength);
-    
+    const encrypted = combined.slice(
+      this.saltLength + this.ivLength + this.tagLength,
+    );
+
     const key = this.deriveKey(password, salt);
-    
+
     const decipher = crypto.createDecipheriv(this.algorithm, key, iv);
     decipher.setAuthTag(tag);
-    
+
     const decrypted = Buffer.concat([
       decipher.update(encrypted),
-      decipher.final()
+      decipher.final(),
     ]);
-    
-    return decrypted.toString('utf8');
+
+    return decrypted.toString("utf8");
   }
 }
 ```
@@ -434,24 +452,24 @@ class LogSanitizer {
   ];
 
   sanitize(data: any): any {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       return this.sanitizeString(data);
     }
 
-    if (typeof data !== 'object' || data === null) {
+    if (typeof data !== "object" || data === null) {
       return data;
     }
 
     if (Array.isArray(data)) {
-      return data.map(item => this.sanitize(item));
+      return data.map((item) => this.sanitize(item));
     }
 
     const sanitized: any = {};
     for (const [key, value] of Object.entries(data)) {
       const sanitizedKey = this.sanitizeString(key);
-      
+
       if (this.isSensitiveField(key)) {
-        sanitized[sanitizedKey] = '[REDACTED]';
+        sanitized[sanitizedKey] = "[REDACTED]";
       } else {
         sanitized[sanitizedKey] = this.sanitize(value);
       }
@@ -462,28 +480,37 @@ class LogSanitizer {
 
   private sanitizeString(str: string): string {
     let sanitized = str;
-    
+
     for (const pattern of this.sensitivePatterns) {
       sanitized = sanitized.replace(pattern, (match) => {
         const parts = match.split(/[:=]/);
         if (parts.length > 1) {
-          return parts[0] + ': [REDACTED]';
+          return parts[0] + ": [REDACTED]";
         }
-        return '[REDACTED]';
+        return "[REDACTED]";
       });
     }
-    
+
     return sanitized;
   }
 
   private isSensitiveField(fieldName: string): boolean {
     const sensitiveFields = [
-      'password', 'token', 'secret', 'key', 'authorization',
-      'cookie', 'session', 'ssn', 'creditCard', 'cvv', 'pin'
+      "password",
+      "token",
+      "secret",
+      "key",
+      "authorization",
+      "cookie",
+      "session",
+      "ssn",
+      "creditCard",
+      "cvv",
+      "pin",
     ];
-    
+
     const lowerField = fieldName.toLowerCase();
-    return sensitiveFields.some(field => lowerField.includes(field));
+    return sensitiveFields.some((field) => lowerField.includes(field));
   }
 }
 ```
@@ -491,55 +518,55 @@ class LogSanitizer {
 ## Testing Data Protection
 
 ```typescript
-describe('Data Protection', () => {
-  describe('Input Validation', () => {
-    it('should validate email addresses', () => {
+describe("Data Protection", () => {
+  describe("Input Validation", () => {
+    it("should validate email addresses", () => {
       const validator = Validators.email();
-      
-      expect(() => validator.validate('invalid')).toThrow();
-      expect(validator.validate('user@example.com')).toBe('user@example.com');
+
+      expect(() => validator.validate("invalid")).toThrow();
+      expect(validator.validate("user@example.com")).toBe("user@example.com");
     });
 
-    it('should prevent SQL injection', async () => {
+    it("should prevent SQL injection", async () => {
       const maliciousInput = "'; DROP TABLE users; --";
       const result = await db.findUserByEmail(maliciousInput);
-      
+
       expect(result).toBeNull();
       // Verify table still exists
       const tableExists = await db.query(
-        "SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = 'users')"
+        "SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = 'users')",
       );
       expect(tableExists.rows[0].exists).toBe(true);
     });
   });
 
-  describe('Encryption', () => {
-    it('should encrypt and decrypt data', () => {
+  describe("Encryption", () => {
+    it("should encrypt and decrypt data", () => {
       const service = new EncryptionService();
-      const plaintext = 'sensitive data';
-      const password = 'strong-password';
-      
+      const plaintext = "sensitive data";
+      const password = "strong-password";
+
       const encrypted = service.encrypt(plaintext, password);
       expect(encrypted).not.toBe(plaintext);
-      
+
       const decrypted = service.decrypt(encrypted, password);
       expect(decrypted).toBe(plaintext);
     });
   });
 
-  describe('Sanitization', () => {
-    it('should sanitize logs', () => {
+  describe("Sanitization", () => {
+    it("should sanitize logs", () => {
       const sanitizer = new LogSanitizer();
       const input = {
-        user: 'john@example.com',
-        password: 'secret123',
-        apiKey: 'sk_live_abcd1234',
+        user: "john@example.com",
+        password: "secret123",
+        apiKey: "sk_live_abcd1234",
       };
-      
+
       const sanitized = sanitizer.sanitize(input);
-      expect(sanitized.password).toBe('[REDACTED]');
-      expect(sanitized.apiKey).toBe('[REDACTED]');
-      expect(sanitized.user).toBe('john@example.com');
+      expect(sanitized.password).toBe("[REDACTED]");
+      expect(sanitized.apiKey).toBe("[REDACTED]");
+      expect(sanitized.user).toBe("john@example.com");
     });
   });
 });

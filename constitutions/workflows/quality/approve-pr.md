@@ -21,18 +21,21 @@ Ensure all review feedback has been addressed:
 Perform final verification of code quality standards:
 
 **Function Design:**
+
 - [ ] Functions follow single responsibility (<60 lines)
 - [ ] Clear, descriptive variable and type names used
 - [ ] Proper error handling with explicit types
 - [ ] No hardcoded values or magic numbers
 
 **Architecture Compliance:**
+
 - [ ] TypeScript conventions followed (strict types, no `any`)
 - [ ] Import order correct (Node built-ins → third-party → project modules)
 - [ ] Files placed in correct directories
 - [ ] Follows established project patterns
 
 **React-Specific (if applicable):**
+
 - [ ] Components use FC type with arrow functions
 - [ ] Props interfaces are exported
 - [ ] Accessibility standards followed
@@ -43,18 +46,21 @@ Perform final verification of code quality standards:
 Confirm comprehensive test coverage:
 
 **Test Quality:**
+
 - [ ] Tests written following TDD approach
 - [ ] 100% coverage maintained with minimal, meaningful tests
 - [ ] Proper test file naming with prefixes (`fn:`, `rc:`, `op:`)
 - [ ] Arrange → Act → Assert pattern followed consistently
 
 **Test Coverage:**
+
 - [ ] All new functionality covered by tests
 - [ ] Edge cases and error scenarios tested
 - [ ] External dependencies properly mocked
 - [ ] Integration points validated
 
 **Test Execution:**
+
 - [ ] All tests passing locally and in CI
 - [ ] No flaky or intermittent test failures
 - [ ] Test performance acceptable (no unnecessarily slow tests)
@@ -64,6 +70,7 @@ Confirm comprehensive test coverage:
 Ensure documentation meets standards:
 
 **JSDoc Standards:**
+
 - [ ] JSDoc format correct (one-line preferred, multi-line when needed)
 - [ ] Functions use 3rd-person verbs, lowercase, no period
 - [ ] Non-functions use noun phrases
@@ -71,6 +78,7 @@ Ensure documentation meets standards:
 - [ ] Complex interfaces have property descriptions
 
 **Comment Quality:**
+
 - [ ] Comments explain WHY, not WHAT
 - [ ] Comment casing follows rules (lowercase sentences)
 - [ ] No temporary tags committed (`TODO`, `FIXME`, `DEBUG`, `TEMP`)
@@ -81,12 +89,14 @@ Ensure documentation meets standards:
 Verify security practices have been followed:
 
 **Code Security:**
+
 - [ ] No hardcoded secrets, API keys, or credentials
 - [ ] No sensitive data exposed in logs or error messages
 - [ ] Input validation implemented for external data
 - [ ] Authentication/authorization checks in place
 
 **Development Artifacts:**
+
 - [ ] No console.log statements in production code
 - [ ] No debug code or development-only features
 - [ ] No commented-out code blocks
@@ -97,12 +107,14 @@ Verify security practices have been followed:
 Confirm the code is ready for deployment:
 
 **Build Process:**
+
 - [ ] Code compiles without TypeScript errors
 - [ ] Linting passes with no violations
 - [ ] Build process completes successfully
 - [ ] No build warnings for new code
 
 **Quality Gates:**
+
 - [ ] All automated checks passing in CI/CD
 - [ ] No `--no-verify` commits used
 - [ ] Pre-commit hooks have run successfully
@@ -113,12 +125,14 @@ Confirm the code is ready for deployment:
 Assess broader integration impact:
 
 **Dependencies:**
+
 - [ ] No new unnecessary dependencies introduced
 - [ ] Dependency versions are appropriate and secure
 - [ ] Breaking changes are documented and coordinated
 - [ ] Database migrations (if any) are backward compatible
 
 **API Changes:**
+
 - [ ] Public API changes are backward compatible or properly versioned
 - [ ] Interface changes don't break existing consumers
 - [ ] Documentation updated for API modifications
@@ -128,24 +142,28 @@ Assess broader integration impact:
 **NEVER approve PRs that contain:**
 
 🔴 **Security Issues:**
+
 - Hardcoded secrets or credentials
 - SQL injection vulnerabilities
 - XSS vulnerabilities
 - Unauthorized data access
 
 🔴 **Quality Issues:**
+
 - Use of `--no-verify` commits
 - Failing tests or linting errors
 - Missing tests for new functionality
 - TypeScript `any` types without justification
 
 🔴 **Documentation Issues:**
+
 - Missing documentation for public APIs
 - TODO/FIXME comments in production code
 - Temporary implementation placeholders
 - Outdated or incorrect documentation
 
 🔴 **Architecture Issues:**
+
 - Violations of established patterns
 - Circular dependencies
 - Inappropriate abstractions
@@ -153,13 +171,13 @@ Assess broader integration impact:
 
 ## Approval Decision Matrix
 
-| Criteria | Must Pass | Should Pass | Nice to Have |
-|----------|-----------|-------------|--------------|
-| Security | ✅ No vulnerabilities | ✅ Best practices followed | 📝 Security comments added |
-| Functionality | ✅ Feature works correctly | ✅ Edge cases handled | 📝 Performance optimized |
-| Tests | ✅ Coverage maintained | ✅ Quality tests added | 📝 Integration tests included |
-| Documentation | ✅ Public APIs documented | ✅ Complex logic explained | 📝 Examples provided |
-| Standards | ✅ Coding standards met | ✅ Patterns followed | 📝 Code style exemplary |
+| Criteria      | Must Pass                  | Should Pass                | Nice to Have                  |
+| ------------- | -------------------------- | -------------------------- | ----------------------------- |
+| Security      | ✅ No vulnerabilities      | ✅ Best practices followed | 📝 Security comments added    |
+| Functionality | ✅ Feature works correctly | ✅ Edge cases handled      | 📝 Performance optimized      |
+| Tests         | ✅ Coverage maintained     | ✅ Quality tests added     | 📝 Integration tests included |
+| Documentation | ✅ Public APIs documented  | ✅ Complex logic explained | 📝 Examples provided          |
+| Standards     | ✅ Coding standards met    | ✅ Patterns followed       | 📝 Code style exemplary       |
 
 ## Post-Approval Process
 
