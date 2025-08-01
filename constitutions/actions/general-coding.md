@@ -26,7 +26,7 @@
 - Private keys must not appear outside test environments
 - Provide `.env.example` with all keys and explanations
 - Use approved secret managers only
-- No silent errors - Use specific error classes, ideally from @theriety/error
+- Use specific error classes either by defining one or from a destinated package
 
 </security_principles>
 
@@ -416,7 +416,7 @@ interface ApiConfig {
 ### Error Classification
 
 ```typescript
-// Use specific error classes from @theriety/error
+// Use specific error classes
 class ValidationError extends Error {
   constructor(message: string, public field: string) {
     super(message);
@@ -435,7 +435,7 @@ class NotFoundError extends Error {
 ### Error Handling Patterns
 
 - NO silent errors - always handle explicitly
-- Use specific error classes, ideally from @theriety/error
+- Use specific error classes either by defining one or from a destinated package
 - Log errors with context (requestId, userId, operation)
 - Return meaningful error messages to users
 - Never expose internal details in user-facing errors
