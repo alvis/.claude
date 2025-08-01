@@ -1,6 +1,6 @@
 # Constitution Directory
 
-*Complete development standards and workflows for the Theriety monorepo*
+_Complete development standards and workflows for the Theriety monorepo_
 
 This directory contains the restructured development constitution, organized by role and responsibility for better discoverability and maintainability.
 
@@ -14,7 +14,7 @@ This directory contains the restructured development constitution, organized by 
 - [Write Code (TDD)](./workflows/coding/write-code-tdd.md) - Test-driven development
 - [Review Code](./workflows/quality/review-code.md) - Code review process
 
-**Key standards:**  
+**Key standards:**
 
 - [React Components](./standards/frontend/react-components.md) - Component patterns and structure
 - [Accessibility](./standards/frontend/accessibility.md) - WCAG compliance
@@ -65,12 +65,12 @@ This directory contains the restructured development constitution, organized by 
 Step-by-step processes for common development tasks (50-150 lines each):
 
 - `frontend/` - React component development
-- `backend/` - Services, data controllers, authentication  
+- `backend/` - Services, data controllers, authentication
 - `coding/` - General programming workflows
 - `quality/` - Code review and approval processes
 - `project/` - Git, deployment, operations
 
-### **[standards/](./standards/)** - WHAT the rules are  
+### **[standards/](./standards/)** - WHAT the rules are
 
 Technical requirements and quality criteria (80-200 lines each):
 
@@ -102,7 +102,7 @@ Immediate reference materials:
 TASK: "I need to create a React component"
 
 1. WORKFLOW: Follow build-component.md for step-by-step process
-2. STANDARDS: Apply react-components.md for technical requirements  
+2. STANDARDS: Apply react-components.md for technical requirements
 3. PATTERNS: Use component-template.md as starting boilerplate
 4. REFERENCES: Look up specific syntax in quick references
 ```
@@ -134,7 +134,7 @@ TASK: "I need to create a React component"
 The restructuring successfully achieved the target file sizes:
 
 - **Workflows**: 50-150 lines (process-focused)
-- **Standards**: 80-200 lines (requirement-focused)  
+- **Standards**: 80-200 lines (requirement-focused)
 - **Patterns**: 30-100 lines (template-focused)
 - **References**: Varies (lookup-focused)
 
@@ -164,4 +164,4 @@ Reference the main [CLAUDE.md](../CLAUDE.md) for project overview and integratio
 
 ---
 
-*This constitution ensures consistent, high-quality development practices across the entire Theriety monorepo while providing role-specific guidance for efficient workflow navigation.*
+_This constitution ensures consistent, high-quality development practices across the entire Theriety monorepo while providing role-specific guidance for efficient workflow navigation._

@@ -30,22 +30,22 @@ throw new Error('User not found');
 ```typescript
 export async function getUserProfile(userId: string, action: Action) {
   try {
-    action.log.info('fetching user profile', { userId });
-    
+    action.log.info("fetching user profile", { userId });
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     if (!user) {
-      throw new MissingDataError('user not found');
+      throw new MissingDataError("user not found");
     }
-    
+
     return user;
   } catch (error) {
     if (error instanceof MissingDataError) {
-      action.log.warn('user not found', { userId });
+      action.log.warn("user not found", { userId });
       return null;
     }
-    
-    action.log.error('unexpected error', { userId, error });
+
+    action.log.error("unexpected error", { userId, error });
     throw error;
   }
 }
@@ -67,11 +67,11 @@ export async function getUserProfile(userId: string, action: Action) {
 ```typescript
 // ✅ CORRECT: Use action.log
 export async function processOrder(orderId: string, action: Action) {
-  action.log.info('processing order', { orderId });
+  action.log.info("processing order", { orderId });
 }
 
 // ❌ WRONG: Never use console
-console.log('This is wrong');
+console.log("This is wrong");
 ```
 
 ## Log Levels
@@ -87,16 +87,16 @@ console.log('This is wrong');
 
 ```typescript
 // ✅ GOOD: Structured with context
-action.log.error('payment failed', {
+action.log.error("payment failed", {
   userId,
   orderId,
   amount: order.total,
   error: error.message,
-  gateway: 'stripe'
+  gateway: "stripe",
 });
 
 // ❌ BAD: String concatenation
-action.log.error('Error: ' + error.message);
+action.log.error("Error: " + error.message);
 ```
 
 </logging>
@@ -127,12 +127,12 @@ action.log.error('Error: ' + error.message);
 
 ```typescript
 // User-facing: Clear and actionable
-throw new ValidationError('Email address must be valid');
+throw new ValidationError("Email address must be valid");
 
 // Developer details in logs only
-action.log.debug('email validation failed', {
+action.log.debug("email validation failed", {
   email,
-  pattern: EMAIL_REGEX.toString()
+  pattern: EMAIL_REGEX.toString(),
 });
 ```
 
@@ -144,14 +144,14 @@ const startTime = performance.now();
 try {
   const result = await processData();
   const duration = performance.now() - startTime;
-  
+
   if (duration > 5000) {
-    action.log.warn('slow processing', { duration, threshold: 5000 });
+    action.log.warn("slow processing", { duration, threshold: 5000 });
   }
-  
+
   return result;
 } catch (error) {
-  action.log.error('processing failed', { error });
+  action.log.error("processing failed", { error });
   throw error;
 }
 ```

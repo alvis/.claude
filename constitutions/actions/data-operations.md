@@ -1,6 +1,6 @@
 # Data Operations & Controllers Standards
 
-*Specific standards for data controllers, database operations, and data management*
+_Specific standards for data controllers, database operations, and data management_
 
 ## Table of Contents
 
@@ -37,17 +37,17 @@
 
 ```typescript
 // ✅ Correct naming
-async function searchUsers(options: QueryOptions): Promise<User[]>
-async function listUsers(filter: UserFilter): Promise<User[]>
-async function getUser(params: { id: string }): Promise<User | null>
-async function setUser(user: User): Promise<User>
-async function dropUser(params: { id: string }): Promise<void>
+async function searchUsers(options: QueryOptions): Promise<User[]>;
+async function listUsers(filter: UserFilter): Promise<User[]>;
+async function getUser(params: { id: string }): Promise<User | null>;
+async function setUser(user: User): Promise<User>;
+async function dropUser(params: { id: string }): Promise<void>;
 
 // ❌ Avoid these names
-async function fetchUsers() // Use list or search
-async function deleteUser() // Use drop
-async function updateUser() // Use set
-async function createUser() // Use set
+async function fetchUsers(); // Use list or search
+async function deleteUser(); // Use drop
+async function updateUser(); // Use set
+async function createUser(); // Use set
 ```
 
 </data_operation_naming>
@@ -80,7 +80,7 @@ interface QueryOptions {
   /** sorting criteria */
   sort?: Array<{
     field: string;
-    order: 'asc' | 'desc';
+    order: "asc" | "desc";
   }>;
 }
 ```
@@ -89,21 +89,21 @@ interface QueryOptions {
 
 ```typescript
 // Search with natural language
-await searchCommunities({ 
-  query: "climate tech in Europe", 
-  limit: 20 
+await searchCommunities({
+  query: "climate tech in Europe",
+  limit: 20,
 });
 
 // List with structured filters
-await listCommunities({ 
-  filter: { country: 'UK', active: true }, 
+await listCommunities({
+  filter: { country: "UK", active: true },
   limit: 50,
-  sort: [{ field: 'createdAt', order: 'desc' }]
+  sort: [{ field: "createdAt", order: "desc" }],
 });
 
 // Get single entity
-await getProduct({ id: 'abc123' });
-await getUser({ slug: 'john-doe' });
+await getProduct({ id: "abc123" });
+await getUser({ slug: "john-doe" });
 ```
 
 </query_structure>
@@ -122,11 +122,11 @@ interface EntityRepository<T, K = string> {
   search(options: QueryOptions): Promise<T[]>;
   list(filter: Partial<T>): Promise<T[]>;
   get(identifier: K | { [key: string]: unknown }): Promise<T | null>;
-  
+
   // Write operations
   set(entity: T): Promise<T>;
   drop(identifier: K): Promise<void>;
-  
+
   // Batch operations
   setBatch(entities: T[]): Promise<T[]>;
   dropBatch(identifiers: K[]): Promise<void>;
@@ -152,39 +152,41 @@ class DatabaseUserRepository implements UserRepository {
 
   async search(options: QueryOptions): Promise<User[]> {
     const { query, filter, limit = 50, offset = 0, sort } = options;
-    
+
     // Build search query with natural language processing
     const searchQuery = this.buildSearchQuery(query, filter);
     const sortClause = this.buildSortClause(sort);
-    
+
     const sql = `
       SELECT * FROM users 
       WHERE ${searchQuery}
       ${sortClause}
       LIMIT $1 OFFSET $2
     `;
-    
+
     const result = await this.db.query(sql, [limit, offset]);
     return result.rows.map(this.mapToUser);
   }
 
   async list(filter: UserFilter): Promise<User[]> {
     const { where, params } = this.buildWhereClause(filter);
-    
+
     const sql = `SELECT * FROM users WHERE ${where}`;
     const result = await this.db.query(sql, params);
     return result.rows.map(this.mapToUser);
   }
 
-  async get(identifier: { id: string } | { email: string }): Promise<User | null> {
+  async get(
+    identifier: { id: string } | { email: string },
+  ): Promise<User | null> {
     let sql: string;
     let params: unknown[];
 
-    if ('id' in identifier) {
-      sql = 'SELECT * FROM users WHERE id = $1';
+    if ("id" in identifier) {
+      sql = "SELECT * FROM users WHERE id = $1";
       params = [identifier.id];
     } else {
-      sql = 'SELECT * FROM users WHERE email = $1';
+      sql = "SELECT * FROM users WHERE email = $1";
       params = [identifier.email];
     }
 
@@ -200,13 +202,13 @@ class DatabaseUserRepository implements UserRepository {
     }
   }
 
-  private async createUser(user: Omit<User, 'id'>): Promise<User> {
+  private async createUser(user: Omit<User, "id">): Promise<User> {
     const sql = `
       INSERT INTO users (name, email, created_at, updated_at)
       VALUES ($1, $2, NOW(), NOW())
       RETURNING *
     `;
-    
+
     const result = await this.db.query(sql, [user.name, user.email]);
     return this.mapToUser(result.rows[0]);
   }
@@ -218,7 +220,7 @@ class DatabaseUserRepository implements UserRepository {
       WHERE id = $3
       RETURNING *
     `;
-    
+
     const result = await this.db.query(sql, [user.name, user.email, user.id]);
     return this.mapToUser(result.rows[0]);
   }
@@ -237,15 +239,18 @@ class DatabaseUserRepository implements UserRepository {
 interface DataController<T> {
   // Query operations
   search(options: QueryOptions): Promise<PaginatedResult<T>>;
-  list(filter: Partial<T>, pagination?: PaginationOptions): Promise<PaginatedResult<T>>;
+  list(
+    filter: Partial<T>,
+    pagination?: PaginationOptions,
+  ): Promise<PaginatedResult<T>>;
   get(id: string): Promise<T | null>;
-  
+
   // Mutation operations
   create(data: CreateData<T>): Promise<T>;
   update(id: string, data: UpdateData<T>): Promise<T>;
   upsert(data: UpsertData<T>): Promise<T>;
   delete(id: string): Promise<void>;
-  
+
   // Batch operations
   bulkCreate(data: CreateData<T>[]): Promise<T[]>;
   bulkUpdate(updates: Array<{ id: string; data: UpdateData<T> }>): Promise<T[]>;
@@ -271,66 +276,68 @@ class UserController implements DataController<User> {
   constructor(
     private repository: UserRepository,
     private validator: UserValidator,
-    private logger: Logger
+    private logger: Logger,
   ) {}
 
   async search(options: QueryOptions): Promise<PaginatedResult<User>> {
-    this.logger.info('Searching users', { options });
-    
+    this.logger.info("Searching users", { options });
+
     try {
       // Validate query options
       const validatedOptions = this.validator.validateQueryOptions(options);
-      
+
       // Execute search
       const users = await this.repository.search(validatedOptions);
       const total = await this.repository.count(validatedOptions);
-      
+
       // Build pagination metadata
       const pagination = this.buildPaginationMeta(validatedOptions, total);
-      
+
       return { data: users, pagination };
     } catch (error) {
-      this.logger.error('User search failed', { error, options });
-      throw new SearchError('Failed to search users', error);
+      this.logger.error("User search failed", { error, options });
+      throw new SearchError("Failed to search users", error);
     }
   }
 
   async get(id: string): Promise<User | null> {
-    this.logger.info('Getting user', { id });
-    
+    this.logger.info("Getting user", { id });
+
     try {
       this.validator.validateId(id);
       const user = await this.repository.get({ id });
-      
+
       if (!user) {
-        this.logger.warn('User not found', { id });
+        this.logger.warn("User not found", { id });
       }
-      
+
       return user;
     } catch (error) {
-      this.logger.error('Failed to get user', { error, id });
-      throw new RetrievalError('Failed to retrieve user', error);
+      this.logger.error("Failed to get user", { error, id });
+      throw new RetrievalError("Failed to retrieve user", error);
     }
   }
 
   async upsert(data: UpsertData<User>): Promise<User> {
-    this.logger.info('Upserting user', { data: { ...data, password: '[REDACTED]' } });
-    
+    this.logger.info("Upserting user", {
+      data: { ...data, password: "[REDACTED]" },
+    });
+
     try {
       // Validate input data
       const validatedData = this.validator.validateUpsertData(data);
-      
+
       // Transform data for repository
       const user = this.transformToUser(validatedData);
-      
+
       // Execute upsert
       const result = await this.repository.set(user);
-      
-      this.logger.info('User upserted successfully', { id: result.id });
+
+      this.logger.info("User upserted successfully", { id: result.id });
       return result;
     } catch (error) {
-      this.logger.error('User upsert failed', { error, data });
-      throw new UpsertError('Failed to upsert user', error);
+      this.logger.error("User upsert failed", { error, data });
+      throw new UpsertError("Failed to upsert user", error);
     }
   }
 
@@ -338,7 +345,7 @@ class UserController implements DataController<User> {
     const { limit = 50, offset = 0 } = options;
     const page = Math.floor(offset / limit) + 1;
     const hasMore = offset + limit < total;
-    
+
     return { page, limit, total, hasMore };
   }
 }
@@ -361,25 +368,25 @@ interface TransactionContext {
 
 class TransactionManager {
   async executeTransaction<T>(
-    operation: (ctx: TransactionContext) => Promise<T>
+    operation: (ctx: TransactionContext) => Promise<T>,
   ): Promise<T> {
     const client = await this.pool.connect();
-    
+
     try {
-      await client.query('BEGIN');
-      
+      await client.query("BEGIN");
+
       const context: TransactionContext = {
         query: (sql, params) => client.query(sql, params),
-        commit: () => client.query('COMMIT'),
-        rollback: () => client.query('ROLLBACK'),
+        commit: () => client.query("COMMIT"),
+        rollback: () => client.query("ROLLBACK"),
       };
-      
+
       const result = await operation(context);
       await context.commit();
-      
+
       return result;
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -388,24 +395,28 @@ class TransactionManager {
 }
 
 // Usage example
-async function transferFunds(fromUserId: string, toUserId: string, amount: number): Promise<void> {
+async function transferFunds(
+  fromUserId: string,
+  toUserId: string,
+  amount: number,
+): Promise<void> {
   await transactionManager.executeTransaction(async (ctx) => {
     // Debit from source account
     await ctx.query(
-      'UPDATE accounts SET balance = balance - $1 WHERE user_id = $2',
-      [amount, fromUserId]
+      "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2",
+      [amount, fromUserId],
     );
-    
+
     // Credit to destination account
     await ctx.query(
-      'UPDATE accounts SET balance = balance + $1 WHERE user_id = $2',
-      [amount, toUserId]
+      "UPDATE accounts SET balance = balance + $1 WHERE user_id = $2",
+      [amount, toUserId],
     );
-    
+
     // Log transaction
     await ctx.query(
-      'INSERT INTO transactions (from_user, to_user, amount, created_at) VALUES ($1, $2, $3, NOW())',
-      [fromUserId, toUserId, amount]
+      "INSERT INTO transactions (from_user, to_user, amount, created_at) VALUES ($1, $2, $3, NOW())",
+      [fromUserId, toUserId, amount],
     );
   });
 }
@@ -429,7 +440,7 @@ interface ValidationSchema<T> {
 class UserValidator implements ValidationSchema<User> {
   validate(data: unknown): User {
     if (!this.isObject(data)) {
-      throw new ValidationError('Data must be an object');
+      throw new ValidationError("Data must be an object");
     }
 
     return {
@@ -443,15 +454,15 @@ class UserValidator implements ValidationSchema<User> {
 
   validatePartial(data: unknown): Partial<User> {
     if (!this.isObject(data)) {
-      throw new ValidationError('Data must be an object');
+      throw new ValidationError("Data must be an object");
     }
 
     const result: Partial<User> = {};
 
-    if ('name' in data) {
+    if ("name" in data) {
       result.name = this.validateName(data.name);
     }
-    if ('email' in data) {
+    if ("email" in data) {
       result.email = this.validateEmail(data.email);
     }
 
@@ -459,22 +470,22 @@ class UserValidator implements ValidationSchema<User> {
   }
 
   private validateName(value: unknown): string {
-    if (typeof value !== 'string' || value.trim().length === 0) {
-      throw new ValidationError('Name must be a non-empty string', 'name');
+    if (typeof value !== "string" || value.trim().length === 0) {
+      throw new ValidationError("Name must be a non-empty string", "name");
     }
     return value.trim();
   }
 
   private validateEmail(value: unknown): string {
-    if (typeof value !== 'string') {
-      throw new ValidationError('Email must be a string', 'email');
+    if (typeof value !== "string") {
+      throw new ValidationError("Email must be a string", "email");
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) {
-      throw new ValidationError('Email must be valid', 'email');
+      throw new ValidationError("Email must be valid", "email");
     }
-    
+
     return value.toLowerCase();
   }
 }
@@ -500,50 +511,50 @@ class LayeredCacheRepository<T> implements EntityRepository<T> {
   constructor(
     private repository: EntityRepository<T>,
     private cache: CacheStrategy<T>,
-    private keyBuilder: (id: string) => string
+    private keyBuilder: (id: string) => string,
   ) {}
 
   async get(identifier: string | object): Promise<T | null> {
     const key = this.buildCacheKey(identifier);
-    
+
     // Try cache first
     const cached = await this.cache.get(key);
     if (cached) {
       return cached;
     }
-    
+
     // Fallback to repository
     const entity = await this.repository.get(identifier);
     if (entity) {
       // Cache for future use
       await this.cache.set(key, entity, 300); // 5 minutes TTL
     }
-    
+
     return entity;
   }
 
   async set(entity: T): Promise<T> {
     // Update repository
     const result = await this.repository.set(entity);
-    
+
     // Invalidate cache
     const key = this.buildCacheKey(result);
     await this.cache.delete(key);
-    
+
     return result;
   }
 
   private buildCacheKey(identifier: string | object): string {
-    if (typeof identifier === 'string') {
+    if (typeof identifier === "string") {
       return this.keyBuilder(identifier);
     }
-    
+
     // Handle object identifiers
     const keyParts = Object.entries(identifier)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}:${value}`)
-      .join('|');
-    
+      .join("|");
+
     return this.keyBuilder(keyParts);
   }
 }
@@ -571,8 +582,8 @@ interface MigrationContext {
 }
 
 class CreateUsersTable implements Migration {
-  id = '001_create_users_table';
-  description = 'Create users table with basic fields';
+  id = "001_create_users_table";
+  description = "Create users table with basic fields";
 
   async up(ctx: MigrationContext): Promise<void> {
     await ctx.query(`
@@ -589,12 +600,12 @@ class CreateUsersTable implements Migration {
       CREATE INDEX idx_users_email ON users(email)
     `);
 
-    ctx.logger.info('Created users table');
+    ctx.logger.info("Created users table");
   }
 
   async down(ctx: MigrationContext): Promise<void> {
-    await ctx.query('DROP TABLE IF EXISTS users');
-    ctx.logger.info('Dropped users table');
+    await ctx.query("DROP TABLE IF EXISTS users");
+    ctx.logger.info("Dropped users table");
   }
 }
 ```

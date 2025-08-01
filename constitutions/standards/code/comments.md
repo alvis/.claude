@@ -1,6 +1,6 @@
 # Comment Standards
 
-*Standards for code comments, documentation, and inline explanations*
+_Standards for code comments, documentation, and inline explanations_
 
 ## Core Comment Principles
 
@@ -138,7 +138,7 @@ function validateUserInput(input: unknown): User {
 ```typescript
 // ✅ Preferred: Single-line for simple descriptions
 /** handles user logout and clears session data */
-function logout(): void { }
+function logout(): void {}
 
 // ✅ Good: Multi-line for complex documentation
 /**
@@ -150,15 +150,15 @@ function logout(): void { }
  * @throws NetworkError if connection fails
  */
 async function processPayment(
-  payment: Payment, 
-  options?: PaymentOptions
-): Promise<PaymentResult> { }
+  payment: Payment,
+  options?: PaymentOptions,
+): Promise<PaymentResult> {}
 
 // ❌ Avoid: Multi-line when single-line suffices
 /**
  * gets user by id
  */
-function getUser(id: string): User { }
+function getUser(id: string): User {}
 ```
 
 ## Interface Documentation
@@ -173,7 +173,7 @@ interface Product {
   id: string;
   /** creation timestamp */
   createdAt: Date;
-  
+
   // details //
   /** product display name */
   name: string;
@@ -181,7 +181,7 @@ interface Product {
   price: number;
   /** markdown description */
   description: string;
-  
+
   // inventory //
   /** current stock level */
   quantity: number;
@@ -225,7 +225,7 @@ counter++;
 
 // ❌ Bad: Explains what instead of why
 // loop through users array
-users.forEach(user => { });
+users.forEach((user) => {});
 
 // ❌ Bad: Redundant with clear code
 // return true if user is active

@@ -1,6 +1,6 @@
 # React Component Standards
 
-*Standards for React component structure, patterns, and performance optimization*
+_Standards for React component structure, patterns, and performance optimization_
 
 ## Component Structure Requirements
 
@@ -30,16 +30,16 @@ export interface ButtonProps {
 }
 
 // ✅ ALWAYS use arrow functions with FC type
-export const Button: FC<ButtonProps> = ({ 
+export const Button: FC<ButtonProps> = ({
   variant = 'primary',
   onClick,
   'aria-label': ariaLabel,
   disabled = false,
-  children 
+  children
 }) => {
   return (
-    <button 
-      className={variant} 
+    <button
+      className={variant}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled}
@@ -79,19 +79,19 @@ Use the component's path and name for the story title:
 // ✅ Good: Path-based naming for stories
 // components/forms/Button.stories.tsx
 export default {
-  title: 'Components/Forms/Button',
+  title: "Components/Forms/Button",
   component: Button,
 } as Meta<typeof Button>;
 
 // components/dashboard/UserCard.stories.tsx
 export default {
-  title: 'Components/Dashboard/UserCard',
+  title: "Components/Dashboard/UserCard",
   component: UserCard,
 } as Meta<typeof UserCard>;
 
 // ❌ Bad: Flat naming structure
 export default {
-  title: 'Button', // Missing path context
+  title: "Button", // Missing path context
   component: Button,
 };
 ```
@@ -100,20 +100,20 @@ export default {
 
 ```typescript
 // ✅ Good: Complete story structure
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "./Button";
 
 const meta = {
-  title: 'Components/UI/Button',
+  title: "Components/UI/Button",
   component: Button,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'secondary', 'danger'],
+      control: "select",
+      options: ["primary", "secondary", "danger"],
     },
   },
 } satisfies Meta<typeof Button>;
@@ -124,16 +124,16 @@ type Story = StoryObj<typeof meta>;
 // Primary story
 export const Primary: Story = {
   args: {
-    variant: 'primary',
-    children: 'Click me',
+    variant: "primary",
+    children: "Click me",
   },
 };
 
 // Additional variants
 export const Secondary: Story = {
   args: {
-    variant: 'secondary',
-    children: 'Click me',
+    variant: "secondary",
+    children: "Click me",
   },
 };
 
@@ -141,15 +141,15 @@ export const Secondary: Story = {
 export const Disabled: Story = {
   args: {
     disabled: true,
-    children: 'Disabled',
+    children: "Disabled",
   },
 };
 
 // With actions
 export const WithClick: Story = {
   args: {
-    children: 'Click me',
-    onClick: () => console.log('clicked'),
+    children: "Click me",
+    onClick: () => console.log("clicked"),
   },
 };
 ```
@@ -199,7 +199,7 @@ export const UserEverything: FC<Props> = ({ user }) => {
 ```typescript
 // ✅ Good: Simple, focused props
 export interface AlertProps {
-  variant: 'success' | 'warning' | 'error';
+  variant: "success" | "warning" | "error";
   message: string;
   onDismiss?: () => void;
 }
@@ -235,7 +235,7 @@ export interface BadAlertProps {
 </Card>
 
 // ❌ Avoid: Monolithic components with many props
-<UserCard 
+<UserCard
   title="User Profile"
   showHeader={true}
   headerStyle="primary"
@@ -257,7 +257,7 @@ export interface BadAlertProps {
 // ✅ Good: Local state for local concerns
 export const TodoItem: FC<TodoItemProps> = ({ todo, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   return (
     <div>
       {isEditing ? (
@@ -280,7 +280,7 @@ const ThemeContext = createContext<Theme>('light');
 // ✅ Good: Context with provider pattern
 export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  
+
   return (
     <UserContext.Provider value={user}>
       {children}
@@ -306,7 +306,7 @@ export const ExpensiveList = memo(({ items }: Props) => {
 
 // ✅ Good: Memoize calculations
 const UserProfile: FC<Props> = ({ user, activities }) => {
-  const sortedActivities = useMemo(() => 
+  const sortedActivities = useMemo(() =>
     activities.sort((a, b) => b.timestamp - a.timestamp),
     [activities]
   );
@@ -318,8 +318,8 @@ const UserProfile: FC<Props> = ({ user, activities }) => {
   return (
     <div>
       {sortedActivities.map(activity => (
-        <Activity 
-          key={activity.id} 
+        <Activity
+          key={activity.id}
           activity={activity}
           onClick={handleActivityClick}
         />
@@ -335,7 +335,7 @@ const UserProfile: FC<Props> = ({ user, activities }) => {
 // ❌ Bad: Creating objects in render
 const BadComponent: FC<Props> = ({ user }) => {
   return (
-    <UserProfile 
+    <UserProfile
       user={user}
       style={{ margin: 10, padding: 5 }} // New object every render
       options={{ showEmail: true }}       // New object every render
@@ -349,7 +349,7 @@ const profileOptions = { showEmail: true };
 
 const GoodComponent: FC<Props> = ({ user }) => {
   return (
-    <UserProfile 
+    <UserProfile
       user={user}
       style={profileStyle}
       options={profileOptions}
@@ -390,7 +390,7 @@ const HeavyChart = dynamic(() => import('#components/Chart'), {
 // ✅ Good: Server Component by default
 export const ServerUserList: FC<Props> = async ({ userId }) => {
   const users = await fetchUsers();
-  
+
   return (
     <div>
       {users.map(user => (
@@ -406,11 +406,11 @@ export const ServerUserList: FC<Props> = async ({ userId }) => {
 export const InteractiveUserList: FC<Props> = ({ initialUsers }) => {
   const [users, setUsers] = useState(initialUsers);
   const [filter, setFilter] = useState('');
-  
+
   return (
     <div>
-      <input 
-        value={filter} 
+      <input
+        value={filter}
         onChange={(e) => setFilter(e.target.value)}
         placeholder="Filter users..."
       />
@@ -437,7 +437,7 @@ describe('rc:Button', () => {
 
   it('should call onClick when clicked', () => {
     const mockClick = vi.fn();
- 
+
     render(<Button onClick={mockClick}>Click</Button>);
     fireEvent.click(screen.getByRole('button'));
 

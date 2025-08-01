@@ -1,6 +1,6 @@
 # React Hooks Standards
 
-*Standards for custom hooks design, patterns, and best practices*
+_Standards for custom hooks design, patterns, and best practices_
 
 ## Hook Design Principles
 
@@ -49,8 +49,8 @@ interface UseDataReturn<T> {
 }
 
 export function useData<T>(
-  url: string, 
-  options: UseDataOptions = {}
+  url: string,
+  options: UseDataOptions = {},
 ): UseDataReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,11 +59,11 @@ export function useData<T>(
 
   const refetch = useCallback(async () => {
     if (!options.enabled) return;
-    
+
     setLoading(true);
     setError(null);
     setIsValidating(true);
-    
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -107,8 +107,8 @@ export function useApiQuery<T>(endpoint: string) {
   });
 
   const fetchData = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+
     try {
       const response = await apiClient.get<T>(endpoint);
       setState({ data: response.data, loading: false, error: null });
@@ -137,7 +137,7 @@ export function useApiQuery<T>(endpoint: string) {
 // ✅ Good: Type-safe localStorage hook
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -149,15 +149,19 @@ export function useLocalStorage<T>(
     }
   });
 
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
-  }, [key, storedValue]);
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      try {
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        setStoredValue(valueToStore);
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      } catch (error) {
+        console.warn(`Error setting localStorage key "${key}":`, error);
+      }
+    },
+    [key, storedValue],
+  );
 
   return [storedValue, setValue];
 }
@@ -186,7 +190,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 // ✅ Good: Debounced callback hook
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const callbackRef = useRef(callback);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -200,12 +204,12 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      
+
       timeoutRef.current = setTimeout(() => {
         callbackRef.current(...args);
       }, delay);
     }) as T,
-    [delay]
+    [delay],
   );
 }
 ```
@@ -217,14 +221,17 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
 ```typescript
 // ✅ Good: Composable hooks
 export function useAuth() {
-  const [user, setUser] = useLocalStorage<User | null>('user', null);
-  const [token, setToken] = useLocalStorage<string | null>('token', null);
+  const [user, setUser] = useLocalStorage<User | null>("user", null);
+  const [token, setToken] = useLocalStorage<string | null>("token", null);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
-    const response = await authApi.login(credentials);
-    setUser(response.user);
-    setToken(response.token);
-  }, [setUser, setToken]);
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      const response = await authApi.login(credentials);
+      setUser(response.user);
+      setToken(response.token);
+    },
+    [setUser, setToken],
+  );
 
   const logout = useCallback(() => {
     setUser(null);
@@ -243,24 +250,27 @@ export function useAuth() {
 export function usePermissions(userId?: string) {
   const { user, isAuthenticated } = useAuth();
   const effectiveUserId = userId || user?.id;
-  
+
   const { data: permissions, loading } = useApiQuery<Permission[]>(
-    effectiveUserId && isAuthenticated 
-      ? `/users/${effectiveUserId}/permissions` 
-      : null
+    effectiveUserId && isAuthenticated
+      ? `/users/${effectiveUserId}/permissions`
+      : null,
   );
 
-  const hasPermission = useCallback((permission: string) => {
-    return permissions?.some(p => p.name === permission) ?? false;
-  }, [permissions]);
+  const hasPermission = useCallback(
+    (permission: string) => {
+      return permissions?.some((p) => p.name === permission) ?? false;
+    },
+    [permissions],
+  );
 
   return {
     permissions: permissions || [],
     loading,
     hasPermission,
-    isAdmin: hasPermission('admin'),
-    canEdit: hasPermission('edit'),
-    canView: hasPermission('view'),
+    isAdmin: hasPermission("admin"),
+    canEdit: hasPermission("edit"),
+    canView: hasPermission("view"),
   };
 }
 ```
@@ -277,35 +287,38 @@ interface FormState<T> {
   isValid: boolean;
 }
 
-type FormAction<T> = 
-  | { type: 'SET_VALUE'; field: keyof T; value: T[keyof T] }
-  | { type: 'SET_ERROR'; field: keyof T; error: string }
-  | { type: 'SET_TOUCHED'; field: keyof T }
-  | { type: 'SET_SUBMITTING'; isSubmitting: boolean }
-  | { type: 'RESET'; initialValues: T };
+type FormAction<T> =
+  | { type: "SET_VALUE"; field: keyof T; value: T[keyof T] }
+  | { type: "SET_ERROR"; field: keyof T; error: string }
+  | { type: "SET_TOUCHED"; field: keyof T }
+  | { type: "SET_SUBMITTING"; isSubmitting: boolean }
+  | { type: "RESET"; initialValues: T };
 
-function formReducer<T>(state: FormState<T>, action: FormAction<T>): FormState<T> {
+function formReducer<T>(
+  state: FormState<T>,
+  action: FormAction<T>,
+): FormState<T> {
   switch (action.type) {
-    case 'SET_VALUE':
+    case "SET_VALUE":
       return {
         ...state,
         values: { ...state.values, [action.field]: action.value },
         errors: { ...state.errors, [action.field]: undefined },
       };
-    case 'SET_ERROR':
+    case "SET_ERROR":
       return {
         ...state,
         errors: { ...state.errors, [action.field]: action.error },
         isValid: false,
       };
-    case 'SET_TOUCHED':
+    case "SET_TOUCHED":
       return {
         ...state,
         touched: { ...state.touched, [action.field]: true },
       };
-    case 'SET_SUBMITTING':
+    case "SET_SUBMITTING":
       return { ...state, isSubmitting: action.isSubmitting };
-    case 'RESET':
+    case "RESET":
       return {
         values: action.initialValues,
         errors: {},
@@ -320,7 +333,7 @@ function formReducer<T>(state: FormState<T>, action: FormAction<T>): FormState<T
 
 export function useForm<T extends Record<string, any>>(
   initialValues: T,
-  validationSchema?: (values: T) => Partial<Record<keyof T, string>>
+  validationSchema?: (values: T) => Partial<Record<keyof T, string>>,
 ) {
   const [state, dispatch] = useReducer(formReducer, {
     values: initialValues,
@@ -330,23 +343,26 @@ export function useForm<T extends Record<string, any>>(
     isValid: true,
   } as FormState<T>);
 
-  const setValue = useCallback((field: keyof T, value: T[keyof T]) => {
-    dispatch({ type: 'SET_VALUE', field, value });
-    
-    if (validationSchema) {
-      const errors = validationSchema({ ...state.values, [field]: value });
-      if (errors[field]) {
-        dispatch({ type: 'SET_ERROR', field, error: errors[field]! });
+  const setValue = useCallback(
+    (field: keyof T, value: T[keyof T]) => {
+      dispatch({ type: "SET_VALUE", field, value });
+
+      if (validationSchema) {
+        const errors = validationSchema({ ...state.values, [field]: value });
+        if (errors[field]) {
+          dispatch({ type: "SET_ERROR", field, error: errors[field]! });
+        }
       }
-    }
-  }, [state.values, validationSchema]);
+    },
+    [state.values, validationSchema],
+  );
 
   const setTouched = useCallback((field: keyof T) => {
-    dispatch({ type: 'SET_TOUCHED', field });
+    dispatch({ type: "SET_TOUCHED", field });
   }, []);
 
   const reset = useCallback(() => {
-    dispatch({ type: 'RESET', initialValues });
+    dispatch({ type: "RESET", initialValues });
   }, [initialValues]);
 
   return {
@@ -368,39 +384,39 @@ export function useForm<T extends Record<string, any>>(
 
 ```typescript
 // ✅ Good: Hook testing with renderHook
-import { renderHook, act } from '@testing-library/react';
-import { useCounter } from './useCounter';
+import { renderHook, act } from "@testing-library/react";
+import { useCounter } from "./useCounter";
 
-describe('useCounter', () => {
-  it('should initialize with default value', () => {
+describe("useCounter", () => {
+  it("should initialize with default value", () => {
     const { result } = renderHook(() => useCounter());
-    
+
     expect(result.current.count).toBe(0);
   });
 
-  it('should initialize with custom value', () => {
+  it("should initialize with custom value", () => {
     const { result } = renderHook(() => useCounter(10));
-    
+
     expect(result.current.count).toBe(10);
   });
 
-  it('should increment count', () => {
+  it("should increment count", () => {
     const { result } = renderHook(() => useCounter());
-    
+
     act(() => {
       result.current.increment();
     });
-    
+
     expect(result.current.count).toBe(1);
   });
 
-  it('should decrement count', () => {
+  it("should decrement count", () => {
     const { result } = renderHook(() => useCounter(5));
-    
+
     act(() => {
       result.current.decrement();
     });
-    
+
     expect(result.current.count).toBe(4);
   });
 });
@@ -414,7 +430,7 @@ describe('useCounter', () => {
 // ✅ Good: Proper dependency management
 export function useUserData(userId: string) {
   const [userData, setUserData] = useState<User | null>(null);
-  
+
   // Memoize expensive operations
   const processedData = useMemo(() => {
     if (!userData) return null;
@@ -428,12 +444,12 @@ export function useUserData(userId: string) {
   // Stable callback reference
   const refreshUser = useCallback(async () => {
     if (!userId) return;
-    
+
     try {
       const user = await fetchUser(userId);
       setUserData(user);
     } catch (error) {
-      console.error('Failed to fetch user:', error);
+      console.error("Failed to fetch user:", error);
     }
   }, [userId]);
 
@@ -474,11 +490,13 @@ export function useBadReturn(data: any[]) {
 // ❌ Bad: Not handling loading/error states
 export function useBadApiCall(url: string) {
   const [data, setData] = useState(null);
-  
+
   useEffect(() => {
-    fetch(url).then(res => res.json()).then(setData);
+    fetch(url)
+      .then((res) => res.json())
+      .then(setData);
   }, [url]);
-  
+
   return data; // No loading or error state
 }
 
@@ -492,17 +510,17 @@ export function useGoodApiCall(url: string) {
 
   useEffect(() => {
     let cancelled = false;
-    
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+
     fetch(url)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (!cancelled) {
           setState({ data, loading: false, error: null });
         }
       })
-      .catch(error => {
+      .catch((error) => {
         if (!cancelled) {
           setState({ data: null, loading: false, error });
         }

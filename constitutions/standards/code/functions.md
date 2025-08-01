@@ -1,6 +1,6 @@
 # Function Design Standards
 
-*Standards for function design, parameters, interfaces, and code organization*
+_Standards for function design, parameters, interfaces, and code organization_
 
 ## Core Principles
 
@@ -17,19 +17,23 @@ function calculateTax(amount: number, rate: number): number {
   return amount * rate;
 }
 
-function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency 
+function formatCurrency(amount: number, currency = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
   }).format(amount);
 }
 
 // ❌ Bad: Multiple responsibilities
-function calculateAndFormatTax(amount: number, rate: number, currency = 'USD'): string {
+function calculateAndFormatTax(
+  amount: number,
+  rate: number,
+  currency = "USD",
+): string {
   const tax = amount * rate;
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency 
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
   }).format(tax);
 }
 ```
@@ -66,11 +70,12 @@ function validateEmail(email: string): boolean {
 }
 
 function processItems(items: Item[]): ProcessedItem[] {
-  return items.map(item => processItem(item));
+  return items.map((item) => processItem(item));
 }
 
 // ❌ Bad: Inferred return types
-function getUserById(id: string) { // Return type unclear
+function getUserById(id: string) {
+  // Return type unclear
   return userRepository.findById(id);
 }
 ```
@@ -80,6 +85,7 @@ function getUserById(id: string) { // Return type unclear
 ### Positional vs Object Parameters
 
 #### Use Positional Parameters (≤2 parameters) When:
+
 - **Intuitive, natural order** exists
 - **All parameters are required**
 - **Parameter order is commonly understood**
@@ -95,11 +101,12 @@ function getUserById(id: string): Promise<User | null> {
 }
 
 function formatDate(date: Date, format: string): string {
-  return date.toLocaleDateString('en-US', { format });
+  return date.toLocaleDateString("en-US", { format });
 }
 ```
 
 #### Use Object Parameters (≥3 parameters) When:
+
 - **Optional values or config-style flags** are present
 - **Parameters are closely related**
 - **Need named arguments for clarity**
@@ -115,16 +122,22 @@ interface CreateUserOptions {
 }
 
 function createUser(options: CreateUserOptions): Promise<User> {
-  const { name, email, role = 'user', sendWelcomeEmail = true, department } = options;
+  const {
+    name,
+    email,
+    role = "user",
+    sendWelcomeEmail = true,
+    department,
+  } = options;
   // Implementation
 }
 
 // Usage
 const user = await createUser({
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'admin',
-  sendWelcomeEmail: false
+  name: "John Doe",
+  email: "john@example.com",
+  role: "admin",
+  sendWelcomeEmail: false,
 });
 ```
 
@@ -159,9 +172,9 @@ interface UserContext {
 }
 
 // ❌ Bad: Generic names
-interface Options { } // Too vague
-interface Data { }    // Too generic
-interface Input { }   // Not descriptive
+interface Options {} // Too vague
+interface Data {} // Too generic
+interface Input {} // Not descriptive
 ```
 
 ### Parameter Ordering
@@ -177,11 +190,11 @@ When using positional parameters, follow this order:
 ```typescript
 // ✅ Good: Logical parameter ordering
 function updateUser(
-  userId: string,                    // 1. Identity
-  userData: UpdateUserData,          // 2. Primary data
-  options: UpdateOptions = {},       // 3. Optional modifiers
-  onSuccess?: (user: User) => void,  // 4. Callbacks
-  context?: RequestContext           // 5. Miscellaneous
+  userId: string, // 1. Identity
+  userData: UpdateUserData, // 2. Primary data
+  options: UpdateOptions = {}, // 3. Optional modifiers
+  onSuccess?: (user: User) => void, // 4. Callbacks
+  context?: RequestContext, // 5. Miscellaneous
 ): Promise<User> {
   // Implementation
 }
@@ -192,18 +205,21 @@ function updateUser(
 ```typescript
 // ✅ Good: Safe destructuring with defaults
 function processUser(options: UserOptions = {}): User {
-  const { name = 'Unknown', role = 'user', active = true } = options;
+  const { name = "Unknown", role = "user", active = true } = options;
   // Safe - won't fail if options is undefined
 }
 
 // ✅ Good: Explicit optional parameter
 function processUserSafe(options?: UserOptions): User {
-  const { name = 'Unknown', role = 'user', active = true } = options || {};
+  const { name = "Unknown", role = "user", active = true } = options || {};
   // Safe - handles undefined options
 }
 
 // ❌ Bad: Direct destructuring can fail
-function processUserBad({ name = 'Unknown', role = 'user' }: UserOptions): User {
+function processUserBad({
+  name = "Unknown",
+  role = "user",
+}: UserOptions): User {
   // Will throw if called with undefined
 }
 ```
@@ -226,8 +242,8 @@ export interface CreateUserOptions {
 }
 
 export function createUser(
-  params: CreateUserParams, 
-  options: CreateUserOptions = {}
+  params: CreateUserParams,
+  options: CreateUserOptions = {},
 ): Promise<User> {
   // Implementation
 }
@@ -248,7 +264,10 @@ interface ValidationContext {
   customRules: ValidationRule[];
 }
 
-function validateEmailWithContext(email: string, context: ValidationContext): boolean {
+function validateEmailWithContext(
+  email: string,
+  context: ValidationContext,
+): boolean {
   // Complex validation logic
 }
 ```
@@ -301,19 +320,19 @@ const doubled = [1, 2, 3].map(double); // [2, 4, 6]
 ```typescript
 // ✅ Good: Explicit error handling with specific types
 function parseUser(input: unknown): User {
-  if (typeof input !== 'object' || input === null) {
-    throw new ValidationError('Input must be an object');
+  if (typeof input !== "object" || input === null) {
+    throw new ValidationError("Input must be an object");
   }
-  
-  if (!('email' in input) || typeof input.email !== 'string') {
-    throw new ValidationError('Email is required and must be a string');
+
+  if (!("email" in input) || typeof input.email !== "string") {
+    throw new ValidationError("Email is required and must be a string");
   }
-  
+
   return input as User;
 }
 
 // ✅ Good: Result type for error handling
-type Result<T, E = Error> = 
+type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
@@ -350,13 +369,13 @@ async function fetchUser(id: string): Promise<User | null> {
 
 // ✅ Good: Timeout handling
 async function fetchWithTimeout<T>(
-  promise: Promise<T>, 
-  timeoutMs: number
+  promise: Promise<T>,
+  timeoutMs: number,
 ): Promise<T> {
   const timeout = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+    setTimeout(() => reject(new Error("Request timeout")), timeoutMs);
   });
-  
+
   return Promise.race([promise, timeout]);
 }
 ```
@@ -375,18 +394,18 @@ async function fetchWithTimeout<T>(
  * @throws {ValidationError} When subtotal is negative or tax rate is invalid
  */
 function calculateTotal(
-  subtotal: number, 
-  taxRate: number, 
-  discountAmount = 0
+  subtotal: number,
+  taxRate: number,
+  discountAmount = 0,
 ): number {
   if (subtotal < 0) {
-    throw new ValidationError('Subtotal cannot be negative');
+    throw new ValidationError("Subtotal cannot be negative");
   }
-  
+
   if (taxRate < 0 || taxRate > 1) {
-    throw new ValidationError('Tax rate must be between 0 and 1');
+    throw new ValidationError("Tax rate must be between 0 and 1");
   }
-  
+
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   return discountedSubtotal * (1 + taxRate);
 }
@@ -421,20 +440,20 @@ function processUser(user: User): ProcessedUser {
   if (!user) {
     return null;
   }
-  
+
   if (!user.isActive) {
-    return { ...user, status: 'inactive' };
+    return { ...user, status: "inactive" };
   }
-  
+
   if (!user.permissions.length) {
-    return { ...user, accessLevel: 'none' };
+    return { ...user, accessLevel: "none" };
   }
-  
+
   // Main processing logic
   return {
     ...user,
     accessLevel: calculateAccessLevel(user.permissions),
-    lastProcessed: new Date()
+    lastProcessed: new Date(),
   };
 }
 ```
@@ -447,14 +466,14 @@ function processUser(user: User): ProcessedUser {
 // ❌ Bad: Functions doing too much
 function processUserAndSendEmail(userData: any): void {
   // Validation
-  if (!userData.email) throw new Error('Email required');
-  
+  if (!userData.email) throw new Error("Email required");
+
   // User creation
   const user = createUser(userData);
-  
+
   // Email sending
   sendWelcomeEmail(user.email);
-  
+
   // Logging
   console.log(`User ${user.id} created and email sent`);
 }
