@@ -9,11 +9,13 @@
 
 <error_handling>
 
-## Use @theriety/error Classes
+## Use specific error Classes
 
 ```typescript
 // ✅ GOOD: Specific error classes
-import { MissingDataError, ValidationError } from '@theriety/error';
+import { MissingDataError } from '@theriety/error';
+
+class ValidationError extends Error { ... }
 
 if (!user) {
   throw new MissingDataError('user profile not found');
@@ -51,10 +53,10 @@ export async function getUserProfile(userId: string, action: Action) {
 
 ## Rules
 
-* Throw early when detecting invalid states
-* Use specific error classes for different scenarios
-* Handle errors explicitly at boundaries
-* NEVER swallow errors silently
+- Throw early when detecting invalid states
+- Use specific error classes for different scenarios
+- Handle errors explicitly at boundaries
+- NEVER swallow errors silently
 
 </error_handling>
 
@@ -74,12 +76,12 @@ console.log('This is wrong');
 
 ## Log Levels
 
-* **FATAL** - System critical errors
-* **ERROR** - Unrecoverable operation errors
-* **WARN** - Recoverable issues
-* **INFO** - Business events
-* **DEBUG** - Debugging details
-* **TRACE** - Very detailed (rare)
+- **FATAL** - System critical errors
+- **ERROR** - Unrecoverable operation errors
+- **WARN** - Recoverable issues
+- **INFO** - Business events
+- **DEBUG** - Debugging details
+- **TRACE** - Very detailed (rare)
 
 ## Structured Logging
 
@@ -103,19 +105,19 @@ action.log.error('Error: ' + error.message);
 
 ## Always Log
 
-* Auth failures
-* Validation errors
-* External service failures
-* Unhandled exceptions
-* Performance warnings
+- Auth failures
+- Validation errors
+- External service failures
+- Unhandled exceptions
+- Performance warnings
 
 ## NEVER Log
 
-* Passwords or tokens
-* PII (Personal Identifiable Info)
-* Credit card numbers
-* API keys or secrets
-* Full request bodies with sensitive data
+- Passwords or tokens
+- PII (Personal Identifiable Info)
+- Credit card numbers
+- API keys or secrets
+- Full request bodies with sensitive data
 
 </what_to_log>
 
