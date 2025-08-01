@@ -1,6 +1,6 @@
 # Documentation Standards
 
-*Standards for JSDoc, comments, inline documentation, and code explanation*
+_Standards for JSDoc, comments, inline documentation, and code explanation_
 
 ## JSDoc Format
 
@@ -26,7 +26,7 @@ function calculateUserScore(assessments: Assessment[]): number {
 async function processPayment(
   userId: string,
   amount: number,
-  paymentMethod: PaymentMethod
+  paymentMethod: PaymentMethod,
 ): Promise<PaymentConfirmation> {
   // Implementation
 }
@@ -39,18 +39,18 @@ async function processPayment(
 ```typescript
 // ✅ Good: Function documentation
 /** validates email address format using RFC 5322 standard */
-function validateEmail(email: string): boolean { }
+function validateEmail(email: string): boolean {}
 
 /** fetches user profile from database with caching */
-async function fetchUserProfile(userId: string): Promise<User> { }
+async function fetchUserProfile(userId: string): Promise<User> {}
 
 /** transforms raw API response to domain model */
-function transformUserData(apiResponse: ApiUserResponse): User { }
+function transformUserData(apiResponse: ApiUserResponse): User {}
 
 // ❌ Bad: Wrong style
-/** Validates email address format. */  // Capitalized, has period
-/** Email validation */                  // Noun phrase for function
-/** This function validates email */     // Too verbose
+/** Validates email address format. */ // Capitalized, has period
+/** Email validation */ // Noun phrase for function
+/** This function validates email */ // Too verbose
 ```
 
 #### Non-Functions: Noun Phrases
@@ -70,7 +70,7 @@ interface User {
 }
 
 /** supported payment methods for transaction processing */
-type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer';
+type PaymentMethod = "credit_card" | "paypal" | "bank_transfer";
 
 /** maximum number of retry attempts for failed requests */
 const MAX_RETRY_ATTEMPTS = 3;
@@ -78,7 +78,7 @@ const MAX_RETRY_ATTEMPTS = 3;
 
 ### Complete JSDoc Examples
 
-```typescript
+````typescript
 /**
  * Retrieves paginated list of users with optional filtering
  * @param filter - Optional filter criteria for user search
@@ -96,7 +96,7 @@ const MAX_RETRY_ATTEMPTS = 3;
  */
 async function getUsers(
   filter: UserFilter = {},
-  pagination: PaginationParams = { page: 1, limit: 50 }
+  pagination: PaginationParams = { page: 1, limit: 50 },
 ): Promise<PaginatedResult<User>> {
   // Implementation
 }
@@ -116,7 +116,7 @@ class UserRepository {
     // Implementation
   }
 }
-```
+````
 
 ### Parameter Documentation
 
@@ -141,7 +141,7 @@ async function createUser(
   options: {
     sendWelcomeEmail?: boolean;
     role?: string;
-  } = {}
+  } = {},
 ): Promise<User> {
   // Implementation
 }
@@ -158,21 +158,24 @@ function calculateShippingCost(weight: number, distance: number): number {
   if (weight > 50) {
     return distance * 0.15 + weight * 0.05;
   }
-  
+
   // Standard rate applies for lightweight packages
-  return distance * 0.10;
+  return distance * 0.1;
 }
 
 // ✅ Good: Document workarounds or constraints
 function parseUserInput(input: string): User {
   // NOTE: API returns inconsistent date formats, normalize to ISO
-  const normalizedInput = input.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2');
-  
+  const normalizedInput = input.replace(
+    /(\d{2})\/(\d{2})\/(\d{4})/,
+    "$3-$1-$2",
+  );
+
   // WORKAROUND: Third-party service occasionally returns null as string "null"
-  if (normalizedInput === 'null') {
-    throw new ValidationError('Invalid user data received');
+  if (normalizedInput === "null") {
+    throw new ValidationError("Invalid user data received");
   }
-  
+
   return JSON.parse(normalizedInput);
 }
 
@@ -180,8 +183,8 @@ function parseUserInput(input: string): User {
 function calculateLateFee(daysLate: number, originalAmount: number): number {
   // Business rule: Late fee caps at 25% of original amount to comply with regulations
   const maxFee = originalAmount * 0.25;
-  const calculatedFee = daysLate * 5.00;
-  
+  const calculatedFee = daysLate * 5.0;
+
   return Math.min(calculatedFee, maxFee);
 }
 ```
@@ -194,7 +197,7 @@ function calculateLateFee(daysLate: number, originalAmount: number): number {
 const hasAccess = checkPermissions(user, resource);
 
 // api requires authentication token in header
-const headers = { 'Authorization': `Bearer ${token}` };
+const headers = { Authorization: `Bearer ${token}` };
 
 // temporary workaround until API v2 is released
 const legacyResponse = await callLegacyAPI(data);
@@ -227,7 +230,7 @@ function setupEventListeners(): void {
 
 // DEBUG: temporary logging for investigation
 function processOrder(order: Order): void {
-  console.log('DEBUG: Processing order', order.id);
+  console.log("DEBUG: Processing order", order.id);
   // Implementation
 }
 
@@ -249,7 +252,7 @@ function handleBuggyLibraryResponse(response: any): ProcessedResponse {
 // Safari interprets dates differently than Chrome/Firefox
 function parseDate(dateString: string): Date {
   // Normalize format for cross-browser compatibility
-  return new Date(dateString.replace(/-/g, '/'));
+  return new Date(dateString.replace(/-/g, "/"));
 }
 
 // NOTE: this function modifies global state by design
@@ -265,8 +268,8 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 // PERFORMANCE: this operation is O(n²) but acceptable for small datasets
 // Consider optimization if dataset size grows beyond 1000 items
 function findDuplicates(items: Item[]): Item[] {
-  return items.filter((item, index) => 
-    items.findIndex(other => other.id === item.id) !== index
+  return items.filter(
+    (item, index) => items.findIndex((other) => other.id === item.id) !== index,
   );
 }
 
@@ -282,7 +285,7 @@ function executeQuery(sql: string, params: unknown[]): Promise<QueryResult> {
 // Include polyfill in build process for production
 function modernBrowserFeature(): void {
   if (!Array.prototype.includes) {
-    throw new Error('Browser compatibility issue detected');
+    throw new Error("Browser compatibility issue detected");
   }
 }
 
@@ -305,22 +308,22 @@ function createConnectionPool(): ConnectionPool {
 interface User {
   /** unique identifier for the user account */
   readonly id: string;
-  
+
   /** user's display name, max 100 characters */
   name: string;
-  
+
   /** normalized email address used for authentication */
   email: string;
-  
+
   /** user roles for authorization (admin, editor, viewer) */
   roles: string[];
-  
+
   /** account creation timestamp */
   readonly createdAt: Date;
-  
+
   /** last profile update timestamp */
   updatedAt: Date;
-  
+
   /** optional profile picture URL */
   avatarUrl?: string;
 }
@@ -332,16 +335,16 @@ interface User {
 interface ApiClientConfig {
   /** base URL for all API requests */
   baseUrl: string;
-  
+
   /** request timeout in milliseconds (default: 5000) */
   timeout?: number;
-  
+
   /** maximum number of retry attempts (default: 3) */
   maxRetries?: number;
-  
+
   /** authentication token for API access */
   authToken?: string;
-  
+
   /** custom headers to include with all requests */
   defaultHeaders?: Record<string, string>;
 }
@@ -351,24 +354,24 @@ interface ApiClientConfig {
 
 ```typescript
 /** supported HTTP methods for API requests */
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 /** user role levels with increasing permissions */
-type UserRole = 'viewer' | 'editor' | 'admin';
+type UserRole = "viewer" | "editor" | "admin";
 
 /** payment processing status during transaction lifecycle */
-type PaymentStatus = 
-  | 'pending'    // Initial state, awaiting processing
-  | 'processing' // Currently being processed by payment provider
-  | 'completed'  // Successfully processed
-  | 'failed'     // Processing failed, user notified
-  | 'cancelled'; // User cancelled before completion
+type PaymentStatus =
+  | "pending" // Initial state, awaiting processing
+  | "processing" // Currently being processed by payment provider
+  | "completed" // Successfully processed
+  | "failed" // Processing failed, user notified
+  | "cancelled"; // User cancelled before completion
 
 /**
  * Result wrapper for operations that may succeed or fail
  * Eliminates need for try-catch in consuming code
  */
-type Result<TData, TError = Error> = 
+type Result<TData, TError = Error> =
   | { success: true; data: TData }
   | { success: false; error: TError };
 ```
@@ -377,20 +380,20 @@ type Result<TData, TError = Error> =
 
 ### Example Documentation
 
-```typescript
+````typescript
 /**
  * Validates and normalizes user email address
  * @param email - Raw email input from user
  * @returns Normalized email address
  * @throws {ValidationError} When email format is invalid
- * 
+ *
  * @example
  * Basic usage:
  * ```typescript
  * const email = normalizeEmail('  John.Doe@EXAMPLE.COM  ');
  * console.log(email); // 'john.doe@example.com'
  * ```
- * 
+ *
  * @example
  * Error handling:
  * ```typescript
@@ -405,14 +408,14 @@ type Result<TData, TError = Error> =
  */
 function normalizeEmail(email: string): string {
   const trimmed = email.trim().toLowerCase();
-  
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-    throw new ValidationError('Invalid email format');
+    throw new ValidationError("Invalid email format");
   }
-  
+
   return trimmed;
 }
-```
+````
 
 ## Documentation Anti-Patterns
 
@@ -430,7 +433,8 @@ const users: User[] = []; // ❌ Bad: type is already clear
 
 // ❌ Bad: Outdated comments
 /** returns user age in years */
-function getUserInfo(user: User): string { // ❌ Bad: returns string, not age
+function getUserInfo(user: User): string {
+  // ❌ Bad: returns string, not age
   return `${user.name} (${user.email})`;
 }
 
@@ -449,12 +453,12 @@ function processUser(user: User): void {
 // ❌ Bad: Restating the code
 function calculateTotal(items: Item[]): number {
   let total = 0; // Initialize total to zero
-  
+
   // Loop through each item in the items array
   for (const item of items) {
     total += item.price; // Add item price to total
   }
-  
+
   return total; // Return the calculated total
 }
 
@@ -478,17 +482,17 @@ function calculateTotal(items: Item[]): number {
  */
 interface UserPreferences {
   /** @deprecated Use appearance.theme instead */
-  theme?: 'light' | 'dark';
-  
+  theme?: "light" | "dark";
+
   /** appearance settings including theme and layout */
   appearance: {
-    theme: 'light' | 'dark' | 'auto';
+    theme: "light" | "dark" | "auto";
     compactMode: boolean;
   };
-  
+
   /** preferred language code (ISO 639-1) */
   language: string;
-  
+
   /** notification delivery preferences */
   notifications: {
     email: boolean;
@@ -503,10 +507,10 @@ interface UserPreferences {
 ```typescript
 /**
  * Authentication service with JWT token management
- * 
+ *
  * @version 2.1.0
  * @since 1.0.0
- * 
+ *
  * @changelog
  * - 2.1.0: Added refresh token support
  * - 2.0.0: Breaking: Changed token format to JWT

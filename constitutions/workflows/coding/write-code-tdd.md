@@ -32,8 +32,8 @@ Before writing any code, plan your test cases:
 Create failing test cases following BDD style:
 
 ```typescript
-describe('fn:calculateTax', () => {
-  it('should calculate tax for standard rate', () => {
+describe("fn:calculateTax", () => {
+  it("should calculate tax for standard rate", () => {
     const amount = 100;
     const rate = 0.2;
     const expected = 20;
@@ -43,14 +43,14 @@ describe('fn:calculateTax', () => {
     expect(result).toBe(expected);
   });
 
-  it('should throw error for negative amount', () => {
+  it("should throw error for negative amount", () => {
     const amount = -10;
     const rate = 0.2;
 
-    expect(() => calculateTax(amount, rate)).toThrow('Amount must be positive');
+    expect(() => calculateTax(amount, rate)).toThrow("Amount must be positive");
   });
 
-  it('should handle zero tax rate', () => {
+  it("should handle zero tax rate", () => {
     const amount = 100;
     const rate = 0;
     const expected = 0;
@@ -69,7 +69,7 @@ Add minimal code to make tests compile:
 ```typescript
 function calculateTax(amount: number, rate: number): number {
   // TODO: Implement
-  throw new Error('Not implemented');
+  throw new Error("Not implemented");
 }
 ```
 
@@ -90,9 +90,9 @@ Write the minimal code to make tests pass:
 ```typescript
 function calculateTax(amount: number, rate: number): number {
   if (amount < 0) {
-    throw new Error('Amount must be positive');
+    throw new Error("Amount must be positive");
   }
-  
+
   return amount * rate;
 }
 ```
@@ -174,7 +174,7 @@ git commit -m "feat(tax): implement tax calculation with validation"
 ### File Naming
 
 - Unit tests: `*.spec.ts`
-- Integration tests: `*.spec.int.ts`  
+- Integration tests: `*.spec.int.ts`
 - React components: `*.spec.tsx`
 - Type tests: `*.spec-d.ts`
 
@@ -191,16 +191,16 @@ Use prefixes to indicate test type:
 ### Test Format (BDD Style)
 
 ```typescript
-describe('fn:functionName', () => {
-  it('should [expected behavior] when [condition]', () => {
+describe("fn:functionName", () => {
+  it("should [expected behavior] when [condition]", () => {
     // Arrange
     const input = setupTestData();
     const expected = expectedResult;
-    
+
     // Act
     const result = functionUnderTest(input);
-    
-    // Assert  
+
+    // Assert
     expect(result).toEqual(expected);
   });
 });

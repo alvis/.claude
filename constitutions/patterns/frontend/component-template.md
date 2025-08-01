@@ -1,12 +1,12 @@
 # React Component Template
 
-*Complete boilerplate template for React components with TypeScript, testing, and Storybook*
+_Complete boilerplate template for React components with TypeScript, testing, and Storybook_
 
 ## Basic Component Template
 
 ### Component Implementation
 
-```typescript
+````typescript
 // ComponentName.tsx
 import type { FC, ReactNode } from 'react';
 
@@ -17,29 +17,29 @@ import type { FC, ReactNode } from 'react';
 export interface ComponentNameProps {
   /** Primary variant of the component */
   variant?: 'primary' | 'secondary' | 'tertiary';
-  
+
   /** Size of the component */
   size?: 'small' | 'medium' | 'large';
-  
+
   /** Whether the component is disabled */
   disabled?: boolean;
-  
+
   /** Click handler for interactive components */
   onClick?: () => void;
-  
+
   /** Additional CSS class names */
   className?: string;
-  
+
   /** Accessible label for screen readers */
   'aria-label'?: string;
-  
+
   /** Child elements to render inside the component */
   children: ReactNode;
 }
 
 /**
  * ComponentName provides [brief description of functionality]
- * 
+ *
  * @example
  * ```tsx
  * <ComponentName variant="primary" onClick={handleClick}>
@@ -91,7 +91,7 @@ export const ComponentName: FC<ComponentNameProps> = ({
     </button>
   );
 };
-```
+````
 
 ### Test File Template
 
@@ -111,46 +111,46 @@ const renderComponentName = (props: Partial<ComponentNameProps> = {}) => {
 describe('rc:ComponentName', () => {
   it('should render with children', () => {
     const expectedText = 'Custom Content';
-    
+
     renderComponentName({ children: expectedText });
-    
+
     expect(screen.getByRole('button')).toHaveTextContent(expectedText);
   });
 
   it('should apply variant classes correctly', () => {
     renderComponentName({ variant: 'secondary' });
-    
+
     const button = screen.getByRole('button');
     expect(button).toHaveClass('component-name--secondary');
   });
 
   it('should apply size classes correctly', () => {
     renderComponentName({ size: 'large' });
-    
+
     const button = screen.getByRole('button');
     expect(button).toHaveClass('component-name--large');
   });
 
   it('should handle click events', () => {
     const mockClick = vi.fn();
-    
+
     renderComponentName({ onClick: mockClick });
-    
+
     fireEvent.click(screen.getByRole('button'));
     expect(mockClick).toHaveBeenCalledOnce();
   });
 
   it('should handle keyboard events', () => {
     const mockClick = vi.fn();
-    
+
     renderComponentName({ onClick: mockClick });
-    
+
     const button = screen.getByRole('button');
-    
+
     // Test Enter key
     fireEvent.keyDown(button, { key: 'Enter' });
     expect(mockClick).toHaveBeenCalledTimes(1);
-    
+
     // Test Space key
     fireEvent.keyDown(button, { key: ' ' });
     expect(mockClick).toHaveBeenCalledTimes(2);
@@ -158,16 +158,16 @@ describe('rc:ComponentName', () => {
 
   it('should not call onClick when disabled', () => {
     const mockClick = vi.fn();
-    
+
     renderComponentName({ onClick: mockClick, disabled: true });
-    
+
     fireEvent.click(screen.getByRole('button'));
     expect(mockClick).not.toHaveBeenCalled();
   });
 
   it('should apply disabled attributes', () => {
     renderComponentName({ disabled: true });
-    
+
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('aria-disabled', 'true');
@@ -176,23 +176,23 @@ describe('rc:ComponentName', () => {
 
   it('should apply custom className', () => {
     const customClass = 'custom-test-class';
-    
+
     renderComponentName({ className: customClass });
-    
+
     expect(screen.getByRole('button')).toHaveClass(customClass);
   });
 
   it('should apply aria-label', () => {
     const ariaLabel = 'Custom accessible label';
-    
+
     renderComponentName({ 'aria-label': ariaLabel });
-    
+
     expect(screen.getByRole('button')).toHaveAttribute('aria-label', ariaLabel);
   });
 
   it('should have proper default props', () => {
     renderComponentName();
-    
+
     const button = screen.getByRole('button');
     expect(button).toHaveClass('component-name--primary');
     expect(button).toHaveClass('component-name--medium');
@@ -396,9 +396,9 @@ export interface UseComponentLogicProps {
   onChange?: (value: boolean) => void;
 }
 
-export const useComponentLogic = ({ 
-  initialValue = false, 
-  onChange 
+export const useComponentLogic = ({
+  initialValue = false,
+  onChange
 }: UseComponentLogicProps = {}) => {
   const [isActive, setIsActive] = useState(initialValue);
 
@@ -508,7 +508,7 @@ interface CardHeaderProps {
 
 const CardHeader: FC<CardHeaderProps> = ({ children, className = '' }) => {
   const { variant } = useCardContext();
-  
+
   return (
     <header className={`card__header card__header--${variant} ${className}`}>
       {children}
@@ -523,7 +523,7 @@ interface CardBodyProps {
 
 const CardBody: FC<CardBodyProps> = ({ children, className = '' }) => {
   const { variant } = useCardContext();
-  
+
   return (
     <div className={`card__body card__body--${variant} ${className}`}>
       {children}
@@ -538,7 +538,7 @@ interface CardFooterProps {
 
 const CardFooter: FC<CardFooterProps> = ({ children, className = '' }) => {
   const { variant } = useCardContext();
-  
+
   return (
     <footer className={`card__footer card__footer--${variant} ${className}`}>
       {children}
@@ -557,6 +557,7 @@ Card.Footer = CardFooter;
 When creating a new component using this template:
 
 ✅ **Component Requirements:**
+
 - [ ] Props interface exported
 - [ ] Component uses FC type with arrow function
 - [ ] Default props defined with destructuring
@@ -564,6 +565,7 @@ When creating a new component using this template:
 - [ ] JSDoc documentation for complex props
 
 ✅ **Accessibility Requirements:**
+
 - [ ] Proper semantic HTML elements
 - [ ] ARIA attributes where needed
 - [ ] Keyboard navigation support
@@ -571,6 +573,7 @@ When creating a new component using this template:
 - [ ] Focus management for interactive elements
 
 ✅ **Testing Requirements:**
+
 - [ ] Test file uses 'rc:' prefix
 - [ ] All interactive behaviors tested
 - [ ] Accessibility attributes tested
@@ -578,6 +581,7 @@ When creating a new component using this template:
 - [ ] Props validation tested
 
 ✅ **Storybook Requirements:**
+
 - [ ] Default story with basic props
 - [ ] Stories for all variants/sizes
 - [ ] Accessibility example story
@@ -585,6 +589,7 @@ When creating a new component using this template:
 - [ ] Documentation descriptions added
 
 ✅ **Performance Considerations:**
+
 - [ ] Memoization added if needed (React.memo, useMemo, useCallback)
 - [ ] Event handlers stable between renders
 - [ ] No unnecessary re-renders

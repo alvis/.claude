@@ -52,31 +52,37 @@ This repository hosts an advanced multi-agent development system designed for en
 ### Development Teams
 
 #### Frontend Excellence
+
 - **`lily-wong-ui-implementation`** - React/Next.js UI implementation expert
 - **`leo-yamamoto-ux-designer`** - UX/UI design and user research
 - **`sophie-laurent-design-systems`** - Design systems and component libraries
 
 #### Backend Engineering
+
 - **`james-mitchell-service-implementation`** - Node.js/TypeScript services
 - **`ethan-kumar-data-architect`** - Database design and optimization
 - **`casey-murphy-integration-specialist`** - API integrations and webhooks
 
 #### Full-Stack & Architecture
+
 - **`priya-sharma-fullstack`** - Full-stack TypeScript development
 - **`alex-chen-architect`** - System architecture and technical strategy
 - **`jordan-lee-api-designer`** - RESTful and GraphQL API design
 
 #### Quality & Security
+
 - **`ava-thompson-testing-evangelist`** - TDD and test coverage champion
 - **`nina-petrov-security-champion`** - Security reviews and threat modeling
 - **`marcus-williams-code-quality`** - Code reviews and refactoring
 
 #### Infrastructure & Operations
+
 - **`felix-anderson-devops`** - CI/CD and automation
 - **`luna-park-sre`** - Site reliability and monitoring
 - **`isabella-costa-cloud-architect`** - Cloud infrastructure design
 
 #### Innovation & Research
+
 - **`phoenix-wright-innovation-catalyst`** - Innovation and rapid prototyping
 - **`nova-chen-research-engineer`** - Technology evaluation
 - **`oliver-singh-data-scientist`** - Machine learning and analytics
@@ -88,6 +94,7 @@ This repository hosts an advanced multi-agent development system designed for en
 The constitution directory contains the single source of truth for all development practices:
 
 ### Directory Structure
+
 ```
 constitutions/
 ├── workflows/      # HOW to do things (step-by-step)
@@ -117,6 +124,7 @@ constitutions/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 22 LTS
 - pnpm 9.x
 - TypeScript ≥5.8
@@ -139,6 +147,7 @@ pnpm constitution:init
 ### Basic Usage
 
 1. **Start with a high-level objective:**
+
    ```
    "Build a user authentication service with OAuth2 support"
    ```
@@ -165,21 +174,22 @@ graph LR
     C -->|Frontend| D[lily-wong-ui-implementation]
     C -->|Backend| E[james-mitchell-service-implementation]
     C -->|Full-Stack| F[priya-sharma-fullstack]
-    
+
     D --> G[TDD Workflow]
     E --> G
     F --> G
-    
+
     G --> H[ava-thompson-testing-evangelist]
     H --> I[nina-petrov-security-champion]
     I --> J[marcus-williams-code-quality]
-    
+
     J --> K[Task Complete]
 ```
 
 ## 🛡️ Quality Gates
 
 ### Mandatory Compliance
+
 - ✅ **TDD Required** - Tests before implementation
 - ✅ **100% Coverage** - No untested code
 - ✅ **TypeScript Strict** - No `any` types
@@ -187,6 +197,7 @@ graph LR
 - ✅ **Constitution Compliance** - All workflows followed
 
 ### Automatic Enforcement
+
 ```typescript
 // Before any code execution:
 if (!workflowSelected) throw new Error("STOP: No workflow selected");
@@ -197,18 +208,21 @@ if (testCoverage < 100) throw new Error("STOP: Insufficient test coverage");
 ## 📊 Tech Stack
 
 ### Core Technologies
+
 - **Language**: TypeScript ≥5.8 (ESM only)
 - **Runtime**: Node.js 22 LTS
 - **Package Manager**: pnpm workspaces
 - **Testing**: Vitest with 100% coverage
 
 ### Frontend
+
 - **Framework**: Next.js ≥15
 - **UI Library**: React ≥19
 - **Styling**: Tailwind CSS 4
 - **State**: Zustand/TanStack Query
 
 ### Backend
+
 - **Framework**: Express/Fastify
 - **Database**: PostgreSQL with Prisma
 - **Authentication**: Supabase Auth
@@ -217,6 +231,7 @@ if (testCoverage < 100) throw new Error("STOP: Insufficient test coverage");
 ## 🤝 Contributing
 
 ### Development Process
+
 1. **Plan** - Agents create comprehensive plan
 2. **Approve** - User approves high-level approach
 3. **Execute** - Agents work in parallel
@@ -224,20 +239,25 @@ if (testCoverage < 100) throw new Error("STOP: Insufficient test coverage");
 5. **Complete** - Summary and merge
 
 ### Agent Collaboration
+
 Agents follow the collaboration framework defined in:
+
 - [`.claude/agents/collaboration-framework.md`](.claude/agents/collaboration-framework.md)
 - [`.claude/agents/escalation-paths.md`](.claude/agents/escalation-paths.md)
 
 ## 📚 Documentation
 
 ### Key Documents
+
 - **[CLAUDE.md](./CLAUDE.md)** - Project constitution and rules
 - **[Collaboration Framework](.claude/agents/collaboration-framework.md)** - How agents work together
 - **[Constitution Workflows](constitutions/workflows/)** - Step-by-step processes
 - **[Tech Standards](constitutions/standards/)** - Technical requirements
 
 ### Agent-Specific Docs
+
 Each agent has detailed documentation in `.claude/agents/`:
+
 - Capabilities and limitations
 - Tool access and models
 - Collaboration patterns
@@ -246,6 +266,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 ## 🎯 Use Cases
 
 ### Optimal For:
+
 - ✅ Large-scale TypeScript applications
 - ✅ Microservices architecture
 - ✅ Full-stack web applications
@@ -253,6 +274,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 - ✅ Security-critical systems
 
 ### Not Recommended For:
+
 - ❌ Quick prototypes (too much overhead)
 - ❌ Non-TypeScript projects
 - ❌ Projects without testing requirements
@@ -261,6 +283,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 ## 📈 Performance Metrics
 
 ### System Capabilities
+
 - **Parallel Agents**: Up to 10 concurrent
 - **Code Quality**: 100% test coverage enforced
 - **Security**: Mandatory security reviews
@@ -270,6 +293,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 ## 🔒 Security
 
 ### Built-in Security Features
+
 - Mandatory security reviews by `nina-petrov-security-champion`
 - Threat modeling for all new features
 - Secure coding standards enforcement
@@ -279,6 +303,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 ## 📞 Support
 
 ### Getting Help
+
 - **Issues**: Report at [GitHub Issues](https://github.com/anthropics/claude-code/issues)
 - **Documentation**: Check constitution files first
 - **Agent Help**: Ask any agent about their capabilities

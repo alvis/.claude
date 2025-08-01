@@ -1,6 +1,6 @@
 # Accessibility Standards
 
-*WCAG compliance standards for inclusive web development*
+_WCAG compliance standards for inclusive web development_
 
 ## Core Accessibility Requirements
 
@@ -88,7 +88,7 @@ All components must meet WCAG 2.1 AA standards:
 
 ```typescript
 // ✅ Good: Proper ARIA usage
-<button 
+<button
   aria-label="Close dialog"
   aria-expanded={isOpen}
   aria-controls="dialog-content"
@@ -97,7 +97,7 @@ All components must meet WCAG 2.1 AA standards:
   <CloseIcon aria-hidden="true" />
 </button>
 
-<div 
+<div
   role="dialog"
   aria-labelledby="dialog-title"
   aria-describedby="dialog-description"
@@ -107,7 +107,7 @@ All components must meet WCAG 2.1 AA standards:
   <p id="dialog-description">Are you sure you want to delete this item?</p>
 </div>
 
-<input 
+<input
   type="email"
   id="email"
   aria-describedby="email-help email-error"
@@ -123,16 +123,16 @@ All components must meet WCAG 2.1 AA standards:
 ```typescript
 // ✅ Good: Appropriate ARIA roles
 <div role="tablist" aria-label="Settings sections">
-  <button 
-    role="tab" 
+  <button
+    role="tab"
     aria-selected={activeTab === 'general'}
     aria-controls="general-panel"
     id="general-tab"
   >
     General
   </button>
-  <button 
-    role="tab" 
+  <button
+    role="tab"
     aria-selected={activeTab === 'privacy'}
     aria-controls="privacy-panel"
     id="privacy-tab"
@@ -141,7 +141,7 @@ All components must meet WCAG 2.1 AA standards:
   </button>
 </div>
 
-<div 
+<div
   role="tabpanel"
   id="general-panel"
   aria-labelledby="general-tab"
@@ -165,23 +165,23 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
     if (isOpen) {
       // Store current focus
       previousFocusRef.current = document.activeElement as HTMLElement;
-      
+
       // Focus the modal
       dialogRef.current?.focus();
-      
+
       // Trap focus within modal
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onClose();
         }
-        
+
         if (e.key === 'Tab') {
           trapFocus(e, dialogRef.current);
         }
       };
-      
+
       document.addEventListener('keydown', handleKeyDown);
-      
+
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
         // Restore focus
@@ -193,7 +193,7 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
@@ -261,7 +261,7 @@ export const FormField: FC<FormFieldProps> = ({
         {label}
         {required && <span aria-label="required"> *</span>}
       </label>
-      
+
       <input
         id={id}
         name={name}
@@ -271,13 +271,13 @@ export const FormField: FC<FormFieldProps> = ({
         aria-required={required}
         {...props}
       />
-      
+
       {helpText && (
         <div id={helpId} className="form-help">
           {helpText}
         </div>
       )}
-      
+
       {error && (
         <div id={errorId} role="alert" className="form-error">
           {error}
@@ -300,34 +300,37 @@ export const useFormValidation = (schema: ValidationSchema) => {
     // Announce errors to screen readers
     const errorCount = Object.keys(newErrors).length;
     if (errorCount > 0) {
-      const announcement = `Form has ${errorCount} error${errorCount > 1 ? 's' : ''}. Please review and correct.`;
-      
+      const announcement = `Form has ${errorCount} error${errorCount > 1 ? "s" : ""}. Please review and correct.`;
+
       // Create live region announcement
-      const liveRegion = document.createElement('div');
-      liveRegion.setAttribute('aria-live', 'polite');
-      liveRegion.setAttribute('aria-atomic', 'true');
-      liveRegion.style.position = 'absolute';
-      liveRegion.style.left = '-10000px';
+      const liveRegion = document.createElement("div");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      liveRegion.style.position = "absolute";
+      liveRegion.style.left = "-10000px";
       liveRegion.textContent = announcement;
-      
+
       document.body.appendChild(liveRegion);
-      
+
       setTimeout(() => {
         document.body.removeChild(liveRegion);
       }, 1000);
     }
   }, []);
 
-  const validate = useCallback((values: Record<string, any>) => {
-    const newErrors = schema.validate(values);
-    setErrors(newErrors);
-    
-    if (Object.keys(newErrors).length > 0) {
-      announceErrors(newErrors);
-    }
-    
-    return Object.keys(newErrors).length === 0;
-  }, [schema, announceErrors]);
+  const validate = useCallback(
+    (values: Record<string, any>) => {
+      const newErrors = schema.validate(values);
+      setErrors(newErrors);
+
+      if (Object.keys(newErrors).length > 0) {
+        announceErrors(newErrors);
+      }
+
+      return Object.keys(newErrors).length === 0;
+    },
+    [schema, announceErrors],
+  );
 
   return { errors, touched, setTouched, validate };
 };
@@ -341,24 +344,24 @@ export const useFormValidation = (schema: ValidationSchema) => {
 // ✅ Good: High contrast color definitions
 const colors = {
   // WCAG AA compliant contrast ratios
-  primary: '#0066cc',        // 4.5:1 against white
-  primaryText: '#ffffff',    // High contrast text
-  secondary: '#6c757d',      // 4.5:1 against white
-  success: '#28a745',        // 3:1 against white
-  danger: '#dc3545',         // 4.5:1 against white
-  warning: '#856404',        // 4.5:1 against white (darker than default)
-  
+  primary: "#0066cc", // 4.5:1 against white
+  primaryText: "#ffffff", // High contrast text
+  secondary: "#6c757d", // 4.5:1 against white
+  success: "#28a745", // 3:1 against white
+  danger: "#dc3545", // 4.5:1 against white
+  warning: "#856404", // 4.5:1 against white (darker than default)
+
   // Text colors
-  textPrimary: '#212529',    // High contrast
-  textSecondary: '#6c757d',  // Still meets AA
-  textMuted: '#6c757d',      // 4.5:1 minimum
+  textPrimary: "#212529", // High contrast
+  textSecondary: "#6c757d", // Still meets AA
+  textMuted: "#6c757d", // 4.5:1 minimum
 } as const;
 
 // ❌ Bad: Low contrast colors
 const badColors = {
-  lightGray: '#e9ecef',     // Too light for text
-  paleBlue: '#cce7ff',      // Insufficient contrast
-  lightText: '#999999',     // Below 4.5:1 ratio
+  lightGray: "#e9ecef", // Too light for text
+  paleBlue: "#cce7ff", // Insufficient contrast
+  lightText: "#999999", // Below 4.5:1 ratio
 };
 ```
 
@@ -377,7 +380,7 @@ export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) =
   };
 
   return (
-    <div 
+    <div
       className={`status-indicator status-${status}`}
       role="status"
       aria-label={`${status}: ${message}`}
@@ -412,9 +415,9 @@ export const useLiveAnnouncement = () => {
     liveRegion.style.position = 'absolute';
     liveRegion.style.left = '-10000px';
     liveRegion.textContent = message;
-    
+
     document.body.appendChild(liveRegion);
-    
+
     setTimeout(() => {
       if (document.body.contains(liveRegion)) {
         document.body.removeChild(liveRegion);
@@ -428,11 +431,11 @@ export const useLiveAnnouncement = () => {
 // Usage in component
 export const NotificationSystem: FC<Props> = () => {
   const { announce } = useLiveAnnouncement();
-  
+
   const handleSuccess = useCallback((message: string) => {
     announce(`Success: ${message}`, 'polite');
   }, [announce]);
-  
+
   const handleError = useCallback((message: string) => {
     announce(`Error: ${message}`, 'assertive');
   }, [announce]);
@@ -481,6 +484,7 @@ export const IconButton: FC<Props> = ({ icon, onClick, label }) => {
 ### Accessibility Testing Checklist
 
 ✅ **Manual Testing Checklist:**
+
 - [ ] Navigate entire interface using only keyboard
 - [ ] Test with screen reader (NVDA, JAWS, VoiceOver)
 - [ ] Verify color contrast meets WCAG AA standards
@@ -505,7 +509,7 @@ describe('rc:Button accessibility', () => {
     const { container } = render(
       <Button onClick={() => {}}>Click me</Button>
     );
-    
+
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
@@ -513,13 +517,13 @@ describe('rc:Button accessibility', () => {
   it('should be accessible via keyboard', () => {
     const mockClick = vi.fn();
     render(<Button onClick={mockClick}>Click me</Button>);
-    
+
     const button = screen.getByRole('button');
     button.focus();
-    
+
     // Should be focusable
     expect(button).toHaveFocus();
-    
+
     // Should activate on Enter
     fireEvent.keyDown(button, { key: 'Enter' });
     expect(mockClick).toHaveBeenCalled();
@@ -527,14 +531,14 @@ describe('rc:Button accessibility', () => {
 
   it('should have proper ARIA attributes', () => {
     render(
-      <Button 
-        aria-label="Custom label" 
+      <Button
+        aria-label="Custom label"
         disabled={true}
       >
         Button
       </Button>
     );
-    
+
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-label', 'Custom label');
     expect(button).toHaveAttribute('disabled');

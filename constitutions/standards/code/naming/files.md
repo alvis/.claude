@@ -1,10 +1,11 @@
 # File and Directory Naming Standards
 
-*Standards for naming files, directories, modules, and environment configurations*
+_Standards for naming files, directories, modules, and environment configurations_
 
 ## Core File Naming Principles
 
 ### MUST Follow Rules
+
 - **MUST use kebab-case** for regular TypeScript/JavaScript files
 - **MUST use PascalCase** for React component files only
 - **MUST match export type** - Noun for objects/classes, verb for functions
@@ -12,6 +13,7 @@
 - **MUST use descriptive names** that indicate file purpose
 
 ### SHOULD Follow Guidelines
+
 - **SHOULD group by feature** rather than file type
 - **SHOULD keep names concise** but meaningful
 - **SHOULD use consistent suffixes** (.service, .repository, .types)
@@ -23,23 +25,23 @@
 
 ```typescript
 // ✅ Good: Clear, kebab-case naming
-user-service.ts              // Service class file
-email-validator.ts           // Validation utilities
-api-client.ts               // API client implementation
-order-repository.ts         // Data access layer
-payment-processor.ts        // Business logic
+user - service.ts; // Service class file
+email - validator.ts; // Validation utilities
+api - client.ts; // API client implementation
+order - repository.ts; // Data access layer
+payment - processor.ts; // Business logic
 
 // ✅ Good: Test file naming
-user-service.test.ts        // Unit tests
-user-service.spec.ts        // Alternative test suffix
-email-validator.test.ts     // Matches source file name
+user - service.test.ts; // Unit tests
+user - service.spec.ts; // Alternative test suffix
+email - validator.test.ts; // Matches source file name
 
 // ❌ Bad: Poor file naming
-userservice.ts              // No word separation
-user_service.ts             // Wrong case style (snake_case)
-UserService.ts              // PascalCase for non-components
-utils.ts                    // Too generic
-helpers.ts                  // Too vague
+userservice.ts; // No word separation
+user_service.ts; // Wrong case style (snake_case)
+UserService.ts; // PascalCase for non-components
+utils.ts; // Too generic
+helpers.ts; // Too vague
 ```
 
 ### Component Files (React/Vue/Angular)
@@ -70,17 +72,18 @@ UserProfileComponent.tsx    // Redundant 'Component' suffix
 ```typescript
 // ✅ Good: Index file usage
 // src/services/index.ts
-export { UserService } from './user-service';
-export { AuthService } from './auth-service';
-export { EmailService } from './email-service';
+export { UserService } from "./user-service";
+export { AuthService } from "./auth-service";
+export { EmailService } from "./email-service";
 
 // src/components/Button/index.tsx
-export { Button } from './Button';
-export type { ButtonProps } from './Button.types';
+export { Button } from "./Button";
+export type { ButtonProps } from "./Button.types";
 
 // ❌ Bad: Avoid complex logic in index files
 // index.ts
-class ComplexService {      // Don't define classes in index
+class ComplexService {
+  // Don't define classes in index
   // Implementation
 }
 ```
@@ -102,7 +105,7 @@ export class UserValidator {
 export const userValidator = {
   validate(user: User): ValidationResult {
     // Implementation
-  }
+  },
 };
 
 // ✅ Good: Verb for functions
@@ -125,20 +128,20 @@ export function validateUser(user: User): ValidationResult {
 ```typescript
 // ✅ Good: When file has multiple exports
 // user-utils.ts - multiple related functions
-export function validateUser(user: User): boolean { }
-export function sanitizeUser(user: User): User { }
-export function compareUsers(a: User, b: User): boolean { }
+export function validateUser(user: User): boolean {}
+export function sanitizeUser(user: User): User {}
+export function compareUsers(a: User, b: User): boolean {}
 
 // user-types.ts - multiple type definitions
-export interface User { }
-export interface UserProfile { }
-export type UserRole = 'admin' | 'user';
+export interface User {}
+export interface UserProfile {}
+export type UserRole = "admin" | "user";
 
 // ❌ Bad: Unrelated exports in same file
 // utils.ts
-export function validateUser() { }
-export function formatCurrency() { }  // Unrelated to users
-export function parseDate() { }        // Different domain
+export function validateUser() {}
+export function formatCurrency() {} // Unrelated to users
+export function parseDate() {} // Different domain
 ```
 
 ## Directory Structure
@@ -243,14 +246,14 @@ MyPackage                  // Should be kebab-case
 ```typescript
 // ✅ Good: Internal module organization
 // src/modules/authentication/index.ts
-export * from './auth.service';
-export * from './auth.guard';
-export * from './auth.types';
+export * from "./auth.service";
+export * from "./auth.guard";
+export * from "./auth.types";
 
 // src/modules/user-management/index.ts
-export * from './user.service';
-export * from './user.repository';
-export * from './user.types';
+export * from "./user.service";
+export * from "./user.repository";
+export * from "./user.types";
 ```
 
 ## Environment and Configuration Files
@@ -337,11 +340,12 @@ URL=...                  // Too generic
 
 ```markdown
 # ✅ Good: Documentation file naming
-README.md                 # Project readme
-CONTRIBUTING.md          # Contribution guidelines
-CHANGELOG.md             # Version history
-LICENSE.md               # License file
-SECURITY.md              # Security policy
+
+README.md # Project readme
+CONTRIBUTING.md # Contribution guidelines
+CHANGELOG.md # Version history
+LICENSE.md # License file
+SECURITY.md # Security policy
 
 docs/
 ├── getting-started.md
@@ -354,18 +358,16 @@ docs/
 
 ```typescript
 // ✅ Good: Build/config file naming
-tsconfig.json            // TypeScript config
-.eslintrc.js            // ESLint config
-.prettierrc             // Prettier config
-jest.config.js          // Jest config
-webpack.config.js       // Webpack config
-rollup.config.js        // Rollup config
-vite.config.ts          // Vite config
+tsconfig.json.eslintrc.js.prettierrc; // TypeScript config // ESLint config // Prettier config
+jest.config.js; // Jest config
+webpack.config.js; // Webpack config
+rollup.config.js; // Rollup config
+vite.config.ts; // Vite config
 
 // Docker files
-Dockerfile              // Main Docker file
-docker-compose.yml      // Docker Compose
-Dockerfile.dev          // Development Docker file
+Dockerfile; // Main Docker file
+docker - compose.yml; // Docker Compose
+Dockerfile.dev; // Development Docker file
 ```
 
 ## Import Path Organization
@@ -373,26 +375,26 @@ Dockerfile.dev          // Development Docker file
 ```typescript
 // ✅ Good: Import organization
 // 1. Node modules
-import express from 'express';
-import { readFile } from 'fs/promises';
+import express from "express";
+import { readFile } from "fs/promises";
 
 // 2. External packages
-import axios from 'axios';
-import { z } from 'zod';
+import axios from "axios";
+import { z } from "zod";
 
 // 3. Internal aliases
-import { UserService } from '@/services/user-service';
-import { logger } from '@/utils/logger';
+import { UserService } from "@/services/user-service";
+import { logger } from "@/utils/logger";
 
 // 4. Relative imports
-import { validateUser } from './validate-user';
-import type { User } from './user.types';
+import { validateUser } from "./validate-user";
+import type { User } from "./user.types";
 
 // ❌ Bad: Mixed import order
-import { validateUser } from './validate-user';
-import express from 'express';
-import { UserService } from '@/services/user-service';
-import axios from 'axios';
+import { validateUser } from "./validate-user";
+import express from "express";
+import { UserService } from "@/services/user-service";
+import axios from "axios";
 ```
 
 ## Anti-Patterns to Avoid

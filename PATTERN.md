@@ -1,6 +1,6 @@
 # Constitution Restructuring Pattern
 
-*Documentation of the role-based organization approach for constitution files*
+_Documentation of the role-based organization approach for constitution files_
 
 ## Overview
 
@@ -28,7 +28,7 @@ Each role gets a dedicated entry point showing:
 **Target Roles:**
 
 - Frontend Engineer
-- Backend Engineer  
+- Backend Engineer
 - Fullstack Engineer (most common)
 - Platform Engineer
 - Data Engineer
@@ -69,7 +69,7 @@ Within each content type, group by domain:
 - Focus on single action or outcome
 - Include workflow metadata at top
 
-### Standards (Rule-Oriented)  
+### Standards (Rule-Oriented)
 
 - Use nouns: `typescript.md`, `api-design.md`
 - Group related rules together
@@ -113,14 +113,17 @@ Within each content type, group by domain:
 **Prerequisites**: Required knowledge, tools, or setup
 
 ## Steps
+
 1. Specific action with verification
 2. Next action with expected outcome
 3. Final step with next actions
 
 ## Standards to Follow
+
 - Link to relevant standards files
 
 ## Common Issues
+
 - Known problems and solutions
 ```
 
@@ -129,20 +132,24 @@ Within each content type, group by domain:
 ```markdown
 # [Topic] Standards
 
-*Brief description of what rules this covers*
+_Brief description of what rules this covers_
 
 ## Core Principles
+
 - High-level guidelines
 
 ## Requirements
+
 - Must-follow rules
 - Critical constraints
 
-## Conventions  
+## Conventions
+
 - Preferred approaches
 - Style guidelines
 
 ## Examples
+
 - Good/bad comparisons
 - Common patterns
 ```
@@ -150,18 +157,21 @@ Within each content type, group by domain:
 ### Pattern Files
 
 ```markdown
-# [Template Name]  
+# [Template Name]
 
-*Brief description of when to use this pattern*
+_Brief description of when to use this pattern_
 
 ## Template
+
 [Copy-paste ready code/structure]
 
 ## Variations
+
 - Common modifications
 - Optional enhancements
 
 ## Usage Notes
+
 - When to use vs alternatives
 - Common mistakes to avoid
 ```
@@ -208,6 +218,6 @@ This pattern enables:
 
 - Only split content that exists today
 - Preserve all current functionality
-- Maintain backward compatibility during transition  
+- Maintain backward compatibility during transition
 - Update tooling to reference new locations
 - Create validation scripts for consistency
