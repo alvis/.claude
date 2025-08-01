@@ -9,6 +9,7 @@
 ### 1. Prepare Branch
 
 Ensure your branch is ready:
+
 - All commits follow [commit standards](../../standards/project/git-workflow.md)
 - All tests pass locally
 - Code follows quality standards
@@ -17,6 +18,7 @@ Ensure your branch is ready:
 ### 2. Create PR with Proper Title
 
 Use same format as commit messages:
+
 ```
 feat(api): add user export functionality
 ```
@@ -25,30 +27,38 @@ feat(api): add user export functionality
 
 ```markdown
 ### 📌
+
 **> Purpose and main changes in <3 sentences**
 
 ### 📝 Context
+
 Why this change is needed, related tickets
 
 ### 🛠️ Implementation
+
 What was implemented and how
 
 ### ✅ Checklist
+
 - [ ] Code follows style guide
 - [ ] Tests added/updated
 - [ ] Documentation updated
 - [ ] Manually tested
 
 ### 💥 Breaking Changes
+
 (omit if none)
 
 ### 🔗 Related Issues
+
 Closes #123, See #456
 
 ### 🧪 Manual Testing
+
 (omit if not needed)
 
 ### 📋 Additional Notes
+
 (omit if none)
 ```
 
@@ -84,16 +94,19 @@ Closes #123, See #456
 ## PR Workflow Phases
 
 ### Draft Phase
+
 - Incomplete work in progress
 - Used for early feedback
 - Can have failing tests temporarily
 
 ### Ready for Review
+
 - All functionality complete
 - All tests passing
 - Ready for final review
 
 ### Approved
+
 - All reviews completed
 - All checks passed
 - Ready to merge

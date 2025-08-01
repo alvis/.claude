@@ -1,10 +1,11 @@
 # Naming Patterns and Common Conventions
 
-*Common patterns, anti-patterns, and conventions for consistent naming across the codebase*
+_Common patterns, anti-patterns, and conventions for consistent naming across the codebase_
 
 ## Core Pattern Principles
 
 ### MUST Follow Rules
+
 - **MUST be consistent** - Same pattern for similar concepts
 - **MUST avoid reserved words** - Never use language keywords
 - **MUST indicate plurality** - Clear distinction between single/multiple
@@ -12,6 +13,7 @@
 - **MUST match context** - Use domain-appropriate terminology
 
 ### SHOULD Follow Guidelines
+
 - **SHOULD follow conventions** - Framework and library patterns
 - **SHOULD group logically** - Related items share prefixes/suffixes
 - **SHOULD indicate relationships** - Clear parent-child naming
@@ -25,60 +27,60 @@
 // ✅ Good: Consistent verb usage
 
 // Data Retrieval (Sync/Async)
-function getUser(id: string): User | null              // Sync, may be cached
-function fetchUser(id: string): Promise<User>          // Async, external source
-function findUser(criteria: SearchCriteria): User | null // Search operation
-function listUsers(): User[]                           // Get all items
-function retrieveUserData(id: string): Promise<UserData> // Complex async operation
+function getUser(id: string): User | null; // Sync, may be cached
+function fetchUser(id: string): Promise<User>; // Async, external source
+function findUser(criteria: SearchCriteria): User | null; // Search operation
+function listUsers(): User[]; // Get all items
+function retrieveUserData(id: string): Promise<UserData>; // Complex async operation
 
 // Data Manipulation
-function createUser(data: CreateUserData): Promise<User>
-function updateUser(id: string, data: UpdateData): Promise<User>
-function deleteUser(id: string): Promise<void>
-function saveUser(user: User): Promise<User>           // Create or update
-function insertUser(user: User): Promise<User>         // Explicit create
+function createUser(data: CreateUserData): Promise<User>;
+function updateUser(id: string, data: UpdateData): Promise<User>;
+function deleteUser(id: string): Promise<void>;
+function saveUser(user: User): Promise<User>; // Create or update
+function insertUser(user: User): Promise<User>; // Explicit create
 
 // Validation and Checks
-function validateEmail(email: string): ValidationResult
-function isValidEmail(email: string): boolean
-function checkUserExists(id: string): Promise<boolean>
-function verifyAuthentication(token: string): Promise<boolean>
-function ensureUserActive(user: User): User | never
+function validateEmail(email: string): ValidationResult;
+function isValidEmail(email: string): boolean;
+function checkUserExists(id: string): Promise<boolean>;
+function verifyAuthentication(token: string): Promise<boolean>;
+function ensureUserActive(user: User): User | never;
 
 // Transformation
-function transformUserData(raw: unknown): User
-function parseUserInput(input: string): UserInput
-function formatUserName(user: User): string
-function serializeUser(user: User): string
-function deserializeUser(data: string): User
+function transformUserData(raw: unknown): User;
+function parseUserInput(input: string): UserInput;
+function formatUserName(user: User): string;
+function serializeUser(user: User): string;
+function deserializeUser(data: string): User;
 
 // State Changes
-function enableFeature(featureId: string): void
-function disableFeature(featureId: string): void
-function toggleFeature(featureId: string): void
-function activateUser(userId: string): Promise<void>
-function deactivateUser(userId: string): Promise<void>
+function enableFeature(featureId: string): void;
+function disableFeature(featureId: string): void;
+function toggleFeature(featureId: string): void;
+function activateUser(userId: string): Promise<void>;
+function deactivateUser(userId: string): Promise<void>;
 ```
 
 ### Handler and Callback Patterns
 
 ```typescript
 // ✅ Good: Event handler naming
-function handleClick(event: MouseEvent): void
-function handleSubmit(event: FormEvent): void
-function handleUserUpdate(user: User): void
+function handleClick(event: MouseEvent): void;
+function handleSubmit(event: FormEvent): void;
+function handleUserUpdate(user: User): void;
 
 // ✅ Good: Callback naming
-function onSuccess(result: Result): void
-function onError(error: Error): void
-function onChange(value: string): void
-function onComplete(): void
+function onSuccess(result: Result): void;
+function onError(error: Error): void;
+function onChange(value: string): void;
+function onComplete(): void;
 
 // ✅ Good: Lifecycle naming
-function beforeSave(entity: Entity): void
-function afterSave(entity: Entity): void
-function onMount(): void
-function onUnmount(): void
+function beforeSave(entity: Entity): void;
+function afterSave(entity: Entity): void;
+function onMount(): void;
+function onUnmount(): void;
 ```
 
 ## Boolean Naming Patterns
@@ -87,18 +89,18 @@ function onUnmount(): void
 
 ```typescript
 // ✅ Good: Boolean prefixes
-const isActive = user.status === 'active';
-const isLoading = state === 'loading';
+const isActive = user.status === "active";
+const isLoading = state === "loading";
 const isVisible = !element.hidden;
 const isEnabled = feature.enabled;
 const isAuthenticated = !!user.token;
 
-const hasPermission = permissions.includes('write');
+const hasPermission = permissions.includes("write");
 const hasChildren = node.children.length > 0;
 const hasError = errors.length > 0;
 const hasChanges = isDirty(form);
 
-const canEdit = role === 'admin' || isOwner;
+const canEdit = role === "admin" || isOwner;
 const canDelete = hasPermission && !isProtected;
 const canSubmit = isValid && !isSubmitting;
 
@@ -110,9 +112,9 @@ const willExpire = expiryDate < futureDate;
 const willUpdate = version < latestVersion;
 
 // ❌ Bad: Unclear boolean names
-const active = true;          // Missing 'is' prefix
-const permission = false;     // Unclear what permission
-const editable = true;        // Should be canEdit or isEditable
+const active = true; // Missing 'is' prefix
+const permission = false; // Unclear what permission
+const editable = true; // Should be canEdit or isEditable
 ```
 
 ### Boolean Method Patterns
@@ -120,10 +122,10 @@ const editable = true;        // Should be canEdit or isEditable
 ```typescript
 // ✅ Good: Boolean method naming
 class User {
-  isActive(): boolean { }
-  hasRole(role: string): boolean { }
-  canPerformAction(action: string): boolean { }
-  shouldReceiveNotifications(): boolean { }
+  isActive(): boolean {}
+  hasRole(role: string): boolean {}
+  canPerformAction(action: string): boolean {}
+  shouldReceiveNotifications(): boolean {}
 }
 
 interface Validator {
@@ -139,18 +141,18 @@ interface Validator {
 
 ```typescript
 // ✅ Good: Collection naming
-const users: User[] = [];                    // Plural for arrays
-const activeUsers = users.filter(u => u.isActive);
-const userIds = users.map(u => u.id);
-const userEmails = users.map(u => u.email);
+const users: User[] = []; // Plural for arrays
+const activeUsers = users.filter((u) => u.isActive);
+const userIds = users.map((u) => u.id);
+const userEmails = users.map((u) => u.email);
 
 // Specific collection patterns
 const customerOrders = await getOrdersForCustomer(customerId);
-const pendingInvoices = invoices.filter(i => i.status === 'pending');
-const availableProducts = products.filter(p => p.inStock);
+const pendingInvoices = invoices.filter((i) => i.status === "pending");
+const availableProducts = products.filter((p) => p.inStock);
 
 // ❌ Bad: Singular names for collections
-const user = [];              // Confusing
+const user = []; // Confusing
 const product = getProducts(); // Misleading
 ```
 
@@ -164,21 +166,21 @@ const emailToUser = new Map<string, User>();
 
 // Object as dictionary
 const errorMessages: Record<ErrorCode, string> = {
-  E001: 'Invalid input',
-  E002: 'Unauthorized'
+  E001: "Invalid input",
+  E002: "Unauthorized",
 };
 
 const currencySymbols: Record<Currency, string> = {
-  USD: '$',
-  EUR: '€',
-  GBP: '£'
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
 };
 
 // Lookup tables
 const statusColors = {
-  active: 'green',
-  pending: 'yellow',
-  inactive: 'red'
+  active: "green",
+  pending: "yellow",
+  inactive: "red",
 };
 ```
 
@@ -202,15 +204,15 @@ const intervalHours = 24;
 const cacheTtlDays = 7;
 
 // Time ranges
-const startDate = new Date('2024-01-01');
-const endDate = new Date('2024-12-31');
-const fromTimestamp = Date.now() - (24 * 60 * 60 * 1000);
+const startDate = new Date("2024-01-01");
+const endDate = new Date("2024-12-31");
+const fromTimestamp = Date.now() - 24 * 60 * 60 * 1000;
 const toTimestamp = Date.now();
 
 // ❌ Bad: Ambiguous time names
-const time = 5000;           // 5000 what?
-const duration = 30;         // Missing unit
-const date = new Date();     // What date? Created? Updated?
+const time = 5000; // 5000 what?
+const duration = 30; // Missing unit
+const date = new Date(); // What date? Created? Updated?
 ```
 
 ## Configuration and Options Patterns
@@ -235,22 +237,24 @@ interface ServerOptions {
 }
 
 // Settings vs Config
-const userSettings = {          // User-configurable
-  theme: 'dark',
-  language: 'en',
-  notifications: true
+const userSettings = {
+  // User-configurable
+  theme: "dark",
+  language: "en",
+  notifications: true,
 };
 
-const systemConfig = {          // System-level
+const systemConfig = {
+  // System-level
   maxConnections: 100,
   timeout: 30000,
-  retryAttempts: 3
+  retryAttempts: 3,
 };
 
 // ❌ Bad: Unclear config names
-const options = { };           // Too generic
-const settings = { };          // What kind of settings?
-const config = { };            // What is being configured?
+const options = {}; // Too generic
+const settings = {}; // What kind of settings?
+const config = {}; // What is being configured?
 ```
 
 ## Error and Exception Patterns
@@ -259,28 +263,28 @@ const config = { };            // What is being configured?
 
 ```typescript
 // ✅ Good: Error naming patterns
-class ValidationError extends Error { }
-class AuthenticationError extends Error { }
-class AuthorizationError extends Error { }
-class NotFoundError extends Error { }
-class ConflictError extends Error { }
-class NetworkError extends Error { }
-class DatabaseError extends Error { }
+class ValidationError extends Error {}
+class AuthenticationError extends Error {}
+class AuthorizationError extends Error {}
+class NotFoundError extends Error {}
+class ConflictError extends Error {}
+class NetworkError extends Error {}
+class DatabaseError extends Error {}
 
 // Error codes
 enum ErrorCode {
-  INVALID_INPUT = 'INVALID_INPUT',
-  UNAUTHORIZED = 'UNAUTHORIZED',
-  NOT_FOUND = 'NOT_FOUND',
-  INTERNAL_ERROR = 'INTERNAL_ERROR'
+  INVALID_INPUT = "INVALID_INPUT",
+  UNAUTHORIZED = "UNAUTHORIZED",
+  NOT_FOUND = "NOT_FOUND",
+  INTERNAL_ERROR = "INTERNAL_ERROR",
 }
 
 // Error messages
 const errorMessages = {
-  userNotFound: 'User not found',
-  invalidCredentials: 'Invalid username or password',
-  insufficientPermissions: 'Insufficient permissions',
-  networkTimeout: 'Network request timed out'
+  userNotFound: "User not found",
+  invalidCredentials: "Invalid username or password",
+  insufficientPermissions: "Insufficient permissions",
+  networkTimeout: "Network request timed out",
 };
 ```
 
@@ -290,21 +294,21 @@ const errorMessages = {
 
 ```typescript
 // ✅ Good: Consistent acronym handling
-const apiURL = 'https://api.example.com';     // URL stays uppercase
-const userUUID = generateUUID();              // UUID stays uppercase
-const htmlParser = new HTMLParser();          // HTML stays uppercase
-const xmlDocument = parseXML(data);           // XML stays uppercase
-const httpClient = new HTTPClient();          // HTTP stays uppercase
-const sqlQuery = 'SELECT * FROM users';       // SQL stays uppercase
+const apiURL = "https://api.example.com"; // URL stays uppercase
+const userUUID = generateUUID(); // UUID stays uppercase
+const htmlParser = new HTMLParser(); // HTML stays uppercase
+const xmlDocument = parseXML(data); // XML stays uppercase
+const httpClient = new HTTPClient(); // HTTP stays uppercase
+const sqlQuery = "SELECT * FROM users"; // SQL stays uppercase
 
 // Well-known lowercase acronyms
-const userId = user.id;                       // 'id' is universally lowercase
-const apiUrl = config.apiUrl;                 // 'url' acceptable in context
+const userId = user.id; // 'id' is universally lowercase
+const apiUrl = config.apiUrl; // 'url' acceptable in context
 
 // ❌ Bad: Inconsistent acronyms
-const apiUrl = 'https://api.example.com';     // Should be apiURL
-const htmlparser = new HtmlParser();          // Should be HTMLParser
-const XmlDocument = parseXml(data);           // Inconsistent casing
+const apiUrl = "https://api.example.com"; // Should be apiURL
+const htmlparser = new HtmlParser(); // Should be HTMLParser
+const XmlDocument = parseXml(data); // Inconsistent casing
 ```
 
 ## Common Anti-Patterns
@@ -318,8 +322,8 @@ const info = getUserInfo();
 const obj = processObject();
 const thing = getThing();
 const stuff = doStuff();
-const temp = calculateTemp();  // Unless it's temperature
-const tmp = await getUser();   // Avoid abbreviations
+const temp = calculateTemp(); // Unless it's temperature
+const tmp = await getUser(); // Avoid abbreviations
 
 // ❌ Bad: Single letter variables (except loops)
 const u = await getUser();
@@ -327,21 +331,21 @@ const p = processPayment();
 const e = handleError();
 
 // ❌ Bad: Hungarian notation
-const strName = 'John';        // Type is clear from TypeScript
-const arrUsers = [];           // Redundant prefix
-const bIsActive = true;        // Just use isActive
-const intCount = 5;            // Type system handles this
+const strName = "John"; // Type is clear from TypeScript
+const arrUsers = []; // Redundant prefix
+const bIsActive = true; // Just use isActive
+const intCount = 5; // Type system handles this
 
 // ❌ Bad: Numbered variables
 const user1 = users[0];
 const user2 = users[1];
-const error1 = 'First error';
-const error2 = 'Second error';
+const error1 = "First error";
+const error2 = "Second error";
 
 // ❌ Bad: Overly clever names
-const batman = cacheManager;    // Cute but unclear
-const ninja = secretFunction;   // Confusing
-const magic = algorithm;        // Doesn't explain purpose
+const batman = cacheManager; // Cute but unclear
+const ninja = secretFunction; // Confusing
+const magic = algorithm; // Doesn't explain purpose
 ```
 
 ### Reserved Words and Conflicts
@@ -372,11 +376,11 @@ const filter = data;            // Shadows Array.filter
 ```typescript
 // ✅ Good: API-related naming
 const apiClient = new ApiClient();
-const apiEndpoint = '/users';
+const apiEndpoint = "/users";
 const apiResponse = await fetch(url);
-const requestHeaders = { 'Content-Type': 'application/json' };
+const requestHeaders = { "Content-Type": "application/json" };
 const responseStatus = 200;
-const httpMethod = 'POST';
+const httpMethod = "POST";
 ```
 
 ### Database and ORM
@@ -386,7 +390,7 @@ const httpMethod = 'POST';
 const userRepository = new UserRepository();
 const dbConnection = await connect();
 const queryBuilder = new QueryBuilder();
-const migrationVersion = '001_create_users';
+const migrationVersion = "001_create_users";
 const transactionScope = await beginTransaction();
 ```
 
@@ -396,7 +400,7 @@ const transactionScope = await beginTransaction();
 // ✅ Good: UI naming patterns
 const isModalOpen = false;
 const selectedItems: Item[] = [];
-const activeTab = 'profile';
+const activeTab = "profile";
 const formErrors: ValidationError[] = [];
 const isSubmitting = false;
 const hasUnsavedChanges = true;
@@ -406,16 +410,16 @@ const hasUnsavedChanges = true;
 
 ```typescript
 // ✅ Good: Test naming patterns
-describe('UserService', () => {
+describe("UserService", () => {
   const mockUser = createMockUser();
   const stubRepository = new UserRepositoryStub();
-  const fakeData = { id: '123', name: 'Test' };
+  const fakeData = { id: "123", name: "Test" };
   const expectedResult = { success: true };
   const actualResult = service.process(input);
 
-  it('should create user when valid data provided', () => {});
-  it('should throw error when email already exists', () => {});
-  it('should return null when user not found', () => {});
+  it("should create user when valid data provided", () => {});
+  it("should throw error when email already exists", () => {});
+  it("should return null when user not found", () => {});
 });
 ```
 

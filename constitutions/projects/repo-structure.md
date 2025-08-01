@@ -22,9 +22,9 @@ supabase/          # Supabase configs
 
 ## Project Structure
 
-* `src/` or `source/` - Source code
-* `spec/` - Tests (mirrors src/ structure)
-* React tests - See `06-react-conventions.md`
+- `src/` or `source/` - Source code
+- `spec/` - Tests (mirrors src/ structure)
+- React tests - See `06-react-conventions.md`
 
 ## Build Outputs
 
@@ -51,16 +51,16 @@ manifests/profile/
 
 ## Files
 
-* Code files: `camelCase.ts`
-  * ✅ `getUserProfile.ts`
-  * ❌ `get-user-profile.ts`
+- Code files: `camelCase.ts`
+  - ✅ `getUserProfile.ts`
+  - ❌ `get-user-profile.ts`
 
 ## Environment Files
 
-* Must start with `.env`
-  * ✅ `.env.development`
-  * ✅ `.env.supabase.local`
-  * ❌ `env.local`
-  * ❌ `.supabase.env`
+- Must start with `.env`
+  - ✅ `.env.development`
+  - ✅ `.env.supabase.local`
+  - ❌ `env.local`
+  - ❌ `.supabase.env`
 
 </naming>

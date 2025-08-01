@@ -1,6 +1,6 @@
 # React & Frontend Coding Standards
 
-*Specific standards for React components, hooks, and frontend development*
+_Specific standards for React components, hooks, and frontend development_
 
 ## Table of Contents
 
@@ -73,16 +73,16 @@ export interface ButtonProps {
 }
 
 // Component uses the exported interface
-export const Button: FC<ButtonProps> = ({ 
+export const Button: FC<ButtonProps> = ({
   variant = 'primary',
   onClick,
   'aria-label': ariaLabel,
   disabled = false,
-  children 
+  children
 }) => {
   return (
-    <button 
-      className={variant} 
+    <button
+      className={variant}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled}
@@ -150,7 +150,7 @@ export const Button: FC<ButtonProps> = ({
 </Card>
 
 // ❌ Avoid: Monolithic components with many props
-<UserCard 
+<UserCard
   title="User Profile"
   showHeader={true}
   headerStyle="primary"
@@ -176,7 +176,7 @@ export const ExpensiveList = memo(({ items }: Props) => {
 });
 
 // Memoize calculations
-const sorted = useMemo(() => 
+const sorted = useMemo(() =>
   items.sort((a, b) => b.score - a.score),
   [items]
 );
@@ -225,12 +225,12 @@ const HeavyChart = dynamic(() => import('#components/Chart'), {
 ### Font Optimization
 
 ```typescript
-import { Inter } from 'next/font/google';
+import { Inter } from "next/font/google";
 
 const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
 });
 ```
 
@@ -270,8 +270,8 @@ interface UseDataReturn<T> {
 }
 
 export function useData<T>(
-  url: string, 
-  options: UseDataOptions = {}
+  url: string,
+  options: UseDataOptions = {},
 ): UseDataReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
@@ -319,7 +319,7 @@ describe('rc:Button', () => {
 
   it('should call onClick when clicked', () => {
     const mockClick = vi.fn();
- 
+
     render(<Button onClick={mockClick}>Click</Button>);
     fireEvent.click(screen.getByRole('button'));
 
@@ -363,7 +363,7 @@ describe('rc:Button', () => {
 
 ```typescript
 // ✅ Good: Semantic and accessible
-<button 
+<button
   aria-label="Close dialog"
   onClick={handleClose}
 >
@@ -373,7 +373,7 @@ describe('rc:Button', () => {
 // ✅ Good: Form accessibility
 <div>
   <label htmlFor="email">Email Address</label>
-  <input 
+  <input
     id="email"
     type="email"
     aria-describedby="email-help"
@@ -397,20 +397,20 @@ describe('rc:Button', () => {
 ### Story Structure
 
 ```typescript
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "./Button";
 
 const meta: Meta<typeof Button> = {
-  title: 'Components/Button',
+  title: "Components/Button",
   component: Button,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: { type: 'select' },
-      options: ['primary', 'secondary'],
+      control: { type: "select" },
+      options: ["primary", "secondary"],
     },
   },
 };
@@ -420,15 +420,15 @@ type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
   args: {
-    variant: 'primary',
-    children: 'Button',
+    variant: "primary",
+    children: "Button",
   },
 };
 
 export const Secondary: Story = {
   args: {
-    variant: 'secondary',
-    children: 'Button',
+    variant: "secondary",
+    children: "Button",
   },
 };
 ```

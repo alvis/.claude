@@ -1,6 +1,6 @@
 # Git Workflow Standards
 
-*Standards for version control, commit messages, and branch management*
+_Standards for version control, commit messages, and branch management_
 
 ## Commit Format
 
@@ -75,7 +75,7 @@ Format: `<type>/<scope>/<topic>`
 
 ```bash
 npm run lint             # Must pass
-npm run coverage            # Must pass  
+npm run coverage            # Must pass
 npm run typecheck       # Must pass (if available)
 ```
 
@@ -174,7 +174,7 @@ Move shared validation functions to utils module to
 reduce code duplication across multiple endpoints.
 
 - Extract email validation
-- Extract phone number validation  
+- Extract phone number validation
 - Add comprehensive test coverage
 
 No breaking changes
@@ -211,9 +211,11 @@ Use this template for all pull requests:
 
 ```markdown
 ## Description
+
 Brief description of what this PR does and why it's needed.
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
@@ -222,24 +224,29 @@ Brief description of what this PR does and why it's needed.
 - [ ] Refactoring (no functional changes)
 
 ## Related Issues
+
 Closes #(issue number)
 Related to #(issue numbers)
 
 ## Changes Made
+
 - List specific changes made in this PR
 - Include technical details where relevant
 - Mention any architectural decisions
 
 ## Testing
+
 - [ ] Unit tests pass locally
 - [ ] Integration tests pass locally
 - [ ] Manual testing completed
 - [ ] Test coverage maintained or improved
 
 ## Screenshots (if applicable)
+
 Add screenshots for UI changes
 
 ## Checklist
+
 - [ ] My code follows the project's style guidelines
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
@@ -250,20 +257,24 @@ Add screenshots for UI changes
 - [ ] Any dependent changes have been merged and published
 
 ## Performance Impact
+
 - [ ] This change has no negative performance impact
 - [ ] Performance impact has been measured and documented
 - [ ] Performance improvements have been verified with benchmarks
 
 ## Security Considerations
+
 - [ ] No security vulnerabilities introduced
 - [ ] Sensitive data is properly handled
 - [ ] Authentication/authorization checked where needed
 - [ ] Input validation added for user inputs
 
 ## Deployment Notes
+
 Any special deployment considerations or migration steps needed?
 
 ## Additional Context
+
 Add any other context about the PR here.
 ```
 
@@ -276,6 +287,7 @@ Follow the same format as commit messages:
 ```
 
 Examples:
+
 - `feat(auth): add multi-factor authentication`
 - `fix(api): resolve race condition in user updates`
 - `docs(readme): update deployment instructions`

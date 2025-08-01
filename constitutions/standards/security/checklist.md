@@ -1,6 +1,6 @@
 # Security Audit Checklist
 
-*Comprehensive security checklist for application security audits and assessments*
+_Comprehensive security checklist for application security audits and assessments_
 
 ## How to Use This Checklist
 
@@ -10,6 +10,7 @@
 4. **Continuous**: Some items require ongoing monitoring
 
 ### Priority Levels
+
 - 🔴 **Critical**: Must be implemented before production
 - 🟡 **Important**: Should be implemented for security maturity
 - 🟢 **Recommended**: Enhances security posture
@@ -17,6 +18,7 @@
 ## Authentication & Session Management
 
 ### 🔴 Critical Items
+
 - [ ] Passwords hashed with bcrypt (min 12 rounds) or Argon2
 - [ ] No plaintext passwords in database or logs
 - [ ] Session tokens generated with cryptographic randomness
@@ -24,6 +26,7 @@
 - [ ] Authentication required for all protected resources
 
 ### 🟡 Important Items
+
 - [ ] JWT tokens expire within 24 hours (access) / 7 days (refresh)
 - [ ] Refresh tokens rotated on use
 - [ ] Account lockout after 5 failed attempts
@@ -31,6 +34,7 @@
 - [ ] Session timeout after inactivity (30 minutes)
 
 ### 🟢 Recommended Items
+
 - [ ] Multi-factor authentication (MFA) available
 - [ ] Passwordless authentication options
 - [ ] Biometric authentication for mobile
@@ -38,6 +42,7 @@
 - [ ] Device fingerprinting
 
 ### Verification Steps
+
 ```bash
 # Check password hashing
 grep -r "bcrypt\|argon2\|scrypt" --include="*.ts" --include="*.js"
@@ -52,6 +57,7 @@ grep -r "password\s*=\s*[\"'][^\"']+[\"']" --include="*.ts" --include="*.js"
 ## Authorization & Access Control
 
 ### 🔴 Critical Items
+
 - [ ] Authorization checks on every API endpoint
 - [ ] Role-based access control (RBAC) implemented
 - [ ] Default deny for unauthorized requests
@@ -59,6 +65,7 @@ grep -r "password\s*=\s*[\"'][^\"']+[\"']" --include="*.ts" --include="*.js"
 - [ ] No authorization logic in client code
 
 ### 🟡 Important Items
+
 - [ ] Principle of least privilege enforced
 - [ ] API scopes properly defined and validated
 - [ ] Admin actions require re-authentication
@@ -66,6 +73,7 @@ grep -r "password\s*=\s*[\"'][^\"']+[\"']" --include="*.ts" --include="*.js"
 - [ ] Function-level access control
 
 ### 🟢 Recommended Items
+
 - [ ] Attribute-based access control (ABAC)
 - [ ] Dynamic permission evaluation
 - [ ] Delegation mechanisms
@@ -73,20 +81,19 @@ grep -r "password\s*=\s*[\"'][^\"']+[\"']" --include="*.ts" --include="*.js"
 - [ ] Geographic access restrictions
 
 ### Verification Steps
+
 ```typescript
 // Example authorization middleware check
-describe('Authorization', () => {
-  it('should require authentication for protected routes', async () => {
-    const response = await request(app)
-      .get('/api/users/profile')
-      .expect(401);
+describe("Authorization", () => {
+  it("should require authentication for protected routes", async () => {
+    const response = await request(app).get("/api/users/profile").expect(401);
   });
 
-  it('should enforce role-based access', async () => {
+  it("should enforce role-based access", async () => {
     const userToken = await getUserToken();
     const response = await request(app)
-      .get('/api/admin/users')
-      .set('Authorization', `Bearer ${userToken}`)
+      .get("/api/admin/users")
+      .set("Authorization", `Bearer ${userToken}`)
       .expect(403);
   });
 });
@@ -95,6 +102,7 @@ describe('Authorization', () => {
 ## Input Validation & Sanitization
 
 ### 🔴 Critical Items
+
 - [ ] All user inputs validated server-side
 - [ ] SQL injection prevention (parameterized queries)
 - [ ] XSS prevention (output encoding)
@@ -102,6 +110,7 @@ describe('Authorization', () => {
 - [ ] Path traversal prevention
 
 ### 🟡 Important Items
+
 - [ ] Input length restrictions
 - [ ] Data type validation
 - [ ] Regular expression validation for formats
@@ -109,6 +118,7 @@ describe('Authorization', () => {
 - [ ] XML external entity (XXE) prevention
 
 ### 🟢 Recommended Items
+
 - [ ] Input normalization (Unicode, etc.)
 - [ ] Business logic validation
 - [ ] Contextual validation based on user role
@@ -116,9 +126,10 @@ describe('Authorization', () => {
 - [ ] Input history tracking
 
 ### Common Vulnerabilities to Check
+
 ```typescript
 // SQL Injection - Check for parameterized queries
-const query = 'SELECT * FROM users WHERE id = $1'; // ✅ Good
+const query = "SELECT * FROM users WHERE id = $1"; // ✅ Good
 const query = `SELECT * FROM users WHERE id = ${userId}`; // ❌ Bad
 
 // XSS - Check for proper encoding
@@ -126,13 +137,17 @@ response.send(`<div>${escapeHtml(userInput)}</div>`); // ✅ Good
 response.send(`<div>${userInput}</div>`); // ❌ Bad
 
 // Path Traversal - Check for path validation
-const safePath = path.join(baseDir, path.normalize(userPath).replace(/^(\.\.[\/\\])+/, '')); // ✅ Good
+const safePath = path.join(
+  baseDir,
+  path.normalize(userPath).replace(/^(\.\.[\/\\])+/, ""),
+); // ✅ Good
 const unsafePath = baseDir + userPath; // ❌ Bad
 ```
 
 ## Data Protection & Cryptography
 
 ### 🔴 Critical Items
+
 - [ ] TLS 1.2+ enforced for all connections
 - [ ] Sensitive data encrypted at rest (AES-256)
 - [ ] No custom cryptography implementations
@@ -140,6 +155,7 @@ const unsafePath = baseDir + userPath; // ❌ Bad
 - [ ] No sensitive data in URLs
 
 ### 🟡 Important Items
+
 - [ ] Strong cipher suites only
 - [ ] Perfect forward secrecy enabled
 - [ ] Encryption keys rotated regularly
@@ -147,6 +163,7 @@ const unsafePath = baseDir + userPath; // ❌ Bad
 - [ ] Secure key storage (HSM/KMS)
 
 ### 🟢 Recommended Items
+
 - [ ] Field-level encryption for PII
 - [ ] Encrypted backups
 - [ ] Certificate pinning
@@ -154,6 +171,7 @@ const unsafePath = baseDir + userPath; // ❌ Bad
 - [ ] Homomorphic encryption for analytics
 
 ### Verification Commands
+
 ```bash
 # Check TLS configuration
 nmap --script ssl-enum-ciphers -p 443 example.com
@@ -168,6 +186,7 @@ grep -r "key\s*=\s*[\"'][0-9a-fA-F]+[\"']" --include="*.ts"
 ## API & Web Security
 
 ### 🔴 Critical Items
+
 - [ ] CORS configured with specific origins
 - [ ] CSRF protection for state-changing requests
 - [ ] Rate limiting implemented
@@ -175,6 +194,7 @@ grep -r "key\s*=\s*[\"'][0-9a-fA-F]+[\"']" --include="*.ts"
 - [ ] API authentication required
 
 ### 🟡 Important Items
+
 - [ ] API versioning implemented
 - [ ] Request size limits
 - [ ] Response size limits
@@ -182,6 +202,7 @@ grep -r "key\s*=\s*[\"'][0-9a-fA-F]+[\"']" --include="*.ts"
 - [ ] Error handling doesn't leak info
 
 ### 🟢 Recommended Items
+
 - [ ] GraphQL query complexity limits
 - [ ] WebSocket authentication
 - [ ] API documentation security reviewed
@@ -189,21 +210,23 @@ grep -r "key\s*=\s*[\"'][0-9a-fA-F]+[\"']" --include="*.ts"
 - [ ] Idempotency keys for payments
 
 ### Security Headers Checklist
+
 ```typescript
 const requiredHeaders = {
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'",
-  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Content-Security-Policy": "default-src 'self'",
+  "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
 };
 ```
 
 ## Infrastructure & Configuration
 
 ### 🔴 Critical Items
+
 - [ ] No secrets in code repository
 - [ ] Environment-specific configurations
 - [ ] Debug mode disabled in production
@@ -211,6 +234,7 @@ const requiredHeaders = {
 - [ ] Unnecessary services disabled
 
 ### 🟡 Important Items
+
 - [ ] Security patches up to date
 - [ ] Dependency vulnerabilities scanned
 - [ ] Container images scanned
@@ -218,6 +242,7 @@ const requiredHeaders = {
 - [ ] Firewall rules configured
 
 ### 🟢 Recommended Items
+
 - [ ] Infrastructure as Code (IaC) security
 - [ ] Immutable infrastructure
 - [ ] Blue-green deployments
@@ -225,6 +250,7 @@ const requiredHeaders = {
 - [ ] Security automation
 
 ### Configuration Audit
+
 ```bash
 # Check for exposed environment variables
 env | grep -i "key\|secret\|password"
@@ -240,6 +266,7 @@ docker scout cves <image-name>
 ## Logging & Monitoring
 
 ### 🔴 Critical Items
+
 - [ ] Security events logged
 - [ ] No sensitive data in logs
 - [ ] Log injection prevention
@@ -247,6 +274,7 @@ docker scout cves <image-name>
 - [ ] Log retention policy defined
 
 ### 🟡 Important Items
+
 - [ ] Centralized logging system
 - [ ] Real-time alerting configured
 - [ ] Anomaly detection active
@@ -254,6 +282,7 @@ docker scout cves <image-name>
 - [ ] Privilege escalation monitored
 
 ### 🟢 Recommended Items
+
 - [ ] Log correlation implemented
 - [ ] SIEM integration
 - [ ] Threat intelligence feeds
@@ -261,29 +290,31 @@ docker scout cves <image-name>
 - [ ] Regular log analysis
 
 ### Log Security Patterns
+
 ```typescript
 // Sanitize before logging
-logger.info('User login attempt', {
+logger.info("User login attempt", {
   email: user.email,
   ip: req.ip,
-  password: '[REDACTED]', // Never log passwords
-  sessionId: hashSessionId(session.id) // Hash sensitive identifiers
+  password: "[REDACTED]", // Never log passwords
+  sessionId: hashSessionId(session.id), // Hash sensitive identifiers
 });
 
 // Structured logging for security events
 logger.security({
-  event: 'AUTH_FAILURE',
-  severity: 'warning',
+  event: "AUTH_FAILURE",
+  severity: "warning",
   user: user.email,
   ip: req.ip,
-  reason: 'invalid_password',
-  timestamp: new Date().toISOString()
+  reason: "invalid_password",
+  timestamp: new Date().toISOString(),
 });
 ```
 
 ## Third-Party Security
 
 ### 🔴 Critical Items
+
 - [ ] Dependencies vulnerability scanned
 - [ ] License compliance verified
 - [ ] API keys securely stored
@@ -291,6 +322,7 @@ logger.security({
 - [ ] Third-party services assessed
 
 ### 🟡 Important Items
+
 - [ ] Supply chain security reviewed
 - [ ] Dependency update process
 - [ ] Vendor security assessments
@@ -298,6 +330,7 @@ logger.security({
 - [ ] Data processing agreements
 
 ### 🟢 Recommended Items
+
 - [ ] Software bill of materials (SBOM)
 - [ ] Dependency pinning
 - [ ] Private package registry
@@ -307,6 +340,7 @@ logger.security({
 ## Compliance & Privacy
 
 ### 🔴 Critical Items
+
 - [ ] Data classification implemented
 - [ ] Privacy policy accurate
 - [ ] Consent mechanisms working
@@ -314,6 +348,7 @@ logger.security({
 - [ ] Right to deletion implemented
 
 ### 🟡 Important Items
+
 - [ ] GDPR compliance (EU users)
 - [ ] CCPA compliance (California users)
 - [ ] PCI DSS (payment cards)
@@ -321,6 +356,7 @@ logger.security({
 - [ ] SOC 2 controls
 
 ### 🟢 Recommended Items
+
 - [ ] Privacy by design
 - [ ] Data minimization
 - [ ] Purpose limitation
@@ -330,6 +366,7 @@ logger.security({
 ## Incident Response
 
 ### 🔴 Critical Items
+
 - [ ] Incident response plan documented
 - [ ] Security contact defined
 - [ ] Backup systems tested
@@ -337,6 +374,7 @@ logger.security({
 - [ ] Communication plan ready
 
 ### 🟡 Important Items
+
 - [ ] Incident classification defined
 - [ ] Escalation procedures clear
 - [ ] Legal counsel identified
@@ -344,6 +382,7 @@ logger.security({
 - [ ] Customer notification templates
 
 ### 🟢 Recommended Items
+
 - [ ] Tabletop exercises conducted
 - [ ] Red team exercises
 - [ ] Purple team collaboration
@@ -353,18 +392,21 @@ logger.security({
 ## Security Testing Schedule
 
 ### Monthly
+
 - [ ] Dependency vulnerability scan
 - [ ] Security patch review
 - [ ] Access control audit
 - [ ] Log analysis review
 
 ### Quarterly
+
 - [ ] Full security checklist review
 - [ ] Penetration testing
 - [ ] Security training update
 - [ ] Incident response drill
 
 ### Annually
+
 - [ ] Third-party security audit
 - [ ] Compliance assessment
 - [ ] Architecture security review

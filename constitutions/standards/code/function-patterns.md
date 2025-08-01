@@ -1,6 +1,6 @@
 # Function Patterns
 
-*Standards for function design, pure functions, immutability, and parameter conventions*
+_Standards for function design, pure functions, immutability, and parameter conventions_
 
 ## Pure Functions
 
@@ -51,14 +51,14 @@ Use impure functions for:
 async function saveUser(user: User): Promise<void> {
   await database.users.insert(user);
   await emailService.sendWelcome(user.email);
-  logger.info('User created', { userId: user.id });
+  logger.info("User created", { userId: user.id });
 }
 
 // ✅ Good: Event handler with side effects
 function handleButtonClick(): void {
-  analytics.track('button_clicked');
+  analytics.track("button_clicked");
   updateUIState();
-  showNotification('Action completed');
+  showNotification("Action completed");
 }
 ```
 
@@ -71,14 +71,14 @@ Always prefer immutable operations unless performance requires mutation:
 ```typescript
 // ✅ Good: Immutable array operations
 const numbers = [1, 2, 3];
-const doubled = numbers.map(n => n * 2); // [2, 4, 6]
-const filtered = numbers.filter(n => n > 1); // [2, 3]
+const doubled = numbers.map((n) => n * 2); // [2, 4, 6]
+const filtered = numbers.filter((n) => n > 1); // [2, 3]
 const sum = numbers.reduce((acc, n) => acc + n, 0); // 6
 
 // ✅ Good: Immutable object updates
-const user = { name: 'John', age: 30 };
+const user = { name: "John", age: 30 };
 const updated = { ...user, age: 31 };
-const withEmail = { ...user, email: 'john@example.com' };
+const withEmail = { ...user, email: "john@example.com" };
 
 // ❌ Bad: Mutating arrays
 const numbers = [1, 2, 3];
@@ -86,7 +86,7 @@ numbers.push(4); // Mutation
 numbers[0] = 10; // Mutation
 
 // ❌ Bad: Mutating objects
-const user = { name: 'John', age: 30 };
+const user = { name: "John", age: 30 };
 user.age = 31; // Mutation
 ```
 
@@ -103,13 +103,13 @@ Mutation is acceptable for:
 function processLargeDataSet(items: Item[]): ProcessedItem[] {
   // NOTE: mutating local array for performance with 1M+ items
   const results: ProcessedItem[] = [];
-  
+
   for (const item of items) {
     if (item.isValid) {
       results.push(processItem(item)); // Local mutation OK
     }
   }
-  
+
   return results;
 }
 
@@ -132,33 +132,33 @@ class PerformanceOptimizedBuffer {
 ```typescript
 // ✅ Good: Array.join for clean multi-line strings
 const errorMessage = [
-  'Validation failed:',
-  '- Email is required',
-  '- Password must be at least 8 characters',
-  '- Username already taken'
-].join('\n');
+  "Validation failed:",
+  "- Email is required",
+  "- Password must be at least 8 characters",
+  "- Username already taken",
+].join("\n");
 
 // ✅ Good: Building complex text structures
 function generateReport(data: ReportData): string {
   const lines = [
     `Report for ${data.date}`,
-    '='.repeat(50),
-    '',
-    'Summary:',
+    "=".repeat(50),
+    "",
+    "Summary:",
     `Total Sales: ${data.totalSales}`,
     `New Customers: ${data.newCustomers}`,
-    '',
-    'Details:',
-    ...data.items.map(item => `- ${item.name}: ${item.value}`)
+    "",
+    "Details:",
+    ...data.items.map((item) => `- ${item.name}: ${item.value}`),
   ];
-  
-  return lines.join('\n');
+
+  return lines.join("\n");
 }
 
 // ❌ Bad: String concatenation
-let message = 'Validation failed:\n';
-message += '- Email is required\n';
-message += '- Password must be at least 8 characters\n';
+let message = "Validation failed:\n";
+message += "- Email is required\n";
+message += "- Password must be at least 8 characters\n";
 
 // ❌ Bad: Template literals for many lines
 const message = `Validation failed:
@@ -174,6 +174,7 @@ const message = `Validation failed:
 Use these standard names consistently across the codebase:
 
 #### params
+
 Use for route/path parameters:
 
 ```typescript
@@ -190,6 +191,7 @@ export default function UserPage({ params }: { params: { id: string } }) {
 ```
 
 #### query
+
 Use for URL query parameters:
 
 ```typescript
@@ -200,15 +202,16 @@ function searchUsers(query: {
   limit?: number;
 }): Promise<UserList> {
   const params = new URLSearchParams();
-  if (query.search) params.set('q', query.search);
-  if (query.page) params.set('page', query.page.toString());
-  if (query.limit) params.set('limit', query.limit.toString());
-  
+  if (query.search) params.set("q", query.search);
+  if (query.page) params.set("page", query.page.toString());
+  if (query.limit) params.set("limit", query.limit.toString());
+
   return api.get(`/users?${params}`);
 }
 ```
 
 #### options
+
 Use for optional configuration:
 
 ```typescript
@@ -220,10 +223,10 @@ interface FormatOptions {
 }
 
 function formatPrice(amount: number, options: FormatOptions = {}): string {
-  const { locale = 'en-US', currency = 'USD', precision = 2 } = options;
-  
+  const { locale = "en-US", currency = "USD", precision = 2 } = options;
+
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
+    style: "currency",
     currency,
     minimumFractionDigits: precision,
   }).format(amount);
@@ -231,12 +234,13 @@ function formatPrice(amount: number, options: FormatOptions = {}): string {
 ```
 
 #### data
+
 Use for primary data payload:
 
 ```typescript
 // ✅ Good: Data parameter for mutations
 function createUser(data: CreateUserData): Promise<User> {
-  return api.post('/users', data);
+  return api.post("/users", data);
 }
 
 function updateProfile(userId: string, data: UpdateProfileData): Promise<User> {
@@ -245,6 +249,7 @@ function updateProfile(userId: string, data: UpdateProfileData): Promise<User> {
 ```
 
 #### config
+
 Use for initialization or complex configuration:
 
 ```typescript
@@ -266,6 +271,7 @@ class Database {
 ```
 
 #### context
+
 Use for request context or execution context:
 
 ```typescript
@@ -278,12 +284,13 @@ interface RequestContext {
 
 function checkAccess(resource: Resource, context: RequestContext): boolean {
   if (resource.ownerId === context.user.id) return true;
-  if (context.permissions.includes('admin')) return true;
+  if (context.permissions.includes("admin")) return true;
   return false;
 }
 ```
 
 #### details
+
 Use for additional information or metadata:
 
 ```typescript
@@ -308,23 +315,25 @@ function logError(message: string, details: ErrorDetails): void {
 ### When to Use Positional Parameters
 
 Use positional parameters for:
+
 - **1-3 required parameters**
 - **Simple, clear relationships**
 - **Common patterns** (id, callback)
 
 ```typescript
 // ✅ Good: Clear positional parameters
-function getUser(id: string): Promise<User>
-function calculateArea(width: number, height: number): number
-function addEventListener(event: string, handler: EventHandler): void
+function getUser(id: string): Promise<User>;
+function calculateArea(width: number, height: number): number;
+function addEventListener(event: string, handler: EventHandler): void;
 
 // ✅ Good: Optional parameter at end
-function formatDate(date: Date, format?: string): string
+function formatDate(date: Date, format?: string): string;
 ```
 
 ### When to Use Object Parameters
 
 Use object parameters for:
+
 - **3+ parameters**
 - **Multiple optional parameters**
 - **Related parameters**
@@ -350,10 +359,10 @@ function searchProducts(
   minPrice?: number,
   maxPrice?: number,
   sortBy?: string,
-  sortOrder?: 'asc' | 'desc',
+  sortOrder?: "asc" | "desc",
   page?: number,
-  limit?: number
-): Promise<ProductList>
+  limit?: number,
+): Promise<ProductList>;
 ```
 
 ## Parameter Destructuring
@@ -362,7 +371,7 @@ function searchProducts(
 
 ```typescript
 // ✅ Good: Destructure in parameter list
-function createUser({ name, email, role = 'user' }: CreateUserData): User {
+function createUser({ name, email, role = "user" }: CreateUserData): User {
   return {
     id: generateId(),
     name,
@@ -373,10 +382,10 @@ function createUser({ name, email, role = 'user' }: CreateUserData): User {
 }
 
 // ✅ Good: Destructure with rename
-function processOrder({ 
-  items, 
+function processOrder({
+  items,
   customer: buyer, // Rename for clarity
-  discount = 0 
+  discount = 0,
 }: OrderData): ProcessedOrder {
   const total = calculateTotal(items, discount);
   return { items, buyer, total };
@@ -393,9 +402,9 @@ interface Config {
   };
 }
 
-function initialize({ 
-  server: { host, port }, 
-  database: { url } 
+function initialize({
+  server: { host, port },
+  database: { url },
 }: Config): void {
   startServer(host, port);
   connectDatabase(url);
@@ -411,10 +420,7 @@ function combine(separator: string, ...parts: string[]): string {
 }
 
 // ✅ Good: Rest with destructuring
-function logEvent(
-  eventName: string, 
-  { userId, ...metadata }: EventData
-): void {
+function logEvent(eventName: string, { userId, ...metadata }: EventData): void {
   logger.info(eventName, {
     userId,
     metadata,
@@ -435,16 +441,16 @@ function logEvent(
 ```typescript
 // ✅ Good: Logical parameter order
 function createButton(
-  text: string,                    // Required
-  onClick: () => void,            // Required callback
-  options?: ButtonOptions         // Optional config
-): ButtonElement
+  text: string, // Required
+  onClick: () => void, // Required callback
+  options?: ButtonOptions, // Optional config
+): ButtonElement;
 
 function fetchData<T>(
-  url: string,                    // Required
-  options?: RequestOptions,       // Optional
-  onProgress?: ProgressCallback   // Optional callback
-): Promise<T>
+  url: string, // Required
+  options?: RequestOptions, // Optional
+  onProgress?: ProgressCallback, // Optional callback
+): Promise<T>;
 ```
 
 ### Default Parameters
@@ -452,16 +458,16 @@ function fetchData<T>(
 ```typescript
 // ✅ Good: Defaults in destructuring
 function createLogger({
-  level = 'info',
-  format = 'json',
-  destination = 'console'
+  level = "info",
+  format = "json",
+  destination = "console",
 }: LoggerOptions = {}): Logger {
   // Implementation
 }
 
 // ✅ Good: Defaults for primitives
 function delay(ms: number = 1000): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 ```
 
@@ -497,7 +503,7 @@ async function fetchUsers(): Promise<User[]> {
 function parseNumber(value: string): number | Error {
   const num = Number(value);
   if (isNaN(num)) {
-    return new Error('Invalid number');
+    return new Error("Invalid number");
   }
   return num;
 }

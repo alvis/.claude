@@ -1,10 +1,11 @@
 # Type Naming Standards
 
-*Standards for naming classes, interfaces, types, and enums in TypeScript*
+_Standards for naming classes, interfaces, types, and enums in TypeScript_
 
 ## Core Type Naming Principles
 
 ### MUST Follow Rules
+
 - **MUST use PascalCase** for all types, interfaces, classes, and enums
 - **MUST use noun phrases** for types and interfaces
 - **MUST avoid prefixes** like 'I' for interfaces or 'T' for types
@@ -12,6 +13,7 @@
 - **MUST use singular names** for types (unless representing collections)
 
 ### SHOULD Follow Guidelines
+
 - **SHOULD use suffixes** to clarify purpose (Service, Repository, Config)
 - **SHOULD group related types** with consistent naming patterns
 - **SHOULD use generic type parameters** starting with T (T, U, V, K)
@@ -45,10 +47,10 @@ interface ApiResponse<T> {
 }
 
 // ❌ Bad: Poor interface naming
-interface IUser { }        // Don't use 'I' prefix
-interface UserInterface { } // Redundant 'Interface' suffix
-interface UserType { }     // Confusing with type aliases
-interface Data { }         // Too generic
+interface IUser {} // Don't use 'I' prefix
+interface UserInterface {} // Redundant 'Interface' suffix
+interface UserType {} // Confusing with type aliases
+interface Data {} // Too generic
 ```
 
 ### Domain-Specific Interfaces
@@ -64,7 +66,7 @@ interface Order {
 
 interface PaymentMethod {
   id: string;
-  type: 'credit_card' | 'paypal' | 'bank_transfer';
+  type: "credit_card" | "paypal" | "bank_transfer";
   lastFourDigits?: string;
 }
 
@@ -121,8 +123,8 @@ interface PaginatedResponse<T> {
 }
 
 // ❌ Bad: Unclear request/response names
-interface UserData { }      // Is this request or response?
-interface ProductInfo { }   // Too vague
+interface UserData {} // Is this request or response?
+interface ProductInfo {} // Too vague
 ```
 
 ## Type Alias Naming
@@ -135,9 +137,9 @@ type UserId = string;
 type Email = string;
 type IsoDateString = string;
 
-type UserRole = 'admin' | 'editor' | 'viewer';
-type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed';
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type UserRole = "admin" | "editor" | "viewer";
+type PaymentStatus = "pending" | "processing" | "completed" | "failed";
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 // ✅ Good: Complex type compositions
 type UserWithRoles = User & { roles: UserRole[] };
@@ -145,19 +147,19 @@ type PartialUser = Partial<User>;
 type ReadonlyUser = Readonly<User>;
 
 // ✅ Good: Discriminated unions
-type ApiResult<T> = 
+type ApiResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
 type PaymentResult =
-  | { status: 'success'; transactionId: string }
-  | { status: 'failed'; reason: string }
-  | { status: 'pending'; estimatedTime: number };
+  | { status: "success"; transactionId: string }
+  | { status: "failed"; reason: string }
+  | { status: "pending"; estimatedTime: number };
 
 // ❌ Bad: Confusing or redundant names
-type TUser = User;          // Redundant 'T' prefix
-type UserType = User;       // Redundant 'Type' suffix
-type StringType = string;   // Unnecessary aliasing
+type TUser = User; // Redundant 'T' prefix
+type UserType = User; // Redundant 'Type' suffix
+type StringType = string; // Unnecessary aliasing
 ```
 
 ### Function Types
@@ -175,8 +177,8 @@ type OnError = (error: Error) => void;
 type ProgressCallback = (progress: number) => void;
 
 // ❌ Bad: Unclear function types
-type Function1 = (x: any) => any;  // Too generic
-type Callback = Function;           // No type information
+type Function1 = (x: any) => any; // Too generic
+type Callback = Function; // No type information
 ```
 
 ## Class Naming
@@ -187,7 +189,7 @@ type Callback = Function;           // No type information
 // ✅ Good: Service class naming
 class UserService {
   constructor(private repository: UserRepository) {}
-  
+
   async createUser(data: CreateUserData): Promise<User> {
     // Implementation
   }
@@ -206,10 +208,10 @@ class AuthenticationService {
 }
 
 // ❌ Bad: Poor service naming
-class UserManager { }      // Vague responsibility
-class UserHelper { }       // Suggests utility rather than service
-class ProcessUser { }      // Verb-based name
-class UserUtils { }        // Should be functions, not a class
+class UserManager {} // Vague responsibility
+class UserHelper {} // Suggests utility rather than service
+class ProcessUser {} // Verb-based name
+class UserUtils {} // Should be functions, not a class
 ```
 
 ### Repository Classes
@@ -220,7 +222,7 @@ class UserRepository {
   async findById(id: string): Promise<User | null> {
     // Implementation
   }
-  
+
   async save(user: User): Promise<User> {
     // Implementation
   }
@@ -246,19 +248,19 @@ class MongoOrderRepository implements OrderRepository {
 
 ```typescript
 // ✅ Good: Component naming (React/Angular/Vue)
-class UserProfileComponent { }
-class NavigationBar { }
-class ShoppingCartWidget { }
-class PaymentForm { }
+class UserProfileComponent {}
+class NavigationBar {}
+class ShoppingCartWidget {}
+class PaymentForm {}
 
 // For React functional components
-const UserProfile: React.FC<UserProfileProps> = (props) => { };
-const ProductCard: React.FC<ProductCardProps> = (props) => { };
+const UserProfile: React.FC<UserProfileProps> = (props) => {};
+const ProductCard: React.FC<ProductCardProps> = (props) => {};
 
 // ❌ Bad: Generic component names
-class Component1 { }
-class MyComponent { }
-class Comp { }
+class Component1 {}
+class MyComponent {}
+class Comp {}
 ```
 
 ## Enum Naming
@@ -268,9 +270,9 @@ class Comp { }
 ```typescript
 // ✅ Good: Enum naming patterns
 enum UserRole {
-  Admin = 'ADMIN',
-  Editor = 'EDITOR',
-  Viewer = 'VIEWER'
+  Admin = "ADMIN",
+  Editor = "EDITOR",
+  Viewer = "VIEWER",
 }
 
 enum HttpStatus {
@@ -279,31 +281,31 @@ enum HttpStatus {
   BadRequest = 400,
   Unauthorized = 401,
   NotFound = 404,
-  InternalServerError = 500
+  InternalServerError = 500,
 }
 
 enum LogLevel {
-  Debug = 'DEBUG',
-  Info = 'INFO',
-  Warning = 'WARNING',
-  Error = 'ERROR',
-  Critical = 'CRITICAL'
+  Debug = "DEBUG",
+  Info = "INFO",
+  Warning = "WARNING",
+  Error = "ERROR",
+  Critical = "CRITICAL",
 }
 
 // ✅ Good: Const assertions as enums
 const OrderStatus = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled'
+  PENDING: "pending",
+  PROCESSING: "processing",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
 } as const;
 
-type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
+type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
 // ❌ Bad: Poor enum naming
-enum status { }           // Should be PascalCase
-enum USER_ROLE { }        // Should be PascalCase, not UPPER_SNAKE
-enum EUserRole { }        // Don't use 'E' prefix
+enum status {} // Should be PascalCase
+enum USER_ROLE {} // Should be PascalCase, not UPPER_SNAKE
+enum EUserRole {} // Don't use 'E' prefix
 ```
 
 ## Generic Type Parameters
@@ -324,7 +326,10 @@ interface KeyValuePair<K, V> {
 }
 
 class EventEmitter<TEvents extends Record<string, any>> {
-  on<K extends keyof TEvents>(event: K, handler: (data: TEvents[K]) => void): void {
+  on<K extends keyof TEvents>(
+    event: K,
+    handler: (data: TEvents[K]) => void,
+  ): void {
     // Implementation
   }
 }
@@ -335,13 +340,14 @@ interface Repository<TEntity extends { id: string }> {
   save(entity: TEntity): Promise<TEntity>;
 }
 
-type AsyncFunction<TArgs extends any[], TReturn> = 
-  (...args: TArgs) => Promise<TReturn>;
+type AsyncFunction<TArgs extends any[], TReturn> = (
+  ...args: TArgs
+) => Promise<TReturn>;
 
 // ❌ Bad: Poor generic naming
-interface Container<Type> { }    // Use single letter T
-interface Map<KeyType, ValueType> { } // Too verbose
-interface Data<X, Y, Z> { }      // Non-standard letters without reason
+interface Container<Type> {} // Use single letter T
+interface Map<KeyType, ValueType> {} // Too verbose
+interface Data<X, Y, Z> {} // Non-standard letters without reason
 ```
 
 ## Namespace and Module Naming
@@ -349,17 +355,17 @@ interface Data<X, Y, Z> { }      // Non-standard letters without reason
 ```typescript
 // ✅ Good: Namespace organization
 namespace Api {
-  export interface User { }
-  export interface Product { }
-  
+  export interface User {}
+  export interface Product {}
+
   export namespace V1 {
-    export interface Response { }
+    export interface Response {}
   }
 }
 
 namespace Database {
-  export interface Config { }
-  export interface Connection { }
+  export interface Config {}
+  export interface Connection {}
 }
 
 // ✅ Good: Module exports
@@ -375,15 +381,18 @@ export interface UserModule {
 ```typescript
 // ✅ Good: Error class naming
 class ValidationError extends Error {
-  constructor(public field: string, message: string) {
+  constructor(
+    public field: string,
+    message: string,
+  ) {
     super(message);
   }
 }
 
-class AuthenticationError extends Error { }
-class AuthorizationError extends Error { }
-class NotFoundError extends Error { }
-class ConflictError extends Error { }
+class AuthenticationError extends Error {}
+class AuthorizationError extends Error {}
+class NotFoundError extends Error {}
+class ConflictError extends Error {}
 
 // ✅ Good: Error type definitions
 interface ErrorResponse {
@@ -395,12 +404,12 @@ interface ErrorResponse {
   timestamp: Date;
 }
 
-type ErrorCode = 
-  | 'INVALID_INPUT'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'INTERNAL_ERROR';
+type ErrorCode =
+  | "INVALID_INPUT"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "INTERNAL_ERROR";
 ```
 
 ## Testing Type Names
@@ -432,22 +441,22 @@ class UserServiceStub implements UserService {
 
 ```typescript
 // ❌ Bad: Common type naming mistakes
-interface IUserService { }      // Don't use 'I' prefix
-type TUser = User;             // Don't use 'T' prefix for aliases
-class userService { }          // Should be PascalCase
-enum user_role { }            // Should be PascalCase
+interface IUserService {} // Don't use 'I' prefix
+type TUser = User; // Don't use 'T' prefix for aliases
+class userService {} // Should be PascalCase
+enum user_role {} // Should be PascalCase
 
-interface UserInterface { }    // Redundant suffix
-type UserType = User;         // Redundant suffix
-class ServiceClass { }        // Generic name
+interface UserInterface {} // Redundant suffix
+type UserType = User; // Redundant suffix
+class ServiceClass {} // Generic name
 
-type str = string;            // Unnecessary aliasing
-type num = number;            // Don't abbreviate
-type bool = boolean;          // Pointless renaming
+type str = string; // Unnecessary aliasing
+type num = number; // Don't abbreviate
+type bool = boolean; // Pointless renaming
 
-interface Data { }            // Too generic
-interface Info { }            // Too vague
-interface Object { }          // Conflicts with built-in
+interface Data {} // Too generic
+interface Info {} // Too vague
+interface Object {} // Conflicts with built-in
 ```
 
 ## References
