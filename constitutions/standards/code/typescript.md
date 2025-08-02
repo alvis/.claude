@@ -192,43 +192,59 @@ class UserService {
 
 **REQUIRED IMPORT ORDER:**
 
-1. **Node built-ins** (`node:*`)
-2. **Third-party libraries**
-3. **Project modules**:
-   - `#*` subpath imports (REQUIRED when available)
-   - Relative imports (`../../*` → `../*` → `./*`)
+1. **Import actual code before types**
+2. **Separate import groups with a blank line**
+3. **Keep type imports separate from actual imports**
+4. **Follow this specific order:**
+   - Building modules (prefixed with `node:`)
+   - Libraries
+   - Project modules:
+     - Components starting with `@/`
+     - Helpers prefixed with `#`
+     - Relative path imports (farthest to closest: `../../*`, `../*`, `./*`)
+5. **Use the same import order for types as for actual code**
 
 ### Import Examples
 
 ```typescript
-// ✅ Good: Proper import order
-// 1. Node built-ins
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+/* code imports */
 
-// 2. Third-party libraries
-import { useState, useEffect } from "react";
-import { z } from "zod";
+// built-in modules
+import { log } from 'node:console';
+import { readFile } from 'node:fs/promises';
 
-// 3. Project modules with subpath imports
-import { useFeature } from "#hooks/useFeature";
-import { validateEmail } from "#utils/validation";
+// third-party libraries
+import { LibComponent } from 'some-library';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-// 4. Relative imports (closest last)
-import { helper } from "../utils/helper";
-import { config } from "./config";
+// project modules
+import { FeatureComponent } from '@/components/FeatureComponent';
+import { useFeature } from '@/hooks/useFeature';
+import { featureFunction } from '#utils/featureUtils';
+import { parentFunction } from '../helpers';
+import { SiblingComponent } from './SiblingComponent';
 
-// Type imports (separate section)
-import type { FC } from "react";
-import type { User } from "#types/user";
-import type { Config } from "./types";
+/* type imports */
+
+// built-in modules
+import type { Console } from 'node:console';
+
+// third-party libraries
+import type { AxiosResponse } from 'axios';
+import type { FC, ReactNode } from 'react';
+
+// project modules
+import type { FeatureProps } from '@/types/feature';
+import type { UserData } from '#types/user';
+import type { LocalConfig } from './types';
 ```
 
 ### Import Rules
 
-- **NO mixed code/type imports**
+- **NO mixed code/type imports** - Avoid `import { useState, type FC } from 'react';`
 - **NO default imports** (except when required by library)
-- **NO namespace imports** (`import * as`)
+- **NO namespace imports** (`import * as`) - Avoid `import * as React from 'react';`
 - **Prefer named imports**
 - **Use subpath imports** (e.g., `#components`) when available in package.json
 
@@ -438,6 +454,151 @@ export { validateUser } from "./validation";
 
 export type { User, CreateUser, UpdateUser } from "./types";
 ```
+
+## Function Parameter Patterns
+
+### Parameter Destructuring
+
+Follow these patterns for parameter destructuring and defaults:
+
+- **Avoid inline destruct in parameter declarations**
+- **Handle optional parameters with defaults at the start**
+- **Use object spread for safe destruct**
+- **Never destruct nullable parameters directly**
+
+```typescript
+// ❌ Bad: Inline destructuring with defaults
+function processUser({
+  name,
+  role = 'user',
+  status = 'active'
+}: {
+  name: string
+  role?: string
+  status?: string
+}) { }
+
+// ✅ Good: Clean parameter declaration with safe destructuring
+function processUser(options?: {
+  name: string
+  role?: string
+  status?: string
+}) {
+  const {
+    name,
+    role = 'user',
+    status = 'active'
+  } = { ...options }
+}
+
+// ✅ Good: Using default values for optional parameters
+function configure(options: Options = { timeout: 1000, retries: 3 }) {
+  // Safe to use options directly
+}
+```
+
+### Object Parameters Shape Declaration
+
+Follow these guidelines when defining function parameters:
+
+#### For Exported Functions
+
+Always define parameter shapes as separate interfaces:
+
+```typescript
+// ✅ Good: Exported function with separate interface
+export interface UpdateUserOptions {
+  name?: string;
+  email?: string;
+}
+
+export function updateUser(options: UpdateUserOptions) { ... }
+```
+
+#### For Internal Functions
+
+Use inline parameter shapes for simpler functions:
+
+```typescript
+// ✅ Good: Simple internal function with inline types
+function processData(options: { data: string; strict?: boolean }) { ... }
+
+// ✅ Good: Complex parameters warrant separate interface
+interface ValidationConfig {
+  rules: Rule[];
+  strict: boolean;
+  onError?: (error: Error) => void;
+}
+
+function validateInternal(config: ValidationConfig) { ... }
+
+// ✅ Good: Shared interface with exported function
+export interface AuthOptions {
+  token: string;
+  refresh?: boolean;
+}
+
+export function authenticate(options: AuthOptions) { ... }
+function validateAuth(options: AuthOptions) { ... }
+```
+
+### Object Parameter Ordering
+
+Use this **standard order** to improve predictability and readability:
+
+1. **Required identity fields** (e.g. `id`, `file`, `name`)
+2. **Primary functional arguments** (e.g. `content`, `source`)
+3. **Optional modifiers/flags** (e.g. `isDraft`, `overwrite`, `sortOrder`)
+4. **Callback or hooks** (e.g. `onSuccess`, `onError`)
+5. **Misc config or metadata** (e.g. `context`, `traceId`)
+
+```typescript
+function uploadFile({
+  file,
+  destination,
+  overwrite = false,
+  onProgress,
+  context,
+}: {
+  file: File
+  destination: string
+  overwrite?: boolean
+  onProgress?: (percent: number) => void
+  context?: UploadContext
+}) { ... }
+```
+
+### Object Property Ordering
+
+For complex objects and interfaces, organize properties into logical groups with comment separators:
+
+```typescript
+interface User {
+  // index //
+  id: string;
+  uuid: string;
+
+  // identity //
+  email: string;
+  name: string;
+  username: string;
+
+  // permissions //
+  isActive: boolean;
+  isAdmin: boolean;
+  roles: string[];
+
+  // metadata //
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**Guidelines:**
+- Group related properties together
+- Order properties alphabetically within each group
+- Use `// groupname //` comment separators
+- Common groups: index, identity, config, permissions, metadata, timestamps
 
 ## Configuration and Environment Types
 

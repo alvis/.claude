@@ -2,26 +2,42 @@
 
 _Comprehensive testing standards for quality assurance and TDD compliance_
 
+## Testing Framework
+
+### Required Framework
+
+**Vitest** is our testing framework of choice. All projects must use Vitest for unit and integration testing.
+
 ## Core Testing Principles
 
 ### Critical Testing Rules
 
+- **Always BDD** - All new code must include tests written in Behavior-Driven Development (BDD) style
+- **Test Before Code** - Always write tests for expected behaviors before implementing code
 - **Follow TDD principles** - Write tests first, then implementation
 - **100% coverage maintained with minimal tests** - Cover everything efficiently
+  - Maintain **100%** coverage, excluding barrel files (typically `index.ts`)
+  - Use `/* v8 ignore start */` at the top of any barrel file to exclude it from coverage reports
 - **BDD style descriptions** - Use "should [expected behavior]" format
 - **Proper test structure** - Follow Arrange → Act → Assert pattern
 - **Minimize test quantity** - Add minimal meaningful tests that cover everything
 - **Maximize test reuse** - Think critically about minimizing complexity and maximizing reuse
 - **Use `const` over `let`** - Prefer immutable test data
 - **Avoid `beforeEach`** - Keep tests self-contained when possible
+- **Never use `any` type in tests** - Use specific types imported from relevant modules
 
 ### Test File Naming and Organization
 
 **File Naming Convention:**
 
 - Unit tests: `*.spec.ts` or `*.spec.tsx`
-- Integration tests: `*.integration.spec.ts`
+- Integration tests: `*.int.spec.ts`
 - End-to-end tests: `*.e2e.spec.ts`
+
+**Test Isolation Requirements:**
+
+- Unit tests (`.spec.ts`) must be fully isolated from external dependencies. Use mocks for databases, APIs, and other services.
+- Integration tests (`.int.spec.ts`) may interact with real databases or third-party services. Ensure all necessary credentials are supplied before running the tests.
 
 **Test Description Prefixes:**
 
@@ -36,6 +52,7 @@ _Comprehensive testing standards for quality assurance and TDD compliance_
 
 ```typescript
 // ✅ Good: Proper test organization
+// Test descriptions must be written in lowercase
 describe("fn:calculateOrderTotal", () => {
   it("should return correct total with tax and shipping", () => {
     // Test implementation
@@ -44,6 +61,13 @@ describe("fn:calculateOrderTotal", () => {
 
 describe("rc:UserProfile", () => {
   it("should render user information correctly", () => {
+    // Test implementation
+  });
+});
+
+// For general-purpose tests, use a clear description without a prefix
+describe("authentication flow", () => {
+  it("should redirect to login when unauthorized", () => {
     // Test implementation
   });
 });
@@ -62,17 +86,14 @@ All tests must follow the AAA pattern with proper spacing:
 - Declare `expected` value in the arrangement section (before `result`)
 
 ```typescript
-// ✅ Good: Clear AAA structure
+// ✅ Good: Clear AAA structure with proper spacing
 describe("fn:formatCurrency", () => {
   it("should format number as USD currency", () => {
-    // Arrange
     const amount = 1234.56;
     const expected = "$1,234.56";
 
-    // Act
     const result = formatCurrency(amount, "USD");
 
-    // Assert
     expect(result).toBe(expected);
   });
 });
@@ -164,6 +185,26 @@ describe("cl:UserService", () => {
 });
 ```
 
+### Test Comparison Preferences
+
+Use the most appropriate assertion method:
+
+- **Prefer inline throwing function** in `expect`, e.g. `expect(() => fn()).toThrow()`
+- **Use `.toBe(...)`** for primitive values or reference identity
+- **Use `.toEqual(...)`** only for deep comparisons (objects, arrays)
+
+```typescript
+// ✅ Good: Appropriate assertion methods
+expect(result).toBe(42); // Primitive comparison
+expect(error).toBeInstanceOf(ValidationError); // Type checking
+expect(() => validateUser(null)).toThrow(); // Inline throwing
+expect(user).toEqual({ id: 1, name: "John" }); // Deep object comparison
+
+// ❌ Bad: Inappropriate assertion methods
+expect(result).toEqual(42); // Overkill for primitives
+expect(user).toBe({ id: 1, name: "John" }); // Will fail - different references
+```
+
 ## Mocking Standards
 
 ### Vi.hoisted Pattern
@@ -199,13 +240,18 @@ describe("fn:getUserProfile", () => {
 
 ### Mock Cleanup
 
+**Note:** There's no need to call `clearAllMocks` in tests because mocks are automatically reset as configured in the Vitest setup.
+
 ```typescript
-// ✅ Good: Proper mock cleanup
+// ❌ Unnecessary: Manual mock cleanup (Vitest handles this automatically)
 describe("fn:apiCall", () => {
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks(); // Not needed with proper Vitest configuration
   });
+});
 
+// ✅ Good: Let Vitest handle mock cleanup automatically
+describe("fn:apiCall", () => {
   it("should handle successful response", () => {
     fetchUser.mockResolvedValue({ id: "123" });
 
