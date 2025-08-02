@@ -6,12 +6,13 @@ _Standards for React component structure, patterns, and performance optimization
 
 ### Critical Component Rules
 
-- **ALWAYS use arrow functions with `FC` type**
+- **ALWAYS use arrow functions with `FC` type** - Use `FC` for functional components with typed props
 - **NO class components** (except Error Boundaries)
 - **ALWAYS export props interface for every component** (required for type safety and documentation)
 - **Keep components small and focused** (single responsibility principle)
 - **Follow accessibility standards (WCAG)**
 - **Optimize performance with memoization when needed**
+- **Implement functional components and hooks exclusively** - Avoid class components
 
 ### Component Template
 
@@ -55,10 +56,12 @@ export const Button: FC<ButtonProps> = ({
 
 ### Naming Conventions
 
-- **Components**: `PascalCase.tsx`
-- **Hooks**: `camelCase.ts` (useAuth.ts)
-- **Test files**: `Component.spec.tsx`
-- **Story files**: `Component.stories.tsx`
+- **Component files**: Name in `PascalCase`, e.g. ✅ `Browser.tsx` ❌ `browser.tsx`
+- **Hook files**: Remain in `camelCase`, e.g. ✅ `useScroll.ts` ❌ `UseScroll.ts`
+- **Test files**: `Component.spec.tsx` or `Component.spec.ts`
+- **Story files**: 
+  - `ComponentName.stories.tsx` for basic component stories
+  - `ComponentName.demo.stories.tsx` for complex scenarios involving multiple components
 
 ### Directory Structure
 
