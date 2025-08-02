@@ -11,7 +11,16 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - WebSearch
+  - mcp__github__list_notifications
+  - mcp__github__get_notification_details
+  - mcp__github__dismiss_notification
+  - mcp__github__list_code_scanning_alerts
+  - mcp__github__list_secret_scanning_alerts
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_get_state
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__graphiti__search_memory_facts
