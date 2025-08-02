@@ -11,6 +11,16 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
+  - mcp__ide__getDiagnostics
+  - mcp__ide__executeCode
+  - mcp__github__get_pull_request_files
+  - mcp__github__create_and_submit_pull_request_review
+  - mcp__github__get_file_contents
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_click
+  - mcp__browseruse__browser_get_state
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__notion__search

@@ -7,8 +7,20 @@ tools:
   - Read
   - Write
   - MultiEdit
+  - Bash
+  - Grep
+  - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - WebSearch
+  - mcp__github__search_repositories
+  - mcp__github__search_code
+  - mcp__github__create_repository
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_extract_content
+  - mcp__context7__resolve-library-id
+  - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__notion__search

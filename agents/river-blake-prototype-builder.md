@@ -12,6 +12,15 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
+  - mcp__ide__executeCode
+  - mcp__ide__getDiagnostics
+  - mcp__github__create_repository
+  - mcp__github__create_or_update_file
+  - mcp__github__push_files
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_get_state
   - mcp__context7__resolve-library-id
   - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory

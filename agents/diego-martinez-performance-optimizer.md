@@ -11,7 +11,17 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - WebSearch
+  - mcp__ide__getDiagnostics
+  - mcp__ide__executeCode
+  - mcp__github__get_file_contents
+  - mcp__github__get_pull_request_diff
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_get_state
+  - mcp__context7__resolve-library-id
+  - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__graphiti__search_memory_facts

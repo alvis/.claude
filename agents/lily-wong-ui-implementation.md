@@ -11,12 +11,20 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - mcp__context7__resolve-library-id
   - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__notion__search
   - mcp__notion__fetch
+  - mcp__ide__getDiagnostics
+  - mcp__github__get_file_contents
+  - mcp__github__create_or_update_file
+  - mcp__github__create_pull_request
+  - mcp__browseruse__browser_navigate
+  - mcp__browseruse__browser_get_state
 ---
 
 # Lily Wong - UI Implementation Expert (✿◠‿◠)
