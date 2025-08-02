@@ -21,6 +21,7 @@ _Comprehensive security checklist for application security audits and assessment
 
 - [ ] Passwords hashed with bcrypt (min 12 rounds) or Argon2
 - [ ] No plaintext passwords in database or logs
+- [ ] No private keys except in unit tests (use mocks for testing)
 - [ ] Session tokens generated with cryptographic randomness
 - [ ] Session invalidation implemented on logout
 - [ ] Authentication required for all protected resources
@@ -228,6 +229,7 @@ const requiredHeaders = {
 ### 🔴 Critical Items
 
 - [ ] No secrets in code repository
+- [ ] `.env.example` file provided with all consumed keys and explanations
 - [ ] Environment-specific configurations
 - [ ] Debug mode disabled in production
 - [ ] Default credentials changed
