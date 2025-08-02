@@ -10,10 +10,18 @@ tools:
   - Bash
   - Grep
   - Glob
-  - TodoWrite
   - Task
-  - mcp__shrimp-task-manager__plan_task
-  - mcp__shrimp-task-manager__split_tasks
+  - TodoRead
+  - TodoWrite
+  - mcp__ide__getDiagnostics
+  - mcp__github__list_pull_requests
+  - mcp__github__get_pull_request
+  - mcp__github__create_and_submit_pull_request_review
+  - mcp__github__list_notifications
+  - mcp__github__get_notification_details
+  - mcp__browseruse__browser_navigate
+  - mcp__context7__resolve-library-id
+  - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__notion__search

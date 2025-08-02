@@ -11,6 +11,8 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - mcp__context7__resolve-library-id
   - mcp__context7__get-library-docs
   - mcp__graphiti__add_memory
@@ -19,6 +21,10 @@ tools:
   - mcp__notion__search
   - mcp__notion__fetch
   - mcp__notion__create-pages
+  - mcp__ide__getDiagnostics
+  - mcp__github__create_or_update_file
+  - mcp__github__create_pull_request
+  - mcp__github__get_pull_request_diff
 ---
 
 # James Mitchell - Service Implementation Lead 🚀

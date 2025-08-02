@@ -11,7 +11,16 @@ tools:
   - Grep
   - Glob
   - Task
+  - TodoRead
+  - TodoWrite
   - WebSearch
+  - mcp__github__create_or_update_file
+  - mcp__github__push_files
+  - mcp__github__create_branch
+  - mcp__github__create_pull_request
+  - mcp__github__merge_pull_request
+  - mcp__github__list_commits
+  - mcp__browseruse__browser_navigate
   - mcp__graphiti__add_memory
   - mcp__graphiti__search_memory_nodes
   - mcp__graphiti__search_memory_facts
