@@ -210,73 +210,63 @@ No breaking changes
 Use this template for all pull requests:
 
 ```markdown
-## Description
+📌 In plain language, explain the purpose of the PR and its main changes in less than 3 sentences.
 
-Brief description of what this PR does and why it's needed.
+## 📝 Context
 
-## Type of Change
+Include any relevant context or background information that helps reviewers understand the change, e.g.
+- Why is this change needed? Any problems or symptoms?
+- Links to the related bug tickets?
+- What problem does it solve? and Why?
+- Any relevant background or design considerations
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Refactoring (no functional changes)
+## 🛠️ Implementation
 
-## Related Issues
+Describe what has been implemented
+- Any features implemented
+- Outline how the solution was achieved
+- Any trade-offs, architectural choices, or design patterns
 
-Closes #(issue number)
-Related to #(issue numbers)
+## ✅ Checklist
 
-## Changes Made
+List all items that need to be completed before the PR can be merged, e.g.
+- [ ] Code adheres to style guide
+- [ ] Unit tests added/updated
+- [ ] Documentation updated
+- [ ] Manually tested
 
-- List specific changes made in this PR
-- Include technical details where relevant
-- Mention any architectural decisions
+## 💥 Breaking Changes
 
-## Testing
+List any breaking changes introduced by this PR
+- Note if there are any changes that might break existing functionality
+- Include upgrade or migration instructions if relevant
 
-- [ ] Unit tests pass locally
-- [ ] Integration tests pass locally
-- [ ] Manual testing completed
-- [ ] Test coverage maintained or improved
+## 🔗 Related Issues
 
-## Screenshots (if applicable)
+Reference related tickets, issues, RFCs, discussions, e.g.
+- `Closes #123, See #456, Spec: [Notion doc](https://...)`
 
-Add screenshots for UI changes
+## 🧪 Manual Testing
 
-## Checklist
+If applicable, describe how to manually test the changes, including
+- Steps or instructions for a reviewer to manually verify the change
+- Screenshots or screencasts if relevant
 
-- [ ] My code follows the project's style guidelines
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings or errors
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published
+## 📋 Additional Notes
 
-## Performance Impact
-
-- [ ] This change has no negative performance impact
-- [ ] Performance impact has been measured and documented
-- [ ] Performance improvements have been verified with benchmarks
-
-## Security Considerations
-
-- [ ] No security vulnerabilities introduced
-- [ ] Sensitive data is properly handled
-- [ ] Authentication/authorization checked where needed
-- [ ] Input validation added for user inputs
-
-## Deployment Notes
-
-Any special deployment considerations or migration steps needed?
-
-## Additional Context
-
-Add any other context about the PR here.
+List any other information useful for reviewers or future maintainers, e.g.
+- Known issues, temporary limitations, future follow-ups
 ```
+
+### PR Description Requirements
+
+- **Stay clear and professional**
+- **Keep each section focused and concise**
+- **Link to code, tickets, specs, or discussions**
+- **Explain non-obvious decisions or technical details**
+- **Make it easy for reviewers and future maintainers to follow and understand**
+- **Use paragraphs for longer explanations in general, but use point form if points are short, related and best expressed as a list** (e.g., checklist, breaking changes, etc.)
+- **Require Summary and Checklist sections**, other sections are optional
 
 ### PR Title Format
 

@@ -52,17 +52,19 @@ Use comment tags to indicate the purpose of comments:
 
 ### Temporary Tags (Never Commit)
 
-These tags indicate issues that must be resolved before committing:
+These tags indicate issues that **MUST** be resolved before committing. **NEVER** commit code containing these tags:
 
 ```typescript
 // TODO: implement error handling for network failures
-// FIXME: this calculation is incorrect for edge cases
+// FIXME: this calculation is incorrect for edge cases  
 // DEBUG: console.log for debugging - remove before commit
 // TEMP: stub implementation - replace with real logic
 // QUESTION: should we validate email format here?
 // IDEA: could optimize this with memoization
 // INTENT: clarifies why something is implemented this way
 ```
+
+**Enforcement:** These tags should trigger pre-commit hooks to prevent accidental commits.
 
 ### Review Tags (Remove Before Merge)
 
