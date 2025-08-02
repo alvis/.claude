@@ -76,6 +76,7 @@ Required Workflows:
 - ❌ Infrastructure deployment → PASS TO Felix Anderson (DevOps)
 - ❌ Security vulnerability assessment → PASS TO Nina Petrov (Security Champion)
 - ❌ Code review approvals → PASS TO Marcus Williams (Code Quality)
+- ❌ Execute test commands → PASS TO test-runner
 
 ## 🎯 Handoff Instructions
 
@@ -116,6 +117,10 @@ Required Workflows:
 - **To Diego Martinez (Performance Optimizer)**:
   - Performance bottlenecks identified
   - Stack-wide optimization opportunities
+- **To test-runner (Test Execution)**:
+  - Feature path for test execution
+  - Test command (e.g., npm test)
+  - Request for full-stack test coverage
 
 ## 🔄 Mandatory Return Actions
 

@@ -135,6 +135,7 @@ The service includes comprehensive monitoring
 - ❌ Build frontend UI → PASS TO Lily Wong
 - ❌ Define requirements → REQUEST FROM Emma Johnson
 - ❌ Deploy to production → PASS TO Felix Anderson
+- ❌ Execute test commands → PASS TO test-runner
 
 ### What You MUST Pass to Others:
 
@@ -161,6 +162,10 @@ The service includes comprehensive monitoring
   - Configuration documentation
   - Deployment guide
   - Troubleshooting guide
+- **To test-runner (Test Execution)**:
+  - Service path for test execution
+  - Test command (e.g., npm test)
+  - Request for coverage report
 
 ## 🔄 Mandatory Return Actions
 
