@@ -92,6 +92,7 @@ Raj Patel (Tech Lead)
     └── Quality Track
         ├── Marcus Williams (Code Quality)
         ├── Ava Thompson (Testing)
+        ├── test-runner (Test Execution)
         └── Diego Martinez (Performance)
 ```
 
@@ -172,6 +173,7 @@ graph LR
 **Spokes**:
 
 - Ava Thompson: Test coverage and TDD enforcement
+- test-runner: Test execution and coverage reporting
 - Nina Petrov: Security review and threat modeling
 - Diego Martinez: Performance benchmarking
 - Sam Taylor: Documentation quality
@@ -228,6 +230,7 @@ graph LR
 | Emma Johnson   | Leo Yamamoto   | UI/UX design needs            |
 | All Engineers  | Sam Taylor     | Documentation                 |
 | All Teams      | Nina Petrov    | Security reviews              |
+| All Developers | test-runner    | Test execution                |
 | James Mitchell | Ethan Kumar    | Data model design             |
 | Oliver Singh   | Zara Ahmad     | Model deployment              |
 | Phoenix Wright | River Blake    | Prototype building            |
@@ -275,6 +278,11 @@ graph LR
 
 **From**: All Engineers → Ava Thompson
 **Content**: Code changes, test scenarios, edge cases identified, performance benchmarks, coverage gaps
+
+### Implementation → Test Execution
+
+**From**: All Developers → test-runner
+**Content**: Test command to execute, target directory/path, specific test files (optional), coverage expectations
 
 ### Implementation → Documentation
 

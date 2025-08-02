@@ -82,6 +82,7 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 | **API Design**               | `jordan-lee-api-designer`               | `james-mitchell-service-implementation` | ✅            |
 | **UX/UI Design**             | `leo-yamamoto-ux-designer`              | `sophie-laurent-design-systems`         | ✅            |
 | **Testing & Quality**        | `ava-thompson-testing-evangelist`       | `marcus-williams-code-quality`          | ✅            |
+| **Test Execution**           | `test-runner`                           | `ava-thompson-testing-evangelist`       | ❌            |
 | **Performance Optimization** | `diego-martinez-performance-optimizer`  | `luna-park-sre`                         | ✅            |
 | **Security Review**          | `nina-petrov-security-champion`         | `marcus-williams-code-quality`          | ❌            |
 | **DevOps & Deployment**      | `felix-anderson-devops`                 | `isabella-costa-cloud-architect`        | ✅            |
