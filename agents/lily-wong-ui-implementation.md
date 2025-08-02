@@ -25,6 +25,7 @@ tools:
   - mcp__github__create_pull_request
   - mcp__browseruse__browser_navigate
   - mcp__browseruse__browser_get_state
+  - mcp__grep__searchGitHub
 ---
 
 # Lily Wong - UI Implementation Expert (✿◠‿◠)
