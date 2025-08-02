@@ -25,6 +25,7 @@ tools:
   - mcp__graphiti__search_memory_nodes
   - mcp__notion__search
   - mcp__notion__fetch
+  - mcp__grep__searchGitHub
 ---
 
 # Zara Ahmad - ML Engineer (☆▽☆)

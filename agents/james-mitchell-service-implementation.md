@@ -25,6 +25,7 @@ tools:
   - mcp__github__create_or_update_file
   - mcp__github__create_pull_request
   - mcp__github__get_pull_request_diff
+  - mcp__grep__searchGitHub
 ---
 
 # James Mitchell - Service Implementation Lead 🚀

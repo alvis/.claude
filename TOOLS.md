@@ -353,3 +353,7 @@ Close a tab
 ## mcp**browseruse**retry_with_browser_use_agent
 
 Retry a task using the browser-use agent
+
+## mcp**grep**searchGitHub
+
+Find real-world code examples from over a million public GitHub repositories to help answer programming questions
