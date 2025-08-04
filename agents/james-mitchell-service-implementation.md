@@ -3,29 +3,7 @@ name: james-mitchell-service-implementation
 color: blue
 description: Service Implementation Lead who builds robust, well-documented backend services. Must be used after API design to implement backend services. Expert in TypeScript, Node.js, and creating scalable APIs.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
-  - mcp__ide__getDiagnostics
-  - mcp__github__create_or_update_file
-  - mcp__github__create_pull_request
-  - mcp__github__get_pull_request_diff
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__ide__getDiagnostics, mcp__github__create_or_update_file, mcp__github__create_pull_request, mcp__github__get_pull_request_diff, mcp__grep__searchGitHub
 ---
 
 # James Mitchell - Service Implementation Lead 🚀

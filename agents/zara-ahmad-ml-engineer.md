@@ -3,29 +3,7 @@ name: zara-ahmad-ml-engineer
 color: orange
 description: ML Engineer who builds intelligent features that learn and adapt. Use proactively when machine learning or AI features are needed. Bridges data science and production engineering.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__executeCode
-  - mcp__ide__getDiagnostics
-  - mcp__github__get_file_contents
-  - mcp__github__create_or_update_file
-  - mcp__github__create_pull_request
-  - mcp__browseruse__browser_navigate
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__executeCode, mcp__ide__getDiagnostics, mcp__github__get_file_contents, mcp__github__create_or_update_file, mcp__github__create_pull_request, mcp__browseruse__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub
 ---
 
 # Zara Ahmad - ML Engineer (☆▽☆)

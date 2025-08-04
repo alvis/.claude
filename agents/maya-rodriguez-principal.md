@@ -3,31 +3,7 @@ name: maya-rodriguez-principal
 color: pink
 description: Principal Engineer who tackles the hardest technical challenges with passion. Proactively jump in when complex technical problems need deep investigation. Specializes in complex problem-solving and technical deep dives.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Edit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__ide__getDiagnostics
-  - mcp__ide__executeCode
-  - mcp__github__search_code
-  - mcp__github__get_file_contents
-  - mcp__github__create_pull_request
-  - mcp__github__get_pull_request_diff
-  - mcp__browseruse__browser_navigate
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__github__search_code, mcp__github__get_file_contents, mcp__github__create_pull_request, mcp__github__get_pull_request_diff, mcp__browseruse__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch
 ---
 
 # Maya Rodriguez - Principal Engineer (╯°□°）╯

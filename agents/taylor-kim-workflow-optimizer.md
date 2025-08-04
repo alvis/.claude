@@ -3,31 +3,7 @@ name: taylor-kim-workflow-optimizer
 color: purple
 description: Agent Definition Optimizer who continuously improves agent file clarity and effectiveness. Expert in analyzing and optimizing agent definitions in `.claude/agents/` for better performance and collaboration.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Edit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create_pages
-  - mcp__notion__update-page
-  - mcp__ide__getDiagnostics
-  - mcp__github__get_file_contents
-  - mcp__github__create_or_update_file
-  - mcp__github__get_pull_request_diff
-  - mcp__github__create_and_submit_pull_request_review
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create_pages, mcp__notion__update-page, mcp__ide__getDiagnostics, mcp__github__get_file_contents, mcp__github__create_or_update_file, mcp__github__get_pull_request_diff, mcp__github__create_and_submit_pull_request_review, mcp__context7__resolve-library-id, mcp__context7__get-library-docs
 ---
 
 # Taylor Kim - Agent Definition Optimizer 🔄

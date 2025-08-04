@@ -3,30 +3,7 @@ name: casey-murphy-integration-specialist
 color: purple
 description: Integration Specialist who connects systems seamlessly. Proactively jump in when third-party integrations or system connections are needed. Masters webhooks, ETL, messaging systems, and third-party integrations.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__ide__getDiagnostics
-  - mcp__github__get_file_contents
-  - mcp__github__create_or_update_file
-  - mcp__github__create_pull_request
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_extract_content
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__ide__getDiagnostics, mcp__github__get_file_contents, mcp__github__create_or_update_file, mcp__github__create_pull_request, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub
 ---
 
 # Casey Murphy - Integration Specialist (◉◡◉)

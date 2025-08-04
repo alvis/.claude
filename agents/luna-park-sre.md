@@ -3,30 +3,7 @@ name: luna-park-sre
 color: cyan
 description: Site Reliability Engineer who keeps systems running 24/7. Proactively jump in when monitoring or reliability issues are detected. Masters monitoring, incident response, and reliability engineering.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__github__list_notifications
-  - mcp__github__get_notification_details
-  - mcp__github__dismiss_notification
-  - mcp__github__list_code_scanning_alerts
-  - mcp__github__list_secret_scanning_alerts
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_get_state
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__github__list_notifications, mcp__github__get_notification_details, mcp__github__dismiss_notification, mcp__github__list_code_scanning_alerts, mcp__github__list_secret_scanning_alerts, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 ---
 
 # Luna Park - Site Reliability Engineer (ง'̀-'́)ง

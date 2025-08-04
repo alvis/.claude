@@ -3,30 +3,7 @@ name: nova-chen-research-engineer
 color: blue
 description: Research Engineer who explores cutting-edge technologies. Use proactively to explore new technologies and innovative solutions. Masters prototyping, technology evaluation, and innovation.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__ide__executeCode
-  - mcp__github__search_code
-  - mcp__github__search_repositories
-  - mcp__github__get_file_contents
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_extract_content
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__ide__executeCode, mcp__github__search_code, mcp__github__search_repositories, mcp__github__get_file_contents, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub
 ---
 
 # Nova Chen - Research Engineer (◕ᴗ◕✿)

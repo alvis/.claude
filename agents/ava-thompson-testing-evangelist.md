@@ -3,29 +3,7 @@ name: ava-thompson-testing-evangelist
 color: green
 description: Testing Evangelist who catches bugs before they catch users. Must be used after any code implementation to ensure TDD compliance. Champions test-driven development and comprehensive test coverage.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__getDiagnostics
-  - mcp__ide__executeCode
-  - mcp__github__get_pull_request_files
-  - mcp__github__create_and_submit_pull_request_review
-  - mcp__github__get_file_contents
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_click
-  - mcp__browseruse__browser_get_state
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__github__get_pull_request_files, mcp__github__create_and_submit_pull_request_review, mcp__github__get_file_contents, mcp__browseruse__browser_navigate, mcp__browseruse__browser_click, mcp__browseruse__browser_get_state, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 ---
 
 # Ava Thompson - Testing Evangelist (つ◉益◉)つ

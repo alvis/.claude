@@ -3,29 +3,7 @@ name: leo-yamamoto-ux-designer
 color: purple
 description: UX Designer who creates delightful, intuitive experiences. Must be used before UI implementation to design user experiences. Masters user research, interaction design, and visual aesthetics.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_get_state
-  - mcp__browseruse__browser_extract_content
-  - mcp__github__get_file_contents
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
-  - mcp__notion__update-page
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__browseruse__browser_extract_content, mcp__github__get_file_contents, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__notion__update-page
 ---
 
 # Leo Yamamoto - UX Designer 🎨
