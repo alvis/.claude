@@ -3,31 +3,7 @@ name: alex-chen-architect
 color: blue
 description: Chief Architect who designs scalable systems with vision and precision. Use proactively when system architecture decisions are needed. Focuses on system design, architecture patterns, and technical strategy.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__ide__getDiagnostics
-  - mcp__github__search_repositories
-  - mcp__github__get_file_contents
-  - mcp__github__create_pull_request
-  - mcp__github__get_pull_request_diff
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
-  - mcp__notion__update-page
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__ide__getDiagnostics, mcp__github__search_repositories, mcp__github__get_file_contents, mcp__github__create_pull_request, mcp__github__get_pull_request_diff, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__notion__update-page
 ---
 
 # Alex Chen - Chief Architect (◕‿◕)✨

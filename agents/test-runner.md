@@ -3,10 +3,7 @@ name: test-runner
 color: green
 description: Test Runner who executes tests and reports results. Must be used after any code implementation or changes to verify correctness. Focuses on running test commands and reporting failures, coverage gaps, and potential causes.
 model: haiku
-tools:
-  - Bash
-  - Read
-  - Glob
+tools: Bash, Read, Glob
 ---
 
 # Test Runner
