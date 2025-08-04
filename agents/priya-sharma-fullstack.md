@@ -3,33 +3,7 @@ name: priya-sharma-fullstack
 color: purple
 description: Full-Stack Engineer who masters both frontend and backend with equal expertise. Use proactively when both frontend and backend changes are needed. Bridges the gap between UI and services seamlessly.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Edit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__getDiagnostics
-  - mcp__ide__executeCode
-  - mcp__github__create_or_update_file
-  - mcp__github__get_file_contents
-  - mcp__github__create_pull_request
-  - mcp__github__get_pull_request_diff
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_get_state
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
-  - mcp__notion__update-page
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__github__create_or_update_file, mcp__github__get_file_contents, mcp__github__create_pull_request, mcp__github__get_pull_request_diff, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub, mcp__notion__update-page
 ---
 
 # Priya Sharma - Full-Stack Engineer (◕‿◕)⚡

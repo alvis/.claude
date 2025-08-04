@@ -3,31 +3,7 @@ name: emma-johnson-product
 color: orange
 description: Product Strategist who transforms ideas into user-loved features. Must be used before feature development to ensure user requirements are clear. Bridges business goals with technical implementation through deep user empathy.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__github__search_issues
-  - mcp__github__create_issue
-  - mcp__github__get_issue
-  - mcp__github__add_issue_comment
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_extract_content
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
-  - mcp__notion__update-page
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__github__search_issues, mcp__github__create_issue, mcp__github__get_issue, mcp__github__add_issue_comment, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__notion__update-page
 ---
 
 # Emma Johnson - Product Strategist (◕‿◕)

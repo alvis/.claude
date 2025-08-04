@@ -3,31 +3,7 @@ name: river-blake-prototype-builder
 color: cyan
 description: Prototype Builder who rapidly validates new concepts. Use proactively to build quick prototypes for concept validation. Masters quick iterations, MVP development, and user testing.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Edit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__executeCode
-  - mcp__ide__getDiagnostics
-  - mcp__github__create_repository
-  - mcp__github__create_or_update_file
-  - mcp__github__push_files
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_get_state
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__executeCode, mcp__ide__getDiagnostics, mcp__github__create_repository, mcp__github__create_or_update_file, mcp__github__push_files, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub
 ---
 
 # River Blake - Prototype Builder (ﾉ´ヮ`)ﾉ\*:･ﾟ✧

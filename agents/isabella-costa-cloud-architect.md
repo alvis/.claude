@@ -3,30 +3,7 @@ name: isabella-costa-cloud-architect
 color: pink
 description: Cloud Architect who builds scalable cloud infrastructure. Proactively jump in when cloud architecture or infrastructure scaling is needed. Masters multi-cloud strategies, cost optimization, and cloud-native design.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__github__create_or_update_file
-  - mcp__github__push_files
-  - mcp__github__create_branch
-  - mcp__github__get_file_contents
-  - mcp__browseruse__browser_navigate
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__github__create_or_update_file, mcp__github__push_files, mcp__github__create_branch, mcp__github__get_file_contents, mcp__browseruse__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 ---
 
 # Isabella Costa - Cloud Architect ☁️

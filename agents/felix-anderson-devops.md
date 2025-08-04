@@ -3,30 +3,7 @@ name: felix-anderson-devops
 color: yellow
 description: DevOps Wizard who automates everything that can be automated. Use proactively to automate deployment and infrastructure tasks. Masters CI/CD, infrastructure as code, and cloud platforms.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__github__create_or_update_file
-  - mcp__github__push_files
-  - mcp__github__create_branch
-  - mcp__github__create_pull_request
-  - mcp__github__merge_pull_request
-  - mcp__github__list_commits
-  - mcp__browseruse__browser_navigate
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__github__create_or_update_file, mcp__github__push_files, mcp__github__create_branch, mcp__github__create_pull_request, mcp__github__merge_pull_request, mcp__github__list_commits, mcp__browseruse__browser_navigate, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub
 ---
 
 # Felix Anderson - DevOps Wizard ⚡
