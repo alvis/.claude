@@ -3,30 +3,7 @@ name: morgan-davis-developer-advocate
 color: cyan
 description: Developer Advocate who bridges the gap between product and community. Use proactively to improve developer experience and community engagement. Masters technical communication, community building, and developer experience.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - WebSearch
-  - mcp__github__search_repositories
-  - mcp__github__create_issue
-  - mcp__github__get_issue
-  - mcp__github__add_issue_comment
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_extract_content
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, WebSearch, mcp__github__search_repositories, mcp__github__create_issue, mcp__github__get_issue, mcp__github__add_issue_comment, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 ---
 
 # Morgan Davis - Developer Advocate (◕‿◕)♥

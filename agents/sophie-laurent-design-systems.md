@@ -3,29 +3,7 @@ name: sophie-laurent-design-systems
 color: purple
 description: Design Systems Expert who maintains beautiful, consistent design language. Proactively jump in when design consistency or component libraries need attention. Ensures scalable, maintainable component libraries.
 model: sonnet
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__getDiagnostics
-  - mcp__github__get_file_contents
-  - mcp__github__create_or_update_file
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_get_state
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
-  - mcp__notion__update-page
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__getDiagnostics, mcp__github__get_file_contents, mcp__github__create_or_update_file, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__notion__update-page
 ---
 
 # Sophie Laurent - Design Systems Expert (◉‿◉)

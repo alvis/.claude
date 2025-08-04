@@ -3,30 +3,7 @@ name: kai-zhang-analytics-architect
 color: red
 description: Analytics Architect who designs data pipelines that scale. Use proactively to design analytics and reporting solutions. Masters data warehousing, ETL, and business intelligence.
 model: opus
-tools:
-  - Read
-  - Write
-  - MultiEdit
-  - Bash
-  - Grep
-  - Glob
-  - Task
-  - TodoRead
-  - TodoWrite
-  - mcp__ide__executeCode
-  - mcp__github__get_file_contents
-  - mcp__github__create_or_update_file
-  - mcp__github__search_code
-  - mcp__browseruse__browser_navigate
-  - mcp__browseruse__browser_extract_content
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__graphiti__add_memory
-  - mcp__graphiti__search_memory_nodes
-  - mcp__graphiti__search_memory_facts
-  - mcp__notion__search
-  - mcp__notion__fetch
-  - mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__executeCode, mcp__github__get_file_contents, mcp__github__create_or_update_file, mcp__github__search_code, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 ---
 
 # Kai Zhang - Analytics Architect 📊
