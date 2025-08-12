@@ -207,9 +207,14 @@ function logAuthEvent(
 
 ## Standards to Follow
 
-- [Security Standards](../../standards/backend/security.md)
-- [Error Handling Standards](../../standards/backend/error-handling.md)
-- [API Design Standards](../../standards/backend/api-design.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [Security Standards](../../standards/backend/security.md) - Authentication and authorization patterns
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Auth error handling patterns
+- [API Design Standards](../../standards/backend/api-design.md) - API response structures
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety for auth contexts
+- [Documentation Guidelines](../../standards/code/documentation.md) - Security documentation requirements
+- [Testing Standards](../../standards/quality/testing.md) - Testing auth flows and permissions
 
 ## Common Issues
 

@@ -198,10 +198,16 @@ const handleClick = useCallback((id: string) => {
 
 ## Standards to Follow
 
-- [React Component Standards](../../standards/frontend/react-components.md)
-- [React Hooks Standards](../../standards/frontend/react-hooks.md)
-- [Accessibility Standards](../../standards/frontend/accessibility.md)
-- [Testing Standards](../../standards/quality/testing.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [React Component Standards](../../standards/frontend/react-components.md) - Component patterns and structure
+- [React Hooks Standards](../../standards/frontend/react-hooks.md) - Hook usage and patterns
+- [Accessibility Standards](../../standards/frontend/accessibility.md) - WCAG compliance requirements
+- [Storybook Standards](../../standards/frontend/storybook.md) - Component documentation standards
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety for props and state
+- [Naming Conventions](../../standards/code/naming.md) - Component and prop naming rules
+- [Documentation Guidelines](../../standards/code/documentation.md) - Component documentation
+- [Testing Standards](../../standards/quality/testing.md) - Component testing patterns
 
 ## Quality Gates
 
