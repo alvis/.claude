@@ -143,9 +143,19 @@ If critical issues are discovered that cannot be resolved within the team:
 2. Escalate to the service's technical lead
 3. Schedule a review meeting to discuss findings
 
+## Standards to Follow
+
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [API Design Standards](../../standards/backend/api-design.md) - RESTful API patterns and conventions
+- [Documentation Guidelines](../../standards/code/documentation.md) - Documentation requirements
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage requirements
+- [TypeScript Standards](../../standards/code/typescript.md) - Type definitions and patterns
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Error response patterns
+- [Security Standards](../../standards/backend/security.md) - Security requirements validation
+
 ---
 
 **Version**: 1.0
 **Last Updated**: 2025-08-04
 **Review Cycle**: Quarterly
-```

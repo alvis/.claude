@@ -209,13 +209,52 @@ After merging:
 - [ ] Watch for any error alerts or monitoring issues
 - [ ] Follow up on any automated notifications
 
-## Standards Referenced
+## Standards to Follow
 
-- [Code Review Process](./review-code.md)
-- [Testing Standards](../../standards/quality/testing.md)
-- [TypeScript Standards](../../standards/code/typescript.md)
-- [Documentation Standards](../../standards/code/documentation.md)
-- [Git Workflow Standards](../../standards/project/git-workflow.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+### Core Code Standards
+
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Naming Conventions](../../standards/code/naming.md) - Variable, function, and file naming rules
+- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
+- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage
+- [General Principles](../../standards/code/general-principles.md) - DRY, SRP, and other principles
+- [Function Patterns](../../standards/code/function-patterns.md) - Function design patterns
+- [Pure Functions](../../standards/code/pure-functions.md) - Writing testable, pure functions
+
+### Frontend Standards
+
+- [React Component Standards](../../standards/frontend/react-components.md) - Component patterns
+- [React Hooks Standards](../../standards/frontend/react-hooks.md) - Hook usage patterns
+- [Accessibility Standards](../../standards/frontend/accessibility.md) - Web accessibility compliance
+
+### Backend Standards
+
+- [API Design Standards](../../standards/backend/api-design.md) - RESTful API patterns
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Error patterns
+- [Security Standards](../../standards/backend/security.md) - Security best practices
+- [Data Operations Standards](../../standards/backend/data-operations.md) - Repository patterns
+
+### Quality Standards
+
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage
+- [Code Review Standards](../../standards/quality/code-review.md) - Review best practices
+- [Git Workflow Standards](../../standards/project/git-workflow.md) - Commit and PR standards
+
+### Security Standards
+
+- [Security Checklist](../../standards/security/checklist.md) - Security verification checklist
+- [Authentication Standards](../../standards/security/authentication.md) - Auth patterns
+- [Data Protection](../../standards/security/data-protection.md) - Data security requirements
+
+### Performance Standards
+
+- [Performance Optimization](../../standards/code/performance-optimization.md) - Performance best practices
+
+### Related Workflows
+
+- [Review Code Process](./review-code.md) - Detailed code review workflow
 
 ## Quality Metrics
 

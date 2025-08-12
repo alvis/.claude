@@ -88,8 +88,14 @@ Closes #123, See #456
 
 ## Standards to Follow
 
-- [Git Workflow Standards](../../standards/project/git-workflow.md)
-- [Code Review Standards](../quality/review-code.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [Git Workflow Standards](../../standards/project/git-workflow.md) - PR title and description formats
+- [Code Review Standards](../../standards/quality/code-review.md) - Review preparation checklist
+- [Communication Standards](../../standards/project/communication.md) - PR communication guidelines
+- [Testing Standards](../../standards/quality/testing.md) - Test coverage requirements
+- [Documentation Guidelines](../../standards/code/documentation.md) - Documentation updates
+- [Review Code Workflow](../quality/review-code.md) - Review process guidelines
 
 ## PR Workflow Phases
 

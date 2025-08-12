@@ -65,8 +65,13 @@ git push -u origin feat/auth/add-oauth
 
 ## Standards to Follow
 
-- [Git Workflow Standards](../../standards/project/git-workflow.md)
-- [TDD Workflow](../coding/write-code-tdd.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [Git Workflow Standards](../../standards/project/git-workflow.md) - Commit formats and branch naming
+- [Testing Standards](../../standards/quality/testing.md) - Test requirements before commit
+- [Code Review Standards](../../standards/quality/code-review.md) - Pre-commit review checklist
+- [Quality Gates](../shared/quality-gates.md) - Mandatory quality checks
+- [TDD Workflow](../coding/write-code-tdd.md) - Test-driven development process
 
 ## Critical Rules
 
