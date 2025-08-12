@@ -164,10 +164,16 @@ git commit -m "feat(tax): implement tax calculation with validation"
 
 ## Standards to Follow
 
-- [Testing Standards](../../standards/quality/testing.md)
-- [TypeScript Standards](../../standards/code/typescript.md)
-- [Function Design Standards](../../standards/code/functions.md)
-- [Git Workflow Standards](../../standards/project/git-workflow.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [Testing Standards](../../standards/quality/testing.md) - Test structure, coverage, and BDD patterns
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Function Design Standards](../../standards/code/functions.md) - Function structure and patterns
+- [Pure Functions Standards](../../standards/code/pure-functions.md) - Writing testable, pure functions
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Proper error handling patterns
+- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage
+- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
+- [Git Workflow Standards](../../standards/project/git-workflow.md) - Commit message formats
 
 ## Test Structure Requirements
 

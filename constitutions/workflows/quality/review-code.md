@@ -205,6 +205,38 @@ Assign appropriate priority to feedback:
 // This doesn't make sense.
 ```
 
+## Standards to Follow
+
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+### Core Code Standards
+
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Naming Conventions](../../standards/code/naming.md) - Variable, function, and file naming rules
+- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
+- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage
+- [General Principles](../../standards/code/general-principles.md) - DRY, SRP, and other principles
+- [Function Patterns](../../standards/code/function-patterns.md) - Function design patterns
+- [Pure Functions](../../standards/code/pure-functions.md) - Writing testable, pure functions
+
+### Frontend Standards (when reviewing React code)
+
+- [React Component Standards](../../standards/frontend/react-components.md) - Component patterns
+- [React Hooks Standards](../../standards/frontend/react-hooks.md) - Hook usage patterns
+- [Accessibility Standards](../../standards/frontend/accessibility.md) - Web accessibility compliance
+
+### Backend Standards (when reviewing services)
+
+- [API Design Standards](../../standards/backend/api-design.md) - RESTful API patterns
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Error patterns
+- [Security Standards](../../standards/backend/security.md) - Security best practices
+- [Data Operations Standards](../../standards/backend/data-operations.md) - Repository patterns
+
+### Quality Standards
+
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage
+- [Code Review Standards](../../standards/quality/code-review.md) - Review best practices
+
 ## Expected Output Template
 
 ### Code Review Summary

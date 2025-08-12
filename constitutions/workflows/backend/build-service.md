@@ -167,10 +167,16 @@ Implement observability:
 
 ## Standards to Follow
 
-- [API Design Standards](../../standards/backend/api-design.md)
-- [Error Handling Standards](../../standards/backend/error-handling.md)
-- [Security Standards](../../standards/backend/security.md)
-- [Testing Standards](../../standards/quality/testing.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [API Design Standards](../../standards/backend/api-design.md) - RESTful principles and API patterns
+- [Data Operations Standards](../../standards/backend/data-operations.md) - Repository pattern and data access
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Error types and handling patterns
+- [Security Standards](../../standards/backend/security.md) - Authentication and authorization patterns
+- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Naming Conventions](../../standards/code/naming.md) - Variable, function, and file naming rules
+- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and API documentation
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage requirements
 
 ## Common Issues
 

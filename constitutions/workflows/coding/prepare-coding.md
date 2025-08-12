@@ -154,9 +154,15 @@ git checkout -b feat/your-feature-name
 
 ## Standards to Follow
 
-- [File Organization Standards](../../standards/code/structure.md)
-- [TypeScript Standards](../../standards/code/typescript.md)
-- [Testing Standards](../../standards/quality/testing.md)
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [General Principles](../../standards/code/general-principles.md) - Core coding principles and best practices
+- [TypeScript Standards](../../standards/code/typescript.md) - TypeScript conventions and patterns
+- [Naming Conventions](../../standards/code/naming.md) - Variable, function, and file naming rules
+- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage guidelines
+- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
+- [Folder Structure](../../standards/code/folder-structure.md) - Project organization patterns
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage requirements
 
 ## Pre-Coding Checklist
 

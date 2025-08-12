@@ -158,3 +158,14 @@ Immediately flag and escalate if:
 - Quarterly comprehensive review
 - Update after major service changes
 - Continuous improvement through team feedback
+
+## Standards to Follow
+
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+- [API Design Standards](../../standards/backend/api-design.md) - RESTful API patterns and conventions
+- [Documentation Guidelines](../../standards/code/documentation.md) - Documentation requirements
+- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage requirements
+- [TypeScript Standards](../../standards/code/typescript.md) - Type definitions and patterns
+- [Error Handling Standards](../../standards/backend/error-handling.md) - Error response patterns
+- [Security Standards](../../standards/backend/security.md) - Security requirements validation
