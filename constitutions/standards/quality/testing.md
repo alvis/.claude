@@ -22,9 +22,13 @@ _Comprehensive testing standards for quality assurance and TDD compliance_
 - **Proper test structure** - Follow Arrange → Act → Assert pattern
 - **Minimize test quantity** - Add minimal meaningful tests that cover everything
 - **Maximize test reuse** - Think critically about minimizing complexity and maximizing reuse
-- **Use `const` over `let`** - Prefer immutable test data
-- **Avoid `beforeEach`** - Keep tests self-contained when possible
-- **Never use `any` type in tests** - Use specific types imported from relevant modules
+- **Ignore lines marked with v8 ignore** - No need to create any tests for lines meant to be ignore from coverage
+- **Use `const` over `let`** - Create fresh instances per test instead of reassigning variables
+- **Avoid `beforeEach`** - Keep tests self-contained when possible, use factory functions for complex setups
+- **Never use `any` type in tests** - Use specific types with `satisfies` pattern for type safety
+- **Never use dynamic imports** - Always use static imports at module level, no `await import()` in tests
+- **Avoid over-mocking** - Use real implementations for simple logic, only mock external dependencies with side effects
+- **Test outcomes, not mocks** - Focus on business logic and results, not mock call verification
 
 ### Test File Naming and Organization
 
@@ -49,6 +53,43 @@ _Comprehensive testing standards for quality assurance and TDD compliance_
 - `hk:` - React hooks
 - `sv:` - Services
 - `rp:` - Repositories
+
+### Test Double Organization
+
+**File Structure:**
+
+Use a simplified, pragmatic structure for test doubles:
+
+```typescript
+spec/
+├── mocks/                   // shared mocks across test files
+│   ├── services/
+│   │   └── user.ts          // no .mock.ts suffix needed
+│   ├── repositories/
+│   │   └── crypto.ts
+│   ├── external/            // third-party service mocks
+│   │   └── stripe.ts
+│   └── factories/           // mock factory functions
+│       ├── user.ts
+│       └── order.ts
+├── fixtures/                // shared test data
+│   ├── users.ts
+│   ├── products.ts
+│   ├── orders.ts
+│   └── factories/           // fixture factory functions
+│       ├── user.ts
+│       └── product.ts
+└── utilities/               // test utilities
+    ├── helpers.ts
+    └── setup.ts             // vitest setup file
+```
+
+**Placement Guidelines:**
+
+- **Inline (Preferred for single-use):** Place at the top of the test file when only used in that file
+- **Shared (For reuse):** Place in `spec/mocks` or `spec/fixtures` when needed by multiple test files
+- **Clean naming:** Use `const user = ...` instead of `const mockUser = ...` - TypeScript provides type clarity
+- **No suffixes:** Use `mocks/user.ts` instead of `user.mock.ts` for cleaner imports
 
 ```typescript
 // ✅ Good: Proper test organization
@@ -82,7 +123,7 @@ All tests must follow the AAA pattern with proper spacing:
 - Structure each test into 3 sections: Arrange, Act, Assert
 - **A line space is required between each section**
 - No need to add `// arrange`, `// act`, or `// assert` comments in the test code
-- IMPORTANT: For testing pure functions, use `result` and `expected` variables
+- [[IMPORTANT] For testing pure functions, use `result` and `expected` variables]
 - Declare `expected` value in the arrangement section (before `result`)
 
 ```typescript
@@ -143,16 +184,16 @@ describe("fn:processUser", () => {
 });
 ```
 
-### Avoiding beforeEach
+### Avoiding beforeEach and Using Factory Functions
 
-Keep tests self-contained when possible:
+Keep tests self-contained when possible. Use factory functions for complex setups:
 
 ```typescript
-// ✅ Good: Self-contained tests
+// ✅ Good: Self-contained tests with fresh instances
 describe("cl:UserService", () => {
   it("should create user with valid data", () => {
-    const mockRepository = createMockUserRepository();
-    const service = new UserService(mockRepository);
+    const repository = createMockUserRepository();
+    const service = new UserService(repository);
     const userData = { name: "John", email: "john@example.com" };
 
     const result = service.createUser(userData);
@@ -161,22 +202,41 @@ describe("cl:UserService", () => {
   });
 
   it("should throw error with invalid email", () => {
-    const mockRepository = createMockUserRepository();
-    const service = new UserService(mockRepository);
+    const repository = createMockUserRepository();
+    const service = new UserService(repository);
     const userData = { name: "John", email: "invalid-email" };
 
     expect(() => service.createUser(userData)).toThrow();
   });
 });
 
-// ❌ Avoid: beforeEach when not necessary
+// ✅ Good: Factory function for complex setup
+const createTestContext = () => {
+  const repository = createMockUserRepository();
+  const cacheService = createCacheService();
+  const service = new UserService(repository, cacheService);
+  return { repository, cacheService, service };
+};
+
+describe("cl:UserService", () => {
+  it("should cache user after creation", () => {
+    const { service, cacheService } = createTestContext();
+    const userData = { name: "John", email: "john@example.com" };
+
+    service.createUser(userData);
+
+    expect(cacheService.set).toHaveBeenCalled();
+  });
+});
+
+// ❌ Bad: Using let with reassignment in hooks
 describe("cl:UserService", () => {
   let service: UserService;
-  let mockRepository: MockUserRepository;
+  let repository: MockUserRepository;
 
   beforeEach(() => {
-    mockRepository = createMockUserRepository();
-    service = new UserService(mockRepository);
+    repository = createMockUserRepository();
+    service = new UserService(repository);
   });
 
   it("should create user with valid data", () => {
@@ -207,12 +267,12 @@ expect(user).toBe({ id: 1, name: "John" }); // Will fail - different references
 
 ## Mocking Standards
 
-### Vi.hoisted Pattern
+### Vi.hoisted Pattern with Type Safety
 
-Use the standard vi.hoisted pattern for mocking:
+Use the standard vi.hoisted pattern with `satisfies` for type-safe mocking:
 
 ```typescript
-// ✅ Good: Standard vi.hoisted pattern
+// ✅ Good: Type-safe vi.hoisted pattern with satisfies
 const { fetchUser } = vi.hoisted(() => ({
   fetchUser: vi.fn(),
 }));
@@ -236,14 +296,41 @@ describe("fn:getUserProfile", () => {
     expect(fetchUser).toHaveBeenCalledWith("123");
   });
 });
+
+// ✅ Good: Type-safe fixtures with satisfies
+import type { User } from "#types";
+
+export const userFixtures = {
+  validUser: {
+    id: "user-001",
+    email: "john@example.com",
+    name: "John Doe",
+    role: "admin",
+  },
+  invalidUser: {
+    id: "",
+    email: "invalid-email",
+    name: "",
+    role: "unknown",
+  },
+} satisfies Record<string, Partial<User>>;
 ```
 
-### Mock Cleanup
+### Mock Cleanup and Vitest Configuration
 
-**Note:** There's no need to call `clearAllMocks` in tests because mocks are automatically reset as configured in the Vitest setup.
+Configure Vitest for automatic cleanup. Never use manual cleanup in tests:
 
 ```typescript
-// ❌ Unnecessary: Manual mock cleanup (Vitest handles this automatically)
+// vitest.config.ts - required configuration
+export default defineConfig({
+  test: {
+    mockReset: true,     // automatically reset mock implementations between tests
+    clearMocks: true,    // clear call history between tests  
+    restoreMocks: true,  // restore original implementations
+  }
+});
+
+// ❌ Bad: Manual mock cleanup (unnecessary with proper config)
 describe("fn:apiCall", () => {
   afterEach(() => {
     vi.clearAllMocks(); // Not needed with proper Vitest configuration
@@ -253,9 +340,13 @@ describe("fn:apiCall", () => {
 // ✅ Good: Let Vitest handle mock cleanup automatically
 describe("fn:apiCall", () => {
   it("should handle successful response", () => {
-    fetchUser.mockResolvedValue({ id: "123" });
+    const fetchUser = vi.fn().mockResolvedValue({ id: "123" });
+    // Each test gets fresh mock state automatically
+  });
 
-    // Test implementation
+  it("should handle error response", () => {
+    const fetchUser = vi.fn().mockRejectedValue(new Error("Failed"));
+    // Previous test's mock state is automatically cleared
   });
 });
 ```
@@ -285,13 +376,13 @@ describe('rc:UserCard', () => {
 
   it('should call onEdit when edit button is clicked', () => {
     const user = { id: '123', name: 'John' };
-    const mockOnEdit = vi.fn();
+    const onEdit = vi.fn();
 
-    render(<UserCard user={user} onEdit={mockOnEdit} />);
+    render(<UserCard user={user} onEdit={onEdit} />);
 
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
 
-    expect(mockOnEdit).toHaveBeenCalledWith('123');
+    expect(onEdit).toHaveBeenCalledWith('123');
   });
 });
 ```
@@ -302,9 +393,9 @@ describe('rc:UserCard', () => {
 // ✅ Good: Testing user interactions
 describe('rc:LoginForm', () => {
   it('should submit form with valid credentials', async () => {
-    const mockOnSubmit = vi.fn();
+    const onSubmit = vi.fn();
 
-    render(<LoginForm onSubmit={mockOnSubmit} />);
+    render(<LoginForm onSubmit={onSubmit} />);
 
     // Arrange user inputs
     const emailInput = screen.getByLabelText(/email/i);
@@ -317,7 +408,7 @@ describe('rc:LoginForm', () => {
     await user.click(submitButton);
 
     // Assert
-    expect(mockOnSubmit).toHaveBeenCalledWith({
+    expect(onSubmit).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'password123'
     });
@@ -333,34 +424,94 @@ describe('rc:LoginForm', () => {
 // ✅ Good: Service testing
 describe("sv:UserService", () => {
   it("should create user and return success result", async () => {
-    const mockRepository = {
+    const repository = {
       save: vi.fn().mockResolvedValue({ id: "123", name: "John" }),
       findById: vi.fn(),
       findAll: vi.fn(),
     };
-    const service = new UserService(mockRepository);
+    const service = new UserService(repository);
     const userData = { name: "John", email: "john@example.com" };
     const expected = { success: true, data: { id: "123", name: "John" } };
 
     const result = await service.createUser(userData);
 
     expect(result).toEqual(expected);
-    expect(mockRepository.save).toHaveBeenCalledWith(userData);
+    expect(repository.save).toHaveBeenCalledWith(userData);
   });
 
   it("should return error result when repository fails", async () => {
-    const mockRepository = {
+    const repository = {
       save: vi.fn().mockRejectedValue(new Error("Database error")),
       findById: vi.fn(),
       findAll: vi.fn(),
     };
-    const service = new UserService(mockRepository);
+    const service = new UserService(repository);
     const userData = { name: "John", email: "invalid" };
 
     const result = await service.createUser(userData);
 
     expect(result.success).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
+  });
+});
+```
+
+## Factory Functions for Test Doubles
+
+### Factory Function Pattern
+
+Use factory functions to create consistent, type-safe test doubles:
+
+```typescript
+// ✅ Good: Factory function with overrides
+export function createUserService(
+  overrides?: Partial<UserService>
+): UserService {
+  return {
+    getUser: vi.fn().mockResolvedValue(createUser()),
+    createUser: vi.fn().mockResolvedValue({ id: 'new-user-id' }),
+    updateUser: vi.fn().mockResolvedValue(true),
+    deleteUser: vi.fn().mockResolvedValue(true),
+    listUsers: vi.fn().mockResolvedValue([]),
+    ...overrides
+  };
+}
+
+// Usage with overrides in test
+describe('fn:handleUserNotFound', () => {
+  it('should handle user not found gracefully', async () => {
+    const userService = createUserService({
+      getUser: vi.fn().mockRejectedValue(new Error('User not found'))
+    });
+    const handler = new UserHandler(userService);
+    
+    const result = await handler.fetchUserSafely('user-123');
+    
+    expect(result).toBeNull();
+  });
+});
+
+// ✅ Good: Factory for fixtures
+export const createUserFixture = (overrides?: Partial<User>): User => ({
+  id: `user-${Date.now()}`,
+  email: `test-${Date.now()}@example.com`,
+  name: 'Test User',
+  role: 'user',
+  createdAt: new Date().toISOString(),
+  ...overrides
+});
+
+// Usage in tests
+describe('fn:processUser', () => {
+  it('should process admin user differently', () => {
+    const adminUser = createUserFixture({ role: 'admin' });
+    const regularUser = createUserFixture({ role: 'user' });
+    
+    const adminResult = processUser(adminUser);
+    const regularResult = processUser(regularUser);
+    
+    expect(adminResult.permissions).toContain('admin');
+    expect(regularResult.permissions).not.toContain('admin');
   });
 });
 ```
@@ -527,29 +678,88 @@ describe("fn:complexBusinessLogic", () => {
 ### Common Mistakes to Avoid
 
 ```typescript
+// ❌ Bad: Over-mocking simple logic
+const dateFormatter = vi.fn().mockReturnValue('2024-01-01');
+const validator = vi.fn().mockReturnValue(true);
+const config = vi.fn().mockReturnValue({ apiUrl: 'https://api.example.com' });
+
+// ✅ Good: Use real implementations for simple logic
+import { formatDate } from '#utils/date';
+import { validateEmail } from '#utils/validators';
+import { config } from '#config';
+
+// Only mock external dependencies with side effects
+const apiClient = createApiClient();
+const database = createDatabaseConnection();
+
+// ❌ Bad: Testing the mock instead of business logic
+describe('sv:UserService', () => {
+  it('should fetch user data', async () => {
+    const userApi = createUserApi();
+    const service = new UserService(userApi);
+    
+    await service.enrichUserProfile('user-123');
+    
+    // Only testing that the mock was called
+    expect(userApi.getUser).toHaveBeenCalledWith('user-123');
+    expect(userApi.getPreferences).toHaveBeenCalled();
+    // Missing: what did the service actually DO with this data?
+  });
+});
+
+// ✅ Good: Test business logic and outcomes
+describe('sv:UserService', () => {
+  it('should enrich user profile with preferences', async () => {
+    const userApi = createUserApi();
+    userApi.getUser.mockResolvedValue({ id: 'user-123', name: 'John' });
+    userApi.getPreferences.mockResolvedValue({ theme: 'dark' });
+    
+    const service = new UserService(userApi);
+    const enrichedProfile = await service.enrichUserProfile('user-123');
+    
+    // Primary: test the actual business logic
+    expect(enrichedProfile).toEqual({
+      id: 'user-123',
+      name: 'John',
+      preferences: { theme: 'dark' },
+      enrichedAt: expect.any(Date)
+    });
+    
+    // Secondary: verify correct API usage
+    expect(userApi.getUser).toHaveBeenCalledWith('user-123');
+  });
+});
+
+// ❌ Bad: Dynamic imports in tests
+describe('fn:validatePermissions', () => {
+  it('should validate user permissions', async () => {
+    const { validatePermissions } = await import('#auth/permissions');
+    const { getUserRole } = await import('#auth/roles');
+    
+    const role = await getUserRole('user-123');
+    const isValid = validatePermissions(role, 'write');
+    expect(isValid).toBe(true);
+  });
+});
+
+// ✅ Good: Static imports at module level
+import { validatePermissions } from '#auth/permissions';
+import { getUserRole } from '#auth/roles';
+
+describe('fn:validatePermissions', () => {
+  it('should validate user permissions', async () => {
+    const role = await getUserRole('user-123');
+    const isValid = validatePermissions(role, 'write');
+    expect(isValid).toBe(true);
+  });
+});
+
 // ❌ Bad: Testing implementation details
 describe('rc:UserList', () => {
   it('should call useState with empty array', () => {
     const useStateSpy = vi.spyOn(React, 'useState');
     render(<UserList />);
     expect(useStateSpy).toHaveBeenCalledWith([]);
-  });
-});
-
-// ❌ Bad: Overly complex test setup
-describe('fn:complexFunction', () => {
-  beforeEach(() => {
-    // 50 lines of setup code
-    setupComplexTestEnvironment();
-    initializeMultipleMocks();
-    configureTestDatabase();
-  });
-});
-
-// ❌ Bad: Testing multiple things in one test
-describe('fn:processOrder', () => {
-  it('should validate input, calculate total, save to database, and send email', () => {
-    // Testing too many responsibilities in one test
   });
 });
 
