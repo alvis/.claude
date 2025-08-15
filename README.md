@@ -87,7 +87,7 @@ This repository hosts an advanced multi-agent development system designed for en
 - **`nova-chen-research-engineer`** - Technology evaluation
 - **`oliver-singh-data-scientist`** - Machine learning and analytics
 
-### [View All 30 Agents →](.claude/agents/)
+### [View All 30 Agents →](@.claude/agents/)
 
 ## 📋 Constitution System
 
@@ -111,8 +111,7 @@ constitutions/
 │       └── approve-pr.md
 ├── standards/      # WHAT the rules are
 │   ├── typescript-standards.md
-│   ├── react-patterns.md
-│   └── api-design.md
+│   └── react-patterns.md
 ├── patterns/       # Templates and examples
 │   ├── component-template.tsx
 │   └── service-template.ts
@@ -242,17 +241,17 @@ if (testCoverage < 100) throw new Error("STOP: Insufficient test coverage");
 
 Agents follow the collaboration framework defined in:
 
-- [`.claude/agents/collaboration-framework.md`](.claude/agents/collaboration-framework.md)
-- [`.claude/agents/escalation-paths.md`](.claude/agents/escalation-paths.md)
+- [`.claude/agents/collaboration-framework.md`](@.claude/agents/collaboration-framework.md)
+- [`.claude/agents/escalation-paths.md`](@.claude/agents/escalation-paths.md)
 
 ## 📚 Documentation
 
 ### Key Documents
 
-- **[CLAUDE.md](./CLAUDE.md)** - Project constitution and rules
-- **[Collaboration Framework](.claude/agents/collaboration-framework.md)** - How agents work together
-- **[Constitution Workflows](constitutions/workflows/)** - Step-by-step processes
-- **[Tech Standards](constitutions/standards/)** - Technical requirements
+- **[CLAUDE.md](@./CLAUDE.md)** - Project constitution and rules
+- **[Collaboration Framework](@.claude/agents/collaboration-framework.md)** - How agents work together
+- **[Constitution Workflows](@constitutions/workflows/)** - Step-by-step processes
+- **[Tech Standards](@constitutions/standards/)** - Technical requirements
 
 ### Agent-Specific Docs
 
@@ -304,7 +303,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 
 ### Getting Help
 
-- **Issues**: Report at [GitHub Issues](https://github.com/anthropics/claude-code/issues)
+- **Issues**: Report at [GitHub Issues](@https://github.com/anthropics/claude-code/issues)
 - **Documentation**: Check constitution files first
 - **Agent Help**: Ask any agent about their capabilities
 - **Escalation**: Follow paths in collaboration framework

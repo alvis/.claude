@@ -71,7 +71,7 @@ Within each content type, group by domain:
 
 ### Standards (Rule-Oriented)
 
-- Use nouns: `typescript.md`, `api-design.md`
+- Use nouns: `typescript.md`, `error-handling.md`
 - Group related rules together
 - Include rationale where helpful
 

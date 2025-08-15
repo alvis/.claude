@@ -100,10 +100,9 @@ ls -la .git/hooks/
 
 Based on your task, review relevant standards:
 
-- For functions: [Function Design Standards](../../standards/code/functions.md)
-- For TypeScript: [TypeScript Standards](../../standards/code/typescript.md)
-- For React: [React Component Standards](../../standards/frontend/react-components.md)
-- For APIs: [API Design Standards](../../standards/backend/api-design.md)
+- For functions: [Function Design Standards](@../../standards/code/functions.md)
+- For TypeScript: [TypeScript Standards](@../../standards/code/typescript.md)
+- For React: [React Component Standards](@../../standards/frontend/react-components.md)
 
 ### 8. Plan Your Approach
 
@@ -156,13 +155,12 @@ git checkout -b feat/your-feature-name
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [General Principles](../../standards/code/general-principles.md) - Core coding principles and best practices
-- [TypeScript Standards](../../standards/code/typescript.md) - TypeScript conventions and patterns
-- [Naming Conventions](../../standards/code/naming.md) - Variable, function, and file naming rules
-- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage guidelines
-- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
-- [Folder Structure](../../standards/code/folder-structure.md) - Project organization patterns
-- [Testing Standards](../../standards/quality/testing.md) - Test structure and coverage requirements
+- [General Principles](@../../standards/code/general-principles.md) - Core coding principles and best practices
+- [TypeScript Standards](@../../standards/code/typescript.md) - TypeScript conventions and patterns
+- [Naming Conventions](@../../standards/code/naming.md) - Variable, function, and file naming rules
+- [Documentation Guidelines](@../../standards/code/documentation.md) - Comments, JSDoc, and documentation standards
+- [Folder Structure](@../../standards/code/folder-structure.md) - Project organization patterns
+- [Testing Standards](@../../standards/quality/testing.md) - Test structure and coverage requirements
 
 ## Pre-Coding Checklist
 

@@ -5,9 +5,9 @@ description: Update slash commands to latest standards with optionally specific 
 # model: opus
 ---
 
-# Update Commands to Latest Standards
+# Update Commands
 
-Update existing slash commands to follow current best practices and template structure. Parses $ARGUMENTS to identify both target commands and specific areas to change. Commands will be upgraded to the latest template with clean, comment-free output. Intelligently extracts change requirements from arguments, adds missing sections from template, removes all comments, preserves custom functionality, and creates backups before modifications. Ultrathink mode.
+Update existing slash commands to follow current best practices and template structure. Parses $ARGUMENTS to identify both target commands and specific areas to change. Commands will be upgraded to the latest template with clean, comment-free output and change any content in relate to the specified changes. Intelligently extracts change requirements from arguments, adds missing sections from template, removes all comments, preserves custom functionality, and make sure all the changes are clearly reflected in the command file. Ultrathink mode.
 
 ## 🎯 Purpose & Scope
 
@@ -82,6 +82,7 @@ Update existing slash commands to follow current best practices and template str
    - Update targeted sections per change requests
    - Reorganize content to match structure
    - Migrate existing content appropriately
+   - Update the content such that the changes are clearly reflected
 
 3. **Standards Enforcement**
    - Apply standards from `constitutions/standards/`

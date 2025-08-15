@@ -8,7 +8,7 @@ This directory contains reusable workflow modules that are referenced by other w
 
 | Workflow                            | Purpose                                             | Used By                   |
 | ----------------------------------- | --------------------------------------------------- | ------------------------- |
-| [Quality Gates](./quality-gates.md) | Standard TypeScript, linting, and test verification | All development workflows |
+| [Quality Gates](@./quality-gates.md) | Standard TypeScript, linting, and test verification | All development workflows |
 
 ## Purpose
 
@@ -28,7 +28,7 @@ Reference shared workflows using relative links:
 ```markdown
 ### Step 4: Run Quality Gates
 
-Follow the [Quality Gates workflow](../shared/quality-gates.md) to verify your changes.
+Follow the [Quality Gates workflow](@../shared/quality-gates.md) to verify your changes.
 ```
 
 ### Directly

@@ -76,13 +76,13 @@ Ensure the implementation follows standards:
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [Data Operations Standards](../../standards/backend/data-operations.md) - Repository pattern and naming conventions
-- [Error Handling Standards](../../standards/backend/error-handling.md) - Error types and handling patterns
-- [Security Standards](../../standards/backend/security.md) - Data validation and sanitization
-- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
-- [Naming Conventions](../../standards/code/naming.md) - Method and variable naming rules
-- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc for repository methods
-- [Testing Standards](../../standards/quality/testing.md) - Repository and controller testing
+- [Data Operations Standards](@../../standards/backend/data-operations.md) - Repository pattern and naming conventions
+- [Error Handling Standards](@../../standards/backend/error-handling.md) - Error types and handling patterns
+- [Security Standards](@../../standards/backend/security.md) - Data validation and sanitization
+- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Naming Conventions](@../../standards/code/naming.md) - Method and variable naming rules
+- [Documentation Guidelines](@../../standards/code/documentation.md) - JSDoc for repository methods
+- [Testing Standards](@../../standards/quality/testing.md) - Repository and controller testing
 
 ## Common Issues
 

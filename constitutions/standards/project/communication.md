@@ -242,6 +242,6 @@ Before communicating:
 
 ## Related Standards
 
-- [Documentation Standards](../code/documentation.md)
-- [Git Workflow Standards](./git-workflow.md)
-- [Code Review Workflow](../../workflows/quality/review-code.md)
+- [Documentation Standards](@../code/documentation.md)
+- [Git Workflow Standards](@./git-workflow.md)
+- [Code Review Workflow](@../../workflows/quality/review-code.md)
