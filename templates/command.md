@@ -1,29 +1,18 @@
 ---
-# FRONTMATTER CONFIGURATION
-# All available options for slash commands
+# INSTRUCTION: In the tool list below, you must proactively update the tool list based on currently available tools. Carefully select those that would have chance to be used to fulfil to the task
+allowed-tools: <list of comma separated list of tools the agent can use, e.g. "Bash(git:*), Bash(npm test), Bash(npm run:*), Bash(docker:*), Edit, MultiEdit, Read, Write, WebSearch, WebFetch, Grep, Glob, Task, ...">
 
-# Available tools (comma-separated list)
-# Restrict Bash commands for security (optional)
-# Format: Bash(command:*) or Bash(exact-command)
-# Examples: Bash(git:*), Bash(npm test), Bash(npm run:*), Bash(docker:*)
-# Common tools: Bash, Edit, MultiEdit, Read, Write, WebSearch, WebFetch, Grep, Glob, Task
-allowed-tools: Bash, Edit, MultiEdit, Read, Write, WebSearch, WebFetch, Grep, Glob, Task
-
-# Hint shown when user types the command (for discoverability)
 argument-hint: <argument description>
 
-# Brief description shown in /help (max 80 characters)
-description: One-line description of what this command does
-
-# Model selection (optional, defaults to current model)
-# Options: opus (complex reasoning), sonnet (standard), haiku (simple)
-# model: opus
-
+# INSTRUCTION: Tell what this command does
+description: <brief description shown in /help (max 80 characters)>
 ---
 
-# Command Title
+# [Command Title]
 
-Describe an action this command will execute. Use $ARGUMENTS as a placeholder for injecting context.
+<!-- INSTRUCTION: Describe an action this command will execute. Use $ARGUMENTS as a placeholder for injecting context -->
+
+[Description of the command in <= 3 sentences]
 
 ## 🎯 Purpose & Scope
 
@@ -31,21 +20,21 @@ Describe an action this command will execute. Use $ARGUMENTS as a placeholder fo
 
 **What this command does NOT do:**
 
-- Explicit boundaries
-- Out-of-scope operations
-- Unsupported features
+- [Explicit boundaries]
+- [Out-of-scope operations]
+- [Unsupported features]
 
 **When to REJECT:**
 
-- Anti-patterns
-- Better alternatives exist
-- Risky conditions
+- [Anti-patterns]
+- [Better alternatives exist]
+- [Risky conditions]
 
 ## 📊 Dynamic Context
 
-<!-- INSTRUCTION: Pick relevant context for purpose of achieving what the command intended to do, can be none -->
+- **[IMPORTANT]** At the start of the command, you must run the command to extract all the context below
 
-[[IMPORTANT] You must carefully remember all the context defined below]
+<!-- INSTRUCTION: Pick relevant context for purpose of achieving what the command intended to do, can be none -->
 
 ### System State
 
@@ -63,75 +52,19 @@ Describe an action this command will execute. Use $ARGUMENTS as a placeholder fo
 
 ## 🔄 Workflow
 
+In ultrathink mode, you'd perform the following steps
+
 <!-- INSTRUCTION: Add or remove the following basic workflow based on the command, think carefully what's the best workflow for the command -->
 
-### Phase 1: Planning
+### Step 1: Follow [Workflow Name] Workflow
 
-1. **Analyze Requirements**
-   - Break down the task into steps
-   - Identify dependencies
-   - Determine order of operations
+- Execute @[path to workflow]
 
-2. **Identify Applicable Workflows & Standards**
-   - Check `constitutions/workflows/` for relevant processes
-   - Review `constitutions/standards/` for applicable standards
-   - Note: MUST follow any matching workflows
+### Step N: Follow [Workflow Name] Workflow
 
-3. **Delegation Decision**
-   - Identify if specialized agents should handle subtasks
-   - List tasks suitable for parallel execution
-   - Plan handoff points between agents
+- Execute @[path to workflow]
 
-4. **Risk Assessment**
-   - Identify potential failure points
-   - Plan rollback strategies
-   - Note destructive operations
-
-### Phase 2: Execution
-
-1. **Workflow Compliance**
-   - MUST follow workflows identified in Phase 1
-   - If no workflow exists, follow project conventions
-   - Reference specific workflow files when applicable
-
-2. **Primary Implementation**
-   - Execute main task following standards
-   - Use parallel processing for independent tasks
-   - Delegate to specialized agents when beneficial
-
-3. **Standards Enforcement**
-   - Apply standards from `constitutions/standards/`
-   - Follow coding conventions for language/framework
-   - Maintain consistency with existing codebase
-
-4. **Edge Case Handling**
-   - Check special conditions
-   - Apply fallback strategies
-   - Maintain data integrity
-
-### Phase 3: Verification
-
-1. **Workflow-Based Verification**
-   - Run `constitutions/workflows/quality/review-code.md` if code modified
-   - Follow `constitutions/workflows/quality/verify-*` patterns if applicable
-   - Use validation checklists from relevant workflows
-
-2. **Automated Testing**
-   - Run test suites: `npm test` or project-specific commands
-   - Verify expected outputs match requirements
-   - Check for regressions in existing functionality
-
-3. **Quality Assurance**
-   - Run type checking: `npm run typecheck` if TypeScript
-   - Execute linters: `npm run lint` or equivalent
-   - Validate against applicable standards
-
-4. **Side Effect Validation**
-   - Confirm no unintended file changes
-   - Verify system state consistency
-   - Check cleanup of temporary resources
-
-### Phase 4: Reporting
+### Step N+1: Reporting
 
 **Output Format:**
 
@@ -153,10 +86,6 @@ Describe an action this command will execute. Use $ARGUMENTS as a placeholder fo
 ## Issues Found (if any)
 - **Issue**: [Description]
   **Fix**: [Applied fix or suggestion]
-
-## Next Steps (if applicable)
-- [Required manual action]
-- [Recommended follow-up]
 ```
 
 ## 📝 Examples

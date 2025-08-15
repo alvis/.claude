@@ -12,7 +12,7 @@
 ## Use specific error Classes
 
 ```typescript
-// ✅ GOOD: Specific error classes
+// ✅ GOOD: specific error classes
 import { MissingDataError } from '@theriety/error';
 
 class ValidationError extends Error { ... }
@@ -21,7 +21,7 @@ if (!user) {
   throw new MissingDataError('user profile not found');
 }
 
-// ❌ BAD: Generic errors
+// ❌ BAD: generic errors
 throw new Error('User not found');
 ```
 
@@ -86,7 +86,7 @@ console.log("This is wrong");
 ## Structured Logging
 
 ```typescript
-// ✅ GOOD: Structured with context
+// ✅ GOOD: structured with context
 action.log.error("payment failed", {
   userId,
   orderId,
@@ -95,7 +95,7 @@ action.log.error("payment failed", {
   gateway: "stripe",
 });
 
-// ❌ BAD: String concatenation
+// ❌ BAD: string concatenation
 action.log.error("Error: " + error.message);
 ```
 

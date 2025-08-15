@@ -8,21 +8,21 @@ This directory contains ready-to-use templates and examples that demonstrate how
 
 ### 👨‍💻 **Frontend Engineers**
 
-- **[Component Template](./frontend/component-template.md)** - Complete React component boilerplate with tests and stories
-- **[Hook Templates](./frontend/hook-templates.md)** - Custom React hooks patterns and examples _(Coming Soon)_
-- **[Accessibility Patterns](./frontend/accessibility-patterns.md)** - WCAG-compliant component examples _(Coming Soon)_
+- **[Component Template](@./frontend/component-template.md)** - Complete React component boilerplate with tests and stories
+- **[Hook Templates](@./frontend/hook-templates.md)** - Custom React hooks patterns and examples _(Coming Soon)_
+- **[Accessibility Patterns](@./frontend/accessibility-patterns.md)** - WCAG-compliant component examples _(Coming Soon)_
 
 ### 🔧 **Backend Engineers**
 
-- **[Repository Template](./backend/repository-template.md)** - Data access layer with caching and transactions
-- **[Service Templates](./backend/service-templates.md)** - API service patterns and examples _(Coming Soon)_
-- **[Auth Patterns](./backend/auth-patterns.md)** - Authentication and authorization examples _(Coming Soon)_
+- **[Repository Template](@./backend/repository-template.md)** - Data access layer with caching and transactions
+- **[Service Templates](@./backend/service-templates.md)** - API service patterns and examples _(Coming Soon)_
+- **[Auth Patterns](@./backend/auth-patterns.md)** - Authentication and authorization examples _(Coming Soon)_
 
 ### 📋 **All Engineers**
 
-- **[Function Templates](./code/function-templates.md)** - Common function patterns and signatures _(Coming Soon)_
-- **[Test Templates](./quality/test-templates.md)** - Testing patterns for different scenarios _(Coming Soon)_
-- **[Error Handling Patterns](./code/error-patterns.md)** - Error handling and validation examples _(Coming Soon)_
+- **[Function Templates](@./code/function-templates.md)** - Common function patterns and signatures _(Coming Soon)_
+- **[Test Templates](@./quality/test-templates.md)** - Testing patterns for different scenarios _(Coming Soon)_
+- **[Error Handling Patterns](@./code/error-patterns.md)** - Error handling and validation examples _(Coming Soon)_
 
 ## Available Patterns
 
@@ -30,13 +30,13 @@ This directory contains ready-to-use templates and examples that demonstrate how
 
 | Pattern                                                | Purpose                        | Includes                                            |
 | ------------------------------------------------------ | ------------------------------ | --------------------------------------------------- |
-| [Component Template](./frontend/component-template.md) | Complete React component setup | TypeScript component, tests, stories, accessibility |
+| [Component Template](@./frontend/component-template.md) | Complete React component setup | TypeScript component, tests, stories, accessibility |
 
 ### ⚙️ Backend Patterns
 
 | Pattern                                                 | Purpose                          | Includes                                                |
 | ------------------------------------------------------- | -------------------------------- | ------------------------------------------------------- |
-| [Repository Template](./backend/repository-template.md) | Data access layer implementation | Repository class, caching, transactions, error handling |
+| [Repository Template](@./backend/repository-template.md) | Data access layer implementation | Repository class, caching, transactions, error handling |
 
 ## How to Use Patterns
 
@@ -176,9 +176,9 @@ Before using a pattern in production:
 
 ## Need Help?
 
-- **Understanding the standards?** Check the [Standards](../standards/) directory
-- **Need step-by-step guidance?** See the [Workflows](../workflows/) directory
-- **Looking for reference info?** Check the [References](../references/) directory
+- **Understanding the standards?** Check the [Standards](@../standards/) directory
+- **Need step-by-step guidance?** See the [Workflows](@../workflows/) directory
+- **Looking for reference info?** Check the [References](@../references/) directory
 - **Pattern doesn't fit your use case?** Look for similar patterns or combine multiple patterns
 
 ## Contributing to Patterns

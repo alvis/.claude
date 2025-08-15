@@ -330,6 +330,5 @@ describe("Authentication", () => {
 
 ## References
 
-- [Password Hashing](../code/security-patterns.md#password-hashing)
-- [Session Management](./session-management.md)
-- [API Security](./api-design.md#security)
+- [Password Hashing](@../code/security-patterns.md#password-hashing)
+- [Session Management](@./session-management.md)

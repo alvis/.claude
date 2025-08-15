@@ -8,24 +8,26 @@ This directory contains executable workflows organized by role and responsibilit
 
 ### 👨‍💻 **Frontend Engineers**
 
-- **[Build React Component](./frontend/build-component.md)** - Complete component development with tests and stories
-- **[Review Code](./quality/review-code.md)** - Code review process and standards
-- **[Approve PR](./quality/approve-pr.md)** - Final quality gates before merge
+- **[Build React Component](@./frontend/build-component.md)** - Complete component development with tests and stories
+- **[Review Code](@./quality/review-code.md)** - Code review process and standards
+- **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
 
 ### 🔧 **Backend Engineers**
 
-- **[Build Data Controller](./backend/build-data-controller.md)** - Repository pattern with caching and transactions
-- **[Verify Auth Scope](./backend/verify-auth-scope.md)** - JWT verification and role-based authorization
-- **[Review Code](./quality/review-code.md)** - Code review process and standards
-- **[Approve PR](./quality/approve-pr.md)** - Final quality gates before merge
+- **[Build Data Controller](@./backend/build-data-controller.md)** - Repository pattern with caching and transactions
+- **[Create Service Operation Manifest](@./backend/create-service-operation-manifest.md)** - Define and implement new service operations with manifest schemas and type-safe implementations
+- **[Implement Data Operation](@./backend/implement-data-operation.md)** - Create database operations from Notion specifications
+- **[Verify Auth Scope](@./backend/verify-auth-scope.md)** - JWT verification and role-based authorization
+- **[Review Code](@./quality/review-code.md)** - Code review process and standards
+- **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
 
 ### 📋 **All Engineers**
 
-- **[Write Code (TDD)](./coding/write-code-tdd.md)** - Test-driven development workflow
-- **[Prepare for Coding](./coding/prepare-coding.md)** - Pre-coding verification steps
-- **[Commit with Git](./project/commit-with-git.md)** - TDD-compliant git workflow
-- **[Review Code](./quality/review-code.md)** - Code review process and standards
-- **[Approve PR](./quality/approve-pr.md)** - Final quality gates before merge
+- **[Write Code (TDD)](@./coding/write-code-tdd.md)** - Test-driven development workflow
+- **[Prepare for Coding](@./coding/prepare-coding.md)** - Pre-coding verification steps
+- **[Commit with Git](@./project/commit-with-git.md)** - TDD-compliant git workflow
+- **[Review Code](@./quality/review-code.md)** - Code review process and standards
+- **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
 
 ## Workflow Categories
 
@@ -33,34 +35,38 @@ This directory contains executable workflows organized by role and responsibilit
 
 | Workflow                                         | Purpose                                                     | When to Use                |
 | ------------------------------------------------ | ----------------------------------------------------------- | -------------------------- |
-| [Build Component](./frontend/build-component.md) | Create React components with full testing and documentation | Building new UI components |
+| [Build Component](@./frontend/build-component.md) | Create React components with full testing and documentation | Building new UI components |
 
 ### ⚙️ Backend Development
 
-| Workflow                                                    | Purpose                                       | When to Use                 |
-| ----------------------------------------------------------- | --------------------------------------------- | --------------------------- |
-| [Build Data Controller](./backend/build-data-controller.md) | Implement data access with repository pattern | Creating data access layers |
-| [Verify Auth Scope](./backend/verify-auth-scope.md)         | Add authentication and authorization          | Securing API endpoints      |
+| Workflow                                                                                | Purpose                                                                   | When to Use                        |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| [Build Data Controller](@./backend/build-data-controller.md)                             | Implement data access with repository pattern                             | Creating data access layers        |
+| [Create Service Operation Manifest](@./backend/create-service-operation-manifest.md)     | Define and implement new service operations with manifest schemas and type-safe implementations | Creating new service operations    |
+| [Implement Data Operation](@./backend/implement-data-operation.md)                       | Implement database operations based on Notion specifications               | Creating data operations (get/set/list/drop) |
+| [Verify Auth Scope](@./backend/verify-auth-scope.md)                                     | Add authentication and authorization                                       | Securing API endpoints             |
 
 ### 💻 General Coding
 
 | Workflow                                         | Purpose                         | When to Use                     |
 | ------------------------------------------------ | ------------------------------- | ------------------------------- |
-| [Write Code (TDD)](./coding/write-code-tdd.md)   | Test-driven development process | All feature development         |
-| [Prepare for Coding](./coding/prepare-coding.md) | Environment and context setup   | Before starting any coding task |
+| [Write Code (TDD)](@./coding/write-code-tdd.md)   | Test-driven development process | All feature development         |
+| [Prepare for Coding](@./coding/prepare-coding.md) | Environment and context setup   | Before starting any coding task |
 
 ### 🔍 Quality Assurance
 
 | Workflow                                | Purpose                           | When to Use             |
 | --------------------------------------- | --------------------------------- | ----------------------- |
-| [Review Code](./quality/review-code.md) | Comprehensive code review process | Reviewing pull requests |
-| [Approve PR](./quality/approve-pr.md)   | Final approval quality gates      | Before merging code     |
+| [Review Code](@./quality/review-code.md) | Comprehensive code review process | Reviewing pull requests |
+| [Review Test](@./quality/review-test.md) | Optimize tests for coverage and maintainability | After test creation or when coverage drops |
+| [Approve PR](@./quality/approve-pr.md)   | Final approval quality gates      | Before merging code     |
 
 ### 📦 Project Operations
 
 | Workflow                                        | Purpose                    | When to Use             |
 | ----------------------------------------------- | -------------------------- | ----------------------- |
-| [Commit with Git](./project/commit-with-git.md) | Quality-gated git workflow | Committing code changes |
+| [Commit with Git](@./project/commit-with-git.md) | Quality-gated git workflow | Committing code changes |
+| [Ensure Project](@./project/ensure-project.md) | Validate and bootstrap project structure | Setting up new projects or validating existing ones |
 
 ## How to Use Workflows
 
@@ -111,9 +117,9 @@ Workflows reference related standards and other workflows as needed.
 
 ## Need Help?
 
-- **Can't find the right workflow?** Check the [Standards](../standards/) directory for technical requirements
-- **Looking for examples?** See the [Patterns](../patterns/) directory for templates and examples
-- **Need quick reference?** Check the [References](../references/) directory for lookup information
+- **Can't find the right workflow?** Check the [Standards](@../standards/) directory for technical requirements
+- **Looking for examples?** See the [Patterns](@../patterns/) directory for templates and examples
+- **Need quick reference?** Check the [References](@../references/) directory for lookup information
 - **Workflow unclear?** Refer to linked standards documents for detailed technical guidance
 
 ## Contributing to Workflows

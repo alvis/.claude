@@ -519,6 +519,6 @@ describe("Infrastructure Security", () => {
 
 ## References
 
-- [OWASP Security Headers](https://owasp.org/www-project-secure-headers/)
-- [Rate Limiting Best Practices](./rate-limiting.md)
-- [CORS Security](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+- [OWASP Security Headers](@https://owasp.org/www-project-secure-headers/)
+- [Rate Limiting Best Practices](@./rate-limiting.md)
+- [CORS Security](@https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)

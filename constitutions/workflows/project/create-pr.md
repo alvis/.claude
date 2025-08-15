@@ -10,7 +10,7 @@
 
 Ensure your branch is ready:
 
-- All commits follow [commit standards](../../standards/project/git-workflow.md)
+- All commits follow [commit standards](@../../standards/project/git-workflow.md)
 - All tests pass locally
 - Code follows quality standards
 - Feature is complete and tested
@@ -90,12 +90,12 @@ Closes #123, See #456
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [Git Workflow Standards](../../standards/project/git-workflow.md) - PR title and description formats
-- [Code Review Standards](../../standards/quality/code-review.md) - Review preparation checklist
-- [Communication Standards](../../standards/project/communication.md) - PR communication guidelines
-- [Testing Standards](../../standards/quality/testing.md) - Test coverage requirements
-- [Documentation Guidelines](../../standards/code/documentation.md) - Documentation updates
-- [Review Code Workflow](../quality/review-code.md) - Review process guidelines
+- [Git Workflow Standards](@../../standards/project/git-workflow.md) - PR title and description formats
+- [Code Review Standards](@../../standards/quality/code-review.md) - Review preparation checklist
+- [Communication Standards](@../../standards/project/communication.md) - PR communication guidelines
+- [Testing Standards](@../../standards/quality/testing.md) - Test coverage requirements
+- [Documentation Guidelines](@../../standards/code/documentation.md) - Documentation updates
+- [Review Code Workflow](@../quality/review-code.md) - Review process guidelines
 
 ## PR Workflow Phases
 
