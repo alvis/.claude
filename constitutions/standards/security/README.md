@@ -8,36 +8,36 @@ This directory contains focused security standards that were extracted from the 
 
 | Standard                                | Purpose                                 | Key Topics                                 |
 | --------------------------------------- | --------------------------------------- | ------------------------------------------ |
-| [Authentication](./authentication.md)   | Secure user authentication and sessions | JWT, passwords, MFA, sessions              |
-| [Data Protection](./data-protection.md) | Input validation and data security      | Validation, encryption, XSS/SQL prevention |
-| [Infrastructure](./infrastructure.md)   | Infrastructure and network security     | Headers, rate limiting, CORS, DDoS         |
-| [Monitoring](./monitoring.md)           | Security event tracking and response    | Logging, alerting, metrics, incidents      |
-| [Checklist](./checklist.md)             | Comprehensive security audit guide      | Full security assessment checklist         |
+| [Authentication](@./authentication.md)   | Secure user authentication and sessions | JWT, passwords, MFA, sessions              |
+| [Data Protection](@./data-protection.md) | Input validation and data security      | Validation, encryption, XSS/SQL prevention |
+| [Infrastructure](@./infrastructure.md)   | Infrastructure and network security     | Headers, rate limiting, CORS, DDoS         |
+| [Monitoring](@./monitoring.md)           | Security event tracking and response    | Logging, alerting, metrics, incidents      |
+| [Checklist](@./checklist.md)             | Comprehensive security audit guide      | Full security assessment checklist         |
 
 ## Quick Start by Role
 
 ### 🔐 **Security Engineers**
 
-1. Start with the [Security Checklist](./checklist.md) for comprehensive coverage
+1. Start with the [Security Checklist](@./checklist.md) for comprehensive coverage
 2. Review all standards for depth in specific areas
-3. Implement [Monitoring](./monitoring.md) for ongoing security visibility
+3. Implement [Monitoring](@./monitoring.md) for ongoing security visibility
 
 ### 👨‍💻 **Backend Engineers**
 
-1. [Authentication](./authentication.md) - Implement secure login systems
-2. [Data Protection](./data-protection.md) - Validate and protect user data
-3. [Infrastructure](./infrastructure.md) - Configure security headers and rate limiting
+1. [Authentication](@./authentication.md) - Implement secure login systems
+2. [Data Protection](@./data-protection.md) - Validate and protect user data
+3. [Infrastructure](@./infrastructure.md) - Configure security headers and rate limiting
 
 ### 🛡️ **DevOps Engineers**
 
-1. [Infrastructure](./infrastructure.md) - Network and infrastructure security
-2. [Monitoring](./monitoring.md) - Set up security monitoring and alerting
-3. [Checklist](./checklist.md#infrastructure--configuration) - Infrastructure audit items
+1. [Infrastructure](@./infrastructure.md) - Network and infrastructure security
+2. [Monitoring](@./monitoring.md) - Set up security monitoring and alerting
+3. [Checklist](@./checklist.md#infrastructure--configuration) - Infrastructure audit items
 
 ### 📊 **Compliance Officers**
 
-1. [Checklist](./checklist.md#compliance--privacy) - Compliance requirements
-2. [Monitoring](./monitoring.md#log-retention-and-compliance) - Audit logging
+1. [Checklist](@./checklist.md#compliance--privacy) - Compliance requirements
+2. [Monitoring](@./monitoring.md#log-retention-and-compliance) - Audit logging
 3. Review all standards for compliance mapping
 
 ## Security Principles
@@ -66,19 +66,19 @@ When systems fail, they should fail in a secure state.
 
 ### Phase 1: Foundation (Weeks 1-2)
 
-- [ ] Implement [Authentication](./authentication.md) standards
-- [ ] Configure [Infrastructure](./infrastructure.md) security headers
-- [ ] Set up basic [Monitoring](./monitoring.md)
+- [ ] Implement [Authentication](@./authentication.md) standards
+- [ ] Configure [Infrastructure](@./infrastructure.md) security headers
+- [ ] Set up basic [Monitoring](@./monitoring.md)
 
 ### Phase 2: Data Security (Weeks 3-4)
 
-- [ ] Apply [Data Protection](./data-protection.md) standards
+- [ ] Apply [Data Protection](@./data-protection.md) standards
 - [ ] Implement input validation across all endpoints
 - [ ] Set up encryption for sensitive data
 
 ### Phase 3: Advanced Security (Weeks 5-6)
 
-- [ ] Complete all [Checklist](./checklist.md) critical items
+- [ ] Complete all [Checklist](@./checklist.md) critical items
 - [ ] Implement advanced monitoring and alerting
 - [ ] Conduct security testing and remediation
 
@@ -162,7 +162,7 @@ describe("Security Standards Compliance", () => {
 
 When security incidents occur:
 
-1. **Detect**: [Monitoring](./monitoring.md) standards for detection
+1. **Detect**: [Monitoring](@./monitoring.md) standards for detection
 2. **Respond**: Use incident response procedures
 3. **Contain**: Apply infrastructure controls
 4. **Recover**: Follow recovery procedures
@@ -181,15 +181,14 @@ When security incidents occur:
 
 ### Internal References
 
-- [Backend API Design](../backend/api-design.md) - API security patterns
-- [Testing Standards](../quality/testing.md) - Security testing approaches
-- [TypeScript Standards](../code/typescript.md) - Type-safe security code
+- [Testing Standards](@../quality/testing.md) - Security testing approaches
+- [TypeScript Standards](@../code/typescript.md) - Type-safe security code
 
 ### External References
 
-- [OWASP Top 10](https://owasp.org/Top10/)
-- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
-- [Security Best Practices](https://github.com/OWASP/CheatSheetSeries)
+- [OWASP Top 10](@https://owasp.org/Top10/)
+- [NIST Cybersecurity Framework](@https://www.nist.gov/cyberframework)
+- [Security Best Practices](@https://github.com/OWASP/CheatSheetSeries)
 
 ## Contribution Guidelines
 

@@ -212,14 +212,14 @@ router.post(
 
 ```typescript
 class DatabaseService {
-  // ✅ Good: Parameterized query
+  // ✅ GOOD: parameterized query
   async findUserByEmail(email: string): Promise<User | null> {
     const query = "SELECT * FROM users WHERE email = $1";
     const result = await this.pool.query(query, [email]);
     return result.rows[0] || null;
   }
 
-  // ✅ Good: Multiple parameters
+  // ✅ GOOD: multiple parameters
   async findUsers(filters: UserFilters): Promise<User[]> {
     const conditions: string[] = [];
     const values: any[] = [];
@@ -253,7 +253,7 @@ class DatabaseService {
     return result.rows;
   }
 
-  // ❌ Bad: String concatenation
+  // ❌ BAD: string concatenation
   async unsafeQuery(table: string, id: string): Promise<any> {
     // NEVER DO THIS
     const query = `SELECT * FROM ${table} WHERE id = '${id}'`;
@@ -574,6 +574,6 @@ describe("Data Protection", () => {
 
 ## References
 
-- [Authentication Standards](./authentication.md)
-- [OWASP Input Validation](https://owasp.org/www-community/controls/Input_Validation)
-- [Encryption Best Practices](../code/security-patterns.md#encryption)
+- [Authentication Standards](@./authentication.md)
+- [OWASP Input Validation](@https://owasp.org/www-community/controls/Input_Validation)
+- [Encryption Best Practices](@../code/security-patterns.md#encryption)

@@ -73,7 +73,7 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 ### Task Routing Rules
 
-| Task Type                    | Primary Agent                           | Secondary Support                       | Auto-Parallel |
+| Task Type                    | Management Agent                           | Secondary Support                       | Auto-Parallel |
 | ---------------------------- | --------------------------------------- | --------------------------------------- | ------------- |
 | **Frontend Development**     | `lily-wong-ui-implementation`           | `sophie-laurent-design-systems`         | ✅            |
 | **Backend Services**         | `james-mitchell-service-implementation` | `ethan-kumar-data-architect`            | ✅            |
@@ -97,7 +97,7 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 - User approves high-level plan and objectives
 - Agents execute detailed steps automatically in parallel
-- Agents coordinate among themselves using `.claude/agents/collaboration-framework.md`
+- Agents coordinate among themselves using `.claude/collaboration-framework.md`
 - Only escalate to user for major decision points or blockers
 
 **Execution Flow:**
@@ -136,7 +136,7 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 ### Agent Collaboration
 
-- **Reference Framework**: Use `.claude/agents/collaboration-framework.md` for inter-agent coordination
+- **Reference Framework**: Use `.claude/collaboration-framework.md` for inter-agent coordination
 - **Clear Handoffs**: Document all work transitions between agents
 - **Escalation Paths**: Follow defined escalation matrix for blockers
 - **Quality Reviews**: Independent agent verification required for completion
@@ -158,7 +158,7 @@ This is the Theriety monorepo containing multiple clients, services, libraries, 
 
 - **Constitution Adherence**: All inter-agent work follows defined workflows
 - **Clear Handoffs**: Use standardized interfaces defined in collaboration framework
-- **Conflict Resolution**: Follow escalation paths in `.claude/agents/collaboration-framework.md`
+- **Conflict Resolution**: Follow escalation paths in `.claude/collaboration-framework.md`
 - **Quality Assurance**: Independent verification required before task completion
 
 ### Communication Standards

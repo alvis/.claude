@@ -444,6 +444,6 @@ echo "✅ Security audit complete!"
 
 ## References
 
-- [OWASP Top 10](https://owasp.org/Top10/)
-- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
-- [CIS Controls](https://www.cisecurity.org/controls)
+- [OWASP Top 10](@https://owasp.org/Top10/)
+- [NIST Cybersecurity Framework](@https://www.nist.gov/cyberframework)
+- [CIS Controls](@https://www.cisecurity.org/controls)

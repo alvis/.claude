@@ -200,14 +200,14 @@ const handleClick = useCallback((id: string) => {
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [React Component Standards](../../standards/frontend/react-components.md) - Component patterns and structure
-- [React Hooks Standards](../../standards/frontend/react-hooks.md) - Hook usage and patterns
-- [Accessibility Standards](../../standards/frontend/accessibility.md) - WCAG compliance requirements
-- [Storybook Standards](../../standards/frontend/storybook.md) - Component documentation standards
-- [TypeScript Standards](../../standards/code/typescript.md) - Type safety for props and state
-- [Naming Conventions](../../standards/code/naming.md) - Component and prop naming rules
-- [Documentation Guidelines](../../standards/code/documentation.md) - Component documentation
-- [Testing Standards](../../standards/quality/testing.md) - Component testing patterns
+- [React Component Standards](@../../standards/frontend/react-components.md) - Component patterns and structure
+- [React Hooks Standards](@../../standards/frontend/react-hooks.md) - Hook usage and patterns
+- [Accessibility Standards](@../../standards/frontend/accessibility.md) - WCAG compliance requirements
+- [Storybook Standards](@../../standards/frontend/storybook.md) - Component documentation standards
+- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety for props and state
+- [Naming Conventions](@../../standards/code/naming.md) - Component and prop naming rules
+- [Documentation Guidelines](@../../standards/code/documentation.md) - Component documentation
+- [Testing Standards](@../../standards/quality/testing.md) - Component testing patterns
 
 ## Quality Gates
 
@@ -231,4 +231,4 @@ npm run coverage         # Component tests pass
 
 ## Component Template Reference
 
-See [Component Template](../../patterns/frontend/component-template.md) for the complete boilerplate code.
+See [Component Template](@../../patterns/frontend/component-template.md) for the complete boilerplate code.

@@ -10,57 +10,56 @@ This directory contains the restructured development constitution, organized by 
 
 **Essential workflows:**
 
-- [Build Component](./workflows/frontend/build-component.md) - React component development
-- [Write Code (TDD)](./workflows/coding/write-code-tdd.md) - Test-driven development
-- [Review Code](./workflows/quality/review-code.md) - Code review process
+- [Build Component](@./workflows/frontend/build-component.md) - React component development
+- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - Test-driven development
+- [Review Code](@./workflows/quality/review-code.md) - Code review process
 
 **Key standards:**
 
-- [React Components](./standards/frontend/react-components.md) - Component patterns and structure
-- [Accessibility](./standards/frontend/accessibility.md) - WCAG compliance
-- [TypeScript](./standards/code/typescript.md) - Language usage and imports
+- [React Components](@./standards/frontend/react-components.md) - Component patterns and structure
+- [Accessibility](@./standards/frontend/accessibility.md) - WCAG compliance
+- [TypeScript](@./standards/code/typescript.md) - Language usage and imports
 
 **Templates:**
 
-- [Component Template](./patterns/frontend/component-template.md) - Complete component boilerplate
+- [Component Template](@./patterns/frontend/component-template.md) - Complete component boilerplate
 
 ### 🔧 **Backend Engineers**
 
 **Essential workflows:**
 
-- [Build Data Controller](./workflows/backend/build-data-controller.md) - Repository pattern implementation
-- [Verify Auth Scope](./workflows/backend/verify-auth-scope.md) - Authentication and authorization
-- [Write Code (TDD)](./workflows/coding/write-code-tdd.md) - Test-driven development
+- [Build Data Controller](@./workflows/backend/build-data-controller.md) - Repository pattern implementation
+- [Verify Auth Scope](@./workflows/backend/verify-auth-scope.md) - Authentication and authorization
+- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - Test-driven development
 
 **Key standards:**
 
-- [API Design](./standards/backend/api-design.md) - RESTful conventions and patterns
-- [Data Operations](./standards/backend/data-operations.md) - Database and repository patterns
-- [TypeScript](./standards/code/typescript.md) - Language usage and imports
+- [Data Operations](@./standards/backend/data-operations.md) - Database and repository patterns
+- [TypeScript](@./standards/code/typescript.md) - Language usage and imports
 
 **Templates:**
 
-- [Repository Template](./patterns/backend/repository-template.md) - Data access layer boilerplate
+- [Repository Template](@./patterns/backend/repository-template.md) - Data access layer boilerplate
 
 ### 📋 **All Engineers**
 
 **Core workflows:**
 
-- [Write Code (TDD)](./workflows/coding/write-code-tdd.md) - **MANDATORY** test-driven development
-- [Commit with Git](./workflows/project/commit-with-git.md) - Quality-gated git workflow
-- [Review Code](./workflows/quality/review-code.md) - Code review standards
-- [Approve PR](./workflows/quality/approve-pr.md) - Final approval quality gates
+- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - **MANDATORY** test-driven development
+- [Commit with Git](@./workflows/project/commit-with-git.md) - Quality-gated git workflow
+- [Review Code](@./workflows/quality/review-code.md) - Code review standards
+- [Approve PR](@./workflows/quality/approve-pr.md) - Final approval quality gates
 
 **Essential standards:**
 
-- [TypeScript](./standards/code/typescript.md) - Core language requirements
-- [Testing](./standards/quality/testing.md) - TDD principles and patterns
-- [Naming Conventions](./standards/code/naming.md) - Consistent naming across codebase
-- [Functions](./standards/code/functions.md) - Function design and parameters
+- [TypeScript](@./standards/code/typescript.md) - Core language requirements
+- [Testing](@./standards/quality/testing.md) - TDD principles and patterns
+- [Naming Conventions](@./standards/code/naming.md) - Consistent naming across codebase
+- [Functions](@./standards/code/functions.md) - Function design and parameters
 
 ## 📁 **Directory Structure**
 
-### **[workflows/](./workflows/)** - HOW to do things
+### **[workflows/](@./workflows/)** - HOW to do things
 
 Step-by-step processes for common development tasks (50-150 lines each):
 
@@ -70,7 +69,7 @@ Step-by-step processes for common development tasks (50-150 lines each):
 - `quality/` - Code review and approval processes
 - `project/` - Git, deployment, operations
 
-### **[standards/](./standards/)** - WHAT the rules are
+### **[standards/](@./standards/)** - WHAT the rules are
 
 Technical requirements and quality criteria (80-200 lines each):
 
@@ -80,7 +79,7 @@ Technical requirements and quality criteria (80-200 lines each):
 - `quality/` - Testing standards
 - `project/` - Git workflow standards
 
-### **[patterns/](./patterns/)** - Templates and examples
+### **[patterns/](@./patterns/)** - Templates and examples
 
 Ready-to-use implementation examples (30-100 lines each):
 
@@ -89,12 +88,12 @@ Ready-to-use implementation examples (30-100 lines each):
 - `code/` - Function and error handling patterns
 - `quality/` - Test templates and examples
 
-### **[references/](./references/)** - Quick lookup information
+### **[references/](@./references/)** - Quick lookup information
 
 Immediate reference materials:
 
-- [Commit Examples](./references/commit-examples.md) - Git commit message patterns
-- [Tech Stack](./references/tech-stack.md) - Commands and tool usage
+- [Commit Examples](@./references/commit-examples.md) - Git commit message patterns
+- [Tech Stack](@./references/tech-stack.md) - Commands and tool usage
 
 ## 🔄 **How Content Types Work Together**
 
@@ -111,16 +110,16 @@ TASK: "I need to create a React component"
 
 ### **TDD Compliance**
 
-- **ALL code development** must follow [Write Code (TDD)](./workflows/coding/write-code-tdd.md)
+- **ALL code development** must follow [Write Code (TDD)](@./workflows/coding/write-code-tdd.md)
 - Tests written BEFORE implementation
 - 100% coverage maintained with minimal tests
 
 ### **Quality Gates**
 
-- **ALL commits** must follow [Commit with Git](./workflows/project/commit-with-git.md)
-- **ALL PRs** must pass [Review Code](./workflows/quality/review-code.md) standards
+- **ALL commits** must follow [Commit with Git](@./workflows/project/commit-with-git.md)
+- **ALL PRs** must pass [Review Code](@./workflows/quality/review-code.md) standards
 - **NO `--no-verify`** commits allowed
-- **ALL merges** require [Approve PR](./workflows/quality/approve-pr.md) completion
+- **ALL merges** require [Approve PR](@./workflows/quality/approve-pr.md) completion
 
 ### **Standards Compliance**
 
@@ -140,7 +139,7 @@ The restructuring successfully achieved the target file sizes:
 
 ## 🔗 **Integration with Main CLAUDE.md**
 
-This constitution directory provides the detailed implementation of the action workflows referenced in the main [CLAUDE.md](../CLAUDE.md) file. The main file contains essential project context while this directory provides comprehensive technical guidance.
+This constitution directory provides the detailed implementation of the action workflows referenced in the main [CLAUDE.md](@../CLAUDE.md) file. The main file contains essential project context while this directory provides comprehensive technical guidance.
 
 ## 🆘 **Need Help?**
 
@@ -160,7 +159,7 @@ This constitution directory provides the detailed implementation of the action w
 
 ### **Still stuck?**
 
-Reference the main [CLAUDE.md](../CLAUDE.md) for project overview and integration guidance, or ask team members familiar with the specific domain area.
+Reference the main [CLAUDE.md](@../CLAUDE.md) for project overview and integration guidance, or ask team members familiar with the specific domain area.
 
 ---
 

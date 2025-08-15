@@ -293,9 +293,8 @@ Define the path from vision to reality:
 
 ## Standards to Follow
 
-- [Communication Guidelines](../../standards/project/communication.md)
-- [API Design Standards](../../standards/backend/api-design.md)
-- [Documentation Standards](../../standards/code/documentation.md)
+- [Communication Guidelines](@../../standards/project/communication.md)
+- [Documentation Standards](@../../standards/code/documentation.md)
 
 ## Common Issues
 

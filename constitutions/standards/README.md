@@ -8,27 +8,26 @@ This directory contains detailed technical standards organized by technology and
 
 ### 👨‍💻 **Frontend Engineers**
 
-- **[React Components](./frontend/react-components.md)** - Component structure, patterns, performance
-- **[React Hooks](./frontend/react-hooks.md)** - Custom hooks design and patterns
-- **[Accessibility](./frontend/accessibility.md)** - WCAG compliance and inclusive design
-- **[TypeScript](./code/typescript.md)** - Type safety, imports, language usage
-- **[Testing](./quality/testing.md)** - TDD principles and testing patterns
+- **[React Components](@./frontend/react-components.md)** - Component structure, patterns, performance
+- **[React Hooks](@./frontend/react-hooks.md)** - Custom hooks design and patterns
+- **[Accessibility](@./frontend/accessibility.md)** - WCAG compliance and inclusive design
+- **[TypeScript](@./code/typescript.md)** - Type safety, imports, language usage
+- **[Testing](@./quality/testing.md)** - TDD principles and testing patterns
 
 ### 🔧 **Backend Engineers**
 
-- **[API Design](./backend/api-design.md)** - RESTful conventions and response patterns
-- **[Data Operations](./backend/data-operations.md)** - Repository patterns and query standards
-- **[TypeScript](./code/typescript.md)** - Type safety, imports, language usage
-- **[Testing](./quality/testing.md)** - TDD principles and testing patterns
+- **[Data Operations](@./backend/data-operations.md)** - Repository patterns and query standards
+- **[TypeScript](@./code/typescript.md)** - Type safety, imports, language usage
+- **[Testing](@./quality/testing.md)** - TDD principles and testing patterns
 
 ### 📋 **All Engineers**
 
-- **[TypeScript](./code/typescript.md)** - Core language standards
-- **[Naming Conventions](./code/naming.md)** - Variables, functions, files
-- **[Functions](./code/functions.md)** - Design, parameters, interfaces
-- **[Documentation](./code/documentation.md)** - JSDoc, comments, inline docs
-- **[Testing](./quality/testing.md)** - Comprehensive testing standards
-- **[Git Workflow](./project/git-workflow.md)** - Commit messages, branching
+- **[TypeScript](@./code/typescript.md)** - Core language standards
+- **[Naming Conventions](@./code/naming.md)** - Variables, functions, files
+- **[Functions](@./code/functions.md)** - Design, parameters, interfaces
+- **[Documentation](@./code/documentation.md)** - JSDoc, comments, inline docs
+- **[Testing](@./quality/testing.md)** - Comprehensive testing standards
+- **[Git Workflow](@./project/git-workflow.md)** - Commit messages, branching
 
 ## Standards Categories
 
@@ -36,37 +35,36 @@ This directory contains detailed technical standards organized by technology and
 
 | Standard                                 | Purpose                                    | Scope                              |
 | ---------------------------------------- | ------------------------------------------ | ---------------------------------- |
-| [TypeScript](./code/typescript.md)       | Type safety, imports, strict configuration | All TypeScript code                |
-| [Naming Conventions](./code/naming.md)   | Consistent naming across codebase          | Variables, functions, files, types |
-| [Functions](./code/functions.md)         | Function design and parameter patterns     | All function implementations       |
-| [Documentation](./code/documentation.md) | JSDoc, comments, and inline documentation  | Code documentation                 |
+| [TypeScript](@./code/typescript.md)       | Type safety, imports, strict configuration | All TypeScript code                |
+| [Naming Conventions](@./code/naming.md)   | Consistent naming across codebase          | Variables, functions, files, types |
+| [Functions](@./code/functions.md)         | Function design and parameter patterns     | All function implementations       |
+| [Documentation](@./code/documentation.md) | JSDoc, comments, and inline documentation  | Code documentation                 |
 
 ### 🎨 Frontend Standards
 
 | Standard                                           | Purpose                              | Scope              |
 | -------------------------------------------------- | ------------------------------------ | ------------------ |
-| [React Components](./frontend/react-components.md) | Component structure and performance  | React components   |
-| [React Hooks](./frontend/react-hooks.md)           | Custom hooks design patterns         | React custom hooks |
-| [Accessibility](./frontend/accessibility.md)       | WCAG compliance and inclusive design | All UI components  |
+| [React Components](@./frontend/react-components.md) | Component structure and performance  | React components   |
+| [React Hooks](@./frontend/react-hooks.md)           | Custom hooks design patterns         | React custom hooks |
+| [Accessibility](@./frontend/accessibility.md)       | WCAG compliance and inclusive design | All UI components  |
 
 ### ⚙️ Backend Standards
 
 | Standard                                        | Purpose                                     | Scope                  |
 | ----------------------------------------------- | ------------------------------------------- | ---------------------- |
-| [API Design](./backend/api-design.md)           | RESTful conventions and patterns            | HTTP APIs and services |
-| [Data Operations](./backend/data-operations.md) | Repository patterns and database operations | Data access layers     |
+| [Data Operations](@./backend/data-operations.md) | Repository patterns and database operations | Data access layers     |
 
 ### 🔍 Quality Standards
 
 | Standard                        | Purpose                             | Scope         |
 | ------------------------------- | ----------------------------------- | ------------- |
-| [Testing](./quality/testing.md) | TDD principles and testing patterns | All test code |
+| [Testing](@./quality/testing.md) | TDD principles and testing patterns | All test code |
 
 ### 📦 Project Standards
 
 | Standard                                  | Purpose                               | Scope           |
 | ----------------------------------------- | ------------------------------------- | --------------- |
-| [Git Workflow](./project/git-workflow.md) | Commit messages and branch management | Version control |
+| [Git Workflow](@./project/git-workflow.md) | Commit messages and branch management | Version control |
 
 ## How to Use Standards
 
@@ -118,11 +116,11 @@ Each standard document includes:
 
 ### **Core Standards** (Apply to All Code)
 
-1. [TypeScript](./code/typescript.md) - Language usage and type safety
-2. [Naming Conventions](./code/naming.md) - Consistent naming
-3. [Functions](./code/functions.md) - Function design patterns
-4. [Documentation](./code/documentation.md) - Code documentation
-5. [Testing](./quality/testing.md) - Testing principles
+1. [TypeScript](@./code/typescript.md) - Language usage and type safety
+2. [Naming Conventions](@./code/naming.md) - Consistent naming
+3. [Functions](@./code/functions.md) - Function design patterns
+4. [Documentation](@./code/documentation.md) - Code documentation
+5. [Testing](@./quality/testing.md) - Testing principles
 
 ### **Domain Standards** (Apply to Specific Areas)
 
@@ -174,9 +172,9 @@ Standards define quality gates that must pass:
 
 ## Need Help?
 
-- **Looking for step-by-step guidance?** Check the [Workflows](../workflows/) directory
-- **Need examples or templates?** See the [Patterns](../patterns/) directory
-- **Want quick reference info?** Check the [References](../references/) directory
+- **Looking for step-by-step guidance?** Check the [Workflows](@../workflows/) directory
+- **Need examples or templates?** See the [Patterns](@../patterns/) directory
+- **Want quick reference info?** Check the [References](@../references/) directory
 - **Standard unclear?** Look for related workflow that shows how to apply it
 
 ## Contributing to Standards

@@ -139,7 +139,7 @@ export const Button: FC<ButtonProps> = ({
 ### Component Composition
 
 ```typescript
-// ✅ Good: Composable components
+// ✅ GOOD: composable components
 <Card>
   <Card.Header>
     <Card.Title>User Profile</Card.Title>
@@ -362,7 +362,7 @@ describe('rc:Button', () => {
 ### Accessibility Examples
 
 ```typescript
-// ✅ Good: Semantic and accessible
+// ✅ GOOD: semantic and accessible
 <button
   aria-label="Close dialog"
   onClick={handleClose}
@@ -370,7 +370,7 @@ describe('rc:Button', () => {
   <CloseIcon aria-hidden="true" />
 </button>
 
-// ✅ Good: Form accessibility
+// ✅ GOOD: form accessibility
 <div>
   <label htmlFor="email">Email Address</label>
   <input

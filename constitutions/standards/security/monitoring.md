@@ -654,6 +654,6 @@ describe("Security Monitoring", () => {
 
 ## References
 
-- [Logging Standards](../code/logging.md)
-- [Alert Configuration](./alerting.md)
-- [SIEM Integration](./siem-integration.md)
+- [Logging Standards](@../code/logging.md)
+- [Alert Configuration](@./alerting.md)
+- [SIEM Integration](@./siem-integration.md)

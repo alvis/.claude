@@ -166,14 +166,13 @@ git commit -m "feat(tax): implement tax calculation with validation"
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [Testing Standards](../../standards/quality/testing.md) - Test structure, coverage, and BDD patterns
-- [TypeScript Standards](../../standards/code/typescript.md) - Type safety and TypeScript patterns
-- [Function Design Standards](../../standards/code/functions.md) - Function structure and patterns
-- [Pure Functions Standards](../../standards/code/pure-functions.md) - Writing testable, pure functions
-- [Error Handling Standards](../../standards/backend/error-handling.md) - Proper error handling patterns
-- [Code Comments](../../standards/code/comments.md) - Comment formatting and usage
-- [Documentation Guidelines](../../standards/code/documentation.md) - JSDoc and documentation standards
-- [Git Workflow Standards](../../standards/project/git-workflow.md) - Commit message formats
+- [Testing Standards](@../../standards/quality/testing.md) - Test structure, coverage, and BDD patterns
+- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety and TypeScript patterns
+- [Function Design Standards](@../../standards/code/functions.md) - Function structure and patterns
+- [Pure Functions Standards](@../../standards/code/pure-functions.md) - Writing testable, pure functions
+- [Error Handling Standards](@../../standards/backend/error-handling.md) - Proper error handling patterns
+- [Documentation Guidelines](@../../standards/code/documentation.md) - Comments, JSDoc, and documentation standards
+- [Git Workflow Standards](@../../standards/project/git-workflow.md) - Commit message formats
 
 ## Test Structure Requirements
 
@@ -199,14 +198,11 @@ Use prefixes to indicate test type:
 ```typescript
 describe("fn:functionName", () => {
   it("should [expected behavior] when [condition]", () => {
-    // Arrange
     const input = setupTestData();
     const expected = expectedResult;
 
-    // Act
     const result = functionUnderTest(input);
 
-    // Assert
     expect(result).toEqual(expected);
   });
 });

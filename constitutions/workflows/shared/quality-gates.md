@@ -122,11 +122,11 @@ npm run typecheck && npm run lint:fix && npm run coverage
 
 This quality gate workflow is referenced by:
 
-- [Write Code (TDD)](../coding/write-code-tdd.md) - After implementation
-- [Prepare for Coding](../coding/prepare-coding.md) - Before starting
-- [Commit with Git](../project/commit-with-git.md) - Before committing
-- [Build Component](../frontend/build-component.md) - After component creation
-- [Build Service](../backend/build-service.md) - After service implementation
+- [Write Code (TDD)](@../coding/write-code-tdd.md) - After implementation
+- [Prepare for Coding](@../coding/prepare-coding.md) - Before starting
+- [Commit with Git](@../project/commit-with-git.md) - Before committing
+- [Build Component](@../frontend/build-component.md) - After component creation
+- [Build Service](@../backend/build-service.md) - After service implementation
 
 ## Automation
 
@@ -154,9 +154,9 @@ Quality gates run automatically on:
 
 ## Standards References
 
-- [TypeScript Standards](../../standards/code/typescript.md) - Type safety requirements
-- [Testing Standards](../../standards/quality/testing.md) - Coverage requirements
-- [Code Style](../../standards/code/general-principles.md) - Linting rules
+- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety requirements
+- [Testing Standards](@../../standards/quality/testing.md) - Coverage requirements
+- [Code Style](@../../standards/code/general-principles.md) - Linting rules
 
 ## Exit Criteria
 

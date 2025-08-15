@@ -18,7 +18,7 @@ Branch format: `<type>/<scope>/<topic>` using lowercase-kebab-case
 
 ### 2. Follow TDD Process
 
-- Write tests first (see [TDD workflow](../coding/write-code-tdd.md))
+- Write tests first (see [TDD workflow](@../coding/write-code-tdd.md))
 - Implement code to pass tests
 - Commit frequently with descriptive messages
 
@@ -41,7 +41,7 @@ git add .
 git commit -m "feat(auth): implement OAuth2 login"
 ```
 
-Use the [commit message format](../../standards/project/git-workflow.md#commit-format):
+Use the [commit message format](@../../standards/project/git-workflow.md#commit-format):
 
 ```
 <type>(<scope>): <summary>   # ≤72 chars, imperative
@@ -59,7 +59,7 @@ git push -u origin feat/auth/add-oauth
 
 ### 6. Create Pull Request
 
-- Use [PR template](create-pr.md)
+- Use [PR template](@create-pr.md)
 - Request reviews from appropriate team members
 - Address feedback and update PR
 
@@ -67,11 +67,13 @@ git push -u origin feat/auth/add-oauth
 
 **🔴 MANDATORY: All standards listed below MUST be followed without exception**
 
-- [Git Workflow Standards](../../standards/project/git-workflow.md) - Commit formats and branch naming
-- [Testing Standards](../../standards/quality/testing.md) - Test requirements before commit
-- [Code Review Standards](../../standards/quality/code-review.md) - Pre-commit review checklist
-- [Quality Gates](../shared/quality-gates.md) - Mandatory quality checks
-- [TDD Workflow](../coding/write-code-tdd.md) - Test-driven development process
+- [Git Workflow Standards](@../../standards/project/git-workflow.md) - Commit formats and branch naming
+- [Testing Standards](@../../standards/quality/testing.md) - Test requirements before commit
+- [Code Review Standards](@../../standards/quality/code-review.md) - Pre-commit review checklist
+- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety before committing
+- [Documentation Guidelines](@../../standards/code/documentation.md) - Code documentation requirements
+- [Quality Gates](@../shared/quality-gates.md) - Mandatory quality checks
+- [TDD Workflow](@../coding/write-code-tdd.md) - Test-driven development process
 
 ## Critical Rules
 

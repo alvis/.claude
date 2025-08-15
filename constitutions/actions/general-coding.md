@@ -176,10 +176,10 @@ import type { FeatureProps } from "#types/feature";
 When destructuring optional parameters, use object spread for safety:
 
 ```typescript
-// ❌ Bad: Direct destructuring can fail if undefined
+// ❌ BAD: direct destructuring can fail if undefined
 function processUser({ name, role = "user" }: UserOptions) {}
 
-// ✅ Good: Safe destructuring with spread
+// ✅ GOOD: safe destructuring with spread
 function processUser(options?: UserOptions) {
   const { name, role = "user" } = { ...options };
 }

@@ -244,7 +244,7 @@ List any breaking changes introduced by this PR
 ## 🔗 Related Issues
 
 Reference related tickets, issues, RFCs, discussions, e.g.
-- `Closes #123, See #456, Spec: [Notion doc](https://...)`
+- `Closes #123, See #456, Spec: [Notion doc](@https://...)`
 
 ## 🧪 Manual Testing
 
