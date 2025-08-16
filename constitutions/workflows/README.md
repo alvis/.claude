@@ -1,8 +1,10 @@
 # Workflows Directory
 
-_Step-by-step processes for common development tasks_
+**Purpose**: Comprehensive collection of step-by-step processes for common development tasks, organized by role and responsibility. Each workflow provides detailed orchestration instructions following Claude's delegation model with 5-phase execution patterns.
 
-This directory contains executable workflows organized by role and responsibility. Each workflow provides detailed steps to complete specific tasks.
+**When to use**: Reference this directory when you need to execute specific development tasks, understand workflow dependencies, or find the appropriate process for your current role and objectives.
+
+**How workflows operate**: All workflows follow Claude's orchestration model where Claude acts as project director, delegating tasks to specialized subagents and making decisions based on their reports. Each workflow step follows a 5-phase pattern: Planning → Execution → Review → Verification → Decision.
 
 ## Quick Access by Role
 
@@ -26,6 +28,7 @@ This directory contains executable workflows organized by role and responsibilit
 - **[Write Code (TDD)](@./coding/write-code-tdd.md)** - Test-driven development workflow
 - **[Prepare for Coding](@./coding/prepare-coding.md)** - Pre-coding verification steps
 - **[Commit with Git](@./project/commit-with-git.md)** - TDD-compliant git workflow
+- **[Create Command](@./project/create-command.md)** - Generate new slash command files from templates
 - **[Review Code](@./quality/review-code.md)** - Code review process and standards
 - **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
 
@@ -66,7 +69,9 @@ This directory contains executable workflows organized by role and responsibilit
 | Workflow                                        | Purpose                    | When to Use             |
 | ----------------------------------------------- | -------------------------- | ----------------------- |
 | [Commit with Git](@./project/commit-with-git.md) | Quality-gated git workflow | Committing code changes |
+| [Create Command](@./project/create-command.md) | Generate new slash command files from templates | Creating new CLI commands |
 | [Ensure Project](@./project/ensure-project.md) | Validate and bootstrap project structure | Setting up new projects or validating existing ones |
+| [Update Agent](@./project/update-agent.md) | Update agent files to align with latest template | Maintaining and updating agent definitions |
 
 ## How to Use Workflows
 
@@ -93,27 +98,30 @@ Each workflow provides:
 
 Workflows link to relevant standards documents for detailed technical requirements.
 
-## Workflow Principles
+## Workflow Architecture Principles
 
-### ✅ **Completeness**
+### Claude Orchestration Model
 
-Each workflow includes all necessary steps from start to finish.
+- **Strategic Delegation**: Claude breaks complex tasks into parallel subtasks assigned to specialized subagents
+- **Quality Oversight**: Claude reviews all subagent outputs without executing tasks directly
+- **Decision Authority**: Claude makes go/no-go decisions based on subagent reports and verification results
+- **Standards Enforcement**: All workflows require adherence to comprehensive coding and quality standards
 
-### 🔄 **Repeatability**
+### 5-Phase Execution Pattern
 
-Workflows produce consistent results when followed by different people.
+Each workflow step follows this consistent pattern:
+1. **Planning** - Claude analyzes requirements and creates task assignments
+2. **Execution** - Specialized subagents perform assigned work in parallel when possible
+3. **Review** - Claude collects and analyzes execution reports
+4. **Verification** - Independent verification subagents check quality when needed
+5. **Decision** - Claude decides to proceed, retry, or rollback based on criteria
 
-### 🎯 **Focus**
+### Workflow Quality Standards
 
-Each workflow has a single, clear purpose and outcome.
-
-### 📝 **Actionable**
-
-Every step is concrete and executable.
-
-### 🔗 **Connected**
-
-Workflows reference related standards and other workflows as needed.
+- **Completeness**: Each workflow includes all necessary steps from start to finish
+- **Repeatability**: Workflows produce consistent results when followed by different teams
+- **Parallel Efficiency**: Independent tasks execute simultaneously to maximize productivity
+- **Quality Gates**: Comprehensive verification ensures standards compliance before proceeding
 
 ## Need Help?
 

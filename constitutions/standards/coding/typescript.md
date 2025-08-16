@@ -118,14 +118,14 @@ Stay current with best practices:
 
 ```typescript
 // ❌ BAD: deprecated patterns
-var name = "John"; // Use const/let
-arguments.callee; // Deprecated
+var name = "John"; // use const/let
+arguments.callee; // deprecated
 with (obj) {
-} // Deprecated
+} // deprecated
 
 // ✅ GOOD: modern alternatives
 const name = "John";
-const args = [...arguments]; // Or use rest parameters
+const args = [...arguments]; // or use rest parameters
 // Use explicit property access instead of 'with'
 ```
 
@@ -158,49 +158,49 @@ All interfaces must be fully documented with JSDoc comments:
 // ✅ GOOD: fully documented interface
 /** represents a user in the system */
 interface User {
-  /** unique identifier */
+  /** identifies the user uniquely */
   id: string;
 
-  /** user's full name */
+  /** stores user's full name */
   name: string;
 
-  /** email address for authentication */
+  /** provides email address for authentication */
   email: string;
 
-  /** account creation timestamp */
+  /** records account creation timestamp */
   createdAt: Date;
 
-  /** last profile update timestamp */
+  /** tracks last profile update timestamp */
   updatedAt: Date;
 
-  /** whether the user has verified their email */
+  /** indicates whether the user has verified their email */
   isVerified: boolean;
 
-  /** user's subscription tier */
+  /** defines user's subscription tier */
   subscriptionLevel: "free" | "pro" | "enterprise";
 
-  /** optional profile settings */
+  /** contains optional profile settings */
   preferences?: UserPreferences;
 }
 
 // ✅ GOOD: group related fields with comments
 interface ApiResponse<T> {
   // response data //
-  /** the main response payload */
+  /** contains the main response payload */
   data: T;
-  /** pagination metadata if applicable */
+  /** provides pagination metadata if applicable */
   pagination?: PaginationInfo;
 
   // response metadata //
-  /** http status code */
+  /** indicates http status code */
   status: number;
-  /** response timestamp */
+  /** records response timestamp */
   timestamp: string;
-  /** request tracking id */
+  /** identifies request tracking id */
   requestId: string;
 
   // error information //
-  /** error details if request failed */
+  /** contains error details if request failed */
   error?: ErrorInfo;
 }
 
@@ -489,7 +489,7 @@ function processUser(input: unknown): void {
 
 // ❌ Avoid: Unsafe type assertions
 function badProcessUser(input: unknown): void {
-  const user = input as User; // Unsafe!
+  const user = input as User; // unsafe!
   console.log(user.name);
 }
 ```
@@ -511,7 +511,7 @@ export { EmailService } from "./email-service";
 export type { User, CreateUser, UpdateUser } from "./types";
 
 // ❌ Avoid: Default exports unless required
-export default userService; // Only when library requires it
+export default userService; // only when library requires it
 ```
 
 ### Barrel Exports
@@ -563,7 +563,7 @@ function processUser(options?: {
 
 // ✅ GOOD: using default values for optional parameters
 function configure(options: Options = { timeout: 1000, retries: 3 }) {
-  // Safe to use options directly
+  // safe to use options directly
 }
 ```
 
@@ -692,7 +692,7 @@ function loadConfig(): EnvironmentConfig {
     JWT_SECRET: process.env.JWT_SECRET,
   };
 
-  // Validate required fields
+  // validate required fields
   if (!config.DATABASE_URL || !config.JWT_SECRET) {
     throw new Error("Missing required environment variables");
   }
@@ -736,7 +736,7 @@ function assertIsUser(value: unknown): asserts value is User {
 
 ```typescript
 // ❌ BAD: Unsafe type assertions that bypass type checking
-const user = input as User; // Completely unsafe!
+const user = input as User; // completely unsafe!
 
 // Problem: No runtime guarantee that input matches User type
 // Risks silent failures and potential runtime errors
@@ -762,7 +762,7 @@ function processData(data: any) { ... }
 // ✅ GOOD: Use unknown with type guards
 function processData(data: unknown) {
   if (typeof data === 'object' && data !== null) {
-    // Safely handle object data
+    // safely handle object data
   }
 }
 ```

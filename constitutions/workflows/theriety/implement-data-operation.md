@@ -174,7 +174,6 @@ Request each subagent to perform the following steps with full detail:
 **Read the following assigned standards** and follow them recursively:
 
 - @../../standards/coding/typescript.md
-- @../../standards/coding/naming/README.md
 - @../../standards/coding/documentation.md
 - @../../standards/coding/functions.md
 - @../../standards/coding/backend/data-operations.md
@@ -186,36 +185,349 @@ You're assigned with the following implementation batch (max 10 operations):
 - [operation name and id from Planning Phase]
 - ...
 
-**Implementation Patterns to Follow**:
+**Implementation Patterns to Follow** (copy these exact patterns):
 
-1. **Type Definitions Pattern**:
-   - Create input types as interfaces extending base parameters
-   - Use union types for flexible input handling (e.g., {id: string} | {slug: string})
-   - Export all types from #types for external consumption
-   - Use Prisma-generated types as foundation
+1. **Type Definition Pattern** - Define types directly in operation files:
 
-2. **Operation Function Pattern**:
-   - Async function with PrismaClient as first parameter
-   - Proper JSDoc with @param, @returns, @throws annotations
-   - Input validation and error handling with MissingDataError from @theriety/error
-   - Use selector patterns for reusable query selection
-   - Handle status-based logic for drop operations (active→inactive→delete)
+   ```typescript
+   // operations/setOffering.ts (types at top of file)
+   import type { SetOptional, SetRequired } from 'type-fest';
+   import type { OfferingAttribute } from '#types';
+   
+   /** input parameters for setOffering */
+   export type SetOfferingInput = CreateOfferingInput | UpdateOfferingInput;
+   export type CreateOfferingInput = SetOptional<
+     Omit<OfferingAttribute, 'slug'>,
+     'id'
+   >;
+   export type UpdateOfferingInput = SetRequired<
+     Partial<Omit<OfferingAttribute, 'slug'>>,
+     'id'
+   >;
+   ```
 
-3. **Controller Integration Pattern**:
-   - Import operation from #operations/{name}
-   - Public method wrapping operation with type preservation
-   - Use Parameters/ReturnType utilities for type safety
-   - Pass-through pattern: return operationFunction(this.#client, input)
+   For simple get/drop operations, use interfaces:
 
-**Steps**
+   ```typescript
+   // operations/getOffering.ts
+   /** input parameters for getOffering */
+   export type GetOfferingInput =
+     | { /** unique identifier */ id: string }
+     | { /** unique slug */ slug: string };
+   ```
 
-1. Create TypeScript type definitions in types/operations.ts following patterns
-2. Implement operation function in operations/{operationName}.ts with proper error handling
-3. Add comprehensive integration tests in spec/operations/{operationName}.spec.ts
-4. Integrate operation into controller class (source/index.ts) 
-5. Update package.json exports and JSDoc documentation
-6. Ensure all tests pass and coverage meets requirements
-7. Validate specification compliance and pattern consistency
+1. **Operation Function Pattern** - Copy this exact structure:
+
+   ```typescript
+   // operations/getOffering.ts (GET pattern)
+   import { MissingDataError } from '@theriety/error';
+   import { offeringAttributeSelector, offeringSummarySelector } from '#selectors';
+   import type { PrismaClient } from '#prisma';
+   import type { Offering } from '#types';
+   
+   /**
+    * retrieves an offering based on the provided criteria
+    * @param client the Prisma client instance
+    * @param input collection of input parameters
+    * @param input.id unique identifier or slug of the offering
+    * @returns a promise that resolves to an offering
+    * @throws MissingDataError if the offering is not found
+    */
+   export async function getOffering(
+     client: PrismaClient,
+     input: GetOfferingInput,
+   ): Promise<Offering> {
+     const offering = await client.offering.findUnique({
+       ...offeringAttributeSelector,
+       where: input,
+       include: {
+         ancestors: offeringSummarySelector,
+         descendants: offeringSummarySelector,
+       },
+     });
+
+     if (!offering) {
+       throw new MissingDataError('offering not found', { meta: input });
+     }
+
+     return { ...offering };
+   }
+   ```
+
+   ```typescript
+   // operations/setOffering.ts (SET pattern with upsert)
+   import { ValidationError } from '@theriety/error';
+   import slugify from 'slug';
+   import { normalize } from '#utilities';
+   import type { PrismaClient } from '#prisma';
+   import type { Offering } from '#types';
+
+   /**
+    * sets an offering based on the provided data
+    * @param client the Prisma client instance
+    * @param input either complete data for creation or partial data for update
+    * @returns a promise that resolves to the created or updated offering
+    */
+   export async function setOffering(
+     client: PrismaClient,
+     input: SetOfferingInput,
+   ): Promise<Offering> {
+     const { status, suiteId, parentId, features, display } = input;
+     const slug = display?.en.name ? slugify(display.en.name) : undefined;
+
+     const data = {
+       status, suiteId, parentId, features, display, slug,
+       quota: normalize(input.quota),
+       rate: normalize(input.rate),
+     };
+
+     return client.offering.upsert({
+       where: { slug: input.id },
+       update: data,
+       create: { ...data, slug: slug ?? input.id },
+       include: { ancestors: offeringSummarySelector },
+     });
+   }
+   ```
+
+   ```typescript
+   // operations/dropOffering.ts (DROP pattern with status-based logic)
+   import { MissingDataError } from '@theriety/error';
+   import { offeringSummarySelector } from '#selectors';
+   import type { PrismaClient } from '#prisma';
+   import type { OfferingSummary } from '#types';
+
+   /** input parameters for dropOffering */
+   export interface DropOfferingInput {
+     /** unique identifier of the offering */
+     id: string;
+   }
+
+   /**
+    * remove or mark an offering as inactive
+    * @param client the Prisma client instance
+    * @param input collection of input parameters
+    * @param input.id unique identifier of the offering (slug)
+    * @returns the summary of the removed offering
+    */
+   export async function dropOffering(
+     client: PrismaClient,
+     { id }: DropOfferingInput,
+   ): Promise<OfferingSummary> {
+     const offering = await client.offering.findUnique({ where: { slug: id } });
+
+     if (!offering) {
+       throw new MissingDataError('offering not found', { meta: { id } });
+     }
+
+     if (offering.status === 'active') {
+       // Mark as inactive
+       return client.offering.update({
+         select: offeringSummarySelector.select,
+         data: { status: 'inactive' },
+         where: { slug: id },
+       });
+     } else if (offering.status === 'inactive') {
+       // Already inactive, return as is
+       return { /* return existing data */ };
+     } else {
+       // Delete draft offerings
+       return client.offering.delete({
+         select: offeringSummarySelector.select,
+         where: { slug: id, status: 'draft' },
+       });
+     }
+   }
+   ```
+
+1. **Selectors Pattern** - All selectors in single `selectors.ts` file:
+
+   ```typescript
+   // source/selectors.ts
+   import type { Prisma } from '#prisma';
+
+   export const offeringAttributeSelector = {
+     select: {
+       id: true,
+       slug: true,
+       status: true,
+       suiteId: true,
+       features: true,
+       display: true,
+       quota: true,
+       rate: true,
+     } as const satisfies Prisma.OfferingSelect,
+   } as const;
+
+   export const offeringSummarySelector = {
+     select: {
+       id: true,
+       slug: true,
+       status: true,
+       suiteId: true,
+       display: true,
+     } as const satisfies Prisma.OfferingSelect,
+   } as const;
+   ```
+
+1. **Controller Integration Pattern** - Add this exact method structure:
+
+   ```typescript
+   // source/index.ts
+   import { getOffering } from '#operations/getOffering';
+   import { setOffering } from '#operations/setOffering';
+   import { dropOffering } from '#operations/dropOffering';
+   import { listOfferings } from '#operations/listOfferings';
+   
+   export class Product {
+     #client: PrismaClient;
+     
+     /**
+      * retrieves an offering based on the provided criteria
+      * @param input collection of input parameters
+      * @param input.slug unique identifier of the offering
+      * @returns a promise that resolves to an offering
+      * @throws MissingDataError if the offering is not found
+      */
+     public async getOffering(
+       input: Parameters<typeof getOffering>[1],
+     ): ReturnType<typeof getOffering> {
+       return getOffering(this.#client, input);
+     }
+
+     /**
+      * sets an offering based on the provided data
+      * @param input either complete data for creation or partial data for update
+      * @returns a promise that resolves to the created or updated offering
+      */
+     public async setOffering(
+       input: Parameters<typeof setOffering>[1],
+     ): ReturnType<typeof setOffering> {
+       return setOffering(this.#client, input);
+     }
+
+     /**
+      * lists offerings based on the provided filter criteria
+      * @param input collection of input parameters
+      * @returns a promise that resolves to an array of offering summaries
+      */
+     public async listOfferings(
+       input?: Parameters<typeof listOfferings>[1],
+     ): ReturnType<typeof listOfferings> {
+       return listOfferings(this.#client, input);
+     }
+   }
+   ```
+
+1. **Integration Test Pattern** - Copy this test structure:
+
+   ```typescript
+   // spec/operations/setOffering.spec.int.ts
+   import { beforeEach, describe, expect, it } from 'vitest';
+   
+   import { instance } from '../common';
+   import setup from '../fixture';
+   
+   import type { Offering } from '#types';
+   
+   beforeEach(async () => {
+     await setup();
+   });
+   
+   describe('op:setOffering', () => {
+     it('should create a new offering when id does not exist', async () => {
+       const input = {
+         id: 'new-test-offering',
+         status: 'draft' as const,
+         suiteId: 'draft-suite',
+         display: {
+           en: {
+             name: 'New Test Offering',
+             description: 'A newly created test offering',
+           },
+         },
+         features: ['new-feature-1', 'new-feature-2'],
+         quota: {},
+         rate: {},
+       };
+
+       const expected: Partial<Offering> = {
+         slug: 'new-test-offering',
+         status: 'draft',
+         suiteId: 'draft-suite',
+       };
+
+       const result = await instance.setOffering(input);
+
+       expect(result).toMatchObject(expected);
+       expect(result.features).toEqual(['new-feature-1', 'new-feature-2']);
+     });
+
+     it('should update an existing offering when id already exists', async () => {
+       const input = {
+         id: 'draft-offering',
+         status: 'active' as const,
+         display: {
+           en: {
+             name: 'Updated Draft Offering',
+             description: 'An updated draft offering',
+           },
+         },
+       };
+
+       const expected: Partial<Offering> = {
+         slug: 'updated-draft-offering',
+         status: 'active',
+       };
+
+       const result = await instance.setOffering(input);
+
+       expect(result).toMatchObject(expected);
+     });
+   });
+   ```
+
+   **Note**: Integration tests use `beforeEach` to call a setup fixture that resets and seeds the database.
+   For simpler unit tests of utilities, use the direct pattern without setup:
+
+   ```typescript
+   // spec/utilities/normalize.spec.ts
+   import { describe, expect, it } from 'vitest';
+   import { normalize } from '#utilities/normalize';
+   
+   describe('fn:normalize', () => {
+     it('should convert null values to Prisma.DbNull', () => {
+       const result = normalize(null);
+       expect(result).toBe(Prisma.DbNull);
+     });
+   });
+   ```
+
+**Execution Steps** (follow this exact sequence):
+
+1. **Implement Operation Function with Types**: Create `operations/{operationName}.ts` file with:
+   - Type definitions at the top of the file (not in separate types/operations.ts)
+   - Use union types for set operations (Create | Update)
+   - Use simple interfaces/types for get/drop/list operations
+   - Function implementation following patterns above
+   - Import selectors from `#selectors`
+
+2. **Write Integration Tests**: Create `spec/operations/{operationName}.spec.int.ts`:
+   - Use `beforeEach(async () => { await setup(); })` for database reset
+   - Import `instance` from `../common` and use controller methods
+   - Test create, update, error cases, and edge scenarios
+   - Use `toMatchObject` for partial matching
+
+3. **Integrate into Controller**: Update `source/index.ts`:
+   - Import operation function from `#operations/{operationName}`
+   - Add public method using Parameters/ReturnType utilities
+   - Include proper JSDoc matching the operation function
+
+4. **Update Package Exports**: Ensure the operation types are exported from main types
+
+5. **Run Tests**: Execute `npm test` or test command for the service
+
+6. **Validate Implementation**: Verify against Notion specification compliance
 
 **Report**
 **[IMPORTANT]** You're requested to return the following:
@@ -227,20 +539,21 @@ You're assigned with the following implementation batch (max 10 operations):
 
 **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
-
 ```yaml
 status: success|failure|partial
 summary: 'Implemented complete data operation [operation] with established patterns'
-modifications: ['types/operations.ts', 'operations/setEntity.ts', 'spec/operations/setEntity.spec.ts', 'source/index.ts', 'package.json']
+modifications: ['operations/setOffering.ts', 'spec/operations/setOffering.spec.int.ts', 'source/index.ts', 'source/selectors.ts']
 outputs:
-  operation_name: 'setEntity'
-  input_type: 'SetEntityInput'
-  output_type: 'Entity'
-  test_count: 12
+  operation_name: 'setOffering'
+  input_type: 'SetOfferingInput' 
+  output_type: 'Offering'
+  test_count: 8
   test_coverage: '100%'
   controller_integrated: true
+  selector_pattern_used: true
+  types_in_operation_file: true
+  integration_test_pattern: true
   pattern_compliance: true
-  package_exports_updated: true
 issues: []  # only if problems encountered
 ```
 
@@ -266,7 +579,6 @@ Request each verification subagent to perform the following verification with fu
 **Review the standards recursively (if A references B, review B too) that were applied**:
 
 - @../../standards/coding/typescript.md - Verify type safety and strict mode compliance
-- @../../standards/coding/naming/README.md - Check consistent naming conventions
 - @../../standards/coding/documentation.md - Validate JSDoc completeness
 - @../../standards/coding/functions.md - Verify pure function patterns
 - @../../standards/coding/backend/data-operations.md - Check data vs business logic separation
