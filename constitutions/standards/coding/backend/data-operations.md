@@ -45,22 +45,22 @@ All read-only database queries should use this structure:
 
 ```typescript
 interface QueryOptions {
-  /** natural language search query */
+  /** contains natural language search query */
   query?: string; // available for Search<Entity> operations only
 
-  /** rule-based structured filters */
+  /** applies rule-based structured filters */
   filter?: Record<string, unknown>;
 
-  /** cursor marker for the next result set, used for cursor-based pagination */
+  /** marks cursor position for next result set in cursor-based pagination */
   cursor?: string;
 
-  /** number of items to skip, used for offset-based pagination */
+  /** specifies number of items to skip for offset-based pagination */
   offset?: number;
 
-  /** max number of records to return */
+  /** limits maximum number of records to return */
   limit?: number;
 
-  /** sorting criteria */
+  /** defines sorting criteria for results */
   sort?: Array<{
     field: string;
     order: "asc" | "desc";

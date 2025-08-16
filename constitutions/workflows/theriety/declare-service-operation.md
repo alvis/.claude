@@ -1,87 +1,243 @@
 # Declare Service Operation
 
-**Purpose**: Define a new operation for a service, creating the manifest schema definition with proper type safety and documentation.
-**When to use**: When adding a new operation to an existing service or creating the first operation for a new service manifest project.
-**Prerequisites**:
+## 1. INTRODUCTION
 
-- Service requirements documented on Notion
-- Understanding of the operation's input/output schema
-- Familiarity with JSON Schema and TypeScript types
-- Access to monorepo root and package manager
+### Purpose & Context
 
-## Expert Role
+**Purpose**: Define a new operation for a service, creating the manifest schema definition with proper type safety and documentation
+**When to use**: When adding a new operation to an existing service or creating the first operation for a new service manifest project
+**Prerequisites**: Service requirements documented on Notion, understanding of the operation's input/output schema, familiarity with JSON Schema and TypeScript types, access to monorepo root and package manager
 
-You are a **Backend Service Architect** specializing in API design and type-safe service operations. Your expertise includes:
+### Your Role
 
-- **Schema-First Design**: Define clear contracts before implementation to ensure API consistency and type safety
-- **Separation of Concerns**: Maintain clear boundaries between manifest definitions (API contracts) and service implementations (business logic)
-- **Type Safety**: Leverage TypeScript's type system with JSON Schema to eliminate runtime type errors
-- **Mock-Driven Development**: Create comprehensive mocks that facilitate testing and development parallelization
-- **Documentation as Code**: Ensure schemas serve as both runtime validation and living documentation
+You are a **Service Orchestration Director** who coordinates the workflow like a project director overseeing API development. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
 
-## Steps
+- **Strategic Delegation**: Break complex schema definition work into parallel tasks and assign to specialized subagents
+- **Parallel Coordination**: Maximize efficiency by running multiple subagents simultaneously for independent tasks
+- **Quality Oversight**: Review manifest definitions objectively without being involved in coding details
+- **Decision Authority**: Make go/no-go decisions based on subagent reports and schema validation results
 
-### 0. Workflow Preparation and Task Management
+## 2. WORKFLOW OVERVIEW
 
-**Initialize workflow tracking and identify reusable components**:
+### Workflow Input/Output Specification
 
-- [ ] Identify available task tracking tools and use the most appropriate one
-- [ ] Create initial todo items for all known major workflow steps
-- [ ] Include estimated complexity for each task
-- [ ] Set initial status to 'pending' for all tasks
-- [ ] **IMPORTANT**: Be prepared to add more todo items as new tasks are discovered
-- [ ] Mark this initialization task as 'completed' once done
+#### Required Inputs
 
-**Identify existing workflows to reuse**:
+- **Service Name**: Target service identifier for manifest creation
+- **Operation Requirements**: Complete operation specification from documentation (typically Notion)
+- **Operation Name**: Specific operation identifier (camelCase naming)
 
-- [ ] Search for applicable existing workflows (e.g., ensure-project, write-code-tdd)
-- [ ] List workflows this workflow will reference
-- [ ] Document workflow dependencies in a clear format
-- [ ] Map which steps will use each referenced workflow
-- [ ] Avoid recreating steps that existing workflows already handle
+#### Optional Inputs
 
-**Plan agent delegation strategy**:
+- **Existing Manifest Path**: Path to existing service manifest directory (default: auto-detect)
+- **Schema Complexity**: Simple/Complex flag to determine batching strategy (default: auto-detect)
 
-- [ ] Identify available specialized agents in the system
-- [ ] Determine which steps require specialized expertise
-- [ ] Create a delegation plan mapping steps to appropriate agents
-- [ ] Document parallel execution opportunities where dependencies allow
-- [ ] Specify verification points for quality assurance
+#### Expected Outputs
 
-### 1. Gather Operation Requirements
+- **Operation Manifest**: Complete operation definition with schema and mock implementation
+- **Schema Files**: TypeScript-compatible JSON schemas for input/output validation
+- **Type Definitions**: Generated TypeScript types using FromSchema pattern
+- **Service Integration**: Updated service manifest index with new operation registration
+- **Validation Report**: Confirmation that all schemas compile and mock data validates
 
-**Task tracking**:
+#### Data Flow Summary
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+The workflow takes service requirements and transforms them into type-safe manifest definitions by decomposing schema creation, implementing validation, and integrating with existing service structure through parallel subagent execution.
 
-Obtain the complete operation specification from documentation or requirements.
+### Visual Overview
 
-**Core actions**:
+#### Main Workflow Flow
 
-- [ ] Visit the Notion page for the service operation (if specified)
-- [ ] Extract input schema requirements with field types and validation rules
-- [ ] Extract output schema requirements (if operation returns data)
+```plaintext
+   YOU                        SUBAGENTS EXECUTE
+(Orchestrates Only)                 (Perform Tasks)
+   |                                   |
+   v                                   v
+[START]
+   |
+   v
+[Step 1: Gather Requirements] ──→ (Subagent: Extract and validate operation specifications)
+   |
+   v
+[Step 2: Ensure Project] ────────→ (Sub-workflow: ensure-project.md for manifest structure)
+   |
+   v
+[Step 3: Create Schemas] ────────→ (Subagents: Build input/output schemas in parallel)
+   |               ├─ Schema Subagent A: Input schema definition
+   |               └─ Schema Subagent B: Output schema definition (if needed)
+   v
+[Step 4: Build Manifest] ────────→ (Subagent: Create operation manifest with mock)
+   |
+   v
+[Step 5: Integrate Service] ─────→ (Subagent: Update service manifest index)
+   |
+   v
+[Step 6: Final Validation] ──────→ (Verification Subagent: Comprehensive validation)
+   |
+   v
+[END]
 
-**Verification**:
+Legend:
+═══════════════════════════════════════════════════════════════════
+• LEFT COLUMN: You plan & orchestrate (no execution)
+• RIGHT SIDE: Subagents execute tasks in parallel
+• ARROWS (───→): You assign work to subagents
+• DECISIONS: You decide based on subagent reports
+═══════════════════════════════════════════════════════════════════
 
-- [ ] Subagent/workflow self-verification: Requirements fully understood and documented
-- [ ] Primary agent verification: All requirements extracted and clear
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during requirements analysis
+Note: 
+• You: Lists resources, batches work, assigns tasks, makes decisions
+• Execution Subagents: Perform actual work, report back (<1k tokens)
+• Verification Subagents: Check quality when needed (<500 tokens)
+• Workflow is LINEAR: Step 1 → 2 → 3 → 4 → 5 → 6
+```
 
-### 3. Ensure Project Structure Using ensure-project Workflow
+## 3. WORKFLOW IMPLEMENTATION
 
-**Task tracking**:
+### Workflow Steps
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+1. Gather Operation Requirements
+2. Ensure Project Structure  
+3. Create Schema Definitions
+4. Build Operation Manifest
+5. Integrate with Service
+6. Final Validation
 
-Set up the manifest project if it doesn't exist yet.
+### Step 1: Gather Operation Requirements
 
-**Core actions**:
+**Step Configuration**:
 
-Follow the [ensure-project workflow](@../project/ensure-project.md) with the following service manifest structure requirements:
+- **Purpose**: Extract and validate complete operation specifications from documentation
+- **Input**: Service name, operation name, and documentation references (typically Notion URLs)
+- **Output**: Structured operation requirements with input/output schema specifications
+- **Sub-workflow**: None
+- **Parallel Execution**: No
+
+#### Phase 1: Planning (You)
+
+**What You Do**:
+
+1. **Receive inputs** from workflow invocation (service name, operation name, documentation sources)
+2. **List all documentation sources** that need to be accessed
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Documentation](@../../standards/code/documentation.md)
+4. **Create task assignment** for requirements gathering
+5. **Use TodoWrite** to create task list: ['Requirements extraction - pending']
+6. **Prepare task assignment** for subagent execution
+7. **Queue requirements gathering** for execution by subagent
+
+**OUTPUT from Planning**: Single task assignment for requirements extraction
+
+#### Phase 2: Execution (Subagents)
+
+**What You Send to Subagents**:
+
+In a single message, You assign the requirements gathering task to a specialized subagent.
+
+- **[IMPORTANT]** Claude MUST ask subagent to ultrathink hard about the operation requirements
+- **[IMPORTANT]** Use TodoWrite to update task status from 'pending' to 'in_progress' when dispatched
+
+Request the subagent to perform the following steps with full detail:
+
+    >>>
+    **In ultrathink mode, adopt the Backend Service Architect mindset**
+
+    - You're a **Backend Service Architect** with deep expertise in API design and type-safe service operations who follows these technical principles:
+      - **Schema-First Design**: Define clear contracts before implementation to ensure API consistency and type safety
+      - **Type Safety**: Leverage TypeScript's type system with JSON Schema to eliminate runtime type errors
+      - **Documentation as Code**: Ensure schemas serve as both runtime validation and living documentation
+
+    **Read the following assigned standards** and follow them recursively:
+
+    - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/documentation.md
+
+    **Assignment**
+    You're assigned to gather requirements for operation: [OPERATION_NAME] in service: [SERVICE_NAME]
+
+    **Steps**
+
+    1. Visit the Notion page for the service operation (if URL provided)
+    2. Extract complete input schema requirements with field types, validation rules, and constraints
+    3. Extract output schema requirements (if operation returns data) with proper typing
+    4. Document any special validation rules or business logic constraints
+    5. Identify required vs optional fields for both input and output
+
+    **Report**
+    **[IMPORTANT]** You're requested to return the following:
+
+    - Complete input schema specification with types and validation
+    - Complete output schema specification (if applicable) with types
+    - List of validation rules and constraints
+    - Operation behavior description (sync/async, side effects)
+
+    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+
+    ```yaml
+    status: success|failure|partial
+    summary: 'Brief description of requirements gathered'
+    modifications: []  # No files modified in this step
+    outputs:
+      input_schema_spec: 'Detailed input schema requirements'
+      output_schema_spec: 'Detailed output schema requirements or null'
+      validation_rules: ['rule1', 'rule2', ...]
+      operation_type: 'sync|async'
+    issues: []  # Any problems encountered during requirements gathering
+    ```
+    <<<
+
+#### Phase 3: Review (You)
+
+**What You Do**:
+
+1. **Use TodoRead** to check current task status
+2. **Collect execution report** from requirements subagent
+3. **Parse report status** and validate completeness of requirements
+4. **Use TodoWrite** to update task status based on success/failure
+5. **Validate requirements completeness**:
+   - Input schema specification present
+   - Output schema specification (if operation returns data)
+   - Validation rules documented
+6. **Determine verification needs**: Not typically required for requirements gathering
+7. **Compile review summary** with any missing requirements
+
+#### Phase 4: Verification (Subagents) - Optional
+
+**When Claude Triggers Verification**: Complex operations with unclear requirements
+
+**What You Send to Verification Subagents**: Not typically needed for this step
+
+#### Phase 5: Decision (You)
+
+**What You Do**:
+
+1. **Analyze requirements report** for completeness and clarity
+2. **Apply decision criteria**:
+   - All required schema specifications gathered
+   - Operation behavior clearly understood
+3. **Select next action**:
+   - **PROCEED**: Complete requirements gathered → Move to Step 2
+   - **RETRY**: Incomplete or unclear requirements → Re-assign requirements gathering
+   - **ROLLBACK**: Critical documentation missing → Request user clarification
+4. **Use TodoWrite** to update task list based on decision
+5. **Prepare transition**: Package requirements for project structure setup
+
+### Step 2: Ensure Project Structure
+
+**Step Configuration**:
+
+- **Purpose**: Set up the manifest project structure if it doesn't exist yet
+- **Input**: Receives from Step 1: service name and operation requirements
+- **Output**: Provides to Step 3: validated project structure with proper manifest directory layout
+- **Sub-workflow**: constitutions/workflows/project/ensure-project.md
+- **Parallel Execution**: No
+
+#### Execute ensure-project Workflow (You)
+
+When Claude reaches this step and sees sub-workflow path:
+
+1. Use Read tool to load the sub-workflow file: constitutions/workflows/project/ensure-project.md
+2. Parse the sub-workflow to identify its steps
+3. Dynamically expand step to 2.1, 2.2, 2.3... from the sub-workflow content with these service manifest structure requirements:
 
 ```plaintext
 # Service manifest directory structure
@@ -94,249 +250,794 @@ manifests/[service-name]/
     └── index.spec.ts
 ```
 
-**Structure Requirements for ensure-project:**
+4. Use TodoWrite to track the status of each ensure-project step
+5. Executes each step as instructed in the ensure-project sub-workflow
+6. Pass specific requirements:
+   - Manifest directory under `manifests/[service-name]/`
+   - Package.json with service-specific configuration and exports
+   - Source directory with index.ts and operations subdirectory
+   - Spec directory for tests
+   - All dependencies aligned with existing manifest projects in monorepo
+7. After all sub-workflow steps are complete, continue to Step 3
 
-- [ ] Manifest directory under `manifests/[service-name]/`
-- [ ] Package.json with service-specific configuration and exports
-- [ ] Source directory with index.ts and operations subdirectory
-- [ ] Spec directory for tests
-- [ ] All dependencies aligned with existing manifest projects in monorepo
+### Step 3: Create Schema Definitions
 
-**Verification**:
+**Step Configuration**:
 
-- [ ] Subagent/workflow self-verification: Project structure validated and bootstrapped
-- [ ] Primary agent verification: Dependencies installed and project functional
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during project setup
+- **Purpose**: Build the schema definition files for the new operation with proper type safety
+- **Input**: Receives from Step 2: validated project structure and from Step 1: operation requirements
+- **Output**: Provides to Step 4: complete schema definitions with TypeScript types
+- **Sub-workflow**: None
+- **Parallel Execution**: Yes - input and output schemas can be created in parallel
 
-### 4. Create Operation Schema Structure
+#### Phase 1: Planning (You)
 
-**Task tracking**:
+**What You Do**:
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+1. **Receive inputs** from Step 1 (requirements) and Step 2 (project structure)
+2. **List schema creation tasks** based on operation requirements:
+   - Input schema (always required)
+   - Output schema (if operation returns data)
+   - Schema exports and type definitions
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Naming Conventions](@../../standards/code/naming.md)
+4. **Create dynamic batches** following these rules:
+   - Batch 1: Input schema creation
+   - Batch 2: Output schema creation (if needed)
+   - Batch 3: Schema exports and type definitions
+5. **Use TodoWrite** to create task list from all batches
+6. **Prepare task assignments** with schema specifications
+7. **Queue all batches** for parallel execution by subagents
 
-Build the schema definition files for the new operation.
+**OUTPUT from Planning**: Task batch assignments for schema creation
 
-**Core actions**:
+#### Phase 2: Execution (Subagents)
 
-```bash
-manifests/[service-name]/source/operations/[operationName]/
-├── index.ts        # Operation manifest definition
-└── schema/
-    ├── index.ts    # Schema exports and types
-    ├── input.ts    # Input schema definition
-    └── output.ts   # Output schema (skip for void operations)
-```
+**What You Send to Subagents**:
 
-- [ ] Create operation directory with camelCase naming
-- [ ] Define input schema with proper JSON Schema format
-- [ ] Define output schema (if operation returns data)
-- [ ] Export TypeScript types using `FromSchema`
-- [ ] Add schema validation rules (required fields, formats, patterns)
+In a single message, You spin up subagents to create schemas in parallel, up to **3** subtasks at a time.
 
-**Verification**:
+- **[IMPORTANT]** When there are any issues reported, Claude must stop dispatching further subagents until all issues have been rectified
+- **[IMPORTANT]** Claude MUST ask all subagents to ultrathink hard about type safety and schema validation
+- **[IMPORTANT]** Use TodoWrite to update each batch's status from 'pending' to 'in_progress' when dispatched
 
-- [ ] Subagent/workflow self-verification: Schema structure created with proper types
-- [ ] Primary agent verification: All schemas match operation requirements
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during schema creation
+Request each subagent to perform the following steps with full detail:
 
-**Input Schema Example:**
+    >>>
+    **In ultrathink mode, adopt the Schema Definition Specialist mindset**
 
-```typescript
-// schema/input.ts
-import type { JsonSchema } from '@theriety/manifest';
+    - You're a **Schema Definition Specialist** with deep expertise in JSON Schema and TypeScript integration who follows these technical principles:
+      - **Type Safety First**: Ensure all schemas compile to strict TypeScript types
+      - **Validation Completeness**: Include all necessary validation rules and constraints
+      - **Documentation Integration**: Every schema field must have clear descriptions
 
-export default {
-  type: 'object',
-  additionalProperties: false,
-  required: ['profileId', 'secret'],
-  properties: {
-    profileId: {
-      type: 'string',
-      format: 'uuid',
-      description: 'KMS profile identifier',
-    },
-    secret: {
+    **Read the following assigned standards** and follow them recursively:
+
+    - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/naming/functions.md
+
+    **Assignment**
+    You're assigned to create schema files for operation: [OPERATION_NAME]
+    
+    Target directory structure:
+    ```
+    manifests/[service-name]/source/operations/[operationName]/
+    ├── index.ts        # Operation manifest definition (Step 4)
+    └── schema/
+        ├── index.ts    # Schema exports and types
+        ├── input.ts    # Input schema definition
+        └── output.ts   # Output schema (skip for void operations)
+    ```
+
+    **Steps**
+
+    1. Create operation directory with camelCase naming
+    2. Define input schema with proper JSON Schema format using requirements
+    3. Define output schema (if operation returns data) with proper typing
+    4. Export TypeScript types using `FromSchema` pattern
+    5. Add comprehensive schema validation rules (required fields, formats, patterns)
+    6. Ensure all schemas use `as const satisfies JsonSchema` pattern
+
+    **Schema Examples to Follow**:
+
+    Input Schema Pattern:
+    ```typescript
+    // schema/input.ts
+    import type { JsonSchema } from '@theriety/manifest';
+
+    export default {
       type: 'object',
-      required: ['name', 'value'],
+      additionalProperties: false,
+      required: ['profileId', 'secret'],
       properties: {
-        name: { type: 'string', minLength: 1 },
-        value: { type: 'string', minLength: 1 },
+        profileId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'KMS profile identifier',
+        },
+        secret: {
+          type: 'object',
+          required: ['name', 'value'],
+          properties: {
+            name: { type: 'string', minLength: 1 },
+            value: { type: 'string', minLength: 1 },
+          },
+        },
       },
-    },
-  },
-} as const satisfies JsonSchema;
-```
+    } as const satisfies JsonSchema;
+    ```
 
-**Schema Export Pattern:**
+    Schema Export Pattern:
+    ```typescript
+    // schema/index.ts
+    import input from './input';
+    import output from './output'; // omit if the operation that doesn't return
 
-```typescript
-// schema/index.ts
-import input from './input';
-import output from './output'; // omit if the operation that doesn't return
+    import type { FromSchema } from '@theriety/manifest';
 
-import type { FromSchema } from '@theriety/manifest';
+    export type Input = FromSchema<typeof input>;
+    export type Output = FromSchema<typeof output>; // omit if the operation that doesn't return
 
-export type Input = FromSchema<typeof input>;
-export type Output = FromSchema<typeof output>; // omit if the operation that doesn't return
+    export default { input, output };
+    ```
 
-export default { input, output };
-```
+    **Report**
+    **[IMPORTANT]** You're requested to return the following:
 
-### 5. Create Operation Manifest
+    - List of schema files created
+    - TypeScript compilation status
+    - Schema validation completeness
 
-**Task tracking**:
+    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+    ```yaml
+    status: success|failure|partial
+    summary: 'Brief description of schemas created'
+    modifications: ['schema/input.ts', 'schema/output.ts', 'schema/index.ts']
+    outputs:
+      input_schema_created: true|false
+      output_schema_created: true|false|not_required
+      type_exports_created: true|false
+      typescript_compiles: true|false
+    issues: []  # Any problems encountered during schema creation
+    ```
+    <<<
 
-Define the operation manifest with mock implementation.
+#### Phase 3: Review (You)
 
-**Core actions**:
+**What You Do**:
 
-```typescript
-// operations/[operationName]/index.ts
-import { createOperationManifest } from '@theriety/manifest';
+1. **Use TodoRead** to check current task statuses
+2. **Collect all execution reports** from parallel schema subagents
+3. **Parse report statuses** for each batch (input schema, output schema, exports)
+4. **Use TodoWrite** to update batch statuses based on success/failure
+5. **Identify any failed schema creation** and group by failure type
+6. **Determine verification needs**: Always verify schema compilation and type safety
+7. **Compile review summary** with schema creation status
 
-import schema from './schema';
- 
-import type { Input, Output } from './schema';
+#### Phase 4: Verification (Subagents) - Required
 
-export default createOperationManifest({
-  path: import.meta.url,
-  schema,
-  async: true,
-  mock: async (input: Input): Promise<Output> => {
-    // return realistic mock data matching output schema
-    return {
-      id: 'mock-id-123',
-      status: 'success',
-      // ... complete mock response
-    };
-  },
-});
-```
+**When Claude Triggers Verification**: Always for schema creation to ensure type safety
 
-- [ ] Import `createOperationManifest` from framework
-- [ ] Set `path: import.meta.url` for operation identification
-- [ ] Configure `async: true` for asynchronous operations
-- [ ] Implement comprehensive mock with realistic data
-- [ ] Ensure mock matches output schema exactly
+**What You Send to Verification Subagents**:
 
-**Verification**:
+In a single message, You assign schema verification to ensure compilation and type safety.
 
-- [ ] Subagent/workflow self-verification: Manifest created with proper mock implementation
-- [ ] Primary agent verification: Mock data matches schema requirements
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during manifest creation
+Request verification subagent to perform the following verification with full scrutiny:
 
-### 6. Update Service Manifest Index
+    >>>
+    **In ultrathink mode, adopt the TypeScript Validation Expert mindset**
 
-**Task tracking**:
+    - You're a **TypeScript Validation Expert** with expertise in schema validation and type safety who follows these principles:
+      - **Compilation Verification**: All schemas must compile without TypeScript errors
+      - **Type Safety Validation**: Generated types must be properly typed and usable
+      - **Schema Completeness**: All required validation rules must be present
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+    **Review the standards recursively that were applied**:
 
-Register the new operation in the service manifest.
+    - constitutions/standards/coding/typescript.md - Verify TypeScript compliance
+    - constitutions/standards/coding/naming/functions.md - Check naming conventions
 
-**Core actions**:
+    **Verification Assignment**
+    You're assigned to verify the following schema files that were created:
 
-```typescript
-// source/index.ts
-import { createServiceManifest } from '@theriety/manifest';
+    - schema/input.ts: Input schema definition with proper JSON Schema format
+    - schema/output.ts: Output schema definition (if applicable)
+    - schema/index.ts: Type exports using FromSchema pattern
 
-import packageJson from '../package.json';
-import storeSecret from '#operations/storeSecret';
-import revealSecret from '#operations/revealSecret';
-// add new operation import
-import newOperation from '#operations/newOperation';
+    **Verification Steps**
 
-export default createServiceManifest({
-  packageJson,
-  operations: {
-    storeSecret,
-    revealSecret,
-    // add new operation
-    newOperation,
-  },
-});
-```
+    1. Read all created schema files to understand structure
+    2. Verify TypeScript compilation works without errors
+    3. Check that all schemas use `as const satisfies JsonSchema` pattern
+    4. Validate that FromSchema types are properly generated
+    5. Ensure validation rules match operation requirements
 
-- [ ] Import the new operation using path mapping
-- [ ] Add operation to the operations object
-- [ ] Maintain alphabetical ordering for consistency
+    **Report**
+    **[IMPORTANT]** You're requested to verify and report:
 
-**Verification**:
+    - TypeScript compilation status
+    - Schema format compliance
+    - Type generation accuracy
+    - Requirements alignment
 
-- [ ] Subagent/workflow self-verification: Service manifest updated with new operation
-- [ ] Primary agent verification: All imports and exports working correctly
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during manifest update
+    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
 
-### 7. Final Review and Comprehensive Validation
+    ```yaml
+    status: pass|fail
+    summary: 'Brief schema verification summary'
+    checks:
+      typescript_compiles: pass|fail
+      schema_format_valid: pass|fail
+      types_generated: pass|fail
+      requirements_match: pass|fail
+    fatals: []  # Only critical blockers
+    warnings: []  # Non-blocking issues
+    recommendation: proceed|retry|rollback
+    ```
+    <<<
 
-**Primary agent performs final review of all delegated work**:
+#### Phase 5: Decision (You)
 
-**Task tracking review**:
+**What You Do**:
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Verify all tracked tasks show 'completed' status
-- [ ] Confirm no tasks remain in 'pending' or 'in_progress' state
+1. **Analyze all reports** (execution + verification)
+2. **Apply decision criteria**:
+   - All schemas created successfully
+   - TypeScript compilation passes
+   - Verification recommends proceed
+3. **Select next action**:
+   - **PROCEED**: All schemas validated → Move to Step 4
+   - **RETRY**: Schema compilation or validation failures → Re-create failed schemas
+   - **ROLLBACK**: Critical type safety issues → Review requirements
+4. **Use TodoWrite** to update task list based on decision
+5. **Prepare transition**: Package schema definitions for manifest creation
 
-**Subagent work review**:
+### Step 4: Build Operation Manifest
 
-- [ ] Review outputs from all delegated agents
-- [ ] Verify each subagent's self-verification was performed
-- [ ] Double-check work quality meets standards
-- [ ] Confirm all referenced workflows were properly executed
+**Step Configuration**:
 
-**Requirements validation**:
+- **Purpose**: Create the operation manifest with comprehensive mock implementation
+- **Input**: Receives from Step 3: validated schema definitions with TypeScript types
+- **Output**: Provides to Step 5: complete operation manifest with realistic mock data
+- **Sub-workflow**: None
+- **Parallel Execution**: No
 
-- [ ] Operation manifest matches Notion specification exactly
-- [ ] Schema definitions are type-safe and complete
-- [ ] Mock implementation provides realistic test data
-- [ ] Service manifest properly exports the new operation
-- [ ] All TypeScript types compile without errors
+#### Phase 1: Planning (You)
 
-**Final sign-off**:
+**What You Do**:
 
-- [ ] Primary agent approves all work
-- [ ] Mark this final review task as 'completed' in task tracking tool
-- [ ] Document any deviations or follow-up items
+1. **Receive inputs** from Step 3 (schema definitions and types)
+2. **List manifest creation requirements**:
+   - Operation manifest definition
+   - Mock implementation with realistic data
+   - Proper async/sync configuration
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Functions](@../../standards/code/functions.md)
+4. **Create single task assignment** for manifest creation
+5. **Use TodoWrite** to create task: ['Manifest creation - pending']
+6. **Prepare task assignment** with schema imports and mock requirements
+7. **Queue manifest creation** for execution by subagent
 
-## Standards Applied
+**OUTPUT from Planning**: Single task assignment for manifest creation
 
-### 🔴 MANDATORY: All standards listed below MUST be followed without exception
+#### Phase 2: Execution (Subagents)
 
-- [TypeScript](@../../standards/code/typescript.md) - Type safety, strict mode, and coding conventions
-- [Naming Conventions](@../../standards/code/naming.md) - Consistent naming for operations, schemas, and types
-- [Documentation](@../../standards/code/documentation.md) - Schema descriptions and code comments
+**What You Send to Subagents**:
 
-## Common Issues
+In a single message, You assign the manifest creation task to a specialized subagent.
 
-- **Schema Mismatch**: Input/output types don't match between manifest and service → Ensure you import types from manifest schema in service implementation
-- **Missing Mock Data**: Mock returns incomplete data → Always return complete objects matching the full output schema
-- **Path Mapping Errors**: Cannot find module '#operations/...' → Check package.json imports configuration and tsconfig paths
-- **Type Safety Lost**: Using `any` types in schemas → Always use `as const satisfies JsonSchema` pattern
-- **Async/Await Issues**: Forgetting async in mock functions → All operation mocks must return promises
-- **Access Control Missing**: No authorization checks → Always call `access.verify()` before executing business logic
+Request the subagent to perform the following steps with full detail:
 
-## Output Template
+    >>>
+    **In ultrathink mode, adopt the Operation Manifest Builder mindset**
 
-### Expected Directory Structure
+    - You're an **Operation Manifest Builder** with deep expertise in manifest framework and mock implementations who follows these technical principles:
+      - **Mock-Driven Development**: Create comprehensive mocks that facilitate testing and development
+      - **Type Safety**: Ensure all mock data matches schema types exactly
+      - **Realistic Data**: Generate mock responses that represent real-world usage
 
-After completing this workflow, you should have:
+    **Read the following assigned standards** and follow them recursively:
 
-```plaintext
-manifests/[service-name]/
-└── source/
-    └── operations/
-        └── [operationName]/
-            ├── index.ts        # Manifest definition
-            └── schema/
-                ├── index.ts    # Type exports
-                ├── input.ts    # Input schema
-                └── output.ts   # Output schema (if applicable)
-```
+    - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/functions.md
+
+    **Assignment**
+    You're assigned to create the operation manifest for: [OPERATION_NAME]
+
+    **Steps**
+
+    1. Import `createOperationManifest` from '@theriety/manifest'
+    2. Import schema and types from './schema'
+    3. Set `path: import.meta.url` for operation identification
+    4. Configure `async: true` for asynchronous operations (or `async: false` if sync)
+    5. Implement comprehensive mock function with realistic data
+    6. Ensure mock return data matches output schema exactly
+    7. Add proper TypeScript typing for mock function parameters and return
+
+    **Manifest Pattern to Follow**:
+    ```typescript
+    // operations/[operationName]/index.ts
+    import { createOperationManifest } from '@theriety/manifest';
+
+    import schema from './schema';
+     
+    import type { Input, Output } from './schema';
+
+    export default createOperationManifest({
+      path: import.meta.url,
+      schema,
+      async: true,
+      mock: async (input: Input): Promise<Output> => {
+        // return realistic mock data matching output schema
+        return {
+          id: 'mock-id-123',
+          status: 'success',
+          // ... complete mock response
+        };
+      },
+    });
+    ```
+
+    **Report**
+    **[IMPORTANT]** You're requested to return the following:
+
+    - Operation manifest file path
+    - Mock implementation completeness
+    - TypeScript compilation status
+    - Mock data schema validation
+
+    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+
+    ```yaml
+    status: success|failure|partial
+    summary: 'Brief description of manifest creation'
+    modifications: ['operations/[operationName]/index.ts']
+    outputs:
+      manifest_created: true|false
+      mock_implemented: true|false
+      typescript_compiles: true|false
+      mock_validates: true|false
+    issues: []  # Any problems encountered during manifest creation
+    ```
+    <<<
+
+#### Phase 3: Review (You)
+
+**What You Do**:
+
+1. **Use TodoRead** to check current task status
+2. **Collect execution report** from manifest subagent
+3. **Parse report status** and validate manifest completeness
+4. **Use TodoWrite** to update task status based on success/failure
+5. **Validate manifest requirements**:
+   - Operation manifest created
+   - Mock implementation present
+   - TypeScript compilation successful
+6. **Determine verification needs**: Verify mock data matches schema
+7. **Compile review summary** with manifest creation status
+
+#### Phase 4: Verification (Subagents) - Required
+
+**When Claude Triggers Verification**: Always for manifest creation to ensure mock data validity
+
+**What You Send to Verification Subagents**:
+
+Request verification subagent to validate manifest and mock implementation:
+
+    >>>
+    **In ultrathink mode, adopt the Manifest Validation Expert mindset**
+
+    - You're a **Manifest Validation Expert** with expertise in operation manifests and mock data validation who follows these principles:
+      - **Mock Data Accuracy**: Mock responses must exactly match output schema
+      - **Type Safety Verification**: All manifest components must be properly typed
+      - **Framework Compliance**: Manifest must follow framework patterns correctly
+
+    **Verification Assignment**
+    You're assigned to verify the operation manifest that was created:
+
+    - operations/[operationName]/index.ts: Complete operation manifest with mock
+
+    **Verification Steps**
+
+    1. Read the created manifest file to understand implementation
+    2. Verify mock function returns data matching output schema
+    3. Check that manifest uses proper framework patterns
+    4. Validate TypeScript types are correctly applied
+    5. Ensure async/sync configuration matches operation requirements
+
+    **Report**
+    **[IMPORTANT]** You're requested to verify and report:
+
+    - Mock data schema compliance
+    - Framework pattern usage
+    - TypeScript type safety
+    - Operation configuration accuracy
+
+    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+
+    ```yaml
+    status: pass|fail
+    summary: 'Brief manifest verification summary'
+    checks:
+      mock_data_valid: pass|fail
+      framework_patterns: pass|fail
+      typescript_safe: pass|fail
+      config_correct: pass|fail
+    fatals: []  # Only critical blockers
+    warnings: []  # Non-blocking issues
+    recommendation: proceed|retry|rollback
+    ```
+    <<<
+
+#### Phase 5: Decision (You)
+
+**What You Do**:
+
+1. **Analyze all reports** (execution + verification)
+2. **Apply decision criteria**:
+   - Manifest created successfully
+   - Mock data validates against schema
+   - Verification recommends proceed
+3. **Select next action**:
+   - **PROCEED**: Manifest validated → Move to Step 5
+   - **RETRY**: Mock data or manifest issues → Re-create manifest
+   - **ROLLBACK**: Critical framework pattern issues → Review schemas
+4. **Use TodoWrite** to update task list based on decision
+5. **Prepare transition**: Package operation manifest for service integration
+
+### Step 5: Integrate with Service
+
+**Step Configuration**:
+
+- **Purpose**: Register the new operation in the service manifest index
+- **Input**: Receives from Step 4: completed operation manifest
+- **Output**: Provides to Step 6: updated service manifest with new operation registered
+- **Sub-workflow**: None
+- **Parallel Execution**: No
+
+#### Phase 1: Planning (You)
+
+**What You Do**:
+
+1. **Receive inputs** from Step 4 (completed operation manifest)
+2. **List service integration requirements**:
+   - Update service manifest index
+   - Add operation import with path mapping
+   - Maintain alphabetical ordering
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Naming Conventions](@../../standards/code/naming.md)
+4. **Create single task assignment** for service integration
+5. **Use TodoWrite** to create task: ['Service integration - pending']
+6. **Prepare task assignment** with service manifest update requirements
+7. **Queue service integration** for execution by subagent
+
+**OUTPUT from Planning**: Single task assignment for service integration
+
+#### Phase 2: Execution (Subagents)
+
+**What You Send to Subagents**:
+
+Request the subagent to perform service integration with full detail:
+
+    >>>
+    **In ultrathink mode, adopt the Service Integration Specialist mindset**
+
+    - You're a **Service Integration Specialist** with deep expertise in service manifest management who follows these technical principles:
+      - **Import Organization**: Maintain clean, alphabetical import organization
+      - **Path Mapping**: Use proper TypeScript path mapping for operation imports
+      - **Consistency**: Ensure integration follows existing service patterns
+
+    **Read the following assigned standards** and follow them recursively:
+
+    - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/naming/functions.md
+
+    **Assignment**
+    You're assigned to integrate operation [OPERATION_NAME] into the service manifest
+
+    **Steps**
+
+    1. Read the current service manifest (source/index.ts) to understand existing structure
+    2. Import the new operation using path mapping: `#operations/[operationName]`
+    3. Add the operation to the operations object in alphabetical order
+    4. Ensure proper TypeScript typing throughout
+    5. Maintain consistency with existing import and export patterns
+
+    **Integration Pattern to Follow**:
+    ```typescript
+    // source/index.ts
+    import { createServiceManifest } from '@theriety/manifest';
+
+    import packageJson from '../package.json';
+    import existingOp1 from '#operations/existingOp1';
+    import newOperation from '#operations/newOperation';
+    import existingOp2 from '#operations/existingOp2';
+
+    export default createServiceManifest({
+      packageJson,
+      operations: {
+        existingOp1,
+        newOperation,  // Added in alphabetical order
+        existingOp2,
+      },
+    });
+    ```
+
+    **Report**
+    **[IMPORTANT]** You're requested to return the following:
+
+    - Service manifest update status
+    - Import organization compliance
+    - TypeScript compilation status
+
+    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+
+    ```yaml
+    status: success|failure|partial
+    summary: 'Brief description of service integration'
+    modifications: ['source/index.ts']
+    outputs:
+      operation_imported: true|false
+      operation_registered: true|false
+      alphabetical_order: true|false
+      typescript_compiles: true|false
+    issues: []  # Any problems encountered during integration
+    ```
+    <<<
+
+#### Phase 3: Review (You)
+
+**What You Do**:
+
+1. **Use TodoRead** to check current task status
+2. **Collect execution report** from integration subagent
+3. **Parse report status** and validate integration completeness
+4. **Use TodoWrite** to update task status based on success/failure
+5. **Validate integration requirements**:
+   - Operation properly imported
+   - Service manifest updated
+   - TypeScript compilation successful
+6. **Determine verification needs**: Verify service manifest exports work
+7. **Compile review summary** with integration status
+
+#### Phase 4: Verification (Subagents) - Required
+
+**When Claude Triggers Verification**: Always for service integration to ensure exports work
+
+**What You Send to Verification Subagents**:
+
+Request verification subagent to validate service manifest integration:
+
+    >>>
+    **In ultrathink mode, adopt the Service Manifest Validator mindset**
+
+    - You're a **Service Manifest Validator** with expertise in service exports and manifest validation who follows these principles:
+      - **Export Validation**: All operations must be properly exported and accessible
+      - **Import Correctness**: All imports must resolve correctly
+      - **Service Completeness**: Service manifest must include all required operations
+
+    **Verification Assignment**
+    You're assigned to verify the updated service manifest:
+
+    - source/index.ts: Updated service manifest with new operation
+
+    **Verification Steps**
+
+    1. Read the updated service manifest to understand changes
+    2. Verify new operation import resolves correctly
+    3. Check that operation is properly included in operations object
+    4. Validate alphabetical ordering is maintained
+    5. Ensure TypeScript compilation works without errors
+    6. Test that service manifest exports the new operation
+
+    **Report**
+    **[IMPORTANT]** You're requested to verify and report:
+
+    - Import resolution status
+    - Operation registration completeness
+    - Export functionality
+    - Organization compliance
+
+    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+
+    ```yaml
+    status: pass|fail
+    summary: 'Brief service integration verification summary'
+    checks:
+      imports_resolve: pass|fail
+      operation_registered: pass|fail
+      exports_work: pass|fail
+      organization_correct: pass|fail
+    fatals: []  # Only critical blockers
+    warnings: []  # Non-blocking issues
+    recommendation: proceed|retry|rollback
+    ```
+    <<<
+
+#### Phase 5: Decision (You)
+
+**What You Do**:
+
+1. **Analyze all reports** (execution + verification)
+2. **Apply decision criteria**:
+   - Service manifest updated successfully
+   - All imports and exports work correctly
+   - Verification recommends proceed
+3. **Select next action**:
+   - **PROCEED**: Integration validated → Move to Step 6
+   - **RETRY**: Import or export issues → Re-integrate service
+   - **ROLLBACK**: Critical service manifest issues → Review manifest creation
+4. **Use TodoWrite** to update task list based on decision
+5. **Prepare transition**: Service ready for final validation
+
+### Step 6: Final Validation
+
+**Step Configuration**:
+
+- **Purpose**: Confirm successful workflow completion with comprehensive validation
+- **Input**: Receives from Step 5: integrated service manifest and all previous outputs
+- **Output**: Final deliverables matching workflow Expected Outputs specification
+- **Sub-workflow**: None
+- **Parallel Execution**: No
+
+#### Phase 1: Planning (You)
+
+**What You Do**:
+
+1. **Receive inputs** from all previous steps
+2. **List comprehensive validation requirements**:
+   - End-to-end TypeScript compilation
+   - Schema validation completeness
+   - Mock data accuracy
+   - Service manifest functionality
+3. **Determine the standards** for final validation: All previously applied standards
+4. **Create single task assignment** for comprehensive validation
+5. **Use TodoRead** to verify all previous tasks completed successfully
+6. **Use TodoWrite** to create final validation task: ['Comprehensive validation - pending']
+7. **Prepare comprehensive validation assignment**
+
+#### Phase 2: Execution (Subagents)
+
+**What You Send to Subagents**:
+
+Request the subagent to perform comprehensive validation:
+
+    >>>
+    **In ultrathink mode, adopt the Comprehensive Validator mindset**
+
+    - You're a **Comprehensive Validator** with expertise in end-to-end validation and quality assurance who follows these principles:
+      - **Complete Testing**: Validate entire operation lifecycle from schema to service
+      - **Type Safety Verification**: Ensure end-to-end type safety throughout
+      - **Integration Testing**: Confirm all components work together seamlessly
+
+    **Assignment**
+    You're assigned to perform final comprehensive validation for operation: [OPERATION_NAME]
+
+    **Steps**
+
+    1. Verify complete TypeScript compilation across all created files
+    2. Test that schemas validate properly with mock data
+    3. Confirm operation manifest loads and functions correctly
+    4. Validate service manifest exports the new operation
+    5. Test end-to-end operation invocation (if possible)
+    6. Verify all requirements from Step 1 are satisfied
+
+    **Comprehensive Validation Checklist**:
+    - [ ] Operation manifest matches original requirements exactly
+    - [ ] Schema definitions are type-safe and complete
+    - [ ] Mock implementation provides realistic test data
+    - [ ] Service manifest properly exports the new operation
+    - [ ] All TypeScript types compile without errors
+    - [ ] Directory structure follows manifest conventions
+
+    **Report**
+    **[IMPORTANT]** You're requested to return the following:
+
+    - Complete validation status
+    - Any remaining issues or deviations
+    - Final deliverables confirmation
+
+    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+
+    ```yaml
+    status: success|failure|partial
+    summary: 'Comprehensive validation results'
+    modifications: []  # No new modifications in validation
+    outputs:
+      requirements_satisfied: true|false
+      typescript_compiles: true|false
+      schemas_validate: true|false
+      service_exports: true|false
+      end_to_end_works: true|false
+    issues: []  # Any remaining problems
+    deliverables:
+      - 'Operation manifest: manifests/[service]/source/operations/[op]/index.ts'
+      - 'Input schema: manifests/[service]/source/operations/[op]/schema/input.ts'
+      - 'Output schema: manifests/[service]/source/operations/[op]/schema/output.ts'
+      - 'Schema exports: manifests/[service]/source/operations/[op]/schema/index.ts'
+      - 'Service integration: manifests/[service]/source/index.ts'
+    ```
+    <<<
+
+#### Phase 3: Review (You)
+
+**What You Do**:
+
+1. **Use TodoRead** to review all workflow tasks
+2. **Collect comprehensive validation report**
+3. **Verify all tracked tasks show 'completed' status**
+4. **Confirm no tasks remain in 'pending' or 'in_progress' state**
+5. **Review final deliverables against workflow specification**
+6. **Use TodoWrite** to mark validation complete or identify remaining issues
+
+#### Phase 4: Verification (Subagents) - Optional
+
+**When Claude Triggers Verification**: Only if comprehensive validation reports issues
+
+#### Phase 5: Decision (You)
+
+**What You Do**:
+
+1. **Analyze comprehensive validation report**
+2. **Apply completion criteria**:
+   - All requirements satisfied
+   - All deliverables present and functional
+   - No critical issues remaining
+3. **Select final action**:
+   - **COMPLETE**: All validation passes → Workflow successful
+   - **RETRY**: Minor issues found → Re-run failed validation
+   - **ESCALATE**: Critical issues → Report to user for guidance
+4. **Use TodoWrite** to mark workflow completion status
+5. **Package final deliverables** and success confirmation
+
+### Final Step: Completion Confirmation
+
+**Completion Checklist**:
+
+- [ ] All main workflow steps completed successfully
+- [ ] ensure-project sub-workflow completed (Step 2)
+- [ ] All outputs produced and packaged
+- [ ] No pending retry or rollback items
+- [ ] Comprehensive validation passed
+- [ ] Service operation fully declared and integrated
+
+## Standards to Follow
+
+**🔴 MANDATORY: All standards listed below MUST be followed without exception**
+
+### Core Development Standards
+
+- [TypeScript Standards](@../../standards/coding/typescript.md) - Type safety, strict mode, and coding conventions for manifest schemas
+- [Naming Conventions](@../../standards/coding/naming/functions.md) - Consistent naming for operations, schemas, and type definitions
+- [Documentation Guidelines](@../../standards/coding/documentation.md) - Schema descriptions and comprehensive code comments
+- [Functions Standards](@../../standards/coding/functions.md) - Mock function structure and implementation patterns
+
+### Code Quality Standards
+
+- [General Principles](@../../standards/coding/general-principles.md) - DRY, SRP, and other fundamental development principles
+
+### Related Workflows
+
+- [Ensure Project](@../project/ensure-project.md) - Project structure setup and validation workflow
+- [Review Code](@../quality/review-code.md) - Code review process for manifest operations
+
+### Service Manifest Development Best Practices
+
+#### Schema Definition Patterns
+- Always use `as const satisfies JsonSchema` pattern for type safety
+- Include comprehensive validation rules (required fields, formats, patterns)
+- Provide clear descriptions for all schema properties
+- Leverage TypeScript's FromSchema for type generation
+
+#### Mock Implementation Requirements
+- Generate realistic mock data that matches output schemas exactly
+- Implement proper async/sync patterns based on operation type
+- Include comprehensive error handling and edge cases
+- Follow operation manifest framework patterns consistently
+
+#### Common Issues to Avoid
+- Schema mismatch between manifest and service implementations
+- Missing mock data or incomplete object returns
+- Path mapping errors in module imports
+- Type safety loss through any/unknown types
+- Missing async/await in operation mock functions
+- Inadequate access control and authorization checks
+
