@@ -28,7 +28,7 @@ All components must meet WCAG 2.1 AA standards:
 ### Use Proper HTML Elements
 
 ```typescript
-// ✅ GOOD: semantic HTML
+// ✅ GOOD: semantic HTML improves accessibility and SEO
 <button onClick={handleSubmit}>Submit Form</button>
 <nav aria-label="Main navigation">
   <ul>
@@ -44,7 +44,7 @@ All components must meet WCAG 2.1 AA standards:
   </article>
 </main>
 
-// ❌ BAD: non-semantic HTML
+// ❌ BAD: non-semantic HTML reduces accessibility
 <div onClick={handleSubmit}>Submit Form</div>
 <div className="nav">
   <div className="nav-item">Home</div>
@@ -62,7 +62,7 @@ All components must meet WCAG 2.1 AA standards:
 ### Heading Hierarchy
 
 ```typescript
-// ✅ GOOD: proper heading hierarchy
+// ✅ GOOD: proper heading hierarchy maintains logical document structure
 <main>
   <h1>Main Page Title</h1>
   <section>
@@ -74,7 +74,7 @@ All components must meet WCAG 2.1 AA standards:
   </section>
 </main>
 
-// ❌ BAD: broken heading hierarchy
+// ❌ BAD: broken heading hierarchy confuses screen readers
 <main>
   <h1>Main Page Title</h1>
   <h4>Should be h2</h4>  {/* Skipped levels */}
@@ -87,7 +87,7 @@ All components must meet WCAG 2.1 AA standards:
 ### Essential ARIA Attributes
 
 ```typescript
-// ✅ GOOD: proper ARIA usage
+// ✅ GOOD: proper ARIA usage enhances accessibility context
 <button
   aria-label="Close dialog"
   aria-expanded={isOpen}
@@ -121,7 +121,7 @@ All components must meet WCAG 2.1 AA standards:
 ### ARIA Roles
 
 ```typescript
-// ✅ GOOD: appropriate ARIA roles
+// ✅ GOOD: appropriate ARIA roles clarify component purpose
 <div role="tablist" aria-label="Settings sections">
   <button
     role="tab"
@@ -156,7 +156,7 @@ All components must meet WCAG 2.1 AA standards:
 ### Focus Management
 
 ```typescript
-// ✅ GOOD: proper focus management
+// ✅ GOOD: proper focus management ensures keyboard accessibility
 export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -211,7 +211,7 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
 ### Keyboard Event Handling
 
 ```typescript
-// ✅ GOOD: keyboard accessibility
+// ✅ GOOD: keyboard accessibility supports all interaction methods
 export const CustomButton: FC<Props> = ({ onClick, children }) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     // Support both Enter and Space like native buttons
@@ -240,7 +240,7 @@ export const CustomButton: FC<Props> = ({ onClick, children }) => {
 ### Form Labels and Descriptions
 
 ```typescript
-// ✅ GOOD: accessible form components
+// ✅ GOOD: accessible form components provide clear user guidance
 export const FormField: FC<FormFieldProps> = ({
   label,
   name,
@@ -291,7 +291,7 @@ export const FormField: FC<FormFieldProps> = ({
 ### Form Validation Messages
 
 ```typescript
-// ✅ GOOD: accessible error handling
+// ✅ GOOD: accessible error handling announces validation issues
 export const useFormValidation = (schema: ValidationSchema) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -341,7 +341,7 @@ export const useFormValidation = (schema: ValidationSchema) => {
 ### Color Contrast Requirements
 
 ```typescript
-// ✅ GOOD: high contrast color definitions
+// ✅ GOOD: high contrast color definitions meet WCAG standards
 const colors = {
   // WCAG AA compliant contrast ratios
   primary: "#0066cc", // 4.5:1 against white
@@ -357,7 +357,7 @@ const colors = {
   textMuted: "#6c757d", // 4.5:1 minimum
 } as const;
 
-// ❌ BAD: low contrast colors
+// ❌ BAD: low contrast colors fail accessibility requirements
 const badColors = {
   lightGray: "#e9ecef", // Too light for text
   paleBlue: "#cce7ff", // Insufficient contrast
@@ -368,7 +368,7 @@ const badColors = {
 ### Color Usage Patterns
 
 ```typescript
-// ✅ GOOD: don't rely on color alone
+// ✅ GOOD: avoiding color-only indicators supports colorblind users
 export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) => {
   const getStatusIcon = (status: Status) => {
     switch (status) {
@@ -391,7 +391,7 @@ export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) =
   );
 };
 
-// ❌ BAD: color only indication
+// ❌ BAD: color-only indication excludes colorblind users
 export const BadStatusIndicator: FC<Props> = ({ status, message }) => {
   return (
     <div className={`status-${status}`}>
@@ -406,7 +406,7 @@ export const BadStatusIndicator: FC<Props> = ({ status, message }) => {
 ### Live Regions
 
 ```typescript
-// ✅ GOOD: screen reader announcements
+// ✅ GOOD: screen reader announcements provide dynamic feedback
 export const useLiveAnnouncement = () => {
   const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
     const liveRegion = document.createElement('div');
@@ -451,7 +451,7 @@ export const NotificationSystem: FC<Props> = () => {
 ### Hidden Content for Screen Readers
 
 ```typescript
-// ✅ GOOD: screen reader only content
+// ✅ GOOD: screen reader only content provides additional context
 export const VisuallyHidden: FC<{ children: ReactNode }> = ({ children }) => {
   const srOnlyStyle: CSSProperties = {
     position: 'absolute',
@@ -497,7 +497,7 @@ export const IconButton: FC<Props> = ({ icon, onClick, label }) => {
 ### Automated Testing
 
 ```typescript
-// ✅ GOOD: accessibility testing
+// ✅ GOOD: accessibility testing ensures compliance and usability
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { Button } from './Button';
@@ -551,7 +551,7 @@ describe('rc:Button accessibility', () => {
 ### Issues to Avoid
 
 ```typescript
-// ❌ BAD: common accessibility problems
+// ❌ BAD: common accessibility problems that reduce usability
 // Missing alt text
 <img src="chart.png" />
 
@@ -567,7 +567,7 @@ describe('rc:Button accessibility', () => {
 // Low contrast
 <span style={{ color: '#999', backgroundColor: '#eee' }}>Text</span>
 
-// ✅ GOOD: accessible alternatives
+// ✅ GOOD: accessible alternatives improve user experience
 // Descriptive alt text
 <img src="chart.png" alt="Sales increased 20% from Q1 to Q2" />
 

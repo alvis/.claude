@@ -24,7 +24,7 @@ _Standards for naming functions, methods, and callable expressions_
 ### Data Retrieval Functions
 
 ```typescript
-// get - Synchronous, immediate return (may be from cache)
+// get - synchronous, immediate return (may be from cache)
 function getUserName(user: User): string {
   return user.name;
 }
@@ -33,23 +33,23 @@ function getCurrentTimestamp(): number {
   return Date.now();
 }
 
-// fetch - Asynchronous, external data source
+// fetch - asynchronous, external data source
 async function fetchUserProfile(userId: string): Promise<UserProfile> {
   const response = await api.get(`/users/${userId}`);
   return response.data;
 }
 
-// find - Search operation, may return null
+// find - search operation, may return null
 function findUserByEmail(users: User[], email: string): User | null {
   return users.find((u) => u.email === email) || null;
 }
 
-// list - Return collection/array
+// list - return collection/array
 function listActiveUsers(users: User[]): User[] {
   return users.filter((u) => u.isActive);
 }
 
-// retrieve - Complex async operation, often with processing
+// retrieve - complex async operation, often with processing
 async function retrieveUserDashboard(userId: string): Promise<Dashboard> {
   const [profile, stats, activity] = await Promise.all([
     fetchUserProfile(userId),
@@ -64,13 +64,13 @@ async function retrieveUserDashboard(userId: string): Promise<Dashboard> {
 ### Data Manipulation Functions
 
 ```typescript
-// create - Make new instance
+// create - make new instance
 async function createUser(data: CreateUserData): Promise<User> {
   const user = new User(data);
   return await userRepository.save(user);
 }
 
-// add - Add to collection
+// add - add to collection
 function addItemToCart(cart: Cart, item: CartItem): Cart {
   return {
     ...cart,
@@ -78,7 +78,7 @@ function addItemToCart(cart: Cart, item: CartItem): Cart {
   };
 }
 
-// update - Modify existing
+// update - modify existing
 async function updateUserProfile(
   userId: string,
   updates: Partial<UserProfile>,
@@ -88,7 +88,7 @@ async function updateUserProfile(
   return await userRepository.save(user);
 }
 
-// set - Create or update (upsert)
+// set - create or update (upsert)
 async function setUserPreference(
   userId: string,
   key: string,
@@ -97,7 +97,7 @@ async function setUserPreference(
   await preferenceRepository.upsert({ userId, key, value });
 }
 
-// delete/remove - Eliminate
+// delete/remove - eliminate
 async function deleteUser(userId: string): Promise<void> {
   await userRepository.delete(userId);
 }
@@ -113,7 +113,7 @@ function removeItemFromCart(cart: Cart, itemId: string): Cart {
 ### Validation and Boolean Functions
 
 ```typescript
-// validate - Full validation with detailed results
+// validate - full validation with detailed results
 function validateUserInput(input: unknown): ValidationResult {
   const errors: ValidationError[] = [];
 
@@ -121,7 +121,7 @@ function validateUserInput(input: unknown): ValidationResult {
     errors.push({ field: "input", message: "Invalid input" });
   }
 
-  // More validation...
+  // more validation...
 
   return {
     isValid: errors.length === 0,
@@ -129,7 +129,7 @@ function validateUserInput(input: unknown): ValidationResult {
   };
 }
 
-// is - Boolean state check
+// is - boolean state check
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -138,7 +138,7 @@ function isUserActive(user: User): boolean {
   return user.status === "active" && !user.deletedAt;
 }
 
-// has - Boolean possession check
+// has - boolean possession check
 function hasPermission(user: User, permission: string): boolean {
   return user.permissions.includes(permission);
 }
@@ -147,12 +147,12 @@ function hasExpired(expiryDate: Date): boolean {
   return expiryDate < new Date();
 }
 
-// can - Boolean capability check
+// can - boolean capability check
 function canEditResource(user: User, resource: Resource): boolean {
   return user.id === resource.ownerId || user.role === "admin";
 }
 
-// should - Boolean recommendation
+// should - boolean recommendation
 function shouldRefreshToken(token: Token): boolean {
   const fiveMinutes = 5 * 60 * 1000;
   return token.expiresAt - Date.now() < fiveMinutes;
@@ -162,7 +162,7 @@ function shouldRefreshToken(token: Token): boolean {
 ### Transformation Functions
 
 ```typescript
-// transform - General transformation
+// transform - general transformation
 function transformRawData(raw: RawData): ProcessedData {
   return {
     id: raw.id,
@@ -171,17 +171,17 @@ function transformRawData(raw: RawData): ProcessedData {
   };
 }
 
-// convert - Type/format conversion
+// convert - type/format conversion
 function convertCelsiusToFahrenheit(celsius: number): number {
   return (celsius * 9) / 5 + 32;
 }
 
-// parse - String to structured data
+// parse - string to structured data
 function parseConfigFile(content: string): Config {
   return JSON.parse(content);
 }
 
-// format - Structured data to string
+// format - structured data to string
 function formatCurrency(amount: number, currency: string = "USD"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -189,7 +189,7 @@ function formatCurrency(amount: number, currency: string = "USD"): string {
   }).format(amount);
 }
 
-// serialize/deserialize - Object to string and back
+// serialize/deserialize - object to string and back
 function serializeUser(user: User): string {
   return JSON.stringify({
     id: user.id,
@@ -207,14 +207,14 @@ function deserializeUser(data: string): User {
 ### Action Functions
 
 ```typescript
-// execute - Run a process
+// execute - run a process
 async function executePayment(payment: Payment): Promise<PaymentResult> {
   const result = await paymentGateway.process(payment);
   await recordTransaction(result);
   return result;
 }
 
-// process - Multi-step operation
+// process - multi-step operation
 async function processOrder(order: Order): Promise<ProcessedOrder> {
   await validateInventory(order.items);
   await calculatePricing(order);
@@ -222,7 +222,7 @@ async function processOrder(order: Order): Promise<ProcessedOrder> {
   return await finalizeOrder(order);
 }
 
-// handle - Event or request handling
+// handle - event or request handling
 async function handleLoginRequest(req: Request): Promise<Response> {
   const { email, password } = req.body;
   const user = await authenticateUser(email, password);
@@ -230,7 +230,7 @@ async function handleLoginRequest(req: Request): Promise<Response> {
   return { user, token };
 }
 
-// trigger - Initiate an action
+// trigger - initiate an action
 function triggerNotification(userId: string, message: string): void {
   eventEmitter.emit("notification", { userId, message });
 }
@@ -247,7 +247,7 @@ async function loadConfiguration(): Promise<Config> {}
 async function saveDocument(doc: Document): Promise<void> {}
 async function processPaymentAsync(payment: Payment): Promise<Result> {}
 
-// Consider adding 'Async' suffix for clarity when needed
+// consider adding 'Async' suffix for clarity when needed
 function processData(data: Data): ProcessedData {}
 async function processDataAsync(data: Data): Promise<ProcessedData> {}
 
@@ -290,12 +290,12 @@ function waitForCondition(
 
 ```typescript
 class UserService {
-  // Getters - no 'get' prefix for property-like access
+  // getters - no 'get' prefix for property-like access
   get activeUsers(): User[] {
     return this.users.filter((u) => u.isActive);
   }
 
-  // Standard methods - use verb prefixes
+  // standard methods - use verb prefixes
   async createUser(data: CreateUserData): Promise<User> {
     return this.repository.create(data);
   }
@@ -308,13 +308,13 @@ class UserService {
     return this.repository.update(id, updates);
   }
 
-  // Private methods - same rules apply
+  // private methods - same rules apply
   private validateUserData(data: unknown): void {
-    // Validation logic
+    // validation logic
   }
 
   private async notifyUserCreated(user: User): Promise<void> {
-    // Notification logic
+    // notification logic
   }
 }
 ```
@@ -323,7 +323,7 @@ class UserService {
 
 ```typescript
 class Component {
-  // Standard lifecycle names
+  // standard lifecycle names
   async initialize(): Promise<void> {}
   async onMount(): Promise<void> {}
   async beforeUpdate(): Promise<void> {}
@@ -331,7 +331,7 @@ class Component {
   async onUnmount(): Promise<void> {}
   async dispose(): Promise<void> {}
 
-  // React-style lifecycle
+  // react-style lifecycle
   componentDidMount(): void {}
   componentWillUnmount(): void {}
   shouldComponentUpdate(): boolean {
@@ -358,7 +358,7 @@ function createDefaultConfig(): Config {
   };
 }
 
-// Factory with options
+// factory with options
 function createLogger(options: LoggerOptions = {}): Logger {
   return new Logger({
     level: options.level || "info",
@@ -367,7 +367,7 @@ function createLogger(options: LoggerOptions = {}): Logger {
   });
 }
 
-// Higher-order factory
+// higher-order factory
 function createServiceFactory<T>(ServiceClass: new () => T) {
   return (config: Config): T => {
     const service = new ServiceClass();
@@ -412,14 +412,14 @@ function handleChange(event: ChangeEvent): void {}
 function handleUserLogin(user: User): void {}
 function handleError(error: Error): void {}
 
-// With 'on' prefix for props/callbacks
+// with 'on' prefix for props/callbacks
 interface ButtonProps {
   onClick: (event: MouseEvent) => void;
   onHover: (hovering: boolean) => void;
   onFocus: () => void;
 }
 
-// Event emitter patterns
+// event emitter patterns
 emitter.on("data", handleData);
 emitter.on("error", handleError);
 emitter.on("close", handleClose);
@@ -441,13 +441,13 @@ interface AsyncOperationOptions<T> {
   onComplete?: OnComplete;
 }
 
-// Usage
+// usage
 async function uploadFile(
   file: File,
   options: AsyncOperationOptions<string>,
 ): Promise<string> {
   try {
-    // Upload logic with progress
+    // upload logic with progress
     options.onProgress?.(0.5);
     const url = await upload(file);
     options.onSuccess?.(url);

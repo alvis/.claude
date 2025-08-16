@@ -24,9 +24,9 @@ useAuth()
 usePermissions(userId: string)
 
 // ❌ BAD: unclear or non-hook names
-getUserData(userId: string)  // Missing 'use' prefix
-useData()                    // Too generic
-useStuff()                   // Not descriptive
+getUserData(userId: string)  // missing 'use' prefix
+useData()                    // too generic
+useStuff()                   // not descriptive
 ```
 
 ## Hook Template Pattern
@@ -94,7 +94,7 @@ export function useData<T>(
 ### Data Fetching Hooks
 
 ```typescript
-// ✅ GOOD: comprehensive data fetching hook
+// ✅ GOOD: comprehensive data fetching hook with proper error handling
 export function useApiQuery<T>(endpoint: string) {
   const [state, setState] = useState<{
     data: T | null;
@@ -134,7 +134,7 @@ export function useApiQuery<T>(endpoint: string) {
 ### Local Storage Hooks
 
 ```typescript
-// ✅ GOOD: type-safe localStorage hook
+// ✅ GOOD: type-safe localStorage hook with error handling
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
@@ -170,7 +170,7 @@ export function useLocalStorage<T>(
 ### Debounce Hooks
 
 ```typescript
-// ✅ GOOD: debounce hook with cleanup
+// ✅ GOOD: debounce hook with proper cleanup to prevent memory leaks
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -187,7 +187,7 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// ✅ GOOD: debounced callback hook
+// ✅ GOOD: debounced callback hook with cancellation support
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
@@ -219,7 +219,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
 ### Hook Composition
 
 ```typescript
-// ✅ GOOD: composable hooks
+// ✅ GOOD: composable hooks that build on each other
 export function useAuth() {
   const [user, setUser] = useLocalStorage<User | null>("user", null);
   const [token, setToken] = useLocalStorage<string | null>("token", null);
@@ -278,7 +278,7 @@ export function usePermissions(userId?: string) {
 ### Custom Hook with Reducer
 
 ```typescript
-// ✅ GOOD: complex state management with useReducer
+// ✅ GOOD: complex state management using useReducer pattern
 interface FormState<T> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
@@ -383,7 +383,7 @@ export function useForm<T extends Record<string, any>>(
 ### Testing Custom Hooks
 
 ```typescript
-// ✅ GOOD: hook testing with renderHook
+// ✅ GOOD: hook testing using renderHook from testing library
 import { renderHook, act } from "@testing-library/react";
 import { useCounter } from "./useCounter";
 
@@ -427,11 +427,11 @@ describe("useCounter", () => {
 ### Dependency Management
 
 ```typescript
-// ✅ GOOD: proper dependency management
+// ✅ GOOD: proper dependency management with memoization
 export function useUserData(userId: string) {
   const [userData, setUserData] = useState<User | null>(null);
 
-  // Memoize expensive operations
+  // memoize expensive operations
   const processedData = useMemo(() => {
     if (!userData) return null;
     return {
@@ -441,7 +441,7 @@ export function useUserData(userId: string) {
     };
   }, [userData]);
 
-  // Stable callback reference
+  // stable callback reference
   const refreshUser = useCallback(async () => {
     if (!userId) return;
 
@@ -453,7 +453,7 @@ export function useUserData(userId: string) {
     }
   }, [userId]);
 
-  // Effect with proper dependencies
+  // effect with proper dependencies
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
@@ -471,23 +471,23 @@ export function useUserData(userId: string) {
 ### Common Mistakes to Avoid
 
 ```typescript
-// ❌ BAD: missing dependencies
+// ❌ BAD: violates dependency rules - missing user.id in dependency array
 export function useBadEffect(user: User) {
   useEffect(() => {
     fetchUserData(user.id).then(setData);
-  }, []); // Missing user.id dependency
+  }, []); // missing user.id dependency
 }
 
-// ❌ BAD: creating objects in hook return
+// ❌ BAD: violates memoization - creates new object on every render
 export function useBadReturn(data: any[]) {
   return {
     data,
-    // New object every render - breaks memoization
+    // new object every render - breaks memoization
     metadata: { count: data.length, lastUpdated: Date.now() },
   };
 }
 
-// ❌ BAD: not handling loading/error states
+// ❌ BAD: missing loading and error state handling
 export function useBadApiCall(url: string) {
   const [data, setData] = useState(null);
 
@@ -497,10 +497,10 @@ export function useBadApiCall(url: string) {
       .then(setData);
   }, [url]);
 
-  return data; // No loading or error state
+  return data; // no loading or error state
 }
 
-// ✅ GOOD: proper hook implementation
+// ✅ GOOD: proper hook implementation with loading, error, and cleanup
 export function useGoodApiCall(url: string) {
   const [state, setState] = useState({
     data: null,

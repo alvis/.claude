@@ -156,9 +156,9 @@ Request the subagent to perform the following comprehensive steps:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - @../../standards/code/typescript.md
-    - @../../standards/code/documentation.md
-    - @../../standards/code/naming.md
+    - @../../standards/coding/typescript.md
+    - @../../standards/coding/documentation.md
+    - @../../standards/coding/naming/functions.md
 
     **Assignment**
     You're assigned to comprehensively discover, extract, analyze, write, and validate the complete data implementation:
@@ -281,9 +281,9 @@ Request the subagent to perform the following comprehensive verification:
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - @../../standards/code/typescript.md - Verify compliance with TypeScript standards
-    - @../../standards/code/documentation.md - Check documentation completeness
-    - @../../standards/code/naming.md - Validate naming conventions
+    - @../../standards/coding/typescript.md - Verify compliance with TypeScript standards
+    - @../../standards/coding/documentation.md - Check documentation completeness
+    - @../../standards/coding/naming/functions.md - Validate naming conventions
     - Database migration best practices
 
     **Verification Assignment**

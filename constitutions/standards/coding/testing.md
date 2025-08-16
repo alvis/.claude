@@ -22,7 +22,7 @@ _Comprehensive testing standards for quality assurance, TDD compliance, and Type
 - **Interface documentation** - All test interfaces must be fully documented with JSDoc comments
 
 ```typescript
-// ✅ GOOD: type-safe test with proper TypeScript compliance
+// ✅ GOOD: type-safe test with proper typescript compliance
 import { describe, it, expect, vi } from 'vitest';
 
 import type { User } from '#types/user';
@@ -34,7 +34,7 @@ const createMockUserRepository = (): UserRepository => ({
   findAll: vi.fn(),
 });
 
-// ❌ BAD: using any types and bypassing TypeScript safety
+// ❌ BAD: using any types bypasses typescript safety
 const mockRepo: any = {
   save: vi.fn(),
   findById: vi.fn(),
@@ -179,8 +179,8 @@ spec/
 - **Documentation:** Follow TypeScript documentation standards for all test doubles
 
 ```typescript
-// ✅ GOOD: proper test organization with TypeScript compliance
-// Test descriptions must be written in lowercase
+// ✅ GOOD: proper test organization with typescript compliance
+// ✅ GOOD: test descriptions must be written in lowercase
 import type { OrderTotal, TaxCalculation } from '#types/order';
 
 describe("fn:calculateOrderTotal", () => {
@@ -229,7 +229,7 @@ All tests must follow the AAA pattern with proper spacing and TypeScript complia
 - **All variables must follow TypeScript standards** - no `any` types, proper type annotations
 
 ```typescript
-// ✅ GOOD: clear AAA structure with proper spacing and TypeScript compliance
+// ✅ GOOD: clear aaa structure with proper spacing and typescript compliance
 import type { CurrencyCode } from '#types/currency';
 
 describe("fn:formatCurrency", () => {
@@ -244,7 +244,7 @@ describe("fn:formatCurrency", () => {
   });
 });
 
-// ❌ BAD: unclear structure and missing TypeScript types
+// ❌ BAD: unclear structure and missing typescript types
 describe("fn:formatCurrency", () => {
   it("should format currency", () => {
     expect(formatCurrency(1234.56, "USD")).toBe("$1,234.56");
@@ -315,7 +315,7 @@ describe("cl:UserService", () => {
   });
 });
 
-// ✅ GOOD: factory function for complex setup
+// factory function for complex setup
 const createTestContext = () => {
   const repository = createMockUserRepository();
   const cacheService = createCacheService();
@@ -402,7 +402,7 @@ describe("fn:getUserProfile", () => {
   });
 });
 
-// ✅ GOOD: type-safe fixtures with satisfies
+// type-safe fixtures with satisfies
 import type { User } from "#types";
 
 export const userFixtures = {
@@ -442,7 +442,7 @@ describe("fn:apiCall", () => {
   });
 });
 
-// ✅ GOOD: let Vitest handle mock cleanup automatically
+// ✅ GOOD: let vitest handle mock cleanup automatically
 describe("fn:apiCall", () => {
   it("should handle successful response", () => {
     const fetchUser = vi.fn().mockResolvedValue({ id: "123" });
@@ -564,7 +564,7 @@ describe("sv:UserService", () => {
 Use factory functions to create consistent, type-safe test doubles:
 
 ```typescript
-// ✅ GOOD: factory function with overrides
+// ✅ GOOD: factory function supports overrides for flexible testing
 export function createUserService(
   overrides?: Partial<UserService>
 ): UserService {
@@ -592,7 +592,7 @@ describe('fn:handleUserNotFound', () => {
   });
 });
 
-// ✅ GOOD: factory for fixtures
+// factory for fixtures
 export const createUserFixture = (overrides?: Partial<User>): User => ({
   id: `user-${Date.now()}`,
   email: `test-${Date.now()}@example.com`,
@@ -864,7 +864,7 @@ describe('rc:UserList', () => {
   });
 });
 
-// ✅ GOOD: test behavior, not implementation, with proper TypeScript
+// ✅ GOOD: test behavior, not implementation, with proper typescript
 import type { User } from '#types/user';
 
 describe('rc:UserList', () => {
@@ -881,13 +881,13 @@ describe('rc:UserList', () => {
   });
 });
 
-// ❌ MAJOR TYPESCRIPT VIOLATION: Using any types in tests
+// ❌ BAD: major typescript violation: using any types in tests
 const mockService: any = {
   getData: vi.fn(),
   saveData: vi.fn()
 };
 
-// ✅ GOOD: Proper TypeScript mock with satisfies pattern
+// ✅ GOOD: proper typescript mock with satisfies pattern
 import type { DataService } from '#services/data';
 
 const mockService: DataService = {

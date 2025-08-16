@@ -4,12 +4,6 @@ _Standards for environment variable management, configuration, and security_
 
 ## Core Principles
 
-### Security First
-
-- **Never commit secrets** - Use mocks in tests so that no real secrets are required
-- **No private keys except in unit tests** - Private keys must not appear outside test environments
-- **Use approved secret managers** - Always rely on approved secret management solutions for handling real credentials
-
 ### Required Documentation
 
 **`.env.example` Required**
