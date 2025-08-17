@@ -119,7 +119,7 @@ Note:
 
 1. **Receive inputs** from workflow invocation (service name, operation name, documentation sources)
 2. **List all documentation sources** that need to be accessed
-3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Documentation](@../../standards/code/documentation.md)
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/coding/typescript.md), [Documentation](@../../standards/coding/documentation.md)
 4. **Create task assignment** for requirements gathering
 5. **Use TodoWrite** to create task list: ['Requirements extraction - pending']
 6. **Prepare task assignment** for subagent execution
@@ -279,7 +279,7 @@ manifests/[service-name]/
    - Input schema (always required)
    - Output schema (if operation returns data)
    - Schema exports and type definitions
-3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Naming Conventions](@../../standards/code/naming.md)
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/coding/typescript.md), [Naming Conventions](@../../standards/coding/naming/functions.md)
 4. **Create dynamic batches** following these rules:
    - Batch 1: Input schema creation
    - Batch 2: Output schema creation (if needed)
@@ -511,7 +511,7 @@ Request verification subagent to perform the following verification with full sc
    - Operation manifest definition
    - Mock implementation with realistic data
    - Proper async/sync configuration
-3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Functions](@../../standards/code/functions.md)
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/coding/typescript.md), [Functions](@../../standards/coding/functions.md)
 4. **Create single task assignment** for manifest creation
 5. **Use TodoWrite** to create task: ['Manifest creation - pending']
 6. **Prepare task assignment** with schema imports and mock requirements
@@ -703,7 +703,7 @@ Request verification subagent to validate manifest and mock implementation:
    - Update service manifest index
    - Add operation import with path mapping
    - Maintain alphabetical ordering
-3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/code/typescript.md), [Naming Conventions](@../../standards/code/naming.md)
+3. **Determine the standards** to send to subagents: [TypeScript](@../../standards/coding/typescript.md), [Naming Conventions](@../../standards/coding/naming/functions.md)
 4. **Create single task assignment** for service integration
 5. **Use TodoWrite** to create task: ['Service integration - pending']
 6. **Prepare task assignment** with service manifest update requirements
