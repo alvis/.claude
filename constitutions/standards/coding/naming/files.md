@@ -1,433 +1,226 @@
 # File and Directory Naming Standards
 
-_Standards for naming files, directories, modules, and environment configurations_
+Standards for naming files, directories, modules, and environment configurations
 
-## Core File Naming Principles
+## Core Principles
 
-### MUST Follow Rules
+### Case Conventions
 
-- **MUST use kebab-case** for regular TypeScript/JavaScript files
-- **MUST use PascalCase** for React component files only
-- **MUST match export type** - Noun for objects/classes, verb for functions
-- **MUST include file extensions** in imports when required
-- **MUST use descriptive names** that indicate file purpose
+Use kebab-case for files, PascalCase for React components.
 
-### SHOULD Follow Guidelines
+```typescript
+// ✅ GOOD: proper casing
+user-service.ts         // Regular file
+UserProfile.tsx         // React component
+api-client.spec.ts     // Test file
 
-- **SHOULD group by feature** rather than file type
-- **SHOULD keep names concise** but meaningful
-- **SHOULD use consistent suffixes** (.service, .repository, .types)
-- **SHOULD follow framework conventions** (React, Angular, etc.)
+// ❌ BAD: wrong casing
+UserService.ts          // Not a component
+user_service.ts         // Snake case
+userservice.ts          // No separation
+```
+
+### Match Export Type
+
+File names should reflect what they export.
+
+```typescript
+// ✅ GOOD: noun for class/object
+// user-validator.ts
+export class UserValidator { ... }
+
+// ✅ GOOD: verb for function
+// validate-user.ts  
+export function validateUser() { ... }
+```
 
 ## File Naming Patterns
 
-### TypeScript/JavaScript Files
+### TypeScript Files
 
 ```typescript
-// ✅ GOOD: clear, kebab-case naming
-user - service.ts; // service class file
-email - validator.ts; // validation utilities
-api - client.ts; // API client implementation
-order - repository.ts; // data access layer
-payment - processor.ts; // business logic
+// service files
+user-service.ts
+payment-processor.ts
 
-// ✅ GOOD: test file naming
-user - service.test.ts; // unit tests
-user - service.spec.ts; // alternative test suffix
-email - validator.test.ts; // matches source file name
+// test files
+user-service.spec.ts
 
-// ❌ BAD: poor file naming
-userservice.ts; // no word separation
-user_service.ts; // wrong case style (snake_case)
-UserService.ts; // PascalCase for non-components
-utils.ts; // too generic
-helpers.ts; // too vague
+// type files
+user.type.ts
+api.type.ts
 ```
 
-### Component Files (React/Vue/Angular)
+### Component Files
 
 ```typescript
-// ✅ GOOD: component file naming
-// React components
-Button.tsx                  // simple component
-UserProfile.tsx             // compound component name
-NavigationBar.tsx           // clear component purpose
-ShoppingCartItem.tsx        // specific component
+// react components - PascalCase
+Button.tsx
+UserProfile.tsx
+NavigationBar.tsx
 
-// component with associated files
+// component folder structure
 UserProfile/
-├── UserProfile.tsx         // main component
-├── UserProfile.test.tsx    // component tests
-├── UserProfile.stories.tsx // Storybook stories
-└── UserProfile.module.css  // component styles
-
-// ❌ BAD: component naming
-button.tsx                  // should be PascalCase
-user-profile.tsx            // components use PascalCase
-UserProfileComponent.tsx    // redundant 'Component' suffix
+  UserProfile.tsx
+  UserProfile.stories.tsx
+  UserProfile.css
+  index.ts
 ```
 
 ### Index Files
 
 ```typescript
-// ✅ GOOD: index file usage
-// src/services/index.ts
+// re-export only
 export { UserService } from "./user-service";
-export { AuthService } from "./auth-service";
-export { EmailService } from "./email-service";
+export type { User } from "./user.types";
 
-// src/components/Button/index.tsx
-export { Button } from "./Button";
-export type { ButtonProps } from "./Button.types";
-
-// ❌ BAD: avoid complex logic in index files
-// index.ts
-class ComplexService {
-  // don't define classes in index
-  // implementation
-}
+// ❌ BAD: logic in index
+class UserService { ... }  // Don't define here
 ```
 
 ## Export-Based Naming
 
-### Match File Name to Export Type
+### Export Type Matching
 
 ```typescript
-// ✅ GOOD: noun for classes/objects
-// user-validator.ts - exports a class or object
-export class UserValidator {
-  validate(user: User): ValidationResult {
-    // Implementation
-  }
-}
+// noun for class/object
+// user-validator.ts
+export class UserValidator { ... }
 
-// OR
-export const userValidator = {
-  validate(user: User): ValidationResult {
-    // Implementation
-  },
-};
+// verb for function
+// validate-user.ts
+export function validateUser() { ... }
 
-// ✅ GOOD: verb for functions
-// validate-user.ts - exports a function
-export function validateUser(user: User): ValidationResult {
-  // Implementation
-}
-
-// More examples:
-// parser.ts → exports class Parser or parser object
-// parse.ts → exports function parse()
-// emitter.ts → exports class Emitter or emitter object
-// emit.ts → exports function emit()
-// transformer.ts → exports class Transformer or transformer object
-// transform.ts → exports function transform()
+// common patterns:
+// parser.ts → class Parser
+// parse.ts → function parse()
 ```
 
 ### Multiple Exports
 
 ```typescript
-// ✅ GOOD: when file has multiple exports
-// user-utils.ts - multiple related functions
-export function validateUser(user: User): boolean {}
-export function sanitizeUser(user: User): User {}
-export function compareUsers(a: User, b: User): boolean {}
+// related exports - OK
+// user-utils.ts
+export function validateUser() { ... }
+export function sanitizeUser() { ... }
 
-// user-types.ts - multiple type definitions
-export interface User {}
-export interface UserProfile {}
-export type UserRole = "admin" | "user";
-
-// ❌ BAD: unrelated exports in same file
-// utils.ts
-export function validateUser() {}
-export function formatCurrency() {} // Unrelated to users
-export function parseDate() {} // Different domain
+// ❌ BAD: unrelated exports
+export function validateUser() { ... }
+export function formatCurrency() { ... }  // Different domain
 ```
 
-## Directory Structure
+## Quick Reference
 
-### Feature-Based Organization
+| File Type | Pattern | Example | Notes |
+|-----------|---------|---------|-------|
+| Service | kebab-case + .service | `user-service.ts` | Domain service |
+| Repository | kebab-case + .repository | `user-repository.ts` | Data layer |
+| Component | PascalCase | `UserProfile.tsx` | React only |
+| Test | source + .spec | `user.spec.ts` | Match source |
+| Types | kebab-case + .type | `api.type.ts` | Type definitions |
+| Config | kebab-case + .config | `database.config.ts` | Configuration |
+| Utils | kebab-case + -utils | `date-utils.ts` | Utilities |
 
-```typescript
-// ✅ GOOD: organized by feature/domain
-src/
-├── user/
-│   ├── user.service.ts
-│   ├── user.repository.ts
-│   ├── user.controller.ts
-│   ├── user.types.ts
-│   └── user.test.ts
-├── order/
-│   ├── order.service.ts
-│   ├── order.repository.ts
-│   ├── order.controller.ts
-│   └── order.types.ts
-├── payment/
-│   ├── payment.service.ts
-│   ├── payment.processor.ts
-│   └── payment.types.ts
-└── shared/
-    ├── types/
-    ├── utils/
-    └── constants/
-```
-
-### Layer-Based Organization
-
-```typescript
-// ✅ Alternative: Organized by layer
-src/
-├── controllers/
-│   ├── user.controller.ts
-│   └── order.controller.ts
-├── services/
-│   ├── user.service.ts
-│   └── order.service.ts
-├── repositories/
-│   ├── user.repository.ts
-│   └── order.repository.ts
-├── models/
-│   ├── user.model.ts
-│   └── order.model.ts
-└── types/
-    ├── user.types.ts
-    └── order.types.ts
-```
-
-### Test File Organization
-
-```typescript
-// ✅ GOOD: co-located tests
-src/
-├── user/
-│   ├── user.service.ts
-│   ├── user.service.test.ts    // Co-located with source
-│   └── user.repository.ts
-│   └── user.repository.test.ts
-
-// ✅ Alternative: Separate test directory
-src/
-├── user/
-│   ├── user.service.ts
-│   └── user.repository.ts
-└── __tests__/
-    └── user/
-        ├── user.service.test.ts
-        └── user.repository.test.ts
-```
-
-## Module and Package Naming
-
-### NPM Package Names
-
-```typescript
-// ✅ GOOD: nPM package naming
-@company/ui-components      // Scoped package
-@company/auth-sdk          // Clear purpose
-react-payment-form         // Framework-specific
-express-rate-limiter       // Purpose-clear
-
-// Package.json
-{
-  "name": "@company/user-service",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts"
-}
-
-// ❌ BAD: poor package naming
-utils                      // Too generic
-my-package                 // Not descriptive
-MyPackage                  // Should be kebab-case
-```
-
-### Internal Module Names
-
-```typescript
-// ✅ GOOD: internal module organization
-// src/modules/authentication/index.ts
-export * from "./auth.service";
-export * from "./auth.guard";
-export * from "./auth.types";
-
-// src/modules/user-management/index.ts
-export * from "./user.service";
-export * from "./user.repository";
-export * from "./user.types";
-```
-
-## Environment and Configuration Files
+## Patterns & Best Practices
 
 ### Environment Files
 
+**Purpose:** Environment-specific configuration
+
+**When to use:**
+
+- Different configs per environment
+- Secret management
+
+**Implementation:**
+
 ```bash
-# ✅ Good: Environment file naming
-.env.local                 # Local development
-.env.development          # Development environment
-.env.staging              # Staging environment
-.env.production           # Production environment
-.env.test                 # Test environment
-
-# Service-specific (when needed)
-.env.database.local       # Database-specific config
-.env.redis.production     # Redis-specific config
-
-# ❌ Bad: Environment file naming
-.env                      # No environment specified
-env.local                 # Missing dot prefix
-.local.env                # Wrong order
+.env.local          # Local dev
+.env.development    # Dev environment
+.env.production     # Production
+.env.test          # Testing
 ```
 
-### Configuration Files
+### Configuration Pattern
+
+**Purpose:** Centralized app configuration
+
+**When to use:**
+
+- App settings
+- Service configuration
+
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: config file naming
 config/
-├── database.config.ts    // Database configuration
-├── auth.config.ts        // Authentication config
-├── app.config.ts         // Application config
-├── redis.config.ts       // Redis config
-└── index.ts              // Main config export
-
-// ✅ GOOD: environment-specific configs
-config/
-├── development.config.ts
-├── staging.config.ts
-├── production.config.ts
-└── test.config.ts
-
-// ❌ BAD: config file naming
-config.ts                 // Too generic
-configuration.ts          // Unnecessarily long
-settings.ts              // Ambiguous
+  database.config.ts
+  auth.config.ts
+  app.config.ts
+  index.ts
 ```
 
-### Environment Variable Naming
+### Common Patterns
+
+1. **NPM Packages** - kebab-case
+
+   ```json
+   "@company/user-service"
+   "react-payment-form"
+   ```
+
+2. **Environment Variables** - UPPER_SNAKE
+
+   ```bash
+   DATABASE_URL=...
+   API_KEY=...
+   ```
+
+## Anti-Patterns
+
+### Poor File Names
 
 ```typescript
-// ✅ GOOD: environment variable names in .env files
-NODE_ENV=production
-PORT=3000
-DATABASE_URL=postgresql://localhost:5432/mydb
-JWT_SECRET=your-secret-key
-AWS_ACCESS_KEY_ID=AKIA...
-STRIPE_API_KEY=sk_live_...
-REDIS_HOST=localhost
-REDIS_PORT=6379
-LOG_LEVEL=info
+// ❌ BAD: common mistakes
+utils.ts            // Too generic
+helpers.ts          // Too vague
+index.js            // Too many index files
+UserServiceImpl.ts  // Implementation suffix
+IUserService.ts     // Interface prefix
 
-// ✅ GOOD: prefixed for clarity
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=myapp
-DB_USER=dbuser
-DB_PASSWORD=dbpass
-
-API_BASE_URL=https://api.example.com
-API_TIMEOUT=30000
-API_RETRY_ATTEMPTS=3
-
-// ❌ BAD: environment variable naming
-databaseUrl=...           // Should be UPPER_SNAKE_CASE
-jwt_secret=...           // Should be all uppercase
-JWTSECRET=...            // Missing underscore separator
-URL=...                  // Too generic
+// ✅ GOOD: specific names
+date-utils.ts
+validation-helpers.ts
+user-service.ts
 ```
 
-## Special Files
+### Common Mistakes to Avoid
 
-### Documentation Files
+1. **Generic Names**
+   - Problem: No clear purpose
+   - Solution: Be specific
+   - Example: `utilities.ts` → `utilities/date.ts` or `utilities/to-iso-date.ts`
 
-```markdown
-# ✅ Good: Documentation file naming
+2. **Inconsistent Casing**
+   - Problem: Mixed conventions
+   - Solution: Stick to one pattern
+   - Example: `userService.ts` + `user-repository.ts` → consistent kebab-case
 
-README.md # Project readme
-CONTRIBUTING.md # Contribution guidelines
-CHANGELOG.md # Version history
-LICENSE.md # License file
-SECURITY.md # Security policy
+3. **Deep Nesting**
+   - Problem: Hard to navigate
+   - Solution: Flatten structure
+   - Example: Max 3-4 levels deep
 
-docs/
-├── getting-started.md
-├── api-reference.md
-├── deployment.md
-└── troubleshooting.md
-```
+## Quick Decision Tree
 
-### Build and Config Files
+1. **File type determination**
+   - If React component → PascalCase
+   - If service/utilities/repo → kebab-case
+   - If test → match source + .spec
+   - If config → match source + .config
+   - If type → match source + .type
 
-```typescript
-// ✅ GOOD: build/config file naming
-tsconfig.json.eslintrc.js.prettierrc; // TypeScript config // ESLint config // Prettier config
-jest.config.js; // Jest config
-webpack.config.js; // Webpack config
-rollup.config.js; // Rollup config
-vite.config.ts; // Vite config
-
-// Docker files
-Dockerfile; // Main Docker file
-docker - compose.yml; // Docker Compose
-Dockerfile.dev; // Development Docker file
-```
-
-## Import Path Organization
-
-```typescript
-// ✅ GOOD: import organization
-// 1. Node modules
-import express from "express";
-import { readFile } from "fs/promises";
-
-// 2. External packages
-import axios from "axios";
-import { z } from "zod";
-
-// 3. Internal aliases
-import { UserService } from "@/services/user-service";
-import { logger } from "@/utils/logger";
-
-// 4. Relative imports
-import { validateUser } from "./validate-user";
-import type { User } from "./user.types";
-
-// ❌ BAD: mixed import order
-import { validateUser } from "./validate-user";
-import express from "express";
-import { UserService } from "@/services/user-service";
-import axios from "axios";
-```
-
-## Anti-Patterns to Avoid
-
-```typescript
-// ❌ BAD: common file naming mistakes
-index.js                  // Too many index files
-utils.ts                  // Too generic
-helpers.ts                // Too vague
-misc.ts                   // Unclear purpose
-stuff.ts                  // Meaningless
-data.ts                   // What kind of data?
-functions.ts              // What functions?
-UserServiceImpl.ts        // Implementation suffix unnecessary
-IUserService.ts           // Interface prefix unnecessary
-
-// ❌ BAD: inconsistent naming
-user-service.ts           // In one place
-userRepository.ts         // Different style elsewhere
-User_Controller.ts        // Yet another style
-
-// ❌ BAD: deep nesting
-src/
-└── features/
-    └── user/
-        └── management/
-            └── services/
-                └── implementation/
-                    └── user-service.ts  // Too deep!
-```
-
-## References
-
-- [Variable Naming](@./variables.md) - Variable naming conventions
-- [Type Naming](@./types.md) - Type and interface naming
-- [Folder Structure](@../folder-structure.md) - Project organization
+2. **Export type**
+   - If exports class/object → noun name
+   - If exports function → verb name
+   - If multiple related → domain-utils pattern

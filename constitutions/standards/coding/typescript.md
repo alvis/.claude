@@ -2,131 +2,127 @@
 
 _Core TypeScript standards for type safety, imports, and language usage_
 
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [General Coding Principles](@./general-principles.md) - Test code must adhere to fundamental coding principles and consistency rules
+- [Function Standards](@./functions.md) - Test functions must follow function naming, structure, and documentation standards
+- [Documentation Standards](@./documentation.md) - Test interfaces and complex test scenarios require proper JSDoc documentation
+
 ## Core Principles
 
 ### Type Safety First
 
-Prioritize compile-time type checking to prevent runtime errors and enhance code reliability. Every type should have a clear, specific purpose that minimizes potential for unexpected behavior.
+Prioritize compile-time type checking to prevent runtime errors:
 
-### Immutability and Predictability
+```typescript
+// ✅ GOOD: explicit type narrowing
+const currency: CurrencyCode = "USD";
 
-Design types and functions to be as immutable and predictable as possible. Prefer `readonly` types, pure functions, and minimize side effects.
+// ❌ BAD: inference allows wrong values
+const currency = "USD"; // could be any string
+```
 
-### Explicit Type Narrowing When Needed
+### No Any Type
 
-Always explicit declare type definitions when narrowing is required, e.g. ✅ `const currency: CurrencyCode = "USD"` over ❌ `const currency = "USD";`
+Use `unknown` or specific types instead of `any`:
 
-## 🚨 MANDATORY PREREQUISITE STANDARDS
+```typescript
+// ✅ GOOD: use unknown for safe handling
+function parseJson(input: string): unknown {
+  return JSON.parse(input);
+}
 
-**[IMPORTANT]** Before applying these standards, you MUST also thoroughly read and understand the following foundational standards:
+// ❌ BAD: any defeats TypeScript's purpose
+function parseJson(input: string): any {
+  return JSON.parse(input);
+}
+```
 
-- [General Coding Principles](@./general-principles.md)
-- Naming Standards:
-  - [Files](@./naming/files.md)
-  - [Functions](@./naming/functions.md)
-  - [Types](@./naming/types.md)
-  - [Variables](@./naming/variables.md)
-- [Function Standards](@./functions.md)
-- [Documentation Standards](@./documentation.md)
+### Prefer const over let
 
-**Compliance is Non-Negotiable:** Every TypeScript implementation MUST adhere to these prerequisite standards in addition to the specific TypeScript guidelines that follow.
+Use `const` by default and `let` only as a last resort when reassignment is absolutely necessary. Avoid mutation whenever possible:
 
-## Strict Configuration
+```typescript
+// ✅ GOOD: const for immutable values
+const userId = "user-123";
+const config = { apiUrl: "https://api.example.com" };
+const users = await fetchUsers();
 
-### Required Compiler Settings
+// ✅ GOOD: functional approach instead of mutation
+const processedUsers = users.map(user => ({ ...user, processed: true }));
+const validUsers = users.filter(user => user.isActive);
+const total = items.reduce((sum, item) => sum + item.value, 0);
 
-Always enable strict mode configuration:
+// ✅ ACCEPTABLE: let only for truly unavoidable cases
+let buffer: string;
+imperativeApiThatRequiresMutation(value => { buffer = value; });
 
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true
-  }
+// NOTE: Most patterns can use pure functions instead:
+// - Accumulation → reduce(), - Conditionals → ternary/logical operators
+// - Multi-step transforms → method chaining, - Loops → Array.from()/generators
+
+// ❌ BAD: let when const would work
+let baseUrl = "https://api.example.com"; // never reassigned
+let userCount = users.length; // never reassigned
+
+// ❌ BAD: unnecessary mutation
+let processedUsers = [];
+for (const user of users) {
+  processedUsers.push({ ...user, processed: true });
 }
 ```
 
 ### Type Safety Rules
 
-- **NO `any` type** - Use `unknown` or specific types instead
-- **For testing errors only**: Use `// @ts-expect-error` comment when necessary
-- **Prefer `readonly`** for immutable data structures
+- **NO `any` type** - Use `unknown` or specific types
 - **Use `#private`** over `private` keyword for class members
-- **American English only** - Use American spelling in all code, comments, and documentation
+- **Prefer `readonly`** for immutable data structures
 
 ### American English Convention
 
-Always use American English spelling:
+- **American English only** - Use American spelling in all code
 
 ```typescript
 // ✅ GOOD: american English
 interface ColorConfig {
   primaryColor: string;
-  backgroundColor: string;
   customizable: boolean;
-  favoriteColors: string[];
-  authorized: boolean;
-  initialization: () => void;
+  // ...
 }
 
 // ❌ BAD: british English
 interface ColourConfig {
   primaryColour: string;
-  backgroundColour: string;
   customisable: boolean;
-  favouriteColours: string[];
-  authorised: boolean;
-  initialisation: () => void;
+  // ...
 }
 ```
 
-## Language and Framework Usage
+## Modern Language Features
 
-### Use Modern JavaScript/TypeScript Features
-
-Leverage ES6+ features for cleaner code:
+### Use ES6+ Features
 
 ```typescript
 // ✅ GOOD: modern features
-// arrow functions
 const double = (n: number): number => n * 2;
-
-// destructuring
 const { name, email } = user;
-
-// template literals
 const message = `Welcome ${name}!`;
-
-// optional chaining
 const city = user?.address?.city;
-
-// nullish coalescing
 const port = process.env.PORT ?? 3000;
-
-// array methods
-const activeUsers = users.filter((user) => user.isActive);
-const userNames = users.map((user) => user.name);
 ```
 
 ### Avoid Deprecated Patterns
 
-Stay current with best practices:
-
 ```typescript
-// ❌ BAD: deprecated patterns
-var name = "John"; // use const/let
+// ❌ BAD: outdated patterns
+var name = "John"; // use const
 arguments.callee; // deprecated
-with (obj) {
-} // deprecated
 
 // ✅ GOOD: modern alternatives
 const name = "John";
-const args = [...arguments]; // or use rest parameters
-// Use explicit property access instead of 'with'
+const args = [...arguments];
 ```
 
 ## Type Definitions
@@ -134,207 +130,128 @@ const args = [...arguments]; // or use rest parameters
 ### Interface vs Type
 
 ```typescript
-// ✅ GOOD: use interfaces for object shapes
+// ✅ GOOD: interfaces for object shapes
 interface User {
   readonly id: string;
   name: string;
   email: string;
-  createdAt: Date;
 }
 
-// ✅ GOOD: use types for unions and computed types
+// ✅ GOOD: types for unions and computed types
 type Status = "active" | "inactive" | "pending";
 type UserWithStatus = User & { status: Status };
-
-// ✅ GOOD: use types for function signatures
 type EventHandler<T> = (event: T) => void;
 ```
 
 ### Interface Documentation
 
-All interfaces must be fully documented with JSDoc comments:
+Document interfaces with JSDoc comments:
 
 ```typescript
-// ✅ GOOD: fully documented interface
+// ✅ GOOD: documented interface
 /** represents a user in the system */
 interface User {
   /** identifies the user uniquely */
   id: string;
-
   /** stores user's full name */
   name: string;
-
   /** provides email address for authentication */
   email: string;
-
-  /** records account creation timestamp */
-  createdAt: Date;
-
-  /** tracks last profile update timestamp */
-  updatedAt: Date;
-
-  /** indicates whether the user has verified their email */
-  isVerified: boolean;
-
-  /** defines user's subscription tier */
-  subscriptionLevel: "free" | "pro" | "enterprise";
-
-  /** contains optional profile settings */
-  preferences?: UserPreferences;
+  // ...
 }
 
-// ✅ GOOD: group related fields with comments
+// ✅ GOOD: group related fields
 interface ApiResponse<T> {
   // response data //
-  /** contains the main response payload */
   data: T;
-  /** provides pagination metadata if applicable */
   pagination?: PaginationInfo;
-
-  // response metadata //
-  /** indicates http status code */
+  
+  // metadata //
   status: number;
-  /** records response timestamp */
-  timestamp: string;
-  /** identifies request tracking id */
   requestId: string;
-
-  // error information //
-  /** contains error details if request failed */
-  error?: ErrorInfo;
 }
 
 // ❌ BAD: missing documentation
 interface User {
   id: string;
   name: string;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
+  // ...
 }
 ```
-
-### Interface Guidelines
-
-- **Document every field** with JSDoc comments
-- **Use lowercase** for all documentation
-- **Be concise** but descriptive
-- **Group related fields** with comment separators
-- **Explain constraints** or special values
-- **Document optional fields** and when they're used
 
 ### Strict Typing Patterns
 
 ```typescript
-// ✅ GOOD: use unknown instead of any
-function parseJson(input: string): unknown {
-  return JSON.parse(input);
-}
-
 // ✅ GOOD: type guards for unknown values
 function isUser(value: unknown): value is User {
   return (
     typeof value === "object" &&
     value !== null &&
     "id" in value &&
-    "name" in value &&
-    "email" in value
+    "name" in value
   );
 }
 
 // ✅ GOOD: readonly for immutable data
 interface ReadonlyConfig {
   readonly apiUrl: string;
-  readonly timeout: number;
   readonly features: readonly string[];
 }
 
 // ✅ GOOD: private fields with #
 class UserService {
   #repository: UserRepository;
-  #cache: Map<string, User> = new Map();
-
-  constructor(repository: UserRepository) {
-    this.#repository = repository;
-  }
+  #cache = new Map<string, User>();
 }
 ```
 
 ## Import Organization
 
-### Critical Import Rules
+### Import Order
 
-**REQUIRED IMPORT ORDER:**
+**Required order:**
 
-1. **Import actual code before types**
-2. **Separate import groups with a blank line**
-3. **Keep type imports separate from actual imports**
-4. **Follow this specific order:**
-   - Building modules (prefixed with `node:`)
-   - Libraries
-   - Project modules:
-     - Components starting with `@/`
-     - Helpers prefixed with `#`
-     - Relative path imports (farthest to closest: `../../*`, `../*`, `./*`)
-5. **Use the same import order for types as for actual code**
-
-### Import Examples
+1. Built-in modules (`node:`)
+2. Third-party libraries
+3. Project modules (`@/`, `#`, relative)
+4. Type imports (same order)
 
 ```typescript
-// built-in modules
-import { log } from 'node:console';
 import { readFile } from 'node:fs/promises';
 
-// third-party libraries
-import { LibComponent } from 'some-library';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
-// project modules
 import { FeatureComponent } from '@/components/FeatureComponent';
-import { useFeature } from '@/hooks/useFeature';
 import { featureFunction } from '#utils/featureUtils';
 import { parentFunction } from '../helpers';
-import { SiblingComponent } from './SiblingComponent';
 
-// built-in modules
-import type { Console } from 'node:console';
+import type { FC } from 'react';
 
-// third-party libraries
-import type { AxiosResponse } from 'axios';
-import type { FC, ReactNode } from 'react';
-
-// project modules
-import type { FeatureProps } from '@/types/feature';
-import type { UserData } from '#types/user';
-import type { LocalConfig } from './types';
+import type { User } from '#types/user';
 ```
 
 ### Import Rules
 
-- **NO mixed code/type imports** - Avoid `import { useState, type FC } from 'react';`
-- **NO default imports** (except when required by library)
-- **NO namespace imports** (`import * as`) - Avoid `import * as React from 'react';`
+- **NO mixed code/type imports**
+- **NO namespace imports** (`import * as`)
 - **Prefer named imports**
 - **Use subpath imports** (e.g., `#components`) when available in package.json
+- **Separate type imports**
 
 ```typescript
-// ✅ GOOD: named imports
-import { useState, useEffect } from "react";
-import { UserService } from "#services/user";
-
-// ✅ GOOD: separate type imports
-import type { User } from "#types/user";
-import type { FC } from "react";
+// ✅ GOOD: clean imports
+import { useState, useEffect } from 'react';
+import type { FC } from 'react';
 
 // ❌ BAD: mixed imports
-import React, { useState, type FC } from "react";
+import React, { useState, type FC } from 'react';
 
 // ❌ BAD: namespace imports
-import * as React from "react";
+import * as React from 'react';
 
 // ❌ BAD: default imports when named available
-import React from "react";
+import React from 'react';
 ```
 
 ## Generic Types
@@ -348,14 +265,6 @@ interface Repository<T extends { id: string }> {
   save(entity: T): Promise<T>;
 }
 
-// ✅ GOOD: multiple constraints
-function merge<
-  T extends Record<string, unknown>,
-  U extends Record<string, unknown>,
->(obj1: T, obj2: U): T & U {
-  return { ...obj1, ...obj2 };
-}
-
 // ✅ GOOD: conditional types
 type ApiResponse<T> = T extends Error
   ? { status: "error"; error: T }
@@ -366,18 +275,10 @@ type ApiResponse<T> = T extends Error
 
 ```typescript
 // ✅ GOOD: use built-in utility types
-type CreateUser = Omit<User, "id" | "createdAt" | "updatedAt">;
+type CreateUser = Omit<User, "id" | "createdAt">;
 type UpdateUser = Partial<Pick<User, "name" | "email">>;
 type UserEmail = User["email"];
-
-// ✅ GOOD: custom utility types
-type NonNullable<T> = T extends null | undefined ? never : T;
-type DeepReadonly<T> = {
-  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
-};
 ```
-
-## Error Handling Types
 
 ### Error Type Patterns
 
@@ -391,230 +292,131 @@ type Result<T, E = Error> =
 class ValidationError extends Error {
   constructor(
     message: string,
-    public readonly field: string,
-    public readonly value: unknown,
+    public readonly field: string
   ) {
     super(message);
     this.name = "ValidationError";
   }
 }
 
-// ✅ GOOD: error handling with types
+// ✅ GOOD: usage
 function parseUser(input: unknown): Result<User, ValidationError> {
   if (!isValidUserInput(input)) {
-    return {
-      success: false,
-      error: new ValidationError("Invalid user input", "input", input),
-    };
+    return { success: false, error: new ValidationError("Invalid input", "input") };
   }
-
   return { success: true, data: input };
 }
 ```
 
-## Advanced Type Patterns
-
-### Template Literal Types
+### Advanced Type Patterns
 
 ```typescript
-// ✅ GOOD: template literal types for API routes
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
-type ApiRoute = `/api/${string}`;
-type ApiEndpoint = `${HttpMethod} ${ApiRoute}`;
-
-// Usage
+// ✅ GOOD: template literal types
+type ApiEndpoint = `${'GET' | 'POST'} /api/${string}`;
 const endpoint: ApiEndpoint = "GET /api/users";
-```
 
-### Mapped Types
-
-```typescript
-// ✅ GOOD: mapped types for transformations
-type Optional<T> = {
-  [K in keyof T]?: T[K];
-};
-
+// ✅ GOOD: mapped types
 type Serialized<T> = {
-  [K in keyof T]: T[K] extends Date
-    ? string
-    : T[K] extends object
-      ? Serialized<T[K]>
-      : T[K];
+  [K in keyof T]: T[K] extends Date ? string : T[K];
 };
 
-// Usage
 type SerializedUser = Serialized<User>;
-// { id: string; name: string; email: string; createdAt: string; }
+// { id: string; name: string; createdAt: string; }
 ```
 
-## Type Assertion and Guards
+## Type Guards
 
-### Type Guards
+### Safe Type Checking
 
 ```typescript
 // ✅ GOOD: proper type guards
-function isString(value: unknown): value is string {
-  return typeof value === "string";
-}
-
 function isUser(value: unknown): value is User {
   return (
     typeof value === "object" &&
     value !== null &&
     "id" in value &&
-    typeof (value as any).id === "string" &&
-    "name" in value &&
-    typeof (value as any).name === "string"
+    "name" in value
   );
 }
 
-// ✅ GOOD: array type guards
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(isString);
-}
-```
-
-### Safe Type Assertions
-
-```typescript
 // ✅ GOOD: use type guards instead of assertions
 function processUser(input: unknown): void {
   if (!isUser(input)) {
     throw new Error("Invalid user input");
   }
-
-  // TypeScript now knows input is User
-  console.log(input.name);
+  console.log(input.name); // TypeScript knows input is User
 }
 
-// ❌ Avoid: Unsafe type assertions
+// ❌ BAD: unsafe type assertions
 function badProcessUser(input: unknown): void {
   const user = input as User; // unsafe!
   console.log(user.name);
 }
 ```
 
-## Module and Namespace Usage
-
 ### Module Patterns
 
 ```typescript
 // ✅ GOOD: named exports
 export const userService = new UserService();
-export const validateEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
+export const validateEmail = (email: string): boolean => { ... };
 
 // ✅ GOOD: re-exports
 export { UserRepository } from "./user-repository";
-export { EmailService } from "./email-service";
-export type { User, CreateUser, UpdateUser } from "./types";
 
-// ❌ Avoid: Default exports unless required
-export default userService; // only when library requires it
+export type { User, CreateUser } from "./types";
+
+// ❌ BAD: default exports (avoid unless required)
+export default userService;
 ```
 
 ### Barrel Exports
 
 ```typescript
-// index.ts - Barrel export file
+// index.ts - barrel export file
 export { UserService } from "./user-service";
 export { UserRepository } from "./user-repository";
-export { validateUser } from "./validation";
 
-export type { User, CreateUser, UpdateUser } from "./types";
+export type { User, CreateUser } from "./types";
 ```
 
-## Function Parameter Patterns
+## Function Parameters
 
 ### Parameter Destructuring
 
-Follow these patterns for parameter destructuring and defaults:
-
-- **Avoid inline destruct in parameter declarations**
-- **Handle optional parameters with defaults at the start**
-- **Use object spread for safe destruct**
-- **Never destruct nullable parameters directly**
-
 ```typescript
-// ❌ BAD: inline destructuring with defaults
-function processUser({
-  name,
-  role = 'user',
-  status = 'active'
-}: {
-  name: string
-  role?: string
-  status?: string
-}) { }
-
-// ✅ GOOD: clean parameter declaration with safe destructuring
+// ✅ GOOD: safe destructuring with defaults
 function processUser(options?: {
-  name: string
-  role?: string
-  status?: string
+  name: string;
+  role?: string;
 }) {
-  const {
-    name,
-    role = 'user',
-    status = 'active'
-  } = { ...options }
+  const { name, role = 'user' } = { ...options };
+  // ...
 }
 
-// ✅ GOOD: using default values for optional parameters
-function configure(options: Options = { timeout: 1000, retries: 3 }) {
-  // safe to use options directly
+// ❌ BAD: inline destructuring (can fail)
+function processUser({ name, role = 'user' }: UserOptions) {
+  // throws if called with undefined
 }
 ```
 
-### Object Parameters Shape Declaration
-
-Follow these guidelines when defining function parameters:
-
-#### For Exported Functions
-
-Always define parameter shapes as separate interfaces:
+### Interface Strategy
 
 ```typescript
-// ✅ GOOD: exported function with separate interface
+// ✅ GOOD: exported functions use separate interfaces
 export interface UpdateUserOptions {
   name?: string;
   email?: string;
 }
-
 export function updateUser(options: UpdateUserOptions) { ... }
-```
 
-#### For Internal Functions
-
-Use inline parameter shapes for simpler functions:
-
-```typescript
-// ✅ GOOD: simple internal function with inline types
+// ✅ GOOD: simple internal functions can use inline types
 function processData(options: { data: string; strict?: boolean }) { ... }
-
-// ✅ GOOD: complex parameters warrant separate interface
-interface ValidationConfig {
-  rules: Rule[];
-  strict: boolean;
-  onError?: (error: Error) => void;
-}
-
-function validateInternal(config: ValidationConfig) { ... }
-
-// ✅ GOOD: shared interface with exported function
-export interface AuthOptions {
-  token: string;
-  refresh?: boolean;
-}
-
-export function authenticate(options: AuthOptions) { ... }
-function validateAuth(options: AuthOptions) { ... }
 ```
 
-### Object Parameter Ordering
+### Object Property Ordering
 
-Use this **standard order** to improve predictability and readability:
+Use this **standard order** and grouped with comment separators to improve predictability and readability:
 
 1. **Required identity fields** (e.g. `id`, `file`, `name`)
 2. **Primary functional arguments** (e.g. `content`, `source`)
@@ -623,40 +425,22 @@ Use this **standard order** to improve predictability and readability:
 5. **Misc config or metadata** (e.g. `context`, `traceId`)
 
 ```typescript
-function uploadFile({
-  file,
-  destination,
-  overwrite = false,
-  onProgress,
-  context,
-}: {
-  file: File
-  destination: string
-  overwrite?: boolean
-  onProgress?: (percent: number) => void
-  context?: UploadContext
-}) { ... }
-```
-
-### Object Property Ordering
-
-For complex objects and interfaces, organize properties into logical groups with comment separators:
-
-```typescript
-interface User {
-  // index //
-  id: string;
-  uuid: string;
-
+// ✅ GOOD: grouped with comment separators
+interface SetUserInput {
   // identity //
+  id: string;
   email: string;
   name: string;
-  username: string;
 
-  // permissions //
-  isActive: boolean;
-  isAdmin: boolean;
+  // primary //
+  source: string;
   roles: string[];
+
+  // optional //
+  isActive?: boolean;
+
+  // hooks //
+  onSuccess: ()=>void;
 
   // metadata //
   createdAt: Date;
@@ -664,105 +448,30 @@ interface User {
 }
 ```
 
-**Guidelines:**
-
-- Group related properties together
-- Order properties alphabetically within each group
-- Use `// groupname //` comment separators
-- Common groups: index, identity, config, permissions, metadata, timestamps
-
-## Configuration and Environment Types
-
-### Environment Variables
-
-```typescript
-// ✅ GOOD: typed environment configuration
-interface EnvironmentConfig {
-  readonly NODE_ENV: "development" | "staging" | "production";
-  readonly PORT: number;
-  readonly DATABASE_URL: string;
-  readonly JWT_SECRET: string;
-}
-
-function loadConfig(): EnvironmentConfig {
-  const config = {
-    NODE_ENV: process.env.NODE_ENV as EnvironmentConfig["NODE_ENV"],
-    PORT: parseInt(process.env.PORT || "3000", 10),
-    DATABASE_URL: process.env.DATABASE_URL,
-    JWT_SECRET: process.env.JWT_SECRET,
-  };
-
-  // validate required fields
-  if (!config.DATABASE_URL || !config.JWT_SECRET) {
-    throw new Error("Missing required environment variables");
-  }
-
-  return config;
-}
-```
-
-## Testing Types
-
-### Test Type Patterns
-
-```typescript
-// ✅ GOOD: mock types
-type MockUser = jest.Mocked<User>;
-type MockRepository<T> = jest.Mocked<Repository<T>>;
-
-// ✅ GOOD: test data factories
-function createTestUser(overrides: Partial<User> = {}): User {
-  return {
-    id: "test-user-id",
-    name: "Test User",
-    email: "test@example.com",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  };
-}
-
-// ✅ GOOD: type-safe test assertions
-function assertIsUser(value: unknown): asserts value is User {
-  if (!isUser(value)) {
-    throw new Error("Expected User object");
-  }
-}
-```
-
 ## Anti-Patterns
 
-### Type Assertion Misuse
+### Common Mistakes to Avoid
 
-```typescript
-// ❌ BAD: Unsafe type assertions that bypass type checking
-const user = input as User; // completely unsafe!
+1. **Type Assertion Misuse**
+   - Problem: Using `as` without runtime validation
+   - Solution: Use type guards instead
+   - Example: `input as User` // unsafe
 
-// Problem: No runtime guarantee that input matches User type
-// Risks silent failures and potential runtime errors
+2. **Using Any Type**
+   - Problem: Defeats TypeScript's purpose
+   - Solution: Use `unknown` with type guards
+   - Example: `function process(data: any)` // loses type safety
 
-// ✅ GOOD: Safe type narrowing with type guards
-function safeProcessUser(input: unknown): void {
-  if (!isUser(input)) {
-    throw new Error("Invalid user input");
-  }
-  // TypeScript guarantees input is User
-}
-```
+3. **Mixed Imports**
+   - Problem: Mixing code and type imports
+   - Solution: Separate type imports
+   - Example: `import { useState, type FC } from 'react'` // avoid
 
-### Overly Broad Types
+## Quick Reference
 
-```typescript
-// ❌ BAD: any type that defeats TypeScript's purpose
-function processData(data: any) { ... }
-
-// Problem: Loses all type safety, equivalent to writing JavaScript
-// Risks unexpected runtime errors
-
-// ✅ GOOD: Use unknown with type guards
-function processData(data: unknown) {
-  if (typeof data === 'object' && data !== null) {
-    // safely handle object data
-  }
-}
-```
+| Pattern | Use Case | Example |
+|---------|----------|----------|
+| Interface | Object shapes | `interface User { id: string; }` |
+| Type | Unions/computed | `type Status = "active" \| "inactive"` |
+| Unknown | Unsafe input | `function parse(input: unknown)` |
+| Type Guard | Runtime check | `function isUser(x): x is User` |

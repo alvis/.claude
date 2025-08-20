@@ -2,31 +2,36 @@
 
 _Standards for Storybook stories, organization, and documentation patterns_
 
-## Story File Naming
+## Dependent Standards
 
-### Standard Story Files
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- **Component stories**: `ComponentName.stories.tsx`
-- **Demo stories**: `ComponentName.demo.stories.tsx` for complex scenarios
-- **Always use TypeScript** for story files
+- [React Components Standards](@../react-components.md) - Storybook documents React components and requires understanding component implementation patterns
+- [Documentation Standards](@../../documentation.md) - Storybook stories serve as living documentation and must follow documentation principles
+- [TypeScript Standards](@../../typescript.md) - All story examples use TypeScript patterns and type definitions
+- [General Principles](@../../general-principles.md) - Story code must follow foundational coding principles and best practices
+
+## Core Principles
+
+### File Naming Convention
+
+Use consistent TypeScript naming for all story files.
 
 ```plaintext
-✅ Good:
+✅ GOOD: descriptive TypeScript story files
 Button.stories.tsx
 UserCard.stories.tsx
-PaymentFlow.demo.stories.tsx
+PaymentFlow.demo.stories.tsx    # Complex scenarios
 
-❌ Bad:
-button.stories.js         # Should be PascalCase and TypeScript
-Button-stories.tsx        # Should use dot notation
-ButtonStories.tsx         # Missing .stories suffix
+❌ BAD: inconsistent naming
+button.stories.js               # Should be PascalCase + TS
+Button-stories.tsx              # Should use dot notation
+ButtonStories.tsx               # Missing .stories suffix
 ```
 
-## Story Title Convention
+### Path-Based Organization
 
-### Path-Based Naming
-
-Story titles must reflect the component's location in the file structure:
+Story titles must reflect component file structure for clear navigation.
 
 ```typescript
 // ✅ GOOD: path reflects file location
@@ -36,12 +41,6 @@ export default {
   component: Button,
 } as Meta<typeof Button>;
 
-// File: components/dashboard/widgets/UserCard.stories.tsx
-export default {
-  title: 'Components/Dashboard/Widgets/UserCard',
-  component: UserCard,
-} as Meta<typeof UserCard>;
-
 // ❌ BAD: flat structure loses context
 export default {
   title: 'Button',  // missing path context
@@ -49,53 +48,61 @@ export default {
 };
 ```
 
-## Story Structure
+### Complete Story Coverage
 
-### Basic Story Template
+Include all component states and variants for comprehensive documentation.
 
 ```typescript
+// ✅ GOOD: covers all important states
+export const Primary: Story = { args: { variant: 'primary' } };
+export const Secondary: Story = { args: { variant: 'secondary' } };
+export const Disabled: Story = { args: { disabled: true } };
+export const Loading: Story = { args: { loading: true } };
+export const WithLongText: Story = { args: { children: 'Very long button text...' } };
+
+// ❌ BAD: only basic state
+export const Default: Story = {};
+```
+
+## Story Implementation
+
+### Standard Story Structure
+
+```typescript
+// complete story template with all recommended features
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
 
 const meta = {
-  title: 'Components/UI/Button', // path-based naming
+  title: 'Components/UI/Button',
   component: Button,
-  parameters: {
-    layout: 'centered',
-  },
   tags: ['autodocs'],
-  argTypes: {
-    variant: {
-      control: 'select',
-      options: ['primary', 'secondary', 'danger'],
-    },
-  },
 } satisfies Meta<typeof Button>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// essential stories
 export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    children: 'Click me',
-  },
+  args: { variant: 'primary', children: 'Click me' },
 };
 
 export const Disabled: Story = {
+  args: { disabled: true, children: 'Disabled' },
+};
+
+export const WithClick: Story = {
   args: {
-    disabled: true,
-    children: 'Disabled',
+    children: 'Interactive',
+    onClick: () => console.log('clicked'),
   },
 };
 ```
 
-## Demo Stories
-
-Use `.demo.stories.tsx` for complex multi-component scenarios:
+### Demo Stories for Complex Scenarios
 
 ```typescript
-// PaymentFlow.demo.stories.tsx
+// PaymentFlow.demo.stories.tsx - complex multi-component scenarios
 const meta = {
   title: 'Demos/E-Commerce/PaymentFlow',
   parameters: { layout: 'fullscreen' },
@@ -106,14 +113,15 @@ export const CompleteCheckout: Story = {
     <PaymentProvider>
       <OrderSummary {...orderProps} />
       <PaymentForm onSubmit={handlePayment} />
+      ...
     </PaymentProvider>
   ),
 };
 ```
 
-## Organization Patterns
+## Organization Structure
 
-### Directory Structure
+### Directory Alignment
 
 ```plaintext
 components/
@@ -124,82 +132,218 @@ components/
   Forms/
     PaymentForm/
       PaymentForm.tsx
-      PaymentForm.spec.tsx
       PaymentForm.stories.tsx
-      PaymentForm.demo.stories.tsx  # Complex scenarios
+      PaymentForm.demo.stories.tsx  # Complex scenarios only
 ```
 
-### Story Categories
+## Interactive Stories
 
-- **Components**: `Components/Category/ComponentName`
-- **Demos**: `Demos/Feature/ScenarioName`
-
-## Story Best Practices
-
-### Essential Stories
-
-Every component should include:
-- **Default** - Minimal required props
-- **All variants** - Primary, Secondary, etc.
-- **All states** - Disabled, Loading, Error
-- **Edge cases** - Long text, empty state
-
-### Interactive Stories
-
-Use `play` function for interactions:
+### Testing User Interactions
 
 ```typescript
+// ✅ GOOD: interactive story with play function
 export const Interactive: Story = {
   play: async ({ canvasElement }) => {
-    const button = within(canvasElement).getByRole('button');
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
     await userEvent.click(button);
+    ...
+  },
+};
+
+// ✅ GOOD: form interaction story
+export const FormInteraction: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByLabelText('Email');
+    await userEvent.type(input, 'test@example.com');
+    await userEvent.click(canvas.getByRole('button', { name: 'Submit' }));
   },
 };
 ```
 
-## Documentation
+## Controls and Documentation
 
-Add component and story documentation via `parameters.docs.description`.
-
-
-## Controls and Args
-
-Common control types:
-- `select` - Dropdown options
-- `boolean` - Toggle switch
-- `range` - Number slider
-- `color` - Color picker
-- `date` - Date picker
-- `false` - Disable control
-
-
-## Testing Integration
-
-Reuse stories in tests with `composeStories`:
+### Control Configuration
 
 ```typescript
-import { composeStories } from '@storybook/react';
-import * as stories from './Button.stories';
-
-const { Primary } = composeStories(stories);
+// ✅ GOOD: comprehensive control setup
+const meta = {
+  title: 'Components/UI/Button',
+  component: Button,
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['primary', 'secondary', 'danger'],
+      description: 'Visual style variant',
+    },
+    size: {
+      control: 'radio',
+      options: ['sm', 'md', 'lg'],
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Disable button interaction',
+    },
+    onClick: { control: false }, // disable control for functions
+  },
+  parameters: {
+    docs: {
+      description: {
+        component: 'Primary button component for user actions',
+      },
+    },
+  },
+};
 ```
 
-## Anti-Patterns to Avoid
+## Quick Reference
 
-- **No inline component definitions** in stories
-- **No direct DOM manipulation**
-- **No real API calls** - use mock data
-- **No side effects** outside of play functions
+| Story Type | File Name | Title Pattern | Use Case |
+|------------|-----------|---------------|----------|
+| Component | `Button.stories.tsx` | `Components/UI/Button` | Basic component docs |
+| Demo | `Flow.demo.stories.tsx` | `Demos/Feature/Flow` | Multi-component scenarios |
+| Interactive | Any story file | N/A | User interaction testing |
+| Controls | Any story file | N/A | Prop exploration |
 
-## Summary
+| Control Type | Use Case | Example |
+|--------------|----------|---------|
+| `select` | Dropdown options | `options: ['sm', 'md', 'lg']` |
+| `boolean` | Toggle switch | `control: 'boolean'` |
+| `range` | Number slider | `{ min: 0, max: 100 }` |
+| `color` | Color picker | `control: 'color'` |
+| `false` | Disable control | Functions, complex objects |
 
-1. **Use path-based titles** that mirror directory structure
-2. **Create `.demo.stories.tsx`** for complex multi-component scenarios
-3. **Include all variants and states** in stories
-4. **Document thoroughly** with descriptions and usage examples
-5. **Use TypeScript** for type safety
-6. **Organize stories** into logical categories
-7. **Add interactive examples** with play functions
-8. **Test accessibility** scenarios
-9. **Mock external dependencies** instead of real calls
-10. **Reuse stories** in component tests
+## Patterns & Best Practices
+
+### Complete Component Story Pattern
+
+**Purpose:** Document all component states and variants comprehensively
+
+**When to use:**
+
+- Every component needs Storybook documentation
+- Component has multiple variants or states
+- Props need interactive exploration
+
+**Implementation:**
+
+```typescript
+// pattern template
+import type { Meta, StoryObj } from '@storybook/react';
+import { ComponentName } from './ComponentName';
+
+const meta = {
+  title: 'Components/Category/ComponentName',
+  component: ComponentName,
+  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  argTypes: {
+    variant: { control: 'select', options: ['primary', 'secondary'] },
+    disabled: { control: 'boolean' },
+  },
+} satisfies Meta<typeof ComponentName>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+// cover all important states
+export const Default: Story = {};
+export const AllVariants: Story = { args: { variant: 'secondary' } };
+export const DisabledState: Story = { args: { disabled: true } };
+export const EdgeCase: Story = { args: { children: 'Very long text content...' } };
+```
+
+### Common Patterns
+
+1. **Story Composition** - Reuse stories in tests
+
+   ```typescript
+   import { composeStories } from '@storybook/react';
+   import * as stories from './Button.stories';
+   const { Primary } = composeStories(stories);
+   ```
+
+2. **Decorator Usage** - Add context providers
+
+   ```typescript
+   export default {
+     decorators: [
+       (Story) => (
+         <ThemeProvider theme={defaultTheme}>
+           <Story />
+         </ThemeProvider>
+       ),
+     ],
+   };
+   ```
+
+## Anti-Patterns
+
+### Inline Component Definitions
+
+```typescript
+// ❌ BAD: defining components in stories
+export const BadStory: Story = {
+  render: () => {
+    const InlineComponent = ({ text }) => <div>{text}</div>;
+    return <InlineComponent text="Bad practice" />;
+  },
+};
+
+// ✅ GOOD: use existing components
+export const GoodStory: Story = {
+  render: () => <ExistingComponent text="Good practice" />,
+};
+```
+
+### Real API Calls in Stories
+
+```typescript
+// ❌ BAD: real API calls in stories
+export const BadData: Story = {
+  render: () => {
+    const [data, setData] = useState(null);
+    useEffect(() => {
+      fetch('/api/data').then(setData); // Real API call
+    }, []);
+    return <Component data={data} />;
+  },
+};
+
+// ✅ GOOD: mock data in stories
+export const GoodData: Story = {
+  args: {
+    data: mockData, // Predefined mock data
+  },
+};
+```
+
+### Common Mistakes to Avoid
+
+1. **Missing story variants**
+   - Problem: Incomplete documentation of component capabilities
+   - Solution: Include all states (default, disabled, loading, error)
+   - Example: Create separate stories for each variant
+
+2. **Poor story organization**
+   - Problem: Stories scattered without logical grouping
+   - Solution: Use path-based titles that mirror file structure
+
+## Quick Decision Tree
+
+1. **What type of story is needed?**
+   - If single component → Use `Component.stories.tsx`
+   - If multi-component scenario → Use `Flow.demo.stories.tsx`
+   - If interaction testing → Add `play` functions
+
+2. **How complex is the component?**
+   - If simple → Include all variants in one file
+   - If complex → Consider separate demo stories
+   - If many states → Use comprehensive argTypes
+
+3. **Does it need context?**
+   - If providers needed → Use decorators
+   - If mock data → Define in story args
+   - If interactions → Use play functions
+

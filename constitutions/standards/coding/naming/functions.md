@@ -2,559 +2,222 @@
 
 _Standards for naming functions, methods, and callable expressions_
 
-## Core Function Naming Principles
+## Core Principles
 
-### MUST Follow Rules
+### Verb-First Convention
 
-- **MUST start with a verb** - Functions perform actions
-- **MUST use camelCase** - Consistent with JavaScript conventions
-- **MUST be descriptive** - Clear about what the function does
-- **MUST indicate async** - Async functions should be obvious
-- **MUST follow conventions** - get, set, is, has patterns
-
-### SHOULD Follow Guidelines
-
-- **SHOULD be concise** - Balance clarity with brevity
-- **SHOULD indicate return type** - Through naming patterns
-- **SHOULD group related functions** - Common prefixes for related operations
-- **SHOULD avoid side effects** in getter functions
-
-## Verb Categories and Usage
-
-### Data Retrieval Functions
+Functions perform actions, so they must start with verbs.
 
 ```typescript
-// get - synchronous, immediate return (may be from cache)
-function getUserName(user: User): string {
-  return user.name;
-}
+// ✅ GOOD: starts with verb
+function createUser(data): User { ... }
+function validateEmail(email): boolean { ... }
 
-function getCurrentTimestamp(): number {
-  return Date.now();
-}
-
-// fetch - asynchronous, external data source
-async function fetchUserProfile(userId: string): Promise<UserProfile> {
-  const response = await api.get(`/users/${userId}`);
-  return response.data;
-}
-
-// find - search operation, may return null
-function findUserByEmail(users: User[], email: string): User | null {
-  return users.find((u) => u.email === email) || null;
-}
-
-// list - return collection/array
-function listActiveUsers(users: User[]): User[] {
-  return users.filter((u) => u.isActive);
-}
-
-// retrieve - complex async operation, often with processing
-async function retrieveUserDashboard(userId: string): Promise<Dashboard> {
-  const [profile, stats, activity] = await Promise.all([
-    fetchUserProfile(userId),
-    fetchUserStats(userId),
-    fetchRecentActivity(userId),
-  ]);
-
-  return composeDashboard(profile, stats, activity);
-}
+// ❌ BAD: no verb
+function user(data): User { ... }
+function validation(email): boolean { ... }
 ```
 
-### Data Manipulation Functions
+### Async Clarity
+
+Async operations should be immediately obvious from the name.
 
 ```typescript
-// create - make new instance
-async function createUser(data: CreateUserData): Promise<User> {
-  const user = new User(data);
-  return await userRepository.save(user);
-}
+// ✅ GOOD: clear async intent
+async function fetchUserData(id): Promise<User> { ... }
+async function loadConfiguration(): Promise<Config> { ... }
 
-// add - add to collection
-function addItemToCart(cart: Cart, item: CartItem): Cart {
-  return {
-    ...cart,
-    items: [...cart.items, item],
-  };
-}
+// ❌ BAD: misleading sync name
+async function getUser(id): Promise<User> { ... }
+```
+
+### Return Type Indication
+
+Function names should hint at what they return.
+
+```typescript
+// ✅ GOOD: clear return expectation
+function isValid(value): boolean { ... }
+function getUserCount(): number { ... }
+function findUser(id): User | null { ... }
+```
+
+## Verb Categories
+
+### Data Retrieval
+
+```typescript
+// get - sync, may be cached
+function getUserName(user: User): string { ... }
+
+// fetch - async, external source  
+async function fetchUserProfile(id): Promise<User> { ... }
+
+// find - search, may return null
+function findUserByEmail(email): User | null { ... }
+
+// list - return collection
+function listActiveUsers(): User[] { ... }
+```
+
+### Data Manipulation
+
+```typescript
+// create - new instance
+async function createUser(data): Promise<User> { ... }
 
 // update - modify existing
-async function updateUserProfile(
-  userId: string,
-  updates: Partial<UserProfile>,
-): Promise<UserProfile> {
-  const user = await userRepository.findById(userId);
-  Object.assign(user, updates);
-  return await userRepository.save(user);
-}
-
-// set - create or update (upsert)
-async function setUserPreference(
-  userId: string,
-  key: string,
-  value: any,
-): Promise<void> {
-  await preferenceRepository.upsert({ userId, key, value });
-}
+async function updateUser(id, data): Promise<User> { ... }
 
 // delete/remove - eliminate
-async function deleteUser(userId: string): Promise<void> {
-  await userRepository.delete(userId);
-}
+async function deleteUser(id): Promise<void> { ... }
 
-function removeItemFromCart(cart: Cart, itemId: string): Cart {
-  return {
-    ...cart,
-    items: cart.items.filter((item) => item.id !== itemId),
-  };
-}
+// set - create or update
+async function setPreference(key, value): Promise<void> { ... }
 ```
 
-### Validation and Boolean Functions
+### Validation and Checks
 
 ```typescript
-// validate - full validation with detailed results
-function validateUserInput(input: unknown): ValidationResult {
-  const errors: ValidationError[] = [];
+// validate - detailed results
+function validateInput(input): ValidationResult { ... }
 
-  if (!input || typeof input !== "object") {
-    errors.push({ field: "input", message: "Invalid input" });
-  }
+// is - state check  
+function isValidEmail(email): boolean { ... }
 
-  // more validation...
+// has - possession
+function hasPermission(user, permission): boolean { ... }
 
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-}
+// can - capability
+function canEdit(user, resource): boolean { ... }
 
-// is - boolean state check
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isUserActive(user: User): boolean {
-  return user.status === "active" && !user.deletedAt;
-}
-
-// has - boolean possession check
-function hasPermission(user: User, permission: string): boolean {
-  return user.permissions.includes(permission);
-}
-
-function hasExpired(expiryDate: Date): boolean {
-  return expiryDate < new Date();
-}
-
-// can - boolean capability check
-function canEditResource(user: User, resource: Resource): boolean {
-  return user.id === resource.ownerId || user.role === "admin";
-}
-
-// should - boolean recommendation
-function shouldRefreshToken(token: Token): boolean {
-  const fiveMinutes = 5 * 60 * 1000;
-  return token.expiresAt - Date.now() < fiveMinutes;
-}
+// should - recommendation
+function shouldRefresh(token): boolean { ... }
 ```
 
-### Transformation Functions
+### Transformation
 
 ```typescript
-// transform - general transformation
-function transformRawData(raw: RawData): ProcessedData {
-  return {
-    id: raw.id,
-    name: raw.name.trim(),
-    createdAt: new Date(raw.created_at),
-  };
-}
+// transform - general change
+function transformData(raw): Processed { ... }
 
-// convert - type/format conversion
-function convertCelsiusToFahrenheit(celsius: number): number {
-  return (celsius * 9) / 5 + 32;
-}
+// parse - string to structured
+function parseConfig(content): Config { ... }
 
-// parse - string to structured data
-function parseConfigFile(content: string): Config {
-  return JSON.parse(content);
-}
+// format - structured to string  
+function formatCurrency(amount): string { ... }
 
-// format - structured data to string
-function formatCurrency(amount: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(amount);
-}
-
-// serialize/deserialize - object to string and back
-function serializeUser(user: User): string {
-  return JSON.stringify({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  });
-}
-
-function deserializeUser(data: string): User {
-  const parsed = JSON.parse(data);
-  return new User(parsed);
-}
+// serialize - object to string
+function serializeUser(user): string { ... }
 ```
 
-### Action Functions
+## Patterns & Best Practices
+
+### Factory Pattern
+
+**Purpose:** Create instances with consistent initialization
+
+**When to use:**
+
+- Creating objects with defaults
+- Abstracting complex construction
+
+**Implementation:**
 
 ```typescript
-// execute - run a process
-async function executePayment(payment: Payment): Promise<PaymentResult> {
-  const result = await paymentGateway.process(payment);
-  await recordTransaction(result);
-  return result;
-}
-
-// process - multi-step operation
-async function processOrder(order: Order): Promise<ProcessedOrder> {
-  await validateInventory(order.items);
-  await calculatePricing(order);
-  await applyDiscounts(order);
-  return await finalizeOrder(order);
-}
-
-// handle - event or request handling
-async function handleLoginRequest(req: Request): Promise<Response> {
-  const { email, password } = req.body;
-  const user = await authenticateUser(email, password);
-  const token = generateToken(user);
-  return { user, token };
-}
-
-// trigger - initiate an action
-function triggerNotification(userId: string, message: string): void {
-  eventEmitter.emit("notification", { userId, message });
-}
-```
-
-## Async Function Patterns
-
-### Naming Async Functions
-
-```typescript
-// ✅ GOOD: clear async operations
-async function fetchUserData(userId: string): Promise<UserData> {}
-async function loadConfiguration(): Promise<Config> {}
-async function saveDocument(doc: Document): Promise<void> {}
-async function processPaymentAsync(payment: Payment): Promise<Result> {}
-
-// consider adding 'Async' suffix for clarity when needed
-function processData(data: Data): ProcessedData {}
-async function processDataAsync(data: Data): Promise<ProcessedData> {}
-
-// ❌ BAD: misleading async names
-async function getUser(id: string): Promise<User> {} // 'get' implies sync
-async function user(id: string): Promise<User> {} // Not a verb
-```
-
-### Promise-Returning Functions
-
-```typescript
-// ✅ GOOD: clear promise returns
-function delayExecution(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function waitForCondition(
-  condition: () => boolean,
-  timeout: number = 5000,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const check = () => {
-      if (condition()) {
-        resolve();
-      } else if (Date.now() - start > timeout) {
-        reject(new Error("Timeout waiting for condition"));
-      } else {
-        setTimeout(check, 100);
-      }
-    };
-    check();
-  });
-}
-```
-
-## Method Naming in Classes
-
-### Standard Method Patterns
-
-```typescript
-class UserService {
-  // getters - no 'get' prefix for property-like access
-  get activeUsers(): User[] {
-    return this.users.filter((u) => u.isActive);
-  }
-
-  // standard methods - use verb prefixes
-  async createUser(data: CreateUserData): Promise<User> {
-    return this.repository.create(data);
-  }
-
-  findUserByEmail(email: string): User | null {
-    return this.users.find((u) => u.email === email) || null;
-  }
-
-  async updateUser(id: string, updates: Partial<User>): Promise<User> {
-    return this.repository.update(id, updates);
-  }
-
-  // private methods - same rules apply
-  private validateUserData(data: unknown): void {
-    // validation logic
-  }
-
-  private async notifyUserCreated(user: User): Promise<void> {
-    // notification logic
-  }
-}
-```
-
-### Lifecycle Methods
-
-```typescript
-class Component {
-  // standard lifecycle names
-  async initialize(): Promise<void> {}
-  async onMount(): Promise<void> {}
-  async beforeUpdate(): Promise<void> {}
-  async afterUpdate(): Promise<void> {}
-  async onUnmount(): Promise<void> {}
-  async dispose(): Promise<void> {}
-
-  // react-style lifecycle
-  componentDidMount(): void {}
-  componentWillUnmount(): void {}
-  shouldComponentUpdate(): boolean {
-    return true;
-  }
-}
-```
-
-## Factory and Builder Functions
-
-### Factory Functions
-
-```typescript
-// ✅ GOOD: clear factory patterns
-function createUser(data: CreateUserData): User {
+function createUser(data): User {
   return new User(data);
 }
 
 function createDefaultConfig(): Config {
-  return {
-    port: 3000,
-    host: "localhost",
-    debug: false,
-  };
-}
-
-// factory with options
-function createLogger(options: LoggerOptions = {}): Logger {
-  return new Logger({
-    level: options.level || "info",
-    format: options.format || "json",
-    ...options,
-  });
-}
-
-// higher-order factory
-function createServiceFactory<T>(ServiceClass: new () => T) {
-  return (config: Config): T => {
-    const service = new ServiceClass();
-    service.configure(config);
-    return service;
-  };
+  return { port: 3000, ... };
 }
 ```
 
-### Builder Functions
+### Builder Pattern
+
+**Purpose:** Construct complex objects step by step
+
+**When to use:**
+
+- Assembling multi-part objects
+- Conditional construction logic
+
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: builder pattern
-function buildQueryString(params: Record<string, any>): string {
+function buildQueryString(params): string {
   return Object.entries(params)
-    .filter(([_, value]) => value != null)
-    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .map(([k, v]) => `${k}=${v}`)
     .join("&");
 }
-
-function buildEmailMessage(options: EmailOptions): EmailMessage {
-  return {
-    to: options.to,
-    from: options.from || "noreply@example.com",
-    subject: options.subject,
-    body: options.template
-      ? renderTemplate(options.template, options.data)
-      : options.body,
-  };
-}
 ```
 
-## Event Handlers and Callbacks
+### Common Patterns
 
-### Event Handler Naming
+1. **Event Handlers** - Use `handle*` prefix
+
+   ```typescript
+   handleClick(event), handleSubmit(event)
+   ```
+
+2. **Callbacks** - Use `on*` prefix  
+
+   ```typescript
+   onClick(event), onSuccess(result), onError(error)
+   ```
+
+3. **Async Suffix** - Optional for clarity
+
+   ```typescript
+   processData() vs processDataAsync()
+   ```
+
+## Anti-Patterns
+
+### Poor Naming
 
 ```typescript
-// ✅ GOOD: event handler patterns
-function handleClick(event: MouseEvent): void {}
-function handleSubmit(event: FormEvent): void {}
-function handleChange(event: ChangeEvent): void {}
-function handleUserLogin(user: User): void {}
-function handleError(error: Error): void {}
+// ❌ BAD: common mistakes
+function user(id): User {}        // No verb
+function getUsers(): void {}      // Wrong return expectation
+function process(data): any {}    // Too generic
+function gUsr(id): User {}       // Unnecessary abbreviation
 
-// with 'on' prefix for props/callbacks
-interface ButtonProps {
-  onClick: (event: MouseEvent) => void;
-  onHover: (hovering: boolean) => void;
-  onFocus: () => void;
-}
-
-// event emitter patterns
-emitter.on("data", handleData);
-emitter.on("error", handleError);
-emitter.on("close", handleClose);
+// ✅ GOOD: clear naming
+function getUser(id): User {}
+function dropUsers(): void {}
+function processPayment(data): PaymentResult {}
+function getUser(id): User {}
 ```
 
-### Callback Patterns
+### Common Mistakes to Avoid
 
-```typescript
-// ✅ GOOD: callback naming
-type OnSuccess<T> = (result: T) => void;
-type OnError = (error: Error) => void;
-type OnProgress = (progress: number) => void;
-type OnComplete = () => void;
+1. **Missing Verbs**
+   - Problem: Functions without action words
+   - Solution: Start with appropriate verb
+   - Example: `user()` → `getUser()`
 
-interface AsyncOperationOptions<T> {
-  onSuccess?: OnSuccess<T>;
-  onError?: OnError;
-  onProgress?: OnProgress;
-  onComplete?: OnComplete;
-}
+2. **Generic Names**  
+   - Problem: Meaningless function names
+   - Solution: Be specific about purpose
+   - Example: `process()` → `processPayment()`
 
-// usage
-async function uploadFile(
-  file: File,
-  options: AsyncOperationOptions<string>,
-): Promise<string> {
-  try {
-    // upload logic with progress
-    options.onProgress?.(0.5);
-    const url = await upload(file);
-    options.onSuccess?.(url);
-    return url;
-  } catch (error) {
-    options.onError?.(error);
-    throw error;
-  } finally {
-    options.onComplete?.();
-  }
-}
-```
+3. **Misleading Names**
+   - Problem: Name doesn't match behavior
+   - Solution: Ensure name reflects actual operation
+   - Example: `getUser()` that creates → `createUser()`
 
-## Utility and Helper Functions
+## Quick Decision Tree
 
-### Pure Utility Functions
+1. **Choosing function verb**
+   - If retrieving data → `get*`
+   - If searching → `search*` (NLP) or `list*` (conventional filter)
+   - If creating → `create*` (instance) or `build*` (data structure)
+   - If modifying → `set*`
+   - If removing → `drop*`
 
-```typescript
-// ✅ GOOD: utility function naming
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
-  let timeout: NodeJS.Timeout;
-  return ((...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  }) as T;
-}
-
-function groupBy<T, K extends keyof T>(
-  array: T[],
-  key: K,
-): Record<string, T[]> {
-  return array.reduce(
-    (groups, item) => {
-      const group = String(item[key]);
-      groups[group] = groups[group] || [];
-      groups[group].push(item);
-      return groups;
-    },
-    {} as Record<string, T[]>,
-  );
-}
-
-// ❌ BAD: vague utility names
-function process(data: any): any {} // too generic
-function util(x: any): any {} // meaningless
-function doStuff(): void {} // no indication of purpose
-```
-
-## Anti-Patterns to Avoid
-
-```typescript
-// ❌ BAD: poor function naming
-
-// no verb
-function user(id: string): User {} // should be getUser
-function validation(data: any): boolean {} // should be validate
-
-// wrong verb
-function getUsers(user: User): void {} // 'get' but returns void
-function createUsersList(): User {} // 'create' but returns single
-
-// too generic
-function process(data: any): any {}
-function handle(thing: any): void {}
-function execute(): void {}
-
-// misleading
-function saveUser(user: User): User {
-  return { ...user }; // doesn't actually save
-}
-
-// hungarian notation
-function fnGetUser(): User {} // 'fn' prefix unnecessary
-function cbHandleClick(): void {} // 'cb' prefix unnecessary
-
-// overly abbreviated
-function gUsr(id: string): User {} // write it out
-function procPmt(p: Payment): void {} // unclear
-```
-
-## Testing Function Names
-
-```typescript
-// ✅ GOOD: test function naming
-describe("UserService", () => {
-  // setup functions
-  function createMockUser(): User {}
-  function setupTestDatabase(): void {}
-  function cleanupTestData(): void {}
-
-  // assertion helpers
-  function expectUserToBeValid(user: User): void {}
-  function assertEmailSent(email: string): void {}
-
-  // test cases - descriptive names
-  it("should create user when valid data provided", () => {});
-  it("should throw ValidationError when email is invalid", () => {});
-  it("should return null when user not found", () => {});
-});
-```
-
-## References
-
-- [Variable Naming](@./variables.md) - Variable conventions
-- [Type Naming](@./types.md) - Class and method naming
-- [Patterns](@./patterns.md) - Common naming patterns
+2. **Boolean functions**
+   - If checking state → `is*`
+   - If checking possession → `has*`
+   - If checking capability → `can*`

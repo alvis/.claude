@@ -2,16 +2,16 @@
 
 _Comprehensive testing standards for quality assurance, TDD compliance, and TypeScript type safety_
 
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [TypeScript Standards](@./typescript.md) - Tests must follow TypeScript type safety requirements and use proper typing throughout
+- [General Coding Principles](@./general-principles.md) - Test code must adhere to fundamental coding principles and consistency rules
+- [Function Standards](@./functions.md) - Test functions must follow function naming, structure, and documentation standards
+- [Documentation Standards](@./documentation.md) - Test interfaces and complex test scenarios require proper JSDoc documentation
+
 ## Core Principles
-
-## 🚨 MANDATORY PREREQUISITE STANDARDS
-
-**[IMPORTANT]** Before applying these standards, you MUST also thoroughly read and understand the following foundational standards:
-
-- [TypeScript Standards](@../code/typescript.md)
-- [General Coding Principles](@../code/general-principles.md)
-- [Function Standards](@../code/functions.md)
-- [Documentation Standards](@../code/documentation.md)
 
 ### TypeScript Standards Compliance
 
@@ -54,12 +54,57 @@ All new code must follow TDD principles with complete TypeScript compliance:
 
 Maintain high quality standards while ensuring complete type safety:
 
-- **100% coverage maintained with minimal tests** - Cover everything efficiently
+## 🚨 CRITICAL: Absolute Minimal Testing Principle
+
+**Every test must add unique value. Redundant tests are maintenance debt.**
+
+- **100% coverage with ABSOLUTE MINIMUM tests** - One test per unique behavior path
   - Maintain **100%** coverage, excluding barrel files (typically `index.ts`)
   - Use `/* v8 ignore start */` at the top of any barrel file to exclude it from coverage reports
-- **Minimize test quantity** - Add minimal meaningful tests that cover everything
-- **Maximize test reuse** - Think critically about minimizing complexity and maximizing reuse
+- **BAD: Artificial scenario variations** - No testing same logic with different fake data
+- **BAD: Redundant edge cases** - If logic is identical, one test is enough
+- **Maximize test reuse** - Parameterized tests over copy-paste variations
 - **Ignore lines marked with v8 ignore** - No need to create any tests for lines meant to be ignore from coverage
+- Every test must verify at least one of:
+  - **Different code path**: Conditional branches, error handling
+  - **Different behavior**: Not just different inputs producing predictable outputs
+  - **Real edge case**: Actual boundary conditions, not artificial scenarios
+
+#### Zero Redundancy Rule
+
+```typescript
+// ❌ BAD: testing same logic with artificial variations
+describe("fn:calculateDiscount", () => {
+  it("should calculate 10% discount for $100", () => {
+    expect(calculateDiscount(100, 0.1)).toBe(90);
+  });
+  
+  it("should calculate 10% discount for $200", () => {
+    expect(calculateDiscount(200, 0.1)).toBe(180);
+  });
+  
+  it("should calculate 10% discount for $300", () => {
+    expect(calculateDiscount(300, 0.1)).toBe(270);
+  });
+  // STOP! same logic, different numbers = WASTE
+});
+
+// ✅ GOOD: one test per unique behavior
+describe("fn:calculateDiscount", () => {
+  it("should apply percentage discount correctly", () => {
+    expect(calculateDiscount(100, 0.1)).toBe(90);
+  });
+  
+  it("should handle zero discount", () => {
+    expect(calculateDiscount(100, 0)).toBe(100);
+  });
+  
+  it("should throw for negative amounts", () => {
+    expect(() => calculateDiscount(-100, 0.1)).toThrow();
+  });
+  // each test verifies DIFFERENT behavior
+});
+```
 
 ### TypeScript Testing Patterns
 
@@ -111,7 +156,7 @@ export default defineConfig({
 
 **TypeScript Import Standards in Tests:**
 
-All test files must follow [TypeScript import standards](@../code/typescript.md#import-organization):
+All test files must follow [TypeScript import standards](@./typescript.md#import-organization):
 
 ```typescript
 // ✅ GOOD: proper import organization
@@ -191,7 +236,7 @@ describe("fn:calculateOrderTotal", () => {
       shipping: 10,
     } satisfies Partial<OrderTotal>;
     
-    // Test implementation with type safety
+    // test implementation with type safety
   });
 });
 
@@ -203,14 +248,14 @@ describe("rc:UserProfile", () => {
       email: 'john@example.com',
     } satisfies Partial<User>;
     
-    // Test implementation
+    // test implementation
   });
 });
 
-// For general-purpose tests, use a clear description without a prefix
+// for general-purpose tests, use a clear description without a prefix
 describe("authentication flow", () => {
   it("should redirect to login when unauthorized", () => {
-    // Test implementation with proper TypeScript types
+    // test implementation with proper TypeScript types
   });
 });
 ```
@@ -345,7 +390,7 @@ describe("cl:UserService", () => {
   });
 
   it("should create user with valid data", () => {
-    // Test implementation
+    // test implementation
   });
 });
 ```
@@ -446,12 +491,12 @@ describe("fn:apiCall", () => {
 describe("fn:apiCall", () => {
   it("should handle successful response", () => {
     const fetchUser = vi.fn().mockResolvedValue({ id: "123" });
-    // Each test gets fresh mock state automatically
+    // each test gets fresh mock state automatically
   });
 
   it("should handle error response", () => {
     const fetchUser = vi.fn().mockRejectedValue(new Error("Failed"));
-    // Previous test's mock state is automatically cleared
+    // previous test's mock state is automatically cleared
   });
 });
 ```
@@ -578,7 +623,7 @@ export function createUserService(
   };
 }
 
-// Usage with overrides in test
+// usage with overrides in test
 describe('fn:handleUserNotFound', () => {
   it('should handle user not found gracefully', async () => {
     const userService = createUserService({
@@ -602,7 +647,7 @@ export const createUserFixture = (overrides?: Partial<User>): User => ({
   ...overrides
 });
 
-// Usage in tests
+// usage in tests
 describe('fn:processUser', () => {
   it('should process admin user differently', () => {
     const adminUser = createUserFixture({ role: 'admin' });
@@ -709,14 +754,14 @@ describe("fn:calculateDiscount", () => {
 // ❌ BAD: slow, interdependent tests
 describe("UserService Integration", () => {
   it("should create user in database", async () => {
-    // Slow database operation
+    // slow database operation
     await database.connect();
     const user = await service.createUser(userData);
     globalTestUser = user; // Creates dependency
   });
 
   it("should find user created in previous test", async () => {
-    // Depends on previous test
+    // depends on previous test
     const user = await service.findUser(globalTestUser.id);
     expect(user).toBeDefined();
   });
@@ -750,7 +795,7 @@ describe("fn:processPayment", () => {
 // ✅ GOOD: document complex test scenarios
 describe("fn:complexBusinessLogic", () => {
   it("should calculate tier pricing based on volume and customer history", () => {
-    // This test verifies the complex pricing algorithm that considers:
+    // this test verifies the complex pricing algorithm that considers:
     // 1. Current order volume (>$1000 gets tier 1 pricing)
     // 2. Customer loyalty status (premium customers get additional 5% off)
     // 3. Seasonal promotions (active during Q4)
@@ -774,7 +819,7 @@ describe("fn:complexBusinessLogic", () => {
 });
 ```
 
-## Test Anti-Patterns
+## Anti-Patterns
 
 ### Common Mistakes to Avoid
 
@@ -782,29 +827,22 @@ describe("fn:complexBusinessLogic", () => {
 // ❌ BAD: over-mocking simple logic
 const dateFormatter = vi.fn().mockReturnValue('2024-01-01');
 const validator = vi.fn().mockReturnValue(true);
-const config = vi.fn().mockReturnValue({ apiUrl: 'https://api.example.com' });
 
 // ✅ GOOD: use real implementations for simple logic
 import { formatDate } from '#utils/date';
 import { validateEmail } from '#utils/validators';
-import { config } from '#config';
 
-// Only mock external dependencies with side effects
+// only mock external dependencies with side effects
 const apiClient = createApiClient();
-const database = createDatabaseConnection();
 
 // ❌ BAD: testing the mock instead of business logic
 describe('sv:UserService', () => {
   it('should fetch user data', async () => {
     const userApi = createUserApi();
-    const service = new UserService(userApi);
-    
     await service.enrichUserProfile('user-123');
     
-    // Only testing that the mock was called
+    // only testing that the mock was called - missing actual business logic
     expect(userApi.getUser).toHaveBeenCalledWith('user-123');
-    expect(userApi.getPreferences).toHaveBeenCalled();
-    // Missing: what did the service actually DO with this data?
   });
 });
 
@@ -815,19 +853,15 @@ describe('sv:UserService', () => {
     userApi.getUser.mockResolvedValue({ id: 'user-123', name: 'John' });
     userApi.getPreferences.mockResolvedValue({ theme: 'dark' });
     
-    const service = new UserService(userApi);
     const enrichedProfile = await service.enrichUserProfile('user-123');
     
-    // Primary: test the actual business logic
+    // primary: test the actual business logic
     expect(enrichedProfile).toEqual({
       id: 'user-123',
       name: 'John',
       preferences: { theme: 'dark' },
       enrichedAt: expect.any(Date)
     });
-    
-    // Secondary: verify correct API usage
-    expect(userApi.getUser).toHaveBeenCalledWith('user-123');
   });
 });
 
@@ -835,11 +869,7 @@ describe('sv:UserService', () => {
 describe('fn:validatePermissions', () => {
   it('should validate user permissions', async () => {
     const { validatePermissions } = await import('#auth/permissions');
-    const { getUserRole } = await import('#auth/roles');
-    
-    const role = await getUserRole('user-123');
-    const isValid = validatePermissions(role, 'write');
-    expect(isValid).toBe(true);
+    // ...
   });
 });
 
@@ -864,14 +894,12 @@ describe('rc:UserList', () => {
   });
 });
 
-// ✅ GOOD: test behavior, not implementation, with proper typescript
-import type { User } from '#types/user';
-
+// ✅ GOOD: test behavior, not implementation
 describe('rc:UserList', () => {
   it('should display user names when users are provided', () => {
     const users: User[] = [
-      { id: '1', name: 'John', email: 'john@example.com', createdAt: new Date(), updatedAt: new Date() }, 
-      { id: '2', name: 'Jane', email: 'jane@example.com', createdAt: new Date(), updatedAt: new Date() }
+      { id: '1', name: 'John', email: 'john@example.com', ... }, 
+      { id: '2', name: 'Jane', email: 'jane@example.com', ... }
     ];
 
     render(<UserList users={users} />);
@@ -882,22 +910,137 @@ describe('rc:UserList', () => {
 });
 
 // ❌ BAD: major typescript violation: using any types in tests
-const mockService: any = {
-  getData: vi.fn(),
-  saveData: vi.fn()
-};
+const mockService: any = { getData: vi.fn(), ... };
 
 // ✅ GOOD: proper typescript mock with satisfies pattern
-import type { DataService } from '#services/data';
-
 const mockService: DataService = {
   getData: vi.fn<[], Promise<Data>>(),
   saveData: vi.fn<[Data], Promise<void>>()
 };
 ```
 
+## 🚨 CRITICAL VIOLATIONS: Minimal Testing Enforcement
+
+### Immediate Rejection Criteria
+
+The following patterns will result in **IMMEDIATE CODE REVIEW REJECTION**:
+
+```typescript
+// ❌ REJECTED: Multiple tests for mathematical variations
+describe("fn:calculateTax", () => {
+  it("should calculate tax for $10", () => {
+    expect(calculateTax(10)).toBe(1);
+  });
+  // more similar tests with different amounts...
+  // REJECTED: same formula, different numbers
+});
+
+// ❌ REJECTED: Testing wrapper functions
+describe("sv:UserService", () => {
+  it("should call repository.save", () => {
+    const repo = { save: vi.fn() };
+    service.saveUser(userData);
+    expect(repo.save).toHaveBeenCalledWith(userData);
+    // REJECTED: service just passes through to repo
+  });
+});
+
+// ❌ REJECTED: Artificial test data variations
+describe("fn:validateEmail", () => {
+  it("should validate john@example.com", () => {
+    expect(validateEmail("john@example.com")).toBe(true);
+  });
+  // more tests with different valid email names...
+  // REJECTED: same validation logic, different names
+});
+
+// ✅ ACCEPTED: Each test verifies unique behavior
+describe("fn:validateEmail", () => {
+  it("should accept valid email format", () => {
+    expect(validateEmail("user@example.com")).toBe(true);
+  });
+  it("should reject missing @", () => {
+    expect(validateEmail("userexample.com")).toBe(false);
+  });
+  it("should reject empty string", () => {
+    expect(validateEmail("")).toBe(false);
+  });
+  // ACCEPTED: different validation rules tested
+});
+```
+
+### Enforcement Rules
+
+1. **One Test Per Behavior** - Not per input value
+2. **No Wrapper Testing** - Test outcomes, not pass-throughs
+3. **No Artificial Variations** - Real edge cases only
+4. **Value or Delete** - Every test must earn its maintenance cost
+
 ---
+
+## Quick Reference
+
+| Test Type | File Pattern | Purpose | Example |
+|-----------|-------------|---------|----------|
+| Unit | `*.spec.ts` | Isolated component testing | `user.service.spec.ts` |
+| Integration | `*.int.spec.ts` | Component interaction testing | `auth.int.spec.ts` |
+| E2E | `*.e2e.spec.ts` | Full system testing | `login.e2e.spec.ts` |
+
+## Patterns & Best Practices
+
+### Factory Pattern for Test Data
+
+**Purpose:** Create consistent, type-safe test data with minimal boilerplate
+
+**When to use:**
+
+- Multiple tests need similar data structures
+- Need to test with variations of the same entity
+- Want to avoid data setup duplication
+
+**Implementation:**
+
+```typescript
+// pattern template
+export const createTestEntity = <T>(base: T, overrides?: Partial<T>): T => ({
+  ...base,
+  ...overrides
+});
+
+// real-world example
+export const createUser = (overrides?: Partial<User>): User => ({
+  id: `user-${Date.now()}`,
+  email: `test@example.com`,
+  name: 'Test User',
+  ...overrides
+});
+```
+
+### Common Patterns
+
+1. **AAA Pattern** - Structure all tests with Arrange, Act, Assert
+
+2. **Factory Functions** - Create test data generators for complex objects
+
+3. **Type-Safe Mocks** - Use satisfies pattern for TypeScript compliance
+
+## Quick Decision Tree
+
+1. **What am I testing?**
+   - If single function/method → Use unit test with `fn:` prefix
+   - If component interaction → Use integration test  
+   - If full user workflow → Use e2e test
+
+2. **Do I need real dependencies?**
+   - If testing logic only → Mock external dependencies
+   - If testing integration → Use real implementations where safe
+   - If testing system → Use real services with test data
+
+3. **Is this test adding unique value?**
+   - If testing same logic with different data → Combine into parameterized test
+   - If testing different behavior → Keep as separate test
+   - If testing implementation detail → Remove test
 
 **COMPLIANCE REMINDER:**
 
-All test code MUST strictly follow TypeScript standards. Any test code that uses `any` types, bypasses type checking, or violates TypeScript best practices will be rejected during code review. This standard works in conjunction with, not as a replacement for, all other coding standards.
+All test code MUST strictly follow TypeScript standards AND minimal testing principles. Any test code that uses `any` types, bypasses type checking, violates TypeScript best practices, OR contains redundant tests will be rejected during code review. This standard works in conjunction with, not as a replacement for, all other coding standards.

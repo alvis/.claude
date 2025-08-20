@@ -2,105 +2,82 @@
 
 _Standards for naming classes, interfaces, types, and enums in TypeScript_
 
-## Core Type Naming Principles
+## Core Principles
 
-### MUST Follow Rules
+### PascalCase Convention
 
-- **MUST use PascalCase** for all types, interfaces, classes, and enums
-- **MUST use noun phrases** for types and interfaces
-- **MUST avoid prefixes** like 'I' for interfaces or 'T' for types
-- **MUST be descriptive** without being redundant
-- **MUST use singular names** for types (unless representing collections)
+All types, interfaces, classes, and enums use PascalCase.
 
-### SHOULD Follow Guidelines
+```typescript
+// ✅ GOOD: PascalCase
+interface User {}
+class UserService {}
+type ApiResponse = {}
+enum UserRole {}
 
-- **SHOULD use suffixes** to clarify purpose (Service, Repository, Config)
-- **SHOULD group related types** with consistent naming patterns
-- **SHOULD use generic type parameters** starting with T (T, U, V, K)
-- **SHOULD match domain language** in type names
+// ❌ BAD: wrong casing
+interface user {}
+class user_service {}
+```
+
+### No Prefixes
+
+Avoid Hungarian notation and unnecessary prefixes.
+
+```typescript
+// ✅ GOOD: clean names
+interface User {}
+type UserId = string;
+
+// ❌ BAD: unnecessary prefixes
+interface IUser {}
+type TUserId = string;
+```
+
+### Descriptive Nouns
+
+Types represent things, so use noun phrases.
+
+```typescript
+// ✅ GOOD: noun phrases
+interface PaymentMethod {}
+class OrderRepository {}
+
+// ❌ BAD: verb-based
+interface ProcessPayment {}
+```
 
 ## Interface Naming
 
 ### Basic Interfaces
 
 ```typescript
-// ✅ GOOD: clear, descriptive interface names
+// domain models
 interface User {
   id: string;
   email: string;
-  name: string;
-  createdAt: Date;
+  ...
 }
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-}
-
+// generic interfaces
 interface ApiResponse<T> {
   data: T;
   status: number;
-  message?: string;
-  timestamp: Date;
+  ...
 }
 
-// ❌ BAD: poor interface naming
-interface IUser {} // don't use 'I' prefix
-interface UserInterface {} // redundant 'Interface' suffix
-interface UserType {} // confusing with type aliases
-interface Data {} // too generic
+// ❌ BAD: avoid prefixes/suffixes
+interface IUser {}         // No 'I' prefix
+interface UserInterface {}  // No 'Interface' suffix
 ```
 
-### Domain-Specific Interfaces
+### Request/Response Patterns
 
 ```typescript
-// ✅ GOOD: domain-specific naming
-interface Order {
-  id: string;
-  customerId: string;
-  items: OrderItem[];
-  total: number;
-}
-
-interface PaymentMethod {
-  id: string;
-  type: "credit_card" | "paypal" | "bank_transfer";
-  lastFourDigits?: string;
-}
-
-interface ShippingAddress {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-// ✅ GOOD: configuration interfaces
-interface DatabaseConfig {
-  host: string;
-  port: number;
-  database: string;
-  ssl?: boolean;
-}
-
-interface AuthConfig {
-  jwtSecret: string;
-  tokenExpiry: string;
-  refreshTokenExpiry: string;
-}
-```
-
-### Request/Response Interfaces
-
-```typescript
-// ✅ GOOD: clear request/response naming
+// clear purpose
 interface CreateUserRequest {
   email: string;
   password: string;
-  name: string;
 }
 
 interface CreateUserResponse {
@@ -108,359 +85,182 @@ interface CreateUserResponse {
   token: string;
 }
 
-interface UpdateProductRequest {
-  name?: string;
-  price?: number;
-  description?: string;
-}
-
+// generic patterns
 interface PaginatedResponse<T> {
   items: T[];
   total: number;
-  page: number;
-  pageSize: number;
-  hasNext: boolean;
+  ...
 }
-
-// ❌ BAD: unclear request/response names
-interface UserData {} // is this request or response?
-interface ProductInfo {} // too vague
 ```
 
-## Type Alias Naming
+## Type Aliases
 
-### Union and Intersection Types
+### Union Types
 
 ```typescript
-// ✅ GOOD: descriptive type aliases
-type UserId = string;
-type Email = string;
-type IsoDateString = string;
-
+// simple unions
 type UserRole = "admin" | "editor" | "viewer";
-type PaymentStatus = "pending" | "processing" | "completed" | "failed";
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+type Status = "pending" | "active" | "inactive";
 
-// ✅ GOOD: complex type compositions
-type UserWithRoles = User & { roles: UserRole[] };
-type PartialUser = Partial<User>;
-type ReadonlyUser = Readonly<User>;
-
-// ✅ GOOD: discriminated unions
+// discriminated unions
 type ApiResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
-
-type PaymentResult =
-  | { status: "success"; transactionId: string }
-  | { status: "failed"; reason: string }
-  | { status: "pending"; estimatedTime: number };
-
-// ❌ BAD: confusing or redundant names
-type TUser = User; // Redundant 'T' prefix
-type UserType = User; // Redundant 'Type' suffix
-type StringType = string; // Unnecessary aliasing
 ```
 
 ### Function Types
 
 ```typescript
-// ✅ GOOD: clear function type names
-type UserValidator = (user: User) => ValidationResult;
+// clear purpose
+type Validator<T> = (value: T) => boolean;
 type EventHandler<T> = (event: T) => void;
 type AsyncOperation<T> = () => Promise<T>;
-type Middleware = (req: Request, res: Response, next: NextFunction) => void;
 
-// ✅ GOOD: callback patterns
+// callbacks
 type OnSuccess<T> = (result: T) => void;
 type OnError = (error: Error) => void;
-type ProgressCallback = (progress: number) => void;
-
-// ❌ BAD: unclear function types
-type Function1 = (x: any) => any; // Too generic
-type Callback = Function; // No type information
 ```
 
 ## Class Naming
 
-### Service Classes
+### Service Pattern
 
 ```typescript
-// ✅ GOOD: service class naming
-class UserService {
-  constructor(private repository: UserRepository) {}
+// domain services
+class UserService { ... }
+class PaymentService { ... }
+class EmailService { ... }
 
-  async createUser(data: CreateUserData): Promise<User> {
-    // Implementation
-  }
-}
-
-class EmailService {
-  async sendEmail(to: string, subject: string, body: string): Promise<void> {
-    // Implementation
-  }
-}
-
-class AuthenticationService {
-  async authenticate(credentials: Credentials): Promise<AuthResult> {
-    // Implementation
-  }
-}
-
-// ❌ BAD: poor service naming
-class UserManager {} // Vague responsibility
-class UserHelper {} // Suggests utility rather than service
-class ProcessUser {} // Verb-based name
-class UserUtils {} // Should be functions, not a class
+// ❌ BAD: vague names
+class UserManager {}  // What does it manage?
+class UserHelper {}   // Too generic
 ```
 
-### Repository Classes
+## Quick Reference
+
+| Type | Pattern | Example | Notes |
+|------|---------|---------|-------|
+| Interface | PascalCase noun | `User` | No 'I' prefix |
+| Type alias | PascalCase | `UserId` | No 'T' prefix |
+| Class | PascalCase + suffix | `UserService` | Purpose suffix |
+| Enum | PascalCase | `UserRole` | No 'E' prefix |
+| Generic | Single letter | `T, K, V` | Start with T |
+| Request | *Request suffix | `CreateUserRequest` | Clear intent |
+| Response | *Response suffix | `ApiResponse<T>` | Clear return |
+
+## Patterns & Best Practices
+
+### Generic Parameters
+
+**Purpose:** Type-safe reusable components
+
+**When to use:**
+
+- Container types
+- Utility types
+- Higher-order functions
+
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: repository pattern naming
-class UserRepository {
-  async findById(id: string): Promise<User | null> {
-    // Implementation
-  }
+// standard generics
+interface Container<T> { value: T; }
+interface Map<K, V> { ... }
 
-  async save(user: User): Promise<User> {
-    // Implementation
-  }
-}
-
-class OrderRepository {
-  async findByCustomerId(customerId: string): Promise<Order[]> {
-    // Implementation
-  }
-}
-
-// ✅ GOOD: specific repository implementations
-class PostgresUserRepository implements UserRepository {
-  // PostgreSQL-specific implementation
-}
-
-class MongoOrderRepository implements OrderRepository {
-  // MongoDB-specific implementation
+// constrained generics
+interface Repository<T extends { id: string }> {
+  findById(id: string): Promise<T | null>;
 }
 ```
 
-### Component Classes
+### Enum Patterns
+
+**Purpose:** Type-safe constants
+
+**When to use:**
+
+- Fixed set of values
+- State machines
+- Configuration options
+
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: component naming (React/Angular/Vue)
-class UserProfileComponent {}
-class NavigationBar {}
-class ShoppingCartWidget {}
-class PaymentForm {}
-
-// For React functional components
-const UserProfile: React.FC<UserProfileProps> = (props) => {};
-const ProductCard: React.FC<ProductCardProps> = (props) => {};
-
-// ❌ BAD: generic component names
-class Component1 {}
-class MyComponent {}
-class Comp {}
-```
-
-## Enum Naming
-
-### Standard Enums
-
-```typescript
-// ✅ GOOD: enum naming patterns
 enum UserRole {
   Admin = "ADMIN",
-  Editor = "EDITOR",
-  Viewer = "VIEWER",
+  User = "USER"
 }
 
-enum HttpStatus {
-  Ok = 200,
-  Created = 201,
-  BadRequest = 400,
-  Unauthorized = 401,
-  NotFound = 404,
-  InternalServerError = 500,
-}
-
-enum LogLevel {
-  Debug = "DEBUG",
-  Info = "INFO",
-  Warning = "WARNING",
-  Error = "ERROR",
-  Critical = "CRITICAL",
-}
-
-// ✅ GOOD: const assertions as enums
-const OrderStatus = {
-  PENDING: "pending",
-  PROCESSING: "processing",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled",
+// or const assertion
+const Status = {
+  ACTIVE: "active",
+  ...
 } as const;
-
-type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
-
-// ❌ BAD: poor enum naming
-enum status {} // Should be PascalCase
-enum USER_ROLE {} // Should be PascalCase, not UPPER_SNAKE
-enum EUserRole {} // Don't use 'E' prefix
 ```
 
-## Generic Type Parameters
+### Common Patterns
 
-### Standard Generic Patterns
+1. **Error Classes** - *Error suffix
+
+   ```typescript
+   ValidationError, NotFoundError, AuthError
+   ```
+
+2. **Config Types** - *Config suffix
+
+   ```typescript
+   DatabaseConfig, ServerConfig, AuthConfig
+   ```
+
+3. **Test Types** - Mock/Stub prefix
+
+   ```typescript
+   MockUser, StubRepository, TestFixture
+   ```
+
+## Anti-Patterns
+
+### Unnecessary Prefixes
 
 ```typescript
-// ✅ GOOD: generic type parameter naming
-interface Container<T> {
-  value: T;
-  getValue(): T;
-  setValue(value: T): void;
-}
+// ❌ BAD: Hungarian notation
+interface IUser {}      // No 'I' prefix
+type TUserId = string;  // No 'T' prefix
+enum EStatus {}         // No 'E' prefix
 
-interface KeyValuePair<K, V> {
-  key: K;
-  value: V;
-}
-
-class EventEmitter<TEvents extends Record<string, any>> {
-  on<K extends keyof TEvents>(
-    event: K,
-    handler: (data: TEvents[K]) => void,
-  ): void {
-    // Implementation
-  }
-}
-
-// ✅ GOOD: descriptive generic constraints
-interface Repository<TEntity extends { id: string }> {
-  findById(id: string): Promise<TEntity | null>;
-  save(entity: TEntity): Promise<TEntity>;
-}
-
-type AsyncFunction<TArgs extends any[], TReturn> = (
-  ...args: TArgs
-) => Promise<TReturn>;
-
-// ❌ BAD: poor generic naming
-interface Container<Type> {} // Use single letter T
-interface Map<KeyType, ValueType> {} // Too verbose
-interface Data<X, Y, Z> {} // Non-standard letters without reason
+// ✅ GOOD: clean names
+interface User {}
+type UserId = string;
+enum Status {}
 ```
 
-## Namespace and Module Naming
+### Common Mistakes to Avoid
 
-```typescript
-// ✅ GOOD: namespace organization
-namespace Api {
-  export interface User {}
-  export interface Product {}
+1. **Generic Names**
+   - Problem: Too vague to be useful
+   - Solution: Be specific about purpose
+   - Example: `Data` → `UserData`
 
-  export namespace V1 {
-    export interface Response {}
-  }
-}
+2. **Redundant Suffixes**
+   - Problem: Adds no value
+   - Solution: Use clean names
+   - Example: `UserInterface` → `User`
 
-namespace Database {
-  export interface Config {}
-  export interface Connection {}
-}
+3. **Wrong Casing**
+   - Problem: Inconsistent with TypeScript
+   - Solution: Always use PascalCase
+   - Example: `user_service` → `UserService`
 
-// ✅ GOOD: module exports
-export interface UserModule {
-  UserService: typeof UserService;
-  UserRepository: typeof UserRepository;
-  UserController: typeof UserController;
-}
-```
+## Quick Decision Tree
 
-## Error and Exception Types
+1. **Choosing type construct**
+   - If object shape → `interface`
+   - If union/alias → `type`
+   - If implementation → `class`
+   - If constants → `enum` or const assertion
 
-```typescript
-// ✅ GOOD: error class naming
-class ValidationError extends Error {
-  constructor(
-    public field: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
-class AuthenticationError extends Error {}
-class AuthorizationError extends Error {}
-class NotFoundError extends Error {}
-class ConflictError extends Error {}
-
-// ✅ GOOD: error type definitions
-interface ErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, any>;
-  };
-  timestamp: Date;
-}
-
-type ErrorCode =
-  | "INVALID_INPUT"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "INTERNAL_ERROR";
-```
-
-## Testing Type Names
-
-```typescript
-// ✅ GOOD: test-specific type naming
-interface MockUser extends User {
-  _isMock: true;
-}
-
-type TestCase<TInput, TExpected> = {
-  name: string;
-  input: TInput;
-  expected: TExpected;
-};
-
-interface TestFixture {
-  users: User[];
-  products: Product[];
-  orders: Order[];
-}
-
-class UserServiceStub implements UserService {
-  // Test implementation
-}
-```
-
-## Anti-Patterns to Avoid
-
-```typescript
-// ❌ BAD: common type naming mistakes
-interface IUserService {} // Don't use 'I' prefix
-type TUser = User; // Don't use 'T' prefix for aliases
-class userService {} // Should be PascalCase
-enum user_role {} // Should be PascalCase
-
-interface UserInterface {} // Redundant suffix
-type UserType = User; // Redundant suffix
-class ServiceClass {} // Generic name
-
-type str = string; // Unnecessary aliasing
-type num = number; // Don't abbreviate
-type bool = boolean; // Pointless renaming
-
-interface Data {} // Too generic
-interface Info {} // Too vague
-interface Object {} // Conflicts with built-in
-```
-
-## References
-
-- [Variable Naming](@./variables.md) - Variable naming patterns
-- [Function Naming](@./functions.md) - Function and method naming
-- [TypeScript Standards](@../typescript.md) - TypeScript best practices
+2. **Naming pattern**
+   - If service → `*Service` suffix
+   - If repository → `*Repository` suffix
+   - If config → `*Config` suffix
+   - If error → `*Error` suffix

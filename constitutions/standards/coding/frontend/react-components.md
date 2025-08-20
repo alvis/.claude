@@ -2,52 +2,89 @@
 
 _Standards for React component structure, patterns, and performance optimization_
 
-## Component Structure Requirements
+## Dependent Standards
 
-### Critical Component Rules
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- **ALWAYS use arrow functions with `FC` type** - Use `FC` for functional components with typed props
-- **NO class components** (except Error Boundaries)
-- **ALWAYS export props interface for every component** (required for type safety and documentation)
-- **Keep components small and focused** (single responsibility principle)
-- **Follow accessibility standards (WCAG)**
-- **Optimize performance with memoization when needed**
-- **Implement functional components and hooks exclusively** - Avoid class components
+- [TypeScript Standards](../../typescript.md) - React components use TypeScript interfaces and typing throughout all examples
+- [Function Standards](../../functions.md) - React components are functions and component handlers are functions
+- [Testing Standards](../../testing.md) - Component test files and testing patterns are essential for quality
+- [Documentation Standards](../../documentation.md) - Components require proper JSDoc and interface documentation
+- [General Principles](../../general-principles.md) - Foundational coding principles that apply to all component code
+- [File Naming Standards](../../naming/files.md) - Specific component file naming patterns (Button.tsx, Button.spec.tsx)
+- [Accessibility Standards](./accessibility.md) - Frontend components must follow accessibility requirements
 
-### Component Template
+## Core Principles
+
+### Functional Components with TypeScript
+
+Always use functional components with proper TypeScript interfaces for type safety and maintainability.
 
 ```typescript
-// ✅ ALWAYS export the props interface
+// ✅ GOOD: proper component structure
 export interface ButtonProps {
-  /** describes button visual style variant */
   variant?: 'primary' | 'secondary';
-  /** handles button click events */
   onClick?: () => void;
-  /** provides accessible label for screen readers */
-  'aria-label'?: string;
-  /** indicates whether button is disabled */
-  disabled?: boolean;
   children: ReactNode;
 }
 
-// ✅ ALWAYS use arrow functions with FC type
-export const Button: FC<ButtonProps> = ({
-  variant = 'primary',
-  onClick,
-  'aria-label': ariaLabel,
-  disabled = false,
-  children
-}) => {
+export const Button: FC<ButtonProps> = ({ variant = 'primary', ...props }) => {
+  return <button className={variant} {...props} />;
+};
+
+// ❌ BAD: missing interface export, class component
+class BadButton extends Component {
+  render() { return <button>...</button>; }
+}
+```
+
+### Single Responsibility
+
+Each component should handle one specific task and delegate complex logic to custom hooks.
+
+```typescript
+// ✅ GOOD: focused component
+export const UserProfile: FC<Props> = ({ user }) => {
   return (
-    <button
-      className={variant}
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      type="button"
-    >
-      {children}
-    </button>
+    <div>
+      <UserAvatar user={user} />
+      <UserInfo user={user} />
+      ...
+    </div>
+  );
+};
+
+// ❌ BAD: monolithic component handling multiple concerns
+export const UserEverything: FC<Props> = ({ user }) => {
+  // 200+ lines of mixed logic
+};
+```
+
+### Performance Optimization
+
+Use memoization strategically for expensive operations and stable references.
+
+```typescript
+// ✅ GOOD: memoize expensive calculations
+export const ExpensiveList = memo(({ items }: Props) => {
+  const sortedItems = useMemo(() => 
+    items.sort((a, b) => b.timestamp - a.timestamp), [items]
+  );
+  
+  const handleClick = useCallback((id: string) => {
+    updateItem(id);
+  }, [updateItem]);
+  
+  return <div>{sortedItems.map(item => <Item key={item.id} ... />)}</div>;
+});
+
+// ❌ BAD: creating objects in render
+export const BadComponent = ({ user }) => {
+  return (
+    <UserProfile
+      style={{ margin: 10 }} // new object every render
+      options={{ showEmail: true }} // new object every render
+    />
   );
 };
 ```
@@ -56,148 +93,32 @@ export const Button: FC<ButtonProps> = ({
 
 ### Naming Conventions
 
-- **Component files**: Name in `PascalCase`, e.g. ✅ `Browser.tsx` ❌ `browser.tsx`
-- **Hook files**: Remain in `camelCase`, e.g. ✅ `useScroll.ts` ❌ `UseScroll.ts`
-- **Test files**: `Component.spec.tsx` or `Component.spec.ts`
-- **Story files**:
-  - `ComponentName.stories.tsx` for basic component stories
-  - `ComponentName.demo.stories.tsx` for complex scenarios involving multiple components
+```plaintext
+✅ GOOD:
+Button.tsx              # PascalCase components
+useScroll.ts           # camelCase hooks
+Button.spec.tsx        # Test files
+Button.stories.tsx     # Story files
+
+❌ BAD:
+browser.tsx            # Should be Browser.tsx
+UseScroll.ts          # Should be useScroll.ts
+```
 
 ### Directory Structure
 
 ```plaintext
 components/
-├── Button.tsx          # Component implementation
-├── Button.spec.tsx     # Tests (use 'rc:' prefix)
-└── Button.stories.tsx  # Storybook documentation
+├── Button.tsx          # Implementation
+├── Button.spec.tsx     # Tests with 'rc:' prefix
+└── Button.stories.tsx  # Storybook stories
 ```
 
-## Storybook Standards
-
-### Story Naming Convention
-
-Use the component's path and name for the story title:
-
-```typescript
-// ✅ GOOD: path-based naming for stories
-// components/forms/Button.stories.tsx
-export default {
-  title: "Components/Forms/Button",
-  component: Button,
-} as Meta<typeof Button>;
-
-// components/dashboard/UserCard.stories.tsx
-export default {
-  title: "Components/Dashboard/UserCard",
-  component: UserCard,
-} as Meta<typeof UserCard>;
-
-// ❌ BAD: flat naming structure
-export default {
-  title: "Button", // missing path context
-  component: Button,
-};
-```
-
-### Story Organization
-
-```typescript
-// ✅ GOOD: complete story structure
-import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "./Button";
-
-const meta = {
-  title: "Components/UI/Button",
-  component: Button,
-  parameters: {
-    layout: "centered",
-  },
-  tags: ["autodocs"],
-  argTypes: {
-    variant: {
-      control: "select",
-      options: ["primary", "secondary", "danger"],
-    },
-  },
-} satisfies Meta<typeof Button>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-// primary story
-export const Primary: Story = {
-  args: {
-    variant: "primary",
-    children: "Click me",
-  },
-};
-
-// additional variants
-export const Secondary: Story = {
-  args: {
-    variant: "secondary",
-    children: "Click me",
-  },
-};
-
-// interactive states
-export const Disabled: Story = {
-  args: {
-    disabled: true,
-    children: "Disabled",
-  },
-};
-
-// with actions
-export const WithClick: Story = {
-  args: {
-    children: "Click me",
-    onClick: () => console.log("clicked"),
-  },
-};
-```
-
-### Story Best Practices
-
-- **Mirror directory structure** in story titles
-- **Include all component states** (default, hover, active, disabled)
-- **Document props** with controls and descriptions
-- **Add interaction tests** for user flows
-- **Use decorators** for context providers
-- **Include accessibility** scenarios
-
-## Component Design Patterns
-
-### Single Responsibility Principle
-
-- One component should handle one task
-- Extract complex logic into custom hooks
-- Break down large components into smaller, focused ones
-
-```typescript
-// ✅ GOOD: focused components
-export const UserProfile: FC<UserProfileProps> = ({ user }) => {
-  return (
-    <div>
-      <UserAvatar user={user} />
-      <UserInfo user={user} />
-      <UserActions user={user} />
-    </div>
-  );
-};
-
-// ❌ BAD: monolithic component
-export const UserEverything: FC<Props> = ({ user }) => {
-  // 200+ lines of mixed avatar, info, and action logic
-};
-```
+## Component Architecture
 
 ### Props Design
 
-- **Always define and export props interface**
-- Keep props simple and minimal
-- Avoid passing down complex structures
-- Use discriminated unions for variant props
+Keep props simple, predictable, and well-typed.
 
 ```typescript
 // ✅ GOOD: simple, focused props
@@ -207,43 +128,37 @@ export interface AlertProps {
   onDismiss?: () => void;
 }
 
-// ❌ BAD: complex props structure
-export interface BadAlertProps {
+// ❌ BAD: complex nested structure
+export interface BadProps {
   config: {
-    display: {
-      variant: string;
-      theme: object;
-      styling: unknown;
-    };
-    behavior: {
-      dismissible: boolean;
-      autoHide: boolean;
-      callbacks: object;
-    };
+    display: { variant: string; theme: object; };
+    behavior: { dismissible: boolean; callbacks: object; };
   };
 }
 ```
 
 ### Component Composition
 
+Favor composition over complex prop configurations.
+
 ```typescript
-// ✅ GOOD: composable components
+// ✅ GOOD: composable structure
 <Card>
   <Card.Header>
-    <Card.Title>User Profile</Card.Title>
+    <Card.Title>Profile</Card.Title>
   </Card.Header>
   <Card.Body>
     <UserInfo user={user} />
   </Card.Body>
 </Card>
 
-// ❌ Avoid: Monolithic components with many props
+// ❌ BAD: too many props
 <UserCard
-  title="User Profile"
+  title="Profile"
   showHeader={true}
   headerStyle="primary"
   user={user}
-  bodyStyle="compact"
+  ...
 />
 ```
 
@@ -251,206 +166,149 @@ export interface BadAlertProps {
 
 ### State Placement
 
-- Keep state close to where it's used
-- Lift state up only when necessary
-- Use Context API for deeply nested props
-- Maintain single source of truth
+Keep state close to where it's used and lift up only when necessary.
 
 ```typescript
 // ✅ GOOD: local state for local concerns
-export const TodoItem: FC<TodoItemProps> = ({ todo, onUpdate }) => {
+export const TodoItem: FC<Props> = ({ todo, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div>
-      {isEditing ? (
-        <TodoEditForm todo={todo} onSave={onUpdate} />
-      ) : (
-        <TodoDisplay todo={todo} onEdit={() => setIsEditing(true)} />
-      )}
+      {isEditing ? <TodoEditForm ... /> : <TodoDisplay ... />}
     </div>
   );
 };
-```
 
-### Context Usage
-
-```typescript
-// ✅ GOOD: split contexts for performance
+// ✅ GOOD: context for deep prop drilling
 const UserContext = createContext<User | null>(null);
-const ThemeContext = createContext<Theme>('light');
 
-// ✅ GOOD: context with provider pattern
 export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-
-  return (
-    <UserContext.Provider value={user}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
 ```
 
-## Performance Optimization
+## Framework Integration
 
-### When to Use Memoization
-
-- Use `React.memo` for components with expensive renders
-- Use `useMemo` for expensive calculations
-- Use `useCallback` for stable event handlers
-- Avoid creating objects/functions in render
+### Next.js Patterns
 
 ```typescript
-// ✅ GOOD: memoize expensive components
-export const ExpensiveList = memo(({ items }: Props) => {
-  return items.map(item => <Item key={item.id} {...item} />);
-});
-
-// ✅ GOOD: memoize calculations
-const UserProfile: FC<Props> = ({ user, activities }) => {
-  const sortedActivities = useMemo(() =>
-    activities.sort((a, b) => b.timestamp - a.timestamp),
-    [activities]
-  );
-
-  const handleActivityClick = useCallback((id: string) => {
-    updateActivity(id);
-  }, [updateActivity]);
-
-  return (
-    <div>
-      {sortedActivities.map(activity => (
-        <Activity
-          key={activity.id}
-          activity={activity}
-          onClick={handleActivityClick}
-        />
-      ))}
-    </div>
-  );
-};
-```
-
-### Performance Anti-Patterns
-
-```typescript
-// ❌ BAD: creating objects in render
-const BadComponent: FC<Props> = ({ user }) => {
-  return (
-    <UserProfile
-      user={user}
-      style={{ margin: 10, padding: 5 }} // new object every render
-      options={{ showEmail: true }}       // new object every render
-    />
-  );
-};
-
-// ✅ GOOD: define objects outside render
-const profileStyle = { margin: 10, padding: 5 };
-const profileOptions = { showEmail: true };
-
-const GoodComponent: FC<Props> = ({ user }) => {
-  return (
-    <UserProfile
-      user={user}
-      style={profileStyle}
-      options={profileOptions}
-    />
-  );
-};
-```
-
-## Next.js Integration
-
-### Dynamic Imports
-
-```typescript
-// ✅ GOOD: lazy load heavy components
+// ✅ GOOD: dynamic imports for performance
 const HeavyChart = dynamic(() => import('#components/Chart'), {
   loading: () => <Skeleton />,
   ssr: false,
 });
-```
 
-### Image Optimization
-
-```typescript
 // ✅ GOOD: optimized images
 <Image
   src="/hero.jpg"
-  alt="Hero image description"
+  alt="Description"
   width={1200}
   height={600}
-  priority // for above fold images
-  placeholder="blur"
+  priority
 />
 ```
 
-## Testing Requirements
+## Quick Reference
 
-### Test File Structure
+| Pattern | Use Case | Example | Notes |
+|---------|----------|---------|-------|
+| FC<Props> | All components | `const Button: FC<Props> = ...` | Always export interface |
+| memo() | Expensive renders | `memo(({ items }) => ...)` | Use sparingly |
+| useMemo | Heavy calculations | `useMemo(() => sort(items), [items])` | Memoize expensive ops |
+| useCallback | Stable handlers | `useCallback((id) => update(id), [])` | Prevent child re-renders |
+| Context | Deep props | `<Provider value={data}>` | Split contexts for performance |
+
+## Patterns & Best Practices
+
+### Component Template Pattern
+
+**Purpose:** Standardized component structure with TypeScript safety
+
+**When to use:**
+
+- Every new component
+- Refactoring existing components
+
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: use 'rc:' prefix for React component tests
-describe('rc:Button', () => {
-  it('should render with correct text', () => {
-    const expected = 'Click me';
+// pattern template
+export interface ComponentProps {
+  variant?: 'primary' | 'secondary';
+  onClick?: () => void;
+  children: ReactNode;
+}
 
-    render(<Button>{expected}</Button>);
-
-    expect(screen.getByRole('button')).toHaveTextContent(expected);
-  });
-
-  it('should call onClick when clicked', () => {
-    const mockClick = vi.fn();
-
-    render(<Button onClick={mockClick}>Click</Button>);
-    fireEvent.click(screen.getByRole('button'));
-
-    expect(mockClick).toHaveBeenCalledOnce();
-  });
-});
+export const Component: FC<ComponentProps> = ({
+  variant = 'primary',
+  ...props
+}) => {
+  return <element className={variant} {...props} />;
+};
 ```
 
-### What to Test
+## Anti-Patterns
 
-- **Component rendering** - Does it render correctly?
-- **User interactions** - Do clicks, inputs work?
-- **Props handling** - Are props applied correctly?
-- **Conditional rendering** - Do different states show correctly?
-- **Accessibility** - Are ARIA attributes present?
-
-## Anti-Patterns to Avoid
+### Class Components
 
 ```typescript
 // ❌ BAD: class components (except Error Boundaries)
 class BadButton extends Component {
-  render() {
-    return <button>{this.props.children}</button>;
-  }
+  render() { return <button>...</button>; }
 }
 
-// ❌ BAD: not exporting props interface
-const BadButton = ({ onClick, children }: { onClick: () => void; children: ReactNode }) => {
-  return <button onClick={onClick}>{children}</button>;
+// ✅ GOOD: functional components
+export const Button: FC<Props> = ({ children }) => {
+  return <button>{children}</button>;
+};
+```
+
+### Missing Interface Exports
+
+```typescript
+// ❌ BAD: inline props type, not exported
+const BadButton = ({ onClick }: { onClick: () => void }) => {
+  return <button onClick={onClick}>...</button>;
 };
 
-// ❌ BAD: complex prop drilling
-<ComponentA>
-  <ComponentB data={data} theme={theme} config={config}>
-    <ComponentC data={data} theme={theme} config={config} />
-  </ComponentB>
-</ComponentA>
+// ✅ GOOD: exported interface
+export interface ButtonProps {
+  onClick?: () => void;
+}
 
-// ✅ GOOD: use Context for deeply nested props
-<DataProvider value={data}>
-  <ThemeProvider value={theme}>
-    <ComponentA>
-      <ComponentB>
-        <ComponentC />
-      </ComponentB>
-    </ComponentA>
-  </ThemeProvider>
-</DataProvider>
+export const Button: FC<ButtonProps> = ({ onClick }) => {
+  return <button onClick={onClick}>...</button>;
+};
 ```
+
+### Common Mistakes to Avoid
+
+1. **Creating objects in render**
+   - Problem: Causes unnecessary re-renders
+   - Solution: Define objects outside component or use useMemo
+   - Example: `const style = { margin: 10 }` outside component
+
+2. **Deep prop drilling**
+   - Problem: Maintenance nightmare, unclear data flow
+   - Solution: Use Context API for deeply nested props
+
+## Quick Decision Tree
+
+1. **Need to share state between components?**
+   - If siblings → Lift state to common parent
+   - If deep nesting → Use Context
+   - Otherwise → Keep local
+
+2. **Component rendering slowly?**
+   - If expensive calculations → Use useMemo
+   - If expensive component → Use memo
+   - If unstable callbacks → Use useCallback
+   - Otherwise → Profile first
+
+3. **Need complex interactions?**
+   - If form-like → Use useReducer
+   - If simple state → Use useState
+   - If external state → Use custom hook
+

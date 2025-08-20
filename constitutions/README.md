@@ -34,7 +34,7 @@ This directory contains the restructured development constitution, organized by 
 
 **Key standards:**
 
-- [Data Operations](@./standards/backend/data-operations.md) - Database and repository patterns
+- [Data Operations](@./standards/backend/data-operation.md) - Database and repository patterns
 - [TypeScript](@./standards/code/typescript.md) - Language usage and imports
 
 **Templates:**
@@ -46,7 +46,6 @@ This directory contains the restructured development constitution, organized by 
 **Core workflows:**
 
 - [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - **MANDATORY** test-driven development
-- [Commit with Git](@./workflows/project/commit-with-git.md) - Quality-gated git workflow
 - [Review Code](@./workflows/quality/review-code.md) - Code review standards
 - [Approve PR](@./workflows/quality/approve-pr.md) - Final approval quality gates
 

@@ -87,7 +87,7 @@ const errorCodeToMessage: Record<string, string> = {
 };
 const cacheDuration = 300; // clear unit indication
 
-// Pattern: <item>By<key> or <item>To<value>
+// pattern: <item>By<key> or <item>To<value>
 const ordersByCustomerId = new Map<string, Order[]>();
 const currencyToSymbol = { USD: "$", EUR: "€", GBP: "£" };
 
@@ -151,7 +151,7 @@ const OrderStatus = {
 
 ```typescript
 // ✅ GOOD: use domain-specific terms
-// E-commerce context
+// e-commerce context
 const customers = await getCustomers();
 const shoppingCart = user.cart;
 const orderTotal = calculateOrderTotal(items);
@@ -181,7 +181,7 @@ const durationMs = endTime - startTime;
 const delaySeconds = 5;
 const timeoutMs = 30000;
 
-// Include units in time variables
+// include units in time variables
 const sessionDurationMinutes = 30;
 const cacheExpiryHours = 24;
 const retryDelayMs = 1000;
@@ -192,31 +192,23 @@ const duration = 30; // 30 what? Seconds? Minutes?
 const timeout = 5000; // Include unit in name
 ```
 
-## Boolean Variables
-
-### State and Condition Booleans
+### Boolean Variables
 
 ```typescript
-// ✅ GOOD: boolean naming patterns
-const isActive = user.status === "active";
-const isVisible = element.style.display !== "none";
-const isLoading = requestState === "pending";
-const isAuthenticated = !!user.token;
+// state checks - is*
+isActive, isVisible, isLoading, isAuthenticated
 
-const hasPermissions = permissions.length > 0;
-const hasCompletedOnboarding = user.onboardingStep === "complete";
-const hasUnsavedChanges = formState.isDirty;
+// possession - has*  
+hasPermissions, hasChanges, hasError
 
-const canEdit = userRole === "admin" || userId === resourceOwnerId;
-const canDelete = userRole === "admin" && resource.isDeletable;
+// capability - can*
+canEdit, canDelete, canSubmit
 
-const shouldRefresh = lastUpdate < Date.now() - CACHE_TTL;
-const shouldRetry = attemptCount < MAX_RETRY_ATTEMPTS;
+// recommendation - should*
+shouldRefresh, shouldRetry
 
-// ❌ BAD: unclear boolean names
-const active = user.status === "active"; // Missing 'is' prefix
-const permission = permissions.length > 0; // Singular suggests non-boolean
-const refresh = lastUpdate < Date.now(); // Verb without context
+// ❌ BAD: missing prefixes
+const active = true;  // Should be isActive
 ```
 
 ## Iteration Variables
@@ -239,12 +231,12 @@ users.forEach((user, index) => {
 
 // ✅ Acceptable: Simple index variables for numeric loops
 for (let i = 0; i < array.length; i++) {
-  // When you need the index
+  // when you need the index
 }
 
 // ❌ BAD: single letters for complex objects
 for (const u of users) {
-  // Use 'user' instead
+  // use 'user' instead
   processUser(u);
 }
 ```
