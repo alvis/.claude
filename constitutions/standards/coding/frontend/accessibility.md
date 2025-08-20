@@ -2,45 +2,54 @@
 
 _WCAG compliance standards for inclusive web development_
 
-## Core Accessibility Requirements
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [General Principles](@../../general-principles.md) - Accessibility builds on fundamental coding principles of clarity, consistency, and user-centered design
+- [Documentation Standards](@../../documentation.md) - All accessibility features and decisions must be properly documented for compliance and team understanding
+
+## Core Principles
 
 ### WCAG 2.1 AA Compliance
 
-All components must meet WCAG 2.1 AA standards:
-
-- **Perceivable** - Information and UI components must be presentable to users in ways they can perceive
-- **Operable** - UI components and navigation must be operable
-- **Understandable** - Information and UI operation must be understandable
-- **Robust** - Content must be robust enough to be interpreted by a wide variety of assistive technologies
-
-### Critical Rules
-
-- **ALWAYS provide semantic HTML elements**
-- **ALWAYS include proper ARIA attributes**
-- **ALWAYS support keyboard navigation**
-- **ALWAYS test with screen readers**
-- **ALWAYS maintain proper color contrast (WCAG AA)**
-- **ALWAYS provide alternative text for images**
-- **ALWAYS associate form labels properly**
-
-## Semantic HTML
-
-### Use Proper HTML Elements
+All components must meet the four fundamental accessibility principles.
 
 ```typescript
-// ✅ GOOD: semantic HTML improves accessibility and SEO
+// ✅ GOOD: accessible button with proper semantics
+<button
+  aria-label="Close dialog"
+  aria-expanded={isOpen}
+  onClick={handleClose}
+>
+  <CloseIcon aria-hidden="true" />
+  Close
+</button>
+
+// ❌ BAD: inaccessible clickable div
+<div onClick={handleClose} className="button-like">
+  <CloseIcon />
+</div>
+```
+
+### Semantic HTML First
+
+Use proper HTML elements before adding ARIA attributes.
+
+```typescript
+// ✅ GOOD: semantic HTML provides built-in accessibility
 <button onClick={handleSubmit}>Submit Form</button>
 <nav aria-label="Main navigation">
   <ul>
     <li><a href="/home">Home</a></li>
-    <li><a href="/about">About</a></li>
+    ...
   </ul>
 </nav>
 <main>
   <h1>Page Title</h1>
   <article>
     <h2>Article Title</h2>
-    <p>Article content...</p>
+    ...
   </article>
 </main>
 
@@ -48,173 +57,18 @@ All components must meet WCAG 2.1 AA standards:
 <div onClick={handleSubmit}>Submit Form</div>
 <div className="nav">
   <div className="nav-item">Home</div>
-  <div className="nav-item">About</div>
-</div>
-<div className="main">
-  <div className="title">Page Title</div>
-  <div className="article">
-    <div className="article-title">Article Title</div>
-    <div>Article content...</div>
-  </div>
+  ...
 </div>
 ```
 
-### Heading Hierarchy
+### Keyboard Navigation Support
+
+Ensure all interactive elements are keyboard accessible.
 
 ```typescript
-// ✅ GOOD: proper heading hierarchy maintains logical document structure
-<main>
-  <h1>Main Page Title</h1>
-  <section>
-    <h2>Section Title</h2>
-    <article>
-      <h3>Article Title</h3>
-      <h4>Subsection</h4>
-    </article>
-  </section>
-</main>
-
-// ❌ BAD: broken heading hierarchy confuses screen readers
-<main>
-  <h1>Main Page Title</h1>
-  <h4>Should be h2</h4>  {/* Skipped levels */}
-  <h2>Out of order</h2>
-</main>
-```
-
-## ARIA Attributes
-
-### Essential ARIA Attributes
-
-```typescript
-// ✅ GOOD: proper ARIA usage enhances accessibility context
-<button
-  aria-label="Close dialog"
-  aria-expanded={isOpen}
-  aria-controls="dialog-content"
-  onClick={handleClose}
->
-  <CloseIcon aria-hidden="true" />
-</button>
-
-<div
-  role="dialog"
-  aria-labelledby="dialog-title"
-  aria-describedby="dialog-description"
-  aria-modal="true"
->
-  <h2 id="dialog-title">Confirm Action</h2>
-  <p id="dialog-description">Are you sure you want to delete this item?</p>
-</div>
-
-<input
-  type="email"
-  id="email"
-  aria-describedby="email-help email-error"
-  aria-invalid={hasError}
-  aria-required="true"
-/>
-<div id="email-help">We'll never share your email</div>
-{hasError && <div id="email-error" role="alert">Please enter a valid email</div>}
-```
-
-### ARIA Roles
-
-```typescript
-// ✅ GOOD: appropriate ARIA roles clarify component purpose
-<div role="tablist" aria-label="Settings sections">
-  <button
-    role="tab"
-    aria-selected={activeTab === 'general'}
-    aria-controls="general-panel"
-    id="general-tab"
-  >
-    General
-  </button>
-  <button
-    role="tab"
-    aria-selected={activeTab === 'privacy'}
-    aria-controls="privacy-panel"
-    id="privacy-tab"
-  >
-    Privacy
-  </button>
-</div>
-
-<div
-  role="tabpanel"
-  id="general-panel"
-  aria-labelledby="general-tab"
-  hidden={activeTab !== 'general'}
->
-  General settings content
-</div>
-```
-
-## Keyboard Navigation
-
-### Focus Management
-
-```typescript
-// ✅ GOOD: proper focus management ensures keyboard accessibility
-export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      // Store current focus
-      previousFocusRef.current = document.activeElement as HTMLElement;
-
-      // Focus the modal
-      dialogRef.current?.focus();
-
-      // Trap focus within modal
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-
-        if (e.key === 'Tab') {
-          trapFocus(e, dialogRef.current);
-        }
-      };
-
-      document.addEventListener('keydown', handleKeyDown);
-
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        // Restore focus
-        previousFocusRef.current?.focus();
-      };
-    }
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-```
-
-### Keyboard Event Handling
-
-```typescript
-// ✅ GOOD: keyboard accessibility supports all interaction methods
+// ✅ GOOD: keyboard accessible custom element
 export const CustomButton: FC<Props> = ({ onClick, children }) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    // Support both Enter and Space like native buttons
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick?.();
@@ -233,14 +87,148 @@ export const CustomButton: FC<Props> = ({ onClick, children }) => {
     </div>
   );
 };
+
+// ❌ BAD: no keyboard support
+<div onClick={onClick} className="clickable">
+  {children}
+</div>
 ```
+
+## Document Structure
+
+### Heading Hierarchy
+
+Maintain logical heading order for screen reader navigation.
+
+```typescript
+// ✅ GOOD: proper heading hierarchy
+<main>
+  <h1>Main Page Title</h1>
+  <section>
+    <h2>Section Title</h2>
+    <article>
+      <h3>Article Title</h3>
+      <h4>Subsection</h4>
+    </article>
+  </section>
+</main>
+
+// ❌ BAD: skipped heading levels
+<main>
+  <h1>Main Page Title</h1>
+  <h4>Should be h2</h4>  // Skipped h2, h3
+  <h2>Out of order</h2>
+</main>
+```
+
+## ARIA Implementation
+
+### Essential ARIA Patterns
+
+```typescript
+// ✅ GOOD: dialog with proper ARIA
+<div
+  role="dialog"
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-description"
+  aria-modal="true"
+>
+  <h2 id="dialog-title">Confirm Action</h2>
+  <p id="dialog-description">Are you sure you want to delete this item?</p>
+  <button onClick={handleConfirm}>Yes, Delete</button>
+  <button onClick={handleCancel}>Cancel</button>
+</div>
+
+// ✅ GOOD: form field with descriptions
+<input
+  type="email"
+  id="email"
+  aria-describedby="email-help email-error"
+  aria-invalid={hasError}
+  aria-required="true"
+/>
+<div id="email-help">We'll never share your email</div>
+{hasError && <div id="email-error" role="alert">Please enter a valid email</div>}
+```
+
+### Interactive Widget Roles
+
+```typescript
+// ✅ GOOD: tab interface with proper roles
+<div role="tablist" aria-label="Settings sections">
+  <button
+    role="tab"
+    aria-selected={activeTab === 'general'}
+    aria-controls="general-panel"
+    id="general-tab"
+  >
+    General
+  </button>
+  ...
+</div>
+
+<div
+  role="tabpanel"
+  id="general-panel"
+  aria-labelledby="general-tab"
+  hidden={activeTab !== 'general'}
+>
+  General settings content
+</div>
+```
+
+## Focus Management
+
+### Modal Focus Trapping
+
+```typescript
+// ✅ GOOD: proper focus management in modal
+export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // store and move focus
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      dialogRef.current?.focus();
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+        if (e.key === 'Tab') trapFocus(e, dialogRef.current);
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        previousFocusRef.current?.focus(); // restore focus
+      };
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+    >
+      {children}
+    </div>
+  );
+};
+```
+
 
 ## Form Accessibility
 
-### Form Labels and Descriptions
+### Accessible Form Fields
 
 ```typescript
-// ✅ GOOD: accessible form components provide clear user guidance
+// ✅ GOOD: complete accessible form field
 export const FormField: FC<FormFieldProps> = ({
   label,
   name,
@@ -257,7 +245,7 @@ export const FormField: FC<FormFieldProps> = ({
 
   return (
     <div className="form-field">
-      <label htmlFor={id} className="form-label">
+      <label htmlFor={id}>
         {label}
         {required && <span aria-label="required"> *</span>}
       </label>
@@ -272,104 +260,44 @@ export const FormField: FC<FormFieldProps> = ({
         {...props}
       />
 
-      {helpText && (
-        <div id={helpId} className="form-help">
-          {helpText}
-        </div>
-      )}
-
-      {error && (
-        <div id={errorId} role="alert" className="form-error">
-          {error}
-        </div>
-      )}
+      {helpText && <div id={helpId}>{helpText}</div>}
+      {error && <div id={errorId} role="alert">{error}</div>}
     </div>
   );
 };
 ```
 
-### Form Validation Messages
+
+## Visual Design
+
+### Color and Contrast
+
+Ensure sufficient color contrast and avoid color-only indicators.
 
 ```typescript
-// ✅ GOOD: accessible error handling announces validation issues
-export const useFormValidation = (schema: ValidationSchema) => {
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  const announceErrors = useCallback((newErrors: Record<string, string>) => {
-    // Announce errors to screen readers
-    const errorCount = Object.keys(newErrors).length;
-    if (errorCount > 0) {
-      const announcement = `Form has ${errorCount} error${errorCount > 1 ? "s" : ""}. Please review and correct.`;
-
-      // Create live region announcement
-      const liveRegion = document.createElement("div");
-      liveRegion.setAttribute("aria-live", "polite");
-      liveRegion.setAttribute("aria-atomic", "true");
-      liveRegion.style.position = "absolute";
-      liveRegion.style.left = "-10000px";
-      liveRegion.textContent = announcement;
-
-      document.body.appendChild(liveRegion);
-
-      setTimeout(() => {
-        document.body.removeChild(liveRegion);
-      }, 1000);
-    }
-  }, []);
-
-  const validate = useCallback(
-    (values: Record<string, any>) => {
-      const newErrors = schema.validate(values);
-      setErrors(newErrors);
-
-      if (Object.keys(newErrors).length > 0) {
-        announceErrors(newErrors);
-      }
-
-      return Object.keys(newErrors).length === 0;
-    },
-    [schema, announceErrors],
-  );
-
-  return { errors, touched, setTouched, validate };
-};
-```
-
-## Color and Contrast
-
-### Color Contrast Requirements
-
-```typescript
-// ✅ GOOD: high contrast color definitions meet WCAG standards
+// ✅ GOOD: WCAG AA compliant colors
 const colors = {
-  // WCAG AA compliant contrast ratios
-  primary: "#0066cc", // 4.5:1 against white
-  primaryText: "#ffffff", // High contrast text
-  secondary: "#6c757d", // 4.5:1 against white
-  success: "#28a745", // 3:1 against white
-  danger: "#dc3545", // 4.5:1 against white
-  warning: "#856404", // 4.5:1 against white (darker than default)
-
-  // Text colors
+  primary: "#0066cc",    // 4.5:1 contrast ratio
+  success: "#28a745",    // High contrast
+  danger: "#dc3545",     // 4.5:1 against white
   textPrimary: "#212529", // High contrast
-  textSecondary: "#6c757d", // Still meets AA
-  textMuted: "#6c757d", // 4.5:1 minimum
+  textSecondary: "#6c757d", // Meets AA standard
 } as const;
 
-// ❌ BAD: low contrast colors fail accessibility requirements
+// ❌ BAD: insufficient contrast
 const badColors = {
-  lightGray: "#e9ecef", // Too light for text
-  paleBlue: "#cce7ff", // Insufficient contrast
-  lightText: "#999999", // Below 4.5:1 ratio
+  lightGray: "#e9ecef",  // Too light for text
+  paleText: "#999999",   // Below 4.5:1 ratio
 };
 ```
 
-### Color Usage Patterns
+### Color-Independent Design
+
+Use icons and text alongside color to convey information.
 
 ```typescript
-// ✅ GOOD: avoiding color-only indicators supports colorblind users
-export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) => {
+// ✅ GOOD: status with icon and text
+export const StatusIndicator: FC<Props> = ({ status, message }) => {
   const getStatusIcon = (status: Status) => {
     switch (status) {
       case 'success': return <CheckIcon aria-hidden="true" />;
@@ -381,7 +309,7 @@ export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) =
 
   return (
     <div
-      className={`status-indicator status-${status}`}
+      className={`status-${status}`}
       role="status"
       aria-label={`${status}: ${message}`}
     >
@@ -391,22 +319,16 @@ export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, message }) =
   );
 };
 
-// ❌ BAD: color-only indication excludes colorblind users
-export const BadStatusIndicator: FC<Props> = ({ status, message }) => {
-  return (
-    <div className={`status-${status}`}>
-      {message}
-    </div>
-  );
-};
+// ❌ BAD: color-only indication
+<div className={`status-${status}`}>{message}</div>
 ```
 
 ## Screen Reader Support
 
-### Live Regions
+### Live Region Announcements
 
 ```typescript
-// ✅ GOOD: screen reader announcements provide dynamic feedback
+// ✅ GOOD: dynamic announcements for screen readers
 export const useLiveAnnouncement = () => {
   const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
     const liveRegion = document.createElement('div');
@@ -417,18 +339,13 @@ export const useLiveAnnouncement = () => {
     liveRegion.textContent = message;
 
     document.body.appendChild(liveRegion);
-
-    setTimeout(() => {
-      if (document.body.contains(liveRegion)) {
-        document.body.removeChild(liveRegion);
-      }
-    }, 1000);
+    setTimeout(() => document.body.removeChild(liveRegion), 1000);
   }, []);
 
   return { announce };
 };
 
-// Usage in component
+// usage in notifications
 export const NotificationSystem: FC<Props> = () => {
   const { announce } = useLiveAnnouncement();
 
@@ -436,22 +353,18 @@ export const NotificationSystem: FC<Props> = () => {
     announce(`Success: ${message}`, 'polite');
   }, [announce]);
 
-  const handleError = useCallback((message: string) => {
-    announce(`Error: ${message}`, 'assertive');
-  }, [announce]);
-
   return (
     <div role="region" aria-label="Notifications">
-      {/* Notification content */}
+      {/* notification content */}
     </div>
   );
 };
 ```
 
-### Hidden Content for Screen Readers
+### Visually Hidden Content
 
 ```typescript
-// ✅ GOOD: screen reader only content provides additional context
+// ✅ GOOD: content hidden visually but available to screen readers
 export const VisuallyHidden: FC<{ children: ReactNode }> = ({ children }) => {
   const srOnlyStyle: CSSProperties = {
     position: 'absolute',
@@ -468,119 +381,134 @@ export const VisuallyHidden: FC<{ children: ReactNode }> = ({ children }) => {
   return <span style={srOnlyStyle}>{children}</span>;
 };
 
-// Usage
-export const IconButton: FC<Props> = ({ icon, onClick, label }) => {
+// usage for icon buttons
+<button onClick={onClick} aria-label={label}>
+  {icon}
+  <VisuallyHidden>{label}</VisuallyHidden>
+</button>
+```
+
+## Quick Reference
+
+| Element Type | Accessibility Requirements | ARIA Attributes | Notes |
+|--------------|---------------------------|------------------|-------|
+| Button | Keyboard support, focus indicator | `aria-label`, `aria-expanded` | Use `<button>` element |
+| Form Input | Label association, error states | `aria-describedby`, `aria-invalid` | Required `<label>` |
+| Modal/Dialog | Focus trap, escape key | `role="dialog"`, `aria-modal` | Manage focus |
+| Navigation | Landmark roles, skip links | `role="navigation"`, `aria-label` | Clear structure |
+| Status Updates | Live region announcements | `aria-live`, `role="alert"` | Use appropriate urgency |
+
+## Patterns & Best Practices
+
+### Accessible Modal Pattern
+
+**Purpose:** Create keyboard-accessible modal dialogs with proper focus management
+
+**When to use:**
+- Confirmation dialogs
+- Form overlays
+- Content popups
+
+**Implementation:**
+
+```typescript
+// pattern template
+export const AccessibleModal: FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      const previousFocus = document.activeElement;
+      dialogRef.current?.focus();
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        (previousFocus as HTMLElement)?.focus();
+      };
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
   return (
-    <button onClick={onClick} aria-label={label}>
-      {icon}
-      <VisuallyHidden>{label}</VisuallyHidden>
-    </button>
+    <div className="modal-overlay">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
+        <h2 id="modal-title">{title}</h2>
+        {children}
+      </div>
+    </div>
   );
 };
 ```
 
-## Testing Accessibility
+### Common Patterns
 
-### Accessibility Testing Checklist
+1. **Skip Links** - Allow keyboard users to skip navigation
 
-✅ **Manual Testing Checklist:**
+   ```typescript
+   <a href="#main-content" className="skip-link">
+     Skip to main content
+   </a>
+   ```
 
-- [ ] Navigate entire interface using only keyboard
-- [ ] Test with screen reader (NVDA, JAWS, VoiceOver)
-- [ ] Verify color contrast meets WCAG AA standards
-- [ ] Check heading hierarchy and structure
-- [ ] Ensure all images have appropriate alt text
-- [ ] Test form labels and error messages
-- [ ] Verify focus indicators are visible
-- [ ] Test with browser zoom at 200%
+2. **Loading States** - Announce loading to screen readers
 
-### Automated Testing
+   ```typescript
+   {loading && <div aria-live="polite">Loading content...</div>}
+   ```
 
-```typescript
-// ✅ GOOD: accessibility testing ensures compliance and usability
-import { render, screen } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
-import { Button } from './Button';
+## Anti-Patterns
 
-expect.extend(toHaveNoViolations);
-
-describe('rc:Button accessibility', () => {
-  it('should not have accessibility violations', async () => {
-    const { container } = render(
-      <Button onClick={() => {}}>Click me</Button>
-    );
-
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it('should be accessible via keyboard', () => {
-    const mockClick = vi.fn();
-    render(<Button onClick={mockClick}>Click me</Button>);
-
-    const button = screen.getByRole('button');
-    button.focus();
-
-    // Should be focusable
-    expect(button).toHaveFocus();
-
-    // Should activate on Enter
-    fireEvent.keyDown(button, { key: 'Enter' });
-    expect(mockClick).toHaveBeenCalled();
-  });
-
-  it('should have proper ARIA attributes', () => {
-    render(
-      <Button
-        aria-label="Custom label"
-        disabled={true}
-      >
-        Button
-      </Button>
-    );
-
-    const button = screen.getByRole('button');
-    expect(button).toHaveAttribute('aria-label', 'Custom label');
-    expect(button).toHaveAttribute('disabled');
-  });
-});
-```
-
-## Common Accessibility Issues
-
-### Issues to Avoid
+### Missing Alt Text
 
 ```typescript
-// ❌ BAD: common accessibility problems that reduce usability
-// Missing alt text
+// ❌ BAD: missing alt text
 <img src="chart.png" />
 
-// Unclear link text
-<a href="/details">Click here</a>
-
-// No keyboard support
-<div onClick={handleClick}>Button</div>
-
-// Missing form labels
-<input type="email" placeholder="Email" />
-
-// Low contrast
-<span style={{ color: '#999', backgroundColor: '#eee' }}>Text</span>
-
-// ✅ GOOD: accessible alternatives improve user experience
-// Descriptive alt text
+// ✅ GOOD: descriptive alt text
 <img src="chart.png" alt="Sales increased 20% from Q1 to Q2" />
-
-// Clear link text
-<a href="/details">View product details</a>
-
-// Proper button with keyboard support
-<button onClick={handleClick}>Submit</button>
-
-// Properly labeled form fields
-<label htmlFor="email">Email Address</label>
-<input id="email" type="email" />
-
-// High contrast colors
-<span style={{ color: '#212529', backgroundColor: '#ffffff' }}>Text</span>
 ```
+
+### Non-Semantic Interactive Elements
+
+```typescript
+// ❌ BAD: div as button without keyboard support
+<div onClick={handleClick} className="button-like">Click me</div>
+
+// ✅ GOOD: proper button element
+<button onClick={handleClick}>Click me</button>
+```
+
+### Common Mistakes to Avoid
+
+1. **Color-only indicators**
+   - Problem: Colorblind users cannot distinguish states
+   - Solution: Use icons, text, or patterns alongside color
+   - Example: `<span className="error"><ErrorIcon /> Error message</span>`
+
+2. **Missing form labels**
+   - Problem: Screen readers cannot identify input purpose
+   - Solution: Always associate labels with inputs
+
+## Quick Decision Tree
+
+1. **Is this interactive?**
+   - If button-like → Use `<button>` element
+   - If link-like → Use `<a>` element
+   - If custom → Add keyboard support and ARIA
+
+2. **Does this convey information?**
+   - If status change → Use live region
+   - If error state → Use `role="alert"`
+   - If additional context → Use `aria-describedby`
+
+3. **Is this visible to all users?**
+   - If decorative only → Use `aria-hidden="true"`
+   - If informative → Provide alt text or screen reader text
+   - If interactive → Ensure keyboard accessibility
+

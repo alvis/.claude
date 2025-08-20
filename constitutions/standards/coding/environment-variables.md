@@ -6,52 +6,82 @@ _Standards for environment variable management, configuration, and security_
 
 ### Required Documentation
 
-**`.env.example` Required**
+**`.env.example` Required** - All applications using environment variables MUST provide a sample `.env.example` file.
 
-If the application uses environment variables, you **MUST** provide a sample `.env.example` file with:
+```bash
+# .env.example
+NODE_ENV=development        # Environment: development | staging | production
+PORT=3000                   # Server port
+DATABASE_URL=postgresql://user:password@localhost:5432/myapp
+JWT_SECRET=your-secret-key-here  # Generate with: openssl rand -hex 32
+```
 
-- All consumed environment variable keys
-- Clear explanations for each variable
-- Example values (never real secrets)
-- Required vs optional indicators
+### Consistent Naming
 
-## Environment File Standards
+Use UPPER_SNAKE_CASE with descriptive names and logical grouping.
+
+```bash
+# ✅ GOOD: clear, grouped naming
+DATABASE_URL=...
+DATABASE_MAX_CONNECTIONS=10
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+
+# ❌ BAD: inconsistent, unclear naming
+database_url=...
+max_conn=10
+awsKey=...
+aws_secret=...
+```
+
+## Environment File Management
 
 ### File Naming Convention
 
-Environment files must follow this naming pattern: `.env.<environment>`
-
-Examples: `.env.local`, `.env.development`, `.env.staging`, `.env.production`
-
-### Example .env.example File
+Use `.env.<environment>` pattern for environment-specific configurations.
 
 ```bash
-# Application
-NODE_ENV=development        # Environment: development | staging | production
-PORT=3000                   # Server port
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/myapp
-
-# Auth - REQUIRED
-JWT_SECRET=your-secret-key-here  # Generate with: openssl rand -hex 32
-
-# External Services - REQUIRED
-STRIPE_API_KEY=sk_test_...
-SENDGRID_API_KEY=SG.xxx
+.env.local          # Local development overrides
+.env.development    # Development environment
+.env.staging        # Staging environment
+.env.production     # Production environment
+.env.test          # Test environment
 ```
 
-## Variable Naming Standards
+### Loading Priority
 
-- Use **UPPER_SNAKE_CASE** for all environment variables
-- Group related variables with common prefixes (DATABASE_, AWS_, SERVICE_)
-- Use descriptive names (avoid abbreviations)
+Environment files should load in this order (later files override earlier ones):
 
-## Best Practices
+1. `.env` (defaults)
+2. `.env.local` (local overrides, never committed)
+3. `.env.<environment>` (environment-specific)
+4. `.env.<environment>.local` (local environment overrides)
 
-## Security Guidelines
+## Variable Categories
 
-- **Never commit real secrets** - Use placeholders in .env.example
-- **No private keys except in unit tests** - Use mocks for testing
-- **Generate strong secrets**: `openssl rand -hex 32`
-- **Use secret managers** in production environments
+### Application Configuration
+
+```bash
+# Core application settings
+NODE_ENV=development        # development | staging | production
+PORT=3000                  # Server port
+```
+
+### Database Configuration
+
+```bash
+# Database connection
+DATABASE_URL=postgresql://user:password@localhost:5432/myapp
+DATABASE_MAX_CONNECTIONS=20
+DATABASE_TIMEOUT_MS=30000
+```
+
+### External Services
+
+```bash
+# Third-party API keys
+STRIPE_API_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+SENDGRID_API_KEY=SG.xxx
+REDIS_URL=redis://localhost:6379
+```

@@ -2,113 +2,107 @@
 
 _Standards for custom hooks design, patterns, and best practices_
 
-## Hook Design Principles
+## Dependent Standards
 
-### Core Rules
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- **Start with `use` prefix** - All custom hooks must begin with "use"
-- **Return consistent interface** - Maintain predictable return patterns
-- **Handle loading and error states** - Always consider async operations
-- **Make hooks reusable and composable** - Design for multiple use cases
-- **Follow dependency rules** - Properly handle dependencies in useEffect/useMemo
+- [Functions Standards](../../functions.md) - React hooks are functions with specific rules and patterns
+- [Function Naming Standards](../../naming/functions.md) - Hook naming conventions (useX pattern) and best practices
+- [TypeScript Standards](../../typescript.md) - Type safety for hook parameters, return types, and generics
+- [Documentation Standards](../../documentation.md) - Hook documentation patterns and JSDoc requirements
+- [Testing Standards](../../testing.md) - Hook testing strategies with React Testing Library
+- [General Principles](../../general-principles.md) - Foundational coding standards for all React hooks
 
-### Hook Naming
+## Core Principles
+
+### Naming Convention
+
+All custom hooks must start with "use" prefix for React rule compliance.
 
 ```typescript
-// ✅ GOOD: clear, descriptive hook names
+// ✅ GOOD: proper hook naming
 useUserData(userId: string)
 useApiRequest<T>(url: string)
 useLocalStorage(key: string)
-useDebounced(value: string, delay: number)
-useAuth()
-usePermissions(userId: string)
 
-// ❌ BAD: unclear or non-hook names
+// ❌ BAD: missing prefix or unclear names
 getUserData(userId: string)  // missing 'use' prefix
 useData()                    // too generic
-useStuff()                   // not descriptive
 ```
 
-## Hook Template Pattern
+### Consistent Return Interface
 
-### Standard Hook Structure
+Maintain predictable return patterns for similar functionality types.
 
 ```typescript
-interface UseDataOptions {
-  enabled?: boolean;
-  refetchOnMount?: boolean;
-  retryCount?: number;
-}
-
+// ✅ GOOD: consistent async pattern
 interface UseDataReturn<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  isValidating: boolean;
 }
 
-export function useData<T>(
-  url: string,
-  options: UseDataOptions = {},
-): UseDataReturn<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
+export function useData<T>(url: string): UseDataReturn<T> {
+  // implementation...
+  return { data, loading, error, refetch };
+}
 
-  const refetch = useCallback(async () => {
-    if (!options.enabled) return;
-
-    setLoading(true);
-    setError(null);
-    setIsValidating(true);
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-      setIsValidating(false);
-    }
-  }, [url, options.enabled]);
-
-  useEffect(() => {
-    if (options.enabled !== false && options.refetchOnMount !== false) {
-      refetch();
-    }
-  }, [refetch, options.enabled, options.refetchOnMount]);
-
-  return { data, loading, error, refetch, isValidating };
+// ❌ BAD: inconsistent return structure
+function useBadData(url: string) {
+  return [data, isLoading, err, reload]; // unpredictable array
 }
 ```
 
-## Common Hook Patterns
+### Dependency Management
 
-### Data Fetching Hooks
+Proper dependency handling prevents bugs and ensures predictable behavior.
 
 ```typescript
-// ✅ GOOD: comprehensive data fetching hook with proper error handling
-export function useApiQuery<T>(endpoint: string) {
+// ✅ GOOD: correct dependencies
+export function useUserData(userId: string) {
+  const [userData, setUserData] = useState<User | null>(null);
+  
+  const refreshUser = useCallback(async () => {
+    if (!userId) return;
+    const user = await fetchUser(userId);
+    setUserData(user);
+  }, [userId]); // correct dependency
+  
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+  
+  return { userData, refreshUser };
+}
+
+// ❌ BAD: missing dependencies
+function useBadEffect(user: User) {
+  useEffect(() => {
+    fetchUserData(user.id).then(setData);
+  }, []); // missing user.id dependency
+}
+```
+
+
+## Data Fetching Hooks
+
+### Async Data Pattern
+
+Standardized pattern for data fetching with loading, error, and success states.
+
+```typescript
+// pattern template
+export function useApiData<T>(endpoint: string) {
   const [state, setState] = useState<{
     data: T | null;
     loading: boolean;
     error: Error | null;
-  }>({
-    data: null,
-    loading: false,
-    error: null,
-  });
+  }>({ data: null, loading: false, error: null });
 
   const fetchData = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
     try {
       const response = await apiClient.get<T>(endpoint);
       setState({ data: response.data, loading: false, error: null });
@@ -124,114 +118,93 @@ export function useApiQuery<T>(endpoint: string) {
   return {
     ...state,
     refetch: fetchData,
-    isLoading: state.loading,
-    isError: state.error !== null,
-    isSuccess: state.data !== null && !state.loading && !state.error,
+    isSuccess: state.data !== null && !state.loading,
   };
 }
 ```
 
-### Local Storage Hooks
+
+## Storage & Persistence
+
+### Local Storage Pattern
 
 ```typescript
-// ✅ GOOD: type-safe localStorage hook with error handling
+// ✅ GOOD: type-safe localStorage with error handling
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T,
+  initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+    } catch {
       return initialValue;
     }
   });
 
-  const setValue = useCallback(
-    (value: T | ((val: T) => T)) => {
-      try {
-        const valueToStore =
-          value instanceof Function ? value(storedValue) : value;
-        setStoredValue(valueToStore);
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
-      }
-    },
-    [key, storedValue],
-  );
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.warn(`localStorage error:`, error);
+    }
+  }, [key, storedValue]);
 
   return [storedValue, setValue];
 }
 ```
 
-### Debounce Hooks
+## Performance Optimization
+
+### Debouncing Pattern
 
 ```typescript
-// ✅ GOOD: debounce hook with proper cleanup to prevent memory leaks
+// ✅ GOOD: debounce value with cleanup
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
 
   return debouncedValue;
 }
 
-// ✅ GOOD: debounced callback hook with cancellation support
+// ✅ GOOD: debounced callback with cancellation
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number,
+  delay: number
 ): T {
-  const callbackRef = useRef(callback);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  useEffect(() => {
-    callbackRef.current = callback;
-  });
-
-  return useCallback(
-    ((...args) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
-      }, delay);
-    }) as T,
-    [delay],
-  );
+  return useCallback(((...args) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => callback(...args), delay);
+  }) as T, [callback, delay]);
 }
 ```
 
-## Advanced Hook Patterns
+## Hook Composition
 
-### Hook Composition
+### Building Composable Hooks
+
+Combine simple hooks to create more powerful, reusable functionality.
 
 ```typescript
-// ✅ GOOD: composable hooks that build on each other
+// ✅ GOOD: auth hook using localStorage hook
 export function useAuth() {
   const [user, setUser] = useLocalStorage<User | null>("user", null);
   const [token, setToken] = useLocalStorage<string | null>("token", null);
 
-  const login = useCallback(
-    async (credentials: LoginCredentials) => {
-      const response = await authApi.login(credentials);
-      setUser(response.user);
-      setToken(response.token);
-    },
-    [setUser, setToken],
-  );
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    const response = await authApi.login(credentials);
+    setUser(response.user);
+    setToken(response.token);
+  }, [setUser, setToken]);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -247,21 +220,18 @@ export function useAuth() {
   };
 }
 
+// ✅ GOOD: permissions hook building on auth hook
 export function usePermissions(userId?: string) {
   const { user, isAuthenticated } = useAuth();
   const effectiveUserId = userId || user?.id;
 
-  const { data: permissions, loading } = useApiQuery<Permission[]>(
-    effectiveUserId && isAuthenticated
-      ? `/users/${effectiveUserId}/permissions`
-      : null,
+  const { data: permissions, loading } = useApiData<Permission[]>(
+    effectiveUserId && isAuthenticated ? `/users/${effectiveUserId}/permissions` : null
   );
 
   const hasPermission = useCallback(
-    (permission: string) => {
-      return permissions?.some((p) => p.name === permission) ?? false;
-    },
-    [permissions],
+    (permission: string) => permissions?.some(p => p.name === permission) ?? false,
+    [permissions]
   );
 
   return {
@@ -269,35 +239,31 @@ export function usePermissions(userId?: string) {
     loading,
     hasPermission,
     isAdmin: hasPermission("admin"),
-    canEdit: hasPermission("edit"),
-    canView: hasPermission("view"),
   };
 }
 ```
 
-### Custom Hook with Reducer
+## Complex State Management
+
+### Form Hook with Reducer
+
+Use useReducer for complex state management with multiple related state updates.
 
 ```typescript
-// ✅ GOOD: complex state management using useReducer pattern
+// ✅ GOOD: form state with reducer pattern
 interface FormState<T> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
   isSubmitting: boolean;
-  isValid: boolean;
 }
 
 type FormAction<T> =
   | { type: "SET_VALUE"; field: keyof T; value: T[keyof T] }
   | { type: "SET_ERROR"; field: keyof T; error: string }
-  | { type: "SET_TOUCHED"; field: keyof T }
-  | { type: "SET_SUBMITTING"; isSubmitting: boolean }
   | { type: "RESET"; initialValues: T };
 
-function formReducer<T>(
-  state: FormState<T>,
-  action: FormAction<T>,
-): FormState<T> {
+function formReducer<T>(state: FormState<T>, action: FormAction<T>): FormState<T> {
   switch (action.type) {
     case "SET_VALUE":
       return {
@@ -309,228 +275,172 @@ function formReducer<T>(
       return {
         ...state,
         errors: { ...state.errors, [action.field]: action.error },
-        isValid: false,
       };
-    case "SET_TOUCHED":
-      return {
-        ...state,
-        touched: { ...state.touched, [action.field]: true },
-      };
-    case "SET_SUBMITTING":
-      return { ...state, isSubmitting: action.isSubmitting };
     case "RESET":
       return {
         values: action.initialValues,
         errors: {},
         touched: {},
         isSubmitting: false,
-        isValid: true,
       };
     default:
       return state;
   }
 }
 
-export function useForm<T extends Record<string, any>>(
-  initialValues: T,
-  validationSchema?: (values: T) => Partial<Record<keyof T, string>>,
-) {
+export function useForm<T extends Record<string, any>>(initialValues: T) {
   const [state, dispatch] = useReducer(formReducer, {
     values: initialValues,
     errors: {},
     touched: {},
     isSubmitting: false,
-    isValid: true,
   } as FormState<T>);
 
-  const setValue = useCallback(
-    (field: keyof T, value: T[keyof T]) => {
-      dispatch({ type: "SET_VALUE", field, value });
-
-      if (validationSchema) {
-        const errors = validationSchema({ ...state.values, [field]: value });
-        if (errors[field]) {
-          dispatch({ type: "SET_ERROR", field, error: errors[field]! });
-        }
-      }
-    },
-    [state.values, validationSchema],
-  );
-
-  const setTouched = useCallback((field: keyof T) => {
-    dispatch({ type: "SET_TOUCHED", field });
+  const setValue = useCallback((field: keyof T, value: T[keyof T]) => {
+    dispatch({ type: "SET_VALUE", field, value });
   }, []);
 
   const reset = useCallback(() => {
     dispatch({ type: "RESET", initialValues });
   }, [initialValues]);
 
-  return {
-    values: state.values,
-    errors: state.errors,
-    touched: state.touched,
-    isSubmitting: state.isSubmitting,
-    isValid: state.isValid,
-    setValue,
-    setTouched,
-    reset,
-  };
+  return { ...state, setValue, reset };
 }
 ```
 
-## Hook Testing
+## Quick Reference
 
-### Testing Custom Hooks
+| Hook Type | Pattern | Return Type | Use Case |
+|-----------|---------|-------------|----------|
+| Data Fetching | `useApiData<T>` | `{data, loading, error}` | API calls |
+| Storage | `useLocalStorage<T>` | `[value, setValue]` | Persist data |
+| Performance | `useDebounce<T>` | `T` | Delay updates |
+| State | `useReducer` | `[state, dispatch]` | Complex state |
+| Composition | `useAuth + usePermissions` | Custom interface | Layered functionality |
 
-```typescript
-// ✅ GOOD: hook testing using renderHook from testing library
-import { renderHook, act } from "@testing-library/react";
-import { useCounter } from "./useCounter";
+## Patterns & Best Practices
 
-describe("useCounter", () => {
-  it("should initialize with default value", () => {
-    const { result } = renderHook(() => useCounter());
+### Hook Template Pattern
 
-    expect(result.current.count).toBe(0);
-  });
+**Purpose:** Consistent structure for async data hooks
 
-  it("should initialize with custom value", () => {
-    const { result } = renderHook(() => useCounter(10));
+**When to use:**
+- API data fetching
+- Any async operation with loading states
+- Reusable data access patterns
 
-    expect(result.current.count).toBe(10);
-  });
-
-  it("should increment count", () => {
-    const { result } = renderHook(() => useCounter());
-
-    act(() => {
-      result.current.increment();
-    });
-
-    expect(result.current.count).toBe(1);
-  });
-
-  it("should decrement count", () => {
-    const { result } = renderHook(() => useCounter(5));
-
-    act(() => {
-      result.current.decrement();
-    });
-
-    expect(result.current.count).toBe(4);
-  });
-});
-```
-
-## Hook Dependencies
-
-### Dependency Management
+**Implementation:**
 
 ```typescript
-// ✅ GOOD: proper dependency management with memoization
-export function useUserData(userId: string) {
-  const [userData, setUserData] = useState<User | null>(null);
+// pattern template
+export function useAsyncHook<T>(param: string) {
+  const [state, setState] = useState<{
+    data: T | null;
+    loading: boolean;
+    error: Error | null;
+  }>({ data: null, loading: false, error: null });
 
-  // memoize expensive operations
-  const processedData = useMemo(() => {
-    if (!userData) return null;
-    return {
-      ...userData,
-      fullName: `${userData.firstName} ${userData.lastName}`,
-      initials: `${userData.firstName[0]}${userData.lastName[0]}`,
-    };
-  }, [userData]);
-
-  // stable callback reference
-  const refreshUser = useCallback(async () => {
-    if (!userId) return;
-
+  const execute = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      const user = await fetchUser(userId);
-      setUserData(user);
+      const result = await someAsyncOperation(param);
+      setState({ data: result, loading: false, error: null });
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      setState({ data: null, loading: false, error: error as Error });
     }
-  }, [userId]);
+  }, [param]);
 
-  // effect with proper dependencies
-  useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
+  useEffect(() => { execute(); }, [execute]);
 
-  return {
-    userData: processedData,
-    refreshUser,
-    isLoading: userData === null,
-  };
+  return { ...state, refetch: execute };
 }
 ```
 
-## Hook Anti-Patterns
+### Common Patterns
 
-### Common Mistakes to Avoid
+1. **Cleanup Pattern** - Prevent memory leaks
+
+   ```typescript
+   useEffect(() => {
+     let cancelled = false;
+     fetchData().then(data => {
+       if (!cancelled) setState(data);
+     });
+     return () => { cancelled = true; };
+   }, []);
+   ```
+
+2. **Stable References** - Prevent unnecessary re-renders
+
+   ```typescript
+   const callback = useCallback((id: string) => {
+     updateItem(id);
+   }, [updateItem]);
+   ```
+
+## Anti-Patterns
+
+### Missing Dependencies
 
 ```typescript
-// ❌ BAD: violates dependency rules - missing user.id in dependency array
-export function useBadEffect(user: User) {
+// ❌ BAD: missing user.id in dependency array
+function useBadEffect(user: User) {
   useEffect(() => {
     fetchUserData(user.id).then(setData);
   }, []); // missing user.id dependency
 }
 
-// ❌ BAD: violates memoization - creates new object on every render
-export function useBadReturn(data: any[]) {
+// ✅ GOOD: include all dependencies
+function useGoodEffect(user: User) {
+  useEffect(() => {
+    fetchUserData(user.id).then(setData);
+  }, [user.id]);
+}
+```
+
+### Unstable Return Values
+
+```typescript
+// ❌ BAD: new object every render
+function useBadReturn(data: any[]) {
   return {
     data,
-    // new object every render - breaks memoization
-    metadata: { count: data.length, lastUpdated: Date.now() },
+    metadata: { count: data.length }, // new object every render
   };
 }
 
-// ❌ BAD: missing loading and error state handling
-export function useBadApiCall(url: string) {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch(url)
-      .then((res) => res.json())
-      .then(setData);
-  }, [url]);
-
-  return data; // no loading or error state
-}
-
-// ✅ GOOD: proper hook implementation with loading, error, and cleanup
-export function useGoodApiCall(url: string) {
-  const [state, setState] = useState({
-    data: null,
-    loading: false,
-    error: null,
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) {
-          setState({ data, loading: false, error: null });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setState({ data: null, loading: false, error });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-
-  return state;
+// ✅ GOOD: stable memoized object
+function useGoodReturn(data: any[]) {
+  const metadata = useMemo(() => ({ count: data.length }), [data.length]);
+  return { data, metadata };
 }
 ```
+
+### Common Mistakes to Avoid
+
+1. **Missing loading states**
+   - Problem: Users see stale data during updates
+   - Solution: Always include loading boolean in async hooks
+   - Example: `{ data, loading, error }`
+
+2. **Memory leaks in effects**
+   - Problem: Component unmounts but async operations continue
+   - Solution: Use cleanup flags or AbortController
+
+## Quick Decision Tree
+
+1. **Need to share logic between components?**
+   - If yes → Create custom hook
+   - If simple state → Use built-in hooks
+   - If complex state → Consider useReducer
+
+2. **Hook involves async operations?**
+   - If yes → Include loading, error, and success states
+   - If data fetching → Use standard async pattern
+   - If side effects → Ensure proper cleanup
+
+3. **Hook returns multiple values?**
+   - If array-like → Return array (like useState)
+   - If object-like → Return object (like useForm)
+   - If single value → Return value directly
+
