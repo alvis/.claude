@@ -2,6 +2,12 @@
 
 _Standards for function design, parameters, interfaces, and code organization_
 
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [General Coding Principles](@./general-principles.md) - Foundation principles that guide all function design decisions
+
 ## Core Principles
 
 ### Single Responsibility
@@ -9,7 +15,7 @@ _Standards for function design, parameters, interfaces, and code organization_
 - **One clear purpose** - Each function should do one thing well
 - **Functions should be <60 lines** - Break down complex operations (< 30 lines preferred)
 - **Extract static methods** - Class methods that don't use `this` should be standalone functions
-- **Avoid side effects** - Prefer pure functions when possible
+- **Avoid side effects** - Prefer pure functions and `const` over `let` when possible
 
 ```typescript
 // ✅ GOOD: single responsibility
@@ -458,7 +464,7 @@ function validateEmailWithContext(
   email: string,
   context: ValidationContext,
 ): boolean {
-  // Complex validation logic
+  // complex validation logic
 }
 ```
 
@@ -533,55 +539,29 @@ message += "- Email is required\n";
 message += "- Password must be at least 8 characters\n";
 ```
 
-## Anti-Patterns to Avoid
+## Anti-Patterns
 
 ### Common Function Mistakes
 
-```typescript
-// ❌ BAD: functions doing too much
-function processUserAndSendEmail(userData: any): void {
-  // validation
-  if (!userData.email) throw new Error("Email required");
+1. **Functions Doing Too Much**
+   - Problem: Single function handles multiple responsibilities
+   - Solution: Break into smaller, focused functions
+   - Example: `processUserAndSendEmailAndLog()` // too much
 
-  // user creation
-  const user = createUser(userData);
+2. **Modifying Parameters**
+   - Problem: Mutating input parameters
+   - Solution: Return new objects instead
+   - Example: `user.age = newAge; return user;` // mutates input
 
-  // email sending
-  sendWelcomeEmail(user.email);
+3. **Missing Return Types**
+   - Problem: Unclear function contracts
+   - Solution: Always declare explicit return types
 
-  // logging
-  console.log(`User ${user.id} created and email sent`);
-}
+## Quick Reference
 
-// ✅ GOOD: separate concerns
-function processUser(userData: UserData): User {
-  validateUserData(userData);
-  return createUser(userData);
-}
-
-function sendWelcomeEmailToUser(user: User): Promise<void> {
-  return sendWelcomeEmail(user.email);
-}
-
-// ❌ BAD: modifying parameters
-function updateUserAge(user: User, newAge: number): User {
-  user.age = newAge; // mutates input
-  return user;
-}
-
-// ✅ GOOD: immutable approach
-function updateUserAge(user: User, newAge: number): User {
-  return { ...user, age: newAge };
-}
-```
-
-## Key Principles Summary
-
-1. **Never mutate function parameters**
-2. **Use `const` by default and avoid `let`**
-3. **Keep side effects at application edges**
-4. **Allow local mutation for performance**
-5. **Use array join for multi-line text**
-6. **Keep functions small** (< 30 lines preferred)
-7. **Extract complex logic** into helper functions
-8. **Single responsibility** per function
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| Positional | ≤2 required params | `add(a: number, b: number)` |
+| Object | ≥3 params or optional | `create(options: CreateOptions)` |
+| Pure | Data transformation | `calculate(input): output` |
+| Impure | I/O operations | `async save(data): Promise<void>` |

@@ -2,6 +2,12 @@
 
 _Standards for code comments, JSDoc, inline documentation, and code explanation_
 
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [General Principles](./general-principles.md) - Foundational code quality principles that inform documentation practices, including clarity, maintainability, and professional standards
+
 ## Core Comment Principles
 
 ### When to Write Comments
@@ -18,31 +24,29 @@ Write comments that explain **"why"**, not **"what"**:
 
 ### Comment Casing Rules
 
-**Always use lowercase** for comments that are sentences or phrases:
+**Always use lowercase** for comments that are sentences or phrases except for referencing code elements or acronym like HTTP:
 
 ```typescript
 // ✅ GOOD: lowercase comments
 // this function handles user authentication
-// api calls require authentication token
 // check if user exists before proceeding
 
 // ❌ BAD: uppercase comments
 // This function handles user authentication
-// API calls require authentication token
 // Check if user exists before proceeding
 ```
 
-**Use uppercase only** when referencing code elements:
+**Use uppercase only** when referencing code elements or acronym:
 
 ```typescript
 // ✅ GOOD: uppercase for code references
 // the UserService handles authentication
-// call the API with proper headers
+// call the OAuth AS with proper headers
 // Layout components should be memoized
 
 // ❌ BAD: lowercase for code references
 // the userservice handles authentication
-// call the api with proper headers
+// call the OAuth AS with proper headers
 // layout components should be memoized
 ```
 
@@ -425,11 +429,11 @@ type UserRole = "viewer" | "editor" | "admin";
 
 /** payment processing status during transaction lifecycle */
 type PaymentStatus =
-  | "pending" // Initial state, awaiting processing
-  | "processing" // Currently being processed by payment provider
-  | "completed" // Successfully processed
-  | "failed" // Processing failed, user notified
-  | "cancelled"; // User cancelled before completion
+  | "pending" // initial state, awaiting processing
+  | "processing" // currently being processed by payment provider
+  | "completed" // successfully processed
+  | "failed" // processing failed, user notified
+  | "cancelled"; // user cancelled before completion
 
 /**
  * Result wrapper for operations that may succeed or fail
@@ -505,8 +509,8 @@ function getUserInfo(user: User): string {
 // ❌ BAD: commented-out code
 function processUser(user: User): void {
   validateUser(user);
-  // updateDatabase(user); // Old implementation
-  // sendNotification(user); // Removed feature
+  // updateDatabase(user); // old implementation
+  // sendNotification(user); // removed feature
   saveUser(user);
 }
 ```
@@ -523,15 +527,15 @@ Avoid these common mistakes:
 constructor() { }
 
 // ❌ BAD: version history (use git)
-// Modified by John on 2024-01-15
-// Fixed bug #123
+// modified by John on 2024-01-15
+// fixed bug #123
 
 // ❌ BAD: obvious comments
 // return the result
 return result;
 
 // ❌ BAD: commented code for "just in case"
-// Might need this later
+// might need this later
 // function oldImplementation() { }
 
 // ❌ BAD: personal notes
@@ -542,14 +546,14 @@ return result;
 
 // ❌ BAD: restating the code
 function calculateTotal(items: Item[]): number {
-  let total = 0; // Initialize total to zero
+  let total = 0; // initialize total to zero
 
-  // Loop through each item in the items array
+  // loop through each item in the items array
   for (const item of items) {
-    total += item.price; // Add item price to total
+    total += item.price; // add item price to total
   }
 
-  return total; // Return the calculated total
+  return total; // return the calculated total
 }
 
 // ✅ GOOD: explain business logic instead
@@ -601,15 +605,12 @@ const tax = amount * 0.18;
 - **Professional tone** - avoid humor or personal notes
 - **Actionable** - comments should help the next developer
 
-## Documentation Maintenance
-
-### Keeping Documentation Current
+### Documentation Maintenance
 
 ```typescript
 /**
  * User preferences for application behavior
- * @since 1.2.0 - Added theme and language preferences
- * @deprecated theme field - Use appearance.theme instead (since 2.0.0)
+ * @deprecated use appearance.theme instead (since 2.0.0)
  */
 interface UserPreferences {
   /** @deprecated Use appearance.theme instead */
@@ -623,38 +624,14 @@ interface UserPreferences {
 
   /** preferred language code (ISO 639-1) */
   language: string;
-
-  /** notification delivery preferences */
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
 }
 ```
 
-### Version Documentation
+## Quick Reference
 
-```typescript
-/**
- * Authentication service with JWT token management
- *
- * @version 2.1.0
- * @since 1.0.0
- *
- * @changelog
- * - 2.1.0: Added refresh token support
- * - 2.0.0: Breaking: Changed token format to JWT
- * - 1.5.0: Added role-based permissions
- * - 1.0.0: Initial implementation
- */
-class AuthService {
-  /**
-   * authenticates user and returns JWT tokens
-   * @since 2.0.0 - Returns JWT tokens instead of session cookies
-   */
-  async authenticate(credentials: Credentials): Promise<AuthTokens> {
-    // Implementation
-  }
-}
-```
+| Element | Format | Example |
+|---------|--------|---------|
+| Function | 3rd person verb, lowercase | `/** validates user input */` |
+| Interface | Noun phrase, lowercase | `/** user account information */` |
+| Type | Descriptive phrase | `/** payment processing status */` |
+| Parameter | Lowercase description | `@param userId the unique identifier` |
