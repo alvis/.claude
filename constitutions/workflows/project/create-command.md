@@ -24,7 +24,7 @@ You are a **Command Creation Director** who orchestrates the command creation wo
 - **Strategic Delegation**: Break complex command creation into clear implementation tasks and assign to specialist subagents
 - **Parallel Coordination**: Handle command creation efficiently through structured delegation when multiple commands are needed
 - **Quality Oversight**: Review command structure objectively without being involved in template application details
-- **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance verification results
+- **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance review results
 
 ## 2. WORKFLOW OVERVIEW
 
@@ -47,7 +47,7 @@ You are a **Command Creation Director** who orchestrates the command creation wo
 - **Command File**: Generated command markdown file following template structure at commands/[command-name].md
 - **Creation Report**: Summary of command creation with configuration details and validation results
 - **Index Updates**: Updated README files with new command entries and descriptions
-- **Configuration Validation**: Verification that all command configurations are properly applied
+- **Configuration Review**: Review that all command configurations are properly applied
 
 #### Data Flow Summary
 
@@ -113,7 +113,7 @@ Note:
    - Ensure no naming conflicts with existing commands in the system
    - Validate argument structure follows established patterns
 3. **Determine the standards** to send to subagent to follow, e.g.
-   - @../../standards/code/documentation.md
+   - @../../standards/coding/documentation.md
 4. **Create single comprehensive task** for complete command generation:
    - Single subagent assignment for complete command generation and validation
 5. **Use TodoWrite** to create task list with single comprehensive item (status 'pending')
@@ -135,7 +135,7 @@ In a single message, You assign the command creation task to a specialist subage
 Request the subagent to perform the following steps with full detail:
 
     >>>
-    **In ultrathink mode, adopt the Command Creation Specialist mindset**
+    **ultrathink: adopt the Command Creation Specialist mindset**
 
     - You're a **Command Creation Specialist** with deep expertise in CLI command development who follows these technical principles:
       - **Template Mastery**: Apply command templates accurately with proper structure and formatting
@@ -145,9 +145,8 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - ../../standards/code/documentation.md
-    - ../../standards/code/general-principles.md
-    - ../../standards/project/communication.md
+    - ../../standards/coding/documentation.md
+    - ../../standards/coding/general-principles.md
 
     **Assignment**
     You're assigned to create a new command with the following specifications:
@@ -183,6 +182,7 @@ Request the subagent to perform the following steps with full detail:
        - Ensure all template sections are present and properly formatted
        - Validate file structure against template requirements
        - Apply proper markdown formatting and documentation structure
+       - Remove all instruction comments
 
     5. **Validate Structure**:
        - Ensure all template sections are present and properly configured
@@ -193,9 +193,9 @@ Request the subagent to perform the following steps with full detail:
     **Report**
     **[IMPORTANT]** You're requested to return the following:
 
-    - Path to created command file with verification of successful creation
+    - Path to created command file with review of successful creation
     - Tools and permissions configured with security validation
-    - Workflow steps implemented with error handling verification
+    - Workflow steps implemented with error handling review
     - Any configuration decisions made with justification and documentation
 
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
@@ -253,21 +253,31 @@ Request the subagent to perform the following steps with full detail:
    - If RETRY: Generate retry assignment with same standards and specific fixes
    - If ROLLBACK: Identify cleanup actions needed and document failure reason
 
-### Final Step: Completion Confirmation
+### Workflow Completion
 
-**Step Configuration**:
+**Report the workflow output as specified:**
 
-- **Purpose**: Confirm successful command creation and package final outputs
-- **Input**: Command file path, creation report, and configuration details from Step 1
-- **Output**: Final deliverables matching workflow Expected Outputs specification
-- **Sub-workflow**: None
-- **Parallel Execution**: No
-
-**Completion Checklist**:
-
-- [ ] Command file created successfully at correct location with complete content
-- [ ] All template sections present and properly configured with requirements met
-- [ ] Tool permissions and restrictions applied appropriately for security
-- [ ] Command follows naming conventions and established standards
-- [ ] Workflow references are valid and properly implemented
-- [ ] No pending retry or rollback items requiring resolution
+```yaml
+workflow: create-command
+status: completed
+outputs:
+  command_file: 'commands/[command-name].md'
+  configuration:
+    tools_configured: ['Bash', 'Read', 'Write', 'Edit']
+    model_configured: 'sonnet'
+    workflows_referenced: ['workflow1.md', 'workflow2.md']
+    arguments_structure: configured
+  validation:
+    template_compliance: passed
+    security_permissions: verified
+    workflow_references: accessible
+    standards_compliance: passed
+  integration:
+    readme_updated: true
+    system_integrated: true
+    documentation_updated: true
+summary: |
+  Successfully created command '[command-name]' with complete configuration,
+  tool permissions, and workflow references. Command is ready for use and
+  properly integrated into the system.
+```

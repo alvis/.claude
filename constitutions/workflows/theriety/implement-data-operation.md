@@ -162,7 +162,7 @@ In a single message, you spin up subagents to perform implementation batches in 
 Request each subagent to perform the following steps with full detail:
 
 ```yaml
-**In ultrathink mode, adopt the Data Operation Implementation Expert mindset**
+**ultrathink: adopt the Data Operation Implementation Expert mindset**
 
 - You're a **Data Operation Implementation Expert** with deep expertise in full-stack data operation development who follows these technical principles:
   - **End-to-End Implementation**: Handle complete feature implementation from types to tests
@@ -176,7 +176,7 @@ Request each subagent to perform the following steps with full detail:
 - @../../standards/coding/typescript.md
 - @../../standards/coding/documentation.md
 - @../../standards/coding/functions.md
-- @../../standards/coding/backend/data-operations.md
+- @../../standards/coding/backend/data-operation.md
 - @../../standards/coding/testing.md
 
 **Assignment**
@@ -557,46 +557,49 @@ outputs:
 issues: []  # only if problems encountered
 ```
 
-#### Phase 3: Verification (Subagents)
+#### Phase 3: Review (Subagents)
 
-In a single message, you spin up verification subagents to check quality, up to **2** verification tasks at a time.
+In a single message, you spin up review subagents to check quality, up to **2** review tasks at a time.
 
-- **[IMPORTANT]** Verification is read-only - subagents must NOT modify any resources
-- **[IMPORTANT]** You MUST ask verification subagents to be thorough and critical
-- **[IMPORTANT]** Use TodoWrite to track verification tasks separately from execution tasks
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
+- **[IMPORTANT]** You MUST ask review subagents to be thorough and critical in their analysis
+- **[IMPORTANT]** Use TodoWrite to track review tasks separately from execution tasks
 
-Request each verification subagent to perform the following verification with full scrutiny:
+Request each review subagent to perform the following review with full scrutiny:
 
 ```yaml
-**In ultrathink mode, adopt the Data Operation QA Expert mindset**
+**ultrathink: adopt the Data Operation QA Expert mindset**
 
-- You're a **Data Operation QA Expert** with expertise in comprehensive validation who follows these principles:
-  - **Specification Compliance**: Verify against original Notion requirements
+- You're a **Data Operation QA Expert** with expertise in comprehensive review who follows these principles:
+  - **Specification Compliance**: Review against original Notion requirements
   - **Pattern Adherence**: Check established patterns are followed correctly
   - **Integration Completeness**: Ensure all components work together seamlessly
-  - **Test Coverage Excellence**: Validate comprehensive testing with edge cases
+  - **Test Coverage Excellence**: Review comprehensive testing with edge cases
+  - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
 **Review the standards recursively (if A references B, review B too) that were applied**:
 
-- @../../standards/coding/typescript.md - Verify type safety and strict mode compliance
-- @../../standards/coding/documentation.md - Validate JSDoc completeness
-- @../../standards/coding/functions.md - Verify pure function patterns
-- @../../standards/coding/backend/data-operations.md - Check data vs business logic separation
-- @../../standards/coding/testing.md - Verify testing standards compliance
+- @../../standards/coding/typescript.md - Review type safety and strict mode compliance
+- @../../standards/coding/documentation.md - Review JSDoc completeness
+- @../../standards/coding/functions.md - Review pure function patterns
+- @../../standards/coding/backend/data-operation.md - Check data vs business logic separation
+- @../../standards/coding/testing.md - Review testing standards compliance
 
-**Verification Assignment**
-You're assigned to verify the following resources that were modified:
+**Review Assignment**
+You're assigned to review the following resources that were modified:
 
 1. Read all modified files to understand complete implementation
 2. Compare implementation against original Notion specification
-3. Verify compliance with each assigned standard and established patterns
+3. Review compliance with each assigned standard and established patterns
 4. Check test coverage includes all scenarios and edge cases
-5. Validate controller integration follows pass-through pattern
+5. Review controller integration follows pass-through pattern
 6. Ensure no business logic mixed with data operations
 7. Confirm error handling uses MissingDataError appropriately
+8. **IMPORTANT**: Do NOT make any changes or fixes - only report issues found
 
 **Report**
-**[IMPORTANT]** You're requested to verify and report:
+**[IMPORTANT]** You're requested to review and report:
 
 - Specification compliance status
 - Standards adherence for each category  
@@ -605,12 +608,12 @@ You're assigned to verify the following resources that were modified:
 - Integration completeness
 - Any critical issues or recommendations
 
-**[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+**[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
 
 ```yaml
 status: pass|fail
-summary: 'Complete data operation verification with pattern compliance'
+summary: 'Complete data operation review with pattern compliance'
 checks:
   spec_compliance: pass|fail
   type_safety: pass|fail
@@ -629,21 +632,55 @@ recommendation: proceed|retry|rollback
 
 **What You Do**:
 
-1. **Analyze all reports** (execution + verification)
+1. **Analyze all reports** (execution + review)
 2. **Apply decision criteria**:
    - Review any critical failures from implementation batches
-   - Consider verification recommendations
+   - Consider review recommendations
    - Check completion status of all implementation components
    - Validate pattern consistency with existing codebase
 3. **Select next action**:
    - **PROCEED**: All success or acceptable partial success → Mark workflow complete
-   - **RETRY**: Partial success with correctable failures → Create new batches for failed components
-   - **ROLLBACK**: Critical failures or verification failed → Report issues and stop workflow
+   - **FIX ISSUES**: Partial success with minor issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical failures → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark remaining 'in_progress' items as 'completed'
-   - If RETRY: Add new todo items for retry batches
+   - If FIX ISSUES: Add new todo items for retry batches with failed items
    - If ROLLBACK: Mark all items as 'failed' and document issues
 5. **Prepare transition**:
    - If PROCEED: Generate completion report with all deliverables
-   - If RETRY: Generate retry batches with same standards for failed components
+   - If FIX ISSUES: Generate retry batches with same standards for failed components, repeat until review reports no more issues
    - If ROLLBACK: Document rollback actions and specification issues
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
+
+### Workflow Completion
+
+**Report the workflow output as specified:**
+
+```yaml
+operation_functions: ["operations/operation1.ts", "operations/operation2.ts", "..."]
+integration_tests: ["spec/operations/operation1.spec.int.ts", "spec/operations/operation2.spec.int.ts", "..."]
+updated_controller: "source/index.ts"
+documentation: ["JSDoc for operation1", "JSDoc for operation2", "..."]
+completion_report:
+  controller_name: "controller-name-from-notion"
+  operations_implemented: ["operation1", "operation2", "..."]
+  test_coverage_percentage: "XX%"
+  all_tests_passing: true|false
+  notion_page_id: "notion-page-id"
+pattern_compliance:
+  types_in_operation_files: true|false
+  selector_pattern_used: true|false
+  integration_test_pattern: true|false
+  error_handling_pattern: true|false
+standards_compliance:
+  typescript_standards: true|false
+  documentation_standards: true|false
+  data_operations_standards: true|false
+  testing_standards: true|false
+notion_specification_compliance:
+  all_operations_implemented: true|false
+  data_logic_separation_verified: true|false
+  specification_deviations: ["deviation1", "deviation2", "..."]
+workflow_status: "success|partial|failure"
+summary: "Brief description of data operation implementation completion"
+```

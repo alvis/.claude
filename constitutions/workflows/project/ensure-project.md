@@ -1,250 +1,290 @@
 # Ensure Project
 
-**Purpose**: Validate and bootstrap a project structure at a given path, ensuring minimum viable project setup with proper metadata and dependencies
-**When to use**: When initializing new projects, validating existing project structure, or setting up development environments for monorepo components
-**Prerequisites**: Access to monorepo root, understanding of project types in the repository, package manager availability (pnpm)
+## 1. INTRODUCTION
 
-## Expert Role
+### Purpose & Context
 
-You are a **DevOps Engineer** with deep expertise in project initialization and monorepo management. Your mindset prioritizes:
+**Purpose**: Create barebone project ONLY if not created yet, otherwise validate and skip to completion.
+**When to use**:
 
-- **Structure Consistency**: Ensure all projects follow established patterns and conventions within the monorepo
-- **Dependency Management**: Properly configure shared dependencies and maintain version consistency across projects
-- **Bootstrap Efficiency**: Minimize setup time while ensuring all essential components are in place
-- **Type Detection**: Accurately identify project types to apply appropriate scaffolding templates
-- **Environment Safety**: Never expose or copy sensitive files, always respect .gitignore patterns
+- When initializing new projects that don't exist
+- When validating if a project is properly set up
+- When ensuring monorepo component structure before development
+**Prerequisites**:
+- Access to monorepo root
+- Understanding of project types in the repository
+- Package manager availability
 
-## Steps
+### Your Role
 
-### 0. Workflow Preparation and Prepare Task Management Mindset
+You are a **Project Orchestration Director** who orchestrates the workflow like a construction project manager. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
 
-**Initialize workflow tracking and identify reusable components**:
+- **Strategic Delegation**: Break complex setup work into parallel tasks and assign to the right specialist subagents
+- **Parallel Coordination**: Maximize efficiency by running multiple subagents simultaneously when dependencies allow
+- **Quality Oversight**: Review work objectively without being involved in execution details
+- **Decision Authority**: Make go/no-go decisions based on subagent reports and verification results
 
-- [ ] Identify available task tracking tools and use the most appropriate one
-- [ ] Create initial todo items for all known major workflow steps
-- [ ] Include estimated complexity for each task
-- [ ] Set initial status to 'pending' for all tasks
-- [ ] **IMPORTANT**: Be prepared to add more todo items as new tasks are discovered
-- [ ] Mark this initialization task as 'completed' once done
+## 2. WORKFLOW OVERVIEW
 
-**Identify existing workflows to reuse**:
+### Workflow Input/Output Specification
 
-- [ ] Search for applicable existing workflows
-- [ ] Reference [Prepare Coding](@../coding/prepare-coding.md) for environment setup
-- [ ] Reference [Commit with Git](@commit-with-git.md) for version control setup
-- [ ] Document workflow dependencies in a clear format
-- [ ] Map which steps will use each referenced workflow
-- [ ] Avoid recreating steps that existing workflows already handle
+#### Required Inputs
 
-**Plan agent delegation strategy**:
+- **Target Path**: Absolute path where project should be created or validated
 
-- [ ] Identify available specialized agents in the system
-- [ ] Determine which steps require specialized expertise
-- [ ] Create a delegation plan mapping steps to appropriate agents
-- [ ] Document parallel execution opportunities where dependencies allow
-- [ ] Specify verification points for quality assurance
+#### Optional Inputs
 
-**Proactive task discovery**:
+- **Package Manager**: Preferred package manager (default: auto-detect from monorepo)
+- **Project Type**: Type of project (app/lib/service) - will auto-detect if not provided
 
-- [ ] As workflow progresses, actively identify additional tasks
-- [ ] Add new todo items immediately when discovered
-- [ ] Update complexity estimates if tasks prove more involved
-- [ ] Break down complex tasks into subtasks when needed
+#### Expected Outputs
 
-### 1. Validate Project Path and Structure
+- **Project Structure**: Complete project directory with all essential files (if created)
+- **Validation Status**: Confirmation whether project was already setup or newly created
+- **Dependency State**: Status of package dependencies if installation was needed
+- **Readiness Report**: Final determination of project readiness for development
 
-**Analyze target path and determine project requirements**:
+#### Data Flow Summary
 
-**Task tracking**:
+The workflow takes a target path, performs a quick check to determine if the project already exists with proper structure. If not, it creates the minimal required files by mimicking patterns from similar projects in the monorepo, then validates the final state.
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+### Visual Overview
 
-**Core actions**:
+#### Main Workflow Flow
 
-- [ ] Verify target path exists and is accessible
-- [ ] Check for existing project metadata files (package.json, tsconfig.json, etc.)
-- [ ] Identify source directory structure (src/, lib/, components/)
-- [ ] Determine project type from path structure or existing configuration
-- [ ] **IMPORTANT**: Always respect .gitignore - never read or copy ignored files
+```plaintext
+   YOU                              SUBAGENTS EXECUTE
+(Orchestrates Only)                 (Perform Tasks)
+   |                                   |
+   v                                   v
+[START]
+   |
+   v
+[Step 1: Ensure Project Setup]
+   ├─ Phase 1: Context & Validation ──→ (Quick check: project exists?)
+   │     ↓
+   │  [Decision: Bootstrap needed?]
+   │     ├─ NO: Skip to Phase 4 (project already setup)
+   │     └─ YES: Continue to Phase 2
+   │
+   ├─ Phase 2: Create Files ──────────→ (Conditional: bootstrap project)
+   │     ↓
+   ├─ Phase 3: Review ─────────────────→ (Conditional: verify setup)
+   │     ↓
+   └─ Phase 4: Decision ──────────────→ (Report final state)
+   |
+   v
+[END]
 
-**Verification**:
+Legend:
+═══════════════════════════════════════════════════════════════════
+• LEFT COLUMN: You plan & orchestrate (no execution)
+• RIGHT SIDE: Subagents execute tasks conditionally
+• ARROWS (───→): You assign work to subagents
+• DECISIONS: Bootstrap decision determines flow
+• PHASES 2-3: Only execute if project needs creation
+═══════════════════════════════════════════════════════════════════
 
-- [ ] Subagent/workflow self-verification: Path validated and type identified
-- [ ] Primary agent verification: Project requirements clearly documented
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during execution
-
-**Anti-pattern to avoid:**
-
-```typescript
-// ❌ Don't do this - ignoring .gitignore
-import fs from 'fs'
-fs.readdirSync('./node_modules') // This violates .gitignore rules
+Note: 
+• Phase 1: SUPER QUICK validation (seconds, not minutes)
+• Phases 2-3: Only if bootstrapping needed
+• Phase 4: Always executes for final report
 ```
 
-### 2. Analyze Similar Projects in Monorepo
+## 3. WORKFLOW IMPLEMENTATION
 
-**Discover patterns and shared dependencies from existing projects**:
+### Workflow Steps
 
-**Task tracking**:
+1. Ensure Project Setup (Single step with 4 phases)
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+### Step 1: Ensure Project Setup
 
-**Core actions**:
+**Step Configuration**:
 
-- [ ] Scan monorepo for projects of the same type (apps/, libs/, services/)
-- [ ] Extract common dependencies from package.json files
-- [ ] Identify shared configuration patterns (tsconfig, eslint, etc.)
-- [ ] Document minimum required project structure
-- [ ] **CRITICAL**: Skip all .gitignored directories and files during analysis
+- **Purpose**: Quickly validate if project exists, bootstrap ONLY if needed, then report final state
+- **Input**: Target Path and optional Project Type from workflow inputs
+- **Output**: Project readiness status (either already setup or newly created)
+- **Sub-workflow**: None
+- **Parallel Execution**: No
 
-**Verification**:
+#### Phase 1: Context Collection & Path Validation (You)
 
-- [ ] Subagent/workflow self-verification: Pattern analysis complete with common dependencies identified
-- [ ] Primary agent verification: Minimum structure requirements documented
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during execution
+**What You Do**:
 
-### 3. Create Minimum Project Structure
+1. **Receive inputs** from workflow inputs (target path and optional project type)
+2. **QUICK CHECK** - Use fast ls commands to check basic structure (NO deep inspection):
+   - Check if target path exists
+   - Check for package.json existence  
+   - Check for source directories (e.g. src or source) and nested files
+   - Check for project config files (e.g. vitest.config.ts)
+   - List immediate directory contents ONLY
+3. **Identify file structure** of monorepo (excluding gitignored files) of similar projects
+4. **Make bootstrap decision**:
+   - If package.json exists AND source exist and consistent to other similar projects → **SKIP to Phase 4**
+   - If missing essential files (e.g. package.json, index.ts etc.) → **PROCEED to Phase 2**
+5. **Use TodoWrite** to create task list based on decision:
+   - If skipping: Single item "Project already setup - validation only"
+   - If bootstrapping: Items for "Analyze patterns", "Create files", "Install deps"
 
-**Bootstrap project with essential files and directories**:
+**CRITICAL**: This phase must be SUPER QUICK (seconds). Don't waste time on full inspection since project is likely already setup.
 
-**Task tracking**:
+**OUTPUT from Phase 1**: Bootstrap decision (YES/NO) and quick status
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+#### Phase 2: Create Basic Files (Conditional - Only if Bootstrap Needed)
 
-**Core actions**:
+**CONDITIONAL EXECUTION**: Skip this phase entirely if Phase 1 determined project is already setup.
 
-- [ ] Create package.json with minimum dependencies shared by similar projects
-- [ ] Create src/ directory structure appropriate for project type
-- [ ] Add essential configuration files (tsconfig.json, .eslintrc, etc.)
-- [ ] Create basic README.md with project information
-- [ ] Set up appropriate .gitignore if not inherited from root
+**What You Do** (if bootstrapping needed):
 
-**Verification**:
+1. **Analyze monorepo patterns** - Quickly scan for similar projects using find/ls
+3. **Create comprehensive task** for file creation and dependency installation
+4. **Use TodoWrite** to update task status from 'pending' to 'in_progress'
+5. **Dispatch subagent** for project bootstrapping
 
-- [ ] Subagent/workflow self-verification: All essential files created with proper structure
-- [ ] Primary agent verification: Project structure follows monorepo conventions
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during execution
+**What You Send to Subagents**:
 
-**Anti-pattern to avoid:**
+    >>>
+    **ultrathink: adopt the Project Bootstrap Creator mindset**
 
-```json
-// ❌ Don't do this - hardcoded versions without checking existing projects
-{
-  "dependencies": {
-    "react": "18.0.0" // Should match other projects in monorepo
-  }
-}
+    - You're a **Project Bootstrap Creator** with expertise in rapid project setup who follows these principles:
+      - **Minimal Structure**: Create only essential barebone files
+      - **Pattern Mimicking**: Copy common patterns from similar projects in monorepo
+      - **Gitignore Compliance**: NEVER create or copy any .gitignored files
+      - **Speed Focus**: Quick creation of minimum viable structure
+
+    **Read the following assigned standards** and follow them recursively:
+
+    - ../../standards/coding/typescript.md
+    - ../../standards/coding/general-principles.md
+    - ../../standards/coding/documentation.md
+
+    **Assignment**
+    Bootstrap a new project at the target path:
+
+    - Target Path: [from workflow inputs]
+    - Project Type: [detected or specified]
+    - Similar Projects Found: [list from quick scan]
+
+    **Steps**
+
+    1. Scan similar projects for common patterns (package.json, tsconfig, etc.)
+    2. Create basic package.json with minimal dependencies
+    4. Create placeholder source files if not exists
+    5. Create other essential config files (.eslintrc, etc.)
+    6. **CRITICAL**: Skip ALL .gitignored files and directories
+    7. Install dependencies using detected package manager (pnpm/npm/yarn)
+
+    **Report**
+    Return the following execution report (<1000 tokens):
+
+    ```yaml
+    status: success|failure|partial
+    summary: 'Brief description of bootstrapping results'
+    modifications: ['package.json', 'tsconfig.json', ...]
+    outputs:
+      files_created: ['list of created files']
+      dependencies_installed: true|false
+      package_manager: 'pnpm|npm|yarn'
+    issues: ['any issues encountered']
+    ```
+
+    <<<
+
+#### Phase 3: Review (Conditional - Only if Phase 2 Executed)
+
+**CONDITIONAL EXECUTION**: Skip this phase entirely if Phase 2 was skipped.
+
+**When You Triggers Review**: Only if Phase 2 was executed
+
+**What You Send to Review Subagent**:
+
+>>>
+**ultrathink: adopt the Project Setup Verifier mindset**
+
+- You're a **Project Setup Verifier** who ensures proper bootstrapping:
+  - **Completeness Check**: Verify all essential files exist
+  - **Standards Compliance**: Check adherence to coding standards
+  - **Dependency Validation**: Ensure packages installed correctly
+  - **Review-Only Role**: You MUST NOT modify any files
+
+**Review Assignment**
+Verify the bootstrapped project at:
+
+- Target Path: [from workflow inputs]
+- Created Files: [from Phase 2 report]
+
+**Review Steps**
+
+1. Verify package.json has required fields and dependencies
+2. Confirm source structure exists and consistent with other projects in the same monorepo
+3. Check for any missing essential files
+
+**Report**
+Return the following review report (<500 tokens):
+
+```yaml
+status: pass|fail
+summary: 'Brief verification summary'
+checks:
+  essential_files: pass|fail
+  dependencies: pass|fail
+  structure: pass|fail
+critical_issues: ['any critical issues']
+warnings: ['any warnings']
+recommendation: proceed|retry|rollback
 ```
 
-### 4. Bootstrap with Package Manager
+**What You Do After Review**:
 
-**Initialize project dependencies and validate setup**:
+1. **Analyze review report** if Phase 3 was executed
+2. **Handle any issues**:
+   - If review passes → Continue to Phase 4
+   - If minor issues → Create fix tasks and re-run Phase 2 for specific fixes
+   - If critical issues → Rollback and retry Phase 2
+3. **Use TodoWrite** to update task statuses
 
-**Task tracking**:
+#### Phase 4: Decision & Final Report (Always Executes)
 
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Review if this step reveals additional subtasks and add them immediately
+**What You Do**:
 
-**Core actions**:
+1. **Compile final status** based on phases executed:
+   - If skipped to Phase 4: Report "Project already properly setup"
+   - If executed Phases 2-3: Analyze bootstrap and review results
+2. **Apply decision criteria**:
+   - Project must have essential files (package.json, tsconfig.json, src/lib)
+   - Dependencies must be resolvable (if installation attempted)
+   - Structure must follow monorepo patterns
+3. **Make final determination**:
+   - **SUCCESS**: Project is ready (either was already or now is)
+   - **PARTIAL**: Project setup but has warnings
+   - **FAILURE**: Critical issues prevent project use
+4. **Use TodoWrite** to mark all tasks complete
+5. **Generate final report** for workflow output
 
-- [ ] Identify package manager from monorepo root (pnpm, npm, yarn)
-- [ ] Run package manager install command for the project
-- [ ] Verify all dependencies resolve correctly
-- [ ] Run any post-install scripts or validation commands
-- [ ] Confirm project builds successfully if build scripts exist
+### Workflow Completion
 
-**Verification**:
+**Report the workflow output as specified:**
 
-- [ ] Subagent/workflow self-verification: Dependencies installed and project functional
-- [ ] Primary agent verification: No package resolution errors or build failures
-- [ ] Mark this task as 'completed' in task tracking tool when verified
-- [ ] Add any follow-up tasks discovered during execution
-
-### 5. Final Review and Comprehensive Validation
-
-**Primary agent performs final review of all delegated work**:
-
-**Task tracking review**:
-
-- [ ] Mark this task as 'in_progress' in task tracking tool
-- [ ] Verify all tracked tasks show 'completed' status
-- [ ] Confirm no tasks remain in 'pending' or 'in_progress' state
-
-**Subagent work review**:
-
-- [ ] Review outputs from all delegated agents
-- [ ] Verify each subagent's self-verification was performed
-- [ ] Double-check work quality meets standards
-- [ ] Confirm all referenced workflows were properly executed
-
-**Requirements validation**:
-
-- [ ] Project metadata file exists and contains appropriate dependencies
-- [ ] Source directory structure follows monorepo conventions
-- [ ] Package manager successfully installed all dependencies
-- [ ] No .gitignored files were read or copied during setup
-- [ ] Project builds and runs without errors
-
-**Final sign-off**:
-
-- [ ] Primary agent approves all work
-- [ ] Mark this final review task as 'completed' in task tracking tool
-- [ ] Document any deviations or follow-up items
-
-## Standards to Follow
-
-**🔴 MANDATORY: All standards listed below MUST be followed without exception**
-
-- [Folder Structure](@../../standards/code/folder-structure.md) - Project directory organization and naming conventions
-- [TypeScript](@../../standards/code/typescript.md) - TypeScript configuration and coding standards
-- [Environment Variables](@../../standards/code/environment-variables.md) - Secure handling of configuration values
-- [Git Workflow](@../../standards/project/git-workflow.md) - Version control and .gitignore compliance
-
-## Common Issues
-
-- **Package Version Conflicts**: Dependencies don't match other projects in monorepo → Check existing package.json files and align versions with workspace standards
-- **Missing Package Manager**: pnpm/npm/yarn not available in environment → Install appropriate package manager or use container with pre-installed tools
-- **Permission Errors**: Cannot create files in target directory → Verify write permissions and user access to the target path
-- **Gitignore Violations**: Accidentally reading node_modules or build artifacts → Always check .gitignore patterns before file operations
-- **Project Type Misidentification**: Wrong template applied for project type → Analyze path structure and existing projects more carefully to determine correct type
-- **Dependency Resolution Failures**: npm/pnpm install fails with peer dependency errors → Review and align peer dependencies with other projects in the monorepo
-- **Configuration File Conflicts**: tsconfig.json or eslint config causes build errors → Ensure configuration extends from monorepo root and doesn't conflict with shared settings
-
-## Project Setup Report Template
-
-### Expected Output Format
-
-```markdown
-## Project Initialization Report
-
-### Summary
-Project successfully initialized at [path] with [project-type] configuration
-
-### Project Structure Created
-- package.json with [X] dependencies aligned with monorepo standards
-- src/ directory with [structure description]
-- Configuration files: [list of config files]
-- Documentation: README.md with project overview
-
-### Dependencies Installed
-- Total packages: [count]
-- Shared with other projects: [percentage]%
-- Project-specific dependencies: [list]
-
-### Validation Results
-- ✅ Package manager install successful
-- ✅ Project builds without errors
-- ✅ No .gitignore violations detected
-- ✅ Structure follows monorepo conventions
-
-### Next Steps
-- Begin development following TDD workflow
-- Set up CI/CD pipeline if needed
-- Add project-specific documentation
+```yaml
+workflow: ensure-project
+status: completed|partial|failed
+outputs:
+  project_state:
+    was_already_setup: true|false  # Key indicator if we skipped bootstrapping
+    target_path: '/path/to/project'
+    project_type: 'app|lib|service'
+    essential_files: ['package.json', 'tsconfig.json', 'src/index.ts']
+  bootstrap_performed:
+    needed: true|false
+    files_created: []  # Empty if project was already setup
+    dependencies_installed: true|false|skipped
+  validation:
+    structure_complete: passed|failed
+    standards_compliance: passed|failed|skipped
+    ready_for_development: true|false
+summary: |
+  [One of the following summaries:]
+  - "Project already properly setup at [path]. No bootstrapping needed."
+  - "Successfully bootstrapped new project at [path] with minimal structure."
+  - "Project validation failed: [reason]"
 ```
