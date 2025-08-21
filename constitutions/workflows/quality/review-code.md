@@ -1,367 +1,245 @@
-# Review Code
+# Code Review Workflow
 
-**Purpose**: Complete code review process to ensure quality, maintainability, and standards compliance
-**When to use**: When reviewing pull requests or code changes
-**Prerequisites**: Understanding of project standards, access to code changes, testing environment available
+## Purpose & Context
 
-## Steps
+This workflow ensures comprehensive review of code following established coding standards.
 
-### 1. Review Tone and Approach
+**Use Cases:**
+- Reviewing any code (existing codebase, PRs, specific files)
+- Ensuring code quality standards are met
+- Validating test coverage and documentation
+- Security review for sensitive changes
 
-Set the right tone for constructive feedback:
+## Visual Flow
 
-- **Use constructive, polite language** - Focus on helping improve the code
-- **Suggest improvements with justification** - Explain why changes are needed
-- **Avoid blaming language** - Don't say "this is wrong", explain what could be better
-- **Focus on the code, not the person** - Keep feedback objective and professional
-- **Recognize good work** - Call out well-written code and good patterns
-
-### 2. Code Quality Assessment
-
-Review fundamental code quality aspects:
-
-**Function Design:**
-
-- [ ] Functions follow single responsibility principle (<60 lines)
-- [ ] Clear, descriptive function names
-- [ ] Proper parameter design (positional vs object parameters)
-- [ ] Return types explicitly declared
-
-**Variable and Type Naming:**
-
-- [ ] Clear, descriptive variable names
-- [ ] Consistent naming conventions (camelCase, PascalCase)
-- [ ] No abbreviations or unclear names
-- [ ] Type names are descriptive and specific
-
-**Error Handling:**
-
-- [ ] Errors handled explicitly with specific types
-- [ ] No silent failures or ignored errors
-- [ ] Proper error messages for debugging
-- [ ] Edge cases considered and handled
-
-### 3. Architecture and Patterns Review
-
-Verify architectural compliance:
-
-**File Organization:**
-
-- [ ] Files placed in correct directories
-- [ ] Proper import/export patterns
-- [ ] No circular dependencies
-- [ ] Consistent file naming
-
-**Framework Patterns:**
-
-- [ ] TypeScript conventions followed (strict types, no `any`)
-- [ ] React patterns followed (FC types, hooks usage, accessibility)
-- [ ] Service patterns followed (proper error handling, data validation)
-- [ ] Import order correct (Node → third-party → project modules)
-
-### 4. Testing Review
-
-Assess test quality and coverage:
-
-**Test Structure:**
-
-- [ ] Tests written following TDD approach
-- [ ] Proper test file naming with prefixes (`fn:`, `rc:`, `op:`)
-- [ ] Arrange → Act → Assert pattern followed
-- [ ] Tests are self-contained and focused
-
-**Test Quality:**
-
-- [ ] 100% coverage maintained with minimal tests
-- [ ] Edge cases and error scenarios covered
-- [ ] External dependencies properly mocked
-- [ ] Uses `const` over `let`, avoids `beforeEach`
-- [ ] No `any` types used in tests
-
-**Test Patterns:**
-
-```typescript
-// ✅ Look for proper test structure
-describe("fn:calculateTotal", () => {
-  it("should return correct total with tax applied", () => {
-    const expected = 108.0;
-
-    const result = calculateTotal(100, 0.08);
-
-    expect(result).toBe(expected);
-  });
-});
+```
+┌─────────────────────────────┐
+│  Phase 1: File              │
+│  Identification (You)        │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  Phase 2: Review Execution  │
+│  (All 4 Agents in Parallel) │
+├─────────────────────────────┤
+│  ╔══════════════════════╗   │
+│  ║ Code Quality Agent   ║───┤
+│  ╚══════════════════════╝   │
+│  ╔══════════════════════╗   │
+│  ║ Testing Agent        ║───┼──→ Phase 3
+│  ╚══════════════════════╝   │
+│  ╔══════════════════════╗   │
+│  ║ Documentation Agent  ║───┤
+│  ╚══════════════════════╝   │
+│  ╔══════════════════════╗   │
+│  ║ Security Agent       ║───┤
+│  ╚══════════════════════╝   │
+└─────────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  Phase 3: Consolidation     │
+│  (You)                      │
+└─────────────────────────────┘
 ```
 
-### 5. Documentation Review
-
-Check documentation quality:
-
-**JSDoc Standards:**
-
-- [ ] JSDoc format is correct (one-line when possible)
-- [ ] Functions use 3rd-person verbs, lowercase, no period
-- [ ] Non-functions use noun phrases
-- [ ] All `@param` and `@throws` documented
-- [ ] No TypeScript types duplicated in prose
-
-**Comment Quality:**
-
-- [ ] Comments explain WHY, not WHAT
-- [ ] Comment casing follows rules (lowercase sentences)
-- [ ] No redundant or obvious comments
-- [ ] Complex business logic is explained
-
-### 6. Security Review
-
-Verify security practices:
-
-**Code Security:**
-
-- [ ] No hardcoded secrets or API keys
-- [ ] No sensitive data in logs
-- [ ] Input validation for external data
-- [ ] Proper authentication/authorization checks
-
-**Development Artifacts:**
-
-- [ ] No console.log statements in production code
-- [ ] No debug code or temporary implementations
-- [ ] No commented-out code blocks
-
-### 7. Comment Tag Review
-
-Flag problematic comment tags:
-
-**Must be removed before merge:**
-
-- `// TODO:` - Implementation needed
-- `// FIXME:` - Broken code needs fixing
-- `// DEBUG:` - Debug code to remove
-- `// TEMP:` - Temporary code/stubs
-- `// REVIEW:` - Needs peer review
-- `// REFACTOR:` - Should be refactored
-
-**Acceptable to keep:**
-
-- `// HACK:` - Non-ideal solution with future refactor plan
-- `// WORKAROUND:` - Bypasses external issue
-- `// NOTE:` - Important context/explanation
-- `// WARNING:` - Potential risks/edge cases
-
-## Feedback Format Guidelines
-
-### Feedback Categories
-
-Use clear prefixes to categorize feedback:
-
-```typescript
-// SUGGESTION: Consider using discriminated union for extensibility
-type Status = 'active' | 'inactive' | 'pending';
-
-// CONSIDER: Extract this to a reusable utility function
-const formatDate = (date: Date) => {...};
-
-// QUESTION: Is this error case handled upstream?
-if (!user) throw new Error();
-
-// NICE: Great use of early return pattern here! 👍
-if (!isValid) return null;
-
-// CRITICAL: This could cause a security vulnerability
-const query = `SELECT * FROM users WHERE id = ${userId}`;
-```
-
-### Priority Levels
-
-Assign appropriate priority to feedback:
-
-- 🔴 **Critical** - Security issues, bugs that break functionality
-- 🟡 **Important** - Performance issues, maintainability concerns, architectural problems
-- 🟢 **Nice to have** - Style improvements, minor optimizations, suggestions
-
-### Constructive Feedback Examples
-
-```typescript
-// ✅ Good feedback examples:
-
-// SUGGESTION: Consider extracting this validation logic into a reusable function
-// This pattern appears in multiple places and could benefit from centralization.
-
-// CONSIDER: Using a Map here instead of an array filter would improve performance
-// for large datasets (O(1) vs O(n) lookup time).
-
-// QUESTION: Should we handle the case where the API returns a 429 status?
-// The current implementation might retry indefinitely.
-
-// NICE: Excellent use of TypeScript discriminated unions here!
-// This makes the API much more type-safe.
-
-// ❌ Poor feedback examples:
-
-// This is wrong.
-// Bad code.
-// Why did you do this?
-// This doesn't make sense.
-```
-
-## Standards to Follow
-
-**🔴 MANDATORY: All standards listed below MUST be followed without exception**
-
-### Core Code Standards
-
-- [TypeScript Standards](@../../standards/code/typescript.md) - Type safety and TypeScript patterns
-- [Naming Conventions](@../../standards/code/naming.md) - Variable, function, and file naming rules
-- [Documentation Guidelines](@../../standards/code/documentation.md) - Comments, JSDoc, and documentation standards
-- [General Principles](@../../standards/code/general-principles.md) - DRY, SRP, and other principles
-- [Function Patterns](@../../standards/code/function-patterns.md) - Function design patterns
-- [Pure Functions](@../../standards/code/pure-functions.md) - Writing testable, pure functions
-
-### Frontend Standards (when reviewing React code)
-
-- [React Component Standards](@../../standards/frontend/react-components.md) - Component patterns
-- [React Hooks Standards](@../../standards/frontend/react-hooks.md) - Hook usage patterns
-- [Accessibility Standards](@../../standards/frontend/accessibility.md) - Web accessibility compliance
-
-### Backend Standards (when reviewing services)
-
-- [Error Handling Standards](@../../standards/backend/error-handling.md) - Error patterns
-- [Security Standards](@../../standards/backend/security.md) - Security best practices
-- [Data Operations Standards](@../../standards/backend/data-operations.md) - Repository patterns
-
-### Quality Standards
-
-- [Testing Standards](@../../standards/quality/testing.md) - Test structure and coverage
-- [Code Review Standards](@../../standards/quality/code-review.md) - Review best practices
-
-## Expected Output Template
-
-### Code Review Summary
-
-Use this template when providing a comprehensive code review:
-
-```markdown
-## Code Review: [PR Title]
-
-### Summary
-
-[2-3 sentence overview of the changes and overall assessment]
-
-### Quality Assessment
-
-- **Code Quality**: [Excellent/Good/Needs Improvement]
-- **Test Coverage**: [Complete/Adequate/Insufficient]
-- **Documentation**: [Complete/Adequate/Missing]
-- **Standards Compliance**: [Full/Partial/Non-compliant]
-
-### Strengths ✅
-
-- [Positive aspect 1]
-- [Positive aspect 2]
-- [Good patterns observed]
-
-### Critical Issues 🔴
-
-- [ ] [Security/Breaking issue that must be fixed]
-- [ ] [Another critical issue]
-
-### Important Suggestions 🟡
-
-- [ ] [Performance or maintainability improvement]
-- [ ] [Architectural concern]
-
-### Minor Suggestions 🟢
-
-- [ ] [Style improvement]
-- [ ] [Optional enhancement]
-
-### Detailed Feedback
-
-[File-by-file feedback using the feedback format guidelines above]
-
-### Testing Verification
-
-- [ ] All tests pass locally
-- [ ] New tests cover added functionality
-- [ ] Edge cases considered
-- [ ] Performance implications tested
-
-### Final Recommendation
-
-[Approve/Request Changes/Comment]
-
-### Next Steps
-
-[Clear action items for the author if changes are needed]
-```
-
-## Standards to Follow
-
-- [Testing Standards](@../../standards/quality/testing.md)
-- [TypeScript Standards](@../../standards/code/typescript.md)
-- [Documentation Standards](@../../standards/code/documentation.md)
-- [React Component Standards](@../../standards/frontend/react-components.md)
-
-## Review Quality Gates
-
-**Before providing approval, ensure:**
-
-✅ **No Critical Issues:**
-
-- [ ] No security vulnerabilities identified
-- [ ] No functionality-breaking bugs
-- [ ] No performance bottlenecks introduced
-
-✅ **Standards Compliance:**
-
-- [ ] All applicable coding standards followed
-- [ ] Proper error handling implemented
-- [ ] Documentation requirements met
-
-✅ **Test Coverage:**
-
-- [ ] All new code covered by tests
-- [ ] Tests follow TDD principles
-- [ ] No test quality regressions
-
-## Common Review Issues
-
-**Architecture Issues:**
-
-- Functions that do too much (>60 lines)
-- Unclear separation of concerns
-- Inconsistent error handling patterns
-- Missing abstraction layers
-
-**Code Quality Issues:**
-
-- Unclear variable/function names
-- Complex nested conditionals
-- Repeated code patterns
-- Missing type safety
-
-**Testing Issues:**
-
-- Tests that test implementation details
-- Missing edge case coverage
-- Overly complex test setup
-- Tests that don't follow AAA pattern
-
-**Documentation Issues:**
-
-- Missing JSDoc for public APIs
-- Comments that restate the code
-- Outdated documentation
-- Temporary tags left in code
-
-## Review Completion
-
-After completing the review:
-
-1. **Summarize findings** - Provide a brief overview of main concerns
-2. **Categorize feedback** - Separate critical, important, and nice-to-have items
-3. **Provide next steps** - Clear guidance on what needs to be addressed
-4. **Offer assistance** - Be available for questions or pair programming if needed
-
-The goal is to maintain high code quality while supporting team learning and growth.
+## Workflow Steps
+
+#### Phase 1: File Identification (You)
+
+**Goal**: Identify all files that need review
+
+**Steps:**
+
+1. **Get File Information**
+   - Identify source of review request (PR, existing code, specific files)
+   - Get list of files to review
+   - Identify file types and categories
+
+2. **Categorize Files**
+   - Source code files
+   - Test files
+   - Documentation files
+   - Configuration files
+
+3. **Create Review Plan**
+   - Map files to appropriate review criteria
+   - Set review priorities
+   - Identify critical paths
+
+#### Phase 2: Execution (Subagents)
+
+**Goal**: Perform comprehensive code review across all quality dimensions
+
+**Parallel Execution**: Deploy all 4 review agents simultaneously
+
+Request each subagent to perform the following steps with full detail:
+
+    >>>
+    **ultrathink: adopt the Code Review Specialist mindset**
+    
+    You're a **Code Review Specialist** with deep expertise in your specific domain who follows these technical principles:
+    - **Standards Compliance**: Ensure code follows all established standards
+    - **Quality Assurance**: Identify issues and provide actionable feedback
+    - **Best Practices**: Recommend improvements based on industry standards
+    
+    **Read the following assigned standards** and follow them recursively:
+    
+    **For Code Quality Agent (@marcus-williams-code-quality)**:
+    - ../../standards/coding/general-principles.md
+    - ../../standards/coding/typescript.md
+    - ../../standards/coding/functions.md
+    - ../../standards/coding/naming/variables.md
+    - ../../standards/coding/naming/functions.md
+    - ../../standards/coding/naming/types.md
+    - ../../standards/coding/naming/files.md
+    
+    **For Testing Agent (@ava-thompson-testing-evangelist)**:
+    - ../../standards/coding/testing.md
+    - ../../standards/coding/general-principles.md
+    
+    **For Documentation Agent (@sam-taylor-documentation)**:
+    - ../../standards/coding/documentation.md
+    - ../../standards/coding/general-principles.md
+    
+    **For Security Agent (@nina-petrov-security-champion)**:
+    - ../../standards/coding/general-principles.md
+    - ../../standards/coding/environment-variables.md
+    
+    **Assignment**
+    You're assigned to review the provided code files for issues in your domain of expertise.
+    
+    **Steps**
+    
+    **For Code Quality Agent**:
+    1. Check code structure and organization against standards
+    2. Validate naming conventions per naming standards
+    3. Review complexity metrics and suggest refactoring
+    4. Check for code duplication and DRY violations
+    5. Verify error handling patterns
+    6. Review performance considerations
+    
+    **For Testing Agent**:
+    1. Analyze test coverage metrics against minimum requirements
+    2. Review test structure and organization per standards
+    3. Check for missing test scenarios and edge cases
+    4. Validate test assertions and expectations
+    5. Review mock usage and test isolation
+    6. Check integration test coverage
+    
+    **For Documentation Agent**:
+    1. Check inline code comments per documentation standards
+    2. Review function/method documentation completeness
+    3. Validate README updates if applicable
+    4. Check API documentation accuracy
+    5. Review type definitions and interfaces
+    6. Verify example usage and clarity
+    
+    **For Security Agent**:
+    1. Check for injection vulnerabilities (SQL, XSS, etc.)
+    2. Review authentication/authorization implementation
+    3. Validate input sanitization and validation
+    4. Check for sensitive data exposure in logs/responses
+    5. Review dependency security and known vulnerabilities
+    6. Check CORS configuration and security headers
+    
+    **Report**
+    Provide findings in YAML format:
+    
+    ```yaml
+    agent: [agent_name]
+    status: [pass|warning|fail]
+    findings:
+      critical:
+        - issue: "Description"
+          file: "path/to/file"
+          line: 123
+          recommendation: "How to fix"
+      warnings:
+        - issue: "Description"
+          file: "path/to/file"
+          recommendation: "Improvement suggestion"
+      passed:
+        - "What was done well"
+    metrics:
+      [relevant metrics for your domain]
+    ```
+    <<<
+
+#### Phase 3: Consolidation (You)
+
+**Goal**: Consolidate all review feedback and generate final report
+
+**Steps:**
+
+1. **Collect All Reports**
+   - Gather reports from all 4 agents
+   - Validate report completeness
+   - Check for conflicting findings
+
+2. **Prioritize Issues**
+   - Critical: Must fix immediately
+   - Major: Should fix before proceeding
+   - Minor: Can fix in follow-up
+   - Suggestions: Optional improvements
+
+3. **Generate Consolidated Report**
+   ```yaml
+   code_review:
+     review_type: "[pr|codebase|files]"
+     identifier: "[pr_number|path|description]"
+     status: "[pass|requires_changes|fail]"
+     
+     critical_issues:
+       - category: "security"
+         description: "SQL injection vulnerability"
+         file: "src/api/users.ts"
+         line: 45
+         recommendation: "Use parameterized queries"
+         
+     major_issues:
+       - category: "testing"
+         description: "Missing test coverage"
+         file: "src/services/auth.ts"
+         coverage: "65%"
+         recommendation: "Add unit tests for error cases"
+         
+     minor_issues:
+       - category: "documentation"
+         description: "Missing JSDoc comments"
+         files: ["src/utils/helpers.ts"]
+         recommendation: "Add function documentation"
+         
+     suggestions:
+       - category: "performance"
+         description: "Consider caching for repeated queries"
+         file: "src/api/data.ts"
+         
+     metrics:
+       test_coverage: "78%"
+       documentation_coverage: "85%"
+       complexity_score: "B"
+       security_score: "A-"
+       files_reviewed: 15
+       issues_found: 8
+   ```
+
+4. **Create Action Items**
+   - List required fixes by priority
+   - Provide clear remediation steps
+   - Suggest implementation order
+
+## Output
+
+**Success Criteria:**
+- All files reviewed by appropriate agents
+- Critical issues identified and documented
+- Comprehensive report generated
+- Clear action items provided
+
+**Deliverables:**
+1. Consolidated review report in YAML format
+2. Prioritized list of issues
+3. Remediation recommendations
+4. Review metrics summary

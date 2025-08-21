@@ -156,6 +156,7 @@ Request the subagent to perform the following comprehensive steps:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
+    - @../../standards/coding/backend/data-entity.md
     - @../../standards/coding/typescript.md
     - @../../standards/coding/documentation.md
     - @../../standards/coding/naming/functions.md
@@ -257,90 +258,95 @@ Request the subagent to perform the following comprehensive steps:
     ```
 ```
 
-#### Step 2 - Phase 3: Verification and Finalization (Subagents)
+#### Step 2 - Phase 3: Review and Finalization (Subagents)
 
 **When You Trigger This Phase**: After the comprehensive subagent completes all implementation tasks
 
-In a single message, You spin up one verification subagent to validate the complete implementation.
+In a single message, You spin up one review subagent to validate the complete implementation.
 
-- **[IMPORTANT]** This phase validates the entire implementation done by the previous subagent
-- **[IMPORTANT]** The subagent will verify schemas, types, and database integration
-- **[IMPORTANT]** Use TodoWrite to track this verification task
+- **[IMPORTANT]** This phase reviews the entire implementation done by the previous subagent
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
+- **[IMPORTANT]** The subagent will review schemas, types, and database integration
+- **[IMPORTANT]** Use TodoWrite to track this review task
 
-Request the subagent to perform the following comprehensive verification:
+Request the subagent to perform the following comprehensive review:
 
 ```text
     **In ultra-think mode, adopt the Database Integration Specialist mindset**
 
-    - You're a **Database Integration Specialist** with expertise in Prisma, TypeScript, and database validation who follows these principles:
-      - **Schema Validation**: Verify correct Prisma schema syntax and conventions
-      - **Type Verification**: Validate generated TypeScript types
-      - **Integration Testing**: Validate the complete database integration
+    - You're a **Database Integration Specialist** with expertise in Prisma, TypeScript, and database review who follows these principles:
+      - **Schema Review**: Review correct Prisma schema syntax and conventions
+      - **Type Review**: Review generated TypeScript types
+      - **Integration Testing**: Review the complete database integration
       - **Documentation Quality**: Ensure comprehensive documentation
       - **Migration Readiness**: Confirm database migration compatibility
+      - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - @../../standards/coding/typescript.md - Verify compliance with TypeScript standards
+    - @../../standards/coding/backend/data-entity.md
+    - @../../standards/coding/typescript.md - Review compliance with TypeScript standards
     - @../../standards/coding/documentation.md - Check documentation completeness
-    - @../../standards/coding/naming/functions.md - Validate naming conventions
+    - @../../standards/coding/naming/functions.md - Review naming conventions
     - Database migration best practices
 
-    **Verification Assignment**
-    You're assigned to verify and validate the complete Prisma implementation:
+    **Review Assignment**
+    You're assigned to review and validate the complete Prisma implementation:
 
     - All generated schema files from Phase 2
     - Complete type generation and validation requirements
 
     **Steps**
 
-    Part A - Verify Schema Files:
+    Part A - Review Schema Files:
     1. Read all generated schema files to understand structure
-    2. Verify Prisma schema syntax and naming conventions
+    2. Review Prisma schema syntax and naming conventions
     3. Check type definitions and constraints for correctness
-    4. Validate entity relationships and foreign key mappings
+    4. Review entity relationships and foreign key mappings
     5. Ensure documentation is comprehensive and accurate
 
-    Part B - Verify TypeScript Types and Integration:
+    Part B - Review TypeScript Types and Integration:
     6. Check generated Prisma client for completeness
-    7. Validate TypeScript types match entity specifications
-    8. Verify successful generation without errors or warnings
+    7. Review TypeScript types match entity specifications
+    8. Review successful generation without errors or warnings
     9. Check for any type safety issues or compilation errors
     10. Ensure all relationships are properly typed and navigable
 
-    Part C - Final Validation:
+    Part C - Final Review:
     11. Test database connection and migration readiness
-    12. Verify all entity models are accessible through Prisma client
+    12. Review all entity models are accessible through Prisma client
     13. Check for any type safety issues or compilation errors
     14. Ensure all relationships are properly typed and navigable
     15. Confirm the implementation matches original Notion specifications
 
-    Part D - Verify Code Changes:
-    16. Run `npm run build` to verify schema changes don't break existing code
-    18. Run `npm run test` to validate all tests pass with new schemas
+    Part D - Review Code Changes:
+    16. Run `npm run build` to review schema changes don't break existing code
+    18. Run `npm run test` to review all tests pass with new schemas
     20. Run `npm run lint` to ensure code quality standards
+    21. **IMPORTANT**: Do NOT make any changes or fixes - only report issues found
 
     **Report**
     **[IMPORTANT]** You're requested to return the following:
 
-    - Schema validation results for all entities
-    - Prisma generation verification status
-    - TypeScript type validation status
+    - Schema review results for all entities
+    - Prisma generation review status
+    - TypeScript type review status
     - Database integration readiness assessment
     - Any critical issues or warnings found
 
-    **[IMPORTANT]** You MUST return the following verification report (<1000 tokens):
+    **[IMPORTANT]** You MUST return the following review report (<1000 tokens):
 
     ```yaml
     status: success|failure|partial
-    summary: 'Brief description of verification results'
-    modifications: []  # no modifications unless fixes were needed
+    summary: 'Brief description of review results'
+    modifications: []  # no modifications - review only
     outputs:
-      schemas_validated: true|false
-      prisma_generation_verified: 'success|failed|warnings'
-      typescript_types_verified: 'valid|errors|warnings'
+      schemas_reviewed: true|false
+      prisma_generation_reviewed: 'success|failed|warnings'
+      typescript_types_reviewed: 'valid|errors|warnings'
       database_ready: true|false
-      validation_details:
+      review_details:
         syntax_valid: pass|fail
         types_correct: pass|fail
         relationships_valid: pass|fail
@@ -355,97 +361,51 @@ Request the subagent to perform the following comprehensive verification:
 
 **What You Do**:
 
-1. **Analyze all reports** (execution + verification)
+1. **Analyze all reports** (execution + review)
 2. **Apply decision criteria**:
    - Data controller successfully located → Check next
    - Entities successfully extracted → Check next
    - Specifications reviewed and validated → Check next
    - Prisma schemas written to files → Check next
    - TypeScript types generated → Check next
-   - All validation passed → COMPLETE
-   - Any critical failures → RETRY or ROLLBACK
+   - All review passed → COMPLETE
+   - Any critical failures → FIX ISSUES or ROLLBACK
 3. **Select next action**:
-   - **PROCEED**: All validation passed → Complete workflow
-   - **RETRY**: Some failures → Re-assign comprehensive task
-   - **ROLLBACK**: Critical failures → Review project setup
+   - **PROCEED**: All review passed → Complete workflow
+   - **FIX ISSUES**: Some failures → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical failures → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark all items as 'completed' and workflow complete
-   - If RETRY: Add new todo items for retry tasks
+   - If FIX ISSUES: Add new todo items for retry tasks with failed items
    - If ROLLBACK: Mark all items as 'failed' and add rollback todos
 5. **Prepare final deliverables**: Package all outputs for workflow completion
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
 
-### Examples and Expected Formats
+### Workflow Completion
 
-#### Example Notion Entity Structure
+**Report the workflow output as specified:**
 
-```typescript
-interface Customer {
-  // identifiers //
-  /** unique customer id */
-  id: string;
-  
-  // properties //
-  /** customer's email address */
-  email: string;
-  /** customer's first name */
-  firstName: string;
-  /** customer's last name */
-  lastName: string;
-  /** customer's date of birth */
-  dateOfBirth: Date | null;
-  
-  // flags //
-  /** current account status */
-  status: 'active' | 'inactive';
-  /** true if the customer is in the member club */
-  isMember: boolean;
-  
-  // timestamps //
-  /** creation timestamp (utc) */
-  createdAt: Date;
-  /** last update timestamp (utc) */
-  updatedAt: Date;
-  
-  // relations //
-  /** customer orders */
-  orders?: Order[];
-}
-```
-
-#### Expected Prisma Schema Output
-
-```prisma
-// file: prisma/models/customer.prisma
-
-model Customer {
-  // identifiers //
-  id           String    @id @default(uuid())                /// unique customer id
-
-  // properties //
-  email        String    @unique                             /// customer's email address
-  firstName    String    @map("first_name")                  /// customer's first name
-  lastName     String    @map("last_name")                   /// customer's last name
-  dateOfBirth  DateTime? @map("date_of_birth")               /// customer's date of birth
-
-  // flags //
-  status       CustomerStatus @default(active)               /// current account status
-  isMember     Boolean   @default(true) @map("is_active")    /// true if the customer is in the member club
-
-  // timestamps //
-  createdAt    DateTime  @default(now()) @map("created_at")  /// creation timestamp (utc)
-  updatedAt    DateTime  @updatedAt @map("updated_at")       /// last update timestamp (utc)
-
-  // relations //
-  orders       Order[]                                       /// customer orders
-
-  // annotations //
-  @@map("customers")
-
-  // add @@index([...]) here if you frequently filter by fields (e.g., isActive, createdAt)
-}
-
-enum CustomerStatus {
-  active    /// default state
-  inactive  /// customer is no longer with us
-}
+```yaml
+prisma_schema_files: ["entity1.prisma", "entity2.prisma", "..."]
+typescript_type_definitions: ["types/Entity1.ts", "types/Entity2.ts", "..."]
+entity_documentation: ["entity1 documentation", "entity2 documentation", "..."]
+code_updates: ["file1.ts updated", "file2.ts updated", "..."]
+migration_files: ["migration1.sql", "migration2.sql", "..."]
+implementation_report:
+  controller_name: "controller-name-from-notion"
+  entities_implemented: ["Entity1", "Entity2", "..."]
+  notion_page_id: "notion-page-id"
+  total_entity_count: 5
+data_flow_validation:
+  project_structure_validated: true|false
+  prisma_generation_successful: true|false
+  typescript_compilation: "success|errors|warnings"
+  database_migration_ready: true|false
+notion_specification_compliance:
+  all_entities_implemented: true|false
+  type_safety_maintained: true|false
+  documentation_complete: true|false
+  specification_gaps: ["gap1", "gap2", "..."]
+workflow_status: "success|partial|failure"
+summary: "Brief description of data schema implementation completion"
 ```
