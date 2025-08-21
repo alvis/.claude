@@ -27,8 +27,8 @@
 
 - **[Write Code (TDD)](@./coding/write-code-tdd.md)** - Test-driven development workflow
 - **[Prepare for Coding](@./coding/prepare-coding.md)** - Pre-coding verification steps
-- **[Commit with Git](@./project/commit-with-git.md)** - TDD-compliant git workflow
 - **[Create Command](@./project/create-command.md)** - Generate new slash command files from templates
+- **[Update Command](@./project/update-command.md)** - Update command files to align with template
 - **[Review Code](@./quality/review-code.md)** - Code review process and standards
 - **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
 
@@ -72,6 +72,16 @@
 | [Create Command](@./project/create-command.md) | Generate new slash command files from templates | Creating new CLI commands |
 | [Ensure Project](@./project/ensure-project.md) | Validate and bootstrap project structure | Setting up new projects or validating existing ones |
 | [Update Agent](@./project/update-agent.md) | Update agent files to align with latest template | Maintaining and updating agent definitions |
+| [Update Command](@./project/update-command.md) | Update command files to align with template | When commands need template alignment |
+
+### 🔄 Theriety Platform
+
+| Workflow                                                            | Purpose                                                                   | When to Use                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [Declare Service Operation](@./theriety/declare-service-operation.md) | Create service operation specifications in Notion                        | Defining new service operations                           |
+| [Implement Data Operation](@./theriety/implement-data-operation.md)   | Implement database operations from Notion specifications                  | Creating data operations                                  |
+| [Implement Data Schema](@./theriety/implement-data-schema.md)        | Implement data schemas from specifications                                | Creating data models                                      |
+| [Review Service Operation](@./theriety/review-service-operation.md)   | Validate service operations in Notion for completeness and standards compliance | Reviewing existing service operations for quality assurance |
 
 ## How to Use Workflows
 
@@ -110,6 +120,7 @@ Workflows link to relevant standards documents for detailed technical requiremen
 ### 5-Phase Execution Pattern
 
 Each workflow step follows this consistent pattern:
+
 1. **Planning** - Claude analyzes requirements and creates task assignments
 2. **Execution** - Specialized subagents perform assigned work in parallel when possible
 3. **Review** - Claude collects and analyzes execution reports

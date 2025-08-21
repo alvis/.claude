@@ -139,7 +139,7 @@ In a single message, You assign the requirements gathering task to a specialized
 Request the subagent to perform the following steps with full detail:
 
     >>>
-    **In ultrathink mode, adopt the Backend Service Architect mindset**
+    **ultrathink: adopt the Backend Service Architect mindset**
 
     - You're a **Backend Service Architect** with deep expertise in API design and type-safe service operations who follows these technical principles:
       - **Schema-First Design**: Define clear contracts before implementation to ensure API consistency and type safety
@@ -197,16 +197,16 @@ Request the subagent to perform the following steps with full detail:
    - Input schema specification present
    - Output schema specification (if operation returns data)
    - Validation rules documented
-6. **Determine verification needs**: Not typically required for requirements gathering
+6. **Determine review needs**: Not typically required for requirements gathering
 7. **Compile review summary** with any missing requirements
 
-#### Phase 4: Verification (Subagents) - Optional
+#### Phase 3: Review (Subagents) - Optional
 
-**When Claude Triggers Verification**: Complex operations with unclear requirements
+**When Claude Triggers Review**: Complex operations with unclear requirements
 
-**What You Send to Verification Subagents**: Not typically needed for this step
+**What You Send to Review Subagents**: Not typically needed for this step
 
-#### Phase 5: Decision (You)
+#### Phase 4: Decision (You)
 
 **What You Do**:
 
@@ -216,10 +216,11 @@ Request the subagent to perform the following steps with full detail:
    - Operation behavior clearly understood
 3. **Select next action**:
    - **PROCEED**: Complete requirements gathered → Move to Step 2
-   - **RETRY**: Incomplete or unclear requirements → Re-assign requirements gathering
-   - **ROLLBACK**: Critical documentation missing → Request user clarification
+   - **FIX ISSUES**: Incomplete or unclear requirements → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical documentation missing → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision
 5. **Prepare transition**: Package requirements for project structure setup
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
 
 ### Step 2: Ensure Project Structure
 
@@ -303,7 +304,7 @@ In a single message, You spin up subagents to create schemas in parallel, up to 
 Request each subagent to perform the following steps with full detail:
 
     >>>
-    **In ultrathink mode, adopt the Schema Definition Specialist mindset**
+    **ultrathink: adopt the Schema Definition Specialist mindset**
 
     - You're a **Schema Definition Specialist** with deep expertise in JSON Schema and TypeScript integration who follows these technical principles:
       - **Type Safety First**: Ensure all schemas compile to strict TypeScript types
@@ -411,60 +412,65 @@ Request each subagent to perform the following steps with full detail:
 3. **Parse report statuses** for each batch (input schema, output schema, exports)
 4. **Use TodoWrite** to update batch statuses based on success/failure
 5. **Identify any failed schema creation** and group by failure type
-6. **Determine verification needs**: Always verify schema compilation and type safety
+6. **Determine review needs**: Always review schema compilation and type safety
 7. **Compile review summary** with schema creation status
 
-#### Phase 4: Verification (Subagents) - Required
+#### Phase 3: Review (Subagents) - Required
 
-**When Claude Triggers Verification**: Always for schema creation to ensure type safety
+**When Claude Triggers Review**: Always for schema creation to ensure type safety
 
-**What You Send to Verification Subagents**:
+**What You Send to Review Subagents**:
 
-In a single message, You assign schema verification to ensure compilation and type safety.
+In a single message, You assign schema review to ensure compilation and type safety.
 
-Request verification subagent to perform the following verification with full scrutiny:
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
+
+Request review subagent to perform the following review with full scrutiny:
 
     >>>
-    **In ultrathink mode, adopt the TypeScript Validation Expert mindset**
+    **ultrathink: adopt the TypeScript Review Expert mindset**
 
-    - You're a **TypeScript Validation Expert** with expertise in schema validation and type safety who follows these principles:
-      - **Compilation Verification**: All schemas must compile without TypeScript errors
-      - **Type Safety Validation**: Generated types must be properly typed and usable
-      - **Schema Completeness**: All required validation rules must be present
+    - You're a **TypeScript Review Expert** with expertise in schema review and type safety who follows these principles:
+      - **Compilation Review**: Review that all schemas compile without TypeScript errors
+      - **Type Safety Review**: Review that generated types are properly typed and usable
+      - **Schema Completeness**: Review that all required validation rules are present
+      - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
     **Review the standards recursively that were applied**:
 
-    - constitutions/standards/coding/typescript.md - Verify TypeScript compliance
+    - constitutions/standards/coding/typescript.md - Review TypeScript compliance
     - constitutions/standards/coding/naming/functions.md - Check naming conventions
 
-    **Verification Assignment**
-    You're assigned to verify the following schema files that were created:
+    **Review Assignment**
+    You're assigned to review the following schema files that were created:
 
     - schema/input.ts: Input schema definition with proper JSON Schema format
     - schema/output.ts: Output schema definition (if applicable)
     - schema/index.ts: Type exports using FromSchema pattern
 
-    **Verification Steps**
+    **Review Steps**
 
     1. Read all created schema files to understand structure
-    2. Verify TypeScript compilation works without errors
+    2. Review TypeScript compilation works without errors
     3. Check that all schemas use `as const satisfies JsonSchema` pattern
-    4. Validate that FromSchema types are properly generated
+    4. Review that FromSchema types are properly generated
     5. Ensure validation rules match operation requirements
+    6. **IMPORTANT**: Do NOT make any changes or fixes - only report issues found
 
     **Report**
-    **[IMPORTANT]** You're requested to verify and report:
+    **[IMPORTANT]** You're requested to review and report:
 
     - TypeScript compilation status
     - Schema format compliance
     - Type generation accuracy
     - Requirements alignment
 
-    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+    **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
     ```yaml
     status: pass|fail
-    summary: 'Brief schema verification summary'
+    summary: 'Brief schema review summary'
     checks:
       typescript_compiles: pass|fail
       schema_format_valid: pass|fail
@@ -476,7 +482,7 @@ Request verification subagent to perform the following verification with full sc
     ```
     <<<
 
-#### Phase 5: Decision (You)
+#### Phase 4: Decision (You)
 
 **What You Do**:
 
@@ -487,10 +493,11 @@ Request verification subagent to perform the following verification with full sc
    - Verification recommends proceed
 3. **Select next action**:
    - **PROCEED**: All schemas validated → Move to Step 4
-   - **RETRY**: Schema compilation or validation failures → Re-create failed schemas
-   - **ROLLBACK**: Critical type safety issues → Review requirements
+   - **FIX ISSUES**: Schema compilation or validation failures → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical type safety issues → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision
 5. **Prepare transition**: Package schema definitions for manifest creation
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
 
 ### Step 4: Build Operation Manifest
 
@@ -528,7 +535,7 @@ In a single message, You assign the manifest creation task to a specialized suba
 Request the subagent to perform the following steps with full detail:
 
     >>>
-    **In ultrathink mode, adopt the Operation Manifest Builder mindset**
+    **ultrathink: adopt the Operation Manifest Builder mindset**
 
     - You're an **Operation Manifest Builder** with deep expertise in manifest framework and mock implementations who follows these technical principles:
       - **Mock-Driven Development**: Create comprehensive mocks that facilitate testing and development
@@ -612,51 +619,56 @@ Request the subagent to perform the following steps with full detail:
    - Operation manifest created
    - Mock implementation present
    - TypeScript compilation successful
-6. **Determine verification needs**: Verify mock data matches schema
+6. **Determine review needs**: Review mock data matches schema
 7. **Compile review summary** with manifest creation status
 
-#### Phase 4: Verification (Subagents) - Required
+#### Phase 3: Review (Subagents) - Required
 
-**When Claude Triggers Verification**: Always for manifest creation to ensure mock data validity
+**When Claude Triggers Review**: Always for manifest creation to ensure mock data validity
 
-**What You Send to Verification Subagents**:
+**What You Send to Review Subagents**:
 
-Request verification subagent to validate manifest and mock implementation:
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
+
+Request review subagent to validate manifest and mock implementation:
 
     >>>
-    **In ultrathink mode, adopt the Manifest Validation Expert mindset**
+    **ultrathink: adopt the Manifest Review Expert mindset**
 
-    - You're a **Manifest Validation Expert** with expertise in operation manifests and mock data validation who follows these principles:
-      - **Mock Data Accuracy**: Mock responses must exactly match output schema
-      - **Type Safety Verification**: All manifest components must be properly typed
-      - **Framework Compliance**: Manifest must follow framework patterns correctly
+    - You're a **Manifest Review Expert** with expertise in operation manifests and mock data review who follows these principles:
+      - **Mock Data Accuracy**: Review that mock responses exactly match output schema
+      - **Type Safety Review**: Review that all manifest components are properly typed
+      - **Framework Compliance**: Review that manifest follows framework patterns correctly
+      - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
-    **Verification Assignment**
-    You're assigned to verify the operation manifest that was created:
+    **Review Assignment**
+    You're assigned to review the operation manifest that was created:
 
     - operations/[operationName]/index.ts: Complete operation manifest with mock
 
-    **Verification Steps**
+    **Review Steps**
 
     1. Read the created manifest file to understand implementation
-    2. Verify mock function returns data matching output schema
+    2. Review mock function returns data matching output schema
     3. Check that manifest uses proper framework patterns
-    4. Validate TypeScript types are correctly applied
+    4. Review TypeScript types are correctly applied
     5. Ensure async/sync configuration matches operation requirements
+    6. **IMPORTANT**: Do NOT make any changes or fixes - only report issues found
 
     **Report**
-    **[IMPORTANT]** You're requested to verify and report:
+    **[IMPORTANT]** You're requested to review and report:
 
     - Mock data schema compliance
     - Framework pattern usage
     - TypeScript type safety
     - Operation configuration accuracy
 
-    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+    **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
     ```yaml
     status: pass|fail
-    summary: 'Brief manifest verification summary'
+    summary: 'Brief manifest review summary'
     checks:
       mock_data_valid: pass|fail
       framework_patterns: pass|fail
@@ -668,7 +680,7 @@ Request verification subagent to validate manifest and mock implementation:
     ```
     <<<
 
-#### Phase 5: Decision (You)
+#### Phase 4: Decision (You)
 
 **What You Do**:
 
@@ -679,10 +691,11 @@ Request verification subagent to validate manifest and mock implementation:
    - Verification recommends proceed
 3. **Select next action**:
    - **PROCEED**: Manifest validated → Move to Step 5
-   - **RETRY**: Mock data or manifest issues → Re-create manifest
-   - **ROLLBACK**: Critical framework pattern issues → Review schemas
+   - **FIX ISSUES**: Mock data or manifest issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical framework pattern issues → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision
 5. **Prepare transition**: Package operation manifest for service integration
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
 
 ### Step 5: Integrate with Service
 
@@ -718,7 +731,7 @@ Request verification subagent to validate manifest and mock implementation:
 Request the subagent to perform service integration with full detail:
 
     >>>
-    **In ultrathink mode, adopt the Service Integration Specialist mindset**
+    **ultrathink: adopt the Service Integration Specialist mindset**
 
     - You're a **Service Integration Specialist** with deep expertise in service manifest management who follows these technical principles:
       - **Import Organization**: Maintain clean, alphabetical import organization
@@ -783,64 +796,54 @@ Request the subagent to perform service integration with full detail:
     ```
     <<<
 
-#### Phase 3: Review (You)
+#### Phase 3: Review (Subagents) - Required
 
-**What You Do**:
+**When Claude Triggers Review**: Always for service integration to ensure exports work
 
-1. **Use TodoRead** to check current task status
-2. **Collect execution report** from integration subagent
-3. **Parse report status** and validate integration completeness
-4. **Use TodoWrite** to update task status based on success/failure
-5. **Validate integration requirements**:
-   - Operation properly imported
-   - Service manifest updated
-   - TypeScript compilation successful
-6. **Determine verification needs**: Verify service manifest exports work
-7. **Compile review summary** with integration status
+**What You Send to Review Subagents**:
 
-#### Phase 4: Verification (Subagents) - Required
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
 
-**When Claude Triggers Verification**: Always for service integration to ensure exports work
-
-**What You Send to Verification Subagents**:
-
-Request verification subagent to validate service manifest integration:
+Request review subagent to validate service manifest integration:
 
     >>>
-    **In ultrathink mode, adopt the Service Manifest Validator mindset**
+    **ultrathink: adopt the Service Manifest Review Expert mindset**
 
-    - You're a **Service Manifest Validator** with expertise in service exports and manifest validation who follows these principles:
-      - **Export Validation**: All operations must be properly exported and accessible
-      - **Import Correctness**: All imports must resolve correctly
-      - **Service Completeness**: Service manifest must include all required operations
+    - You're a **Service Manifest Review Expert** with expertise in service exports and manifest review who follows these principles:
+      - **Export Review**: Review that all operations are properly exported and accessible
+      - **Import Correctness**: Review that all imports resolve correctly
+      - **Service Completeness**: Review that service manifest includes all required operations
+      - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
-    **Verification Assignment**
-    You're assigned to verify the updated service manifest:
+    **Review Assignment**
+    You're assigned to review the updated service manifest:
 
     - source/index.ts: Updated service manifest with new operation
 
-    **Verification Steps**
+    **Review Steps**
 
     1. Read the updated service manifest to understand changes
-    2. Verify new operation import resolves correctly
+    2. Review new operation import resolves correctly
     3. Check that operation is properly included in operations object
-    4. Validate alphabetical ordering is maintained
+    4. Review alphabetical ordering is maintained
     5. Ensure TypeScript compilation works without errors
     6. Test that service manifest exports the new operation
+    7. **IMPORTANT**: Do NOT make any changes or fixes - only report issues found
 
     **Report**
-    **[IMPORTANT]** You're requested to verify and report:
+    **[IMPORTANT]** You're requested to review and report:
 
     - Import resolution status
     - Operation registration completeness
     - Export functionality
     - Organization compliance
 
-    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+    **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
     ```yaml
     status: pass|fail
-    summary: 'Brief service integration verification summary'
+    summary: 'Brief service integration review summary'
     checks:
       imports_resolve: pass|fail
       operation_registered: pass|fail
@@ -852,7 +855,7 @@ Request verification subagent to validate service manifest integration:
     ```
     <<<
 
-#### Phase 5: Decision (You)
+#### Phase 4: Decision (You)
 
 **What You Do**:
 
@@ -863,10 +866,11 @@ Request verification subagent to validate service manifest integration:
    - Verification recommends proceed
 3. **Select next action**:
    - **PROCEED**: Integration validated → Move to Step 6
-   - **RETRY**: Import or export issues → Re-integrate service
-   - **ROLLBACK**: Critical service manifest issues → Review manifest creation
+   - **FIX ISSUES**: Import or export issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical service manifest issues → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision
 5. **Prepare transition**: Service ready for final validation
+6. **Decision Management**: In phase 4, you (the management) must decide whether it should reask the subagent in phase 2 to fix any issues found by the subagent in phase 3, and repeat until the subagent report no more issues
 
 ### Step 6: Final Validation
 
@@ -901,7 +905,7 @@ Request verification subagent to validate service manifest integration:
 Request the subagent to perform comprehensive validation:
 
     >>>
-    **In ultrathink mode, adopt the Comprehensive Validator mindset**
+    **ultrathink: adopt the Comprehensive Validator mindset**
 
     - You're a **Comprehensive Validator** with expertise in end-to-end validation and quality assurance who follows these principles:
       - **Complete Testing**: Validate entire operation lifecycle from schema to service
@@ -957,22 +961,14 @@ Request the subagent to perform comprehensive validation:
     ```
     <<<
 
-#### Phase 3: Review (You)
+#### Phase 3: Review (Subagents) - Optional
 
-**What You Do**:
+**When Claude Triggers Review**: Only if comprehensive validation reports issues
 
-1. **Use TodoRead** to review all workflow tasks
-2. **Collect comprehensive validation report**
-3. **Verify all tracked tasks show 'completed' status**
-4. **Confirm no tasks remain in 'pending' or 'in_progress' state**
-5. **Review final deliverables against workflow specification**
-6. **Use TodoWrite** to mark validation complete or identify remaining issues
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources or fix issues
+- **[IMPORTANT]** Review subagents ONLY report issues and provide recommendations - they do not implement fixes
 
-#### Phase 4: Verification (Subagents) - Optional
-
-**When Claude Triggers Verification**: Only if comprehensive validation reports issues
-
-#### Phase 5: Decision (You)
+#### Phase 4: Decision (You)
 
 **What You Do**:
 
@@ -988,16 +984,39 @@ Request the subagent to perform comprehensive validation:
 4. **Use TodoWrite** to mark workflow completion status
 5. **Package final deliverables** and success confirmation
 
-### Final Step: Completion Confirmation
+### Workflow Completion
 
-**Completion Checklist**:
+**Report the workflow output as specified:**
 
-- [ ] All main workflow steps completed successfully
-- [ ] ensure-project sub-workflow completed (Step 2)
-- [ ] All outputs produced and packaged
-- [ ] No pending retry or rollback items
-- [ ] Comprehensive validation passed
-- [ ] Service operation fully declared and integrated
+```yaml
+operation_manifest:
+  service_name: "service-name"
+  operation_name: "operationName"
+  location: "manifests/[service-name]/source/operations/[operationName]/"
+  status: "created|updated"
+schema_files:
+  input_schema: "manifests/[service-name]/source/operations/[operationName]/schema/input.ts"
+  output_schema: "manifests/[service-name]/source/operations/[operationName]/schema/output.ts"
+  type_definitions: "manifests/[service-name]/source/operations/[operationName]/schema/index.ts"
+service_integration:
+  service_manifest_updated: true|false
+  operation_exported: true|false
+  import_paths_configured: true|false
+  alphabetical_ordering: true|false
+validation_report:
+  typescript_compilation: "success|errors|warnings"
+  schema_validation: "pass|fail"
+  mock_data_valid: true|false
+  end_to_end_testing: "pass|fail"
+  requirements_satisfied: true|false
+project_structure:
+  ensure_project_completed: true|false
+  directories_created: ["dir1", "dir2", "..."]
+  dependencies_aligned: true|false
+  package_configuration: "valid|invalid"
+workflow_status: "success|partial|failure"
+summary: "Brief description of service operation declaration completion"
+```
 
 ## Standards to Follow
 
