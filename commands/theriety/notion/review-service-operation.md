@@ -1,198 +1,126 @@
 ---
-allowed-tools: mcp__notion__search, mcp__notion__fetch
-argument-hint: "<service-name> [--operation=operation-name] [--area=area-name]"
-description: "Validate service operations in Notion for completeness and standards compliance"
+allowed-tools: "Bash, Read, Grep, Glob, Task, mcp__notion__search, mcp__notion__fetch, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown"
+
+argument-hint: <service-name> [--area=...]
+
+description: "Review service documentation completeness on Notion"
 ---
 
 # Review Service Operation
 
-In ultrathink mode, review service operations in Notion for completeness and coding standards compliance. Use Notion MCP tools to access the $ARGUMENTS service page under "Services" database and analyze all related service operations under "Service Operations" database.
+Review the completeness and integrity of a service's documentation on Notion through comprehensive validation of service operations. This command orchestrates parallel validation tasks to ensure all service operations meet coding standards and completeness requirements.
 
 ## 🎯 Purpose & Scope
 
 **What this command does NOT do:**
 
-- Does not modify operation pages directly
-- Does not validate implementation code in repositories
-- Does not check database schema consistency
+- Modify or edit service operation content in Notion
+- Create or implement new service operations
+- Read old or outdated documentation files from the local filesystem
+- Perform service implementation or code generation
 
 **When to REJECT:**
 
-- Service or operation does not exist in Notion
-- User lacks access to Services or Service Operations database
-- Operation pages are incomplete (missing core sections)
+- Service name does not exist in Notion Services database
+- User lacks appropriate permissions to access Notion workspace
+- Request involves editing or modifying service operations
+- Request asks to read local documentation files instead of Notion
+
+## 📊 Dynamic Context
+
+- **[IMPORTANT]** At the start of the command, you MUST run the command to load all the context below
+
+### System State
+
+- Current branch: !`git branch --show-current`
+- Git status: !`git status --short`
+- Recent commits: !`git log --oneline -5`
+- Working directory: !`pwd`
+- Modified files: !`git diff --name-only`
+- Staged files: !`git diff --cached --name-only`
+
+### Project Context
+
+- Workflows: !`find "$(git rev-parse --show-toplevel)/constitutions/workflows" "$HOME/.claude/constitutions/workflows" -type f -name '*.md' 2>/dev/null | sed "s|^$(pwd)/||" || echo "No workflows found"`
+- Standards: !`find "$(git rev-parse --show-toplevel)/constitutions/standards" "$HOME/.claude/constitutions/standards" -type f -name '*.md' 2>/dev/null | sed "s|^$(pwd)/||" || echo "No workflows found"`
 
 ## 🔄 Workflow
 
-### Step 1: Planning
+ultrathink: you'd perform the following steps
 
-1. **Service Discovery**
-   - use a subagent
-      - Locate the `Services` database via Notion Search (with type database)
-      - Fetch the `Services` database and locate the service page
-      - Extract service-level context via Notion Fetch
-      - From the service page extract metadata (name and id BUT NOT content) of all Service Operations belonging to the service from the link to the database view via Notion Fetch
-      - From the service page extract metadata (name and id BUT NOT content) of all Data Operations belonging to the service from the link to the database view via Notion Fetch
-      - Report the following content back to the management agent
-         - Summary of the service
-         - List of service operations (name and id only) belonging to the service
-         - List of data operations (name and id only) used by the service
+### Step 1: Follow Review Service Operation Workflow
 
-### Step 2: Execution
+- Execute @constitutions/workflows/theriety/review-service-operation.md
 
-0. **Delication**
-   - In a single message, spin up a subagent for detailed review for each operation, up to 2 operaions at a time
-   - Request each subagent to perform the following steps with full detail passed
-   - [[IMPORTANT] When there are any issues reported, the management agent must stop dispatching further subagents until all issues have been rectified]
-   - [[IMPORTANT] the management agent MUST also pass service-level context, metadata of all service operations and data operations extracted in step 1]
-   - [[IMPORTANT] the management agent MUST ask all subagent to ultrathink hard the task and requirement]
-
-1. **Service Page Analysis**
-   - Fetch service operation page content via notion fetch method
-
-      **Use Case Validation:**
-      - [[IMPORTANT] DO NOT COMPLAINT about the presence of any template placeholders in the use case section]
-      - Verify at least one documented use case exists
-      - Check sync block alignment with service page scenarios
-      - Suggest missing user scenarios if needed
-
-      **Requirements Completeness:**
-      - Verify input parameters with types and constraints
-      - Check output interfaces documentation
-      - Validate functional requirements for business logic
-      - Suggest missing interface definitions
-
-      **Pseudo Code Standards Compliance:**
-      - Validate pseudo code follows this structure and formatted well:
-
-      ```typescript
-      import { ... } from 'node:xxx'; // build-in modules
-      
-      import { ... } from 'xxx'; // third-party libraries project modules
-
-      import { createOperation } from '#factory'; // project modules
-
-      export default createOperation.<operationName in camelCase>(
-      async ({ inputParam1, inputParam2 }, { verifyAccess, data: { entityName }, integration: { library }, service: { self, otherService } }) => {
-         // check permission
-         verifyAccess(`<resource>:<identifier>:<action>`);
-
-         // business logic implementation
-         const result = await entityName.dataOperation({ parameters });
-
-         // additional processing
-         // ...
-
-         return result;
-      },
-      );
-      ```
-
-      Check these coding standards:
-
-      - **Variable Naming**: camelCase for variables/functions, PascalCase for constants, descriptive names preferred
-      - **Import Order**: (1) Built-in modules (node:\*) → (2) third-party libraries → (3) project modules (# prefixed subpath imports, then relative paths), spacing between groups
-      - **TypeScript**: Strict typing, avoid `any`, use proper interfaces
-      - **Comments**: Use `//` for single-line, document business logic and complex operations, explain permission checks and data operations, always in lower case except for tags such as `// NOTE: ` or references to variable/type/interface/acronym names such as ` // assume UTC timezone`
-      - **Function Structure**: Arrow functions, proper destructuring, async/await, no let, use const, pure function only
-      - [[IMPORTANT] **Import What Is Used Only**: NOT all import groups are required, only check imports that are definitely needed ]
-      - [[IMPORTANT] **Pseudo Code Is MEANT TO BE INCOMPLETE**: Focus on the business logic and important steps to follow, use `...` and omit fields for brevity if it's getting long, completeness is not required, and DO NOT complain about type safety or missing error handling]
-
-      **Data Operations Consistency:**
-      - Extract data operation calls from pseudo code
-      - Compare with Data Operations field
-         - [[IMPORTANT] data operations presented in the Data Operations field may present as an id or url, you can map that with the data operation list retrieved in step 1]
-         - [[IMPORTANT] data operations presented in the Data Operations field is always in PascalCase, while in the pseudo code is always in camelCase, DO NOT compliant because of case mismatch]
-         - [[IMPORTANT] DO NOT fetch the related data operation pages and ignore their statuses, as it's out of scope]
-      - Suggest updates or new operations for consistency
-
-      **Requirements Alignment:**
-      - Verify use cases covered by requirements
-      - Suggest missing or refined requirements
-
-      **Permission Alignment:**
-      - Check permission checks in pseudo code match permission field
-      - Account for placeholder format differences
-
-      **Code-Requirements Consistency:**
-      - Verify business logic implements all requirements
-      - Suggest pseudo code or requirements updates
-
-2. **Issue Escalation Process**
-   - When issues found, management agent pauses further validation
-   - Present detailed issues report (including code snippet around the issue) and fix suggestions to the management agent, which may inclide
-      - Use Cases content changes
-      - Permission field updates
-      - Requirement modifications
-      - Pseudo Code corrections
-      - Display content diffs for changes
-   - Primary agent present in full detail the issues (including code snippet around the issue) and fix suggestions (with code implementation if code related) to the user
-   - Await approval before continuing
-
-3. **Resolution Confirmation**
-   - Verify fixes applied correctly
-   - Resume validation process
-   - Continue to next operation
-
-4. If no issue is found, the subagent should simply report a ✅ for the operation page
-
-### Step 4: Reporting
+### Step 2: Reporting
 
 **Output Format:**
 
-```markdown
-Operation Validation Report
+```
+[✅/❌] Command: $ARGUMENTS
 
 ## Summary
 - Service: [service-name]
-- Operations checked: [count]
+- Operations reviewed: [count]
 - Issues found: [count]
-- Status: [PASS/ISSUES_FOUND]
+- Standards compliance: [PASS/FAIL]
 
-## Operations by Functional Domain
+## Actions Taken
+1. Discovered service operations from Notion Services database
+2. Validated [count] operations across [domains] functional domains
+3. Generated comprehensive validation report with recommendations
 
-### [Domain Group]
+## Workflows Applied
+- Review Service Operation: [Status]
 
-✅ Operation: [Operation Name]
-   Status: No issues found
+## Issues Found (if any)
+- **Issue**: [Description with location]
+  **Fix**: [Applied fix or actionable recommendation]
 
-❌ Operation: [Operation Name]
-   - **Issue Type**: [Use Cases/Requirements/Pseudo Code/Data Ops/Alignment]
-   - **Problem**: [Specific issue description]
-   - **Detailed Fix Suggestion**: [Actionable recommendation]
-
-## Next Steps
-- [Required manual actions]
-- [Recommended improvements]
+## Validation Report
+[Link or content of comprehensive validation report]
 ```
 
 ## 📝 Examples
 
-### Simple Service Review
-
-```bash
-/review-service-operation "user-management" --operation="CreateUser"
-# Reviews single operation for standards compliance
-```
-
-### Full Service Analysis
+### Simple Usage
 
 ```bash
 /review-service-operation "user-management"
-# Reviews all operations in user-management service
+# Reviews all operations for the user-management service
 ```
 
-### Domain-Specific Review
+### Complex Usage with Area Filter
 
 ```bash
-/review-service-operation "payment-processing" --area="process-refund"
-# Focuses on specific high-risk operation
+/review-service-operation "payment-processing" --area="authentication" 
+# Reviews only operations in authentication area for payment-processing service
+```
+
+### Delegation Example
+
+```bash
+/review-service-operation "notification-service"
+# Automatically delegates to:
+#   - Discovery Agent: Extracts service context and operations
+#   - Validator A: Reviews operations 1-2 (parallel)
+#   - Validator B: Reviews operations 3-4 (parallel)
+#   - Report Agent: Consolidates findings
 ```
 
 ### Error Case Handling
 
 ```bash
 /review-service-operation "nonexistent-service"
-# Error: Service not found in Services database
+# Error: Service 'nonexistent-service' not found in Services database
 # Suggestion: Check available services with Notion search
+# Alternative: Use '/list-services' to see valid service names
+```
+
+### With Area Targeting
+
+```bash
+/review-service-operation "order-management" --area="fulfillment"
+# Reviews only operations in fulfillment area for order-management service
+# Filters operations by functional domain before validation
 ```
