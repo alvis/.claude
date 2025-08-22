@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
-argument-hint: [standard] [--change1="description"] [--change2="description"] ...
+argument-hint: [standard specifier] [--changes=...]
 description: Update standard(s) to latest template and apply specified changes
 ---
 

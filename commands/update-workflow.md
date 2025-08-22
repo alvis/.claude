@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
-argument-hint: [workflow] [--change1="description" --change2="description" ...]
+argument-hint: [workflow specifier] [--changes=...]
 description: Update workflow(s) to latest standard template and make specified changes
 ---
 

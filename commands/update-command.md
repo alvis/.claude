@@ -1,8 +1,7 @@
 ---
 allowed-tools: Read, Write, MultiEdit, Glob, Task
-argument-hint: <target> [--area="specific-section"] [--changes="description"]
+argument-hint: <target> [--area=...] [--changes=...]
 description: Update slash commands to latest standards with optionally specific area changes
-# model: opus
 ---
 
 # Update Commands
@@ -28,6 +27,8 @@ Update existing slash commands to follow current best practices and template str
 - For non-command markdown files
 
 ## 📊 Dynamic Context
+
+- **[IMPORTANT]** At the start of the command, you must run the command to extract all the context below
 
 ### Project Context
 
