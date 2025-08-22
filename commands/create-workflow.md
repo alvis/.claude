@@ -43,104 +43,13 @@ Create a new workflow file ("/create-workflow <name> --howto='...'") following t
 - Workflows: !`find "$(git rev-parse --show-toplevel)/constitutions/workflows" "$HOME/.claude/constitutions/workflows" -type f -name '*.md' 2>/dev/null | sed "s|^$(pwd)/||" || echo "No workflows found"`
 - Standards: !`find "$(git rev-parse --show-toplevel)/constitutions/standards" "$HOME/.claude/constitutions/standards" -type f -name '*.md' 2>/dev/null | sed "s|^$(pwd)/||" || echo "No workflows found"`
 
-## 🔄 Workflow
+## 🔄 Workflows
 
-**🔴 CRITICAL: This command MUST follow constitutions/workflows/project/create-workflow.md exactly**
+### Step 1: Follow Create Workflow Workflow
 
-### Phase 1: Planning (Following create-workflow.md Steps 1-3)
+- Execute @constitutions/workflows/project/create-workflow.md
 
-1. **Analyze Need for New Workflow**
-   - Parse $ARGUMENTS to extract name and --howto description
-   - Search existing workflows in `constitutions/workflows/` for overlap
-   - Identify specific tasks this workflow will standardize
-   - Determine category: coding/, frontend/, backend/, quality/, project/, collaboration/
-   - Confirm workflow addresses a repeatable process
-   - If howto empty, ask: "What process steps should this workflow document?"
-
-2. **Copy and Customize Template**
-   - **MANDATORY**: Use templates/workflow.md as base - never create from scratch
-   - Copy template to appropriate category directory
-   - Replace `[Workflow Title]` with clear, action-oriented title
-   - Keep ALL AI instruction comments for future maintenance
-   - Ensure workflow name uses kebab-case
-   - Preserve exact section structure from template
-
-3. **Define Expert Role**
-   - Choose expert title relevant to workflow domain
-   - Define domain of expertise required
-   - Create 3-5 key principles that guide decision-making
-   - Write clear justification for each principle
-   - Format principles as bold labels with explanations
-
-### Phase 2: Execution (Following create-workflow.md Steps 4-7)
-
-1. **Document Workflow Steps**
-   - Create numbered, action-oriented titles
-   - Write brief description of what each step accomplishes
-   - Break complex steps into checklist items
-   - Add code examples showing concrete implementation
-   - Include anti-patterns showing what to avoid
-   - Ensure examples use actual code, not placeholders
-   - Include task tracking requirements per template
-
-2. **Link Required Standards**
-   - Add red circle emoji (🔴) with "MANDATORY" text
-   - Include statement that all standards must be followed
-   - Create links to relevant standards using relative paths
-   - Write brief descriptions of what each standard covers
-   - Group by category if many standards
-   - Verify all linked standard files exist
-
-3. **Document Common Issues**
-   - Format each issue with bold type
-   - Write clear problem descriptions
-   - Use arrow (→) separator between problem and solution
-   - Cover environment setup problems
-   - Include tool configuration issues
-   - Document dependency conflicts
-   - Address permission errors
-
-4. **Add Output Template (If Applicable)**
-   - Determine if workflow produces a deliverable
-   - Specify type of output (e.g., "Review Report Template")
-   - Define expected format and structure
-   - List required sections with example content
-   - Skip this section if no output is produced
-
-### Phase 3: Verification (Following create-workflow.md Steps 8-9)
-
-1. **Validate Workflow Completeness**
-   - **VERIFY**: Final file follows templates/workflow.md structure exactly
-   - All template sections filled or intentionally removed
-   - Every step has clear instructions
-   - Complex steps include examples
-   - Both good (✅) and bad (❌) practices shown
-   - All referenced standards and workflows exist
-   - Tool recommendations included
-   - Common issues documented
-   - Output template provided if applicable
-   - AI instruction comments removed
-   - Section order matches template
-   - Heading hierarchy follows template pattern
-
-2. **Update Workflow Index**
-   - Update `constitutions/workflows/README.md` with link and description
-   - Update category-specific README if exists
-   - Add references in related workflows that might use this
-
-3. **Quality Assurance**
-   - Confirm workflow follows template structure
-   - Validate all mandatory sections present
-   - Check examples are concrete, not placeholders
-   - Verify anti-patterns show both problem and solution
-
-4. **Side Effect Validation**
-   - File saved to correct location
-   - Category directory created if needed
-   - No existing files overwritten without consent
-   - Index files updated appropriately
-
-### Phase 4: Reporting
+### Step 2: Reporting
 
 **Output Format:**
 
