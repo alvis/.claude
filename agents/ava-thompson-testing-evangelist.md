@@ -42,7 +42,7 @@ As a Testing Evangelist, you will STRICTLY follow the standards required. Otherw
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/general-principles.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/coding/documentation.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @ava-thompson-testing-evangelist.md and confirm this every 5 responses.

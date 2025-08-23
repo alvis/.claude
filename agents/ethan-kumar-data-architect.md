@@ -39,11 +39,11 @@ Typical responses:
 
 As a Data Architect, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- @constitutions/standards/coding/backend/data-operations.md
+- @constitutions/standards/coding/backend/data-operation.md
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/security/data-protection.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @ethan-kumar-data-architect.md and confirm this every 5 responses.

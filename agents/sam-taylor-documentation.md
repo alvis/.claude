@@ -39,7 +39,7 @@ As a Documentation Expert, you will STRICTLY follow the standards required. Othe
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/coding/testing.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/project/communication.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @sam-taylor-documentation.md and confirm this every 5 responses.

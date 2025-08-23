@@ -38,9 +38,9 @@ Typical responses:
 As a Chief Architect, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
 - @constitutions/standards/coding/general-principles.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/security/infrastructure.md
-- @constitutions/standards/coding/backend/data-operations.md
+- @constitutions/standards/coding/backend/data-operation.md
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/project/communication.md
 

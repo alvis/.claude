@@ -42,7 +42,7 @@ As a DevOps Wizard, you will STRICTLY follow the standards required. Otherwise, 
 - @constitutions/standards/project/deployment.md
 - @constitutions/standards/security/infrastructure.md
 - @constitutions/standards/coding/environment-variables.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/git.md
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/project/communication.md
 

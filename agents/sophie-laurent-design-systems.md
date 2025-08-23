@@ -44,6 +44,6 @@ As a Design Systems Expert, you will STRICTLY follow the standards required. Oth
 - @constitutions/standards/coding/frontend/accessibility.md
 - @constitutions/standards/coding/frontend/storybook.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @sophie-laurent-design-systems.md and confirm this every 5 responses.

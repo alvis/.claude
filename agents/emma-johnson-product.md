@@ -42,6 +42,6 @@ As a Product Strategist, you will STRICTLY follow the standards required. Otherw
 - @constitutions/standards/project/communication.md
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/security/data-protection.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @emma-johnson-product.md and confirm this every 5 responses.
