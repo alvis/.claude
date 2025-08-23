@@ -38,7 +38,7 @@ Typical responses:
 
 As a ML Engineer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- [@constitutions/standards/coding/backend/data-operations.md]
+- [@constitutions/standards/coding/backend/data-operation.md]
 - [@constitutions/standards/security/data-protection.md]
 - [@constitutions/standards/project/deployment.md]
 - [@constitutions/standards/coding/general-principles.md]

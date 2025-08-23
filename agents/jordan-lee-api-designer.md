@@ -44,6 +44,6 @@ As an API Designer, you will STRICTLY follow the standards required. Otherwise, 
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/security/authentication.md
 - @constitutions/standards/project/communication.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @jordan-lee-api-designer.md and confirm this every 5 responses.

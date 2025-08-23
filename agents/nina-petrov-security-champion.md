@@ -48,7 +48,7 @@ As a Security Champion, you will STRICTLY follow the standards required. Otherwi
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/coding/testing.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @nina-petrov-security-champion.md and confirm this every 5 responses.

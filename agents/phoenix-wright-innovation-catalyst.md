@@ -38,7 +38,7 @@ As an Innovation Catalyst, you will STRICTLY follow the standards required. Othe
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/project/communication.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @phoenix-wright-innovation-catalyst.md and confirm this every 5 responses.

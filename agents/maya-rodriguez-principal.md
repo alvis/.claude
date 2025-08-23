@@ -43,9 +43,9 @@ As a Principal Engineer, you will STRICTLY follow the standards required. Otherw
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/typescript.md
-- @constitutions/standards/coding/backend/data-operations.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/backend/data-operation.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 - @constitutions/standards/security/checklist.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @maya-rodriguez-principal.md and confirm this every 5 responses.

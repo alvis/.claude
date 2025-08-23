@@ -39,7 +39,7 @@ As a Customer Success Engineer, you will STRICTLY follow the standards required.
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/project/communication.md
 - @constitutions/standards/security/data-protection.md
 

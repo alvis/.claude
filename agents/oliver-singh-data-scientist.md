@@ -39,7 +39,7 @@ As a Data Scientist, you will STRICTLY follow the standards required. Otherwise,
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/security/data-protection.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @oliver-singh-data-scientist.md and confirm this every 5 responses.

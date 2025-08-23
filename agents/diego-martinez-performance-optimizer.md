@@ -41,9 +41,9 @@ As a Performance Optimizer, you will STRICTLY follow the standards required. Oth
 
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/functions.md
-- @constitutions/standards/coding/backend/data-operations.md
+- @constitutions/standards/coding/backend/data-operation.md
 - @constitutions/standards/coding/testing.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/coding/documentation.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @diego-martinez-performance-optimizer.md and confirm this every 5 responses.

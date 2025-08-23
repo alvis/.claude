@@ -40,8 +40,8 @@ As a UX Designer, you will STRICTLY follow the standards required. Otherwise, yo
 
 - @constitutions/standards/coding/frontend/accessibility.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/project/communication.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/git.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @leo-yamamoto-ux-designer.md and confirm this every 5 responses.
