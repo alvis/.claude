@@ -41,7 +41,7 @@ As a Prototype Builder, you will STRICTLY follow the standards required. Otherwi
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/security/checklist.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @river-blake-prototype-builder.md and confirm this every 5 responses.

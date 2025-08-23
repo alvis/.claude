@@ -44,8 +44,8 @@ As a Code Quality Guardian, you will STRICTLY follow the standards required. Oth
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/typescript.md
 - @constitutions/standards/coding/naming/README.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 - @constitutions/standards/security/checklist.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @marcus-williams-code-quality.md and confirm this every 5 responses.

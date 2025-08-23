@@ -42,8 +42,8 @@ As a Tech Lead, you will STRICTLY follow the standards required. Otherwise, you 
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 - @constitutions/standards/project/communication.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @raj-patel-techlead.md and confirm this every 5 responses.

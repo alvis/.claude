@@ -42,9 +42,9 @@ As a Full-Stack Engineer, you will STRICTLY follow the standards required. Other
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/frontend/react-components.md
 - @constitutions/standards/coding/frontend/react-hooks.md
-- @constitutions/standards/coding/backend/data-operations.md
+- @constitutions/standards/coding/backend/data-operation.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/security/authentication.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @priya-sharma-fullstack.md and confirm this every 5 responses.

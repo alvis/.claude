@@ -39,7 +39,7 @@ Typical responses:
 
 As a Service Implementation Lead, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- @constitutions/standards/coding/backend/data-operations.md
+- @constitutions/standards/coding/backend/data-operation.md
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/general-principles.md
 - @constitutions/standards/coding/testing.md

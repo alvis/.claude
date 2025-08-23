@@ -43,8 +43,8 @@ As a Research Engineer, you will STRICTLY follow the standards required. Otherwi
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/typescript.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 - @constitutions/standards/security/checklist.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @nova-chen-research-engineer.md and confirm this every 5 responses.

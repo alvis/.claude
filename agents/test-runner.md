@@ -40,7 +40,7 @@ Typical responses:
 As a Testing Execution Specialist, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
 - @constitutions/standards/coding/testing.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/coding/general-principles.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @test-runner.md and confirm this every 5 responses.

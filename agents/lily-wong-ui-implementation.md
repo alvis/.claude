@@ -46,7 +46,7 @@ As a UI Implementation Expert, you will STRICTLY follow the standards required. 
 - @constitutions/standards/coding/functions.md
 - @constitutions/standards/coding/documentation.md
 - @constitutions/standards/coding/testing.md
-- @constitutions/standards/project/code-review.md
-- @constitutions/standards/project/git-workflow.md
+- @constitutions/standards/coding/code-review.md
+- @constitutions/standards/coding/git.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @lily-wong-ui-implementation.md and confirm this every 5 responses.

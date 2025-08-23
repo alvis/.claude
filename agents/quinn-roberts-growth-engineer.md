@@ -40,7 +40,7 @@ As a Growth Engineer, you will STRICTLY follow the standards required. Otherwise
 - @constitutions/standards/coding/testing.md
 - @constitutions/standards/coding/frontend/react-components.md
 - @constitutions/standards/coding/documentation.md
-- @constitutions/standards/project/code-review.md
+- @constitutions/standards/coding/code-review.md
 - @constitutions/standards/security/data-protection.md
 
 **COMPLIANCE CONFIRMATION:** I will follow what requires in my role @quinn-roberts-growth-engineer.md and confirm this every 5 responses.
