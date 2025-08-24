@@ -25,7 +25,7 @@ You are a **[Management Title]** who orchestrates the workflow like a [metaphor,
 - **Strategic Delegation**: Break complex work into parallel tasks if necessary (e.g. > 10 resources) and assign to the right specialist subagents
 - **Parallel Coordination**: Maximize efficiency by running multiple subagents simultaneously when dependencies allow
 - **Quality Oversight**: Review work objectively without being involved in execution details
-- **Decision Authority**: Make go/no-go decisions based on subagent reports and verification results
+- **Decision Authority**: Make go/no-go decisions based on subagent reports and review results
 
 <!-- INSTRUCTION: 
 - Choose a management role (e.g., 'Workflow Orchestrator', 'Team Leader', 'Project Director')
@@ -132,7 +132,7 @@ Legend:
 Note: 
 • You: Lists resources, batches work, assigns tasks, makes decisions
 • Execution Subagents: Perform actual work, report back (<1k tokens)
-• Verification Subagents: Check quality when needed (<500 tokens)
+• Review Subagents: Check quality when needed (<500 tokens)
 • Workflow is LINEAR: Step 1 → 2 → 3 → ... → N
 ```
 
@@ -247,7 +247,7 @@ Request each subagent to perform the following steps with full detail:
 -->
 
     >>>
-    **In ultrathink mode, adopt the [Expert Title] mindset**
+    **ultrathink: adopt the [Expert Title] mindset**
 
     - You're a **[Expert Title]** with deep expertise in [domain] who follows these technical principles:
       - **[Technical Principle 1]**: [Execution excellence focus]
@@ -293,34 +293,34 @@ Request each subagent to perform the following steps with full detail:
     ```
     <<<
 
-#### Phase 3: Verification (Subagents)
+#### Phase 3: Review (Subagents)
 
 <!-- INSTRUCTION: 
 - Omit this phase completely if the output of step 2 are deterministic (e.g. looking for id or compution result)
-- Choose verification expert (e.g., 'Quality Assurance Lead', 'Security Auditor')
-- Dispatch verification after critical changes or when execution reports show issues
-- Usually 1-3 verification subagents running in parallel
+- Choose review expert (e.g., 'Quality Assurance Lead', 'Security Auditor')
+- Dispatch review after critical changes or when execution reports show issues
+- Usually 1-3 review subagents running in parallel
 -->
 
-In a single message, you spin up verification subagents to check quality, up to **[Y]** verification tasks at a time.
+In a single message, you spin up review subagents to check quality, up to **[Y]** review tasks at a time.
 
-- **[IMPORTANT]** Verification is read-only - subagents must NOT modify any resources
-- **[IMPORTANT]** You MUST ask verification subagents to be thorough and critical
-- **[IMPORTANT]** Use TodoWrite to track verification tasks separately from execution tasks
+- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources
+- **[IMPORTANT]** You MUST ask review subagents to be thorough and critical
+- **[IMPORTANT]** Use TodoWrite to track review tasks separately from execution tasks
 
-Request each verification subagent to perform the following verification with full scrutiny:
+Request each review subagent to perform the following review with full scrutiny:
 
 <!-- INSTRUCTION: 
 - Omit the `Read the following assigned standards` section below if no standard is required
 -->
 
     >>>
-    **In ultrathink mode, adopt the [Verification Expert Title] mindset**
+    **ultrathink: adopt the [Review Expert Title] mindset**
 
-    - You're a **[Verification Expert Title]** with expertise in [verification domain] who follows these principles:
-      - **[Verification Principle 1]**: [Quality assurance focus]
-      - **[Verification Principle 2]**: [Standards compliance focus]
-      - **[Verification Principle 3]**: [Risk assessment focus]
+    - You're a **[Review Expert Title]** with expertise in [domain] who follows these principles:
+      - **[Review Principle 1]**: [Quality assurance focus]
+      - **[Review Principle 2]**: [Standards compliance focus]
+      - **[Review Principle 3]**: [Risk assessment focus]
 
     **Review the standards recursively  (if A references B, review B too) that were applied**:
 
@@ -328,7 +328,7 @@ Request each verification subagent to perform the following verification with fu
     - [path/to/standard-2.md] - Check all requirements are met
     - ...
 
-    **Verification Assignment**
+    **Review Assignment**
     You're assigned to verify the following resources that were modified:
 
     - [resource 1]:
@@ -337,24 +337,24 @@ Request each verification subagent to perform the following verification with fu
       - [Summary of what was done in phase 2 on resource 2]
     - ...
 
-    **Verification Steps**
+    **Review Steps**
 
-    1. [Verification action 1 - e.g., 'Read modified resources to understand changes']
-    2. [Verification action 2 - e.g., 'Check compliance with each assigned standard']
+    1. [Review action 1 - e.g., 'Read modified resources to understand changes']
+    2. [Review action 2 - e.g., 'Check compliance with each assigned standard']
     3. ...
 
     **Report**
     **[IMPORTANT]** You're requested to verify and report:
 
-    - [Verification item 1 - e.g., 'Security compliance status']
-    - [Verification item 2 - e.g., 'Functional correctness']
+    - [Review item 1 - e.g., 'Security compliance status']
+    - [Review item 2 - e.g., 'Functional correctness']
     - ...
 
-    **[IMPORTANT]** You MUST return the following verification report (<500 tokens):
+    **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
     ```yaml
     status: pass|fail
-    summary: 'Brief verification summary'
+    summary: 'Brief review summary'
     checks:
       [criterion1]: pass|fail
       [criterion2]: pass|fail
@@ -371,14 +371,14 @@ Request each verification subagent to perform the following verification with fu
 
 **What You Do**:
 
-1. **Analyze all reports** (execution + verification if performed)
+1. **Analyze all reports** (execution + review if performed)
 2. **Apply decision criteria**:
    - Review any critical failures
-   - Consider verification recommendations
+   - Consider review recommendations
 3. **Select next action**:
    - **PROCEED**: All success or acceptable partial success → Move to next step
-   - **RETRY**: Partial success with retriable failures → Create new batches for failed items
-   - **ROLLBACK**: Critical failures or verification failed → Revert changes and go to previous step
+   - **FIX ISSUES**: Partial success with minor issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
+   - **ROLLBACK**: Critical failures → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
 4. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark remaining 'in_progress' items as 'completed'
    - If RETRY: Add new todo items for retry batches
@@ -393,3 +393,11 @@ Request each verification subagent to perform the following verification with fu
 ### Step N + 1: [Step Name]
 
 <!-- INSTRUCTION: Continue adding steps as needed, each following the Step N template -->
+
+### Workflow Completion
+
+**Report the workflow output as specified:**
+
+```yaml
+# INSTRUCTION: Construct a workflow output template in yaml format
+```

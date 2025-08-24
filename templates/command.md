@@ -32,7 +32,9 @@ description: <brief description shown in /help (max 80 characters)>
 
 ## 📊 Dynamic Context
 
-- **[IMPORTANT]** At the start of the command, you must run the command to extract all the context below
+<!-- INSTRUCTION: Keep the following line to remind the agent it must reload the context lest it forget -->
+
+- **[IMPORTANT]** At the start of the command, you MUST run the command to load all the context below
 
 <!-- INSTRUCTION: Pick relevant context for purpose of achieving what the command intended to do, can be none -->
 
@@ -52,7 +54,7 @@ description: <brief description shown in /help (max 80 characters)>
 
 ## 🔄 Workflow
 
-In ultrathink mode, you'd perform the following steps
+ultrathink: you'd perform the following steps
 
 <!-- INSTRUCTION: Add or remove the following basic workflow based on the command, think carefully what's the best workflow for the command -->
 
