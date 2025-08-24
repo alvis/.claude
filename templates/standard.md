@@ -7,6 +7,18 @@ _[Brief description of what this standard covers and its purpose]_
 <!-- INSTRUCTION: Include practical examples for every rule or guideline -->
 <!-- INSTRUCTION: Keep sections focused and avoid redundancy -->
 
+<!-- INSTRUCTION: All examples must be minimal to illusrate the point and use `...` proactively for brevity. Avoid full example unless it's absolutely necessary -->
+
+## Dependent Standards
+
+<!-- INSTRUCTION: Link to all other related standard files that are needed to make this standard complete, e.g. a typescript standard would requires documentation, functions, naming and general principle standards -->
+
+🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+
+- [Related Standard 1](@../path/to/standard.md) - [How it relates]
+- [Related Standard 2](@../path/to/standard.md) - [How it relates]
+- [External Resource](@https://example.com) - [Why it's relevant]
+
 ## Core Principles
 
 <!-- INSTRUCTION: List 3-5 fundamental principles that guide this standard -->
@@ -17,10 +29,10 @@ _[Brief description of what this standard covers and its purpose]_
 [Brief explanation of the principle and why it matters]
 
 ```typescript
-// ✅ GOOD: [Explanation of good practice]
+// ✅ GOOD: [explanation of good practice]
 [Code example demonstrating the principle]
 
-// ❌ BAD: [Explanation of why this is wrong]
+// ❌ BAD: [explanation of why this is wrong]
 [Counter-example showing what to avoid]
 ```
 
@@ -38,10 +50,10 @@ _[Brief description of what this standard covers and its purpose]_
 [Introduction to the subtopic and when it applies]
 
 ```typescript
-// Standard pattern/template
+// standard pattern/template
 [Code template or interface definition]
 
-// Example implementation
+// example implementation
 [Concrete example using the pattern]
 ```
 
@@ -50,45 +62,32 @@ _[Brief description of what this standard covers and its purpose]_
 #### Basic Pattern
 
 ```typescript
-// ✅ GOOD: [Specific practice]
+// ✅ GOOD: [specific practice]
 [Good example code]
 
-// ❌ BAD: [Common mistake]
+// ❌ BAD: [common mistake]
 [Bad example code]
 ```
 
 #### Advanced Pattern
 
 ```typescript
-// When you need [specific requirement]:
+// when you need [specific requirement]:
 [Advanced example with annotations]
 ```
 
-## [Main Topic Area 2]
+## [Main Topic Area N]
 
-### Quick Reference
+<!-- INSTRUCTION: Repeat the section template above -->
 
-<!-- INSTRUCTION: Include tables for quick lookup when appropriate -->
+## Quick Reference
+
+<!-- INSTRUCTION: Include tables for quick lookup for patterns that are similar and require extra considerations to decision the pattern to use.  -->
 
 | Pattern | Use Case | Example | Notes |
 |---------|----------|---------|-------|
 | [Pattern 1] | [When to use] | `[code]` | [Additional context] |
 | [Pattern 2] | [When to use] | `[code]` | [Additional context] |
-
-### Decision Matrix
-
-<!-- INSTRUCTION: Help developers make quick decisions -->
-
-**Use [Option A] when:**
-
-- [Condition 1]
-- [Condition 2]
-- [Condition 3]
-
-**Use [Option B] when:**
-
-- [Condition 1]
-- [Condition 2]
 
 ## Patterns & Best Practices
 
@@ -106,10 +105,10 @@ _[Brief description of what this standard covers and its purpose]_
 **Implementation:**
 
 ```typescript
-// Pattern template
+// pattern template
 [Reusable code pattern with placeholders]
 
-// Real-world example
+// real-world example
 [Concrete implementation of the pattern]
 ```
 
@@ -137,15 +136,12 @@ _[Brief description of what this standard covers and its purpose]_
 ### [Anti-Pattern 1 Name]
 
 ```typescript
-// ❌ Never do this:
+// ❌ BAD: [explain what issues this causes]
 [Bad code example]
 
-// Problem: [Explain what issues this causes]
-
-// ✅ Instead, do this:
+// ✅ GOOD: [explain the benefits of the correct approach]
 [Corrected code example]
 
-// Why: [Explain the benefits of the correct approach]
 ```
 
 ### Common Mistakes to Avoid
@@ -172,72 +168,3 @@ _[Brief description of what this standard covers and its purpose]_
 
 2. **[Second decision point]**
    - [Continue pattern...]
-
-## Related Workflows & Standards
-
-<!-- INSTRUCTION: Link to related documentation -->
-
-- [Related Standard 1](@../path/to/standard.md) - [How it relates]
-- [Related Standard 2](@../path/to/standard.md) - [How it relates]
-- [External Resource](@https://example.com) - [Why it's relevant]
-
-<!-- INSTRUCTION: Include supplementary information if needed -->
-
-```json
-// [Configuration file name]
-{
-  "[setting1]": "[value]",
-  "[setting2]": "[value]"
-}
-```
-
----
-
-<!-- AI META INSTRUCTIONS -->
-<!-- 
-When using this template to create a new standard:
-
-1. STRUCTURE:
-   - Keep sections logically ordered from general to specific
-   - Use consistent heading levels (##, ###, ####)
-   - Group related content together
-
-2. CONTENT:
-   - Be prescriptive - tell developers exactly what to do
-   - Provide rationale - explain WHY, not just WHAT
-   - Include examples for EVERY guideline
-   - Show both good and bad practices
-
-3. CODE EXAMPLES:
-   - Use TypeScript for all examples (unless standard is language-specific)
-   - Keep examples concise but complete
-   - Add comments to explain non-obvious parts
-   - Use ✅ and ❌ consistently for good/bad examples
-
-4. FORMATTING:
-   - Use tables for quick reference information
-   - Use bullet points for lists of conditions or requirements
-   - Use numbered lists for sequential steps
-   - Use code blocks with proper syntax highlighting
-
-5. TONE:
-   - Be direct and clear
-   - Avoid ambiguous language
-   - Use "must", "should", "may" consistently (RFC 2119)
-   - Keep explanations concise
-
-6. COMPLETENESS:
-   - Cover common scenarios
-   - Address edge cases
-   - Include migration paths if replacing existing standards
-   - Provide testing guidelines where applicable
-
-7. MAINTENANCE:
-   - Include version information if needed
-   - Date significant changes
-   - Mark deprecated sections clearly
-   - Keep examples up to date
-
-Remember: Standards should be authoritative references that developers
-can quickly consult to make decisions and write compliant code.
--->
