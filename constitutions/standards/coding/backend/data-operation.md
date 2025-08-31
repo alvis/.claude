@@ -101,10 +101,10 @@ function get<Entity>(...): Promise<Entity | null>;
 
 ```typescript
 // operations/getOffering.ts
-import { offeringSelector } from '#selectors';
+import { offeringSelector, normalizeOffering } from '#entities/offering';
 
 import type { PrismaClient } from '#prisma';
-import type { Offering } from '#types';
+import type { Offering } from '#entities/offering';
 
 /** input parameters for getOffering */
 export type GetOfferingInput =
@@ -126,7 +126,7 @@ export async function getOffering(
     where: input,
   });
 
-  return offering ?? null;
+  return offering ? normalizeOffering(offering) : null;
 }
 ```
 
@@ -154,7 +154,7 @@ Types should be defined directly in operation files for better cohesion:
 ```typescript
 // operations/setOffering.ts
 import type { SetOptional, SetRequired } from 'type-fest';
-import type { Offering } from '#types';
+import type { Offering } from '#entities/offering';
 
 /** input parameters for setOffering */
 export type SetOfferingInput = CreateOfferingInput | UpdateOfferingInput;
@@ -181,10 +181,10 @@ function set<Entity>(...): Promise<Entity>;
 
 ```typescript
 // operations/setOffering.ts
-import { offeringSelector } from '#selectors';
+import { offeringSelector, normalizeOffering } from '#entities/offering';
 
 import type { PrismaClient } from '#prisma';
-import type { Offering } from '#types';
+import type { Offering } from '#entities/offering';
 
 /** input parameters for setOffering */
 export type SetOfferingInput =
@@ -215,12 +215,14 @@ export async function setOffering(
     rate: input.rate,
   };
 
-  return client.offering.upsert({
+  const offering = await client.offering.upsert({
     select: offeringSelector,
     where: { id },
     update: data,
     create: data,
   });
+
+  return normalizeOffering(offering);
 }
 ```
 
@@ -310,6 +312,18 @@ export function ignoreNotFound(error: unknown): null {
 
 ```typescript
 // operations/dropOffering.ts
+import { offeringSummarySelector, normalizeOffering } from '#entities/offering';
+import { ignoreNotFound } from '#utilities';
+
+import type { PrismaClient } from '#prisma';
+import type { OfferingSummary } from '#entities/offering';
+
+/** input parameters for dropOffering */
+export interface DropOfferingInput {
+  /** unique identifier of the offering */
+  id: string;
+}
+
 /**
  * remove an draft offering
  * @param client the Prisma client instance
@@ -321,10 +335,12 @@ export async function dropOffering(
   { id }: DropOfferingInput,
 ): Promise<OfferingSummary | null> {
   // only draft entities can be deleted
-  return client.offering.delete({
+  const offering = await client.offering.delete({
     select: offeringSummarySelector,
     where: { id, status: { in: ['draft'] } },
   }).catch(ignoreNotFound);
+
+  return offering ? normalizeOffering(offering) : null;
 }
 ```
 
@@ -401,6 +417,12 @@ function search<Entity>(...): Promise<Entity[]>;
 
 ```typescript
 // operations/listOfferings.ts
+import { DEFAULT_LIMIT } from '#constants';
+import { offeringSummarySelector, normalizeOffering } from '#entities/offering';
+
+import type { PrismaClient } from '#prisma';
+import type { Offering, OfferingSummary } from '#entities/offering';
+
 /** input parameters for listOfferings */
 export interface ListOfferingsInput {
   /** filter by status (defaults to ['active']) */
@@ -437,7 +459,7 @@ export async function listOfferings(
     orderBy = { field: 'createdAt', direction: 'desc' }
   } = {...input};
 
-  return client.offering.findMany({
+  const offerings = await client.offering.findMany({
     select: offeringSummarySelector,
     where: {
       status: { in: status },
@@ -450,6 +472,8 @@ export async function listOfferings(
       [orderBy.field]: orderBy.direction,
     },
   });
+
+  return offerings.map(normalizeOffering);
 }
 
 // operations/searchOfferings.ts (extends ListOfferingsInput with query field)
@@ -548,41 +572,70 @@ await searchCommunities({
 
 ## Common Patterns
 
-### Selector Patterns
+### Entity-Centric Pattern
 
-Centralize all selectors in a single file for reusability:
+Colocate selectors, types, and normalization helpers within entity files for better cohesion:
 
 ```typescript
-// source/selectors.ts
+// source/entities/offering.ts
 import type { Prisma } from '#prisma';
+import type { OverrideProperties } from 'type-fest';
 
-/** full attribute selector for detailed entity retrieval */
-export const offeringSelector = {
-  select: {
-    id: true,
-    slug: true,
-    status: true,
-    suiteId: true,
-    parentId: true,
-    features: true,
-    display: true,
-    quota: true,
-    rate: true,
-    createdAt: true,
-    updatedAt: true,
-  } as const satisfies Prisma.OfferingSelect,
-} as const;
+/** offering with normalized display data */
+export type Offering = OverrideProperties<
+  Prisma.OfferingGetPayload<{
+    select: typeof offeringSelector;
+  }>,
+  NormalizedField
+>;
+
+/** offering summary for list operations */
+export type OfferingSummary = OverrideProperties<
+  Prisma.OfferingGetPayload<{
+    select: typeof offeringSummarySelector;
+  }>,
+  NormalizedField
+>;
+
+type NormalizedField = {
+  features: Array<string>;
+};
 
 /** summary selector for list operations and relations */
 export const offeringSummarySelector = {
-  select: {
-    id: true,
-    slug: true,
-    status: true,
-    suiteId: true,
-    display: true,
-  } as const satisfies Prisma.OfferingSelect,
-} as const;
+  id: true,
+  slug: true,
+  status: true,
+  suiteId: true,
+  display: true,
+} as const satisfies Prisma.OfferingSelect;
+
+/** full attribute selector for detailed entity retrieval */
+export const offeringSelector = {
+  ...offeringSummarySelector,
+  parentId: true,
+  features: true,
+  quota: true,
+  rate: true,
+  createdAt: true,
+  updatedAt: true,
+} as const satisfies Prisma.OfferingSelect;
+
+/**
+ * normalizes offering data for consistent API responses
+ * @param offering raw offering from database
+ * @returns normalized offering with processed fields
+ */
+export function normalizeOffering<
+  T extends Prisma.OfferingGetPayload<{
+    select: typeof offeringSummarySelector;
+  }>,
+>(offering: T): Omit<T, keyof NormalizedField> & NormalizedField {
+  return {
+    ...offering,
+    features: offering.features ? JSON.parse(offering.features) : [],
+  };
+}
 ```
 
 ### Controller Integration Pattern
@@ -596,11 +649,14 @@ import { setOffering } from '#operations/setOffering';
 import { dropOffering } from '#operations/dropOffering';
 import { listOfferings } from '#operations/listOfferings';
 
-// export types from operations
+// export operation input types
 export type { GetOfferingInput } from '#operations/getOffering';
 export type { SetOfferingInput } from '#operations/setOffering';
 export type { DropOfferingInput } from '#operations/dropOffering';
 export type { ListOfferingsInput } from '#operations/listOfferings';
+
+// export entity types from entity modules
+export type { Offering, OfferingSummary } from '#entities/offering';
 
 export class Product {
   #client: PrismaClient;
@@ -654,23 +710,25 @@ class <Feature> {
 data/{service}/
 ├── source/
 │   ├── index.ts           # controller class and exports
-│   ├── selectors.ts       # all Prisma selectors
+│   ├── constants.ts       # shared constants (DEFAULT_LIMIT, etc.)
+│   ├── entities/          # entity-specific modules
+│   │   ├── offering.ts    # types, selectors, normalization
+│   │   ├── user.ts        # types, selectors, normalization
+│   │   └── profile.ts     # types, selectors, normalization
 │   ├── operations/        # operation functions
 │   │   ├── getOffering.ts
 │   │   ├── setOffering.ts
 │   │   ├── dropOffering.ts
 │   │   └── listOfferings.ts
-│   ├── utilities/         # helper functions
-│   │   └── normalize.ts
-│   └── types/            # shared type definitions
+│   └── utilities.ts       # shared helper functions
 ├── spec/
 │   ├── operations/       # integration tests
 │   │   ├── getOffering.spec.int.ts
 │   │   ├── setOffering.spec.int.ts
 │   │   ├── dropOffering.spec.int.ts
 │   │   └── listOfferings.spec.int.ts
-│   ├── utilities/        # unit tests
-│   │   └── normalize.spec.ts
+│   ├── entities/         # entity unit tests
+│   │   └── offering.spec.ts
 │   ├── common.ts         # test utilities
 │   └── fixture.ts        # database setup/seed
 ├── prisma/
@@ -680,8 +738,8 @@ data/{service}/
 
 **File Conventions:**
 
-1. **Operation Files**: One operation per file, types at the top
-2. **Selectors**: All selectors in single `selectors.ts` file
+1. **Entity Files**: Types, selectors, and normalization colocated by domain
+2. **Operation Files**: One operation per file, types at the top
 3. **Controller**: Single class in `index.ts` with pass-through methods
 4. **Tests**: Mirror source structure in `spec/` directory
 5. **Integration Tests**: Use `.spec.int.ts` extension
