@@ -28,6 +28,7 @@
 - **[Write Code (TDD)](@./coding/write-code.md)** - Test-driven development workflow
 - **[Prepare for Coding](@./coding/prepare-coding.md)** - Pre-coding verification steps
 - **[Create Command](@./project/create-command.md)** - Generate new slash command files from templates
+- **[Create Screen Design](@./project/create-screen-design.md)** - Create comprehensive screen design documentation on Notion with responsive variations
 - **[Update Command](@./project/update-command.md)** - Update command files to align with template
 - **[Review Code](@./quality/review-code.md)** - Code review process and standards
 - **[Approve PR](@./quality/approve-pr.md)** - Final quality gates before merge
@@ -70,6 +71,7 @@
 | ----------------------------------------------- | -------------------------- | ----------------------- |
 | [Commit with Git](@./project/commit-with-git.md) | Quality-gated git workflow | Committing code changes |
 | [Create Command](@./project/create-command.md) | Generate new slash command files from templates | Creating new CLI commands |
+| [Create Screen Design](@./project/create-screen-design.md) | Create comprehensive screen design documentation on Notion with responsive variations | Documenting UI/UX screen designs |
 | [Ensure Project](@./project/ensure-project.md) | Validate and bootstrap project structure | Setting up new projects or validating existing ones |
 | [Update Agent](@./project/update-agent.md) | Update agent files to align with latest template | Maintaining and updating agent definitions |
 | [Update Command](@./project/update-command.md) | Update command files to align with template | When commands need template alignment |
@@ -82,6 +84,7 @@
 | [Implement Data Operation](@./theriety/implement-data-operation.md)   | Implement database operations from Notion specifications                  | Creating data operations                                  |
 | [Implement Data Schema](@./theriety/implement-data-schema.md)        | Implement data schemas from specifications                                | Creating data models                                      |
 | [Review Service Operation](@./theriety/review-service-operation.md)   | Validate service operations in Notion for completeness and standards compliance | Reviewing existing service operations for quality assurance |
+| [Update Screen Design](@./theriety/update-screen-design.md)         | Update design documentations for interactive screens on Notion to conform to latest template | Updating existing screen designs to current standards |
 
 ## How to Use Workflows
 
