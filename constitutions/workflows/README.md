@@ -25,7 +25,7 @@
 
 ### 📋 **All Engineers**
 
-- **[Write Code (TDD)](@./coding/write-code-tdd.md)** - Test-driven development workflow
+- **[Write Code (TDD)](@./coding/write-code.md)** - Test-driven development workflow
 - **[Prepare for Coding](@./coding/prepare-coding.md)** - Pre-coding verification steps
 - **[Create Command](@./project/create-command.md)** - Generate new slash command files from templates
 - **[Update Command](@./project/update-command.md)** - Update command files to align with template
@@ -53,7 +53,7 @@
 
 | Workflow                                         | Purpose                         | When to Use                     |
 | ------------------------------------------------ | ------------------------------- | ------------------------------- |
-| [Write Code (TDD)](@./coding/write-code-tdd.md)   | Test-driven development process | All feature development         |
+| [Write Code (TDD)](@./coding/write-code.md)   | Test-driven development process | All feature development         |
 | [Prepare for Coding](@./coding/prepare-coding.md) | Environment and context setup   | Before starting any coding task |
 
 ### 🔍 Quality Assurance

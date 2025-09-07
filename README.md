@@ -100,7 +100,7 @@ constitutions/
 ├── workflows/      # HOW to do things (step-by-step)
 │   ├── coding/
 │   │   ├── prepare-coding.md
-│   │   └── write-code-tdd.md
+│   │   └── write-code.md
 │   ├── frontend/
 │   │   └── build-component.md
 │   ├── backend/

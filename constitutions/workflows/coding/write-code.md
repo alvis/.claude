@@ -357,7 +357,7 @@ Request the review subagent to perform the following review with full scrutiny:
 **Report the workflow output as specified:**
 
 ```yaml
-workflow: write-code-tdd
+workflow: write-code
 status: completed
 outputs:
   test_suite:
