@@ -11,7 +11,7 @@ This directory contains the restructured development constitution, organized by 
 **Essential workflows:**
 
 - [Build Component](@./workflows/frontend/build-component.md) - React component development
-- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - Test-driven development
+- [Write Code (TDD)](@./workflows/coding/write-code.md) - Test-driven development
 - [Review Code](@./workflows/quality/review-code.md) - Code review process
 
 **Key standards:**
@@ -30,7 +30,7 @@ This directory contains the restructured development constitution, organized by 
 
 - [Build Data Controller](@./workflows/backend/build-data-controller.md) - Repository pattern implementation
 - [Verify Auth Scope](@./workflows/backend/verify-auth-scope.md) - Authentication and authorization
-- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - Test-driven development
+- [Write Code (TDD)](@./workflows/coding/write-code.md) - Test-driven development
 
 **Key standards:**
 
@@ -45,7 +45,7 @@ This directory contains the restructured development constitution, organized by 
 
 **Core workflows:**
 
-- [Write Code (TDD)](@./workflows/coding/write-code-tdd.md) - **MANDATORY** test-driven development
+- [Write Code (TDD)](@./workflows/coding/write-code.md) - **MANDATORY** test-driven development
 - [Review Code](@./workflows/quality/review-code.md) - Code review standards
 - [Approve PR](@./workflows/quality/approve-pr.md) - Final approval quality gates
 
@@ -109,7 +109,7 @@ TASK: "I need to create a React component"
 
 ### **TDD Compliance**
 
-- **ALL code development** must follow [Write Code (TDD)](@./workflows/coding/write-code-tdd.md)
+- **ALL code development** must follow [Write Code (TDD)](@./workflows/coding/write-code.md)
 - Tests written BEFORE implementation
 - 100% coverage maintained with minimal tests
 

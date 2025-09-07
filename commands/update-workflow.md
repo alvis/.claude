@@ -102,7 +102,7 @@ Update workflow files to align with the latest standard template and apply speci
 ### Update Single Workflow
 
 ```bash
-/update-workflow "constitutions/workflows/coding/write-code-tdd.md"
+/update-workflow "constitutions/workflows/coding/write-code.md"
 # Updates specified workflow to match latest template
 # Uses one ultrathink subagent for comprehensive analysis
 ```
