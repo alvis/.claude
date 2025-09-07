@@ -5,6 +5,7 @@
 This workflow ensures comprehensive review of code following established coding standards.
 
 **Use Cases:**
+
 - Reviewing any code (existing codebase, PRs, specific files)
 - Ensuring code quality standards are met
 - Validating test coverage and documentation
@@ -21,19 +22,22 @@ This workflow ensures comprehensive review of code following established coding 
            ▼
 ┌─────────────────────────────┐
 │  Phase 2: Review Execution  │
-│  (All 4 Agents in Parallel) │
+│  (All 5 Agents in Parallel) │
 ├─────────────────────────────┤
 │  ╔══════════════════════╗   │
 │  ║ Code Quality Agent   ║───┤
 │  ╚══════════════════════╝   │
 │  ╔══════════════════════╗   │
-│  ║ Testing Agent        ║───┼──→ Phase 3
+│  ║ Testing Agent        ║───┤
 │  ╚══════════════════════╝   │
 │  ╔══════════════════════╗   │
-│  ║ Documentation Agent  ║───┤
+│  ║ Documentation Agent  ║───┼──→ Phase 3
 │  ╚══════════════════════╝   │
 │  ╔══════════════════════╗   │
 │  ║ Security Agent       ║───┤
+│  ╚══════════════════════╝   │
+│  ╔══════════════════════╗   │
+│  ║ Linting Agent        ║───┤
 │  ╚══════════════════════╝   │
 └─────────────────────────────┘
            │
@@ -72,7 +76,7 @@ This workflow ensures comprehensive review of code following established coding 
 
 **Goal**: Perform comprehensive code review across all quality dimensions
 
-**Parallel Execution**: Deploy all 4 review agents simultaneously
+**Parallel Execution**: Deploy all 5 review agents simultaneously
 
 Request each subagent to perform the following steps with full detail:
 
@@ -106,6 +110,9 @@ Request each subagent to perform the following steps with full detail:
     **For Security Agent (@nina-petrov-security-champion)**:
     - ../../standards/coding/general-principles.md
     - ../../standards/coding/environment-variables.md
+    
+    **For Linting Agent (@alex-chen-linting-specialist)**:
+    - ../../standards/coding/general-principles.md
     
     **Assignment**
     You're assigned to review the provided code files for issues in your domain of expertise.
@@ -144,6 +151,15 @@ Request each subagent to perform the following steps with full detail:
     5. Review dependency security and known vulnerabilities
     6. Check CORS configuration and security headers
     
+    **For Linting Agent**:
+    1. Identify project meta files (package.json) at project and monorepo levels
+    2. Extract linting scripts from meta files (e.g., lint, lint:fix, eslint, tslint)
+    3. Map appropriate linting scripts to each file group based on file types
+    4. Prefer project-level scripts over monorepo-level scripts when available
+    5. Execute relevant linting scripts and capture output
+    6. Report all linting issues found by the tools (DO NOT read config files)
+    7. Provide summary of linting results per file group
+    
     **Report**
     Provide findings in YAML format:
     
@@ -174,7 +190,7 @@ Request each subagent to perform the following steps with full detail:
 **Steps:**
 
 1. **Collect All Reports**
-   - Gather reports from all 4 agents
+   - Gather reports from all 5 agents
    - Validate report completeness
    - Check for conflicting findings
 
@@ -185,6 +201,7 @@ Request each subagent to perform the following steps with full detail:
    - Suggestions: Optional improvements
 
 3. **Generate Consolidated Report**
+
    ```yaml
    code_review:
      review_type: "[pr|codebase|files]"
@@ -204,6 +221,11 @@ Request each subagent to perform the following steps with full detail:
          file: "src/services/auth.ts"
          coverage: "65%"
          recommendation: "Add unit tests for error cases"
+       - category: "linting"
+         description: "ESLint violations found"
+         file: "src/components/Button.tsx"
+         issues: ["prefer-const", "no-unused-vars"]
+         recommendation: "Fix linting violations using automated tools"
          
      minor_issues:
        - category: "documentation"
@@ -233,12 +255,14 @@ Request each subagent to perform the following steps with full detail:
 ## Output
 
 **Success Criteria:**
-- All files reviewed by appropriate agents
+
+- All files reviewed by appropriate agents (5 specialized agents)
 - Critical issues identified and documented
-- Comprehensive report generated
+- Comprehensive report generated including linting analysis
 - Clear action items provided
 
 **Deliverables:**
+
 1. Consolidated review report in YAML format
 2. Prioritized list of issues
 3. Remediation recommendations
