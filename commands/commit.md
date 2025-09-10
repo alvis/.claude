@@ -37,7 +37,6 @@ Analyzes changes and creates atomic commits with conventional commit messages an
 
 ### Project Context
 
-- Project type: !`[[ -f package.json ]] && echo "Node.js" || [[ -f Cargo.toml ]] && echo "Rust" || echo "Other"`
 - Available workflows: !`ls -1 constitutions/workflows/ 2>/dev/null | head -5 || echo "No workflows found"`
 
 ## 🔄 Workflow
