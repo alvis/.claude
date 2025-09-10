@@ -174,6 +174,7 @@ Request each subagent to perform the following steps with full detail:
 **Read the following assigned standards** and follow them recursively:
 
 - @../../standards/coding/typescript.md
+- @../../standards/coding/error-handling-logging.md
 - @../../standards/coding/documentation.md
 - @../../standards/coding/functions.md
 - @../../standards/coding/backend/data-operation.md
