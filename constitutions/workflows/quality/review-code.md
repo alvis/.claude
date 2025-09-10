@@ -92,6 +92,7 @@ Request each subagent to perform the following steps with full detail:
     
     **For Code Quality Agent (@marcus-williams-code-quality)**:
     - ../../standards/coding/general-principles.md
+    - ../../standards/coding/error-handling-logging.md
     - ../../standards/coding/typescript.md
     - ../../standards/coding/functions.md
     - ../../standards/coding/naming/variables.md

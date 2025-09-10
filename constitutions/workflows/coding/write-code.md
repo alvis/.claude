@@ -179,6 +179,7 @@ Request the subagent to perform the following steps with full detail:
       **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
       - constitutions/standards/coding/general-principles.md
+      - constitutions/standards/coding/error-handling-logging.md
       - constitutions/standards/coding/typescript.md
       - constitutions/standards/coding/functions.md
       - constitutions/standards/coding/documentation.md
