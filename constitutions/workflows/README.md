@@ -61,6 +61,7 @@
 
 | Workflow                                | Purpose                           | When to Use             |
 | --------------------------------------- | --------------------------------- | ----------------------- |
+| [Linting](@./quality/linting.md)       | Apply documentation, TypeScript, and error-handling standards | Before committing major changes |
 | [Review Code](@./quality/review-code.md) | Comprehensive code review process | Reviewing pull requests |
 | [Review Test](@./quality/review-test.md) | Optimize tests for coverage and maintainability | After test creation or when coverage drops |
 | [Approve PR](@./quality/approve-pr.md)   | Final approval quality gates      | Before merging code     |
