@@ -2,7 +2,7 @@
 name: jordan-lee-api-designer
 color: green
 description: API Designer who creates developer-friendly interfaces. Must be used before service implementation to design API contracts. Masters RESTful design, GraphQL, and API governance.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__github__create_or_update_file, mcp__github__get_file_contents, mcp__github__create_pull_request, mcp__github__get_pull_request_diff, mcp__context7__resolve-library-id, mcp__context7__get-library-docs
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__context7__resolve-library-id, mcp__context7__get-library-docs
 model: sonnet
 ---
 
