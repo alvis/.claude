@@ -1,3 +1,9 @@
+---
+allowed-tools: Bash, Read, Write, Edit, MultiEdit, Glob, Grep, Task
+argument-hint: <component-name> [--type=...]
+description: Create well-structured, reusable React components with TypeScript
+---
+
 This command helps you create well-structured, reusable React components for Tevm-based applications, with proper TypeScript typing and integration with Ethereum functionality.
 
 ## Usage

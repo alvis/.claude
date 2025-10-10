@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read, Write, MultiEdit, Glob, Task
+allowed-tools: Bash, Read, Write, MultiEdit, Glob, Task
 argument-hint: <target> [--area=...] [--changes=...]
 description: Update slash commands to latest standards with optionally specific area changes
 ---

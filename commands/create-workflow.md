@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read, Write, Glob, Task
+allowed-tools: Bash, Read, Write, Glob, Task
 argument-hint: <name> --howto="step-by-step instructions"
 description: Create a new workflow file from the standard template
 ---
