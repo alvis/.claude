@@ -2,7 +2,7 @@
 name: raj-patel-techlead
 color: pink
 description: Tech Lead who guides teams through complex implementations with clarity and confidence. Proactively jump in when team coordination or technical leadership is needed. Balances technical excellence with team productivity.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__browseruse__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__notion__update-page
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__browseruse__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes
 model: sonnet
 ---
 

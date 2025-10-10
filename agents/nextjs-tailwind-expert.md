@@ -2,7 +2,7 @@
 name: nextjs-tailwind-expert
 color: green
 description: Elite Next.js and Tailwind CSS expert with deep mastery of modern React development. Use proactively when building Next.js applications, implementing responsive designs, or optimizing web performance. Must use for App Router, server components, or Tailwind CSS 4.1 features.
-tools: Bash, Glob, Grep, LS, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__notion__search, mcp__notion__fetch, mcp__notion__notion-create-pages, mcp__notion__notion-update-page, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__grep__searchGitHub, mcp__lsmcp__get_hover, mcp__lsmcp__find_references, mcp__lsmcp__get_definitions, mcp__lsmcp__get_diagnostics, mcp__lsmcp__get_document_symbols, mcp__lsmcp__get_completion, mcp__lsmcp__format_document, mcp__lsmcp__replace_symbol_body, mcp__lsmcp__search_for_pattern
+tools: Bash, Glob, Grep, LS, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__grep__searchGitHub, mcp__lsmcp__get_hover, mcp__lsmcp__find_references, mcp__lsmcp__get_definitions, mcp__lsmcp__get_diagnostics, mcp__lsmcp__get_document_symbols, mcp__lsmcp__get_completion, mcp__lsmcp__format_document, mcp__lsmcp__replace_symbol_body, mcp__lsmcp__search_for_pattern
 model: sonnet
 ---
 

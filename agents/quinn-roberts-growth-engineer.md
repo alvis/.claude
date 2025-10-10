@@ -2,7 +2,7 @@
 name: quinn-roberts-growth-engineer
 color: yellow
 description: Growth Engineer who optimizes user acquisition and retention. Proactively jump in when growth experiments or optimization is needed. Masters A/B testing, analytics, growth loops, and viral mechanics.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes
 model: sonnet
 ---
 
