@@ -1,5 +1,5 @@
 ---
-allowed-tools: "Read, Write, MultiEdit, Edit, Glob, Grep, Task"
+allowed-tools: "Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task"
 
 argument-hint: "<instruction> - Specify the area of code and flow to draft"
 

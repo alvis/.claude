@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task, Read, Write, Edit, MultiEdit, WebSearch, WebFetch, Grep, Glob, TodoWrite
+allowed-tools: Bash, Task, Read, Write, Edit, MultiEdit, WebSearch, WebFetch, Grep, Glob, TodoWrite
 argument-hint: <research-topic> [optional-focus-area]
 description: Conduct comprehensive multi-source research with AI-powered analysis
 ---

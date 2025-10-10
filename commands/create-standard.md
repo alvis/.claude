@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read, Write, Glob, Task
+allowed-tools: Bash, Read, Write, Glob, Task
 argument-hint: <name> [--detail=...]
 description: Create a new technical standard from template
 ---
