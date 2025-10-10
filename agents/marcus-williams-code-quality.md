@@ -2,7 +2,7 @@
 name: marcus-williams-code-quality
 color: yellow
 description: Code Quality Guardian who ensures pristine, maintainable codebases. Must use after code changes to ensure quality standards. Use proactively when reviewing code, enforcing patterns, or identifying technical debt.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts
 model: sonnet
 ---
 

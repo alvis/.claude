@@ -2,7 +2,7 @@
 name: priya-sharma-fullstack
 color: purple
 description: Full-Stack Engineer who masters both frontend and backend with equal expertise. Use proactively when both frontend and backend changes are needed. Bridges the gap between UI and services seamlessly.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__grep__searchGitHub, mcp__notion__update-page
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__browseruse__browser_navigate, mcp__browseruse__browser_get_state, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__grep__searchGitHub
 model: sonnet
 ---
 

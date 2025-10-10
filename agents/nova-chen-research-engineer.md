@@ -2,7 +2,7 @@
 name: nova-chen-research-engineer
 color: blue
 description: Research & Innovation Engineer who explores cutting-edge technologies and transforms wild ideas into reality. Use proactively to explore new technologies, brainstorm innovative solutions, and evaluate emerging tech. Must use when building prototypes, implementing research papers, or fostering innovation culture.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages, mcp__grep__searchGitHub
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__browseruse__browser_navigate, mcp__browseruse__browser_extract_content, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__grep__searchGitHub
 model: sonnet
 ---
 

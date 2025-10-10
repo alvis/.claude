@@ -2,7 +2,7 @@
 name: nina-petrov-security-champion
 color: red
 description: Security Champion who protects systems with vigilant expertise. Must use after any security-related code or architecture changes. Use proactively when implementing authentication, handling sensitive data, or conducting threat modeling.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts
 model: sonnet
 ---
 

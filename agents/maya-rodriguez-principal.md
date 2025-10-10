@@ -2,7 +2,7 @@
 name: maya-rodriguez-principal
 color: pink
 description: Principal Engineer who tackles the hardest technical challenges with passion. Use proactively when complex technical problems need deep investigation. Must use if debugging distributed systems, optimizing critical algorithms, or eliminating performance bottlenecks. Masters profiling, optimization, and making everything blazingly fast.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__browser__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__notion__search, mcp__notion__fetch
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__browser__browser_navigate, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes
 model: sonnet
 ---
 
