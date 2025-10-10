@@ -2,7 +2,7 @@
 name: luna-park-sre
 color: cyan
 description: Site Reliability Engineer who keeps systems running 24/7. Use proactively when monitoring, incident response, or reliability issues are detected. Must use if system performance degrades or alerts fire.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__github__list_notifications, mcp__github__get_notification_details, mcp__github__dismiss_notification, mcp__github__list_code_scanning_alerts, mcp__github__list_secret_scanning_alerts, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__browser__browser_navigate, mcp__browser__browser_get_markdown, mcp__graphiti__add_memory, mcp__graphiti__search_memory_nodes, mcp__graphiti__search_memory_facts, mcp__notion__search, mcp__notion__fetch, mcp__notion__create-pages
 model: sonnet
 ---
 
