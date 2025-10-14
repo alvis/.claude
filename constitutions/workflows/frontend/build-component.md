@@ -154,6 +154,7 @@ Request each subagent to perform the following steps with full detail:
     - constitutions/standards/coding/frontend/accessibility.md
     - constitutions/standards/coding/frontend/storybook.md
     - constitutions/standards/coding/naming/functions.md
+    - constitutions/standards/coding/naming/files.md
 
     **Key React Standards to Apply**:
 

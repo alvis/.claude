@@ -160,6 +160,7 @@ Request the subagent to perform the following comprehensive steps:
     - @../../standards/coding/typescript.md
     - @../../standards/coding/documentation.md
     - @../../standards/coding/naming/functions.md
+    - @../../standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to comprehensively discover, extract, analyze, write, and validate the complete data implementation:

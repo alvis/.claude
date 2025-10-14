@@ -136,6 +136,7 @@ Request the subagent to perform analysis:
 
     - constitutions/standards/coding/testing.md (ESPECIALLY the Minimal Testing Principle section)
     - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to analyze for [mode: coverage|tdd]:
@@ -228,6 +229,7 @@ Request the subagent to create minimal tests:
 
     - constitutions/standards/coding/testing.md (FOCUS on Zero Redundancy Rule)
     - constitutions/standards/coding/typescript.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     Create these MINIMAL tests:

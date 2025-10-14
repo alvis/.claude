@@ -150,6 +150,7 @@ Request the subagent to perform the following steps with full detail:
 
     - constitutions/standards/coding/typescript.md
     - constitutions/standards/coding/documentation.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to gather requirements for operation: [OPERATION_NAME] in service: [SERVICE_NAME]
@@ -315,6 +316,7 @@ Request each subagent to perform the following steps with full detail:
 
     - constitutions/standards/coding/typescript.md
     - constitutions/standards/coding/naming/functions.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to create schema files for operation: [OPERATION_NAME]
@@ -546,6 +548,7 @@ Request the subagent to perform the following steps with full detail:
 
     - constitutions/standards/coding/typescript.md
     - constitutions/standards/coding/functions.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to create the operation manifest for: [OPERATION_NAME]
@@ -742,6 +745,7 @@ Request the subagent to perform service integration with full detail:
 
     - constitutions/standards/coding/typescript.md
     - constitutions/standards/coding/naming/functions.md
+    - constitutions/standards/coding/naming/files.md
 
     **Assignment**
     You're assigned to integrate operation [OPERATION_NAME] into the service manifest

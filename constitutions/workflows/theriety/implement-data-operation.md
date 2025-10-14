@@ -179,6 +179,7 @@ Request each subagent to perform the following steps with full detail:
 - @../../standards/coding/functions.md
 - @../../standards/coding/backend/data-operation.md
 - @../../standards/coding/testing.md
+- @../../standards/coding/naming/files.md
 
 **Assignment**
 You're assigned with the following implementation batch (max 10 operations):
