@@ -184,6 +184,7 @@ Request the subagent to perform the following steps with full detail:
       - constitutions/standards/coding/functions.md
       - constitutions/standards/coding/documentation.md
       - constitutions/standards/coding/testing.md
+      - constitutions/standards/coding/naming/files.md
 
       **Assignment**
       You're assigned to complete the full TDD implementation cycle:
