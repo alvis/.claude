@@ -1,0 +1,18 @@
+{
+  "name": "web",
+  "description": "Web development tools including UX design, growth optimization, rapid prototyping, and browser automation via MCP",
+  "version": "1.0.0",
+  "mcpServers": "./mcp.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../../scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+      }
+    ]
+  }
+}

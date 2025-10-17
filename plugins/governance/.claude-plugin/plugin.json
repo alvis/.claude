@@ -1,0 +1,17 @@
+{
+  "name": "governance",
+  "description": "Tools for creating and managing Claude Code configuration files including commands, workflows, standards, and agents",
+  "version": "1.0.0",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../../scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+      }
+    ]
+  }
+}
