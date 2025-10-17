@@ -1,0 +1,17 @@
+{
+  "name": "essential",
+  "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
+  "version": "1.0.0",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../../scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "alvis",
+  "owner": {
+    "name": "Alvis"
+  },
+  "metadata": {
+    "description": "Curated collection of agents, commands, and integrations for Claude Code development workflows",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "coding",
+      "source": "./plugins/coding",
+      "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
+      "category": "development"
+    },
+    {
+      "name": "essential",
+      "source": "./plugins/essential",
+      "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
+      "category": "productivity"
+    },
+    {
+      "name": "governance",
+      "source": "./plugins/governance",
+      "description": "Tools for creating and managing Claude Code configuration files",
+      "category": "meta"
+    },
+    {
+      "name": "react",
+      "source": "./plugins/react",
+      "description": "React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities",
+      "category": "frontend"
+    },
+    {
+      "name": "specification",
+      "source": "./plugins/specification",
+      "description": "Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration",
+      "category": "development"
+    },
+    {
+      "name": "web",
+      "source": "./plugins/web",
+      "description": "Web development tools including UX design, growth optimization, rapid prototyping, and browser automation",
+      "category": "frontend"
+    }
+  ]
+}
