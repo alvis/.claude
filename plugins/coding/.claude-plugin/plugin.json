@@ -1,0 +1,33 @@
+{
+  "name": "coding",
+  "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
+  "version": "1.0.0",
+  "mcpServers": "./mcp.json",
+  "agents": [
+    "./../../agents/marcus-williams-code-quality.md",
+    "./../../agents/ava-thompson-testing-evangelist.md",
+    "./../../agents/maya-rodriguez-principal.md",
+    "./../../agents/felix-anderson-devops.md",
+    "./../../agents/alex-chen-architect.md",
+    "./../../agents/ethan-kumar-data-architect.md",
+    "./../../agents/nina-petrov-security-champion.md",
+    "./../../agents/luna-park-sre.md",
+    "./../../agents/casey-murphy-integration-specialist.md",
+    "./../../agents/jordan-lee-api-designer.md",
+    "./../../agents/oliver-singh-data-scientist.md",
+    "./../../agents/zara-ahmad-ml-engineer.md",
+    "./../../agents/nova-chen-research-engineer.md",
+    "./../../agents/raj-patel-techlead.md"
+  ],
+  "commands": [
+    "./../../commands/draft-code.md",
+    "./../../commands/complete-code.md",
+    "./../../commands/find-unused.md",
+    "./../../commands/fix-code.md",
+    "./../../commands/fix-test.md",
+    "./../../commands/lint.md",
+    "./../../commands/review-code.md",
+    "./../../commands/review-test.md",
+    "./../../commands/commit.md"
+  ]
+}

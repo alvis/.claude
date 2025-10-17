@@ -1,0 +1,17 @@
+{
+  "name": "documentation",
+  "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
+  "version": "1.0.0",
+  "mcpServers": "./.mcp.json",
+  "agents": [
+    "./../../agents/sam-taylor-documentation.md",
+    "./../../agents/emma-johnson-product.md",
+    "./../../agents/morgan-davis-developer-advocate.md",
+    "./../../agents/sage-wilson-customer-success.md"
+  ],
+  "commands": [
+    "./../../commands/design-code.md",
+    "./../../commands/handover.md",
+    "./../../commands/takeover.md"
+  ]
+}

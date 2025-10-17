@@ -1,0 +1,18 @@
+{
+  "name": "constitution",
+  "description": "Tools for creating and managing Claude Code configuration files including commands, workflows, standards, and agents",
+  "version": "1.0.0",
+  "agents": [
+    "./../../agents/taylor-kim-workflow-optimizer.md"
+  ],
+  "commands": [
+    "./../../commands/create-command.md",
+    "./../../commands/create-workflow.md",
+    "./../../commands/create-standard.md",
+    "./../../commands/update-command.md",
+    "./../../commands/update-workflow.md",
+    "./../../commands/update-standard.md",
+    "./../../commands/update-agent.md",
+    "./../../commands/deep-research.md"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "react",
+  "description": "React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities",
+  "version": "1.0.0",
+  "agents": [
+    "./../../agents/lily-wong-ui-implementation.md",
+    "./../../agents/sophie-laurent-design-systems.md",
+    "./../../agents/nextjs-tailwind-expert.md",
+    "./../../agents/priya-sharma-fullstack.md"
+  ],
+  "commands": [
+    "./../../commands/create-component.md"
+  ]
+}

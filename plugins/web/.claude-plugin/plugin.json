@@ -1,0 +1,12 @@
+{
+  "name": "web",
+  "description": "Web development tools including UX design, growth optimization, rapid prototyping, and browser automation via MCP",
+  "version": "1.0.0",
+  "mcpServers": "./mcp.json",
+  "agents": [
+    "./../../agents/leo-yamamoto-ux-designer.md",
+    "./../../agents/quinn-roberts-growth-engineer.md",
+    "./../../agents/river-blake-prototype-builder.md"
+  ],
+  "commands": []
+}

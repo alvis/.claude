@@ -1,0 +1,12 @@
+{
+  "name": "theriety",
+  "description": "Theriety-specific commands and tools for service operations and Notion integration",
+  "version": "1.0.0",
+  "agents": [
+    "./../../agents/james-mitchell-service-implementation.md"
+  ],
+  "commands": [
+    "./../../commands/implement-data-controller.md",
+    "./../../commands/theriety/notion/review-service-operation.md"
+  ]
+}
