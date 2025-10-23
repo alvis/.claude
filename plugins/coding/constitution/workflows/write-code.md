@@ -175,8 +175,7 @@ When resuming work after a handover (using /coding:takeover command) or when sta
 
 #### Determining Resume Point (You)
 
-1. **Read handover documentation** (if available):
-   - Execute `/coding:takeover --files=CONTEXT.md,RESEARCH.md,PLAN.md`
+1. **Read handover documentation** (if available in project context):
    - Review CONTEXT.md to identify last completed step
    - Check PLAN.md for any pending tasks or known issues
    - Read RESEARCH.md for context and decisions made
@@ -257,9 +256,9 @@ When in interactive mode, each step's confirmation phase offers resume options:
 
 **Step Configuration**:
 
-- **Purpose**: Discover design specifications and direction from project documentation to guide implementation
+- **Purpose**: Discover design specifications and handover documentation from project to guide implementation with full context awareness
 - **Input**: Feature Requirements from workflow inputs
-- **Output**: Design context and specifications for Step 1
+- **Output**: Combined design and handover context for Step 1
 - **Sub-workflow**: None
 - **Parallel Execution**: No
 
@@ -287,27 +286,61 @@ Before executing this step, check resume and skip parameters:
 
 #### What You Do
 
-1. **Check for design documentation** using Glob or Grep tools (NEVER use `find` in bash):
+1. **Discover design documentation** using Glob or Grep tools (NEVER use `find` in bash):
    - Look for `DESIGN.md` in project root
    - Search for `**/*.md` files that might contain design specifications
    - Use Grep to search for design-related keywords if needed
-2. **Extract design direction** if found:
+   - Look for architecture documentation files
+
+2. **Discover handover documentation** using Glob tool (NEVER use `find` in bash):
+   - Look for `CONTEXT.md`, `RESEARCH.md`, `PLAN.md` in project root
+   - Check if handover files exist from previous work sessions
+   - Note which handover files are available
+
+3. **Extract design direction** if design docs found:
    - Read relevant design files
    - Note architecture patterns
    - Identify interface requirements
    - Document constraints and guidelines
-3. **Prepare design context** for Step 1:
-   - Package design specifications
-   - List interface definitions
-   - Note any architectural decisions
-4. **Use TodoWrite** to mark this step complete
-5. **Proceed to Step 1** with design context
+   - Extract design decisions and rationale
+
+4. **Extract handover context** if handover docs found:
+   - **From CONTEXT.md** (if exists):
+     - Current state and file status
+     - Key decisions and their rationale
+     - Gotchas and workarounds to avoid
+     - Established patterns to follow
+     - Next steps and priorities
+   - **From RESEARCH.md** (if exists):
+     - Problems already solved (avoid duplicating work)
+     - What worked and what didn't work (learn from attempts)
+     - Key insights and learnings
+     - Quick tips and proven approaches
+   - **From PLAN.md** (if exists):
+     - Goals and success criteria
+     - Current phase and progress
+     - Task breakdown and dependencies
+     - Risks and mitigation strategies
+
+5. **Prepare combined context** for Step 1:
+   - Merge design specifications with handover context
+   - Package architecture patterns and decisions
+   - List interface definitions and requirements
+   - Note constraints, guidelines, and gotchas
+   - Identify established patterns and proven approaches
+   - Document goals and success criteria
+   - Create comprehensive context package for implementation
+
+6. **Use TodoWrite** to mark this step complete
+
+7. **Proceed to Step 1** with combined design and handover context
 
 **Tool Usage Rules**:
 
-- ✅ **Use**: Glob tool for finding files (e.g., `**/*.md`, `**/DESIGN.md`)
+- ✅ **Use**: Glob tool for finding files (e.g., `**/*.md`, `**/DESIGN.md`, `CONTEXT.md`)
 - ✅ **Use**: Grep tool for content search
 - ✅ **Use**: LS tool for directory listing
+- ✅ **Use**: Read tool for reading discovered documentation
 - ❌ **NEVER**: Use `find` command in bash
 
 ### Step 1: Draft Code Skeleton & Test Structure
@@ -386,6 +419,10 @@ Request the subagent to perform the following steps with full detail:
       - **TODO Clarity**: Use clear TODO placeholders for implementation points
       - **Standards Compliance**: Follow all coding standards for structure
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - general-principles.md
@@ -395,11 +432,24 @@ Request the subagent to perform the following steps with full detail:
     - testing.md
     - naming/files.md
 
-    **Design Context**
-    [Include design specifications discovered in Step 0]
+    **Context from Step 0**
+    [Include all context discovered in Step 0, which may include:]
+
+    **Design Context** (if design docs found):
+    - Architecture patterns and decisions
+    - Interface requirements and constraints
+    - Design guidelines and rationale
+
+    **Handover Context** (if handover docs found):
+    - Key decisions and established patterns (from CONTEXT.md)
+    - Gotchas and workarounds to avoid (from CONTEXT.md)
+    - Problems already solved and approaches that worked/didn't work (from RESEARCH.md)
+    - Key insights and quick tips (from RESEARCH.md)
+    - Goals and success criteria (from PLAN.md)
+    - Current phase and task priorities (from PLAN.md)
 
     **Assignment**
-    You're assigned to create code skeleton and test structure:
+    You're assigned to create code skeleton and test structure following all discovered context:
 
     - Create TypeScript-compliant function signatures and class structures
     - Add comprehensive TODO comments for implementation details
@@ -516,6 +566,10 @@ Request the review subagent to perform the following review with full scrutiny:
       - **Type Safety**: Ensure TypeScript compliance throughout
       - **Test Readiness**: Confirm tests are prepared for implementation
       - **Standards Compliance**: Validate adherence to all coding standards
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
@@ -713,6 +767,10 @@ Request the subagent to perform the following steps with full detail:
       - **Quick Feedback**: Implement in small increments with frequent test runs
       - **Standards Compliance**: Follow all coding standards from the start
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - general-principles.md
@@ -796,6 +854,10 @@ Request the review subagent to perform the following review with full scrutiny:
       - **Test Satisfaction**: Verify tests pass for correct reasons
       - **Standards Compliance**: Confirm adherence to all coding standards
       - **Quality Assessment**: Ensure implementation quality meets standards
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
@@ -982,8 +1044,13 @@ Request each Correction Agent to perform the following steps with full detail:
       - **Correctness First**: Fix test behavior and logic, never modify tests just to make them pass
       - **Standards Compliance**: Apply all discovered standards consistently across your batch
       - **Test-Only Modification**: NEVER modify source code - only test files, mocks, and fixtures
+      - **Critical Root Cause Analysis**: Before fixing any test, think critically about the root cause - is it source code logic or test implementation? Determine expected behavior from test descriptions and specification files. Ask user for clarification if uncertain.
 
-    **STEP 1: Dynamically discover all available standard files first**
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
+    **Dynamically discover all available standard files first**
 
     Before reading any assigned standards, use LS/Glob tools (NEVER `find` in bash) to list ALL available standard files in the plugins/coding/constitution/standards directory. Then determine which additional standards beyond the minimum 3 apply to test code.
 
@@ -1010,10 +1077,11 @@ Request each Correction Agent to perform the following steps with full detail:
     1. **Standards Discovery**: Use LS/Glob tools (NEVER `find` in bash) to list all available standard files and identify which apply to test code
     2. **Analysis Phase**: Read each test file in your batch to understand current issues, violations, and incorrect behavior
     3. **Issue Identification**: Identify correctness issues, standards violations, and improvement opportunities
-    4. **Correction Planning**: Create fixing strategy focusing on correctness, standards compliance, and proper test patterns
-    5. **Execution Phase**: Apply all corrections to fix issues and meet all applicable standards while preserving test intent
-    6. **Verification Phase**: Run tests to ensure fixes work correctly and verify standards compliance - DO NOT modify tests to make them pass
-    7. **Run test and lint scripts**:
+    4. **Critical Root Cause Analysis**: Read test descriptions to understand intended behavior, check DESIGN.md and specification files for expected behavior hints, analyze failures to determine if issues are in source code logic vs. test implementation, form judgment on expected behavior, and if uncertain request user clarification.
+    5. **Correction Planning**: Create fixing strategy focusing on correctness, standards compliance, and proper test patterns based on expected behavior determined in Step 1
+    6. **Execution Phase**: Apply all corrections to fix issues and meet all applicable standards while preserving test intent, ensuring fixes align with expected behavior from Step 1
+    7. **Verification Phase**: Verify fixes align with expected behavior determined in Step 1 - DO NOT modify tests just to make them pass
+    8. **Run test and lint scripts**:
        - Execute `npm run test` or equivalent
        - Execute `npm run lint` or equivalent
        - Report any issues found
@@ -1054,6 +1122,13 @@ Request each Correction Agent to perform the following steps with full detail:
     summary: 'Batch [X]: Fixed Y issues across Z test files with standards compliance verification'
     modifications: ['test/file1.spec.ts', 'test/file2.spec.ts', ...]
     outputs:
+      root_cause_analysis:
+        expected_behavior_determined: ['description of expected behavior']
+        root_cause: 'source_code_logic|test_implementation|requirements_unclear'
+        reasoning: 'explanation of how expected behavior was determined'
+        specifications_consulted: ['DESIGN.md', 'other files']
+        user_clarification_needed: true|false
+        clarification_questions: ['question1'] # if needed
       batch_info:
         batch_number: X
         files_processed: Z
@@ -1107,6 +1182,11 @@ Request each Review Subagent to perform the following review with full scrutiny:
       - **Recursive Standards Review**: When a standard references other standards, verify compliance with ALL referenced standards
       - **Critical Analysis**: Identify any deviation from standards requirements or remaining correctness issues
       - **Zero Tolerance**: Any standards violation or correctness issue must be flagged as a failure
+      - **Independent Critical Analysis**: Form your own independent judgment about root cause and expected behavior from test descriptions and specifications. Compare your analysis with executor's findings and flag any disagreements.
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
@@ -1126,12 +1206,14 @@ Request each Review Subagent to perform the following review with full scrutiny:
 
     **Review Steps**
 
-    1. **Read ALL Applied Standards**: Read all standards that were applied and identify ALL requirements including recursive references
-    2. **Verify Minimum Standards**: Check each test file against ALL requirements in testing.md, typescript.md, documentation.md
-    3. **Verify Additional Standards**: Check each test file against ALL requirements in additional standards discovered
-    4. **Check Recursive References**: Verify any standards referenced by applied standards are also met
-    5. **Verify Correctness**: Ensure test logic and behavior is correct and appropriate
-    6. **Report Compliance**: Provide detailed pass/fail for each standard and correctness verification
+    1. **Independent Root Cause Analysis**: Read test descriptions and specifications independently to form your own understanding of expected behavior and root cause. Do NOT be biased by executor's analysis yet.
+    2. **Read ALL Applied Standards**: Read all standards that were applied and identify ALL requirements including recursive references
+    3. **Verify Minimum Standards**: Check each test file against ALL requirements in testing.md, typescript.md, documentation.md
+    4. **Verify Additional Standards**: Check each test file against ALL requirements in additional standards discovered
+    5. **Check Recursive References**: Verify any standards referenced by applied standards are also met
+    6. **Verify Correctness**: Ensure test logic and behavior is correct and appropriate
+    7. **Compare Analysis with Executor**: Review executor's root_cause_analysis, compare expected behavior determinations, check root cause agreement. If disagreement: flag as FATAL. If both uncertain: recommend user clarification.
+    8. **Report Compliance**: Provide detailed pass/fail for each standard and correctness verification
 
     **Report**
     **[IMPORTANT]** You're requested to verify and report:
@@ -1146,12 +1228,19 @@ Request each Review Subagent to perform the following review with full scrutiny:
     status: pass|fail
     summary: 'Batch [X]: Verified Y test files against all applied standards and correctness requirements'
     checks:
+      root_cause_agreement: pass|fail
+      expected_behavior_agreement: pass|fail
+      independent_analysis_performed: pass|fail
       testing_standard: pass|fail
       typescript_standard: pass|fail
       documentation_standard: pass|fail
       additional_standards_complete: pass|fail
       correctness_verification: pass|fail
       batch_verification_complete: pass|fail
+    analysis_comparison:
+      agreement: true|false
+      disagreement_details: 'if any'
+      user_clarification_recommended: true|false
     standards_matrix:
       - file: 'test/file1.spec.ts'
         testing_std: pass|fail
@@ -1165,7 +1254,11 @@ Request each Review Subagent to perform the following review with full scrutiny:
         documentation_std: pass|fail
         additional_std: pass|fail
         correctness: pass|fail
-    fatals: ['issue1', 'issue2', ...]  # Any standards violations or correctness issues found
+    fatals:
+      - 'Disagreement on expected behavior: [details]' # if applicable
+      - 'Both uncertain about expected behavior' # if applicable
+      - 'issue1' # Any standards violations or correctness issues found
+      - 'issue2'
     warnings: ['warning1', 'warning2', ...]  # Non-blocking issues
     recommendation: proceed|retry|rollback
     ```
@@ -1177,6 +1270,9 @@ Request each Review Subagent to perform the following review with full scrutiny:
 
 1. **Analyze all batch reports** (execution + mandatory verification for Step 3)
 2. **Apply decision criteria**:
+   - Review root cause analysis agreement between executor and reviewer
+   - Check for disagreements on expected behavior
+   - **If disagreement or uncertainty**: MUST ask user for clarification before proceeding
    - Review any critical batch failures
    - Review mandatory verification results for standards compliance and correctness
    - Consider verification recommendations
@@ -1306,6 +1402,10 @@ Request each Optimization Agent to perform the following steps with full detail:
       - **Standards Compliance**: Apply all applicable testing standards to fixture/mock organization
       - **Test-Only Modification**: Only modify test support files - NEVER modify source code
       - **Verification Integration**: Self-verify all changes before reporting
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
@@ -1517,6 +1617,10 @@ Request the subagent to perform the following steps with full detail:
       - **Test Protection**: Ensure all tests continue to pass throughout refactoring
       - **Standards Mastery**: Apply all coding standards for production quality
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - general-principles.md
@@ -1611,6 +1715,10 @@ Request the review subagent to perform the following review with full scrutiny:
       - **Documentation Review**: Verify documentation completeness and accuracy
       - **Standards Enforcement**: Confirm adherence to all coding standards
       - **Production Readiness**: Assess overall production readiness
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 

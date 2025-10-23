@@ -4,7 +4,74 @@ argument-hint: <component-name> [--type=...]
 description: Create well-structured, reusable React components with TypeScript
 ---
 
+# Create React Component
+
 This command helps you create well-structured, reusable React components for Tevm-based applications, with proper TypeScript typing and integration with Ethereum functionality.
+
+## 🎯 Purpose & Scope
+
+**What this command does NOT do**:
+
+- Modify existing components
+- Create non-React files
+- Generate components without proper TypeScript types
+
+**When to REJECT**:
+
+- Component name is invalid or missing
+- Request is to modify existing component (use edit instead)
+- Request is for non-React component creation
+
+## 🔄 Workflow
+
+ultrathink: you'd perform the following steps
+
+### Step 1: Gather Requirements
+
+- Ask user to describe the component
+- Clarify component purpose and functionality
+- Determine props structure and validation needs
+- Identify blockchain interactions required
+- Understand state management approach
+
+### Step 2: Create Component Structure
+
+- Create component directory with proper structure
+- Generate TypeScript component file with proper typing
+- Implement Tevm-specific functionality
+- Add JSDoc documentation
+
+### Step 3: Create Tests
+
+- Generate test file with comprehensive coverage
+- Mock Tevm client interactions
+- Test component rendering and behavior
+- Verify props and callbacks
+
+### Step 4: Reporting
+
+**Output Format**:
+
+```
+[✅/❌] Command: create-component $ARGUMENTS
+
+## Summary
+- Component created: [name]
+- Files generated: [count]
+- TypeScript types: [defined]
+- Tests: [created]
+
+## Actions Taken
+1. Created component file at [path]
+2. Generated test file at [path]
+3. Created index.ts for re-exports
+4. [Created CSS module] (if needed)
+
+## Next Steps
+1. Review component implementation
+2. Run tests to verify functionality
+3. Import component in your application
+```
 
 ## Usage
 

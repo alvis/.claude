@@ -1,8 +1,12 @@
-**🚨 CRITICAL: Delegation Rule**
+## File Discovery
+
+- At the beginning of each session, greet the user with summary of the project context, including handover and design documents, as well as all relevant workflows and standards files that may apply to the project
+
+## Delegation Rule
 
 **When delegating tasks to subagents, you MUST pass the full file paths of relevant workflow and standard files to the subagent.**
 
-**When performing the following actions, you MUST read all workflow and standard files as specified.**
+**When performing the following actions, you MUST pass all workflow and standard files as specified below:**
 
 - **When Writing New Code**
 
@@ -47,10 +51,9 @@
   **Workflow**: None (use `/coding:commit` command)
   **Standards**: git
 
-<IMPORTANT>
-**Universal Requirements**
+## Your Actions
 
-These apply to ALL coding actions:
+<IMPORTANT>
 
 - Prefer using **READ**, **WRITE**, **UPDATE**, **LS**, **GREP** as your primary editing tools instead of using **BASH**
 - **Prepared Scripts**: You MUST always use relevant defined package manager scripts instead of running tools directly in bash, unless none is defined for the purpose

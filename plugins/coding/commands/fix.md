@@ -1,27 +1,25 @@
 ---
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
 
-argument-hint: [specifier] [--area=AREA]
+argument-hint: [specifier] [--area=AREA] [--note=...]
 
 description: Fix code and test issues using intelligent area detection and workflow
 ---
 
 # Fix
 
-Fix code and test issues in specified files using intelligent area detection and the write-code workflow. Automatically discovers context from documentation, runs diagnostics, detects the type of fixes needed, and applies the appropriate workflow steps to resolve issues.
+Fix code and test issues in specified files using intelligent area detection and the write-code workflow. Uses context from available project documentation, runs diagnostics, detects the type of fixes needed, and applies the appropriate workflow steps to resolve issues.
 
 ## 🎯 Purpose & Scope
 
 **What this command does NOT do**:
 
 - Create new features or functionality not related to fixing identified issues
-- Proceed without a specifier to identify target files
 - Modify code without understanding context and requirements
 - Apply fixes that could break existing functionality without validation
 
 **When to REJECT**:
 
-- No specifier provided for target code location
 - Specifier points to non-existent files or invalid patterns
 - Conflicting area specifications that don't make sense together
 - Request asks to create entirely new features rather than fix issues
@@ -34,6 +32,8 @@ ultrathink: you'd perform the following steps
 
 #### Parse Specifier
 
+**When specifier is provided:**
+
 - Understand specifier type:
   - File paths: `src/components/Button.ts`
   - Glob patterns: `src/**/*.spec.ts`, `**/*.{ts,tsx}`
@@ -44,19 +44,89 @@ ultrathink: you'd perform the following steps
 - Resolve specifier to concrete file list using Glob tool
 - Validate that target files exist and are accessible
 
-#### Read Context Files
+**When NO specifier is provided:**
 
-- Check for and read if present (using Read tool):
-  - REVIEW.md - Recent code review findings and issues
-  - DESIGN.md - Design specifications and architectural direction
-  - CONTEXT.md - Current work context and progress
-  - PLAN.md - Implementation plan and pending tasks
-  - RESEARCH.md - Research findings and decisions
-- Extract relevant information:
-  - Known issues and their locations
-  - Required fixes and their priority
-  - Architectural constraints
-  - Pending tasks related to target files
+1. **Locate Project Root:**
+   - Search upward from current directory for project markers:
+     - `package.json` (Node.js/TypeScript/JavaScript)
+     - `Cargo.toml` (Rust)
+     - `pyproject.toml` or `setup.py` (Python)
+     - `go.mod` (Go)
+     - `pom.xml` or `build.gradle` (Java/Kotlin)
+     - Other language-specific project files
+   - Use the directory containing the project file as root
+
+2. **Detect Language and Infer File Patterns:**
+   - Read project configuration file to determine language/stack
+   - Auto-generate appropriate glob patterns based on detected language:
+
+   **TypeScript/JavaScript (package.json):**
+   - Source: `src/**/*.{ts,tsx,js,jsx}`, `lib/**/*.{ts,tsx,js,jsx}`
+   - Tests: `**/*.spec.{ts,tsx,js,jsx}`, `**/*.test.{ts,tsx,js,jsx}`, `__tests__/**/*.{ts,tsx,js,jsx}`
+
+   **Python (pyproject.toml, setup.py):**
+   - Source: `**/*.py` (excluding `tests/`, `test_*.py`, `*_test.py`)
+   - Tests: `tests/**/*.py`, `test_*.py`, `*_test.py`
+
+   **Rust (Cargo.toml):**
+   - Source: `src/**/*.rs`, `lib.rs`, `main.rs`
+   - Tests: `tests/**/*.rs`
+
+   **Go (go.mod):**
+   - Source: `**/*.go` (excluding `*_test.go`)
+   - Tests: `**/*_test.go`
+
+   **Java/Kotlin (pom.xml, build.gradle):**
+   - Source: `src/main/**/*.java`, `src/main/**/*.kt`
+   - Tests: `src/test/**/*.java`, `src/test/**/*.kt`
+
+3. **Resolve to Concrete File List:**
+   - Apply inferred patterns using Glob tool
+   - Combine source and test files into target list
+   - Validate that files exist and are accessible
+
+#### Discover Context and Handover Documentation
+
+1. **Find All Markdown Files:**
+   - Search project root for all markdown files: `**/*.md`
+   - Exclude common non-context files: `node_modules/`, `README.md`, `CHANGELOG.md`, `LICENSE.md`
+
+2. **Analyze Content to Identify Relevant Documents:**
+   - Read each markdown file and analyze content for keywords/patterns:
+
+   **Review/Findings Documents:**
+   - Keywords: "review", "issues", "findings", "critical", "major", "minor", "violations"
+   - Patterns: Issue lists, severity levels, file references with line numbers
+
+   **Handover/Continuation Documents:**
+   - Keywords: "handover", "takeover", "continuation", "work in progress", "WIP", "next steps"
+   - Patterns: Task lists, pending work, blockers, decisions made
+
+   **Context Documents:**
+   - Keywords: "context", "current state", "progress", "status", "overview"
+   - Patterns: Current implementation state, recent changes, decisions
+
+   **Planning Documents:**
+   - Keywords: "plan", "todo", "tasks", "implementation", "roadmap", "checklist"
+   - Patterns: Numbered steps, task lists, requirements, milestones
+
+   **Research/Investigation Documents:**
+   - Keywords: "research", "investigation", "analysis", "findings", "options", "alternatives"
+   - Patterns: Options compared, decisions rationale, technical investigations
+
+3. **Extract Fix Requirements:**
+   - From identified documents, extract:
+     - Known issues and their locations (file paths, line numbers)
+     - Required fixes and their priority/severity
+     - Architectural constraints and requirements
+     - Pending tasks related to discovered target files
+     - Blockers or decisions that inform fix direction
+
+4. **Prioritize Information:**
+   - Recent documents (by modification time) have higher priority
+   - Review findings take precedence for identifying what to fix
+   - Handover notes provide critical context for work continuation
+   - Multiple sources strengthen confidence in fix requirements
 
 #### Run Initial Diagnostics
 
@@ -308,16 +378,74 @@ Output Format:
 # Reports detailed fix results
 ```
 
-### Error Case: No Specifier
+### Auto-Discovery: TypeScript Project
 
 ```bash
 /fix
-# Error: Missing specifier parameter
-# Suggestion: Provide target files, pattern, or git reference:
-#   /fix "src/components/Button.ts"
-#   /fix "git diff"
-#   /fix "pr"
-# Alternative: Use '/review' first to identify issues, then fix them
+# Discovers package.json → identifies TypeScript project
+# Auto-generates patterns:
+#   - Source: src/**/*.{ts,tsx}
+#   - Tests: **/*.spec.{ts,tsx}, **/*.test.{ts,tsx}
+# Scans all *.md files in project
+# Finds and analyzes: code-review-2024-01-15.md
+#   → Contains review findings with severity levels
+#   → Extracts 12 critical issues, 8 major issues
+# Runs initial diagnostics (tsc, lint)
+# Auto-detects areas: implementation, test, lint
+# Executes write-code workflow Steps 2-3
+# Validates all fixes applied successfully
+```
+
+### Auto-Discovery: Python Project
+
+```bash
+/fix
+# Discovers pyproject.toml → identifies Python project
+# Auto-generates patterns:
+#   - Source: **/*.py (excluding tests)
+#   - Tests: tests/**/*.py, test_*.py
+# Scans markdown files
+# Finds: handover-jan-2024.md, technical-notes.md
+#   → Extracts work-in-progress items
+#   → Identifies 5 pending bug fixes with file locations
+# Runs diagnostics (mypy, pylint)
+# Auto-detects areas from diagnostics and docs
+# Applies appropriate fixes
+# Reports completion with test results
+```
+
+### Auto-Discovery: Rust Project
+
+```bash
+/fix
+# Discovers Cargo.toml → identifies Rust project
+# Auto-generates patterns:
+#   - Source: src/**/*.rs, lib.rs, main.rs
+#   - Tests: tests/**/*.rs
+# Scans for context documents
+# Finds: IMPLEMENTATION_STATUS.md
+#   → Contains known compiler warnings
+#   → Lists clippy suggestions
+# Runs cargo check and cargo clippy
+# Fixes identified issues
+# Validates with cargo test
+```
+
+### Auto-Discovery: No Context Docs
+
+```bash
+/fix
+# Discovers package.json → TypeScript project
+# Auto-generates file patterns
+# No context markdown files found
+# Falls back to diagnostic-driven approach:
+#   - Runs get_project_overview
+#   - Executes tsc --noEmit
+#   - Runs npm run lint
+# Identifies issues from diagnostics alone
+# Auto-detects areas based on error types
+# Applies fixes
+# Validates resolution
 ```
 
 ### Error Case: Ambiguous Area

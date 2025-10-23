@@ -159,6 +159,10 @@ Request each subagent to perform the following steps with full detail:
       - **Quality Assurance**: Verify all changes improve code quality
       - **Automated Validation**: Use linting tools to confirm compliance
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md

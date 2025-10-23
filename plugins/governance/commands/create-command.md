@@ -26,7 +26,9 @@ Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=.
 - Creating regular markdown documentation
 - Modifying template files
 
-## 🔄 Workflows
+## 🔄 Workflow
+
+ultrathink: you'd perform the following steps
 
 ### Step 1: Follow Create Command Workflow
 

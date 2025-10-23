@@ -147,6 +147,10 @@ Request the subagent to perform the following steps with full detail:
       - **Type Safety**: Leverage TypeScript's type system with JSON Schema to eliminate runtime type errors
       - **Documentation as Code**: Ensure schemas serve as both runtime validation and living documentation
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively:
 
     - typescript.md
@@ -313,6 +317,10 @@ Request each subagent to perform the following steps with full detail:
       - **Validation Completeness**: Include all necessary validation rules and constraints
       - **Documentation Integration**: Every schema field must have clear descriptions
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively:
 
     - typescript.md
@@ -440,6 +448,10 @@ Request review subagent to perform the following review with full scrutiny:
       - **Schema Completeness**: Review that all required validation rules are present
       - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Review the standards recursively that were applied**:
 
     - typescript.md - Review TypeScript compliance
@@ -545,6 +557,10 @@ Request the subagent to perform the following steps with full detail:
       - **Type Safety**: Ensure all mock data matches schema types exactly
       - **Realistic Data**: Generate mock responses that represent real-world usage
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively:
 
     - typescript.md
@@ -646,6 +662,10 @@ Request review subagent to validate manifest and mock implementation:
       - **Framework Compliance**: Review that manifest follows framework patterns correctly
       - **Review-Only Role**: Identify issues and provide recommendations without making any changes
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Review Assignment**
     You're assigned to review the operation manifest that was created:
 
@@ -742,6 +762,10 @@ Request the subagent to perform service integration with full detail:
       - **Path Mapping**: Use proper TypeScript path mapping for operation imports
       - **Consistency**: Ensure integration follows existing service patterns
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively:
 
     - typescript.md
@@ -820,6 +844,10 @@ Request review subagent to validate service manifest integration:
       - **Import Correctness**: Review that all imports resolve correctly
       - **Service Completeness**: Review that service manifest includes all required operations
       - **Review-Only Role**: Identify issues and provide recommendations without making any changes
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review Assignment**
     You're assigned to review the updated service manifest:
@@ -916,6 +944,10 @@ Request the subagent to perform comprehensive validation:
       - **Complete Testing**: Validate entire operation lifecycle from schema to service
       - **Type Safety Verification**: Ensure end-to-end type safety throughout
       - **Integration Testing**: Confirm all components work together seamlessly
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Assignment**
     You're assigned to perform final comprehensive validation for operation: [OPERATION_NAME]
@@ -1048,22 +1080,24 @@ summary: "Brief description of service operation declaration completion"
 ### Service Manifest Development Best Practices
 
 #### Schema Definition Patterns
+
 - Always use `as const satisfies JsonSchema` pattern for type safety
 - Include comprehensive validation rules (required fields, formats, patterns)
 - Provide clear descriptions for all schema properties
 - Leverage TypeScript's FromSchema for type generation
 
 #### Mock Implementation Requirements
+
 - Generate realistic mock data that matches output schemas exactly
 - Implement proper async/sync patterns based on operation type
 - Include comprehensive error handling and edge cases
 - Follow operation manifest framework patterns consistently
 
 #### Common Issues to Avoid
+
 - Schema mismatch between manifest and service implementations
 - Missing mock data or incomplete object returns
 - Path mapping errors in module imports
 - Type safety loss through any/unknown types
 - Missing async/await in operation mock functions
 - Inadequate access control and authorization checks
-

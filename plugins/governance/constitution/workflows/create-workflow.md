@@ -162,6 +162,10 @@ Request the subagent to perform the following workflow creation:
       - **Content Clarity**: Create clear, actionable workflow instructions
       - **Professional Polish**: Deliver clean, production-ready documentation
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Assignment**
     You're assigned to create a complete workflow: [workflow name]
     
@@ -250,6 +254,10 @@ Request the subagent to perform the following validation review:
       - **Content Quality**: Assess clarity, completeness, and professionalism
       - **Logical Flow**: Ensure workflow steps are sound and achievable
       - **Documentation Standards**: Check formatting and consistency
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review Assignment**
     You're assigned to validate the workflow file that was created:

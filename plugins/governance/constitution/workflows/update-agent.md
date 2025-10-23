@@ -151,6 +151,10 @@ Request each subagent to perform the following steps with full detail:
       - **Standards Compliance**: Apply documentation and formatting standards consistently
       - **Change Management**: Apply requested changes while preserving agent integrity
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Assignment**
     You're assigned to update the following agent files:
 
@@ -225,6 +229,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Content Integrity**: Ensure agent personality and expertise are preserved
       - **Standards Compliance**: Check documentation and formatting standards
       - **Functional Validation**: Confirm agent remains functional and coherent
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Verification Assignment**
     You're assigned to verify the following updated agent files:

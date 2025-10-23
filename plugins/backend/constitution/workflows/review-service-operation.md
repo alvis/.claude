@@ -175,6 +175,10 @@ Request each subagent to perform the following steps with full detail:
       - **Consistency Checking**: Verify alignment between use cases, requirements, and pseudo code
       - **Quality Assurance**: Identify gaps and provide actionable recommendations
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md

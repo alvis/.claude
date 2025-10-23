@@ -27,7 +27,9 @@ Create a new workflow file ("/create-workflow <name> --howto='...'") following t
 - Creating regular documentation instead of workflows
 - Attempting to create without using the template
 
-## 🔄 Workflows
+## 🔄 Workflow
+
+ultrathink: you'd perform the following steps
 
 ### Step 1: Follow Create Workflow Workflow
 

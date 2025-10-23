@@ -29,7 +29,9 @@ Update workflow files to align with the latest standard template and apply speci
 
 - Template: !`ls template:workflow 2>/dev/null || echo "Template not found"`
 
-## 🔄 Steps
+## 🔄 Workflow
+
+ultrathink: you'd perform the following steps
 
 ### Step 1: Extract Input
 

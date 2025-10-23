@@ -27,7 +27,11 @@ Parses handover documentation (CONTEXT.md, RESEARCH.md, PLAN.md) left by previou
 
 ## 🔄 Workflow
 
-ultrathink: Before performing any steps, deeply analyze the handover context and plan continuation:
+ultrathink: you'd perform the following steps
+
+### Step 0: Analyze Handover Context and Plan Continuation
+
+Before performing any steps, deeply analyze the handover context and plan continuation:
 
 <IMPORTANT>
 - **Project Diagnostics**: Run get_project_overview, ide__getDiagnostics, testing, linting, and build scripts with LIMITED OUTPUT (max 20 lines per bash tool) to understand current issues. OMIT TODO errors from consideration.
@@ -43,8 +47,6 @@ ultrathink: Before performing any steps, deeply analyze the handover context and
 </IMPORTANT>
 - **Task Planning**: Identify immediate priorities, dependencies, and continuation strategy based on detected workflow step and current issues
 - **Knowledge Transfer**: Extract all critical context (decisions, patterns, gotchas, research insights) needed for seamless continuation at the detected step
-
-Then perform the following steps:
 
 ### Step 1: Run Project Diagnostics
 
@@ -89,7 +91,7 @@ Then perform the following steps:
 
 - Parse --files argument, default to "CONTEXT.md,RESEARCH.md,PLAN.md"
 - Verify all three handover files exist at specified locations, reject if missing
-- Discover architecture/design documentation files by using  Glob to find all .md files recursively in project for verification context
+- Review design documentation from project context (automatically discovered)
 
 ### Step 3: Read and Parse Handover Documents
 

@@ -154,6 +154,10 @@ Request the subagent to perform the following implementation:
       - **Code Quality**: Ensure all examples compile and demonstrate best practices
       - **Integration Focus**: Create proper cross-references and index updates
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Template Usage Requirement**
     
     - Copy and paste template:standard first, then update content following the instruction ultrathink
@@ -223,6 +227,10 @@ Request the same subagent to review and report:
       - **Content Quality**: Assess clarity and completeness of principles
       - **Code Validation**: Check all TypeScript examples compile
       - **Integration Review**: Verify index updates and cross-references
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review Assignment**
     Review the standard file created in Phase 2 implementation:

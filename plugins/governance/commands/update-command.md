@@ -28,7 +28,9 @@ Update existing slash commands to follow current best practices and template str
 
 ## 🔄 Workflow
 
-### Phase 1: Planning
+ultrathink: you'd perform the following steps
+
+### Step 1: Planning
 
 1. **Analyze Requirements**
    - Parse $ARGUMENTS to extract:
@@ -61,7 +63,7 @@ Update existing slash commands to follow current best practices and template str
    - Plan rollback strategies
    - Note destructive operations
 
-### Phase 2: Execution
+### Step 2: Execution
 
 1. **Workflow Compliance**
    - MUST follow workflows identified in Phase 1
@@ -87,7 +89,7 @@ Update existing slash commands to follow current best practices and template str
    - Handle missing sections gracefully
    - Maintain backward compatibility
 
-### Phase 3: Verification
+### Step 3: Verification
 
 1. **Quality Assurance**
    - Verify NO comments remain
@@ -100,7 +102,7 @@ Update existing slash commands to follow current best practices and template str
    - Custom content maintained
    - Template compliance achieved
 
-### Phase 4: Reporting
+### Step 4: Reporting
 
 **Output Format**:
 

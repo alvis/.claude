@@ -146,6 +146,10 @@ Request each subagent to perform the following steps with full detail:
       - **Accessibility First**: Ensure designs are accessible and inclusive
       - **Innovation Balance**: Blend creativity with proven UX patterns
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_backend_notion__*) for ALL Notion operations:
     - Use `mcp__plugin_backend_notion__fetch` to read any Notion pages or databases
     - Use `mcp__plugin_backend_notion__notion-create-pages` to create new pages
@@ -229,6 +233,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Design Excellence**: Verify designs meet professional UX standards
       - **Responsiveness Validation**: Confirm all device variations are properly implemented
       - **Documentation Completeness**: Check all required sections are thoroughly completed
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review Assignment**
     You're assigned to verify ONE complete design page:

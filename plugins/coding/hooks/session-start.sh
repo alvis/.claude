@@ -4,15 +4,8 @@
 
 set -euo pipefail
 
-# Get script directory and plugin root
-PLUGIN_ROOT="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
-
 # Source context library scripts
-source "$PLUGIN_ROOT/../../scripts/session-start.sh"
-
-# Determine project and plugin directories
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}"
+source "$CLAUDE_PLUGIN_ROOT/../../scripts/session-start.sh"
 
 # Run session start hook with two constitution paths
-run_session_start_hook --plugin-dir "$PLUGIN_ROOT" --constitution-paths "$PROJECT_DIR/.claude" "$PLUGIN_DIR"
+run_session_start_hook --plugin-dir "$CLAUDE_PLUGIN_ROOT" --constitution-paths "$CLAUDE_PLUGIN_ROOT/.claude" "$CLAUDE_PLUGIN_ROOT"

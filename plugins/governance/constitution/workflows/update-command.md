@@ -137,6 +137,10 @@ Request each subagent to perform the following steps with full detail:
       - **Content Preservation**: Maintain existing functionality while updating structure
       - **Quality Assurance**: Ensure all template sections are properly implemented
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
@@ -205,6 +209,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Quality Assurance**: Check for completeness and consistency
       - **Risk Assessment**: Identify potential issues with command structure
       - **Review-Only Role**: You MUST NOT modify any resources - only report issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
@@ -319,6 +327,10 @@ Request each subagent to perform the following steps with full detail:
       - **Content Integration**: Merge existing content with new template structure seamlessly
       - **Quality Maintenance**: Preserve command functionality while updating format
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
@@ -385,6 +397,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Functional Preservation**: Ensure command functionality remains intact
       - **Standard Adherence**: Check compliance with documentation standards
       - **Review-Only Role**: You MUST NOT modify any resources - only report issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
@@ -498,6 +514,10 @@ Request each subagent to perform the following steps with full detail:
       - **Quality Assurance**: Ensure all template requirements are met
       - **Standards Enforcement**: Verify adherence to all applicable standards
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
@@ -559,6 +579,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Risk Identification**: Identify any remaining compliance gaps
       - **Success Review**: Confirm workflow objectives have been achieved
       - **Review-Only Role**: You MUST NOT modify any resources - only report issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 

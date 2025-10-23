@@ -27,7 +27,9 @@ Analyzes changes and creates atomic commits with conventional commit messages an
 
 ## 🔄 Workflow
 
-### Phase 1: Planning
+ultrathink: you'd perform the following steps
+
+### Step 1: Planning
 
 1. **Analyze Requirements**
    - Check for --no-verify flag
@@ -51,7 +53,7 @@ Analyzes changes and creates atomic commits with conventional commit messages an
    - Verify no merge conflicts
    - Ensure build stability
 
-### Phase 2: Execution
+### Step 2: Execution
 
 1. **File Staging**
    - Check git status for staged files
@@ -72,7 +74,7 @@ Analyzes changes and creates atomic commits with conventional commit messages an
    - Verify commit succeeded
    - Report completion status
 
-### Phase 3: Verification
+### Step 3: Verification
 
 1. **Post-commit Validation**
    - Verify commit created successfully
@@ -83,7 +85,7 @@ Analyzes changes and creates atomic commits with conventional commit messages an
    - Message follows conventional format
    - Description is clear and concise
 
-### Phase 4: Reporting
+### Step 4: Reporting
 
 **Output Format**:
 

@@ -146,6 +146,10 @@ Request each subagent to perform the following steps with full detail:
       - **Quality Enhancement**: Improve readability and understanding without changing core meaning
       - **Preservation Excellence**: Keep existing valid content intact while enhancing organization
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Use the following template file** (this is a template to follow, not a standard to follow):
 
     - template:standard - Follow this template structure exactly for all standard file updates
@@ -220,6 +224,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Content Quality**: Ensure updates improve clarity while preserving essential information
       - **Consistency Check**: Confirm all standards maintain uniform formatting and organization
       - **Review-Only Role**: You MUST NOT modify any resources - only report compliance issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review against the following template** (this is a template to verify compliance with):
 

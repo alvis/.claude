@@ -152,6 +152,10 @@ Note:
       - **Gitignore Compliance**: NEVER create or copy any .gitignored files
       - **Speed Focus**: Quick creation of minimum viable structure
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Read the following assigned standards** and follow them recursively:
 
     - ../../standards/coding/typescript.md

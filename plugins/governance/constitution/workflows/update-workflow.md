@@ -135,6 +135,10 @@ Request each subagent to perform the following steps with full detail:
       - **Completeness Check**: Ensure all required sections are present and properly filled
       - **Reference Validation**: Verify all referenced standards and sub-workflows exist
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Assignment**
     You're assigned with the following workflow files to update:
 
@@ -212,6 +216,10 @@ Request each review subagent to perform the following review with full scrutiny:
       - **Intent Review**: Confirm original workflow purpose remains intact
       - **Completeness Check**: Review no critical information was lost
       - **Review-Only Role**: You MUST NOT modify any resources - only report issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review the standards recursively that were applied**:
 

@@ -27,7 +27,9 @@ Create a new technical standard document in the [plugin]/constitution/standards 
 
 ## 🔄 Workflow
 
-### Phase 1: Planning
+ultrathink: you'd perform the following steps
+
+### Step 1: Planning
 
 1. **Analyze Requirements**
    - Parse $ARGUMENTS to extract standard name and details
@@ -45,7 +47,7 @@ Create a new technical standard document in the [plugin]/constitution/standards 
    - Verify category directory exists
    - Ensure no duplicate standards
 
-### Phase 2: Execution
+### Step 2: Execution
 
 1. **Workflow Compliance**
    - Follow `/create-standard.md`
@@ -71,7 +73,7 @@ Create a new technical standard document in the [plugin]/constitution/standards 
    - Handle complex multi-word names properly
    - Preserve any existing backups
 
-### Phase 3: Verification
+### Step 3: Verification
 
 1. **Workflow-Based Verification**
    - Verify follows template structure
@@ -93,7 +95,7 @@ Create a new technical standard document in the [plugin]/constitution/standards 
    - No existing files overwritten
    - Category directory created if needed
 
-### Phase 4: Reporting
+### Step 4: Reporting
 
 **Output Format**:
 

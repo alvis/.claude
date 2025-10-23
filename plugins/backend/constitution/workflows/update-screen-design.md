@@ -132,6 +132,10 @@ Request each subagent to perform the following steps with full detail:
       - **Content Preservation**: Carefully migrate existing content to appropriate template sections without loss
       - **Design Consistency**: Ensure all design documentation follows consistent formatting and structure standards
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_backend_notion__*) for ALL Notion operations:
     - Use `mcp__plugin_backend_notion__fetch` to read any Notion pages, databases, or collections
     - Use `mcp__plugin_backend_notion__notion-update-page` to modify existing pages

@@ -317,5 +317,51 @@ get_plugin_context() {
     context+="\n"
   fi
 
+  # Potential Context Documents
+  # Discover markdown documentation files that may contain handover notes, design specs, or project context
+  # Excludes common non-context files like README, LICENSE, and plugin infrastructure files
+  local context_docs=""
+
+  # Use find to locate .md files, excluding common non-context paths
+  # Search up to 3 levels deep to find project docs without going too deep into subdirectories
+  # Compatible with bash 3.2+ (macOS default)
+  if [[ -d "$current_dir" ]]; then
+    local md_files=$(find "$current_dir" -maxdepth 3 -type f -name "*.md" 2>/dev/null | \
+      grep -v '/node_modules/' | \
+      grep -v '/\.git/' | \
+      grep -v '/\.github/' | \
+      grep -v '/doc/' | \
+      grep -v '/docs/' | \
+      grep -v '/build/' | \
+      grep -v '/dist/' | \
+      grep -v '/out/' | \
+      grep -v '/coverage/' | \
+      grep -v '/constitution/' | \
+      grep -v '/templates/' | \
+      grep -v '/commands/' | \
+      grep -v '/workflows/' | \
+      grep -v '/agents/' | \
+      grep -v '/standards/' | \
+      grep -v -E '(README|LICENSE|CHANGELOG|CONTRIBUTING|CODE_OF_CONDUCT)\.md$' | \
+      sort)
+
+    # Categorize discovered markdown files
+    while IFS= read -r file; do
+      [[ -z "$file" ]] && continue
+
+      context_docs+="- $file\n"
+    done <<< "$md_files"
+  fi
+
+  # Only add section if any documentation files were found
+  if [[ -n "$context_docs" ]]; then
+    context+="## Potential Context Documents\n\n"
+
+    if [[ -n "$context_docs" ]]; then
+      context+="$context_docs"
+      context+="\n"
+    fi
+  fi
+
   echo -n "$context"
 }

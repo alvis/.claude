@@ -195,6 +195,10 @@ Request each subagent to perform the following steps with full detail:
       - **Scalability Focus**: Enable workflows to handle both single and multiple entities
       - **Documentation Excellence**: Provide clear, detailed instructions for all sections
 
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
     **Copy and follow the template:agent template structure** - Use this as your blueprint to create agent definition files:
 
     - template:agent - This is a TEMPLATE to COPY AND PASTE, not a standard to read
@@ -276,6 +280,10 @@ Request each review subagent to perform the following comprehensive review:
       - **Template Compliance**: Verify all agent files follow proper structure
       - **Boundary Validation**: Check that agent boundaries work correctly
       - **Integration Testing**: Validate collaboration patterns and handoffs
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
 
     **Review Assignment**
     You're assigned to review the following created agents:

@@ -412,6 +412,28 @@ You're a **Code Quality Analyst** performing comprehensive read-only code qualit
 
 **Analysis Tasks**:
 
+0. **Unused Code Detection** (TypeScript projects only):
+   - Check if project uses TypeScript by looking for tsconfig.json in project root
+   - If TypeScript project detected: Run `npx -y knip --exclude=binaries --no-config-hints` in project root
+   - Parse knip output to identify:
+     - Unused files (*.ts, *.tsx)
+     - Unused exports and re-exports
+     - Unlisted dependencies
+     - Unused dependencies
+   - **CRITICAL**: Carefully examine each finding before reporting:
+     - Test files (*.spec.ts, *.test.ts, *.e2e.ts): DO NOT REPORT - these are correctly not meant to be exported
+     - Type definition files (*.d.ts): Verify actual usage before flagging
+     - Config files and utility files: Double-check cross-references
+     - Entry points and index files: Verify they serve a purpose
+     - Files with planned future use: Confirm they're truly abandoned
+   - Only report items that are genuinely redundant with no planned usage
+   - For each unused code finding, include in report:
+     - File path affected
+     - Why it's flagged (unused export, unused file, etc.)
+     - Severity: low|medium (unused code is typically low-to-medium priority)
+     - Recommendation to remove only if verification confirms true redundancy
+   - If no knip output or project is not TypeScript, skip this task
+
 1. **Code Structure**: Check organization, modularity, separation of concerns
 2. **Naming Conventions**: Verify compliance with naming standards
 3. **Complexity**: Identify functions/methods needing refactoring
@@ -428,8 +450,19 @@ scope: code-quality
 status: success|partial|failure
 summary: 'Brief overview of code quality findings'
 files_analyzed: ['file1.ts', 'file2.ts', ...]
+typescript_project: true|false
+knip_analysis_performed: true|false
 
 findings:
+  - file: 'src/legacy/old-export.ts'
+    line: 0
+    severity: low
+    category: unused_code
+    issue: 'Export unused throughout codebase'
+    knip_finding: 'Unused export detected by knip'
+    current_state: 'Export exists but has zero references'
+    recommendation: 'Remove unused export and consider file deletion if no other exports'
+
   - file: 'src/services/payment.service.ts'
     line: 145
     function: 'processPayment'
@@ -449,6 +482,8 @@ findings:
 metrics:
   complexity_score: 'B'
   duplication_percentage: '8%'
+  unused_exports_found: 0-N
+  unused_files_found: 0-N
   total_issues: 34
   critical_issues: 2
   high_issues: 12

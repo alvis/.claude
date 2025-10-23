@@ -32,15 +32,17 @@ Generates comprehensive handover documentation capturing current project & work 
 
 ## 🔄 Workflow
 
-ultrathink: Before performing any steps, deeply analyze the complete project context:
+ultrathink: you'd perform the following steps
+
+### Step 0: Analyze Project Context
+
+Before performing handover documentation, deeply analyze the complete project context:
 
 - **Project State Analysis**: Examine git status, recent commits, file changes to understand current work trajectory
 - **Existing Work Review**: Read all current todos from TodoRead to understand ongoing tasks and their status
 - **Context Discovery**: Identify background, goals, decisions from project docs and commit history
 - **Pattern Recognition**: Detect architectural patterns, established conventions, recurring issues
 - **Comprehensive Synthesis**: Integrate all gathered context into coherent handover documentation
-
-Then perform the following steps:
 
 ### Step 1: Parse Arguments and Validate
 

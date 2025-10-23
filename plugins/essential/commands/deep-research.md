@@ -21,7 +21,9 @@ Conduct systematic, multi-source research on $ARGUMENTS using AI-powered analysi
 
 ## 🔄 Workflow
 
-### Phase 1: Planning
+ultrathink: you'd perform the following steps
+
+### Step 1: Planning
 
 1. **Analyze Requirements**
    - Parse research topic from $ARGUMENTS
@@ -89,7 +91,7 @@ Conduct systematic, multi-source research on $ARGUMENTS using AI-powered analysi
    - Plan verification strategies
    - Note information gaps
 
-### Phase 2: Execution
+### Step 2: Execution
 
 1. **Workflow Compliance**
    - MUST follow workflows identified in Phase 1
@@ -174,7 +176,7 @@ Conduct systematic, multi-source research on $ARGUMENTS using AI-powered analysi
    - Circular references: Document but don't re-analyze
    - **Early termination**: If high-confidence convergent evidence achieved
 
-### Phase 3: Verification
+### Step 3: Verification
 
 1. **Quality Assurance**
    - Verify all sources marked as analyzed have summaries
@@ -204,7 +206,7 @@ Conduct systematic, multi-source research on $ARGUMENTS using AI-powered analysi
    - Ensure all findings traceable to sources
    - Verify workspace organization
 
-### Phase 4: Reporting
+### Step 4: Reporting
 
 **Output Format**:
 

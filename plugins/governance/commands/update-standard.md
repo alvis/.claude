@@ -24,9 +24,11 @@ Update standard files to align with the latest standard template and apply speci
 - Attempting to violate constitutional standards
 - Template file is missing or corrupted
 
-## 🔄 Standard
+## 🔄 Workflow
 
-### Phase 1: Planning
+ultrathink: you'd perform the following steps
+
+### Step 1: Planning
 
 1. **Analyze Requirements**
    - Parse $ARGUMENTS to extract standard name and change specifications
@@ -43,7 +45,7 @@ Update standard files to align with the latest standard template and apply speci
 3. **Locate Standard**
    - Discover all relevant standard files using Glob
 
-### Phase 2: Execution
+### Step 2: Execution
 
 1. **Template Validation**
    - Verify template:standard exists and is readable
@@ -67,7 +69,7 @@ Update standard files to align with the latest standard template and apply speci
    - Handle any subagent failures or escalations
    - Ensure constitutional compliance in all updates
 
-### Phase 3: Verification
+### Step 3: Verification
 
 1. **Template Compliance Verification**
    - Verify each updated standard follows template:standard structure
@@ -89,7 +91,7 @@ Update standard files to align with the latest standard template and apply speci
    - Verify internal consistency and logical flow
    - Confirm no broken references or missing dependencies
 
-### Phase 4: Reporting
+### Step 4: Reporting
 
 **Output Format**:
 
