@@ -254,7 +254,7 @@ Prepare comprehensive context package for subagent delegation:
 ### Step 7: Update Handover & Report
 
 <IMPORTANT>
-**FIRST ACTION: Run `/handover` command to update handover documentation with current state before showing output.**
+After performing your work, run `/handover` command to update handover documentation with the latest state before showing output.**
 </IMPORTANT>
 
 After updating handover, use a subtask to run testing, linting and building scripts again to confirm compliance, then provide concise output:
