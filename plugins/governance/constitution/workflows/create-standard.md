@@ -6,7 +6,7 @@
 
 **Purpose**: Generate a new standard documentation file that defines mandatory practices, patterns, and principles for a specific technical domain.
 **When to use**: When AI needs to create a new standard file in the [plugin]/constitution/standards/ directory based on requirements and domain analysis.
-**Prerequisites**: Access to templates/standard.md, understanding of the technical domain, existing standards reviewed programmatically, clear scope definition.
+**Prerequisites**: Access to template:standard, understanding of the technical domain, existing standards reviewed programmatically, clear scope definition.
 
 ### Your Role
 
@@ -111,7 +111,7 @@ Note:
 
 1. **Receive inputs** from external sources (technical domain, standard requirements)
 2. **Analyze domain requirements** to understand scope and boundaries
-3. **Review template structure** by examining templates/standard.md
+3. **Review template structure** by examining template:standard
 4. **List all related resources** using find commands for existing standards
 5. **Determine target standard path** following this structure:
    - Base path: [plugin]/constitution/standards/
@@ -156,7 +156,7 @@ Request the subagent to perform the following implementation:
 
     **Template Usage Requirement**
     
-    - Copy and paste templates/standard.md first, then update content following the instruction ultrathink
+    - Copy and paste template:standard first, then update content following the instruction ultrathink
     - Ensure all template sections are properly filled with domain-specific content
     - Replace all placeholders with actual values
 
@@ -168,7 +168,7 @@ Request the subagent to perform the following implementation:
     **Steps**
 
     1. Load and prepare template:
-       - Read templates/standard.md for structure
+       - Read template:standard for structure
        - Identify all sections and placeholders
        - Prepare content structure based on plan
     

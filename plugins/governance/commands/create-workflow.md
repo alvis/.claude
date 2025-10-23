@@ -6,7 +6,7 @@ description: Create a new workflow file from the standard template
 
 # Create Workflow
 
-Create a new workflow file ("/create-workflow <name> --howto='...'") following the /create-workflow.md workflow. The --howto parameter describes WHAT the workflow does (the steps it will contain), not HOW the AI creates it. Generates workflow files in constitution/workflows/ directory from @templates/workflow.md template.
+Create a new workflow file ("/create-workflow <name> --howto='...'") following the /create-workflow.md workflow. The --howto parameter describes WHAT the workflow does (the steps it will contain), not HOW the AI creates it. Generates workflow files in constitution/workflows/ directory from template:workflow template.
 
 ## 🎯 Purpose & Scope
 
@@ -16,7 +16,7 @@ Create a new workflow file ("/create-workflow <name> --howto='...'") following t
 - Create non-workflow documentation
 - Override existing files without confirmation
 - Create workflow files outside constitution/workflows/
-- Create workflows from scratch (MUST use templates/workflow.md)
+- Create workflows from scratch (MUST use template:workflow)
 
 **When to REJECT**:
 

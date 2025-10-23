@@ -40,7 +40,7 @@ Update existing slash commands to follow current best practices and template str
    - Determine order of operations
 
 2. **Structure Analysis**
-   - Compare with @templates/command.md
+   - Compare with template:command
    - Identify missing sections
    - Map requested changes to template sections
    - Identify key custom content to preserve

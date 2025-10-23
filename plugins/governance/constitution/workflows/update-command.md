@@ -6,7 +6,7 @@
 
 **Purpose**: Update existing command files to align with the command template and apply specified changes to command configuration and implementation
 **When to use**: When commands need template alignment, when bulk updates are needed across multiple commands, when specific changes need to be applied across command files
-**Prerequisites**: Access to templates/command.md, understanding of command structure and metadata, knowledge of available tools and workflows
+**Prerequisites**: Access to template:command, understanding of command structure and metadata, knowledge of available tools and workflows
 
 ### Your Role
 
@@ -151,7 +151,7 @@ Request each subagent to perform the following steps with full detail:
     - [command file 4] 
     - [command file 5]
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
 
     **Specific Changes**: [Any additional changes beyond template alignment]
 
@@ -220,7 +220,7 @@ Request each review subagent to perform the following review with full scrutiny:
     - [command file 4]: Content sections aligned
     - [command file 5]: Instruction comments removed
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
 
     **Review Steps**
 
@@ -333,7 +333,7 @@ Request each subagent to perform the following steps with full detail:
     - [command file 4]
     - [command file 5]
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
     **Specific Changes**: [Any additional modifications required]
 
     **Steps**
@@ -400,7 +400,7 @@ Request each review subagent to perform the following review with full scrutiny:
     - [command file 4]: Instruction comments removed and structure cleaned
     - [command file 5]: Specific changes applied and verified
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
 
     **Review Steps**
 
@@ -508,7 +508,7 @@ Request each subagent to perform the following steps with full detail:
 
     - [All command files that were updated in this workflow]
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
 
     **Steps**
 
@@ -572,7 +572,7 @@ Request each review subagent to perform the following review with full scrutiny:
     - Template compliance achievement across all files
     - Quality of updates applied to command files
 
-    **Template Reference**: templates/command.md
+    **Template Reference**: template:command
 
     **Review Steps**
 

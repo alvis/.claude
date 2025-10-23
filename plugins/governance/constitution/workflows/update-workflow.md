@@ -28,7 +28,7 @@ You are a **Workflow Evolution Orchestrator** who orchestrates workflow updates 
 
 #### Optional Inputs
 
-- **Template Path**: Path to the current workflow template (default: `templates/workflow.md`)
+- **Template Path**: Path to the current workflow template (default: `template:workflow`)
 - **Workflow Path**: Specific workflow file path to update (default: all workflow files in `[plugin]/constitution/workflows/`)
 - **Changes to Make**: Specific changes or improvements to apply (default: template structure update and clarity improvements)
 - **Exclusion Patterns**: Files to exclude from batch updates (default: none)

@@ -1,5 +1,15 @@
 # Code Review Workflow
 
+> **⚠️ DEPRECATED**: This workflow has been superseded by the unified `review.md` workflow which combines code review and test review functionality with enhanced scope-based filtering. Please use `review.md` instead for all code review needs.
+>
+> **Migration Guide**: The new `review.md` workflow provides:
+> - All functionality from this workflow
+> - Additional test analysis capabilities
+> - Optional scope filtering (test, documentation, code-quality, security, style)
+> - Automatic agent selection
+> - Comprehensive REVIEW.md output
+> - Read-only analysis with detailed issue reporting
+
 ## Purpose & Context
 
 This workflow ensures comprehensive review of code following established coding standards.

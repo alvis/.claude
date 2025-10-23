@@ -36,7 +36,7 @@ Update standard files to align with the latest standard template and apply speci
    - Count total standards if updating all
 
 2. **Load Template Reference**
-   - Read templates/standard.md for latest standard structure
+   - Read template:standard for latest standard structure
    - Identify template sections and required elements
    - Note any template updates since last standard refresh
 
@@ -46,7 +46,7 @@ Update standard files to align with the latest standard template and apply speci
 ### Phase 2: Execution
 
 1. **Template Validation**
-   - Verify templates/standard.md exists and is readable
+   - Verify template:standard exists and is readable
    - Load template structure for reference
    - Identify mandatory sections that must be preserved
 
@@ -58,7 +58,7 @@ Update standard files to align with the latest standard template and apply speci
       - request to ultrathink\
 
 3. **Subagent Task Specification**
-   - **Task 1**: Align standard with templates/standard.md structure
+   - **Task 1**: Align standard with template:standard structure
    - **Task 2**: Apply each change specification as subtask (2a, 2b, 2c...)
    - **Task 3**: Review standard integrity and consistency throughout
 
@@ -70,7 +70,7 @@ Update standard files to align with the latest standard template and apply speci
 ### Phase 3: Verification
 
 1. **Template Compliance Verification**
-   - Verify each updated standard follows templates/standard.md structure
+   - Verify each updated standard follows template:standard structure
    - Check all mandatory sections are present and properly formatted
    - Validate frontmatter and metadata consistency
 

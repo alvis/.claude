@@ -195,9 +195,9 @@ Request each subagent to perform the following steps with full detail:
       - **Scalability Focus**: Enable workflows to handle both single and multiple entities
       - **Documentation Excellence**: Provide clear, detailed instructions for all sections
 
-    **Copy and follow the templates/agent.md template structure** - Use this as your blueprint to create agent definition files:
+    **Copy and follow the template:agent template structure** - Use this as your blueprint to create agent definition files:
 
-    - templates/agent.md - This is a TEMPLATE to COPY AND PASTE, not a standard to read
+    - template:agent - This is a TEMPLATE to COPY AND PASTE, not a standard to read
     - Use the agent.md template as your blueprint - copy its structure exactly
 
     **Assignment**

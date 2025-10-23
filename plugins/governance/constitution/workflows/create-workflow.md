@@ -14,7 +14,7 @@
 **Prerequisites**:
 - Clear understanding of the process being documented
 - Review of existing workflows to avoid duplication and ensure consistency
-- Access to templates/workflow.md file and workflow standards
+- Access to template:workflow file and workflow standards
 - Knowledge of team processes and standard operating procedures
 
 ### Your Role
@@ -118,7 +118,7 @@ Note:
 
 1. **Receive inputs** from workflow creation request (workflow name, category, optional instructions)
 2. **List all related resources** using directory commands:
-   - Template file location: templates/workflow.md
+   - Template file location: template:workflow
    - Existing workflows in the specified category to avoid conflicts
    - README files that require updates for new workflow registration
 3. **Generate workflow path suggestions** including:
@@ -168,7 +168,7 @@ Request the subagent to perform the following workflow creation:
     **Workflow Specifications**:
     - **Name**: [workflow name from inputs]
     - **Category**: [category from inputs]
-    - **Template**: templates/workflow.md
+    - **Template**: template:workflow
     - **Target Location**: [plugin]/constitution/workflows/[workflow-name].md
     
     **Workflow Path Guidance** (from Phase 1 Planning):
@@ -180,7 +180,7 @@ Request the subagent to perform the following workflow creation:
     **Steps**
 
     1. **Copy Template First**:
-       - Read templates/workflow.md file completely to understand the structure
+       - Read template:workflow file completely to understand the structure
        - Create new workflow file at the target location
        - Copy entire template content exactly to new file as starting point
        - This ensures all required sections and formatting are preserved
@@ -256,7 +256,7 @@ Request the subagent to perform the following validation review:
 
     - **Workflow File**: [workflow file path from Step 2]
     - **Implementation Summary**: [summary from Step 2]
-    - **Template Reference**: templates/workflow.md
+    - **Template Reference**: template:workflow
 
     **Review Steps**
 

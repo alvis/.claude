@@ -12,7 +12,7 @@
 - When implementing new automation commands for development workflows
 - When standardizing team automation and command patterns
 **Prerequisites**:
-- Access to templates/command.md template file and command patterns
+- Access to template:command template file and command patterns
 - Understanding of command structure and tool restrictions for security
 - Knowledge of workflow patterns and automation requirements
 - Familiarity with CLI command design and user experience principles
@@ -160,7 +160,7 @@ Request the subagent to perform the following steps with full detail:
     **Steps**
 
     1. **Load Template and Validate**:
-       - Read templates/command.md to understand the complete command structure
+       - Read template:command to understand the complete command structure
        - Validate all provided specifications against template requirements
        - Check for any missing or invalid specifications
        - Ensure command name follows established naming conventions

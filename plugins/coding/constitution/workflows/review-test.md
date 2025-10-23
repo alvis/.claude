@@ -1,5 +1,15 @@
 # Review Test
 
+> **⚠️ DEPRECATED**: This workflow has been superseded by the unified `review.md` workflow which combines code review and test review functionality with enhanced scope-based filtering. Please use `review.md` instead for all test review needs.
+>
+> **Migration Guide**: The new `review.md` workflow provides:
+> - All functionality from this workflow
+> - Integration with broader code review capabilities
+> - Optional scope filtering - select "test" scope for test-focused review
+> - Automatic agent selection via Task tool
+> - Comprehensive REVIEW.md output grouped by file
+> - Read-only analysis with detailed issue reporting
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context

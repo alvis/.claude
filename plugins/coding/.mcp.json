@@ -2,7 +2,7 @@
   "mcpServers": {
     "context7": {
       "type": "http",
-      "url": "https://context7.liam.sh/mcp"
+      "url": "https://mcp.context7.com/mcp"
     },
     "grep": {
       "type": "http",

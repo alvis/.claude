@@ -12,7 +12,7 @@
 - Periodic maintenance to ensure all agents follow current standards
 **Prerequisites**:
 - Access to agent files in `/agents` directory
-- Latest agent template at `/templates/agent.md`
+- Latest agent template at `template:agent`
 - Understanding of agent file structure and role definitions
 
 ### Your Role
@@ -158,12 +158,12 @@ Request each subagent to perform the following steps with full detail:
     - [agent-file-2.md]
     - ...
 
-    **Template Path**: templates/agent.md
+    **Template Path**: template:agent
     **Specific Changes**: [Any additional changes beyond template alignment]
 
     **Steps**
 
-    1. Read the current agent template from templates/agent.md to understand required structure
+    1. Read the current agent template from template:agent to understand required structure
     2. For each assigned agent file:
        a. Read the current agent file to understand its unique content
        b. Map existing content to the new template structure:
@@ -235,7 +235,7 @@ Request each review subagent to perform the following review with full scrutiny:
       - Added new metadata fields, updated workflows
     - ...
 
-    **Template Path**: templates/agent.md
+    **Template Path**: template:agent
 
     **Verification Steps**
 

@@ -6,7 +6,7 @@
 
 **Purpose**: Update multiple standard documentation files to add new patterns, clarify requirements, or expand coverage while maintaining consistency and preserving all valid existing content across the standards system.
 **When to use**: When AI needs to modify standard files in [plugin]/constitution/standards/ to add content, fix issues, enhance documentation, or fill gaps while maintaining template compliance across multiple standards.
-**Prerequisites**: Understanding of standards system structure, clear requirements for what needs changing, familiarity with templates/standard.md template structure.
+**Prerequisites**: Understanding of standards system structure, clear requirements for what needs changing, familiarity with template:standard template structure.
 
 ### Your Role
 
@@ -15,7 +15,7 @@ You are a **Standards Evolution Director** who orchestrates the multi-standard m
 - **Strategic Delegation**: Break standard updates into parallel batches with specialized enhancement teams (max 5 standards per subagent)
 - **Parallel Coordination**: Run multiple subagents simultaneously when dependencies allow for efficient processing
 - **Quality Oversight**: Ensure updates improve standards without breaking existing functionality through comprehensive review
-- **Template Compliance**: Ensure all updated standards strictly follow the templates/standard.md template structure
+- **Template Compliance**: Ensure all updated standards strictly follow the template:standard template structure
 
 ## 2. WORKFLOW OVERVIEW
 
@@ -83,7 +83,7 @@ Legend:
 
 Note: 
 • You: Lists standard files, batches work, assigns tasks, makes decisions
-• Execution Subagents: Update standards following templates/standard.md (<1k tokens)
+• Execution Subagents: Update standards following template:standard (<1k tokens)
 • Review Subagents: Check template compliance and quality (<500 tokens)  
 • Workflow is SINGLE STEP with 4 PHASES: Planning → Execution → Review → Decision
 ```
@@ -113,14 +113,14 @@ Note:
    - If scope specified: Filter by path pattern or function type (backend, frontend, testing, naming, etc.)
    - If scope not specified: Include all standard files in [plugin]/constitution/standards/
 3. **Determine templates and standards** to send to subagents:
-   - templates/standard.md (template file to follow for structure)
+   - template:standard (template file to follow for structure)
    - documentation.md (for documentation quality)
 4. **Create dynamic batches** following these rules:
    - Generate batches at runtime based on standard files found
    - Limit each batch to max 5 standard files
    - Assign one single subagent to perform updates on all standards in their batch
 5. **Use TodoWrite** to create task list from all batches (each batch = one todo item with status 'pending')
-6. **Prepare task assignments** with templates/standard.md compliance requirements
+6. **Prepare task assignments** with template:standard compliance requirements
 7. **Queue all batches** for parallel execution by subagents
 
 **OUTPUT from Planning**: Standard file batch assignments as todos
@@ -141,14 +141,14 @@ Request each subagent to perform the following steps with full detail:
     **ultrathink: adopt the Standards Enhancement Specialist mindset**
 
     - You're a **Standards Enhancement Specialist** with deep expertise in technical documentation who follows these technical principles:
-      - **Template Compliance**: Ensure every updated standard follows the templates/standard.md structure exactly
+      - **Template Compliance**: Ensure every updated standard follows the template:standard structure exactly
       - **Content Consistency**: Make updated standard files fluid, clear, and consistent with the template
       - **Quality Enhancement**: Improve readability and understanding without changing core meaning
       - **Preservation Excellence**: Keep existing valid content intact while enhancing organization
 
     **Use the following template file** (this is a template to follow, not a standard to follow):
 
-    - templates/standard.md - Follow this template structure exactly for all standard file updates
+    - template:standard - Follow this template structure exactly for all standard file updates
 
     **Assignment**
     You're assigned with the following standard files to update (max 5 files):
@@ -163,17 +163,17 @@ Request each subagent to perform the following steps with full detail:
 
     1. Read and analyze each assigned standard file:
        - Read the entire existing standard file content
-       - Compare current structure against templates/standard.md template
+       - Compare current structure against template:standard template
        - Identify content that needs reorganization for template compliance
        - Note sections that need enhancement or clarification based on "Things to Change" input
     2. Apply requested changes while ensuring template compliance:
        - Implement specific changes requested in "Things to Change" input (if provided)
-       - Re-order content to match templates/standard.md structure exactly
+       - Re-order content to match template:standard structure exactly
        - Ensure all required template sections are present and properly filled
        - Make content fluid and clear while maintaining original intent
     3. Update each standard file with enhanced content:
        - Preserve all existing valid content while improving organization
-       - Ensure consistency with templates/standard.md template structure
+       - Ensure consistency with template:standard template structure
        - Maintain logical flow and readability throughout the document
        - Save updated files back to their original locations
 
@@ -216,14 +216,14 @@ Request each review subagent to perform the following review with full scrutiny:
     **ultrathink: adopt the Template Compliance Reviewer mindset**
 
     - You're a **Template Compliance Reviewer** with expertise in documentation standards who follows these principles:
-      - **Template Compliance**: Verify every updated standard strictly follows templates/standard.md structure
+      - **Template Compliance**: Verify every updated standard strictly follows template:standard structure
       - **Content Quality**: Ensure updates improve clarity while preserving essential information
       - **Consistency Check**: Confirm all standards maintain uniform formatting and organization
       - **Review-Only Role**: You MUST NOT modify any resources - only report compliance issues
 
     **Review against the following template** (this is a template to verify compliance with):
 
-    - templates/standard.md - Verify all updated standards follow this template structure exactly
+    - template:standard - Verify all updated standards follow this template structure exactly
 
     **Review Assignment**
     You're assigned to review the following updated standard files (max 5 files):
@@ -242,7 +242,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review Steps**
 
     1. Read each updated standard file to verify template compliance
-    2. Check that all required sections from templates/standard.md are present
+    2. Check that all required sections from template:standard are present
     3. Verify content is properly organized and flows logically
     4. Confirm existing valid content was preserved during updates
 
@@ -305,7 +305,7 @@ change_documentation:
   date_updated: "YYYY-MM-DD"
 template_compliance_report:
   compliance_status: "compliant|partial|non_compliant" 
-  template_used: "templates/standard.md"
+  template_used: "template:standard"
   compliant_files: ["file1", "file2", "..."]
   non_compliant_files: ["file3", "file4", "..."]
 batch_processing_summary:

@@ -27,7 +27,7 @@ Update workflow files to align with the latest standard template and apply speci
 - Modified files: !`git diff --name-only`
 - Staged files: !`git diff --cached --name-only`
 
-- Template: !`ls templates/workflow.md 2>/dev/null || echo "Template not found"`
+- Template: !`ls template:workflow 2>/dev/null || echo "Template not found"`
 
 ## 🔄 Steps
 
@@ -131,7 +131,7 @@ Update workflow files to align with the latest standard template and apply speci
 
 ```bash
 /update-workflow "some-workflow.md"
-# Error: Template templates/workflow.md not found
+# Error: Template template:workflow not found
 # Suggestion: Ensure template exists before updating workflows
 # Action: Command aborts to prevent inconsistent updates
 ```

@@ -32,13 +32,38 @@ Create a code skeleton with TypeScript-compliant function signatures and logical
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Follow Write-Code Workflow (Adapted for Drafting)
+### Step 1: Follow Write-Code Workflow (Step 1 Only)
 
-- Execute adapted version of workflow:write-code
-- Focus on structure creation rather than full implementation
-- Create draft tests using describe.todo/it.todo patterns
-- Generate TypeScript-compliant function signatures with TODO placeholders
-- Ensure all code follows coding standards for structure and types
+- Execute workflow:write-code with resume parameters:
+  - **Resume From Step**: 1 (Draft Code Skeleton & Test Structure)
+  - **Change Direction**: Include specific structural requirements from command arguments
+  - **Skip Steps**: [2, 3, 4, 5] (only execute Steps 0-1)
+- Focus on:
+  - Step 0: Design Direction Discovery
+  - Step 1: Draft Code Skeleton & Test Structure
+
+**Resume Parameter Examples**:
+
+**Example 1: Draft skeleton with specific patterns**
+```
+Resume From Step: 1
+Change Direction: "Use factory pattern for object creation and builder pattern for configuration"
+Skip Steps: [2, 3, 4, 5] (only draft, no implementation)
+```
+
+**Example 2: Draft skeleton and continue to implementation**
+```
+Resume From Step: 1
+Change Direction: "Create service layer with dependency injection"
+Skip Steps: [3, 4] (draft, implement, refactor - skip test fixing)
+```
+
+**Example 3: Draft with specific architecture**
+```
+Resume From Step: 0
+Change Direction: "Follow hexagonal architecture with ports and adapters"
+Skip Steps: [2, 3, 4, 5] (discover design, draft structure only)
+```
 
 ### Step 2: Draft Implementation Creation
 

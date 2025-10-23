@@ -49,7 +49,7 @@ Create a new technical standard document in the [plugin]/constitution/standards 
 
 1. **Workflow Compliance**
    - Follow `/create-standard.md`
-   - Load template from templates/standard.md
+   - Load template from template:standard
    - Apply standard naming conventions
 
 2. **Primary Implementation**

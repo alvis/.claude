@@ -24,7 +24,7 @@ This command systematically updates agent files to maintain consistency with the
 **When to REJECT**:
 
 - No agents exist in the `/agents` directory
-- Template file `/templates/agent.md` is missing or invalid
+- Template file `template:agent` is missing or invalid
 - Request to modify protected agent characteristics without justification
 - Agent files are locked or in active use by running processes
 

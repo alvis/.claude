@@ -7,7 +7,7 @@ description: Create a new slash command following best practices
 
 # Create Custom Slash Command
 
-Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--workflow1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from @templates/command.md. Ultrathink mode.
+Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--workflow1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from template:command. Ultrathink mode.
 
 ## 🎯 Purpose & Scope
 

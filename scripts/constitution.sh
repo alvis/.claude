@@ -83,21 +83,21 @@ get_constitution_context() {
   # Search for standards
   local standards_found=$(search_md_files "$search_path" "constitution/standards")
 
-  # Only output if we found something
-  if [[ -n "$workflows_found" || -n "$standards_found" ]]; then
-    if [[ -n "$context" ]]; then
-      context+="## ${label} Constitution\n\n"
-    else
-      context+="## ${label} Constitution\n\n"
-    fi
+  # Search for templates
+  local templates_found=$(search_md_files "$search_path" "constitution/templates")
 
-    if [[ -n "$workflows_found" ]]; then
-      context+="**Workflows**:\n$workflows_found\n"
-    fi
+  context+="## ${label} Constitution\n\n"
 
-    if [[ -n "$standards_found" ]]; then
-      context+="**Standards**:\n$standards_found\n"
-    fi
+  if [[ -n "$workflows_found" ]]; then
+    context+="**Workflows**:\n$workflows_found\n"
+  fi
+
+  if [[ -n "$standards_found" ]]; then
+    context+="**Standards**:\n$standards_found\n"
+  fi
+
+  if [[ -n "$templates_found" ]]; then
+    context+="**Templates**:\n$templates_found\n"
   fi
 
   echo -n "$context"
