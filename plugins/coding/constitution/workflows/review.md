@@ -286,7 +286,7 @@ You're a **Testing Quality Analyst** performing comprehensive read-only test ana
    - Find duplicate fixture patterns across files
    - Identify mocks that could be centralized
    - Recommend fixture consolidation strategies
-   - Look for overly complex mock setups
+   - Look for overly complex fixture/mock setups
 
 **Report Format** (<2000 tokens):
 

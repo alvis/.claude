@@ -85,7 +85,7 @@ Analyze diagnostics and context to determine what needs fixing:
 1. **Check Test Status**:
    - If test failures found in specifier scope → include `test` area
    - If test files in specifier → include `test` area
-   - Pattern: `*.spec.ts`, `*.test.ts`, `__tests__/*`
+   - Pattern: `*.spec.ts`, `*.spec.tsx`
 
 2. **Check Lint Status**:
    - If lint errors found in specifier scope → include `lint` area
@@ -139,48 +139,6 @@ Configure workflow:write-code execution with:
   - Example: If area=test, skip Steps 0, 1, 2, 5
   - Example: If area=fixtures, skip Steps 0, 1, 2, 3, 5
   - Example: If area=implementation,test, skip Steps 0, 1, execute 2-3, skip 4-5
-
-#### Workflow Execution Examples
-
-##### Example 1: Fix test issues only
-
-```text
-Detected Area: test
-Resume From Step: 3
-Skip Steps: [0, 1, 2, 4, 5]
-Change Direction: "Fix test assertions and add edge case coverage based on review findings"
-Result: Executes only Step 3 (Fix Test Issues)
-```
-
-##### Example 2: Fix implementation and tests
-
-```text
-Detected Area: implementation,test
-Resume From Step: 2
-Skip Steps: [0, 1, 4, 5]
-Change Direction: "Fix authentication logic to use JWT tokens and update related tests"
-Result: Executes Steps 2-3 (Implementation + Fix Tests)
-```
-
-##### Example 3: Optimize fixtures
-
-```text
-Detected Area: fixtures
-Resume From Step: 4
-Skip Steps: [0, 1, 2, 3, 5]
-Change Direction: "Consolidate duplicate fixtures and improve type safety"
-Result: Executes only Step 4 (Optimize Fixtures)
-```
-
-##### Example 4: Comprehensive fix
-
-```text
-Detected Area: implementation,test,fixtures,refactoring
-Resume From Step: 2
-Skip Steps: [0, 1]
-Change Direction: "Complete refactoring based on REVIEW.md findings"
-Result: Executes Steps 2-5 (Implementation through Refactoring)
-```
 
 #### Delegate to Write-Code Workflow
 

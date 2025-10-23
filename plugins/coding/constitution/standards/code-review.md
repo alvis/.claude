@@ -45,11 +45,47 @@ Does the code work correctly?
 // check for:
 // - Logic errors, edge cases, null handling
 // - Off-by-one errors, race conditions
+// - Suppression comments (eslint-disable, @ts-ignore, etc.)
 
 // example feedback:
 // "issue: Function doesn't handle empty array case"
 if (items.length === 0) return defaultValue;
 ```
+
+<IMPORTANT>
+
+## CRITICAL: Flag All Suppression Comments
+
+**Every suppression comment found** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) is a **RED FLAG** that requires investigation.
+
+### Review Action:
+
+When you find suppression comments, always ask:
+
+1. **Why is this suppression here?** - Understand the original problem
+2. **Can this be fixed properly?** - Suggest concrete refactoring
+3. **Is it truly unavoidable?** - Very few cases justify suppression
+
+### Required Feedback:
+
+```typescript
+// CRITICAL ISSUE: Suppression comment found
+// "issue: Remove @ts-ignore and fix the underlying type issue.
+// Suggestions:
+// 1. Add proper type guard: if (!isValidUser(data)) throw new Error(...)
+// 2. Update function return type if needed
+// 3. Use type assertion only after validation
+// The suppression masks a real type safety problem that must be fixed."
+```
+
+### Escalation Path:
+
+- If developer insists suppression is needed
+- Ask them to document WHY in the PR description
+- Flag for lead engineer review
+- May require architectural discussion
+
+</IMPORTANT>
 
 ### Security (Critical)
 

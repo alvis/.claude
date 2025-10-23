@@ -80,6 +80,59 @@ for (const user of users) {
 - **Use `#private`** over `private` keyword for class members
 - **Prefer `readonly`** for immutable data structures
 
+<IMPORTANT>
+
+## CRITICAL: Avoid Suppression Comments
+
+**DO NOT use suppression comments** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) to silence errors or warnings. It is **VERY RARE** that they are necessary.
+
+### Required Approach:
+
+1. **Ultrathink** - Deeply analyze the underlying cause of the error/warning
+2. **Use Diagnostic Tools** - Leverage LSP tools (`lsp_get_diagnostics`, `ide__getDiagnostics`) to understand the issue
+3. **Fix Properly** - Apply proper solutions:
+   - Correct type definitions
+   - Add proper type guards
+   - Refactor code structure
+   - Update imports/exports
+   - Fix actual logic errors
+
+### When All Else Fails:
+
+- Suppression comments are a **LAST RESORT ONLY**
+- **MUST consult with the user** before applying any suppression comment
+- Document why suppression is unavoidable
+- Create a follow-up task to fix properly
+
+### Examples:
+
+```typescript
+// ❌ ABSOLUTELY BAD: Silencing the problem
+// @ts-ignore
+const result: User = riskyFunction();
+
+// ✅ GOOD: Understanding and fixing the root cause
+function isValidResult(value: unknown): value is Result {
+  return typeof value === "object" && value !== null && "data" in value;
+}
+
+const rawResult = riskyFunction();
+if (!isValidResult(rawResult)) {
+  throw new Error("Invalid result from riskyFunction");
+}
+const result = rawResult;
+
+// ✅ GOOD: Using type guards to narrow types safely
+function processData(input: unknown): User {
+  if (!isUser(input)) {
+    throw new ValidationError("Invalid user data provided");
+  }
+  return input; // TypeScript now knows input is User
+}
+```
+
+</IMPORTANT>
+
 ### American English Convention
 
 - **American English only** - Use American spelling in all code

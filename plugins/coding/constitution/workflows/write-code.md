@@ -112,7 +112,7 @@ The workflow takes feature requirements and systematically implements them using
    |
    v
 [Step 3: Fix Test Issues] ───────────→ (Skip if Resume > 3)
-   |                                    │ (Batch execution for >10 files)
+   |                                    │ (Batch execution for >25 files)
    |                                    │ [Apply Change Direction if Resume = 3]
    ├─ Test correction batches         │
    ├─ Standards compliance            │
@@ -120,7 +120,7 @@ The workflow takes feature requirements and systematically implements them using
    |
    v
 [Step 4: Optimize Test Structure] ───→ (Skip if Resume > 4)
-   |                                    │ (Batch execution for >10 fixtures)
+   |                                    │ (1 subagent max)
    |                                    │ [Apply Change Direction if Resume = 4]
    ├─ Fixture optimization batches    │
    ├─ Mock improvements               │
@@ -201,6 +201,7 @@ When resuming work after a handover (using /coding:takeover command) or when sta
 #### Resume Examples
 
 **Example 1: Resume after reviewing implementation**
+
 ```
 Last Completed Step: 2 (Implementation)
 User Feedback: "The authentication approach needs to be changed to use JWT"
@@ -211,6 +212,7 @@ Result: Re-executes Step 2 with new direction, then proceeds to Steps 3-5
 ```
 
 **Example 2: Resume to fix test issues only**
+
 ```
 Last Completed Step: 2 (Implementation)
 User Feedback: "Implementation looks good, but tests need fixing for edge cases"
@@ -221,6 +223,7 @@ Result: Skips Steps 0-2, executes Step 3 with direction, skips Step 4, proceeds 
 ```
 
 **Example 3: Resume after pause for review**
+
 ```
 Paused At Step: 3 (handover created)
 User Decision: "Tests look good, skip fixture optimization, proceed to refactoring"
@@ -231,6 +234,7 @@ Result: Skips Steps 0-4, executes only Step 5 with specific refactoring focus
 ```
 
 **Example 4: Resume with different approach**
+
 ```
 Last Completed Step: 1 (Draft Skeleton)
 User Feedback: "The approach needs to change - use a factory pattern instead of direct instantiation"
@@ -410,6 +414,27 @@ Request the subagent to perform the following steps with full detail:
       - Throw `new Error('IMPLEMENTATION: <description of what is missing>, requiring <parameters required as JSON object>')`
       - This prevents TypeScript type errors and unused variable complaints
       - Example: `throw new Error(\`IMPLEMENTATION: user authentication logic needed, requiring \${JSON.stringify({ userId, token })}\`)`
+
+    **TEST EXAMPLE**
+    - If no interface: Use describe.todo() and it.todo() syntax:
+    ```typescript
+    describe.todo('fn:calculateTotal')
+    it.todo('should sum all item prices')
+    it.todo('should apply discounts correctly')
+    ```
+    - If interface provided: Create actual tests (won't run):
+    ```typescript
+    describe('fn:calculateTotal', () => {
+      it('should sum all item prices', () => {
+         const items = [{ price: 10 }, { price: 20 }];
+         const expected = 30; // LOGICAL expectation
+         
+         const result = calculateTotal(items);
+         
+         expect(result).toBe(expected);
+      });
+    });
+    ```
 
     **Steps**
 
@@ -890,7 +915,7 @@ Request the review subagent to perform the following review with full scrutiny:
 - **Input**: Implementation from Step 2, all test files
 - **Output**: Corrected tests with compliance report and correctness verification
 - **Sub-workflow**: None
-- **Parallel Execution**: Yes - can process multiple files in parallel (batch execution for >10 files)
+- **Parallel Execution**: Yes - can process multiple files in parallel (batch execution for >25 files)
 
 #### Step Execution Decision (You)
 
@@ -1000,6 +1025,17 @@ Request each Correction Agent to perform the following steps with full detail:
     - Focus on test correctness, not on making tests pass
     - If tests fail due to source code issues, report this but do not fix the source code
     - Use LS/Glob tools for file discovery, NEVER use `find` in bash
+
+    <IMPORTANT>
+    **Handling Unused Code Errors**: When you encounter unused code or unused variable errors during validation:
+
+    1. **Check design documentation first** (DESIGN.md, specification files) to verify if this code is part of planned functionality
+    2. **Check handover documentation** (CONTEXT.md, PLAN.md, RESEARCH.md) to see if this is intentional incomplete implementation
+    3. **If code is planned but not yet implemented**: Use `throw new Error('IMPLEMENTATION: [description of what needs implementing]', JSON.stringify({ unusedVar }))` to suppress the warning while clearly marking what needs implementation
+    4. **Only remove code** that is genuinely unnecessary and not part of any planned feature
+
+    This prevents accidental deletion of intentionally incomplete code while maintaining type safety.
+    </IMPORTANT>
 
     **Report**
     **[IMPORTANT]** You're requested to return the following batch results:
@@ -1201,7 +1237,7 @@ Request each Review Subagent to perform the following review with full scrutiny:
 - **Input**: Fixed test files from Step 3
 - **Output**: Corrected and optimized fixtures/mocks with proper organization and type safety
 - **Sub-workflow**: None
-- **Parallel Execution**: Yes - can process multiple fixture groups in parallel (batch execution for >10 fixtures)
+- **Parallel Execution**: No - single subagent
 
 #### Step Execution Decision (You)
 

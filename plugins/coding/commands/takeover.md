@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read, Glob, Grep, TodoWrite, Task, Bash
+allowed-tools: Read, Glob, Grep, TodoWrite, Task, Bash, SlashCommand(/handover)
 
 argument-hint: [--files=CONTEXT.md,RESEARCH.md,PLAN.md]
 
@@ -25,18 +25,22 @@ Parses handover documentation (CONTEXT.md, RESEARCH.md, PLAN.md) left by previou
 - When requested to create handover instead of reading it
 - When working directory is not a git repository
 
-
-
 ## 🔄 Workflow
 
 ultrathink: Before performing any steps, deeply analyze the handover context and plan continuation:
 
-- **Project Diagnostics**: Run get_project_overview and ide__getDiagnostics to understand current build/type/lint issues
+<IMPORTANT>
+- **Project Diagnostics**: Run get_project_overview, ide__getDiagnostics, testing, linting, and build scripts with LIMITED OUTPUT (max 20 lines per bash tool) to understand current issues. OMIT TODO errors from consideration.
+- **Issue Prioritization**: If CRITICAL issues found (type errors, test failures, build breaks), fixing them MUST take priority before resuming planned work. Consult handover and design docs for direction.
+</IMPORTANT>
 - **Handover Analysis**: Thoroughly read and understand all three handover files (CONTEXT.md, RESEARCH.md, PLAN.md) to grasp the complete project state
 - **State Verification**: Compare documented state with actual current state to identify discrepancies and changes
 - **Issue Analysis**: Correlate diagnostics results with handover documentation to identify what needs fixing
 - **Context Integration**: Synthesize information from all three files into coherent understanding of goals, progress, and challenges
 - **Workflow Step Detection**: Analyze file substates, current issues, and current phase to automatically determine which write-code workflow step to resume
+<IMPORTANT>
+- **Delegation Strategy**: ALL coding actions (implementation, fixing, testing, refactoring) MUST be delegated to subagents via Task tool. Direct code modification is PROHIBITED.
+</IMPORTANT>
 - **Task Planning**: Identify immediate priorities, dependencies, and continuation strategy based on detected workflow step and current issues
 - **Knowledge Transfer**: Extract all critical context (decisions, patterns, gotchas, research insights) needed for seamless continuation at the detected step
 
@@ -44,30 +48,42 @@ Then perform the following steps:
 
 ### Step 1: Run Project Diagnostics
 
+<IMPORTANT>
+**Critical Requirements:**
+- LIMIT output to max 20 lines per diagnostic tool (use `| head -20` or similar)
+- OMIT TODO issues from consideration - focus only on real type/build/lint issues
+- If any issues found (lint issues, type errors, test failures, build breaks), plan must prioritize FIXING them FIRST before resuming documented work
+- Consult handover docs (CONTEXT.md, PLAN.md) and design docs for direction on fixes
+</IMPORTANT>
+
 **Diagnostic Tools (in order of preference):**
 
 1. **Run get_project_overview MCP tool** (if available):
-   - Provides comprehensive project analysis
+   - Provides comprehensive project analysis with limited output
    - Identifies type errors, build issues, and structural problems
    - Skip remaining diagnostic steps if this succeeds
 
 2. **Run ide__getDiagnostics MCP tool** (if available and get_project_overview unavailable):
-   - Get real-time diagnostics from language server
+   - Get real-time diagnostics from language server with limited output
    - Identify type errors and linting issues
    - Run for all files in scope from handover
 
-3. **Run npm run lint** (if MCP tools unavailable):
-   - Execute linting on project path
+3. **Run build script** (e.g., `npx tsc --noEmit | head -20`):
+   - Execute TypeScript compilation check with limited output
+   - Identify type errors and compilation issues
+
+4. **Run lint script** (e.g., `npm run lint | head -20`):
+   - Execute linting on project path with limited output
    - Identify standards violations and code quality issues
-   - Use `npm run lint -- <path>` for targeted linting
 
 **Capture and Document:**
-- All errors and warnings found
+
+- All errors and warnings found (excluding TODO errors)
 - Files with issues and their error counts
 - Severity levels (fatal, error, warning)
 - Correlation with file substates from handover
 
-**Output**: Diagnostics summary to inform workflow step detection
+**Output**: Diagnostics summary to inform workflow step detection and issue prioritization
 
 ### Step 2: Validate Handover Files and Discover Architecture
 
@@ -108,7 +124,7 @@ Validate critical sections exist: Current State, File Status, Next Steps (CONTEX
 
 From the parsed handover documents, extract and organize:
 
-**Priority 1 - Strategic Context**:
+**Strategic Context**:
 
 - Goals and success criteria from PLAN.md (defines what "done" means)
 - Current phase status from PLAN.md task breakdown (where we are in the plan)
@@ -116,27 +132,35 @@ From the parsed handover documents, extract and organize:
 - Any in-progress files (🚧) from CONTEXT.md that need completion
 - Blocking issues or gotchas from CONTEXT.md that must be addressed first
 
-**Priority 2 - Research Context**:
+**Research Context**:
 
 - Problems already solved from RESEARCH.md (avoid duplicating work)
 - What worked and what didn't work from RESEARCH.md explorations (learn from past attempts)
 - Key insights from RESEARCH.md (apply proven learnings)
 - Quick tips from RESEARCH.md (use discovered shortcuts and best practices)
 
-**Priority 3 - Planning Information**:
+**Planning Information**:
 
 - Task breakdown by phases from PLAN.md (structured work plan)
 - Dependencies from PLAN.md (what needs to happen when)
 - Risks and mitigation strategies from PLAN.md (proactive problem handling)
 
-**Priority 4 - Reference Information**:
+**Reference Information**:
 
 - Key decisions and their rationale from CONTEXT.md (affects how work continues)
 - Established patterns from CONTEXT.md (must follow for consistency)
 - Gotchas and workarounds from CONTEXT.md (avoid repeating mistakes)
 - Dependencies and configuration from CONTEXT.md (technical requirements)
 
-### Step 6: Determine Write-Code Workflow Step and Create Action Plan
+### Step 6: Create Action Plan for Delegation
+
+<IMPORTANT>
+**Delegation Requirements:**
+- ALL coding actions (implementation, fixing, testing, refactoring, linting) MUST be delegated to subagents via Task tool
+- Direct code modification by this command is PROHIBITED
+- When delegating, MUST pass full file paths of relevant workflow and standard files to subagent
+- Subagent must be given complete context: detected step, file substates, diagnostics issues, handover insights
+</IMPORTANT>
 
 **Part A: Auto-Detect Write-Code Workflow Resumption Point**
 
@@ -183,24 +207,38 @@ Analyze extracted information AND diagnostics results to determine which write-c
    - List specific issues to address
    - Prepare context for write-code workflow execution
 
-**Part B: Create Task List**
+**Part B: Prepare Delegation Context**
 
 Using TodoWrite, create task list based on detected write-code workflow step:
+Prepare comprehensive context package for subagent delegation:
 
-**Task Structure**:
+**Context Package Contents**:
 
-```yaml
-- content: "[action from PLAN.md or Next Steps]"
-  activeForm: "[present continuous form]"
-  status: "pending"
-```
+1. **Detected Workflow Step**:
+   - Step number and name from write-code.md
+   - Detection rationale (diagnostics + file substates)
+   - Expected outcomes for this step
 
-**Task Creation Strategy**:
+2. **File Context**:
+   - Files in scope with their substates
+   - Diagnostic issues per file (excluding TODO errors)
+   - Dependency relationships
 
-- **PRIMARY**: Execute detected write-code workflow step with all relevant files
-- **CONTEXT**: Provide complete handover context (decisions, insights, patterns, gotchas)
-- **STANDARDS**: Reference write-code.md workflow file path explicitly
-- **ENRICHMENT**: Include research insights from RESEARCH.md as step context
+3. **Workflow & Standards**:
+   - Full path to write-code.md workflow file
+   - Full paths to required standards files for detected step
+   - Specific step instructions from workflow
+
+4. **Handover Context**:
+   - Key decisions from CONTEXT.md
+   - Established patterns to follow
+   - Known gotchas and workarounds
+   - Research insights from RESEARCH.md
+   - Quick tips applicable to detected step
+
+5. **Success Criteria**:
+   - Relevant criteria from PLAN.md
+   - Validation requirements
 
 **Write-Code Workflow Step Mapping**:
 
@@ -211,19 +249,15 @@ Using TodoWrite, create task list based on detected write-code workflow step:
 - **Step 4**: Optimize Test Structure & Fixtures (for fixture/mock issues)
 - **Step 5**: Refactoring & Documentation (for need-linting, need-refactoring states)
 
-**File Grouping**: Group by state type (max 5 files/group), relationship (component + types), or dependency order (types → implementation → tests)
+**Delegation Preparation**: Format context for Task tool invocation with appropriate subagent (coding agent)
 
-**Task Prioritization**: (1) Blocking issues/in-progress work, (2) File substates (need-draft → need-completion → need-fixing → need-linting → need-testing → need-refactoring), (3) Current phase tasks from PLAN.md, (4) Next steps from CONTEXT.md, (5) Next phase tasks
+### Step 7: Update Handover & Report
 
-**Workflow Context Preparation**: Gather all context for write-code workflow execution:
-- File paths and their substates for step-specific processing
-- Relevant workflows and standards from Project Context
-- Key decisions and established patterns from CONTEXT.md
-- Known gotchas and workarounds to avoid repeating mistakes
-- Research insights and quick tips from RESEARCH.md applicable to detected step
-- Success criteria from PLAN.md to guide validation
+<IMPORTANT>
+**FIRST ACTION: Run `/handover` command to update handover documentation with current state before showing output.**
+</IMPORTANT>
 
-### Step 7: Present Continuation Summary
+After updating handover, use a subtask to run testing, linting and building scripts again to confirm compliance, then provide concise output:
 
 **Output Format**:
 
@@ -231,263 +265,45 @@ Using TodoWrite, create task list based on detected write-code workflow step:
 [✅] Takeover: $ARGUMENTS
 
 ## Handover Summary
-- Context file: [absolute path to CONTEXT.md]
-- Research file: [absolute path to RESEARCH.md]
-- Plan file: [absolute path to PLAN.md]
+- Files: CONTEXT.md, RESEARCH.md, PLAN.md at [project root path]
 - Last Updated: [ISO timestamp from CONTEXT.md]
-- Documented Branch: [branch from CONTEXT.md]
-
-## Project Diagnostics
-### Tool Used
-[get_project_overview | ide__getDiagnostics | npm run lint]
-
-### Issues Found
-- **Type Errors**: [count] errors in [count] files
-- **Build Failures**: [count] failures
-- **Lint Violations**: [count] violations in [count] files
-- **Test Failures**: [count] failing tests
-
-### Critical Files with Issues
-- [file path]: [error count] errors ([error types])
-- [file path]: [error count] errors ([error types])
-
-### Issue Categories
-- **Incomplete Implementation**: [count] files with TODO/IMPLEMENTATION errors
-- **Type Safety**: [count] files with type errors
-- **Standards Compliance**: [count] files with lint violations
-- **Test Issues**: [count] files with test failures
-
-## State Verification
-### ✅ Verified
-- Current branch matches: [branch name]
-- [count] completed files confirmed clean
-- [count] in-progress files confirmed modified
-
-### ⚠️ Discrepancies (if any)
-- Branch mismatch: documented=[branch], actual=[branch]
-- New modifications not in handover: [files]
-- Documented in-progress files now clean: [files]
-
-## Plan Overview
-### Primary Goal
-[primary goal from PLAN.md Goals & Success Criteria]
-
-### Current Phase
-[current phase name] - [phase status/progress]
-
-### Success Criteria
-- [ ] [criterion 1 from PLAN.md]
-- [ ] [criterion 2 from PLAN.md]
-- [ ] [criterion 3 from PLAN.md]
-
-## Write-Code Workflow Continuation
-
-### Auto-Detected Resume Point
-**Step [N]: [Step Name from write-code.md]**
-
-### Detection Rationale
-- **Diagnostics Analysis**: [X type errors, Y test failures, Z lint violations]
-- **File States Analysis**: [X files need-draft, Y files need-completion, Z files need-fixing]
-- **Current Phase**: [Phase name and status from PLAN.md]
-- **Triggering Factors**: [Primary reason this step was selected - diagnostics issue or file substate]
-- **Priority Consideration**: [Why this step takes priority - diagnostics-driven or substate-driven]
-- **Issues to Address**: [Specific diagnostic issues that will be resolved in this step]
-
-### Step-Specific Context
-
-**What Has Been Completed:**
-- [Summary of completed work from CONTEXT.md]
-- [Key milestones achieved]
-
-**What Remains for This Step:**
-- [Specific actions required for detected step]
-- [Files to be processed in this step]
-- [Expected outcomes from this step]
-
-**Key Decisions to Apply:**
-- [Decision 1 from CONTEXT.md relevant to this step]
-- [Decision 2 from CONTEXT.md relevant to this step]
-
-**Research Insights to Use:**
-- [Insight 1 from RESEARCH.md applicable to this step]
-- [Tip 1 from RESEARCH.md Quick Tips]
-
-**Known Issues to Watch:**
-- [Gotcha 1 from CONTEXT.md]
-- [Workaround to apply]
-
-### Continuation Instructions
-
-**Workflow File**: `/Users/alvis/Repositories/.claude/plugins/coding/constitution/workflows/write-code.md`
-
-**Execute**: Start write-code workflow at Step [N]
-
-**Actions for Step [N]**:
-1. [Specific action 1 for this step from write-code.md]
-2. [Specific action 2 for this step from write-code.md]
-3. [Specific action 3 for this step from write-code.md]
-
-**Required Standards** (from write-code.md Step [N]):
-- [standard 1 path]
-- [standard 2 path]
-- [standard 3 path]
-
-**Files in Scope**:
-- [file 1] - [substate] - [specific work needed]
-- [file 2] - [substate] - [specific work needed]
-
-**Expected Output**:
-[What this step should produce per write-code.md]
-
-## Research Insights Summary
-### Problems Solved
-- [problem description] → [solution approach] at [location/file]
-- [problem description] → [solution approach] at [location/file]
-
-### Key Learnings
-- ✅ What Worked: [approach that worked and why]
-- ❌ What Didn't Work: [approach that failed and why]
-
-### Quick Tips
-- [tip from RESEARCH.md quick tips]
-- [tip from RESEARCH.md quick tips]
-
-## Critical Context
-### Key Decisions
-1. [decision] - [rationale] - affects [impact]
-2. [decision] - [rationale] - affects [impact]
-
-### Established Patterns
-- [pattern description and where it's used]
-- [pattern description and where it's used]
-
-### Known Gotchas
-- [issue] at [location] - workaround: [solution]
-- [issue] at [location] - workaround: [solution]
-
-## File Status with Work Required
-
-### 🚧 In Progress ([count] files)
-- [file path] ([substate: need-completion/need-fixing/need-linting/need-refactoring]) - [specific work required]
-- [file path] ([substate]) - [specific work required]
-
-### 📋 Planned ([count] files)
-- [file path] ([substate: need-draft/need-testing]) - [specific work required]
-
-### ✅ Completed ([count] files)
-- [count] files completed (details in CONTEXT.md Historical Notes)
-- Recent: [first 3-5 files...]
-
-## Workflow Execution Plan
-
-### Detected Workflow
-**write-code.md** - Comprehensive TDD implementation workflow
-
-### Starting Point
-**Step [N]: [Step Name]**
-
-### File Processing Strategy
-- **Total Files**: [count] files requiring attention
-- **Primary Substate**: [most common substate]
-- **Processing Approach**: [Sequential/Batched based on write-code.md step requirements]
-
-### Workflow Progression
-After completing Step [N], the write-code workflow will automatically progress through remaining steps:
-- [List of subsequent steps if applicable]
-- Each step includes built-in quality gates and validation
-- Interactive handover points enabled for user feedback
-
-## Task Breakdown from Plan
-### Phase 1: [phase name] ([status])
-1. [task from PLAN.md]
-2. [task from PLAN.md]
-
-### Phase 2: [phase name] ([status])
-3. [task from PLAN.md]
-4. [task from PLAN.md]
-
-## Action Plan Created
-### Priority 1 - Immediate ([count] tasks from current phase)
-1. [task from PLAN.md current phase]
-2. [task from PLAN.md current phase]
-
-### Priority 2 - Following ([count] tasks from next phase)
-3. [task from PLAN.md next phase]
-4. [task from PLAN.md next phase]
-
-### Priority 3 - Future ([count] tasks)
-5. [task from later phases or CONTEXT.md]
-
-## Dependencies
-### External Dependencies
-- [package/config] - [version/purpose]
-
-### Internal Dependencies
-- [file/component] - [dependency relationship]
-
-## Ready to Continue
-✓ Handover parsed successfully (3 files)
-✓ State verification complete
-✓ Research insights extracted
-✓ Plan overview integrated
-✓ Write-code workflow step auto-detected: Step [N]
-✓ Step-specific context prepared
-✓ Continuation instructions ready
-
-## Next Action: Resume Write-Code Workflow
-
-**Execute write-code workflow starting at Step [N]: [Step Name]**
-
-### Current Work Context
-- **Primary Goal**: [goal from PLAN.md]
-- **Current State**: [brief state summary from CONTEXT.md]
-- **Diagnostics Summary**: [X type errors, Y test failures, Z lint violations]
-- **Files in Scope**: [list of files with their substates and diagnostic issues]
-- **Detected Step**: Step [N] based on [diagnostics + triggering factor]
-
-### Step [N] Execution Requirements
-
-**Workflow File Path**:
-`/Users/alvis/Repositories/.claude/plugins/coding/constitution/workflows/write-code.md`
-
-**Specific Actions for This Step**:
-1. [Action 1 from write-code.md Step N]
-2. [Action 2 from write-code.md Step N]
-3. [Action 3 from write-code.md Step N]
-
-**Required Standards** (per write-code.md Step [N]):
-- [Standard 1 path]
-- [Standard 2 path]
-- [Standard 3 path]
-
-**Expected Output**:
-[What Step N should produce per write-code.md]
-
-### Context to Apply During Execution
-
-**Key Decisions** (from CONTEXT.md):
-- [Decision 1 affecting this step]
-- [Decision 2 affecting this step]
-
-**Established Patterns** (from CONTEXT.md):
-- [Pattern 1 to follow]
-- [Pattern 2 to follow]
-
-**Research Insights** (from RESEARCH.md):
-- [Insight 1 applicable to this step]
-- [Quick tip 1 for this step]
-
-**Known Gotchas** (from CONTEXT.md):
-- [Gotcha 1] - Workaround: [solution]
-- [Gotcha 2] - Workaround: [solution]
-
-**Success Criteria** (from PLAN.md):
-- [Criterion 1 relevant to this step]
-- [Criterion 2 relevant to this step]
-
----
-
-**Post-Execution**: Upon completion of delegated work, run `/handover` to automatically update documentation with latest state.
+- Branch: [branch from CONTEXT.md]
+
+## Diagnostics Summary
+- **Type Errors**: [count] in [count] files (TODO errors omitted)
+- **Test Failures**: [count] tests
+- **Lint Violations**: [count] in [count] files
+- **Build Issues**: [count] failures
+
+## Detected Workflow Step
+**Step [N]: [Step Name]** from write-code.md
+
+**Rationale**: [1-2 sentence explanation based on diagnostics + file substates]
+
+**Critical Issues to Fix First**: [List if diagnostics found critical issues, otherwise "None - ready to resume planned work"]
+
+## Files in Scope
+### 🚧 In Progress ([count])
+- [file path] - [substate] - [diagnostic issue if any]
+
+### 📋 Planned ([count])
+- [file path] - [substate] - [diagnostic issue if any]
+
+### ✅ Completed ([count])
+- [Summary line, e.g., "15 files completed, see CONTEXT.md"]
+
+## Next Action
+<IMPORTANT>
+**Delegate to subagent**: Execute write-code.md Step [N] with following context:
+- Workflow: `/Users/alvis/.../write-code.md`
+- Standards: [list required standard file paths]
+- Files: [list files with substates]
+- Key decisions from CONTEXT.md: [1-2 critical decisions]
+- Research insights: [1-2 applicable tips from RESEARCH.md]
+- Success criteria: [relevant criteria from PLAN.md]
+</IMPORTANT>
+
+**After subagent completes**: Run `/handover` again to update documentation.
 ```
 
 ## 📝 Examples
@@ -496,130 +312,12 @@ After completing Step [N], the write-code workflow will automatically progress t
 
 ```bash
 /takeover
-# Step 1: Runs get_project_overview - finds 15 type errors, 3 test failures
-# Step 2-3: Reads CONTEXT.md, RESEARCH.md, PLAN.md
-# Step 4-5: Analyzes file substates and current phase
-# Step 6: Auto-detects: Resume at write-code Step 3 (Fix Test Issues)
-#         Rationale: Test failures in diagnostics + "need-fixing" substates
-# Step 7: Provides complete context and continuation instructions
-# Result: Ready to execute write-code.md Step 3 with diagnostics + handover context
-```
-
-### Scenario: Need Draft (Step 1 Detection)
-
-```bash
-/takeover
-# Diagnostics: No significant errors (project clean or minimal setup)
-# File States: 5 files with "need-draft" substate
-# Current Phase: "Implementation" phase just started
-# Auto-detects: Resume at write-code Step 1 (Draft Code Skeleton & Test Structure)
-# Detection: Substate-driven (no code exists, need to draft skeleton)
-# Context provided:
-#   - Design specifications from discovered DESIGN.md
-#   - Interface requirements from PLAN.md
-#   - Patterns to follow from CONTEXT.md
-# Next: Execute write-code.md Step 1 to create skeleton and test structure
-```
-
-### Scenario: Need Completion (Step 2 Detection)
-
-```bash
-/takeover
-# Diagnostics: 8 "IMPLEMENTATION: ..." errors (TODO placeholders throwing errors)
-# File States: 3 files with "need-completion" substate
-# Current State: Code skeleton exists with TODOs
-# Auto-detects: Resume at write-code Step 2 (Implementation - Green Phase)
-# Detection: Diagnostics-driven (incomplete implementation errors match substates)
-# Context provided:
-#   - Existing skeleton structure
-#   - Test suite awaiting implementation
-#   - Error handling patterns from CONTEXT.md
-#   - Specific TODOs identified from diagnostics
-# Next: Execute write-code.md Step 2 to implement minimal working code
-```
-
-### Scenario: Test Failures (Step 3 Detection)
-
-```bash
-/takeover
-# Diagnostics: 12 test failures across 7 files + 5 type errors in test files
-# File States: 7 files with "need-fixing" substate
-# Current State: Tests failing, implementation done
-# Auto-detects: Resume at write-code Step 3 (Fix Test Issues & Standards Compliance)
-# Detection: Diagnostics-driven (test failures are primary trigger)
-# Context provided:
-#   - Specific test failures from diagnostics
-#   - Test failure patterns from CONTEXT.md
-#   - Standards violations identified in diagnostics
-#   - Solutions from RESEARCH.md for similar failures
-# Issues to address: 12 test failures + 5 type errors
-# Next: Execute write-code.md Step 3 to fix tests and ensure compliance
-```
-
-### Scenario: Need Refactoring (Step 5 Detection)
-
-```bash
-/takeover
-# Diagnostics: 23 lint violations (no type/test errors)
-# File States: 4 files with "need-refactoring" and "need-linting" substates
-# Current State: Implementation complete, tests passing
-# Auto-detects: Resume at write-code Step 5 (Refactoring & Documentation)
-# Detection: Diagnostics-driven (lint violations only = quality/style issues)
-# Context provided:
-#   - Specific lint violations from diagnostics
-#   - Code quality improvements needed
-#   - Documentation standards from RESEARCH.md
-#   - Refactoring patterns from CONTEXT.md
-# Issues to address: 23 lint violations across 4 files
-# Next: Execute write-code.md Step 5 for quality improvements
-```
-
-### Scenario: Diagnostics-Driven Priority (Mixed States)
-
-```bash
-/takeover
-# Diagnostics: 15 test failures + 3 type errors + 8 lint violations
-# File States: Mixed (2 need-completion, 5 need-fixing, 3 need-linting)
-# Current State: Some implementation incomplete, tests failing, quality issues
-# Auto-detects: Resume at write-code Step 3 (Fix Test Issues & Standards Compliance)
-# Detection: Diagnostics-driven (test failures take priority over other issues)
-# Rationale: Fix failing tests first before refactoring or completing implementation
-# Context provided:
-#   - Test failures are blocking progress (highest priority)
-#   - Type errors in test files need fixing
-#   - Lint violations can be addressed in Step 5 later
-# Issues to address: 15 test failures + 3 type errors (lint deferred)
-# Next: Execute write-code.md Step 3, then loop back for Step 2/5 if needed
-```
-
-### Custom File Paths
-
-```bash
-/takeover --files=CONTEXT.md,RESEARCH.md,PLAN.md
-# Explicitly specify all 3 handover files
-# Runs diagnostics + analyzes handover state
-# Auto-detects workflow step based on diagnostics + file analysis
-# Provides complete continuation context with issue details
-```
-
-### Complete Workflow Cycle
-
-```bash
-# Agent A finishing work:
-/handover
-# Creates CONTEXT.md (state), RESEARCH.md (learnings), PLAN.md (strategy)
-
-# Agent B taking over:
-/takeover
-# 1. Runs project diagnostics (get_project_overview or ide__getDiagnostics)
-# 2. Reads all 3 handover files (CONTEXT.md, RESEARCH.md, PLAN.md)
-# 3. Correlates diagnostics with file substates
-# 4. Auto-detects write-code workflow step based on diagnostics + substates
-#    Example: 12 test failures → Step 3 (Fix Test Issues)
-# 5. Provides complete context: diagnostics + handover insights
-# 6. Execute write-code.md starting at detected step with full context
-# 7. Upon completion, run /handover to update docs with latest state
-# Result: Seamless work continuation with diagnostics-informed workflow resumption
+# Step 1: Runs diagnostics (limited output) - finds 12 type errors, 3 test failures
+# Step 2-3: Reads handover files (CONTEXT, RESEARCH, PLAN)
+# Step 4-5: Analyzes state and extracts critical info
+# Step 6: Auto-detects Step 3 (Fix Test Issues) - test failures + need-fixing states
+# Step 7: Runs /handover first, then shows concise output with delegation instructions
+# Result: Concise report with next action to delegate to subagent
 ```
 
 ### Error Case

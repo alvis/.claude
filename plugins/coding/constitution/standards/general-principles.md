@@ -218,3 +218,46 @@ const userIndex = new Map<string, User>(); // O(1) lookup
 3. **Clever Code Over Clear Code**
    - Problem: Writing "smart" code that's hard to understand
    - Solution: Prioritize readability and maintainability
+
+<IMPORTANT>
+
+## CRITICAL: Never Suppress Errors - Fix Root Causes
+
+**DO NOT use suppression comments** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) to mask underlying problems. It is **VERY RARE** that they are necessary.
+
+### The Problem with Suppression Comments:
+
+- **Masks real issues** - Problem continues to exist, just hidden
+- **Creates technical debt** - Future maintainers won't understand why code is structured oddly
+- **Breaks continuous improvement** - Can't identify and fix root causes
+- **Violates DRY principle** - You're working around a problem instead of fixing it
+
+### Correct Approach:
+
+1. **Understand the root cause** - Use diagnostic tools to see the underlying issue
+2. **Refactor or fix** - Change the code structure, types, or logic to resolve it properly
+3. **Test the solution** - Verify that the fix is correct and complete
+4. **Document if needed** - Only add comments to explain legitimate design decisions
+
+### Example:
+
+```typescript
+// ❌ BAD: Suppressing the error
+// @ts-ignore - types are broken here
+const user = getData() as User;
+
+// ✅ GOOD: Fixing the actual problem
+interface DataResponse {
+  success: boolean;
+  data: unknown;
+}
+
+function processData(response: DataResponse): User {
+  if (!response.success || !isValidUser(response.data)) {
+    throw new Error("Invalid user data in response");
+  }
+  return response.data; // Now TypeScript knows this is User
+}
+```
+
+</IMPORTANT>

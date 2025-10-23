@@ -45,20 +45,15 @@ ultrathink: you'd perform the following steps
 **Resume Parameter Examples**:
 
 **Example 1: Draft skeleton with specific patterns**
+
 ```
 Resume From Step: 1
 Change Direction: "Use factory pattern for object creation and builder pattern for configuration"
 Skip Steps: [2, 3, 4, 5] (only draft, no implementation)
 ```
 
-**Example 2: Draft skeleton and continue to implementation**
-```
-Resume From Step: 1
-Change Direction: "Create service layer with dependency injection"
-Skip Steps: [3, 4] (draft, implement, refactor - skip test fixing)
-```
-
 **Example 3: Draft with specific architecture**
+
 ```
 Resume From Step: 0
 Change Direction: "Follow hexagonal architecture with ports and adapters"
