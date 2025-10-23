@@ -253,11 +253,11 @@ Prepare comprehensive context package for subagent delegation:
 
 ### Step 7: Update Handover & Report
 
-<IMPORTANT>
-After performing your work, run `/handover` command to update handover documentation with the latest state before showing output.**
-</IMPORTANT>
+After work completion,
 
-After updating handover, use a subtask to run testing, linting and building scripts again to confirm compliance, then provide concise output:
+1. update handover documents with the latest state
+2. use a subtask to run testing, linting and building scripts again to confirm compliance
+3. then provide concise output:
 
 **Output Format**:
 
@@ -303,7 +303,7 @@ After updating handover, use a subtask to run testing, linting and building scri
 - Success criteria: [relevant criteria from PLAN.md]
 </IMPORTANT>
 
-**After subagent completes**: Run `/handover` again to update documentation.
+**After subagent completes**: Run `/handover` to update documentation.
 ```
 
 ## 📝 Examples
@@ -312,12 +312,6 @@ After updating handover, use a subtask to run testing, linting and building scri
 
 ```bash
 /takeover
-# Step 1: Runs diagnostics (limited output) - finds 12 type errors, 3 test failures
-# Step 2-3: Reads handover files (CONTEXT, RESEARCH, PLAN)
-# Step 4-5: Analyzes state and extracts critical info
-# Step 6: Auto-detects Step 3 (Fix Test Issues) - test failures + need-fixing states
-# Step 7: Runs /handover first, then shows concise output with delegation instructions
-# Result: Concise report with next action to delegate to subagent
 ```
 
 ### Error Case
