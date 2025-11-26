@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task, SlashCommand(/handover)
+allowed-tools: Task, SlashCommand(/coding:handover)
 
 argument-hint: [prefix]
 
@@ -14,7 +14,7 @@ Parses handover documentation (CONTEXT.md, NOTES.md, PLAN.md) left by previous a
 
 **What this command does NOT do**:
 
-- Does not create or update handover documentation (use `/handover` for that)
+- Does not create or update handover documentation (use `/coding:handover` for that)
 - Does not modify project files or execute code directly (delegates to subagents)
 - Does not perform git operations like commit, push, or branch switching
 
@@ -589,7 +589,7 @@ After PLAN subagent completes and handover is updated (if normal plan), execute 
    - Store in working directory alongside handover files
 
 3. **Update Handover with Research Results**:
-   - Run `/handover` command to update all three handover files
+   - Run `/coding:handover` command to update all three handover files
    - NOTES.md will reference new research files in "Open Questions"
    - PLAN.md will mark decisions as "📊 **RESEARCH AVAILABLE**"
 
@@ -768,7 +768,7 @@ For each decision that was consulted in Phase 3:
 
 **For normal plans only:**
 
-1. **Run `/handover` command** to update all three handover files:
+1. **Run `/coding:handover` command** to update all three handover files:
    - CONTEXT.md with latest file statuses and decisions from execution
    - NOTES.md with any new implementation issues and solutions
    - PLAN.md with decision outcomes and unblocked tasks
@@ -907,5 +907,5 @@ Provide comprehensive output report tailored to plan type:
 ```bash
 /takeover
 # Error: One or more handover files not found
-# Suggestion: Create handover first with `/handover` or check file location
+# Suggestion: Create handover first with `/coding:handover` or check file location
 ```

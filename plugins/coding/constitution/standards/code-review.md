@@ -10,13 +10,33 @@ _Standards for conducting effective, constructive code reviews that improve code
 
 ## Core Principles
 
+### Truth Over Ego
+
+Value accuracy over being right. Every correction upgrades the system.
+
+```typescript
+// ✅ GOOD: Embrace corrections as learning
+// Reviewer: "This approach has a race condition under load"
+// Author: "You're right. I missed that. Let me add synchronization.
+//          Can we document this pattern for others?"
+
+// ❌ BAD: Defensive response
+// "Well it works for now, we can fix it later if it's a problem"
+```
+
+**Application**:
+- Corrections are data, not criticism
+- Update beliefs when evidence shows they're wrong
+- Document what you learned for the team
+- Ask "What else am I missing?" to invite deeper review
+
 ### Constructive Collaboration
 
-Reviews should improve code and build team knowledge.
+Reviews improve code and build team knowledge.
 
 ```typescript
 // ✅ GOOD: Constructive feedback
-// "suggestion: Consider extracting this validation logic into 
+// "suggestion: Consider extracting this validation logic into
 // a reusable function for consistency across endpoints"
 
 // ❌ BAD: Unconstructive criticism
@@ -25,7 +45,7 @@ Reviews should improve code and build team knowledge.
 
 ### Focus on Impact
 
-Prioritize critical issues over style preferences.
+Prioritize critical issues over style. Critique is about ideas, not people.
 
 ```typescript
 // ✅ GOOD: Focus on important issues
@@ -34,6 +54,16 @@ Prioritize critical issues over style preferences.
 // ❌ BAD: Over-focusing on minor style
 // "nit: Add space after comma (50 comments on spacing)"
 ```
+
+### Psychological Safety with High Standards
+
+Make the team feel trusted while maintaining rigorous quality.
+
+**Application**:
+- Separate code quality from personal worth
+- Good process is praised even when outcomes disappoint
+- Explain why standards matter, don't just enforce
+- Invite challenge: "What am I missing in this review?"
 
 ## Review Focus Areas
 

@@ -2,6 +2,76 @@
 
 _Core principles that guide all development work across the codebase_
 
+## Thinking Frameworks
+
+### Model-Based, Systems Thinking
+
+Approach problems mathematically and systemically:
+
+```typescript
+// ✅ GOOD: Think in systems and models
+interface CacheStrategy {
+  get(key: string): Promise<Value | null>;
+  set(key: string, value: Value, ttl?: number): Promise<void>;
+  invalidate(pattern: string): Promise<void>;
+}
+
+// Model the system: Cache → Repository → Database
+// Reason about: What if cache fails? What if DB is slow?
+// Optimize for: Long-term sustainability, not quick fixes
+```
+
+**Application**:
+- Map systems and their interactions before coding
+- Consider long-term consequences, not just immediate fixes
+- Reason quantitatively where appropriate (complexity, performance)
+
+### Listen First, Speak Last
+
+Gather complete context before acting:
+
+```typescript
+// ✅ GOOD: Read existing patterns before creating new ones
+// 1. Search codebase for similar functionality
+// 2. Understand current patterns and conventions
+// 3. Only then propose solution aligned with existing system
+```
+
+**Application**:
+- Read relevant code before modifying
+- Check existing implementations for patterns
+- Ask clarifying questions when requirements are ambiguous
+- Gather input before making architectural decisions
+
+### "What Am I Missing?" Checkpoint
+
+Before major decisions, explicitly check for blindspots:
+
+**Questions to ask**:
+- What assumptions am I making?
+- What information don't I have?
+- What could go wrong that I haven't considered?
+- Who else should weigh in?
+- What are the unintended consequences?
+
+```typescript
+// ✅ GOOD: Document key decisions and uncertainties
+/**
+ * Decision: Using LRU cache with 1-hour TTL
+ *
+ * Assumptions:
+ * - Data changes infrequently (< 1/hour)
+ * - Memory is available for cache
+ * - Cache misses are acceptable
+ *
+ * Uncertainties:
+ * - Actual data update frequency unknown
+ * - Cache memory impact not measured
+ *
+ * Monitoring: Track cache hit rate, memory usage
+ */
+```
+
 ## Core Principles
 
 ### Single Responsibility Principle

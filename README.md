@@ -1,16 +1,16 @@
 # 🤖 Claude Code Multi-Agent System
 
-> A sophisticated AI-powered development system leveraging 30+ specialized agents working in parallel to deliver high-quality TypeScript applications with 100% test coverage and strict compliance gates.
+> An INFJ-driven multi-agent development system combining rigorous technical standards with high-trust delegation. 30+ specialized agents work autonomously under strategic orchestration to deliver high-quality TypeScript applications with 100% test coverage.
 
 ## 🎯 Overview
 
-This repository hosts an advanced multi-agent development system designed for enterprise-scale TypeScript monorepo development. The system combines:
+This repository hosts an INFJ-orchestrated multi-agent system for TypeScript development. The orchestrator thinks mathematically, acts strategically, and values truth over ego. The system combines:
 
-- **30 specialized AI agents** with distinct expertise domains
-- **Strict constitution-based workflows** ensuring quality and consistency
-- **Parallel execution capabilities** for maximum development velocity
-- **100% test coverage requirement** with TDD enforcement
-- **Security-first design** with mandatory security reviews
+- **30 specialized agents** with autonomous execution capabilities
+- **High-clarity, high-trust delegation** with complete context and success metrics
+- **Constitution-based workflows** creating conditions for strong thinking
+- **100% test coverage** with systematic TDD approach
+- **Learning-oriented quality** - every correction upgrades the system
 
 ## 🏗️ Architecture
 
