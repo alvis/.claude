@@ -172,13 +172,27 @@ class UserService {
   async findUser(id: string): Promise<User> {
     const cached = await this.cache.get(`user:${id}`);
     if (cached) return cached;
-    
+
     const user = await this.repo.find(id);
     if (!user) throw new UserNotFoundError(`User ${id} not found`);
-    
+
     await this.cache.set(`user:${id}`, user, { ttl: 3600 });
     return user;
   }
+}
+```
+
+**Factory Exception**: Factory functions are allowed ONLY when they accept input parameters:
+
+```typescript
+// ✅ GOOD: factory with parameters - adds configuration value
+function createLogger(config: LoggerConfig): Logger {
+  return new Logger(config);
+}
+
+// ❌ BAD: zero-argument factory - no value added
+function createDefaultLogger(): Logger {
+  return new Logger(); // just use new Logger() directly!
 }
 ```
 

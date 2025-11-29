@@ -65,7 +65,7 @@ Maintain high quality standards while ensuring complete type safety:
 
 - **100% coverage with ABSOLUTE MINIMUM tests** - One test per unique behavior path
   - Maintain **100%** coverage, excluding barrel files (typically `index.ts`) and pure type files (ususally `types.ts`)
-  - Use `/* v8 ignore start */` at the top of any barrel and type files to exclude them from coverage reports and signal no test is needed
+  - Use `/* v8 ignore file */` at the top of any barrel and type files to exclude them from coverage reports and signal no test is needed
 - **BAD: Artificial scenario variations** - No testing same logic with different fake data
 - **BAD: Redundant edge cases** - If logic is identical, one test is enough
 - **Maximize test reuse** - Parameterized tests over copy-paste variations
@@ -264,7 +264,7 @@ Follow these TypeScript-specific testing patterns:
 - **Use `const` over `let`** - Create fresh instances per test instead of reassigning variables
 - **Avoid `beforeEach`** - Keep tests self-contained when possible, use factory functions for complex setups
 - **Never use dynamic imports** - Always use static imports at module level, no `await import()` in tests
-- **Avoid over-mocking** - Use real implementations for simple logic, only mock external dependencies with side effects
+- **Avoid over-mocking** - See "When to Use Mocks" section for guidance on when mocking is appropriate
 - **Test outcomes, not mocks** - Focus on business logic and results, not mock call verification
 - **Type-safe mock creation** - All mocks must implement proper TypeScript interfaces
 </IMPORTANT>
@@ -422,12 +422,10 @@ Test files containing setup areas (types/interfaces, setup helpers, constants, m
 
 **Section Header Format**:
 
-All section headers must use exactly this format with consistent character width (26 characters total, 20 equal signs):
+All section headers must use exactly this simple format:
 
 ```typescript
-// ==================== //
 // SECTION NAME IN CAPS //
-// ==================== //
 ```
 
 **When to Use**:
@@ -456,18 +454,14 @@ Use these standardized section names in order of appearance:
 import { describe, it, expect, vi } from 'vitest';
 import type { User, UserRepository } from '#types';
 
-// ==================== //
-//         TYPES        //
-// ==================== //
+// TYPES //
 
 interface TestContext {
   repository: UserRepository;
   service: UserService;
 }
 
-// ==================== //
-//        MOCKS         //
-// ==================== //
+// MOCKS //
 
 const { fetchUser } = vi.hoisted(() => ({
   fetchUser: vi.fn(),
@@ -480,19 +474,14 @@ vi.mock(
   }) satisfies Partial<typeof import('#services/userService')>,
 );
 
-// ==================== //
-//      CONSTANTS       //
-// ==================== //
+// CONSTANTS //
 
 const VALID_USER_DATA = {
   name: 'John Doe',
   email: 'john@example.com',
 } as const;
 
-
-// ==================== //
-//        HELPERS       //
-// ==================== //
+// HELPERS //
 
 const createTestContext = (): TestContext => {
   const repository = createMockUserRepository();
@@ -500,9 +489,7 @@ const createTestContext = (): TestContext => {
   return { repository, service };
 };
 
-// ==================== //
-//     TEST SUITES      //
-// ==================== //
+// TEST SUITES //
 
 describe('sv:UserService', () => {
   it('should create user successfully', () => {
@@ -517,9 +504,7 @@ describe('sv:UserService', () => {
 
 **Formatting Guidelines**:
 
-- Section names should be centered or left-aligned within the header
 - Maintain consistent spacing (2 slashes, 1 space, content, 1 space, 2 slashes)
-- Total line width must be exactly 26 characters
 - Use CAPS for all section names
 - Keep section headers aligned vertically
 
@@ -541,23 +526,17 @@ describe('sv:UserService', () => {
 // ✅ GOOD: consistent headers with clear organization
 import { describe, it, expect, vi } from 'vitest';
 
-// ==================== //
-//       MOCKS          //
-// ==================== //
+// MOCKS //
 
 const { fetchUser } = vi.hoisted(() => ({
   fetchUser: vi.fn(),
 }));
 
-// ==================== //
-//     CONSTANTS        //
-// ==================== //
+// CONSTANTS //
 
 const VALID_USER = { name: 'John' };
 
-// ==================== //
-//    TEST SUITES       //
-// ==================== //
+// TEST SUITES //
 
 describe('sv:UserService', () => {
   it('should handle user creation', () => {
@@ -845,10 +824,81 @@ it("should return non-empty user list", async () => {
 
 ## Mocking Standards
 
+### When to Use Mocks
+
+<IMPORTANT>
+**Only create mocks when the dependency involves:**
+
+1. **IO Operations** - File system, network calls, database queries
+2. **External Services** - Third-party APIs, cloud services, messaging queues
+3. **Behavior You Want to Control** - Time/dates, random values, specific error scenarios
+
+**For all other cases, use the real implementation.** Simple logic, pure functions, utility methods, and internal business logic should use their actual implementations in tests.
+</IMPORTANT>
+
+```typescript
+// ✅ GOOD: mock external service with side effects
+const { sendEmail } = vi.hoisted(() => ({
+  sendEmail: vi.fn().mockResolvedValue({ sent: true }),
+}));
+
+vi.mock('#services/email', () => ({ sendEmail }));
+
+// ✅ GOOD: use real implementation for pure logic
+import { formatCurrency, calculateDiscount } from '#utils/pricing';
+
+describe("fn:processOrder", () => {
+  it("should calculate final price correctly", () => {
+    // use real formatCurrency and calculateDiscount - they're pure functions
+    const result = processOrder({ amount: 100, discount: 0.1 });
+    expect(result.formatted).toBe("$90.00");
+  });
+});
+
+// ❌ BAD: unnecessary mock for pure function
+const { formatCurrency } = vi.hoisted(() => ({
+  formatCurrency: vi.fn().mockReturnValue("$90.00"),
+}));
+// Why mock a pure function? It has no side effects!
+```
+
+**Decision Guide:**
+
+| Dependency Type | Mock? | Rationale |
+|-----------------|-------|-----------|
+| Database queries | Yes | IO, side effects |
+| HTTP/API calls | Yes | IO, external service |
+| File system operations | Yes | IO |
+| Email/SMS services | Yes | External service, side effects |
+| Date/time (when testing time-sensitive logic) | Yes | Behavior control |
+| Random number generation | Yes | Behavior control |
+| Pure utility functions | No | No side effects |
+| Internal business logic | No | Part of what you're testing |
+| Simple data transformations | No | Deterministic, testable as-is |
+| Type converters | No | Pure, no side effects |
+
 ### Vi.hoisted Pattern with Type Safety
 
 <IMPORTANT>
-All module mocks MUST use vi.hoisted() with proper type safety. Mock objects MUST use `satisfies Partial<MockedObject<Type>>` and module mocks MUST use `satisfies Partial<typeof import('...')>` for compile-time type checking.
+All module mocks MUST use vi.hoisted() with proper type safety.
+
+**Two distinct patterns for type casting:**
+
+1. **Inside vi.mock** (partial module): Use triple pattern for module system compatibility
+
+   ```typescript
+   vi.mock("./service", () => ({
+     service: { ... } satisfies Partial<MockedObject<Service>> as Partial<MockedObject<Service>> as MockedObject<Service>,
+   }));
+   ```
+
+2. **Outside vi.mock** (in vi.hoisted or test code): Strictly `satisfies Partial<MockedObject<Type>>` only
+
+   ```typescript
+   const mockService = { getUser: vi.fn() } satisfies Partial<MockedObject<Service>>;
+   ```
+
+**Why?** Inside vi.mock, the module system requires the exact type. Outside vi.mock, test code should explicitly handle partial types for accuracy.
 </IMPORTANT>
 
 Use the standard vi.hoisted pattern with destructured returns and helper utilities:
@@ -1426,6 +1476,89 @@ describe('fn:processUser', () => {
 });
 ```
 
+### Factory Function Justification Rules
+
+<IMPORTANT>
+Factory functions add complexity and must justify their existence. A factory function is only warranted when it will be called multiple times with different parameters.
+</IMPORTANT>
+
+**Rule 1: No Zero-Parameter Factory Functions**
+
+Factory functions without parameters are violations. Use a `const` variable instead:
+
+```typescript
+// ❌ VIOLATION: factory with no parameters
+function createUser(): User {
+  return { id: 'user-1', name: 'John', email: 'john@example.com' };
+}
+
+// ❌ VIOLATION: arrow function style but still no parameters
+const createUser = (): User => ({
+  id: 'user-1',
+  name: 'John',
+  email: 'john@example.com',
+});
+
+// ✅ CORRECT: use const for fixed test data
+const user: User = { id: 'user-1', name: 'John', email: 'john@example.com' };
+```
+
+**Rule 2: Factory Functions Must Be Used With Different Parameters**
+
+A factory function must be called at least twice with different parameters to justify its existence. If you only call it once or always with the same parameters, use a `const` instead:
+
+```typescript
+// ❌ VIOLATION: factory only used once or with same params
+const createOrder = (overrides?: Partial<Order>): Order => ({
+  id: 'order-1',
+  status: 'pending',
+  total: 100,
+  ...overrides,
+});
+
+// only ever called as:
+const order = createOrder(); // no overrides - just use const!
+
+// ✅ CORRECT: factory used with different parameters (justifies existence)
+const pendingOrder = createOrder({ status: 'pending' });
+const completedOrder = createOrder({ status: 'completed', total: 500 });
+const cancelledOrder = createOrder({ status: 'cancelled', total: 0 });
+```
+
+**Rule 3: Date.now() Does Not Justify a Factory**
+
+Dynamic values like `Date.now()` do not justify a factory function because dates should be frozen in tests using `vi.setSystemTime()`:
+
+```typescript
+// ❌ VIOLATION: Date.now() doesn't justify factory
+function createEvent(): Event {
+  return { id: 'event-1', timestamp: Date.now() };
+}
+
+// ✅ CORRECT: freeze time with vi.setSystemTime, then use const
+vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
+const event: Event = { id: 'event-1', timestamp: Date.now() };
+```
+
+**Rule 4: Use Const Arrow Function Syntax**
+
+When a factory function is justified, it must use `const` + arrow function syntax:
+
+```typescript
+// ❌ VIOLATION: function declaration
+function createUser(overrides?: Partial<User>): User {
+  return { id: 'user-1', name: 'John', ...overrides };
+}
+
+// ✅ CORRECT: const + arrow function
+const createUser = (overrides?: Partial<User>): User => ({
+  id: 'user-1',
+  name: 'John',
+  email: 'john@example.com',
+  ...overrides,
+});
+```
+
 ## Error Testing
 
 ### Testing Error Conditions
@@ -1461,12 +1594,14 @@ describe("fn:fetchUserData", () => {
 ### Coverage Requirements
 
 <IMPORTANT>
-- **Minimum coverage**: 100% line coverage
+- **Minimum coverage**: 100% line coverage, excluding barrel files (`index.ts`) and pure type files (`types.ts`)
 - **Branch coverage**: 100% for critical paths
 - **Function coverage**: 100% for public APIs
 - **Statement coverage**: 100% for business logic
 
 All projects MUST maintain 100% coverage with the absolute minimum number of tests. Use the coverage-driven test development workflow to ensure each test adds unique value.
+
+Use `/* v8 ignore file */` at the top of barrel and type files to exclude them from coverage reports.
 </IMPORTANT>
 
 ### Coverage Configuration
@@ -1602,6 +1737,7 @@ import { validateEmail } from '#utils/validators';
 
 // only mock external dependencies with side effects
 const apiClient = createApiClient();
+// See "When to Use Mocks" section above for complete guidance on when mocking is appropriate
 
 // ❌ BAD: testing the mock instead of business logic
 describe('sv:UserService', () => {

@@ -25,6 +25,7 @@ Value accuracy over being right. Every correction upgrades the system.
 ```
 
 **Application**:
+
 - Corrections are data, not criticism
 - Update beliefs when evidence shows they're wrong
 - Document what you learned for the team
@@ -60,6 +61,7 @@ Prioritize critical issues over style. Critique is about ideas, not people.
 Make the team feel trusted while maintaining rigorous quality.
 
 **Application**:
+
 - Separate code quality from personal worth
 - Good process is praised even when outcomes disappoint
 - Explain why standards matter, don't just enforce
@@ -82,40 +84,44 @@ Does the code work correctly?
 if (items.length === 0) return defaultValue;
 ```
 
-<IMPORTANT>
+## Suppression Comments
 
-## CRITICAL: Flag All Suppression Comments
+Suppression comments (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) are **acceptable when properly documented** with reasoning.
 
-**Every suppression comment found** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) is a **RED FLAG** that requires investigation.
+### Review Action
 
-### Review Action:
+When you find suppression comments:
 
-When you find suppression comments, always ask:
+1. **Check for documentation** - Is there a comment explaining WHY?
+2. **If undocumented** - Request documentation before approving
+3. **If documented** - Accept if the reasoning is valid
 
-1. **Why is this suppression here?** - Understand the original problem
-2. **Can this be fixed properly?** - Suggest concrete refactoring
-3. **Is it truly unavoidable?** - Very few cases justify suppression
-
-### Required Feedback:
+### Example of Acceptable Suppression
 
 ```typescript
-// CRITICAL ISSUE: Suppression comment found
-// "issue: Remove @ts-ignore and fix the underlying type issue.
-// Suggestions:
-// 1. Add proper type guard: if (!isValidUser(data)) throw new Error(...)
-// 2. Update function return type if needed
-// 3. Use type assertion only after validation
-// The suppression masks a real type safety problem that must be fixed."
+// TypeScript cannot infer the narrowed type after the instanceof check in this closure
+// @ts-expect-error - see https://github.com/microsoft/TypeScript/issues/9998
+const handler = (err: unknown) => err instanceof Error && err.cause;
 ```
 
-### Escalation Path:
+### Handling Untyped Libraries (NOT Suppression)
 
-- If developer insists suppression is needed
-- Ask them to document WHY in the PR description
-- Flag for lead engineer review
-- May require architectural discussion
+For third-party libraries without types, create type declarations instead of suppressing:
 
-</IMPORTANT>
+```typescript
+// in types/legacy-lib.d.ts
+declare module 'legacy-lib' {
+  export function process(data: unknown): ProcessResult;
+}
+```
+
+### Example of Unacceptable Suppression
+
+```typescript
+// ❌ BAD: Using suppression instead of creating type declarations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const result = legacyLib.process(data) as any;
+```
 
 ### Security (Critical)
 

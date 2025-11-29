@@ -117,7 +117,7 @@ For multi-line content, start tag on its own line:
 
 ### Basic JSDoc Structure
 
-**[IMPORTANT]** Use one-line format when possible, multi-line when necessary:
+**[IMPORTANT]** Use one-line JSDoc when there are no parameters and return is void/Promise<void>. Use multi-line when there are parameters or non-void returns:
 
 ```typescript
 /** calculates user's total score from all completed assessments */
@@ -146,7 +146,6 @@ async function processPayment(
 ### JSDoc Rules
 
 - **Oneline section header** in UPPER CASE
-- **Prefer oneline docs** BUT NOT when there are parameters or non-void (including non-Promise<void>) return
 - **Begin with third-person singular verb** (e.g., "validates" not "validate")
 - **Write all JSDoc in lowercase**
 - **Parameter descriptions start with lowercase** (unless referencing types/interfaces/acronyms)

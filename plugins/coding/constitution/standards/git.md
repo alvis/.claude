@@ -64,7 +64,7 @@ closes #245
 
 ### Guidelines
 
-- **Subject line**: 50 chars or less, imperative mood
+- **Subject line**: Aim for ≤50 chars (72 hard limit), imperative mood
 - **Body**: Wrap at 72 chars, explain WHY not WHAT
 - **Footer**: Reference issues and breaking changes
 

@@ -71,15 +71,7 @@ interface ApiResponse {
 const response: ApiResponse = await fetchUser(); // proper typing
 const user = response.user;
 
-// ✅ ACCEPTABLE (TESTING ONLY): partial mocking pattern
-const mockUser = {
-  id: "123",
-  name: "Test User",
-} as Partial<User> as User; // explicit testing pattern
-
-// ✅ ACCEPTABLE (TESTING ONLY): extends pattern
-interface PartialUser extends Pick<User, "id" | "name"> {}
-const mockUser: User = { id: "123", name: "Test" } as PartialUser as User;
+// ✅ ACCEPTABLE (TESTING ONLY): see Testing Patterns below
 ```
 
 **Why `as unknown as TYPE` is dangerous**:
@@ -104,22 +96,39 @@ const mockUser: User = { id: "123", name: "Test" } as PartialUser as User;
    - Add proper validation at boundaries
 4. **User confirmation** - If you believe `as unknown as TYPE` is necessary, **MUST confirm with user first**
 
-**Testing exceptions ONLY**:
+**Testing Patterns** (TESTING ONLY):
+
+Two distinct patterns depending on context:
 
 ```typescript
-// ✅ ACCEPTABLE: Testing with partial objects
+// ✅ INSIDE vi.mock: Triple pattern when mocking partial module
+vi.mock("./user-service", () => ({
+  userService: {
+    getUser: vi.fn(),
+  } satisfies Partial<MockedObject<UserService>> as Partial<
+    MockedObject<UserService>
+  > as MockedObject<UserService>,
+}));
+
+// ✅ OUTSIDE vi.mock: Strictly satisfies only
+// Test code must know the exact shape of the mock
 const mockUser = {
   id: "123",
   name: "Test User",
-} as Partial<User> as User;
+} satisfies Partial<User>;
 
-// ✅ ACCEPTABLE: Testing with extends pattern
-interface TestUser extends Pick<User, "id" | "name"> {}
-const mockData: User = testData as TestUser as User;
-
-// NOTE: These patterns ONLY allowed in test files
-// Production code must NEVER use these patterns
+// Use the partial mock with explicit type annotation
+function setupTest(user: Partial<User> = mockUser) {
+  // ...
+}
 ```
+
+**Why two patterns?**
+
+- **Inside vi.mock**: The module system requires the exact type, so triple casting is necessary
+- **Outside vi.mock**: Test code should explicitly handle partial types for accuracy
+
+**NOTE**: These patterns ONLY allowed in test files. Production code must NEVER use these patterns.
 
 ### Prefer const over let
 
