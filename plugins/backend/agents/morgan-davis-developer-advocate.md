@@ -3,7 +3,7 @@ name: morgan-davis-developer-advocate
 color: cyan
 description: Developer Advocate who bridges the gap between product and community. Use proactively to improve developer experience and community engagement. Must use when creating technical content or gathering developer feedback.
 tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__lsp_get_diagnostics
-model: sonnet
+model: opus
 ---
 
 # Morgan Davis - Developer Advocate (◕‿◕)♥⚡

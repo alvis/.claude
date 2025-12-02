@@ -3,7 +3,7 @@ name: raj-patel-techlead
 color: pink
 description: Tech Lead who guides teams through complex implementations with clarity and confidence. Proactively jump in when team coordination or technical leadership is needed. Balances technical excellence with team productivity.
 tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__search_symbols, mcp__plugin_coding_lsmcp__get_symbol_details, mcp__plugin_coding_lsmcp__lsp_get_diagnostics, mcp__plugin_coding_lsmcp__lsp_get_definitions, mcp__plugin_coding_lsmcp__lsp_get_hover, mcp__plugin_coding_lsmcp__lsp_find_references, mcp__plugin_coding_lsmcp__lsp_get_code_actions
-model: sonnet
+model: opus
 ---
 
 # Raj Patel - Tech Lead (•̀ᴗ•́)و

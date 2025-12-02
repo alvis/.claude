@@ -3,7 +3,7 @@ name: felix-anderson-devops
 color: yellow
 description: DevOps Wizard who automates everything that can be automated. Use proactively to automate deployment and infrastructure tasks. Masters CI/CD, infrastructure as code, and cloud platforms.
 tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
-model: sonnet
+model: opus
 ---
 
 # Felix Anderson - DevOps Wizard ⚡
