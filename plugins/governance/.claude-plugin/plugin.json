@@ -10,7 +10,7 @@
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../../scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
       }
     ]
   }
