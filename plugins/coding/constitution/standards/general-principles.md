@@ -2,6 +2,129 @@
 
 _Core principles that guide all development work across the codebase_
 
+## Dependent Standards
+
+🚨 **[IMPORTANT]** You MUST also read the following standards if applicable together with this file
+
+- TypeScript Standards (standard:typescript) - Code must follow strict type safety rules
+- Naming Standards (standard:naming) - All identifiers must follow naming conventions
+- Documentation Standards (standard:documentation) - Public APIs require proper documentation
+
+## What's Stricter Here
+
+This standard enforces requirements beyond typical coding practices:
+
+| Standard Practice                | Our Stricter Requirement                      |
+|----------------------------------|-----------------------------------------------|
+| British/American spelling mixed  | **American English ONLY**                     |
+| Wrapper functions acceptable     | **Zero wrapper tolerance** - must add value   |
+| Suppression comments as needed   | **MUST avoid**                   |
+| Flexible coding style            | **Match existing patterns** required          |
+| Optimize when needed             | **Profile first, optimize second**            |
+| Quick fixes OK                   | **Fix root causes, not symptoms**             |
+
+## Violation Checklist
+
+Before submitting code, verify NONE of these violations are present:
+
+### British English
+
+```typescript
+// ❌ VIOLATION: British spelling
+interface ColourConfig {
+  primaryColour: string;
+  customisable: boolean;
+}
+```
+
+**See**: [American English Convention](#american-english-convention)
+
+### Wrapper Without Value
+
+```typescript
+// ❌ VIOLATION: pointless wrapper
+function getUser(id: string): Promise<User> {
+  return userRepository.findById(id); // no value added!
+}
+```
+
+**See**: [Zero Wrapper Tolerance](#zero-wrapper-tolerance)
+
+### Suppression Comments
+
+```typescript
+// ❌ VIOLATION: silencing errors without approval
+// @ts-ignore
+// @ts-expect-error
+// eslint-disable-next-line
+/* eslint-disable */
+```
+
+**See**: [CRITICAL: Never Suppress Errors](#critical-never-suppress-errors---fix-root-causes)
+
+### Pattern Mismatch
+
+```typescript
+// ❌ VIOLATION: different pattern than existing codebase
+// If codebase uses UserService with constructor DI
+class ProductManager {
+  static async getProduct(id: string): Promise<Product> { ... }
+}
+```
+
+**See**: [Match Existing Patterns](#match-existing-patterns)
+
+### Multiple Responsibilities
+
+```typescript
+// ❌ VIOLATION: doing too many things
+class EmailManager {
+  validate(email: string): boolean { ... }
+  send(to: string, subject: string, body: string): void { ... }
+  saveToDatabase(email: Email): void { ... }
+}
+```
+
+**See**: [Single Responsibility Principle](#single-responsibility-principle)
+
+### Premature Optimization
+
+```typescript
+// ❌ VIOLATION: optimizing without profiling
+const cache = new WeakMap(); // "just in case" it's slow
+```
+
+**See**: [Optimize Thoughtfully](#optimize-thoughtfully)
+
+### Critical (Immediate Rejection)
+
+| Violation                    | Example                              |
+|------------------------------|--------------------------------------|
+| Suppression without approval | `@ts-ignore`, `eslint-disable`       |
+| Wrapper without value        | `return repo.find(id)`               |
+| British English              | `colour`, `customise`                |
+| Pattern mismatch             | Static methods when DI pattern used  |
+
+## American English Convention
+
+- **American English only** - Use American spelling in all code
+
+```typescript
+// ✅ GOOD: american English
+interface ColorConfig {
+  primaryColor: string;
+  customizable: boolean;
+  // ...
+}
+
+// ❌ BAD: british English
+interface ColourConfig {
+  primaryColour: string;
+  customisable: boolean;
+  // ...
+}
+```
+
 ## Thinking Frameworks
 
 ### Model-Based, Systems Thinking
@@ -22,6 +145,7 @@ interface CacheStrategy {
 ```
 
 **Application**:
+
 - Map systems and their interactions before coding
 - Consider long-term consequences, not just immediate fixes
 - Reason quantitatively where appropriate (complexity, performance)
@@ -38,6 +162,7 @@ Gather complete context before acting:
 ```
 
 **Application**:
+
 - Read relevant code before modifying
 - Check existing implementations for patterns
 - Ask clarifying questions when requirements are ambiguous
@@ -48,6 +173,7 @@ Gather complete context before acting:
 Before major decisions, explicitly check for blindspots:
 
 **Questions to ask**:
+
 - What assumptions am I making?
 - What information don't I have?
 - What could go wrong that I haven't considered?
@@ -309,21 +435,35 @@ const userIndex = new Map<string, User>(); // O(1) lookup
 
 **DO NOT use suppression comments** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) to mask underlying problems. It is **VERY RARE** that they are necessary.
 
-### The Problem with Suppression Comments:
+### The Problem with Suppression Comments
 
 - **Masks real issues** - Problem continues to exist, just hidden
 - **Creates technical debt** - Future maintainers won't understand why code is structured oddly
 - **Breaks continuous improvement** - Can't identify and fix root causes
 - **Violates DRY principle** - You're working around a problem instead of fixing it
 
-### Correct Approach:
+### Correct Approach
 
-1. **Understand the root cause** - Use diagnostic tools to see the underlying issue
-2. **Refactor or fix** - Change the code structure, types, or logic to resolve it properly
-3. **Test the solution** - Verify that the fix is correct and complete
-4. **Document if needed** - Only add comments to explain legitimate design decisions
+1. **Ultrathink** - Deeply analyze the underlying cause of the error/warning
+1. **Understand the root cause** - Use diagnostic tools (e.g. `lsp_get_diagnostics`, `ide__getDiagnostics`) to understand the underlying issue
+1. **Refactor or fix** - Change the code structure, types, or logic to resolve it properly
+1. **Fix Properly** - Apply proper solutions:
+   - Correct type definitions
+   - Add proper type guards
+   - Refactor code structure
+   - Update imports/exports
+   - Fix actual logic errors
+1. **Test the solution** - Verify that the fix is correct and complete
+1. **Document if needed** - Only add comments to explain legitimate design decisions
 
-### Example:
+### When All Else Fails
+
+- Suppression comments are a **LAST RESORT ONLY**
+- **MUST consult with the user** before applying any suppression comment
+- Document why suppression is unavoidable
+- Create a follow-up task to fix properly
+
+### Example
 
 ```typescript
 // ❌ BAD: Suppressing the error
@@ -342,6 +482,49 @@ function processData(response: DataResponse): User {
   }
   return response.data; // Now TypeScript knows this is User
 }
+```
+
+```typescript
+// ❌ ABSOLUTELY BAD: Silencing the problem
+// @ts-ignore
+const result: User = riskyFunction();
+
+// ✅ GOOD: Understanding and fixing the root cause
+function isValidResult(value: unknown): value is Result {
+  return typeof value === "object" && value !== null && "data" in value;
+}
+
+const rawResult = riskyFunction();
+if (!isValidResult(rawResult)) {
+  throw new Error("Invalid result from riskyFunction");
+}
+const result = rawResult;
+
+// ✅ GOOD: Using type guards to narrow types safely
+function processData(input: unknown): User {
+  if (!isUser(input)) {
+    throw new ValidationError("Invalid user data provided");
+  }
+  return input; // TypeScript knows input is User
+}
+```
+
+```typescript
+// ❌ VERY BAD: suppressing the linter instead of following its suggestion
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- intentional boolean OR for graphics support check */
+const supportsImages =
+  terminalInfo?.capabilities.supportsITerm2Graphics ||
+  terminalInfo?.capabilities.supportsKittyGraphics ||
+  terminalInfo?.capabilities.supportsSixelGraphics ||
+  false;
+/* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
+
+// ✅ GOOD: Follow the linter's suggestion - use nullish coalescing
+const supportsImages =
+  terminalInfo?.capabilities.supportsITerm2Graphics ??
+  terminalInfo?.capabilities.supportsKittyGraphics ??
+  terminalInfo?.capabilities.supportsSixelGraphics ??
+  false;
 ```
 
 </IMPORTANT>
