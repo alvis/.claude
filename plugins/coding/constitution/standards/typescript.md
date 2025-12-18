@@ -10,6 +10,118 @@ _Core TypeScript standards for type safety, imports, and language usage_
 - Naming Standards (standard:naming) - Test functions must follow function naming, structure, and documentation standards
 - Documentation Standards (standard:documentation) - Test interfaces and complex test scenarios require proper JSDoc documentation
 
+## What's Stricter Here
+
+This standard enforces requirements beyond typical TypeScript practices:
+
+| Standard Practice                | Our Stricter Requirement                  |
+|----------------------------------|-------------------------------------------|
+| `any` allowed for quick fixes    | **NO `any` types ever**                   |
+| `as unknown as TYPE` for casting | **Type guards or fix root cause**         |
+| Mixed imports acceptable         | **Separate code and type imports**        |
+| Namespace imports OK             | **Named imports only**                    |
+| Default exports common           | **Named exports preferred**               |
+| `private` keyword                | **Use `#private` fields**                 |
+| Suppression comments as needed   | **MUST consult user first**               |
+| `let` for flexibility            | **`const` by default, `let` last resort** |
+
+## Violation Checklist
+
+Before submitting code, verify NONE of these violations are present:
+
+### No Any Type
+
+```typescript
+// ❌ VIOLATION: any defeats TypeScript's purpose
+function parseJson(input: string): any { ... }
+const data: any = {};
+```
+
+**See**: [No Any Type](#no-any-type)
+
+### Type Casting
+
+```typescript
+// ❌ VIOLATION: unsafe double casting
+const user = data as unknown as User;
+```
+
+**See**: [No Unsafe Type Casting](#no-unsafe-type-casting)
+
+### Suppression Comments
+
+```typescript
+// ❌ VIOLATION: silencing errors without approval
+// @ts-ignore
+// @ts-expect-error
+// eslint-disable-next-line
+```
+
+**See**: [CRITICAL: Avoid Suppression Comments](#critical-avoid-suppression-comments)
+
+### Import Organization
+
+```typescript
+// ❌ VIOLATION: mixed code and type imports
+import { useState, type FC } from 'react';
+
+// ❌ VIOLATION: namespace imports
+import * as React from 'react';
+```
+
+**See**: [Import Organization](#import-organization)
+
+### Variable Declaration
+
+```typescript
+// ❌ VIOLATION: let when const would work
+let baseUrl = 'https://api.example.com'; // never reassigned
+```
+
+**See**: [Prefer const over let](#prefer-const-over-let)
+
+### Class Members
+
+```typescript
+// ❌ VIOLATION: private keyword instead of #private
+class Service {
+  private repository: Repository; // use #repository instead
+}
+```
+
+**See**: [Type Safety Rules](#type-safety-rules)
+
+### Module Exports
+
+```typescript
+// ❌ VIOLATION: default exports
+export default userService;
+```
+
+**See**: [Module Patterns](#module-patterns)
+
+### Subpath Imports
+
+```typescript
+// ❌ VIOLATION: relative import when subpath exists
+import { handler } from './fastify/request';
+
+// ❌ VIOLATION: subpath import within same subpath
+// file: src/fastify/request.ts
+import { formatResponse } from '#fastify/response';
+```
+
+**See**: [Subpath Requirements](#subpath-requirements)
+
+### Critical (Immediate Rejection)
+
+| Violation                    | Example                |
+|------------------------------|------------------------|
+| `any` type                   | `const data: any = {}` |
+| Double casting               | `as unknown as User`   |
+| Suppression without approval | `@ts-ignore`           |
+| Namespace imports            | `import * as React`    |
+
 ## Core Principles
 
 ### Type Safety First
@@ -170,59 +282,6 @@ for (const user of users) {
 - **NO `as unknown as TYPE` casting** - Use type guards or fix root cause (see "No Unsafe Type Casting")
 - **Use `#private`** over `private` keyword for class members
 - **Prefer `readonly`** for immutable data structures
-
-<IMPORTANT>
-
-## CRITICAL: Avoid Suppression Comments
-
-**DO NOT use suppression comments** (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) to silence errors or warnings. It is **VERY RARE** that they are necessary.
-
-### Required Approach
-
-1. **Ultrathink** - Deeply analyze the underlying cause of the error/warning
-2. **Use Diagnostic Tools** - Leverage LSP tools (`lsp_get_diagnostics`, `ide__getDiagnostics`) to understand the issue
-3. **Fix Properly** - Apply proper solutions:
-   - Correct type definitions
-   - Add proper type guards
-   - Refactor code structure
-   - Update imports/exports
-   - Fix actual logic errors
-
-### When All Else Fails
-
-- Suppression comments are a **LAST RESORT ONLY**
-- **MUST consult with the user** before applying any suppression comment
-- Document why suppression is unavoidable
-- Create a follow-up task to fix properly
-
-### Examples
-
-```typescript
-// ❌ ABSOLUTELY BAD: Silencing the problem
-// @ts-ignore
-const result: User = riskyFunction();
-
-// ✅ GOOD: Understanding and fixing the root cause
-function isValidResult(value: unknown): value is Result {
-  return typeof value === "object" && value !== null && "data" in value;
-}
-
-const rawResult = riskyFunction();
-if (!isValidResult(rawResult)) {
-  throw new Error("Invalid result from riskyFunction");
-}
-const result = rawResult;
-
-// ✅ GOOD: Using type guards to narrow types safely
-function processData(input: unknown): User {
-  if (!isUser(input)) {
-    throw new ValidationError("Invalid user data provided");
-  }
-  return input; // TypeScript knows input is User
-}
-```
-
-</IMPORTANT>
 
 ### American English Convention
 
@@ -1041,35 +1100,17 @@ const apiHandlerFactory: HandlerFactory<ApiHandler> = {
    }
    ```
 
-## Anti-Patterns
-
-### Common Mistakes to Avoid
-
-1. ❌ **Type Assertion Misuse (CRITICAL)**
-
-   See "No Unsafe Type Casting" for comprehensive coverage of why `as unknown as TYPE` is dangerous and proper solutions including type guards and testing exceptions.
-
-2. ❌ **Using Any Type**
-   - Problem: Defeats TypeScript's purpose
-   - Solution: Use `unknown` with type guards
-   - Example: `function process(data: any)` // loses type safety
-
-3. ❌ **Mixed Imports**
-   - Problem: Mixing code and type imports
-   - Solution: Separate type imports
-   - Example: `import { useState, type FC } from 'react'` // avoid
-
 ## Quick Reference
 
-| Pattern | Use Case | Example |
-|---------|----------|----------|
-| Interface | Object shapes | `interface User { id: string; }` |
-| Type | Unions/computed | `type Status = "active" \| "inactive"` |
-| Unknown | Unsafe input | `function parse(input: unknown)` |
-| Type Guard | Runtime check | `function isUser(x): x is User` |
-| Result Pattern | Error handling | `type Result<T, E> = { success: true; data: T } \| { success: false; error: E }` |
-| Discriminated Union | Exhaustive checks | `type Action = { type: 'A' } \| { type: 'B' }` |
-| Branded Type | Type safety | `type UserId = string & { readonly brand: 'UserId' }` |
+| Pattern             | Use Case          | Example                                                                          |
+|---------------------|-------------------|----------------------------------------------------------------------------------|
+| Interface           | Object shapes     | `interface User { id: string; }`                                                 |
+| Type                | Unions/computed   | `type Status = "active" \| "inactive"`                                           |
+| Unknown             | Unsafe input      | `function parse(input: unknown)`                                                 |
+| Type Guard          | Runtime check     | `function isUser(x): x is User`                                                  |
+| Result Pattern      | Error handling    | `type Result<T, E> = { success: true; data: T } \| { success: false; error: E }` |
+| Discriminated Union | Exhaustive checks | `type Action = { type: 'A' } \| { type: 'B' }`                                   |
+| Branded Type        | Type safety       | `type UserId = string & { readonly brand: 'UserId' }`                            |
 
 ## Quick Decision Tree
 
