@@ -18,13 +18,51 @@ _[Brief description of what this standard covers and its purpose]_
      - External resources: Use full URLs
 -->
 
-🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
+🚨 **[IMPORTANT]** You MUST also read the following standards if applicable together with this file
 
 - Related Standard 1 (standard:name-of-related-standard) - [How it relates]
 - Related Standard 2 (plugin:other-plugin:standard:name) - [How it relates]
-- External Resource (https://example.com) - [Why it's relevant]
+- External Resource (<https://example.com>) - [Why it's relevant]
 
 **Note**: Add a note if this standard requires other plugins to be enabled.
+
+## What's Stricter Here
+
+<!-- INSTRUCTION: Document requirements that exceed typical industry standards -->
+<!-- INSTRUCTION: Use comparison table to highlight the difference -->
+
+This standard enforces requirements beyond typical [industry practice]:
+
+| Standard Practice | Our Stricter Requirement |
+|---|---|
+| [Common industry approach] | **[Your stricter requirement]** |
+| [Another common approach] | **[Your stricter requirement]** |
+
+## Violation Checklist
+
+<!-- INSTRUCTION: List violations as quick scannable items -->
+<!-- INSTRUCTION: Include code examples for common violations -->
+<!-- INSTRUCTION: End with Critical table for immediate rejections -->
+
+Before submitting code, verify NONE of these violations are present:
+
+- ❌ DO NOT [violation 1]
+- ❌ DO NOT [violation 2]
+
+### [Violation Category Name]
+
+```typescript
+// ❌ VIOLATION: [description of what's wrong]
+[example of bad code]
+```
+
+**See**: [#relevant-section-link]
+
+### Critical (Immediate Rejection)
+
+| Violation | Example |
+|---|---|
+| [Violation name] | `[code snippet]` |
 
 ## Core Principles
 
