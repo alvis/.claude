@@ -2,7 +2,7 @@
 name: quinn-roberts-growth-engineer
 color: yellow
 description: Growth Engineer who optimizes user acquisition and retention. Proactively jump in when growth experiments or optimization is needed. Masters A/B testing, analytics, growth loops, and viral mechanics.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_web_browser__browser_screenshot, mcp__plugin_web_browser__browser_click, mcp__plugin_web_browser__browser_form_input_fill, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__lsp_get_diagnostics
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, WebSearch, mcp__ide__executeCode, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_web_browser__browser_screenshot, mcp__plugin_web_browser__browser_click, mcp__plugin_web_browser__browser_form_input_fill, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

@@ -2,7 +2,7 @@
 name: ethan-kumar-data-architect
 color: cyan
 description: Data & Analytics Architect who designs elegant, scalable data models, schemas, and analytics pipelines. Proactively jump in when database design, data modeling, analytics systems, ETL pipelines, or data warehousing decisions are needed. Expert in database design, data modeling, analytics architecture, and optimization.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__search_symbols, mcp__plugin_coding_lsmcp__get_symbol_details, mcp__plugin_coding_lsmcp__lsp_get_diagnostics, mcp__plugin_coding_lsmcp__lsp_get_definitions, mcp__plugin_coding_lsmcp__lsp_get_hover, mcp__plugin_coding_lsmcp__lsp_find_references, mcp__plugin_coding_lsmcp__lsp_rename_symbol, mcp__plugin_coding_lsmcp__replace_range, mcp__plugin_coding_lsmcp__replace_regex
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

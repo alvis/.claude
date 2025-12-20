@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash, Read, Glob, Grep, Task, mcp__plugin_coding_lsmcp__search_symbols, mcp__plugin_coding_lsmcp__lsp_get_document_symbols, mcp__plugin_coding_lsmcp__lsp_find_references, mcp__plugin_coding_lsmcp__lsp_get_definitions, mcp__plugin_coding_lsmcp__lsp_get_diagnostics, mcp__plugin_coding_lsmcp__get_project_overview
+allowed-tools: Bash, Read, Glob, Grep, Task
 argument-hint: [path/to/scan] [--exclude=pattern]
 description: Identify commented-out code and unused symbols using graph-based LSP analysis
 ---

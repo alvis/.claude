@@ -2,7 +2,7 @@
 name: river-blake-prototype-builder
 color: cyan
 description: Prototype Builder who rapidly validates new concepts. Use proactively to build quick prototypes for concept validation. Masters quick iterations, MVP development, and user testing.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, mcp__ide__executeCode, mcp__ide__getDiagnostics, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__search_symbols, mcp__plugin_coding_lsmcp__lsp_get_diagnostics, mcp__plugin_coding_lsmcp__lsp_get_hover, mcp__plugin_coding_lsmcp__lsp_get_code_actions, mcp__plugin_coding_lsmcp__replace_range
+tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, Task, mcp__ide__executeCode, mcp__ide__getDiagnostics, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub
 model: opus
 ---
 

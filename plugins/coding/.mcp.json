@@ -7,17 +7,6 @@
     "grep": {
       "type": "http",
       "url": "https://mcp.grep.app"
-    },
-    "lsmcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@mizchi/lsmcp",
-        "-p",
-        "tsgo"
-      ],
-      "env": {},
-      "type": "stdio"
     }
   }
 }

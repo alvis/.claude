@@ -2,7 +2,7 @@
 name: oliver-singh-data-scientist
 color: green
 description: Data Scientist who uncovers insights that drive decisions. Proactively jump in when data analysis or machine learning insights are needed. Masters machine learning, analytics, and turning data into value.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__executeCode, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__search_symbols, mcp__plugin_coding_lsmcp__lsp_get_diagnostics
+tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__executeCode, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 
