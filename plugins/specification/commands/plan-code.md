@@ -1,100 +1,126 @@
 ---
-allowed-tools: Read, Glob, Grep, Bash, TodoWrite, Task, AskUserQuestion, ExitPlanMode, mcp__plugin_coding_lsmcp__get_project_overview, mcp__plugin_coding_lsmcp__lsp_get_diagnostics
+allowed-tools: Read, Glob, Grep, Bash, Write, Task, TodoWrite, AskUserQuestion, ExitPlanMode
 
 argument-hint: [--design=DESIGN.md] [--change="description"]
 
-description: Refine design via Q&A, analyze gaps, plan implementation in handover format
+description: Generate DRAFT.md (commit blueprint) and PLAN.md (execution roadmap) from proposals
 ---
 
 # Plan Code
 
-Analyzes design specifications (DESIGN.md and child pages) against current implementation state, asks clarifying questions to refine design proposals, and generates comprehensive handover documents (CONTEXT.md, NOTES.md, PLAN.md) with actionable implementation roadmap bridging design intent and reality.
+Analyzes design proposals or existing specifications, generates comprehensive DRAFT.md with copy-paste ready commit blueprints, and creates lightweight PLAN.md execution roadmap. Transforms approved designs into actionable implementation plans with atomic, testable commits.
 
-## 🎯 Purpose & Scope
+## Purpose & Scope
 
 **What this command does NOT do**:
 
 - Does not implement code or make changes to source files
-- Does not modify original design specifications (creates \_PROPOSED and \_CHANGE files instead)
-- Does not perform git operations like commit, push, or branch management
+- Does not execute git commits, push, or branch management
 - Does not create new design specifications from scratch (use /spec-code for that)
 - Does not execute builds, tests, or deployments
-- Does not follow handover documents to execute tasks (use /takeover for that)
-- Does not work in plan mode (creates files that require execution mode)
+- Does not follow plans to execute tasks (use /takeover for that)
+- Does not modify original design files directly
 
 **When to REJECT**:
 
-- When running in plan mode (user must exit plan mode first to create \_PROPOSED/\_CHANGE files)
 - When no design specifications exist (run /spec-code first)
 - When requesting code implementation instead of planning
-- When asking to modify design specs directly instead of creating proposals
+- When asking to execute commits from DRAFT.md (use /takeover for that)
 - When the working directory is not a git repository
 - When design specs are too vague or incomplete to plan against
-- When requesting task execution instead of planning
 
-## 🔄 Workflow
+**Plan Mode Behavior**:
+
+This command can operate partially in plan mode:
+- **Allowed in plan mode**: Loading design docs, analysis, AskUserQuestion clarifications, presenting summaries
+- **Blocked in plan mode**: Writing DRAFT.md, *_CHANGE.md, PLAN.md, or finalizing proposals
+
+When a write action is needed in plan mode, inform the user:
+"I've completed the analysis and design refinement. To write [DRAFT.md/*_CHANGE.md/PLAN.md], please exit plan mode first. You can do this by approving the plan or using /model."
+
+## Workflow
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Plan Mode Check
+### Step 1: Load All Design Documents & Detect Proposals
 
 **Actions**:
 
-1. **Check Execution Mode**:
-   - Detect if running in plan mode
-   - If in plan mode, REJECT the request immediately
-   - Explain to user: "I cannot run /plan-code in plan mode because it requires creating and updating files (\_PROPOSED.md, \_CHANGE.md). Please exit plan mode first using /model or by approving a plan. I promise not to modify any code - only design and planning documents will be created."
-
-2. **Validate Preconditions**:
+1. **Validate Environment**:
    - Confirm working directory is a git repository
-   - Check if design specifications exist (or will be analyzed)
+   - Parse --design argument (default: look in current directory)
+   - Parse --change argument if provided (description of what to change/add)
+   - Use TodoWrite to create initial todo list for workflow tracking
 
-### Step 2: Load and Validate Design Specifications
+2. **Scan for Design Documents**:
+   - Use Glob to find all design documents in the project:
+     - **DESIGN.md** - Main design specification (architecture, components, patterns)
+     - **REQUIREMENTS.md** - Functional and non-functional requirements
+     - **DATA.md** - Data models, schemas, database design
+     - **UI.md** - UI specifications, component designs, layouts
+     - **NOTES.md** - Implementation notes, decisions, context
+     - **REFERENCE.md** - API specifications, technical reference
+     - **Any other `*.md`** design docs in the project directory
+   - Read and parse each found document for later cross-referencing
+
+3. **Scan for Proposals**:
+   - Use Glob to find `*_PROPOSED.md` files in project directory
+   - Check for DESIGN_PROPOSED.md, UI_PROPOSED.md, REFERENCE_PROPOSED.md, etc.
+
+4. **Handle Proposal Detection**:
+   - **If proposals found**:
+     - Present summary of all `*_PROPOSED.md` files discovered
+     - List key changes in each proposal
+     - Ask user: "Is this proposal approved for implementation planning?"
+     - If approved: Proceed to Step 2
+     - If not approved: Exit with guidance to refine proposals first
+   - **If no proposals found**:
+     - Inform user: "No `*_PROPOSED.md` files found. Using original design files directly."
+     - Skip to Step 3 (Generate DRAFT.md)
+
+### Step 2: Analyze Approved Proposal & Document Changes
+
+**Actions** (only if `*_PROPOSED.md` files exist):
+
+1. **Read Proposal Files**:
+   - Read each `*_PROPOSED.md` file found
+   - Parse structure, sections, and content
+
+2. **Compare Against Originals**:
+   - For each proposal, find corresponding original file:
+     - DESIGN_PROPOSED.md → DESIGN.md
+     - UI_PROPOSED.md → UI.md
+     - REFERENCE_PROPOSED.md → REFERENCE.md
+   - Read original files for comparison
+
+3. **Check Plan Mode Before Writing**:
+   - If in plan mode:
+     - Present the change analysis verbally (what sections were added, modified, removed)
+     - Inform user: "To persist *_CHANGE.md files, please exit plan mode first."
+     - Pause workflow until user exits plan mode
+   - If not in plan mode: Proceed to write files
+
+4. **Generate Change Documentation**:
+   - Create `*_CHANGE.md` for each proposal documenting:
+     - Sections added
+     - Sections modified (with before/after)
+     - Sections removed
+     - Key architectural decisions changed
+     - Technology additions or removals
+   - Format changes clearly for human review
+
+### Step 3: Generate DRAFT.md
 
 **Actions**:
 
-1. **Parse Arguments**:
-   - Extract --design argument (default: DESIGN.md in current directory)
-   - Extract --change argument (optional description of what to change/add)
-   - Validate design file exists and is readable
-
-2. **Read Design Specifications**:
-   - Read main DESIGN.md file
-   - Check frontmatter for related_files list
-   - Read all child page files mentioned in related_files:
-     - REFERENCE.md (development reference and implementation detail)
-     - REQUIREMENTS.md (functional and non-functional requirements)
-     - NOTES.md (lessons learnt, researches and decisions archive)
-     - UI.md (UI designs and component specs, if applicable)
-     - DEPLOYMENT.md (deployment and infrastructure specs, if applicable)
-   - Parse all design content into structured data
-
-3. **Extract Design Intent**:
-   - Identify target architecture and patterns
-   - List all specified components and their responsibilities
-   - Document required APIs and endpoints
-   - Note UI requirements and component hierarchy (if applicable)
-   - Extract technology stack requirements
-   - Identify deployment and infrastructure needs (if applicable)
-   - Capture non-functional requirements (performance, security, etc.)
-
-4. **Validate Design Completeness**:
-   - Check for missing critical sections
-   - Identify ambiguous specifications
-   - Note any design decisions that need clarification
-   - If design is incomplete, suggest running /spec-code to update
-
-### Step 3: Analyze Current Implementation State
-
-**Actions**:
-
-1. **Get Project Overview**:
-   - Use mcp__plugin_coding_lsmcp__get_project_overview to understand codebase structure
-   - Run git status to see current changes and branch
-   - Check recent commits for context on ongoing work
+1. **Gather Implementation Context**:
+   - Use mcp__plugin_coding_lsmcp__get_project_overview for codebase structure
+   - Use Glob to scan current file structure
+   - Read relevant design files (proposals if exist, originals otherwise)
+   - Analyze technology stack from package.json or equivalent
+   - Use TodoWrite to track analysis progress
 
 2. **Analyze Implementation Architecture**:
-   - Use Glob to scan project directory structure
    - Map actual file organization vs. designed architecture
    - Identify existing components and modules
    - Document current architectural patterns in use
@@ -105,26 +131,288 @@ ultrathink: you'd perform the following steps
    - Compare actual stack vs. designed stack
    - Identify missing dependencies from design
    - Note any extra dependencies not in design
-   - Check versions and compatibility
 
-4. **Analyze Components and APIs**:
-   - Use Grep to find component implementations
-   - Search for API endpoint definitions
-   - Map implemented components to designed components
-   - Identify implemented but not designed components
-   - Note missing components from design
-
-5. **Check Code Quality and Issues**:
+4. **Check Code Quality and Issues**:
    - Use mcp__plugin_coding_lsmcp__lsp_get_diagnostics to find TypeScript errors
    - Use Grep to search for TODO, FIXME, HACK comments
    - Identify files with incomplete implementation
    - Note areas needing refactoring or improvement
 
-6. **Review Tests and Coverage**:
+5. **Review Tests and Coverage**:
    - Use Glob to find test files
    - Map tests to components
    - Identify components lacking test coverage
-   - Note test failures or missing test scenarios
+
+6. **Cross-Reference ALL Design Documents**:
+   - **DESIGN.md** - Cross-reference for architecture patterns, component relationships, and system design
+   - **REQUIREMENTS.md** - Ensure all functional requirements have corresponding implementations and tests
+   - **DATA.md** - Use for data model implementations, schema definitions, and database operations
+   - **UI.md** - Reference for component specifications, layouts, and UI behavior
+   - **NOTES.md** - Follow implementation patterns, decisions, and context guidelines
+   - **REFERENCE.md** - Use for API specifications, endpoint definitions, and technical contracts
+
+7. **Plan Atomic Commits**:
+   - Break implementation into self-contained, atomic commits
+   - Each commit must be:
+     - Independently testable
+     - Single responsibility
+     - Complete with 100% test coverage for its scope
+   - Order commits by dependency (foundations first)
+
+8. **Write DRAFT.md**:
+
+   ```markdown
+   # Implementation Draft - [Project Name]
+
+   **Created**: [ISO 8601 timestamp]
+   **Design Source**: [path to DESIGN_PROPOSED.md or DESIGN.md]
+   **Change Log**: [path to *_CHANGE.md files if exist]
+
+   ## File Structure
+
+   Final project structure after all commits are applied.
+   Files are sorted by type (directories first), then alphabetically.
+   Each entry shows which commit(s) create or modify it.
+
+   ```
+
+   project/
+   ├── src/
+   │   ├── components/
+   │   │   ├── Button.tsx           # (#1)
+   │   │   ├── Card.tsx             # (#2)
+   │   │   └── index.ts             # (#1, #2)
+   │   ├── hooks/
+   │   │   └── useAuth.ts           # (#3)
+   │   ├── services/
+   │   │   ├── api.ts               # (#1)
+   │   │   └── auth.ts              # (#3)
+   │   └── index.ts                 # (#1)
+   ├── tests/
+   │   ├── Button.test.tsx          # (#1)
+   │   ├── Card.test.tsx            # (#2)
+   │   └── useAuth.test.ts          # (#3)
+   ├── package.json                 # (#1)
+   └── tsconfig.json                # (#1)
+
+   ```
+
+   ## Commit Plan
+
+   Each commit is atomic, self-contained, and independently testable.
+   Copy-paste the code blocks directly into your files.
+
+   ### Commit 1: `feat(core): initialize project with base configuration`
+
+   - **Scope**: Project foundation
+   - **Description**: Sets up project structure, configuration files, and core dependencies
+
+   **Files**:
+
+   ```
+
+   new: package.json
+   new: tsconfig.json
+   new: src/index.ts
+   new: src/services/api.ts
+   new: src/components/Button.tsx
+   new: src/components/index.ts
+   new: tests/Button.test.tsx
+
+   ```
+
+   - `package.json` (new)
+     ```json
+     {
+       "name": "project-name",
+       "version": "1.0.0",
+       "dependencies": {
+         "react": "^18.2.0"
+       }
+     }
+     ```
+
+   - `tsconfig.json` (new)
+
+     ```json
+     {
+       "compilerOptions": {
+         "target": "ES2020",
+         "module": "ESNext",
+         "strict": true
+       }
+     }
+     ```
+
+   - `src/index.ts` (new)
+
+     ```typescript
+     export * from './components';
+     export * from './services/api';
+     ```
+
+   - `src/services/api.ts` (new)
+
+     ```typescript
+     export class ApiService {
+       private baseUrl: string;
+
+       constructor(baseUrl: string) {
+         this.baseUrl = baseUrl;
+       }
+
+       async get<T>(endpoint: string): Promise<T> {
+         const response = await fetch(`${this.baseUrl}${endpoint}`);
+         return response.json();
+       }
+     }
+     ```
+
+   - `src/components/Button.tsx` (new)
+
+     ```tsx
+     import React from 'react';
+
+     interface ButtonProps {
+       label: string;
+       onClick: () => void;
+     }
+
+     export const Button: React.FC<ButtonProps> = ({ label, onClick }) => {
+       return <button onClick={onClick}>{label}</button>;
+     };
+     ```
+
+   - `src/components/index.ts` (new)
+
+     ```typescript
+     export { Button } from './Button';
+     ```
+
+   - `tests/Button.test.tsx` (new)
+
+     ```tsx
+     import { render, fireEvent } from '@testing-library/react';
+     import { Button } from '../src/components/Button';
+
+     describe('Button', () => {
+       it('renders with label', () => {
+         const { getByText } = render(<Button label="Click me" onClick={() => {}} />);
+         expect(getByText('Click me')).toBeInTheDocument();
+       });
+
+       it('calls onClick when clicked', () => {
+         const handleClick = jest.fn();
+         const { getByText } = render(<Button label="Click" onClick={handleClick} />);
+         fireEvent.click(getByText('Click'));
+         expect(handleClick).toHaveBeenCalledTimes(1);
+       });
+     });
+     ```
+
+   ---
+
+   ### Commit 2: `feat(ui): add Card component with styling`
+
+   - **Scope**: UI components
+   - **Description**: Adds reusable Card component for content containers
+
+   **Files**:
+
+   ```
+   new: src/components/Card.tsx
+   modified: src/components/index.ts
+   new: tests/Card.test.tsx
+   ```
+
+   - `src/components/Card.tsx` (new)
+
+     ```tsx
+     import React from 'react';
+
+     interface CardProps {
+       title: string;
+       children: React.ReactNode;
+     }
+
+     export const Card: React.FC<CardProps> = ({ title, children }) => {
+       return (
+         <div className="card">
+           <h2>{title}</h2>
+           <div className="card-content">{children}</div>
+         </div>
+       );
+     };
+     ```
+
+   - `src/components/index.ts` (modified)
+
+     ```typescript
+     export { Button } from './Button';
+     export { Card } from './Card';
+     ```
+
+   - `tests/Card.test.tsx` (new)
+
+     ```tsx
+     import { render } from '@testing-library/react';
+     import { Card } from '../src/components/Card';
+
+     describe('Card', () => {
+       it('renders title and children', () => {
+         const { getByText } = render(
+           <Card title="Test Card">
+             <p>Card content</p>
+           </Card>
+         );
+         expect(getByText('Test Card')).toBeInTheDocument();
+         expect(getByText('Card content')).toBeInTheDocument();
+       });
+     });
+     ```
+
+   ---
+
+   ### Commit 3: `feat(auth): add authentication hook and service`
+
+   - **Scope**: Authentication
+   - **Description**: Implements useAuth hook and auth service for user authentication
+
+   **Files**:
+
+   ```
+   new: src/hooks/useAuth.ts
+   new: src/services/auth.ts
+   new: tests/useAuth.test.ts
+   ```
+
+   [Continue with full file contents for each commit...]
+
+   ---
+
+   ## Notes
+
+   - All commits follow conventional commit format
+   - Each commit includes complete test coverage
+   - Files can be copy-pasted directly - no placeholders or TODOs
+   - Run tests after each commit to verify: `npm test`
+
+   ```
+
+9. **Check Plan Mode Before Writing**:
+   - If in plan mode:
+     - Present the draft plan verbally (commit summaries, file structure overview)
+     - Inform user: "To persist DRAFT.md, please exit plan mode first."
+     - Pause workflow until user exits plan mode
+   - If not in plan mode: Write DRAFT.md to disk
+
+10. **Commit Requirements Checklist**:
+   - Each commit is self-contained (independently testable)
+   - Each commit has 100% test coverage for its scope
+   - Clear separation of concerns between commits
+   - Conventional commit format: `type(scope): description`
+   - Multiple commits per implementation phase allowed
+   - Full file contents provided - copy-paste ready
 
 ### Step 4: Interactive Design Refinement
 
@@ -141,977 +429,509 @@ ultrathink: you'd perform the following steps
      - Design constraints (performance, scalability, maintainability)
      - Edge cases and error handling strategies
 
-2. **Create Proposal Documents**:
-   - Copy DESIGN.md → DESIGN_PROPOSED.md (in same directory as DESIGN.md)
-   - Copy REFERENCE.md → REFERENCE_PROPOSED.md (if exists, in same directory)
-   - Create DESIGN_CHANGE.md documenting all proposed changes from original to proposed
-   - Create REFERENCE_CHANGE.md documenting reference changes (if REFERENCE.md exists)
+2. **Update DRAFT.md Based on Answers**:
+   - Apply user answers to DRAFT.md commit plan
+   - Adjust commit structure if architectural decisions change
+   - Document rationale for each decision in commit descriptions
+   - Use TodoWrite to mark question-answering tasks as completed
 
-3. **Update Proposals Based on Answers**:
-   - Apply user answers to _PROPOSED files
-   - Document rationale for each change in _CHANGE files
-   - Include both what changed and why it changed
-   - Mark question-answering tasks as completed in todo list
-
-4. **User Review Cycle**:
-   - Inform user to review \_PROPOSED and \_CHANGE files
-   - Ask if user has questions or needs clarification on the proposals
+3. **User Review Cycle**:
+   - Inform user to review updated DRAFT.md
+   - Ask if user has questions or needs clarification
    - If yes, ask follow-up questions using AskUserQuestion
-   - Update \_PROPOSED and \_CHANGE files based on follow-up answers
-   - Repeat until user is satisfied with proposals
+   - Update DRAFT.md based on follow-up answers
+   - Repeat until user is satisfied with the draft
 
-5. **Mark Refinement Complete**:
-   - Update todo list to show design refinement completed
-   - Confirm with user that proposed design is ready for gap analysis
+4. **Mark Refinement Complete**:
+   - Use TodoWrite to update todo list showing design refinement completed
+   - Confirm with user that DRAFT.md is ready for final review
 
-### Step 5: Identify Gaps and Discrepancies
-
-**Actions**:
-
-1. **Create Todo List**:
-   - Use TodoWrite to track analysis progress
-   - Track gap identification by category
-
-2. **Map Design to Reality**:
-   - Use DESIGN_PROPOSED.md (if exists) instead of DESIGN.md for comparison
-   - Use REFERENCE_PROPOSED.md (if exists) instead of REFERENCE.md
-   - For each design specification section:
-     - Compare with actual implementation
-     - Document what exists vs. what's proposed
-     - Identify gaps: proposed but not implemented
-     - Identify deviations: implemented differently than proposed
-     - Note extras: implemented but not in proposed design
-
-3. **Categorize Gaps**:
-   - **Architecture gaps**: Structural differences between design and reality
-   - **Component gaps**: Missing components or incomplete implementations
-   - **API gaps**: Missing or incomplete endpoints
-   - **UI gaps**: Missing screens, components, or incorrect implementations
-   - **Technology gaps**: Missing dependencies or stack mismatches
-   - **Testing gaps**: Missing tests or insufficient coverage
-   - **Documentation gaps**: Missing or outdated docs
-   - **Quality gaps**: Code quality issues, TODOs, technical debt
-
-4. **Prioritize Gaps**:
-   - Critical: Blocks core functionality or violates architecture
-   - High: Required for complete feature implementation
-   - Medium: Improves quality or user experience
-   - Low: Nice-to-have or future enhancements
-
-5. **Identify Dependencies**:
-   - Note which gaps must be addressed first
-   - Document blockers and prerequisites
-   - Map task dependencies for sequencing
-
-### Step 6: Generate Implementation Roadmap
+### Step 5: Present Draft for Review
 
 **Actions**:
 
-1. **Break Down Work into Phases**:
-   - Phase 1: Foundation (architecture, core dependencies)
-   - Phase 2: Core Implementation (essential components and APIs)
-   - Phase 3: Integration (connecting components, data flow)
-   - Phase 4: UI/UX (screens, components, styling)
-   - Phase 5: Testing & Quality (tests, linting, refactoring)
-   - Phase 6: Documentation & Deployment (docs, deployment setup)
+1. **Generate Draft Summary**:
+   - List all commit messages in order
+   - Show total commit count
+   - Summarize key files and their commit associations
+   - Highlight any dependencies between commits
 
-2. **Create Task Breakdown**:
-   - For each gap identified:
-     - Create specific, actionable task
-     - Assign to appropriate phase
-     - Note dependencies and blockers
-     - Estimate complexity (simple/moderate/complex)
-     - Include acceptance criteria
+2. **Present to User**:
+   - Display commit plan summary:
 
-3. **Document Decisions and Rationale**:
-   - Note architectural decisions affecting implementation
-   - Document trade-offs and constraints
-   - Identify risks and mitigation strategies
-   - Capture assumptions requiring validation
+     ```
+     ## Draft Summary
 
-4. **Prepare Research Notes**:
-   - Document design specs and references
-   - Note areas requiring further research
-   - Identify external resources needed
-   - List questions needing clarification
-   - Reference design changes from _CHANGE files in notes
+     **Total Commits**: X
+     **Files Created**: Y
+     **Files Modified**: Z
 
-### Step 7: Present Plan for Approval
+     ### Commits:
+     1. `feat(core): initialize project` - X files
+     2. `feat(ui): add Card component` - Y files
+     3. `feat(auth): add authentication` - Z files
+     ...
 
-**Actions**:
+     ### Key Dependencies:
+     - Commit 2 depends on Commit 1 (uses base config)
+     - Commit 3 depends on Commit 1 (uses API service)
+     ```
 
-1. **Summarize Proposed Design Changes**:
-   - Extract key changes from DESIGN_CHANGE.md
-   - Highlight major architectural decisions from user Q&A
-   - List technology choices and rationale
-   - Note critical design decisions made
+3. **Request Approval**:
+   - Ask user: "Approve this draft to generate PLAN.md?"
+   - If approved: Proceed to Step 6
+   - If changes requested: Update DRAFT.md and re-present
 
-2. **Present Gap Analysis Summary**:
-   - Show critical gaps that block implementation
-   - Highlight high-priority tasks from roadmap
-   - Explain dependencies and sequencing
-   - Clarify risks and mitigation strategies
-
-3. **Create Implementation Plan Summary**:
-   - Summarize 6-phase roadmap with key deliverables
-   - Show task breakdown with priorities
-   - Explain decision rationale from design refinement
-   - Include estimated complexity for major tasks
-
-4. **Use ExitPlanMode Tool**:
-   - Present complete implementation plan to user
-   - Include design changes, gap analysis, and roadmap
-   - Wait for user approval before proceeding
-   - Format plan concisely with markdown
-
-5. **Handle User Response**:
-   - If approved: Proceed to Step 8 (Generate Handover Documents)
-   - If rejected: Return to Step 4 for more design refinement
-   - If questions raised: Clarify and re-present plan
-
-### Step 8: Generate Handover Documents
+### Step 6: Generate PLAN.md (on approval)
 
 **Actions**:
 
-1. **Generate Current Timestamp**:
-   - Execute: `date -u +"%Y-%m-%dT%H:%M:%SZ"` to get current ISO 8601 timestamp
-   - Store the result to use consistently across all documents
-   - Use this actual timestamp for all "Last Updated", "Created", "Updated" fields
-
-2. **Write CONTEXT.md**:
-
-   ```markdown
-   # Implementation Handover - [Project Name]
-
-   **Last Updated**: [ISO 8601 timestamp]
-   **Current Branch**: [branch name]
-   **Working Directory**: [pwd]
-   **Design Specification**: [path to DESIGN_PROPOSED.md (or DESIGN.md if no proposal)]
-   **Design Changes**: [path to DESIGN_CHANGE.md (if exists)]
-
-   ## Background & Context
-
-   [Extract from DESIGN_PROPOSED.md Background/Overview section]
-
-   **Design Intent**: [Summary of what the proposed design specifies]
-
-   **Design Evolution**: [Summary of changes from original to proposed design, from DESIGN_CHANGE.md]
-
-   **Current State**: [Summary of current implementation status]
-
-   ## Goals & Objectives
-
-   **Design Goals**: [From DESIGN_PROPOSED.md goals and requirements]
-
-   **Implementation Goals**: [What needs to be achieved to match proposed design]
-
-   ## Reference Documents
-
-   - Proposed Design: [path to DESIGN_PROPOSED.md]
-   - Design Changes: [path to DESIGN_CHANGE.md]
-   - Original Design: [path to DESIGN.md]
-   - Proposed Reference: [path to REFERENCE_PROPOSED.md]
-   - Reference Changes: [path to REFERENCE_CHANGE.md]
-   - Original Reference: [path to REFERENCE.md]
-   - Requirements Spec: [path to REQUIREMENTS.md]
-   - Development Notes: [path to NOTES.md]
-   - [UI Design Spec: path to UI.md]
-   - [Deployment Spec: path to DEPLOYMENT.md]
-
-   ## Current State
-
-   **Architecture**: [Current vs. Designed]
-   - Designed: [architecture from DESIGN.md]
-   - Implemented: [actual architecture from analysis]
-   - Status: [aligned/partial/divergent]
-
-   **Technology Stack**: [Current vs. Designed]
-   - Designed: [stack from DESIGN.md]
-   - Implemented: [actual dependencies from package.json]
-   - Gaps: [missing dependencies]
-   - Extras: [additional dependencies not in design]
-
-   **Components**: [X of Y implemented]
-   - Implemented: [list of existing components]
-   - Missing: [list of designed but not implemented]
-   - Deviating: [list of implemented differently]
-
-   **APIs/Endpoints**: [X of Y implemented]
-   - Implemented: [list of existing endpoints]
-   - Missing: [list from REFERENCE.md not found]
-
-   **UI/Screens**: [X of Y implemented] (if applicable)
-   - Implemented: [list of existing screens]
-   - Missing: [list from UI.md not found]
-
-   **Tests**: [coverage status]
-   - Test files: [count]
-   - Coverage gaps: [components without tests]
-
-   ## File Status
-
-   ### 🚧 In Progress
-   [Files with TODOs, FIXMEs, incomplete implementation]
-   - `path/to/file.ts` (need-completion) - [specific todos]
-   - `path/to/file.ts` (need-fixing) - [issues found]
-   - `path/to/file.ts` (need-linting) - [diagnostics]
-   - `path/to/file.ts` (need-refactoring) - [quality issues]
-
-   ### 📋 Planned
-   [Files mentioned in design but not yet created]
-   - `path/to/file.ts` (need-draft) - [component from REFERENCE.md]
-   - `path/to/file.ts` (need-testing) - [missing test file]
-
-   ### ✅ Completed
-   [Files fully implemented and tested]
-   - [list of completed files]
-
-   ## Gap Analysis Summary
-
-   ### Critical Gaps (Blockers)
-   - [gap description] - [why critical] - [affects what]
-
-   ### High Priority Gaps
-   - [gap description] - [impact]
-
-   ### Medium Priority Gaps
-   - [gap description] - [impact]
-
-   ### Low Priority Gaps
-   - [gap description] - [impact]
-
-   ## Key Decisions & Patterns
-
-   **From Design**:
-   - **Decision**: [from DESIGN.md decisions]
-     **Status**: [implemented/pending/deviating]
-
-   **Implementation Decisions Needed**:
-   - **Decision**: [what needs to be decided]
-     **Options**: [alternatives]
-     **Impact**: [what it affects]
-
-   ## Gotchas & Constraints
-
-   **From Design**:
-   - [constraints from DESIGN.md]
-
-   **From Implementation**:
-   - [discovered constraints or issues]
-
-   ## Dependencies & Configuration
-
-   **Required (from Design)**:
-   - [package] [version] - [purpose] - [status: installed/missing]
-
-   **Actual (from package.json)**:
-   - [package] [version] - [in design: yes/no]
-
-   **Configuration Changes Needed**:
-   - [config change] - [reason from design]
-
-   ## Next Steps
-
-   1. [Immediate next action based on roadmap]
-   2. [Following action from phase 1]
-   3. [Next action in sequence]
-
-   ## Context for Continuation
-
-   **Design Understanding**:
-   - [Key architectural concepts from design]
-   - [Important patterns to follow]
-
-   **Implementation Context**:
-   - [Current work state]
-   - [Recent changes]
-   - [Blockers or challenges]
-   ```
-
-3. **Write NOTES.md**:
-
-   ```markdown
-   # Implementation Research - [Project Name]
-
-   **Last Updated**: [ISO 8601 timestamp]
-   **Related Work**: Implementing [project name] per design specifications
-
-   ## Design Specification References
-
-   ### Main Design Documents
-   - DESIGN_PROPOSED.md: [path] - [proposed architecture, stack, goals]
-   - DESIGN_CHANGE.md: [path] - [summary of changes from original design]
-   - DESIGN.md: [path] - [original design for reference]
-
-   ### Development Reference
-   - REFERENCE_PROPOSED.md: [path] - [proposed development reference and implementation detail]
-   - REFERENCE_CHANGE.md: [path] - [reference changes from original]
-   - REFERENCE.md: [path] - [original reference for comparison]
-
-   ### Requirements
-   - REQUIREMENTS.md: [path] - [functional and non-functional requirements]
-
-   ### Development Notes
-   - NOTES.md: [path] - [lessons learnt, researches and decisions archive]
-
-   ### UI Design (if applicable)
-   - UI.md: [path] - [screens, components, styling]
-
-   ### Deployment (if applicable)
-   - DEPLOYMENT.md: [path] - [infrastructure, deployment process]
-
-   ## Technology Stack Research
-
-   ### From Design Specifications
-   [For each technology in designed stack]
-   - **[Technology]** ([version])
-     - Purpose: [why specified in design]
-     - Status: [installed/missing]
-     - Documentation: [official docs URL]
-     - Key features needed: [from REFERENCE.md or NOTES.md]
-
-   ### Additional Research Needed
-   - [Technology/concept]: [what needs research] - [why]
-
-   ## Gap Analysis Findings
-
-   ### Architecture Gaps
-   **Gap**: [description]
-   - **Design Intent**: [what DESIGN.md specifies]
-   - **Current State**: [what exists]
-   - **Discrepancy**: [the gap]
-   - **Impact**: [why it matters]
-   - **Solution**: [how to address]
-
-   ### Component Gaps
-   **Gap**: [component name from REFERENCE.md]
-   - **Specification**: [from REFERENCE.md]
-   - **Current State**: [not implemented/partial/different]
-   - **What's Missing**: [specific details]
-   - **Dependencies**: [what's needed first]
-
-   ### API/Endpoint Gaps
-   **Gap**: [endpoint from REFERENCE.md]
-   - **Specification**: [method, path, request/response]
-   - **Current State**: [missing/incomplete]
-   - **Implementation Needs**: [what to build]
-
-   ### Testing Gaps
-   **Gap**: [component without tests]
-   - **Test Requirements**: [from REQUIREMENTS.md if specified]
-   - **Current Coverage**: [none/partial]
-   - **Test Scenarios Needed**: [list]
-
-   ## Implementation Patterns
-
-   ### From Design Documentation
-   - **Pattern**: [pattern specified in DESIGN.md]
-     - **Purpose**: [why this pattern]
-     - **How to Apply**: [from NOTES.md]
-     - **Status**: [used/not used/partially used]
-
-   ### Discovered in Codebase
-   - **Pattern**: [pattern found in code]
-     - **Alignment**: [matches/differs from design]
-     - **Should Change**: [yes/no - rationale]
-
-   ## Key Insights
-
-   - **Design Completeness**: [how complete the design is]
-   - **Implementation Maturity**: [how much is already done]
-   - **Major Gaps**: [biggest discrepancies]
-   - **Quick Wins**: [easy items to implement first]
-   - **Complex Areas**: [challenging parts requiring more planning]
-
-   ## Open Questions
-
-   - [Design ambiguity requiring clarification]
-   - [Implementation decision not covered in design]
-   - [Technology choice needing validation]
-   - [Architecture decision needing team input]
-
-   ## Quick Tips for Implementation
-
-   - Start with: [recommended starting point based on analysis]
-   - Watch out for: [gotchas from design or code analysis]
-   - Reference: [most useful design doc sections]
-   - Testing strategy: [from REQUIREMENTS.md or gaps analysis]
-   ```
-
-4. **Write PLAN.md**:
+1. **Group Commits by Phase**:
+   - Analyze commit dependencies
+   - Group related commits into logical phases
+   - Typical phases: Foundation, Core, Features, Integration, Testing, Polish
+
+2. **Write PLAN.md**:
 
    ```markdown
    # Implementation Plan - [Project Name]
 
    **Created**: [ISO 8601 timestamp]
-   **Updated**: [ISO 8601 timestamp]
-   **Status**: Planning
-   **Design Base**: [path to DESIGN_PROPOSED.md]
-   **Design Changes**: [path to DESIGN_CHANGE.md]
+   **Draft Reference**: DRAFT.md
+   **Status**: Ready for Implementation
 
-   ## Design Refinement Summary
+   ## Implementation Phases
 
-   **Original Design**: [path to DESIGN.md]
-   **Proposed Design**: [path to DESIGN_PROPOSED.md]
+   Commits are grouped by logical phase. Execute in order.
 
-   **Key Changes** (from DESIGN_CHANGE.md):
-   - [Change 1: description and rationale]
-   - [Change 2: description and rationale]
-   - [Change 3: description and rationale]
+   ### Phase 1: Foundation
 
-   **Design Decisions Made**:
-   - [Decision 1: what was decided and why]
-   - [Decision 2: what was decided and why]
+   - Commit 1: `feat(core): initialize project with base configuration` → See DRAFT.md#commit-1
+   - Commit 2: `chore(deps): add required dependencies` → See DRAFT.md#commit-2
 
-   ## Goals & Objectives
+   ### Phase 2: Core Components
 
-   ### Primary Goal
-   Implement [project name] according to proposed design specifications with focus on:
-   - [key goal from DESIGN_PROPOSED.md]
-   - [key goal from DESIGN_PROPOSED.md]
+   - Commit 3: `feat(ui): add Button component` → See DRAFT.md#commit-3
+   - Commit 4: `feat(ui): add Card component` → See DRAFT.md#commit-4
+   - Commit 5: `feat(ui): add Form components` → See DRAFT.md#commit-5
 
-   ### Success Criteria
-   - [ ] All components from REFERENCE_PROPOSED.md implemented and tested
-   - [ ] Architecture matches DESIGN_PROPOSED.md specifications
-   - [ ] All requirements from REQUIREMENTS.md satisfied
-   - [ ] API endpoints from REFERENCE_PROPOSED.md fully functional
-   - [ ] [UI matches UI.md specifications] (if applicable)
-   - [ ] Code follows patterns from NOTES.md
-   - [ ] Test coverage meets requirements
-   - [ ] [Deployment per DEPLOYMENT.md] (if applicable)
+   ### Phase 3: Services & Logic
 
-   ## Task Breakdown
+   - Commit 6: `feat(api): implement API service` → See DRAFT.md#commit-6
+   - Commit 7: `feat(auth): add authentication service` → See DRAFT.md#commit-7
 
-   ### Phase 1: Foundation (Status: Pending)
-   **Goal**: Establish architectural foundation and core dependencies
+   ### Phase 4: Integration
 
-   **Tasks**:
-   - [ ] Install missing dependencies from design spec
-     - Priority: Critical
-     - Packages: [list from gap analysis]
-     - Files affected: package.json
-   - [ ] Set up project structure per DESIGN.md architecture
-     - Priority: Critical
-     - Create: [directories from architecture]
-     - Rationale: [from DESIGN.md]
-   - [ ] Configure build tools and linting
-     - Priority: High
-     - Per: NOTES.md guidelines
-   - [ ] [Set up database/data layer per REFERENCE.md]
-     - Priority: Critical (if applicable)
-     - Schema: [from data models]
+   - Commit 8: `feat(app): integrate components with services` → See DRAFT.md#commit-8
+   - Commit 9: `feat(routes): add routing configuration` → See DRAFT.md#commit-9
 
-   ### Phase 2: Core Components (Status: Pending)
-   **Goal**: Implement essential components and business logic
+   ### Phase 5: Testing & Polish
 
-   **Tasks**:
-   - [ ] Implement [Component A] from REFERENCE.md
-     - Priority: Critical
-     - Spec: [reference to REFERENCE.md section]
-     - Dependencies: [what's needed first]
-     - Acceptance: [from requirements]
-   - [ ] Implement [Component B] from REFERENCE.md
-     - Priority: High
-     - Spec: [reference to REFERENCE.md section]
-     - Dependencies: [Component A]
-   - [ ] [Continue for each core component...]
-   - [ ] Refactor [existing component] to match design
-     - Priority: Medium
-     - Current state: [deviation description]
-     - Target state: [per REFERENCE.md]
+   - Commit 10: `test(integration): add integration tests` → See DRAFT.md#commit-10
+   - Commit 11: `docs(readme): update documentation` → See DRAFT.md#commit-11
 
-   ### Phase 3: API Layer (Status: Pending)
-   **Goal**: Implement all API endpoints per REFERENCE.md
+   ## Execution Order
 
-   **Tasks**:
-   - [ ] Implement [GET /endpoint] from REFERENCE.md
-     - Priority: Critical
-     - Request: [spec]
-     - Response: [spec]
-     - Validation: [requirements]
-   - [ ] Implement [POST /endpoint] from REFERENCE.md
-     - Priority: Critical
-     - Request: [spec]
-     - Response: [spec]
-   - [ ] [Continue for each endpoint...]
-   - [ ] Add authentication/authorization per DESIGN.md
-     - Priority: Critical
-     - Pattern: [from NOTES.md]
+   Linear execution with dependencies noted.
 
-   ### Phase 4: UI Implementation (Status: Pending) (if applicable)
-   **Goal**: Build user interface per UI.md specifications
+   1. `feat(core): initialize project` (no dependencies)
+   2. `chore(deps): add dependencies` (requires #1)
+   3. `feat(ui): add Button` (requires #1)
+   4. `feat(ui): add Card` (requires #1)
+   5. `feat(ui): add Form` (requires #3)
+   6. `feat(api): implement API` (requires #1, #2)
+   7. `feat(auth): add auth` (requires #6)
+   8. `feat(app): integrate` (requires #3-7)
+   9. `feat(routes): add routing` (requires #8)
+   10. `test(integration): integration tests` (requires #8)
+   11. `docs(readme): documentation` (requires all above)
 
-   **Tasks**:
-   - [ ] Implement [Screen/Page A] from UI.md
-     - Priority: High
-     - Components needed: [list]
-     - Routes: [from UI.md]
-   - [ ] Implement [Component X] from UI.md
-     - Priority: High
-     - Props: [from spec]
-     - Styling: [approach from UI.md]
-   - [ ] [Continue for each UI element...]
-   - [ ] Implement navigation and routing
-     - Priority: Medium
-     - Per: UI.md navigation spec
+   ## Success Criteria
 
-   ### Phase 5: Testing & Quality (Status: Pending)
-   **Goal**: Achieve test coverage and code quality per REQUIREMENTS.md
+   Implementation is complete when:
 
-   **Tasks**:
-   - [ ] Write tests for [Component A]
-     - Priority: High
-     - Coverage target: [from REQUIREMENTS.md]
-     - Scenarios: [from requirements and edge cases]
-   - [ ] Write integration tests for [API endpoints]
-     - Priority: High
-     - Test cases: [from REQUIREMENTS.md]
-   - [ ] [Continue for each component...]
-   - [ ] Fix linting issues and TODOs
-     - Priority: Medium
-     - Files: [from gap analysis]
-   - [ ] Address code quality issues
-     - Priority: Medium
-     - Areas: [from diagnostics]
-
-   ### Phase 6: Documentation & Deployment (Status: Pending)
-   **Goal**: Complete documentation and deployment setup
-
-   **Tasks**:
-   - [ ] Document public APIs
-     - Priority: Medium
-     - Per: NOTES.md standards
-   - [ ] [Set up deployment pipeline per DEPLOYMENT.md]
-     - Priority: High (if applicable)
-     - Infrastructure: [from DEPLOYMENT.md]
-   - [ ] [Configure environments per DEPLOYMENT.md]
-     - Priority: Medium (if applicable)
-   - [ ] Update README and user docs
-     - Priority: Low
-     - Content: based on implementation
-
-   ## Dependencies
-
-   ### External Dependencies
-   [From designed stack and gap analysis]
-   - [Package] [version] - [provides what] - [status: installed/needed]
-
-   ### Internal Dependencies
-   [Task sequencing based on architecture]
-   - [Component B] requires [Component A] completed first
-   - [API endpoints] require [data layer] completed first
-   - [UI screens] require [components] completed first
-   - [Tests] require [implementation] completed first
-
-   ### Design Clarifications Needed
-   [From open questions]
-   - [Question] - [blocks what task] - [who to ask]
-
-   ## Risks & Mitigation
-
-   ### Risk: Design Specification Incomplete
-   **Impact**: Medium
-   **Affected Tasks**: [tasks affected by ambiguity]
-   **Mitigation**: Review design with team, run /spec-code to update design docs
-
-   ### Risk: Technology Stack Mismatch
-   **Impact**: High (if critical mismatch found)
-   **Details**: [description of mismatch]
-   **Mitigation**: [strategy to align or update design]
-
-   ### Risk: [Other risks from gap analysis]
-   **Impact**: [High/Medium/Low]
-   **Mitigation**: [strategy]
-
-   ## Decision Log
-
-   ### Decision: Use Design Specifications as Source of Truth
-   **Date**: [ISO 8601 timestamp]
-   **Rationale**: All implementation should align with design docs; deviations require design updates
-   **Impact**: All tasks reference design specs for acceptance criteria
-
-   ### Decision: [Other key decisions made during planning]
-   **Date**: [ISO 8601 timestamp]
-   **Rationale**: [why]
-   **Impact**: [what it affects]
-
-   ## Progress Tracking
-
-   **Overall Progress**: 0% (Planning Phase)
-
-   **By Phase**:
-   - Phase 1 (Foundation): 0% (0/X tasks)
-   - Phase 2 (Core): 0% (0/X tasks)
-   - Phase 3 (API): 0% (0/X tasks)
-   - Phase 4 (UI): 0% (0/X tasks)
-   - Phase 5 (Testing): 0% (0/X tasks)
-   - Phase 6 (Docs/Deploy): 0% (0/X tasks)
-
-   **Total Tasks**: [count] ([critical count] critical, [high count] high, [medium count] medium, [low count] low)
+   - [ ] All commits from DRAFT.md are applied
+   - [ ] All tests pass (`npm test`)
+   - [ ] No TypeScript errors (`npm run type-check`)
+   - [ ] Linting passes (`npm run lint`)
+   - [ ] Application runs successfully (`npm run dev`)
+   - [ ] All design requirements from [DESIGN.md/DESIGN_PROPOSED.md] are met
    ```
 
-5. **Update Todo List**:
-   - Mark handover document generation completed
-   - Note files created: CONTEXT.md, NOTES.md, PLAN.md
-   - Note proposal files created (if applicable): DESIGN_PROPOSED.md, DESIGN_CHANGE.md, etc.
+3. **Check Plan Mode Before Writing**:
+   - If in plan mode:
+     - Present the execution roadmap verbally (phases, commit order, success criteria)
+     - Inform user: "To persist PLAN.md, please exit plan mode first."
+     - Pause workflow until user exits plan mode
+   - If not in plan mode: Write PLAN.md to disk
+
+4. **Save PLAN.md**:
+   - Write to project root or specified location
+   - Ensure markdown formatting is clean
+
+### Step 7: Subagent Review (Quality Gate)
+
+**Actions**:
+
+1. **Spawn Review Subagent**:
+   - Use the Task tool to spawn a review subagent
+   - Pass DRAFT.md, PLAN.md, and all design documents to the subagent
+   - Use TodoWrite to track subagent review progress
+
+2. **Review Checklist**:
+   The subagent must verify:
+   - **Architecture Alignment**: Plan aligns with DESIGN.md architecture patterns and component relationships
+   - **Requirements Coverage**: All functional requirements from REQUIREMENTS.md have corresponding implementations AND tests
+   - **Data Model Accuracy**: Data models and schemas match DATA.md specifications exactly
+   - **UI Component Match**: UI components match UI.md specifications for layout, behavior, and styling
+   - **Implementation Patterns**: Implementation patterns follow NOTES.md guidelines and decisions
+   - **Test Coverage**: No requirement gaps or missing test coverage for any feature
+
+3. **Review Output**:
+   - Generate a review report documenting:
+     - Items that pass verification
+     - Issues found with specific references to design documents
+     - Missing coverage areas
+     - Recommendations for fixes
+
+4. **Action on Issues**:
+   - **If issues found**:
+     - Update DRAFT.md to address gaps
+     - Update PLAN.md if phase structure needs adjustment
+     - Re-run review checklist to verify fixes
+   - **If no issues**:
+     - Proceed to Step 8 (Finalize Proposals)
+
+### Step 8: Finalize Proposals
+
+**Actions** (only if `*_PROPOSED.md` files existed):
+
+1. **Check Plan Mode Before Finalizing**:
+   - If in plan mode:
+     - Present summary of files to be finalized
+     - Inform user: "To finalize proposals (rename *_PROPOSED.md files), please exit plan mode first."
+     - Pause workflow until user exits plan mode
+   - If not in plan mode: Proceed with finalization
+
+2. **Replace Proposals with Finals**:
+   - For each `*_PROPOSED.md` file:
+     - Copy content to target file (e.g., DESIGN_PROPOSED.md → DESIGN.md)
+     - Confirm replacement with user
+     - Remove `*_PROPOSED.md` file after successful copy
+
+3. **Preserve Change Documentation**:
+   - Keep all `*_CHANGE.md` files for historical reference
+   - These document the evolution of the design
+
+4. **Skip if No Proposals**:
+   - If Step 1 found no proposals, skip this step entirely
 
 ### Step 9: Reporting
 
 **Output Format**:
 
-```text
-[✅] Command: plan-code $ARGUMENTS
+```
+[OK] Command: plan-code $ARGUMENTS
 
 ## Summary
-- Design specification: [path to DESIGN_PROPOSED.md or DESIGN.md]
-- Design changes documented: [path to DESIGN_CHANGE.md] (if created)
-- Child specs analyzed: [count] ([filenames])
-- Current implementation: [X% complete based on gap analysis]
-- Gaps identified: [count] ([critical/high/medium/low breakdown])
-- Proposal files created (if applicable):
-  - DESIGN_PROPOSED.md: Refined design with user input
-  - DESIGN_CHANGE.md: Summary of design changes
-  - COMPONENTS_PROPOSED.md: Updated component specifications (if applicable)
-  - COMPONENTS_CHANGE.md: Component changes summary (if applicable)
-- Handover documents created:
-  - CONTEXT.md: Implementation status and gap analysis
-  - NOTES.md: Design specs and implementation research
-  - PLAN.md: [X] tasks across [Y] phases
 
-## Design Refinement Summary (if applicable)
-- Questions asked: [count]
-- Design iterations: [count]
-- Key decisions made:
-  - [Decision 1: description]
-  - [Decision 2: description]
-  - [Decision 3: description]
-- Major changes from original design:
-  - [Change 1: from DESIGN_CHANGE.md]
-  - [Change 2: from DESIGN_CHANGE.md]
+- Design source: [path to design file used]
+- Proposals processed: [count or "none"]
+- Change docs created: [list of *_CHANGE.md files or "none"]
+- DRAFT.md: Created with [X] commits
+- PLAN.md: Created with [Y] phases
+- Quality Review: [PASSED/ISSUES FOUND AND RESOLVED]
 
-## Design Analysis
-- Architecture: [designed architecture]
-- Technology Stack: [designed stack]
-- Components Specified: [count]
-- APIs/Endpoints Specified: [count]
-- UI Elements Specified: [count] (if applicable)
-- Requirements: [count functional, count non-functional]
+## Files Created
 
-## Implementation Analysis
-- Current Architecture: [actual architecture] - [aligned/partial/divergent]
-- Current Stack: [actual dependencies]
-- Components Implemented: [count] of [designed count]
-- APIs Implemented: [count] of [designed count]
-- UI Implemented: [count] of [designed count] (if applicable)
-- Test Coverage: [percentage or count]
-- Code Quality Issues: [count diagnostics, TODOs, FIXMEs]
+- DRAFT.md: Implementation blueprint with [X] atomic commits
+- PLAN.md: Execution roadmap with [Y] phases
+- [*_CHANGE.md files if created]
 
-## Gap Analysis
-### Critical Gaps ([count])
-- [gap 1]
-- [gap 2]
-- [gap 3]
+## Commit Summary
 
-### High Priority Gaps ([count])
-- [gap 1]
-- [gap 2]
+1. `type(scope): description` - [X files]
+2. `type(scope): description` - [Y files]
+3. `type(scope): description` - [Z files]
+...
 
-### Medium Priority Gaps ([count])
-- [gap summary]
+## Phases Overview
 
-### Low Priority Gaps ([count])
-- [gap summary]
+- Phase 1 (Foundation): [X] commits
+- Phase 2 (Core): [Y] commits
+- Phase 3 (Features): [Z] commits
+...
 
-## Implementation Roadmap
-- **Phase 1 (Foundation)**: [X] tasks - [key deliverables]
-- **Phase 2 (Core)**: [X] tasks - [key deliverables]
-- **Phase 3 (API)**: [X] tasks - [key deliverables]
-- **Phase 4 (UI)**: [X] tasks - [key deliverables] (if applicable)
-- **Phase 5 (Testing)**: [X] tasks - [key deliverables]
-- **Phase 6 (Docs/Deploy)**: [X] tasks - [key deliverables]
+## Quality Review Summary
 
-**Total Tasks**: [count] ([critical], [high], [medium], [low])
-
-## Handover Documents
-- CONTEXT.md: ✓ (status, gaps, decisions)
-- NOTES.md: ✓ (design specs, patterns, insights)
-- PLAN.md: ✓ (roadmap, [X] tasks, dependencies)
+- Architecture alignment: [PASS/FIXED]
+- Requirements coverage: [PASS/FIXED]
+- Data model accuracy: [PASS/FIXED]
+- UI component match: [PASS/FIXED]
+- Implementation patterns: [PASS/FIXED]
+- Test coverage: [PASS/FIXED]
 
 ## Next Steps
-1. Review handover documents (CONTEXT.md, NOTES.md, PLAN.md)
-2. Clarify design ambiguities if needed (run /spec-code to update)
-3. Begin implementation with /takeover to auto-resume from PLAN.md
-4. Start with Phase 1 tasks: [first critical task]
 
-## Recommendations
-- [Implementation strategy based on analysis]
-- [Areas requiring design clarification]
-- [Quick wins to build momentum]
-- [Complex areas needing extra attention]
+1. Review DRAFT.md for code accuracy
+2. Review PLAN.md for execution order
+3. Run `/takeover` to begin implementation
+4. Execute commits in order, copy-pasting from DRAFT.md
 ```
 
-## 📝 Examples
+## Examples
 
-### Basic Usage - Analyze Existing Design
+### Basic Usage - No Proposals Found (9-Step Workflow)
 
 ```bash
 /plan-code
-# Step 1: Checks not in plan mode ✓
-# Step 2: Analyzes DESIGN.md and child files
-# Step 3: Analyzes current empty project (greenfield)
-# Step 4: Asks clarifying questions about architecture, tech stack, patterns
-#   Q: "Which state management approach should we use?"
-#   Options: Redux, Context API, Zustand, MobX
-#   User selects: Zustand
-# Step 4: Creates DESIGN_PROPOSED.md with Zustand decision
-# Step 4: Creates DESIGN_CHANGE.md documenting state management choice
-# Step 4: User reviews proposals, approves
-# Step 5: Identifies gaps (0% implementation)
-# Step 6: Generates roadmap (6 phases)
-# Step 7: Presents plan via ExitPlanMode, user approves
-# Step 8: Creates CONTEXT.md showing 0% implementation
-# Step 8: Creates NOTES.md with design specs and decisions
-# Step 8: Builds PLAN.md with complete implementation roadmap
-# Result: Full implementation plan with refined design
+# Step 1: Scans for design documents - finds DESIGN.md, REQUIREMENTS.md, DATA.md
+# Step 1: Creates initial todo list with TodoWrite for workflow tracking
+# Step 1: Scans for *_PROPOSED.md files - none found
+# Step 1: "No proposals found. Using original design files directly."
+# Step 3: Reads all design docs, cross-references for completeness
+# Step 3: Uses TodoWrite to track analysis progress
+# Step 3: Generates DRAFT.md with 8 atomic commits
+# Step 4: Uses AskUserQuestion to ask clarifying questions about design
+#   - "Which state management approach: Redux, Zustand, or Context API?"
+#   - "Should authentication use JWT or session-based?"
+# Step 4: Updates DRAFT.md based on user answers
+# Step 4: Uses TodoWrite to mark refinement tasks completed
+# Step 5: Presents draft summary
+#   - 8 commits across Foundation, Core, Features phases
+#   - 24 files to create, 3 to modify
+#   - User approves draft
+# Step 6: Generates PLAN.md with 4 phases
+# Step 7: Subagent reviews plan quality
+#   - Uses TodoWrite to track review progress
+#   - Verifies all REQUIREMENTS.md items have tests
+#   - Confirms architecture matches DESIGN.md
+#   - Review passes
+# Step 8: Skipped (no proposals)
+# Step 9: Reports success
+#
+# Output:
+#   project/
+#   ├── DRAFT.md    # 8 commits with full code
+#   └── PLAN.md     # 4-phase execution roadmap
 ```
 
-### Plan Mode Rejection
-
-```bash
-# User is in plan mode
-/plan-code --change="add authentication"
-# Step 1: Detects plan mode
-# ❌ Error: Cannot run /plan-code in plan mode
-# Message: "I cannot run /plan-code in plan mode because it requires creating
-#           and updating files (_PROPOSED.md, _CHANGE.md). Please exit plan mode
-#           first using /model or by approving a plan. I promise not to modify
-#           any code - only design and planning documents will be created."
-# Suggestion: Exit plan mode first, then re-run command
-```
-
-### Interactive Design Refinement
-
-```bash
-/plan-code --change="add caching layer with Redis"
-# Step 1: Checks not in plan mode ✓
-# Step 2: Loads DESIGN.md (current design without caching)
-# Step 3: Analyzes current implementation (no caching present)
-# Step 4: Asks clarifying questions:
-#   Q1: "What should be the caching strategy?"
-#       Options: Write-through, Write-back, Cache-aside, Read-through
-#       User selects: Cache-aside
-#   Q2: "Which data should be cached?"
-#       Options: All API responses, User sessions only, Database queries, Computed results
-#       User selects: Database queries, Computed results (multi-select)
-#   Q3: "What should be the cache TTL strategy?"
-#       Options: Fixed TTL for all, Per-resource TTL, Adaptive TTL, No expiration
-#       User selects: Per-resource TTL
-# Step 4: Creates DESIGN_PROPOSED.md adding Redis caching with cache-aside pattern
-# Step 4: Creates COMPONENTS_PROPOSED.md adding CacheService component
-# Step 4: Creates DESIGN_CHANGE.md documenting:
-#   - Added Redis dependency
-#   - Added cache-aside pattern
-#   - Cache TTL strategy: per-resource
-#   - Scope: database queries and computed results
-# Step 4: Creates COMPONENTS_CHANGE.md documenting new CacheService
-# Step 4: User reviews _PROPOSED files
-# Step 4: User asks: "Should we cache API responses too?"
-# Step 4: Follow-up question asked, updates files based on answer
-# Step 5: Identifies gaps (Redis not installed, CacheService missing)
-# Step 6: Generates roadmap with caching implementation tasks
-# Step 7: Presents plan, user approves
-# Step 8: Creates handover docs referencing proposed design
-# Result: Complete plan for adding Redis caching with user-refined design
-```
-
-### Partially Implemented Project
+### With Approved Proposals (9-Step Workflow with Design Refinement)
 
 ```bash
 /plan-code
-# Step 1: Checks not in plan mode ✓
-# Step 2: Reads DESIGN.md (specifies 8 components, 12 API endpoints)
-# Step 3: Analyzes codebase (finds 3 components, 5 endpoints)
-# Step 4: Asks questions about missing features:
-#   Q: "Should we maintain the original architecture or refactor?"
-#   User selects: Maintain original
-#   Q: "Which missing components should be prioritized?"
-#   User selects: Authentication, User Management (multi-select)
-# Step 4: Creates _PROPOSED files with prioritization decisions
-# Step 5: Gap Analysis:
-#   - 5 components missing (2 high priority, 3 medium)
-#   - 7 endpoints missing
-#   - 2 components implemented differently
-#   - 4 components missing tests
-# Step 6: Builds roadmap prioritizing auth and user management
-# Step 7: Presents plan, user approves
-# Step 8: Generates CONTEXT.md with gap breakdown
-# Step 8: Creates NOTES.md documenting deviations
-# Step 8: Builds PLAN.md focusing on high-priority items first
+# Step 1: Loads DESIGN.md, REQUIREMENTS.md, DATA.md, UI.md, NOTES.md
+# Step 1: Creates todo list with TodoWrite
+# Step 1: Finds DESIGN_PROPOSED.md and UI_PROPOSED.md
+# Step 1: Presents summary:
+#   "Found 2 proposals:
+#    - DESIGN_PROPOSED.md: Adds Redis caching layer
+#    - UI_PROPOSED.md: New dashboard components
+#    Is this proposal approved?"
+# User: "Yes, approved"
+# Step 2: Compares proposals against originals
+# Step 2: Creates DESIGN_CHANGE.md documenting:
+#   - Added: Redis caching section
+#   - Modified: Architecture diagram
+#   - Added: Cache invalidation strategy
+# Step 2: Creates UI_CHANGE.md documenting:
+#   - Added: Dashboard component specs
+#   - Modified: Navigation structure
+# Step 3: Generates DRAFT.md with 12 commits
+#   - Cross-references DATA.md for cache schema
+#   - Cross-references REQUIREMENTS.md for feature coverage
+# Step 4: Uses AskUserQuestion for design refinement
+#   - "Redis deployment: self-hosted or managed service?"
+#   - "Dashboard polling interval: 5s, 15s, or 30s?"
+# Step 4: Updates DRAFT.md with refined decisions
+# Step 5: Presents draft, user approves
+# Step 6: Generates PLAN.md with 5 phases
+# Step 7: Subagent reviews with TodoWrite tracking:
+#   - Finds missing test for requirement REQ-042
+#   - Updates DRAFT.md to add test
+#   - Re-reviews, passes
+# Step 8: Replaces DESIGN_PROPOSED.md → DESIGN.md
+# Step 8: Replaces UI_PROPOSED.md → UI.md
+# Step 8: Keeps DESIGN_CHANGE.md, UI_CHANGE.md
+# Step 9: Reports success with quality review summary
+#
+# Output:
+#   project/
+#   ├── DESIGN.md         # Updated from proposal
+#   ├── UI.md             # Updated from proposal
+#   ├── DESIGN_CHANGE.md  # Change documentation
+#   ├── UI_CHANGE.md      # Change documentation
+#   ├── DRAFT.md          # 12 commits with full code
+#   └── PLAN.md           # 5-phase execution roadmap
 ```
 
-### Project with Design-Reality Mismatch
+### Custom Design Path with Change Description
 
 ```bash
-/plan-code --design=docs/DESIGN.md
-# Loads design from docs/DESIGN.md
-# Design specifies: REST API with Express, PostgreSQL, React UI
-# Actual code: REST API with Fastify, MongoDB, React UI
-# Gap Analysis:
-#   - Stack deviation: Fastify vs Express (minor)
-#   - Stack deviation: MongoDB vs PostgreSQL (major)
-#   - Architecture alignment: 80%
-# CONTEXT.md documents deviations and impact
-# NOTES.md notes why deviations occurred
-# PLAN.md includes tasks to either:
-#   - Update design to match reality, OR
-#   - Migrate implementation to match design
-# Recommends design update discussion
+/plan-code --design=docs/specs/DESIGN.md --change="add authentication"
+# Step 1: Creates todo list with TodoWrite
+# Step 1: Scans docs/specs/ for all design documents
+# Step 1: Loads DESIGN.md, REQUIREMENTS.md, REFERENCE.md from docs/specs/
+# Step 1: Scans for proposals - none found
+# Step 1: Using docs/specs/DESIGN.md directly
+# Step 3: Reads design, focuses on authentication requirements
+# Step 3: Cross-references REFERENCE.md for auth API specs
+# Step 3: Generates DRAFT.md with auth-focused commits:
+#   - Commit 1: feat(auth): add auth service
+#   - Commit 2: feat(auth): add login component
+#   - Commit 3: feat(auth): add protected routes
+#   - Commit 4: test(auth): add auth tests
+# Step 4: Uses AskUserQuestion for auth-specific refinement
+#   - "Authentication method: OAuth2, JWT, or API keys?"
+#   - "Session storage: cookies, localStorage, or memory?"
+# Step 4: Updates DRAFT.md based on answers
+# Step 5: Presents auth implementation draft
+# Step 6: Generates PLAN.md focused on auth phase
+# Step 7: Subagent verifies auth requirements coverage
+# Step 9: Reports success
 ```
 
-### Well-Aligned Implementation
-
-```bash
-/plan-code
-# Analyzes design and implementation
-# Findings:
-#   - Architecture: 95% aligned
-#   - Components: 10 of 10 implemented
-#   - APIs: 15 of 15 implemented
-#   - Tests: 8 of 10 components covered
-# Gap Analysis:
-#   - 2 components need tests (medium priority)
-#   - Minor refactoring opportunities (low priority)
-#   - Documentation incomplete (low priority)
-# Generates minimal PLAN.md focusing on polish
-# CONTEXT.md shows high completion status
-# Recommends final testing and documentation phase
-```
-
-### Design Clarification Needed
-
-```bash
-/plan-code
-# Reads DESIGN.md
-# Finds ambiguous sections:
-#   - Authentication method not specified
-#   - Database schema incomplete
-#   - Error handling strategy unclear
-# CONTEXT.md lists ambiguities as blockers
-# NOTES.md documents open questions
-# PLAN.md includes Phase 0: Design Clarification
-#   - Task: Update DESIGN.md with auth strategy
-#   - Task: Complete database schema in REFERENCE.md
-#   - Task: Add error handling to NOTES.md
-# Recommends running /spec-code to update design first
-```
-
-### Complex Migration Scenario
+### Proposal Not Approved
 
 ```bash
 /plan-code
-# Design specifies: Microservices architecture
-# Current state: Monolithic application
-# Gap Analysis:
-#   - Architecture: Complete restructuring needed
-#   - Critical: Extract services from monolith
-#   - High: Set up service communication
-#   - High: Migrate data layer
-# PLAN.md creates migration roadmap:
-#   - Phase 1: Service boundaries and APIs
-#   - Phase 2: Extract Service A (least dependent)
-#   - Phase 3: Extract Service B
-#   - Phase 4: Extract Service C
-#   - Phase 5: Retire monolith
-# NOTES.md documents migration patterns
-# CONTEXT.md highlights migration risks
+# Step 1: Finds DESIGN_PROPOSED.md
+# Step 1: "Found proposal: DESIGN_PROPOSED.md
+#          Changes: Migrate from REST to GraphQL
+#          Is this proposal approved?"
+# User: "No, need to reconsider the GraphQL migration"
+# Command exits with message:
+#   "Proposal not approved. Please refine the proposal in
+#    DESIGN_PROPOSED.md and run /plan-code again when ready."
 ```
 
-### After Design Update
+### Draft Revision Requested
 
 ```bash
-# User previously ran: /spec-code "Add caching layer using Redis"
 /plan-code
-# Detects DESIGN.md was recently updated (via frontmatter last_edited_at)
-# Loads updated design with Redis caching specification
-# Analyzes current code: No Redis integration found
-# Gap Analysis:
-#   - New component: Redis cache service (critical)
-#   - Updated component: API layer needs cache integration (high)
-#   - New dependency: redis package (critical)
-#   - Updated tests: Cache layer tests needed (high)
-# PLAN.md focuses on implementing new caching layer
-# CONTEXT.md explains caching addition context
-# NOTES.md includes Redis documentation references
+# Steps 1-3 complete, DRAFT.md generated
+# Step 4: Uses AskUserQuestion for design refinement
+# Step 5: Presents draft with 6 commits
+# User: "Split commit 3 into smaller pieces"
+# Step 5: Updates DRAFT.md:
+#   - Original Commit 3 split into 3a, 3b, 3c
+#   - Re-presents draft with 8 commits
+# User: "Approved"
+# Step 6: Generates PLAN.md
+# Step 7: Subagent reviews updated plan
+# Step 9: Reports success with 8 commits
 ```
 
-### Custom Design File Path
+### Running in Plan Mode
 
 ```bash
-/plan-code --design=docs/specs/DESIGN.md --change="migrate to microservices"
-# Step 1: Checks not in plan mode ✓
-# Step 2: Loads design from docs/specs/DESIGN.md
-# Step 3: Analyzes current monolithic implementation
-# Step 4: Asks questions about microservices migration:
-#   Q1: "Which service extraction strategy?"
-#       Options: Big Bang, Strangler Fig, Parallel Run, Incremental
-#       User selects: Strangler Fig
-#   Q2: "Which services to extract first?"
-#       Options lists service boundaries from analysis
-#       User selects: User Service, Product Service
-#   Q3: "How should services communicate?"
-#       Options: REST, gRPC, Message Queue, Event Bus
-#       User selects: gRPC for sync, Message Queue for async
-# Step 4: Creates docs/specs/DESIGN_PROPOSED.md with microservices architecture
-# Step 4: Creates docs/specs/DESIGN_CHANGE.md with migration strategy
-# Step 5: Identifies massive architectural gaps
-# Step 6: Generates multi-phase migration roadmap
-# Step 7: Presents complex migration plan, user approves
-# Step 8: Creates handover docs with migration context
-# Result: Complete microservices migration plan
+/plan-code
+# Step 1: Loads all design documents - works in plan mode
+# Step 1: Creates todo list, scans for DESIGN.md, REQUIREMENTS.md, etc.
+# Step 1: Detects DESIGN_PROPOSED.md, asks for approval - works
+# Step 2: Analyzes proposal, compares with original
+# Step 2: Plan mode detected - presents changes verbally:
+#   "Changes in DESIGN_PROPOSED.md:
+#    - Added: Redis caching section
+#    - Modified: Architecture diagram
+#    - Removed: Legacy sync approach
+#    To persist DESIGN_CHANGE.md, please exit plan mode first."
+# User exits plan mode (approves plan or uses /model)
+# Step 2: Writes DESIGN_CHANGE.md
+# Step 3: Generates DRAFT.md with 8 commits
+# Step 4: Asks clarifying questions via AskUserQuestion
+# Step 5: Presents draft summary, user approves
+# Step 6: Generates PLAN.md
+# Step 7: Subagent reviews
+# Step 8: Finalizes proposals
+# Step 9: Reports success
 ```
 
 ### Error - No Design Specification
 
 ```bash
 /plan-code
-# Step 1: Checks not in plan mode ✓
-# Step 2: Error - Design specification not found
-# Looked for: DESIGN.md in current directory
-# Suggestion: Run '/spec-code "your project description"' to create design specifications first
-# Alternative: Specify design file path with --design=path/to/DESIGN.md
+# Step 1: Scans for design documents - none found
+# Step 1: Scans for proposals - none found
+# Step 1: Looks for DESIGN.md - not found
+# Error: "No design specification found.
+#         Looked for: DESIGN.md, REQUIREMENTS.md, DATA.md, UI.md, NOTES.md, REFERENCE.md
+#         Suggestion: Run '/spec-code' to create design specifications first
+#         Alternative: Specify path with --design=path/to/DESIGN.md"
 ```
 
-### Error - Incomplete Design
+### Error - Design Too Vague
 
 ```bash
-/plan-code
-# Warning: Design specification is incomplete or too vague
-# Missing critical sections:
-#   - Architecture not specified
-#   - No components defined in REFERENCE.md
-#   - Technology stack unclear
-# Cannot create meaningful implementation plan without design details
-# Suggestion: Run '/spec-code --sync-template' to update design with complete template structure
-# Alternative: Manually complete design specification before running /plan-code
+/plan-code --design=docs/DESIGN.md
+# Step 1: No proposals, using docs/DESIGN.md
+# Step 3: Reads DESIGN.md - insufficient detail
+# Error: "Design specification too vague for implementation planning.
+#         Missing: Component specifications, API definitions, data models
+#         Suggestion: Run '/spec-code --sync-template' to add required sections
+#         Cannot generate meaningful commit blueprint without implementation details."
 ```
 
 ### Integration with /takeover
 
 ```bash
-# Step 1: Plan the work with design refinement
-/plan-code --change="add real-time notifications"
-# Asks clarifying questions about notification approach
-# Creates DESIGN_PROPOSED.md with WebSocket decision
-# Creates DESIGN_CHANGE.md documenting changes
-# Generates CONTEXT.md, NOTES.md, PLAN.md
+# Step 1: Generate implementation plan (9-step workflow)
+/plan-code
+# Creates DRAFT.md with 10 commits
+# Creates PLAN.md with 4 phases
 
 # Step 2: Execute the plan
 /takeover
-# Automatically reads handover documents
-# References DESIGN_PROPOSED.md for target architecture
-# Reviews DESIGN_CHANGE.md for context on decisions
-# Uses CONTEXT.md for gap awareness
-# References NOTES.md for implementation patterns
-# Executes tasks from PLAN.md Phase 1 in priority order
-# Follows design decisions from refinement step
+# Reads PLAN.md for execution order
+# References DRAFT.md for code to copy-paste
+# Executes commits in sequence:
+#   - Creates files from Commit 1
+#   - Runs tests to verify
+#   - Commits with message from DRAFT.md
+#   - Proceeds to Commit 2
+#   - ... continues through all commits
+```
+
+### Large Project with Multiple Phases (Full 9-Step Workflow)
+
+```bash
+/plan-code
+# Step 1: Loads all design documents (DESIGN.md, REQUIREMENTS.md, DATA.md, UI.md, NOTES.md, REFERENCE.md)
+# Step 1: Creates comprehensive todo list with TodoWrite
+# Step 1: Finds DESIGN_PROPOSED.md (major refactor)
+# Step 1: User approves
+# Step 2: Creates DESIGN_CHANGE.md (extensive changes)
+# Step 3: Generates DRAFT.md with 25 commits across:
+#   - Foundation: 3 commits
+#   - Data Layer: 5 commits
+#   - Business Logic: 7 commits
+#   - API Layer: 4 commits
+#   - UI Components: 4 commits
+#   - Integration: 2 commits
+# Step 4: Uses AskUserQuestion for comprehensive design refinement:
+#   - "Database: PostgreSQL with Prisma or MongoDB with Mongoose?"
+#   - "API style: REST, GraphQL, or tRPC?"
+#   - "State management: Redux Toolkit or Zustand?"
+#   - "Testing strategy: Jest + RTL or Vitest + Testing Library?"
+# Step 4: Updates DRAFT.md based on all decisions
+# Step 4: Uses TodoWrite to mark refinement complete
+# Step 5: Presents summary:
+#   "25 commits planned across 6 phases
+#    52 new files, 12 modified files
+#    Estimated implementation: significant
+#    Approve draft?"
+# User: "Approved"
+# Step 6: PLAN.md with 6 phases, clear dependencies
+# Step 7: Subagent performs comprehensive review:
+#   - Uses TodoWrite to track review items
+#   - Checks all 47 requirements from REQUIREMENTS.md
+#   - Verifies data models against DATA.md
+#   - Confirms UI specs match UI.md
+#   - Identifies 2 missing tests, updates DRAFT.md
+#   - Re-reviews, all checks pass
+# Step 8: Finalizes DESIGN.md from proposal
+# Step 9: Reports with full breakdown and quality summary
+#
+# Output includes clear execution path
+# /takeover can systematically execute each commit
 ```
