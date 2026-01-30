@@ -567,6 +567,14 @@ Skip review phase if all batches report success. Only trigger review if batches 
 
 **KEY INNOVATION**: Use Plan subagent to analyze all tests and identify potential redundancies, then execute removals in parallel.
 
+**CRITICAL RULE - Source File Scoped Coverage**:
+
+- Each test file **mirrors exactly one source file** (e.g., `src/auth/service.ts` → `spec/auth/service.spec.ts`)
+- Coverage is verified **per-source-file**: `npm run coverage -- <spec/path/to/file.spec.ts>`
+- A test is **redundant ONLY IF** it does NOT contribute to its **mirrored source file's** coverage
+- Tests that contribute to the mirrored source file's coverage **MUST be kept**, even if they seem redundant globally or overlap with tests for other source files
+- The goal is 100% coverage **for each mirrored source file**, not just overall coverage
+
 #### Phase 1: Planning with Plan Subagent (You)
 
 **What You Do**:
@@ -585,6 +593,7 @@ Use the Task tool with subagent_type="Plan" to dispatch the plan subagent:
     - You're a **Test Redundancy Analyst** with deep expertise in identifying unnecessary tests who follows these principles:
       - **Coverage Analysis**: Understand which tests cover which code paths
       - **Redundancy Detection**: Identify tests that duplicate coverage without adding value
+      - **Behavioral Distinctness**: Recognize that tests covering the same lines may still verify different behavioral aspects and should be kept separate
       - **Strategic Planning**: Create removal strategy that preserves 100% coverage
       - **Risk Assessment**: Flag tests that appear redundant but may be essential
 
@@ -606,11 +615,17 @@ Use the Task tool with subagent_type="Plan" to dispatch the plan subagent:
        - What source code lines it covers
        - What branches it exercises
        - What unique behavior it verifies
-    3. **Identify redundancy patterns**:
-       - Tests with same logic but different data values
-       - Tests that cover same lines as other tests
-       - Tests for artificial scenarios (not real edge cases)
-       - Wrapper function tests (just calling other functions)
+    3. **Identify redundancy patterns** (IMPORTANT: coverage is scoped to the mirrored source file and feature):
+       - Tests with same logic but different data values **that don't add coverage AND don't verify distinct behaviors**
+       - Tests that cover same lines **AND verify the same behavioral aspect** as other tests (same semantic purpose)
+       - Tests for artificial scenarios (not real edge cases) **that don't contribute to source file coverage or behavioral documentation**
+       - Wrapper function tests (just calling other functions) **that don't add unique coverage or behavioral insight**
+       - **NOTE**: A test is NOT redundant if it contributes to its mirrored source file, even if it overlaps with tests for other source files
+       - **CRITICAL**: Tests that verify **different behavioral aspects** must be kept separate even if they cover the same code paths. Indicators of distinct behaviors:
+         - Different semantic purposes (e.g., "empty state handling" vs "null safety")
+         - Different failure modes being documented
+         - Different contracts/invariants being verified
+         - Different edge cases from a user perspective
     4. **Create removal candidates list**:
        - Group tests by file
        - Mark each as: 'safe_to_remove', 'uncertain', 'keep'
@@ -678,27 +693,33 @@ Request each Test Removal Agent to perform the following:
 
     **FOR EACH test in your assignment:**
 
-    1. **Pre-removal coverage check**:
-       - Run: `vitest --coverage spec/path/to/file.spec.ts`
-       - Note current coverage percentages (must be 100%)
+    1. **Pre-removal coverage check** (SCOPED TO MIRRORED SOURCE FILE):
+       - Run: `npm run coverage -- spec/path/to/file.spec.ts`
+       - Note current coverage percentages for the **mirrored source file** (must be 100%)
+       - Example: `spec/auth/service.spec.ts` → check coverage for `src/auth/service.ts`
 
     2. **Remove single test**:
        - Comment out or delete the specific test block
        - Save file
 
-    3. **Post-removal coverage verification**:
-       - Run: `vitest --coverage spec/path/to/file.spec.ts`
-       - Compare with pre-removal coverage
+    3. **Post-removal coverage verification** (SCOPED TO MIRRORED SOURCE FILE):
+       - Run: `npm run coverage -- spec/path/to/file.spec.ts`
+       - Compare coverage **for the mirrored source file** with pre-removal coverage
 
-    4. **Decision**:
-       - **IF coverage maintained at 100%**:
+    4. **Decision** (CRITICAL - based on mirrored source file coverage):
+       - **IF mirrored source file coverage maintained at 100%**:
          - KEEP test removed ✓
-         - Log: "Test successfully removed - redundant"
+         - Log: "Test successfully removed - does not contribute to mirrored source file coverage"
          - Continue to next test
-       - **IF coverage dropped (even 1%)**:
+       - **IF mirrored source file coverage dropped (even 1%)**:
          - RESTORE test immediately ✗
-         - Log: "Test necessary - restored"
+         - Log: "Test necessary - contributes to mirrored source file coverage"
          - Mark as 'essential'
+       - **IMPORTANT**: Tests that seem globally redundant but contribute to their mirrored source file MUST be kept
+       - **IMPORTANT**: Before removing a test, verify it doesn't document a unique behavioral aspect:
+         - Does this test verify a different semantic concept than other tests?
+         - Would removing it lose documentation of an important edge case or invariant?
+         - If YES to either → mark as 'essential' and keep, even if coverage is maintained
 
     5. **Move to next test** in assignment
 
@@ -706,9 +727,9 @@ Request each Test Removal Agent to perform the following:
     **[IMPORTANT]** You're requested to return:
 
     - Tests attempted for removal
-    - Tests successfully removed
-    - Tests restored (coverage dropped)
-    - Final coverage status
+    - Tests successfully removed (did not contribute to mirrored source file coverage)
+    - Tests restored (contributed to mirrored source file coverage - MUST be kept)
+    - Final coverage status for each mirrored source file
 
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
@@ -724,22 +745,24 @@ Request each Test Removal Agent to perform the following:
         tests_restored: 3
       removal_details:
         - test_name: 'should calculate tax for $100'
+          mirrored_source_file: 'src/billing/tax.ts'
           action: 'removed'
-          coverage_before: '100%'
-          coverage_after: '100%'
-          outcome: 'success'
+          source_coverage_before: '100%'
+          source_coverage_after: '100%'
+          outcome: 'success - did not contribute to mirrored source file'
         - test_name: 'should validate email format'
+          mirrored_source_file: 'src/auth/validator.ts'
           action: 'restored'
-          coverage_before: '100%'
-          coverage_after: '98%'
-          outcome: 'essential - coverage dropped'
-      final_coverage:
+          source_coverage_before: '100%'
+          source_coverage_after: '98%'
+          outcome: 'essential - contributes to mirrored source file coverage'
+      final_coverage_per_source_file:  # Coverage for each mirrored source file
         lines: '100%'
         branches: '100%'
         statements: '100%'
         functions: '100%'
       verification:
-        coverage_maintained: true|false
+        mirrored_source_coverage_maintained: true|false  # All source files still at 100%
         all_tests_passing: true|false
     issues: ['issue1'] # if any
     ```
