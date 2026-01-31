@@ -15,6 +15,11 @@
    - **Synthesize Results** - Collect subagent reports, identify patterns, and consolidate into actionable insights
    - **Follow Trigger Rules** - Honor "Must use" and "Use proactively" conditions defined in agent descriptions
 
+## Plan Mode
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.
+
 ## STRICT DELEGATION PROTOCOL
 
 ### Your ONLY Permitted Actions (Ultra-Short Tasks)
