@@ -118,7 +118,7 @@ expect(users[1].name).toBe('Bob');
 ```typescript
 // ❌ VIOLATION: setting success return value inside it() block
 it('should upload with different etag', () => {
-  upload.mockResolvedValue({ etag: ''different-etag'' });
+  upload.mockResolvedValue({ etag: 'different-etag' });
   // ...
 });
 
@@ -505,7 +505,7 @@ expect(users).toEqual([
 ```typescript
 // ❌ VIOLATION: unnecessary mock for pure function
 const { formatCurrency } = vi.hoisted(() => ({
-  formatCurrency: vi.fn().mockReturnValue('$90.00'),
+  formatCurrency: vi.fn(() => '$90.00'),
 }));
 // pure functions have no side effects - use real implementation
 ```
@@ -535,8 +535,8 @@ vi.mock(
         getContainerClient() {
           return {
             getBlockBlobClient: () => ({
-              upload: vi.fn().mockResolvedValue({ etag: ''etag'' }),
-              exists: vi.fn().mockResolvedValue(true),
+              upload: vi.fn(async () => ({ etag: 'etag' })),
+              exists: vi.fn(async () => true),
             }),
           };
         }
@@ -565,8 +565,8 @@ vi.mock(
         getContainerClient() {
           return {
             getBlockBlobClient: () => ({
-              upload: vi.fn().mockResolvedValue({ etag: ''etag'' }),
-              exists: vi.fn().mockResolvedValue(true),
+              upload: vi.fn(async () => ({ etag: 'etag' })),
+              exists: vi.fn(async () => true),
             }),
           };
         }
@@ -596,7 +596,7 @@ import type { BlockBlobClient } from '@azure/storage-blob';
 // MOCKS //
 
 const { upload } = vi.hoisted(() => ({
-  upload: vi.fn().mockResolvedValue({ etag: ''etag'' }),
+  upload: vi.fn(async () => ({ etag: 'etag' })),
 }) satisfies Partial<BlockBlobClient>);
 
 vi.mock(
@@ -636,6 +636,27 @@ describe('fn:uploadToStorage', () => {
 });
 ```
 
+#### vi.hoisted Type Alternatives
+
+When using `vi.hoisted()`, you have two options for typing mock objects:
+
+- **Explicit type import**: Use when the type is needed elsewhere in the test file
+- **Inline type extraction**: Use `typeof import('...')['Type']` when the type is only needed for the mock
+
+```typescript
+// ✅ CORRECT: type imported explicitly (preferred when type used elsewhere)
+import type { BlockBlobClient } from '@azure/storage-blob';
+
+const { upload } = vi.hoisted(() => ({
+  upload: vi.fn(async () => ({ etag: 'etag' })),
+}) satisfies Partial<BlockBlobClient>);
+
+// ✅ CORRECT: inline type extraction (when type not needed elsewhere)
+const { upload } = vi.hoisted(() => ({
+  upload: vi.fn(async () => ({ etag: 'etag' })),
+}) satisfies Partial<typeof import('@azure/storage-blob')['BlockBlobClient']>);
+```
+
 ### Mock Setup Decision Guide
 
 When creating a mock, ask these questions:
@@ -658,7 +679,7 @@ When creating a mock, ask these questions:
 ❌ **You're setting the same `.mockResolvedValue()` in multiple tests**
 → Define a default in `vi.hoisted()` or `vi.mock()`
 
-❌ **You have `vi.fn()` with no chained `.mockResolvedValue()` or `.mockReturnValue()`**
+❌ **You have `vi.fn()` with chained `.mockResolvedValue()` or `.mockReturnValue()`**
 → Either add a default return, or remove if unused
 
 ❌ **Your mock object has more than 3-4 methods**
@@ -701,12 +722,13 @@ vi.mock(
 
 All mocks must use the `satisfies` pattern for compile-time validation:
 
-| Pattern                                   | Usage                               |
-| ----------------------------------------- | ----------------------------------- |
-| `satisfies Partial<Type>`                 | Mock objects implementing interface |
-| `satisfies Partial<typeof import('...')>` | Partial module mocks                |
-| `satisfies typeof import('...')`          | Full module mocks with importActual |
-| `vi.fn<[Params], Return>()`               | Explicit function signatures        |
+| Pattern                                              | Usage                                               |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| `satisfies Partial<Type>`                            | Mock objects implementing interface (type imported) |
+| `satisfies Partial<typeof import('...')['Type']>`    | Mock objects when type not imported elsewhere       |
+| `satisfies Partial<typeof import('...')>`            | Partial module mocks in vi.mock()                   |
+| `satisfies typeof import('...')`                     | Full module mocks with importActual                 |
+| `vi.fn<[Params], Return>()`                          | Explicit function signatures                        |
 
 **Triple Pattern for Partial Results** - Use when returning incomplete mock data that must satisfy a full type. The `satisfies Partial<T> as Partial<T> as T` chain validates structure while allowing incomplete data:
 
