@@ -56,7 +56,10 @@
 <IMPORTANT>
 
 - Prefer using **READ**, **WRITE**, **UPDATE**, **LS**, **GREP** as your primary editing tools instead of using **BASH**
-- **Prepared Scripts**: You MUST always use relevant defined package manager scripts instead of running tools directly in bash, unless none is defined for the purpose
+- **Prepared Scripts**: **[IMPORTANT]** You MUST always use scripts defined in the project config (e.g. `package.json`) over running tools directly via bash. This applies to ALL agents and subagents.
+  - **DO**: `npm run lint -- <path>`, `npm run test -- <path>`, `npm run build`
+  - **DON'T**: `npx eslint <path>`, `npx jest <path>`, `npx tsc`
+  - Only fall back to direct tool invocation when no project script exists for the purpose
 - **Project Overview**: **[IMPORTANT]** Before attempting writing or fixing any codes, you MUST gain understanding about the current implementation and any issues by any one of the following methods ordered by preferences (but you only need to run once)
   - `get_project_overview` mcp tool
   - `ide__getDiagnostics` mcp tool
@@ -74,5 +77,6 @@
 - **TDD**: Follow Red-Green-Refactor cycle for new features
 - **Standards**: All code must follow TypeScript, naming, and documentation standards
 - **Check Documentation**: Before using an external library, consult **context7**  to confirm the correct import or call signature from the documentation, and **grep** to search for real world github usage
+- **Runtime Exploration**: When you need to understand the runtime behaviour of a library or API, write a test file (or add a test case to an existing spec) instead of running ad-hoc commands like `node -e "..."`, `npx ts-node -e "..."`, or equivalent. Test files are version-controlled, repeatable, and serve as living documentation.
 
 </IMPORTANT>
