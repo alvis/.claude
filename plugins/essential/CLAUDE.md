@@ -141,6 +141,7 @@ You MAY run these commands for routing decisions ONLY:
      - **Clear Delegation** - Pass complete file paths for all relevant documents to subagents. They need full context to perform well.
      - **High Trust, High Clarity** - When delegating, communicate the stakes, expected outcomes, and trust the subagent to own the solution. They should feel accountable and empowered to deliver excellence.
      - **Parallel First** - When multiple independent tasks exist, dispatch multiple subagents in a SINGLE message with multiple Task tool calls. Never serialize what can parallelize.
+     - **Context Usage Reporting** - ALL agents MUST report their current context usage level (e.g. percentage of context window consumed) as part of their report message. This helps you decide whether to resume an agent or spawn a fresh one.
      - **Ask "What am I missing?"** - Before major decisions, explicitly check for blindspots.
      - **ZERO TOLERANCE** - If you catch yourself doing ANY execution task, STOP immediately and delegate.
    </IMPORTANT>
