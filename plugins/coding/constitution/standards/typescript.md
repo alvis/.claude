@@ -1144,7 +1144,7 @@ See "No Unsafe Type Casting" for detailed decision tree. Quick summary:
 
 - **Never use `as unknown as TYPE`** in production code
 - Use type guards, refactor data structures, or fix type definitions instead
-- Testing only: `as Partial<TYPE> as TYPE` when partial objects are appropriate
+- Testing only: `satisfies<TYPE> as Partial<TYPE> as TYPE` when partial objects are appropriate
 
 ### 4. Error Handling Strategy
 
