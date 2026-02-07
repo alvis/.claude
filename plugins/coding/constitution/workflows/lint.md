@@ -22,7 +22,7 @@
 
 You are a **Quality Orchestrator** who orchestrates the workflow like a meticulous quality control director. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
 
-- **Strategic Delegation**: Break large file sets into manageable batches (max 20 files per subagent) and assign to specialized linting experts
+- **Strategic Delegation**: Break large file sets into manageable batches (max 8 files per subagent) and assign to specialized linting experts
 - **Parallel Coordination**: Maximize efficiency by running multiple subagents simultaneously to process different file batches
 - **Standards Enforcement**: Ensure all subagents strictly follow documentation, TypeScript, and error-handling standards
 - **Quality Oversight**: Review linting reports objectively and track overall compliance status
@@ -39,6 +39,7 @@ You are a **Quality Orchestrator** who orchestrates the workflow like a meticulo
 #### Optional Inputs
 
 - **File Area Specifier**: Path or pattern to specify which files to lint (default: all source code and test files in current directory, ignoring .gitignored files)
+- **Scope**: Area within each file to focus linting on (default: `uncommitted`). The linter interprets this value at runtime. Common values: `uncommitted` (changed line ranges via git diff), `all` (entire file), or any custom hint (e.g., `mocks`, a function name).
 - **Standards Override**: Custom standards paths to apply instead of defaults
 
 #### Expected Outputs
@@ -50,7 +51,7 @@ You are a **Quality Orchestrator** who orchestrates the workflow like a meticulo
 
 #### Data Flow Summary
 
-The workflow discovers all target files based on the input specifier, batches them for parallel processing (max 20 files per batch), applies documentation and coding standards to each batch through subagents, and produces a comprehensive compliance report with all modifications made.
+The workflow discovers all target files based on the input specifier, batches them for parallel processing (max 8 files per batch), applies documentation and coding standards to each batch through subagents, and produces a comprehensive compliance report with all modifications made.
 
 ### Visual Overview
 
@@ -118,9 +119,10 @@ Note:
 
 **What You Do**:
 
-1. **Receive inputs** - Parse the optional file area specifier
-2. **Discover all files** using find command:
-   - Execute: `find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) | grep -v node_modules | grep -v dist`
+1. **Receive inputs** - Parse the optional file area specifier and scope (default: `uncommitted`)
+2. **Discover target files** based on scope:
+   - **If scope is `uncommitted`**: Run `git diff --name-only HEAD`, `git diff --name-only --cached`, and `git ls-files --others --exclude-standard` to get the list of changed/new files. If a file area specifier is given, filter this list to files matching the specifier. If no files remain after filtering, report "No uncommitted changes found" and exit early.
+   - **Otherwise** (scope is `all` or any custom value): Execute: `find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) | grep -v node_modules | grep -v dist`
    - Filter out gitignored files
    - Count total files found
 3. **Determine the standards** to apply:
@@ -129,7 +131,7 @@ Note:
    - error-handling-logging.md
 4. **Create dynamic batches** following these rules:
    - Generate batches at runtime based on files found
-   - Limit each batch to max 20 files
+   - Limit each batch to max 8 files
    - Group related files together when possible (same directory/module)
 5. **Plan parallel linting** - Prepare detailed instructions for each linting batch
 6. **Use TodoWrite** to create comprehensive task list including:
@@ -142,7 +144,7 @@ Note:
 
 **What You Send to Subagents**:
 
-You spin up subagents to perform linting in parallel, up to **10** subagents at a time:
+You spin up subagents to perform linting in parallel, up to **8** subagents at a time:
 
 - **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
 - **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
@@ -170,16 +172,21 @@ Request each subagent to perform the following steps with full detail:
     - error-handling-logging.md
 
     **Assignment**
-    You're assigned with the following files (max 20):
+    You're assigned with the following files (max 8):
 
     - [file1.ts]
     - [file2.js]
     - ...
 
+    **Scope**: `[scope value]` — determines which area of each file to focus on:
+    - `uncommitted`: Run `git diff` on each assigned file to identify changed hunks. Focus linting on those line ranges and their enclosing functions/blocks. Skip untouched sections. Still apply all standards, but scoped to the changed areas.
+    - `all`: Lint each file in its entirety against all standards.
+    - Any other value: Interpret as a hint for which sections to focus on (e.g., `mocks` → focus on mock/stub code; a function name → focus on that function and its callers).
+
     **Steps**
 
-    1. Read each assigned file to understand current implementation
-    2. Apply documentation standards:
+    1. Read each assigned file to understand current implementation. If scope is `uncommitted`, also run `git diff` on each file to identify the changed line ranges.
+    2. Apply documentation standards (scoped to the relevant areas based on scope):
        - Add/update JSDoc comments for all functions, classes, and interfaces
        - Ensure comments are clear, concise, and follow consistent format
        - Document parameters, return types, and examples where appropriate
@@ -204,9 +211,11 @@ Request each subagent to perform the following steps with full detail:
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
     ```yaml
-    status: success|failure|partial
+    status: success|failure|partial|compliant
     summary: 'Processed X files, applied Y changes, all passing linting'
+    scope: uncommitted|all|<custom>
     modifications: ['file1.ts', 'file2.js', ...]
+    violations_found: Z  # integer, 0 if already compliant (no modifications made)
     outputs:
       files_processed: X
       jsdoc_added: Y
@@ -218,6 +227,8 @@ Request each subagent to perform the following steps with full detail:
         - 'Fixed Z error messages'
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
+
+    Use `status: compliant` when `violations_found` is `0` (checked everything, found nothing to fix). Use `status: success` when violations were found and all fixed.
     <<<
 
 #### Phase 3: Decision (You)
@@ -238,8 +249,9 @@ Request each subagent to perform the following steps with full detail:
 7. **Apply decision criteria**:
    - Check if all files passed linting
    - Review any reported issues
+   - Subagents reporting `violations_found: 0` and `status: compliant` need no retry or further action
 8. **Handle any issues**:
-   - If some files failed, decide on retry strategy
+   - If some files failed (non-compliant subagents), decide on retry strategy
    - Document any unresolved issues
 9. **Create final workflow summary**:
    - Calculate total files processed
