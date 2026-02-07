@@ -4,7 +4,7 @@
 
 ### Purpose & Context
 
-**Purpose**: Apply documentation, TypeScript, and error-handling standards to ensure consistent code quality across all files, including proper JSDoc comments, logging messages, error handling, and correct ordering of functions and interface fields.
+**Purpose**: Apply applicable coding standards to ensure consistent code quality across all files, including proper JSDoc comments, logging messages, error handling, and correct ordering of functions and interface fields. Standards are discovered at runtime from all active plugins and system context.
 
 **When to use**:
 
@@ -125,10 +125,12 @@ Note:
    - **Otherwise** (scope is `all` or any custom value): Execute: `find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) | grep -v node_modules | grep -v dist`
    - Filter out gitignored files
    - Count total files found
-3. **Determine the standards** to apply:
-   - documentation.md
-   - typescript.md
-   - error-handling-logging.md
+3. **Discover applicable standards**:
+   a. Extract every standard file path listed under **all** "Plugin Constitution > Standards" sections in your system prompt. These paths span all active plugins and system-level configurations. Fallback: use `Glob` to search for `**/constitution/standards/*.md` across plugin directories.
+   b. Refer to the **Delegation Rule** in your system prompt. Under "When Linting Code", match each listed standard name against the collected paths by filename stem.
+   c. If any target files are test files (`*.spec.*`, `*.test.*`), include standards with `testing` in the filename.
+   d. If any target files are React (`*.tsx`, `*.jsx`), include standards from the react plugin. If backend service files, include standards from the backend plugin.
+   e. If a delegation-rule name doesn't exactly match, include any file whose stem partially matches (rename/split resilience).
 4. **Create dynamic batches** following these rules:
    - Generate batches at runtime based on files found
    - Limit each batch to max 8 files
@@ -167,9 +169,7 @@ Request each subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - documentation.md
-    - typescript.md
-    - error-handling-logging.md
+    [Insert the full absolute paths of all applicable standards discovered in Phase 1 Step 3]
 
     **Assignment**
     You're assigned with the following files (max 8):

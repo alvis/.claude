@@ -10,7 +10,7 @@ argument-hint: [specifier] [--scope=SCOPE]
 
 # Linting
 
-Apply documentation, TypeScript, and error-handling standards to ensure consistent code quality across the specified files.
+Apply applicable coding standards to ensure consistent code quality across the specified files. Standards are discovered at runtime from all active plugins and system context.
 
 ## Arguments
 
@@ -60,7 +60,7 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
 - **DO**: Discover files, create batches, spawn teammates, manage lifecycle, aggregate results
 - **DO NOT**: Read standard files, apply standards, lint code, review compliance, or fix issues
 - **NEVER**: Use the `Read` tool on any standard or workflow file (paths containing `constitution/standards/` or `constitution/workflows/`). These are for teammates to read, not you.
-- **DO NOT**: Assign new tasks to any agent that reported `context_level` >= 50% — retire them instead
+- **DO NOT**: Assign new tasks to any agent that reported `context_level` >= 60% — retire them instead
 - **ALWAYS**: Pass the full file paths of standard files to teammates — they read and interpret the standards, not you
 - **LIFECYCLE**: Manage reviewer lifecycle based on pass/fail + `context_level` reports only (detailed findings go directly to linters, not through you)
 
@@ -73,12 +73,15 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    - Filter out gitignored files, node_modules, dist, build, out
 3. **Create dynamic batches** (max 2 files per batch)
    - Group related files together when possible (same directory/module)
-4. **Collect standard file paths** (string values only — do NOT read these files):
-   Use `Glob` to find the full absolute paths for these standard filenames under the constitution/standards directory:
-   - `documentation.md`
-   - `typescript.md`
-   - `error-handling-logging.md`
-   Pass these full absolute paths as strings to teammates. You never need to know their contents.
+4. **Discover applicable standard file paths** (string values only — do NOT read these files):
+   a. **Collect all available standards**: Extract every standard file path listed under **all** "Plugin Constitution > Standards" sections in your system prompt. These paths span all active plugins (coding, react, backend, etc.) and system-level configurations. If the system prompt does not contain standard paths, fall back to `Glob` searching for `**/constitution/standards/*.md` across plugin directories.
+   b. **Select the base set**: Refer to the **Delegation Rule** section in your system prompt. Under "When Linting Code", a list of applicable standard names is provided. Match each name against the collected paths by filename stem (e.g., `documentation` matches `documentation.md`).
+   c. **Extend by file context**:
+      - If any target files are test files (`*.spec.*` or `*.test.*`), also include any standard whose filename contains `testing`
+      - If any target files are React files (`*.tsx` or `*.jsx`), also include standards from the react plugin (paths containing `/react/`)
+      - If any target files are backend service files, also include standards from the backend plugin (paths containing `/backend/`)
+   d. **Rename resilience**: If a delegation-rule name does not exactly match any collected path, include any file whose stem partially matches (e.g., if `typescript` was split into `typescript-types.md` and `typescript-style.md`, both would match).
+   e. Pass all matched full absolute paths as strings to teammates. You never need to know their contents.
 
 #### Phase 2: Team Setup & Execution (Lead orchestrates)
 
@@ -88,7 +91,7 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    - Max **2 reviewers** active (working) at any time — if both slots are occupied, queue review assignments until a reviewer becomes idle or is retired
 3. **Initialize agent pool**: Lead maintains a registry tracking each agent's name, role, model, last-reported `context_level`, and status (`working` / `idle` / `retired`)
 4. **Spawn or reuse linter teammates**: For each batch:
-   - **Check pool** for an idle linter with `context_level` < 50%
+   - **Check pool** for an idle linter with `context_level` < 60%
    - **If found**: Reuse via `SendMessage` with new batch instructions
    - **If not found**: Spawn a fresh `linter-N` using **opus** model, type `general-purpose`
 5. **Create lint tasks**: `TaskCreate` per batch with full instructions including:
@@ -102,8 +105,8 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    - Instruction that linters CANNOT further delegate work
    - **Instruction to report `context_level`** (calculated as `input_tokens / context_window_size × 100`, default context window: 200K tokens) in their completion message
    - **Instruction to WAIT for reviewer feedback** after completing the lint task (if violations were found) — linters must NOT self-claim new tasks from the task list until the lead confirms the batch is complete
-   - **Instruction: if `context_level` >= 50%, the linter MUST NOT self-claim any further tasks** — it must report to the lead and await instructions
-   - **Instruction: if reviewers flag issues AND the linter's `context_level` >= 50%**, the linter must request retirement from the lead (send a message requesting the lead to retire it and reassign the fix to a fresh agent)
+   - **Instruction: if `context_level` >= 60%, the linter MUST NOT self-claim any further tasks** — it must report to the lead and await instructions
+   - **Instruction: if reviewers flag issues AND the linter's `context_level` >= 60%**, the linter must request retirement from the lead (send a message requesting the lead to retire it and reassign the fix to a fresh agent)
 6. **Assign tasks**: `TaskUpdate` to set owner per linter
 
 #### Phase 3: Lint-Review Cycle (per batch, all batches in parallel)
@@ -116,12 +119,12 @@ After each linter completes their lint task:
    - **If `violations_found` is `0` AND `status` is `compliant`** (no modifications were made):
      - **SKIP review entirely** for this batch — do NOT assign reviewers
      - Mark batch as complete immediately
-     - The linter is eligible for new batches if `context_level` < 50%; otherwise the lead retires it
+     - The linter is eligible for new batches if `context_level` < 60%; otherwise the lead retires it
      - Log the batch as "compliant — review skipped" in the aggregation
    - **If `violations_found` > 0** (modifications were made):
      - **Proceed to reviewer assignment** (steps 4+ below)
 4. **Lead assigns 2 reviewers** per completed batch (only when violations were found):
-   - **Check pool** for idle reviewers with `context_level` < 50% — reuse via `SendMessage`
+   - **Check pool** for idle reviewers with `context_level` < 60% — reuse via `SendMessage`
    - **If not enough idle reviewers**: Spawn fresh `reviewer-N`
    - All reviewers use **opus** model, type `general-purpose`
 5. **Lead creates review tasks** for each reviewer with these instructions:
@@ -136,12 +139,12 @@ After each linter completes their lint task:
    - **To the linter** (via `SendMessage`): Full issue details if issues found, or "approved, no issues" if compliant
    - **To the lead** (via `SendMessage`): Only `status: approved` or `status: issues_found`, plus `context_level: XX%`
 7. **Lead updates reviewer pool** based on each reviewer's reported `context_level`:
-   - If `context_level` < 50%: Mark reviewer as `idle` — available for reuse in future review rounds
-   - If `context_level` >= 50%: Retire reviewer via shutdown request
+   - If `context_level` < 60%: Mark reviewer as `idle` — available for reuse in future review rounds
+   - If `context_level` >= 60%: Retire reviewer via shutdown request
 8. **If either reviewer flags issues**:
-   - **If linter `context_level` < 50%**: The linter already received detailed findings directly from reviewers — it fixes the issues, then reports back to lead with updated `context_level`. Lead assigns 2 reviewers again (reuse idle pool or spawn fresh). Repeat until both approve.
-   - **If linter `context_level` >= 50%**: The linter sends a **self-retirement request** to the lead (requesting the lead to retire it and reassign the fix to a fresh agent). Lead retires the linter, spawns a fresh replacement, and forwards the linter's partial work context + reviewer findings to the new linter. The new linter fixes issues and the cycle continues.
-9. **When both reviewers approve**: Lead marks the batch as fully completed. The linter is now eligible for new batches if `context_level` < 50%; otherwise the lead retires it.
+   - **If linter `context_level` < 60%**: The linter already received detailed findings directly from reviewers — it fixes the issues, then reports back to lead with updated `context_level`. Lead assigns 2 reviewers again (reuse idle pool or spawn fresh). Repeat until both approve.
+   - **If linter `context_level` >= 60%**: The linter sends a **self-retirement request** to the lead (requesting the lead to retire it and reassign the fix to a fresh agent). Lead retires the linter, spawns a fresh replacement, and forwards the linter's partial work context + reviewer findings to the new linter. The new linter fixes issues and the cycle continues.
+9. **When both reviewers approve**: Lead marks the batch as fully completed. The linter is now eligible for new batches if `context_level` < 60%; otherwise the lead retires it.
 
 ```
 Per-batch flow:
@@ -167,8 +170,8 @@ Per-batch flow:
                                └─────────┬─────────┘
                                          │
                           lead updates reviewer pool
-                            < 50% → mark idle for reuse
-                            >= 50% → retire via shutdown
+                            < 60% → mark idle for reuse
+                            >= 60% → retire via shutdown
                                          │
                                Both approve? ──yes──> batch complete
                                     │                  └── linter: pool or retire
@@ -177,7 +180,7 @@ Per-batch flow:
                                     │
                           ┌─────────┴─────────┐
                           │                   │
-                    linter < 50%        linter >= 50%
+                    linter < 60%        linter >= 60%
                           │                   │
                     linter fixes        linter sends self-
                     (already has        retirement request
@@ -203,8 +206,8 @@ Per-batch flow:
 | Agent | Model | Role | Max Concurrent | Lifecycle |
 |-------|-------|------|----------------|-----------|
 | Lead (skill agent) | opus | Orchestration only | 1 | Entire workflow |
-| `linter-N` | **opus** | Apply standards (scoped by `--scope`), fix reviewer feedback | **4** | Spawned on demand; reports `violations_found`; if compliant → batch completes without review; if violations found → must **wait for reviewer approval**; **reused if `context_level` < 50%**; requests retirement if >= 50% and more fix work needed |
-| `reviewer-N-a/b` | **opus** | Independent compliance review (only when violations found) | **2** | Spawned on demand; messages **detailed findings directly to linter**; reports **pass/fail + `context_level`** to lead; reused if < 50%, retired if >= 50% |
+| `linter-N` | **opus** | Apply standards (scoped by `--scope`), fix reviewer feedback | **4** | Spawned on demand; reports `violations_found`; if compliant → batch completes without review; if violations found → must **wait for reviewer approval**; **reused if `context_level` < 60%**; requests retirement if >= 60% and more fix work needed |
+| `reviewer-N-a/b` | **opus** | Independent compliance review (only when violations found) | **2** | Spawned on demand; messages **detailed findings directly to linter**; reports **pass/fail + `context_level`** to lead; reused if < 60%, retired if >= 60% |
 
 #### Phase 4: Aggregation & Cleanup (Lead)
 
@@ -259,7 +262,7 @@ Per-batch flow:
 ## Agent Lifecycle (team mode only)
 - Agents spawned: [count]
 - Agents reused: [count]
-- Agents retired (context >= 50%): [count]
+- Agents retired (context >= 60%): [count]
 
 ## Issues Found (if any)
 - **Issue**: [Description]
@@ -333,8 +336,8 @@ Per-batch flow:
 #   Linter-1 finds violations → 2 reviewers assigned for that batch.
 #   Linter-2 reports compliant → review skipped for that batch.
 #   Agents report context_level after each task:
-#     - context < 50%: agent reused for next task
-#     - context >= 50%: agent retired, fresh replacement spawned
+#     - context < 60%: agent reused for next task
+#     - context >= 60%: agent retired, fresh replacement spawned
 #   Team is cleaned up after all batches complete.
 ```
 
