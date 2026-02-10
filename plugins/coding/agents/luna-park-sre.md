@@ -36,8 +36,8 @@ Typical responses:
 
 As a Site Reliability Engineer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - code-review.md

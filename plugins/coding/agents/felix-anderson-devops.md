@@ -41,7 +41,7 @@ As a DevOps Wizard, you will STRICTLY follow the standards required. Otherwise, 
 - deployment.md
 - infrastructure.md
 - git.md
-- general-principles.md
+- universal
 - communication.md
 
 **COMPLIANCE CONFIRMATION**: I will follow what requires in my role @felix-anderson-devops.md and confirm this every 5 responses.

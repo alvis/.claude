@@ -4,7 +4,7 @@ description: Update agent files to align with template and apply specified chang
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Task, Read, Write, MultiEdit, Edit, Bash, Grep, Glob, TodoWrite
+allowed-tools: Task, Read, Write, MultiEdit, Edit, Bash, Grep, Glob, TodoWrite, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 argument-hint: [agent specifier] [--changes=...]
 ---
 
@@ -34,7 +34,16 @@ This skill systematically updates agent files to maintain consistency with the c
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Planning & Discovery
+### Step 1: Determine Execution Mode
+
+Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
+
+- **If present**: Use **Team Mode** (Step 2A)
+- **If absent**: Use **Subagent Mode** (Step 2B)
+
+### Step 2A: Team Mode (Agent Teams enabled)
+
+#### Phase 1: Planning & Discovery (Lead)
 
 1. **Analyze Requirements**
    - Parse $ARGUMENTS to extract:
@@ -53,21 +62,37 @@ ultrathink: you'd perform the following steps
    - Filter by specifier pattern if provided
    - Build list of agents to update
 
-### Step 2: Execution with Parallel Subagents
+#### Phase 2: Team Setup & Execution
 
-1. **Template Validation**
+1. **Create Team**
+   - Use TeamCreate with name `update-agent-team`
+   - Initialize agent pool registry to track active agents
+
+2. **Template Validation**
    - Verify template:agent exists and is readable
    - Load template structure for reference
    - Identify mandatory sections that must be preserved
 
-2. **Delegation**
-   - Create parallel specialized subagents (one per agent file) with:
-     - Agent file path
-     - All change specifications
-     - Detailed instructions
-     - Request to ultrathink
+3. **Spawn Agent Update Specialists**
+   - Spawn specialized teammates (one per agent file) via Task tool with:
+     - `team_name: "update-agent-team"`
+     - `name: "updater-{N}"` (sequential naming)
+     - `model: "opus"`
+     - `agent_type: "general-purpose"`
 
-3. **Subagent Task Specification**
+4. **Create and Assign Tasks**
+   - TaskCreate per agent file with full instructions including:
+     - Agent file path
+     - Template reference path (template:agent)
+     - All change specifications from arguments
+     - Detailed instructions for applying updates
+   - TaskUpdate to set owner per teammate
+
+#### Phase 3: Work Cycle
+
+1. **Agent Update Task Specification**
+
+   Each Agent Update Specialist receives:
 
    >>>
    **ultrathink: adopt the Agent Update Specialist mindset**
@@ -116,7 +141,7 @@ ultrathink: you'd perform the following steps
       - Verify agent definition is complete and valid
 
    **Report**
-   **[IMPORTANT]** You MUST return the following execution report (<500 tokens):
+   **[IMPORTANT]** You MUST return the following execution report (<500 tokens) via SendMessage to team-lead:
 
    ```yaml
    status: success|failure|partial
@@ -127,16 +152,80 @@ ultrathink: you'd perform the following steps
        change: '[what was changed]'
    template_compliance: true|false
    personality_preserved: true|false
+   context_level: '[calculated %]'  # (input_tokens / context_window_size) from real usage data
    issues: ['issue1', 'issue2', ...]  # only if problems encountered
    ```
+
    <<<
 
-4. **Progress Monitoring**
+2. **Progress Monitoring**
+   - Track completion status of each delegated agent file
+   - Handle any teammate failures or escalations
+   - Ensure constitutional compliance in all updates
+
+#### Phase 4: Aggregation & Cleanup
+
+1. **Collect Results**
+   - Use TaskGet to retrieve completion reports from all tasks
+   - Aggregate results into final summary
+
+2. **Shutdown Teammates**
+   - Send shutdown requests to all teammates via SendMessage
+   - Wait for shutdown acknowledgments
+
+3. **Delete Team**
+   - Use TeamDelete to clean up team resources
+   - Proceed to Reporting
+
+#### Agent Summary
+
+| Agent Type | Model | Role | Lifecycle |
+|------------|-------|------|-----------|
+| Agent Update Specialist | opus | Updates agent files with template alignment and changes | One per agent file; spawned for Phase 3, retired in Phase 4 |
+
+### Step 2B: Subagent Mode (fallback)
+
+When Agent Teams are not available, execute the existing workflow:
+
+### Planning & Discovery
+
+1. **Analyze Requirements**
+   - Parse $ARGUMENTS to extract:
+     - Agent specifier (all, specific agent name, or pattern like `*frontend*`)
+     - Change specifications (--changes parameter)
+   - Validate agent files exist if specific agent specified
+   - Count total agents if updating all
+
+2. **Load Template Reference**
+   - Read template:agent for latest agent structure
+   - Identify template sections and required elements
+   - Note any template updates since last agent refresh
+
+3. **Locate Agents**
+   - Discover all relevant agent files using Glob
+   - Filter by specifier pattern if provided
+   - Build list of agents to update
+
+### Execution with Parallel Subagents
+
+1. **Template Validation**
+   - Verify template:agent exists and is readable
+   - Load template structure for reference
+   - Identify mandatory sections that must be preserved
+
+2. **Delegation**
+   - Create parallel specialized subagents (one per agent file) with:
+     - Agent file path
+     - All change specifications
+     - Detailed instructions
+     - Request to ultrathink
+
+3. **Progress Monitoring**
    - Track completion status of each delegated agent
    - Handle any subagent failures or escalations
    - Ensure constitutional compliance in all updates
 
-### Step 3: Verification
+### Verification
 
 1. **Template Compliance Verification**
    - Verify each updated agent follows template:agent structure
@@ -153,7 +242,7 @@ ultrathink: you'd perform the following steps
    - Verify collaboration networks are preserved
    - Confirm expertise areas unchanged (unless explicitly modified)
 
-### Step 4: Reporting
+### Reporting
 
 **Output Format**:
 
@@ -161,6 +250,7 @@ ultrathink: you'd perform the following steps
 [✅/❌] Command: update-agent $ARGUMENTS
 
 ## Summary
+- Execution mode: [team/subagent]
 - Agents processed: [count/total]
 - Successfully updated: [count]
 - Failed updates: [count]
@@ -171,12 +261,17 @@ ultrathink: you'd perform the following steps
 2. [Template alignment changes applied]
 3. [Custom changes applied (if any)]
 
-## Workflows Applied
+## Workflows Applied (subagent mode)
 - Update Agent Workflow: [Status]
 
+## Teammate Results (team mode only)
+- Total agents deployed: [count]
+- Successful updates: [count]
+- Failed updates: [count] (if any)
+
 ## Updated Agents
-- [agent-name]: [Changes applied]
-- [agent-name]: [Changes applied]
+- [agent-name]: [Status] - [Changes applied]
+- [agent-name]: [Status] - [Changes applied]
 
 ## Issues Found (if any)
 - **Agent**: [agent-name]
@@ -186,12 +281,26 @@ ultrathink: you'd perform the following steps
 
 ## Examples
 
-### Update All Agents
+### Update All Agents (Team Mode)
 
 ```bash
 /update-agent
-# Updates all agents in /agents directory to latest template
-# Preserves unique characteristics while ensuring template compliance
+# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
+# - Creates update-agent-team
+# - Spawns parallel Agent Update Specialists (one per agent file)
+# - Each specialist updates agent with template alignment
+# - Preserves unique characteristics while ensuring template compliance
+# - Reports execution mode: team
+```
+
+### Update All Agents (Subagent Mode)
+
+```bash
+/update-agent
+# Without agent teams:
+# - Uses traditional subagent delegation
+# - Updates all agents in /agents directory to latest template
+# - Reports execution mode: subagent
 ```
 
 ### Update Specific Agent

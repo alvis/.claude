@@ -42,8 +42,8 @@ As a Security Champion, you will STRICTLY follow the standards required. Otherwi
 - data-protection.md
 - infrastructure.md
 - monitoring.md
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - code-review.md

@@ -4,18 +4,18 @@
 
 ### Purpose & Context
 
-**Purpose**: Update multiple standard documentation files to add new patterns, clarify requirements, or expand coverage while maintaining consistency and preserving all valid existing content across the standards system.
-**When to use**: When AI needs to modify standard files in [plugin]/constitution/standards/ to add content, fix issues, enhance documentation, or fill gaps while maintaining template compliance across multiple standards.
-**Prerequisites**: Understanding of standards system structure, clear requirements for what needs changing, familiarity with template:standard template structure.
+**Purpose**: Update multiple standard directories to add new patterns, clarify requirements, or expand coverage while maintaining consistency and preserving all valid existing content across the standards system.
+**When to use**: When AI needs to modify standard directories in [plugin]/constitution/standards/ to add content, fix issues, enhance documentation, or fill gaps while maintaining template compliance across multiple standards. Each standard is a directory containing `meta.md`, `scan.md`, `write.md`, and a `rules/` subdirectory.
+**Prerequisites**: Understanding of standards system structure, clear requirements for what needs changing, familiarity with the three-tier standard template structure: template:standard-meta, template:standard-scan, template:standard-write.
 
 ### Your Role
 
 You are a **Standards Evolution Director** who orchestrates the multi-standard maintenance process like a technical documentation curator ensuring continuous improvement while preserving valuable existing content. You never execute editing tasks directly, only delegate and coordinate. Your management style emphasizes:
 
-- **Strategic Delegation**: Break standard updates into parallel batches with specialized enhancement teams (max 5 standards per subagent)
+- **Strategic Delegation**: Break standard updates into parallel batches with specialized enhancement teams (max 2-3 directories per subagent)
 - **Parallel Coordination**: Run multiple subagents simultaneously when dependencies allow for efficient processing
 - **Quality Oversight**: Ensure updates improve standards without breaking existing functionality through comprehensive review
-- **Template Compliance**: Ensure all updated standards strictly follow the template:standard template structure
+- **Template Compliance**: Ensure all updated standards strictly follow the three-tier template structure (template:standard-meta, template:standard-scan, template:standard-write)
 
 ## 2. WORKFLOW OVERVIEW
 
@@ -27,19 +27,19 @@ None
 
 #### Optional Inputs
 
-- **Scope of Standard Files**: Either specific paths or function type (e.g., "backend", "frontend", "testing", "naming") to filter which standards to update (default: all standard files if unspecified)
+- **Scope of Standard Directories**: Either specific paths or function type (e.g., "backend", "frontend", "testing", "naming") to filter which standard directories to update (default: all standard directories if unspecified)
 - **Things to Change**: Specific changes, additions, or enhancements needed across the selected standards (default: template compliance improvements)
 
 #### Expected Outputs
 
-- **Updated Standard Files**: Enhanced standards with new content while preserving existing valid material
+- **Updated Standard Directories**: Enhanced standards (meta.md, scan.md, write.md per directory) with new content while preserving existing valid material
 - **Change Documentation**: Summary of all modifications made across all standards with rationale
-- **Template Compliance Report**: Confirmation that all updates maintain template consistency
-- **Batch Processing Summary**: Details of how standards were processed in parallel batches
+- **Template Compliance Report**: Confirmation that all updates maintain three-tier template consistency
+- **Batch Processing Summary**: Details of how standard directories were processed in parallel batches
 
 #### Data Flow Summary
 
-The workflow takes optional scope criteria and change requirements, identifies relevant standard files, processes them in parallel batches through specialized subagents (max 5 standards per agent), and ensures all updates maintain template compliance while preserving existing valid content.
+The workflow takes optional scope criteria and change requirements, identifies relevant standard directories (each containing meta.md, scan.md, write.md), processes them in parallel batches through specialized subagents (max 2-3 directories per agent), and ensures all updates maintain three-tier template compliance while preserving existing valid content.
 
 ### Visual Overview
 
@@ -53,19 +53,19 @@ The workflow takes optional scope criteria and change requirements, identifies r
 [START]
    |
    v
-[Step 1: Update Standards] ──────→ Phase 1: Planning (You identify standard files to update)
+[Step 1: Update Standards] ──────→ Phase 1: Planning (You identify standard directories to update)
    |                                 |
    |                                 v
-   |                              Phase 2: Execution (Subagents update standards in parallel)
-   |                                 ├─ Subagent A: Batch 1 (≤5 standards)     ─┐
-   |                                 ├─ Subagent B: Batch 2 (≤5 standards)     ─┼─→ [Decision: Quality OK?]
-   |                                 └─ Subagent N: Batch N (≤5 standards)     ─┘
+   |                              Phase 2: Execution (Subagents update standard directories in parallel)
+   |                                 ├─ Subagent A: Batch 1 (≤3 directories)   ─┐
+   |                                 ├─ Subagent B: Batch 2 (≤3 directories)   ─┼─→ [Decision: Quality OK?]
+   |                                 └─ Subagent N: Batch N (≤3 directories)   ─┘
    |                                 |
    |                                 v
-   |                              Phase 3: Review (Subagents verify template compliance)
-   |                                 ├─ Review Agent A: Batch 1 (≤5 standards) ─┐
-   |                                 ├─ Review Agent B: Batch 2 (≤5 standards) ─┼─→ [Decision: Proceed?]
-   |                                 └─ Review Agent N: Batch N (≤5 standards) ─┘
+   |                              Phase 3: Review (Subagents verify three-tier template compliance)
+   |                                 ├─ Review Agent A: Batch 1 (≤3 directories) ─┐
+   |                                 ├─ Review Agent B: Batch 2 (≤3 directories) ─┼─→ [Decision: Proceed?]
+   |                                 └─ Review Agent N: Batch N (≤3 directories) ─┘
    |                                 |
    |                                 v
    |                              Phase 4: Decision (You decide next action)
@@ -76,15 +76,15 @@ The workflow takes optional scope criteria and change requirements, identifies r
 Legend:
 ═══════════════════════════════════════════════════════════════════
 • LEFT COLUMN: You plan & orchestrate (no execution)
-• RIGHT SIDE: Subagents execute tasks in parallel batches (max 5 standards each)
+• RIGHT SIDE: Subagents execute tasks in parallel batches (max 3 directories each)
 • ARROWS (───→): You assign work to subagents
 • DECISIONS: You decide based on subagent reports
 ═══════════════════════════════════════════════════════════════════
 
 Note: 
-• You: Lists standard files, batches work, assigns tasks, makes decisions
-• Execution Subagents: Update standards following template:standard (<1k tokens)
-• Review Subagents: Check template compliance and quality (<500 tokens)  
+• You: Lists standard directories, batches work, assigns tasks, makes decisions
+• Execution Subagents: Update standard directories following template:standard-meta, template:standard-scan, template:standard-write (<1k tokens)
+• Review Subagents: Check three-tier template compliance and quality (<500 tokens)
 • Workflow is SINGLE STEP with 4 PHASES: Planning → Execution → Review → Decision
 ```
 
@@ -98,9 +98,9 @@ Note:
 
 **Step Configuration**:
 
-- **Purpose**: Update multiple standard files in parallel batches while ensuring template compliance and content consistency
-- **Input**: Scope of standard files, Things to change from workflow inputs
-- **Output**: Updated standard files, change documentation, template compliance report, batch processing summary
+- **Purpose**: Update multiple standard directories in parallel batches while ensuring three-tier template compliance and content consistency
+- **Input**: Scope of standard directories, Things to change from workflow inputs
+- **Output**: Updated standard directories (meta.md, scan.md, write.md), change documentation, template compliance report, batch processing summary
 - **Sub-workflow**: None
 - **Parallel Execution**: Yes
 
@@ -109,21 +109,25 @@ Note:
 **What You Do**:
 
 1. **Receive inputs** from external sources (optional scope and things to change)
-2. **List all standard files to update** using find commands in [plugin]/constitution/standards/ (do NOT read file contents):
-   - If scope specified: Filter by path pattern or function type (backend, frontend, testing, naming, etc.)
-   - If scope not specified: Include all standard files in [plugin]/constitution/standards/
+2. **List all standard directories to update** by finding directories under [plugin]/constitution/standards/ that contain `meta.md` (do NOT read file contents):
+   - Discovery: find directories containing `meta.md` — each such directory is a standard unit containing `meta.md`, `scan.md`, `write.md`, and a `rules/` subdirectory
+   - If scope specified: Filter by directory name or function type (backend, frontend, testing, naming, etc.)
+   - If scope not specified: Include all standard directories in [plugin]/constitution/standards/
+   - Each directory is batched as a single unit (not individual files)
 3. **Determine templates and standards** to send to subagents:
-   - template:standard (template file to follow for structure)
+   - template:standard-meta (template for meta.md structure)
+   - template:standard-scan (template for scan.md structure)
+   - template:standard-write (template for write.md structure)
    - documentation.md (for documentation quality)
 4. **Create dynamic batches** following these rules:
-   - Generate batches at runtime based on standard files found
-   - Limit each batch to max 5 standard files
+   - Generate batches at runtime based on standard directories found
+   - Limit each batch to max 2-3 standard directories (each directory = 3 tier files, so max 6-9 files per batch for context efficiency)
    - Assign one single subagent to perform updates on all standards in their batch
 5. **Use TodoWrite** to create task list from all batches (each batch = one todo item with status 'pending')
-6. **Prepare task assignments** with template:standard compliance requirements
+6. **Prepare task assignments** with three-tier template compliance requirements (template:standard-meta, template:standard-scan, template:standard-write)
 7. **Queue all batches** for parallel execution by subagents
 
-**OUTPUT from Planning**: Standard file batch assignments as todos
+**OUTPUT from Planning**: Standard directory batch assignments as todos
 
 #### Phase 2: Execution (Subagents)
 
@@ -141,8 +145,8 @@ Request each subagent to perform the following steps with full detail:
     **ultrathink: adopt the Standards Enhancement Specialist mindset**
 
     - You're a **Standards Enhancement Specialist** with deep expertise in technical documentation who follows these technical principles:
-      - **Template Compliance**: Ensure every updated standard follows the template:standard structure exactly
-      - **Content Consistency**: Make updated standard files fluid, clear, and consistent with the template
+      - **Template Compliance**: Ensure every updated standard directory follows the three-tier template structure exactly (meta.md → template:standard-meta, scan.md → template:standard-scan, write.md → template:standard-write)
+      - **Content Consistency**: Make updated standard tier files fluid, clear, and consistent with their respective templates
       - **Quality Enhancement**: Improve readability and understanding without changing core meaning
       - **Preservation Excellence**: Keep existing valid content intact while enhancing organization
 
@@ -150,43 +154,47 @@ Request each subagent to perform the following steps with full detail:
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **Use the following template file** (this is a template to follow, not a standard to follow):
+    **Use the following template files** (these are templates to follow, not standards to follow):
 
-    - template:standard - Follow this template structure exactly for all standard file updates
+    - template:standard-meta - Follow this template structure for meta.md files
+    - template:standard-scan - Follow this template structure for scan.md files
+    - template:standard-write - Follow this template structure for write.md files
 
     **Assignment**
-    You're assigned with the following standard files to update (max 5 files):
+    You're assigned with the following standard directories to update (max 3 directories):
 
-    - [standard file 1]
-    - [standard file 2]
-    - [standard file 3]
-    - [standard file 4] 
-    - [standard file 5]
+    - [standard directory 1] (meta.md, scan.md, write.md)
+    - [standard directory 2] (meta.md, scan.md, write.md)
+    - [standard directory 3] (meta.md, scan.md, write.md)
 
     **Steps**
 
-    1. Read and analyze each assigned standard file:
-       - Read the entire existing standard file content
-       - Compare current structure against template:standard template
-       - Identify content that needs reorganization for template compliance
+    1. Read and analyze each assigned standard directory:
+       - Read all three tier files (meta.md, scan.md, write.md) in the directory
+       - Compare meta.md against template:standard-meta
+       - Compare scan.md against template:standard-scan
+       - Compare write.md against template:standard-write
+       - Identify content that needs reorganization for template compliance in each tier file
        - Note sections that need enhancement or clarification based on "Things to Change" input
     2. Apply requested changes while ensuring template compliance:
        - Implement specific changes requested in "Things to Change" input (if provided)
-       - Re-order content to match template:standard structure exactly
-       - Ensure all required template sections are present and properly filled
+       - Apply updates to the correct tier file based on what's changing (metadata changes → meta.md, scanning rules → scan.md, writing guidance → write.md)
+       - Ensure each tier file matches its corresponding template structure exactly
+       - Ensure all required template sections are present and properly filled in each tier
        - Make content fluid and clear while maintaining original intent
-    3. Update each standard file with enhanced content:
+    3. Save all three tier files back to their original locations:
        - Preserve all existing valid content while improving organization
-       - Ensure consistency with template:standard template structure
-       - Maintain logical flow and readability throughout the document
-       - Save updated files back to their original locations
+       - Ensure consistency of meta.md with template:standard-meta
+       - Ensure consistency of scan.md with template:standard-scan
+       - Ensure consistency of write.md with template:standard-write
+       - Maintain logical flow and readability throughout each document
 
     **Report**
     **[IMPORTANT]** You're requested to return the following:
 
-    - List of standard files successfully updated with template compliance
-    - Summary of changes made to each standard file
-    - Template compliance verification for each file
+    - List of standard directories successfully updated with three-tier template compliance
+    - Summary of changes made to each tier file (meta.md, scan.md, write.md) per directory
+    - Template compliance verification for each tier file against its respective template
     - Any issues encountered during the update process
 
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
@@ -194,10 +202,13 @@ Request each subagent to perform the following steps with full detail:
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of standard updates completion'
-    modifications: ['path/to/standard1.md', 'path/to/standard2.md', ...]
+    modifications: ['path/to/standard-dir1/meta.md', 'path/to/standard-dir1/scan.md', 'path/to/standard-dir1/write.md', ...]
     outputs:
-      updated_standards: ['file1', 'file2', ...]
-      template_compliance: true|false
+      updated_directories: ['standard-dir1', 'standard-dir2', ...]
+      tier_compliance:
+        meta: true|false   # compliance with template:standard-meta
+        scan: true|false   # compliance with template:standard-scan
+        write: true|false  # compliance with template:standard-write
       changes_summary: 'Summary of changes made'
       preserved_content: true|false
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
@@ -220,45 +231,43 @@ Request each review subagent to perform the following review with full scrutiny:
     **ultrathink: adopt the Template Compliance Reviewer mindset**
 
     - You're a **Template Compliance Reviewer** with expertise in documentation standards who follows these principles:
-      - **Template Compliance**: Verify every updated standard strictly follows template:standard structure
+      - **Template Compliance**: Verify every updated standard directory strictly follows the three-tier template structure (meta.md → template:standard-meta, scan.md → template:standard-scan, write.md → template:standard-write)
       - **Content Quality**: Ensure updates improve clarity while preserving essential information
-      - **Consistency Check**: Confirm all standards maintain uniform formatting and organization
+      - **Consistency Check**: Confirm all standard tier files maintain uniform formatting and organization
       - **Review-Only Role**: You MUST NOT modify any resources - only report compliance issues
 
     <IMPORTANT>
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **Review against the following template** (this is a template to verify compliance with):
+    **Review against the following templates** (these are templates to verify compliance with):
 
-    - template:standard - Verify all updated standards follow this template structure exactly
+    - template:standard-meta - Verify all meta.md files follow this template structure exactly
+    - template:standard-scan - Verify all scan.md files follow this template structure exactly
+    - template:standard-write - Verify all write.md files follow this template structure exactly
 
     **Review Assignment**
-    You're assigned to review the following updated standard files (max 5 files):
+    You're assigned to review the following updated standard directories (max 3 directories):
 
-    - [standard file 1]:
+    - [standard directory 1] (meta.md, scan.md, write.md):
       - Summary of changes made during phase 2
-    - [standard file 2]:
+    - [standard directory 2] (meta.md, scan.md, write.md):
       - Summary of changes made during phase 2
-    - [standard file 3]:
-      - Summary of changes made during phase 2
-    - [standard file 4]:
-      - Summary of changes made during phase 2
-    - [standard file 5]:
+    - [standard directory 3] (meta.md, scan.md, write.md):
       - Summary of changes made during phase 2
 
     **Review Steps**
 
-    1. Read each updated standard file to verify template compliance
-    2. Check that all required sections from template:standard are present
-    3. Verify content is properly organized and flows logically
+    1. Read each tier file (meta.md, scan.md, write.md) in each updated standard directory
+    2. Check meta.md against template:standard-meta, scan.md against template:standard-scan, write.md against template:standard-write
+    3. Verify content is properly organized and flows logically within each tier file
     4. Confirm existing valid content was preserved during updates
 
     **Report**
     **[IMPORTANT]** You're requested to review and report:
 
-    - Template compliance status for each updated standard file
-    - Content quality and organization assessment
+    - Template compliance status for each tier file (meta.md, scan.md, write.md) per directory
+    - Content quality and organization assessment for each tier
     - Preservation of existing valid content verification
     - Any critical issues that need immediate attention
 
@@ -266,9 +275,11 @@ Request each review subagent to perform the following review with full scrutiny:
 
     ```yaml
     status: pass|fail
-    summary: 'Brief verification summary of updated standards'
+    summary: 'Brief verification summary of updated standard directories'
     checks:
-      template_compliance: pass|fail
+      meta_template_compliance: pass|fail   # meta.md vs template:standard-meta
+      scan_template_compliance: pass|fail   # scan.md vs template:standard-scan
+      write_template_compliance: pass|fail  # write.md vs template:standard-write
       content_quality: pass|fail
       content_preservation: pass|fail
       organization_flow: pass|fail
@@ -303,22 +314,35 @@ In phase 4, you (the management) must decide whether to reask subagents in phase
 **Report the workflow output as specified**:
 
 ```yaml
-updated_standard_files: ["path/to/standard1.md", "path/to/standard2.md", "..."]
+updated_standard_directories:
+  - directory: "path/to/standard1/"
+    files: ["meta.md", "scan.md", "write.md"]
+  - directory: "path/to/standard2/"
+    files: ["meta.md", "scan.md", "write.md"]
 change_documentation:
-  modifications_per_file:
-    "standard1.md": ["change1", "change2", "..."]
-    "standard2.md": ["change1", "change2", "..."]
+  modifications_per_directory:
+    "standard1":
+      meta: ["change1", "change2", "..."]
+      scan: ["change1", "..."]
+      write: ["change1", "..."]
+    "standard2":
+      meta: ["change1", "..."]
+      scan: ["change1", "..."]
+      write: ["change1", "..."]
   content_preserved: true|false
   rationale: "explanation of batch processing approach"
   date_updated: "YYYY-MM-DD"
 template_compliance_report:
-  compliance_status: "compliant|partial|non_compliant" 
-  template_used: "template:standard"
-  compliant_files: ["file1", "file2", "..."]
-  non_compliant_files: ["file3", "file4", "..."]
+  compliance_status: "compliant|partial|non_compliant"
+  templates_used:
+    - "template:standard-meta"
+    - "template:standard-scan"
+    - "template:standard-write"
+  compliant_directories: ["dir1", "dir2", "..."]
+  non_compliant_directories: ["dir3", "dir4", "..."]
 batch_processing_summary:
   total_batches: N
-  standards_per_batch: "≤5"
+  directories_per_batch: "≤3"
   execution_subagents: N
   review_subagents: N
   retry_count: N

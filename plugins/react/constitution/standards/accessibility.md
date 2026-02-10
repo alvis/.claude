@@ -6,7 +6,7 @@ _WCAG compliance standards for inclusive web development_
 
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- General Principles (plugin:coding:standard:general-principles) - Accessibility builds on fundamental coding principles of clarity, consistency, and user-centered design
+- General Principles (plugin:coding:standard:universal) - Accessibility builds on fundamental coding principles of clarity, consistency, and user-centered design
 - Documentation Standards (plugin:coding:standard:documentation) - All accessibility features and decisions must be properly documented for compliance and team understanding
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
@@ -224,7 +224,6 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, children }) => {
 };
 ```
 
-
 ## Form Accessibility
 
 ### Accessible Form Fields
@@ -268,7 +267,6 @@ export const FormField: FC<FormFieldProps> = ({
   );
 };
 ```
-
 
 ## Visual Design
 
@@ -407,6 +405,7 @@ export const VisuallyHidden: FC<{ children: ReactNode }> = ({ children }) => {
 **Purpose**: Create keyboard-accessible modal dialogs with proper focus management
 
 **When to use**:
+
 - Confirmation dialogs
 - Form overlays
 - Content popups
@@ -513,4 +512,3 @@ export const AccessibleModal: FC<ModalProps> = ({ isOpen, onClose, title, childr
    - If decorative only → Use `aria-hidden="true"`
    - If informative → Provide alt text or screen reader text
    - If interactive → Ensure keyboard accessibility
-

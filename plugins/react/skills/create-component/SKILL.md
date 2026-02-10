@@ -100,6 +100,7 @@ When you run this command, I will:
 ## Input Requirements
 
 Before running this command, it helps to prepare:
+
 1. The name of your component
 2. The purpose of the component (UI element, data display, form, etc.)
 3. Any Tevm/blockchain functionality it needs to interact with
@@ -346,6 +347,7 @@ export const BlockInfo: FC<{ blockNumber?: bigint }> = ({ blockNumber }) => {
 ## Output Format
 
 For your component, I'll provide:
+
 1. All necessary files with complete implementations
 2. Explanations of key design decisions
 3. Integration guidance for your specific use case

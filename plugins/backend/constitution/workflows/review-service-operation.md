@@ -124,6 +124,7 @@ Note:
       - From the service page extract metadata (name and id BUT NOT content) of all Data Operations belonging to the service from the link to the database view via Notion Fetch
       - Apply any optional filters to the operations list
       - Return the following discovery template:
+
         ```yaml
         status: success|failure|partial
         summary: 'Service discovery and context extraction completed'
@@ -135,6 +136,7 @@ Note:
           filtered_operations: ['filtered list if filters applied']
         issues: ['issue1', 'issue2', ...]  # only if problems encountered
         ```
+
 4. **Create operation batches** from discovered operations following these rules:
    - Generate batches at runtime based on operations found
    - Limit each batch to max 2 operations for optimal validation throughput
@@ -182,10 +184,10 @@ Request each subagent to perform the following steps with full detail:
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
-    - error-handling-logging.md
+    - observability/scan.md
     - typescript.md
-    - functions.md
-    - general-principles.md
+    - function/scan.md
+    - universal/scan.md
 
     **Assignment**
     You're assigned to validate this service operation:

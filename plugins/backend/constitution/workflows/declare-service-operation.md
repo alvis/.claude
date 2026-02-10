@@ -120,7 +120,7 @@ Note:
 
 1. **Receive inputs** from workflow invocation (service name, operation name, documentation sources)
 2. **List all documentation sources** that need to be accessed
-3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript), Documentation (plugin:coding:standard:documentation)
+3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript/write), Documentation (plugin:coding:standard:documentation/write)
 4. **Create task assignment** for requirements gathering
 5. **Use TodoWrite** to create task list: ['Requirements extraction - pending']
 6. **Prepare task assignment** for subagent execution
@@ -153,9 +153,9 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively:
 
-    - typescript.md
-    - documentation.md
-    - naming/files.md
+    - typescript/write.md
+    - documentation/write.md
+    - naming/write.md
 
     **Assignment**
     You're assigned to gather requirements for operation: [OPERATION_NAME] in service: [SERVICE_NAME]
@@ -257,15 +257,15 @@ manifests/[service-name]/
     └── index.spec.ts
 ```
 
-4. Use TodoWrite to track the status of each ensure-project step
-5. Executes each step as instructed in the ensure-project sub-workflow
-6. Pass specific requirements:
+1. Use TodoWrite to track the status of each ensure-project step
+2. Executes each step as instructed in the ensure-project sub-workflow
+3. Pass specific requirements:
    - Manifest directory under `manifests/[service-name]/`
    - Package.json with service-specific configuration and exports
    - Source directory with index.ts and operations subdirectory
    - Spec directory for tests
    - All dependencies aligned with existing manifest projects in monorepo
-7. After all sub-workflow steps are complete, continue to Step 3
+4. After all sub-workflow steps are complete, continue to Step 3
 
 ### Step 3: Create Schema Definitions
 
@@ -286,7 +286,7 @@ manifests/[service-name]/
    - Input schema (always required)
    - Output schema (if operation returns data)
    - Schema exports and type definitions
-3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript), Naming Conventions (plugin:coding:standard:naming)
+3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript/write), Naming Conventions (plugin:coding:standard:naming/write)
 4. **Create dynamic batches** following these rules:
    - Batch 1: Input schema creation
    - Batch 2: Output schema creation (if needed)
@@ -323,9 +323,8 @@ Request each subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively:
 
-    - typescript.md
-    - naming/functions.md
-    - naming/files.md
+    - typescript/write.md
+    - naming/write.md
 
     **Assignment**
     You're assigned to create schema files for operation: [OPERATION_NAME]
@@ -454,8 +453,8 @@ Request review subagent to perform the following review with full scrutiny:
 
     **Review the standards recursively that were applied**:
 
-    - typescript.md - Review TypeScript compliance
-    - naming/functions.md - Check naming conventions
+    - typescript/scan.md - Review TypeScript compliance
+    - naming/scan.md - Check naming conventions
 
     **Review Assignment**
     You're assigned to review the following schema files that were created:
@@ -533,7 +532,7 @@ Request review subagent to perform the following review with full scrutiny:
    - Operation manifest definition
    - Mock implementation with realistic data
    - Proper async/sync configuration
-3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript), Functions (plugin:coding:standard:functions)
+3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript/write), Functions (plugin:coding:standard:function/write)
 4. **Create single task assignment** for manifest creation
 5. **Use TodoWrite** to create task: ['Manifest creation - pending']
 6. **Prepare task assignment** with schema imports and mock requirements
@@ -563,9 +562,9 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively:
 
-    - typescript.md
-    - functions.md
-    - naming/files.md
+    - typescript/write.md
+    - function/write.md
+    - naming/write.md
 
     **Assignment**
     You're assigned to create the operation manifest for: [OPERATION_NAME]
@@ -740,7 +739,7 @@ Request review subagent to validate manifest and mock implementation:
    - Update service manifest index
    - Add operation import with path mapping
    - Maintain alphabetical ordering
-3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript), Naming Conventions (plugin:coding:standard:naming)
+3. **Determine the standards** to send to subagents: TypeScript (plugin:coding:standard:typescript/write), Naming Conventions (plugin:coding:standard:naming/write)
 4. **Create single task assignment** for service integration
 5. **Use TodoWrite** to create task: ['Service integration - pending']
 6. **Prepare task assignment** with service manifest update requirements
@@ -768,9 +767,8 @@ Request the subagent to perform service integration with full detail:
 
     **Read the following assigned standards** and follow them recursively:
 
-    - typescript.md
-    - naming/functions.md
-    - naming/files.md
+    - typescript/write.md
+    - naming/write.md
 
     **Assignment**
     You're assigned to integrate operation [OPERATION_NAME] into the service manifest
@@ -1064,11 +1062,11 @@ summary: "Brief description of service operation declaration completion"
 - TypeScript Standards (plugin:coding:standard:typescript) - Type safety, strict mode, and coding conventions for manifest schemas
 - Naming Conventions (plugin:coding:standard:naming) - Consistent naming for operations, schemas, and type definitions
 - Documentation Guidelines (plugin:coding:standard:documentation) - Schema descriptions and comprehensive code comments
-- Functions Standards (plugin:coding:standard:functions) - Mock function structure and implementation patterns
+- Functions Standards (plugin:coding:standard:function) - Mock function structure and implementation patterns
 
 ### Code Quality Standards
 
-- General Principles (plugin:coding:standard:general-principles) - DRY, SRP, and other fundamental development principles
+- General Principles (plugin:coding:standard:universal) - DRY, SRP, and other fundamental development principles
 
 ### Related Workflows
 

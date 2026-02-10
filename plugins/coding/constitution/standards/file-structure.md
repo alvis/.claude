@@ -111,15 +111,15 @@ export function formatCurrency() { ... }  // Different domain
 
 ## Quick Reference
 
-| File Type | Pattern | Example | Notes |
-|-----------|---------|---------|-------|
-| Service | kebab-case + .service | `user-service.ts` | Domain service |
-| Repository | kebab-case + .repository | `user-repository.ts` | Data layer |
-| Component | PascalCase | `UserProfile.tsx` | React only |
-| Test | source + .spec | `user.spec.ts` | Match source |
-| Types | kebab-case + .type | `api.type.ts` | Type definitions |
-| Config | kebab-case + .config | `database.config.ts` | Configuration |
-| Utils | kebab-case + -utils | `date-utils.ts` | Utilities |
+| File Type  | Pattern                  | Example              | Notes            |
+|------------|--------------------------|----------------------|------------------|
+| Service    | kebab-case + .service    | `user-service.ts`    | Domain service   |
+| Repository | kebab-case + .repository | `user-repository.ts` | Data layer       |
+| Component  | PascalCase               | `UserProfile.tsx`    | React only       |
+| Test       | source + .spec           | `user.spec.ts`       | Match source     |
+| Types      | kebab-case + .type       | `api.type.ts`        | Type definitions |
+| Config     | kebab-case + .config     | `database.config.ts` | Configuration    |
+| Utils      | kebab-case + -utils      | `date-utils.ts`      | Utilities        |
 
 ## Patterns & Best Practices
 

@@ -7,10 +7,10 @@ _Standards for React component structure, patterns, and performance optimization
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
 - TypeScript Standards (plugin:coding:standard:typescript) - React components use TypeScript interfaces and typing throughout all examples
-- Function Standards (plugin:coding:standard:functions) - React components are functions and component handlers are functions
+- Function Standards (plugin:coding:standard:function) - React components are functions and component handlers are functions
 - Testing Standards (plugin:coding:standard:testing) - Component test files and testing patterns are essential for quality
 - Documentation Standards (plugin:coding:standard:documentation) - Components require proper JSDoc and interface documentation
-- General Principles (plugin:coding:standard:general-principles) - Foundational coding principles that apply to all component code
+- General Principles (plugin:coding:standard:universal) - Foundational coding principles that apply to all component code
 - File Naming Standards (plugin:coding:standard:file-structure) - Specific component file naming patterns (Button.tsx, Button.spec.tsx)
 - Accessibility Standards (standard:accessibility) - Frontend components must follow accessibility requirements
 

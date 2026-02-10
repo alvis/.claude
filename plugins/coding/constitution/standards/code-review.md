@@ -6,7 +6,7 @@ _Standards for conducting effective, constructive code reviews that improve code
 
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- General Coding Principles (standard:general-principles) - Foundation of what makes good code and provides the principles to check against during review
+- General Coding Principles (standard:universal) - Foundation of what makes good code and provides the principles to check against during review
 
 ## Core Principles
 
@@ -177,13 +177,13 @@ function validateUserInput(input) { ... }
 
 ## Quick Reference
 
-| Priority | Focus Area | Comment Prefix | Example |
-|----------|------------|----------------|----------|
-| 🔴 Critical | Security/Correctness | `issue:` | `issue: SQL injection vulnerability` |
-| 🟡 Important | Performance/Architecture | `suggestion:` | `suggestion: Extract to utility function` |
-| 🟢 Optional | Style/Minor | `nit:` | `nit: Consider destructuring` |
-| 🔵 Info | Clarification | `question:` | `question: Why sort twice?` |
-| 🟢 Positive | Good practices | `praise:` | `praise: Great use of types!` |
+| Priority     | Focus Area               | Comment Prefix | Example                                   |
+|--------------|--------------------------|----------------|-------------------------------------------|
+| 🔴 Critical  | Security/Correctness     | `issue:`       | `issue: SQL injection vulnerability`      |
+| 🟡 Important | Performance/Architecture | `suggestion:`  | `suggestion: Extract to utility function` |
+| 🟢 Optional  | Style/Minor              | `nit:`         | `nit: Consider destructuring`             |
+| 🔵 Info      | Clarification            | `question:`    | `question: Why sort twice?`               |
+| 🟢 Positive  | Good practices           | `praise:`      | `praise: Great use of types!`             |
 
 ## Patterns & Best Practices
 

@@ -48,6 +48,7 @@ ultrathink: you'd perform the following steps
 ### Step 2: Resolve Merge Conflicts
 
 (Only if existing Notion pages found)
+
 - Spawn Merge Resolution Subagent
 - Compare local vs Notion content
 - Ask user for each difference
@@ -97,6 +98,7 @@ ultrathink: you'd perform the following steps
 ### Step 10: Sync to Notion
 
 (Unless --skip-notion-sync)
+
 1. **Spawn Notion Sync Subagent**
 2. **Spawn Verification Subagent**
 3. **Spawn Patching Subagent** (if needed)

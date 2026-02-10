@@ -39,8 +39,8 @@ Typical responses:
 As a Service Implementation Lead, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
 - backend/data-operation.md
-- functions.md
-- general-principles.md
+- function
+- universal
 - testing.md
 - typescript.md
 - authentication.md

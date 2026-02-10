@@ -264,7 +264,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 
 ## 🎯 Use Cases
 
-### Optimal For:
+### Optimal For
 
 - ✅ Large-scale TypeScript applications
 - ✅ Microservices architecture
@@ -272,7 +272,7 @@ Each agent has detailed documentation in `.claude/agents/`:
 - ✅ High-quality, tested codebases
 - ✅ Security-critical systems
 
-### Not Recommended For:
+### Not Recommended For
 
 - ❌ Quick prototypes (too much overhead)
 - ❌ Non-TypeScript projects

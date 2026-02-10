@@ -93,7 +93,7 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
 4. **Spawn or reuse linter teammates**: For each batch:
    - **Check pool** for an idle linter with `context_level` < 60%
    - **If found**: Reuse via `SendMessage` with new batch instructions
-   - **If not found**: Spawn a fresh `linter-N` using **opus** model, type `general-purpose`
+   - **If not found**: Spawn a fresh `linter-N` using **haiku** model, type `general-purpose`
 5. **Create lint tasks**: `TaskCreate` per batch with full instructions including:
    - The full absolute paths to the standard files collected in Phase 1 Step 4 (as string values — teammates will read these files themselves)
    - Complete file list for the batch
@@ -126,7 +126,7 @@ After each linter completes their lint task:
 4. **Lead assigns 2 reviewers** per completed batch (only when violations were found):
    - **Check pool** for idle reviewers with `context_level` < 60% — reuse via `SendMessage`
    - **If not enough idle reviewers**: Spawn fresh `reviewer-N`
-   - All reviewers use **opus** model, type `general-purpose`
+   - All reviewers use **sonnet** model, type `general-purpose`
 5. **Lead creates review tasks** for each reviewer with these instructions:
    - Subject: "Review lint batch N (reviewer A/B)"
    - Description includes: the file list that was linted, the full file paths to standards (reviewers read these themselves), instruction to independently review for compliance, **instruction to report `context_level`** in their response
@@ -157,8 +157,8 @@ Per-batch flow:
                     ┌────┴────┐
                     no        yes
                     │         │
-              batch complete  ├──[spawn/reuse]──> reviewer-N-a (opus)
-              (review skipped)└──[spawn/reuse]──> reviewer-N-b (opus)
+              batch complete  ├──[spawn/reuse]──> reviewer-N (sonnet)
+              (review skipped)└──[spawn/reuse]──> reviewer-N (sonnet)
               linter: pool               │
               or retire        reviewers review independently
                                          │
@@ -206,8 +206,8 @@ Per-batch flow:
 | Agent | Model | Role | Max Concurrent | Lifecycle |
 |-------|-------|------|----------------|-----------|
 | Lead (skill agent) | opus | Orchestration only | 1 | Entire workflow |
-| `linter-N` | **opus** | Apply standards (scoped by `--scope`), fix reviewer feedback | **4** | Spawned on demand; reports `violations_found`; if compliant → batch completes without review; if violations found → must **wait for reviewer approval**; **reused if `context_level` < 60%**; requests retirement if >= 60% and more fix work needed |
-| `reviewer-N-a/b` | **opus** | Independent compliance review (only when violations found) | **2** | Spawned on demand; messages **detailed findings directly to linter**; reports **pass/fail + `context_level`** to lead; reused if < 60%, retired if >= 60% |
+| `linter-N` | **haiku** | Apply standards (scoped by `--scope`), fix reviewer feedback | **4** | Spawned on demand; reports `violations_found`; if compliant → batch completes without review; if violations found → must **wait for reviewer approval**; **reused if `context_level` < 60%**; requests retirement if >= 60% and more fix work needed |
+| `reviewer-N` | **sonnet** | Independent compliance review (only when violations found) | **2** | Spawned on demand; messages **detailed findings directly to linter**; reports **pass/fail + `context_level`** to lead; reused if < 60%, retired if >= 60% |
 
 #### Phase 4: Aggregation & Cleanup (Lead)
 
@@ -330,8 +330,8 @@ Per-batch flow:
 /lint "src/" --scope=uncommitted
 # With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
 #   Discovers uncommitted files under src/, creates lint-team:
-#   - linter-1 (opus): Handles src/components/Button.tsx, src/components/Modal.tsx
-#   - linter-2 (opus): Handles src/utils/format.ts (parallel)
+#   - linter-1 (haiku): Handles src/components/Button.tsx, src/components/Modal.tsx
+#   - linter-2 (haiku): Handles src/utils/format.ts (parallel)
 #   Each linter uses git diff to focus on changed hunks within assigned files.
 #   Linter-1 finds violations → 2 reviewers assigned for that batch.
 #   Linter-2 reports compliant → review skipped for that batch.

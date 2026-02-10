@@ -137,9 +137,9 @@ Note:
 **What You Do** (if bootstrapping needed):
 
 1. **Analyze monorepo patterns** - Quickly scan for similar projects using find/ls
-3. **Create comprehensive task** for file creation and dependency installation
-4. **Use TodoWrite** to update task status from 'pending' to 'in_progress'
-5. **Dispatch subagent** for project bootstrapping
+2. **Create comprehensive task** for file creation and dependency installation
+3. **Use TodoWrite** to update task status from 'pending' to 'in_progress'
+4. **Dispatch subagent** for project bootstrapping
 
 **What You Send to Subagents**:
 
@@ -158,9 +158,9 @@ Note:
 
     **Read the following assigned standards** and follow them recursively:
 
-    - ../../standards/coding/typescript.md
-    - ../../standards/coding/general-principles.md
-    - ../../standards/coding/documentation.md
+    - ../../standards/coding/typescript/write.md
+    - ../../standards/coding/universal/write.md
+    - ../../standards/coding/documentation/write.md
 
     **Assignment**
     Bootstrap a new project at the target path:
