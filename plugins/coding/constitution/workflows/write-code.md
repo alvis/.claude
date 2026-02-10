@@ -385,12 +385,12 @@ Before executing this step, check resume and skip parameters:
 1. **Receive inputs** from workflow inputs and Step 0 (design context)
 2. **List all related resources** using LS/Glob tools for understanding existing patterns
 3. **Determine the standards** to send to subagent:
-   - general-principles.md
-   - typescript.md
-   - functions.md
-   - documentation.md
-   - testing.md
-   - naming/files.md
+   - universal/write.md
+   - typescript/write.md
+   - function/write.md
+   - documentation/write.md
+   - testing/write.md
+   - naming/write.md
 4. **Create task assignment** for skeleton drafting
 5. **Use TodoWrite** to create task for code skeleton creation
 6. **Prepare task assignment** with design context and requirements
@@ -426,12 +426,12 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
-    - naming/files.md
+    - universal/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/meta.md + testing/write.md
+    - naming/write.md
 
     **Context from Step 0**
     [Include all context discovered in Step 0, which may include:]
@@ -574,12 +574,12 @@ Request the review subagent to perform the following review with full scrutiny:
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
-    - naming/files.md
+    - universal/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/meta.md + testing/write.md
+    - naming/write.md
 
     **Review Assignment**
     You're assigned to review the code skeleton and test structure created.
@@ -734,12 +734,12 @@ Before executing this step, check resume and skip parameters:
 
 1. **Receive inputs** from Step 1 (skeleton and test structure)
 2. **Determine the standards** to send to subagent:
-   - general-principles.md
-   - error-handling-logging.md
-   - typescript.md
-   - functions.md
-   - documentation.md
-   - testing.md
+   - universal/write.md
+   - observability/write.md
+   - typescript/write.md
+   - function/write.md
+   - documentation/write.md
+   - testing/write.md
 3. **Create task assignment** for implementation
 4. **Use TodoWrite** to create task for implementation
 5. **Prepare task assignment** with skeleton context
@@ -774,12 +774,12 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - general-principles.md
-    - error-handling-logging.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
+    - universal/write.md
+    - observability/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/meta.md + testing/write.md
 
     **Assignment**
     You're assigned to implement minimal code to make tests pass:
@@ -862,12 +862,12 @@ Request the review subagent to perform the following review with full scrutiny:
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - general-principles.md
-    - error-handling-logging.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
+    - universal/write.md
+    - observability/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/meta.md + testing/write.md
 
     **Review Assignment**
     You're assigned to review the implementation created.
@@ -1011,9 +1011,10 @@ Before executing this step, check resume and skip parameters:
 1. **Receive implementation** from Step 2
 2. **List all test files** using LS/Glob tools (do NOT read contents)
 3. **Determine the minimum required standards** to send to subagents:
-   - testing.md (REQUIRED)
-   - typescript.md (REQUIRED)
-   - documentation.md (REQUIRED)
+   - testing/meta.md + testing/scan.md (REQUIRED)
+   - typescript/scan.md (REQUIRED)
+   - documentation/scan.md (REQUIRED)
+   - When a specific rule violation is detected, load its fix guidance from `testing/rules/<rule-id>.md`
 4. **Create dynamic batches** following these rules:
    - Generate batches at runtime based on test files found
    - Limit each batch to max 10 test files
@@ -1057,9 +1058,12 @@ Request each Correction Agent to perform the following steps with full detail:
 
     **Read the following MINIMUM REQUIRED standards** and follow them recursively (if A references B, read B too):
 
-    - testing.md
-    - typescript.md
-    - documentation.md
+    - testing/meta.md + testing/scan.md
+    - typescript/scan.md
+    - documentation/scan.md
+
+    When a specific rule violation is detected, load its fix guidance from
+    `testing/rules/<rule-id>.md` (e.g., `testing/rules/tst-mock-03.md`).
 
     **Read any ADDITIONAL DISCOVERED standards** that apply to your test code batch:
 
@@ -1137,7 +1141,7 @@ Request each Correction Agent to perform the following steps with full detail:
       standards_discovery:
         standards_found: ['list', 'of', 'all', 'discovered', 'standards']
         standards_applied: ['list', 'of', 'applied', 'standards']
-        minimum_required: ['testing.md', 'typescript.md', 'documentation.md']
+        minimum_required: ['testing/write.md', 'typescript.md', 'documentation.md']
         additional_applied: ['other', 'standards', 'applied']
       issue_resolution:
         correctness_issues_fixed: X
@@ -1191,9 +1195,9 @@ Request each Review Subagent to perform the following review with full scrutiny:
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - testing.md - Verify compliance with this standard and all its referenced standards
-    - typescript.md - Verify compliance with this standard and all its referenced standards
-    - documentation.md - Verify compliance with this standard and all its referenced standards
+    - testing/meta.md + testing/scan.md - Verify compliance with this standard and all its referenced standards
+    - typescript/scan.md - Verify compliance with this standard and all its referenced standards
+    - documentation/scan.md - Verify compliance with this standard and all its referenced standards
     - [Additional standards discovered and applied by execution agents]
 
     **Review Assignment**
@@ -1209,7 +1213,7 @@ Request each Review Subagent to perform the following review with full scrutiny:
 
     1. **Independent Root Cause Analysis**: Read test descriptions and specifications independently to form your own understanding of expected behavior and root cause. Do NOT be biased by executor's analysis yet.
     2. **Read ALL Applied Standards**: Read all standards that were applied and identify ALL requirements including recursive references
-    3. **Verify Minimum Standards**: Check each test file against ALL requirements in testing.md, typescript.md, documentation.md
+    3. **Verify Minimum Standards**: Check each test file against ALL requirements in testing/scan.md, typescript.md, documentation.md
     4. **Verify Additional Standards**: Check each test file against ALL requirements in additional standards discovered
     5. **Check Recursive References**: Verify any standards referenced by applied standards are also met
     6. **Verify Correctness**: Ensure test logic and behavior is correct and appropriate
@@ -1285,6 +1289,7 @@ Request each Review Subagent to perform the following review with full scrutiny:
    - **Learning Asset**: Document insight for future reference
 
    Example:
+
    ```yaml
    error: "Test expected UserNotFound but got null"
    root_cause: "Inconsistent error handling between service layers"
@@ -1293,6 +1298,7 @@ Request each Review Subagent to perform the following review with full scrutiny:
    improvement: "Create error-handling standard, add to review checklist"
    learning: "Document in NOTES.md: Service layer error patterns"
    ```
+
 4. **Select next action**:
    - **PROCEED**: All batches success or acceptable partial success → Move to interactive confirmation
    - **FIX ISSUES**: Partial success with minor issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again → ||repeat||
@@ -1426,11 +1432,11 @@ Request each Optimization Agent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
+    - universal/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/meta.md + testing/write.md
 
     **Assignment**
     You're assigned to fix issues in the following fixtures/mocks in Batch [X]:
@@ -1600,11 +1606,11 @@ Before executing this step, check resume and skip parameters:
 
 1. **Receive inputs** from Steps 2-4 (implementation and tests)
 2. **Determine the standards** to send to subagent:
-   - general-principles.md
-   - typescript.md
-   - functions.md
-   - documentation.md
-   - naming/files.md
+   - universal/write.md
+   - typescript/write.md
+   - function/write.md
+   - documentation/write.md
+   - naming/write.md
 3. **Create task assignment** for refactoring
 4. **Use TodoWrite** to create task for refactoring
 5. **Prepare task assignment** with implementation context
@@ -1640,11 +1646,11 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - naming/files.md
+    - universal/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - naming/write.md
 
     **Assignment**
     You're assigned to refactor implementation for quality and maintainability:
@@ -1739,11 +1745,11 @@ Request the review subagent to perform the following review with full scrutiny:
 
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - naming/files.md
+    - universal/scan.md
+    - typescript/scan.md
+    - function/scan.md
+    - documentation/scan.md
+    - naming/scan.md
 
     **Review Assignment**
     You're assigned to review the refactored implementation and documentation.
@@ -1875,7 +1881,7 @@ outputs:
     files_fixed: ['src/component.spec.ts']
     issues_resolved: 5
     standards_violations_fixed: 3
-    standards_applied: ['testing.md', 'typescript.md', 'documentation.md']
+    standards_applied: ['testing/scan.md', 'typescript/scan.md', 'documentation/scan.md']
   optimized_fixtures:
     files_created: ['src/fixtures/component.fixture.ts']
     fixtures_count: 8

@@ -5,15 +5,18 @@ This directory contains templates for creating new constitution documents. Use t
 ## Available Templates
 
 ### 📋 workflow.md
+
 **Purpose**: Template for creating new workflow documents in `constitutions/workflows/`
 
 Use this template when you need to document:
+
 - Step-by-step processes for completing tasks
 - Development workflows (coding, testing, deployment)
 - Review and verification procedures
 - Quality assurance processes
 
 **Key Sections**:
+
 - Purpose, When to use, Prerequisites
 - Expert Role definition
 - Numbered steps with examples
@@ -23,15 +26,18 @@ Use this template when you need to document:
 - Common issues and solutions
 
 ### 📐 standard.md
+
 **Purpose**: Template for creating new standards documents in `constitutions/standards/`
 
 Use this template when you need to document:
+
 - Coding conventions and patterns
 - Technical requirements and specifications
 - Best practices and anti-patterns
 - Security and performance guidelines
 
 **Key Sections**:
+
 - Core principles
 - Topic areas with examples
 - Patterns and anti-patterns
@@ -40,18 +46,22 @@ Use this template when you need to document:
 - Migration guides
 
 ### 🤖 agent.md
+
 **Purpose**: Template for defining AI agent personas in `.claude/agents/`
 
 Use this template when you need to create:
+
 - Specialized agent roles
 - Agent capabilities and expertise
 - Collaboration protocols
 - Tool access definitions
 
 ### 🔧 command.md
+
 **Purpose**: Template for creating slash commands in `commands/`
 
 Use this template when you need to create:
+
 - Custom slash commands for common tasks
 - Automated workflows triggered by commands
 - Tool orchestration commands
@@ -123,6 +133,7 @@ Need to create a command? → command.md
 ## File Naming Conventions
 
 ### Workflows
+
 ```
 constitutions/workflows/[category]/[verb]-[noun].md
 Examples:
@@ -132,6 +143,7 @@ Examples:
 ```
 
 ### Standards
+
 ```
 constitutions/standards/[category]/[topic].md
 Examples:

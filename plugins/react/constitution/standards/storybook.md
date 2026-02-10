@@ -9,7 +9,7 @@ _Standards for Storybook stories, organization, and documentation patterns_
 - React Components Standards (standard:react-components) - Storybook documents React components and requires understanding component implementation patterns
 - Documentation Standards (plugin:coding:standard:documentation) - Storybook stories serve as living documentation and must follow documentation principles
 - TypeScript Standards (plugin:coding:standard:typescript) - All story examples use TypeScript patterns and type definitions
-- General Principles (plugin:coding:standard:general-principles) - Story code must follow foundational coding principles and best practices
+- General Principles (plugin:coding:standard:universal) - Story code must follow foundational coding principles and best practices
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
 
@@ -348,4 +348,3 @@ export const GoodData: Story = {
    - If providers needed → Use decorators
    - If mock data → Define in story args
    - If interactions → Use play functions
-

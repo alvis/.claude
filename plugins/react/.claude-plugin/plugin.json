@@ -1,7 +1,7 @@
 {
   "name": "react",
   "description": "React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities",
-  "version": "1.0.0",
+  "version": "2026-02-16",
   "hooks": {
     "SessionStart": [
       {

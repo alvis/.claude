@@ -38,7 +38,7 @@ Typical responses:
 
 As an Agent Definition Optimizer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
+- universal
 - documentation.md
 - testing.md
 - code-review.md

@@ -12,39 +12,40 @@
 
   YOU MUST FOLLOW:
   **Workflow**: write-code
-  **Standards**: documentation, error-handling-logging, file-structure, functions, general-principles, naming, testing, typescript
+  **Standards**: documentation/write, observability/write, file-structure, function/write, universal/write, naming/write, testing/write, typescript/write
 
 - **When Creating Tests**
 
   YOU MUST FOLLOW:
   **Workflow**: create-test
-  **Standards**: documentation, general-principles, naming, testing, typescript
+  **Standards**: documentation/write, universal/write, naming/write, testing/write, typescript/write
 
 - **When Reviewing**
 
   YOU MUST FOLLOW:
   **Workflow**: review
-  **Standards**: code-review, documentation, environment-variables, error-handling-logging, functions, general-principles, naming, testing, typescript
+  **Standards**: code-review, documentation/scan, environment-variables, observability/scan, function/scan, universal/scan, naming/scan, testing/scan, typescript/scan
 
 - **When Fixing Tests**
 
   YOU MUST FOLLOW:
   **Workflow**: write-code (Steps 3-4 only)
-  **Standards**: general-principles, naming, testing, typescript
+  **Standards**: universal/scan, naming/scan, testing/scan, typescript/scan
 
   **NOTE**: The fix-test workflow has been merged into write-code. When fixing tests, execute Steps 3 and 4 of the write-code workflow.
+  **NOTE**: When a specific rule violation is detected, load its fix guidance from `testing/rules/<rule-id>.md`.
 
 - **When Linting Code**
 
   YOU MUST FOLLOW:
   **Workflow**: lint
-  **Standards**: documentation, error-handling-logging, functions, general-principles, naming, typescript
+  **Standards**: documentation/scan, observability/scan, function/scan, universal/scan, naming/scan, testing/scan, typescript/scan
 
 - **When Setting Up Project**
 
   YOU MUST FOLLOW:
   **Workflow**: ensure-project
-  **Standards**: file-structure, general-principles, typescript
+  **Standards**: file-structure, universal/write, typescript/write
 
 - **When Committing Code**
 

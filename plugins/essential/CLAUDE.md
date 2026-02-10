@@ -63,6 +63,7 @@ You may perform these actions DIRECTLY without delegation:
 ### Permitted Read-Only Commands
 
 You MAY run these commands for routing decisions ONLY:
+
 - `ls` - List directory contents
 - `git status` - Check repo state
 - `cat` (single file) - Quick file peek (counts toward 2-file limit)
@@ -89,11 +90,13 @@ You MAY run these commands for routing decisions ONLY:
 ### What "Context Understanding" ACTUALLY Means
 
 **PERMITTED:**
+
 - Read DESIGN.md to understand what to build (1 file)
 - Read package.json to see available scripts (1 file)
 - TOTAL: Maximum 2 files for routing decision
 
 **NOT PERMITTED (Requires Delegation):**
+
 - Reading 3+ files for any reason
 - Analyzing code patterns across files
 - Understanding error causes
@@ -105,12 +108,14 @@ You MAY run these commands for routing decisions ONLY:
 ### What "Delegation Decision" ACTUALLY Means
 
 **PERMITTED:**
+
 - "This is a coding task → delegate to Maya/James"
 - "This involves tests → delegate to Ava"
 - "This is security-related → delegate to Nina"
 - "This needs architecture → delegate to Alex"
 
 **NOT PERMITTED (IS the work, not decision about work):**
+
 - Running diagnostics to understand the problem
 - Reading error logs to categorize the issue
 - Analyzing code to determine approach

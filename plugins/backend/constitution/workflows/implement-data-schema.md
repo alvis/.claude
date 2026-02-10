@@ -158,10 +158,10 @@ Request the subagent to perform the following comprehensive steps:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - plugin:coding:standard:documentation
+    - plugin:coding:standard:documentation/write
     - plugin:coding:standard:file-structure
-    - plugin:coding:standard:naming
-    - plugin:coding:standard:typescript
+    - plugin:coding:standard:naming/write
+    - plugin:coding:standard:typescript/write
     - standard:data-entity
 
     **Assignment**
@@ -289,9 +289,9 @@ Request the subagent to perform the following comprehensive review:
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
     - Database migration best practices
-    - plugin:coding:standard:documentation - Check documentation completeness
-    - plugin:coding:standard:naming - Review naming conventions
-    - plugin:coding:standard:typescript - Review compliance with TypeScript standards
+    - plugin:coding:standard:documentation/scan - Check documentation completeness
+    - plugin:coding:standard:naming/scan - Review naming conventions
+    - plugin:coding:standard:typescript/scan - Review compliance with TypeScript standards
     - standard:data-entity
 
     **Review Assignment**

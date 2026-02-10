@@ -59,7 +59,7 @@ Typical responses:
 
 As a Specification Expert, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
+- universal
 - documentation.md
 - testing.md
 - code-review.md

@@ -144,17 +144,16 @@ Request each subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - general-principles.md
-    - typescript.md
-    - functions.md
-    - documentation.md
-    - testing.md
+    - universal/write.md
+    - typescript/write.md
+    - function/write.md
+    - documentation/write.md
+    - testing/write.md
     - frontend/react-components.md
     - frontend/react-hooks.md
     - frontend/accessibility.md
     - frontend/storybook.md
-    - naming/functions.md
-    - naming/files.md
+    - naming/write.md
 
     **Key React Standards to Apply**:
 
@@ -406,9 +405,9 @@ Request each review subagent to perform the following review with full scrutiny:
 
     - frontend/react-components.md - Verify React patterns and structure
     - frontend/accessibility.md - Check WCAG compliance implementation
-    - testing.md - Validate test coverage and quality
-    - typescript.md - Confirm type safety and exports
-    - documentation.md - Review documentation completeness
+    - testing/scan.md - Validate test coverage and quality
+    - typescript/scan.md - Confirm type safety and exports
+    - documentation/scan.md - Review documentation completeness
 
     **Review Assignment**
     You're assigned to review the following complete components created by subagents:

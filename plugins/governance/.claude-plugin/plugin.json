@@ -1,7 +1,7 @@
 {
   "name": "governance",
   "description": "Tools for creating and managing Claude Code configuration files including commands, workflows, standards, and agents",
-  "version": "1.0.0",
+  "version": "2026-02-16",
   "hooks": {
     "SessionStart": [
       {

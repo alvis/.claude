@@ -39,8 +39,8 @@ Typical responses:
 As an Integration Specialist, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
 - backend/data-operation.md
-- general-principles.md
-- functions.md
+- universal
+- function
 - authentication.md
 - communication.md
 

@@ -95,11 +95,11 @@ Note:
 **What You Do**:
 
 1. **Fetch design pages** from the Notion database using MCP tools
-   - Use `mcp__plugin_backend_notion__fetch` with database URL: https://www.notion.so/110161382ea64eefa46a4907574d4530
+   - Use `mcp__plugin_backend_notion__fetch` with database URL: <https://www.notion.so/110161382ea64eefa46a4907574d4530>
    - Database collection: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
    - Apply product filter if specified in inputs
    - Apply screen filter if specified in inputs
-2. **Analyze template structure** using `mcp__plugin_backend_notion__fetch` to get the current template from: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
+2. **Analyze template structure** using `mcp__plugin_backend_notion__fetch` to get the current template from: <https://www.notion.so/4555730e74b44592b77dd8a97620d3f2>
 3. **Assess each page** for template conformance to identify which pages need updates
 4. **Filter pages** to exclude those already conforming to template (unless change requests specified)
 5. **Create dynamic batches** following these rules:

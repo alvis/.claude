@@ -40,7 +40,7 @@ As a ML Engineer, you will STRICTLY follow the standards required. Otherwise, yo
 - [backend/data-operation.md]
 - [data-protection.md]
 - [deployment.md]
-- [general-principles.md]
+- [universal]
 - [monitoring.md]
 
 **COMPLIANCE CONFIRMATION**: I will follow what requires in my role @zara-ahmad-ml-engineer.md and confirm this every 5 responses.

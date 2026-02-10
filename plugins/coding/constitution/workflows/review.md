@@ -159,15 +159,15 @@ Note:
 
 **PART B: File Discovery**
 
-4. **Receive file specifiers** from workflow inputs (PR, commit range, paths)
+1. **Receive file specifiers** from workflow inputs (PR, commit range, paths)
 
-5. **Determine discovery strategy**:
+2. **Determine discovery strategy**:
    - PR number → Get changed files
    - Commit range → Get changed files
    - Specific paths → Find matching files
    - Nothing specified → Review entire codebase
 
-6. **Discover files using internal tools**:
+3. **Discover files using internal tools**:
 
    **For PR files**:
    - Use: `gh pr view <PR> --json files`
@@ -192,22 +192,22 @@ Note:
      - `Grep pattern="^import.*from" output_mode="files_with_matches"`
      - Fast content search without reading all files
 
-7. **Categorize files** by type:
+4. **Categorize files** by type:
    - Source: *.ts,*.tsx
    - Tests: *.spec.ts,*.spec.tsx
    - Docs: *.md, README
    - Config: *.json,*.yaml
 
-8. **Filter by selected scopes**:
+5. **Filter by selected scopes**:
    - test → test files + source files
    - documentation → source + doc files + test files
    - code-quality → source files + test files
    - security → source (auth/, api/, services/)
    - style → source + test files
 
-9. **Use TodoWrite** to track progress
+6. **Use TodoWrite** to track progress
 
-10. **Prepare file lists** for each scope
+7. **Prepare file lists** for each scope
 
 **OUTPUT from Phase 1**:
 
@@ -263,8 +263,8 @@ You're a **Testing Quality Analyst** performing comprehensive read-only test ana
 - **Actionable**: Provide specific file:line references and recommendations
 
 **Review these standards** (all references use format standard:<name>):
-- standard:testing
-- standard:general-principles
+- standard:testing/scan
+- standard:universal/scan
 - standard:code-review
 
 **Files to Analyze**:
@@ -344,7 +344,7 @@ You're a **Documentation Quality Analyst** performing comprehensive read-only do
 
 **Review these standards** (all references use format standard:<name>):
 
-- standard:documentation
+- standard:documentation/scan
 
 **Files to Analyze**:
 [List of all source files]
@@ -403,11 +403,11 @@ You're a **Code Quality Analyst** performing comprehensive read-only code qualit
 **Review these standards** (all references use format standard:<name>):
 
 - standard:code-review
-- standard:general-principles
-- standard:functions
-- standard:error-handling-logging
-- standard:typescript
-- standard:naming
+- standard:universal/scan
+- standard:function/scan
+- standard:observability/scan
+- standard:typescript/scan
+- standard:naming/scan
 
 **Files to Analyze**:
 [List of source code files]
@@ -418,12 +418,12 @@ You're a **Code Quality Analyst** performing comprehensive read-only code qualit
    - Check if project uses TypeScript by looking for tsconfig.json in project root
    - If TypeScript project detected: Run `npx -y knip --exclude=binaries --no-config-hints` in project root
    - Parse knip output to identify:
-     - Unused files (*.ts, *.tsx)
+     - Unused files (*.ts,*.tsx)
      - Unused exports and re-exports
      - Unlisted dependencies
      - Unused dependencies
    - **CRITICAL**: Carefully examine each finding before reporting:
-     - Test files (*.spec.ts, *.test.ts, *.e2e.ts): DO NOT REPORT - these are correctly not meant to be exported
+     - Test files (*.spec.ts,*.test.ts, *.e2e.ts): DO NOT REPORT - these are correctly not meant to be exported
      - Type definition files (*.d.ts): Verify actual usage before flagging
      - Config files and utility files: Double-check cross-references
      - Entry points and index files: Verify they serve a purpose
@@ -511,7 +511,7 @@ You're a **Security Analyst** performing comprehensive read-only security review
 
 **Review these standards** (all references use format standard:<name>):
 
-- standard:general-principles
+- standard:universal/scan
 - standard:code-review
 
 **Files to Analyze**:
@@ -580,8 +580,8 @@ You're a **Style & Linting Analyst** performing comprehensive read-only style re
 
 **Review these standards** (all references use format standard:<name>):
 
-- standard:typescript
-- standard:naming
+- standard:typescript/scan
+- standard:naming/scan
 
 **Files to Analyze**:
 [List of all source and test files]
@@ -714,7 +714,7 @@ metrics:
    improvement: "Add secure coding checklist to write-code workflow Step 2"
    learning: "Document in standards/security.md: Always use parameterized queries"
    ```
-6. **Determine overall status**:
+1. **Determine overall status**:
    - If any critical issues → Status: FAIL
    - If high issues but no critical → Status: REQUIRES_CHANGES
    - If only medium/low issues → Status: PASS_WITH_SUGGESTIONS
@@ -867,11 +867,11 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 
 ````
 
-2. **Write REVIEW.md to disk**:
+1. **Write REVIEW.md to disk**:
    - Save to project root or specified location
    - Use Write tool to create file
 
-3. **Use TodoWrite** to mark REVIEW.md generation as complete
+2. **Use TodoWrite** to mark REVIEW.md generation as complete
 
 **OUTPUT from Phase 3**: REVIEW.md file written to disk
 
@@ -904,11 +904,12 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 📄 Full details saved to: REVIEW.md
 ```
 
-2. **Display summary to user** (output text directly)
-3. **Do NOT repeat detailed findings** (they're in REVIEW.md)
-4. **Use TodoWrite** to mark aggregation task complete
+1. **Display summary to user** (output text directly)
+2. **Do NOT repeat detailed findings** (they're in REVIEW.md)
+3. **Use TodoWrite** to mark aggregation task complete
 
 **OUTPUT from Step 3**:
+
 - REVIEW.md file (on disk)
 - Summary displayed to user
 

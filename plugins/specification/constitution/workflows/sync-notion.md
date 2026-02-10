@@ -7,12 +7,14 @@
 **Purpose**: Perform bidirectional synchronization between local markdown documentation files and Notion pages with intelligent conflict resolution and integrity verification.
 
 **When to use**:
+
 - When local markdown documentation needs to be synced to Notion workspace
 - When Notion pages need to be pulled down to local markdown files
 - When resolving conflicts between local and remote documentation versions
 - After significant documentation updates that need to be reflected in both locations
 
 **Prerequisites**:
+
 - Access to Notion workspace with appropriate permissions
 - Notion MCP server configured and available
 - Local markdown files with valid frontmatter (if updating existing synced files)
@@ -766,6 +768,7 @@ Request each subagent to perform the following verification:
    - **For Each Failed Pair**:
      a. **Read Local Content**: Use Read tool to get current local file content
      b. **Print to Console**: Display content in markdown format ready for copy-paste:
+
         ```
         ╔═══════════════════════════════════════════════════════════════╗
         ║ SYNC INTEGRITY FAILURE - MANUAL FIX REQUIRED                  ║
@@ -789,6 +792,7 @@ Request each subagent to perform the following verification:
         5. Save the page in Notion
         6. Return here and confirm completion
         ```
+
      c. **Ask User Confirmation**: Use AskUserQuestion tool:
         - question: "Have you manually fixed the Notion page at [notion_url]?"
         - options:
@@ -798,9 +802,9 @@ Request each subagent to perform the following verification:
         - multiSelect: false
      d. **Record User Decision**: Track which pairs were fixed, skipped, or caused abort
    - **After All Failed Pairs Processed**:
-     * If any marked "Fixed": Optionally re-run verification for those pairs
-     * If any marked "Skip": Continue workflow but mark as partial success
-     * If any marked "Abort": Stop workflow immediately with abort status
+     - If any marked "Fixed": Optionally re-run verification for those pairs
+     - If any marked "Skip": Continue workflow but mark as partial success
+     - If any marked "Abort": Stop workflow immediately with abort status
 7. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark all verification todos as 'completed'
    - If MANUAL FIX then PROCEED: Mark fixed as 'completed', skipped as 'partial'

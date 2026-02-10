@@ -1,7 +1,7 @@
 {
   "name": "web",
   "description": "Web development tools including UX design, growth optimization, rapid prototyping, and browser automation via agent-browser",
-  "version": "1.0.0",
+  "version": "2026-02-16",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [

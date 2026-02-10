@@ -44,8 +44,8 @@ Typical responses:
 
 As a Principal Engineer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - typescript.md

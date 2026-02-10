@@ -144,7 +144,7 @@ Request each subagent to perform the following steps with full detail:
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
-    - general-principles.md
+    - universal/write.md
 
     **Assignment**
     You're assigned with the following command files to update:
@@ -217,7 +217,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
     - documentation.md - Verify compliance with documentation standards
-    - general-principles.md - Check adherence to coding principles
+    - universal/scan.md - Check adherence to coding principles
 
     **Review Assignment**
     You're assigned to review the following command files that were modified:
@@ -334,7 +334,7 @@ Request each subagent to perform the following steps with full detail:
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
-    - general-principles.md
+    - universal/write.md
 
     **Assignment**
     You're assigned to implement template updates for these command files:
@@ -405,7 +405,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
     - documentation.md - Verify documentation compliance
-    - general-principles.md - Check implementation quality
+    - universal/scan.md - Check implementation quality
 
     **Review Assignment**
     You're assigned to review the following command files that were updated:
@@ -521,7 +521,7 @@ Request each subagent to perform the following steps with full detail:
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
     - documentation.md
-    - general-principles.md
+    - universal/scan.md
 
     **Assignment**
     You're assigned to perform final compliance verification for these updated command files:
@@ -587,7 +587,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review the standards recursively (if A references B, review B too) that were applied**:
 
     - documentation.md - Final documentation compliance check
-    - general-principles.md - Overall quality validation
+    - universal/scan.md - Overall quality validation
 
     **Review Assignment**
     You're assigned to review the overall success of the command update workflow:

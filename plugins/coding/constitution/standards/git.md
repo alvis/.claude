@@ -129,7 +129,9 @@ List any breaking changes introduced by this PR
 Reference related tickets, issues, RFCs, discussions:
 
 ```
+
 Closes #123, See #456, Spec: [Notion doc](https://...)
+
 ```
 
 ## 🧪 Manual Testing

@@ -28,9 +28,20 @@ search_md_files() {
   # Clear temp file
   > "$temp_file"
 
-  # Search only in the provided path
+  # Search only in the provided path.
+  # Standards are intentionally limited to top-level files so per-rule
+  # example files under constitution/standards/** are discovered on demand.
+  # Three-tier standards (e.g., testing/meta.md, testing/scan.md, testing/write.md)
+  # are discovered at depth 2 by explicit filename match.
   if [[ -d "${search_path}/${subdir}" ]]; then
-    find "${search_path}/${subdir}" -type f -name "*.md" 2>/dev/null >> "$temp_file" || true
+    if [[ "$subdir" == "constitution/standards" ]]; then
+      # Top-level standards (non-migrated, e.g., typescript.md)
+      find "${search_path}/${subdir}" -maxdepth 1 -type f -name "*.md" 2>/dev/null >> "$temp_file" || true
+      # Three-tier standards (migrated, e.g., testing/meta.md, testing/scan.md, testing/write.md)
+      find "${search_path}/${subdir}" -maxdepth 2 -type f \( -name "meta.md" -o -name "scan.md" -o -name "write.md" \) 2>/dev/null >> "$temp_file" || true
+    else
+      find "${search_path}/${subdir}" -type f -name "*.md" 2>/dev/null >> "$temp_file" || true
+    fi
   fi
 
   # Format output

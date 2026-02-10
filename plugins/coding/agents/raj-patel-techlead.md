@@ -38,7 +38,7 @@ Typical responses:
 
 As a Tech Lead, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
+- universal
 - testing.md
 - documentation.md
 - code-review.md

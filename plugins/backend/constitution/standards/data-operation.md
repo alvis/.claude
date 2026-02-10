@@ -8,11 +8,11 @@ _Core standards for data controllers, database operations, and data management p
 
 - Entity Standards (standard:data-entity) - Entity interfaces in TypeScript & Prisma
 - TypeScript Standards (plugin:coding:standard:typescript) - Type safety and interfaces required for all data operations
-- Functions Standards (plugin:coding:standard:functions) - Function patterns and structure for operation implementations
+- Functions Standards (plugin:coding:standard:function) - Function patterns and structure for operation implementations
 - Function Naming Standards (plugin:coding:standard:naming) - Naming conventions for Search/List/Get/Set/Drop operations
 - Testing Standards (plugin:coding:standard:testing) - Testing patterns for data operations and repository layers
 - Documentation Standards (plugin:coding:standard:documentation) - Documenting data operations and API contracts
-- General Principles (plugin:coding:standard:general-principles) - Core coding principles that apply to all data operations
+- General Principles (plugin:coding:standard:universal) - Core coding principles that apply to all data operations
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
 

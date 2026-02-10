@@ -38,8 +38,8 @@ Typical responses:
 
 As an API Designer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - authentication.md
 - communication.md

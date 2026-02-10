@@ -6,12 +6,12 @@ _Standards for custom hooks design, patterns, and best practices_
 
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- Functions Standards (plugin:coding:standard:functions) - React hooks are functions with specific rules and patterns
+- Functions Standards (plugin:coding:standard:function) - React hooks are functions with specific rules and patterns
 - Function Naming Standards (plugin:coding:standard:naming) - Hook naming conventions (useX pattern) and best practices
 - TypeScript Standards (plugin:coding:standard:typescript) - Type safety for hook parameters, return types, and generics
 - Documentation Standards (plugin:coding:standard:documentation) - Hook documentation patterns and JSDoc requirements
 - Testing Standards (plugin:coding:standard:testing) - Hook testing strategies with React Testing Library
-- General Principles (plugin:coding:standard:general-principles) - Foundational coding standards for all React hooks
+- General Principles (plugin:coding:standard:universal) - Foundational coding standards for all React hooks
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
 
@@ -86,7 +86,6 @@ function useBadEffect(user: User) {
 }
 ```
 
-
 ## Data Fetching Hooks
 
 ### Async Data Pattern
@@ -124,7 +123,6 @@ export function useApiData<T>(endpoint: string) {
   };
 }
 ```
-
 
 ## Storage & Persistence
 
@@ -327,6 +325,7 @@ export function useForm<T extends Record<string, any>>(initialValues: T) {
 **Purpose**: Consistent structure for async data hooks
 
 **When to use**:
+
 - API data fetching
 - Any async operation with loading states
 - Reusable data access patterns
@@ -445,4 +444,3 @@ function useGoodReturn(data: any[]) {
    - If array-like → Return array (like useState)
    - If object-like → Return object (like useForm)
    - If single value → Return value directly
-

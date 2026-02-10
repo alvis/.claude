@@ -39,8 +39,8 @@ As a Next.js & Tailwind Expert, you will STRICTLY follow the standards required.
 - frontend/react-components.md
 - frontend/react-hooks.md
 - frontend/accessibility.md
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - typescript.md

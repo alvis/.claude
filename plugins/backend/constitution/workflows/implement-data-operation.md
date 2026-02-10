@@ -173,12 +173,12 @@ Request each subagent to perform the following steps with full detail:
 
 **Read the following assigned standards** and follow them recursively:
 
-- plugin:coding:standard:documentation
-- plugin:coding:standard:error-handling-logging
+- plugin:coding:standard:documentation/write
+- plugin:coding:standard:observability/write
 - plugin:coding:standard:file-structure
-- plugin:coding:standard:functions
-- plugin:coding:standard:testing
-- plugin:coding:standard:typescript
+- plugin:coding:standard:function/write
+- plugin:coding:standard:testing/write
+- plugin:coding:standard:typescript/write
 - standard:data-operation
 
 **Note**: This workflow requires the coding plugin to be enabled for referenced coding standards.
@@ -584,10 +584,10 @@ Request each review subagent to perform the following review with full scrutiny:
 
 **Review the standards recursively (if A references B, review B too) that were applied**:
 
-- plugin:coding:standard:documentation - Review JSDoc completeness
-- plugin:coding:standard:functions - Review pure function patterns
-- plugin:coding:standard:testing - Review testing standards compliance
-- plugin:coding:standard:typescript - Review type safety and strict mode compliance
+- plugin:coding:standard:documentation/scan - Review JSDoc completeness
+- plugin:coding:standard:function/scan - Review pure function patterns
+- plugin:coding:standard:testing/scan - Review testing standards compliance
+- plugin:coding:standard:typescript/scan - Review type safety and strict mode compliance
 - standard:data-operation - Check data vs business logic separation
 
 **Review Assignment**

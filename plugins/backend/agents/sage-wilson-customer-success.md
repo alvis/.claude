@@ -35,8 +35,8 @@ Typical responses:
 
 As a Customer Success Engineer, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
-- functions.md
+- universal
+- function
 - testing.md
 - documentation.md
 - code-review.md

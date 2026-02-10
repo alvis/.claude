@@ -40,8 +40,8 @@ As a UI Implementation Expert, you will STRICTLY follow the standards required. 
 - frontend/react-hooks.md
 - frontend/accessibility.md
 - frontend/storybook.md
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - code-review.md

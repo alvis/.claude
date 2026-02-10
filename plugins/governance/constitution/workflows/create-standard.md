@@ -4,9 +4,9 @@
 
 ### Purpose & Context
 
-**Purpose**: Generate a new standard documentation file that defines mandatory practices, patterns, and principles for a specific technical domain.
-**When to use**: When AI needs to create a new standard file in the [plugin]/constitution/standards/ directory based on requirements and domain analysis.
-**Prerequisites**: Access to template:standard, understanding of the technical domain, existing standards reviewed programmatically, clear scope definition.
+**Purpose**: Generate a new standard directory with three-tier structure (meta.md, scan.md, write.md, and rules/) that defines mandatory practices, patterns, and principles for a specific technical domain.
+**When to use**: When AI needs to create a new standard directory in the [plugin]/constitution/standards/ directory based on requirements and domain analysis.
+**Prerequisites**: Access to template:standard-meta, template:standard-scan, template:standard-write, understanding of the technical domain, existing standards reviewed programmatically, clear scope definition.
 
 ### Your Role
 
@@ -35,12 +35,12 @@ You are a **Standards Development Director** who orchestrates the standard creat
 
 #### Expected Outputs
 
-- **Standard File Path**: Absolute path to the created standard file (e.g., /path/to/filename.md)
+- **Standard Directory Path**: Absolute path to the created standard directory (e.g., /path/to/standard-name/) containing meta.md, scan.md, write.md, and rules/
 - **Implementation Summary**: Comprehensive summary of standard creation including scope, principles, and integration details
 
 #### Data Flow Summary
 
-The workflow takes technical domain requirements and creates a comprehensive standard document through four integrated phases: planning and analysis (you), implementation (single subagent), review (same subagent), and decision with retry logic (you).
+The workflow takes technical domain requirements and creates a comprehensive standard directory (containing meta.md, scan.md, write.md, and rules/) through four integrated phases: planning and analysis (you), implementation (single subagent), review (same subagent), and decision with retry logic (you).
 
 ### Visual Overview
 
@@ -61,7 +61,7 @@ The workflow takes technical domain requirements and creates a comprehensive sta
    │   determine standard path,      |
    │   prepare implementation plan)  |
    │                                 |
-   ├─[Phase 2: Implementation]───────→ (Subagent: create standard file)
+   ├─[Phase 2: Implementation]───────→ (Subagent: create standard directory)
    │                                   |
    ├─[Phase 3: Review]─────────────────→ (Same Subagent: review quality)
    │                                   |
@@ -99,9 +99,9 @@ Note:
 
 **Step Configuration**:
 
-- **Purpose**: Create a complete standard document through integrated planning, implementation, review, and decision phases
+- **Purpose**: Create a complete standard directory (meta.md, scan.md, write.md, rules/) through integrated planning, implementation, review, and decision phases
 - **Input**: Technical Domain, Standard Requirements from workflow inputs
-- **Output**: Standard file path and implementation summary
+- **Output**: Standard directory path and implementation summary
 - **Sub-workflow**: None
 - **Parallel Execution**: No (single subagent handles phases 2 and 3)
 
@@ -111,27 +111,29 @@ Note:
 
 1. **Receive inputs** from external sources (technical domain, standard requirements)
 2. **Analyze domain requirements** to understand scope and boundaries
-3. **Review template structure** by examining template:standard
+3. **Review template structures** by examining template:standard-meta, template:standard-scan, and template:standard-write
 4. **List all related resources** using find commands for existing standards
-5. **Determine target standard path** following this structure:
+5. **Determine target standard directory** following this structure:
    - Base path: [plugin]/constitution/standards/
    - Category: [coding|project|quality]/[subcategory if needed]/
-   - Filename: descriptive-kebab-case.md
-   - Example: frontend/react-components.md
+   - Directory: descriptive-kebab-case/
+   - Example: testing/ containing meta.md, scan.md, write.md, rules/
 6. **Identify related standards** that should be referenced or cross-linked
 7. **Create implementation plan** including:
-   - Suggested standard file path
+   - Suggested standard directory path
+   - Three-tier file plan: meta.md (metadata and principles), scan.md (scanning/review rules), write.md (writing/implementation guidance)
+   - Rules to place in rules/ subdirectory
    - Core principles to develop (3-5)
    - Main topic areas to cover
    - Anti-patterns to document
    - Related standards to reference
-8. **Prepare comprehensive instructions** for the single subagent with template requirements
+8. **Prepare comprehensive instructions** for the single subagent with template requirements for all three tier files
 
 **OUTPUT from Planning**:
 
-- Suggested standard file path (e.g., backend/error-handling.md)
-- Implementation plan with all sections outlined
-- Template usage instructions for subagent
+- Suggested standard directory path (e.g., error-handling/) with three-tier file plan
+- Implementation plan with all sections outlined for meta.md, scan.md, write.md, and rules/
+- Template usage instructions for subagent (template:standard-meta, template:standard-scan, template:standard-write)
 
 #### Phase 2: Implementation (Single Subagent)
 
@@ -139,7 +141,7 @@ Note:
 
 In a single message, You dispatch ONE subagent to implement the complete standard based on your planning.
 
-- **[IMPORTANT]** Provide the suggested standard file path from Phase 1
+- **[IMPORTANT]** Provide the suggested standard directory path from Phase 1
 - **[IMPORTANT]** Include complete implementation plan with all sections outlined
 - **[IMPORTANT]** The subagent should return ONLY success or failure status
 
@@ -159,37 +161,44 @@ Request the subagent to perform the following implementation:
     </IMPORTANT>
 
     **Template Usage Requirement**
-    
-    - Copy and paste template:standard first, then update content following the instruction ultrathink
-    - Ensure all template sections are properly filled with domain-specific content
-    - Replace all placeholders with actual values
+
+    - Copy and paste template:standard-meta, template:standard-scan, and template:standard-write first, then update content following the instruction ultrathink
+    - Ensure all template sections in each file are properly filled with domain-specific content
+    - Replace all placeholders with actual values in all three files
 
     **Assignment**
-    You're assigned to create the complete standard at the following path:
-    - Target Path: [suggested standard file path from Phase 1]
+    You're assigned to create the complete standard directory at the following path:
+    - Target Directory: [suggested standard directory path from Phase 1]
+    - Three-tier files: meta.md, scan.md, write.md
+    - Rules subdirectory: rules/
     - Implementation Plan: [complete plan from Phase 1]
 
     **Steps**
 
-    1. Load and prepare template:
-       - Read template:standard for structure
-       - Identify all sections and placeholders
+    1. Load and prepare templates:
+       - Read template:standard-meta for meta.md structure
+       - Read template:standard-scan for scan.md structure
+       - Read template:standard-write for write.md structure
+       - Identify all sections and placeholders in each template
        - Prepare content structure based on plan
-    
+
     2. Generate core content:
        - Write 3-5 core principles with clear titles and explanations
        - Create TypeScript code examples for each principle
        - Develop main topic areas with patterns and rules
        - Document anti-patterns with problematic examples
        - Build decision trees and quick reference tables
-    
-    3. Create standard file:
-       - Compile all content following template structure
-       - Replace all template placeholders
+       - Distribute content appropriately across the three tier files
+
+    3. Create standard directory and files:
+       - Create the standard directory and rules/ subdirectory using `mkdir -p <name>/rules/`
+       - Create `<name>/meta.md` following template:standard-meta structure
+       - Create `<name>/scan.md` following template:standard-scan structure
+       - Create `<name>/write.md` following template:standard-write structure
+       - Replace all template placeholders in each file
        - Ensure all code examples are valid TypeScript
-       - Write file to specified path
-       - Validate file creation success
-    
+       - Validate all file creations succeeded
+
     4. Update indexes:
        - Update [plugin]/constitution/standards/README.md
        - Update category-specific README if exists
@@ -201,7 +210,8 @@ Request the subagent to perform the following implementation:
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of standard creation'
-    standard_path: 'absolute path if created'
+    standard_directory: 'absolute path to standard directory'
+    files_created: ['meta.md', 'scan.md', 'write.md', 'rules/']
     ```
     <<<
 
@@ -233,30 +243,35 @@ Request the same subagent to review and report:
     </IMPORTANT>
 
     **Review Assignment**
-    Review the standard file created in Phase 2 implementation:
+    Review the standard directory and all three tier files created in Phase 2 implementation:
 
     **Review Steps**
 
     1. Template compliance check:
-       - Verify all template sections are present
-       - Check that placeholders are replaced
-       - Ensure proper markdown structure
-    
+       - Verify meta.md follows template:standard-meta structure with all sections present
+       - Verify scan.md follows template:standard-scan structure with all sections present
+       - Verify write.md follows template:standard-write structure with all sections present
+       - Check that placeholders are replaced in all three files
+       - Ensure proper markdown structure in each file
+       - Verify rules/ subdirectory exists
+
     2. Content quality assessment:
        - Review 3-5 core principles for clarity
        - Check code examples for correctness
        - Verify anti-patterns are documented
        - Assess decision trees and tables
-    
+       - Ensure content is distributed correctly across the three tier files
+
     3. Integration validation:
        - Check README.md updates
        - Verify cross-references work
-       - Ensure file path is correct
-    
+       - Ensure directory path is correct and all three files are present
+
     4. Overall quality evaluation:
        - Is the standard actionable and enforceable
        - Are examples clear and compilable
        - Does it integrate with existing standards
+       - Are all three tier files consistent with each other
 
     **Report**
     **[IMPORTANT]** Provide detailed review report for decision-making:
@@ -284,8 +299,8 @@ Request the same subagent to review and report:
 3. **Select next action**:
 
    **PROCEED** (Review passes or minor warnings only):
-   - Extract standard file path from implementation
-   - Compile implementation summary
+   - Extract standard directory path from implementation
+   - Compile implementation summary covering all three tier files
    - Complete workflow with final outputs
 
    **FIX ISSUES** (Partial success with fixable issues):
@@ -296,7 +311,7 @@ Request the same subagent to review and report:
 
    **ROLLBACK** (Critical failures requiring cleanup):
    - Revert any partial changes made
-   - Clean up incomplete files
+   - Clean up incomplete directory and files
    - Return to Phase 1 for re-planning
    - Maximum 2 rollback attempts before workflow termination
 
@@ -309,7 +324,7 @@ Request the same subagent to review and report:
 
 **Final Output**:
 
-- Standard file path (absolute path to created file)
+- Standard directory path (absolute path to created directory containing meta.md, scan.md, write.md, and rules/)
 - Implementation summary including:
   - Domain and scope covered
   - Core principles established
@@ -325,7 +340,12 @@ Request the same subagent to review and report:
 workflow: create-standard
 status: completed
 outputs:
-  standard_file_path: '[filename].md'
+  standard_directory_path: '[standard-name]/'
+  files_created:
+    - '[standard-name]/meta.md'
+    - '[standard-name]/scan.md'
+    - '[standard-name]/write.md'
+    - '[standard-name]/rules/'
   implementation_summary:
     domain: '[technical domain]'
     scope: '[scope covered]'
@@ -333,16 +353,19 @@ outputs:
     code_examples: 8
     anti_patterns: 3
   quality_assurance:
-    template_compliance: passed
+    meta_template_compliance: passed
+    scan_template_compliance: passed
+    write_template_compliance: passed
     content_quality: passed
     code_validation: passed
     integration_verified: passed
   cross_references:
-    related_standards: ['standard1.md', 'standard2.md']
+    related_standards: ['standard1/', 'standard2/']
     index_updates: completed
 total_attempts: 1
 summary: |
-  Successfully created standard for [technical domain] with [N] core principles,
-  comprehensive TypeScript examples, and clear anti-patterns. Standard is fully
-  integrated with cross-references and index updates completed.
+  Successfully created standard directory for [technical domain] with three-tier
+  structure (meta.md, scan.md, write.md) and rules/ subdirectory. Includes [N]
+  core principles, comprehensive TypeScript examples, and clear anti-patterns.
+  Standard is fully integrated with cross-references and index updates completed.
 ```

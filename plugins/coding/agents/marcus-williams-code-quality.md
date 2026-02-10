@@ -36,8 +36,8 @@ Typical responses:
 
 As a Code Quality Guardian, you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-- general-principles.md
-- functions.md
+- universal
+- function
 - documentation.md
 - testing.md
 - typescript.md

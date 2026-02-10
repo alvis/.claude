@@ -113,7 +113,7 @@ Note:
    - Ensure no naming conflicts with existing commands in the system
    - Validate argument structure follows established patterns
 3. **Determine the standards** to send to subagent to follow, e.g.
-   - plugin:coding:standard:documentation
+   - plugin:coding:standard:documentation/write
 4. **Create single comprehensive task** for complete command generation:
    - Single subagent assignment for complete command generation and validation
 5. **Use TodoWrite** to create task list with single comprehensive item (status 'pending')
@@ -149,8 +149,8 @@ Request the subagent to perform the following steps with full detail:
 
     **Read the following assigned standards** and follow them recursively (if A references B, read B too):
 
-    - ../../standards/coding/documentation.md
-    - ../../standards/coding/general-principles.md
+    - ../../standards/coding/documentation/write.md
+    - ../../standards/coding/universal/write.md
 
     **Assignment**
     You're assigned to create a new command with the following specifications:

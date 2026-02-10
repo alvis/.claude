@@ -1,7 +1,7 @@
 {
   "name": "theriety",
   "description": "Theriety-specific commands and tools for service operations and Notion integration",
-  "version": "1.0.0",
+  "version": "2026-02-16",
   "mcpServers": "./.mcp.json",
   "hooks": {
     "SessionStart": [
