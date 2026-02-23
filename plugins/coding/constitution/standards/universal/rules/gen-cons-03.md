@@ -66,4 +66,4 @@ const userIndex = new Map<string, User>(); // O(1) lookup
 
 ## Related
 
-GEN-CONS-01, GEN-CONS-02, GEN-DESN-01
+GEN-CONS-01, GEN-CONS-02, GEN-CONS-04, GEN-DESN-01

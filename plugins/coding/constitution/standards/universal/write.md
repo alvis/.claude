@@ -32,6 +32,7 @@
 - **GEN-CONS-01**: Match established architecture/style before introducing new patterns. One-off changes require explicit migration decision.
 - **GEN-CONS-02**: Use American English spelling in symbols, filenames, and comments. (→ TYP-CORE-06)
 - **GEN-CONS-03**: Prefer straightforward constructs that optimize maintainability and onboarding.
+- **GEN-CONS-04**: Prefer declarative defaults (spread, `??`, parameter defaults, destructuring defaults) over conditional overrides.
 
 ### Scalability (GEN-SCAL)
 
@@ -76,6 +77,24 @@ A wrapper is valid only when it adds concrete value:
 | Telemetry            | Duration/metric logging around call    |
 | Policy enforcement   | Permission check before action         |
 
+### Declarative Defaults
+
+Use built-in default mechanisms instead of conditional overrides:
+
+```typescript
+// object defaults with spread
+const headers = { 'Content-Type': 'application/json', ...options?.headers };
+
+// nullish coalescing
+const timeout = options?.timeout ?? 3000;
+
+// parameter defaults
+function connect(port = 3000): void { /* ... */ }
+
+// destructuring defaults
+const { retries = 3, backoff = 1000 } = config;
+```
+
 ### Pattern Matching
 
 Before introducing a new pattern, inspect nearby code and match the established architecture/style.
@@ -86,6 +105,7 @@ Before introducing a new pattern, inspect nearby code and match the established 
 - Architecture drift from ad-hoc local patterns.
 - Unnecessary indirection and abstraction layering.
 - Premature generalization of unproven requirements.
+- Replacing declarative defaults with conditional imperative logic.
 - Optimizing without profiling evidence.
 
 ## Quick Decision Tree
@@ -96,3 +116,4 @@ Before introducing a new pattern, inspect nearby code and match the established 
 4. If changing style/patterns, align with current architecture (`GEN-CONS-01`).
 5. If optimizing, provide profiling evidence (`GEN-SCAL-01`).
 6. For complex changes, run "what am I missing" check (`GEN-SCAL-03`).
+7. If replacing a declarative default with a conditional, revert to the declarative form (`GEN-CONS-04`).
