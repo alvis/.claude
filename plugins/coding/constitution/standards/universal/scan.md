@@ -10,6 +10,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT introduce one-off architecture styles that conflict with nearby established patterns [`GEN-CONS-01`]
 - DO NOT use British spelling in code [`GEN-CONS-02`] (→ TYP-CORE-06)
 - DO NOT prioritize cleverness over clarity [`GEN-CONS-03`]
+- DO NOT replace declarative defaults with conditional imperative logic [`GEN-CONS-04`]
 - DO NOT mix unrelated concerns in one function or module [`GEN-DESN-01`] (→ FUNC-ARCH-01)
 - DO NOT duplicate logic that should be extracted [`GEN-DESN-02`]
 - DO NOT add wrappers that provide no behavioral value [`GEN-DESN-03`] (→ FUNC-ARCH-03)
@@ -27,6 +28,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `GEN-CONS-01` | Local architecture pattern is ignored | `class ProductManager {}` in an area using service/DI patterns |
 | `GEN-CONS-02` | British spelling appears in code | `const colour = "red"`; `interface ColourConfig {` |
 | `GEN-CONS-03` | Code prioritizes cleverness over clarity | `return a?b:c?d:e`; `const isValid = !!(user && user.email && +user.age >= 18);` |
+| `GEN-CONS-04` | Declarative default replaced with conditional logic | `if (x !== undefined) { headers['Key'] ??= 'value'; }` replacing spread default; `let t; if (...) {...} else { t = 3000; }` replacing `?? 3000` |
 | `GEN-DESN-01` | Function/module has mixed concerns | `function saveAndNotify(){ saveUser(); sendEmail(); }` |
 | `GEN-DESN-02` | Duplicate logic not extracted | `const y=a+b; const z=a+b`; `function calculateUserDiscount(user: User): number {` |
 | `GEN-DESN-03` | Wrapper adds no behavioral value | `return repo.findById(id)`; `function getUser(id: string): Promise<User> {` |
