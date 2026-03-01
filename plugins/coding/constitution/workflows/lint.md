@@ -186,26 +186,15 @@ Request each subagent to perform the following steps with full detail:
     **Steps**
 
     1. Read each assigned file to understand current implementation. If scope is `uncommitted`, also run `git diff` on each file to identify the changed line ranges.
-    2. Apply documentation standards (scoped to the relevant areas based on scope):
-       - Add/update JSDoc comments for all functions, classes, and interfaces
-       - Ensure comments are clear, concise, and follow consistent format
-       - Document parameters, return types, and examples where appropriate
-    3. Apply TypeScript standards:
-       - Ensure proper type annotations on all functions and variables
-       - Order interface fields alphabetically or by logical grouping
-       - Order class methods: constructor, public, protected, private
-    4. Apply error-handling and logging standards:
-       - Standardize all error messages with consistent format
-       - Ensure logging messages follow established patterns
-       - Add appropriate error handling where missing
-    5. Reorder functions in files following logical flow:
-       - Exports first, then main functions, then helpers
-       - Group related functions together
-    6. Run the linting script from the nearest package.json:
+    2. Scan each file against the Quick Scan checklists from every loaded standard to identify potential violations (scoped to the relevant areas based on scope).
+    3. For each potential violation found, read the matching rule file (`./rules/<rule-id>.md` relative to the standard that flagged it) to:
+       a. Confirm it is a genuine violation — check the rule's examples and edge cases to rule out false positives or documented exceptions
+       b. Follow the rule's Fix section to apply the correction
+    4. Run the linting script from the nearest package.json:
        - Execute: npm run lint or yarn lint (infer from lock file)
        - If no lint script, try: npx eslint [files]
        - Ensure all files pass with no linting errors
-    7. Fix any remaining linting issues reported by the tool
+    5. Fix any remaining linting issues reported by the tool
 
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
