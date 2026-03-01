@@ -1,6 +1,6 @@
 ---
 name: complete-test
-description: Achieves 100% test coverage with minimal redundancy through progressive test writing. Writes tests one-at-a-time with immediate coverage verification, removes redundant tests while maintaining coverage, fixes standards violations, restructures fixtures. Use when creating test suites for existing code, or optimizing test efficiency
+description: Write comprehensive test suites achieving 100% coverage with minimal redundancy. Use when creating test suites for existing code, achieving full test coverage, optimizing test efficiency, or following test-driven development.
 model: opus
 context: fork
 agent: general-purpose

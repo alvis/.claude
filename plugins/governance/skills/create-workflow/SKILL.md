@@ -1,6 +1,6 @@
 ---
 name: create-workflow
-description: Creates comprehensive constitution workflow documents that define repeatable processes. Use when establishing new processes, documenting recurring tasks, standardizing procedures, or creating reusable workflow patterns. Takes workflow name, category, and optional instructions to generate complete workflow files with template compliance validation.
+description: Create comprehensive constitution workflow documents that define repeatable processes. Use when establishing new processes, documenting recurring tasks, standardizing procedures, or creating reusable workflow patterns.
 model: opus
 context: fork
 agent: general-purpose

@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Creates comprehensive skill documents that define specialized Claude capabilities. Use when creating new skills, documenting reusable AI behaviors, establishing automated task patterns, or building autonomous capabilities. Takes skill name, plugin, and optional instructions to generate complete skill files with frontmatter and orchestration logic.
+description: Create comprehensive skill documents that define specialized Claude capabilities. Use when creating new skills, documenting reusable AI behaviors, establishing automated task patterns, or building autonomous capabilities.
 model: opus
 context: fork
 agent: general-purpose
