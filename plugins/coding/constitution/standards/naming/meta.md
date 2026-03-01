@@ -40,7 +40,7 @@ If exception note is missing, submission is rejected.
 
 ## Rule Groups
 
-- `NAM-CORE-*`: Base naming clarity, casing, abbreviation, and unit precision.
+- `NAM-CORE-*`: Base naming clarity, casing, abbreviation, unit precision, and path redundancy.
 - `NAM-FUNC-*`: Function and operation naming semantics.
 - `NAM-TYPE-*`: Type/interface and parameter-contract naming.
 - `NAM-DATA-*`: Collection, map, boolean, and iteration naming patterns.

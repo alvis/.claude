@@ -10,7 +10,8 @@ Use kebab-case for files, PascalCase for React components.
 
 ```typescript
 // ✅ GOOD: proper casing
-user-service.ts         // Regular file
+user-service.ts         // Standalone (no typed directory)
+user.ts                 // Inside services/ directory
 UserProfile.tsx         // React component
 api-client.spec.ts     // Test file
 
@@ -30,9 +31,31 @@ File names should reflect what they export.
 export class UserValidator { ... }
 
 // ✅ GOOD: verb for function
-// validate-user.ts  
+// validate-user.ts
 export function validateUser() { ... }
 ```
+
+### Avoid Path Redundancy
+
+Do not repeat a word in a file name that is already expressed by its parent directory. When a file lives inside a typed directory, omit the type suffix from the file name.
+
+```typescript
+// ❌ BAD: word repeated in path
+store/token-store.ts
+services/user-service.ts
+repositories/user-repository.ts
+
+// ✅ GOOD: directory provides the context
+store/token.ts
+services/user.ts
+repositories/user.ts
+
+// ✅ OK: suffix needed when no typed directory
+lib/token-store.ts
+src/user-service.ts
+```
+
+> **Rule of thumb:** Read the full path aloud. If a word appears in both the directory and file name, remove it from the file name.
 
 ## File Naming Patterns
 
@@ -40,15 +63,17 @@ export function validateUser() { ... }
 
 ```typescript
 // service files
-user-service.ts
-payment-processor.ts
+user-service.ts               // standalone (no typed directory)
+services/user.ts              // inside typed directory (preferred)
 
 // test files
-user-service.spec.ts
+user-service.spec.ts          // standalone
+services/user.spec.ts         // inside typed directory
 
 // type files
-user.type.ts
-api.type.ts
+types.ts                      // co-located types for a module
+types/user.ts                 // typed directory for multiple type files
+types/api.ts
 ```
 
 ### Component Files
@@ -72,7 +97,7 @@ UserProfile/
 ```typescript
 // re-export only
 export { UserService } from "./user-service";
-export type { User } from "./user.types";
+export type { User } from "./types";
 
 // ❌ BAD: logic in index
 class UserService { ... }  // Don't define here
@@ -111,15 +136,15 @@ export function formatCurrency() { ... }  // Different domain
 
 ## Quick Reference
 
-| File Type  | Pattern                  | Example              | Notes            |
-|------------|--------------------------|----------------------|------------------|
-| Service    | kebab-case + .service    | `user-service.ts`    | Domain service   |
-| Repository | kebab-case + .repository | `user-repository.ts` | Data layer       |
-| Component  | PascalCase               | `UserProfile.tsx`    | React only       |
-| Test       | source + .spec           | `user.spec.ts`       | Match source     |
-| Types      | kebab-case + .type       | `api.type.ts`        | Type definitions |
-| Config     | kebab-case + .config     | `database.config.ts` | Configuration    |
-| Utils      | kebab-case + -utils      | `date-utils.ts`      | Utilities        |
+| File Type  | Pattern                    | Example              | Notes                          |
+|------------|----------------------------|----------------------|--------------------------------|
+| Service    | kebab-case (+ -service)    | `services/user.ts`   | Omit suffix in typed directory |
+| Repository | kebab-case (+ -repository) | `repositories/user.ts` | Omit suffix in typed directory |
+| Component  | PascalCase                 | `UserProfile.tsx`    | React only                     |
+| Test       | source + .spec             | `user.spec.ts`       | Match source                   |
+| Types      | `types.ts` or `types/<name>.ts` | `types/user.ts` | No `.type` suffix              |
+| Config     | kebab-case + .config       | `database.config.ts` | Configuration                  |
+| Utils      | kebab-case (+ -utils)      | `utilities/date.ts`  | Omit suffix in typed directory |
 
 ## Patterns & Best Practices
 
@@ -191,6 +216,11 @@ services/user.ts
    - Solution: Flatten structure
    - Example: Max 3-4 levels deep
 
+4. **Path Redundancy**
+   - Problem: Same word in directory and file name
+   - Solution: Let the directory provide the type context
+   - Example: `services/user-service.ts` → `services/user.ts`
+
 ## Quick Decision Tree
 
 1. **File type determination**
@@ -198,7 +228,11 @@ services/user.ts
    - Otherwise → kebab-case
    - If test → match source + .spec
 
-2. **Export type**
+2. **File in typed directory?**
+   - If directory already conveys the type (services/, store/, repositories/) → omit type suffix
+   - Otherwise → include type suffix
+
+3. **Export type**
    - If exports class/object → noun name
    - If exports function → verb name
    - If multiple related → domain-utils pattern

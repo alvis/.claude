@@ -3,7 +3,9 @@
 > **Prerequisite**: Read `meta.md` in this directory first for dependencies, exception policy, and rule groups.
 
 Any single violation blocks submission by default.
-If a violation is detected, load the matching rule guide at `./rules/<rule-id>.md`.
+If a violation is detected, load the matching rule guide at `./rules/<rule-id>.md` to confirm the violation and follow its fix guidance.
+
+> **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 
 ## Quick Scan
 
@@ -11,6 +13,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use symbol casing that does not match symbol type [`NAM-CORE-02`]
 - DO NOT use non-allowlisted abbreviations [`NAM-CORE-03`]
 - DO NOT omit units from measured values [`NAM-CORE-04`]
+- DO NOT repeat a word from the parent directory in the file name [`NAM-CORE-05`]
 - DO NOT use singular names for collections [`NAM-DATA-01`]
 - DO NOT use map names that hide key-value relationships [`NAM-DATA-02`]
 - DO NOT use boolean names without canonical prefixes [`NAM-DATA-03`]
@@ -30,6 +33,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `NAM-CORE-02` | Casing does not match symbol type | `const User_Name = "x"`; `user_service` |
 | `NAM-CORE-03` | Non-allowlisted abbreviation used | `const usr = getUser()`; `gUsr()` |
 | `NAM-CORE-04` | Unit missing from measured value | `const timeout = 5000` |
+| `NAM-CORE-05` | File name repeats word from parent directory | `services/user-service.ts`; `store/token-store.ts` |
 | `NAM-DATA-01` | Collections use singular names | `const user = []` |
 | `NAM-DATA-02` | Map name hides relationship | `const userMap = new Map()` |
 | `NAM-DATA-03` | Boolean missing canonical prefix | `const active = true`; `bIsActive` |
