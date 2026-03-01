@@ -52,6 +52,12 @@
   **Workflow**: None (use `/coding:commit` command)
   **Standards**: git
 
+- **When Planning Code** (including plan mode and Plan subagents)
+
+  YOU MUST FOLLOW:
+  **Workflow**: None (follow existing plan mode workflow)
+  **Standards**: universal/write, typescript/write, naming/write, function/write
+
 ## Your Actions
 
 <IMPORTANT>
