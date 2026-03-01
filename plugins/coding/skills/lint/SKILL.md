@@ -101,6 +101,7 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
      - `uncommitted`: Run `git diff` on each assigned file to identify changed hunks; lint those line ranges and their enclosing functions/blocks; skip untouched sections. Still apply all standards, but scoped to the changed areas.
      - `all`: Lint each file in its entirety against all standards.
      - Any other value: Interpret as a hint for which sections to focus on (e.g., `mocks` → focus on mock/stub code; a function name → focus on that function and its callers).
+   - **Linting process**: Linters must (1) scan each file against the loaded standards' Quick Scan checklists, (2) for each potential violation, read the matching rule file (`./rules/<rule-id>.md`) to confirm the violation and follow its Fix section, (3) run the lint script, (4) fix any remaining tool-reported issues
    - Expected YAML report format (see below) — **must include `violations_found` count** (integer, `0` if already compliant and no modifications were made) and **use `status: compliant`** when `violations_found` is `0` (distinct from `success` which means violations were found and fixed)
    - Instruction that linters CANNOT further delegate work
    - **Instruction to report `context_level`** (calculated as `input_tokens / context_window_size × 100`, default context window: 200K tokens) in their completion message
