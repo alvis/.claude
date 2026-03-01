@@ -1,4 +1,12 @@
 {
   "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--no-usage-statistics"]
+    },
+    "recraft": {
+      "type": "http",
+      "url": "https://mcp.recraft.ai/mcp"
+    }
   }
 }
