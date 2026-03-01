@@ -1,7 +1,7 @@
 {
   "name": "essential",
   "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
-  "version": "2026-02-16",
+  "version": "2026-03-01",
   "hooks": {
     "SessionStart": [
       {
