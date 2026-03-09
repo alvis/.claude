@@ -24,7 +24,7 @@ async function fetchUser(id: string): Promise<Result<User, FetchError>> {
     }
     return { success: true, data: await response.json() };
   } catch (err) {
-    return { success: false, error: new FetchError("Network error") };
+    return { success: false, error: new FetchError("Network error", { cause: err as Error }) };
   }
 }
 

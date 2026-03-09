@@ -133,7 +133,7 @@ export async function getUserHandler(
       status: "error",
       error: {
         code: "USER_NOT_FOUND",
-        message: "User not found",
+        message: (error as Error).message,
         details: error,
       },
     };

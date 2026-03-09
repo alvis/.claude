@@ -20,6 +20,7 @@
 - **ERR-HAND-01**: Use domain-specific error classes instead of generic `Error` whenever context matters.
 - **ERR-HAND-02**: Throw as soon as invalid state is detected; handle errors explicitly at system boundaries. Never swallow with empty catch.
 - **ERR-HAND-03**: Error logs must retain cause chain and stack context when available.
+- **ERR-HAND-04**: Cast caught errors immediately via `as Error` or a `toError` helper. Never use conditional branching on base `Error` in catch blocks.
 
 ### Logging Operations (LOG-OPER)
 
@@ -45,12 +46,14 @@ Use domain-specific error classes with cause chaining:
 try {
   await chargeOrder(order);
 } catch (error) {
+  const exception = error as Error;
   action.log.error("Charging order failed", {
     operation: "billing:charge-order",
     orderId: order.id,
-    error,
+    errorMessage: exception.message,
+    stack: exception.stack,
   });
-  throw new BillingChargeError("charging order failed", { cause: error });
+  throw new BillingChargeError("charging order failed", { cause: exception });
 }
 ```
 

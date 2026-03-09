@@ -10,7 +10,7 @@ Throw as soon as invalid state is detected, then handle errors explicitly at sys
 try {
   return await paymentGateway.charge(payload);
 } catch (error) {
-  throw new PaymentProcessingError("failed to charge payment", { cause: error });
+  throw new PaymentProcessingError("failed to charge payment", { cause: error as Error });
 }
 ```
 
@@ -23,7 +23,7 @@ function parseConfig(raw: string): Result<AppConfig> {
   try {
     return { ok: true, value: JSON.parse(raw) };
   } catch (error) {
-    return { ok: false, error: new ConfigParseError("invalid config format", { cause: error }) };
+    return { ok: false, error: new ConfigParseError("invalid config format", { cause: error as Error }) };
   }
 }
 ```

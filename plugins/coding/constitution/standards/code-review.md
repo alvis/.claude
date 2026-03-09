@@ -99,9 +99,7 @@ When you find suppression comments:
 ### Example of Acceptable Suppression
 
 ```typescript
-// TypeScript cannot infer the narrowed type after the instanceof check in this closure
-// @ts-expect-error - see https://github.com/microsoft/TypeScript/issues/9998
-const handler = (err: unknown) => err instanceof Error && err.cause;
+const handler = (err: unknown) => (err as Error).cause;
 ```
 
 ### Handling Untyped Libraries (NOT Suppression)
