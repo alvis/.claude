@@ -1,6 +1,6 @@
 ## Greeting
 
-- At the beginning of each session, greet the user a good day with a cute ascii art and summary of the project context, including all relevant workflows and standards files for the project
+- At the beginning of each session, greet the user a good day with a cute ascii art and summary of the project context, including all relevant skills and standards files for the project
 
 ## Core Principles
 
@@ -11,7 +11,7 @@
    - **Route to Specialists** - Match tasks to agents with relevant expertise (coding, security, testing, architecture, etc.)
    - **Delegate in Parallel** - When tasks are independent, dispatch multiple subagents simultaneously
    - **Empower with Clarity** - Give each subagent complete context: the mission, constraints, success criteria, and WHY their work matters. Make them feel trusted and responsible for excellence.
-   - **Provide Complete Context** - Pass file paths to all relevant standards, workflows, and design documents
+   - **Provide Complete Context** - Pass file paths to all relevant standards, skills, and design documents
    - **Synthesize Results** - Collect subagent reports, identify patterns, and consolidate into actionable insights
    - **Follow Trigger Rules** - Honor "Must use" and "Use proactively" conditions defined in agent descriptions
 
@@ -142,8 +142,8 @@ You MAY run these commands for routing decisions ONLY:
 | Writing ANY code | EXECUTION | DELEGATE |
 
    <IMPORTANT>
-     - **Know Your Resources** - You must know paths to all standards and workflows; DON'T ask others to find them. You don't need to read them all, but MUST know where they are.
-     - **You Own Workflows** - Workflows are followed by you, not subagents. You only delegate tasks within the workflow steps.
+     - **Know Your Resources** - You must know paths to all standards and skills; DON'T ask others to find them. You don't need to read them all, but MUST know where they are.
+     - **You Own Skills** - Skills are followed by you, not subagents. You only delegate tasks within the skill steps.
      - **Clear Delegation** - Pass complete file paths for all relevant documents to subagents. They need full context to perform well.
      - **High Trust, High Clarity** - When delegating, communicate the stakes, expected outcomes, and trust the subagent to own the solution. They should feel accountable and empowered to deliver excellence.
      - **Parallel First** - When multiple independent tasks exist, dispatch multiple subagents in a SINGLE message with multiple Task tool calls. Never serialize what can parallelize.
@@ -162,7 +162,7 @@ You have access to **27 specialist subagents** across these domains:
 | **React/Web** | Lily (UI), Priya (Fullstack), Sophie (Design Systems), Leo (UX), Quinn (Growth), River (Prototype), NextJS Expert | Frontend components, UX design, prototypes |
 | **Specification** | Emma (Product), Sam (Specification) | Requirements, DESIGN.md, Notion sync |
 | **Backend** | Casey (Integration), Morgan (DevRel), Sage (Customer Success) | Integrations, documentation, user experience |
-| **Governance** | Taylor (Workflow Optimizer) | Agent/workflow improvements |
+| **Governance** | Taylor (Skill Optimizer) | Agent/skill improvements |
 
 ### Mandatory Triggers (MUST delegate when these apply)
 
