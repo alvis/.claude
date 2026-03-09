@@ -61,10 +61,10 @@ Check the session context for `**Agent Teams**: enabled` under the "Agent Capabi
    - Identify key custom content to preserve
    - Extract specific change areas from arguments
 
-3. **Identify Applicable Workflows & Standards**
-   - Check `[plugin]/constitution/workflows/` for relevant processes
+3. **Identify Applicable Skills & Standards**
+   - Check `[plugin]/skills/` for relevant skill processes
    - Review `[plugin]/constitution/standards/` for applicable standards
-   - Note: MUST follow any matching workflows
+   - Note: MUST follow any matching skills
 
 4. **Delegation Decision**
    - Identify if specialized agents should handle subtasks
@@ -199,10 +199,10 @@ When Agent Teams are not available, execute the existing workflow:
 
 ### Planning
 
-1. **Workflow Compliance**
-   - MUST follow workflows identified in Phase 1
-   - If no workflow exists, follow project conventions
-   - Reference specific workflow files when applicable
+1. **Skill Compliance**
+   - MUST follow skills identified in Phase 1
+   - If no skill exists, follow project conventions
+   - Reference specific skill files when applicable
 
 2. **Primary Implementation**
    - Apply specific area changes from parsed arguments
@@ -254,8 +254,8 @@ When Agent Teams are not available, execute the existing workflow:
 1. [Action with result]
 2. [Action with result]
 
-## Workflows Applied (subagent mode)
-- [Workflow name]: [Status]
+## Skills Applied (subagent mode)
+- [Skill name]: [Status]
 
 ## Teammate Results (team mode only)
 - Total agents deployed: [count]

@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Create comprehensive skill documents that define specialized Claude capabilities. Use when creating new skills, documenting reusable AI behaviors, establishing automated task patterns, or building autonomous capabilities.
+description: Create comprehensive skill documents that define specialized Claude capabilities. Use when creating new skills, documenting reusable AI behaviors, establishing automated task patterns, building autonomous capabilities, or defining repeatable processes (previously handled by create-workflow).
 model: opus
 context: fork
 agent: general-purpose
@@ -12,13 +12,14 @@ agent: general-purpose
 
 ### Purpose & Context
 
-**Purpose**: Create comprehensive skill documents that define specialized Claude capabilities for autonomous invocation and execution.
+**Purpose**: Create comprehensive skill documents that define specialized Claude capabilities for autonomous invocation and execution. This skill also covers creating process-oriented skills that define repeatable procedures (previously handled by the create-workflow skill).
 **When to use**:
 
 - When creating new autonomous capabilities that Claude can invoke independently
 - When documenting reusable AI behaviors for consistent task execution
 - When establishing automated task patterns for common development workflows
 - When building specialized capabilities that require orchestration and subagent coordination
+- When defining repeatable processes and procedures for consistent task execution
 **Prerequisites**:
 - Clear understanding of the capability being documented
 - Review of existing skills to avoid duplication and ensure consistency
@@ -118,7 +119,7 @@ Note:
 - **Purpose**: Analyze requirements and generate comprehensive skill path guidance for subagent execution
 - **Input**: Skill Name, Plugin Name, and optional Step Instructions from skill inputs
 - **Output**: Skill path suggestions and detailed subagent assignment for combined creation & validation
-- **Sub-workflow**: None
+- **Sub-skill**: None
 - **Parallel Execution**: No
 
 #### Phase 1: Planning (You)
@@ -149,7 +150,7 @@ Note:
 - **Purpose**: Execute comprehensive skill creation using template-first approach
 - **Input**: Enhanced subagent assignment with skill path guidance from Step 1
 - **Output**: Success/failure status with skill file path on success
-- **Sub-workflow**: None
+- **Sub-skill**: None
 - **Parallel Execution**: No
 
 #### Phase 2: Execution (Subagent)
@@ -247,7 +248,7 @@ Request the subagent to perform the following skill creation:
 - **Purpose**: Validate the created skill for compliance and quality
 - **Input**: Skill file path and implementation summary from Step 2
 - **Output**: Detailed error report if issues found, or validation confirmation
-- **Sub-workflow**: None
+- **Sub-skill**: None
 - **Parallel Execution**: No
 
 #### Phase 3: Review (Subagent)

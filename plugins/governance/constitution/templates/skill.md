@@ -120,7 +120,7 @@ You are a **[Management Title]** who orchestrates the skill like a [metaphor, e.
 [Step 2: ...] ───────────→ (Subagents: execute more tasks) → [Decision: What's next?]
    |
    v
-[Step 3: ...] ───────────→ (Complex: invoke sub-workflow)
+[Step 3: ...] ───────────→ (Complex: invoke sub-skill)
    |
    v
    ⋮
@@ -176,7 +176,7 @@ N. [Step N Name: Add more as needed]
 
 <!-- INSTRUCTION:
 - Each step listed above will be detailed below using the step template
-- Steps can invoke sub-workflows by expanding to substeps (3.1, 3.2, etc.)
+- Steps can invoke sub-skills by expanding to substeps (3.1, 3.2, etc.)
 - Identify parallelization opportunities for batch processing or large number of standards to follow
 -->
 
@@ -189,30 +189,30 @@ N. [Step N Name: Add more as needed]
 - **Purpose**: [What this step accomplishes]
 - **Input**: [Maps to skill inputs or receives from Step X: specific field names and data structure]
 - **Output**: [Produces for skill outputs or provides to Step Y: specific field names and structure]
-- **Sub-workflow**: [path/to/sub-workflow.md or leave empty if none]
+- **Sub-skill**: [path/to/sub-skill SKILL.md or leave empty if none]
 - **Parallel Execution**: [Yes/No - can this task spin up subtasks running in parallel]
 
 <!-- INSTRUCTION:
 - You should use TodoWrite at step start to track skill progress
-- Check if Sub-workflow path exists and follow appropriate path below
+- Check if Sub-skill path exists and follow appropriate path below
 -->
 
-<!-- if sub-workflow is given -->
+<!-- if sub-skill is given -->
 
-#### Execute [...] Workflow (You)
+#### Execute [...] Sub-Skill (You)
 
-When you reaches this step and sees sub-workflow path:
+When you reaches this step and sees sub-skill path:
 
-1. Use Read tool to load the sub-workflow file
-2. Parse the sub-workflow to identify its steps
-3. Dynamically expand step to N.1, N.2, N.3... from the sub-workflow content
+1. Use Read tool to load the sub-skill file
+2. Parse the sub-skill to identify its steps
+3. Dynamically expand step to N.1, N.2, N.3... from the sub-skill content
 4. Use todo to track the status of each step
-5. Executes each step as instructed in the sub-workflow
-6. After all sub-workflow steps are complete, continue to the next step
+5. Executes each step as instructed in the sub-skill
+6. After all sub-skill steps are complete, continue to the next step
 
-<!-- /if sub-workflow is given -->
+<!-- /if sub-skill is given -->
 
-<!-- if no sub-workflow is given -->
+<!-- if no sub-skill is given -->
 
 #### Phase N: Planning (You)
 
@@ -399,7 +399,7 @@ Request each review subagent to perform the following review with full scrutiny:
    - If RETRY: Generate retry batches with same standards
    - If ROLLBACK: Identify rollback actions needed
 
-<!-- /if no sub-workflow is given -->
+<!-- /if no sub-skill is given -->
 
 ### Step N + 1: [Step Name]
 

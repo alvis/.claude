@@ -15,7 +15,7 @@ Create a new technical standard directory in the [plugin]/constitution/standards
 **What this command does NOT do**:
 
 - Modify existing standards (use update-standard)
-- Create workflows (use create-workflow)
+- Create skills (use create-skill)
 - Override existing directories without confirmation
 - Create non-standard documentation
 
@@ -39,8 +39,8 @@ ultrathink: you'd perform the following steps
    - Identify related existing standards
    - Plan three-tier directory structure: meta.md, scan.md, write.md, and rules/
 
-2. **Identify Applicable Workflows & Standards**
-   - Check `/create-standard.md` for creation process
+2. **Identify Applicable Skills & Standards**
+   - Check `create-standard` skill for creation process
    - Review existing standards in target category for patterns
    - Note related standards to reference
 
@@ -51,8 +51,8 @@ ultrathink: you'd perform the following steps
 
 ### Step 2: Execution
 
-1. **Workflow Compliance**
-   - Follow `/create-standard.md`
+1. **Skill Compliance**
+   - Follow `create-standard` skill
    - Load templates from template:standard-meta, template:standard-scan, and template:standard-write
    - Apply standard naming conventions
 
@@ -80,7 +80,7 @@ ultrathink: you'd perform the following steps
 
 ### Step 3: Verification
 
-1. **Workflow-Based Verification**
+1. **Template-Based Verification**
    - Verify meta.md follows template:standard-meta structure
    - Verify scan.md follows template:standard-scan structure
    - Verify write.md follows template:standard-write structure
