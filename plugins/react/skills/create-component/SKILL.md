@@ -190,7 +190,7 @@ export const ComponentName: FC<ComponentNameProps> = ({
         setState(result.toString())
         onChange?.(result.toString())
       } catch (error) {
-        console.error('Error in ComponentName:', error)
+        console.error('Error in ComponentName:', (error as Error).message)
       }
     }
 
@@ -406,7 +406,7 @@ export const TransactionForm: FC<{ onSubmit?: (txHash: string) => void }> = ({ o
 
       onSubmit?.(txHash)
     } catch (error) {
-      console.error('Transaction error:', error)
+      console.error('Transaction error:', (error as Error).message)
     } finally {
       setSending(false)
     }

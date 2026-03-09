@@ -19,7 +19,8 @@ action.log.error("failed to sync billing profile", {
 ```typescript
 try {
   await riskyOperation();
-} catch (originalError) {
+} catch (error) {
+  const originalError = error as Error;
   const contextualError = new ProcessingError(
     "Failed to process user data",
     { cause: originalError },

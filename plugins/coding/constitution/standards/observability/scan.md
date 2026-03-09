@@ -12,6 +12,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT throw generic errors for domain failures [`ERR-HAND-01`]
 - DO NOT swallow errors silently, such as `catch { return }` without rethrow or typed failure [`ERR-HAND-02`]
 - DO NOT drop error context chains [`ERR-HAND-03`]
+- DO NOT use conditional branching on base `Error` in catch blocks instead of casting [`ERR-HAND-04`]
 - DO NOT use console logging in app/runtime flow [`LOG-OPER-01`]
 - DO NOT use log levels that do not match outcome severity, such as `logger.info("payment failed")` [`LOG-OPER-02`]
 - DO NOT write log messages without clear action/outcome, such as `logger.info("payment")` [`LOG-OPER-03`]
@@ -28,6 +29,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `ERR-HAND-01` | Generic error used for domain failure | `throw new Error("not found")`; `throw new Error('User not found')` |
 | `ERR-HAND-02` | Error is swallowed silently | `catch { return }` |
 | `ERR-HAND-03` | Error context chain is not preserved | `logger.error(error.message)` |
+| `ERR-HAND-04` | Conditional branching on base `Error` in catch instead of casting | `error instanceof Error ? error.message : String(error)` |
 | `LOG-OPER-01` | Console logging used in app flow | `console.log("processing")`; `console.log("This is wrong")` |
 | `LOG-OPER-02` | Log level does not match outcome | `logger.info("payment failed")` |
 | `LOG-OPER-03` | Message lacks action/outcome clarity | `logger.info("payment")`; `logger.error("Error: " + error.message)` |
