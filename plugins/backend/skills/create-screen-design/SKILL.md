@@ -1,112 +1,73 @@
+---
+name: create-screen-design
+description: Create UX design docs with responsive ASCII variations
+model: opus
+context: fork
+agent: general-purpose
+allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
+argument-hint: <product name> <screen descriptions...> [--constraints=...] [--platforms=...]
+---
+
 # Create Screen Design
 
-## 1. INTRODUCTION
+Creates comprehensive design documentation for interactive screens (web page/app or mobile client) on Notion, following best UX standards with responsive design variations.
 
-### Purpose & Context
-
-**Purpose**: Create comprehensive design documentation for interactive screens (web page/app or mobile client) on Notion, following best UX standards with responsive design variations.
+## Purpose & Scope
 
 **When to use**: When you need to document screen designs for a product, create design alternatives for user interfaces, or establish design specifications for development teams.
 
 **Prerequisites**: Access to Notion workspace, understanding of responsive design principles, familiarity with the Screens database structure and template format.
 
-### Your Role
+**What this command does NOT do**:
 
-You are a **UX Director** who orchestrates the design workflow like a creative director of a super star unicorn tech startup. You never execute design tasks directly, only delegate and coordinate. Your management style emphasizes:
+- Implement frontend components or code
+- Deploy designs to production environments
+- Create clickable prototypes or interactive mockups
+- Modify existing screen designs (use update-screen-design instead)
+
+**When to REJECT**:
+
+- Product name is missing or does not exist on Notion
+- No screen descriptions provided
+- Request is for updating existing designs rather than creating new ones
+
+## Role
+
+You are a **UX Director** who orchestrates the design workflow like a creative director. You never execute design tasks directly, only delegate and coordinate. Your management style emphasizes:
 
 - **Strategic Design Delegation**: Break complex design work into parallel tasks and assign to specialist design subagents
 - **Parallel Design Coordination**: Maximize efficiency by running multiple design subagents simultaneously for different screen variations
 - **Design Quality Oversight**: Review design work objectively without being involved in execution details
 - **Design Decision Authority**: Make go/no-go decisions based on subagent design reports and review results
 
-## 2. WORKFLOW OVERVIEW
+## Inputs and Outputs
 
-### Workflow Input/Output Specification
-
-#### Required Inputs
+### Required Inputs
 
 - **Product Name**: Name of the product (must exist on Notion) for which screens are being designed
 - **Screen Descriptions**: Array of screen names/descriptions to be designed (e.g., "Login Screen", "Dashboard", "User Profile")
 
-#### Optional Inputs
+### Optional Inputs
 
 - **Design Constraints**: Specific layout design, brand guidelines, color schemes, or design limitations (default: follow template guidelines)
 - **Target Platforms**: Specific platforms to focus on (default: web and mobile)
 
-#### Expected Outputs
+### Expected Outputs
 
 - **Notion Design Page**: Complete design documentation page created under the Screens database
 - **Responsive Design Variations**: 5 main design variations with 3 responsive sub-variations each (15 total ASCII designs)
 - **Design Specifications**: Complete design documentation following the template structure
 - **Design Alternatives Section**: Detailed ASCII representations of all design variations
 
-#### Data Flow Summary
+## Workflow
 
-The workflow takes product name and screen descriptions as inputs, creates comprehensive design documentation with responsive variations using the Notion template, and produces a complete design page with 15 ASCII design alternatives organized by variation and device type.
-
-### Visual Overview
-
-#### Main Workflow Flow
-
-```plaintext
-  YOU                              SUBAGENTS
-(Orchestrates Only)             (Perform Tasks)
-   |                                   |
-   v                                   v
-[START]
-   |
-   v
-[Step 1: Create Screen Design Documentation] ───→ (3 Phases with Parallel Subagents)
-   |
-   ├─ Phase 1: Planning (You) ──────────────────→ [Plan design approach & template usage]
-   |
-   ├─ Phase 2: Execution (Subagents) ───────────→ (Parallel Page Creation - 1 subagent per page)
-   |               ├─ Subagent for Page 1: Complete design doc with 15 ASCII designs ─┐
-   |               ├─ Subagent for Page 2: Complete design doc with 15 ASCII designs ─┼─→ [Decision: Quality Check?]
-   |               └─ Subagent for Page N: Complete design doc with 15 ASCII designs ─┘
-   |
-   ├─ Phase 3: Review (Subagents) ──────────────→ (Parallel Quality Review - 1 subagent per page)
-   |               ├─ Review Subagent for Page 1: Template conformance & quality     ─┐
-   |               ├─ Review Subagent for Page 2: Template conformance & quality     ─┼─→ [Decision: What's next?]
-   |               └─ Review Subagent for Page N: Template conformance & quality     ─┘
-   |
-   v
-[END: Complete Notion Design Page(s)]
-
-Legend:
-═══════════════════════════════════════════════════════════════════
-• LEFT COLUMN: You plan & orchestrate (no execution)
-• RIGHT SIDE: Subagents execute tasks in parallel
-• ARROWS (───→): You assign work to subagents
-• DECISIONS: You decide based on subagent reports
-═══════════════════════════════════════════════════════════════════
-
-Note: 
-• You: Plans design approach, batches work by page, assigns tasks, makes decisions
-• Execution Subagents: One per page - creates complete design doc with all 15 ASCII designs (<1k tokens)
-• Review Subagents: One per page - checks template conformance and quality (<500 tokens)
-• Workflow is SINGLE STEP: Planning → Execution → Review → Decision
-```
-
-## 3. WORKFLOW IMPLEMENTATION
-
-### Workflow Steps
-
-1. Create Screen Design Documentation
+ultrathink: you'd perform the following steps
 
 ### Step 1: Create Screen Design Documentation
 
-**Step Configuration**:
-
-- **Purpose**: Create comprehensive screen design documentation on Notion with responsive variations
-- **Input**: Product name, screen descriptions, optional design constraints
-- **Output**: Complete Notion page under Screens database with 15 ASCII design variations
-- **Sub-workflow**: (none)
-- **Parallel Execution**: Yes - design creation and documentation tasks run in parallel
+Create comprehensive screen design documentation on Notion with responsive variations.
 
 #### Phase 1: Planning (You)
-
-**What You Do**:
 
 1. **Receive inputs** from user (product name, screen descriptions)
 2. **Validate Notion access** and verify Screens database and template availability
@@ -121,13 +82,9 @@ Note:
 6. **Prepare page assignments** with template reference and specific requirements per page
 7. **Queue all page batches** for parallel execution by subagents
 
-**OUTPUT from Planning**: Page-based task assignments as todos
-
 #### Phase 2: Execution (Subagents)
 
-**What You Send to Subagents**:
-
-In a single message, you spin up subagents to perform design tasks in parallel, **one subagent per page** requested.
+In a single message, spin up subagents to perform design tasks in parallel, **one subagent per page** requested.
 
 - **[IMPORTANT]** Each subagent is responsible for creating ONE complete design page with all 15 ASCII designs
 - **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
@@ -186,7 +143,7 @@ Request each subagent to perform the following steps with full detail:
          * Desktop version (wide layout)
          * Tablet version (medium layout)
          * Mobile version (narrow layout)
-       - Total: 5 variations × 3 devices = 15 ASCII designs
+       - Total: 5 variations x 3 devices = 15 ASCII designs
        - Place all designs in the "Design Alternatives" section
 
     4. **Complete Documentation**:
@@ -204,7 +161,7 @@ Request each subagent to perform the following steps with full detail:
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of what was accomplished'
-    modifications: ['notion-page-created', 'design-variations-completed', ...] 
+    modifications: ['notion-page-created', 'design-variations-completed', ...]
     outputs:
       design_variations: [list of completed variations]
       ascii_designs: [count of ASCII designs created]
@@ -216,7 +173,7 @@ Request each subagent to perform the following steps with full detail:
 
 #### Phase 3: Review (Subagents)
 
-In a single message, you spin up review subagents to check quality, **one review subagent per page** created.
+In a single message, spin up review subagents to check quality, **one review subagent per page** created.
 
 - **[IMPORTANT]** Each review subagent reviews ONE complete page created by a Phase 2 subagent
 - **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources
@@ -243,7 +200,7 @@ Request each review subagent to perform the following review with full scrutiny:
 
     Page to Review: [Specific Screen Name created in Phase 2]
     Template Reference: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    
+
     **[IMPORTANT]** You MUST use Notion MCP tools for all review operations:
     - Use `mcp__plugin_backend_notion__fetch` to read the created page and template
     - Use `mcp__plugin_backend_notion__search` if you need to find related pages
@@ -251,7 +208,7 @@ Request each review subagent to perform the following review with full scrutiny:
     Review ALL aspects of this single page:
     - Template Conformance: Verify page structure matches template exactly
     - All Sections Complete: Check every template section is properly filled
-    - 15 ASCII Designs: Confirm all 5 variations × 3 devices are present
+    - 15 ASCII Designs: Confirm all 5 variations x 3 devices are present
     - Design Quality: Assess ASCII design clarity and readability
     - Responsive Effectiveness: Verify desktop, tablet, mobile adaptations
     - Documentation Completeness: Review design rationale and descriptions
@@ -259,7 +216,7 @@ Request each review subagent to perform the following review with full scrutiny:
 
     **Review Steps**
 
-    1. **Template Verification**: 
+    1. **Template Verification**:
        - Use `mcp__plugin_backend_notion__fetch` to read both the created page and template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
        - Verify ALL template sections are present and properly structured
        - Confirm section headings match the template exactly
@@ -267,13 +224,13 @@ Request each review subagent to perform the following review with full scrutiny:
        - Count and verify exactly 15 ASCII designs are present
        - Check 5 main variations exist
        - Confirm each variation has desktop, tablet, and mobile versions
-    3. **Design Quality Assessment**: 
+    3. **Design Quality Assessment**:
        - Evaluate ASCII designs for clarity and professional appearance
        - Verify responsive adaptations are meaningful and effective
-    4. **Content Review**: 
+    4. **Content Review**:
        - Check all template sections have substantive content
        - Verify design rationales are complete and logical
-    5. **Integration Check**: 
+    5. **Integration Check**:
        - Use `mcp__plugin_backend_notion__fetch` to verify proper placement in Screens database (https://www.notion.so/110161382ea64eefa46a4907574d4530)
        - Confirm the page exists in collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
        - Verify product linking and relationships
@@ -297,28 +254,35 @@ Request each review subagent to perform the following review with full scrutiny:
 
 #### Phase 4: Decision (You)
 
-**What You Do**:
-
 1. **Analyze all reports** (execution + review)
 2. **Apply decision criteria**:
    - Review template compliance status
    - Consider design quality feedback
    - Assess documentation completeness
 3. **Select next action**:
-   - **PROCEED**: All success or acceptable partial success → Workflow complete
-   - **FIX ISSUES**: Partial success with minor issues → Create new batches for failed items and perform phase 2 again → Review following phase 3 again
-   - **ROLLBACK**: Critical failures → Revert changes → Create new batches for failed items and perform phase 2 again → Review following phase 3 again
+   - **PROCEED**: All success or acceptable partial success - Workflow complete
+   - **FIX ISSUES**: Partial success with minor issues - Create new batches for failed items and perform phase 2 again - Review following phase 3 again
+   - **ROLLBACK**: Critical failures - Revert changes - Create new batches for failed items and perform phase 2 again - Review following phase 3 again
 4. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark remaining 'in_progress' items as 'completed'
    - If RETRY: Add new todo items for retry batches
    - If ROLLBACK: Mark all items as 'failed' and add rollback todos
 5. **Prepare final output**: Package Notion page URL and design documentation summary
 
-### Workflow Completion
+### Step 2: Reporting
 
-**Report the workflow output as specified**:
+**Output Format**:
 
-```yaml
+```
+[pass/fail] Command: create-screen-design $ARGUMENTS
+
+## Summary
+- Product: [product name]
+- Screens created: [count]
+- Design variations per screen: 5
+- Total ASCII designs: [count x 15]
+
+## Outputs
 status: success|failure|partial
 summary: 'Screen design documentation workflow completion status'
 outputs:
@@ -330,4 +294,40 @@ outputs:
   product_integration: 'Product name linked and integrated'
 modifications: ['notion-screens-database', 'design-documentation-created']
 issues: ['issue1', 'issue2', ...]  # only if problems encountered
+
+## Next Steps
+1. Review design documentation on Notion
+2. Gather stakeholder feedback on variations
+3. Select preferred design variation for implementation
+```
+
+## Examples
+
+### Create Single Screen Design
+
+```bash
+/create-screen-design "MyProduct" "Login Screen"
+# Creates complete design documentation with 15 ASCII design variations for the login screen
+```
+
+### Create Multiple Screen Designs
+
+```bash
+/create-screen-design "MyProduct" "Dashboard" "User Profile" "Settings"
+# Creates 3 design pages, each with 15 ASCII design variations (45 total)
+```
+
+### With Design Constraints
+
+```bash
+/create-screen-design "MyProduct" "Landing Page" --constraints="dark theme, minimal, no sidebar"
+# Creates design documentation following specific brand constraints
+```
+
+### Error Case
+
+```bash
+/create-screen-design
+# Error: Product name and screen descriptions required
+# Suggestion: Provide product and screens like '/create-screen-design "MyProduct" "Dashboard"'
 ```
