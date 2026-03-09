@@ -3,12 +3,12 @@ name: create-command
 description: Create a new slash command following best practices. Use when establishing new CLI commands, documenting reusable command patterns, or building automated command templates.
 model: opus
 allowed-tools: Bash, Edit, Read, Write, WebSearch, WebFetch, Grep, Glob, Task
-argument-hint: <command-name> [--purpose=...] [--workflow1=...]
+argument-hint: <command-name> [--purpose=...] [--skill1=...]
 ---
 
 # Create Custom Slash Command
 
-Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--workflow1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from template:command. Ultrathink mode.
+Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--skill1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from template:command. Ultrathink mode.
 
 ## Purpose & Scope
 
@@ -31,9 +31,9 @@ Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=.
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Follow Create Command Workflow
+### Step 1: Follow Create Command Skill
 
-- Execute workflow:create-command
+- Execute the create-command skill process
 
 ### Step 2: Reporting
 
@@ -59,7 +59,7 @@ ultrathink: you'd perform the following steps
 
 ## Next Steps
 - Test command: /[command-name] "test-argument"
-- Customize workflow if needed
+- Customize skill if needed
 - Add to documentation if public command
 ```
 
@@ -79,7 +79,7 @@ ultrathink: you'd perform the following steps
 /create-command analyze-quality --purpose="analyze code quality and metrics"
 # Generates: analyze-quality.md
 # Tools: Read, Grep, Glob, Task
-# Pattern: Analysis workflow
+# Pattern: Analysis skill
 ```
 
 ### Build Command with Restrictions
@@ -109,11 +109,11 @@ ultrathink: you'd perform the following steps
 # Action: Wait for user input before proceeding
 ```
 
-### With Workflow Override
+### With Skill Override
 
 ```bash
-/create-command custom-task --purpose="perform custom analysis" --workflow="analysis"
-# Uses analysis workflow pattern
+/create-command custom-task --purpose="perform custom analysis" --skill="analysis"
+# Uses analysis skill pattern
 # Configures read-only tools
-# Generates analytical workflow structure
+# Generates analytical skill structure
 ```

@@ -34,15 +34,15 @@ description: <brief description shown in /help (max 80 characters)>
 
 ultrathink: you'd perform the following steps
 
-<!-- INSTRUCTION: Add or remove the following basic workflow based on the command, think carefully what's the best workflow for the command -->
+<!-- INSTRUCTION: Add or remove the following basic steps based on the command, think carefully what's the best process for the command -->
 
-### Step 1: Follow [Workflow Name] Workflow
+### Step 1: Follow [Skill Name] Skill
 
-- Execute workflow:[workflow name]
+- Execute skill:[skill name]
 
-### Step N: Follow [Workflow Name] Workflow
+### Step N: Follow [Skill Name] Skill
 
-- Execute workflow:[workflow name]
+- Execute skill:[skill name]
 
 ### Step N+1: Reporting
 
@@ -60,8 +60,8 @@ ultrathink: you'd perform the following steps
 1. [Action with result]
 2. [Action with result]
 
-## Workflows Applied
-- [Workflow name]: [Status]
+## Skills Applied
+- [Skill name]: [Status]
 
 ## Issues Found (if any)
 - **Issue**: [Description]
@@ -103,9 +103,9 @@ ultrathink: you'd perform the following steps
 # Alternative: Use '/command-name --list' to see valid options
 ```
 
-### With Workflow Override
+### With Skill Override
 
 ```bash
-/command-name "task" --workflow="custom-workflow.md"
-# Uses specified workflow instead of auto-detected one
+/command-name "task" --skill="custom-skill"
+# Uses specified skill instead of auto-detected one
 ```

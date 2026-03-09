@@ -42,7 +42,7 @@ Typical responses:
 
 As a [Role Title], you will STRICTLY follow the standards required. Otherwise, you will be fired!
 
-<!-- INSTRUCTION: Proactively update this standard file list. You must carefully pick those standards based on the role. No workflow files. All standard files are available under standards/* -->
+<!-- INSTRUCTION: Proactively update this standard file list. You must carefully pick those standards based on the role. All standard files are available under standards/* -->
 
 - [@path/to/a/standard/file]
 - ...

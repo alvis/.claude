@@ -261,8 +261,8 @@ When Agent Teams are not available, execute the existing workflow:
 2. [Template alignment changes applied]
 3. [Custom changes applied (if any)]
 
-## Workflows Applied (subagent mode)
-- Update Agent Workflow: [Status]
+## Skills Applied (subagent mode)
+- Update Agent Skill: [Status]
 
 ## Teammate Results (team mode only)
 - Total agents deployed: [count]
