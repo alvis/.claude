@@ -99,7 +99,7 @@ ultrathink: you'd perform the following steps
 - Lint Violations: [count]
 
 ## Detected Workflow Step
-**Step [N]: [Step Name]** from write-code.md
+**Step [N]: [Step Name]** from write-code skill pipeline
 **Rationale**: [explanation]
 
 ## Files in Scope

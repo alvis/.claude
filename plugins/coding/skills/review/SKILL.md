@@ -171,9 +171,147 @@ Filter files by selected scopes (pass file paths to teammates, not file contents
 
 ### Step 2B: Subagent Mode (fallback)
 
-Execute workflows:review with the selected scopes and file specifier.
+You are a **Review Orchestrator**. You coordinate code review to improve both the code and the system. You never modify code directly, only delegate analysis and consolidate learning. Your approach emphasizes:
 
-The workflow will perform subagent-based review as before.
+- **Strategic Delegation**: Assign review with clear mission, constraints, success metrics
+- **Parallel Coordination**: Run specialized agents autonomously and simultaneously
+- **Learning Orientation**: Consolidate findings into REVIEW.md plus systemic improvements
+- **Visible Reasoning**: Reviewers explain why issues matter, not just what's wrong
+- **Truth Over Ego**: Findings are data for system upgrades, not criticism
+- **Scope Management**: Adapt depth based on user-selected areas of focus
+
+#### Standards Applied
+
+The review skill applies the following standards (all references use format `standard:<name>`):
+
+| Scope | Standards |
+|-------|-----------|
+| All scopes (baseline) | `code-review`, `universal/scan` |
+| test | `testing/scan` |
+| documentation | `documentation/scan` |
+| code-quality | `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan` |
+| security | `universal/scan`, `code-review` |
+| style | `typescript/scan`, `naming/scan` |
+
+#### Phase 1: Planning (You)
+
+**Context Detection & Scope Selection**: Use the same scope selection logic as Team Mode (Step 2A Phase 1) -- detect execution environment, resolve specifier, determine default scope, discover files, and categorize them by type.
+
+**File filtering by scope**:
+
+- test: test files + source files
+- documentation: source + doc files + test files
+- code-quality: source files + test files
+- security: source files (especially auth/, api/, services/)
+- style: source + test files
+
+Prepare file lists for each selected scope.
+
+#### Phase 2: Execution (Subagents via Task Tool)
+
+Dispatch up to 5 scope review tasks in parallel using the Task tool, one for each selected scope.
+
+- **All agents must operate in READ-ONLY mode** -- no code modifications
+- **Agents must report issues with exact file:line references**, function names
+- Each agent receives its scope-specific standards and file list
+
+**For TEST Scope** (if selected):
+
+Task tool with `subagent_type: "coding:ava-thompson-testing-evangelist"`
+
+Prompt the agent as a **Testing Quality Analyst** performing comprehensive read-only test analysis. Include standards: `testing/scan`, `universal/scan`, `code-review`. The agent performs:
+
+1. **Coverage Analysis**: Run coverage tools, identify uncovered lines/branches/statements, specify exact file:line locations, recommend specific test cases
+2. **Test Quality Analysis**: Analyze structure and organization, identify complex setups, check arrange-act-assert patterns, find unnecessary or redundant tests
+3. **Fixtures & Mocks Analysis**: Find duplicate fixture patterns, identify centralizable mocks, recommend consolidation strategies
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `current_state`, `recommendation`), `metrics` (coverage_line, coverage_branch, coverage_statement, total_issues, critical_issues, high_issues).
+
+**For DOCUMENTATION Scope** (if selected):
+
+Task tool with `subagent_type: "general-purpose"`
+
+Prompt the agent as a **Documentation Quality Analyst** performing read-only documentation review. Include standard: `documentation/scan`. The agent checks:
+
+1. JSDoc/TSDoc completeness for all exported functions, classes, interfaces
+2. Inline comments for complex logic
+3. README accuracy and completeness
+4. API documentation if applicable
+5. Example usage and code samples
+6. Type definitions documentation
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `function`, `severity`, `category`, `issue`, `recommendation`), `metrics` (functions_documented, classes_documented, interfaces_documented, total_issues).
+
+**For CODE-QUALITY Scope** (if selected):
+
+Task tool with `subagent_type: "coding:marcus-williams-code-quality"`
+
+Prompt the agent as a **Code Quality Analyst** performing read-only code quality review. Include standards: `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`. The agent performs:
+
+0. **Unused Code Detection** (TypeScript projects only): Check for tsconfig.json, run `npx -y knip --exclude=binaries --no-config-hints`, parse output for unused files/exports/dependencies. Carefully examine each finding -- do NOT report test files, verify type definitions, double-check config files. Only report genuinely redundant items.
+1. **Code Structure**: Organization, modularity, separation of concerns
+2. **Naming Conventions**: Compliance with naming standards
+3. **Complexity**: Functions/methods needing refactoring
+4. **DRY Violations**: Code duplication
+5. **Error Handling**: Error handling patterns and logging
+6. **Performance**: Performance concerns
+7. **Accessibility**: Accessibility issues (if applicable)
+8. **Architecture**: Architectural patterns and design decisions
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `typescript_project`, `knip_analysis_performed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `current_state`, `recommendation`), `metrics` (complexity_score, duplication_percentage, unused_exports_found, unused_files_found, total_issues, critical_issues, high_issues).
+
+**For SECURITY Scope** (if selected):
+
+Task tool with `subagent_type: "coding:nina-petrov-security-champion"`
+
+Prompt the agent as a **Security Analyst** performing read-only security review. Include standards: `universal/scan`, `code-review`. The agent checks:
+
+1. **Injection Vulnerabilities**: SQL injection, XSS, command injection
+2. **Authentication/Authorization**: Auth implementation review
+3. **Input Validation**: Input sanitization and validation
+4. **Sensitive Data**: Exposed secrets, logging sensitive data
+5. **Dependencies**: Known vulnerabilities
+6. **CORS & Headers**: Security headers configuration
+7. **Crypto**: Proper encryption usage
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `function`, `severity`, `category`, `issue`, `current_state`, `recommendation`, `attack_vector`), `metrics` (security_score, critical_vulnerabilities, high_vulnerabilities, total_issues).
+
+**For STYLE Scope** (if selected):
+
+Task tool with `subagent_type: "general-purpose"`
+
+Prompt the agent as a **Style & Linting Analyst** performing read-only style review. Include standards: `typescript/scan`, `naming/scan`. The agent performs:
+
+1. Identify project package.json files (project and monorepo levels)
+2. Extract linting scripts (lint, lint:fix, eslint, prettier)
+3. Execute linting scripts and capture output
+4. Parse linter output for file:line references
+5. Report all linting issues found
+6. Check naming convention compliance
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `linting_scripts_executed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `rule`, `recommendation`), `metrics` (total_lint_errors, total_lint_warnings, naming_violations, total_issues).
+
+#### Phase 3: Aggregation & Report Generation (You)
+
+1. **Collect all reports** from Task tool executions. If any agent reports failure, log the issue and note incomplete analysis.
+2. **Group findings by file path**. Within each file, sort by:
+   - Primary: Line number (ascending)
+   - Secondary: Severity (critical > high > medium > low)
+   - Tertiary: Scope (test > code-quality > security > documentation > style)
+3. **Calculate aggregate metrics**: total files reviewed, findings by severity, findings by scope, findings by category.
+4. **Systemic Pattern Analysis**:
+   - **Recurring Issues**: Identify patterns across files (e.g., "5 files lack input validation")
+   - **Root Causes**: What systemic gaps allow these issues?
+   - **Process Gaps**: Why did existing process not catch this?
+   - **System Improvements**: Specific actions to prevent recurrence
+   - **Learning Assets**: Document patterns for team reference
+5. **Determine overall status**:
+   - Any critical issues: **FAIL**
+   - High issues but no critical: **REQUIRES_CHANGES**
+   - Only medium/low issues: **PASS_WITH_SUGGESTIONS**
+   - No issues: **PASS**
+6. **Generate REVIEW.md** with findings grouped by file, sorted by line, including: summary metrics, findings by file (each with line, severity, scope, issue, current state, recommendation, impact, action required), systemic improvements section (patterns, root causes, process changes, learning assets), and conclusion.
+7. **Write REVIEW.md** to project root or specified location.
 
 ### Step 3: Reporting
 
