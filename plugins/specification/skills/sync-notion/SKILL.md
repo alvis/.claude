@@ -1,3 +1,13 @@
+---
+name: sync-notion
+description: Perform bidirectional synchronization between local markdown files and Notion pages with conflict resolution and integrity verification. Use when syncing documentation to Notion, pulling Notion pages to local files, or resolving conflicts between local and remote versions.
+model: opus
+context: fork
+agent: general-purpose
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, TodoWrite, AskUserQuestion
+argument-hint: <sync-mode> <file-paths...> [--database-id=ID] [--skip-verification]
+---
+
 # Sync Notion Documents
 
 ## 1. INTRODUCTION
