@@ -1,7 +1,7 @@
 {
   "name": "coding",
   "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
-  "version": "2026-03-06",
+  "version": "2026-03-27",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [
