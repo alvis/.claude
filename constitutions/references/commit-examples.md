@@ -204,11 +204,17 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 - Include scope when relevant: `feat(auth): add login`
 - Reference issues when helpful: `fix(profile): stop mutation (#123, #456)`
 
-### Scope Guidelines
+### Scope Convention
 
-- Use directory or module name: `feat(client/web-talent)`, `fix(service/profile)`
-- Omit scope if not relevant: `chore: update TypeScript to v5.5`
-- Use component names for specific fixes: `fix(auth)`, `feat(dashboard)`
+Use the **short package name** as scope — drop the catalog prefix (e.g., `@theriety/`, `@amino/`). Scopes should be short and scannable in `git log`.
+
+- **Single package** → short package name: `ai`, `gateway-microservice`, `hmr`, `authentication`
+- **Multiple packages, shared concern** → name the concern: `local-stack`, `a11y`, `signals`
+- **Whole catalog or infra** → catalog or infra name: `theriety`, `pulumi`, `github-actions`
+- **Truly global** → omit scope entirely
+- **Name collision across catalogs** → prefix with short catalog name: `amino-auth` vs `theriety-auth`
+- Comma-separated scopes are acceptable when touching exactly two packages:
+  - ✅ `fix(gateway,hmr): resolve port conflict in local dev server`
 
 </title_guidelines>
 
@@ -219,32 +225,33 @@ feat: upgrade next.js for new app router feature   # For dependency upgrades to 
 ### Scope Patterns
 
 ```plaintext
-# Service/Module scopes
-feat(auth): implement login
-fix(profile): correct validation
-refactor(dashboard): simplify layout
+# Single package (short name)
+feat(ai): add structured extraction pipeline
+fix(client-desktop): correct StableSnapshot diff serialization
+refactor(gateway): extract shared middleware into dispatch module
 
-# Directory scopes
-feat(client/web): add new landing page
-fix(service/api): resolve timeout issue
-test(packages/utils): add validation tests
+# Cross-package concern
+refactor(local-stack): align LocalGatewayConfig across development and theriety
 
-# No scope (project-wide)
-chore: update dependencies
-build: configure webpack
-ci: add GitHub Actions workflow
+# Catalog-level
+build(theriety): update shared tsconfig base
+
+# No scope (global)
+chore: update TypeScript to 5.7 across all packages
+
+# Two packages (comma-separated)
+fix(gateway,hmr): resolve port conflict in local dev server
 ```
 
 ### Issue References
 
 ```plaintext
-# Single issue
-fix(auth): resolve login timeout (fixes #123)
-feat(dashboard): add export feature (closes #456)
+# Reference in title
+fix(auth): allow login with email alias
+fix(profile): stop objects being mutated (#123, #456)
 
-# Multiple issues
-fix(profile): handle edge cases (#123, #456)
-feat(api): add bulk operations (closes #789, #012)
+# Close issues in footer
+Closes #123, #456
 ```
 
 ### Breaking Changes
@@ -344,9 +351,7 @@ Migration guide: docs/api-v2-migration.md
 
 ### Footer Keywords
 
-- `Closes #123` - Closes issue
-- `Fixes #123` - Fixes bug
-- `Resolves #123` - Resolves issue
+- `Closes #123, #456` - Closes issues (use commas to reference multiple)
 - `See #123` - References related issue
 - `BREAKING CHANGE:` - Breaking change description
 
