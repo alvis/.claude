@@ -10,14 +10,14 @@ argument-hint: <area> [--test-only]
 
 # Complete Code Implementation
 
-Completes all TODO-marked code in the specified area using a test-first approach. Scans for TODO, FIXME, and HACK comments, then implements the missing functionality while ensuring tests pass.
+Completes all TODO-marked code in the specified area using a test-first approach (TDD Green Phase). Scans for TODO, FIXME, and HACK comments, then implements the missing functionality with minimal code to make tests pass. Corresponds to Step 2 (Implementation / Green Phase) of the TDD lifecycle.
 
-## 🎯 Purpose & Scope
+## Purpose & Scope
 
 **What this command does NOT do**:
 
 - Create new features not mentioned in TODOs
-- Refactor existing working code
+- Refactor existing working code (use `/coding:refactor`)
 - Modify configuration files
 - Change project architecture
 
@@ -28,16 +28,29 @@ Completes all TODO-marked code in the specified area using a test-first approach
 - TODOs require external dependencies not installed
 - TODOs involve security-sensitive operations without clear requirements
 
-## 🔄 Workflow
+## Applicable Standards
+
+When executing this skill, the following standards apply:
+
+| Standard | Purpose |
+|---|---|
+| `documentation/write` | JSDoc and inline comments for new implementations |
+| `function/write` | Function design, error handling, complexity |
+| `observability/write` | Logging, metrics, and tracing for new code |
+| `testing/write` | Test-first implementation, coverage requirements |
+| `typescript/write` | Type safety, no `any`, proper generics |
+| `universal/write` | General code authoring conventions |
+
+## Workflow
 
 ultrathink: you'd perform the following steps
 
 ### Step 1: Discovery
 
 1. **Scan for TODOs**
-   - Use Grep to find TODO, FIXME, HACK comments
-   - Parse area argument from $ARGUMENTS
+   - Use Grep to find TODO, FIXME, HACK comments in the area from $ARGUMENTS
    - Classify by type and priority
+   - Determine if running as standalone or as part of composite (`--from-composite`)
 
 2. **Analyze Dependencies**
    - Read files containing TODOs
@@ -51,47 +64,59 @@ ultrathink: you'd perform the following steps
 
 ### Step 2: Test-First Implementation
 
+Follow TDD Green Phase principles: write only enough code to make tests pass.
+
 1. **For Each TODO Group**:
-   - Read existing tests
-   - Write failing tests for missing functionality
-   - Implement code to pass tests
-   - Verify all tests pass
+   - Read existing tests to understand expected behavior
+   - Write failing tests for missing functionality (if tests do not exist yet)
+   - Implement minimal code to pass tests
+   - Replace TODO placeholders with simplest working implementation
+   - Apply proper error handling per standards
+   - Ensure type safety throughout
+   - Run tests after each implementation increment to verify progress
 
 2. **Handle --test-only Flag**:
    - If set, only write tests without implementation
    - Mark implementation as ready for next phase
 
+3. **CODE DRAFTING PATTERNS** for any remaining incomplete sections:
+   - Use `// TODO:` comments to mark sections still incomplete
+   - For incomplete code where a return is expected:
+     - Throw `new Error('IMPLEMENTATION: <description>')`
+     - This prevents TypeScript type errors
+
 ### Step 3: Validation
 
 1. **Run Test Suite**
    - Execute all related tests
-   - Verify 100% coverage for new code
-   - Check for regressions
+   - Verify Green phase achievement (all tests passing)
+   - Ensure no existing tests are broken
+   - Confirm tests pass for correct reasons
 
 2. **Code Quality**
-   - Run linting
-   - Run type checking
-   - Verify coding standards
+   - Run linting via `npm run lint` or equivalent
+   - Run type checking via `npx tsc --noEmit` or equivalent
+   - Verify coding standards compliance
 
 ### Step 4: Reporting
 
 **Output Format**:
 
 ```
-[✅/❌] Command: complete-code $ARGUMENTS
+[OK/FAIL] Command: complete-code $ARGUMENTS
 
 ## Summary
 - Area: [path]
 - TODOs found: [count]
 - TODOs completed: [count]
 - Tests added: [count]
-- Coverage: [percentage]
+- Tests passing: [count]
 
 ## Actions Taken
 1. Discovered [N] TODOs in [area]
 2. Created [M] tests
 3. Implemented [K] functions
-4. Verified all tests pass
+4. Verified all tests pass (Green phase)
 
 ## Completed TODOs
 - [file:line] - [description]
@@ -100,13 +125,18 @@ ultrathink: you'd perform the following steps
 ## Remaining TODOs (if any)
 - [file:line] - [reason not completed]
 
+## Validation Results
+- Tests: PASS/FAIL ([X] passing, [Y] failing)
+- Types: PASS/FAIL ([N] errors)
+- Lint: PASS/FAIL ([N] warnings)
+
 ## Next Steps
 1. Review implementations
-2. Run full test suite
-3. Update documentation if needed
+2. Fix any remaining issues with /coding:fix
+3. Refactor with /coding:refactor
 ```
 
-## 📝 Examples
+## Examples
 
 ### Complete All TODOs in Area
 

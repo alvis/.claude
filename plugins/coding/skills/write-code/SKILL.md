@@ -4,13 +4,13 @@ description: Write production-ready code using full TDD lifecycle with design di
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite
+allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: <instruction> [--resume]
 ---
 
 # Write Code
 
-Orchestrates the complete TDD lifecycle (Steps 0-5) from the write-code workflow. Takes a feature instruction and drives it through design discovery, skeleton drafting, implementation, test fixing, optimization, and refactoring — producing production-ready, fully tested code.
+Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline. Takes a feature instruction and drives it through project setup, design discovery, skeleton drafting, implementation, test fixing, optimization, and refactoring -- producing production-ready, fully tested code.
 
 ## Purpose & Scope
 
@@ -19,6 +19,7 @@ Orchestrates the complete TDD lifecycle (Steps 0-5) from the write-code workflow
 - Create only a skeleton without implementation (use `/coding:draft-code`)
 - Complete only TODO-marked placeholders (use `/coding:complete-code`)
 - Fix only test/lint/type issues (use `/coding:fix`)
+- Refactor without the full lifecycle (use `/coding:refactor`)
 - Perform code review (use `/coding:review`)
 
 **When to REJECT**:
@@ -28,6 +29,36 @@ Orchestrates the complete TDD lifecycle (Steps 0-5) from the write-code workflow
 - If the user only wants to fix failing tests/lint/types -> tell them to use `/coding:fix`
 - If the instruction is too vague to define acceptance criteria
 - If the target project has no testing framework configured
+
+## Composition Structure
+
+This is a **composite skill** that orchestrates the following atomic skills in sequence. Each child skill runs in `context: fork` and receives the `--from-composite` flag to suppress redundant confirmation gates.
+
+```
+write-code (this orchestrator)
+  |
+  |-- 1. Skill: coding:setup-project   (conditional: only if no project exists)
+  |-- 2. Skill: coding:draft-code      (Steps 0-1: design discovery + skeleton)
+  |-- 3. Skill: coding:complete-code   (Step 2: implementation / green phase)
+  |-- 4. Skill: coding:fix             (Steps 3-4: fix issues + optimize fixtures)
+  |-- 5. Skill: coding:refactor        (Step 5: refactor + documentation)
+```
+
+### State Handover Between Steps
+
+State is passed between child skills via handover documents (CONTEXT.md, NOTES.md, PLAN.md). Each child skill reads these documents for context and updates them upon completion.
+
+### Resume Support
+
+When `--resume` is provided, the orchestrator reads handover documents to determine which step to resume from:
+- Files with `need-draft` -> resume from `coding:draft-code`
+- Files with `need-completion` -> resume from `coding:complete-code`
+- Files with `need-fixing` -> resume from `coding:fix`
+- Files with `need-refactoring` -> resume from `coding:refactor`
+
+### Composite Convention
+
+When calling child skills, this orchestrator passes `--from-composite` as an argument. Child skills receiving this flag suppress their own confirmation gates and trust the orchestrator to handle user interaction.
 
 ## Workflow
 
@@ -44,41 +75,81 @@ ultrathink: you'd perform the following steps
    - Check if `--resume` flag is present in $ARGUMENTS
    - If `--resume`:
      - Search for handover documents (CONTEXT.md, NOTES.md, PLAN.md) in the working directory
-     - Parse file substates from CONTEXT.md to determine which step to resume from:
-       - Files with `need-draft` -> resume from Step 1
-       - Files with `need-completion` -> resume from Step 2
-       - Files with `need-fixing` -> resume from Step 3
-       - Files with `need-refactoring` -> resume from Step 5
+     - Parse file substates from CONTEXT.md to determine which skill to resume from
      - Extract change direction from PLAN.md next steps or NOTES.md open questions
-     - Extract any steps to skip from completed phases in PLAN.md
      - If handover files are missing, reject with: "No handover files found. Create them first with `/coding:handover`"
 
-### Step 2: Load and Execute Write-Code Workflow
+### Step 2: Conditional Project Setup
 
-1. **Load the Workflow**
-   - Read the write-code workflow document:
-     `/Users/alvis/.claude/plugins/cache/alvis/coding/2026-02-16/constitution/workflows/write-code.md`
+Check if the target project has essential structure (package.json, source directories, test framework).
 
-2. **Prepare Workflow Inputs**
-   - **Feature Requirements**: The parsed `<instruction>`
-   - **Resume From Step**: Auto-detected step from handover (if `--resume`), otherwise 0
-   - **Change Direction**: Extracted from handover docs (if `--resume`), otherwise none
-   - **Skip Steps**: Derived from completed phases in handover (if `--resume`), otherwise none
-   - **Interactive Mode**: true (if the client supports it)
+- **If project is NOT set up**: Invoke `coding:setup-project` with the target path and `--from-composite`
+- **If project IS set up**: Skip this step
 
-3. **Execute the Workflow**
-   - Follow the workflow document step by step, executing Steps 0 through 5:
-     - **Step 0**: Design Direction Discovery
-     - **Step 1**: Draft Code Skeleton & Test Structure
-     - **Step 2**: Implementation (Green Phase)
-     - **Step 3**: Fix Test Issues & Standards Compliance
-     - **Step 4**: Optimize Test Structure & Fixtures
-     - **Step 5**: Refactoring & Documentation
-   - Skip any steps indicated by the resume analysis
-   - Apply change direction at the appropriate step
-   - Delegate implementation work to subagents as defined in the workflow
+### Step 3: Draft Code Skeleton (design + skeleton)
 
-### Step 3: Reporting
+Invoke `coding:draft-code` with the parsed instruction and `--from-composite`.
+
+This skill handles:
+- Design direction discovery (searching for DESIGN.md, handover docs)
+- Code skeleton creation with TODO placeholders
+- Test structure creation with describe.todo/it.todo patterns
+- TypeScript and lint validation of the skeleton
+
+**Interactive gate**: After this skill completes, present the user with options:
+1. Proceed to implementation
+2. Request changes to the skeleton (re-run draft-code with change direction)
+3. Resume from a different step
+4. Pause and create handover documentation
+
+### Step 4: Implementation (green phase)
+
+Invoke `coding:complete-code` with the target area and `--from-composite`.
+
+This skill handles:
+- Replacing TODO placeholders with minimal working implementations
+- TDD Green phase: implementing just enough code to make tests pass
+- Continuous test execution to verify progress
+
+**Interactive gate**: After this skill completes, present the user with options:
+1. Proceed to fixing
+2. Request changes to implementation (re-run complete-code with direction)
+3. Resume from a different step
+4. Pause and create handover documentation
+
+### Step 5: Fix Issues and Optimize (fix + optimize)
+
+Invoke `coding:fix` with the target area and `--from-composite`.
+
+This skill handles:
+- Fixing test issues and standards compliance
+- Critical root cause analysis for test failures
+- Optimizing test fixtures and mocks
+- Batch processing for large file sets (>25 files)
+
+**Interactive gate**: After this skill completes, present the user with options:
+1. Proceed to refactoring
+2. Request changes to fixes (re-run fix with specific notes)
+3. Resume from a different step
+4. Pause and create handover documentation
+
+### Step 6: Refactor and Document
+
+Invoke `coding:refactor` with the target area and `--from-composite`.
+
+This skill handles:
+- Code structure improvements without changing functionality
+- Naming convention enforcement
+- Comprehensive JSDoc documentation
+- Final quality validation (tests, lint, types, coverage)
+
+**Interactive gate**: After this skill completes, present the user with options:
+1. Complete the workflow
+2. Request changes to refactoring (re-run refactor with focus)
+3. Resume from a different step
+4. Pause and create handover documentation
+
+### Step 7: Reporting
 
 **Output Format**:
 
@@ -87,20 +158,19 @@ ultrathink: you'd perform the following steps
 
 ## Summary
 - Instruction: [parsed instruction]
-- Steps executed: [list of steps run]
-- Steps skipped: [list of steps skipped, if any]
+- Steps executed: [list of skills run]
+- Steps skipped: [list of skills skipped, if any]
 - Files created: [count]
 - Files modified: [count]
 - Tests passing: [count]
 - Coverage: [percentage]
 
 ## Actions Taken
-1. [Step 0] Design discovery: [brief summary]
-2. [Step 1] Drafted skeleton: [files created]
-3. [Step 2] Implemented: [functions/modules completed]
-4. [Step 3] Fixed: [issues resolved]
-5. [Step 4] Optimized: [fixtures/mocks improved]
-6. [Step 5] Refactored: [quality improvements]
+1. [setup-project] Project setup: [brief summary or "skipped"]
+2. [draft-code] Drafted skeleton: [files created]
+3. [complete-code] Implemented: [functions/modules completed]
+4. [fix] Fixed: [issues resolved, fixtures optimized]
+5. [refactor] Refactored: [quality improvements, docs added]
 
 ## Validation Results
 - Tests: PASS/FAIL ([X] passing, [Y] failing)
@@ -120,12 +190,11 @@ ultrathink: you'd perform the following steps
 ```bash
 /write-code "Create user authentication service with login, logout, and token refresh"
 # Runs full TDD lifecycle:
-# Step 0: Discovers design patterns, existing auth code
-# Step 1: Drafts types, service skeleton, test structure
-# Step 2: Implements auth logic to pass tests
-# Step 3: Fixes any test/lint/type issues
-# Step 4: Optimizes test fixtures and mocks
-# Step 5: Refactors for quality and adds docs
+# 1. setup-project (if needed)
+# 2. draft-code: Discovers design, drafts types, service skeleton, test structure
+# 3. complete-code: Implements auth logic to pass tests
+# 4. fix: Fixes any test/lint/type issues, optimizes fixtures
+# 5. refactor: Refactors for quality and adds documentation
 ```
 
 ### Implement from Design Spec
@@ -141,7 +210,7 @@ ultrathink: you'd perform the following steps
 /write-code "Continue implementing the notification system" --resume
 # Reads CONTEXT.md, NOTES.md, PLAN.md
 # Auto-detects resume point from file substates
-# Continues from the appropriate step
+# Continues from the appropriate skill
 ```
 
 ### Error Cases

@@ -1,62 +1,27 @@
 ## File Discovery
 
-- At the beginning of each session, greet the user with summary of the project context, including handover and design documents, as well as all relevant workflows and standards files that may apply to the project
+- At the beginning of each session, greet the user with summary of the project context, including handover and design documents, as well as all relevant skills and standards files that may apply to the project
 
 ## Delegation Rule
 
-**When delegating tasks to subagents, you MUST pass the full file paths of relevant workflow and standard files to the subagent.**
+**When delegating tasks to subagents, you MUST pass the full file paths of relevant skill and standard files to the subagent.**
 
-**When performing the following actions, you MUST pass all workflow and standard files as specified below:**
+Each skill documents its own applicable standards internally. Route actions to the appropriate skill:
 
-- **When Writing New Code**
-
-  YOU MUST FOLLOW:
-  **Workflow**: write-code
-  **Standards**: documentation/write, observability/write, file-structure, function/write, universal/write, naming/write, testing/write, typescript/write
-
-- **When Creating Tests**
-
-  YOU MUST FOLLOW:
-  **Workflow**: create-test
-  **Standards**: documentation/write, universal/write, naming/write, testing/write, typescript/write
-
-- **When Reviewing**
-
-  YOU MUST FOLLOW:
-  **Workflow**: review
-  **Standards**: code-review, documentation/scan, environment-variables, observability/scan, function/scan, universal/scan, naming/scan, testing/scan, typescript/scan
-
-- **When Fixing Tests**
-
-  YOU MUST FOLLOW:
-  **Workflow**: write-code (Steps 3-4 only)
-  **Standards**: universal/scan, naming/scan, testing/scan, typescript/scan
-
-  **NOTE**: The fix-test workflow has been merged into write-code. When fixing tests, execute Steps 3 and 4 of the write-code workflow.
-  **NOTE**: When a specific rule violation is detected, load its fix guidance from `testing/rules/<rule-id>.md`.
-
-- **When Linting Code**
-
-  YOU MUST FOLLOW:
-  **Workflow**: lint
-  **Standards**: documentation/scan, observability/scan, function/scan, universal/scan, naming/scan, testing/scan, typescript/scan
-
-- **When Setting Up Project**
-
-  YOU MUST FOLLOW:
-  **Workflow**: ensure-project
-  **Standards**: file-structure, universal/write, typescript/write
-
-- **When Committing Code**
-
-  **Workflow**: None (use `/coding:commit` command)
-  **Standards**: git
-
-- **When Planning Code** (including plan mode and Plan subagents)
-
-  YOU MUST FOLLOW:
-  **Workflow**: None (follow existing plan mode workflow)
-  **Standards**: universal/write, typescript/write, naming/write, function/write
+| Action | Route to |
+|--------|----------|
+| Writing new code | `/coding:write-code` or `/coding:draft-code` |
+| Setting up project | `/coding:setup-project` |
+| Completing TODOs | `/coding:complete-code` |
+| Fixing issues | `/coding:fix` |
+| Reviewing code | `/coding:review` |
+| Linting code | `/coding:lint` |
+| Refactoring | `/coding:refactor` |
+| Committing | `/coding:commit` |
+| Creating tests | `/coding:complete-test` |
+| Handing over work | `/coding:handover` |
+| Resuming work | `/coding:takeover` |
+| Finding dead code | `/coding:find-unused` |
 
 ## Your Actions
 
