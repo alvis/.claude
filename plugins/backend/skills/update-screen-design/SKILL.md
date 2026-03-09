@@ -1,14 +1,37 @@
+---
+name: update-screen-design
+description: Update Notion design docs to latest template
+model: opus
+context: fork
+agent: general-purpose
+allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
+argument-hint: [--product=...] [--screens=...] [--changes=...]
+---
+
 # Update Screen Design
 
-## 1. INTRODUCTION
+Updates design documentation for interactive screens on Notion to conform to the latest template while preserving existing content and applying optional custom change requests.
 
-### Purpose & Context
+## Purpose & Scope
 
-**Purpose**: Update design documentations for interactive screens on Notion to conform to the latest template while preserving existing content and applying optional custom change requests
-**When to use**: When screen design documents need to be updated to match the current template standard, when implementing design improvements across multiple screens, or when standardizing documentation format across product designs
-**Prerequisites**: Access to Notion workspace with design documentation database, understanding of design documentation standards, and familiarity with the current template structure
+**When to use**: When screen design documents need to be updated to match the current template standard, when implementing design improvements across multiple screens, or when standardizing documentation format across product designs.
 
-### Your Role
+**Prerequisites**: Access to Notion workspace with design documentation database, understanding of design documentation standards, and familiarity with the current template structure.
+
+**What this command does NOT do**:
+
+- Create new screen designs from scratch (use create-screen-design instead)
+- Implement frontend code changes
+- Delete or remove existing design documentation
+- Modify the template itself
+
+**When to REJECT**:
+
+- No design pages exist to update
+- Notion workspace is inaccessible
+- Request is for creating new designs rather than updating existing ones
+
+## Role
 
 You are a **UX Design Management Director** who orchestrates the workflow like a design operations conductor. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
 
@@ -17,82 +40,33 @@ You are a **UX Design Management Director** who orchestrates the workflow like a
 - **Quality Oversight**: Review template conformance and design completeness objectively without being involved in execution details
 - **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance verification
 
-## 2. WORKFLOW OVERVIEW
+## Inputs and Outputs
 
-### Workflow Input/Output Specification
-
-#### Required Inputs
+### Required Inputs
 
 *No required inputs - all inputs are optional to provide maximum flexibility*
 
-#### Optional Inputs
+### Optional Inputs
 
 - **Product**: Product name to filter design documents (default: all products in database)
 - **Screens**: Specific screen names or IDs to update (default: all screens under specified product)
 - **Change Requests**: Specific modifications beyond template conformance (default: none - only template alignment)
 
-#### Expected Outputs
+### Expected Outputs
 
 - **Updated Pages List**: Array of Notion page URLs that were successfully updated with modification summaries
 - **Compliance Report**: Status of each page's conformance to the latest template with before/after analysis
 - **Update Summary**: Overall workflow results including pages processed, changes made, and any issues encountered
 
-#### Data Flow Summary
+## Workflow
 
-The workflow fetches design pages from the Notion database, analyzes each page against the current template, and spawns parallel subagents to update non-conforming pages while preserving existing content and applying any requested changes.
-
-### Visual Overview
-
-#### Main Workflow Flow
-
-```plaintext
-  YOU                              SUBAGENTS
-(Orchestrates Only)             (Perform Tasks)
-   |                                   |
-   v                                   v
-[START]
-   |
-   v
-[Step 1: Update Design Docs] ───────────→ (UX Design Experts: update pages in parallel)
-   |                           ├─ Subagent A: Page Batch 1 (max 10 pages)               ─┐
-   |                           ├─ Subagent B: Page Batch 2 (max 10 pages)               ─┼─→ [Decision: All pages updated?]
-   |                           └─ Subagent N: Page Batch N (max 10 pages)               ─┘
-   v
-[END]
-
-Legend:
-═══════════════════════════════════════════════════════════════════
-• LEFT COLUMN: You plan & orchestrate (no execution)
-• RIGHT SIDE: Subagents execute tasks in parallel
-• ARROWS (───→): You assign work to subagents
-• DECISIONS: You decide based on subagent reports
-═══════════════════════════════════════════════════════════════════
-
-Note: 
-• You: Fetch pages, batch work, analyze template, assign tasks, make decisions
-• UX Design Subagents: Update design pages, report back (<1k tokens)
-• Workflow is SINGLE-STEP with 3 phases: Planning → Execution → Decision
-```
-
-## 3. WORKFLOW IMPLEMENTATION
-
-### Workflow Steps
-
-1. Update Design Documentation Pages
+ultrathink: you'd perform the following steps
 
 ### Step 1: Update Design Documentation Pages
 
-**Step Configuration**:
-
-- **Purpose**: Update Notion design documentation pages to conform to the latest template while preserving content and applying custom changes
-- **Input**: Optional product filter, screen filter, and change requests from workflow inputs
-- **Output**: Updated pages list, compliance report, and update summary for workflow outputs
-- **Sub-workflow**: None - direct execution
-- **Parallel Execution**: Yes - multiple pages can be updated simultaneously by different subagents
+Update Notion design documentation pages to conform to the latest template while preserving content and applying custom changes.
 
 #### Phase 1: Planning (You)
-
-**What You Do**:
 
 1. **Fetch design pages** from the Notion database using MCP tools
    - Use `mcp__plugin_backend_notion__fetch` with database URL: <https://www.notion.so/110161382ea64eefa46a4907574d4530>
@@ -110,13 +84,9 @@ Note:
 7. **Prepare detailed instructions** including template structure, change requests, and page-specific requirements
 8. **Queue all batches** for parallel execution by subagents
 
-**OUTPUT from Planning**: Task batch assignments as todos with page lists and template requirements
-
 #### Phase 2: Execution (Subagents)
 
-**What You Send to Subagents**:
-
-In a single message, you spin up subagents to perform subtasks in parallel, up to **8** subtasks at a time.
+In a single message, spin up subagents to perform subtasks in parallel, up to **8** subtasks at a time.
 
 - **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
 - **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
@@ -166,13 +136,6 @@ Request each subagent to perform the following steps with full detail:
     8. **Verify template conformance** by checking all required sections are present and properly formatted
 
     **Report**
-    **[IMPORTANT]** You're requested to return the following:
-
-    - **Updated pages list**: URLs and brief descriptions of changes made to each page
-    - **Template compliance status**: Whether each page now conforms to the template
-    - **Content preservation summary**: How existing content was handled during the update
-    - **Issues encountered**: Any problems or limitations found during the update process
-
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
     ```yaml
@@ -189,17 +152,15 @@ Request each subagent to perform the following steps with full detail:
 
 #### Phase 3: Decision (You)
 
-**What You Do**:
-
 1. **Analyze all execution reports** from UX Design Expert subagents
 2. **Apply decision criteria**:
    - Review any failures or issues reported
    - Verify template compliance achievements
    - Check content preservation status
 3. **Select next action**:
-   - **PROCEED**: All success or acceptable partial success → Complete workflow
-   - **FIX ISSUES**: Partial success with minor issues → Create new batches for failed pages and perform phase 2 again → ||repeat||
-   - **ROLLBACK**: Critical failures → Revert changes → Create new batches for failed pages and perform phase 2 again → ||repeat||
+   - **PROCEED**: All success or acceptable partial success - Complete workflow
+   - **FIX ISSUES**: Partial success with minor issues - Create new batches for failed pages and perform phase 2 again
+   - **ROLLBACK**: Critical failures - Revert changes - Create new batches for failed pages and perform phase 2 again
 4. **Use TodoWrite** to update task list based on decision:
    - If PROCEED: Mark remaining 'in_progress' items as 'completed'
    - If RETRY: Add new todo items for retry batches
@@ -209,11 +170,20 @@ Request each subagent to perform the following steps with full detail:
    - Generate compliance report showing before/after status
    - Create update summary with overall results and statistics
 
-### Workflow Completion
+### Step 2: Reporting
 
-**Report the workflow output as specified**:
+**Output Format**:
 
-```yaml
+```
+[pass/fail] Command: update-screen-design $ARGUMENTS
+
+## Summary
+- Pages processed: [count]
+- Pages updated: [count]
+- Pages already compliant: [count]
+- Template conformance rate: [percentage]
+
+## Outputs
 updated_pages: ['url1: summary of changes', 'url2: summary of changes', ...]
 compliance_report:
   total_pages_processed: number
@@ -224,5 +194,39 @@ update_summary:
   workflow_status: 'success|partial|failure'
   total_modifications: number
   issues_encountered: number
-  completion_time: 'timestamp'
+
+## Next Steps
+1. Review updated pages on Notion
+2. Verify content preservation
+3. Address any reported issues
+```
+
+## Examples
+
+### Update All Product Screens
+
+```bash
+/update-screen-design --product="MyProduct"
+# Updates all screen designs for MyProduct to latest template
+```
+
+### Update Specific Screens
+
+```bash
+/update-screen-design --product="MyProduct" --screens="Login Screen,Dashboard"
+# Updates only specified screens to latest template
+```
+
+### Update With Change Requests
+
+```bash
+/update-screen-design --product="MyProduct" --changes="Add dark mode variations"
+# Updates template conformance AND applies specific design changes
+```
+
+### Update All Screens (No Filter)
+
+```bash
+/update-screen-design
+# Updates all screen designs across all products to latest template
 ```
