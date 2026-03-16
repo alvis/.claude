@@ -33,7 +33,7 @@
 
 - **DOC-LIFE-01**: Never commit temporary tags (`TODO`, `FIXME`, `DEBUG`, `TEMP`, `QUESTION`, `IDEA`, `INTENT`).
 - **DOC-LIFE-02**: Review tags (`REVIEW`, `REFACTOR`, `OPTIMIZE`) allowed in drafts only, removed before merge.
-- **DOC-LIFE-03**: Persistent tags (`NOTE`, `WARNING`, `SECURITY`, `PERFORMANCE`, `COMPATIBILITY`, `LIMITATION`, `HACK`, `WORKAROUND`) only when they add long-term value.
+- **DOC-LIFE-03**: Persistent tags (`NOTE`, `IMPORTANT`, `WARNING`, `SECURITY`, `PERFORMANCE`, `COMPATIBILITY`, `LIMITATION`, `HACK`, `WORKAROUND`) only when they add long-term value.
 - **DOC-LIFE-04**: When behavior changes, update or remove related comments/JSDoc in the same PR.
 
 ## Patterns

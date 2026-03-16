@@ -2,7 +2,7 @@
 
 ## Intent
 
-Persistent tags (`NOTE`, `WARNING`, `SECURITY`, `PERFORMANCE`, `COMPATIBILITY`, `LIMITATION`, `HACK`, `WORKAROUND`) may remain only when they add long-term operational value. Use tags sparingly and avoid repeated visual-noise tag spam.
+Persistent tags (`NOTE`, `IMPORTANT`, `WARNING`, `SECURITY`, `PERFORMANCE`, `COMPATIBILITY`, `LIMITATION`, `HACK`, `WORKAROUND`) may remain only when they add long-term operational value. Use tags sparingly and avoid repeated visual-noise tag spam.
 
 ## Fix
 
@@ -19,6 +19,9 @@ mutateInPlace(buffer);
 ```
 
 ```typescript
+// IMPORTANT: all amounts must be in cents to avoid floating-point errors
+const total = items.reduce((sum, item) => sum + item.priceInCents, 0);
+
 // SECURITY: sanitize before rendering to prevent stored XSS
 const safe = sanitizeHtml(userContent);
 
@@ -36,6 +39,7 @@ These tags can stay in production code when they add long-term value:
 | Tag | Purpose |
 |-----|---------|
 | `NOTE` | important context or non-obvious explanation |
+| `IMPORTANT` | highlights critical constraints or requirements |
 | `WARNING` | alerts about potential risks or edge cases |
 | `SECURITY` | documents security implications |
 | `PERFORMANCE` | highlights optimization context |

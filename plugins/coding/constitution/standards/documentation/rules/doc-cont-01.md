@@ -2,7 +2,7 @@
 
 ## Intent
 
-Write comments only for non-obvious intent: business-rule rationale, constraints, tradeoffs, or external workarounds. If a comment only mirrors code syntax or names, remove it.
+Write comments only for non-obvious intent: business-rule rationale, constraints, tradeoffs, or external workarounds. If a comment only mirrors code syntax or names, remove it. "Mirrors code" means the comment **literally restates the adjacent code statement** (e.g., `// set x to 5` above `x = 5`), not that it merely relates to the same topic as the code.
 
 ## Fix
 
@@ -81,6 +81,7 @@ function calculateTotal(items: Item[]): number {
 - When existing code matches prior violation patterns such as ❌ `// increment i`, refactor before adding new behavior.
 - Regex or bitwise logic usually warrants a short "why" comment even if the code is technically readable.
 - If a comment only restates what the code already says (e.g., ❌ `// increment counter by 1`), delete it rather than rewriting.
+- Comments with persistent tags (`NOTE:`, `IMPORTANT:`, `WARNING:`, `SECURITY:`, etc.) are governed by `DOC-LIFE-03` -- never remove them under this rule.
 
 ## Related
 
