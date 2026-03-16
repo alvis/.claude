@@ -2,7 +2,7 @@
 
 ## Intent
 
-Inline comments should explain decisions and edge-case behavior, not mirror code syntax. A comment that restates code is noise and must be removed.
+Inline comments should explain decisions and edge-case behavior, not mirror code syntax. A comment that restates code is noise and must be removed. "Restates code" means the comment **literally restates the adjacent code statement** (e.g., `// return the result` above `return result`), not that it merely relates to the same topic as the code.
 
 ## Fix
 
@@ -64,6 +64,7 @@ return result;
 
 - When existing code matches prior violation patterns such as ❌ `// set x to 1`, refactor before adding new behavior.
 - A comment that restates code (e.g., ❌ `// return the result`) is noise; remove it entirely rather than trying to rewrite.
+- Comments with persistent tags (`NOTE:`, `IMPORTANT:`, `WARNING:`, `SECURITY:`, etc.) are governed by `DOC-LIFE-03` -- never remove them under this rule.
 
 ## Related
 
