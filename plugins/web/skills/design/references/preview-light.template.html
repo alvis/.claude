@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design System Preview — Light Mode</title>
+  <style>
+    /* ========================================
+       DESIGN TOKENS — Replace values per project
+       ======================================== */
+    :root {
+      /* Primary */
+      --color-primary: #6366f1; /* REPLACE */
+      --color-primary-hover: #4f46e5; /* REPLACE */
+      --color-primary-active: #4338ca; /* REPLACE */
+      --color-primary-subtle: #eef2ff; /* REPLACE */
+
+      /* Secondary */
+      --color-secondary: #06b6d4; /* REPLACE */
+      --color-secondary-hover: #0891b2; /* REPLACE */
+      --color-secondary-subtle: #ecfeff; /* REPLACE */
+
+      /* Surfaces */
+      --surface-canvas: #ffffff; /* REPLACE */
+      --surface-primary: #ffffff; /* REPLACE */
+      --surface-secondary: #f9fafb; /* REPLACE */
+      --surface-tertiary: #f3f4f6; /* REPLACE */
+
+      /* Text */
+      --text-primary: #111827; /* REPLACE */
+      --text-secondary: #6b7280; /* REPLACE */
+      --text-tertiary: #9ca3af; /* REPLACE */
+      --text-inverse: #ffffff; /* REPLACE */
+
+      /* Borders */
+      --border-default: #e5e7eb; /* REPLACE */
+      --border-strong: #d1d5db; /* REPLACE */
+      --border-focus: #6366f1; /* REPLACE */
+
+      /* Semantic */
+      --color-success: #16a34a; /* REPLACE */
+      --color-success-subtle: #f0fdf4; /* REPLACE */
+      --color-warning: #d97706; /* REPLACE */
+      --color-warning-subtle: #fffbeb; /* REPLACE */
+      --color-error: #dc2626; /* REPLACE */
+      --color-error-subtle: #fef2f2; /* REPLACE */
+      --color-info: #2563eb; /* REPLACE */
+      --color-info-subtle: #eff6ff; /* REPLACE */
+
+      /* Spacing */
+      --space-2xs: 0.25rem; /* REPLACE */
+      --space-xs: 0.5rem; /* REPLACE */
+      --space-sm: 0.75rem; /* REPLACE */
+      --space-md: 1rem; /* REPLACE */
+      --space-lg: 1.5rem; /* REPLACE */
+      --space-xl: 2rem; /* REPLACE */
+      --space-2xl: 3rem; /* REPLACE */
+      --space-3xl: 4rem; /* REPLACE */
+
+      /* Border Radius */
+      --radius-sm: 0.25rem; /* REPLACE */
+      --radius-md: 0.5rem; /* REPLACE */
+      --radius-lg: 0.75rem; /* REPLACE */
+      --radius-xl: 1rem; /* REPLACE */
+      --radius-full: 9999px; /* REPLACE */
+
+      /* Shadows */
+      --shadow-0: none; /* REPLACE */
+      --shadow-1: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); /* REPLACE */
+      --shadow-2: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06); /* REPLACE */
+      --shadow-3: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05); /* REPLACE */
+      --shadow-4: 0 20px 25px rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.04); /* REPLACE */
+
+      /* Typography */
+      --font-family: 'Inter', system-ui, -apple-system, sans-serif; /* REPLACE */
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace; /* REPLACE */
+    }
+
+    /* ========================================
+       BASE STYLES
+       ======================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--surface-canvas);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ========================================
+       STICKY NAVIGATION
+       ======================================== */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface-primary);
+      border-bottom: 1px solid var(--border-default);
+      padding: var(--space-sm) var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      overflow-x: auto;
+      backdrop-filter: blur(12px);
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      white-space: nowrap;
+      padding: var(--space-2xs) var(--space-xs);
+      border-radius: var(--radius-sm);
+      transition: color 150ms ease, background-color 150ms ease;
+    }
+
+    nav a:hover {
+      color: var(--color-primary);
+      background: var(--color-primary-subtle);
+    }
+
+    nav a:focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      margin-right: var(--space-sm);
+      flex-shrink: 0;
+    }
+
+    /* ========================================
+       LAYOUT
+       ======================================== */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    section {
+      margin-bottom: var(--space-3xl);
+    }
+
+    .section-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: var(--space-xs);
+      color: var(--text-primary);
+    }
+
+    .section-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xl);
+    }
+
+    .subsection-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-top: var(--space-xl);
+      margin-bottom: var(--space-md);
+      color: var(--text-primary);
+    }
+
+    /* ========================================
+       COLOR SWATCHES
+       ======================================== */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .swatch {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-default);
+    }
+
+    .swatch-color {
+      height: 80px;
+      width: 100%;
+    }
+
+    .swatch-info {
+      padding: var(--space-sm);
+      background: var(--surface-primary);
+    }
+
+    .swatch-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+
+    .swatch-value {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ========================================
+       TYPOGRAPHY SAMPLES
+       ======================================== */
+    .type-sample {
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .type-sample:last-child {
+      border-bottom: none;
+    }
+
+    .type-meta {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2xs);
+    }
+
+    /* ========================================
+       BUTTONS
+       ======================================== */
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.875rem;
+      font-family: var(--font-family);
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease;
+      text-decoration: none;
+    }
+
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--text-inverse);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-1);
+    }
+
+    .btn-primary:active {
+      background: var(--color-primary-active);
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn-primary.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-primary-subtle);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-primary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-secondary);
+    }
+
+    .btn-ghost.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-danger {
+      background: var(--color-error);
+      color: var(--text-inverse);
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-1);
+    }
+
+    .btn-danger.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ========================================
+       CARDS
+       ======================================== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    .card {
+      padding: var(--space-lg);
+      border-radius: var(--radius-lg);
+      background: var(--surface-primary);
+    }
+
+    .card-default {
+      border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-1);
+    }
+
+    .card-elevated {
+      box-shadow: var(--shadow-2);
+    }
+
+    .card-interactive {
+      border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-1);
+      cursor: pointer;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .card-interactive:hover {
+      box-shadow: var(--shadow-2);
+      transform: translateY(-2px);
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-sm);
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: var(--space-xs);
+    }
+
+    .card p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ========================================
+       SPACING SCALE
+       ======================================== */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-sm);
+    }
+
+    .spacing-label {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      width: 100px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .spacing-bar {
+      height: 24px;
+      background: var(--color-primary-subtle);
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius-sm);
+      opacity: 0.8;
+    }
+
+    .spacing-value {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    /* ========================================
+       RADIUS SCALE
+       ======================================== */
+    .radius-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-lg);
+      align-items: flex-end;
+    }
+
+    .radius-item {
+      text-align: center;
+    }
+
+    .radius-box {
+      width: 80px;
+      height: 80px;
+      background: var(--color-primary-subtle);
+      border: 2px solid var(--color-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .radius-name {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .radius-val {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+    }
+
+    /* ========================================
+       ELEVATION LEVELS
+       ======================================== */
+    .elevation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    .elevation-card {
+      padding: var(--space-lg);
+      border-radius: var(--radius-lg);
+      background: var(--surface-primary);
+      text-align: center;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .elevation-level {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2xs);
+    }
+
+    .elevation-name {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 768px) {
+      nav {
+        padding: var(--space-xs) var(--space-md);
+      }
+
+      .container {
+        padding: var(--space-lg) var(--space-md);
+      }
+
+      .swatch-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      }
+
+      .button-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Navigation -->
+  <nav role="navigation" aria-label="Section navigation">
+    <span class="nav-title">Light Mode</span>
+    <a href="#colors">Colors</a>
+    <a href="#typography">Typography</a>
+    <a href="#buttons">Buttons</a>
+    <a href="#cards">Cards</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#radius">Radius</a>
+    <a href="#elevation">Elevation</a>
+  </nav>
+
+  <div class="container">
+
+    <!-- ==========================================
+         COLOR SWATCHES
+         ========================================== -->
+    <section id="colors">
+      <h2 class="section-title">Color Palette</h2>
+      <p class="section-desc">All color tokens with their assigned roles. Each swatch shows the CSS custom property name and hex value.</p>
+
+      <h3 class="subsection-title">Primary</h3>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-primary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-primary</div><div class="swatch-value">#6366f1</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-primary-hover);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-primary-hover</div><div class="swatch-value">#4f46e5</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-primary-active);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-primary-active</div><div class="swatch-value">#4338ca</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-primary-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-primary-subtle</div><div class="swatch-value">#eef2ff</div></div>
+        </div>
+      </div>
+
+      <h3 class="subsection-title">Secondary</h3>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-secondary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-secondary</div><div class="swatch-value">#06b6d4</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-secondary-hover);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-secondary-hover</div><div class="swatch-value">#0891b2</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-secondary-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-secondary-subtle</div><div class="swatch-value">#ecfeff</div></div>
+        </div>
+      </div>
+
+      <h3 class="subsection-title">Surfaces</h3>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--surface-canvas); border-bottom: 1px solid var(--border-default);"></div>
+          <div class="swatch-info"><div class="swatch-name">--surface-canvas</div><div class="swatch-value">#ffffff</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--surface-primary); border-bottom: 1px solid var(--border-default);"></div>
+          <div class="swatch-info"><div class="swatch-name">--surface-primary</div><div class="swatch-value">#ffffff</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--surface-secondary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--surface-secondary</div><div class="swatch-value">#f9fafb</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--surface-tertiary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--surface-tertiary</div><div class="swatch-value">#f3f4f6</div></div>
+        </div>
+      </div>
+
+      <h3 class="subsection-title">Neutrals</h3>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-primary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-primary</div><div class="swatch-value">#111827</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-secondary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-secondary</div><div class="swatch-value">#6b7280</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-tertiary);"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-tertiary</div><div class="swatch-value">#9ca3af</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--border-default);"></div>
+          <div class="swatch-info"><div class="swatch-name">--border-default</div><div class="swatch-value">#e5e7eb</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--border-strong);"></div>
+          <div class="swatch-info"><div class="swatch-name">--border-strong</div><div class="swatch-value">#d1d5db</div></div>
+        </div>
+      </div>
+
+      <h3 class="subsection-title">Semantic</h3>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-success);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-success</div><div class="swatch-value">#16a34a</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-success-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-success-subtle</div><div class="swatch-value">#f0fdf4</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-warning);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-warning</div><div class="swatch-value">#d97706</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-warning-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-warning-subtle</div><div class="swatch-value">#fffbeb</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-error);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-error</div><div class="swatch-value">#dc2626</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-error-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-error-subtle</div><div class="swatch-value">#fef2f2</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-info);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-info</div><div class="swatch-value">#2563eb</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--color-info-subtle);"></div>
+          <div class="swatch-info"><div class="swatch-name">--color-info-subtle</div><div class="swatch-value">#eff6ff</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TYPOGRAPHY SAMPLES
+         ========================================== -->
+    <section id="typography">
+      <h2 class="section-title">Typography</h2>
+      <p class="section-desc">Each level rendered at its actual size, weight, and line-height. Font: var(--font-family).</p>
+
+      <div class="type-sample">
+        <div class="type-meta">Display XL / 3.5rem / 800 / -0.03em</div>
+        <div style="font-size: 3.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em;">The quick brown fox</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Display / 3rem / 800 / -0.025em</div>
+        <div style="font-size: 3rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.025em;">The quick brown fox</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H1 / 2.25rem / 700 / -0.02em</div>
+        <div style="font-size: 2.25rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em;">The quick brown fox jumps over</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H2 / 1.875rem / 700 / -0.015em</div>
+        <div style="font-size: 1.875rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em;">The quick brown fox jumps over the lazy dog</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H3 / 1.5rem / 600 / -0.01em</div>
+        <div style="font-size: 1.5rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em;">The quick brown fox jumps over the lazy dog</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H4 / 1.25rem / 600 / -0.005em</div>
+        <div style="font-size: 1.25rem; font-weight: 600; line-height: 1.35; letter-spacing: -0.005em;">The quick brown fox jumps over the lazy dog</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H5 / 1.125rem / 600 / 0</div>
+        <div style="font-size: 1.125rem; font-weight: 600; line-height: 1.4;">The quick brown fox jumps over the lazy dog</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">H6 / 1rem / 600 / 0</div>
+        <div style="font-size: 1rem; font-weight: 600; line-height: 1.4;">The quick brown fox jumps over the lazy dog</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Body LG / 1.125rem / 400 / 0</div>
+        <div style="font-size: 1.125rem; font-weight: 400; line-height: 1.6;">The quick brown fox jumps over the lazy dog. This is a longer paragraph to demonstrate how body text reads at this size and weight with proper line-height for comfortable reading.</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Body / 1rem / 400 / 0</div>
+        <div style="font-size: 1rem; font-weight: 400; line-height: 1.6;">The quick brown fox jumps over the lazy dog. This is the default body text size used throughout the interface for primary content and descriptions.</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Body SM / 0.875rem / 400 / 0.005em</div>
+        <div style="font-size: 0.875rem; font-weight: 400; line-height: 1.5; letter-spacing: 0.005em;">The quick brown fox jumps over the lazy dog. Secondary text used for supporting information and metadata.</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Caption / 0.75rem / 500 / 0.01em</div>
+        <div style="font-size: 0.75rem; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em;">The quick brown fox jumps over the lazy dog. Captions and meta information.</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Tiny / 0.625rem / 500 / 0.02em</div>
+        <div style="font-size: 0.625rem; font-weight: 500; line-height: 1.4; letter-spacing: 0.02em;">THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG. BADGES AND FINE PRINT.</div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         BUTTONS
+         ========================================== -->
+    <section id="buttons">
+      <h2 class="section-title">Buttons</h2>
+      <p class="section-desc">Four variants in default, hover-preview, and disabled states.</p>
+
+      <h3 class="subsection-title">Primary</h3>
+      <div class="button-row">
+        <button class="btn btn-primary" type="button">Primary Button</button>
+        <button class="btn btn-primary" type="button" style="background: var(--color-primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-1);">Hover State</button>
+        <button class="btn btn-primary disabled" type="button" disabled>Disabled</button>
+      </div>
+
+      <h3 class="subsection-title">Secondary</h3>
+      <div class="button-row">
+        <button class="btn btn-secondary" type="button">Secondary Button</button>
+        <button class="btn btn-secondary" type="button" style="background: var(--color-primary-subtle); transform: translateY(-1px);">Hover State</button>
+        <button class="btn btn-secondary disabled" type="button" disabled>Disabled</button>
+      </div>
+
+      <h3 class="subsection-title">Ghost</h3>
+      <div class="button-row">
+        <button class="btn btn-ghost" type="button">Ghost Button</button>
+        <button class="btn btn-ghost" type="button" style="background: var(--surface-secondary);">Hover State</button>
+        <button class="btn btn-ghost disabled" type="button" disabled>Disabled</button>
+      </div>
+
+      <h3 class="subsection-title">Danger</h3>
+      <div class="button-row">
+        <button class="btn btn-danger" type="button">Danger Button</button>
+        <button class="btn btn-danger" type="button" style="background: #b91c1c; transform: translateY(-1px); box-shadow: var(--shadow-1);">Hover State</button>
+        <button class="btn btn-danger disabled" type="button" disabled>Disabled</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         CARDS
+         ========================================== -->
+    <section id="cards">
+      <h2 class="section-title">Cards</h2>
+      <p class="section-desc">Default, elevated, and interactive card variants.</p>
+
+      <div class="card-grid">
+        <div class="card card-default">
+          <div class="card-label">Default</div>
+          <h3>Card Title</h3>
+          <p>A default card with a subtle border and level-1 shadow. Used for standard content containers throughout the interface.</p>
+        </div>
+        <div class="card card-elevated">
+          <div class="card-label">Elevated</div>
+          <h3>Card Title</h3>
+          <p>An elevated card with no border and level-2 shadow. Used for content that needs to visually separate from the surface.</p>
+        </div>
+        <div class="card card-interactive">
+          <div class="card-label">Interactive (hover me)</div>
+          <h3>Card Title</h3>
+          <p>An interactive card that lifts on hover with a smooth transition. Used for clickable items like feature cards or links.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SPACING SCALE
+         ========================================== -->
+    <section id="spacing">
+      <h2 class="section-title">Spacing Scale</h2>
+      <p class="section-desc">Visual representation of each spacing token. All values align to the base grid unit.</p>
+
+      <div class="spacing-row">
+        <span class="spacing-label">--space-2xs</span>
+        <div class="spacing-bar" style="width: 4px;"></div>
+        <span class="spacing-value">0.25rem (4px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-xs</span>
+        <div class="spacing-bar" style="width: 8px;"></div>
+        <span class="spacing-value">0.5rem (8px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-sm</span>
+        <div class="spacing-bar" style="width: 12px;"></div>
+        <span class="spacing-value">0.75rem (12px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-md</span>
+        <div class="spacing-bar" style="width: 16px;"></div>
+        <span class="spacing-value">1rem (16px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-lg</span>
+        <div class="spacing-bar" style="width: 24px;"></div>
+        <span class="spacing-value">1.5rem (24px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-xl</span>
+        <div class="spacing-bar" style="width: 32px;"></div>
+        <span class="spacing-value">2rem (32px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-2xl</span>
+        <div class="spacing-bar" style="width: 48px;"></div>
+        <span class="spacing-value">3rem (48px)</span>
+      </div>
+      <div class="spacing-row">
+        <span class="spacing-label">--space-3xl</span>
+        <div class="spacing-bar" style="width: 64px;"></div>
+        <span class="spacing-value">4rem (64px)</span>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         RADIUS SCALE
+         ========================================== -->
+    <section id="radius">
+      <h2 class="section-title">Border Radius Scale</h2>
+      <p class="section-desc">Each radius token applied to identical boxes for visual comparison.</p>
+
+      <div class="radius-grid">
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-sm);"></div>
+          <div class="radius-name">--radius-sm</div>
+          <div class="radius-val">0.25rem</div>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-md);"></div>
+          <div class="radius-name">--radius-md</div>
+          <div class="radius-val">0.5rem</div>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-lg);"></div>
+          <div class="radius-name">--radius-lg</div>
+          <div class="radius-val">0.75rem</div>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-xl);"></div>
+          <div class="radius-name">--radius-xl</div>
+          <div class="radius-val">1rem</div>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-full);"></div>
+          <div class="radius-name">--radius-full</div>
+          <div class="radius-val">9999px</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         ELEVATION LEVELS
+         ========================================== -->
+    <section id="elevation">
+      <h2 class="section-title">Elevation Levels</h2>
+      <p class="section-desc">Five-level shadow system from flat (Level 0) to floating (Level 4).</p>
+
+      <div class="elevation-grid">
+        <div class="elevation-card" style="box-shadow: var(--shadow-0); border: 1px solid var(--border-default);">
+          <div class="elevation-level">0</div>
+          <div class="elevation-name">--shadow-0</div>
+        </div>
+        <div class="elevation-card" style="box-shadow: var(--shadow-1);">
+          <div class="elevation-level">1</div>
+          <div class="elevation-name">--shadow-1</div>
+        </div>
+        <div class="elevation-card" style="box-shadow: var(--shadow-2);">
+          <div class="elevation-level">2</div>
+          <div class="elevation-name">--shadow-2</div>
+        </div>
+        <div class="elevation-card" style="box-shadow: var(--shadow-3);">
+          <div class="elevation-level">3</div>
+          <div class="elevation-name">--shadow-3</div>
+        </div>
+        <div class="elevation-card" style="box-shadow: var(--shadow-4);">
+          <div class="elevation-level">4</div>
+          <div class="elevation-name">--shadow-4</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
