@@ -1,0 +1,23 @@
+{
+  "categories": {
+    "text": {
+      "issues": [
+        {"ruleId": "WCAG-CONTRAST", "severity": "critical", "selector": ".btn", "summary": "Low contrast"},
+        {"ruleId": "WCAG-CONTRAST", "severity": "critical", "selector": ".btn", "summary": "Low contrast"},
+        {"ruleId": "WCAG-CONTRAST", "severity": "critical", "selector": ".btn", "summary": "Low contrast"}
+      ]
+    },
+    "structure": {
+      "issues": [
+        {"ruleId": "STRUCT-HEADING", "severity": "high", "selector": "h1", "summary": "Missing"}
+      ]
+    },
+    "interaction": {
+      "issues": [
+        {"ruleId": "INT-BUTTON", "severity": "medium", "selector": "button", "summary": "no label"},
+        {"ruleId": "INT-BUTTON", "severity": "medium", "selector": "button", "summary": "no label"},
+        {"ruleId": "INT-FOCUS", "severity": "low", "selector": "a", "summary": "no focus ring"}
+      ]
+    }
+  }
+}

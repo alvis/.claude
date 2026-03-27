@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {
+      "uid": 100,
+      "role": "link",
+      "name": "Follow on X",
+      "url": "https://x.com/acme"
+    },
+    {
+      "uid": 101,
+      "role": "link",
+      "name": "Partner portal",
+      "url": "https://partner.com/login"
+    },
+    {
+      "uid": 102,
+      "role": "button",
+      "name": "Sign up",
+      "ancestors": []
+    }
+  ]
+}
