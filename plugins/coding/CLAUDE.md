@@ -22,6 +22,7 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Handing over work | `/coding:handover` |
 | Resuming work | `/coding:takeover` |
 | Finding dead code | `/coding:find-unused` |
+| Modernizing syntax | `/coding:modernize` |
 
 ## Your Actions
 
