@@ -1,0 +1,17 @@
+{
+  "name": "client",
+  "description": "Client-facing screen design and UX documentation with Notion integration",
+  "version": "2026-04-08",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+      }
+    ]
+  }
+}

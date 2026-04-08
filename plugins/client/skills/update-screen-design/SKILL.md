@@ -69,11 +69,11 @@ Update Notion design documentation pages to conform to the latest template while
 #### Phase 1: Planning (You)
 
 1. **Fetch design pages** from the Notion database using MCP tools
-   - Use `mcp__plugin_backend_notion__fetch` with database URL: <https://www.notion.so/110161382ea64eefa46a4907574d4530>
+   - Use `mcp__plugin_client_notion__fetch` with database URL: <https://www.notion.so/110161382ea64eefa46a4907574d4530>
    - Database collection: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
    - Apply product filter if specified in inputs
    - Apply screen filter if specified in inputs
-2. **Analyze template structure** using `mcp__plugin_backend_notion__fetch` to get the current template from: <https://www.notion.so/4555730e74b44592b77dd8a97620d3f2>
+2. **Analyze template structure** using `mcp__plugin_client_notion__fetch` to get the current template from: <https://www.notion.so/4555730e74b44592b77dd8a97620d3f2>
 3. **Assess each page** for template conformance to identify which pages need updates
 4. **Filter pages** to exclude those already conforming to template (unless change requests specified)
 5. **Create dynamic batches** following these rules:
@@ -106,10 +106,10 @@ Request each subagent to perform the following steps with full detail:
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_backend_notion__*) for ALL Notion operations:
-    - Use `mcp__plugin_backend_notion__fetch` to read any Notion pages, databases, or collections
-    - Use `mcp__plugin_backend_notion__notion-update-page` to modify existing pages
-    - Use `mcp__plugin_backend_notion__search` to find pages in the database
+    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_client_notion__*) for ALL Notion operations:
+    - Use `mcp__plugin_client_notion__fetch` to read any Notion pages, databases, or collections
+    - Use `mcp__plugin_client_notion__notion-update-page` to modify existing pages
+    - Use `mcp__plugin_client_notion__search` to find pages in the database
     - Never access Notion URLs directly without these tools
 
     **Assignment**
@@ -120,19 +120,19 @@ Request each subagent to perform the following steps with full detail:
     - ...
 
     **Template Reference**: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Use `mcp__plugin_backend_notion__fetch` tool to access this template URL
+    **[IMPORTANT]** Use `mcp__plugin_client_notion__fetch` tool to access this template URL
 
     **Change Requests**: [List any specific change requests beyond template conformance, or "None" if only template alignment needed]
 
     **Steps**
 
-    1. **Fetch and analyze template structure** using `mcp__plugin_backend_notion__fetch` tool from the provided URL to understand current standard format
-    2. **Read each assigned page** using `mcp__plugin_backend_notion__fetch` tool to understand current content and structure
+    1. **Fetch and analyze template structure** using `mcp__plugin_client_notion__fetch` tool from the provided URL to understand current standard format
+    2. **Read each assigned page** using `mcp__plugin_client_notion__fetch` tool to understand current content and structure
     3. **Compare against template** to identify specific sections that need updating or restructuring
     4. **Preserve valuable content** by mapping existing content to appropriate template sections
     5. **Apply template structure** while maintaining design intent and information completeness
     6. **Implement change requests** if any were specified in the assignment
-    7. **Update pages** using `mcp__plugin_backend_notion__notion-update-page` tool to apply all changes
+    7. **Update pages** using `mcp__plugin_client_notion__notion-update-page` tool to apply all changes
     8. **Verify template conformance** by checking all required sections are present and properly formatted
 
     **Report**
