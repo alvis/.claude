@@ -107,10 +107,10 @@ Request each subagent to perform the following steps with full detail:
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_backend_notion__*) for ALL Notion operations:
-    - Use `mcp__plugin_backend_notion__fetch` to read any Notion pages or databases
-    - Use `mcp__plugin_backend_notion__notion-create-pages` to create new pages
-    - Use `mcp__plugin_backend_notion__search` to find existing pages
+    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_client_notion__*) for ALL Notion operations:
+    - Use `mcp__plugin_client_notion__fetch` to read any Notion pages or databases
+    - Use `mcp__plugin_client_notion__notion-create-pages` to create new pages
+    - Use `mcp__plugin_client_notion__search` to find existing pages
     - Never access Notion URLs directly without these tools
 
     **Assignment**
@@ -122,12 +122,12 @@ Request each subagent to perform the following steps with full detail:
 
     **Reference Template**
     Follow the design template structure at: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Use `mcp__plugin_backend_notion__fetch` tool to access this template URL
+    **[IMPORTANT]** Use `mcp__plugin_client_notion__fetch` tool to access this template URL
 
     **Steps**
 
     1. **Copy Template First**:
-       - Use `mcp__plugin_backend_notion__fetch` tool to access the template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
+       - Use `mcp__plugin_client_notion__fetch` tool to access the template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
        - Copy the entire template structure to ensure consistency
        - This ensures all sections and formatting are preserved
 
@@ -151,7 +151,7 @@ Request each subagent to perform the following steps with full detail:
        - Explain key features and user flow considerations
        - Link to product pages and maintain database relationships
        - Ensure all template sections are thoroughly completed
-       - Use `mcp__plugin_backend_notion__notion-create-pages` tool to create new page under Screens database
+       - Use `mcp__plugin_client_notion__notion-create-pages` tool to create new page under Screens database
        - Database collection URL: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
        - Parent database URL: https://www.notion.so/110161382ea64eefa46a4907574d4530
 
@@ -202,8 +202,8 @@ Request each review subagent to perform the following review with full scrutiny:
     Template Reference: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
 
     **[IMPORTANT]** You MUST use Notion MCP tools for all review operations:
-    - Use `mcp__plugin_backend_notion__fetch` to read the created page and template
-    - Use `mcp__plugin_backend_notion__search` if you need to find related pages
+    - Use `mcp__plugin_client_notion__fetch` to read the created page and template
+    - Use `mcp__plugin_client_notion__search` if you need to find related pages
 
     Review ALL aspects of this single page:
     - Template Conformance: Verify page structure matches template exactly
@@ -217,7 +217,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review Steps**
 
     1. **Template Verification**:
-       - Use `mcp__plugin_backend_notion__fetch` to read both the created page and template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
+       - Use `mcp__plugin_client_notion__fetch` to read both the created page and template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
        - Verify ALL template sections are present and properly structured
        - Confirm section headings match the template exactly
     2. **Design Count Verification**:
@@ -231,7 +231,7 @@ Request each review subagent to perform the following review with full scrutiny:
        - Check all template sections have substantive content
        - Verify design rationales are complete and logical
     5. **Integration Check**:
-       - Use `mcp__plugin_backend_notion__fetch` to verify proper placement in Screens database (https://www.notion.so/110161382ea64eefa46a4907574d4530)
+       - Use `mcp__plugin_client_notion__fetch` to verify proper placement in Screens database (https://www.notion.so/110161382ea64eefa46a4907574d4530)
        - Confirm the page exists in collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
        - Verify product linking and relationships
 
