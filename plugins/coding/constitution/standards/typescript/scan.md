@@ -25,7 +25,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use default imports when named imports exist [`TYP-IMPT-06`]
 - DO NOT break top-level symbol group ordering (imports → re-exports → types → constants → classes → functions), such as `export function run() {} const X = 1` [`TYP-MODL-01`]
 - DO NOT place helper/leaf functions before the public/root functions that call them, such as defining `checkFields()` before `processUser()` that calls it [`TYP-MODL-02`]
-- DO NOT expose default exports from modules where disallowed [`TYP-MODL-03`]
+- DO NOT expose default exports from modules where disallowed (unless file is a primary-export module — see rule) [`TYP-MODL-03`]
 - DO NOT use unsafe optional object destructuring [`TYP-PARM-01`] (→ `FUNC-SIGN-04`)
 - DO NOT use inline/weak typing for exported contracts [`TYP-PARM-02`] (→ `FUNC-SIGN-05`)
 - DO NOT ignore property ordering contracts, such as `type X = { meta: string; id: string }` when canonical order is `id` then `meta` [`TYP-PARM-03`]
@@ -56,7 +56,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TYP-IMPT-06` | Default import is used when named import exists | `import React from "react"`; `import React from 'react';` |
 | `TYP-MODL-01` | Symbol group order violated (imports → re-exports → types → constants → classes → functions) | `export function run() {} const X = 1`; `const Y = 1; interface Config {}` |
 | `TYP-MODL-02` | Helper/leaf function appears before the root function that calls it | `function validate(u: User) {} export function createUser(u: User) { validate(u); }` |
-| `TYP-MODL-03` | Module exposes default export | `export default userService`; `export default userService;` |
+| `TYP-MODL-03` | Module exposes default export (unless primary-export module) | `export default userService` in a multi-export module |
 | `TYP-PARM-01` | Optional object destructuring is unsafe | `function run({id}:Opts){}`; `function processUser({ name, role = 'user' }: UserOptions) {` |
 | `TYP-PARM-02` | Exported contract uses inline/weak typing | `export function setUser(p:any){}` |
 | `TYP-PARM-03` | Property ordering contract is ignored | `type X={meta:string,id:string}` |

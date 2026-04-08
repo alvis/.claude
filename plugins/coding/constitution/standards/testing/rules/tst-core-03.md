@@ -48,6 +48,25 @@ describe('when user is admin', () => { ... });
 
 For comment quality and AAA spacing in tests, see `TST-STRU-03`.
 
+### Prefix Reference
+
+| Prefix | Meaning | Example |
+|--------|---------|---------|
+| `fn:` | Function | `describe('fn:computeTax', ...)` |
+| `sv:` | Service | `describe('sv:AuthService', ...)` |
+| `op:` | Operation | `describe('op:migrate', ...)` |
+| `cl:` | Class | `describe('cl:UserService', ...)` |
+| `mt:` | Method | `describe('mt:toString', ...)` |
+| `gt:` | Getter | `describe('gt:name', ...)` |
+| `st:` | Setter | `describe('st:value', ...)` |
+| `re:` | Regex | `describe('re:emailPattern', ...)` |
+| `ty:` | Type/Interface | `describe('ty:Config', ...)` |
+| `rc:` | React Component | `describe('rc:Button', ...)` |
+| `hk:` | Hook | `describe('hk:useAuth', ...)` |
+| `cmd:` | CLI command | `describe('cmd:build-service', ...)` |
+
+DO NOT change an existing valid prefix to a different one. Match the prefix to the symbol's category.
+
 ## Edge Cases
 
 - When existing code matches prior violation patterns such as ❌ `it("returns user", fn)`, refactor before adding new behavior.
