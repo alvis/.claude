@@ -11,7 +11,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 - DO NOT bypass TypeScript safety requirements in tests [`TST-CORE-01`]
 - DO NOT implement code before writing a failing test [`TST-CORE-02`]
-- DO NOT use non-compliant test naming: `it(...)` must start with `should`; `describe(...)` titles scoped to a **symbol** (function, class, method, etc.) must use an approved prefix (`fn:`, `op:`, `sv:`, `cl:`, `mt:`, `gt:`, `st:`, `re:`, `ty:`, `rc:`, `hk:`); IMPORTANT: general-purpose `describe(...)` titles (e.g. grouping by scenario or context) must **NOT** use prefixes [`TST-CORE-03`]
+- DO NOT use non-compliant test naming: `it(...)` must start with `should`; `describe(...)` titles scoped to a **symbol** (function, class, method, etc.) must use the correct approved prefix: `fn:` function, `op:` operation, `sv:` service, `cl:` class, `mt:` method, `gt:` getter, `st:` setter, `re:` regex, `ty:` type, `rc:` React component, `hk:` hook, `cmd:` CLI command — DO NOT change an existing valid prefix to a different prefix; IMPORTANT: general-purpose `describe(...)` titles (e.g. grouping by scenario or context) must **NOT** use prefixes [`TST-CORE-03`]
 - DO NOT add tests that provide no unique path or behavior [`TST-CORE-04`]
 - DO NOT add artificial variation-only tests [`TST-CORE-05`]
 - DO NOT write tests that only check wrapper/dependency calls [`TST-CORE-06`]
@@ -41,6 +41,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use test identifiers that start with `mock` or `mocked` [`TST-MOCK-13`]
 - DO NOT use module types for class instance mock typing, such as `typeof import("#svc")` for instance doubles [`TST-MOCK-14`]
 - DO NOT wrap existing mock instances with nested `vi.fn` in `vi.mock` factories [`TST-MOCK-15`]
+- DO NOT flag existing `vi.fn<T>()` type generics as a violation; typed `vi.fn<T>` is encouraged when named types are available and is not required only when the type can be inferred within a `satisfies` container [`TST-MOCK-16`]
 - DO NOT use `.test.ts` extension; use `.spec.ts` for unit, `.int.spec.ts` for integration, `.e2e.spec.ts` for e2e, such as `user.test.ts` instead of `user.spec.ts` [`TST-STRU-01`]
 - DO NOT use ad-hoc test file layout/import order [`TST-STRU-02`]
 - DO NOT add AAA section comments or inline noise comments or `expect(result).toBe(x); // check ...` [`TST-STRU-03`]
@@ -81,6 +82,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-MOCK-13` | Test identifier starts with forbidden `mock` or `mocked` | `const mockUserRepo = {}` |
 | `TST-MOCK-14` | Module type is used for class instance mock typing | `Partial<typeof import("#svc")>`; `const client: typeof import("#svc") = { ... }` for an instance double |
 | `TST-MOCK-15` | Existing mock instance is wrapped by nested `vi.fn` in `vi.mock` factory | `existsSync: vi.fn((...args: unknown[]) => existsSync(...args))`; `upload: vi.fn(async (...args) => upload(...args))` |
+| `TST-MOCK-16` | Existing `vi.fn<T>()` type generic is incorrectly removed | `vi.fn<HttpReply>()` changed to `vi.fn()`; `vi.fn<(req: Request) => Response>()` changed to `vi.fn()` |
 | `TST-STRU-01` | Test file uses `.test.ts` instead of `.spec.ts` / `.int.spec.ts` / `.e2e.spec.ts` | `user.test.ts`; `user-api.integration.ts` |
 | `TST-STRU-02` | File layout/import order is ad-hoc | `describe(...) // before mock setup`; `import { describe, it, expect, vi } from 'vitest';` |
 | `TST-STRU-03` | AAA spacing/comment policy is violated | `// Arrange`; `expect(result.name).toBe('John'); // check that result has name` |

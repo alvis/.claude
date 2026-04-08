@@ -191,6 +191,11 @@ What the backup does:
    - **package.json in feat(pull) commit**: ADD `exports["./pull"]` or `imports["#pull"]` if applicable
    - **tsconfig.json**: Only include paths that exist at that commit point
    - **vitest.config.ts**: Only the base test config in init; e2e-specific config added with e2e commit
+   - **package.json `dependencies` in init commit**: Only packages actually imported by init-commit code -- NO packages used exclusively by future feature commits
+   - **package.json in feat(api) commit**: ADD `dependencies` entries (e.g., `node-fetch`, `bottleneck`) that this feature's code imports
+   - **package.json in feat(cache) commit**: ADD `better-sqlite3` to `dependencies` -- each commit introduces only the packages its own code requires
+   - **Lock file** (`pnpm-lock.yaml` / `package-lock.json` / `yarn.lock`): Regenerated in EVERY commit that modifies `dependencies` or `devDependencies` -- run the package manager's lockfile-only install command (e.g., `pnpm install --ignore-scripts`) and include the lock file change in the same commit
+   - **pnpm `allowBuilds`**: When a newly added package requires native build scripts (e.g., `better-sqlite3`, `esbuild`, packages using `node-gyp` or `prebuild-install`), add it to `allowBuilds` in `pnpm-workspace.yaml` in the same commit. See https://pnpm.io/settings#allowbuilds
 
    END IF
 
@@ -443,6 +448,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 #
 # Each commit evolves shared files incrementally (package.json, tsconfig,
 # constants, barrel exports) -- no forward references allowed.
+# Dependencies in package.json also evolve incrementally -- each commit
+# adds only the npm packages its code imports, and regenerates the lock file.
 ```
 
 ### Retrospective Commit
@@ -493,6 +500,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 - Intermediate states do NOT need to have existed independently during development -- they just need to be logically coherent
 - Each split commit MUST be standalone: it must compile, pass lint, and pass all tests independently. If splitting would break a commit in isolation, adjust the grouping until every commit is self-contained and green
 - Shared files (package.json, tsconfig, configs) MUST evolve incrementally -- each commit adds only the entries it introduces. The init commit contains the minimal viable version; later commits modify the file to add their entries.
+- Dependencies (`dependencies`/`devDependencies`) MUST be added progressively -- each commit only adds packages that its own code imports. Lock files must be regenerated and included in every commit that changes dependency entries.
 - A commit must NEVER contain forward references to code, modules, or files that don't exist yet in the chain. If a file references future code, you must modify it to remove those references for that commit.
 
 **Split Criteria**:

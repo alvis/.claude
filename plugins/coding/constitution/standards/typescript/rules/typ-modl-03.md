@@ -23,6 +23,16 @@ export default userService;
 
 - When existing code matches prior violation patterns such as ❌ `export default userService`, refactor before adding new behavior.
 - Default exports are acceptable only when an external framework or contract requires it.
+- Default export is acceptable — and encouraged — when a file's sole purpose is to expose **one primary symbol**, especially across a set of sibling files that each export the same kind of symbol (e.g., Next.js page/layout components, service operation handlers, route handlers, middleware). This lets consumers import without guessing the exported name.
+
+```typescript
+// ✅ GOOD: default export for primary symbol in a uniform set
+// operations/get-payment-account.ts
+export default async function getPaymentAccount(...) { ... }
+
+// operations/set-invoice.ts
+export default async function setInvoice(...) { ... }
+```
 
 ## Related
 
