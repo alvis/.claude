@@ -32,6 +32,29 @@ Update skill files to align with the latest standard template and apply specifie
 
 ultrathink: you'd perform the following steps
 
+**Skill Steps**:
+
+1. Mode Selection
+2. Execution (Team or Subagent mode)
+3. Reporting
+4. Verify & Iterate
+
+```
+[Step 1: Mode Selection]
+   |
+   v
+[Step 2: Execution] ─→ (Team Mode 2A or Subagent Mode 2B)
+   |
+   v
+[Step 3: Reporting]
+   |
+   v
+[Step 4: Verify & Iterate] ─→ (Sub-skill: governance:verify-skill per updated skill)
+   |                           Loop max 2 iterations per skill
+   v
+[END]
+```
+
 ### Step 1: Determine Execution Mode
 
 Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
@@ -323,11 +346,102 @@ Per-batch flow:
 - **Issue**: [Description]
   **Resolution**: [Applied fix or escalation]
 
+## Verification Results (Step 4)
+```yaml
+verification:
+  total_verified: N
+  passed_first_try: N
+  passed_after_fix: N
+  remaining_issues: N
+  per_skill:
+    - skill: '[skill-name]'
+      status: pass|fail
+      iterations: N
+```
+
 ## Next Steps (if applicable)
 - Review updated skills for accuracy
 - Test skill execution with sample scenarios
 - Commit changes if satisfied with results
 ```
+
+### Step 4: Verify & Iterate
+
+**Step Configuration**:
+
+- **Purpose**: Invoke verify-skill on each updated skill to ensure template compliance and quality
+- **Input**: List of updated skill file paths from Step 2/3
+- **Output**: Per-skill verification results, potentially improved skill files
+- **Sub-skill**: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md
+- **Parallel Execution**: Yes — verify each updated skill independently
+
+#### Execute Verify Sub-Skill (You)
+
+For each updated skill file in the batch:
+
+1. Use Read tool to load the sub-skill file at the path above
+2. Invoke verify-skill with these parameters:
+   - **skill_path**: [updated SKILL.md path]
+   - **mode**: `structural` (default for update-skill — focus on template/formatting compliance)
+   - **fix**: `true`
+3. Evaluate verify-skill results:
+   - **IF pass** → Mark skill as verified
+   - **IF fail with suggestions** → Spawn fix subagent with suggestions, re-verify
+   - **Max 2 iterations** per skill (update-skill is a batch operation, keep bounded)
+   - **IF 2 failures** → Record remaining issues, continue to next skill
+4. Use TodoWrite to track verification progress per skill
+
+**Fix Subagent Instructions** (when verify-skill reports issues):
+
+    >>>
+    **ultrathink: adopt the Skill Repair Specialist mindset**
+
+    - You're a **Skill Repair Specialist** who fixes skill document issues:
+      - **Precision Fixes**: Address only the specific issues reported
+      - **Minimal Changes**: Don't rewrite sections that pass validation
+      - **Quality Preservation**: Maintain overall document quality while fixing issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
+    **Assignment**: Fix the following issues in skill file at [skill_path]
+
+    **Issues to Fix**:
+    [List of issues from verify-skill report]
+
+    **Suggestions**:
+    [List of suggestions from verify-skill report]
+
+    **Steps**
+    1. Read the skill file
+    2. For each reported issue, apply the suggested fix
+    3. Verify the fix doesn't break other sections
+    4. Save the updated file
+
+    **Report**
+    ```yaml
+    status: success|failure
+    summary: 'Fixed N issues in skill file'
+    modifications: ['[skill-path]']
+    outputs:
+      issues_fixed: N
+      issues_remaining: N
+    issues: [...]
+    ```
+    <<<
+
+#### Aggregate Verification Results (You)
+
+After all skills have been verified:
+
+1. Collect verification reports for all updated skills
+2. Compile aggregate summary:
+   - Total skills verified
+   - Skills passing on first try
+   - Skills requiring fix iterations
+   - Skills with remaining issues
+3. Include in final report from Step 3
 
 ## Examples
 

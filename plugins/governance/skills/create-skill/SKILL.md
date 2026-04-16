@@ -74,17 +74,20 @@ The skill takes a skill name and plugin along with optional instructions, uses t
 [START]
    |
    v
-[Phase 1: Planning] ───────────→ (Generate skill path guidance and subagent instructions)
+[Step 1: Planning] ───────────→ (Generate guidance + eval plan)
    |
    v
-[Phase 2: Execution] ──────────→ (Single subagent: skill creation)
+[Step 2: Execution] ──────────→ (Skill creation + evals.yaml)
    |
    v
-[Phase 3: Review] ─────────────→ (Different single subagent: validation)
+[Step 3: Review] ─────────────→ (Validation subagent)
    |
    v
-[Phase 4: Decision] ←──────────┘
+[Step 4: Decision] ←──────────┘
    |
+   v ─── if structural OK ───
+[Step 5: Verify & Iterate] ──→ (Sub-skill: governance:verify-skill)
+   |                            Loop max 3 iterations
    v
 [END]
 
@@ -94,13 +97,15 @@ Legend:
 • RIGHT SIDE: Subagents execute tasks
 • ARROWS (───→): You assign work to subagents
 • DECISIONS: You decide based on subagent reports
+• Step 5 invokes verify-skill as sub-skill for functional verification
 ═══════════════════════════════════════════════════════════════════
 
 Note:
 • You: Generate guidance, assign separate tasks, make decisions
-• Phase 2 Subagent: Perform skill creation, report back (<1k tokens)
-• Phase 3 Subagent: Perform validation review, report back (<500 tokens)
-• Skill is LINEAR: Phase 1 → Phase 2 → Phase 3 → Phase 4 Decision
+• Phase 2 Subagent: Perform skill creation + eval generation, report back
+• Phase 3 Subagent: Perform validation review, report back
+• Step 5: Invokes verify-skill sub-skill, loops until pass or max 3 iterations
+• Skill is LINEAR: Step 1 → 2 → 3 → 4 → 5
 ```
 
 ## 3. SKILL IMPLEMENTATION
@@ -109,8 +114,9 @@ Note:
 
 1. Planning & Guidance Generation
 2. Skill Creation Execution
-3. Review
-4. Decision & Completion
+3. Validation Review
+4. Decision
+5. Verify & Iterate
 
 ### Step 1: Planning & Guidance Generation
 
@@ -137,9 +143,14 @@ Note:
    - Potential pitfalls or common issues for similar skills
    - Template customization guidance for the specific use case
    - Frontmatter description suggestions with "Use when" clause for proper invocation
-4. **Create comprehensive subagent guidance** with skill path recommendations
-5. **Use TodoWrite** to create task list with combined creation & validation item (status 'pending')
-6. **Prepare enhanced task assignment** with path suggestions and complete specifications
+4. **Generate eval plan** including:
+   - Determine eval_type: objective (deterministic output skills), subjective (quality-based), or process (workflow skills)
+   - Draft 2-3 test prompts with expected outcomes based on the skill's purpose
+   - Draft trigger queries: 5+ should_trigger and 5+ should_not_trigger queries
+   - Include eval plan in subagent guidance for Step 2
+5. **Create comprehensive subagent guidance** with skill path recommendations
+6. **Use TodoWrite** to create task list with combined creation & validation item (status 'pending')
+7. **Prepare enhanced task assignment** with path suggestions and complete specifications
 
 **OUTPUT from Planning**: Enhanced subagent assignment with skill path guidance and comprehensive specifications
 
@@ -225,6 +236,13 @@ Request the subagent to perform the following skill creation:
        - Ensure final document is clean and professional
        - Verify SKILL.md is uppercase (not skill.md)
 
+    5. **Generate Evaluation File**:
+       - Create directory [plugin]/skills/[skill-name]/evals/
+       - Create evals/evals.yaml based on eval plan from Step 1
+       - Include 2-3 test cases with prompts and expectations
+       - Include trigger_eval with should_trigger and should_not_trigger queries
+       - Reference template: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/references/eval-template.yaml
+
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
@@ -237,6 +255,7 @@ Request the subagent to perform the following skill creation:
       frontmatter_valid: true|false
       template_compliance: true|false
       directory_created: true|false
+      evals_generated: true|false
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
     <<<
@@ -361,6 +380,73 @@ Request the subagent to perform the following validation review:
    - If RETRY: Generate focused retry instructions for the failed phase only
    - If ABORT: Document abort reason and cleanup actions taken
 
+### Step 5: Verify & Iterate
+
+**Step Configuration**:
+
+- **Purpose**: Invoke verify-skill to perform comprehensive verification and iterate on fixes if needed
+- **Input**: Skill file path from Step 2, decision to proceed from Step 4
+- **Output**: Verification report, potentially improved skill file
+- **Sub-skill**: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md
+- **Parallel Execution**: No
+
+#### Execute Verify & Iterate Sub-Skill (You)
+
+When you reach this step:
+
+1. Use Read tool to load the sub-skill file at the path above
+2. Parse the sub-skill to identify its steps
+3. Invoke verify-skill with these parameters:
+   - **skill_path**: [created SKILL.md path from Step 2]
+   - **mode**: `structural` (or `full` if evals.yaml was generated in Step 2)
+   - **fix**: `true`
+4. Evaluate verify-skill results:
+   - **IF pass** → Proceed to Skill Completion
+   - **IF fail with suggestions** → Spawn fix subagent with the suggestions, then re-invoke verify-skill
+   - **Max 3 iterations** of fix → re-verify
+   - **IF 3 failures** → Report partial completion with remaining issues
+5. Use TodoWrite to track iteration progress
+
+**Fix Subagent Instructions** (when verify-skill reports issues):
+
+    >>>
+    **ultrathink: adopt the Skill Repair Specialist mindset**
+
+    - You're a **Skill Repair Specialist** who fixes skill document issues:
+      - **Precision Fixes**: Address only the specific issues reported
+      - **Minimal Changes**: Don't rewrite sections that pass validation
+      - **Quality Preservation**: Maintain overall document quality while fixing issues
+
+    <IMPORTANT>
+      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+    </IMPORTANT>
+
+    **Assignment**: Fix the following issues in skill file at [skill_path]
+
+    **Issues to Fix**:
+    [List of issues from verify-skill report]
+
+    **Suggestions**:
+    [List of suggestions from verify-skill report]
+
+    **Steps**
+    1. Read the skill file
+    2. For each reported issue, apply the suggested fix
+    3. Verify the fix doesn't break other sections
+    4. Save the updated file
+
+    **Report**
+    ```yaml
+    status: success|failure
+    summary: 'Fixed N issues in skill file'
+    modifications: ['[skill-path]']
+    outputs:
+      issues_fixed: N
+      issues_remaining: N
+    issues: [...]
+    ```
+    <<<
+
 ### Skill Completion
 
 **Report the skill output as specified**:
@@ -384,6 +470,11 @@ outputs:
     logic_validation: passed
     documentation_standards: passed
     file_naming: correct
+  verification_report:
+    status: pass|partial
+    iterations: N
+    structural: passed
+    functional: pass_rate  # if evals were generated
 summary: |
   Successfully created skill '[skill-name]' with complete template
   customization and validation. Skill is ready for autonomous invocation

@@ -1,0 +1,40 @@
+# Evaluation definition for [skill-name]
+# Copy this template to [skill-dir]/evals/evals.yaml and customize
+#
+# Usage:
+#   verify-skill will load this file when running functional or full verification.
+#   Test cases define prompts and expectations for grading.
+#   Trigger eval defines queries for testing skill description accuracy.
+
+test_cases:
+  - name: basic_usage
+    prompt: "[Example user request that should invoke this skill]"
+    expectations:
+      - text: "[Expected output content or behavior]"
+        type: content       # content | filesystem | structure
+
+  - name: edge_case
+    prompt: "[Edge case or unusual request]"
+    expectations:
+      - text: "[Expected handling of edge case]"
+        type: content
+
+  # Add up to 3 test cases (controls token budget)
+  # - name: advanced_usage
+  #   prompt: "..."
+  #   expectations:
+  #     - text: "..."
+  #       type: content
+
+trigger_eval:
+  should_trigger:
+    - "[Query that should invoke this skill]"
+    - "[Another matching query]"
+    - "[Third matching query with different phrasing]"
+    # Aim for 5-10 should_trigger queries
+
+  should_not_trigger:
+    - "[Near-miss query that targets a different skill]"
+    - "[Similar but different intent]"
+    - "[Query about the skill itself rather than invoking it]"
+    # Aim for 5-10 should_not_trigger queries (near-misses are most valuable)
