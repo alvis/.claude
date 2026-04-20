@@ -2,22 +2,22 @@
 
 ## Intent
 
-Import order is strict: built-in (`node:`), third-party, project modules (alias/subpath/relative), then type-only imports, with blank-line separation between categories. Never mix runtime and `type` imports in a single statement.
+Import order is strict across **five groups**: built-in (`node:`), scoped internal-org packages (`@theriety/*`, other `@scope/*` packages belonging to the org), generic third-party, project modules (alias/subpath/relative), then type-only imports — with blank-line separation between categories. Never mix runtime and `type` imports in a single statement.
 
 ## Fix
 
 ```typescript
-import { readFile } from "node:fs/promises";
+import { readFile } from 'node:fs/promises';
 
-import { useState } from "react";
-import axios from "axios";
+import { operationMockFactory } from '@theriety/mock-service';
 
-import { DatabaseClient } from "#database/client";
-import { logger } from "#utilities/logger";
+import { describe, expect, it, vi } from 'vitest';
 
-import type { Request, Response } from "express";
+import listSuites from '#operations/list-suites';
 
-import type { User } from "#types/user";
+import type { TestContext } from 'vitest';
+
+import type { Suite } from '#types/suite';
 ```
 
 ### Strict Import Order
@@ -25,12 +25,15 @@ import type { User } from "#types/user";
 **STRICT order** (blank lines separate each category):
 
 1. **Built-in modules** (`node:`)
-2. **Third-party libraries**
-3. **Project modules** (subpath `#*`, path alias `@*`, or relative `../`)
-4. **Type imports** (repeat same order as above)
+2. **Scoped internal-org packages** (`@theriety/*`, other `@scope/*` packages belonging to the org)
+3. **Generic third-party libraries** (`vitest`, `react`, `axios`, …)
+4. **Project modules** (subpath `#*`, path alias `@*`, or relative `../`)
+5. **Type imports** (repeat the same 4-group order within)
 
 ```typescript
 import { readFile } from 'node:fs/promises';
+
+import { operationMockFactory } from '@theriety/mock-service';
 
 import { useState } from 'react';
 import axios from 'axios';
@@ -114,8 +117,9 @@ The category ordering itself makes the grouping self-evident; comment labels add
 
 ## Edge Cases
 
+- Scoped `@org/*` packages belonging to the internal organization form their own group **before** generic third-party packages — do not intermix.
 - When existing code matches prior violation patterns such as ❌ `import x from "#a"; import fs from "fs"` (wrong order), refactor before adding new behavior.
-- Type-only imports repeat the same category order (builtin types, third-party types, project types) within their section.
+- Type-only imports repeat the same category order (builtin types, scoped-org types, third-party types, project types) within their section.
 
 ## Related
 
