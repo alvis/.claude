@@ -1,0 +1,175 @@
+# Evaluation definition for document
+# Skill type: process (workflow) — graded on adherence to the orchestration flow
+#
+# Usage:
+#   verify-skill will load this file when running functional or full verification.
+#   Test cases define prompts and expectations for grading.
+#   Trigger eval defines queries for testing skill description accuracy.
+
+test_cases:
+  - name: template_follow_monorepo
+    prompt: "Generate a README.md for the package at ~/Repositories/core/packages/cache. The monorepo has a README.template.md — follow it."
+    expectations:
+      - text: "Discovers and follows the existing README.template.md without entering plan mode"
+        type: content
+      - text: "Profiles the package code (package.json, exports, file tree) before drafting"
+        type: content
+      - text: "Produces README.md with sections matching the template (Overview, Core Concept if applicable, Architecture, Usage, API Reference, Related Packages)"
+        type: content
+      - text: "Runs an evidence review step that verifies every documented export and path exists in the source"
+        type: content
+
+  - name: greenfield_plan_mode
+    prompt: "Create a README.md for a brand-new standalone TypeScript package at ~/projects/tiny-util. There is no template or sibling README."
+    expectations:
+      - text: "Detects no anchors are available and routes to plan-mode (Step 5)"
+        type: content
+      - text: "Proposes a content outline (section list with purposes and evidence sources) and waits for user confirmation before drafting"
+        type: content
+      - text: "Does not write README.md until the user approves the outline"
+        type: content
+
+  - name: readme_and_architecture
+    prompt: "Update the README.md and ARCHITECTURE.md for the CLI runner at ~/Repositories/core/runners/cli to reflect the current source."
+    expectations:
+      - text: "Detects update mode because README.md already exists and preserves unchanged sections"
+        type: content
+      - text: "Regenerates ARCHITECTURE.md with a depth-2/3 file tree matching the actual source layout and main-components list with file references"
+        type: content
+      - text: "Honors --architecture default on; would skip ARCHITECTURE.md only when --no-architecture or --readme-only is passed"
+        type: content
+
+  - name: architecture_generation
+    prompt: "Generate an ARCHITECTURE.md for the package at ~/Repositories/core/packages/engine that covers its module topology and design patterns."
+    expectations:
+      - text: "Follows ARCHITECTURE.template.md section order (Core Concepts, Module Topology, Component Architecture, Data Flow, Design Patterns, Invariants, Related Packages)"
+        type: content
+      - text: "Expanded diagram vocabulary is available and referenced: flowchart, stateDiagram-v2, sequenceDiagram, classDiagram, erDiagram, journey, and block-beta or C4Context"
+        type: content
+      - text: "Picks diagram types appropriate to the content (e.g. sequenceDiagram for per-request flow, classDiagram for domain model, block-beta or C4Context for system context)"
+        type: content
+
+  - name: toc_single_line
+    prompt: "Generate README.md and ARCHITECTURE.md for ~/Repositories/core/packages/cache following the monorepo templates."
+    expectations:
+      - text: "Every generated Table of Contents is emitted on a single line with no embedded newline characters"
+        type: content
+      - text: "Each TOC line is at most 110 characters total, including the wrapping <div align=\"center\"> tags"
+        type: content
+      - text: "TOC prefers hard-to-spot high-value anchors and uses one-word captions (e.g. Deployment instead of How to Deploy)"
+        type: content
+
+  - name: folder_no_trailing_slash
+    prompt: "Generate README.md and ARCHITECTURE.md for ~/Repositories/core/packages/cache including file-tree snippets."
+    expectations:
+      - text: "No folder reference in any tree fence, table, or prose ends with a trailing / character"
+        type: content
+      - text: "A regex scan for the pattern [A-Za-z]/[)`\\s\\n] across the generated README and ARCHITECTURE returns zero matches"
+        type: content
+      - text: "File-tree comments and bullet component references use src/components rather than src/components/"
+        type: content
+
+  - name: support_matrix_when_adapters
+    prompt: "Generate README.md for ~/Repositories/core/packages/queue-worker which ships an adapters/ directory with Postgres, MySQL, and SQLite implementations."
+    expectations:
+      - text: "Detects the adapters/ directory in the code profile and emits a section titled ## 🧰 Support Matrix"
+        type: content
+      - text: "The matrix legend line contains every status emoji: ✅, ⚠️, ❌, and 🔜"
+        type: content
+      - text: "Rows of the matrix correspond to the adapters (Postgres, MySQL, SQLite) and columns are feature dimensions"
+        type: content
+
+  - name: mermaid_no_hardcoded_colors
+    prompt: "Generate README.md and ARCHITECTURE.md for ~/Repositories/core/packages/engine including every relevant Mermaid diagram."
+    expectations:
+      - text: "No mermaid code fence contains a style directive, a fill: property, or a stroke: property"
+        type: content
+      - text: "No mermaid code fence contains a hex color literal matching the pattern #[0-9a-fA-F]{3,6}"
+        type: content
+      - text: "Diagrams rely on default Mermaid theming so GitHub light and dark modes both render correctly"
+        type: content
+
+  - name: architecture_split_proposed
+    prompt: "Generate ARCHITECTURE.md for ~/Repositories/platform which contains three top-level subsystems src/api, src/worker, and src/db plus a projected single-file draft above 600 lines."
+    expectations:
+      - text: "Step 7 returns control to the orchestrator with split_applied: true instead of drafting a single monolithic ARCHITECTURE.md"
+        type: content
+      - text: "The Step 7 report lists a non-empty parts array covering api, worker, and db or equivalent subsystem identifiers"
+        type: content
+      - text: "The orchestrator subsequently invokes Step 7 once per subsystem to produce one ARCHITECTURE-<part>.md per entry in parts"
+        type: content
+
+  - name: separation_compact_readme_arch
+    prompt: "Generate both README.md and ARCHITECTURE.md for ~/Repositories/core/packages/engine."
+    expectations:
+      - text: "Because ARCHITECTURE.md is being generated, the README Architecture section is trimmed to at most 8 lines of content"
+        type: content
+      - text: "The compact Architecture section consists of a one-line summary, a depth-2 file-tree snippet, and a link to ARCHITECTURE.md"
+        type: content
+      - text: "Diagrams, design patterns, invariants, data flow, and extension points appear only in ARCHITECTURE.md, not duplicated in README.md"
+        type: content
+
+  - name: example_by_type_selection
+    prompt: "Generate README.md for the CLI tool at ~/Repositories/core/tools/tsx-lint; Step 5 classifies the package as package_type: cli."
+    expectations:
+      - text: "Step 5 returns package_type: cli in its editorial plan for the CLI tool"
+        type: content
+      - text: "Step 6 selects references/README.example.cli.md as the example anchor and the execution log mentions the filename README.example.cli.md"
+        type: content
+      - text: "Step 6 does not fall back to README.example.library.md or the bundled README.template.md when a CLI-specific example exists"
+        type: content
+
+  - name: example_by_type_stateless_service
+    prompt: "Generate README.md for the package at ~/Repositories/core/services/atc — Step 3 profile shows src/operations present, no prisma/, and a manifest export."
+    expectations:
+      - text: "Step 5 classifies the package as package_type: stateless"
+        type: content
+      - text: "Step 6 selects references/README.example.stateless.md as the example anchor"
+        type: content
+      - text: "Detection rule matches src/operations present + no prisma/ + manifest export, routing to stateless and not microservice"
+        type: content
+
+  - name: example_by_type_data_controller
+    prompt: "Generate README.md for the package at ~/Repositories/core/data/billing — Step 3 profile shows prisma/schema.prisma, src/prisma, and src/operations present."
+    expectations:
+      - text: "Step 5 classifies the package as package_type: data-controller"
+        type: content
+      - text: "Step 6 selects references/README.example.data-controller.md and Step 7 selects references/ARCHITECTURE.example.data-controller.md"
+        type: content
+      - text: "Detection rule matches prisma/schema.prisma + src/operations + src/prisma together, routing to data-controller and not stateless"
+        type: content
+
+  - name: example_by_type_microservice
+    prompt: "Generate README.md for ~/Repositories/core/services/queue-worker which exposes HTTP endpoints, persists to a DB, and ships adapters/ for Postgres, MySQL, Redis."
+    expectations:
+      - text: "Step 5 classifies the package as package_type: microservice"
+        type: content
+      - text: "Step 6 selects references/README.example.microservice.md and does not fall back to README.example.stateless.md"
+        type: content
+      - text: "Detection rule matches HTTP endpoints + DB + adapters, routing to microservice"
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "write a README for this package"
+    - "update the README to reflect the new code"
+    - "generate an ARCHITECTURE.md for this project"
+    - "document this package"
+    - "refresh docs for the CLI"
+    - "create a README and ARCHITECTURE.md for ~/Repositories/foo/packages/bar"
+    - "I added new exports — bring the README up to date"
+    - "draft a README following our monorepo template"
+    - "document the file structure and main components of this runner"
+    - "produce docs for this new package based on the code"
+
+  should_not_trigger:
+    - "write the implementation code for this package"
+    - "review my pull request"
+    - "add JSDoc comments to these functions"
+    - "set up a new project scaffolding"
+    - "run the tests and report results"
+    - "refactor this module"
+    - "what does this README say?"
+    - "explain how Claude Code skills work"
+    - "commit these changes with a message"
+    - "lint the codebase"

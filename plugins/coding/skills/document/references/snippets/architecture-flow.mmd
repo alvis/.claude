@@ -1,0 +1,39 @@
+%% Request / Data Flow Architecture
+%% When to use: For microservices, APIs, or data pipelines to show request lifecycle; embed in README §Architecture.
+%% Embed in README with ```mermaid fence.
+%%
+%% --- Placeholder version ---
+
+sequenceDiagram
+    participant Client as <Client>
+    participant Gateway as <Gateway>
+    participant Service as <Service>
+    participant DataLayer as <DataLayer>
+    participant Database as <Database>
+
+    Client->>Gateway: Request
+    Gateway->>Service: Forward (authenticated)
+    Service->>DataLayer: Query / Command
+    DataLayer->>Database: SQL / Driver call
+    Database-->>DataLayer: Result set
+    DataLayer-->>Service: Domain object
+    Service-->>Gateway: Response payload
+    Gateway-->>Client: HTTP response
+
+%% --- Worked example ---
+%%
+%% sequenceDiagram
+%%     participant Browser
+%%     participant APIGateway as API Gateway
+%%     participant AuthService as Auth Service
+%%     participant UserRepo as User Repository
+%%     participant Postgres
+%%
+%%     Browser->>APIGateway: POST /login
+%%     APIGateway->>AuthService: validateCredentials()
+%%     AuthService->>UserRepo: findByEmail()
+%%     UserRepo->>Postgres: SELECT * FROM users
+%%     Postgres-->>UserRepo: user row
+%%     UserRepo-->>AuthService: User entity
+%%     AuthService-->>APIGateway: JWT token
+%%     APIGateway-->>Browser: 200 { token }

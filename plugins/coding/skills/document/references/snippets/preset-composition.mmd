@@ -1,0 +1,23 @@
+%% Composable Module / Preset Composition
+%% When to use: For libraries with plugin architecture, preset systems, or layered composition; embed in README §How It Works or §Architecture.
+%% Embed in README with ```mermaid fence.
+%%
+%% --- Placeholder version ---
+
+flowchart LR
+    Base[<PresetBase>] -->|extended by| Mid[<PresetMid>]
+    Mid -->|combined with| Strict[<PresetStrict>]
+    Strict -->|consumed by| App[<ConsumerApp>]
+
+    PluginA[<PluginA>] -.->|registered in| Mid
+    PluginB[<PluginB>] -.->|registered in| Strict
+
+%% --- Worked example ---
+%%
+%% flowchart LR
+%%     base["@acme/preset-base"] -->|extended by| web["@acme/preset-web"]
+%%     web -->|combined with| strict["@acme/preset-strict"]
+%%     strict -->|consumed by| app["acme-web-app"]
+%%
+%%     a11y["@acme/plugin-a11y"] -.->|registered in| web
+%%     security["@acme/plugin-security"] -.->|registered in| strict
