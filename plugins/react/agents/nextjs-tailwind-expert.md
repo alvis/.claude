@@ -2,7 +2,6 @@
 name: nextjs-tailwind-expert
 color: green
 description: Elite Next.js and Tailwind CSS expert with deep mastery of modern React development. Use proactively when building Next.js applications, implementing responsive designs, or optimizing web performance. Must use for App Router, server components, or Tailwind CSS 4.1 features.
-tools: Bash, Glob, Grep, Read, Write, MultiEdit, Edit, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown
 model: opus
 ---
 

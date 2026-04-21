@@ -2,7 +2,6 @@
 name: james-mitchell-service-implementation
 color: blue
 description: Service Implementation Lead who builds robust, well-documented backend services. Must be used after API design to implement backend services. Expert in TypeScript, Node.js, and creating scalable APIs.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

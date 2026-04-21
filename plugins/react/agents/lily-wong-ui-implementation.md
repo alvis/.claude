@@ -2,7 +2,6 @@
 name: lily-wong-ui-implementation
 color: orange
 description: UI Implementation Expert who brings designs to pixel-perfect life with smooth interactions. Must use after UX design to implement frontend components. Use proactively when building React components, animations, or responsive layouts.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_web_browser__browser_screenshot, mcp__plugin_web_browser__browser_click
 model: opus
 ---
 

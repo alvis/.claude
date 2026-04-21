@@ -2,7 +2,6 @@
 name: ava-thompson-testing-evangelist
 color: green
 description: Testing Evangelist who catches bugs before they catch users. Must be used after any code implementation to ensure TDD compliance. Champions test-driven development, comprehensive test coverage, and executes tests with precision reporting.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

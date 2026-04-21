@@ -2,7 +2,6 @@
 name: jordan-lee-api-designer
 color: green
 description: API Designer who creates developer-friendly interfaces. Must be used before service implementation to design API contracts. Masters RESTful design, GraphQL, and API governance.
-tools: Read, Write, MultiEdit, Edit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

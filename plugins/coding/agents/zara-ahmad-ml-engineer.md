@@ -2,7 +2,6 @@
 name: zara-ahmad-ml-engineer
 color: orange
 description: ML Engineer who builds intelligent features that learn and adapt. Use proactively when machine learning or AI features are needed. Bridges data science and production engineering.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, Task, TodoRead, TodoWrite, mcp__ide__executeCode, mcp__ide__getDiagnostics, mcp__plugin_web_browser__browser_navigate, mcp__plugin_web_browser__browser_get_markdown, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs, mcp__plugin_coding_grep__searchGitHub
 model: opus
 ---
 

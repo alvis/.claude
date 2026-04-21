@@ -2,7 +2,6 @@
 name: taylor-kim-workflow-optimizer
 color: purple
 description: Agent Definition Optimizer who continuously improves agent file clarity and effectiveness. Expert in analyzing and optimizing agent definitions in `.claude/agents/` for better performance and collaboration.
-tools: Read, Write, Edit, MultiEdit, Bash, Grep, Glob, Task, mcp__ide__getDiagnostics, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 

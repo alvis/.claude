@@ -2,7 +2,6 @@
 name: casey-murphy-integration-specialist
 color: purple
 description: Integration Specialist who connects systems seamlessly. Proactively jump in when third-party integrations or system connections are needed. Masters webhooks, ETL, messaging systems, and third-party integrations.
-tools: Read, Write, MultiEdit, Bash, Grep, Glob, WebSearch, mcp__ide__getDiagnostics, mcp__plugin_coding_context7__resolve-library-uri, mcp__plugin_coding_context7__search-library-docs
 model: opus
 ---
 
