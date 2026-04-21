@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: Refactor implementation for quality and maintainability with comprehensive documentation. Use when improving code structure, enhancing readability, applying naming conventions, adding JSDoc, or performing final quality validation.
+description: 'Refactor code for quality and maintainability without changing behavior; improves structure, naming, and JSDoc. Triggers when: "refactor this", "clean up this code", "rename these variables", "improve readability", "add JSDoc comments". Also use when: simplifying complex functions, extracting helpers, standardizing naming across a module. Examples: "refactor src/utils", "clean up this file", "add JSDoc to all exports".'
 model: opus
 context: fork
 agent: general-purpose
@@ -74,7 +74,14 @@ ultrathink: you'd perform the following steps
    - Ensure code follows all established patterns in the codebase
    - Run tests continuously to ensure no functionality is broken
 
-2. **Enhance Readability**
+2. **Split Long Files (Two-Stage Rule)**
+   - When a file exceeds the project's `max-lines` threshold, apply the two-stage rule before making any ad-hoc splits:
+     - **Stage 1 — Extract shared helpers:** Look for logic that can live in another file (existing or new) as a genuinely reusable helper. Prefer this when the extracted code is shared by more than one caller.
+     - **Stage 2 — Folder split:** If the file still exceeds `max-lines` after extraction, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern. The entry file `<base>.ts` stays as a thin re-exports/orchestrator; helpers move into `<base>/*.ts` with short names (the folder already provides the context).
+   - Do NOT split a file into arbitrary sibling files (e.g. `foo.schema.ts`, `foo.parse.ts`) unless that naming is already an established project convention; prefer the folder pattern.
+   - See `constitution/standards/file-structure.md` → "Splitting Long Files" for the full rule and examples.
+
+3. **Enhance Readability**
    - Apply proper naming conventions per naming standards
    - Improve code flow and logical grouping
    - Simplify complex expressions

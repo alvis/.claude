@@ -1,6 +1,6 @@
 ---
 name: complete-test
-description: Write comprehensive test suites achieving 100% coverage with minimal redundancy. Use when creating test suites for existing code, achieving full test coverage, optimizing test efficiency, or following test-driven development.
+description: 'Write comprehensive test suites reaching 100% coverage with minimal redundancy. Triggers when: "write tests for this", "add unit tests", "write test cases", "increase test coverage", "test this function". Also use when: filling coverage gaps, optimizing an existing test suite, adding tests before refactor. Examples: "write tests for src/parser.ts", "get this file to 100% coverage", "add unit tests for the auth module".'
 model: opus
 context: fork
 agent: general-purpose

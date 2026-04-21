@@ -1,11 +1,13 @@
 ---
 name: review
-description: Comprehensive code review with context-aware scope selection. Use when reviewing pull requests, auditing code quality, checking security concerns, or validating test coverage.
+description: 'MUST RUN after implementing any code. Spawns review subagents (test, security, code-quality, docs, style) to audit against the plan, siblings, redundancy, and correctness. Triggers when: "review this code", "review my PR", "audit this file", "check the code quality", "review for security". Also use when: finishing an implementation, validating test coverage, pre-merge checks. Examples: "review src/auth", "review the pull request", "audit this module for security issues".'
 model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 argument-hint: [specifier] [--area=test|documentation|code-quality|security|style|all]
+enforcement: mandatory-post-implementation
+orchestration: subagent-spawning
 ---
 
 # Code Review
@@ -25,6 +27,46 @@ Performs comprehensive code review of specified files, directories, PRs, or patt
 - When asked to fix issues (redirect to /fix command)
 - When specifier points to binary or non-code files exclusively
 - When requesting review of external dependencies or node_modules
+
+## 🛑 Core Review Mandates (apply to EVERY scope, EVERY mode)
+
+These mandates override tone and brevity. Reviewers MUST enforce them on every file examined.
+
+1. **Plan Adherence (MANDATORY)**: Treat the approved plan (PLAN.md, DRAFT.md, DESIGN.md, PR description, or linked spec) as the contract. For every changed file:
+   - Map each change back to a specific planned item.
+   - Flag any deviation, addition, or omission as a **drift** finding.
+   - For each drift, require a documented justification (commit message, PR comment, or inline rationale). If no solid reason is present → severity **critical**. A "good reason" means: a constraint discovered during implementation, a correctness fix, or explicit user/reviewer approval — NOT convenience, scope creep, or "while I was here" cleanup.
+   - If no plan exists, the reviewer MUST state this explicitly and treat the PR description / commit messages as the best-available contract.
+
+2. **Redundancy is a Defect** (human-detectable only — linters handle the mechanical cases): Aggressively flag code that does not need to exist. Focus on what ESLint / knip / `tsc` CANNOT see:
+   - Defensive checks for conditions that cannot occur (trust internal invariants).
+   - Wrapper functions that add no behaviour over what they wrap.
+   - Duplicate logic that could reuse an existing helper.
+   - Comments that restate what well-named code already says.
+   - Backwards-compat shims, feature flags, or fallbacks for hypothetical futures.
+   - Over-generalised abstractions with a single caller.
+   Every redundant construct is a finding — severity **high** minimum when in production paths. **DO NOT** flag dead branches, unused imports, unused exports, unused parameters, or unreachable code — the linter/knip step owns those.
+
+3. **Sibling Consistency (MANDATORY)**: Before approving any function, class, method (including internal/private ones), or module, search the codebase for siblings serving a similar role — e.g. adapters, mappers, repositories, handlers, clients, formatters, validators. For each match, verify:
+   - **Naming**: follows the same verb/noun convention as its siblings (`fetchX` vs `getX`, `toDTO` vs `serialize`).
+   - **Parameter shape**: same argument order, same positional vs options-object style, same optional/required split.
+   - **Return shape**: same envelope (raw vs `{ data, error }`, sync vs Promise, throwing vs Result).
+   - **Logic flow**: same error-handling discipline, same logging posture, same retry/cache behaviour.
+   Any divergence without documented justification → severity **high** (critical if it risks silent behavioural surprise in a shared interface like an adapter set). Consistency reduces cognitive load and bug surface — treat new outliers as defects.
+
+4. **Zero Tolerance for Semantic Error**: Treat the code as production-critical. There is NO room for:
+   - Incorrect control flow, off-by-ones, wrong operators, swapped arguments.
+   - Silent failure modes (swallowed errors, ignored return values).
+   - Race conditions, unhandled async rejections, leaked resources.
+   - Missing validation at system boundaries (user input, external APIs).
+   - Logic that merely *looks* right — reviewers must trace it and prove it.
+   Every plausible failure path must be called out. "Probably fine" is not acceptable.
+
+5. **Delegate Mechanical Checks to Tooling**: Reviewers MUST NOT spend effort on anything a linter, compiler, or static analyzer already enforces. Assume `npm run lint`, `tsc --noEmit`, and `knip` run in the pipeline. SKIP these entirely:
+   - Type mismatches, missing annotations, unknown properties, signature violations (→ `tsc`).
+   - Unused imports, unused variables/exports, unreachable code, dead branches (→ ESLint / knip).
+   - Formatting, quote style, semicolons, import ordering (→ Prettier / ESLint).
+   Focus human-review bandwidth on semantics, intent, plan fidelity, sibling consistency, and non-mechanical redundancy.
 
 ## 🔄 Workflow
 
@@ -106,9 +148,11 @@ Filter files by selected scopes (pass file paths to teammates, not file contents
 4. **Create review tasks**: `TaskCreate` for each scope with:
    - Subject: "Review [scope] (e.g., test, security)"
    - Description: Full instructions including:
+     - **Core Review Mandates** (plan adherence, non-mechanical redundancy, sibling consistency across adapters/mappers/etc., zero-tolerance semantics, delegate mechanical checks to lint/tsc/knip) — see top of skill
+     - Path to the approved plan document (PLAN.md/DRAFT.md/DESIGN.md/PR description) for drift checking
      - File paths to analyze (NOT file contents)
      - Standard file paths to consult (e.g., `/absolute/path/to/standards/testing.md`)
-     - Expected report format (YAML with findings, metrics, context_level)
+     - Expected report format (YAML with findings, metrics, context_level, plan_drifts)
      - Instruction to calculate and report `context_level` from token usage
 
 5. **Assign ownership**: `TaskUpdate` to set owner for each task to corresponding reviewer
@@ -246,19 +290,24 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 
 Task tool with `subagent_type: "coding:marcus-williams-code-quality"`
 
-Prompt the agent as a **Code Quality Analyst** performing read-only code quality review. Include standards: `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`. The agent performs:
+Prompt the agent as a **Code Quality Analyst** performing read-only code quality review. The agent MUST apply the Core Review Mandates (Plan Adherence, Redundancy, Sibling Consistency, Zero Tolerance, Delegate Mechanical Checks) defined at the top of this skill. Include standards: `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`. The agent performs:
 
-0. **Unused Code Detection** (TypeScript projects only): Check for tsconfig.json, run `npx -y knip --exclude=binaries --no-config-hints`, parse output for unused files/exports/dependencies. Carefully examine each finding -- do NOT report test files, verify type definitions, double-check config files. Only report genuinely redundant items.
-1. **Code Structure**: Organization, modularity, separation of concerns
-2. **Naming Conventions**: Compliance with naming standards
-3. **Complexity**: Functions/methods needing refactoring
-4. **DRY Violations**: Code duplication
-5. **Error Handling**: Error handling patterns and logging
-6. **Performance**: Performance concerns
-7. **Accessibility**: Accessibility issues (if applicable)
-8. **Architecture**: Architectural patterns and design decisions
+0. **Plan Adherence Check (MANDATORY FIRST STEP)**: Locate the approved plan (PLAN.md, DRAFT.md, DESIGN.md, linked spec, or PR description). For each changed file, map every change to a planned item. Flag drifts (additions, deviations, omissions). For each drift, evaluate whether a solid documented justification exists (commit message, PR comment, inline rationale). Drift without justification → severity **critical**. Drift with weak justification (convenience, scope creep) → severity **high**. If no plan is available, state this and use PR description as best-available contract.
+1. **Sibling Consistency Check (MANDATORY)**: For every function, class, method (INCLUDING internal/private members), and module, Grep the codebase for siblings of similar role (adapters, mappers, repositories, handlers, clients, formatters, validators, etc.). Compare naming conventions, parameter shape (order, options-object vs positional, optional/required split), return shape (envelope style, sync vs async, throw vs Result), and internal logic pattern (error handling, logging, retry/cache). Any unjustified divergence → severity **high** (**critical** for adapter-sets or other shared-interface families where inconsistency causes silent behavioural surprise).
+2. **Non-Mechanical Redundancy**: Scan for redundancy that linters CANNOT detect — defensive checks for impossible conditions, wrapper functions with no added behaviour, duplicate logic ignoring an existing helper, comments restating code, backwards-compat shims, speculative fallbacks, over-generalised abstractions with a single caller. Every genuine redundancy is a finding (high+ in production paths). DO NOT flag dead branches, unused imports/exports, unreachable code — those belong to the `style` scope / linter.
+3. **Semantic Correctness (Zero Tolerance)**: Trace every non-trivial control flow. Flag off-by-ones, swapped arguments, wrong operators, silent failures, swallowed errors, unhandled rejections, race conditions, leaked resources, missing boundary validation. "Probably fine" is not acceptable — prove correctness or flag it.
+4. **Code Structure**: Organization, modularity, separation of concerns
+5. **Naming Conventions**: Compliance with naming standards (beyond lint rules — domain-appropriate, sibling-aligned names)
+6. **Complexity**: Functions/methods needing refactoring
+7. **DRY Violations**: Code duplication (where linters miss the semantic overlap)
+8. **Error Handling**: Error handling patterns and logging
+9. **Performance**: Performance concerns
+10. **Accessibility**: Accessibility issues (if applicable)
+11. **Architecture**: Architectural patterns and design decisions
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `typescript_project`, `knip_analysis_performed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `current_state`, `recommendation`), `metrics` (complexity_score, duplication_percentage, unused_exports_found, unused_files_found, total_issues, critical_issues, high_issues).
+**DO NOT** re-check what tooling already enforces — skip type errors (→ `tsc`), unused imports/vars/exports, unreachable code, dead branches (→ ESLint / knip), and formatting (→ Prettier). The `style` scope and CI lint step own these. Spend bandwidth on semantics, intent, sibling fit, and plan fidelity.
+
+Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `typescript_project`, `plan_source` (path to plan doc or "none_found"), `plan_drifts_found`, `sibling_families_checked` (list of role families scanned, e.g. "adapters", "mappers"), `findings` (each with `file`, `line`, `severity`, `category` (include `plan-drift`, `sibling-inconsistency`, `redundancy`, `semantic-error` as valid categories), `issue`, `current_state`, `sibling_reference` (for consistency findings: file:line of the divergent sibling), `recommendation`, `plan_justification` (for drift findings: present/weak/missing)), `metrics` (complexity_score, duplication_percentage, plan_drifts, unjustified_drifts, sibling_inconsistencies, total_issues, critical_issues, high_issues).
 
 **For SECURITY Scope** (if selected):
 

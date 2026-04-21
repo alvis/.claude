@@ -1,6 +1,6 @@
 ---
 name: write-code
-description: Write production-ready code using full TDD lifecycle with design discovery, skeleton creation, implementation, test fixing, optimization, and refactoring. Use when implementing new features, writing new modules, or performing comprehensive code changes that need the complete development workflow.
+description: 'Write production-ready code end-to-end via a full TDD lifecycle (design, skeleton, implement, test, refactor). Triggers when: "write a function", "implement this feature", "build a new module", "add a feature". Also use when: starting a new component from scratch, turning a spec or ticket into working code, creating a CLI or API endpoint with tests. Examples: "write a function that parses dates", "implement user authentication", "build a rate limiter module".'
 model: opus
 context: fork
 agent: general-purpose

@@ -1,11 +1,11 @@
 ---
 name: fix
-description: Fix code and test issues using intelligent area detection and workflow. Use when resolving test failures, fixing linting errors, addressing type issues, or applying review feedback.
+description: 'Fix failing code, tests, lint, or type errors with auto area detection. Triggers when: "fix the bug", "fix this error", "fix failing tests", "fix the lint errors", "fix type errors". Also use when: resolving TypeScript complaints, addressing PR review feedback, repairing broken CI. Examples: "fix the bug in parseDate", "the tests are failing, fix them", "fix these eslint warnings".'
 model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
-argument-hint: [specifier] [--area=AREA] [--note=...]
+argument-hint: [specifier] [--area=AREA] [--note=...] [--plan=PATH]
 ---
 
 # Fix Code Issues
@@ -74,6 +74,20 @@ ultrathink: you'd perform the following steps
    - Collect error messages
    - Identify affected files
    - Map error to code location
+
+4. **Capture Plan Context (Post-Review in Plan Mode)**
+
+   When this skill runs **after a `/coding:review` in the same session** (i.e. the triggering input is a review report, the argument includes review findings, or the conversation shows a prior review invocation), the plan that `/review` validated against MUST be pinned into the fix context so a subsequent `/coding:review` can be re-run against the identical contract.
+
+   - **Detect the trigger** (no dedicated flag needed — existing Step 1 rules already infer this): input references a review report, YAML findings from `/review`, or `--note="...review..."`; OR the prior turn ran `/coding:review`.
+   - **Resolve the plan source** (first match wins):
+     1. Explicit path passed via `--plan=<path>` — always wins when provided.
+     2. The **active plan-mode plan file** surfaced by the Claude Code harness for the current session (path provided by the harness; typically under `~/.claude/plans/`). This is the authoritative source when the session is in — or has just exited — plan mode. Do NOT hardcode this path; read it from the harness-provided session context.
+     3. The `plan_source` echoed by the preceding review report, if one is present.
+     4. **Repo-level fallback (requires confirmation)**: if none of the above resolves but a repo-level plan doc is discoverable (`PLAN.md`, `DRAFT.md`, or `DESIGN.md` at repo root or scope directory), use `AskUserQuestion` to ask the user whether to adopt one of them (or none). Do **not** silently adopt a repo plan when there is no plan-mode plan — a stale repo doc may not match what `/review` actually validated against.
+     5. If neither a plan-mode plan nor a confirmed repo plan is available → record `plan_source: none_found` and treat the review report itself as the best-available contract.
+   - **Inject into context**: read the resolved plan document in full and treat it as a first-class input alongside the error context. Echo its absolute path and a one-line digest into every fix subtask prompt so downstream agents remain aligned with the same contract.
+   - **Preserve across iterations**: the plan path MUST be carried into the Step 6 report under `plan_source` so the follow-up `/coding:review` can be invoked with the same `--plan` argument and produce comparable drift verdicts.
 
 ### Step 2: Plan Fixes
 
@@ -163,6 +177,8 @@ Fix issues in test fixtures and mocks, ensuring proper structure and organizatio
 - Issues found: [count]
 - Issues fixed: [count]
 - Files modified: [count]
+- Plan source: [absolute path to PLAN.md/DRAFT.md/DESIGN.md, or `none_found`] <!-- present only when triggered post-review under plan mode; re-run `/coding:review --plan=<path>` to verify -->
+- Review re-run command: `/coding:review <scope> --plan=<plan_source>` <!-- omit if plan_source is none_found -->>
 
 ## Root Cause Analysis
 - Expected behavior: [description]

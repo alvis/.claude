@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Creates well-formatted commits with conventional messages and emoji. Use when committing code changes, following conventional commit standards, or automating commit message generation.
+description: 'Create well-formatted atomic git commits using conventional commit messages with emoji. Triggers when: "commit my changes", "commit this", "make a commit", "git commit", "write a commit message". Also use when: staging and committing work-in-progress, splitting large diffs into atomic commits, generating conventional commit messages. Examples: "commit my changes", "commit these files as a fix", "make a conventional commit for this feature".'
 model: opus
 allowed-tools: Bash(git:*), Bash(npm:*), Bash(pnpm:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/*), Read, Grep, Glob, Agent
 argument-hint: [--no-verify] [--retrospective]
