@@ -104,7 +104,32 @@ it("should throw when decryption fails", () => {
 | Happy-path mock defaults | File or `describe` level | `kms.on(Cmd).resolves(...)` |
 | Error-path overrides | Inside `it()` | `kms.on(Cmd).rejectsOnce(...)` |
 | Non-Vitest history reset | `beforeEach` | `kms.resetHistory()` |
+| `onTestFailed` diagnostic hook | `beforeEach` | `ctx.onTestFailed(() => dumpLogs(...))` |
 | All other mock setup | **NOT** in `beforeEach` | — |
+
+## Permitted Exception: Failure-Time Log Dumping
+
+`beforeEach` MAY register a Vitest `onTestFailed` hook whose sole purpose is printing recorded logs / HTTP records for diagnosis when a test fails. This is the only sanctioned `beforeEach` use besides history reset. The hook must not configure mock return values, not mutate behavior, and not run on passing tests.
+
+```typescript
+// ✅ CORRECT: onTestFailed dump for debug visibility
+beforeEach((ctx) => {
+  interceptor.clearRecords();
+  ctx.onTestFailed(() => {
+    const records = interceptor.getRecords();
+    process.stderr.write(formatFailureDump(ctx.task.name, records));
+  });
+});
+
+// ✅ CORRECT: minimal form without record clearing
+beforeEach((ctx) => ctx.onTestFailed(() => dumpLogs(log.mock.calls)));
+```
+
+Rules for this exception:
+
+- Hook body must only **read** mock/interceptor state and write to stderr/stdout.
+- `interceptor.clearRecords()` (or equivalent history-only reset) is allowed alongside the hook registration — same category as `client.resetHistory()`.
+- No mock behavior setup permitted inside the hook or the surrounding `beforeEach`.
 
 ## Edge Cases
 

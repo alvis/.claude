@@ -10,7 +10,8 @@
 - Test descriptions: `it("should ...")`, symbol-scoped suites: `describe("fn:symbol")`, general suites: plain description
 - All mocks typed with `satisfies Partial<typeof import("...")>` or `satisfies Partial<RealType>` — never `Record<string, unknown>` or inline structural types
 - Happy-path defaults inline: `vi.fn(() => value)`, never `.mockResolvedValue()`
-- No `beforeEach` for mock setup — only for non-Vitest mock history resets (`client.resetHistory()`)
+- No `beforeEach` for mock setup — only for non-Vitest mock history resets (`client.resetHistory()`) or registering `ctx.onTestFailed(...)` debug-dump hooks
+- Log-observable behavior: capture logger as typed `vi.fn<LogFn>()` and assert `log.mock.calls` structurally
 - `const` for shared fixtures; file-level instances by default
 - Structural assertions (`toEqual`), not field-by-field
 
@@ -60,6 +61,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-CORE-06**: Do not test only that dependencies were called. Assert behavior and outcome.
 - **TST-CORE-07**: Do not spy on internals when external behavior can be tested.
 - **TST-CORE-08**: Avoid `await import(...)` in tests. Keep imports static and predictable.
+- **TST-CORE-09**: For log-observable behavior, capture the logger as `vi.fn<LogFn>()` or `{ info: vi.fn<Logger['info']>() } satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])`. Do not use scattered `toHaveBeenCalledWith(...)` chains or count-only assertions. Prefer the SUT's exported `Log` type; a local alias is acceptable only when no real type is exported.
 
 ### Coverage (TST-COVR)
 
@@ -81,7 +83,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-MOCK-01**: Mock only IO/external/control dependencies. Keep pure internal logic real.
 - **TST-MOCK-02**: Use `vi.hoisted` only when shared refs are needed for spying or error-path overrides.
 - **TST-MOCK-03**: Define defaults inline: `vi.fn(() => value)` or `vi.fn(async () => value)`. Never chain `.mockResolvedValue()`.
-- **TST-MOCK-04**: `beforeEach` must NOT contain any mock setup — it is **only** for non-Vitest mock history resets (`client.resetHistory()`). Happy-path defaults go at file/describe level; error-path overrides go inside `it()`. Applies to all mock APIs including library-specific ones (e.g., `client.on(Cmd).resolves(...)`).
+- **TST-MOCK-04**: `beforeEach` must NOT contain any mock setup. Its only permitted uses are (a) non-Vitest mock history resets (`client.resetHistory()`, `interceptor.clearRecords()`) and (b) registering `ctx.onTestFailed(...)` hooks that dump recorded logs/HTTP records for failure diagnosis. Happy-path defaults go at file/describe level; error-path overrides go inside `it()`.
 - **TST-MOCK-05**: All test doubles validated with `satisfies Partial<typeof import("...")>` or `satisfies Partial<RealType>`. Weak generic types (`Record<string, unknown>`, `Record<string, ReturnType<typeof vi.fn>>`, inline structural types) are violations — they bypass real type validation.
 - **TST-MOCK-06**: No custom mock-only interfaces or oversized mock surfaces.
 - **TST-MOCK-07**: Mock behavior depends on input arguments, not mutable external flags.

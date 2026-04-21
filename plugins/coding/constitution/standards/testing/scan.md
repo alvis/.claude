@@ -17,6 +17,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT write tests that only check wrapper/dependency calls [`TST-CORE-06`]
 - DO NOT assert implementation details in tests [`TST-CORE-07`]
 - DO NOT use dynamic imports in tests [`TST-CORE-08`]
+- DO NOT assert log output via scattered `toHaveBeenCalledWith(...)` or count-only checks; capture the logger as `vi.fn<LogFn>()` / `satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])` [`TST-CORE-09`]
 - DO NOT merge with line coverage below 100% required threshold [`TST-COVR-01`]
 - DO NOT leave critical branch paths untested [`TST-COVR-02`]
 - DO NOT batch multiple tests before checking coverage [`TST-COVR-03`]
@@ -29,7 +30,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT mock pure/internal logic unnecessarily [`TST-MOCK-01`]
 - DO NOT use `vi.hoisted` without spy/error need [`TST-MOCK-02`]
 - DO NOT define happy-path defaults via chained `.mockResolvedValue(...)` / `.mockReturnValue(...)`, such as `vi.fn().mockResolvedValue(...)`; define defaults inline via `vi.fn(() => value)` or `vi.fn(async () => value)` [`TST-MOCK-03`]
-- DO NOT use `beforeEach()` for mock setup (happy-path or otherwise); `beforeEach` is **only** for resetting call history of non-Vitest mocks that aren't automatically cleared (e.g., `client.resetHistory()`). Happy-path defaults go at file/describe level; error-path overrides go inside `it()`. Violations include `run.mockResolvedValue("ok")` in `it()`, `beforeEach(() => client.on(Cmd).resolves(...))`, and any `beforeEach` that configures mock return values [`TST-MOCK-04`]
+- DO NOT use `beforeEach()` for mock setup (happy-path or otherwise); `beforeEach` is **only** for (a) resetting call history of non-Vitest mocks (`client.resetHistory()`, `interceptor.clearRecords()`) and (b) registering `ctx.onTestFailed(...)` hooks that dump recorded logs/HTTP records for failure diagnosis. All other mock setup is a violation. Happy-path defaults go at file/describe level; error-path overrides go inside `it()`. Violations include `run.mockResolvedValue("ok")` in `it()`, `beforeEach(() => client.on(Cmd).resolves(...))`, and any `beforeEach` that configures mock return values [`TST-MOCK-04`]
 - DO NOT skip `satisfies` checks in `vi.mock(...)` or `vi.hoisted(...)` mock typing, and DO NOT use weak generic types that bypass real type validation; `satisfies` must reference the **real module type** via `Partial<typeof import("...")>` or `Partial<RealType>` — never `Record<string, unknown>`, `Record<string, ReturnType<typeof vi.fn>>`, or inline structural types [`TST-MOCK-05`]
 - DO NOT create oversized or synthetic mock surfaces [`TST-MOCK-06`]
 - DO NOT control mock behavior with mutable flags [`TST-MOCK-07`]
@@ -58,6 +59,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-CORE-06` | Test only checks wrapper/dependency calls | `expect(dep).toHaveBeenCalled()` |
 | `TST-CORE-07` | Test asserts implementation details | `expect(useState).toHaveBeenCalled()` |
 | `TST-CORE-08` | Dynamic import is used in tests | `const m = await import("#mod")` |
+| `TST-CORE-09` | Log output asserted with scattered calls / count-only / untyped mock | `expect(log).toHaveBeenCalledWith('x')` + `expect(log).toHaveBeenCalledTimes(2)`; `const log = vi.fn()` without generic |
 | `TST-COVR-01` | Line coverage is below 100% required threshold | `lines: 98 // required: 100` |
 | `TST-COVR-02` | Critical branch path is untested | `if (err) throw err // untested` |
 | `TST-COVR-03` | Multiple tests written before coverage check | `it.each(cases)(...)` |
