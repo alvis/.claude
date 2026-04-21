@@ -39,5 +39,7 @@ If exception note is missing, submission is rejected.
 ## Rule Groups
 
 - `FUNC-SIGN-*`: Signature, parameter, and exported contract rules.
+  - `FUNC-SIGN-06`: No inline destructuring at parameter declaration; destructure inside the body.
 - `FUNC-STAT-*`: State safety (mutation, immutability, purity, side-effects).
 - `FUNC-ARCH-*`: Structural function-design rules and helper patterns.
+  - `FUNC-ARCH-04`: Remove short-circuit guards before small loops; use optional chaining at the call site.

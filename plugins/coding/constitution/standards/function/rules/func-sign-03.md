@@ -96,10 +96,41 @@ function logError(message: string, details: ErrorDetails): void {
 }
 ```
 
+## `config` vs `options` — Semantic Distinction
+
+`config` and `options` are NOT interchangeable. They carry distinct semantics:
+
+- **`config`** — required by core logic to function. Describes *what the system is* at initialization time. May contain non-JSON-serializable references (class instances, schemas) only when those are structural to the system's identity. Typically passed to constructors and persisted for the lifetime of the instance. Absence of a required `config` field is a configuration error, not a runtime choice.
+
+- **`options`** — optional runtime helpers the core logic can function *without*. Describes *how execution should behave or be observed* at call time. Common contents: runtime hooks (`onThinking`, `onProgress`, `onError`), callbacks, `log` loggers, retry/validation defaults, abort signals, per-call overrides, progress handlers. Options are ergonomic affordances; their absence never prevents the operation from running.
+
+### Rule of thumb
+
+If removing the field would break the operation's ability to execute, it is `config`. If removing it would merely reduce observability or change a default, it is `options`.
+
+### Split constructors when both apply
+
+When a class needs both structural configuration and optional runtime helpers, split them into two constructor parameters rather than merging them into one mixed object:
+
+```typescript
+// GOOD — config is required structure, options is optional runtime behaviour
+class Operator<T, C extends OperatorConfig = OperatorConfig> {
+  constructor(config: C, options?: OperatorOptions<T>) { /* ... */ }
+}
+
+// BAD — mixing required providers/models with optional log/callbacks in one blob
+class Operator<T> {
+  constructor(configAndOptions: OperatorConfig<T> & { log?: Log; onError?: Handler }) { /* ... */ }
+}
+```
+
+This keeps the `config` object JSON-serializable where possible, makes the required-vs-optional distinction obvious at the call site, and gives consumers a place to pass loggers/hooks without polluting the persisted configuration.
+
 ## Edge Cases
 
 - When existing code matches prior violation patterns such as ❌ `fn(payload, cfg, extra)`, refactor before adding new behavior.
 - Choose parameter names by role in the API contract, not by current implementation details.
+- When a parameter could plausibly be either `config` or `options`, apply the rule-of-thumb above: required-to-execute is `config`, observability/defaults is `options`.
 
 ## Related
 
