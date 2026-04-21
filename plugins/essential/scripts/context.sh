@@ -10,13 +10,37 @@ get_working_directory_context() {
   echo -n "$context"
 }
 
-# Get custom project context from .claude-context file
-get_custom_context() {
-  local context=""
+get_repo_root() {
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    git rev-parse --show-toplevel
+  else
+    pwd
+  fi
+}
 
-  if [[ -f ".claude-context" ]]; then
-    context+="### Custom Project Context\n\n"
-    context+="$(cat .claude-context)\n\n"
+get_repo_root_documents_context() {
+  local repo_root="$1"
+  local context=""
+  local docs=(
+    "CONTEXT.md"
+    "DESIGN.md"
+    "PLAN.md"
+    "NOTES.md"
+    "REQUIREMENTS.md"
+    "DATA.md"
+    "UI.md"
+    "REFERENCE.md"
+  )
+  local doc
+
+  for doc in "${docs[@]}"; do
+    if [[ -f "$repo_root/$doc" ]]; then
+      context+="- $repo_root/$doc\n"
+    fi
+  done
+
+  if [[ -n "$context" ]]; then
+    context="## Target Repo Documents\n\n${context}\n"
   fi
 
   echo -n "$context"
@@ -49,8 +73,11 @@ get_environment_context() {
 # Combines working directory, custom context, and environment info
 get_plugin_context() {
   local context=""
+  local repo_root
+
+  repo_root=$(get_repo_root)
   context+=$(get_working_directory_context)
-  context+=$(get_custom_context)
   context+=$(get_environment_context)
+  context+=$(get_repo_root_documents_context "$repo_root")
   echo -n "$context"
 }
