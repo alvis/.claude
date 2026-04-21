@@ -44,6 +44,6 @@ If exception note is missing, submission is rejected.
 
 - `TYP-CORE-*`: Global type-safety and language-baseline rules.
 - `TYP-IMPT-*`: Import ordering and subpath usage rules.
-- `TYP-MODL-*`: Module layout and export-shape rules.
+- `TYP-MODL-*`: Module layout, export-shape, and barrel re-export strategy rules.
 - `TYP-PARM-*`: Parameter and contract-shape rules.
 - `TYP-TYPE-*`: Type-system and narrowing strategy rules.

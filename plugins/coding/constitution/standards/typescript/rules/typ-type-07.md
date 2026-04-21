@@ -4,6 +4,8 @@
 
 Testing partial-cast chains (`satisfies Partial<T> as Partial<T> as T` or equivalent) are test-only and limited to mock boundaries that require full-type compatibility. They are forbidden in production/runtime modules and non-test utilities. `as never` is not allowed for mocked-instance or test-double typing in tests.
 
+Use `@ts-expect-error` with a reason comment instead of `satisfies Partial<T> as Partial<T> as T`. The triple-cast pattern remains a documented fallback for cases where `@ts-expect-error` cannot be placed inline.
+
 ## Fix
 
 ```typescript
@@ -19,7 +21,13 @@ run(userRepository as Partial<UserRepository> as UserRepository);
 Two distinct patterns depending on context:
 
 ```typescript
-// ✅ INSIDE vi.mock: Triple pattern when mocking partial module
+// ✅ PREFERRED (inside vi.mock): @ts-expect-error replaces the triple-cast
+vi.mock("./user-service", () => ({
+  // @ts-expect-error partial mock — unused methods not needed for this test suite
+  userService: { getUser: vi.fn() } satisfies Partial<MockedObject<UserService>>,
+}));
+
+// ✅ FALLBACK (inside vi.mock): triple-cast when inline comment is not possible
 vi.mock("./user-service", () => ({
   userService: {
     getUser: vi.fn(),
@@ -28,7 +36,7 @@ vi.mock("./user-service", () => ({
   > as MockedObject<UserService>,
 }));
 
-// ✅ OUTSIDE vi.mock: Strictly satisfies only
+// ✅ OUTSIDE vi.mock: unchanged — satisfies Partial<T> is already clean
 const mockUser = {
   id: "123",
   name: "Test User",
@@ -41,7 +49,7 @@ function setupTest(user: Partial<User> = mockUser) {
 
 **Why two patterns?**
 
-- **Inside vi.mock**: The module system requires the exact type, so triple casting is necessary
+- **Inside vi.mock**: The module system requires the exact type; prefer `@ts-expect-error` for clarity, triple-cast as fallback
 - **Outside vi.mock**: Test code should explicitly handle partial types for accuracy
 
 **NOTE**: These patterns are ONLY allowed in test files. Production code must NEVER use these patterns.

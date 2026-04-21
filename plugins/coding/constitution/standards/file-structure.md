@@ -95,13 +95,24 @@ UserProfile/
 ### Index Files
 
 ```typescript
-// re-export only
-export { UserService } from "./user-service";
-export type { User } from "./types";
+// barrel → barrel: wildcard via subpath alias (covers code and types)
+export * from '#auth';
+
+// barrel → leaf: explicit named exports (code then types)
+export { UserService } from './user-service';
+export type { User } from './types';
+
+// ❌ BAD: wildcard from a leaf file (leaks internal symbols)
+export * from './user-service';
+
+// ❌ BAD: explicit picks from another barrel (duplicates its surface area)
+export { UserService } from '#auth';
 
 // ❌ BAD: logic in index
 class UserService { ... }  // Don't define here
 ```
+
+See TYP-MODL-04 for the full rule.
 
 ## Export-Based Naming
 
@@ -133,6 +144,34 @@ export function sanitizeUser() { ... }
 export function validateUser() { ... }
 export function formatCurrency() { ... }  // Different domain
 ```
+
+### Splitting Long Files
+
+When a file exceeds the project's `max-lines` threshold, apply the **two-stage rule** — never split arbitrarily.
+
+**Stage 1 — Extract shared helpers first.** Look for logic that genuinely belongs elsewhere (another existing file, or a new helper module) and move it out. Prefer this when the extracted code is reused by more than one caller, or when it represents a distinct concern that stands on its own.
+
+**Stage 2 — Folder split if still too long.** If the file still exceeds `max-lines` after extraction, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern:
+
+- The entry file `<base>.ts` remains a thin re-exports/orchestrator and preserves the public surface.
+- Helpers live inside `<base>/*.ts` with **short names** — the folder name already provides the context, so do not repeat the base in the file name (see "Avoid Path Redundancy").
+
+```typescript
+// ❌ BEFORE: single file is too long
+adapters/anthropic.ts          // 520 lines — exceeds max-lines
+
+// ✅ AFTER: folder split with thin entry + short helper names
+adapters/anthropic.ts          // thin entry: orchestrates and re-exports
+adapters/anthropic/schema.ts   // zod schemas
+adapters/anthropic/parse.ts    // response parsing
+adapters/anthropic/request.ts  // request building
+
+// ❌ BAD: helper names repeat the base (folder already provides context)
+adapters/anthropic/anthropic-schema.ts
+adapters/anthropic/anthropic-parse.ts
+```
+
+> **Do not split into arbitrary sibling files** (e.g. `anthropic.schema.ts`, `anthropic.parse.ts` alongside `anthropic.ts`) unless that naming is already an established project convention. The folder pattern is preferred because it keeps related helpers grouped and lets the folder name carry the context.
 
 ## Quick Reference
 

@@ -2,7 +2,7 @@
 
 ## Intent
 
-Type-escape casts are forbidden in production code, including `as unknown as TYPE` and `as never`. Fix the type model or add guard-based narrowing.
+Type-escape casts are forbidden in production code, including `as unknown as TYPE` and `as never`. Fix the type model, add guard-based narrowing, or use `// @ts-expect-error <reason>` for intentional mismatches.
 
 ## Fix
 
@@ -38,25 +38,22 @@ When tempted to use `as unknown as TYPE`:
    - Refactor data structures to match types
    - Update type definitions to reflect reality
    - Add proper validation at boundaries
+4. **When a mismatch is intentional** and a runtime guard adds no value, annotate with `@ts-expect-error <reason>` on the preceding line. Prefer over `@ts-ignore` — TS errors if the suppression becomes redundant.
 
 ```typescript
-// ❌ BAD: double casting defeats type safety
-const user = data as unknown as User; // no validation!
+// ❌ BAD: double-cast silently discards type information
+const config = rawValue as unknown as Config;
 
-// ✅ GOOD: use type guards for safe type narrowing
-function isUser(value: unknown): value is User {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "name" in value
-  );
+// ✅ GOOD: type guard — validates at runtime, narrows safely
+function isConfig(v: unknown): v is Config {
+  return typeof v === "object" && v !== null && "host" in v;
 }
+if (!isConfig(rawValue)) throw new Error("invalid");
+const config = rawValue;
 
-if (!isUser(data)) {
-  throw new ValidationError("Invalid user data");
-}
-const user = data; // TypeScript knows this is safe
+// ✅ GOOD: @ts-expect-error — intentional mismatch, self-documenting
+// @ts-expect-error rawValue is Config-shaped but lacks optional `timeout` populated at init
+const config = rawValue as Config;
 
 // ✅ GOOD: refactor to fix type issues
 interface ApiResponse {
@@ -75,6 +72,7 @@ Testing partial-cast chains are allowed only in test files. See `TYP-TYPE-07` fo
 
 - When existing code matches prior violation patterns such as ❌ `value as unknown as User`, refactor before adding new behavior.
 - If types mismatch, fix schema/type contracts first; use testing exception path only in test files with explicit partial-type validation.
+- Prefer `@ts-expect-error` over `@ts-ignore`; `@ts-ignore` never errors when the suppression is no longer needed.
 
 ## Related
 

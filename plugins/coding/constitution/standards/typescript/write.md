@@ -39,6 +39,7 @@
 - **TYP-MODL-01**: File order: imports, re-exports, types, constants, classes, functions.
 - **TYP-MODL-02**: Within each group, place public/root orchestration before helper/leaf details.
 - **TYP-MODL-03**: Use named exports by default. Default exports only when an external contract requires it.
+- **TYP-MODL-04**: In barrel files, use `export * from '#subpath'` for barrel sources; use explicit named exports for leaf sources.
 
 ### Parameters (TYP-PARM)
 
@@ -90,6 +91,8 @@
 - Using comment labels above import groups (`// Third-party`, `// Internal`, `// Types`) — blank-line separation is sufficient.
 - Using default imports when a named import exists for the same symbol.
 - Using default exports for general module APIs.
+- Using `export * from './leaf-file'` in a barrel (leaks internals).
+- Explicitly picking named exports from another barrel (duplicates its surface area).
 - Skipping guards at external data boundaries.
 
 ## Quick Decision Tree

@@ -24,6 +24,7 @@ export default userService;
 - When existing code matches prior violation patterns such as ❌ `export default userService`, refactor before adding new behavior.
 - Default exports are acceptable only when an external framework or contract requires it.
 - Default export is acceptable — and encouraged — when a file's sole purpose is to expose **one primary symbol**, especially across a set of sibling files that each export the same kind of symbol (e.g., Next.js page/layout components, service operation handlers, route handlers, middleware). This lets consumers import without guessing the exported name.
+- In barrel files, `export * from '#subpath'` is preferred when the source is itself a barrel — this is not a violation of this rule. See TYP-MODL-04.
 
 ```typescript
 // ✅ GOOD: default export for primary symbol in a uniform set
@@ -36,4 +37,4 @@ export default async function setInvoice(...) { ... }
 
 ## Related
 
-TYP-MODL-01, TYP-MODL-02, TYP-IMPT-06
+TYP-MODL-01, TYP-MODL-02, TYP-MODL-04, TYP-IMPT-06
