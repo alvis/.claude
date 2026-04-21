@@ -17,42 +17,32 @@ get_path_type() {
   fi
 }
 
-# Function to search for markdown files in a specific path
-search_md_files() {
+# Get first-level standard entries for a specific constitution path.
+# Directories are rendered by name only, while top-level markdown files keep
+# their .md extension.
+get_first_level_standard_entries() {
   local search_path="$1"
-  local subdir="$2"
-  # Replace slashes with underscores for valid temp file path
-  local safe_subdir="${subdir//\//_}"
-  local temp_file="/tmp/claude_search_$$_${safe_subdir}.txt"
+  local standards_dir="${search_path}/constitution/standards"
+  local temp_file="/tmp/claude_standards_$$_$(basename "$search_path").txt"
 
-  # Clear temp file
+  if [[ ! -d "$standards_dir" ]]; then
+    return
+  fi
+
   > "$temp_file"
 
-  # Search only in the provided path.
-  # Standards are intentionally limited to top-level files so per-rule
-  # example files under constitution/standards/** are discovered on demand.
-  # Three-tier standards (e.g., testing/meta.md, testing/scan.md, testing/write.md)
-  # are discovered at depth 2 by explicit filename match.
-  if [[ -d "${search_path}/${subdir}" ]]; then
-    if [[ "$subdir" == "constitution/standards" ]]; then
-      # Top-level standards (non-migrated, e.g., typescript.md)
-      find "${search_path}/${subdir}" -maxdepth 1 -type f -name "*.md" 2>/dev/null >> "$temp_file" || true
-      # Three-tier standards (migrated, e.g., testing/meta.md, testing/scan.md, testing/write.md)
-      find "${search_path}/${subdir}" -maxdepth 2 -type f \( -name "meta.md" -o -name "scan.md" -o -name "write.md" \) 2>/dev/null >> "$temp_file" || true
-    else
-      find "${search_path}/${subdir}" -type f -name "*.md" 2>/dev/null >> "$temp_file" || true
-    fi
-  fi
+  find "$standards_dir" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null >> "$temp_file" || true
+  find "$standards_dir" -mindepth 1 -maxdepth 1 -type f -name "*.md" -exec basename {} \; 2>/dev/null >> "$temp_file" || true
 
-  # Format output
-  if [[ -f "$temp_file" && -s "$temp_file" ]]; then
-    sort -u "$temp_file" | while IFS= read -r file; do
-      if [[ -n "$file" ]]; then
-        echo "  - $file"
+  if [[ -s "$temp_file" ]]; then
+    sort -u "$temp_file" | while IFS= read -r entry; do
+      if [[ -n "$entry" ]]; then
+        echo "- $entry"
       fi
     done
-    rm -f "$temp_file"
   fi
+
+  rm -f "$temp_file"
 }
 
 # Get constitution context (workflows and standards) from a specific path
@@ -88,27 +78,12 @@ get_constitution_context() {
     context+="$(cat "$claude_md_path")\n\n"
   fi
 
-  # Search for workflows
-  local workflows_found=$(search_md_files "$search_path" "constitution/workflows")
-
-  # Search for standards
-  local standards_found=$(search_md_files "$search_path" "constitution/standards")
-
-  # Search for templates
-  local templates_found=$(search_md_files "$search_path" "constitution/templates")
-
-  context+="## ${label} Constitution\n\n"
-
-  if [[ -n "$workflows_found" ]]; then
-    context+="**Workflows**:\n$workflows_found\n"
-  fi
+  local standards_found=$(get_first_level_standard_entries "$search_path")
 
   if [[ -n "$standards_found" ]]; then
-    context+="**Standards**:\n$standards_found\n"
-  fi
-
-  if [[ -n "$templates_found" ]]; then
-    context+="**Templates**:\n$templates_found\n"
+    context+="## ${label} Constitution\n\n"
+    context+="Root Path: ${search_path}/constitution/standards/\n"
+    context+="$standards_found\n"
   fi
 
   echo -n "$context"

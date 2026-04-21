@@ -56,8 +56,8 @@ check_and_remind_token_usage() {
 
   # Check if we've crossed a 25k boundary
   local previous_boundary current_boundary
-  previous_boundary=$((previous_total / 25000))
-  current_boundary=$((current_total / 25000))
+  previous_boundary=$((previous_total / 250000))
+  current_boundary=$((current_total / 250000))
 
   if [[ $current_boundary -gt $previous_boundary ]]; then
     # Calculate how many boundaries we've crossed
