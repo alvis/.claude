@@ -86,19 +86,28 @@ if (items.length === 0) return defaultValue;
 
 ## Suppression Comments
 
-Suppression comments (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) are **acceptable when properly documented** with reasoning.
+Suppression comments (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, etc.) are acceptable **only** when BOTH of the following are true:
+
+1. **The user has explicitly approved the suppression** (per GEN-SAFE-01). Author-only judgement is not sufficient — silent suppression is prohibited.
+2. **An adjacent comment records the root-cause attempt and why it was blocked** (e.g. upstream type bug, runtime-only invariant the type system cannot express).
+
+Canonical source: `universal/rules/gen-safe-01.md`. See also `universal/meta.md`, `universal/write.md`, and `universal/scan.md`. This section restates the rule inline for reviewer convenience; if this file ever drifts from `gen-safe-01.md`, treat `gen-safe-01.md` as authoritative.
 
 ### Review Action
 
-When you find suppression comments:
+When you find a suppression comment:
 
-1. **Check for documentation** - Is there a comment explaining WHY?
-2. **If undocumented** - Request documentation before approving
-3. **If documented** - Accept if the reasoning is valid
+1. **Check for explicit user approval** — Is there evidence (PR discussion, linked issue, or an in-code note referencing the approving decision) that the user approved this specific suppression? If not, block and request approval before approving the PR.
+2. **Check the root-cause note** — Does the adjacent comment explain what was tried to fix the underlying issue and why that did not work? If not, block and request the note.
+3. **If both present** — Accept if the reasoning is valid and the scope is minimal (narrowest possible suppression, not a file-wide `@ts-nocheck`).
+
+A documented-but-unapproved suppression is **not** acceptable. A comment alone does not clear the GEN-SAFE-01 bar.
 
 ### Example of Acceptable Suppression
 
 ```typescript
+// user-approved in PR #1234 - upstream lib ships wrong cause type (issue: acme/lib#88)
+// tried: augmenting the module via .d.ts, but the declaration is not re-exported
 const handler = (err: unknown) => (err as Error).cause;
 ```
 

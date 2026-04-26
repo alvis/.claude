@@ -22,12 +22,10 @@ function processUser(options?: UserOptions): User {
   // safe - handles undefined options
 }
 
-// ❌ direct destructuring can throw if called with undefined
-function processUserBad({
-  name = "Unknown",
-  role = "user",
-}: UserOptions): User {
-  // will throw if called with undefined
+// ❌ direct destructuring of an optional parameter - will throw if called with undefined
+function processUserBad(options?: UserOptions): User {
+  const { name = "Unknown", role = "user" } = options as UserOptions;
+  // will throw if called with undefined (no `= {}` default, no spread guard)
 }
 ```
 
