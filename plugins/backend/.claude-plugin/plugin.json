@@ -2,7 +2,6 @@
   "name": "theriety",
   "description": "Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers",
   "version": "2026-04-15",
-  "mcpServers": "./.mcp.json",
   "hooks": {
     "SessionStart": [
       {
