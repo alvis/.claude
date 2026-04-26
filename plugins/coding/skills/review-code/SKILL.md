@@ -1,5 +1,5 @@
 ---
-name: review
+name: review-code
 description: 'MUST RUN after implementing any code. Spawns review subagents (test, security, code-quality, docs, style) to audit against the plan, siblings, redundancy, and correctness. Triggers when: "review this code", "review my PR", "audit this file", "check the code quality", "review for security". Also use when: finishing an implementation, validating test coverage, pre-merge checks. Examples: "review src/auth", "review the pull request", "audit this module for security issues".'
 model: opus
 context: fork
@@ -455,7 +455,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 #### Single Scope Review (Team Mode)
 
 ```bash
-/review --area=security
+/review-code --area=security
 # Team mode:
 #   - Creates review-team
 #   - Spawns security-reviewer (nina-petrov-security-champion, opus)
@@ -466,7 +466,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 #### Multi-Scope Review with Cross-Review (Team Mode)
 
 ```bash
-/review "src/api/" --area=security,code-quality
+/review-code "src/api/" --area=security,code-quality
 # Team mode:
 #   - Spawns security-reviewer and quality-reviewer in parallel
 #   - Both analyze API directory independently
@@ -489,7 +489,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Single Scope Review
 
 ```bash
-/review --area=test
+/review-code --area=test
 # Reviews only test quality, coverage, and complexity
 # Delegates to Testing Quality Analyst
 ```
@@ -497,7 +497,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Multiple Scope Review
 
 ```bash
-/review "src/api/" --area=security,code-quality
+/review-code "src/api/" --area=security,code-quality
 # Reviews API directory for security vulnerabilities and code quality
 # Runs security and code-quality analysts in parallel
 ```
@@ -505,7 +505,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Pattern-Based Review
 
 ```bash
-/review "src/api/**/*.spec.ts" --area=test
+/review-code "src/api/**/*.spec.ts" --area=test
 # Reviews only API test files using glob pattern
 # Limits file discovery to specified pattern
 ```
@@ -513,7 +513,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Pull Request Review
 
 ```bash
-/review "PR#123" --area=all
+/review-code "PR#123" --area=all
 # Reviews all files changed in pull request 123
 # Comprehensive review across all quality dimensions
 ```
@@ -521,7 +521,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Directory Review with Verbose Output
 
 ```bash
-/review "src/auth/" --verbose --format=markdown
+/review-code "src/auth/" --verbose --format=markdown
 # Reviews authentication directory with detailed explanations
 # Outputs in human-readable markdown format
 ```
@@ -529,7 +529,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Package-Based Review
 
 ```bash
-/review "@myapp/auth" --area=security,code-quality
+/review-code "@myapp/auth" --area=security,code-quality
 # Reviews all files that import/use the auth package
 # Focuses on security and code quality in auth-related code
 ```
@@ -537,7 +537,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### CI Mode Example
 
 ```bash
-/review --area=all --format=markdown
+/review-code --area=all --format=markdown
 # In CI environment:
 #   - Outputs full REVIEW.md content to console
 #   - No interactive prompts
@@ -547,7 +547,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Interactive Mode Example
 
 ```bash
-/review "src/"
+/review-code "src/"
 # In interactive environment:
 #   - May prompt for scope selection if unclear
 #   - Outputs summary to console
@@ -558,7 +558,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Glob Pattern Review
 
 ```bash
-/review "src/services/**/auth*.ts" --area=security
+/review-code "src/services/**/auth*.ts" --area=security
 # Reviews only auth-related files within services directory
 # Focuses on security vulnerabilities using glob pattern
 ```
@@ -566,7 +566,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Documentation Review
 
 ```bash
-/review "src/**/*.ts" --area=documentation
+/review-code "src/**/*.ts" --area=documentation
 # Reviews JSDoc/TSDoc coverage in all TypeScript source files
 # Identifies missing or incomplete documentation
 ```
@@ -574,7 +574,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Git-Based Review
 
 ```bash
-/review "HEAD~3..HEAD" --area=all
+/review-code "HEAD~3..HEAD" --area=all
 # Reviews changes in last 3 commits
 # Comprehensive analysis of recent changes
 ```
@@ -582,7 +582,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Pre-Commit Review
 
 ```bash
-/review "$(git diff --cached --name-only)" --area=test,code-quality
+/review-code "$(git diff --cached --name-only)" --area=test,code-quality
 # Reviews only staged files
 # Perfect for pre-commit hook integration
 # Focuses on test and code quality
@@ -591,7 +591,7 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Multiple File Types Review
 
 ```bash
-/review "**/*.{ts,tsx,js,jsx}" --area=code-quality,style
+/review-code "**/*.{ts,tsx,js,jsx}" --area=code-quality,style
 # Reviews all TypeScript and JavaScript files
 # Focuses on code quality and style compliance
 ```
@@ -599,15 +599,15 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Format Options
 
 ```bash
-/review "src/" --format=yaml  # Machine-readable YAML for /fix-code
-/review "src/" --format=json  # JSON format for CI/CD integration
-/review "src/" --format=markdown  # Human-readable for PR comments
+/review-code "src/" --format=yaml  # Machine-readable YAML for /fix-code
+/review-code "src/" --format=json  # JSON format for CI/CD integration
+/review-code "src/" --format=markdown  # Human-readable for PR comments
 ```
 
 ### Team Mode Output Example
 
 ```bash
-/review "src/api/" --area=all
+/review-code "src/api/" --area=all
 # Output (Team Mode):
 #
 # 📊 Code Review Complete (Team Mode)
@@ -641,18 +641,18 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### Error Handling
 
 ```bash
-/review "nonexistent/path"
+/review-code "nonexistent/path"
 # Error: Path not found
 # Suggestion: Check path exists with 'ls nonexistent/'
-# Alternative: Use glob patterns like '/review "**/*"' or '/review' for full codebase
+# Alternative: Use glob patterns like '/review-code "**/*"' or '/review' for full codebase
 
-/review --area=invalid
+/review-code --area=invalid
 # Error: Invalid scope 'invalid'
 # Valid scopes: test, documentation, code-quality, security, style, all
-# Example: /review --area=test,code-quality
+# Example: /review-code --area=test,code-quality
 
-/review "unknown-package"
+/review-code "unknown-package"
 # Warning: Package 'unknown-package' not found in imports
 # Suggestion: Check package name or use file path instead
-# Alternative: Use '/review "src/**/*"' to review source directory
+# Alternative: Use '/review-code "src/**/*"' to review source directory
 ```
