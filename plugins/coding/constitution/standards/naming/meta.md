@@ -8,6 +8,7 @@ You MUST also read the following standards together with this file:
 
 - General Coding Principles (standard:universal) - baseline quality and consistency rules
 - TypeScript Standards (standard:typescript) - naming must align with type-safety and import rules
+- Python Standards (standard:python) - Python casing & identifier conventions are governed by `standard:python` (see `PYT-NAME-*`)
 - Function Design Standards (standard:function) - function naming must match function design contracts
 
 ## What's Stricter Here
