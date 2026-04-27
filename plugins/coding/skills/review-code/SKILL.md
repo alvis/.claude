@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: [specifier] [--area=test|documentation|code-quality|security|style|all]
+argument-hint: [specifier] [--area=test|documentation|code-quality|security|style|all] [--out=reviews]
 enforcement: mandatory-post-implementation
 orchestration: subagent-spawning
 ---
@@ -67,6 +67,113 @@ These mandates override tone and brevity. Reviewers MUST enforce them on every f
    - Unused imports, unused variables/exports, unreachable code, dead branches (→ ESLint / knip).
    - Formatting, quote style, semicolons, import ordering (→ Prettier / ESLint).
    Focus human-review bandwidth on semantics, intent, plan fidelity, sibling consistency, and non-mechanical redundancy.
+
+## 📤 Output Format & Priority Levels
+
+Reviews emit **one Markdown file per area** under `<out>/` (default: `reviews/`, relative to project root). The canonical structure for each file is defined by `references/review.template.md` — every subagent and every re-run MUST conform to it exactly.
+
+### Priority taxonomy
+
+| Priority | Meaning |
+|----------|---------|
+| **P0** | Blocker — security hole, data loss, broken build / startup, must-fix before merge |
+| **P1** | High — correctness bug, major standard violation, plan drift without justification |
+| **P2** | Medium — maintainability issue, minor bug, unclear contract |
+| **P3** | Low — polish, nits, cosmetic concerns |
+
+### Area files & prefixes
+
+| Prefix | File | Area |
+|--------|------|------|
+| `SEC`  | `<out>/SECURITY.md`    | Security |
+| `QUAL` | `<out>/QUALITY.md`     | Code quality |
+| `TEST` | `<out>/TESTING.md`     | Tests / coverage |
+| `DOCS` | `<out>/DOCS.md`        | Documentation |
+| `STYL` | `<out>/STYLE.md`       | Style / lint / naming |
+| `CORR` | `<out>/CORRECTNESS.md` | Correctness / semantics |
+
+A top-level `<out>/README.md` index lists every area file with its current verdict.
+
+### Issue ID format
+
+`<PREFIX>-P<n>-<seq>` — sequential per priority within the area file. Examples: `SEC-P0-1`, `SEC-P0-2`, `QUAL-P1-1`, `TEST-P3-4`. IDs are **stable across re-runs** for the same finding; new findings get the next available sequence within their priority.
+
+### Per-file structure (canonical: `references/review.template.md`)
+
+Every area file follows this order:
+
+1. **Frontmatter**: `area`, `prefix`, `reviewed_at`, `files_reviewed_count`.
+2. **Title**: `# <AREA> Review`.
+3. **Verdict line** (one of):
+   - `**Verdict**: ✅ PASS` (single line, exactly this string) — when the file has zero open issues.
+   - `**Verdict**: ❌ FAIL — N issues (P0:a, P1:b, P2:c, P3:d)` — counts open (unchecked) issues only.
+4. **`## General Status`** — `Files Reviewed` bullet list + 2–4 sentence prose summary. If verdict is ✅ PASS, replace the body with the single line `_No issues found._`.
+5. **`## Issues`** — grouped strictly by priority: `### P0 — Blockers`, `### P1 — High`, `### P2 — Medium`, `### P3 — Low`. Empty priority groups may be omitted.
+6. **`## Pending Decisions`** — duplicates every issue whose `**Solution**` is `TBD`, with options and a recommendation.
+
+### Issue block format
+
+Each issue is a todo-checkbox list item with three labelled fields:
+
+```markdown
+- [ ] ### SEC-P0-1: <one-line summary>
+
+  **Source**: `path/to/file.ts:42-58`
+  ```ts
+  // representative source lines that triggered the finding
+  ```
+
+  **Issue**: <what is wrong, which standard/principle is violated, why it doesn't work>
+
+  **Solution**: <directional fix — enough for an agent to act, NOT a full diff>
+```
+
+`Solution` is **direction**, not a full patch. Capture the intent ("validate token at boundary, reject empty input, route through existing `verifyToken` helper") so a downstream `/coding:fix` agent can implement.
+
+### Fixed-issue convention
+
+When an issue is resolved, **both** signals are required:
+
+1. Flip the checkbox from `- [ ]` to `- [x]`.
+2. Wrap the heading text in `~~...~~`.
+
+Example:
+
+```markdown
+- [x] ### ~~SEC-P0-1: hard-coded credentials in auth handler~~
+```
+
+Fixed issues remain in the file as historical record. They are **not** counted in the verdict line.
+
+### Pending Decisions format
+
+When the right fix is unclear or there are multiple credible directions, set `**Solution**: TBD` on the main issue and **duplicate** the issue under `## Pending Decisions` with an `**Options**` block:
+
+```markdown
+- [ ] ### QUAL-P1-3: <same summary as main issue>
+
+  **Source**: `path/to/file.ts:88-104`
+  ```ts
+  // same snippet as main issue
+  ```
+
+  **Issue**: <same description as main issue>
+
+  **Options**:
+  1. <approach A> — Pros: <…>. Cons: <…>.
+  2. <approach B> — Pros: <…>. Cons: <…>.
+
+  **Recommended**: Option <N> — <one-line reason>
+```
+
+### Resolution rule
+
+When a Pending Decision is resolved (an option is chosen):
+
+1. Fill in `**Solution**` on the main issue under `## Issues` with the chosen direction.
+2. **Delete** the corresponding entry from `## Pending Decisions`.
+
+Never leave both a concrete `**Solution**` on the main issue and a duplicate `Pending Decisions` entry — they are mutually exclusive states.
 
 ## 🔄 Workflow
 
@@ -152,8 +259,10 @@ Filter files by selected scopes (pass file paths to teammates, not file contents
      - Path to the approved plan document (PLAN.md/DRAFT.md/DESIGN.md/PR description) for drift checking
      - File paths to analyze (NOT file contents)
      - Standard file paths to consult (e.g., `/absolute/path/to/standards/testing.md`)
-     - Expected report format (YAML with findings, metrics, context_level, plan_drifts)
-     - Instruction to calculate and report `context_level` from token usage
+     - **Output target**: the absolute path to the area file under `<out>/` (e.g., `<project-root>/reviews/SECURITY.md`) — the subagent writes this file directly
+     - **Template**: `references/review.template.md` — the canonical structure to follow (frontmatter, verdict, General Status, Issues grouped P0→P3, Pending Decisions)
+     - **Re-run instruction**: if the target file already exists, read it first; cross-reference new findings against any unchecked (`- [ ]`) issues by `Source` location + `Issue` text; reuse the original `<PREFIX>-P<n>-<seq>` ID for matched issues; preserve any Pending Decisions context on matched issues; for prior unchecked issues with no current match, confirm the issue no longer applies before dropping it; new unmatched findings get the next available sequence per priority
+     - Instruction to calculate and report `context_level` from token usage in the completion message back to the lead
 
 5. **Assign ownership**: `TaskUpdate` to set owner for each task to corresponding reviewer
 
@@ -176,30 +285,35 @@ Filter files by selected scopes (pass file paths to teammates, not file contents
    - Task: Check for conflicts or interactions between scope findings
    - Wait for cross-review completion messages
 
-#### Phase 4: Aggregation & Cleanup
+#### Phase 4: Index & Cleanup
 
-1. **Aggregate findings**:
-   - Group by file path
-   - Sort by line number within each file
-   - Calculate metrics across all scopes
+1. **Verify per-area files**:
+   - For every scope spawned, confirm the corresponding `<out>/<AREA>.md` file exists and conforms to `references/review.template.md` (frontmatter + verdict line + General Status + Issues + Pending Decisions).
+   - If a file is missing, surface the failure rather than silently aggregating.
 
-2. **Generate REVIEW.md**:
-   - Detailed findings by file
-   - Summary metrics
-   - Critical actions required
-   - Systemic improvement recommendations
-   - Agent lifecycle statistics (agents spawned, reused, retired)
+2. **Generate or refresh `<out>/README.md` index**:
+   - One row per area file, with the verdict pulled verbatim from the file's first verdict line (`✅ PASS` or `❌ FAIL — N issues (P0:a, P1:b, P2:c, P3:d)`).
+   - Link each area name to its file (e.g., `[Security](./SECURITY.md)`).
+   - Include reviewed timestamp and aggregate counts (P0/P1/P2/P3 totals across files).
+   - On re-runs, **rewrite** this index entirely from the current area files.
 
-3. **Shutdown teammates**:
+3. **Print console summary**:
+   - Counts per priority across all areas.
+   - List of FAIL areas with their open-issue counts.
+   - Path to `<out>/README.md`.
+   - Agent lifecycle statistics (agents spawned, reused, retired).
+
+4. **Shutdown teammates**:
    - Send `SendMessage` with type `shutdown_request` to all active teammates
    - Wait for shutdown confirmations
 
-4. **Cleanup**: `TeamDelete` to remove team
+5. **Cleanup**: `TeamDelete` to remove team
 
-5. **Report**:
-   - Display summary to user
-   - Note execution mode: team
-   - Include agent lifecycle stats (spawned, reused, retired by context level)
+6. **Report**:
+   - Display per-area file listing with each verdict.
+   - Path to `<out>/README.md` index.
+   - Note execution mode: team.
+   - Include agent lifecycle stats (spawned, reused, retired by context level).
 
 #### Agent Summary
 
@@ -219,7 +333,7 @@ You are a **Review Orchestrator**. You coordinate code review to improve both th
 
 - **Strategic Delegation**: Assign review with clear mission, constraints, success metrics
 - **Parallel Coordination**: Run specialized agents autonomously and simultaneously
-- **Learning Orientation**: Consolidate findings into REVIEW.md plus systemic improvements
+- **Learning Orientation**: Each subagent writes its own area file under `<out>/` (per `references/review.template.md`); orchestrator generates the `<out>/README.md` index plus systemic improvements
 - **Visible Reasoning**: Reviewers explain why issues matter, not just what's wrong
 - **Truth Over Ego**: Findings are data for system upgrades, not criticism
 - **Scope Management**: Adapt depth based on user-selected areas of focus
@@ -269,7 +383,7 @@ Prompt the agent as a **Testing Quality Analyst** performing comprehensive read-
 2. **Test Quality Analysis**: Analyze structure and organization, identify complex setups, check arrange-act-assert patterns, find unnecessary or redundant tests
 3. **Fixtures & Mocks Analysis**: Find duplicate fixture patterns, identify centralizable mocks, recommend consolidation strategies
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `current_state`, `recommendation`), `metrics` (coverage_line, coverage_branch, coverage_statement, total_issues, critical_issues, high_issues).
+**Output**: write the area file using `references/review.template.md`. Target path: `<out>/TESTING.md` (resolved against project root from the `--out` arg, default `reviews/`). Prefix `TEST`. Issue IDs follow `TEST-P<n>-<seq>`. Verdict is computed from open (unchecked) issues only. If `<out>/TESTING.md` already exists, read it first and apply the re-run logic: match new findings to prior unchecked entries by `Source` location + `Issue` text; reuse original IDs and any Pending Decisions context; for prior unchecked items with no current match, confirm they no longer apply before dropping; new findings get the next available sequence per priority. Rewrite the file in full. Return a short completion message to the orchestrator with the file path, open-issue counts per priority, and `context_level`.
 
 **For DOCUMENTATION Scope** (if selected):
 
@@ -284,7 +398,7 @@ Prompt the agent as a **Documentation Quality Analyst** performing read-only doc
 5. Example usage and code samples
 6. Type definitions documentation
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `function`, `severity`, `category`, `issue`, `recommendation`), `metrics` (functions_documented, classes_documented, interfaces_documented, total_issues).
+**Output**: write the area file using `references/review.template.md`. Target path: `<out>/DOCS.md`. Prefix `DOCS`. Issue IDs follow `DOCS-P<n>-<seq>`. Apply the same re-run logic as above (match prior unchecked issues by `Source` + `Issue`, preserve IDs and Pending Decisions). Rewrite the file in full. Return a short completion message with file path, open-issue counts per priority, and `context_level`.
 
 **For CODE-QUALITY Scope** (if selected):
 
@@ -307,7 +421,12 @@ Prompt the agent as a **Code Quality Analyst** performing read-only code quality
 
 **DO NOT** re-check what tooling already enforces — skip type errors (→ `tsc`), unused imports/vars/exports, unreachable code, dead branches (→ ESLint / knip), and formatting (→ Prettier). The `style` scope and CI lint step own these. Spend bandwidth on semantics, intent, sibling fit, and plan fidelity.
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `typescript_project`, `plan_source` (path to plan doc or "none_found"), `plan_drifts_found`, `sibling_families_checked` (list of role families scanned, e.g. "adapters", "mappers"), `findings` (each with `file`, `line`, `severity`, `category` (include `plan-drift`, `sibling-inconsistency`, `redundancy`, `semantic-error` as valid categories), `issue`, `current_state`, `sibling_reference` (for consistency findings: file:line of the divergent sibling), `recommendation`, `plan_justification` (for drift findings: present/weak/missing)), `metrics` (complexity_score, duplication_percentage, plan_drifts, unjustified_drifts, sibling_inconsistencies, total_issues, critical_issues, high_issues).
+**Output**: write the area file using `references/review.template.md`. Code-quality findings are split between two area files based on category:
+
+- **Correctness/semantics findings** (off-by-ones, swapped arguments, wrong operators, swallowed errors, race conditions, plan-drift, semantic bugs) → `<out>/CORRECTNESS.md`, prefix `CORR`, IDs `CORR-P<n>-<seq>`.
+- **All other quality findings** (sibling-consistency, non-mechanical redundancy, structure, naming, complexity, DRY, error-handling posture, performance, accessibility, architecture) → `<out>/QUALITY.md`, prefix `QUAL`, IDs `QUAL-P<n>-<seq>`.
+
+For each target file, apply the re-run logic (match prior unchecked issues by `Source` + `Issue`, preserve IDs and Pending Decisions, drop only after confirming no longer applicable, new findings get next available sequence). Rewrite each file in full. Return a short completion message listing both file paths with open-issue counts per priority and `context_level`.
 
 **For SECURITY Scope** (if selected):
 
@@ -323,7 +442,7 @@ Prompt the agent as a **Security Analyst** performing read-only security review.
 6. **CORS & Headers**: Security headers configuration
 7. **Crypto**: Proper encryption usage
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `findings` (each with `file`, `line`, `function`, `severity`, `category`, `issue`, `current_state`, `recommendation`, `attack_vector`), `metrics` (security_score, critical_vulnerabilities, high_vulnerabilities, total_issues).
+**Output**: write the area file using `references/review.template.md`. Target path: `<out>/SECURITY.md`. Prefix `SEC`. Issue IDs follow `SEC-P<n>-<seq>`. Apply the re-run logic (match prior unchecked issues by `Source` + `Issue`, preserve IDs and Pending Decisions). Rewrite the file in full. Return a short completion message with file path, open-issue counts per priority, and `context_level`.
 
 **For STYLE Scope** (if selected):
 
@@ -338,42 +457,35 @@ Prompt the agent as a **Style & Linting Analyst** performing read-only style rev
 5. Report all linting issues found
 6. Check naming convention compliance
 
-Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyzed`, `linting_scripts_executed`, `findings` (each with `file`, `line`, `severity`, `category`, `issue`, `rule`, `recommendation`), `metrics` (total_lint_errors, total_lint_warnings, naming_violations, total_issues).
+**Output**: write the area file using `references/review.template.md`. Target path: `<out>/STYLE.md`. Prefix `STYL`. Issue IDs follow `STYL-P<n>-<seq>`. Apply the re-run logic (match prior unchecked issues by `Source` + `Issue`, preserve IDs and Pending Decisions). Rewrite the file in full. Return a short completion message with file path, open-issue counts per priority, and `context_level`.
 
-#### Phase 3: Aggregation & Report Generation (You)
+#### Phase 3: Index & Report Generation (You)
 
-1. **Collect all reports** from Task tool executions. If any agent reports failure, log the issue and note incomplete analysis.
-2. **Group findings by file path**. Within each file, sort by:
-   - Primary: Line number (ascending)
-   - Secondary: Severity (critical > high > medium > low)
-   - Tertiary: Scope (test > code-quality > security > documentation > style)
-3. **Calculate aggregate metrics**: total files reviewed, findings by severity, findings by scope, findings by category.
-4. **Systemic Pattern Analysis**:
-   - **Recurring Issues**: Identify patterns across files (e.g., "5 files lack input validation")
-   - **Root Causes**: What systemic gaps allow these issues?
-   - **Process Gaps**: Why did existing process not catch this?
-   - **System Improvements**: Specific actions to prevent recurrence
-   - **Learning Assets**: Document patterns for team reference
-5. **Determine overall status**:
-   - Any critical issues: **FAIL**
-   - High issues but no critical: **REQUIRES_CHANGES**
-   - Only medium/low issues: **PASS_WITH_SUGGESTIONS**
-   - No issues: **PASS**
-6. **Generate REVIEW.md** with findings grouped by file, sorted by line, including: summary metrics, findings by file (each with line, severity, scope, issue, current state, recommendation, impact, action required), systemic improvements section (patterns, root causes, process changes, learning assets), and conclusion.
-7. **Write REVIEW.md** to project root or specified location.
+1. **Collect completion messages** from each Task tool execution (file path written, open-issue counts per priority, `context_level`). If any agent reports failure, log it and note that the corresponding area file is incomplete or missing.
+2. **Verify each expected area file** exists at its target path under `<out>/` and starts with the canonical verdict line per `references/review.template.md`. Surface any structural problems rather than silently aggregating.
+3. **Compute aggregate counts** from each file's verdict line: totals per priority across `<out>/SECURITY.md`, `<out>/QUALITY.md`, `<out>/TESTING.md`, `<out>/DOCS.md`, `<out>/STYLE.md`, `<out>/CORRECTNESS.md`. List which areas are FAIL vs PASS.
+4. **Systemic Pattern Analysis** (across area files): recurring issues, root causes, process gaps, system improvements, learning assets. Capture this as a short addendum at the end of `<out>/README.md`.
+5. **Determine overall status** from open-issue counts:
+   - Any P0 open: **FAIL**
+   - P1 open, no P0: **REQUIRES_CHANGES**
+   - Only P2/P3 open: **PASS_WITH_SUGGESTIONS**
+   - All areas verdict ✅ PASS: **PASS**
+6. **Generate or refresh `<out>/README.md` index** with one row per area file (verdict pulled verbatim from each file's first verdict line, link to the file), reviewed timestamp, aggregate priority counts, the systemic improvements section, and overall status. On re-runs, **rewrite** the index entirely from current area files.
 
 ### Step 3: Reporting
 
 **Output Format** (both modes):
+
+The orchestrator reports the **per-area file listing** (one line per area, with verdict), aggregate counts per priority, and the path to `<out>/README.md`. Detailed findings live in the area files — not in the console summary.
 
 **Common fields**:
 
 - Execution mode: [team|subagent]
 - Review scopes: [list of scopes reviewed]
 - Overall status: [PASS|PASS_WITH_SUGGESTIONS|REQUIRES_CHANGES|FAIL]
-- Files reviewed: [N]
-- Total issues: [N] by severity
-- Issues by scope
+- Per-area file listing with each file's verdict
+- Aggregate open-issue counts: P0, P1, P2, P3
+- Path to `<out>/README.md` index
 
 **Team mode additional fields**:
 
@@ -388,52 +500,46 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 **If CI/Non-Interactive Mode**:
 
 ```markdown
-# Code Review Report
+# Code Review Summary
 
 **Generated**: [timestamp]
 **Review Scopes**: [scopes reviewed]
 **Overall Status**: [PASS|PASS_WITH_SUGGESTIONS|REQUIRES_CHANGES|FAIL]
 
-## Summary
+## Area Files
 
-- **Total Files Reviewed**: [N]
-- **Total Issues Found**: [N]
-  - Critical: [N]
-  - High: [N]
-  - Medium: [N]
-  - Low: [N]
+- [Security](./reviews/SECURITY.md) — ❌ FAIL — 3 issues (P0:1, P1:2, P2:0, P3:0)
+- [Quality](./reviews/QUALITY.md) — ✅ PASS
+- [Testing](./reviews/TESTING.md) — ❌ FAIL — 2 issues (P0:0, P1:0, P2:1, P3:1)
+- [Docs](./reviews/DOCS.md) — ✅ PASS
+- [Style](./reviews/STYLE.md) — ✅ PASS
+- [Correctness](./reviews/CORRECTNESS.md) — ❌ FAIL — 1 issue (P0:0, P1:1, P2:0, P3:0)
 
-## Findings by File
+## Aggregate
 
-[Full detailed findings with file:line references]
+- P0: [N], P1: [N], P2: [N], P3: [N]
 
-## Conclusion
-
-[Overall assessment]
+Index: `./reviews/README.md`
 ```
 
 **If Interactive Mode**:
 
 ```
-📊 Code Review Complete
+Code Review Complete
 
-✅ REVIEW.md generated successfully
+Area files written under reviews/:
+  SECURITY.md    ❌ FAIL — 3 issues (P0:1, P1:2, P2:0, P3:0)
+  QUALITY.md     ✅ PASS
+  TESTING.md     ❌ FAIL — 2 issues (P0:0, P1:0, P2:1, P3:1)
+  DOCS.md        ✅ PASS
+  STYLE.md       ✅ PASS
+  CORRECTNESS.md ❌ FAIL — 1 issue (P0:0, P1:1, P2:0, P3:0)
 
-📁 Files Reviewed: [N]
-🔍 Total Issues: [N] (Critical: [N], High: [N], Medium: [N], Low: [N])
+Aggregate open issues: P0:1, P1:3, P2:1, P3:1
 
-🎯 Issues by Scope:
-  • test: [N] issues
-  • code-quality: [N] issues
-  • security: [N] issues
-  • documentation: [N] issues
-  • style: [N] issues
+FAIL areas: SECURITY, TESTING, CORRECTNESS
 
-⚠️ Critical Actions Required:
-1. [First critical issue - file:line]
-2. [Second critical issue - file:line]
-
-📄 Full details saved to: REVIEW.md
+Index: reviews/README.md
 ```
 
 ## 📝 Examples
@@ -447,8 +553,8 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 # Team mode behavior:
 #   - Creates review-team
 #   - Spawns specialized reviewers for all scopes in parallel
-#   - Tracks context levels for potential reuse
-#   - Aggregates findings from all teammates
+#   - Each reviewer writes its own area file under reviews/
+#   - Orchestrator generates reviews/README.md index
 #   - Reports agent lifecycle stats
 ```
 
@@ -459,19 +565,18 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 # Team mode:
 #   - Creates review-team
 #   - Spawns security-reviewer (nina-petrov-security-champion, opus)
-#   - Single specialist performs thorough security analysis
-#   - Reports context level for potential reuse
+#   - Writes reviews/SECURITY.md
+#   - Updates reviews/README.md index
 ```
 
-#### Multi-Scope Review with Cross-Review (Team Mode)
+#### Custom Output Directory (Team Mode)
 
 ```bash
-/review-code "src/api/" --area=security,code-quality
+/review-code "src/api/" --area=security,code-quality --out=audits/q4
 # Team mode:
-#   - Spawns security-reviewer and quality-reviewer in parallel
-#   - Both analyze API directory independently
-#   - If critical issues found, may trigger cross-scope review round
-#   - Reuses low-context agents for cross-review if available
+#   - Writes audits/q4/SECURITY.md, audits/q4/QUALITY.md, audits/q4/CORRECTNESS.md
+#   - Generates audits/q4/README.md index with verdicts
+#   - On re-run, preserves issue IDs and Pending Decisions context
 ```
 
 ### Subagent Mode Examples (Fallback)
@@ -518,12 +623,13 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 # Comprehensive review across all quality dimensions
 ```
 
-### Directory Review with Verbose Output
+### Directory Review with Custom Output
 
 ```bash
-/review-code "src/auth/" --verbose --format=markdown
-# Reviews authentication directory with detailed explanations
-# Outputs in human-readable markdown format
+/review-code "src/auth/" --out=reviews/auth
+# Reviews authentication directory
+# Writes reviews/auth/SECURITY.md, QUALITY.md, etc.
+# Index at reviews/auth/README.md
 ```
 
 ### Package-Based Review
@@ -537,11 +643,12 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 ### CI Mode Example
 
 ```bash
-/review-code --area=all --format=markdown
+/review-code --area=all
 # In CI environment:
-#   - Outputs full REVIEW.md content to console
+#   - Writes per-area files under reviews/
+#   - Prints area-file listing + aggregate counts to console
 #   - No interactive prompts
-#   - Exits with non-zero code if critical issues found
+#   - Exits with non-zero code if any P0 issues found
 ```
 
 ### Interactive Mode Example
@@ -550,8 +657,8 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 /review-code "src/"
 # In interactive environment:
 #   - May prompt for scope selection if unclear
-#   - Outputs summary to console
-#   - Writes full details to REVIEW.md file
+#   - Writes per-area files under reviews/
+#   - Prints area-file listing with verdicts to console
 #   - User-friendly formatting
 ```
 
@@ -596,12 +703,51 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 # Focuses on code quality and style compliance
 ```
 
-### Format Options
+### Clean Pass Example (single area, zero issues)
 
 ```bash
-/review-code "src/" --format=yaml  # Machine-readable YAML for /fix-code
-/review-code "src/" --format=json  # JSON format for CI/CD integration
-/review-code "src/" --format=markdown  # Human-readable for PR comments
+/review-code "src/auth/" --area=style
+# Subagent writes reviews/STYLE.md:
+#
+#   # STYLE Review
+#   **Verdict**: ✅ PASS
+#   ## General Status
+#   _No issues found._
+#
+# Console output:
+#   STYLE.md  ✅ PASS
+#   Index: reviews/README.md
+```
+
+### Issues with Pending Decisions Example
+
+```bash
+/review-code "src/api/" --area=security,code-quality --out=reviews
+# Subagents write reviews/SECURITY.md, reviews/QUALITY.md, reviews/CORRECTNESS.md.
+# reviews/SECURITY.md contains issues like:
+#
+#   ## Issues
+#   ### P0 — Blockers
+#   - [ ] ### SEC-P0-1: missing input validation on /payments
+#         **Source**: `src/api/payments.controller.ts:203-218`
+#         **Issue**: ...
+#         **Solution**: TBD
+#   ### P1 — High
+#   - [ ] ### SEC-P1-1: token compared with == instead of constant-time
+#         **Solution**: replace with `timingSafeEqual` from existing `crypto-utils`
+#
+#   ## Pending Decisions
+#   - [ ] ### SEC-P0-1: missing input validation on /payments
+#         **Options**:
+#         1. Inline zod schema — Pros: local. Cons: duplicates auth boundary contract.
+#         2. Reuse existing `validateRequest` middleware — Pros: consistent. Cons: requires routing tweak.
+#         **Recommended**: Option 2 — matches sibling controllers in `users.controller.ts`.
+#
+# Console output:
+#   SECURITY.md     ❌ FAIL — 2 issues (P0:1, P1:1, P2:0, P3:0)
+#   QUALITY.md      ✅ PASS
+#   CORRECTNESS.md  ✅ PASS
+#   Index: reviews/README.md
 ```
 
 ### Team Mode Output Example
@@ -610,32 +756,27 @@ Report format (YAML, <2000 tokens): `scope`, `status`, `summary`, `files_analyze
 /review-code "src/api/" --area=all
 # Output (Team Mode):
 #
-# 📊 Code Review Complete (Team Mode)
+# Code Review Complete (Team Mode)
 #
-# ✅ REVIEW.md generated successfully
+# Area files written under reviews/:
+#   SECURITY.md     ❌ FAIL — 5 issues (P0:1, P1:2, P2:1, P3:1)
+#   QUALITY.md      ❌ FAIL — 8 issues (P0:0, P1:3, P2:4, P3:1)
+#   TESTING.md      ❌ FAIL — 6 issues (P0:0, P1:1, P2:3, P3:2)
+#   DOCS.md         ✅ PASS
+#   STYLE.md        ✅ PASS
+#   CORRECTNESS.md  ❌ FAIL — 4 issues (P0:0, P1:2, P2:1, P3:1)
 #
-# 📁 Files Reviewed: 42
-# 🔍 Total Issues: 87 (Critical: 5, High: 15, Medium: 32, Low: 35)
+# Aggregate open issues: P0:1, P1:8, P2:9, P3:5
 #
-# 🎯 Issues by Scope:
-#   • test: 18 issues
-#   • code-quality: 22 issues
-#   • security: 12 issues
-#   • documentation: 20 issues
-#   • style: 15 issues
+# FAIL areas: SECURITY, QUALITY, TESTING, CORRECTNESS
 #
-# 👥 Agent Lifecycle:
-#   • Total agents spawned: 5
-#   • Agents reused: 2 (for cross-scope review)
-#   • Agents retired: 3 (context >= 50%)
-#   • Average context level: 38%
+# Agent Lifecycle:
+#   - Total agents spawned: 5
+#   - Agents reused: 2 (for cross-scope review)
+#   - Agents retired: 3 (context >= 50%)
+#   - Average context level: 38%
 #
-# ⚠️ Critical Actions Required:
-# 1. src/api/auth.controller.ts:89 - SQL injection vulnerability
-# 2. src/api/users.controller.ts:145 - Sensitive data exposure
-# 3. src/api/payments.controller.ts:203 - Missing input validation
-#
-# 📄 Full details saved to: REVIEW.md
+# Index: reviews/README.md
 ```
 
 ### Error Handling
