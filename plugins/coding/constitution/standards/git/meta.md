@@ -41,3 +41,6 @@ If exception note is missing, submission is rejected.
 - `GIT-MSG-*`: Commit message format, type, scope, title length, body, and footer rules.
 - `GIT-BRN-*`: Branch naming format and scope convention rules.
 - `GIT-PR-*`: Pull request format, description structure, and review rules.
+- `GIT-PR-SIZE-*`: PR size zones (green/yellow/red/black) with file and LOC thresholds.
+- `GIT-PR-TYPE-*`: PR categorisation across the 12 PR archetypes and isolation rules between them.
+- `GIT-PR-STACK-*`: Stacked-PR mechanics — bookmark naming, fix routing, merge order, and feature-flag policy.
