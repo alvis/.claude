@@ -218,6 +218,69 @@ When reviewing PRs:
 - **Large**: 500-1000 lines changed (needs justification)
 - **Too Large**: > 1000 lines (split into multiple PRs)
 
+### PR Size Zones
+
+A precise zone policy supersedes the loose Small/Medium/Large bands above when an enforced lint or stacked-PR workflow is configured. A PR's zone is the **stricter** of files-changed and net-LOC.
+
+| Zone   | Files Changed | Net LOC | Required Sections                          | Reviewer Expectation              |
+|--------|---------------|---------|--------------------------------------------|------------------------------------|
+| Green  | ≤ 15          | ≤ 500   | Summary, Checklist                         | Quick read; default-mergeable      |
+| Yellow | ≤ 30          | ≤ 1200  | Summary, Checklist, Risk, Test plan        | One reviewer; ~30 min budget       |
+| Red    | ≤ 60          | ≤ 2000  | All of yellow + `## Why this size` (isolation justification) + reviewer-time estimate | Two reviewers; explicit time block |
+| Black  | > 60          | > 2000  | Reject by default; flag using template     | Author splits before review        |
+
+Black-zone PRs are flag-only — the lint surfaces the rejection template but does not auto-block merge so escape hatches stay possible. Override the thresholds per-project via a `[git.pr.thresholds]` block in standard-overrides config (`files_green`, `loc_green`, `files_yellow`, `loc_yellow`, `files_red`, `loc_red`).
+
+### Black-Zone Rejection Template
+
+Reviewers paste this on any PR that crosses into the black zone. It is a flag, not an automatic block:
+
+```markdown
+## ⛔ PR Size — Black Zone
+
+This PR exceeds **60 files** or **2000 LOC** (zone threshold).
+
+Black-zone PRs are flagged because reviewer attention degrades sharply past this size.
+Please split before requesting review:
+
+- [ ] Extract mechanical refactors (renames, moves) into their own PR (`GIT-PR-TYPE-04`)
+- [ ] Extract migrations into their own PR with rollback (`GIT-PR-TYPE-03`)
+- [ ] Extract generated files into their own PR or mark them clearly (`GIT-PR-TYPE-05`)
+- [ ] Land code spec / scaffolding first (`GIT-PR-TYPE-02`)
+- [ ] Stack remaining behaviour changes per `GIT-PR-STACK-*`
+
+If a split is genuinely impossible (e.g. atomic migration), justify under `## Why this size`
+and override locally via `[git.pr.thresholds]` in standard-overrides.
+```
+
+### PR Categories (the 12 Archetypes)
+
+Every PR declares exactly one category in its title prefix or body header (see `GIT-PR-TYPE-01`). Categories drive expected size, required sections, and review depth.
+
+- **rfc** — A proposal-only PR adding a design document or decision record. No production code. Use when a change needs alignment before implementation. Lands as the top of a stack so reviewers can comment on intent before reviewing scaffolding.
+- **code-spec** — Types, interfaces, schema definitions, and JSDoc-only contracts with no runtime behaviour. Use to lock the shape of an API or domain model before any implementation. Lands first in the stack so downstream PRs reference settled types.
+- **contract** — External-facing API, IPC, or wire-format contracts (OpenAPI, GraphQL SDL, protobuf, JSON Schema). Use when the change is observable across services or processes. Reviewed by both producer and consumer owners.
+- **domain-model** — Pure domain entities, value objects, and invariants with their unit tests. Use when introducing or reshaping the ubiquitous-language layer. No I/O, no transport, no framework code.
+- **implementation** — Business logic that fulfils a previously-landed code-spec or domain-model. Use for the bulk of feature work. Should not introduce new public types — those land in code-spec first.
+- **integration** — Wiring between modules, adapters, dependency-injection bindings, and end-to-end tests. Use when connecting already-implemented pieces; expect cross-cutting touch but isolated semantics.
+- **feature-flag** — Adds, flips, or removes a feature flag. Use to introduce reversibility before a behaviour change lands, and again to clean up the flag once a rollout settles. Must name the flag and state its default.
+- **migration** — Database schema migrations, data backfills, or config-format upgrades. Isolated from logic changes (`GIT-PR-TYPE-03`) and must include a `## Rollback` section. Land behind a flag whenever the migration is observable.
+- **ui** — User-facing visual or interaction changes. Use for component, layout, copy, or styling work. Must include before/after screenshots and accessibility notes when relevant.
+- **mechanical-refactor** — Renames, file moves, automated codemods, and pure restructuring. Isolated from behaviour changes (`GIT-PR-TYPE-04`) so reviewers can trust the diff is mechanical. Often large in LOC but low in cognitive load — qualifies for red-zone justification.
+- **cleanup** — Dead-code removal, deprecated-API deletion, lint-debt repayment. Use when the change reduces surface area without altering behaviour. Pairs naturally with a preceding `feature-flag` retirement.
+- **observability** — Logs, metrics, traces, dashboards, alerts, and instrumentation. Use when adding visibility without changing behaviour. Reviewed for cardinality, PII, and alert-noise risk.
+
+### Stacked PR Mechanics
+
+When a feature spans more than one zone or category, split it into a stack governed by `GIT-PR-STACK-*`:
+
+- Bookmark each PR `<feature-slug>/NN-<type>` (e.g. `auth-rewrite/01-spec`, `auth-rewrite/02-impl`) — see `GIT-PR-STACK-01`.
+- Fix issues in the earliest owning unmerged change using `jj edit` / `jj absorb`, never by patching a later PR (`GIT-PR-STACK-02`).
+- Once a stack PR has merged upstream, never rewrite history — open a corrective PR instead (`GIT-PR-STACK-03`).
+- Land behaviour changes behind a flag unless the change is tiny, isolated, and reversible (`GIT-PR-STACK-04`).
+- Merge bottom-to-top; rebase the next PR onto main after each lower PR lands (`GIT-PR-STACK-05`).
+- Always open stacked PRs in draft (`GIT-PR-STACK-06`, reinforcing `GIT-PR-01`).
+
 ### PR Review Etiquette
 
 #### For Authors
