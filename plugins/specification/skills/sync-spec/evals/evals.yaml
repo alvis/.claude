@@ -1,0 +1,58 @@
+# Evaluation definition for sync-spec
+# Loaded by governance:verify-skill for functional/full verification.
+
+eval_type: objective
+
+test_cases:
+  - name: happy_path_with_children
+    prompt: "Download the Notion spec at <test-id> to disk so I have a local copy of the spec tree."
+    expectations:
+      - text: "resolves the spec-path to <project-root>/.code-spec by walking up from CWD to the closest project root"
+        type: content
+      - text: "wipes the spec-path directory before downloading (always — no caching)"
+        type: content
+      - text: "produces SPEC.md, INDEX.md, children/*.md (when child pages exist), and a .gitignore containing a single * at the bundle root"
+        type: content
+      - text: "writes notion_id, title, url, kind, fetched_at frontmatter on every markdown file"
+        type: content
+      - text: "reports status=completed with outputs.spec_bundle.spec_path, index_path, and a files[] list of kind/title/notion_id/path/summary entries"
+        type: content
+
+  - name: wipe_on_rerun
+    prompt: "Re-run sync-spec on a directory that already contains junk files left over from a previous run."
+    expectations:
+      - text: "performs Bash rm -rf on <spec-path> before any new content is written, removing any pre-existing files including unrelated junk"
+        type: content
+      - text: "does NOT preserve, copy, or merge any existing content under spec-path — fresh download every time"
+        type: content
+      - text: "passes safety check that spec-path is inside the resolved project root or under CWD before wiping"
+        type: content
+
+  - name: invalid_id_refusal
+    prompt: "Download spec ABCDEF (a malformed Notion id) to disk."
+    expectations:
+      - text: "validates the 32-char hex id after dash-stripping and refuses with status=refused, reason=invalid_id"
+        type: content
+      - text: "does NOT wipe the spec-path, does NOT write any files, does NOT dispatch the Notion Bundle Specialist subagent"
+        type: content
+      - text: "completion report includes refusal reason invalid_id"
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "download the Notion spec to disk"
+    - "sync the Notion spec page locally"
+    - "pull the spec bundle from Notion for ticket X"
+    - "mirror the Notion spec tree locally"
+    - "fetch the spec for this Notion ticket"
+    - "refresh my .code-spec bundle from Notion"
+    - "save a hard local copy of this Notion spec"
+
+  should_not_trigger:
+    - "sync this markdown file back to Notion"            # → sync-notion
+    - "implement this Notion ticket"                       # → implement-code
+    - "plan this spec into PLAN.md"                        # → plan-code
+    - "review the spec doc on Notion"                      # → review-service-operation
+    - "create a new Notion page"                           # → notion MCP direct
+    - "audit the service spec for completeness"            # → audit-service / review-service-operation
+    - "commit my changes"                                  # → coding:commit
