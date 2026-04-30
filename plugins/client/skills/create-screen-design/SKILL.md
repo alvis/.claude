@@ -2,8 +2,6 @@
 name: create-screen-design
 description: Create UX design docs with responsive ASCII variations
 model: opus
-context: fork
-agent: general-purpose
 allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
 argument-hint: <product name> <screen descriptions...> [--constraints=...] [--platforms=...]
 ---
