@@ -1,0 +1,64 @@
+# Evaluation definition for sync-tool.
+#
+# Used by `governance:verify-skill` for functional/full verification.
+# - test_cases drive process-style grading (workflow correctness).
+# - trigger_eval verifies the SKILL.md description picks up natural phrasing
+#   for the registered tools (brew, jj, gh) without false-positive matches.
+
+eval_type: process
+
+test_cases:
+  - name: install_full_registry_dry_run
+    prompt: "Show me what sync-tool would do if I ran it with --dry-run on this machine."
+    expectations:
+      - text: "invokes scripts/sync.py with --dry-run"
+        type: content
+      - text: "iterates over brew, jj, gh in registry order"
+        type: content
+      - text: "emits per-tool status lines and a final 'summary:' line"
+        type: content
+
+  - name: install_only_jj_gh
+    prompt: "Make sure jj and gh are installed and at minimum version, but don't touch brew."
+    expectations:
+      - text: "passes --only=jj,gh to scripts/sync.py"
+        type: content
+      - text: "preserves registry order (jj before gh)"
+        type: content
+      - text: "skips brew without modifying it"
+        type: content
+
+  - name: gh_auth_post_install_banner
+    prompt: "I just installed gh via sync-tool but it's stuck waiting on auth. What should I do?"
+    expectations:
+      - text: "explains the multi-line banner instructing the user to run `gh auth login` in another terminal"
+        type: content
+      - text: "mentions polling every 5 seconds and re-printing the banner every ~30s (every 6th poll)"
+        type: content
+      - text: "mentions SYNC_TOOL_NO_WAIT=1 as the way to skip the wait for CI/non-interactive callers"
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "install jj on my mac"
+    - "install gh"
+    - "install brew"
+    - "update my coding tools"
+    - "missing gh command"
+    - "missing jj command"
+    - "set up CLI dependencies"
+    - "make sure jj is up to date"
+    - "sync coding tools"
+    - "install gh and jj"
+
+  should_not_trigger:
+    - "write a function that parses dates"        # general coding, not tool sync
+    - "stack these PRs"                           # belongs to coding:stack-code
+    - "commit my changes"                         # belongs to coding:commit
+    - "review this code"                          # belongs to coding:review-code
+    - "install npm dependencies for this project" # not in registry; project-level deps
+    - "set up postgres locally"                   # not a registered CLI tool
+    - "install docker"                            # not in registry
+    - "what version of node am I running"         # diagnostic, not install/update
+    - "create a new skill called foo"             # belongs to governance:create-skill
+    - "open a pull request for this branch"       # belongs to coding:write-pr
