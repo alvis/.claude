@@ -1,6 +1,6 @@
 ---
 name: commit
-description: 'Create well-formatted atomic git commits using conventional commit messages with emoji. Triggers when: "commit my changes", "commit this", "make a commit", "git commit", "write a commit message". Also use when: staging and committing work-in-progress, splitting large diffs into atomic commits, generating conventional commit messages. Examples: "commit my changes", "commit these files as a fix", "make a conventional commit for this feature".'
+description: 'Create well-formatted atomic git commits using conventional commit messages. Triggers when: "commit my changes", "commit this", "make a commit", "git commit", "write a commit message". Also use when: staging and committing work-in-progress, splitting large diffs into atomic commits, generating conventional commit messages. Examples: "commit my changes", "commit these files as a fix", "make a conventional commit for this feature".'
 model: opus
 allowed-tools: Bash(git:*), Bash(npm:*), Bash(pnpm:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/*), Read, Grep, Glob, Agent
 argument-hint: [--no-verify] [--retrospective]
@@ -25,7 +25,7 @@ PreToolUse/PostToolUse hooks in the frontmatter auto-trigger these scripts. **If
 
 # Create Commit with Conventional Format
 
-Analyzes changes and creates atomic commits with conventional commit messages and appropriate emoji. Automatically runs pre-commit checks and suggests splitting large changes into multiple commits when appropriate.
+Analyzes changes and creates atomic commits with conventional commit messages. Automatically runs pre-commit checks and suggests splitting large changes into multiple commits when appropriate.
 
 ## Purpose & Scope
 
@@ -230,7 +230,7 @@ Target: def5678 test(auth): add login tests
 
 ### New Commits
 
-  <emoji> feat(auth): add logout endpoint
+  feat(auth): add logout endpoint
   Files: auth.ts, auth.spec.ts
 
 ### Projected History (after rebase)
@@ -250,11 +250,11 @@ ELSE:
 Pre-commit checks: [PASS / SKIP (--no-verify)]
 
 ### Commit 1
-  <emoji> <type>(scope): <description>
+  <type>(scope): <description>
   Files: <file list>
 
 ### Commit 2
-  <emoji> <type>(scope): <description>
+  <type>(scope): <description>
   Files: <file list>
 
 Proceed? [Y/n]
@@ -378,7 +378,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 3. [Commit creation]
 
 ## Commit Messages
-- [Emoji Type: Description]
+- [Type: Description]
 
 ## Next Steps (if applicable)
 - [Push to remote]
@@ -488,6 +488,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 - Title: aim for <=50 characters; if a longer title offers better clarity, use up to 72 characters; 72-character hard limit
 - Present tense, imperative mood
 - No period at end of subject line
+- **No emoji prefix**: NEVER prefix the subject line with an emoji or emoji shortcode (e.g., do NOT use `:sparkles: feat: ...`, `✨ feat: ...`, or `feat: :bug: fix ...`). Plain conventional-commits format only.
 - Follow conventional format:
   - `<type>: <description>` for global or non-project/feature specific changes
   - `<type>(<scope>): <description>` for project or feature specific changes -- use **short package name** as scope, dropping the catalog prefix (e.g., `@theriety/`, `@amino/`). For cross-package concerns, name the concern. For global changes, omit scope.
