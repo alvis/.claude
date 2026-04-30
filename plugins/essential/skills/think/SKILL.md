@@ -5,8 +5,6 @@ description: >
   Use when there is no crystal-clear instruction or solution on how to solve a
   problem — forces deliberate reasoning before any modification or creation begins.
 model: opus
-context: fork
-agent: general-purpose
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: [problem-or-question]
 ---

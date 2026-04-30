@@ -2,8 +2,6 @@
 name: update-screen-design
 description: Update Notion design docs to latest template
 model: opus
-context: fork
-agent: general-purpose
 allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
 argument-hint: [--product=...] [--screens=...] [--changes=...]
 ---
