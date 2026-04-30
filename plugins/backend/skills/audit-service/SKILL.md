@@ -165,67 +165,22 @@ Legend:
 
 #### Phase 2: Execution (Subagents)
 
-Spin up validation subagents, up to **2** at a time:
+Spin up read-only validation subagents, up to **2** at a time. The dispatch prompt MUST contain ONLY: spec path, implementation path(s), output template path, and applicable standards paths. Do not include parent narrative, intent, or expected conclusions.
 
     >>>
-    **ultrathink: adopt the Service Operation Validator mindset**
+    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
 
-    - You're a **Service Operation Validator** with deep expertise in service operation documentation who follows these technical principles:
-      - **Standards Compliance**: Rigorously validate against coding and documentation standards
-      - **Completeness Verification**: Ensure all required sections are present and complete
-      - **Consistency Checking**: Verify alignment between use cases, requirements, and pseudo code
-      - **Quality Assurance**: Identify gaps and provide actionable recommendations
+    This is a read-only audit. Do not modify any file.
 
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
-
-    **Read the following assigned standards** and follow them recursively:
-    - documentation.md
-    - observability/scan.md
-    - typescript.md
-    - function/scan.md
-    - universal/scan.md
-
-    **Assignment**
-    Validate this service operation:
-    - **Operation**: [operation name and ID]
-    - **Service Context**: [service context from discovery]
-    - **Data Operations Available**: [list from discovery]
-
-    **Steps**
-    1. **Fetch Operation Content**: Use Notion fetch to retrieve complete operation page
-    2. **Validate Use Cases**: Verify documented use cases exist, check sync block alignment
-    3. **Check Requirements**: Verify input parameters, output interfaces, functional requirements
-    4. **Validate Pseudo Code**: Check structure follows `createOperation` pattern:
-       ```typescript
-       import { createOperation } from '#factory';
-       export default createOperation.<operationName>(
-         async ({ input }, { verifyAccess, data: { entity }, integration: { lib }, service: { self, other } }) => {
-           verifyAccess(`<resource>:<identifier>:<action>`);
-           const result = await entity.dataOperation({ params });
-           return result;
-         },
-       );
-       ```
-    5. **Verify Data Operations**: Compare pseudo code data calls with Data Operations field
-    6. **Check Requirements Alignment**: Ensure use cases covered by requirements
-    7. **Validate Permissions**: Verify permission checks match permission field
-    8. **Assess Code-Requirements Consistency**: Confirm logic implements all requirements
-
-    **Validation Criteria**:
-    - Use Cases: At least one documented, sync block alignment checked
-    - Requirements: Input params with types, output interfaces, functional requirements
-    - Pseudo Code: Import order, naming conventions, TypeScript strict typing, lowercase comments
-    - Data Operations: PascalCase in field → camelCase in code mapping verified
-    - [IMPORTANT] DO NOT complain about template placeholders in use case section
-    - [IMPORTANT] Pseudo code is meant to be incomplete — focus on business logic
+    **Spec**: [absolute path to operation spec page export or DESIGN.md section]
+    **Implementation**: [absolute path(s) to operation source file(s) and related tests]
+    **Output Template**: [absolute path to AUDIT.md template or finding row schema]
+    **Applicable Standards**:
+    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
 
     **Report** (<1000 tokens):
     ```yaml
     status: success|failure|partial
-    summary: 'Validation completed for [operation]'
-    modifications: []
     outputs:
       operation_name: '[name]'
       validation_status: 'pass|issues_found'

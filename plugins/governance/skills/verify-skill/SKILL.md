@@ -247,27 +247,24 @@ In a single message, you spin up **3** subagents to perform validation in parall
 **Subagent A: Frontmatter Validator**
 
     >>>
-    **ultrathink: adopt the YAML Frontmatter Specialist mindset**
+    You are an independent validator. Treat the target skill file as unfamiliar; do not assume the author's intent is correct.
 
-    - You're a **YAML Frontmatter Specialist** who validates skill frontmatter with precision:
-      - **Schema Compliance**: Verify all required and optional fields
-      - **Value Validation**: Check field values against allowed ranges
-      - **Trigger Quality**: Assess description's "Use when" clause effectiveness
+    **Inputs**
+    - Target skill file: [skill_path]
+    - Rubric: frontmatter checklist below
+    - Report template: YAML block below
 
-    **Assignment**
-    Validate frontmatter of skill at [skill_path]
+    **Checklist**
 
-    **Steps**
-
-    1. Read the skill file
-    2. Parse YAML frontmatter between `---` delimiters
-    3. Check required fields: `name` (kebab-case, matches directory), `description` (includes "Use when..." clause)
-    4. Check optional fields if present: `model` (valid values: opus, sonnet, haiku), `context` (valid: fork, none), `agent` (valid agent type), `allowed-tools` (comma-separated tool names)
-    5. Validate description quality -- should clearly describe purpose AND trigger conditions
-    6. Check name matches directory name in the path
+    1. Read the skill file.
+    2. Parse YAML frontmatter between `---` delimiters.
+    3. Check required fields: `name` (kebab-case, matches directory), `description` (includes "Use when..." clause).
+    4. Check optional fields if present: `model` (valid values: opus, sonnet, haiku), `context` (valid: fork, none), `agent` (valid agent type), `allowed-tools` (comma-separated tool names).
+    5. Validate description quality -- should clearly describe purpose AND trigger conditions.
+    6. Check name matches directory name in the path.
 
     **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+    Return the following execution report (<1000 tokens):
 
     ```yaml
     status: pass|fail
@@ -287,33 +284,26 @@ In a single message, you spin up **3** subagents to perform validation in parall
 **Subagent B: Template Compliance Checker**
 
     >>>
-    **ultrathink: adopt the Template Compliance Auditor mindset**
+    You are an independent validator. Treat the target skill file as unfamiliar; do not assume the author's intent is correct.
 
-    - You're a **Template Compliance Auditor** with expertise in skill template standards:
-      - **Section Coverage**: Verify all required template sections exist
-      - **Structure Integrity**: Check section ordering and nesting
-      - **Format Standards**: Verify ASCII diagrams, code blocks, subagent instruction formatting
+    **Inputs**
+    - Target skill file: [skill_path]
+    - Rubric/template: `/Users/alvis/Repositories/.claude/plugins/governance/constitution/templates/skill.md` (follow references recursively if A points to B)
+    - Report template: YAML block below
 
-    **Read the following assigned standards** and follow them recursively (if A references B, read B too):
+    **Checklist**
 
-    - `/Users/alvis/Repositories/.claude/plugins/governance/constitution/templates/skill.md`
-
-    **Assignment**
-    Check template compliance of skill at [skill_path]
-
-    **Steps**
-
-    1. Read the template to understand required sections
-    2. Read the target skill file
-    3. Verify required sections: Introduction (Purpose, Role), Skill Overview (I/O Spec, Visual Overview), Skill Implementation (Steps, Phases)
-    4. Check section ordering matches template
-    5. Verify ASCII diagram exists and is properly formatted
-    6. Check subagent instruction blocks use `>>>` / `<<<` delimiters
-    7. Verify report YAML blocks exist at step outputs
-    8. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments
+    1. Read the template to understand required sections.
+    2. Read the target skill file.
+    3. Verify required sections: Introduction (Purpose, Role), Skill Overview (I/O Spec, Visual Overview), Skill Implementation (Steps, Phases).
+    4. Check section ordering matches template.
+    5. Verify ASCII diagram exists and is properly formatted.
+    6. Check subagent instruction blocks use `>>>` / `<<<` delimiters.
+    7. Verify report YAML blocks exist at step outputs.
+    8. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments.
 
     **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+    Return the following execution report (<1000 tokens):
 
     ```yaml
     status: pass|fail
@@ -334,29 +324,25 @@ In a single message, you spin up **3** subagents to perform validation in parall
 **Subagent C: Content Quality Assessor**
 
     >>>
-    **ultrathink: adopt the Technical Documentation Reviewer mindset**
+    You are an independent validator. Treat the target skill file as unfamiliar; do not assume the author's intent is correct.
 
-    - You're a **Technical Documentation Reviewer** with expertise in content quality:
-      - **Clarity**: Instructions should be unambiguous and actionable
-      - **Completeness**: All skill steps should be fully specified
-      - **Consistency**: Inputs/outputs should align across steps
-      - **Professional Polish**: No typos, broken references, or incomplete sections
+    **Inputs**
+    - Target skill file: [skill_path]
+    - Rubric: content-quality checklist below
+    - Report template: YAML block below
 
-    **Assignment**
-    Assess content quality of skill at [skill_path]
+    **Checklist**
 
-    **Steps**
-
-    1. Read the skill file completely
-    2. Check that purpose, when-to-use, and prerequisites are substantive (not placeholder)
-    3. Verify input/output specifications are complete and well-typed
-    4. Check each skill step has clear purpose, input, output definitions
-    5. Verify subagent instructions are detailed enough for autonomous execution
+    1. Read the skill file completely.
+    2. Check that purpose, when-to-use, and prerequisites are substantive (not placeholder).
+    3. Verify input/output specifications are complete and well-typed.
+    4. Check each skill step has clear purpose, input, output definitions.
+    5. Verify subagent instructions are detailed enough for autonomous execution.
     6. Check data flow -- do step outputs feed correctly into subsequent step inputs?
-    7. Assess overall clarity and professionalism
+    7. Assess overall clarity and professionalism.
 
     **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+    Return the following execution report (<1000 tokens):
 
     ```yaml
     status: pass|fail
@@ -492,25 +478,23 @@ In a single message, you spin up **up to 3** subagents to perform test cases in 
 For each test case:
 
     >>>
-    **ultrathink: adopt the Functional Test Runner mindset**
+    You are an independent test runner. Treat the target skill file as unfamiliar; capture raw results without judging quality (grading is Step 5).
 
-    - You're a **Functional Test Runner** who executes skill test cases with precision:
-      - **Faithful Execution**: Run the exact prompt specified
-      - **Complete Capture**: Record all outputs and side effects
-      - **No Judgment**: Capture results without grading (grading is Step 5)
-
-    **Assignment**
-    Execute test case "[test_case_name]" for skill at [skill_path]
+    **Inputs**
+    - Target skill file: [skill_path]
+    - Test case name: [test_case_name]
+    - Test prompt: "[test prompt]"
+    - Report template: YAML block below
 
     **Steps**
 
-    1. Read the skill file to understand expected behavior
-    2. Execute the test prompt: "[test prompt]"
-    3. Capture all outputs: text output, files created/modified, error messages
-    4. Record execution metadata: duration, tokens used (if available)
+    1. Read the skill file to understand expected behavior.
+    2. Execute the test prompt as given.
+    3. Capture all outputs: text output, files created/modified, error messages.
+    4. Record execution metadata: duration, tokens used (if available).
 
     **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+    Return the following execution report (<1000 tokens):
 
     ```yaml
     status: success|failure
@@ -566,33 +550,25 @@ In a single message, you spin up **up to 3** subagents to grade test results in 
 For each test result:
 
     >>>
-    **ultrathink: adopt the Grading Specialist mindset**
+    You are an independent grader. Treat the test output as unfamiliar; do not assume it is correct.
 
-    Reference: `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/grader.md`
-
-    - You're a **Grading Specialist** who evaluates skill outputs with rigorous 3-level validation:
-      - **Level 1 -- Predefined Expectations**: Check output against explicit expectations from evals.yaml
-      - **Level 2 -- Implicit Claims**: Verify any claims the skill makes about what it will produce
-      - **Level 3 -- Eval Quality**: Assess whether the test case itself is well-designed
-
-    **Assignment**
-    Grade test output for test case "[test_name]"
-
-    **Test Case**:
+    **Inputs**
+    - Test case name: [test_name]
     - Prompt: [prompt]
     - Expectations: [expectations list]
-
-    **Actual Output**: [raw output from Step 4]
+    - Actual output: [raw output from Step 4]
+    - Rubric: `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/grader.md`
+    - Report template: YAML block below
 
     **Steps**
 
-    1. Check each predefined expectation against the actual output
-    2. Identify implicit claims in the skill that should be verified
-    3. Assess whether the test case expectations are reasonable and complete
-    4. Assign grade: pass (meets all expectations), partial (meets some), fail (meets few/none)
+    1. Check each predefined expectation against the actual output.
+    2. Identify implicit claims in the skill that should be verified.
+    3. Assess whether the test case expectations are reasonable and complete.
+    4. Assign grade: pass (meets all expectations), partial (meets some), fail (meets few/none).
 
     **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
+    Return the following execution report (<1000 tokens):
 
     ```yaml
     status: success

@@ -255,14 +255,17 @@ Filter files by selected scopes (pass file paths to teammates, not file contents
 4. **Create review tasks**: `TaskCreate` for each scope with:
    - Subject: "Review [scope] (e.g., test, security)"
    - Description: Full instructions including:
+     - **Neutral preamble** (verbatim): "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct."
      - **Core Review Mandates** (plan adherence, non-mechanical redundancy, sibling consistency across adapters/mappers/etc., zero-tolerance semantics, delegate mechanical checks to lint/tsc/knip) — see top of skill
-     - Path to the approved plan document (PLAN.md/DRAFT.md/DESIGN.md/PR description) for drift checking
-     - File paths to analyze (NOT file contents)
-     - Standard file paths to consult (e.g., `/absolute/path/to/standards/testing.md`)
+     - Path to the approved plan document (PLAN.md/DRAFT.md/DESIGN.md/PR description) for drift checking — pass the file path only; do NOT summarize or paraphrase the plan
+     - Scope/file-set name and the file paths to analyze (NOT file contents)
+     - Rubric / standard file paths to consult (e.g., `plugins/coding/constitution/standards/code-review.md`, plus the area-specific scan standard such as `/absolute/path/to/standards/testing.md`)
      - **Output target**: the absolute path to the area file under `<out>/` (e.g., `<project-root>/reviews/SECURITY.md`) — the subagent writes this file directly
      - **Template**: `references/review.template.md` — the canonical structure to follow (frontmatter, verdict, General Status, Issues grouped P0→P3, Pending Decisions)
      - **Re-run instruction**: if the target file already exists, read it first; cross-reference new findings against any unchecked (`- [ ]`) issues by `Source` location + `Issue` text; reuse the original `<PREFIX>-P<n>-<seq>` ID for matched issues; preserve any Pending Decisions context on matched issues; for prior unchecked issues with no current match, confirm the issue no longer applies before dropping it; new unmatched findings get the next available sequence per priority
      - Instruction to calculate and report `context_level` from token usage in the completion message back to the lead
+
+   **Do NOT include in the task description**: parent-conversation framing, the implementer's reasoning narrative, "what we built and why" prose, sibling reviewers' findings during this initial pass, or any "the user wants X" / "we decided Y" sentences. The reviewer must form judgments solely from the artifact + rubric + template.
 
 5. **Assign ownership**: `TaskUpdate` to set owner for each task to corresponding reviewer
 
@@ -377,7 +380,7 @@ Dispatch up to 5 scope review tasks in parallel using the Task tool, one for eac
 
 Task tool with `subagent_type: "coding:ava-thompson-testing-evangelist"`
 
-Prompt the agent as a **Testing Quality Analyst** performing comprehensive read-only test analysis. Include standards: `testing/scan`, `universal/scan`, `code-review`. The agent performs:
+Prompt the agent as a **Testing Quality Analyst** performing comprehensive read-only test analysis. Begin the dispatch prompt with the neutral preamble verbatim: "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct." Pass only: the scope/file-set name, the file paths to analyze, the rubric paths (`plugins/coding/constitution/standards/code-review.md` and the area-specific scan standards `testing/scan`, `universal/scan`), the output target path, and the template path `references/review.template.md`. Do NOT include parent-conversation framing, the implementer's reasoning, "what we built and why" prose, sibling reviewers' findings, or "the user wants X" / "we decided Y" sentences. Include standards: `testing/scan`, `universal/scan`, `code-review`. The agent performs:
 
 1. **Coverage Analysis**: Run coverage tools, identify uncovered lines/branches/statements, specify exact file:line locations, recommend specific test cases
 2. **Test Quality Analysis**: Analyze structure and organization, identify complex setups, check arrange-act-assert patterns, find unnecessary or redundant tests
@@ -389,7 +392,7 @@ Prompt the agent as a **Testing Quality Analyst** performing comprehensive read-
 
 Task tool with `subagent_type: "general-purpose"`
 
-Prompt the agent as a **Documentation Quality Analyst** performing read-only documentation review. Include standard: `documentation/scan`. The agent checks:
+Prompt the agent as a **Documentation Quality Analyst** performing read-only documentation review. Begin the dispatch prompt with the neutral preamble verbatim: "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct." Pass only: the scope/file-set name, the file paths to analyze, the rubric paths (`plugins/coding/constitution/standards/code-review.md` and `documentation/scan`), the output target path, and the template path `references/review.template.md`. Do NOT include parent-conversation framing, the implementer's reasoning, "what we built and why" prose, sibling reviewers' findings, or "the user wants X" / "we decided Y" sentences. Include standard: `documentation/scan`. The agent checks:
 
 1. JSDoc/TSDoc completeness for all exported functions, classes, interfaces
 2. Inline comments for complex logic
@@ -404,7 +407,7 @@ Prompt the agent as a **Documentation Quality Analyst** performing read-only doc
 
 Task tool with `subagent_type: "coding:marcus-williams-code-quality"`
 
-Prompt the agent as a **Code Quality Analyst** performing read-only code quality review. The agent MUST apply the Core Review Mandates (Plan Adherence, Redundancy, Sibling Consistency, Zero Tolerance, Delegate Mechanical Checks) defined at the top of this skill. Include standards: `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`. The agent performs:
+Prompt the agent as a **Code Quality Analyst** performing read-only code quality review. Begin the dispatch prompt with the neutral preamble verbatim: "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct." Pass only: the scope/file-set name, the file paths to analyze, the path to the approved plan document (file path only — do NOT summarize or paraphrase its contents), the rubric paths (`plugins/coding/constitution/standards/code-review.md` plus `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`), the output target paths, and the template path `references/review.template.md`. Do NOT include parent-conversation framing, the implementer's reasoning narrative, "what we built and why" prose, sibling reviewers' findings during this initial pass, or "the user wants X" / "we decided Y" sentences. The agent MUST apply the Core Review Mandates (Plan Adherence, Redundancy, Sibling Consistency, Zero Tolerance, Delegate Mechanical Checks) defined at the top of this skill. Include standards: `code-review`, `universal/scan`, `function/scan`, `observability/scan`, `typescript/scan`, `naming/scan`. The agent performs:
 
 0. **Plan Adherence Check (MANDATORY FIRST STEP)**: Locate the approved plan (PLAN.md, DRAFT.md, DESIGN.md, linked spec, or PR description). For each changed file, map every change to a planned item. Flag drifts (additions, deviations, omissions). For each drift, evaluate whether a solid documented justification exists (commit message, PR comment, inline rationale). Drift without justification → severity **critical**. Drift with weak justification (convenience, scope creep) → severity **high**. If no plan is available, state this and use PR description as best-available contract.
 1. **Sibling Consistency Check (MANDATORY)**: For every function, class, method (INCLUDING internal/private members), and module, Grep the codebase for siblings of similar role (adapters, mappers, repositories, handlers, clients, formatters, validators, etc.). Compare naming conventions, parameter shape (order, options-object vs positional, optional/required split), return shape (envelope style, sync vs async, throw vs Result), and internal logic pattern (error handling, logging, retry/cache). Any unjustified divergence → severity **high** (**critical** for adapter-sets or other shared-interface families where inconsistency causes silent behavioural surprise).
@@ -432,7 +435,7 @@ For each target file, apply the re-run logic (match prior unchecked issues by `S
 
 Task tool with `subagent_type: "coding:nina-petrov-security-champion"`
 
-Prompt the agent as a **Security Analyst** performing read-only security review. Include standards: `universal/scan`, `code-review`. The agent checks:
+Prompt the agent as a **Security Analyst** performing read-only security review. Begin the dispatch prompt with the neutral preamble verbatim: "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct." Pass only: the scope/file-set name, the file paths to analyze, the rubric paths (`plugins/coding/constitution/standards/code-review.md` and `universal/scan`), the output target path, and the template path `references/review.template.md`. Do NOT include parent-conversation framing, the implementer's reasoning, "what we built and why" prose, sibling reviewers' findings, or "the user wants X" / "we decided Y" sentences. Include standards: `universal/scan`, `code-review`. The agent checks:
 
 1. **Injection Vulnerabilities**: SQL injection, XSS, command injection
 2. **Authentication/Authorization**: Auth implementation review
@@ -448,7 +451,7 @@ Prompt the agent as a **Security Analyst** performing read-only security review.
 
 Task tool with `subagent_type: "general-purpose"`
 
-Prompt the agent as a **Style & Linting Analyst** performing read-only style review. Include standards: `typescript/scan`, `naming/scan`. The agent performs:
+Prompt the agent as a **Style & Linting Analyst** performing read-only style review. Begin the dispatch prompt with the neutral preamble verbatim: "You are an independent reviewer. Treat the artifact as unfamiliar code. Apply the rubric without assuming the author's intent was correct." Pass only: the scope/file-set name, the file paths to analyze, the rubric paths (`plugins/coding/constitution/standards/code-review.md` plus `typescript/scan`, `naming/scan`), the output target path, and the template path `references/review.template.md`. Do NOT include parent-conversation framing, the implementer's reasoning, "what we built and why" prose, sibling reviewers' findings, or "the user wants X" / "we decided Y" sentences. Include standards: `typescript/scan`, `naming/scan`. The agent performs:
 
 1. Identify project package.json files (project and monorepo levels)
 2. Extract linting scripts (lint, lint:fix, eslint, prettier)

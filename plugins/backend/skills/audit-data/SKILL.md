@@ -163,22 +163,20 @@ Legend:
 
 #### Phase 2: Execution (Subagents)
 
-Spin up **3 parallel audit subagents**:
+Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST contain ONLY: spec path, implementation path(s), output template path, and applicable standards paths. Do not include parent narrative, intent, or expected conclusions.
 
 **Stream 1 — Schema Audit**:
 
     >>>
-    **ultrathink: adopt the Schema Auditor mindset**
+    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
 
-    **Assignment**: Compare Prisma schema against Notion entity definitions
+    This is a read-only audit. Do not modify any file.
 
-    **Steps**:
-    1. Read all Prisma schema files in `prisma/`
-    2. Compare each model against corresponding Notion entity
-    3. Check: missing fields, type mismatches, missing relations, missing indexes, missing constraints
-    4. Check: orphaned models (in Prisma but not in Notion)
-    5. Check: missing models (in Notion but not in Prisma)
-    6. Verify JSDoc documentation on every field
+    **Spec**: [absolute path to entity spec export or DESIGN.md section]
+    **Implementation**: [absolute path(s) to prisma/ schema files]
+    **Output Template**: [absolute path to AUDIT.md schema-findings template]
+    **Applicable Standards**:
+    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
 
     **Report** (<1000 tokens):
     ```yaml
@@ -196,17 +194,15 @@ Spin up **3 parallel audit subagents**:
 **Stream 2 — Operation Audit**:
 
     >>>
-    **ultrathink: adopt the Operation Coverage Auditor mindset**
+    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
 
-    **Assignment**: Verify operation coverage and pattern compliance
+    This is a read-only audit. Do not modify any file.
 
-    **Steps**:
-    1. List all operations in `src/operations/`
-    2. Compare against Notion operation specs
-    3. Check: missing operations, extra operations, verb pattern compliance
-    4. For each operation: verify type safety, error handling, selector usage
-    5. Check barrel exports in `src/operations/index.ts`
-    6. Verify test coverage: unit test exists, integration test exists
+    **Spec**: [absolute path to operation spec export or DESIGN.md section]
+    **Implementation**: [absolute path(s) to src/operations/ and src/operations/index.ts]
+    **Output Template**: [absolute path to AUDIT.md operation-findings template]
+    **Applicable Standards**:
+    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
 
     **Report** (<1000 tokens):
     ```yaml
@@ -224,17 +220,16 @@ Spin up **3 parallel audit subagents**:
 **Stream 3 — Controller Audit**:
 
     >>>
-    **ultrathink: adopt the Controller Integration Auditor mindset**
+    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
 
-    **Assignment**: Verify controller methods match operations 1:1
+    This is a read-only audit. Do not modify any file.
 
-    **Steps**:
-    1. Read controller class in `source/index.ts`
-    2. List all public methods
-    3. Compare against operations barrel exports
-    4. Check: missing methods, extra methods, delegation pattern (`Parameters<typeof op>[1]` / `ReturnType<typeof op>`)
-    5. Verify alphabetical ordering
-    6. Check type re-exports
+    **Spec**: [absolute path to controller spec export or DESIGN.md section]
+    **Implementation**: [absolute path to source/index.ts and src/operations/index.ts]
+    **Output Template**: [absolute path to AUDIT.md controller-findings template]
+    **Applicable Standards**:
+    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
+    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
 
     **Report** (<1000 tokens):
     ```yaml
