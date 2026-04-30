@@ -27,6 +27,7 @@ Orchestrates the complete TDD lifecycle by composing atomic skills into a sequen
 - If the user only wants a scaffold/skeleton -> tell them to use `/coding:draft-code`
 - If the user only wants to complete existing TODOs -> tell them to use `/coding:complete-code`
 - If the user only wants to fix failing tests/lint/types -> tell them to use `/coding:fix`
+- If the user has explicitly asked for a stack and only a stack (no implementation) -> redirect them to `/coding:stack-code` directly
 - If the instruction is too vague to define acceptance criteria
 - If the target project has no testing framework configured
 
@@ -42,6 +43,7 @@ write-code (this orchestrator)
   |-- 3. Skill: coding:complete-code   (Step 2: implementation / green phase)
   |-- 4. Skill: coding:fix             (Steps 3-4: fix issues + optimize fixtures)
   |-- 5. Skill: coding:refactor        (Step 5: refactor + documentation)
+  |-- 6. Skill: coding:stack-code      (conditional: only if change is large or upstream stack exists)
 ```
 
 ### State Handover Between Steps
@@ -149,7 +151,25 @@ This skill handles:
 3. Resume from a different step
 4. Pause and create handover documentation
 
-### Step 7: Reporting
+### Step 7: Conditional Stack Split
+
+After refactor lands and BEFORE reporting, decide whether the resulting change should be sliced into a stack of ordered draft PRs, or whether an existing open stack needs restacking. The orchestrator NEVER invokes `jj split` / `gh pr create` directly -- it always delegates to `coding:stack-code`.
+
+1. **Compute change size** via `jj diff --summary --stat` (preferred when the working copy is jj-colocated) or `git diff --shortstat HEAD` as fallback. Capture: changed-file count and LOC diff.
+
+2. **Detect open stack**: scan for either
+   - state file `.jj/stack-code/<slug>.json`, or
+   - bookmarks matching `<slug>/NN-<scope>` (e.g. `jj bookmark list` / `git branch --list '*/[0-9][0-9]-*'`).
+
+3. **Apply triggers** (thresholds read from `coding:stack-code` Step 2 detect-mode -- do NOT hardcode here; if upstream changes, this step inherits the new values):
+   - **Large change** -- mirrors stack-code's detect-mode thresholds verbatim: `>5 changed files OR >300 LOC diff OR multiple loosely-coupled domains`. Dispatch `coding:stack-code` with `--from-composite` (split-mode) to slice the working copy into reviewable, ordered draft PRs.
+   - **Restack on semantic upstream change** -- if an open stack is detected AND this change semantically modifies code that a lower (earlier-in-order) PR in the stack depends on (signature/behavior/contract of a symbol the lower PR establishes or relies on), MUST dispatch `coding:stack-code` in restack mode (`--from-composite`, restack flow) after code lands. Incidental file overlap alone (formatting, unrelated co-edit) does NOT trigger restack -- judge by lower-PR correctness dependence.
+
+4. **Otherwise** (small, single-domain change, no semantic upstream impact): skip and proceed straight to Step 8 reporting.
+
+**Interactive gate**: If a dispatch is triggered, surface the rationale (size metrics or named lower PRs at risk) and proposed mode to the user before delegating. The child skill drives its own confirmation gates.
+
+### Step 8: Reporting
 
 **Output Format**:
 
@@ -171,6 +191,7 @@ This skill handles:
 3. [complete-code] Implemented: [functions/modules completed]
 4. [fix] Fixed: [issues resolved, fixtures optimized]
 5. [refactor] Refactored: [quality improvements, docs added]
+6. [stack-code] Stacked: [skipped | dispatched in <split|restack> mode -- N draft PRs opened/restacked]
 
 ## Validation Results
 - Tests: PASS/FAIL ([X] passing, [Y] failing)
@@ -180,7 +201,8 @@ This skill handles:
 
 ## Next Steps
 1. [Follow-up action if any]
-2. [Commit with /coding:commit]
+2. [If stack-code was dispatched: list opened/restacked PRs (bookmark + URL) for review]
+3. [Commit with /coding:commit]
 ```
 
 ## Examples
