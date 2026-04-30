@@ -1,0 +1,56 @@
+# Evaluation definition for review-implementation
+# Process-style skill: validates spec-driven review orchestration.
+
+test_cases:
+  - name: basic_usage
+    prompt: 'review-implementation src/auth --spec-path=./.code-spec --area=alignment --out=reviews'
+    expectations:
+      - text: 'Writes reviews/ALIGNMENT.md conforming to references/review.template.md'
+        type: filesystem
+      - text: 'ALIGNMENT.md contains the canonical verdict line (PASS or FAIL with priority counts)'
+        type: content
+      - text: 'Issue IDs use the ALIGN-P<n>-<seq> format and the file uses prefix ALIGN'
+        type: content
+      - text: 'reviews/README.md index is regenerated and includes a row linking to ALIGNMENT.md'
+        type: filesystem
+
+  - name: notion_spec
+    prompt: 'review the implementation in src/payments against https://www.notion.so/example/Payments-Spec-abc123'
+    expectations:
+      - text: 'specification:sync-spec is invoked first to materialize a local .code-spec bundle at the project root'
+        type: structure
+      - text: 'After sync, alignment review runs against the local bundle and writes reviews/ALIGNMENT.md'
+        type: filesystem
+      - text: 'If sync-spec refuses, review-implementation refuses with status: refused, reason: spec_not_found'
+        type: content
+
+  - name: missing_spec
+    prompt: 'review-implementation src/ --spec-path=./.no-such-dir'
+    expectations:
+      - text: 'Skill refuses with structured YAML containing status: refused and reason: spec_not_found'
+        type: content
+      - text: 'No alignment file is written under reviews/ for the alignment area'
+        type: filesystem
+      - text: 'Refusal report includes details.resolved_spec_path and details.missing'
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - 'review my implementation against the spec'
+    - 'review-implementation src/auth'
+    - 'audit alignment with .code-spec'
+    - 'check that this PR matches the Notion spec'
+    - 'verify the code aligns with SPEC.md'
+    - 'run a spec-driven code review'
+    - 'review implementation against ./.code-spec'
+    - 'close out the implement-code ticket and verify alignment with the approved spec'
+
+  should_not_trigger:
+    - 'review this code'                          # → coding:review-code
+    - 'implement the spec at notion.so/...'       # → specification:implement-code
+    - 'sync the spec to disk'                     # → specification:sync-spec
+    - 'write code for the new feature'            # → coding:write-code
+    - 'fix the failing tests'                     # → coding:fix
+    - 'create a new spec'                         # → specification:spec-code
+    - 'audit the service against its specification'  # → theriety:audit-service
+    - 'review my PR for security issues'          # → coding:review-code (security area)
