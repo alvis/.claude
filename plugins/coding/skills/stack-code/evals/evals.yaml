@@ -1,0 +1,202 @@
+# Evaluation definition for stack-code
+#
+# Skill type: process (workflow) — graded on adherence to the orchestration flow.
+#
+# Usage:
+#   verify-skill loads this file when running functional or full verification.
+#   Test cases define prompts and expectations for grading.
+#
+# Trigger eval defines queries for testing skill description accuracy.
+
+eval_type: process
+skill: stack-code
+
+triggers:
+  positive:
+    - "stack these PRs"
+    - "split this branch into a stack"
+    - "open a PR stack for this feature"
+    - "/stack-code"
+    - "restack against latest main"
+    - "slice this chunky branch"
+    - "land this as ordered draft PRs"
+  negative:
+    - "commit my changes"
+    - "write a single PR description"
+    - "rebase onto main" # plain rebase, not stack-aware
+    - "review this PR"
+
+tasks:
+  - id: bootstrap-idempotent
+    prompt: "Run bootstrap.py twice in /tmp/stack-code-sandbox; the second run must be a no-op."
+    expected_outcome:
+      - first_run.exit == 0
+      - second_run.exit == 0
+      - second_run.stderr does not contain "initialising jj"
+      - state_dir_exists: ".jj/stack-code"
+
+  - id: detect-mode-clean
+    prompt: "Against a clean working copy at main@origin, detect-mode emits noop (nothing to stack)."
+    fixture: fixtures/clean-main
+    expected_outcome:
+      - stdout.json.mode == "noop"
+      - stdout.json.rationale contains "nothing to stack"
+
+  - id: detect-mode-noop-orchestrator-refuses
+    prompt: "On a clean working copy with no divergence, the skill must print 'nothing to stack' (or equivalent) and create zero PRs — no propose-splits, no execute-stack."
+    fixture: fixtures/clean-main
+    expected_outcome:
+      - transcript.last_assistant_message contains "nothing to stack"
+      - prs_created == 0
+      - propose_splits_invoked == false
+      - execute_stack_invoked == false
+
+  - id: detect-mode-chunky
+    prompt: "Against a working copy with 12 changed files / ~600 LOC, detect-mode emits split."
+    fixture: fixtures/chunky-multidomain
+    expected_outcome:
+      - stdout.json.mode == "split"
+      - stdout.json.rationale contains "chunky"
+
+  - id: propose-splits-clusters
+    prompt: "Cluster a multi-domain diff (migrations/, prisma/, src/ui/, .github/) into scope-named slices."
+    fixture: fixtures/chunky-multidomain
+    expected_outcome:
+      - stdout.json.prs[*].scope is non-empty
+      - every pr.bookmark matches "^[a-z0-9-]+/[0-9]{2}-[a-z0-9._/-]+$"
+      - every pr does NOT contain a "type" field
+
+  - id: meaningful-splits-domain-grouping
+    prompt: |
+      Stack-code a working copy that touches the customer domain across
+      prisma/customer.prisma, src/services/customer/operations.ts,
+      src/data/customer/repository.ts, plus an unrelated
+      src/services/order/handlers.ts. After Step 3.5 review, the LLM should
+      consolidate the three customer-domain files into ONE PR (not split by
+      directory) and keep the order PR separate. The script's raw
+      propose-splits output may show 3+1 PRs grouped by directory; the LLM's
+      revised plan must show 1 customer PR + 1 order PR with rationale citing
+      data-entity.md / data-operation.md domain conventions.
+    fixture: fixtures/customer-domain-multilayer
+    expected_outcome:
+      - transcript.last_assistant_message contains "customer"
+      - transcript.last_assistant_message contains "domain"
+      - revised_plan.prs.length == 2
+      - revised_plan.prs[*].files contains "prisma/customer.prisma" in same PR as "src/services/customer/operations.ts"
+      - revised_plan.prs[*].files contains "src/data/customer/repository.ts" in same PR as "src/services/customer/operations.ts"
+      - revised_plan.prs[*].files contains "src/services/order/handlers.ts" in a different PR than customer files
+
+  - id: execute-stack-dry-run-stable
+    prompt: "execute-stack.py --dry-run prints a stable, ordered plan and fires zero subprocess writes."
+    fixture: fixtures/proposal-3pr.json
+    expected_outcome:
+      - stderr contains "Planned stack"
+      - stderr contains "[DRY-RUN] would run: jj split"
+      - stderr contains "[DRY-RUN] would run: jj git push"
+      - stderr contains "[DRY-RUN] would run: gh pr create"
+      - working_copy_unchanged: true
+
+  - id: execute-stack-rejects-nonconventional-title
+    prompt: "execute-stack.py aborts BEFORE any mutation when a proposal entry has a non-conventional title."
+    fixture: fixtures/proposal-bad-title.json
+    expected_outcome:
+      - exit_code != 0
+      - stderr contains "conventional-commits"
+      - jj_split_invoked == false
+      - gh_pr_create_invoked == false
+
+  - id: restack-after-merge
+    prompt: "After PR #01 merges, restack drops it from the active list and rebases #02 onto main@origin."
+    fixture: fixtures/state-after-merge.json
+    expected_outcome:
+      - stdout.json.ops contains "merged"
+      - stdout.json.ops contains "rebased"
+      - state_file.prs[0].status == "merged"
+
+  - id: bookmark-naming-validates
+    prompt: "lib.bookmark_name accepts a kebab-case scope and emits canonical NN format; rejects invalid scopes."
+    expected_outcome:
+      - bookmark_name("auth-rewrite", 3, "auth") == "auth-rewrite/03-auth"
+      - bookmark_name("auth-rewrite", 3, "Bad Scope") raises ValueError
+
+  - id: validate-conventional-subject
+    prompt: "lib.validate_conventional_subject accepts every allowlisted type and rejects non-conventional subjects."
+    expected_outcome:
+      - validate_conventional_subject("feat(auth): add login") returns None
+      - validate_conventional_subject("fix: hotpatch") returns None
+      - validate_conventional_subject("perf(api/v2)!: drop legacy field") returns None
+      - validate_conventional_subject("WIP: half-done") raises ValueError
+      - validate_conventional_subject("feature: typo") raises ValueError
+
+fixtures:
+  clean-main:
+    setup: |
+      jj git init --colocate
+      jj describe -m 'initial'
+  chunky-multidomain:
+    setup: |
+      jj git init --colocate
+      mkdir -p migrations prisma src/ui src/api src/lib .github/workflows
+      # migrations (3 files, ~120 LOC)
+      for n in 001 002 003; do
+        printf 'create table t_%s (id int primary key, name text, payload jsonb, created_at timestamptz default now());\nalter table t_%s add column updated_at timestamptz;\ncreate index idx_t_%s_name on t_%s (name);\n%s\n' "$n" "$n" "$n" "$n" "$(yes 'select 1;' | head -n 35)" > "migrations/${n}.sql"
+      done
+      # prisma (2 files, ~120 LOC)
+      printf 'model X {\n  id Int @id\n  name String\n}\n%s\n' "$(yes '  // field' | head -n 55)" > prisma/schema.prisma
+      printf '%s\n' "$(yes '-- seed' | head -n 60)" > prisma/seed.sql
+      # ui (3 files, ~150 LOC)
+      for f in Page Header Footer; do
+        printf 'export const %s = () => null;\n%s\n' "$f" "$(yes '// ui' | head -n 49)" > "src/ui/${f}.tsx"
+      done
+      # api (2 files, ~120 LOC)
+      for f in users orders; do
+        printf 'export const %s = () => ({});\n%s\n' "$f" "$(yes '// api' | head -n 59)" > "src/api/${f}.ts"
+      done
+      # lib (1 file, ~60 LOC)
+      printf '%s\n' "$(yes 'export const k = 1;' | head -n 60)" > src/lib/util.ts
+      # ci (1 file, ~30 LOC)
+      printf 'name: ci\n%s\n' "$(yes '  step: build' | head -n 29)" > .github/workflows/ci.yml
+      jj describe -m 'wip'
+  customer-domain-multilayer:
+    setup: |
+      jj git init --colocate
+      mkdir -p prisma src/services/customer src/data/customer src/services/order
+      # customer domain — three layers, same domain
+      printf 'model Customer {\n  id Int @id\n  name String\n  email String\n}\n%s\n' "$(yes '  // field' | head -n 30)" > prisma/customer.prisma
+      printf 'export const createCustomer = () => null;\nexport const getCustomer = () => null;\n%s\n' "$(yes '// op' | head -n 30)" > src/services/customer/operations.ts
+      printf 'export class CustomerRepository {}\n%s\n' "$(yes '// repo' | head -n 30)" > src/data/customer/repository.ts
+      # unrelated order domain
+      printf 'export const orderHandler = () => null;\n%s\n' "$(yes '// handler' | head -n 30)" > src/services/order/handlers.ts
+      jj describe -m 'wip customer + order'
+
+  proposal-3pr.json:
+    inline: |
+      {
+        "slug": "demo",
+        "base": "main@origin",
+        "prs": [
+          {"n":1,"scope":"docs","files":["docs/spec.md"],"loc":40,"bookmark":"demo/01-docs","summary":"spec the demo","title":"docs(demo): spec the demo"},
+          {"n":2,"scope":"demo","files":["src/demo.ts","src/demo.spec.ts"],"loc":120,"bookmark":"demo/02-demo","summary":"implement demo","title":"feat(demo): implement demo"},
+          {"n":3,"scope":"ui","files":["src/ui/Demo.tsx"],"loc":40,"bookmark":"demo/03-ui","summary":"render demo","title":"feat(ui): render demo"}
+        ]
+      }
+  proposal-bad-title.json:
+    inline: |
+      {
+        "slug": "demo",
+        "base": "main@origin",
+        "prs": [
+          {"n":1,"scope":"demo","files":["src/demo.ts"],"loc":10,"bookmark":"demo/01-demo","summary":"WIP","title":"WIP: half-done"}
+        ]
+      }
+  state-after-merge.json:
+    inline: |
+      {
+        "slug": "demo",
+        "mode": "split",
+        "base": "main@origin",
+        "prs": [
+          {"n":1,"scope":"docs","bookmark":"demo/01-docs","change_id":"aaa","gh_url":"...","title":"docs(demo): spec","status":"merged"},
+          {"n":2,"scope":"demo","bookmark":"demo/02-demo","change_id":"bbb","gh_url":"...","title":"feat(demo): impl","status":"draft"}
+        ]
+      }
