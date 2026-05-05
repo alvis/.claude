@@ -18,6 +18,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT assert implementation details in tests [`TST-CORE-07`]
 - DO NOT use dynamic imports in tests [`TST-CORE-08`]
 - DO NOT assert log output via scattered `toHaveBeenCalledWith(...)` or count-only checks; capture the logger as `vi.fn<LogFn>()` / `satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])` [`TST-CORE-09`]
+- DO NOT write tests that only assert literal contents of a constant export (frozen `Set`/`Map`/`Record`/array/scalar); encode shape via TypeScript types (`satisfies`, `as const`) in source, or test the consumer function that uses the constant [`TST-CORE-10`]
 - DO NOT merge with line coverage below 100% required threshold [`TST-COVR-01`]
 - DO NOT leave critical branch paths untested [`TST-COVR-02`]
 - DO NOT batch multiple tests before checking coverage [`TST-COVR-03`]
@@ -46,6 +47,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use `.test.ts` extension; use `.spec.ts` for unit, `.int.spec.ts` for integration, `.e2e.spec.ts` for e2e, such as `user.test.ts` instead of `user.spec.ts` [`TST-STRU-01`]
 - DO NOT use ad-hoc test file layout/import order [`TST-STRU-02`]
 - DO NOT add AAA section comments or inline noise comments or `expect(result).toBe(x); // check ...` [`TST-STRU-03`]
+- DO NOT use `beforeAll`/`afterAll`/`beforeEach`/`afterEach` for any purpose other than the narrow allowances in `TST-MOCK-04`/`TST-MOCK-10`; every occurrence is review-worthy [`TST-STRU-04`]
 
 ## Rule Matrix
 
@@ -60,6 +62,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-CORE-07` | Test asserts implementation details | `expect(useState).toHaveBeenCalled()` |
 | `TST-CORE-08` | Dynamic import is used in tests | `const m = await import("#mod")` |
 | `TST-CORE-09` | Log output asserted with scattered calls / count-only / untyped mock | `expect(log).toHaveBeenCalledWith('x')` + `expect(log).toHaveBeenCalledTimes(2)`; `const log = vi.fn()` without generic |
+| `TST-CORE-10` | Test only asserts literal contents of a constant export | `expect(SUPPORTED_MIME_TYPES.has('image/png')).toBe(true)`; `expect(ROLES).toEqual(['admin', 'user'])` |
 | `TST-COVR-01` | Line coverage is below 100% required threshold | `lines: 98 // required: 100` |
 | `TST-COVR-02` | Critical branch path is untested | `if (err) throw err // untested` |
 | `TST-COVR-03` | Multiple tests written before coverage check | `it.each(cases)(...)` |
@@ -88,3 +91,4 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-STRU-01` | Test file uses `.test.ts` instead of `.spec.ts` / `.int.spec.ts` / `.e2e.spec.ts` | `user.test.ts`; `user-api.integration.ts` |
 | `TST-STRU-02` | File layout/import order is ad-hoc | `describe(...) // before mock setup`; `import { describe, it, expect, vi } from 'vitest';` |
 | `TST-STRU-03` | AAA spacing/comment policy is violated | `// Arrange`; `expect(result.name).toBe('John'); // check that result has name` |
+| `TST-STRU-04` | Lifecycle hook used outside the narrow `TST-MOCK-04`/`TST-MOCK-10` allowances | `beforeEach(() => { user = createUser() })`; `afterAll(() => server.close())`; `beforeAll(() => seed(db))` |

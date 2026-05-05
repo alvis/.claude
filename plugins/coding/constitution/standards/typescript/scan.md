@@ -13,7 +13,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use `any` [`TYP-CORE-02`]
 - DO NOT use type-escape casts in production/runtime paths, such as `as unknown as` or `as never` [`TYP-CORE-03`]
 - DO NOT add suppression comments without approval [`TYP-CORE-04`] (→ `GEN-SAFE-01`)
-- DO NOT use mutable bindings without need [`TYP-CORE-05`]
+- DO NOT use `let` unless reassignment is required; every `let` is review-worthy and must justify its mutability [`TYP-CORE-05`]
 - DO NOT use non-American spelling in code symbols [`TYP-CORE-06`] (→ `GEN-CONS-02`)
 - DO NOT use deprecated JS patterns in TypeScript code [`TYP-CORE-07`]
 - DO NOT place imports out of category order (node: built-in → third-party → project subpath/alias/relative; type imports follow the same order), such as `import x from "#a"; import fs from "fs"` [`TYP-IMPT-01`]
