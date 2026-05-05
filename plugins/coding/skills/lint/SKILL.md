@@ -4,8 +4,8 @@ description: Apply coding standards and linting to specified code areas. Use whe
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Task, Read, Glob, Edit, Grep, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: [specifier] [--scope=SCOPE]
+allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+argument-hint: [specifier] [--scope=SCOPE] [--max-iterations=N]
 ---
 
 # Linting
@@ -19,6 +19,7 @@ Apply applicable coding standards to ensure consistent code quality across the s
   - `uncommitted` — Focus on line ranges with uncommitted changes (staged + unstaged). The linter uses `git diff` to identify changed hunks and lints those areas plus their immediate surrounding context (enclosing functions/blocks).
   - `all` — Lint each file in its entirety (legacy behavior).
   - Any other value (e.g., `mocks`, `handlers`, a function name) — The linter interprets the value as a hint for which sections of the code to focus on.
+- **--max-iterations** (optional, default: `5`): Maximum lint passes to run. The skill delegates iteration to `/loop`, which re-invokes `/coding:lint` with `--max-iterations=1` until either zero violations are reported or the cap is reached. Use `--max-iterations=1` to force a single pass and skip looping entirely.
 
 **Lead pre-filter for `uncommitted` scope**: Before batching, the lead runs `git diff --name-only` to identify files with uncommitted changes. Files with no changes are excluded from batching to save linter tokens. If no specifier is given, all changed files are included. If a specifier is given, only changed files matching the specifier are batched.
 
@@ -42,6 +43,15 @@ Apply applicable coding standards to ensure consistent code quality across the s
 ## 🔄 Workflow
 
 ultrathink: you'd perform the following steps
+
+### Step 0: Loop Dispatch
+
+Parse `--max-iterations` from `$ARGUMENTS` (default `5`; positive integer).
+
+- **If `max_iterations > 1`**: invoke the `Skill` tool with `skill: "loop"` and `args: "/coding:lint <original-args-minus-max-iterations> --max-iterations=1"`. The `/loop` skill self-paces, re-firing `/coding:lint --max-iterations=1` each cycle. It stops when the inner report says `violations_found_total: 0` or when its own iteration count reaches the original `--max-iterations`. After the `Skill` call returns, emit a final aggregated summary (iteration count, total violations fixed, termination reason: `converged | hard_cap_reached | no_progress`) and exit. **Do not run Steps 1–3 in this outer call.**
+- **If `max_iterations == 1`**: skip the `Skill` invocation and continue to Step 1. This is the per-iteration single pass; the existing workflow runs unmodified, and Step 3 reporting must surface the convergence signal described below.
+
+This dispatch keeps lint's convergence logic out of the skill — `/loop` owns iteration and pacing.
 
 ### Step 1: Determine Execution Mode
 
@@ -335,6 +345,18 @@ Use `status: compliant` when `violations_found` is `0` (checked everything, foun
 
 **Output Format** (same for both modes):
 
+The report MUST begin with the following top-level keys so `/loop`'s pacing model can read convergence state without parsing prose:
+
+```
+violations_found_total: <int>   # sum across all batches in this pass
+status: compliant | success | partial | failure
+iteration_hint: max_iterations=<N>  # echoed from input so the loop model can track its cap
+```
+
+Use `status: compliant` and `violations_found_total: 0` together to signal convergence (no further `/loop` iterations needed). Use `status: success` when violations were found and all fixed (loop should continue to verify a clean pass). Use `partial` or `failure` when issues remain unresolved.
+
+The remainder of the summary follows below:
+
 ```
 [✅/❌] Command: $ARGUMENTS
 
@@ -456,4 +478,22 @@ Use `status: compliant` when `violations_found` is `0` (checked everything, foun
 #   - Agent A: Handles src/components (2 files, focuses on changed hunks)
 #   - Agent B: Handles src/utils (1 file, already compliant — no review needed)
 #   - Summary Agent: Compiles results after all complete
+```
+
+### Looping Until Clean (Default)
+
+```bash
+/lint "src/" --scope=uncommitted
+# Default: --max-iterations=5
+# Pass 1 (via /loop): 7 violations fixed across 4 files
+# Pass 2: rediscovers files, 1 violation fixed
+# Pass 3: violations_found_total: 0 → /loop stops
+# Final: Termination reason: converged
+```
+
+### Single Pass (No Loop)
+
+```bash
+/lint "src/" --max-iterations=1
+# Runs the existing workflow once; no /loop wrapping. Equivalent to legacy behavior.
 ```
