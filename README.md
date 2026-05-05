@@ -1,12 +1,12 @@
 # 🤖 Claude Code Multi-Agent System
 
-> An INFJ-driven multi-agent development system combining rigorous technical standards with high-trust delegation. 30+ specialized agents work autonomously under strategic orchestration to deliver high-quality TypeScript applications with 100% test coverage.
+> An INFJ-driven multi-agent development system combining rigorous technical standards with high-trust delegation. 15 specialized agents work autonomously under strategic orchestration to deliver high-quality TypeScript applications with 100% test coverage.
 
 ## 🎯 Overview
 
 This repository hosts an INFJ-orchestrated multi-agent system for TypeScript development. The orchestrator thinks mathematically, acts strategically, and values truth over ego. The system combines:
 
-- **30 specialized agents** with autonomous execution capabilities
+- **15 specialized agents** with autonomous execution capabilities
 - **High-clarity, high-trust delegation** with complete context and success metrics
 - **Constitution-based workflows** creating conditions for strong thinking
 - **100% test coverage** with systematic TDD approach
@@ -29,7 +29,7 @@ This repository hosts an INFJ-orchestrated multi-agent system for TypeScript dev
 └─────────────────────┼───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
-│        30 Specialized Agents (Parallel)         │
+│        15 Specialized Agents (Parallel)         │
 ├─────────────────────────────────────────────────┤
 │ • Frontend (React/Next.js)                      │
 │ • Backend (Node/TypeScript)                     │
@@ -54,20 +54,12 @@ This repository hosts an INFJ-orchestrated multi-agent system for TypeScript dev
 #### Frontend Excellence
 
 - **`lily-wong-ui-implementation`** - React/Next.js UI implementation expert
-- **`leo-yamamoto-ux-designer`** - UX/UI design and user research
 - **`sophie-laurent-design-systems`** - Design systems and component libraries
 
 #### Backend Engineering
 
 - **`james-mitchell-service-implementation`** - Node.js/TypeScript services
 - **`ethan-kumar-data-architect`** - Database design and optimization
-- **`casey-murphy-integration-specialist`** - API integrations and webhooks
-
-#### Full-Stack & Architecture
-
-- **`priya-sharma-fullstack`** - Full-stack TypeScript development
-- **`alex-chen-architect`** - System architecture and technical strategy
-- **`jordan-lee-api-designer`** - RESTful and GraphQL API design
 
 #### Quality & Security
 
@@ -78,7 +70,6 @@ This repository hosts an INFJ-orchestrated multi-agent system for TypeScript dev
 #### Infrastructure & Operations
 
 - **`felix-anderson-devops`** - CI/CD and automation
-- **`luna-park-sre`** - Site reliability and monitoring
 - **`isabella-costa-cloud-architect`** - Cloud infrastructure design
 
 #### Innovation & Research
@@ -87,7 +78,7 @@ This repository hosts an INFJ-orchestrated multi-agent system for TypeScript dev
 - **`nova-chen-research-engineer`** - Technology evaluation
 - **`oliver-singh-data-scientist`** - Machine learning and analytics
 
-### [View All 30 Agents →](@.claude/agents/)
+### [View All 15 Agents →](@.claude/agents/)
 
 ## 📋 Constitution System
 
@@ -172,11 +163,9 @@ graph LR
     B --> C{Task Type?}
     C -->|Frontend| D[lily-wong-ui-implementation]
     C -->|Backend| E[james-mitchell-service-implementation]
-    C -->|Full-Stack| F[priya-sharma-fullstack]
 
     D --> G[TDD Workflow]
     E --> G
-    F --> G
 
     G --> H[ava-thompson-testing-evangelist]
     H --> I[nina-petrov-security-champion]
@@ -315,5 +304,5 @@ This project is licensed under the terms specified in the LICENSE file.
 ---
 
 <div align="center">
-Built with 🤖 by 30+ specialized AI agents working in perfect harmony
+Built with 🤖 by 15 specialized AI agents working in perfect harmony
 </div>

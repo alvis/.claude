@@ -306,8 +306,8 @@ When Agent Teams are not available, execute the existing workflow:
 ### Update Specific Agent
 
 ```bash
-/update-agent "priya-sharma"
-# Updates only the priya-sharma agent file
+/update-agent "james-mitchell"
+# Updates only the james-mitchell agent file
 # Aligns with template while preserving role-specific content
 ```
 
