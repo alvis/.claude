@@ -13,6 +13,11 @@
       {
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop.sh"}]
+      }
     ]
   }
 }
