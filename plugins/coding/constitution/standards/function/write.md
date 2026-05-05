@@ -51,26 +51,23 @@ function run(input: Input, options: Options): Out {}
 ```
 
 - **FUNC-SIGN-05**: Exported functions MUST use dedicated parameter/result interfaces/types where contracts are non-trivial. (→ TYP-PARM-02)
-- **FUNC-SIGN-06**: Object-param functions MUST NOT destructure inline at the declaration; accept `params: { ... }` and destructure in the body so future readers see the full param shape at the call boundary, stack frames keep `params` intact for readability, and debuggers/inspectors can reason about a single named argument. When a function takes `options`, it MUST be a separate trailing positional arg (`fn(params, options?)`), NEVER folded into the `params` object.
+- **FUNC-SIGN-06**: Avoid `...(cond ? { k: v } : {})` for optional keys when the consumer treats `key: undefined` and key-absent identically (Prisma, `JSON.stringify`, React props, destructuring with defaults). Pass the value directly. Keep the conditional spread only for consumer-specific contracts that distinguish missing from `undefined` — `'key' in obj` checks, `exactOptionalPropertyTypes: true`, spread-over-defaults overrides, `URLSearchParams`/`FormData` builders, Prisma `strictUndefinedChecks`, or wire formats with distinct null/absent semantics — and cite the contract in a one-line comment.
 
 ```ts
-// good
-function f(params: { a: T; b: U }): R {
-  const { a, b } = params;
-  /* body */
-}
+// good — direct; consumers tolerate undefined
+const query = { url, filter: opts.filter };
 
-// bad
-function f({ a, b }: { a: T; b: U }): R {
-  /* body */
-}
+// bad — unnecessary guard around an undefined-tolerant consumer
+const query = {
+  url,
+  ...(opts.filter ? { filter: opts.filter } : {}),
+};
 
-// good — options is a separate trailing arg
-function f(params: { a: T; b: U }, options?: Options): R {
-  const { a, b } = params;
-}
-// bad — options folded into params
-function f(params: { a: T; b: U; options?: Options }): R {}
+// good — guard justified; downstream uses `'timeout' in overrides`
+const merged = {
+  timeout: 5000,
+  ...(opts.timeout !== undefined ? { timeout: opts.timeout } : {}),
+};
 ```
 
 ### State Safety (FUNC-STAT)

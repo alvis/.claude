@@ -19,7 +19,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use unsafe optional destructuring [`FUNC-SIGN-04`] (→ TYP-PARM-01)
 - DO NOT mark `Options` fields as required; rename to `*Params` if no defaults exist [`FUNC-SIGN-04`]
 - DO NOT omit exported contract types [`FUNC-SIGN-05`] (→ TYP-PARM-02)
-- DO NOT destructure inline at the parameter declaration; use `params` then destructure in the body [`FUNC-SIGN-06`]
+- DO NOT use conditional spread `...(cond ? { k: v } : {})` for optional keys when the consumer treats `key: undefined` as absent (Prisma, `JSON.stringify`, React props, destructuring defaults); pass the value directly [`FUNC-SIGN-06`]
 - DO NOT mutate input parameters [`FUNC-STAT-01`]
 - DO NOT use mutable transforms when immutable transforms suffice, such as `items.push(...)` instead of creating a new array [`FUNC-STAT-02`]
 - DO NOT mix pure logic with side effects [`FUNC-STAT-03`]
@@ -38,7 +38,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `FUNC-SIGN-03` | Parameter names are non-standard | `fn(payload, cfg, extra)` |
 | `FUNC-SIGN-04` | Optional destructuring is unsafe | `const { a } = maybeOpts`; `function run({ id }: Options | undefined) {}`; `type Options = { model: string }` — Options field must be optional; `function run(opts: Options): R` — options param must be optional |
 | `FUNC-SIGN-05` | Exported contract type is missing | `export function createUser(p:any)` |
-| `FUNC-SIGN-06` | Inline destructuring at parameter declaration | `function f({ a, b }: { a: T; b: U }) {}`; `const run = ({ id, name }: Args) => { /* ... */ }`; `function f(params: { a: T; options: O }) {}` — options must be separate trailing arg |
+| `FUNC-SIGN-06` | Conditional spread for optional keys when consumer is undefined-tolerant | `{ ...(opts.filter ? { filter: opts.filter } : {}) }`; `{ ...(x !== undefined ? { x } : {}) }`; `{ ...(x != undefined ? { x } : {}) }` inside a `{ ... }` object literal whose consumer is Prisma / `JSON.stringify` / React props / destructuring with defaults |
 | `FUNC-STAT-01` | Input parameter is mutated | `user.name = user.name.trim()`; `function processUser(user: User): User {` |
 | `FUNC-STAT-02` | Mutable transform used without need | `items.push(nextItem)`; `for (const item of items) total += item.price` where `reduce`/immutable flow is sufficient |
 | `FUNC-STAT-03` | Pure logic mixed with side effects | `logger.info(calc(x))` |
