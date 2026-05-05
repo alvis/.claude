@@ -26,7 +26,7 @@
 
 - **DOC-FORM-01**: Write explanatory comments and JSDoc summaries in lowercase sentence style; uppercase only for section headers (`// --- NAME --- //`) and code/type/acronym references.
 - **DOC-FORM-02**: One-line JSDoc for no-param void functions; multi-line when parameters, non-void returns, `@throws`, or examples exist.
-- **DOC-FORM-03**: Function JSDoc summaries start with present-tense third-person verb, stay lowercase, omit trailing period.
+- **DOC-FORM-03**: All JSDoc prose (function summary, `@returns`, `@throws`, `@example` description, free `* …` lines) stays lowercase and omits a trailing period; function summaries additionally use a present-tense third-person verb. Exception: first word may be uppercase when it is a code/type/acronym reference.
 - **DOC-FORM-04**: `@param` descriptions start lowercase, describe semantics not TypeScript types; capitalize only for proper type/interface/acronym references.
 - **DOC-FORM-05**: Use section dividers (`// --- NAME --- //`) in structures with 3+ logical groups; skip for trivial structures.
 - **DOC-FORM-06**: Use standard UPPERCASE section names (IDENTIFIERS, PROPERTIES, FLAGS, TIMESTAMPS, RELATIONS, etc.); domain-specific names allowed when standard ones don't fit.
