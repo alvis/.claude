@@ -45,7 +45,7 @@ ultrathink: you'd perform the following steps
 
 ### Step 2: Parallel Analysis
 
-Launch three parallel analysis agents:
+Launch three parallel analysis agents (Commented Code / Unused Exports / Unused Test Helpers). See `references/parallel-analysis.md` for the full three-agent decomposition, including the hierarchical LSP phases (file-level → symbol-level → test helpers) and the test-only production code detector. See `references/lsp-operations.md` for the LSP→task mapping and reference-classification rules each agent relies on.
 
 1. **Commented Code Agent**
    - Find multi-line comment blocks

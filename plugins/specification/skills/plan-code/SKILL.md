@@ -73,11 +73,30 @@ ultrathink: you'd perform the following steps
    - Commit Plan with copy-paste ready code
    - Each commit: atomic, testable, 100% coverage
 
+**Commit Requirements Checklist** (every commit in DRAFT.md must satisfy):
+
+- [ ] Self-contained (independently testable)
+- [ ] 100% test coverage for its scope
+- [ ] Clear separation of concerns from other commits
+- [ ] Conventional commit format: `type(scope): description`
+- [ ] Multiple commits per phase allowed
+- [ ] Full file contents provided — copy-paste ready
+
 ### Step 4: Interactive Design Refinement
 
-1. **Ask Clarifying Questions** via AskUserQuestion
-2. **Update DRAFT.md Based on Answers**
-3. **User Review Cycle**
+1. **Ask Clarifying Questions** via AskUserQuestion:
+   - Each question offers 2–4 alternatives with clear rationales
+   - Focus on areas where `--change` is proposed or design is ambiguous
+   - Question categories:
+     - **Architecture**: patterns, structure, modularity
+     - **Technology**: libraries, frameworks, tools
+     - **Implementation**: trade-offs between approaches
+     - **Constraints**: performance, scalability, maintainability, edge cases
+   - Example: "Which state management approach: Redux, Zustand, or Context API?"
+
+2. **Update DRAFT.md Based on Answers** — adjust commit structure if architectural decisions change; document rationale in commit descriptions.
+
+3. **User Review Cycle** — repeat follow-up questions via AskUserQuestion until the user is satisfied with the draft.
 
 ### Step 5: Present Draft for Review
 
@@ -94,12 +113,17 @@ ultrathink: you'd perform the following steps
 
 ### Step 7: Subagent Review (Quality Gate)
 
-1. **Spawn Review Subagent**
-2. **Verify**:
-   - Architecture alignment
-   - Requirements coverage
-   - Data model accuracy
-   - Test coverage
+1. **Spawn Review Subagent** via the Task tool, passing DRAFT.md, PLAN.md, and all design documents.
+
+2. **Review Checklist** — the subagent must verify:
+   - **Architecture Alignment**: plan matches DESIGN.md patterns and component relationships
+   - **Requirements Coverage**: every REQUIREMENTS.md item has implementation AND tests
+   - **Data Model Accuracy**: schemas match DATA.md exactly
+   - **UI Components**: components match UI.md layout, behavior, styling
+   - **Implementation Patterns**: follow NOTES.md guidelines and decisions
+   - **Test Coverage**: no requirement gaps, no missing tests
+
+3. **Action on Issues**: if issues found, update DRAFT.md / PLAN.md and re-run the checklist; otherwise proceed to Step 8.
 
 ### Step 8: Finalize Proposals
 

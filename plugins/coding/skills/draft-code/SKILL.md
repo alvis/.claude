@@ -46,6 +46,14 @@ When executing this skill, the following standards apply:
 
 ultrathink: you'd perform the following steps
 
+**Resume Pattern**: When resuming partial work, pass parameters to the underlying write-code workflow to skip already-completed steps. Example:
+
+```
+Resume From Step: 1
+Change Direction: "Use factory pattern for object creation"
+Skip Steps: [2, 3, 4, 5]   # only draft, no implementation
+```
+
 ### Step 1: Design Direction Discovery
 
 1. **Parse Instructions**
@@ -106,6 +114,8 @@ ultrathink: you'd perform the following steps
    - If interface provided: Create actual test cases with assertions (tests will fail until implementation)
    - Structure tests following AAA pattern preparation
    - Plan test cases covering all functionality
+
+   **Conditional stub style**: Use `describe.todo()` / `it.todo()` only when no interface is provided yet — these mark tests as pending without compile-time coupling. As soon as an interface is provided, write real assertions against it (the suite will fail red until implementation lands, which is the desired TDD signal).
 
 2. **Add Test Utilities**
    - Draft mock factories

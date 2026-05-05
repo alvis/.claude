@@ -51,8 +51,10 @@ ultrathink: you'd perform the following steps
 
 - Spawn Merge Resolution Subagent
 - Compare local vs Notion content
-- Ask user for each difference
-- Apply decisions to create merged content
+- Ask user for each difference (Keep Local / Keep Remote / Keep Both / Skip)
+- Apply decisions to create merged content and return a merge report
+
+See `references/merge-resolution.md` for the full conflict-resolution protocol, AskUserQuestion decision tree, and merge report format.
 
 ### Step 3: Gather Requirements
 
@@ -64,7 +66,9 @@ ultrathink: you'd perform the following steps
 
 - CREATE: Research appropriate stack
 - UPDATE: Research only changed technologies
-- DOCUMENT: Extract from existing code
+- DOCUMENT: Extract from existing code (no research)
+
+For DOCUMENT mode, see `references/document-mode.md` for the full codebase-extraction workflow (project scan, package.json parsing, tech stack derivation, mapping to spec sections).
 
 ### Step 5: Design Architecture
 
@@ -95,14 +99,18 @@ ultrathink: you'd perform the following steps
 4. **Write Main File with Frontmatter**
 5. **Write Child Page Files with Frontmatter**
 
+See `references/frontmatter.md` for the exact frontmatter schema (`notion_url`, `last_edited_at`, `last_synced_at`, `related_files`), filename mapping, and update rules.
+
 ### Step 10: Sync to Notion
 
 (Unless --skip-notion-sync)
 
-1. **Spawn Notion Sync Subagent**
-2. **Spawn Verification Subagent**
-3. **Spawn Patching Subagent** (if needed)
-4. **Update Frontmatter** with Notion URLs
+1. **Spawn Notion Sync Subagent** (create or update in Design Specification database)
+2. **Spawn Verification Subagent** (fetch Notion content, compare vs local)
+3. **Spawn Patching Subagent** (if verification fails, max 3 retries)
+4. **Update Frontmatter** with Notion URLs and `last_synced_at`
+
+See `references/notion-sync.md` for the full 4-step sync protocol, subagent inputs/responsibilities, and database/page property rules.
 
 ### Step 11: Reporting
 

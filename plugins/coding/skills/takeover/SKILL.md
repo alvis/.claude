@@ -31,6 +31,15 @@ Parses handover documentation (CONTEXT.md, NOTES.md, PLAN.md) left by previous a
 
 ultrathink: you'd perform the following steps
 
+<IMPORTANT>
+**Delegation Mandate (applies every run):**
+
+- Step 1 is ENTIRELY delegated to a PLAN subagent via the Task tool. Direct planning by this skill is PROHIBITED.
+- The PLAN subagent MUST perform all diagnostics, handover parsing, analysis, user consultation, and plan approval itself, and MUST NOT further sub-delegate.
+- ALL coding actions in Step 3 (implementation, fixing, testing, refactoring) MUST be delegated to coding subagents via the Task tool. Direct code modification is PROHIBITED.
+- After PLAN subagent returns, proceed to Step 2 (handover update) then Step 3 (execution).
+</IMPORTANT>
+
 ### Step 1: Plan Work Continuation
 
 1. **Validate Handover Files**
@@ -59,11 +68,15 @@ ultrathink: you'd perform the following steps
    - Get user input on approach
    - Record decisions for execution
 
-### Step 2: Update Handover
+### Step 2: Update Handover with Decisions and Plan
 
-- Update CONTEXT.md with decisions made
-- Update PLAN.md with unblocked tasks
-- Remove decision markers for resolved items
+<IMPORTANT>If the PLAN subagent returned a "research-only" plan, SKIP this step and go straight to Step 3 for research subagent dispatch.</IMPORTANT>
+
+Update handover docs BEFORE execution begins, so context is preserved if work is interrupted.
+
+- **Phase 1 — Prepare context**: From the PLAN subagent output, extract finalized decisions (selected option, rationale, alternatives), finalized plan details (detected workflow step, actions, deferred items, files in scope, success criteria), and task status changes (unblocked, still-blocked, newly created).
+- **Phase 2 — Delegate the update**: Use the Task tool to dispatch a Documentation Specialist subagent that updates CONTEXT.md (Key Decisions & Patterns, Next Steps, File Status), NOTES.md (retain deferred items in Open Questions, drop finalized ones), and PLAN.md (append to Decision Log, clear ⚠️ DECISION REQUIRED and ⏸️ markers for unblocked tasks, fold chosen approaches into task descriptions). Preserve all unrelated content.
+- **Phase 3 — Verify**: Confirm all three handover files were updated and the decision/plan information was captured correctly before proceeding to Step 3.
 
 ### Step 3: Execute Work
 

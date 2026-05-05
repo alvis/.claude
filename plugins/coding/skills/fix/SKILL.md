@@ -70,12 +70,24 @@ ultrathink: you'd perform the following steps
    - Run type check for TypeScript errors
    - Prioritize: tests > types > lint
 
-3. **Gather Error Context**
+3. **Map Area to Workflow Step**
+
+   Use the detected (or `--area`-specified) area to determine which workflow step to enter. When multiple areas are present, start from the earliest step and execute all relevant steps:
+
+   | Area | Workflow Step |
+   |---|---|
+   | `test` | Step 3 (Apply Test Fixes) |
+   | `fixtures` | Step 4 (Optimize Test Fixtures) |
+   | `impl` | Step 2 (Plan Fixes) |
+   | `refactor` | Step 5 (Validate) |
+
+4. **Gather Error Context**
    - Collect error messages
    - Identify affected files
    - Map error to code location
+   - For broader project context (handover docs, review findings, planning notes), see `references/context-discovery.md`
 
-4. **Capture Plan Context (Post-Review in Plan Mode)**
+5. **Capture Plan Context (Post-Review in Plan Mode)**
 
    When this skill runs **after a `/coding:review` in the same session** (i.e. the triggering input is a review report, the argument includes review findings, or the conversation shows a prior review invocation), the plan that `/review` validated against MUST be pinned into the fix context so a subsequent `/coding:review` can be re-run against the identical contract.
 
