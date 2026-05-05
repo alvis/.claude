@@ -231,6 +231,18 @@ Use Glob/Grep to discover files matching the specifier. Categorize by type:
 
 Filter files by selected scopes (pass file paths to teammates, not file contents).
 
+**Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and route each slice to the relevant reviewer when spawning their task:
+
+| Reviewer | Categories from report |
+|---|---|
+| `docs-reviewer` | `jsdoc-uppercase`, `jsdoc-fullstop` |
+| `test-reviewer` | `test-hooks` |
+| `quality-reviewer` | `let` |
+| `style-reviewer` | all four (style polish) |
+| `security-reviewer` | (none — no relevant categories) |
+
+Pass the slice as a "Candidate violations (advisory; verify against scan.md before flagging)" section in the dispatch prompt. Reviewers MUST re-check every candidate against the loaded rule files (`DOC-FORM-03`, `DOC-FORM-04`, `TST-MOCK-04`, `TST-MOCK-10`, `TST-DATA-01`, `TST-DATA-05`, `TST-STRU-04`, `TYP-CORE-05`) and discard candidates that fall under sanctioned exceptions. If `python3` is unavailable, log a warning and proceed without the pre-pass.
+
 #### Phase 2: Team Setup & Execution
 
 1. **Create team**: `TeamCreate` with name `review-team`
@@ -367,6 +379,8 @@ The review skill applies the following standards (all references use format `sta
 - style: source + test files
 
 Prepare file lists for each selected scope.
+
+**Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and pass the slice into each subagent's dispatch prompt as a "Candidate violations (advisory; verify against scan.md before flagging)" section, using the same routing as Team Mode (docs gets `jsdoc-*`; test gets `test-hooks`; code-quality gets `let`; style gets all four; security gets none). Subagents MUST re-check every candidate against the loaded rule files before adding a finding. If `python3` is unavailable, log a warning and proceed without the pre-pass.
 
 #### Phase 2: Execution (Subagents via Task Tool)
 

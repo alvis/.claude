@@ -46,7 +46,6 @@ ultrathink: you'd perform the following steps
 ### Step 1: Determine Execution Mode
 
 Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
-c
 
 - **If present**: Use **Team Mode** (Step 2A) — full team orchestration with lint-review cycles
 - **If absent**: Use **Subagent Mode** (Step 2B) — existing workflow via subagents
@@ -73,7 +72,8 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    - Filter out gitignored files, node_modules, dist, build, out
 3. **Create dynamic batches** (max 2 files per batch)
    - Group related files together when possible (same directory/module)
-4. **Discover applicable standard file paths** (string values only — do NOT read these files):
+4. **Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <target-files> --category all --before 5 --after 10` and capture the stdout. Pass the report to each linter teammate as a "Candidate violations (advisory; verify against scan.md before flagging)" section. Linters MUST re-check every candidate against the relevant rule (`DOC-FORM-03`, `DOC-FORM-04`, `TST-MOCK-04`, `TST-MOCK-10`, `TST-DATA-01`, `TST-DATA-05`, `TST-STRU-04`, `TYP-CORE-05`) before flagging. If `python3` is not available, log a warning and proceed without the pre-pass.
+5. **Discover applicable standard file paths** (string values only — do NOT read these files):
    a. **Collect all available standards**: Extract every standard file path listed under **all** "Plugin Constitution > Standards" sections in your system prompt. These paths span all active plugins (coding, react, backend, etc.) and system-level configurations. If the system prompt does not contain standard paths, fall back to `Glob` searching for `**/constitution/standards/*.md` across plugin directories.
    b. **Select the base set**: Refer to the **Delegation Rule** section in your system prompt. Under "When Linting Code", a list of applicable standard names is provided. Match each name against the collected paths by filename stem (e.g., `documentation` matches `documentation.md`).
    c. **Extend by file context**:
@@ -249,8 +249,9 @@ Standards are discovered at runtime: extract every standard file path listed und
    - **If scope is `uncommitted`**: Run `git diff --name-only HEAD`, `git diff --name-only --cached`, and `git ls-files --others --exclude-standard` to get changed/new files. If a specifier is given, filter to matching files. If no files remain, report "No uncommitted changes found" and exit early.
    - **Otherwise** (scope is `all` or custom): Discover via Glob/Bash based on specifier, filtering out gitignored files, node_modules, dist, build, out.
 3. **Discover applicable standard file paths**: Collect all available standards from plugin constitutions, match against the delegation rule for linting, and extend by file context (test, React, backend files). Record the full absolute paths as strings.
-4. **Create dynamic batches**: Group related files (same directory/module), max 8 files per batch.
-5. **Prepare subagent instructions** for each batch.
+4. **Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <target-files> --category all --before 5 --after 10` and capture the stdout. Pass the captured report to each Phase-2 subagent as a section labeled **"Candidate violations (advisory; verify against scan.md before flagging)"**. Subagents must NOT flag a candidate without confirming it against the relevant rule (`DOC-FORM-03`, `DOC-FORM-04`, `TST-MOCK-04`, `TST-MOCK-10`, `TST-DATA-01`, `TST-DATA-05`, `TST-STRU-04`, `TYP-CORE-05`). If `python3` is not available on the host, log a warning and proceed without the pre-pass.
+5. **Create dynamic batches**: Group related files (same directory/module), max 8 files per batch.
+6. **Prepare subagent instructions** for each batch.
 
 #### Phase 2: Execution (Subagents via Task Tool)
 
@@ -293,6 +294,8 @@ Each subagent receives the following prompt:
 >    - If no lint script, try: npx eslint [files]
 >    - Ensure all files pass with no linting errors
 > 5. Fix any remaining linting issues reported by the tool
+>
+> **Candidate violations (advisory; verify against scan.md before flagging)**: a mechanical pre-pass report from `scan_potential_violations.py` is included below. It flags every occurrence of 4 review-worthy patterns (JSDoc uppercase, JSDoc trailing period, lifecycle hooks, `let` declarations). Reference it as a starting point, but **never trust it blindly** — every match must be re-checked against the loaded scan.md before you flag or fix it. Most matches will be legitimate; the script is intentionally permissive.
 
 Subagent report format (YAML, <1000 tokens):
 
