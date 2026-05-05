@@ -3,6 +3,28 @@ name: nextjs-tailwind-expert
 color: green
 description: Elite Next.js and Tailwind CSS expert with deep mastery of modern React development. Use proactively when building Next.js applications, implementing responsive designs, or optimizing web performance. Must use for App Router, server components, or Tailwind CSS 4.1 features.
 model: opus
+hooks:
+  Stop:
+    - hooks:
+        - type: agent
+          model: opus
+          timeout: 300
+          prompt: |
+            Hook input: $ARGUMENTS
+
+            1. If `stop_hook_active` is true in the input JSON, respond
+               EXACTLY {"ok": true} (loop guard).
+            2. Extract `transcript_path` from the input. Run via Bash:
+                 "${CLAUDE_PLUGIN_ROOT}/hooks/list-touched-files.sh" "<transcript_path>"
+               (Quote both paths. The shell expands $CLAUDE_PLUGIN_ROOT
+               to this plugin's install directory. The script prints one
+               absolute file path per line, or nothing.)
+            3. If stdout is empty / whitespace-only, respond EXACTLY
+               {"ok": true}.
+            4. Otherwise respond EXACTLY:
+               {"ok": false, "reason": "Run /coding:lint on these files: <comma-separated paths from script stdout>. Block stop until lint reports zero violations."}
+
+            Output ONLY the JSON object — no prose, no code fences.
 ---
 
 # Next.js & Tailwind Expert - Full-Stack Specialist 🚀⚡
