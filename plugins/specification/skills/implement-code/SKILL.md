@@ -344,15 +344,7 @@ This is the **hard gate** that guarantees a local spec hard copy exists before c
 | 8 | Ticket stage and local artifacts disagree (e.g. stage=done but code missing, or stage=not-ready but code landed)                                        | `FLAG_MISMATCH`       |
 | 9 | `status_stage=unknown` after Step 1 fallback                                                                                                            | `FLAG_MISMATCH`       |
 
-**Mode Semantics**:
-
-- **COMMIT_PLAN**: Execute PLAN.md phases via `coding:draft-code` → `coding:write-code` → `coding:review` → `coding:commit`, one commit per PLAN phase
-- **PI_ITERATE**: Partial implementation exists; dispatch `coding:complete-code` then `coding:fix` then `coding:review` then `coding:commit`
-- **DRAFT_THEN_ASK**: No plan yet; refuse to code, print pointer to run `specification:plan-code` first, ask user whether to proceed with a lightweight draft
-- **AUDIT_AND_COMPLETE**: Dispatch `coding:review` first, then `coding:complete-code` + `coding:fix` for gaps, then `coding:commit`
-- **VERIFY_ONLY**: Ticket marked done; dispatch `coding:review` only, report any drift, no commits
-- **FLAG_MISMATCH**: Emit a structured report to the user describing the mismatch and ask for resolution via `AskUserQuestion`; do not code
-- **REFUSE**: Decline with a clear message citing stage + matched rule; no worktree, no dispatch
+**Mode Semantics**: See `references/modes.md` for one-line semantics + per-mode child chains. Load only the section for the resolved mode after selection.
 
 #### Phase 4: Decision (You)
 
@@ -580,30 +572,7 @@ When you reach this step:
 
 0. **Pre-coding hard-copy gate**: Before selecting any child chain, verify `<spec_bundle.root_path>/SPEC.md` still exists and is non-empty (`Bash test -s`). This is a defence-in-depth check against any path that could have skipped Step 2's gate (e.g. injected mode override, race with manual cleanup). If missing, set `status=refused` with reason `spec_bundle_missing_at_dispatch`, do NOT dispatch any child, jump to Step 12.
 
-Select the child chain from the mode:
-
-- **COMMIT_PLAN** (per PLAN phase):
-  1. `coding:draft-code` — scaffold skeletons for the phase
-  2. `coding:write-code` — TDD-complete the phase
-  3. `coding:review` — MUST pass before commit
-  4. `coding:commit` — atomic commit for the phase
-- **PI_ITERATE**:
-  1. `coding:complete-code` — finish TODOs
-  2. `coding:fix` — fix broken tests/lint
-  3. `coding:review`
-  4. `coding:commit`
-- **DRAFT_THEN_ASK**:
-  1. Print pointer to `specification:plan-code`
-  2. If user opts into lightweight draft: `coding:draft-code` only, then `coding:handover`
-- **AUDIT_AND_COMPLETE**:
-  1. `coding:review` (baseline)
-  2. `coding:complete-code` for gaps
-  3. `coding:fix`
-  4. `coding:review` (final)
-  5. `coding:commit`
-- **VERIFY_ONLY**:
-  1. `coding:review` — no commits
-- **FLAG_MISMATCH** / **REFUSE**: no children dispatched; skip to Step 11
+Select the child chain from the mode. **See `references/modes.md` "Step 8 — Per-Mode Child Chains"** for the full chain per mode (`COMMIT_PLAN` / `PI_ITERATE` / `DRAFT_THEN_ASK` / `AUDIT_AND_COMPLETE` / `VERIFY_ONLY`). `FLAG_MISMATCH` / `REFUSE` dispatch no children — skip to Step 11.
 
 Update TodoWrite with one todo per dispatched child.
 
@@ -616,51 +585,14 @@ For each child in the chain, in order:
    - `worktree_path`
    - `branch_name`
    - `ticket_summary` (title + slug)
-   - `deviation_policy` (the block below, verbatim, embedded in every `coding:*` dispatch payload)
+   - `deviation_policy`: the verbatim block from `references/modes.md` "Deviation Policy Block" (embed in every `coding:*` dispatch payload)
    - Child-specific inputs (e.g. plan phase, drift items, features to complete)
-
-   **Deviation policy block** (include verbatim in every dispatch):
-
-    ```markdown
-    ## Deviation Policy
-
-    The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, DEVIATE and proceed, appending an entry to `<worktree>/DEVIATIONS.md`:
-
-    - Missing or wrong dependency (package not installed, wrong version, replaced)
-    - Wrong integration assumption (API signature, event name, schema field, import path, module layout differs from what the draft assumes)
-    - Standard violation (draft conflicts with `plugins/<plugin>/constitution/standards/`)
-    - Architectural conflict (draft's structure doesn't fit the repo's existing pattern)
-    - Symbol the draft references no longer exists
-
-    SKIP logging for trivial differences:
-
-    - Auto-added JSDoc the draft omitted
-    - Inferred type annotations the draft left implicit
-    - Lint / formatter-driven whitespace or import ordering
-    - Casing adjustments to match local conventions
-    - Obvious prose typos in the draft
-
-    **DEVIATIONS.md entry format** (append, never rewrite existing entries):
-
-        ### D-<N>: <short title>
-        - **When**: <step name / commit label>
-        - **Draft said**: <one-line summary>
-        - **What I did instead**: <one-line summary>
-        - **Reason**: missing-dep | wrong-integration | standard-violation | arch-conflict | stale-symbol
-        - **Impact on spec**: none | surface-change | behavior-change
-        - **Severity**: minor | major | blocking
-
-    DO NOT refuse the task over a deviation. DO NOT ask the user mid-implementation for trivial choices. Record and proceed.
-    ```
 
 3. **[IMPORTANT]** You do NOT call `Write`/`Edit` yourself — you rely on the child's tool grants
 4. Capture each child's status + summary into `child_dispatch_log`
 5. On `coding:review` failure: run `coding:fix` then re-run `coding:review`, max 3 iterations
 6. On `coding:commit` success: append SHA to `commits_landed`
-7. **After the last code commit**, dispatch one extra `coding:commit` scoped to `DEVIATIONS.md` with message `chore(deviations): log draft departures for <ticket.slug>`. **Skip** this trailing commit when any of the following hold:
-   - The file ended header-only (no `D-N` entries appended)
-   - Mode is `VERIFY_ONLY` or `DRAFT_THEN_ASK` (no commits land)
-   - `--dry-run` is set
+7. **After the last code commit**, dispatch one trailing `coding:commit` scoped to `DEVIATIONS.md` per the "Trailing DEVIATIONS Commit" rules in `references/modes.md` (skips when header-only, `VERIFY_ONLY`/`DRAFT_THEN_ASK`, or `--dry-run`).
 
 #### Phase 4: Decision (You)
 
@@ -701,134 +633,17 @@ After the analyst runs, **additionally read `<worktree_path>/DEVIATIONS.md`** an
 
 ### Step 9a: Stack-Aware Sizing & Restack Trigger
 
-**Step Configuration**:
+**Skip entirely** (record `stack_dispatch.dispatched=false` with reason) when any of: `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`, `--dry-run` is set, or `commits_landed` is empty.
 
-- **Purpose**: After `commits_landed` are produced, decide whether to delegate to `coding:stack-code` (split/create mode for oversized changes, restack mode for semantic upstream impact). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:stack-code` so its standards (`GIT-PR-STACK-01..06`, `GIT-PR-SIZE-01..04`) and detect-mode thresholds remain the single source of truth.
-- **Input**: `worktree_path`, `branch_name`, `commits_landed`, post-commit diff stats, `ticket.slug`
-- **Output**: `stack_dispatch` = `{ dispatched: true|false, mode: split|create|restack|null, slug: <slug>|null, prs: [...] }`
-- **Sub-skill**: `coding:stack-code` (only when triggered)
-- **Parallel Execution**: No
+Otherwise, **see `references/stack-aware-sizing.md`** for the full step (size + restack trigger classification, `coding:stack-code` dispatch payload, decision rules). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:stack-code`.
 
-**⚠️ SKIP LIST**: Skip this step entirely when any of the following hold (record `stack_dispatch.dispatched=false` with one-line reason):
-
-- `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`
-- `--dry-run` is set
-- `commits_landed` is empty
-
-#### Phase 1: Planning (You)
-
-1. **Compute aggregate change size** against the worktree base branch (read-only, via `Bash` `jj diff --stat` or `git diff --stat <base>...HEAD`):
-   - `changed_files`: total files touched across `commits_landed`
-   - `loc_delta`: total added + removed lines
-   - `domains_touched`: distinct top-level path prefixes / package roots
-2. **Read thresholds from `coding:stack-code`** (do not hardcode here): the detect-mode heuristic table in `plugins/coding/skills/stack-code/SKILL.md` Step 2 is authoritative — currently >5 changed files OR >300 LOC diff OR multiple loosely-coupled domains. If that file's thresholds drift, this skill picks up the new values automatically.
-3. **Detect open stack**: presence of `<repo>/.jj/stack-code/<slug>.json` state file OR existing bookmarks matching `<slug>/NN-<scope>` per `GIT-PR-STACK-01`.
-4. **Classify the trigger**:
-   - **Size-trigger** → dispatch `coding:stack-code` in `split` mode (existing chunky branch) or `create` mode (planned outline) per stack-code's own auto-detect; orchestrator does not pre-pick.
-   - **Restack-trigger** → an open stack exists AND the landed code **semantically modifies a symbol/contract that a lower (earlier-in-order) PR in the stack establishes or relies on**. Apply this judgement per symbol, not per file:
-     - Trigger: signature change of an exported symbol the lower PR consumes; behavior change in a shared helper a lower PR's tests assume; schema/contract change a lower PR's migration depends on.
-     - Do NOT trigger: incidental file overlap (formatting, lint, unrelated co-edit in same file), purely additive code that lower PRs do not reference.
-   - **Both triggers fire** → `split` (or `create`) takes precedence; restack is implicit in the new stack layout.
-   - **Neither fires** → small, single-domain change; continue with the existing single-commit / single-PR path. Record `stack_dispatch.dispatched=false`.
-5. Update TodoWrite: add `stack-aware-sizing` todo set to `in_progress` when a trigger fires.
-
-#### Phase 2: Execution (Sub-Skill)
-
-When a trigger fires, dispatch `coding:stack-code` exactly once via the `Skill` tool:
-
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/stack-code/SKILL.md` via `Read`
-2. Invoke with a minimal payload:
-   - `--slug <ticket.slug>`
-   - For size-trigger: let `coding:stack-code`'s `detect-mode.py` pick `create` vs `split`; do not force `--mode` unless the user has already approved a specific path
-   - For restack-trigger: invoke `scripts/restack.py --slug <ticket.slug>` per stack-code Step 8 (Ongoing Operations)
-   - Pass `worktree_path` and `branch_name` so stack-code operates inside the same worktree
-3. Capture stack-code's `outputs.mode`, `outputs.slug`, and `outputs.prs[]` from its YAML report into `stack_dispatch`
-4. Append the dispatch entry to `child_dispatch_log` so Step 12 surfaces it alongside the `coding:*` chain
-
-#### Phase 4: Decision (You)
-
-- `stack-code` reports `status=completed` → record `stack_dispatch` and proceed to Step 10
-- `stack-code` reports `status=failed|partial` → mark this skill's final `status=partial`, attach the stack-code report to the running context, still proceed to Step 10 (paper-only review remains valuable)
-- Mark `stack-aware-sizing` todo as `completed`
+Output written back to `stack_dispatch` = `{ dispatched, mode: split|create|restack|null, slug, prs[] }` for Step 12.
 
 ### Step 10: Thought-Experiment Gate
 
-**Step Configuration**:
+**Skip entirely** (record `thought_experiment_report.status=skipped` with reason) when any of: `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH, AUDIT_AND_COMPLETE}`, `--dry-run` is set, or `commits_landed` is empty.
 
-- **Purpose**: Paper-only integration validation against the landed code; catches silent integration breakage that tests missed by tracing every intended usage through the real file graph.
-- **Input**: `worktree_path`, `spec_bundle.root_path` plus a pre-computed pointer list of all Usage/Example/Scenario/Verification sections discovered across `SPEC.md` + `children/*.md`, `commits_landed`, `<worktree_path>/DEVIATIONS.md`
-- **Output**: `thought_experiment_report` with per-usage verdicts
-- **Sub-skill**: None — single `Task` dispatch. The subagent **MUST** use `subagent_type=general-purpose`, `model=opus` (never Sonnet, never Haiku, no fallback), and **maximum reasoning effort / thinking budget**. These settings are mandatory whenever this step runs; do not downgrade for cost, latency, or quota reasons. If opus is unavailable, fail the step with `status=partial` and an advisory rather than substituting a weaker model.
-- **Parallel Execution**: No — one sequential deep pass
-
-**⚠️ IMPORTANT SKIP LIST**: Skip this step entirely when any of the following hold:
-
-- `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH, AUDIT_AND_COMPLETE}`
-- `--dry-run` is set
-- `commits_landed` is empty
-
-`AUDIT_AND_COMPLETE` is in the skip list because the mode's premise is that the draft is no longer authoritative — tracing spec→code loses meaning once the audit itself has overridden the draft.
-
-#### Phase 1: Planning (You)
-
-1. Evaluate the skip list. If any condition holds, record `thought_experiment_report.status=skipped` with a one-line reason and proceed to Step 11.
-2. Otherwise assemble the inputs bundle: `spec_bundle.root_path` + pre-computed pointer list of Usage/Example/Scenario/Verification sections, absolute `worktree_path`, `DEVIATIONS.md` path, and the list of `commits_landed` shas for context.
-3. Update TodoWrite: add a `thought-experiment` todo set to `in_progress`.
-
-#### Phase 2: Execution (Subagent)
-
-Dispatch a single `Task` with `subagent_type=general-purpose`, `model=opus`, maximum reasoning budget. Embed the prompt below verbatim.
-
-    >>>
-    (Dispatched on model=opus with maximum reasoning effort. This is the only place in the skill that guarantees deep paper-only integration review; no other step compensates if you under-think here.)
-
-    You are the Thought-Experiment Reviewer. Apply maximum reasoning effort. Do NOT run code, run tests, or edit files — read only.
-
-    **[IMPORTANT]** Read `INDEX.md` first, then open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
-
-    **Inputs**
-    - Spec bundle root: `<spec_bundle.root_path>` (read `INDEX.md` first, then open only pointer-list files)
-    - Spec pointer list (pre-computed by orchestrator): every Usage / Example / Scenario / PI Verification section discovered across `<bundle_root>/SPEC.md` + `<bundle_root>/children/*.md`
-    - Worktree: <worktree_path> (use Read / Grep / Glob)
-    - Deviations log: <worktree_path>/DEVIATIONS.md
-
-    **Task**
-    Identify every INTENDED USAGE in the spec (one usage = one externally-observable way the implementation is meant to be called or composed). For each:
-    1. Trace it step-by-step through the actual landed code — imports, call graph, return shapes, error paths, async boundaries
-    2. Verify the public surface the usage touches exists, has the right signature, and composes correctly with its dependencies
-    3. Check every deviation in DEVIATIONS.md has been absorbed — the usage must still work despite the departure from draft
-    4. Cross-check against adjacent usages to catch conflicting assumptions
-
-    **Per-usage verdict**: `works` | `broken` | `unclear` — with 2-3 sentences of trace reasoning. If `broken`, cite `file:line`.
-
-    **Overall verdict**: `pass` (all `works`) | `partial` (any `unclear`, no `broken`) | `fail` (any `broken`).
-
-    **Report (YAML, <3000 tokens)**:
-
-        status: pass|partial|fail
-        outputs:
-          thought_experiment_report:
-            usages:
-              - id: U-1
-                description: '<one-liner>'
-                verdict: works|broken|unclear
-                trace: '<2-3 sentences>'
-                cite: '<file:line or null>'
-            deviations_absorbed: true|false
-            summary: '<paragraph>'
-        issues: []
-    <<<
-
-#### Phase 3: Review (Subagents)
-
-**SKIPPED** — This step is itself the review layer; its output feeds Step 11 and Step 12 directly.
-
-#### Phase 4: Decision (You)
-
-- `status=pass` → proceed to Step 11 with `status=completed`
-- `status=partial` → final `status=partial`, list unclear usages in the final report, do not block
-- `status=fail` → append `D-<N>: thought-experiment-blocking / severity=blocking` to `DEVIATIONS.md`, final `status=partial`, recommend rerun after fix, proceed to Step 11
-- Always attach the full `thought_experiment_report` to running context so Step 12 can emit it
+Otherwise, **see `references/thought-experiment.md`** for the full paper-only integration validation step (mandatory `model=opus` + maximum reasoning effort dispatch, verbatim subagent prompt, per-usage verdict rules, and decision flow). Output `thought_experiment_report` is attached for Step 12.
 
 ### Step 11: Skill Self-Verify
 
