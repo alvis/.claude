@@ -1,90 +1,7 @@
-# React Hooks Standards
+# React Hooks: Compliant Patterns
 
-_Standards for custom hooks design, patterns, and best practices_
-
-## Dependent Standards
-
-🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
-
-- Functions Standards (plugin:coding:standard:function) - React hooks are functions with specific rules and patterns
-- Function Naming Standards (plugin:coding:standard:naming) - Hook naming conventions (useX pattern) and best practices
-- TypeScript Standards (plugin:coding:standard:typescript) - Type safety for hook parameters, return types, and generics
-- Documentation Standards (plugin:coding:standard:documentation) - Hook documentation patterns and JSDoc requirements
-- Testing Standards (plugin:coding:standard:testing) - Hook testing strategies with React Testing Library
-- General Principles (plugin:coding:standard:universal) - Foundational coding standards for all React hooks
-
-**Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
-
-## Core Principles
-
-### Naming Convention
-
-All custom hooks must start with "use" prefix for React rule compliance.
-
-```typescript
-// ✅ GOOD: proper hook naming
-useUserData(userId: string)
-useApiRequest<T>(url: string)
-useLocalStorage(key: string)
-
-// ❌ BAD: missing prefix or unclear names
-getUserData(userId: string)  // missing 'use' prefix
-useData()                    // too generic
-```
-
-### Consistent Return Interface
-
-Maintain predictable return patterns for similar functionality types.
-
-```typescript
-// ✅ GOOD: consistent async pattern
-interface UseDataReturn<T> {
-  data: T | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
-}
-
-export function useData<T>(url: string): UseDataReturn<T> {
-  // implementation...
-  return { data, loading, error, refetch };
-}
-
-// ❌ BAD: inconsistent return structure
-function useBadData(url: string) {
-  return [data, isLoading, err, reload]; // unpredictable array
-}
-```
-
-### Dependency Management
-
-Proper dependency handling prevents bugs and ensures predictable behavior.
-
-```typescript
-// ✅ GOOD: correct dependencies
-export function useUserData(userId: string) {
-  const [userData, setUserData] = useState<User | null>(null);
-  
-  const refreshUser = useCallback(async () => {
-    if (!userId) return;
-    const user = await fetchUser(userId);
-    setUserData(user);
-  }, [userId]); // correct dependency
-  
-  useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
-  
-  return { userData, refreshUser };
-}
-
-// ❌ BAD: missing dependencies
-function useBadEffect(user: User) {
-  useEffect(() => {
-    fetchUserData(user.id).then(setData);
-  }, []); // missing user.id dependency
-}
-```
+> **Prerequisite**: Read `meta.md` in this directory first for dependencies and rule groups.
+> **Compliance**: Also follow `scan.md` in this directory to avoid violations during writing. When unsure about a specific rule, consult its detailed guidance in `rules/<rule-id>.md`.
 
 ## Data Fetching Hooks
 
@@ -378,55 +295,6 @@ export function useAsyncHook<T>(param: string) {
      updateItem(id);
    }, [updateItem]);
    ```
-
-## Anti-Patterns
-
-### Missing Dependencies
-
-```typescript
-// ❌ BAD: missing user.id in dependency array
-function useBadEffect(user: User) {
-  useEffect(() => {
-    fetchUserData(user.id).then(setData);
-  }, []); // missing user.id dependency
-}
-
-// ✅ GOOD: include all dependencies
-function useGoodEffect(user: User) {
-  useEffect(() => {
-    fetchUserData(user.id).then(setData);
-  }, [user.id]);
-}
-```
-
-### Unstable Return Values
-
-```typescript
-// ❌ BAD: new object every render
-function useBadReturn(data: any[]) {
-  return {
-    data,
-    metadata: { count: data.length }, // new object every render
-  };
-}
-
-// ✅ GOOD: stable memoized object
-function useGoodReturn(data: any[]) {
-  const metadata = useMemo(() => ({ count: data.length }), [data.length]);
-  return { data, metadata };
-}
-```
-
-### Common Mistakes to Avoid
-
-1. **Missing loading states**
-   - Problem: Users see stale data during updates
-   - Solution: Always include loading boolean in async hooks
-   - Example: `{ data, loading, error }`
-
-2. **Memory leaks in effects**
-   - Problem: Component unmounts but async operations continue
-   - Solution: Use cleanup flags or AbortController
 
 ## Quick Decision Tree
 

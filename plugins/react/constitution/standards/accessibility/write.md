@@ -1,100 +1,7 @@
-# Accessibility Standards
+# Accessibility: Compliant Patterns
 
-_WCAG compliance standards for inclusive web development_
-
-## Dependent Standards
-
-🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
-
-- General Principles (plugin:coding:standard:universal) - Accessibility builds on fundamental coding principles of clarity, consistency, and user-centered design
-- Documentation Standards (plugin:coding:standard:documentation) - All accessibility features and decisions must be properly documented for compliance and team understanding
-
-**Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
-
-## Core Principles
-
-### WCAG 2.1 AA Compliance
-
-All components must meet the four fundamental accessibility principles.
-
-```typescript
-// ✅ GOOD: accessible button with proper semantics
-<button
-  aria-label="Close dialog"
-  aria-expanded={isOpen}
-  onClick={handleClose}
->
-  <CloseIcon aria-hidden="true" />
-  Close
-</button>
-
-// ❌ BAD: inaccessible clickable div
-<div onClick={handleClose} className="button-like">
-  <CloseIcon />
-</div>
-```
-
-### Semantic HTML First
-
-Use proper HTML elements before adding ARIA attributes.
-
-```typescript
-// ✅ GOOD: semantic HTML provides built-in accessibility
-<button onClick={handleSubmit}>Submit Form</button>
-<nav aria-label="Main navigation">
-  <ul>
-    <li><a href="/home">Home</a></li>
-    ...
-  </ul>
-</nav>
-<main>
-  <h1>Page Title</h1>
-  <article>
-    <h2>Article Title</h2>
-    ...
-  </article>
-</main>
-
-// ❌ BAD: non-semantic HTML reduces accessibility
-<div onClick={handleSubmit}>Submit Form</div>
-<div className="nav">
-  <div className="nav-item">Home</div>
-  ...
-</div>
-```
-
-### Keyboard Navigation Support
-
-Ensure all interactive elements are keyboard accessible.
-
-```typescript
-// ✅ GOOD: keyboard accessible custom element
-export const CustomButton: FC<Props> = ({ onClick, children }) => {
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick?.();
-    }
-  };
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      aria-label="Custom action button"
-    >
-      {children}
-    </div>
-  );
-};
-
-// ❌ BAD: no keyboard support
-<div onClick={onClick} className="clickable">
-  {children}
-</div>
-```
+> **Prerequisite**: Read `meta.md` in this directory first for dependencies and rule groups.
+> **Compliance**: Also follow `scan.md` in this directory to avoid violations during writing. When unsure about a specific rule, consult its detailed guidance in `rules/<rule-id>.md`.
 
 ## Document Structure
 
@@ -388,16 +295,6 @@ export const VisuallyHidden: FC<{ children: ReactNode }> = ({ children }) => {
 </button>
 ```
 
-## Quick Reference
-
-| Element Type | Accessibility Requirements | ARIA Attributes | Notes |
-|--------------|---------------------------|------------------|-------|
-| Button | Keyboard support, focus indicator | `aria-label`, `aria-expanded` | Use `<button>` element |
-| Form Input | Label association, error states | `aria-describedby`, `aria-invalid` | Required `<label>` |
-| Modal/Dialog | Focus trap, escape key | `role="dialog"`, `aria-modal` | Manage focus |
-| Navigation | Landmark roles, skip links | `role="navigation"`, `aria-label` | Clear structure |
-| Status Updates | Live region announcements | `aria-live`, `role="alert"` | Use appropriate urgency |
-
 ## Patterns & Best Practices
 
 ### Accessible Modal Pattern
@@ -462,53 +359,3 @@ export const AccessibleModal: FC<ModalProps> = ({ isOpen, onClose, title, childr
    ```typescript
    {loading && <div aria-live="polite">Loading content...</div>}
    ```
-
-## Anti-Patterns
-
-### Missing Alt Text
-
-```typescript
-// ❌ BAD: missing alt text
-<img src="chart.png" />
-
-// ✅ GOOD: descriptive alt text
-<img src="chart.png" alt="Sales increased 20% from Q1 to Q2" />
-```
-
-### Non-Semantic Interactive Elements
-
-```typescript
-// ❌ BAD: div as button without keyboard support
-<div onClick={handleClick} className="button-like">Click me</div>
-
-// ✅ GOOD: proper button element
-<button onClick={handleClick}>Click me</button>
-```
-
-### Common Mistakes to Avoid
-
-1. **Color-only indicators**
-   - Problem: Colorblind users cannot distinguish states
-   - Solution: Use icons, text, or patterns alongside color
-   - Example: `<span className="error"><ErrorIcon /> Error message</span>`
-
-2. **Missing form labels**
-   - Problem: Screen readers cannot identify input purpose
-   - Solution: Always associate labels with inputs
-
-## Quick Decision Tree
-
-1. **Is this interactive?**
-   - If button-like → Use `<button>` element
-   - If link-like → Use `<a>` element
-   - If custom → Add keyboard support and ARIA
-
-2. **Does this convey information?**
-   - If status change → Use live region
-   - If error state → Use `role="alert"`
-   - If additional context → Use `aria-describedby`
-
-3. **Is this visible to all users?**
-   - If decorative only → Use `aria-hidden="true"`
-   - If informative → Provide alt text or screen reader text
-   - If interactive → Ensure keyboard accessibility
