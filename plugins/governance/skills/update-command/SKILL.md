@@ -4,7 +4,7 @@ description: Update slash commands to latest standards with optional specific ar
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
 argument-hint: [command specifier] [--changes=...]
 ---
 
@@ -34,22 +34,56 @@ Update existing slash commands to follow current best practices and template str
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Determine Execution Mode
+### Step 1: Subagent Orchestration
 
-Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
+Spawn parallel specialized subagents (max 8 parallel `Task` calls per dispatch) to execute the workflow against `template:command` — apply template alignment, change requests, standards enforcement, and verify quality before reporting.
 
-- **If present**: Use **Team Mode** (Step 2A)
-- **If absent**: Use **Subagent Mode** (Step 2B)
+#### Planning
 
-### Step 2A: Team Mode (Agent Teams enabled)
+1. **Skill Compliance**
+   - MUST follow skills identified in Phase 1
+   - If no skill exists, follow project conventions
+   - Reference specific skill files when applicable
 
-Lead Orchestrator coordinates Command Update Specialist teammates (opus) to update command files in parallel against template:command. For the full Phase 1–4 procedure (planning, team setup, work cycle with verbatim subagent prompt, aggregation/cleanup) and the agent summary table, see `references/team-mode.md`.
+2. **Primary Implementation**
+   - Apply specific area changes from parsed arguments
+   - Add missing sections from template
+   - Update targeted sections per change requests
+   - Reorganize content to match structure
+   - Migrate existing content appropriately
+   - Update the content such that the changes are clearly reflected
 
-### Step 2B: Subagent Mode (fallback)
+3. **Standards Enforcement**
+   - Apply standards from `[plugin]/constitution/standards/`
+   - Follow template structure
+   - No instruction comments copied from the template
+   - Ensure targeted changes align with standards
 
-Execute the existing workflow with parallel subagents — apply template alignment, change requests, standards enforcement, and verify quality before reporting. For full procedure (planning steps, verification of QA and side effects), see `references/subagent-mode.md`.
+4. **Edge Case Handling**
+   - Preserve custom useful content
+   - Handle missing sections gracefully
+   - Maintain backward compatibility
 
-### Reporting
+#### Verification
+
+1. **Quality Assurance**
+   - Verify NO comments remain
+   - Check markdown formatting and structure
+   - Validate frontmatter syntax and completeness
+   - Verify all requested changes implemented
+
+2. **Side Effect Validation**
+   - Core functionality preserved
+   - Custom content maintained
+   - Template compliance achieved
+
+#### Aggregation
+
+- Track completion status of each delegated command
+- Handle any subagent failures or escalations
+- Aggregate per-subagent results into the final Step 2 report
+
+### Step 2: Reporting
 
 **Output Format**:
 
@@ -57,7 +91,6 @@ Execute the existing workflow with parallel subagents — apply template alignme
 [✅/❌] Command: $ARGUMENTS
 
 ## Summary
-- Execution mode: [team/subagent]
 - Files modified: [count]
 - Commands updated: [count/total]
 - Specific areas changed: [list]
@@ -67,11 +100,8 @@ Execute the existing workflow with parallel subagents — apply template alignme
 1. [Action with result]
 2. [Action with result]
 
-## Skills Applied (subagent mode)
-- [Skill name]: [Status]
-
-## Teammate Results (team mode only)
-- Total agents deployed: [count]
+## Subagent Results
+- Total subagents deployed: [count]
 - Successful updates: [count]
 - Failed updates: [count] (if any)
 
@@ -90,25 +120,12 @@ Execute the existing workflow with parallel subagents — apply template alignme
 
 ## Examples
 
-### Update All Commands (Team Mode)
+### Update All Commands
 
 ```bash
 /update-command all
-# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
-# - Creates update-command-team
-# - Spawns parallel Command Update Specialists (one per command)
-# - Each specialist updates command with template alignment
-# - Aggregates results and reports execution mode: team
-```
-
-### Update All Commands (Subagent Mode)
-
-```bash
-/update-command all
-# Without agent teams:
-# - Uses traditional subagent delegation
-# - Updates every command in .claude/commands/
-# - Reports execution mode: subagent
+# Spawns parallel subagents (max 8 parallel Task calls)
+# Updates every command in .claude/commands/ via subagent delegation
 ```
 
 ### Update Specific Command

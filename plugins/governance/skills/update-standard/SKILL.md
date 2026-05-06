@@ -4,7 +4,7 @@ description: Update standard(s) to latest template and apply specified changes. 
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
 argument-hint: [standard specifier] [--changes=...]
 ---
 
@@ -32,24 +32,114 @@ Update standard directories to align with the latest three-tier standard templat
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Determine Execution Mode
+### Step 1: Subagent Orchestration
 
-Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
+Spawn parallel specialized subagents (max 3 standard directories per batch, max 8 parallel `Task` calls per dispatch) — each ultrathinks, reads three tier templates + standard tier files, and applies changes.
 
-- **If present**: Use **Team Mode** (Step 2A)
-- **If absent**: Use **Subagent Mode** (Step 2B)
+1. **Template Validation**
+   - Verify all three tier templates exist and are readable: template:standard-meta, template:standard-scan, template:standard-write
+   - Load template structures for reference
+   - Identify mandatory sections that must be preserved in each tier
 
-### Step 2A: Team Mode (Agent Teams enabled)
+2. **Delegation**
+   - Discover standard directories by finding directories containing `meta.md` under [plugin]/constitution/standards/
+   - Create batches (max 3 standard directories per batch for subagent efficiency, since each directory = 3 tier files)
+   - Create parallel specialized subagents (one per batch, max 8 parallel `Task` calls per dispatch) with:
+     - Standard directory paths (each containing meta.md, scan.md, write.md)
+     - All three tier template paths (template:standard-meta, template:standard-scan, template:standard-write)
+     - All change specifications
+     - Detailed instructions
+     - Request to ultrathink
 
-Lead Orchestrator coordinates updater (opus) and reviewer (haiku) teammates with batched update-review cycles and context-level pool management. For the full Phase 1–4 procedure (Lead rules, planning, team setup, update-review cycle, aggregation/cleanup) and the agent summary table, see `references/team-mode.md`.
+3. **Subagent Task Specification**
 
-### Step 2B: Subagent Mode (fallback)
+   >>>
+   **ultrathink: adopt the Standard Update Specialist mindset**
 
-Spawn parallel specialized subagents (max 3 standard directories per batch) — each ultrathinks, reads three tier templates + standard tier files, and applies changes. For full procedure (template validation, delegation, the verbatim subagent prompt with `>>> <<<` block, report YAML, and progress monitoring), see `references/subagent-mode.md`.
+   - You're a **Standard Update Specialist** with deep expertise in technical documentation who follows these principles:
+     - **Template-First Approach**: Always compare against template before modification
+     - **Content Preservation**: Maintain existing guidelines and examples
+     - **Structural Integrity**: Align with template structure while preserving content
+     - **Professional Polish**: Deliver clean, consistent documentation
 
-### Step 3: Reporting
+   <IMPORTANT>
+     You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+   </IMPORTANT>
 
-**Output Format** (same for both modes):
+   **Assignment**
+   You're assigned to update standard directory: [standard name]
+
+   **Standard Specifications**:
+   - **Standard Directory**: [standard directory path] (contains meta.md, scan.md, write.md)
+   - **Templates**:
+     - template:standard-meta (for meta.md)
+     - template:standard-scan (for scan.md)
+     - template:standard-write (for write.md)
+   - **Changes to Apply**: [change specifications from inputs]
+
+   **Steps**
+
+   1. **Read Current Standard**:
+      - Read all three tier files: meta.md, scan.md, write.md
+      - Identify existing guidelines, examples, and anti-patterns in each tier
+      - Note any custom sections or unique content
+
+   2. **Compare with Templates**:
+      - Compare meta.md against template:standard-meta
+      - Compare scan.md against template:standard-scan
+      - Compare write.md against template:standard-write
+      - Identify missing sections from each respective template
+      - Identify sections that need structural updates in each tier
+      - Map changes to the correct tier file based on what's changing
+
+   3. **Apply Updates**:
+      - Task 1: Align each tier file with its corresponding template structure
+      - Task 2a, 2b, 2c...: Apply each change specification to the appropriate tier file
+      - Task 3: Review standard integrity and consistency across all three tiers
+      - Preserve all existing guidelines and examples
+      - Add any missing required sections from each template
+
+   4. **Clean & Finalize**:
+      - Remove any outdated or deprecated content
+      - Ensure consistent formatting throughout all three tier files
+      - Verify all code examples are valid TypeScript
+
+   **Report**
+   **[IMPORTANT]** You MUST return the following execution report (<500 tokens):
+
+   ```yaml
+   status: success|failure|partial
+   standard: '[standard-name]'
+   summary: 'Brief description of changes applied'
+   modifications:
+     meta:
+       - section: '[section name]'
+         change: '[what was changed]'
+     scan:
+       - section: '[section name]'
+         change: '[what was changed]'
+     write:
+       - section: '[section name]'
+         change: '[what was changed]'
+   tier_compliance:
+     meta: true|false   # compliance with template:standard-meta
+     scan: true|false   # compliance with template:standard-scan
+     write: true|false  # compliance with template:standard-write
+   content_preserved: true|false
+   issues: ['issue1', 'issue2', ...]  # only if problems encountered
+   ```
+
+   <<<
+
+4. **Progress Monitoring & Aggregation**
+   - Track completion status of each delegated standard directory
+   - Handle any subagent failures or escalations
+   - Ensure constitutional compliance in all updates
+   - Aggregate per-subagent YAML reports into the final Step 2 report
+
+### Step 2: Reporting
+
+**Output Format**:
 
 ```plaintext
 [✅/❌] Command: $ARGUMENTS
@@ -58,23 +148,15 @@ Spawn parallel specialized subagents (max 3 standard directories per batch) — 
 - Standards updated: [count]
 - Changes applied: [change specifications]
 - Template alignment: [COMPLETE/PARTIAL/FAILED]
-- Execution mode: [team/subagent]
 
 ## Actions Taken
 1. [Standard directory] (meta.md, scan.md, write.md): [Status] - [Changes applied]
 2. [Standard directory] (meta.md, scan.md, write.md): [Status] - [Changes applied]
 
-## Subagent Results (subagent mode) / Agent Lifecycle (team mode)
-- Total agents deployed: [count]
+## Subagent Results
+- Total subagents deployed: [count]
 - Successful updates: [count]
 - Failed updates: [count] (if any)
-- Agents reused (team mode only): [count]
-- Agents retired (team mode only, context >= 50%): [count]
-
-## Review Cycles (team mode only)
-- Batch 1: [N] review rounds until both reviewers approved
-- Batch 2: [N] review rounds until both reviewers approved
-- ...
 
 ## Template Alignment Applied
 - Structure updates: [list]
@@ -107,29 +189,14 @@ Spawn parallel specialized subagents (max 3 standard directories per batch) — 
 # Ultrathink review for integrity and consistency across all three tiers
 ```
 
-### Bulk Standard Updates (Team Mode)
+### Bulk Standard Updates
 
 ```bash
 /update-standard --change1="Update TypeScript to 5.0 requirements"
-# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
-#   Discovers all standard directories (those containing meta.md), creates update-standard-team:
-#   - updater-1 (opus): Handles batch 1 (2 standard directories, 6 tier files)
-#   - updater-2 (opus): Handles batch 2 (2 standard directories, 6 tier files, parallel)
-#   Each updater reads all three tier templates and standard tier files, applies changes
-#   Agents report context_level after completion:
-#     - context < 50%: agent reused for next batch
-#     - context >= 50%: agent retired, fresh replacement spawned
-#   Team is cleaned up after all batches complete
-```
-
-### Bulk Standard Updates (Subagent Fallback)
-
-```bash
-/update-standard --change1="Update TypeScript to 5.0 requirements"
-# Without agent teams enabled:
-#   Updates ALL standard directories in parallel via subagents
-#   Each subagent handles one standard directory (meta.md, scan.md, write.md)
-#   Consistent change applied across entire standard library
+# Discovers all standard directories (those containing meta.md)
+# Spawns parallel subagents (max 3 standard directories per batch, max 8 parallel Task calls)
+# Each subagent handles one standard directory (meta.md, scan.md, write.md)
+# Consistent change applied across entire standard library
 ```
 
 ### Template-Only Alignment

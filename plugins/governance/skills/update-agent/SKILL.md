@@ -4,7 +4,7 @@ description: Update agent files to align with template and apply specified chang
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Task, Read, Write, MultiEdit, Edit, Bash, Grep, Glob, TodoWrite, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+allowed-tools: Task, Read, Write, MultiEdit, Edit, Bash, Grep, Glob, TodoWrite
 argument-hint: [agent specifier] [--changes=...]
 ---
 
@@ -34,22 +34,70 @@ This skill systematically updates agent files to maintain consistency with the c
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Determine Execution Mode
+### Step 1: Subagent Orchestration
 
-Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
+Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` calls per dispatch) — each ultrathinks, reads `template:agent` and the agent file, and applies updates.
 
-- **If present**: Use **Team Mode** (Step 2A)
-- **If absent**: Use **Subagent Mode** (Step 2B)
+#### Planning & Discovery
 
-### Step 2A: Team Mode (Agent Teams enabled)
+1. **Analyze Requirements**
+   - Parse $ARGUMENTS to extract:
+     - Agent specifier (all, specific agent name, or pattern like `*frontend*`)
+     - Change specifications (--changes parameter)
+   - Validate agent files exist if specific agent specified
+   - Count total agents if updating all
 
-Lead Orchestrator coordinates Agent Update Specialist teammates (opus) to update agent files in parallel against template:agent. For the full Phase 1–4 procedure (planning, team setup, work cycle with verbatim subagent prompt, aggregation/cleanup) and the agent summary table, see `references/team-mode.md`.
+2. **Load Template Reference**
+   - Read template:agent for latest agent structure
+   - Identify template sections and required elements
+   - Note any template updates since last agent refresh
 
-### Step 2B: Subagent Mode (fallback)
+3. **Locate Agents**
+   - Discover all relevant agent files using Glob
+   - Filter by specifier pattern if provided
+   - Build list of agents to update
 
-Spawn parallel specialized subagents (one per agent file) — each ultrathinks, reads template:agent and the agent file, and applies updates. For full procedure (planning, delegation, progress monitoring, verification of template compliance, change application, and personality preservation), see `references/subagent-mode.md`.
+#### Execution with Parallel Subagents
 
-### Reporting
+1. **Template Validation**
+   - Verify template:agent exists and is readable
+   - Load template structure for reference
+   - Identify mandatory sections that must be preserved
+
+2. **Delegation**
+   - Create parallel specialized subagents (one per agent file, max 8 parallel `Task` calls per dispatch) with:
+     - Agent file path
+     - All change specifications
+     - Detailed instructions
+     - Request to ultrathink
+
+3. **Progress Monitoring**
+   - Track completion status of each delegated agent
+   - Handle any subagent failures or escalations
+   - Ensure constitutional compliance in all updates
+
+#### Verification
+
+1. **Template Compliance Verification**
+   - Verify each updated agent follows template:agent structure
+   - Check all mandatory sections are present and properly formatted
+   - Validate frontmatter and metadata consistency
+
+2. **Change Application Verification**
+   - Confirm all specified changes were applied correctly
+   - Verify changes are reflected throughout the agent file
+   - Check for any conflicting or contradictory specifications
+
+3. **Personality Preservation Check**
+   - Ensure unique agent characteristics remain intact
+   - Verify collaboration networks are preserved
+   - Confirm expertise areas unchanged (unless explicitly modified)
+
+#### Aggregation
+
+- Aggregate per-subagent results into the final Step 2 report
+
+### Step 2: Reporting
 
 **Output Format**:
 
@@ -57,7 +105,6 @@ Spawn parallel specialized subagents (one per agent file) — each ultrathinks, 
 [✅/❌] Command: update-agent $ARGUMENTS
 
 ## Summary
-- Execution mode: [team/subagent]
 - Agents processed: [count/total]
 - Successfully updated: [count]
 - Failed updates: [count]
@@ -68,11 +115,8 @@ Spawn parallel specialized subagents (one per agent file) — each ultrathinks, 
 2. [Template alignment changes applied]
 3. [Custom changes applied (if any)]
 
-## Skills Applied (subagent mode)
-- Update Agent Skill: [Status]
-
-## Teammate Results (team mode only)
-- Total agents deployed: [count]
+## Subagent Results
+- Total subagents deployed: [count]
 - Successful updates: [count]
 - Failed updates: [count] (if any)
 
@@ -88,26 +132,12 @@ Spawn parallel specialized subagents (one per agent file) — each ultrathinks, 
 
 ## Examples
 
-### Update All Agents (Team Mode)
+### Update All Agents
 
 ```bash
 /update-agent
-# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
-# - Creates update-agent-team
-# - Spawns parallel Agent Update Specialists (one per agent file)
-# - Each specialist updates agent with template alignment
-# - Preserves unique characteristics while ensuring template compliance
-# - Reports execution mode: team
-```
-
-### Update All Agents (Subagent Mode)
-
-```bash
-/update-agent
-# Without agent teams:
-# - Uses traditional subagent delegation
-# - Updates all agents in /agents directory to latest template
-# - Reports execution mode: subagent
+# Spawns parallel subagents (one per agent file, max 8 parallel Task calls)
+# Updates all agents in /agents directory to latest template
 ```
 
 ### Update Specific Agent

@@ -4,7 +4,7 @@ description: Update skill(s) to latest standard template and make specified chan
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
 argument-hint: [skill specifier] [--changes=...]
 ---
 
@@ -47,47 +47,123 @@ ultrathink: you'd perform the following steps
 
 **Skill Steps**:
 
-1. Mode Selection
-2. Execution (Team or Subagent mode)
-3. Reporting
-4. Verify & Iterate
+1. Subagent Orchestration
+2. Reporting
+3. Verify & Iterate
 
 ```
-[Step 1: Mode Selection]
+[Step 1: Subagent Orchestration]
    |
    v
-[Step 2: Execution] ─→ (Team Mode 2A or Subagent Mode 2B)
+[Step 2: Reporting]
    |
    v
-[Step 3: Reporting]
-   |
-   v
-[Step 4: Verify & Iterate] ─→ (Sub-skill: governance:verify-skill per updated skill)
+[Step 3: Verify & Iterate] ─→ (Sub-skill: governance:verify-skill per updated skill)
    |                           Loop max 2 iterations per skill
    v
 [END]
 ```
 
-### Step 1: Determine Execution Mode
+### Step 1: Subagent Orchestration
 
-Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
+Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls per dispatch) — each ultrathinks, reads template + skill files, and applies changes. The default Content Placement Rule subtask above applies — pass it through as Task 0 of every subagent assignment.
 
-- **If present**: Use **Team Mode** (Step 2A)
-- **If absent**: Use **Subagent Mode** (Step 2B)
+1. **Template Validation**
+   - Verify template:skill exists and is readable
+   - Load template structure for reference
+   - Identify mandatory sections that must be preserved
 
-### Step 2A: Team Mode (Agent Teams enabled)
+2. **Discover Skills**
+   - Locate all skill directories in [plugin]/skills/
+   - Each skill directory contains a SKILL.md file
+   - Filter by specifier if provided
+   - Build list of skills to update
 
-Lead Orchestrator coordinates updater (opus) and reviewer (haiku) teammates with batched update-review cycles and context-level pool management. For the full Phase 1–4 procedure (Lead rules, planning, team setup, update-review cycle, aggregation/cleanup) and the agent summary table, see `references/team-mode.md`.
+3. **Delegation**
+   - Create batches (max 8 skill files per batch for subagent efficiency, max 8 parallel `Task` calls per dispatch)
+   - Create parallel specialized subagents (one per batch) with:
+     - Skill file path
+     - All change specifications
+     - Detailed instructions
+     - Request to ultrathink
 
-The default Content Placement Rule subtask above applies — pass it through to updaters as Task 0 of every batch.
+4. **Subagent Task Specification**
 
-### Step 2B: Subagent Mode (fallback)
+   >>>
+   **ultrathink: adopt the Skill Update Specialist mindset**
 
-Spawn parallel subagents (max 8 skills per batch) — each ultrathinks, reads template + skill files, and applies changes. The default Content Placement Rule subtask above applies — pass it through as Task 0 of every subagent assignment. For full procedure (template validation, discovery, delegation, the verbatim subagent prompt with `>>> <<<` block, report YAML, and progress monitoring), see `references/subagent-mode.md`.
+   - You're a **Skill Update Specialist** with deep expertise in process documentation who follows these principles:
+     - **Template-First Approach**: Always compare against template before modification
+     - **Process Preservation**: Maintain existing skill logic and steps
+     - **Structural Integrity**: Align with template structure while preserving content
+     - **Professional Polish**: Deliver clean, consistent skill documentation
 
-### Step 3: Reporting
+   <IMPORTANT>
+     You've to perform the task yourself. You CANNOT further delegate the work to another subagent
+   </IMPORTANT>
 
-**Output Format** (same for both modes):
+   **Assignment**
+   You're assigned to update skill: [skill name]
+
+   **Skill Specifications**:
+   - **Skill File**: [skill file path]
+   - **Template**: template:skill
+   - **Changes to Apply**: [change specifications from inputs]
+
+   **Steps**
+
+   1. **Read Current Skill**:
+      - Read the skill file completely
+      - Identify existing steps, phases, and subagent instructions
+      - Note any custom sections or unique process logic
+
+   2. **Compare with Template**:
+      - Read template:skill for current structure
+      - Identify missing sections from template
+      - Identify sections that need structural updates
+      - Map changes to specific template sections
+
+   3. **Apply Updates**:
+      - Task 0 (default, always run): Scan SKILL.md for conditional bulk per the **Content Placement Rule** in SKILL.md. Propose offloads to `references/<topic>.md` (or splitting into a separate skill for coherent independently-triggerable workflows) as part of this patch. Apply approved offloads before user-requested changes so subsequent edits land in the correct file.
+      - Task 1: Align skill with template:skill structure
+      - Task 2a, 2b, 2c...: Apply each change specification as subtask
+      - Task 3: Review skill integrity and consistency throughout
+      - Preserve all existing process logic and steps
+      - Add any missing required sections from template
+      - Update ASCII diagrams if structure changed
+
+   4. **Clean & Finalize**:
+      - Remove any outdated or deprecated content
+      - Ensure consistent formatting throughout
+      - Verify subagent instruction blocks follow >>> <<< format
+      - Ensure all placeholder content has been replaced
+
+   **Report**
+   **[IMPORTANT]** You MUST return the following execution report (<500 tokens):
+
+   ```yaml
+   status: success|failure|partial
+   skill: '[skill-name]'
+   summary: 'Brief description of changes applied'
+   modifications:
+     - section: '[section name]'
+       change: '[what was changed]'
+   template_compliance: true|false
+   process_preserved: true|false
+   issues: ['issue1', 'issue2', ...]  # only if problems encountered
+   ```
+
+   <<<
+
+5. **Progress Monitoring & Aggregation**
+   - Track completion status of each delegated skill
+   - Handle any subagent failures or escalations
+   - Ensure constitutional compliance in all updates
+   - Aggregate per-subagent YAML reports into the final Step 2 report
+
+### Step 2: Reporting
+
+**Output Format**:
 
 ```plaintext
 [pass/fail] Command: $ARGUMENTS
@@ -96,23 +172,15 @@ Spawn parallel subagents (max 8 skills per batch) — each ultrathinks, reads te
 - Skills updated: [count]
 - Changes applied: [change specifications]
 - Template alignment: [COMPLETE/PARTIAL/FAILED]
-- Execution mode: [team/subagent]
 
 ## Actions Taken
 1. [Skill file]: [Status] - [Changes applied]
 2. [Skill file]: [Status] - [Changes applied]
 
-## Subagent Results (subagent mode) / Agent Lifecycle (team mode)
-- Total agents deployed: [count]
+## Subagent Results
+- Total subagents deployed: [count]
 - Successful updates: [count]
 - Failed updates: [count] (if any)
-- Agents reused (team mode only): [count]
-- Agents retired (team mode only, context >= 50%): [count]
-
-## Review Cycles (team mode only)
-- Batch 1: [N] review rounds until both reviewers approved
-- Batch 2: [N] review rounds until both reviewers approved
-- ...
 
 ## Template Alignment Applied
 - Structure updates: [list]
@@ -127,7 +195,7 @@ Spawn parallel subagents (max 8 skills per batch) — each ultrathinks, reads te
 - **Issue**: [Description]
   **Resolution**: [Applied fix or escalation]
 
-## Verification Results (Step 4)
+## Verification Results (Step 3)
 ```yaml
 verification:
   total_verified: N
@@ -146,12 +214,12 @@ verification:
 - Commit changes if satisfied with results
 ```
 
-### Step 4: Verify & Iterate
+### Step 3: Verify & Iterate
 
 **Step Configuration**:
 
 - **Purpose**: Invoke verify-skill on each updated skill to ensure template compliance and quality
-- **Input**: List of updated skill file paths from Step 2/3
+- **Input**: List of updated skill file paths from Step 1/2
 - **Output**: Per-skill verification results, potentially improved skill files
 - **Sub-skill**: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md
 - **Parallel Execution**: Yes — verify each updated skill independently
@@ -222,7 +290,7 @@ After all skills have been verified:
    - Skills passing on first try
    - Skills requiring fix iterations
    - Skills with remaining issues
-3. Include in final report from Step 3
+3. Include in final report from Step 2
 
 ## Examples
 
@@ -242,29 +310,13 @@ After all skills have been verified:
 # Each change becomes a subtask (2a, 2b) in the skill
 ```
 
-### Update All Skills (Team Mode)
+### Update All Skills
 
 ```bash
 /update-skill
-# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
-#   Discovers all skill files, creates update-skill-team:
-#   - updater-1 (opus): Handles batch 1 (2 skill files)
-#   - updater-2 (opus): Handles batch 2 (2 skill files, parallel)
-#   Each updater reads template and skills, applies updates
-#   Agents report context_level after completion:
-#     - context < 50%: agent reused for next batch
-#     - context >= 50%: agent retired, fresh replacement spawned
-#   Team is cleaned up after all batches complete
-```
-
-### Update All Skills (Subagent Fallback)
-
-```bash
-/update-skill
-# Without agent teams enabled:
-#   Discovers all skill files in [plugin]/skills/
-#   Spawns parallel subagents to update each skill
-#   Maintains consistency across entire skill system
+# Discovers all skill files in [plugin]/skills/
+# Spawns parallel subagents (max 8 skills per batch, max 8 parallel Task calls)
+# Maintains consistency across entire skill system
 ```
 
 ### Complex Multi-Change Update
