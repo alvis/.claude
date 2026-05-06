@@ -22,7 +22,7 @@ Use Glob/Grep to discover files matching the resolved specifier. Categorize by t
 - Docs: `*.md`, `README`
 - Config: `*.json`, `*.yaml`
 
-Filter files by selected scopes (pass file paths to teammates/subagents, **not** file contents).
+Filter files by selected scopes (pass file paths to subagents, **not** file contents).
 
 ## Default Scope Determination
 
@@ -36,7 +36,7 @@ Apply this decision ladder after file discovery:
    - Default: all
 5. If in CI mode and no scope specified → Default to `all`
 
-## Subagent-Mode File Filtering by Scope
+## File Filtering by Scope
 
 When dispatching subagent tasks, filter the discovered file list per scope:
 

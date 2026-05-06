@@ -1,43 +1,6 @@
 # Invocation Examples
 
-Reference examples for `/review-code`. Each example is gated on a specific invocation pattern (mode, scope, specifier shape). Consult the example matching the user's invocation; do not load all of them.
-
-## Team Mode Examples (Agent Teams enabled)
-
-### Context-Aware Review with Team Coordination
-
-```bash
-/review
-# Team mode behavior:
-#   - Creates review-team
-#   - Spawns specialized reviewers for all scopes in parallel
-#   - Each reviewer writes its own area file under reviews/
-#   - Orchestrator generates reviews/README.md index
-#   - Reports agent lifecycle stats
-```
-
-### Single Scope Review (Team Mode)
-
-```bash
-/review-code --area=security
-# Team mode:
-#   - Creates review-team
-#   - Spawns security-reviewer (nina-petrov-security-champion, opus)
-#   - Writes reviews/SECURITY.md
-#   - Updates reviews/README.md index
-```
-
-### Custom Output Directory (Team Mode)
-
-```bash
-/review-code "src/api/" --area=security,code-quality --out=audits/q4
-# Team mode:
-#   - Writes audits/q4/SECURITY.md, audits/q4/QUALITY.md, audits/q4/CORRECTNESS.md
-#   - Generates audits/q4/README.md index with verdicts
-#   - On re-run, preserves issue IDs and Pending Decisions context
-```
-
-## Subagent Mode Examples (Fallback)
+Reference examples for `/review-code`. Each example is gated on a specific invocation pattern (scope, specifier shape). Consult the example matching the user's invocation; do not load all of them.
 
 ### Context-Aware Review (Auto-Detect)
 
@@ -206,35 +169,6 @@ Reference examples for `/review-code`. Each example is gated on a specific invoc
 #   QUALITY.md      ✅ PASS
 #   CORRECTNESS.md  ✅ PASS
 #   Index: reviews/README.md
-```
-
-### Team Mode Output Example
-
-```bash
-/review-code "src/api/" --area=all
-# Output (Team Mode):
-#
-# Code Review Complete (Team Mode)
-#
-# Area files written under reviews/:
-#   SECURITY.md     ❌ FAIL — 5 issues (P0:1, P1:2, P2:1, P3:1)
-#   QUALITY.md      ❌ FAIL — 8 issues (P0:0, P1:3, P2:4, P3:1)
-#   TESTING.md      ❌ FAIL — 6 issues (P0:0, P1:1, P2:3, P3:2)
-#   DOCS.md         ✅ PASS
-#   STYLE.md        ✅ PASS
-#   CORRECTNESS.md  ❌ FAIL — 4 issues (P0:0, P1:2, P2:1, P3:1)
-#
-# Aggregate open issues: P0:1, P1:8, P2:9, P3:5
-#
-# FAIL areas: SECURITY, QUALITY, TESTING, CORRECTNESS
-#
-# Agent Lifecycle:
-#   - Total agents spawned: 5
-#   - Agents reused: 2 (for cross-scope review)
-#   - Agents retired: 3 (context >= 50%)
-#   - Average context level: 38%
-#
-# Index: reviews/README.md
 ```
 
 ### Error Handling

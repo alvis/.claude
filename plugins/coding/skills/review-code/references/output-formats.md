@@ -1,23 +1,14 @@
 # Reporting Output Formats
 
-Use this reference during Step 3 (Reporting) to render the final console/markdown summary. The active format is gated on the runtime mode detected in Phase 1: **CI/Non-Interactive** vs **Interactive**.
+Use this reference during Step 2 (Reporting) to render the final console/markdown summary. The active format is gated on the runtime environment detected in Phase 1: **CI/Non-Interactive** vs **Interactive**.
 
 ## Common fields (both formats)
 
-- Execution mode: `[team|subagent]`
 - Review scopes: `[list of scopes reviewed]`
 - Overall status: `[PASS|PASS_WITH_SUGGESTIONS|REQUIRES_CHANGES|FAIL]`
 - Per-area file listing with each file's verdict
 - Aggregate open-issue counts: P0, P1, P2, P3
 - Path to `<out>/README.md` index
-
-## Team mode additional fields
-
-- Agent lifecycle stats:
-  - Total agents spawned: `[N]`
-  - Agents reused: `[N]`
-  - Agents retired: `[N]`
-  - Average context level at completion: `[X%]`
 
 ## CI / Non-Interactive Format
 
