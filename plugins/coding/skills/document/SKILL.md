@@ -456,30 +456,7 @@ Note:
     - Plan-mode outline (if any): [paste approved Step 5 outline]
     - User notes/highlights (if any): [paste]
     - Bundled template path: '<skill_root>/references/README.template.md' (if used)
-    - Bundled example path (type-aware): '<skill_root>/references/README.example.<type>.md' where `<type>` is resolved from `package_type` (Step 5) or the Step 3 profile:
-      - `library` (internal) → `README.example.library.md`
-      - `library` (OSS) → `README.example.oss-library.md`
-      - `cli` → `README.example.cli.md`
-      - `microservice` → `README.example.microservice.md`
-      - `stateless` → `README.example.stateless.md`
-      - `data-controller` → `README.example.data-controller.md`
-      - `iac` → `README.example.iac.md`
-      - `monorepo-root` (internal) → `README.example.monorepo.md`
-      - `monorepo-root` (OSS) → `README.example.oss-monorepo.md`
-      Detection fallback from the Step 3 profile (first match wins):
-      - `bin` present → cli
-      - `pulumi/` / `cdk/` / `*.tf` / `*.bicep` present → iac
-      - root `workspaces` field + no `src` → monorepo-root
-      - `prisma/schema.prisma` AND `src/operations` AND `src/prisma` → data-controller
-      - `src/operations` AND no `prisma/` AND (server entry OR manifest export) → stateless
-      - HTTP endpoints + DB + `adapters/` → microservice
-      - else → library
-      **OSS signals** (applied on top of the base type — a package is treated as OSS if ANY of the following is true):
-      - repo root has a `LICENSE` file
-      - `package.json.repository.url` points to a public host (`github.com`, `gitlab.com`, `bitbucket.org`, `codeberg.org`, etc.)
-      - `package.json.publishConfig.access === "public"`
-      - `package.json` does NOT have `"private": true`
-      An **OSS monorepo root** is OSS AND has a top-level `workspaces` field AND sub-packages are present under that `workspaces` glob. OSS overrides the bundled example only for `library` and `monorepo-root`; all other archetypes (cli/microservice/data-controller/iac/stateless) ignore the OSS flag and use their existing example.
+    - Bundled example path (type-aware): resolve `<type>` and pick `<skill_root>/references/README.example.<type>.md` per `<skill_root>/references/package-types.md` (covers library/oss-library/cli/microservice/stateless/data-controller/iac/monorepo/oss-monorepo, the detection fallback from the Step 3 profile, and the OSS-signal overrides).
 
     **Steps**
 
@@ -568,22 +545,7 @@ Note:
     - Existing ARCHITECTURE.md (if any): [paste]
     - Architecture template (if Subagent A found one): [paste]
     - Bundled template path: '<skill_root>/references/ARCHITECTURE.template.md' (if used)
-    - Bundled example path (type-aware): '<skill_root>/references/ARCHITECTURE.example.<type>.md' where `<type>` is resolved from `package_type` (Step 5) or the Step 3 profile:
-      - `library` → `ARCHITECTURE.example.library.md`
-      - `cli` → `ARCHITECTURE.example.cli.md`
-      - `microservice` → `ARCHITECTURE.example.microservice.md`
-      - `stateless` → `ARCHITECTURE.example.stateless.md`
-      - `data-controller` → `ARCHITECTURE.example.data-controller.md`
-      - `iac` → `ARCHITECTURE.example.iac.md`
-      - `monorepo-root` → `ARCHITECTURE.example.monorepo.md`
-      Detection fallback from the Step 3 profile (first match wins):
-      - `bin` present → cli
-      - `pulumi/` / `cdk/` / `*.tf` / `*.bicep` present → iac
-      - root `workspaces` field + no `src` → monorepo-root
-      - `prisma/schema.prisma` AND `src/operations` AND `src/prisma` → data-controller
-      - `src/operations` AND no `prisma/` AND (server entry OR manifest export) → stateless
-      - HTTP endpoints + DB + `adapters/` → microservice
-      - else → library
+    - Bundled example path (type-aware): resolve `<type>` and pick `<skill_root>/references/ARCHITECTURE.example.<type>.md` per `<skill_root>/references/package-types.md` (ARCHITECTURE map: library/cli/microservice/stateless/data-controller/iac/monorepo — no OSS variants; same Step-3 detection fallback applies).
 
     **Steps**
 
