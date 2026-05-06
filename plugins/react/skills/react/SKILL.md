@@ -121,10 +121,9 @@ When a scan or review surfaces a specific violation code, open the matching file
 Defer to the right skill instead of doing the work inline:
 
 - Detailed implementation work (full TDD lifecycle: design → skeleton → implement → test → refactor) → `coding:write-code`
-- Granular single-component scaffold (one component, one tree, one shot) → `react:create-component`
 - Design, visual, layout, palette, typography, animation work → `web:design`
 - Next.js debugging (SSR, App Router, route handlers, build issues, RSC boundaries, hydration) → `web:next`
 - Linting / standards enforcement across many files → `coding:lint` (pass the standard paths above)
-- Story authoring as part of a broader feature → keep scope here; for a one-shot scaffold defer to `react:create-component`
+- Story authoring as part of a broader feature → keep scope here
 
 This skill itself does NOT scaffold components, run lifecycles, or fix lint at scale — it loads context, surfaces the right standards, and routes.
