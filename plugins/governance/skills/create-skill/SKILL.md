@@ -110,6 +110,19 @@ Note:
 
 ## 3. SKILL IMPLEMENTATION
 
+### Content Placement Rule
+
+> **SKILL.md must contain only the always-on core workflow — the path every invocation walks.**
+>
+> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer (e.g. `For two-way merge mode, see references/two-way-merge.md`).
+> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** instead.
+> 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
+> 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
+>
+> Rationale: SKILL.md is loaded on every invocation; references are loaded on demand. Inline conditional bulk is paid for by every run that never enters the branch.
+
+This rule MUST be enforced when drafting any new SKILL.md. The Step 2 subagent applies it during creation; the Step 5 verify-skill sub-skill audits compliance.
+
 ### Skill Steps
 
 1. Planning & Guidance Generation
@@ -235,6 +248,9 @@ Request the subagent to perform the following skill creation:
        - Keep all skill content and user-facing documentation intact
        - Ensure final document is clean and professional
        - Verify SKILL.md is uppercase (not skill.md)
+
+    4b. **Apply Content Placement Rule**:
+       After drafting SKILL.md, identify any block that is conditional (mode-, scope-, flag-, language-gated). If it exceeds ~50 lines, write it to `references/<topic>.md` and replace the block with a one-line pointer (e.g. `For two-way merge mode, see references/two-way-merge.md`). If the branch is a coherent independently-triggerable workflow, propose a separate skill instead. Short `if X then do Y` lines and always-on bulk MAY stay inline. Rationale: SKILL.md loads every invocation; references load on demand.
 
     5. **Generate Evaluation File**:
        - Create directory [plugin]/skills/[skill-name]/evals/
