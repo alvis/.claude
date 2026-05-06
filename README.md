@@ -51,11 +51,6 @@ This repository hosts an INFJ-orchestrated multi-agent system for TypeScript dev
 
 ### Development Teams
 
-#### Frontend Excellence
-
-- **`lily-wong-ui-implementation`** - React/Next.js UI implementation expert
-- **`sophie-laurent-design-systems`** - Design systems and component libraries
-
 #### Backend Engineering
 
 - **`james-mitchell-service-implementation`** - Node.js/TypeScript services
@@ -161,11 +156,9 @@ pnpm constitution:init
 graph LR
     A[User Request] --> B[CLAUDE.md Routes Task]
     B --> C{Task Type?}
-    C -->|Frontend| D[lily-wong-ui-implementation]
     C -->|Backend| E[james-mitchell-service-implementation]
 
-    D --> G[TDD Workflow]
-    E --> G
+    E --> G[TDD Workflow]
 
     G --> H[ava-thompson-testing-evangelist]
     H --> I[nina-petrov-security-champion]
