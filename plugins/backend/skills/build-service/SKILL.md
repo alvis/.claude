@@ -199,109 +199,11 @@ Legend:
 #### Phase 1: Planning (You)
 
 1. **Determine manifest project**: Check if `manifests/{name}/` exists
-2. **If new manifest needed**, plan project structure:
-   ```
-   manifests/{name}/
-   ├── package.json
-   ├── source/
-   │   ├── index.ts
-   │   └── operations/
-   │       └── {operationName}/
-   │           ├── index.ts      # Operation manifest
-   │           └── schema/
-   │               ├── index.ts  # Schema exports + types
-   │               ├── input.ts  # Input schema
-   │               └── output.ts # Output schema (if not void)
-   └── spec/
-       └── index.spec.ts
-   ```
+2. **If new manifest needed**, follow the manifest project structure and per-operation subagent pattern in `references/manifest-declaration.md`
 3. **Create batches** — one per operation (max 10 per batch)
 4. **Use TodoWrite** to track
 
-#### Phase 2: Execution (Subagents)
-
-Spin up subagents for schema creation, up to **3** at a time:
-
-    >>>
-    **ultrathink: adopt the Schema Definition Specialist mindset**
-
-    - You're a **Schema Definition Specialist** with deep expertise in JSON Schema and TypeScript integration who follows these technical principles:
-      - **Type Safety First**: Ensure all schemas compile to strict TypeScript types
-      - **Validation Completeness**: Include all necessary validation rules and constraints
-      - **Documentation Integration**: Every schema field must have clear descriptions
-
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
-
-    **Assignment**
-    Create schema and manifest for operation: [OPERATION_NAME] in service: [SERVICE_NAME]
-
-    **Steps**
-    1. Create operation directory with camelCase naming under `manifests/{service}/source/operations/`
-    2. Define input schema using `as const satisfies JsonSchema` pattern
-    3. Define output schema (if operation returns data)
-    4. Export TypeScript types using `FromSchema` pattern
-    5. Create operation manifest with `createOperationManifest` including comprehensive mock
-    6. Register operation in `source/index.ts` (alphabetical order)
-
-    **Schema Patterns**:
-
-    Input Schema:
-    ```typescript
-    import type { JsonSchema } from '@theriety/manifest';
-    export default {
-      type: 'object',
-      additionalProperties: false,
-      required: ['field1'],
-      properties: { field1: { type: 'string', format: 'uuid', description: '...' } },
-    } as const satisfies JsonSchema;
-    ```
-
-    Schema Export:
-    ```typescript
-    import input from './input';
-    import output from './output';
-    import type { FromSchema } from '@theriety/manifest';
-    export type Input = FromSchema<typeof input>;
-    export type Output = FromSchema<typeof output>;
-    export default { input, output };
-    ```
-
-    Manifest:
-    ```typescript
-    import { createOperationManifest } from '@theriety/manifest';
-    import schema from './schema';
-    import type { Input, Output } from './schema';
-    export default createOperationManifest({
-      path: import.meta.url,
-      schema,
-      async: true,
-      mock: async (input: Input): Promise<Output> => ({ /* realistic mock */ }),
-    });
-    ```
-
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    summary: 'Schema and manifest created for [operation]'
-    modifications: ['schema/input.ts', 'schema/output.ts', 'schema/index.ts', 'index.ts']
-    outputs:
-      input_schema_created: true|false
-      output_schema_created: true|false|not_required
-      manifest_created: true|false
-    issues: []
-    ```
-    <<<
-
-#### Phase 3: Review (Subagents)
-
-Review TypeScript compilation, schema format, FromSchema types, and requirements alignment (read-only).
-
-#### Phase 4: Decision (You)
-
-- **PROCEED** if schemas validated → Step 3
-- **FIX ISSUES** if compilation failures → retry Phase 2
+For Phase 2 (schema/manifest subagent prompt + schema patterns), Phase 3 (review checks), and Phase 4 (decision rules), see `references/manifest-declaration.md`.
 
 ---
 
@@ -336,40 +238,11 @@ Review TypeScript compilation, schema format, FromSchema types, and requirements
 
 #### Execute Draft Sub-Skill (You)
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/draft-code/SKILL.md`
-2. Execute with context specifying files to create with TODO placeholders:
-   - Operations: `src/operations/{op-name}/index.ts` following `createOperation.opName` pattern
-   - Integrations: `src/integrations/{system}/` directories (if any)
-   - Webhooks: `src/webhooks/{system}.ts` files (if any)
-   - Supporting files: `factory.ts`, `config.ts`, `client.ts`, `peer.ts`, `index.ts`
+For per-batch context (files to create, implementation patterns, test patterns, and reference file paths), see `references/implementation-patterns.md`.
 
-   Reference files:
-   - `/Users/alvis/Repositories/core/services/billing/package.json` — package structure
-   - `/Users/alvis/Repositories/core/services/product/src/factory.ts` — createServiceFactory pattern
-   - `/Users/alvis/Repositories/core/services/atc/src/config.ts` — ServiceConfigSpecification
-   - `/Users/alvis/Repositories/core/services/billing/src/client.ts` — ClientInitializer
-
-3. After draft complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-code/SKILL.md`
-4. Execute with context specifying implementation patterns:
-   - Operations: `createOperation.opName(async (payload, { data, integration, emit }, { initiator }) => { ... })`
-   - Use `ensure()` from `@theriety/core` for authorization
-   - Use `retry()`, `RetryableError` for transient failures
-   - Reference: `/Users/alvis/Repositories/core/services/product/src/operations/set-offering/index.ts`
-
-5. After implementation complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-test/SKILL.md`
-6. Execute with context specifying test patterns:
-
-   | Aspect | Unit Tests (*.spec.ts) | Integration Tests (*.spec.int.ts) |
-   |--------|------------------------|--------------------------------------|
-   | Scope | Each operation + integration | End-to-end flows |
-   | Data layer | vi.fn() mocks | **Real** action.data |
-   | External APIs | vi.hoisted() + vi.mock() | **Real** API calls |
-   | Internal services | N/A | **Mock** via vi.mock() |
-   | Framework | operationMockFactory | Direct calls |
-
-   Reference files:
-   - `/Users/alvis/Repositories/core/services/product/spec/operations/set-offering.spec.ts` — unit test
-   - `/Users/alvis/Repositories/core/services/billing/spec/integrations/stripe/invoice.spec.ts` — integration test
+1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/draft-code/SKILL.md` and execute with the **Draft Phase Context** from the reference.
+2. After draft complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-code/SKILL.md` and execute with the **Implementation Phase Context** from the reference.
+3. After implementation complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-test/SKILL.md` and execute with the **Test Phase Context** from the reference.
 
 ---
 
