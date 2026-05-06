@@ -144,21 +144,21 @@ import { useMemoryClient } from 'tevm/memory-client'
 import styles from './ComponentName.module.css'
 
 /**
- * Props for the ComponentName component
+ * props for the ComponentName component
  */
 export interface ComponentNameProps {
-  /** Description of prop1 */
+  /** description of prop1 */
   prop1: string
-  /** Description of prop2, which is optional */
+  /** description of prop2, which is optional */
   prop2?: number
-  /** Callback function */
+  /** callback fired when the resolved value changes */
   onChange?: (value: string) => void
 }
 
 /**
- * ComponentName - Brief description of what this component does
+ * renders the ComponentName feature with the given props.
  *
- * Detailed description of the component's purpose, usage context,
+ * detailed description of the component's purpose, usage context,
  * and any important behaviors or limitations.
  *
  * @example
@@ -172,17 +172,15 @@ export interface ComponentNameProps {
  */
 export const ComponentName: FC<ComponentNameProps> = ({
   prop1,
-  prop2 = 0, // Default value for optional prop
+  prop2 = 0,
   onChange,
 }) => {
   const [state, setState] = useState('')
   const client = useMemoryClient()
 
   useEffect(() => {
-    // Example effect to interact with Tevm
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       try {
-        // Example contract interaction
         const result = await client.getBalance({
           address: prop1,
         })
@@ -190,7 +188,8 @@ export const ComponentName: FC<ComponentNameProps> = ({
         setState(result.toString())
         onChange?.(result.toString())
       } catch (error) {
-        console.error('Error in ComponentName:', (error as Error).message)
+        const message = error instanceof Error ? error.message : String(error)
+        console.error('Error in ComponentName:', message)
       }
     }
 
@@ -297,10 +296,10 @@ export const ContractComponent: FC<{ address: string }> = ({ address }) => {
     abi: MyContractAbi,
   })
 
-  const [data, setData] = useState(null)
+  const [data, setData] = useState<unknown>(null)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       const result = await contract.read.myMethod()
       setData(result)
     }
@@ -308,7 +307,7 @@ export const ContractComponent: FC<{ address: string }> = ({ address }) => {
     fetchData()
   }, [contract])
 
-  const handleAction = async () => {
+  const handleAction = async (): Promise<void> => {
     await contract.write.performAction()
   }
 
@@ -365,7 +364,7 @@ export const BalanceDisplay: FC<{ address: string }> = ({ address }) => {
   const [balance, setBalance] = useState<bigint>(BigInt(0))
 
   useEffect(() => {
-    const getBalance = async () => {
+    const getBalance = async (): Promise<void> => {
       const result = await client.getBalance({ address })
       setBalance(result)
     }
@@ -393,8 +392,8 @@ export const TransactionForm: FC<{ onSubmit?: (txHash: string) => void }> = ({ o
   const [value, setValue] = useState('')
   const [sending, setSending] = useState(false)
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
     if (!to) return
 
     try {
@@ -406,7 +405,8 @@ export const TransactionForm: FC<{ onSubmit?: (txHash: string) => void }> = ({ o
 
       onSubmit?.(txHash)
     } catch (error) {
-      console.error('Transaction error:', (error as Error).message)
+      const message = error instanceof Error ? error.message : String(error)
+      console.error('Transaction error:', message)
     } finally {
       setSending(false)
     }
@@ -419,7 +419,7 @@ export const TransactionForm: FC<{ onSubmit?: (txHash: string) => void }> = ({ o
         <input
           id="to"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={(event) => setTo(event.target.value)}
           placeholder="0x..."
           required
         />
@@ -432,7 +432,7 @@ export const TransactionForm: FC<{ onSubmit?: (txHash: string) => void }> = ({ o
           type="number"
           step="0.001"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(event) => setValue(event.target.value)}
           placeholder="0.0"
         />
       </div>
