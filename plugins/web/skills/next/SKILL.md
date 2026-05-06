@@ -1,5 +1,5 @@
 ---
-name: develop-nextjs
+name: next
 description: >-
   Debug Next.js apps using **next-browser CLI** (React components, Next.js routes, SSR,
   errors, screenshots, interactions) and **Chrome DevTools MCP** (DOM/styles, performance,
