@@ -128,6 +128,19 @@ Note:
 
 ## 3. SKILL IMPLEMENTATION
 
+### Content Placement Rule
+
+> **SKILL.md must contain only the always-on core workflow — the path every invocation walks.**
+>
+> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer (e.g. `For two-way merge mode, see references/two-way-merge.md`).
+> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** instead.
+> 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
+> 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
+>
+> Rationale: SKILL.md is loaded on every invocation; references are loaded on demand. Inline conditional bulk is paid for by every run that never enters the branch.
+
+Step 2 Structural Validation enforces this rule via the **Content Placement Validator** subagent (D).
+
 ### Skill Steps
 
 1. Analysis -- Analyze target skill, generate or load evals
@@ -225,20 +238,20 @@ Request the subagent to perform the following steps:
 - **Input**: Skill metadata from Step 1
 - **Output**: Structural validation results (pass/fail per check)
 - **Sub-skill**: None
-- **Parallel Execution**: Yes -- can run frontmatter + template + content checks in parallel
+- **Parallel Execution**: Yes -- can run frontmatter + template + content + content-placement checks in parallel
 
 #### Phase 1: Planning (You)
 
 **What You Do**:
 
-1. **Prepare** three parallel validation tasks: frontmatter, template compliance, content quality
+1. **Prepare** four parallel validation tasks: frontmatter, template compliance, content quality, content placement
 2. **Use TodoWrite** to track each validation task
 3. **Note** that if `fix: true`, fixable issues should include fix instructions
-4. **Queue** all three subagents for parallel execution
+4. **Queue** all four subagents for parallel execution
 
 #### Phase 2: Execution (Subagents)
 
-In a single message, you spin up **3** subagents to perform validation in parallel.
+In a single message, you spin up **4** subagents to perform validation in parallel.
 
 - **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
 - **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
@@ -359,11 +372,53 @@ In a single message, you spin up **3** subagents to perform validation in parall
     ```
     <<<
 
+**Subagent D: Content Placement Validator**
+
+    >>>
+    You are an independent validator. Treat the target skill file as unfamiliar; do not assume the author's intent is correct.
+
+    **Inputs**
+    - Target skill file: [skill_path]
+    - Skill directory (for sibling `references/` lookup): [skill_dir]
+    - Rubric: Content Placement Rule (see SKILL.md Section 3) and the structured findings schema in `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/references/schemas.md` ("Content Placement Validation Report")
+    - Report template: YAML block below
+
+    **Duties**
+
+    1. **Identify gated section blocks** — scan headings and prose for mode/scope/flag/language gates. Cues: "When mode is X", "If --flag", "Step 2A / 2B" branch tables, "(language=ts only)", mode matrices, "Skip condition: ...", per-language checklists.
+    2. **Flag inline conditional bulk** — for each gated block, count its lines (heading to next sibling heading). If a gated block exceeds 50 lines and lives inline in SKILL.md, flag it with `severity: required_offload`. Suggest a `references/<topic>.md` filename and the one-line pointer that should replace it.
+    3. **Detect inverse hiding** — read each file in the sibling `references/` directory. If a reference file contains *unconditional* core workflow steps (steps every invocation must run), flag it with `severity: hidden_core` — always-on work must live in SKILL.md, not behind a pointer.
+    4. **Suggest workflow splits** — if a gated block is a coherent, independently-triggerable workflow (has its own clear input, output, and trigger conditions), include a `suggested_split` finding (severity `suggestion`, never required). The user decides per case.
+    5. **Allow short conditionals** — non-bulky `if X then do Y` lines (under ~50 lines) MAY stay inline; do not flag them.
+    6. **Allow always-on bulk** — long checklists or tables consulted every run MAY stay inline; flag only if you can demonstrate the content is gated.
+
+    **Report**
+    Return the following execution report (<1500 tokens):
+
+    ```yaml
+    status: pass|fail
+    summary: 'Content placement validation of [skill name]'
+    checks:
+      no_inline_conditional_bulk: pass|fail
+      no_hidden_core_in_references: pass|fail
+    findings:
+      - severity: required_offload|hidden_core|suggestion
+        location: 'SKILL.md:line_start-line_end' | 'references/<file>.md'
+        gate: 'mode=functional' | 'flag --fix' | 'language=ts' | 'always-on (inverse)'
+        line_count: N
+        summary: 'one-line description of the block'
+        recommendation: 'move to references/<topic>.md' | 'split into separate skill <name>' | 'inline into SKILL.md core'
+        replacement_pointer: 'For X, see references/<topic>.md'  # only when recommending offload
+    issues: [...]
+    suggestions: [...]
+    ```
+    <<<
+
 #### Phase 4: Decision (You)
 
 **What You Do**:
 
-1. **Collect** all 3 subagent reports
+1. **Collect** all 4 subagent reports
 2. **Apply decision criteria**:
    - If ALL pass -> proceed to Step 3 (or skip to Step 7 if mode=structural)
    - If ANY fail and fix=true -> spawn fix subagent with aggregated fix_instructions, then re-validate (max 2 retries)
@@ -374,308 +429,19 @@ In a single message, you spin up **3** subagents to perform validation in parall
    - **SKIP TO REPORT**: mode=structural -> skip Steps 3-6, go to Step 7
 4. **Use TodoWrite** to update task list based on decision
 
-### Step 3: Trigger Testing (mode=functional|full only)
-
-**Step Configuration**:
-
-- **Purpose**: Test whether the skill's description triggers correctly for matching queries and does not trigger for non-matching queries
-- **Input**: Skill frontmatter description, trigger queries from evals (should_trigger + should_not_trigger)
-- **Output**: Trigger accuracy rate, false positive rate
-- **Sub-skill**: None
-- **Parallel Execution**: Yes -- test queries can run in parallel batches
-- **Skip condition**: mode=structural OR no trigger queries available OR `claude` CLI not available
-
-#### Phase 1: Planning (You)
-
-**What You Do**:
-
-1. **Load** trigger queries from evals (should_trigger + should_not_trigger lists)
-2. **If no trigger queries exist**, skip this step entirely
-3. **Check** if `claude -p` is available (run quick availability check)
-4. **Batch** queries for parallel execution
-5. **Use TodoWrite** to track trigger testing tasks
-
-#### Phase 2: Execution (Subagents)
-
-In a single message, you spin up **1** subagent to perform trigger testing.
-
-- **[IMPORTANT]** You MUST ask the subagent to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update the trigger testing task status from 'pending' to 'in_progress' when dispatched
-
-    >>>
-    **ultrathink: adopt the Trigger Testing Engineer mindset**
-
-    - You're a **Trigger Testing Engineer** who tests skill invocation accuracy:
-      - **Precision**: Measure exact trigger vs non-trigger accuracy
-      - **Systematic Testing**: Run each query independently
-      - **Statistical Rigor**: Calculate rates from complete test runs
-
-    **Assignment**
-    Test trigger accuracy for skill description: "[skill description from frontmatter]"
-
-    **Steps**
-
-    1. For each should_trigger query, use `scripts/run_trigger_eval.py` (if available) or manually test whether the skill description would match
-    2. For each should_not_trigger query, verify the skill does NOT match
-    3. Calculate trigger_rate = correct_triggers / total_should_trigger
-    4. Calculate false_positive_rate = false_triggers / total_should_not_trigger
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success|failure
-    summary: 'Trigger testing for [skill name]'
-    outputs:
-      trigger_rate: 0.XX
-      false_positive_rate: 0.XX
-      total_should_trigger: N
-      correct_triggers: N
-      total_should_not_trigger: N
-      false_triggers: N
-      details: [...]
-    issues: [...]
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-**What You Do**:
-
-1. **Analyze** the trigger testing report
-2. **Apply decision criteria**:
-   - trigger_rate >= 0.8 AND false_positive_rate <= 0.2 -> pass, proceed to Step 4
-   - Otherwise -> record as issue, proceed to Step 4
-3. **Use TodoWrite** to update task status based on decision
-
-### Step 4: Functional Testing (mode=functional|full only)
-
-**Step Configuration**:
-
-- **Purpose**: Run the skill against test prompts and capture outputs for grading
-- **Input**: Test cases from evals (prompt + expectations)
-- **Output**: Raw outputs for each test case
-- **Sub-skill**: None
-- **Parallel Execution**: Yes -- test cases are independent
-- **Skip condition**: mode=structural OR no test cases available
-
-#### Phase 1: Planning (You)
-
-**What You Do**:
-
-1. **Load** test cases from evals (max 3 test cases to control token budget)
-2. **Create** batch assignments for test execution
-3. **Use TodoWrite** to track each test case as a separate task
-
-#### Phase 2: Execution (Subagents)
-
-In a single message, you spin up **up to 3** subagents to perform test cases in parallel.
-
-- **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
-- **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update each test case status from 'pending' to 'in_progress' when dispatched
-
-For each test case:
-
-    >>>
-    You are an independent test runner. Treat the target skill file as unfamiliar; capture raw results without judging quality (grading is Step 5).
-
-    **Inputs**
-    - Target skill file: [skill_path]
-    - Test case name: [test_case_name]
-    - Test prompt: "[test prompt]"
-    - Report template: YAML block below
-
-    **Steps**
-
-    1. Read the skill file to understand expected behavior.
-    2. Execute the test prompt as given.
-    3. Capture all outputs: text output, files created/modified, error messages.
-    4. Record execution metadata: duration, tokens used (if available).
-
-    **Report**
-    Return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success|failure
-    summary: 'Functional test [test_case_name] for [skill name]'
-    outputs:
-      test_name: '...'
-      prompt: '...'
-      raw_output: '...'
-      files_created: [...]
-      files_modified: [...]
-      errors: [...]
-      execution_time: '...'
-    issues: [...]
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-**What You Do**:
-
-1. **Collect** all test case reports
-2. **Apply decision criteria**:
-   - If tests executed -> proceed to Step 5 with outputs
-   - If tests failed to run -> record issues, skip to Step 7
-3. **Use TodoWrite** to update task statuses based on results
-
-### Step 5: Grading (mode=functional|full only)
-
-**Step Configuration**:
-
-- **Purpose**: Grade functional test outputs against expectations using 3-level validation
-- **Input**: Raw test outputs from Step 4, expectations from evals
-- **Output**: Pass rate, grading summary, per-test-case results
-- **Sub-skill**: None
-- **Parallel Execution**: Yes -- grade each test case independently
-- **Skip condition**: Step 4 was skipped
-
-#### Phase 1: Planning (You)
-
-**What You Do**:
-
-1. **Pair** each test output from Step 4 with its expectations from evals
-2. **Create** grading assignments for each test case
-3. **Use TodoWrite** to track grading tasks
-
-#### Phase 2: Execution (Subagents)
-
-In a single message, you spin up **up to 3** subagents to grade test results in parallel.
-
-- **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update each grading task status from 'pending' to 'in_progress' when dispatched
-
-For each test result:
-
-    >>>
-    You are an independent grader. Treat the test output as unfamiliar; do not assume it is correct.
-
-    **Inputs**
-    - Test case name: [test_name]
-    - Prompt: [prompt]
-    - Expectations: [expectations list]
-    - Actual output: [raw output from Step 4]
-    - Rubric: `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/grader.md`
-    - Report template: YAML block below
-
-    **Steps**
-
-    1. Check each predefined expectation against the actual output.
-    2. Identify implicit claims in the skill that should be verified.
-    3. Assess whether the test case expectations are reasonable and complete.
-    4. Assign grade: pass (meets all expectations), partial (meets some), fail (meets few/none).
-
-    **Report**
-    Return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success
-    summary: 'Grading of test [test_name]'
-    outputs:
-      test_name: '...'
-      grade: pass|partial|fail
-      expectation_results:
-        - expectation: '...'
-          met: true|false
-          evidence: '...'
-      implicit_claims_verified: [...]
-      eval_quality_notes: '...'
-    issues: [...]
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-**What You Do**:
-
-1. **Aggregate** grades across test cases
-2. **Calculate** pass_rate = passed_tests / total_tests
-3. **Apply decision criteria**:
-   - pass_rate >= 0.7 -> functional pass
-   - pass_rate < 0.7 and fix=true -> spawn fix subagent, re-test (max 2 iterations)
-   - Otherwise -> record issues, proceed
-4. **Use TodoWrite** to update grading task statuses
-5. **Prepare transition** to Step 6 or Step 7
-
-### Step 6: Description Optimization (optimize_description=true only)
-
-**Step Configuration**:
-
-- **Purpose**: Optimize the skill description for better trigger accuracy using train/test split
-- **Input**: Current description, trigger queries (split 60/40 train/test)
-- **Output**: Optimized description with measured improvement
-- **Sub-skill**: None
-- **Parallel Execution**: No -- iterative process
-- **Skip condition**: optimize_description=false OR mode != full
-
-#### Phase 1: Planning (You)
-
-**What You Do**:
-
-1. **Verify** optimize_description=true and mode=full
-2. **Prepare** current description and trigger query sets for optimization
-3. **Use TodoWrite** to track optimization task
-
-#### Phase 2: Execution (Subagents)
-
-In a single message, you spin up **1** subagent to perform iterative optimization.
-
-- **[IMPORTANT]** You MUST ask the subagent to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update the optimization task status from 'pending' to 'in_progress' when dispatched
-
-    >>>
-    **ultrathink: adopt the Description Optimizer mindset**
-
-    - You're a **Description Optimizer** who improves skill trigger descriptions:
-      - **Data-Driven**: Use train/test split to prevent overfitting
-      - **Iterative**: Refine description over max 5 iterations
-      - **Measurable**: Report improvement in trigger accuracy
-
-    **Assignment**
-    Optimize description for skill at [skill_path]
-
-    **Current Description**: "[current description]"
-
-    **Steps**
-
-    1. Split trigger queries 60/40 into train and test sets
-    2. Using train set, propose improved description
-    3. Evaluate improved description against test set
-    4. If improvement > 5%, keep new description and iterate
-    5. If no improvement after 2 iterations, stop
-    6. Max 5 iterations total
-    7. Use comparator agent reference (`/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/comparator.md`) for blind A/B comparison between iterations
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success
-    summary: 'Description optimization for [skill name]'
-    outputs:
-      original_description: '...'
-      optimized_description: '...'
-      original_trigger_rate: 0.XX
-      optimized_trigger_rate: 0.XX
-      improvement: '+X%'
-      iterations_run: N
-      train_test_split: '60/40'
-    issues: [...]
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-**What You Do**:
-
-1. **Analyze** the optimization report
-2. **Apply decision criteria**:
-   - If improvement > 0 -> include optimized description in final report with recommendation
-   - If no improvement -> report original description is already optimal
-3. **Use TodoWrite** to update optimization task status
-4. **Proceed** to Step 7
+### Steps 3–6: Functional Mode Branch (mode=functional|full only)
+
+The functional branch — trigger testing, functional testing, grading, and optional description optimization — is loaded on demand to keep this SKILL.md focused on the always-on core. When `mode=functional` or `mode=full`, follow `references/functional-mode.md` for the complete step bodies.
+
+> **Step 3 (functional/full mode only)** — Trigger Testing: dispatch 1 subagent to measure trigger_rate and false_positive_rate against eval queries. See `references/functional-mode.md#step-3-trigger-testing-modefunctionalfull-only`.
+>
+> **Step 4 (functional/full mode only)** — Functional Testing: dispatch up to 3 parallel subagents to execute test prompts and capture raw outputs. See `references/functional-mode.md#step-4-functional-testing-modefunctionalfull-only`.
+>
+> **Step 5 (functional/full mode only)** — Grading: dispatch up to 3 parallel grader subagents to score outputs against expectations and aggregate pass_rate. See `references/functional-mode.md#step-5-grading-modefunctionalfull-only`.
+>
+> **Step 6 (mode=full + optimize_description=true only)** — Description Optimization: dispatch 1 subagent to iteratively refine the description via 60/40 train/test split (max 5 iterations). See `references/functional-mode.md#step-6-description-optimization-optimize_descriptiontrue-only`.
+
+After completing the applicable branch steps (or skipping them when `mode=structural`), proceed to Step 7.
 
 ### Step 7: Report
 
@@ -727,6 +493,7 @@ outputs:
       frontmatter: pass|fail
       template_compliance: pass|fail
       content_quality: pass|fail
+      content_placement: pass|fail
     functional:
       pass_rate: 0.XX
       test_cases: N

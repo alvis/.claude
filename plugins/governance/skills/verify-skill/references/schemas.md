@@ -143,6 +143,69 @@ history:
     test_acc: float
 ```
 
+## Content Placement Validation Report
+
+Produced by the **Content Placement Validator** subagent (Step 2, Subagent D) in verify-skill.
+
+Enforces the Content Placement Rule: SKILL.md must contain only the always-on core workflow. Conditional content (mode-, scope-, flag-, language-gated) exceeding ~50 lines must be offloaded to `references/<topic>.md`. Reference files must not hide unconditional core steps.
+
+```yaml
+status: pass | fail
+summary: string
+checks:
+  no_inline_conditional_bulk: pass | fail   # SKILL.md has no >50-line gated blocks inline
+  no_hidden_core_in_references: pass | fail # references/ files contain only conditional content
+findings:
+  - severity: required_offload | hidden_core | suggestion
+    # required_offload: gated block >50 lines inline in SKILL.md (MUST move)
+    # hidden_core: reference file contains unconditional core steps (MUST inline)
+    # suggestion: candidate for splitting into a separate skill (user decides)
+    location: string                # 'SKILL.md:line_start-line_end' or 'references/<file>.md'
+    gate: string                    # e.g., 'mode=functional', 'flag --fix', 'language=ts', 'always-on (inverse)'
+    line_count: integer
+    summary: string                 # one-line description of the block
+    recommendation: string          # 'move to references/<topic>.md' | 'split into separate skill <name>' | 'inline into SKILL.md core'
+    replacement_pointer: string     # only present when recommending offload, e.g., 'For X, see references/<topic>.md'
+issues:
+  - string
+suggestions:
+  - string
+```
+
+### Severity Semantics
+
+- `required_offload` — blocks the verify-skill pass; the skill MUST be refactored.
+- `hidden_core` — blocks the verify-skill pass; the always-on steps MUST be inlined back into SKILL.md.
+- `suggestion` — informational; the user chooses per case whether to split into a separate skill.
+
+### Example
+
+```yaml
+status: fail
+summary: 'Content placement validation of complete-test'
+checks:
+  no_inline_conditional_bulk: fail
+  no_hidden_core_in_references: pass
+findings:
+  - severity: required_offload
+    location: 'SKILL.md:412-587'
+    gate: 'language=python'
+    line_count: 175
+    summary: 'Python-specific pytest fixture generation walkthrough'
+    recommendation: 'move to references/python-fixtures.md'
+    replacement_pointer: 'For Python pytest fixtures, see references/python-fixtures.md'
+  - severity: suggestion
+    location: 'SKILL.md:880-1020'
+    gate: 'mode=mutation-testing'
+    line_count: 140
+    summary: 'Mutation testing workflow with stryker setup, run, and report'
+    recommendation: 'split into separate skill mutation-test'
+issues:
+  - 'Python fixtures section (175 lines) is gated by language but lives inline'
+suggestions:
+  - 'Mutation testing reads as an independent workflow; consider promoting to its own skill'
+```
+
 ## Verification Report — Final Output
 
 The consolidated report produced by verify-skill.
@@ -153,6 +216,7 @@ structural:
   frontmatter: pass | fail
   template_compliance: pass | fail
   content_quality: pass | fail
+  content_placement: pass | fail
 functional:                # Only present if mode=functional|full
   pass_rate: float
   test_cases: integer
