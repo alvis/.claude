@@ -182,67 +182,7 @@ Both tools now share the same Chrome instance. Only close the agent-browser sess
 
 ### Step 1: Phase 1 -- Plan
 
-**Step Configuration**:
-- **Purpose**: Resolve the target URL (and optional source path), viewports, and scope into a single plan object that feeds the CLI
-- **Input**: User-provided URL or project path, optional scope, optional `--all-pages`
-- **Output**: `{ target_url, source_path?, scope, viewports[], all_pages }` ready for Phase 2
-- **Parallel Execution**: No
-
-#### 1.1 Parse Input Mode
-
-**URL mode** (URL provided directly):
-- `target_url` = the provided URL
-- `source_path` = omitted
-
-**Source code mode** (project path provided):
-1. Detect project type by checking for marker files:
-   - `next.config.*` or `next.config.ts` --> Next.js (`npm run dev` or `npx next dev`)
-   - `vite.config.*` --> Vite (`npm run dev` or `npx vite`)
-   - `react-scripts` in package.json --> CRA (`npm start`)
-   - `index.html` at root --> static (`npx serve .`)
-2. Install dependencies if needed (`npm install`)
-3. Start the dev server in background
-4. Wait for the server to be ready (check stdout for "ready" / "listening" / URL output)
-5. `target_url` = the dev server URL
-6. `source_path` = the project path (passed to the CLI as `--source` so it can discover orphan/uncrawled routes from source code)
-
-**Error handling**:
-- If dev server fails to start: check `package.json` scripts, try alternative commands, report to user if all fail
-- If port is already in use: try the dev server's default port, or detect the running server URL
-
-#### 1.2 Resolve Viewports
-
-Default viewports (always emitted to the CLI):
-
-| Viewport | Dimensions |
-|----------|-----------|
-| Desktop  | 1440x900 |
-| Tablet   | 768x1024 |
-| Mobile   | 390x844 (mobile=true, touch=true) |
-
-#### 1.3 Determine Scope
-
-| Scope | Rules | When |
-|-------|-------|------|
-| `full` (default) | All 60 rules, all categories | No scope specified |
-| `quick` | Text + structure only (17 rules) | User says "quick audit" |
-| Category-specific | Rules in requested category only | User specifies category |
-
-#### 1.4 Emit Plan
-
-Output of Phase 1:
-
-```json
-{
-  "target_url": "https://example.com",
-  "source_path": "/abs/path/to/project",
-  "scope": "full",
-  "viewports": ["desktop", "tablet", "mobile"],
-  "all_pages": false
-}
-```
-
-`source_path` is omitted in URL mode. This object feeds directly into the Phase 2 CLI invocation.
+Resolve target, viewports (Desktop 1440x900, Tablet 768x1024, Mobile 390x844), and scope (`full` | `quick` | category) into a plan object `{ target_url, source_path?, scope, viewports[], all_pages }` for Phase 2. **For source-code mode (project-path input), dev-server detection rules, and the full plan schema, see `references/plan-phase.md`.**
 
 ---
 
@@ -285,215 +225,15 @@ The severity weights and diminishing-returns formula above are applied by the CL
 
 ### Step 3: Phase 3 -- AI Visual Review
 
-**Step Configuration**:
-- **Purpose**: Fill in AI verdicts for findings the CLI marked `needs_ai_review`, and resolve cross-origin expansion questions
-- **Input**: `<out>/report.json` (contract v3; see `cli/audit_cli/types.py`)
-- **Output**: `<out>/report-final.json` with `ai_verdict` populated
-- **Parallel Execution**: No
+Read `<out>/report.json` (validate contract v3). Resolve `cross_origin_candidates` via AskUserQuestion (once). For each finding with `needs_ai_review: true`, open `evidence.crop_path`, apply `finding.ai_prompt` **literally**, and fill `finding.ai_verdict` with `{passed, confidence, rationale}`. Write `<out>/report-final.json`. **For the full procedure, the 11 AI-grounded rule IDs, and the verdict schema, see `references/ai-visual-review.md`.**
 
-Claude does **not** re-run the crawl, does **not** re-audit code-shaped rules, and does **not** second-guess automated findings. Claude fills in `ai_verdict` only for items the CLI explicitly flagged.
-
-#### 3.1 Read the Report
-
-1. Read `<out>/report.json` (path captured from Phase 2 stdout).
-2. Validate the contract version matches v3 (see `cli/audit_cli/types.py`). If not, stop and surface the mismatch.
-
-#### 3.2 Resolve Cross-Origin Candidates
-
-If `report.cross_origin_candidates` is non-empty:
-
-1. Use **AskUserQuestion once** with the list grouped by origin (social-media hosts are already excluded by the CLI).
-2. The user's answer determines which cross-origin pages to include in a follow-up scope. Record declined origins for the Phase 4 site-level section.
-3. Do not prompt again during this audit.
-
-If the list is empty, skip this step.
-
-#### 3.3 Adjudicate `needs_ai_review` Findings
-
-The 11 AI-grounded rules are: **DES-CONS-01 (visual), DES-PRIM-01, DES-HIER-02, DES-FEED-01, DES-FEED-02, DES-NAV-01, DES-NAV-02, DES-COPY-01, DES-COPY-02, DES-ICON-01, DES-MOTI-01**.
-
-For each finding where `needs_ai_review` is true:
-
-1. Open `evidence.crop_path` (image on disk).
-2. Apply `finding.ai_prompt` literally -- it is a specific question written by the CLI. Do not paraphrase or expand it.
-3. Fill `finding.ai_verdict`:
-   ```json
-   {
-     "passed": true,
-     "confidence": 0.0,
-     "rationale": ""
-   }
-   ```
-   - `passed` (bool): whether the rule passes based on what is visible in the crop
-   - `confidence` (float 0.0-1.0): your confidence in the verdict
-   - `rationale` (str): concise explanation citing visible evidence
-
-#### 3.4 Persist Merged Report
-
-Write the merged report to `<out>/report-final.json`. Phase 4 reads exclusively from this file.
+Claude does **not** re-run the crawl, re-audit code-shaped rules, or second-guess automated findings.
 
 ---
 
 ### Step 4: Phase 4 -- Report
 
-**Step Configuration**:
-- **Purpose**: Render the final audit report (markdown + JSON) from `report-final.json`
-- **Input**: `<out>/report-final.json`
-- **Output**: Markdown report in conversation, JSON summary code block
-- **Parallel Execution**: No
-
-#### 4.1 Markdown Report
-
-Output to conversation following `references/review-template.md` (rendering language follows `constitution/standards/design/write.md`):
-
-**Section 1 -- Context**:
-- URL(s) audited
-- Viewports tested (Desktop 1440x900, Tablet 768x1024, Mobile 390x844)
-- Timestamp
-- Audit scope (full / quick / category-specific)
-- Input mode (URL / source code)
-- Component types detected
-
-**Section 2 -- Overall Score**:
-- Score 0-100 with risk level badge (CRITICAL / HIGH / MEDIUM / LOW)
-- Quality level label (per review-template.md scale)
-
-**Section 3 -- Per-Category Table**:
-
-| Category | Score | Issues | Top Severity |
-|----------|-------|--------|-------------|
-| ... | ... | ... | ... |
-
-**Section 4 -- Findings by Area**:
-
-Area summary table:
-
-| Area | Score | Issues | Screenshot |
-|------|-------|--------|------------|
-| navbar | 0 | 0 | [screenshot](http://localhost:18977/area-navbar.png) |
-| ... | ... | ... | ... |
-
-Per-area detail block:
-- **Screenshot link**: `http://localhost:18977/area-{name}.png`
-- **Grounding summary**: AI verdicts from Phase 3 that apply to this area
-- **Findings list**: All findings that belong to this area
-- **Area score**: Read from `report-final.json` (computed by the CLI)
-
-**Section 5 -- Findings by Priority** (P0, then P1, then P2):
-
-Each finding includes:
-- Rule ID and title
-- Severity and classification (gulf type, error type)
-- Description of the issue
-- Evidence: DOM values, computed styles, crop image path, `ai_verdict` (if any)
-- Selector(s) affected
-- Viewport(s) where observed
-- **Recommendation**:
-  - **What to change**: Actionable description of the fix
-  - **Code suggestion**: CSS/HTML inline code snippet
-  - **Rule reference**: Path to rule file + clause
-- Effort x Impact classification
-
-**Section 6 -- Manual Review Entries**:
-- AI verdicts from Phase 3 with rationale and confidence
-
-**Section 7 -- Quick Wins**:
-- Top high-impact, low-effort changes
-
-**Section 8 -- Verification Checklist**:
-- Per review-template.md checklist items
-
-**Section 9 -- Site-Level Findings** (always included, even for single-page audits):
-
-- **Orphan routes** (present in source, not linked): list from `report.orphan_routes`
-- **Recurring elements** (audited once, scope: site-wide): e.g., hamburger menu, modal X, dropdown Y -- from `report.recurring_elements`
-- **Cross-origin excluded (social)**: list from `report.cross_origin_excluded_social`
-- **Cross-origin excluded (user-declined)**: list captured during Phase 3.2
-- **Per-page scores** (sorted worst --> best)
-- **Worst 3 pages** (for triage): top three lowest-scoring pages with their scores and primary issues
-
-**DESIGN.md Compliance** (only when DESIGN.md detected):
-- Token compliance score
-- Deviation table
-
-#### 4.2 JSON Summary
-
-Append as a fenced code block:
-
-```json
-{
-  "contractVersion": "3.0",
-  "target": {
-    "urls": ["https://example.com"],
-    "mode": "url|source"
-  },
-  "summary": {
-    "overallScore": 0,
-    "risk": "CRITICAL|HIGH|MEDIUM|LOW",
-    "totalIssues": 0,
-    "bySeverity": { "p0": 0, "p1": 0, "p2": 0 }
-  },
-  "pages": [
-    {
-      "url": "https://example.com",
-      "viewports": [
-        {
-          "label": "Desktop 1440x900",
-          "score": 0,
-          "issues": [
-            {
-              "ruleId": "",
-              "severity": "",
-              "recommendation": {
-                "action": "",
-                "codeSuggestion": "",
-                "ruleRef": ""
-              }
-            }
-          ]
-        },
-        {
-          "label": "Tablet 768x1024",
-          "score": 0,
-          "issues": []
-        },
-        {
-          "label": "Mobile 390x844",
-          "score": 0,
-          "issues": []
-        }
-      ],
-      "areas": [
-        {
-          "name": "navbar",
-          "score": 0,
-          "issueCount": 0,
-          "screenshotUrl": "http://localhost:18977/area-navbar.png",
-          "groundingSummary": "",
-          "findings": []
-        }
-      ]
-    }
-  ],
-  "siteLevel": {
-    "orphanRoutes": [],
-    "recurringElements": [],
-    "crossOriginExcludedSocial": [],
-    "crossOriginExcludedUserDeclined": [],
-    "perPageScores": [],
-    "worstPages": []
-  }
-}
-```
-
-#### 4.3 Batch Mode (Multiple URLs)
-
-When auditing multiple pages (via `--all-pages` or explicit page list):
-- Per-page sections with individual scores
-- Site-level aggregation is already covered by Section 9 (Site-Level Findings)
-- Cross-page consistency findings are surfaced via `recurring_elements` in `report-final.json`
-
----
+Render the final audit report (markdown + JSON) from `<out>/report-final.json` to conversation. Markdown follows `references/review-template.md`; rendering language follows `constitution/standards/design/write.md`. Sections cover Context, Overall Score, Per-Category, Findings by Area, Findings by Priority (P0/P1/P2), Manual Review, Quick Wins, Verification Checklist, and Site-Level (orphan routes, recurring elements, cross-origin, per-page scores, worst 3). Append a JSON summary code block (contract v3.0). **For full section schemas, the JSON summary template, and batch-mode rules, see `references/phase-4-output.md`.**
 
 ### Skill Completion
 
@@ -510,6 +250,9 @@ The audit is complete when:
 | Resource | Purpose |
 |----------|---------|
 | `references/review-template.md` | Report output format and scoring scales |
+| `references/plan-phase.md` | Phase 1 detail: source-mode dev-server detection, viewport table, scope table, plan schema |
+| `references/ai-visual-review.md` | Phase 3 detail: cross-origin handling, 11 AI-grounded rule IDs, `ai_verdict` schema |
+| `references/phase-4-output.md` | Phase 4 detail: section-by-section markdown layout and JSON summary contract v3.0 |
 | `constitution/standards/design/scan.md` | 60-rule violation checklist |
 | `constitution/standards/design/meta.md` | Standard scope, exception policy, rule groups |
 | `constitution/standards/design/rules/` | Individual rule files for confirmation and edge cases |
