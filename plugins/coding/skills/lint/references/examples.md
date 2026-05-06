@@ -55,11 +55,10 @@ Loaded by `SKILL.md` "Examples" pointer. Reference for invocation patterns.
 # Alternative: Use '/lint "src/"' for source files
 ```
 
-## Large-Scale Processing (Team Mode)
+## Large-Scale Processing
 
 ```bash
 /lint "src/" --scope=uncommitted
-# With CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1:
 #   Discovers uncommitted files under src/, creates lint-team:
 #   - linter-1 (haiku): Handles src/components/Button.tsx, src/components/Modal.tsx
 #   - linter-2 (haiku): Handles src/utils/format.ts (parallel)
@@ -70,17 +69,6 @@ Loaded by `SKILL.md` "Examples" pointer. Reference for invocation patterns.
 #     - context < 60%: agent reused for next task
 #     - context >= 60%: agent retired, fresh replacement spawned
 #   Team is cleaned up after all batches complete.
-```
-
-## Large-Scale Processing (Subagent Fallback)
-
-```bash
-/lint "src/" --scope=uncommitted
-# Without agent teams enabled:
-#   Discovers uncommitted files under src/, delegates to subagents:
-#   - Agent A: Handles src/components (2 files, focuses on changed hunks)
-#   - Agent B: Handles src/utils (1 file, already compliant — no review needed)
-#   - Summary Agent: Compiles results after all complete
 ```
 
 ## Looping Until Clean (Default)

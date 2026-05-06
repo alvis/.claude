@@ -3,6 +3,7 @@ name: design
 version: 2.0.0
 description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; produces DESIGN.md and HTML preview catalogs with WCAG contrast checks via Chrome DevTools MCP. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup". Also use when: proposing layouts, picking color palettes, adding visual polish. Examples: "design a landing page", "make the dashboard look modern", "create a mockup for the settings page".'
 argument-hint: "[page/component to design or improve] [--style=STYLE]"
+allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
 
 # Visual Excellence Design Skill
@@ -273,6 +274,25 @@ When the WCAG script above is insufficient (e.g., for individual element deep-di
 - Always prefer evidence from `evaluate_script` + screenshots over Lighthouse
 
 ## Design Workflow
+
+### Step 1: Spin up the design team
+
+You are the Lead Orchestrator. Create a persistent team via `TeamCreate`:
+- 3× style-explorer (haiku) — each owns one aesthetic direction
+  (palette + type + layout sketch)
+- 1× visual-reviewer (sonnet) — audits candidates against design standards
+  at plugins/web/constitution/standards/design/ and WCAG contrast rules
+
+Cycle: lead briefs each style-explorer with a distinct aesthetic constraint →
+reviewer scores all 3 against the standards → lead presents ranked options to
+the user → user picks one to refine → chosen explorer iterates with reviewer
+until convergence → `TeamDelete` on completion.
+
+Context monitoring: every `SendMessage` reply MUST include
+`context_used: <token-count>`. When `context_used > 150_000` for any teammate,
+lead `TeamDelete`s that teammate, spawns a replacement via `TeamCreate`, and
+re-issues the in-flight slice with a brief handover (work done, work remaining,
+decisions made).
 
 ### Phase 1: Understand
 

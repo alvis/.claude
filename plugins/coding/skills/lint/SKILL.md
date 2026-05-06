@@ -53,24 +53,11 @@ Parse `--max-iterations` from `$ARGUMENTS` (default `5`; positive integer).
 
 This dispatch keeps lint's convergence logic out of the skill — `/loop` owns iteration and pacing.
 
-### Step 1: Determine Execution Mode
+### Step 1: Run the lint workflow
 
-Check the session context for `**Agent Teams**: enabled` under the "Agent Capabilities" section.
-
-- **If present**: Use **Team Mode** (Step 2A) — full team orchestration with lint-review cycles
-- **If absent**: Use **Subagent Mode** (Step 2B) — existing workflow via subagents
-
-### Step 2A: Team Mode (Agent Teams enabled)
-
-You are the **Lead Orchestrator** running the full team workflow (planning → team setup → lint-review cycles → aggregation/cleanup). Standards are passed as paths only — you never read them. Concurrency: max 4 linters (haiku), max 2 reviewers (sonnet); retire any agent at `context_level >= 60%`. Compliant batches (`violations_found: 0`) skip review entirely.
-
-**See `references/team-mode.md` for the full Lead Rules, four-phase procedure, lint-review cycle diagram, and agent lifecycle table.**
-
-### Step 2B: Subagent Mode (fallback)
-
-You are a **Quality Orchestrator**. Discover target files (filtering gitignored / `node_modules` / `dist` / `build` / `out`), discover applicable standards by path only, run the optional `scan_potential_violations.py` pre-pass, and dispatch up to 8 parallel subagents (max 8 files per batch) via the Task tool. Each subagent reads the standards itself, applies them at the requested `--scope`, runs the project's lint script, and returns a YAML report including `violations_found` and `status` (`compliant` when `violations_found: 0`, `success` when violations were found and fixed).
-
-**See `references/subagent-mode.md` for the Standards-Applied table, full Phase 1/2/3 procedure, the verbatim subagent prompt, and the YAML report schema.**
+Follow `references/team-mode.md` exactly. Standards are passed by path only —
+you never read them. Concurrency: max 4 linters (haiku), max 2 reviewers
+(sonnet); retire any agent at `context_level >= 60%`.
 
 ### Step 3: Reporting
 

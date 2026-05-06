@@ -1,6 +1,6 @@
-# Step 2A: Team Mode (Agent Teams enabled)
+# Lint Team Workflow
 
-Loaded by `SKILL.md` Step 2 when the session context contains `**Agent Teams**: enabled` under "Agent Capabilities". Full team orchestration with lint-review cycles.
+Loaded by `SKILL.md` Step 1. Full team orchestration with lint-review cycles.
 
 You are the **Lead Orchestrator**. Your role is strictly **orchestration** — you coordinate, delegate, and aggregate. You MUST NOT perform any linting, reviewing, or standards-reading work yourself.
 

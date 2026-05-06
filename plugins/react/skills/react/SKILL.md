@@ -3,7 +3,7 @@ name: react
 description: 'Apply React, Next.js, JSX, hooks, accessibility, and Storybook standards proactively whenever React work happens. Triggers when: editing or creating .tsx/.jsx files, writing JSX, building React/Next.js components, authoring custom hooks (use*), managing React state, combining Tailwind with React, writing Storybook .stories.tsx files, or whenever the user mentions "React", "Next.js", "JSX", "hook", "component", "useState/useEffect/useMemo/useCallback", "memo", "Server Component", "client component", or "story". Use to enforce naming, structure, performance, accessibility (WCAG 2.1 AA), and story-coverage rules across the React surface.'
 model: sonnet
 context: inline
-allowed-tools: Read, Glob, Grep, Skill
+allowed-tools: Read, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
 
 # React Standards
@@ -69,6 +69,30 @@ PascalCase `.stories.tsx` filenames, path-based titles, complete state coverage 
 ## Workflow: scan → write → verify
 
 Pick the tier that matches the activity. Do not load every file — load only what the current task touches.
+
+### Step 1: Spin up the implementation team
+
+You are the Lead Orchestrator. Estimate scope: count components + hooks +
+files implied by the task. Create a persistent team via `TeamCreate`:
+
+- implementer teammates (haiku) — `ceil(files / 10)`, minimum 1
+- 1× reviewer teammate (sonnet)
+
+Partition the file set so each implementer owns a coherent slice (by
+feature / route / component cluster — never random shards). Pass standards
+as paths only:
+  - plugins/react/constitution/standards/
+
+Cycle: lead briefs each implementer with their slice + standards paths →
+implementers stream completed files → reviewer audits each batch → lead
+orchestrates and aggregates only (never reads file bodies) → `TeamDelete` on
+completion.
+
+Context monitoring: every `SendMessage` reply MUST include
+`context_used: <token-count>`. When `context_used > 150_000` for any teammate,
+lead `TeamDelete`s that teammate, spawns a replacement via `TeamCreate`, and
+re-issues the in-flight slice with a brief handover (files completed, files
+remaining, decisions made).
 
 ### Scan (auditing existing React code)
 

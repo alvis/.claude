@@ -6,6 +6,7 @@ description: >-
   Lighthouse, network, device emulation, JS debugging, storage). next-browser connects via
   CDP to a Chrome DevTools-launched browser.
 argument-hint: "[debug instruction or URL]"
+allowed-tools: Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
 
 # Next.js Development & Debugging Skill
@@ -117,6 +118,33 @@ Chrome DevTools MCP is configured via the plugin's `mcp.json` and available auto
 - Functionally equivalent — use whichever tool is already active in the current workflow
 
 ## Workflow
+
+### Step 1: Spin up the implementation team
+
+You are the Lead Orchestrator. Estimate scope: count components + hooks +
+files implied by the task. Create a persistent team via `TeamCreate`:
+
+- implementer teammates (haiku) — `ceil(files / 10)`, minimum 1
+- 1× reviewer teammate (sonnet)
+
+Partition the file set so each implementer owns a coherent slice (by
+feature / route / component cluster — never random shards). Pass standards
+as paths only:
+  - plugins/react/constitution/standards/
+  - plugins/web/constitution/standards/
+
+Cycle: lead briefs each implementer with their slice + standards paths →
+implementers stream completed files → reviewer audits each batch → lead
+orchestrates and aggregates only (never reads file bodies) → `TeamDelete` on
+completion.
+
+Context monitoring: every `SendMessage` reply MUST include
+`context_used: <token-count>`. When `context_used > 150_000` for any teammate,
+lead `TeamDelete`s that teammate, spawns a replacement via `TeamCreate`, and
+re-issues the in-flight slice with a brief handover (files completed, files
+remaining, decisions made).
+
+### Step 2: Setup, classify, execute
 
 1. **Setup** — Start the dev server. Open the browser via Chrome DevTools `navigate_page` (foundation). Connect next-browser via CDP.
 2. **Classify** — Parse the user's debug instruction. Map to a category from the routing table above.
