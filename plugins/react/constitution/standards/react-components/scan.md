@@ -37,6 +37,11 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT statically import heavy/optional components — use `dynamic(() => import(...))` with a loading fallback [`RC-NEXT-01`]
 - DO NOT use raw `<img>` for content images in Next.js — use `next/image` with width/height/alt [`RC-NEXT-01`]
 
+### Documentation
+
+- DO NOT export a component without a corresponding `<Name>.stories.tsx` file [`RC-DOC-01`]
+- DO NOT compose multiple components in production without a `<Name>.demo.stories.tsx` demonstrating the scenario [`RC-DOC-01`]
+
 ## Rule Matrix
 
 | Rule ID | Violation | Bad Examples |
@@ -51,3 +56,4 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `RC-PERF-01` | Object/array created inline in render | `style={{ margin: 10 }}`; `options={{ showEmail: true }}` in JSX |
 | `RC-PERF-02` | Missing memoization on hot paths | Expensive sort each render; new handler each render passed to memoized child |
 | `RC-NEXT-01` | Heavy import without `dynamic`; raw `<img>` instead of `next/image` | `import HeavyChart from '#components/Chart'`; `<img src="/hero.jpg">` |
+| `RC-DOC-01` | Missing per-component Storybook coverage | Exported `Button.tsx` without `Button.stories.tsx`; composed `<Form><Field/></Form>` without `Form.demo.stories.tsx` |

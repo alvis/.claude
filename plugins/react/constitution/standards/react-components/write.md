@@ -124,6 +124,100 @@ const HeavyChart = dynamic(() => import('#components/Chart'), {
 />
 ```
 
+## Documentation
+
+Every exported component is documented via a co-located Storybook story file. The kind of story file depends on whether the scenario involves a single component or a composition. This section enforces _coverage_; refer to `standard:storybook` for story _content_ rules (titles, args, autodocs, coverage of variants, play functions).
+
+### `.stories.tsx` (Always Required)
+
+Every exported component ships a `<Name>.stories.tsx` documenting:
+
+- Basic states (default, disabled, loading, error)
+- Props matrix (each variant of `variant`, `size`, etc.)
+- Edge cases of _that component in isolation_ (long text, empty content, async-pending)
+
+```typescript
+// components/Button.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from './Button';
+
+const meta = {
+  title: 'Components/Button',
+  component: Button,
+  tags: ['autodocs'],
+} satisfies Meta<typeof Button>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = { args: { variant: 'primary', children: 'Save' } };
+export const Disabled: Story = { args: { disabled: true, children: 'Save' } };
+export const Loading: Story = { args: { loading: true, children: 'Saving…' } };
+```
+
+### `.demo.stories.tsx` (Multi-Component Scenarios)
+
+When a component participates in a composition with siblings, slots, or controlled-uncontrolled coordination, additionally ship a `<Name>.demo.stories.tsx` showing the integration as it appears in production:
+
+- Composition with siblings (`<Form><Field/><Submit/></Form>`)
+- Slot patterns (`<Card.Header/>` + `<Card.Body/>`)
+- Controlled-uncontrolled coordination (parent state driving multiple children)
+- Form-with-validation flows (field + error + submit + toast)
+
+```typescript
+// components/Form.demo.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { Form } from './Form';
+import { TextField } from '../TextField';
+import { SubmitButton } from '../SubmitButton';
+
+const meta = {
+  title: 'Components/Form/Demo',
+  component: Form,
+  tags: ['autodocs'],
+} satisfies Meta<typeof Form>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const WithValidation: Story = {
+  render: () => (
+    <Form onSubmit={() => {}}>
+      <TextField name="email" required />
+      <SubmitButton>Send</SubmitButton>
+    </Form>
+  ),
+};
+```
+
+### Decision Rule
+
+If your story only renders `<MyComponent>`, it's `.stories.tsx`. If your story renders `<MyComponent>` + `<OtherComponent>` to demonstrate composition, it's `.demo.stories.tsx`.
+
+### File-Tree Examples
+
+```plaintext
+✅ GOOD: simple component — one story file
+components/
+├── Button.tsx
+├── Button.stories.tsx
+└── Button.spec.tsx
+
+✅ GOOD: composition component — story + demo
+components/
+├── Form.tsx
+├── Form.stories.tsx          # Form rendered alone (empty, with one field, etc.)
+├── Form.demo.stories.tsx     # Form composed with TextField + SubmitButton
+└── Form.spec.tsx
+
+❌ BAD: exported component, no story
+components/
+└── Button.tsx                # missing Button.stories.tsx
+
+❌ BAD: composition demo placed inside the basic story
+components/
+├── Form.tsx
+└── Form.stories.tsx          # contains <Form><TextField/></Form> — should be .demo.stories.tsx
+```
+
 ## Quick Reference
 
 | Pattern | Use Case | Example | Notes |
@@ -133,6 +227,7 @@ const HeavyChart = dynamic(() => import('#components/Chart'), {
 | useMemo | Heavy calculations | `useMemo(() => sort(items), [items])` | Memoize expensive ops |
 | useCallback | Stable handlers | `useCallback((id) => update(id), [])` | Prevent child re-renders |
 | Context | Deep props | `<Provider value={data}>` | Split contexts for performance |
+| Storybook coverage | All exported components | `<Name>.stories.tsx` required; `<Name>.demo.stories.tsx` for multi-component scenarios | `RC-DOC-01` |
 
 ## Patterns & Best Practices
 

@@ -13,6 +13,8 @@ _Standards for React component structure, patterns, and performance optimization
 - General Principles (plugin:coding:standard:universal) - Foundational coding principles that apply to all component code
 - File Naming Standards (plugin:coding:standard:file-structure) - Specific component file naming patterns (Button.tsx, Button.spec.tsx)
 - Accessibility Standards (standard:accessibility) - Frontend components must follow accessibility requirements
+- Storybook Standards (standard:storybook) - Component stories document behavior and verify accessibility; this standard enforces story existence per component
+- React Project Structure Standards (standard:react-project-structure) - Component placement and barrel conventions within the project tree
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
 
@@ -91,6 +93,39 @@ export const BadComponent = ({ user }) => {
 };
 ```
 
+### Documentation
+
+Every exported component ships `<Name>.stories.tsx` (basic states + props matrix). Components participating in multi-component scenarios (composition with siblings, slots, controlled-uncontrolled coordination) additionally ship `<Name>.demo.stories.tsx` showing the integration. See `standard:storybook` for story authoring rules; this principle enforces _coverage_, not _content_.
+
+```typescript
+// ✅ GOOD: component ships with its story file
+// Button.tsx + Button.stories.tsx
+
+// ✅ GOOD: composition scenario adds a demo story
+// Form.tsx + Form.stories.tsx + Form.demo.stories.tsx
+
+// ❌ BAD: exported component with no story file
+// Button.tsx (no Button.stories.tsx anywhere)
+```
+
+### Accessibility
+
+Components are accessible by default: semantic HTML, `aria-*` attributes, keyboard navigation, focus management. Accessibility is verified in Storybook via interaction tests. See `standard:accessibility` for the full a11y rule set; this principle is a cross-reference reminder for component authors.
+
+```typescript
+// ✅ GOOD: semantic + aria + keyboard
+<button
+  aria-label="Close dialog"
+  aria-expanded={isOpen}
+  onClick={handleClose}
+>
+  Close
+</button>
+
+// ❌ BAD: clickable div without role, tabIndex, or key handlers
+<div onClick={handleClose}>Close</div>
+```
+
 ## Rule Groups
 
 - `RC-NAMING-*`: File naming conventions and directory structure for components, tests, and stories.
@@ -99,3 +134,4 @@ export const BadComponent = ({ user }) => {
 - `RC-STATE-*`: State placement — local-first, lift only when necessary, Context for deep prop drilling.
 - `RC-PERF-*`: Performance — memoization with `memo`/`useMemo`/`useCallback`; avoid creating objects in render.
 - `RC-NEXT-*`: Framework integration patterns for Next.js (dynamic imports, optimized images).
+- `RC-DOC-*`: Storybook coverage per component — `<Name>.stories.tsx` required; `<Name>.demo.stories.tsx` for multi-component scenarios.
