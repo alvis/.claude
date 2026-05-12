@@ -17,6 +17,8 @@ argument-hint: "[URL, project path, or page description] [--scope=full|quick|CAT
 
 Audits UI designs for compliance against the 60-rule design standard (`constitution/standards/design/`). Claude acts as a thin orchestrator: the Python CLI (`python3 -m audit_cli`) owns crawl, interaction discovery, dedup, and automated audit runs; Claude handles only the subjective visual judgments the CLI flags and renders the final report. Like `/lint` for visual design -- reports scored findings with severity classification, does NOT fix.
 
+> **Visual Grounding Principle**: The **primary** visual evidence for every AI-adjudicated finding is a **section-focused crop** bounded by `getBoundingClientRect()` of a known section element (minimum: **nav, hero, mid, footer**; also TOC, CTA, pricing-band when detected), captured **per viewport** (desktop/tablet/mobile) so cross-viewport regressions stay visible. A full-page top-to-bottom screenshot **may** accompany a crop as **supplementary context**, but **must not** be the only image passed to AI assessment -- at thumbnail scale it loses pixel fidelity everywhere. In report artifacts, `evidence.crop_path` (section crop) is primary; `evidence.context_path` (full-page) is supplementary. If only a full-page screenshot exists, the reviewer records `ai_verdict.passed = null` with reason `"missing_section_crop"` and surfaces it as a **skill defect**, not a rule failure.
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -63,11 +65,14 @@ You are a **Design QA Director** who delegates mechanical work to the audit CLI 
 
 - **Markdown report**: Scored findings with evidence, output to conversation
 - **JSON summary**: Machine-readable contract appended as code block
-- **Area crops**: Screenshot crops of structural areas used as visual evidence
+- **Section crops (primary)**: Section-focused screenshot crops (nav, hero, mid, footer minimum; TOC/CTA/pricing-band when detected) captured per viewport. Attached to findings as `evidence.crop_path`.
+- **Full-page screenshots (supplementary)**: Top-to-bottom captures retained only as `evidence.context_path` for cross-section rhythm checks. Never the sole image on a finding -- if a section crop is missing, AI verdict is `null` with reason `"missing_section_crop"` (skill defect, not a rule failure).
 
 #### Data Flow Summary
 
 The skill takes a target URL or source project and hands it to the Python audit CLI, which crawls, captures screenshots/snapshots at 3 viewports, injects audit scripts, discovers and exercises interactive elements, deduplicates recurring components site-wide, and writes a structured `report.json`. Claude then opens the report, fills in AI verdicts for items marked `needs_ai_review`, and renders the final markdown using `references/review-template.md`. Screenshots persist in an OS temp directory (`$TMPDIR/audit-<kebab>-<ts>/`) and are served via the CLI's HTTP server for report linking.
+
+**Capture step (Visual Grounding contract)**: During Phase 2, the CLI captures **section-focused crops** (nav, hero, mid, footer at minimum; TOC/CTA/pricing-band when detected) at **each viewport** (desktop/tablet/mobile). These section crops are the **primary** visual artifacts attached to findings as `evidence.crop_path`. A full-page screenshot may be additionally retained as `evidence.context_path` for supplementary disambiguation, but is never the sole image passed to AI assessment.
 
 ### Visual Overview
 

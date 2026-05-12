@@ -326,11 +326,108 @@
     };
 
     // -----------------------------------------------------------------------
+    // Nav section crop (all viewports)
+    // -----------------------------------------------------------------------
+    var analyzeNavSection = function () {
+      var navSelectors = settings.selectors.navbar.split(',').map(function (s) { return s.trim(); });
+      var navEl = null;
+      for (var i = 0; i < navSelectors.length; i++) {
+        navEl = document.querySelector(navSelectors[i]);
+        if (navEl) break;
+      }
+      if (!navEl) return;
+
+      var navRect = getRect(navEl);
+      if (!navRect || navRect.height < 1) return;
+
+      manualReview.push(createManualReviewEntry({
+        selector: selectorHint(navEl),
+        summary: 'Nav section should be reviewed for hierarchy and legibility.',
+        reason:
+          'Nav spans ' + Math.round(navRect.width) +
+          'x' + Math.round(navRect.height) + 'px at the top of the page.',
+        aiPrompt:
+          'Review this nav crop for hierarchy, density, and active-state legibility.',
+        humanArea: 'Primary navigation',
+        humanChecks: [
+          'Is the active state clearly distinguishable from inactive items?',
+          'Does the nav feel appropriately dense without crowding?',
+          'Is the brand mark balanced against the nav items?',
+        ],
+      }));
+    };
+
+    // -----------------------------------------------------------------------
+    // Mid-page section crop (all viewports)
+    // -----------------------------------------------------------------------
+    var analyzeMidSection = function () {
+      var mainEl = document.querySelector(settings.selectors.main.split(',')[0].trim());
+      if (!mainEl) mainEl = document.querySelector('main');
+      if (!mainEl) return;
+
+      var pageHeight = document.documentElement.scrollHeight;
+      var midRect = getRect(mainEl);
+      if (!midRect || pageHeight < window.innerHeight * 1.5) return;
+
+      manualReview.push(createManualReviewEntry({
+        selector: selectorHint(mainEl),
+        summary: 'Mid-page rhythm and content density should be reviewed.',
+        reason:
+          'Page is ' + Math.round(pageHeight) +
+          'px tall; sampling viewport centered at scrollY=' +
+          Math.round(pageHeight * 0.5) + 'px.',
+        aiPrompt:
+          'Review this mid-page crop for rhythm, scannability, and content density.',
+        humanArea: 'Mid-page content rhythm',
+        humanChecks: [
+          'Does content flow with intentional rhythm or feel monotonous?',
+          'Are sections scannable with clear visual anchors?',
+          'Is density appropriate for the content type?',
+        ],
+      }));
+    };
+
+    // -----------------------------------------------------------------------
+    // Footer section crop (all viewports)
+    // -----------------------------------------------------------------------
+    var analyzeFooterSection = function () {
+      var footerSelectors = settings.selectors.footer.split(',').map(function (s) { return s.trim(); });
+      var footerEl = null;
+      for (var i = 0; i < footerSelectors.length; i++) {
+        footerEl = document.querySelector(footerSelectors[i]);
+        if (footerEl) break;
+      }
+      if (!footerEl) return;
+
+      var footerRect = getRect(footerEl);
+      if (!footerRect || footerRect.height < 1) return;
+
+      manualReview.push(createManualReviewEntry({
+        selector: selectorHint(footerEl),
+        summary: 'Footer should be reviewed for grouping and brand resolution.',
+        reason:
+          'Footer spans ' + Math.round(footerRect.width) +
+          'x' + Math.round(footerRect.height) + 'px at the page tail.',
+        aiPrompt:
+          'Review this footer crop for grouping clarity, link density, and brand resolution.',
+        humanArea: 'Page footer',
+        humanChecks: [
+          'Are link groups clearly delineated with readable headings?',
+          'Is link density manageable rather than overwhelming?',
+          'Does the brand close the page with appropriate weight?',
+        ],
+      }));
+    };
+
+    // -----------------------------------------------------------------------
     // Run analyses
     // -----------------------------------------------------------------------
     analyzeHeroBalance();
     analyzeDesktopToc();
     analyzeMobileFragmentation();
+    analyzeNavSection();
+    analyzeMidSection();
+    analyzeFooterSection();
 
     // -----------------------------------------------------------------------
     // Build report
