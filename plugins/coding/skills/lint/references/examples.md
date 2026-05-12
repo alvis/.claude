@@ -71,20 +71,28 @@ Loaded by `SKILL.md` "Examples" pointer. Reference for invocation patterns.
 #   Team is cleaned up after all batches complete.
 ```
 
-## Looping Until Clean (Default)
+## Iterating Until Clean With /goal
 
 ```bash
+/goal violations_found_total reaches 0 from a fresh /coding:lint pass on src/, or stop after 5 turns
 /lint "src/" --scope=uncommitted
-# Default: --max-iterations=5
-# Pass 1 (via /loop): 7 violations fixed across 4 files
-# Pass 2: rediscovers files, 1 violation fixed
-# Pass 3: violations_found_total: 0 → /loop stops
-# Final: Termination reason: converged
+# Pass 1: 7 violations fixed across 4 files; report shows status: success
+# Goal evaluator (Haiku) returns no → Claude re-invokes /coding:lint
+# Pass 2: 1 violation fixed; status: success
+# Pass 3: violations_found_total: 0, status: compliant → goal met, session pauses
 ```
 
-## Single Pass (No Loop)
+## Single Pass (No Goal)
 
 ```bash
-/lint "src/" --max-iterations=1
-# Runs the existing workflow once; no /loop wrapping. Equivalent to legacy behavior.
+/lint "src/"
+# Runs the workflow once. With no active /goal, the session pauses after the pass.
+```
+
+## Headless / Non-Interactive
+
+```bash
+claude -p "/goal violations_found_total reaches 0 from a fresh /coding:lint pass on src/, or stop after 5 turns" \
+       -p "/lint src/ --scope=uncommitted"
+# Single invocation runs the goal loop to completion; exit when condition met or cap hit.
 ```

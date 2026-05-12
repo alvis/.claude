@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: [specifier] [--scope=SCOPE] [--max-iterations=N]
+argument-hint: [specifier] [--scope=SCOPE]
 ---
 
 # Linting
@@ -19,7 +19,8 @@ Apply applicable coding standards to ensure consistent code quality across the s
   - `uncommitted` — Focus on line ranges with uncommitted changes (staged + unstaged). The linter uses `git diff` to identify changed hunks and lints those areas plus their immediate surrounding context (enclosing functions/blocks).
   - `all` — Lint each file in its entirety (legacy behavior).
   - Any other value (e.g., `mocks`, `handlers`, a function name) — The linter interprets the value as a hint for which sections of the code to focus on.
-- **--max-iterations** (optional, default: `5`): Maximum lint passes to run. The skill delegates iteration to `/loop`, which re-invokes `/coding:lint` with `--max-iterations=1` until either zero violations are reported or the cap is reached. Use `--max-iterations=1` to force a single pass and skip looping entirely.
+
+Iteration is handled at the session level via [`/goal`](https://code.claude.com/docs/en/goal) — not by this skill. To run lint until clean, set a goal first, then invoke `/coding:lint`. Example: `/goal violations_found_total reaches 0 from a fresh /coding:lint pass on src/, or stop after 5 turns`. The Step-2 report below is shaped so the goal evaluator (default Haiku) can read convergence state directly.
 
 **Lead pre-filter for `uncommitted` scope**: Before batching, the lead runs `git diff --name-only` to identify files with uncommitted changes. Files with no changes are excluded from batching to save linter tokens. If no specifier is given, all changed files are included. If a specifier is given, only changed files matching the specifier are batched.
 
@@ -44,34 +45,24 @@ Apply applicable coding standards to ensure consistent code quality across the s
 
 ultrathink: you'd perform the following steps
 
-### Step 0: Loop Dispatch
-
-Parse `--max-iterations` from `$ARGUMENTS` (default `5`; positive integer).
-
-- **If `max_iterations > 1`**: invoke the `Skill` tool with `skill: "loop"` and `args: "/coding:lint <original-args-minus-max-iterations> --max-iterations=1"`. The `/loop` skill self-paces, re-firing `/coding:lint --max-iterations=1` each cycle. It stops when the inner report says `violations_found_total: 0` or when its own iteration count reaches the original `--max-iterations`. After the `Skill` call returns, emit a final aggregated summary (iteration count, total violations fixed, termination reason: `converged | hard_cap_reached | no_progress`) and exit. **Do not run Steps 1–3 in this outer call.**
-- **If `max_iterations == 1`**: skip the `Skill` invocation and continue to Step 1. This is the per-iteration single pass; the existing workflow runs unmodified, and Step 3 reporting must surface the convergence signal described below.
-
-This dispatch keeps lint's convergence logic out of the skill — `/loop` owns iteration and pacing.
-
 ### Step 1: Run the lint workflow
 
 Follow `references/team-mode.md` exactly. Standards are passed by path only —
 you never read them. Concurrency: max 4 linters (haiku), max 2 reviewers
 (sonnet); retire any agent at `context_level >= 60%`.
 
-### Step 3: Reporting
+### Step 2: Reporting
 
 **Output Format** (same for both modes):
 
-The report MUST begin with the following top-level keys so `/loop`'s pacing model can read convergence state without parsing prose:
+The report MUST begin with the following top-level keys so `/goal`'s evaluator (default Haiku) can read convergence state without parsing prose:
 
 ```
 violations_found_total: <int>   # sum across all batches in this pass
 status: compliant | success | partial | failure
-iteration_hint: max_iterations=<N>  # echoed from input so the loop model can track its cap
 ```
 
-Use `status: compliant` and `violations_found_total: 0` together to signal convergence (no further `/loop` iterations needed). Use `status: success` when violations were found and all fixed (loop should continue to verify a clean pass). Use `partial` or `failure` when issues remain unresolved.
+Use `status: compliant` and `violations_found_total: 0` together to signal the goal is met. Use `status: success` when violations were found and fixed in this pass (the goal evaluator will request another pass to verify clean state). Use `partial` or `failure` when issues remain.
 
 The remainder of the summary follows below:
 
