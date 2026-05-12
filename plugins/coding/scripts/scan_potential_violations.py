@@ -8,6 +8,9 @@ Categories (all opt-in via --category, default `all`):
   test-mock-stub      mock/stub-named identifiers in *.spec.* files
   let                 `let` declarations (any file) — every match worth review
   conditional-spread  `...(cond ? { k: v } : {})` style conditional object spread
+  dynamic-import-static  dynamic `import()` with a string-literal or non-interpolated-template path (TYP-IMPT-07)
+                         covers both runtime `await import('./x')` and type-position `typeof import('./x')`.
+                         skips matches inside `vi.mock(...)` / `vi.hoist(...)` callbacks.
 
 Output is plain text grouped by category then file, with --before/--after
 context lines per match. The script always exits 0 — it is advisory, not a gate.
@@ -30,6 +33,7 @@ type Category = Literal[
     "test-mock-stub",
     "let",
     "conditional-spread",
+    "dynamic-import-static",
 ]
 CATEGORIES: tuple[Category, ...] = get_args(Category.__value__)
 CATEGORY_LABELS: dict[Category, str] = {
@@ -39,6 +43,7 @@ CATEGORY_LABELS: dict[Category, str] = {
     "test-mock-stub": "Mock/stub identifiers in spec files",
     "let": "`let` declarations",
     "conditional-spread": "Conditional object spread (`...(cond ? {…} : {})`)",
+    "dynamic-import-static": "Dynamic `import()` with static path (TYP-IMPT-07)",
 }
 
 SOURCE_GLOBS = ("*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs")
@@ -69,6 +74,19 @@ CONDITIONAL_SPREAD = re.compile(
     r"\s*\)",
     re.DOTALL,
 )
+# TYP-IMPT-07 — see plugins/coding/constitution/standards/typescript/rules/typ-impt-07.md
+# matches `import(<literal>)` where the argument is a string literal or a backtick
+# template literal WITHOUT `${...}`. Catches BOTH runtime (`await import('./x')`)
+# and type-position (`typeof import('./x')`, `import('./x').Foo`) usages — the regex
+# doesn't care about context; the vi.mock/vi.hoist exception is applied per match.
+DYNAMIC_IMPORT_STATIC = re.compile(
+    r"\bimport\s*\(\s*"
+    r"(?:'[^'\n]*'|\"[^\"\n]*\"|`[^`$\n]*`)"
+    r"\s*\)",
+)
+# header for the exempted scope — `vi.mock(` or `vi.hoist(` (optional whitespace
+# allowed around `.`). The trailing `(` is included so `m.end()` lands just past it.
+VI_MOCK_OR_HOIST_HEAD = re.compile(r"\bvi\s*\.\s*(?:mock|hoist)\s*\(")
 
 
 @dataclass(frozen=True, slots=True)
@@ -228,6 +246,30 @@ def scan_conditional_spread(*, path: Path, lines: list[str], matches: list[Match
         matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
 
 
+def _inside_vi_mock_or_hoist(*, text: str, pos: int) -> bool:
+    """true iff `pos` lies inside an unclosed `vi.mock(` / `vi.hoist(` call.
+
+    walks through every `vi.mock(`/`vi.hoist(` opener that appears before `pos`,
+    counting parens between the opener and `pos`. since the opener's own `(` is
+    consumed by the regex match (and thus excluded from the segment), we are still
+    inside iff opens >= closes in the segment.
+    """
+    for head in VI_MOCK_OR_HOIST_HEAD.finditer(text, 0, pos):
+        segment = text[head.end():pos]
+        if segment.count("(") >= segment.count(")"):
+            return True
+    return False
+
+
+def scan_dynamic_import_static(*, path: Path, lines: list[str], matches: list[Match]) -> None:
+    text = "\n".join(lines)
+    for hit in DYNAMIC_IMPORT_STATIC.finditer(text):
+        if _inside_vi_mock_or_hoist(text=text, pos=hit.start()):
+            continue
+        lineno = text.count("\n", 0, hit.start()) + 1
+        matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
+
+
 SCANNERS: dict[Category, tuple[Scanner, tuple[str, ...], bool]] = {
     "jsdoc-uppercase": (scan_jsdoc_uppercase, SOURCE_GLOBS, False),
     "jsdoc-fullstop": (scan_jsdoc_fullstop, SOURCE_GLOBS, False),
@@ -235,6 +277,7 @@ SCANNERS: dict[Category, tuple[Scanner, tuple[str, ...], bool]] = {
     "test-mock-stub": (scan_mock_stub, SPEC_GLOBS, True),
     "let": (scan_let, SOURCE_GLOBS, False),
     "conditional-spread": (scan_conditional_spread, SOURCE_GLOBS, False),
+    "dynamic-import-static": (scan_dynamic_import_static, SOURCE_GLOBS, False),
 }
 
 

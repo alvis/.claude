@@ -23,6 +23,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use relative paths where subpath aliases exist, such as `../fastify/request` instead of `#fastify/request` [`TYP-IMPT-04`]
 - DO NOT use subpath imports inside the same subpath module, such as `#fastify/error` from another file under `#fastify/*` [`TYP-IMPT-05`]
 - DO NOT use default imports when named imports exist [`TYP-IMPT-06`]
+- DO NOT use `import()` with a static path at runtime OR in type position (e.g. `typeof import('foo')`) — use a static `import` / `import type` statement; `vi.mock`/`vi.hoist` callbacks are exempt [`TYP-IMPT-07`]
 - DO NOT break top-level symbol group ordering (imports → re-exports → types → constants → classes → functions), such as `export function run() {} const X = 1` [`TYP-MODL-01`]
 - DO NOT place helper/leaf functions before the public/root functions that call them, such as defining `checkFields()` before `processUser()` that calls it [`TYP-MODL-02`]
 - DO NOT expose default exports from modules where disallowed (unless file is a primary-export module — see rule) [`TYP-MODL-03`]
@@ -55,6 +56,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TYP-IMPT-04` | Relative path used where subpath exists | `import { h } from "../fastify/request"`; `import { handler } from './fastify/request';` |
 | `TYP-IMPT-05` | Subpath used inside the same subpath module | `import { e } from "#fastify/error"`; `import { formatResponse } from '#fastify/response';` |
 | `TYP-IMPT-06` | Default import is used when named import exists | `import React from "react"`; `import React from 'react';` |
+| `TYP-IMPT-07` | Dynamic `import()` with a statically-known path, at runtime or in type position (exception: `vi.mock`/`vi.hoist` callbacks) | `const mod = await import('./utils')`; `type X = typeof import('execa')`; `type Y = import('./foo').Bar` |
 | `TYP-MODL-01` | Symbol group order violated (imports → re-exports → types → constants → classes → functions) | `export function run() {} const X = 1`; `const Y = 1; interface Config {}` |
 | `TYP-MODL-02` | Helper/leaf function appears before the root function that calls it | `function validate(u: User) {} export function createUser(u: User) { validate(u); }` |
 | `TYP-MODL-03` | Module exposes default export (unless primary-export module) | `export default userService` in a multi-export module |

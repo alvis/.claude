@@ -33,6 +33,7 @@
 - **TYP-IMPT-04**: For cross-module imports where alias/subpath mapping exists, use the shortest configured path.
 - **TYP-IMPT-05**: Within the same subpath domain, use relative imports (`./`, `../`).
 - **TYP-IMPT-06**: Use named imports by default. Default imports only when no named export exists.
+- **TYP-IMPT-07**: Use static `import` statements when the module path is statically known. Reserve dynamic `import()` for paths computed at runtime.
 
 ### Module Layout (TYP-MODL)
 
