@@ -27,9 +27,13 @@ Use the Task tool to delegate merge conflict resolution.
 
 **Subagent responsibilities**:
 
-- Fetch full content from all Notion pages using `mcp__plugin_specification_notion__notion-fetch`.
+- Materialize remote-side content for all Notion pages with a single recursive CLI call per root ref:
+  - `Bash: notion-sync pull <ref> --follow-children --follow-links --out <tmp_dir>`
+  - One invocation walks the page subgraph + direct linked references; **never** loop and pull each linked page across separate tool-call turns.
+  - Files are written to `<tmp_dir>` as `{kebab-title}-{32hex-id}.md`.
+  - This pull-based read is preferred over `notion-sync diff` here because the merge UX needs to inspect linked content (e.g. child pages, cross-page references), not just block-level diffs.
 - Read all local files using the Read tool.
-- Compare local vs Notion content section-by-section.
+- Compare local vs pulled-Notion content section-by-section.
 - Identify ALL differences:
   - **Additions**: Content in local but not in Notion.
   - **Removals**: Content in Notion but not in local.
@@ -52,7 +56,7 @@ Use the Task tool to delegate merge conflict resolution.
 - Write merged content back to local files using Write/Edit tools.
 - Return a comprehensive merge report (see below).
 
-**Required tools**: Read, Write, Edit, AskUserQuestion, `mcp__plugin_specification_notion__notion-fetch`.
+**Required tools**: Read, Write, Edit, AskUserQuestion, Bash (`notion-sync pull`).
 
 **Execution mode**: Blocking (must complete before the next workflow step).
 

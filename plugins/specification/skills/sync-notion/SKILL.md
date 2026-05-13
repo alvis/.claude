@@ -1,6 +1,6 @@
 ---
 name: sync-notion
-description: Perform bidirectional synchronization between local markdown files and Notion pages with conflict resolution and integrity verification. Use when syncing documentation to Notion, pulling Notion pages to local files, or resolving conflicts between local and remote versions.
+description: Perform bidirectional synchronization between local markdown files and Notion pages via the `notion-sync` CLI, with conflict resolution and integrity verification. Use when syncing documentation to Notion, pulling Notion pages to local files, or resolving conflicts between local and remote versions.
 model: opus
 context: fork
 agent: general-purpose
@@ -26,9 +26,21 @@ argument-hint: <sync-mode> <file-paths...> [--database-id=ID] [--skip-verificati
 **Prerequisites**:
 
 - Access to Notion workspace with appropriate permissions
-- Notion MCP server configured and available
-- Local markdown files with valid frontmatter (if updating existing synced files)
+- `notion-sync` CLI on PATH (verify via `Bash: notion-sync --help`)
+- `NOTION_TOKEN` exported in the environment
+- Local markdown files with valid frontmatter (`ref:` for existing pages, `parent:` for new pages)
 - Understanding of sync modes and their implications
+
+**CLI usage cheat sheet** (use these flag combinations exactly — the CLI walks subgraphs in one call so you never iterate per-page across tool turns):
+
+- `notion-sync pull <ref> --follow-children --follow-links --out <dir>` — single-page + direct references (validation reads, notion→local sync)
+- `notion-sync pull <ref> --follow --out <dir>` — full recursive mirror (children + database + links + files)
+- `notion-sync push <file>` — uses frontmatter `ref:` (update) or `parent:` (create); CLI writes the new `ref:` back to the file on creation
+- `notion-sync push <file> --follow` — also push other local files reachable via `parent:` chains
+- `notion-sync diff <file> [-f json]` — block-level diff against the page identified by frontmatter `ref:`
+- `notion-sync search "<query>" -j` — JSON search results for URL/id resolution
+
+**Recursion principle (CRITICAL)**: every `notion-sync pull` MUST use the appropriate `--follow*` flag set so a single invocation walks the entire required subgraph. Never loop and pull each linked page individually across separate tool calls.
 
 ### Your Role
 
@@ -51,7 +63,7 @@ You are a **Synchronization Orchestrator** who coordinates the documentation syn
   - `notion-to-local`: Overwrite local files with Notion content (no conflict detection)
   - `two-way-merge`: Compare content and ask user to resolve conflicts
 - **File Paths**: Array of absolute paths to local markdown files to be synced
-- **Notion URLs**: Array of Notion page URLs corresponding to the files (extracted from frontmatter, searched, or provided manually)
+- **Notion Refs**: Array of Notion page refs (URL, 32-hex id, or title query) corresponding to the files. Resolved from frontmatter `ref:`, `Bash: notion-sync search "<title>" -j`, or provided manually.
 
 #### Optional Inputs
 
@@ -157,13 +169,13 @@ Note:
 
 **What You Do**:
 
-1. **Receive inputs** from workflow invocation (sync_mode, file_paths, notion_urls, optional parameters)
-2. **Extract Notion URLs from frontmatter** if not provided:
-   - Read each file's frontmatter to extract `notion_url` field
-   - If notion_url missing and database_id provided: prepare for fuzzy search
-   - If notion_url missing and no database_id: mark as "create new page"
+1. **Receive inputs** from workflow invocation (sync_mode, file_paths, notion_refs, optional parameters)
+2. **Extract Notion refs from frontmatter** if not provided:
+   - Read each file's frontmatter to extract `ref:` (preferred) or legacy `notion_url`
+   - If `ref:` missing and a search hint or `database_id` available: prepare for `notion-sync search`
+   - If `ref:` missing and no hint: mark as "create new page" and confirm `parent:` exists in frontmatter (or stage one to be added before Step 3 push)
 3. **Create file-page pair mappings**:
-   - Pair each file_path with its corresponding notion_url (or null if creating new)
+   - Pair each file_path with its corresponding notion_ref (or null if creating new)
    - Generate unique identifiers for each pair (e.g., pair_1, pair_2, ...)
 4. **Use TodoWrite** to create task list with one todo per file-page pair (status 'pending')
 5. **Prepare validation assignments** for parallel execution (one subagent per pair)
@@ -196,38 +208,40 @@ Request each subagent to perform the following validation:
     You're assigned to validate a single file-page pair:
 
     - **File Path**: [file_path]
-    - **Notion URL**: [notion_url or 'SEARCH REQUIRED' or 'CREATE NEW']
+    - **Notion Ref**: [notion_ref or 'SEARCH REQUIRED' or 'CREATE NEW']
     - **Database ID**: [database_id if provided]
-    - **Fuzzy Search**: [true/false]
-    - **Parent Page URL**: [parent_page_url if provided]
+    - **Search Hint**: [title from frontmatter / file name]
+    - **Parent (CREATE_NEW only)**: [parent_id or parent_page_url if provided]
 
     **Steps**
 
     1. **Validate Local File**:
        - Use Read tool to load the file at [file_path]
-       - Parse YAML frontmatter if exists (look for notion_url, last_synced_at, etc.)
+       - Parse YAML frontmatter if exists (look for `ref:` (preferred), legacy `notion_url`, `parent:`, `last_synced_at`, etc.)
        - Extract file content (everything after frontmatter)
        - Verify file is readable and content is valid markdown
        - Record file size and section count for integrity tracking
 
-    2. **Resolve Notion URL** (if not provided or marked SEARCH REQUIRED):
-       - For database-id-driven resolution, fuzzy-search rules, and `CREATE_NEW` fallback, see `references/database-resolution.md`.
+    2. **Resolve Notion Ref** (if not provided or marked SEARCH REQUIRED):
+       - For search-based resolution and `CREATE_NEW` fallback, see `references/database-resolution.md`.
+       - In short: `Bash: notion-sync search "<title-or-hint>" -j -l 20` and pick the best match; otherwise mark `CREATE_NEW` and ensure `parent:` is in frontmatter.
 
-    3. **Validate Notion Page** (if notion_url exists):
-       - Use notion-fetch to retrieve page content
-       - Verify page is accessible and fetchable
-       - Extract page content for comparison
-       - Record page last_edited_time from Notion metadata
-       - Verify page is not archived or deleted
+    3. **Validate Notion Page** (if `ref:` exists):
+       - **Single recursive pull** for the page + its direct references:
+         `Bash: notion-sync pull <ref> --follow-children --follow-links --out <tmp_dir>`
+       - Read the resulting `<tmp_dir>/{kebab-title}-{32hex-id}.md` to confirm the page is accessible and fetchable.
+       - Extract page content (without frontmatter) for comparison and record approximate length.
+       - Treat a non-zero CLI exit, missing output file, or an empty body as inaccessible/archived.
+       - **Do not** loop per-linked-page across tool calls; the recursive flags cover them in one invocation.
 
     4. **Prepare Pair Data**:
        - Package all validated data for downstream steps:
          * file_path: [path]
          * file_content: [content without frontmatter]
-         * file_frontmatter: [parsed YAML object]
-         * notion_url: [url or 'CREATE_NEW']
+         * file_frontmatter: [parsed YAML object, including `ref:` and/or `parent:`]
+         * notion_ref: [ref or 'CREATE_NEW']
          * notion_content: [content if exists]
-         * notion_last_edited: [timestamp if exists]
+         * notion_pulled_path: [path to the pulled mirror file in tmp_dir, if any]
          * validation_status: valid|invalid
          * validation_notes: [any issues found]
 
@@ -242,11 +256,11 @@ Request each subagent to perform the following validation:
       file_path: '[path]'
       file_accessible: true|false
       file_content_length: [number]
-      file_frontmatter: {notion_url: '...', last_synced_at: '...'}
-      notion_url: '[url or CREATE_NEW or SEARCH_FAILED]'
+      file_frontmatter: {ref: '...', parent: '...', last_synced_at: '...'}
+      notion_ref: '[ref or CREATE_NEW or SEARCH_FAILED]'
       notion_accessible: true|false|N/A
       notion_content_length: [number or 0]
-      notion_last_edited: '[ISO timestamp or null]'
+      notion_pulled_path: '[tmp path or null]'
       pair_status: 'valid|invalid|needs_creation'
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
@@ -338,14 +352,13 @@ Request each subagent to perform the following sync operation:
     You're assigned to sync a single file-page pair:
 
     - **File Path**: [file_path]
-    - **Notion URL**: [notion_url or 'CREATE_NEW']
+    - **Notion Ref**: [notion_ref or 'CREATE_NEW'] (already in file frontmatter as `ref:` or `parent:`)
     - **Sync Mode**: [sync_mode: local-to-notion|notion-to-local|two-way-merge]
-    - **Source Content**: [determined by sync_mode]
-      - If local-to-notion: Use local file content
-      - If notion-to-local: Use Notion page content
-      - If two-way-merge: Use resolved_content from Step 2
-    - **Database ID**: [database_id if creating new page]
-    - **Parent Page URL**: [parent_page_url if creating new page]
+    - **Source of Truth**: [determined by sync_mode]
+      - If local-to-notion: local file is source; push it
+      - If notion-to-local: remote ref is source; pull it
+      - If two-way-merge: local file already contains Step 2's merged state; push it
+    - **Parent (CREATE_NEW only)**: must already be set in file frontmatter as `parent: <database-or-page-id>` before push
 
     **Steps**
 
@@ -357,13 +370,13 @@ Request each subagent to perform the following sync operation:
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of sync execution'
-    modifications: ['[file_path]' or '[notion_url]' or both]
+    modifications: ['[file_path]' and/or remote ref]
     outputs:
       file_path: '[path]'
-      notion_url: '[url]'
+      notion_ref: '[ref written or read]'
       sync_direction: 'local→notion|notion→local|merged→both'
       sync_timestamp: '[ISO timestamp]'
-      new_page_created: true|false
+      new_page_created: true|false  # true when CLI wrote `ref:` back on push
       skipped_conflicts_count: [number, 0 if none]
       bytes_synced: [approximate size]
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
@@ -453,34 +466,34 @@ Request each subagent to perform the following verification:
     You're assigned to verify integrity for a single synced pair:
 
     - **File Path**: [file_path]
-    - **Notion URL**: [notion_url]
+    - **Notion Ref**: [notion_ref] (already in file frontmatter as `ref:`)
     - **Sync Direction**: [sync_direction from Step 3]
     - **Expected Sync**: [what should have happened based on sync_mode]
 
     **Steps**
 
-    1. **Read Current State**:
-       - Use Read tool to fetch current local file content
-       - Use notion-fetch to retrieve current Notion page content
-       - Extract content from both sources (without frontmatter for local)
+    1. **Compute Drift via CLI**:
+       - `Bash: notion-sync diff <file_path>` — single call. Empty output = no drift = pass.
+       - For richer inspection on a fail, re-run `Bash: notion-sync diff <file_path> -f json` and walk the entries.
+       - The diff command compares the file's local content against the remote page identified by frontmatter `ref:`. There is no need to separately fetch the Notion page first.
 
-    2. **Verify Content Integrity**:
-       - **Length Check**: Compare content lengths (should be similar, allow ±5% for formatting)
-       - **Completeness Check**: Verify all major sections are present in both
-       - **No Truncation**: Check that content is not cut off mid-sentence or mid-section
-       - **Character Integrity**: Verify no corrupted characters or encoding issues
+    2. **Verify Content Integrity** (only if diff is non-empty or you need extra confidence):
+       - Use Read tool to fetch current local file content for length/section counts.
+       - Length and section counts come from the local file; the diff tells you whether remote matches.
+       - **Length Check**: Local content length is within ±5% of expected (use synced_pairs metadata).
+       - **Completeness Check**: All major sections still present locally.
+       - **No Truncation**: Content is not cut off mid-sentence or mid-section.
+       - **Character Integrity**: No corrupted characters or encoding issues.
 
-    3. **Verify Structure Integrity**:
+    3. **Verify Structure Integrity** (local-side):
        - **Headers Present**: All markdown headers are preserved
        - **Lists Intact**: Bullet points and numbered lists are correct
        - **Code Blocks**: Code blocks are properly formatted
        - **Links Valid**: Internal and external links are not broken
 
     4. **Verify Sync Direction**:
-       - Based on sync_direction, verify the expected source matches destination:
-         * If 'local→notion': Notion content should match local
-         * If 'notion→local': Local content should match Notion
-         * If 'merged→both': Both should have the resolved content
+       - Based on sync_direction, an empty `notion-sync diff` confirms remote == local for either direction or for `merged→both`.
+       - If diff is non-empty, classify which side is authoritative for the sync_direction and record the divergence as a critical issue.
 
     5. **Identify Any Issues**:
        - Classify severity:
@@ -498,17 +511,17 @@ Request each subagent to perform the following verification:
     modifications: []  # no modifications during verification
     outputs:
       file_path: '[path]'
-      notion_url: '[url]'
+      notion_ref: '[ref]'
       verification_status: 'pass|fail'
+      diff_empty: true|false  # primary signal from `notion-sync diff`
+      diff_entry_count: [number]
       checks:
-        content_length_match: pass|fail
         completeness_check: pass|fail
         no_truncation: pass|fail
         character_integrity: pass|fail
         structure_integrity: pass|fail
         sync_direction_correct: pass|fail
       local_content_length: [number]
-      notion_content_length: [number]
       critical_issues: ['issue1', 'issue2', ...]  # MUST stop workflow
       warnings: ['warning1', 'warning2', ...]  # Non-blocking
     issues: ['issue1', 'issue2', ...]  # same as critical_issues if any
@@ -545,7 +558,7 @@ Request each subagent to perform the following verification:
         ║ SYNC INTEGRITY FAILURE - MANUAL FIX REQUIRED                  ║
         ╠═══════════════════════════════════════════════════════════════╣
         ║ File: [file_path]                                             ║
-        ║ Notion: [notion_url]                                          ║
+        ║ Notion: [notion_ref]                                          ║
         ║ Issues: [list critical_issues]                                ║
         ╚═══════════════════════════════════════════════════════════════╝
 
@@ -557,7 +570,7 @@ Request each subagent to perform the following verification:
 
         INSTRUCTIONS:
         1. Copy the content above (from "===" to "=== END")
-        2. Open Notion page: [notion_url]
+        2. Open Notion page: [notion_ref]
         3. Select all content in the page
         4. Paste the corrected content
         5. Save the page in Notion
@@ -565,7 +578,7 @@ Request each subagent to perform the following verification:
         ```
 
      c. **Ask User Confirmation**: Use AskUserQuestion tool:
-        - question: "Have you manually fixed the Notion page at [notion_url]?"
+        - question: "Have you manually fixed the Notion page at [notion_ref]?"
         - options:
           - label: "Fixed", description: "I've manually updated the Notion page"
           - label: "Skip", description: "Skip this pair for now"
@@ -632,7 +645,7 @@ Request each subagent to perform the following metadata update:
     You're assigned to update frontmatter for a single file:
 
     - **File Path**: [file_path]
-    - **Notion URL**: [notion_url from Step 3]
+    - **Notion Ref**: [notion_ref from Step 3] (likely already written by `notion-sync push`)
     - **Sync Mode**: [sync_mode]
     - **Sync Timestamp**: [sync_timestamp from Step 3]
     - **Sync Status**: [success|partial from Step 3 and Step 4]
@@ -642,20 +655,20 @@ Request each subagent to perform the following metadata update:
     1. **Read Current File**:
        - Use Read tool to load the file completely
        - Parse existing YAML frontmatter (between --- markers)
-       - Extract all existing fields
+       - Extract all existing fields (note: `ref:` may have already been written by `notion-sync push` for newly-created pages — preserve it)
        - Preserve file content (everything after frontmatter)
 
     2. **Update Frontmatter Fields**:
-       - Create or update these fields:
+       - Confirm or set:
          ```yaml
-         notion_url: '[notion_url]'
+         ref: '[notion_ref]'  # the CLI sets this on create; verify present on update
          last_edited_at: '[current ISO timestamp]'
          last_synced_at: '[sync_timestamp from Step 3]'
          sync_mode: '[sync_mode]'
          sync_status: 'success|partial'
          ```
-       - Preserve all other existing fields (related_files, custom fields, etc.)
-       - Maintain YAML formatting and structure
+       - Preserve all other existing fields (`parent:`, related_files, custom fields, etc.).
+       - Maintain YAML formatting and structure.
 
     3. **Write Updated File**:
        - Use Edit tool to update the frontmatter section
@@ -677,7 +690,7 @@ Request each subagent to perform the following metadata update:
     outputs:
       file_path: '[path]'
       frontmatter_updated: true|false
-      fields_updated: ['notion_url', 'last_edited_at', 'last_synced_at', 'sync_mode', 'sync_status']
+      fields_updated: ['ref', 'last_edited_at', 'last_synced_at', 'sync_mode', 'sync_status']
       preserved_fields: [list of other fields kept]
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
@@ -726,13 +739,13 @@ outputs:
   sync_pairs: [
     {
       file: 'path1',
-      notion_url: 'url1',
+      notion_ref: 'ref1',
       direction: 'local→notion|notion→local|merged→both',
       status: 'success|partial|failure'
     },
     {
       file: 'path2',
-      notion_url: 'url2',
+      notion_ref: 'ref2',
       direction: 'local→notion|notion→local|merged→both',
       status: 'success|partial|failure'
     }

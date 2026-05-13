@@ -1,10 +1,10 @@
 ---
 name: sync-spec
-description: Materialize a hard local copy of a Notion specification page tree (root SPEC.md + recursive child pages + leaf-only linked pages) into a target directory, with INDEX.md, frontmatter on every file, and a .gitignore at the bundle root. Hard-gates on root SPEC.md persistence. Use when downloading a Notion spec to disk, mirroring a Notion spec page tree locally, pulling a spec bundle for a ticket, refreshing a stale .code-spec bundle, or any time a guaranteed-on-disk copy of a Notion spec is needed before downstream analysis or codegen.
+description: Materialize a hard local copy of a Notion specification page tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files (plus an auto-written `.gitignore`). Hard-gates on root spec persistence — the file whose 32-hex suffix matches the input id MUST exist non-empty. Use when downloading a Notion spec to disk, mirroring a Notion spec page tree locally, pulling a spec bundle for a ticket, refreshing a stale .code-spec bundle, or any time a guaranteed-on-disk copy of a Notion spec is needed before downstream analysis or codegen.
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Read, Grep, Glob, Bash, Task, TodoWrite, mcp__plugin_specification_notion__notion-fetch, mcp__plugin_specification_notion__notion-search
+allowed-tools: Read, Grep, Glob, Bash, TodoWrite
 argument-hint: <notion-url-or-id> [--spec-path=<dir>]
 ---
 
@@ -26,18 +26,19 @@ argument-hint: <notion-url-or-id> [--spec-path=<dir>]
 
 **Prerequisites**:
 
-- Notion MCP access for the target workspace and page (`notion-fetch`, `notion-search`)
+- `notion-sync` CLI on PATH (verify with `Bash: notion-sync --help`)
+- `NOTION_TOKEN` environment variable set in the current shell (export before invoking)
 - Write access to the resolved `<spec-path>` directory
 - A working directory inside (or under) a project (so `<spec-path>` defaults can resolve to a project root); otherwise falls back to `<CWD>/.code-spec`
 
 ### Your Role
 
-You are a **Spec Bundle Operator** who orchestrates a single Notion-fetch specialist subagent and validates the on-disk result. You never write Notion data yourself — every page conversion happens inside the dispatched subagent. Your responsibilities are:
+You are a **Spec Bundle CLI Operator** who runs a single recursive `notion-sync pull` and validates the on-disk result. Your responsibilities are:
 
 - **Path Discipline**: Resolve `<spec-path>` deterministically (project-root walk-up, then CWD fallback) and refuse to operate outside the project tree
 - **Wipe Discipline**: Always wipe `<spec-path>` before the fetch — no caching, no merging, no preservation
-- **Hard-Gate Authority**: After dispatch, verify `<spec-path>/SPEC.md` is present and non-empty; refuse the entire skill if not
-- **Zero Direct Writes**: You never run `mcp__notion-fetch` for content — your tool surface is path validation, wipe, gitignore, and final verification
+- **One-Shot Recursion**: Issue exactly ONE `notion-sync pull <id> --follow --out <spec-path>` call. The CLI walks children + databases + links + files in a single invocation. Do NOT iterate per-page across tool turns.
+- **Hard-Gate Authority**: After the pull, verify the file whose `{32hex-id}` filename suffix matches the input `notion_id` exists and is non-empty. Refuse the entire skill if not.
 - **Faithful Reporting**: Emit a single YAML completion report describing every file persisted, with refusal reasons surfaced explicitly when applicable
 
 ## 2. SKILL OVERVIEW
@@ -56,28 +57,25 @@ There are NO other arguments. There is **no** `--use-cache`, **no** `--repo`, **
 
 #### Expected Outputs
 
-- **Bundle on disk** at `<spec-path>/`:
-  - `SPEC.md` — root page (hard-gated; missing/empty causes refusal)
-  - `INDEX.md` — tree-of-contents listing every file with kind/title/notion_id/summary
-  - `children/*.md` — recursive child pages (only present if any exist)
-  - `linked/*.md` — leaf-only linked pages from inline mentions (only present if any exist)
-  - `.gitignore` — single line `*`, idempotent (never overwrites an existing gitignore)
-- **Frontmatter on every markdown file**: `notion_id`, `title`, `url`, `kind: spec|child|linked`, `fetched_at`
-- **Completion Report (YAML)**: `status` (`completed` | `refused`), refusal `reason` if applicable, `outputs.notion`, `outputs.spec_bundle.spec_path`, `outputs.spec_bundle.index_path`, `outputs.spec_bundle.files[]`
+- **Bundle on disk** at `<spec-path>/` (flat, no subdirectories):
+  - `{kebab-title}-{32hex-id}.md` for every page in the pulled subgraph (root + recursive children + linked leaves + database rows)
+  - `.gitignore` — auto-written by `notion-sync`, single line `*`
+- **Page identity** is the 32-hex suffix of the filename. The root page is the file whose suffix equals the input `notion_id`.
+- **Completion Report (YAML)**: `status` (`completed` | `refused`), refusal `reason` if applicable, `outputs.notion`, `outputs.spec_bundle.spec_path`, `outputs.spec_bundle.files[]` (each entry `{ path, notion_id }`)
 
 #### Data Flow Summary
 
-The skill takes a Notion URL or id, normalizes it to a 32-char hex id, resolves an absolute `<spec-path>` (project-root walk-up with CWD fallback), safety-checks that the path is inside the resolved project root or under CWD, wipes the directory, writes a `*` gitignore (only if absent), dispatches one Notion Bundle Specialist subagent to recursively fetch root + child pages and leaf-only linked pages with frontmatter and INDEX.md, hard-gate verifies that `<spec-path>/SPEC.md` exists and is non-empty, and emits a YAML completion report. There is no caching, no merge, no second pass.
+The skill takes a Notion URL or id, normalizes it to a 32-char hex id, resolves an absolute `<spec-path>` (project-root walk-up with CWD fallback), safety-checks that the path is inside the resolved project root or under CWD, wipes the directory, runs ONE `notion-sync pull <id> --follow --out <spec-path>` call (which recursively writes flat `{kebab-title}-{32hex-id}.md` files for the entire subgraph plus a `.gitignore`), hard-gate verifies that the root file (filename suffix matches input `notion_id`) exists and is non-empty, and emits a YAML completion report. There is no caching, no merge, no second pass, and no per-page iteration across tool turns.
 
 ### Visual Overview
 
 #### Main Skill Flow
 
 ```plaintext
-   YOU                                  SUBAGENT
-(Orchestrates Only)                     (Performs Notion Fetch)
-   |                                         |
-   v                                         v
+   YOU
+(CLI Operator — single linear flow)
+   |
+   v
 [START]
    |
    v
@@ -92,22 +90,22 @@ The skill takes a Notion URL or id, normalizes it to a 32-char hex id, resolves 
    |    • mkdir -p <spec-path>
    |    • ALWAYS wipes (no cache, ever)
    v
-[Step 3: Auto-write .gitignore]
-   |    • single line `*`
-   |    • only if file does not already exist
+[Step 3: One-Shot Recursive Pull]
+   |    • Bash: notion-sync pull <notion_id> --follow --out <spec-path>
+   |    • SINGLE call walks children + databases + links + files
+   |    • CLI auto-writes .gitignore at <spec-path>/.gitignore
+   |    • files land flat: {kebab-title}-{32hex-id}.md
+   |    • DO NOT iterate per-page across turns
    v
-[Step 4: Notion Bundle Fetch] ───────→ (Notion Bundle Specialist subagent)
-   |                                    • root → SPEC.md
-   |                                    • children/ recursive
-   |                                    • linked/ leaf-only (from inline mentions)
-   |                                    • frontmatter + INDEX.md
+[Step 4: Enumerate]
+   |    • Glob: <spec-path>/*.md → file list
+   |    • parse 32-hex suffix from each filename → notion_id
    v
 [Step 5: Hard-Gate Verification]  *** HARD GATE ***
-   |    • Bash test -s <spec-path>/SPEC.md
-   |    • subagent failure OR SPEC.md missing/empty → refuse
-   |    • partial + SPEC.md ok → completed (warnings)
-   |    • partial + SPEC.md missing/empty → refuse (downgrade)
-   |    • success + SPEC.md ok → completed
+   |    • locate file whose {32hex-id} suffix matches input notion_id
+   |    • Bash test -s <root-file>
+   |    • CLI exit ≠ 0 OR root file missing/empty → refuse
+   |    • CLI exit 0 + root file present non-empty → completed
    v
 [Step 6: Skill Completion Report]
    |    • emit YAML
@@ -116,28 +114,27 @@ The skill takes a Notion URL or id, normalizes it to a 32-char hex id, resolves 
 
 Legend:
 ═══════════════════════════════════════════════════════════════════
-• LEFT COLUMN: You orchestrate (path discipline + wipe + verify)
-• RIGHT SIDE: Subagent performs all Notion fetch + markdown writes
-• ARROWS (───→): You dispatch work
-• Step 5 is the HARD GATE — no completed status without SPEC.md on disk
+• Single operator — no subagent dispatch, no parallel fan-out
+• ONE notion-sync pull does everything (recursion via --follow)
+• Step 5 is the HARD GATE — no completed status without root file on disk
 • Skill is LINEAR: 1 → 2 → 3 → 4 → 5 → 6
 • On invalid_id (Step 1) or refusal at Step 5: jump straight to Step 6
 ═══════════════════════════════════════════════════════════════════
 
 Note:
-• You: Resolve, wipe, gitignore, hard-gate, report
-• Subagent: All Notion MCP fetches + all markdown writes (1 dispatch)
+• Recursion happens INSIDE the CLI, not across tool turns
 • No caching: every invocation is a fresh download
 • No merging: pre-existing contents at <spec-path> are deleted
+• No INDEX.md, no children/, no linked/ — bundle is flat
 ```
 
 ### Skill Steps
 
 1. Resolve & Normalize (You) — strip dashes, validate 32-char hex, resolve `<spec-path>`
 2. Wipe & Prepare (You) — safety check + `rm -rf` + `mkdir -p`
-3. Auto-write `.gitignore` (You) — single `*` line, only if absent
-4. Notion Bundle Fetch (Subagent) — recursive fetch + INDEX.md
-5. Hard-Gate Verification (You) — `test -s <spec-path>/SPEC.md`
+3. One-Shot Recursive Pull (You) — `notion-sync pull <id> --follow --out <spec-path>`
+4. Enumerate (You) — `Glob: <spec-path>/*.md`, parse 32-hex suffix per filename
+5. Hard-Gate Verification (You) — `test -s` on the file whose suffix matches input id
 6. Skill Completion Report (You) — emit YAML
 
 ## 3. SKILL IMPLEMENTATION
@@ -158,14 +155,14 @@ Note:
    - If a full URL, extract the trailing id segment
    - Strip all dashes
    - Validate the result is exactly 32 hex characters (`/^[0-9a-f]{32}$/i`)
-   - **On validation failure**: set `status=refused`, `reason=invalid_id`, jump to Step 6. Do NOT wipe. Do NOT dispatch subagent.
+   - **On validation failure**: set `status=refused`, `reason=invalid_id`, jump to Step 6. Do NOT wipe. Do NOT call `notion-sync`.
 2. **Resolve `<spec-path>`**:
    - If `--spec-path=<dir>` provided: take it as-is, resolve to absolute path
    - Otherwise: walk up from CWD looking for the first ancestor containing any of `.git/`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`
      - If found: `spec_path = <root>/.code-spec`
      - If no marker found anywhere up to filesystem root: `spec_path = <CWD>/.code-spec` (fallback)
    - Record `project_root` (the resolved root, or null if fallback fired)
-3. **Use TodoWrite** to seed todos for Steps 2–6 (`wipe-prepare`, `write-gitignore`, `notion-fetch`, `hard-gate-verify`, `completion-report`).
+3. **Use TodoWrite** to seed todos for Steps 2–6 (`wipe-prepare`, `notion-pull`, `enumerate`, `hard-gate-verify`, `completion-report`).
 4. Cache `notion_id`, `spec_path`, `project_root` for downstream steps.
 
 ### Step 2: Wipe & Prepare
@@ -188,124 +185,75 @@ Note:
 3. **Recreate** via Bash: `mkdir -p <spec-path>`.
 4. Update TodoWrite: mark `wipe-prepare` as `completed`.
 
-### Step 3: Auto-write `.gitignore`
+### Step 3: One-Shot Recursive Pull
 
 **Step Configuration**:
 
-- **Purpose**: Ensure `<spec-path>/.gitignore` contains a single `*` line so bundles never accidentally land in git history. Idempotent.
+- **Purpose**: Run a SINGLE `notion-sync pull` invocation that mirrors the entire Notion subgraph (root + children + linked leaves + database rows + files) into `<spec-path>` as flat `{kebab-title}-{32hex-id}.md` files. The CLI also auto-writes `<spec-path>/.gitignore`.
+- **Input**: `notion_id`, `spec_path`
+- **Output**: Files on disk; CLI exit code; stdout/stderr captured
+- **Sub-skill**: None (direct CLI call)
+- **Parallel Execution**: No (one CLI process; the CLI internally parallelizes via `-c` concurrency)
+
+#### Actions (You)
+
+1. Confirm `<spec-path>` exists and is empty (sanity check after Step 2).
+2. Update TodoWrite: mark `notion-pull` as `in_progress`.
+3. Confirm `NOTION_TOKEN` is exported in the current shell. If unset, set `status=refused`, `reason=notion_unavailable`, attach a one-line explanation in `issues` (`"NOTION_TOKEN environment variable is not set"`), jump to Step 6.
+4. Issue exactly ONE Bash invocation:
+
+   ```bash
+   notion-sync pull <notion_id> --follow --out <spec-path>
+   ```
+
+   - `--follow` is the umbrella flag that walks `--follow-children --follow-database --follow-links --follow-files` in a single pass.
+   - Default depths are `children=3`, `database=1`, `link=1`. Override with `--depth N` or per-axis flags only when the caller explicitly requested deeper recursion.
+   - You MAY add `--bail` to fail fast on the first per-page error and `-c 25` (default concurrency) if not already.
+5. **DO NOT** loop — one pull call walks the entire subgraph. Per-page iteration across tool turns is forbidden.
+6. Capture the CLI exit code as `cli_exit_code`. Capture stderr only on non-zero exit (for the `issues` field).
+7. Update TodoWrite: mark `notion-pull` as `completed`.
+
+### Step 4: Enumerate
+
+**Step Configuration**:
+
+- **Purpose**: Discover every markdown file the CLI wrote and parse each filename's `{32hex-id}` suffix into a `notion_id`. Builds the `files[]` payload for the completion report.
 - **Input**: `spec_path`
-- **Output**: `<spec-path>/.gitignore` exists with content `*`
+- **Output**: `spec_bundle.files[]` = `[{ path, notion_id }, ...]`
 - **Sub-skill**: None
 - **Parallel Execution**: No
 
 #### Actions (You)
 
-1. Check whether `<spec-path>/.gitignore` already exists (Bash `test -e`).
-2. **If absent**: write a single line `*` (newline-terminated) into `<spec-path>/.gitignore`.
-3. **If present**: leave untouched. Never overwrite a user-managed gitignore. Record this in `issues` only if the existing file is empty (no `*` rule), as an advisory.
-4. Update TodoWrite: mark `write-gitignore` as `completed`.
-
-### Step 4: Notion Bundle Fetch
-
-**Step Configuration**:
-
-- **Purpose**: Dispatch one Notion Bundle Specialist subagent to fetch the root page, recurse through child pages, leaf-fetch any linked pages discovered via inline mentions, write frontmatter to every file, and produce `INDEX.md`.
-- **Input**: `notion_id`, `spec_path`
-- **Output**: `spec_bundle` = `{ spec_path, index_path, files[], cache_hit: false }`
-- **Sub-skill**: None (uses Notion MCP via subagent)
-- **Parallel Execution**: Yes — child-page fetches dispatch in parallel batches inside the subagent
-
-#### Phase 1: Planning (You)
-
-1. Confirm `<spec-path>` exists and is empty (sanity check after Step 2).
-2. Update TodoWrite: mark `notion-fetch` as `in_progress`.
-3. Prepare a single Notion Bundle Specialist task assignment.
-
-**OUTPUT from Planning**: One queued subagent task to fetch + walk + index the bundle.
-
-#### Phase 2: Execution (Subagent)
-
-In a single message, you spin up one Notion Bundle Specialist subagent (`general-purpose`).
-
-- **[IMPORTANT]** You MUST ask the subagent to ultrathink hard about faithful mirroring and recursion semantics
-- **[IMPORTANT]** Use TodoWrite to keep `notion-fetch` as `in_progress` until the subagent reports back
-- **[IMPORTANT]** Do NOT recurse into linked pages — they are fetched as leaves only
-
-Request the subagent to perform the following fetch and write:
-
-    >>>
-    **ultrathink: adopt the Notion Bundle Specialist mindset**
-
-    - You're a **Notion Bundle Specialist**:
-      - **Faithful Mirroring**: Convert each Notion page to clean markdown preserving headings, lists, code blocks, tables, and links
-      - **Recursive on Children, Leaf-Only on Links**: Recurse fully through `child_page` / `child_database` blocks (no depth cap). Linked-page references are fetched as leaves only — never recursed.
-      - **Deduplicate by Notion ID**: Each unique page is written once even if referenced multiple times
-
-    **Assignment**
-
-    - Bundle root: `<spec_path>` (absolute path)
-    - Root page: `<notion_id>`
-    - Linked-page seeds: any inline `mention` blocks discovered while fetching root + child pages (no external seed list)
-
-    **Steps**
-
-    1. Fetch the root page; convert to markdown; save to `<spec_path>/SPEC.md`
-    2. Walk child blocks for `child_page` and `child_database` references; for each, fetch + save to `<spec_path>/children/<slug-of-title>.md`. Recurse fully (no depth cap).
-    3. Resolve linked-page mentions in property values (the four seeds above, plus any inline `mention` blocks); save unique linked pages to `<spec_path>/linked/<slug>.md` (skip duplicates by Notion id). Linked pages are leaves — do NOT recurse into them.
-    4. **Frontmatter on every file**: `notion_id`, `title`, `url`, `kind: spec|child|linked`, `fetched_at`
-    5. Build `<spec_path>/INDEX.md`: a one-line-per-file index with kind, title, relative path, and a one-sentence summary (extracted from the page's first paragraph)
-
-    **Report**
-
-    ```yaml
-    status: success|partial|failure
-    outputs:
-      spec_bundle:
-        root_path: '<abs path>'
-        index_path: '<abs path>/INDEX.md'
-        cache_hit: false
-        files:
-          - kind: spec|child|linked
-            notion_id: '...'
-            title: '...'
-            path: '<rel path>'
-            summary: '<one-liner>'
-    issues: []
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-1. Parse the subagent's YAML report.
-2. Cache `spec_bundle` (rename `root_path` to `spec_path` in your internal state for the completion report).
-3. Note the subagent's `status` (`success` | `partial` | `failure`); the actual gating happens in Step 5 against the on-disk file, not the subagent's self-report.
-4. Update TodoWrite: mark `notion-fetch` as `completed`.
+1. `Glob: <spec-path>/*.md` to list every markdown file (flat — no recursion needed; the CLI does not create subdirectories).
+2. For each file path, parse the trailing `-{32hex}.md` segment to extract the `notion_id`. Reject any filename that does not match `/-[0-9a-f]{32}\.md$/i`; record an advisory in `issues` for skipped entries.
+3. Build `spec_bundle.files = [{ path: '<abs or rel path>', notion_id: '<32hex>' }, ...]`.
+4. Cache `spec_bundle` (with `spec_path` + `files[]`) for the completion report.
 
 ### Step 5: Hard-Gate Verification
 
 **Step Configuration**:
 
-- **Purpose**: Defence-in-depth verification that the on-disk bundle has a non-empty root `SPEC.md`. This is the hard gate that distinguishes `completed` from `refused`. The subagent's self-reported status is advisory; the filesystem is authoritative.
-- **Input**: `spec_path`, subagent's reported `status`
-- **Output**: `final_status` (`completed` | `refused`), `final_reason` (when refused)
+- **Purpose**: Defence-in-depth verification that the on-disk bundle has a non-empty root file. The root file is the one whose filename suffix matches the input `notion_id`. CLI exit code is advisory; the filesystem is authoritative.
+- **Input**: `spec_path`, `notion_id`, `cli_exit_code`, `spec_bundle.files[]`
+- **Output**: `final_status` (`completed` | `refused`), `final_reason` (when refused), `root_file_path` (when present)
 - **Sub-skill**: None
 - **Parallel Execution**: No
 
 #### Actions (You)
 
-1. Run `Bash test -s <spec-path>/SPEC.md` to confirm the file exists and is non-empty.
-2. Apply the decision matrix:
+1. Find the root file by scanning `spec_bundle.files[]` for the entry whose `notion_id` equals the input `notion_id`. Record `root_file_path` if found.
+2. Run `Bash: test -s <root_file_path>` to confirm the file exists and is non-empty.
+3. Apply the decision matrix:
 
-   | Subagent status | `SPEC.md` present non-empty? | Outcome                                                                                       |
-   |-----------------|-------------------------------|-----------------------------------------------------------------------------------------------|
-   | `failure`       | (any)                         | `status=refused`, `reason=spec_bundle_unavailable` — jump to Step 6                            |
-   | `partial`       | No                            | Downgrade: `status=refused`, `reason=spec_bundle_unavailable` — jump to Step 6                 |
-   | `partial`       | Yes                           | `status=completed` with warnings — surface missing-children list in `issues`                  |
-   | `success`       | No                            | Treat as failure: `status=refused`, `reason=spec_bundle_unavailable` — jump to Step 6          |
-   | `success`       | Yes                           | `status=completed`                                                                            |
+   | `cli_exit_code` | Root file present non-empty? | Outcome                                                                                |
+   |-----------------|------------------------------|----------------------------------------------------------------------------------------|
+   | non-zero        | (any)                        | `status=refused`, `reason=spec_bundle_unavailable` — jump to Step 6                     |
+   | `0`             | No                           | `status=refused`, `reason=spec_bundle_unavailable` — jump to Step 6                     |
+   | `0`             | Yes                          | `status=completed` (any per-page warnings surface in `issues`)                          |
 
-3. Cache `final_status` and `final_reason` for the completion report.
-4. Update TodoWrite: mark `hard-gate-verify` as `completed`.
+4. Cache `final_status` and `final_reason` for the completion report.
+5. Update TodoWrite: mark `hard-gate-verify` as `completed`.
 
 ### Step 6: Skill Completion Report
 
@@ -331,13 +279,9 @@ outputs:
     title: '<page title>'
   spec_bundle:
     spec_path: '<abs path>'
-    index_path: '<abs path>/INDEX.md'
     files:
-      - kind: spec | child | linked
-        notion_id: '...'
-        title: '...'
-        path: '<rel path from spec-path>'
-        summary: '<one-liner>'
+      - path: '<abs or rel path>/<kebab-title>-<32hex-id>.md'
+        notion_id: '<32hex>'
 issues: []
 ```
 

@@ -4,88 +4,86 @@ Default behavior of spec-code Step 10. Skipped only when `--skip-notion-sync` is
 
 **Database**: Design Specification — `https://www.notion.so/292b2572f78880fe95b9fdc8daeb862f` (database ID `292b2572-f788-803f-84f5-000b9b51b8b6`).
 
+All Notion interactions go through the `notion-sync` CLI (`Bash: notion-sync ...`). The CLI requires `NOTION_TOKEN` in env. Recursive operations MUST use `--follow*` flags so a single invocation walks the entire subgraph — never iterate per-page across tool-call turns.
+
 ## Step 1 — Prepare Sync Payload
 
 Collect:
 
 - All local file paths (DESIGN.md + every child page file created in Step 9).
-- All Notion URLs known so far (from frontmatter or Step 1 database search).
+- All Notion refs known so far (from frontmatter `ref:`, or resolved via `Bash: notion-sync search "<title>" -j`).
 - Merge report from the merge-resolution step (if any).
 - Package name (from Step 1).
 - Operation mode (CREATE / UPDATE / DOCUMENT).
 - Database ID `292b2572-f788-803f-84f5-000b9b51b8b6`.
 - Child page metadata captured in Step 1.
 
-## Step 2 — Spawn Notion Sync Subagent
+## Step 2 — Push Local Files to Notion
 
-Use the Task tool to delegate Notion sync.
+For every local file (DESIGN.md + child pages), run **one** `notion-sync push` per file. The CLI decides create-vs-update from the file's frontmatter.
 
-**Input to subagent**: all local file paths, all known Notion URLs, operation mode, package name, database ID, child page metadata.
+### 2a — Update existing pages (`ref:` already present)
 
-**Subagent responsibilities**:
+If the file's frontmatter already contains `ref:` (a Notion URL or 32-hex id), the CLI updates that page in place:
 
-- Read all local files (DESIGN.md + child pages).
-- Determine create vs update for the main page:
-  - Check if a Notion URL is already known (from Step 1 search or frontmatter).
-  - If no URL: search the database with fuzzy matching — strip `@` and `/`, lowercase, allow partial match.
-  - If found: update the existing page using `mcp__plugin_specification_notion__notion-update-page`.
-  - If not found: create a new page in the database using `mcp__plugin_specification_notion__notion-create-pages`.
-- Set page properties on the main page:
-  - `Name` = package name.
-  - `Status` = `"Drafting"` (CREATE mode) or `"Implemented"` (DOCUMENT mode).
-- For each child page:
-  - Check whether the child already exists as a sub-page of the main page.
-  - Create or update the child under the main page.
-  - Set the title from child page metadata (e.g. `"Requirements"`, `"Components & APIs"`).
-  - Position child pages at the TOP of the main page.
-- Collect and return all Notion URLs (main + every child).
+- `Bash: notion-sync push <file_path>`
+- Add `--follow` if the file references other local files (via `parent:` chains) that should also be pushed in the same call.
+- The CLI sets page properties on `Name` and any other frontmatter-mapped fields. For the main DESIGN.md, ensure frontmatter carries `Status: "Drafting"` (CREATE mode) or `Status: "Implemented"` (DOCUMENT mode) so the push propagates it.
 
-**Required tools**: Read, `notion-search`, `notion-fetch`, `notion-create-pages`, `notion-update-page`.
+### 2b — Create new pages (no `ref:` yet)
+
+For files that do not yet exist on Notion:
+
+1. Ensure the file's frontmatter contains `parent:` set to:
+   - `292b2572-f788-803f-84f5-000b9b51b8b6` (the Design Specification database id) for the main DESIGN.md, or
+   - the parent page id (or sibling local path) of the main DESIGN.md for each child page.
+2. `Bash: notion-sync push <file_path>`
+3. The CLI creates the page under `parent:` and **writes the resulting `ref:` back into the file's frontmatter**. No separate metadata step is required to capture the new URL.
+4. Position child pages at the TOP of the main page (the CLI's child ordering follows the order children are pushed; push children immediately after the main page in the desired top-to-bottom order, or rely on `parent:` resolution against the main page).
+
+### Collect URLs
+
+After all pushes complete, re-read each file's frontmatter `ref:` to assemble the canonical list of Notion URLs (main + every child).
+
+**Required tools**: Read, Edit, Bash (`notion-sync push`, `notion-sync search`).
 
 **Execution mode**: Blocking (must complete before verification).
 
-## Step 3 — Spawn Verification Subagent
+## Step 3 — Verify Sync Integrity
 
-**Input**: all local file paths, all Notion URLs returned by the sync subagent.
+For each local file, run:
 
-**Subagent responsibilities**:
+- `Bash: notion-sync diff <file_path>`
+  - Empty output (or zero diff entries) ⇒ pass for that file.
+  - Non-empty output ⇒ drift detected; record the file + diff summary for Step 4.
 
-- Fetch all Notion pages using `notion-fetch`.
-- Compare Notion content vs local files.
-- Check for sync bugs: truncated content, broken formatting, missing sections, corrupted characters, missing child pages.
-- Return verification status per page (pass / fail).
-- Count total verified pages.
+The diff command compares the file's local content against the remote page identified by frontmatter `ref:`. There is no need to fetch each page separately first.
 
-**Required tools**: Read, `notion-fetch`.
+**Required tools**: Bash (`notion-sync diff`).
 
-If all pages pass: proceed to Step 5.
-If any page fails: proceed to Step 4 (patching).
+If all files pass: proceed to Step 5.
+If any file shows drift: proceed to Step 4 (patching).
 
-## Step 4 — Spawn Patching Subagent (only if verification failed)
+## Step 4 — Re-Push Drifted Files (only if verification failed)
 
 **Maximum 3 retry attempts.**
 
-**Input**: verification report (failed pages/sections), local file paths, Notion URLs needing patches, current attempt number.
+For each file flagged in Step 3:
 
-**Subagent responsibilities**:
+- `Bash: notion-sync push <file_path>` — re-pushes the local file as the source of truth.
+- After all drifted files are re-pushed, re-run Step 3 (`notion-sync diff`) to verify.
 
-- Focus only on failed pages/sections.
-- Apply targeted fixes using `notion-update-page`.
-- Make minimal changes to fix the specific issues identified.
-- Return a patching report.
+Increment the retry counter on every full Step 3 → Step 4 cycle. If files still show drift after 3 attempts: log the issues, report to the user, and mark sync as partially completed.
 
-**Required tools**: Read, `notion-update-page`.
-
-After patching: spawn a fresh verification subagent to re-check.
-If still failing after 3 attempts: log the issues, report to the user, and mark sync as partially completed.
+**Required tools**: Bash (`notion-sync push`, `notion-sync diff`).
 
 ## Step 5 — Update Frontmatter
 
-After successful sync, use the Edit tool to update frontmatter in every file:
+`notion-sync push` already writes `ref:` back for newly-created pages. After verification passes, use the Edit tool to set or refresh the remaining sync metadata in every file:
 
-- Set `notion_url` to the page URL returned by the sync subagent.
+- Confirm `ref:` is set (the CLI handled this on creation; verify present for every file).
 - Set `last_synced_at` to the ISO 8601 timestamp of the successful sync.
-- Verify all files have a non-empty `notion_url`.
+- Verify all files have a non-empty `ref:`.
 - Confirm the count of updated files equals `1 main + N children`.
 
 For the exact frontmatter schema, see `references/frontmatter.md`.

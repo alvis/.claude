@@ -26,7 +26,7 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--branch=<name>] [--dry-run] 
 
 **Prerequisites**:
 
-- Notion MCP access for the target workspace and page
+- `notion-sync` CLI on PATH with `NOTION_TOKEN` exported (used by `specification:sync-spec` and any direct ticket-status reads)
 - Local git repository (current directory or `--repo=<path>`) with the target spec's codebase
 - `superpowers:using-git-worktrees` skill available for worktree creation
 - `specification:sync-spec` available for the Step 2 spec bundle download (hard-gated)
@@ -58,7 +58,7 @@ You are an **Implementation Director** who orchestrates spec-to-code delivery li
 - **--branch=<name>**: Override the default branch name. Defaults to `feat/impl-<spec-slug>` derived from the ticket title.
 - **--dry-run**: Plan and report only. Do not create a worktree, do not dispatch write/edit children, do not commit.
 - **--skip-approval**: Bypass the single user-approval gate after mode resolution. Intended for trusted automation contexts.
-- **--use-cache**: Reuse an existing `.code-spec/<ticket.slug>/` bundle if `INDEX.md` and `SPEC.md` are both present locally. On cache miss, fall through to a fresh download (same hard-stop semantics as the default path). Default behavior wipes and re-downloads on every invocation.
+- **--use-cache**: Reuse an existing `.code-spec/<ticket.slug>/` bundle if it contains any `*.md` files (i.e. a prior `notion-sync pull` left flat `{kebab-title}-{32hex-id}.md` files behind). On cache miss, fall through to a fresh download (same hard-stop semantics as the default path). Default behavior wipes and re-downloads on every invocation.
 
 #### Expected Outputs
 
@@ -87,12 +87,12 @@ The skill fetches the Notion ticket, classifies its status by Notion `status` gr
 [START]
    |
    v
-[Step 1: Resolve Ticket] ───────────→ (Notion MCP fetch + status classify)
+[Step 1: Resolve Ticket] ───────────→ (notion-sync pull <id> --follow-children --follow-links + status classify)
    |                                    group + keyword regex → stage
    v
 [Step 2: Download Spec Bundle] ─────→ (sub-skill specification:sync-spec → .code-spec/<slug>/)
-   |                                    HARD GATE: stop if root SPEC.md cannot be saved
-   |                                    --use-cache short-circuits sub-skill if INDEX.md + SPEC.md exist
+   |                                    HARD GATE: stop if root spec file (filename suffix = ticket.id) cannot be saved
+   |                                    --use-cache short-circuits sub-skill when bundle dir already has any *.md files
    v
 [Step 3: Mode Resolution] ──────────→ (Apply Mode Matrix → 1 of 7 modes)
    |
@@ -217,7 +217,10 @@ Request the subagent to perform the following fetch and classification:
 
     **Steps**
 
-    1. Fetch the page via Notion MCP (`notion-fetch` or equivalent)
+    1. Fetch the page via the `notion-sync` CLI as a one-shot recursive pull:
+       - `Bash: notion-sync pull <normalized 32-char id> --follow-children --follow-links --out <tmp-dir>` (single call — never iterate per-page across turns)
+       - Then `Glob: <tmp-dir>/*.md` and `Read` the file whose filename ends in `-<normalized id>.md` to extract status + linked URLs
+       - Requires `NOTION_TOKEN` exported in the shell
     2. Extract:
        - `id`, `title`, derived `slug` (kebab-case of title)
        - `status.group` (one of `to_do` | `in_progress` | `complete`)
@@ -278,9 +281,9 @@ Request the subagent to perform the following fetch and classification:
 
 **Step Configuration**:
 
-- **Purpose**: Materialize a hard local copy of the Notion spec into `<repo>/.code-spec/<ticket.slug>/` BEFORE any coding can begin. This is a hard gate — if the root spec cannot be persisted locally, the skill MUST stop and refuse to dispatch any `coding:*` child. The only bypass is `--use-cache` with a pre-existing valid local bundle.
+- **Purpose**: Materialize a hard local copy of the Notion spec into `<repo>/.code-spec/<ticket.slug>/` BEFORE any coding can begin. This is a hard gate — if the root spec file cannot be persisted locally, the skill MUST stop and refuse to dispatch any `coding:*` child. The only bypass is `--use-cache` with a pre-existing valid local bundle.
 - **Input**: `ticket` (from Step 1), `--use-cache`, `--repo`
-- **Output**: `spec_bundle` = `{ root_path, index_path, files[], cache_hit }`
+- **Output**: `spec_bundle` = `{ root_path, files[], cache_hit }` where `files[]` entries are `{ path, notion_id }`
 - **Sub-skill**: `specification:sync-spec` (download); cache check is performed inline before delegation
 - **Parallel Execution**: Delegated to sub-skill
 
@@ -288,10 +291,10 @@ Request the subagent to perform the following fetch and classification:
 
 1. Compute `bundle_root = <repo>/.code-spec/<ticket.slug>/`
 2. **Cache decision**:
-   - **Cache-hit path**: If `--use-cache` AND `bundle_root/INDEX.md` exists AND `bundle_root/SPEC.md` exists (both files non-empty) → load `spec_bundle` from disk (`Read` INDEX.md, list files via `Glob`), set `cache_hit=true`, **skip Phase 2**. This is the only branch that may continue without a fresh Notion fetch.
-   - **Cache-miss under --use-cache**: If `--use-cache` is set but the cache is incomplete (missing INDEX.md OR missing SPEC.md OR either is empty) → log a `cache_miss_fallthrough` notice and proceed to Phase 2 (sub-skill will wipe + re-download).
+   - **Cache-hit path**: If `--use-cache` AND `bundle_root/` contains at least one `*.md` file (`Glob: <bundle_root>/*.md` returns non-empty) AND the file whose `{32hex-id}` filename suffix matches `ticket.id` exists and is non-empty → load `spec_bundle` from disk (enumerate via `Glob`, parse the 32-hex suffix from each filename to populate `files[]`), set `cache_hit=true`, **skip Phase 2**. This is the only branch that may continue without a fresh Notion fetch.
+   - **Cache-miss under --use-cache**: If `--use-cache` is set but the cache is incomplete (no `*.md` files OR the root id-suffix file is missing/empty) → log a `cache_miss_fallthrough` notice and proceed to Phase 2 (sub-skill will wipe + re-download).
    - **Default path**: Otherwise → proceed to Phase 2. The sub-skill always wipes `<spec-path>` before downloading; no extra wipe is required here.
-3. **Auto-write `<repo>/.code-spec/.gitignore`** containing a single line `*` if the file does not already exist, so bundles never accidentally get committed. Idempotent — never overwrite an existing user-managed gitignore. (Note: the sub-skill writes its own `.gitignore` at `<bundle_root>/.gitignore`; this parent-level one covers the whole `.code-spec/` directory across all slugs.)
+3. **Auto-write `<repo>/.code-spec/.gitignore`** containing a single line `*` if the file does not already exist, so bundles never accidentally get committed. Idempotent — never overwrite an existing user-managed gitignore. (Note: `notion-sync pull` also writes its own `.gitignore` at `<bundle_root>/.gitignore`; this parent-level one covers the whole `.code-spec/` directory across all slugs.)
 4. Add TodoWrite `download-spec-bundle` → `in_progress`
 
 #### Phase 2: Sub-Skill Invocation (You)
@@ -302,16 +305,16 @@ Skip this phase entirely if Phase 1 took the cache-hit path.
 2. Invoke `specification:sync-spec` via the `Skill` tool with:
    - `notion_url_or_id`: `ticket.id`
    - `--spec-path`: `<bundle_root>` (i.e. `<repo>/.code-spec/<ticket.slug>`) — sync-spec is slug-agnostic; namespacing is implement-code's responsibility
-3. Capture the sub-skill's report. Map `outputs.spec_bundle.spec_path` → `spec_bundle.root_path`. Set `spec_bundle.index_path = outputs.spec_bundle.index_path`, `spec_bundle.files = outputs.spec_bundle.files`, `spec_bundle.cache_hit = false`.
+3. Capture the sub-skill's report. Map `outputs.spec_bundle.spec_path` → `spec_bundle.root_path`. Set `spec_bundle.files = outputs.spec_bundle.files` (each entry `{ path, notion_id }`). Set `spec_bundle.cache_hit = false`.
 
 #### Phase 4: Decision (You)
 
 This is the **hard gate** that guarantees a local spec hard copy exists before coding. No `coding:*` child may be dispatched unless this gate passes.
 
-- **On sub-skill `status=refused` with reason `spec_bundle_unavailable` / `notion_not_found` / `notion_unavailable` / `invalid_id`**: report this skill's `status=refused` with the same reason (or `spec_bundle_unavailable` if the sub-skill returned a different upstream reason but the root SPEC.md is missing), jump to Step 12. Do NOT proceed to Step 3. Do NOT create a worktree. Do NOT dispatch any `coding:*` child.
+- **On sub-skill `status=refused` with reason `spec_bundle_unavailable` / `notion_not_found` / `notion_unavailable` / `invalid_id`**: report this skill's `status=refused` with the same reason (or `spec_bundle_unavailable` if the sub-skill returned a different upstream reason but the root file is missing), jump to Step 12. Do NOT proceed to Step 3. Do NOT create a worktree. Do NOT dispatch any `coding:*` child.
 - **On sub-skill `status=completed` with `issues[]` warnings** (some children/linked pages failed): the hard-copy guarantee is satisfied — warn, continue with what was fetched, surface the missing-children list in the final report.
 - **On sub-skill `status=completed` with no warnings, OR cache hit**: cache `spec_bundle` for downstream steps; mark todo `completed`.
-- **Verification before exit**: Before marking this step complete, `Read` (or `Bash test -s`) `<bundle_root>/SPEC.md` to confirm the hard copy actually exists on disk. If the file is missing despite a `completed` report, treat as refusal (`spec_bundle_unavailable`) and apply the rule above.
+- **Verification before exit**: Before marking this step complete, locate the entry in `spec_bundle.files[]` whose `notion_id` equals `ticket.id` and confirm via `Bash test -s <root file>` that it exists non-empty. If the file is missing despite a `completed` report, treat as refusal (`spec_bundle_unavailable`) and apply the rule above.
 
 ### Step 3: Mode Resolution
 
@@ -381,15 +384,15 @@ Dispatch one read-only analyst subagent.
       - **Diff-Centric**: Focus on items present in one artifact but not in the others
       - **Terse**: Report each drift item as a single line
 
-    **[IMPORTANT]** Read `INDEX.md` first, then open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
+    **[IMPORTANT]** Enumerate the bundle via `Glob: <bundle_root>/*.md`. The root spec file is the one whose filename ends `-<ticket.id>.md` (32-hex suffix). Open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
 
     **Assignment**
     Compare these artifacts:
-    - Spec bundle root: `<spec_bundle.root_path>` — read `INDEX.md` first, then open only the pointer-list files; do NOT re-fetch from Notion
-    - Spec pointer block (pre-computed by orchestrator from INDEX.md + SPEC.md headings):
-        - `<bundle_root>/SPEC.md#Features`
-        - `<bundle_root>/SPEC.md#Acceptance`
-        - matching `<bundle_root>/children/*.md` headings (Features/Acceptance sections in child pages)
+    - Spec bundle root: `<spec_bundle.root_path>` — flat directory of `{kebab-title}-{32hex-id}.md` files; identify the root by filename suffix matching `<ticket.id>`; open only the pointer-list files; do NOT re-fetch from Notion
+    - Spec pointer block (pre-computed by orchestrator by Globbing the bundle and reading `Features` / `Acceptance` headings from the root file and adjacent bundle files):
+        - `<bundle_root>/<root-filename>.md#Features`
+        - `<bundle_root>/<root-filename>.md#Acceptance`
+        - matching `<bundle_root>/*-<32hex>.md` headings (Features/Acceptance sections in other bundle files reachable from the root)
     - DRAFT.md — [path if present, else N/A]
     - PLAN.md — [path if present, else N/A]
     - Code under [repo path] matching Features slugs
@@ -454,13 +457,13 @@ Dispatch one read-only mapping subagent.
 
     - Map each Spec Feature to one code symbol. If multiple candidates exist, prefer the closest-named exported symbol.
 
-    **[IMPORTANT]** Read `INDEX.md` first, then open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
+    **[IMPORTANT]** Enumerate the bundle via `Glob: <bundle_root>/*.md`. The root spec file is the one whose filename ends `-<ticket.id>.md` (32-hex suffix). Open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
 
     **Assignment**
-    Spec bundle root: `<spec_bundle.root_path>`
+    Spec bundle root: `<spec_bundle.root_path>` (flat directory of `{kebab-title}-{32hex-id}.md` files)
     Features pointer list (pre-computed by orchestrator):
-      - `<bundle_root>/SPEC.md#Features`
-      - matching child page Features headings under `<bundle_root>/children/*.md`
+      - `<bundle_root>/<root-filename>.md#Features` (root file = filename suffix matches `<ticket.id>`)
+      - matching Features headings in adjacent bundle files (`<bundle_root>/*-<32hex>.md`) reachable from the root
     Repo root: [repo path]
 
     **Steps**
@@ -570,7 +573,7 @@ When you reach this step:
 
 #### Phase 1: Planning (You)
 
-0. **Pre-coding hard-copy gate**: Before selecting any child chain, verify `<spec_bundle.root_path>/SPEC.md` still exists and is non-empty (`Bash test -s`). This is a defence-in-depth check against any path that could have skipped Step 2's gate (e.g. injected mode override, race with manual cleanup). If missing, set `status=refused` with reason `spec_bundle_missing_at_dispatch`, do NOT dispatch any child, jump to Step 12.
+0. **Pre-coding hard-copy gate**: Before selecting any child chain, verify the bundle's root spec file (the entry in `spec_bundle.files[]` whose `notion_id` matches `ticket.id`) still exists and is non-empty (`Bash test -s <root file>`). This is a defence-in-depth check against any path that could have skipped Step 2's gate (e.g. injected mode override, race with manual cleanup). If missing, set `status=refused` with reason `spec_bundle_missing_at_dispatch`, do NOT dispatch any child, jump to Step 12.
 
 Select the child chain from the mode. **See `references/modes.md` "Step 8 — Per-Mode Child Chains"** for the full chain per mode (`COMMIT_PLAN` / `PI_ITERATE` / `DRAFT_THEN_ASK` / `AUDIT_AND_COMPLETE` / `VERIFY_ONLY`). `FLAG_MISMATCH` / `REFUSE` dispatch no children — skip to Step 11.
 
@@ -789,6 +792,6 @@ Invocation:
 /specification:implement-code <id> --use-cache
 ```
 
-- Cache decision: `<repo>/.code-spec/<slug>/INDEX.md` exists → load bundle from disk, set `cache_hit=true`, skip Phase 2
+- Cache decision: `Glob: <repo>/.code-spec/<slug>/*.md` returns at least one entry AND the root file (filename suffix matches ticket id) is non-empty → load bundle from disk, set `cache_hit=true`, skip Phase 2
 - Subsequent steps proceed against the existing bundle without any Notion fetch
 - Final report shows `spec_bundle.cache_hit=true`

@@ -15,7 +15,7 @@
 ## Step Configuration
 
 - **Purpose**: Paper-only integration validation against the landed code; catches silent integration breakage that tests missed by tracing every intended usage through the real file graph.
-- **Input**: `worktree_path`, `spec_bundle.root_path` plus a pre-computed pointer list of all Usage/Example/Scenario/Verification sections discovered across `SPEC.md` + `children/*.md`, `commits_landed`, `<worktree_path>/DEVIATIONS.md`
+- **Input**: `worktree_path`, `spec_bundle.root_path` plus a pre-computed pointer list of all Usage/Example/Scenario/Verification sections discovered across the bundle's flat `{kebab-title}-{32hex-id}.md` files (root + adjacent), `commits_landed`, `<worktree_path>/DEVIATIONS.md`
 - **Output**: `thought_experiment_report` with per-usage verdicts
 - **Sub-skill**: None — single `Task` dispatch. The subagent **MUST** use `subagent_type=general-purpose`, `model=opus` (never Sonnet, never Haiku, no fallback), and **maximum reasoning effort / thinking budget**. These settings are mandatory whenever this step runs; do not downgrade for cost, latency, or quota reasons. If opus is unavailable, fail the step with `status=partial` and an advisory rather than substituting a weaker model.
 - **Parallel Execution**: No — one sequential deep pass
@@ -35,11 +35,11 @@ Dispatch a single `Task` with `subagent_type=general-purpose`, `model=opus`, max
 
     You are the Thought-Experiment Reviewer. Apply maximum reasoning effort. Do NOT run code, run tests, or edit files — read only.
 
-    **[IMPORTANT]** Read `INDEX.md` first, then open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
+    **[IMPORTANT]** Enumerate the bundle via `Glob: <bundle_root>/*.md`. The root spec file is the one whose filename ends `-<ticket.id>.md` (32-hex suffix). Open only the files referenced in the pointer block. Do NOT re-fetch from Notion.
 
     **Inputs**
-    - Spec bundle root: `<spec_bundle.root_path>` (read `INDEX.md` first, then open only pointer-list files)
-    - Spec pointer list (pre-computed by orchestrator): every Usage / Example / Scenario / PI Verification section discovered across `<bundle_root>/SPEC.md` + `<bundle_root>/children/*.md`
+    - Spec bundle root: `<spec_bundle.root_path>` (flat directory of `{kebab-title}-{32hex-id}.md` files; identify root by filename suffix matching ticket id)
+    - Spec pointer list (pre-computed by orchestrator): every Usage / Example / Scenario / PI Verification section discovered across the bundle's `*.md` files (root file + adjacent files)
     - Worktree: <worktree_path> (use Read / Grep / Glob)
     - Deviations log: <worktree_path>/DEVIATIONS.md
 

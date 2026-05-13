@@ -105,11 +105,14 @@ Request each subagent to perform the following steps with full detail:
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_client_notion__*) for ALL Notion operations:
-    - Use `mcp__plugin_client_notion__fetch` to read any Notion pages or databases
-    - Use `mcp__plugin_client_notion__notion-create-pages` to create new pages
-    - Use `mcp__plugin_client_notion__search` to find existing pages
-    - Never access Notion URLs directly without these tools
+    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for ALL Notion operations (the `NOTION_TOKEN` env var must be set):
+    - Read pages/databases by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` then use `Glob` + `Read` on the resulting `.md` files
+    - For a full screen-design subtree (children + database + links + files), use `Bash: notion-sync pull <url> --follow --out <tmp>`
+    - To create new pages: author a local `.md` file with `parent:` in frontmatter, then run `Bash: notion-sync push <file>` — the CLI creates the Notion page and writes the resulting `ref:` back into the source file
+      - The `parent:` value can be a Notion page id, a Notion URL, OR a sibling local file path (in which case the CLI will push the parent first if it lacks `ref:`)
+    - To find existing pages: `Bash: notion-sync search "<query>" -j`
+    - **Fetch linked pages in a single `--follow*` invocation — never spawn additional `notion-sync pull` calls for individually discovered references.** One-shot recursive pulls only; never iterate across tool-call turns.
+    - Never access Notion URLs directly without `notion-sync`
 
     **Assignment**
     You're assigned to create ONE complete screen design documentation page for:
@@ -120,12 +123,12 @@ Request each subagent to perform the following steps with full detail:
 
     **Reference Template**
     Follow the design template structure at: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Use `mcp__plugin_client_notion__fetch` tool to access this template URL
+    **[IMPORTANT]** Mirror this template locally with a single recursive call: `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>`, then `Read` the resulting `.md` file
 
     **Steps**
 
     1. **Copy Template First**:
-       - Use `mcp__plugin_client_notion__fetch` tool to access the template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
+       - Run `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` (one recursive call — do NOT loop into discovered references) and `Read` the resulting `.md` file
        - Copy the entire template structure to ensure consistency
        - This ensures all sections and formatting are preserved
 
@@ -149,7 +152,8 @@ Request each subagent to perform the following steps with full detail:
        - Explain key features and user flow considerations
        - Link to product pages and maintain database relationships
        - Ensure all template sections are thoroughly completed
-       - Use `mcp__plugin_client_notion__notion-create-pages` tool to create new page under Screens database
+       - Author the new page locally as `<kebab-screen-name>.md` with frontmatter `parent: https://www.notion.so/110161382ea64eefa46a4907574d4530` (the Screens database), then run `Bash: notion-sync push <file>` to create the page on Notion. The CLI will write the resulting `ref:` back into the local file
+         - The `parent:` value can also be a sibling local file path; the CLI will push the parent first if it lacks `ref:`
        - Database collection URL: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
        - Parent database URL: https://www.notion.so/110161382ea64eefa46a4907574d4530
 
@@ -199,9 +203,9 @@ Request each review subagent to perform the following review with full scrutiny:
     Page to Review: [Specific Screen Name created in Phase 2]
     Template Reference: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
 
-    **[IMPORTANT]** You MUST use Notion MCP tools for all review operations:
-    - Use `mcp__plugin_client_notion__fetch` to read the created page and template
-    - Use `mcp__plugin_client_notion__search` if you need to find related pages
+    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for all review operations (review is read-only — pull only, never push):
+    - Read the created page and template by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` (single recursive call per URL — never iterate into discovered references) then `Read` the resulting `.md` files
+    - To find related pages: `Bash: notion-sync search "<query>" -j`
 
     Review ALL aspects of this single page:
     - Template Conformance: Verify page structure matches template exactly
@@ -215,7 +219,7 @@ Request each review subagent to perform the following review with full scrutiny:
     **Review Steps**
 
     1. **Template Verification**:
-       - Use `mcp__plugin_client_notion__fetch` to read both the created page and template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
+       - Mirror both pages locally with `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` (one recursive call for the created page, one for the template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2) and `Read` the resulting `.md` files
        - Verify ALL template sections are present and properly structured
        - Confirm section headings match the template exactly
     2. **Design Count Verification**:
@@ -229,7 +233,7 @@ Request each review subagent to perform the following review with full scrutiny:
        - Check all template sections have substantive content
        - Verify design rationales are complete and logical
     5. **Integration Check**:
-       - Use `mcp__plugin_client_notion__fetch` to verify proper placement in Screens database (https://www.notion.so/110161382ea64eefa46a4907574d4530)
+       - Run `Bash: notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 --follow-children --follow-links --out <tmp>` (single recursive call) and `Glob`/`Read` the resulting files to verify proper placement in the Screens database
        - Confirm the page exists in collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
        - Verify product linking and relationships
 

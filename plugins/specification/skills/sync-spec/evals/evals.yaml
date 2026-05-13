@@ -11,11 +11,11 @@ test_cases:
         type: content
       - text: "wipes the spec-path directory before downloading (always — no caching)"
         type: content
-      - text: "produces SPEC.md, INDEX.md, children/*.md (when child pages exist), and a .gitignore containing a single * at the bundle root"
+      - text: "produces flat {kebab-title}-{32hex-id}.md files at the bundle root (root page + recursive children + linked leaves), plus a .gitignore auto-written by notion-sync"
         type: content
-      - text: "writes notion_id, title, url, kind, fetched_at frontmatter on every markdown file"
+      - text: "uses a single notion-sync pull <id> --follow --out <spec-path> invocation rather than iterating per-page across tool turns"
         type: content
-      - text: "reports status=completed with outputs.spec_bundle.spec_path, index_path, and a files[] list of kind/title/notion_id/path/summary entries"
+      - text: "reports status=completed with outputs.spec_bundle.spec_path and a files[] list of {path, notion_id} entries (notion_id parsed from the filename's 32-hex suffix)"
         type: content
 
   - name: wipe_on_rerun
@@ -33,7 +33,7 @@ test_cases:
     expectations:
       - text: "validates the 32-char hex id after dash-stripping and refuses with status=refused, reason=invalid_id"
         type: content
-      - text: "does NOT wipe the spec-path, does NOT write any files, does NOT dispatch the Notion Bundle Specialist subagent"
+      - text: "does NOT wipe the spec-path, does NOT write any files, does NOT call notion-sync"
         type: content
       - text: "completion report includes refusal reason invalid_id"
         type: content
@@ -53,6 +53,6 @@ trigger_eval:
     - "implement this Notion ticket"                       # → implement-code
     - "plan this spec into PLAN.md"                        # → plan-code
     - "review the spec doc on Notion"                      # → review-service-operation
-    - "create a new Notion page"                           # → notion MCP direct
+    - "create a new Notion page"                           # → notion-sync push (sam-taylor-specification)
     - "audit the service spec for completeness"            # → audit-service / review-service-operation
     - "commit my changes"                                  # → coding:commit

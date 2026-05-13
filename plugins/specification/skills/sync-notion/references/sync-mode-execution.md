@@ -2,71 +2,46 @@
 
 Load this reference during **Step 3 (Execute Sync Operations)** in `SKILL.md`. It contains the mode-specific execution recipes the sync subagent must follow based on the active `sync_mode`. Pick exactly one of the three branches below per pair.
 
+All branches delegate to the `notion-sync` CLI. **Never iterate per-page across tool-call turns** — use the recursive `--follow*` flags so the CLI walks the entire subgraph in a single invocation.
+
 ## For sync_mode = 'local-to-notion'
 
-1. **Prepare Local Content**:
-   - Read local file using Read tool
-   - Extract content (without frontmatter)
-   - Verify content is ready for Notion
-
-2. **Sync to Notion**:
-   - If notion_url exists:
-     * Use notion-update-page to overwrite Notion page
-     * Pass complete local content
-     * No comparison, direct overwrite
-   - If notion_url is 'CREATE_NEW':
-     * Use notion-create-pages to create new page
-     * Set parent as database_id or parent_page_url
-     * Set title from file name or frontmatter
-     * Store returned notion_url for frontmatter update
-   - Capture Notion's response with last_edited_time
-
-3. **Record Sync Result**:
-   - Sync direction: 'local→notion'
+1. **Push to Notion** (single CLI call):
+   - `Bash: notion-sync push <file_path>`
+     - Uses the file's frontmatter `ref:` to update the existing page.
+     - For `CREATE_NEW` pairs, ensure the file has `parent: <database-or-page-id>` in frontmatter; the CLI creates the page and writes the resulting `ref:` back to the source file.
+     - Add `--follow` when the local file references other local files (via `parent:` chains) that also need pushing in one go.
+2. **Record Sync Result**:
+   - Sync direction: `local→notion`
    - Sync timestamp: current ISO timestamp
-   - Notion URL (new or existing)
+   - Notion URL: read from the (now-updated) file frontmatter `ref:`
 
 ## For sync_mode = 'notion-to-local'
 
-1. **Fetch Notion Content**:
-   - Use notion-fetch to get complete page content
-   - Verify content is valid markdown
-   - Preserve Notion's last_edited_time
-
-2. **Sync to Local**:
-   - Use Write tool to overwrite local file
-   - Preserve existing frontmatter structure
-   - Write Notion content as main content
-   - No comparison, direct overwrite
-
-3. **Record Sync Result**:
-   - Sync direction: 'notion→local'
+1. **Pull from Notion** (single recursive CLI call):
+   - `Bash: notion-sync pull <ref> --follow-children --follow-links --out <dir>`
+     - `<ref>` = the resolved Notion URL or 32-hex id from Step 1.
+     - One recursive call walks the page + its direct references; do **not** loop and pull each linked page across separate turns.
+     - Files are written as `{kebab-title}-{32hex-id}.md` under `<dir>`.
+2. **Record Sync Result**:
+   - Sync direction: `notion→local`
    - Sync timestamp: current ISO timestamp
 
 ## For sync_mode = 'two-way-merge'
 
 1. **Get Resolved Content**:
-   - Use resolved_content from Step 2 for this pair
-   - This content already has conflicts resolved
-
-2. **Sync to Both Destinations**:
-   - **To Local**:
-     * Use Write tool to update local file
-     * Write resolved_content
-     * Preserve frontmatter structure
-   - **To Notion**:
-     * If notion_url exists: Use notion-update-page
-     * If notion_url is 'CREATE_NEW': Use notion-create-pages
-     * Write resolved_content
-     * Store returned notion_url if new
-
+   - The merged content for this pair has already been written to the local file by Step 2 (`references/two-way-merge.md`). The local file now represents the agreed-upon state.
+2. **Push merged state to Notion** (single CLI call):
+   - `Bash: notion-sync push <file_path>`
+     - Uses frontmatter `ref:` (existing page) or `parent:` (CREATE_NEW). For CREATE_NEW, the CLI writes back the new `ref:`.
+     - Add `--follow` if other locally-modified files in the merge set also need pushing.
 3. **Record Sync Result**:
-   - Sync direction: 'merged→both'
+   - Sync direction: `merged→both`
    - Sync timestamp: current ISO timestamp
-   - Notion URL (new or existing)
+   - Notion URL: read from the file frontmatter `ref:` after push.
 
 **Handle Skipped Conflicts** (only for two-way-merge):
-- If resolved_content contains TODO markers for skipped conflicts:
-  * Document these in sync notes
-  * Mark sync as 'partial' success
-  * User must manually resolve later
+- If the merged local file contains TODO markers for skipped conflicts:
+  - Document these in sync notes
+  - Mark sync as `partial` success
+  - User must manually resolve later

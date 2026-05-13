@@ -57,27 +57,26 @@ Request each subagent to perform the following comparison and conflict resolutio
 
     - **File Path**: [file_path]
     - **File Content**: [file_content from Step 1]
-    - **Notion URL**: [notion_url from Step 1]
-    - **Notion Content**: [notion_content from Step 1]
+    - **Notion Ref**: [notion_ref from Step 1] (read from frontmatter `ref:`)
+    - **Notion Pulled Path**: [notion_pulled_path from Step 1] (the mirror file pulled by `notion-sync pull --follow-children --follow-links`)
 
     **Steps**
 
-    1. **Parse Content into Sections**:
-       - Split local markdown into sections (by headers: #, ##, ###)
-       - Split Notion content into sections (by headers)
-       - Create section-level mapping for comparison
-       - Handle frontmatter separately (not compared, preserved from local)
+    1. **Compute Block-Level Diff via CLI**:
+       - `Bash: notion-sync diff <file_path> -f json`
+         - The CLI compares the local file (via frontmatter `ref:`) against the remote Notion page and emits a structured JSON list of block-level diff entries.
+         - Empty array = no conflicts; report `conflicts_found: 0` and exit Phase 2 cleanly.
+       - **Presentation-layer mapping**: walk the JSON entries and group adjacent block diffs under their nearest preceding markdown header (or file-relative path). Use the resulting **section name** as the user-facing conflict label — never show raw block ids in AskUserQuestion choices.
 
-    2. **Identify Differences**:
-       - Compare each section pair between local and Notion
-       - Classify differences as:
-         * **Addition**: Section exists in local but not in Notion
-         * **Removal**: Section exists in Notion but not in local
-         * **Modification**: Section exists in both but content differs
-         * **Identical**: Section is the same in both (skip)
-       - Record all differences with section identifiers
+    2. **Classify Each Diff Entry**:
+       - For each diff entry produced by `notion-sync diff`, classify as:
+         * **Addition**: present locally, missing remotely
+         * **Removal**: present remotely, missing locally
+         * **Modification**: present in both, content differs
+         * **Identical**: skip (the CLI typically omits these from the JSON, but ignore any that appear)
+       - Record each diff with its mapped section name and original block id(s) for write-back.
 
-    3. **Resolve Each Conflict with User** (for each difference found):
+    3. **Resolve Each Conflict with User** (for each diff entry found):
        - Display the difference clearly:
          ```
          CONFLICT in [file_path] - Section: [section_name]
@@ -103,8 +102,8 @@ Request each subagent to perform the following comparison and conflict resolutio
 
     4. **Apply Decisions to Create Merged Content**:
        - For each conflict resolved:
-         * Keep Local: Use local section content
-         * Keep Remote: Use Notion section content
+         * Keep Local: Use local section content (no write needed)
+         * Keep Remote: Replace local section with Notion section content (use Edit on the local file)
          * Keep Both: Combine both sections with clear markers:
            ```
            [section from local]
@@ -112,12 +111,12 @@ Request each subagent to perform the following comparison and conflict resolutio
            --- Merged from Notion ---
            [section from Notion]
            ```
-         * Skip: Add TODO marker in both versions:
+         * Skip: Add TODO marker on the local side:
            ```
            <!-- TODO: Resolve merge conflict manually - Section [name] -->
            ```
-       - Assemble final merged content with resolved sections
-       - Preserve original order and structure
+       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. Step 3 (`references/sync-mode-execution.md`) will then push it to Notion via `notion-sync push <file>`.
+       - Preserve original order, frontmatter, and structure.
 
     5. **Generate Conflict Report**:
        - Count total conflicts found
@@ -133,7 +132,7 @@ Request each subagent to perform the following comparison and conflict resolutio
     modifications: []  # no file modifications yet
     outputs:
       file_path: '[path]'
-      notion_url: '[url]'
+      notion_ref: '[ref]'
       conflicts_found: [number]
       conflicts_by_type:
         additions: [count]

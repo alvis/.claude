@@ -66,12 +66,13 @@ Update Notion design documentation pages to conform to the latest template while
 
 #### Phase 1: Planning (You)
 
-1. **Fetch design pages** from the Notion database using MCP tools
-   - Use `mcp__plugin_client_notion__fetch` with database URL: <https://www.notion.so/110161382ea64eefa46a4907574d4530>
+1. **Fetch design pages** from the Notion database using the `notion-sync` CLI
+   - Run `Bash: notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 --follow-children --follow-links --out <tmp>` (single recursive call — never iterate per linked page)
    - Database collection: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
+   - Use `Glob: <tmp>/*.md` and `Read` resulting files to inspect each page locally
    - Apply product filter if specified in inputs
    - Apply screen filter if specified in inputs
-2. **Analyze template structure** using `mcp__plugin_client_notion__fetch` to get the current template from: <https://www.notion.so/4555730e74b44592b77dd8a97620d3f2>
+2. **Analyze template structure** by running `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` to mirror the current template, then `Read` the resulting `{kebab-title}-{32hex-id}.md` file
 3. **Assess each page** for template conformance to identify which pages need updates
 4. **Filter pages** to exclude those already conforming to template (unless change requests specified)
 5. **Create dynamic batches** following these rules:
@@ -104,11 +105,13 @@ Request each subagent to perform the following steps with full detail:
       You've to perform the task yourself. You CANNOT further delegate the work to another subagent
     </IMPORTANT>
 
-    **[IMPORTANT]** You MUST use Notion MCP tools (mcp__plugin_client_notion__*) for ALL Notion operations:
-    - Use `mcp__plugin_client_notion__fetch` to read any Notion pages, databases, or collections
-    - Use `mcp__plugin_client_notion__notion-update-page` to modify existing pages
-    - Use `mcp__plugin_client_notion__search` to find pages in the database
-    - Never access Notion URLs directly without these tools
+    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for ALL Notion operations (the `NOTION_TOKEN` env var must be set):
+    - Read pages/databases/collections by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` then use `Glob` + `Read` on the resulting `.md` files
+    - For a full screen-design subtree (children + database + links + files), use `Bash: notion-sync pull <url> --follow --out <tmp>`
+    - To modify existing pages: `Edit` the local `.md` (it already has `ref:` from the prior pull) then run `Bash: notion-sync push <file>`
+    - To find pages in the database: `Bash: notion-sync search "<query>" -j`
+    - **Fetch linked pages in a single `--follow*` invocation — never spawn additional `notion-sync pull` calls for individually discovered references.** One-shot recursive pulls only; never iterate across tool-call turns.
+    - Never access Notion URLs directly without `notion-sync`
 
     **Assignment**
     You're assigned to update the following Notion design pages to conform to the latest template:
@@ -118,20 +121,20 @@ Request each subagent to perform the following steps with full detail:
     - ...
 
     **Template Reference**: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Use `mcp__plugin_client_notion__fetch` tool to access this template URL
+    **[IMPORTANT]** Mirror this template locally via `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` (single recursive call), then `Read` the resulting `.md` file
 
     **Change Requests**: [List any specific change requests beyond template conformance, or "None" if only template alignment needed]
 
     **Steps**
 
-    1. **Fetch and analyze template structure** using `mcp__plugin_client_notion__fetch` tool from the provided URL to understand current standard format
-    2. **Read each assigned page** using `mcp__plugin_client_notion__fetch` tool to understand current content and structure
+    1. **Fetch and analyze template structure** by running `Bash: notion-sync pull <template-url> --follow-children --follow-links --out <tmp>` (one recursive call) and `Read` the resulting `.md` to understand current standard format
+    2. **Mirror each assigned page** with `Bash: notion-sync pull <page-url> --follow-children --follow-links --out <tmp>` (single call per page; do NOT loop into discovered references) and `Read` the resulting `.md` to understand current content and structure
     3. **Compare against template** to identify specific sections that need updating or restructuring
     4. **Preserve valuable content** by mapping existing content to appropriate template sections
     5. **Apply template structure** while maintaining design intent and information completeness
     6. **Implement change requests** if any were specified in the assignment
-    7. **Update pages** using `mcp__plugin_client_notion__notion-update-page` tool to apply all changes
-    8. **Verify template conformance** by checking all required sections are present and properly formatted
+    7. **Update pages** by `Edit`ing the local `.md` files (they already have `ref:` frontmatter from the pull) and then running `Bash: notion-sync push <file>` to push changes back to Notion
+    8. **Verify template conformance** by checking all required sections are present and properly formatted (use `Bash: notion-sync diff <file>` to confirm what was changed)
 
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):

@@ -22,7 +22,7 @@ argument-hint: '[specifier] [--area=test|documentation|code-quality|security|sty
 - When auditing whether the code has drifted from an approved design or contract
 **Prerequisites**:
 - An on-disk specification bundle (default `./.code-spec`) OR a Notion URL/ID resolvable by `specification:sync-spec`
-- The specification bundle must contain at minimum a `SPEC.md` file (an `INDEX.md` is helpful for enumeration)
+- The specification bundle must contain at minimum one root spec markdown file. Bundles produced by `specification:sync-spec` are flat `{kebab-title}-{32hex-id}.md` files; enumerate them via `Glob: <spec-path>/*.md` and identify the root by the 32-hex suffix in its filename (matching the requested page id when known).
 - A target file set, directory, PR, or git range to review (resolved via the same specifier semantics as `coding:review-code`)
 
 ### Your Role
@@ -223,7 +223,7 @@ After completion, continue to Step 3.
 
 **What You Do**:
 
-1. **Enumerate spec resources** by listing files under `<spec-path>` (do NOT read full file contents — paths only). Note the presence of `INDEX.md` and `SPEC.md`.
+1. **Enumerate spec resources** by `Glob: <spec-path>/*.md` (do NOT read full file contents — paths only). Bundles are flat `{kebab-title}-{32hex-id}.md` files; identify any root spec by the 32-hex suffix of its filename when a target page id is known.
 2. **Resolve the implementation file set** using the same specifier-resolution logic as `coding:review-code` (file path, directory, glob, package name, PR number, git range, or command output). Produce a list of absolute paths.
 3. **Determine the existing target file**: check whether `<out>/ALIGNMENT.md` already exists. If yes, the subagent must apply the base-skill re-run logic (preserve issue IDs, preserve Pending Decisions context).
 4. **Determine standards** (paths only, recursive — subagent reads them):
@@ -283,7 +283,7 @@ Request the subagent to perform the following audit with full detail:
 
     **Steps**
 
-    1. **Build a requirement inventory**: read every file under <spec-path> (start with INDEX.md if present, then SPEC.md, then any sub-documents). Extract:
+    1. **Build a requirement inventory**: enumerate the bundle via `Glob: <spec-path>/*.md` (flat layout — files are `{kebab-title}-{32hex-id}.md`). Read every file. When a target page id is known, identify the root file by its filename's 32-hex suffix and read it first; otherwise read in alphabetical order. Extract:
        - Functional contracts (operations, signatures, inputs/outputs)
        - Schemas (data models, types, validation rules)
        - Invariants (must-hold conditions, ordering guarantees, idempotency claims)
