@@ -4,8 +4,8 @@ description: Apply coding standards and linting to specified code areas. Use whe
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: [specifier] [--scope=SCOPE]
+allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+argument-hint: [specifier] [--scope=SCOPE] [--skip-unused]
 ---
 
 # Linting
@@ -19,12 +19,15 @@ Apply applicable coding standards to ensure consistent code quality across the s
   - `uncommitted` — Focus on line ranges with uncommitted changes (staged + unstaged). The linter uses `git diff` to identify changed hunks and lints those areas plus their immediate surrounding context (enclosing functions/blocks).
   - `all` — Lint each file in its entirety (legacy behavior).
   - Any other value (e.g., `mocks`, `handlers`, a function name) — The linter interprets the value as a hint for which sections of the code to focus on.
+- **--skip-unused** (optional flag): Bypass Step 1 (the pre-flight unused-code scan) entirely and go straight to the lint workflow.
 
-Iteration is handled at the session level via [`/goal`](https://code.claude.com/docs/en/goal) — not by this skill. To run lint until clean, set a goal first, then invoke `/coding:lint`. Example: `/goal violations_found_total reaches 0 from a fresh /coding:lint pass on src/, or stop after 5 turns`. The Step-2 report below is shaped so the goal evaluator (default Haiku) can read convergence state directly.
+Iteration is handled at the session level via [`/goal`](https://code.claude.com/docs/en/goal) — not by this skill. To run lint until clean, set a goal first, then invoke `/coding:lint`. Example: `/goal violations_found_total reaches 0 from a fresh /coding:lint pass on src/, or stop after 5 turns`. The Step-3 report below is shaped so the goal evaluator (default Haiku) can read convergence state directly.
 
 **Lead pre-filter for `uncommitted` scope**: Before batching, the lead runs `git diff --name-only` to identify files with uncommitted changes. Files with no changes are excluded from batching to save linter tokens. If no specifier is given, all changed files are included. If a specifier is given, only changed files matching the specifier are batched.
 
 ## 🎯 Purpose & Scope
+
+When framework-specific lint skills are available (e.g. `react:lint`), this skill auto-dispatches the relevant subset of files to them and aggregates results.
 
 **What this command does NOT do**:
 
@@ -45,13 +48,34 @@ Iteration is handled at the session level via [`/goal`](https://code.claude.com/
 
 ultrathink: you'd perform the following steps
 
-### Step 1: Run the lint workflow
+### Step 1: Scan for unused code (pre-flight)
+
+If `--skip-unused` is in $ARGUMENTS, skip this step entirely.
+
+1. Invoke `Skill: coding:find-unused` with the specifier (or repo root if
+   none given). It runs its own parallel-agent LSP scan and returns a
+   categorized report: commented-out code, unused exports, unused test
+   helpers. `--scope` does NOT apply here — dead-code detection is
+   project-wide by nature.
+2. If the report has zero findings: log "No unused code found" and proceed
+   to Step 2 silently — do NOT prompt the user.
+3. If findings exist: present them per-item via `AskUserQuestion`. One
+   question per finding (file:line + symbol/snippet), options Remove / Keep.
+   Batch ≤4 questions per call; paginate across calls for larger sets.
+4. Collect all "Remove" decisions. If none, proceed to Step 2.
+5. Spawn ONE dedicated cleanup agent (`Task`, subagent_type
+   general-purpose, haiku model) with the confirmed-unused list (paths,
+   line ranges, symbols). Instruct it to delete precisely via Edit,
+   preserve surrounding code, and report removed items. Await completion.
+6. Record scan/removed/kept counts for the Step 3 report. Proceed to Step 2.
+
+### Step 2: Run the lint workflow
 
 Follow `references/team-mode.md` exactly. Standards are passed by path only —
 you never read them. Concurrency: max 4 linters (haiku), max 2 reviewers
 (sonnet); retire any agent at `context_level >= 60%`.
 
-### Step 2: Reporting
+### Step 3: Reporting
 
 **Output Format** (same for both modes):
 
@@ -64,10 +88,16 @@ status: compliant | success | partial | failure
 
 Use `status: compliant` and `violations_found_total: 0` together to signal the goal is met. Use `status: success` when violations were found and fixed in this pass (the goal evaluator will request another pass to verify clean state). Use `partial` or `failure` when issues remain.
 
+Unused-code removals from Step 1 are reported separately (in the "Unused Code (Step 1)" block below) and do **not** count toward `violations_found_total` — a one-time prune must not skew `/goal` convergence.
+
 The remainder of the summary follows below:
 
 ```
 [✅/❌] Command: $ARGUMENTS
+
+## Unused Code (Step 1)
+- Scan: [ran/skipped]
+- Findings: [count]   Removed: [count]   Kept: [count]
 
 ## Summary
 - Scope: [uncommitted|all|custom]

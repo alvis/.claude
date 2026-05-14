@@ -46,6 +46,30 @@ Loaded by `SKILL.md` "Examples" pointer. Reference for invocation patterns.
 # Lints all test files across the entire project
 ```
 
+## Pre-flight Unused-Code Scan (Step 1)
+
+```bash
+/lint "src/"
+#   Step 1: invokes coding:find-unused on src/.
+#   Scan reports 2 dead exports:
+#     - src/utils/format.ts:42  export `legacyFormat` (no references)
+#     - src/api/client.ts:88    export `oldFetch` (no references)
+#   Per-item AskUserQuestion prompts (Remove/Keep):
+#     - legacyFormat → user picks Remove
+#     - oldFetch     → user picks Keep
+#   Cleanup agent (Task, general-purpose, haiku) deletes only `legacyFormat`.
+#   Step 1 records: Findings 2, Removed 1, Kept 1.
+#   Step 2: normal lint workflow runs on the (now pruned) file set.
+```
+
+## Skipping the Unused-Code Scan
+
+```bash
+/lint "src/" --skip-unused
+# Step 1 is bypassed entirely — no find-unused scan, no removal prompts.
+# Goes straight to the Step 2 lint workflow.
+```
+
 ## Error Case Handling
 
 ```bash

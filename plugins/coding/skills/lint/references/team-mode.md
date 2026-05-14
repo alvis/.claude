@@ -1,6 +1,6 @@
 # Lint Team Workflow
 
-Loaded by `SKILL.md` Step 1. Full team orchestration with lint-review cycles.
+Loaded by `SKILL.md` Step 2. Full team orchestration with lint-review cycles.
 
 You are the **Lead Orchestrator**. Your role is strictly **orchestration** — you coordinate, delegate, and aggregate. You MUST NOT perform any linting, reviewing, or standards-reading work yourself.
 
@@ -28,10 +28,21 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    b. **Select the base set**: Refer to the **Delegation Rule** section in your system prompt. Under "When Linting Code", a list of applicable standard names is provided. Match each name against the collected paths by filename stem (e.g., `documentation` matches `documentation.md`).
    c. **Extend by file context**:
       - If any target files are test files (`*.spec.*` or `*.test.*`), also include any standard whose filename contains `testing`
-      - If any target files are React files (`*.tsx` or `*.jsx`), also include standards from the react plugin (paths containing `/react/`)
+      - **React dispatch branch**: If any target files are React files (`*.tsx` or `*.jsx`) AND a `react:lint` skill is available in the system prompt's available-skills list, **partition the file set**: route `.tsx` / `.jsx` files to a `Skill: react:lint` dispatch (as a sibling Task — see Step 4f for the dispatch mechanics), and continue the coding:lint workflow only on the remaining files. If `react:lint` is **NOT** available (older install), fall back to the legacy inline behavior: include standards from the react plugin (paths containing `/react/`) in this run's standard set and keep the React files in the coding batches.
       - If any target files are backend service files, also include standards from the backend plugin (paths containing `/backend/`)
    d. **Rename resilience**: If a delegation-rule name does not exactly match any collected path, include any file whose stem partially matches (e.g., if `typescript` was split into `typescript-types.md` and `typescript-style.md`, both would match).
    e. Pass all matched full absolute paths as strings to teammates. You never need to know their contents.
+   f. **Framework auto-discovery (file dispatch)**: After standard selection, inspect the target file set for framework signals:
+      - `.tsx` / `.jsx` → `react`
+      - `.vue` → `vue` (future)
+      - `.svelte` → `svelte` (future)
+
+      For each detected framework, check whether `<framework>:lint` exists in the system prompt's available-skills list:
+
+      - **If available**: Compute the file subset belonging to that framework (e.g., `react_files = [f for f in files if f.endswith(('.tsx', '.jsx'))]` and `other_files = files - react_files`). Spawn a `Task` with `subagent_type: general-purpose` whose prompt is: *"Run `Skill: <framework>:lint` on these files with `--scope=<inherited>`: <file list>. Report `violations_found_total` and `status` on completion."* The dispatched Task runs in **parallel** with the remaining coding:lint workflow. **Remove those framework files from this run's batches** so the coding linters do not double-process them.
+      - **If not available**: Leave the files in this run's batches (the legacy inline behavior from Step 4c handles them).
+
+      Track each dispatched framework subtask in a dispatch registry so Phase 4 can aggregate its results.
 
 ## Phase 2: Team Setup & Execution (Lead orchestrates)
 
@@ -162,9 +173,12 @@ Per-batch flow:
 
 ## Phase 4: Aggregation & Cleanup (Lead)
 
-1. **Wait** for all batch lint-review cycles to complete (including batches that completed immediately due to compliance)
-2. **Collect results** via `TaskGet` for each completed batch
-3. **Aggregate** all batch reports into final summary — track batches that were **compliant (review skipped)** vs. **reviewed**
+1. **Wait** for all batch lint-review cycles to complete (including batches that completed immediately due to compliance) **and** for every framework dispatch subtask (from Phase 1 Step 4f) to return its `violations_found_total` + `status`
+2. **Collect results** via `TaskGet` for each completed batch, and read each framework dispatch's reported `violations_found_total` + `status`
+3. **Aggregate** all batch reports into a final summary:
+   - **Sum** `violations_found` across all coding batches **and** every dispatched framework subtask into `violations_found_total`
+   - **Take the worst status** across all coding batches and every framework dispatch, using the precedence `failure > partial > success > compliant`
+   - Track batches that were **compliant (review skipped)** vs. **reviewed**, and list framework dispatches separately under "Framework dispatches" with their individual `violations_found_total` + `status`
 4. **Shutdown** all remaining teammates via `SendMessage` shutdown requests
 5. **Delete team** via `TeamDelete`
 6. Proceed to Step 3: Reporting
