@@ -15,7 +15,7 @@
 ## Step Configuration
 
 - **Purpose**: Paper-only integration validation against the landed code; catches silent integration breakage that tests missed by tracing every intended usage through the real file graph.
-- **Input**: `worktree_path`, `spec_bundle.root_path` plus a pre-computed pointer list of all Usage/Example/Scenario/Verification sections discovered across the bundle's flat `{kebab-title}-{32hex-id}.md` files (root + adjacent), `commits_landed`, `<worktree_path>/DEVIATIONS.md`
+- **Input**: `repo_path`, `spec_bundle.root_path` plus a pre-computed pointer list of all Usage/Example/Scenario/Verification sections discovered across the bundle's flat `{kebab-title}-{32hex-id}.md` files (root + adjacent), `commits_landed`, `<repo_path>/DEVIATIONS.md`
 - **Output**: `thought_experiment_report` with per-usage verdicts
 - **Sub-skill**: None — single `Task` dispatch. The subagent **MUST** use `subagent_type=general-purpose`, `model=opus` (never Sonnet, never Haiku, no fallback), and **maximum reasoning effort / thinking budget**. These settings are mandatory whenever this step runs; do not downgrade for cost, latency, or quota reasons. If opus is unavailable, fail the step with `status=partial` and an advisory rather than substituting a weaker model.
 - **Parallel Execution**: No — one sequential deep pass
@@ -23,7 +23,7 @@
 ## Phase 1: Planning (You)
 
 1. Evaluate the skip list above. If any condition holds, record `thought_experiment_report.status=skipped` with a one-line reason and proceed to Step 11.
-2. Otherwise assemble the inputs bundle: `spec_bundle.root_path` + pre-computed pointer list of Usage/Example/Scenario/Verification sections, absolute `worktree_path`, `DEVIATIONS.md` path, and the list of `commits_landed` shas for context.
+2. Otherwise assemble the inputs bundle: `spec_bundle.root_path` + pre-computed pointer list of Usage/Example/Scenario/Verification sections, absolute `repo_path`, `DEVIATIONS.md` path, and the list of `commits_landed` shas for context.
 3. Update TodoWrite: add a `thought-experiment` todo set to `in_progress`.
 
 ## Phase 2: Execution (Subagent)
@@ -40,8 +40,8 @@ Dispatch a single `Task` with `subagent_type=general-purpose`, `model=opus`, max
     **Inputs**
     - Spec bundle root: `<spec_bundle.root_path>` (flat directory of `{kebab-title}-{32hex-id}.md` files; identify root by filename suffix matching ticket id)
     - Spec pointer list (pre-computed by orchestrator): every Usage / Example / Scenario / PI Verification section discovered across the bundle's `*.md` files (root file + adjacent files)
-    - Worktree: <worktree_path> (use Read / Grep / Glob)
-    - Deviations log: <worktree_path>/DEVIATIONS.md
+    - Repo: <repo_path> (use Read / Grep / Glob)
+    - Deviations log: <repo_path>/DEVIATIONS.md
 
     **Task**
     Identify every INTENDED USAGE in the spec (one usage = one externally-observable way the implementation is meant to be called or composed). For each:

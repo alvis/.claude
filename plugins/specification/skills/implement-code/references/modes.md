@@ -8,13 +8,13 @@ This file holds the per-mode execution bodies. The mode-selection table itself s
 
 ## Mode Semantics (one-line summaries)
 
-- **COMMIT_PLAN**: Execute PLAN.md phases via `coding:draft-code` → `coding:write-code` → `coding:review` → `coding:commit`, one commit per PLAN phase
+- **COMMIT_PLAN**: Execute PLAN.md phases via `coding:write-code` → `coding:review` → `coding:commit`, one commit per PLAN phase
 - **PI_ITERATE**: Partial implementation exists; dispatch `coding:complete-code` then `coding:fix` then `coding:review` then `coding:commit`
 - **DRAFT_THEN_ASK**: No plan yet; refuse to code, print pointer to run `specification:plan-code` first, ask user whether to proceed with a lightweight draft
 - **AUDIT_AND_COMPLETE**: Dispatch `coding:review` first, then `coding:complete-code` + `coding:fix` for gaps, then `coding:commit`
 - **VERIFY_ONLY**: Ticket marked done; dispatch `coding:review` only, report any drift, no commits
 - **FLAG_MISMATCH**: Emit a structured report to the user describing the mismatch and ask for resolution via `AskUserQuestion`; do not code
-- **REFUSE**: Decline with a clear message citing stage + matched rule; no worktree, no dispatch
+- **REFUSE**: Decline with a clear message citing stage + matched rule; no dispatch
 
 ---
 
@@ -26,10 +26,9 @@ Select the child chain from the mode:
 
 Per PLAN phase:
 
-1. `coding:draft-code` — scaffold skeletons for the phase
-2. `coding:write-code` — TDD-complete the phase
-3. `coding:review` — MUST pass before commit
-4. `coding:commit` — atomic commit for the phase
+1. `coding:write-code` — TDD-complete the phase
+2. `coding:review` — MUST pass before commit
+3. `coding:commit` — atomic commit for the phase
 
 ### PI_ITERATE
 
@@ -57,7 +56,7 @@ Per PLAN phase:
 
 ### FLAG_MISMATCH / REFUSE
 
-No children dispatched; skip to Step 11.
+No children dispatched; skip to Step 12.
 
 Update TodoWrite with one todo per dispatched child.
 
@@ -68,7 +67,7 @@ Update TodoWrite with one todo per dispatched child.
 ```markdown
 ## Deviation Policy
 
-The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, DEVIATE and proceed, appending an entry to `<worktree>/DEVIATIONS.md`:
+The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, DEVIATE and proceed, appending an entry to `<repo>/DEVIATIONS.md`:
 
 - Missing or wrong dependency (package not installed, wrong version, replaced)
 - Wrong integration assumption (API signature, event name, schema field, import path, module layout differs from what the draft assumes)

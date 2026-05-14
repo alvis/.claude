@@ -1,11 +1,11 @@
 ---
 name: implement-code
-description: Execute approved specification-notion tickets end-to-end by resolving ticket intent, committing or iterating on plans, and dispatching coding:* child skills to write, verify, and commit code in an isolated git worktree. Use when asked to implement a Notion ticket, take a spec to code, kick off work on a specification URL/ID, turn an approved plan into shipped commits, or audit and finish a partial implementation tracked in Notion.
+description: Execute approved specification-notion tickets end-to-end by resolving ticket intent, committing or iterating on plans, and dispatching coding:* child skills to write, verify, and commit code in place against the current working copy. Use when asked to implement a Notion ticket, take a spec to code, kick off work on a specification URL/ID, turn an approved plan into shipped commits, or audit and finish a partial implementation tracked in Notion.
 model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Read, Grep, Glob, Bash, Task, Skill, TodoWrite, AskUserQuestion, ExitPlanMode
-argument-hint: <notion-url-or-id> [--repo=<path>] [--branch=<name>] [--dry-run] [--skip-approval] [--use-cache]
+argument-hint: <notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] [--use-cache]
 ---
 
 # Implement Code
@@ -14,7 +14,7 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--branch=<name>] [--dry-run] 
 
 ### Purpose & Context
 
-**Purpose**: Turn an approved Notion specification ticket into landed code by resolving ticket status, selecting the right execution mode (commit-plan, iterate, draft-then-ask, audit-and-complete, verify-only, flag-mismatch, or refuse), and orchestrating coding:* child skills inside an isolated git worktree. Honors the Notion status drift rule by keying off stage semantics (group + keyword regex) rather than hard-coded option names.
+**Purpose**: Turn an approved Notion specification ticket into landed code by resolving ticket status, selecting the right execution mode (commit-plan, iterate, draft-then-ask, audit-and-complete, verify-only, flag-mismatch, or refuse), and orchestrating coding:* child skills in place against the current working copy, delegating all jj organization to `coding:stack-code`. Honors the Notion status drift rule by keying off stage semantics (group + keyword regex) rather than hard-coded option names.
 
 **When to use**:
 
@@ -28,19 +28,17 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--branch=<name>] [--dry-run] 
 
 - `notion-sync` CLI on PATH with `NOTION_TOKEN` exported (used by `specification:sync-spec` and any direct ticket-status reads)
 - Local git repository (current directory or `--repo=<path>`) with the target spec's codebase
-- `superpowers:using-git-worktrees` skill available for worktree creation
 - `specification:sync-spec` available for the Step 2 spec bundle download (hard-gated)
 - `coding:*` child skills available (draft-code, write-code, complete-code, fix, review, commit, handover)
 - `coding:stack-code` available for size-triggered slicing and upstream-restack delegation (thresholds and modes are read from that skill, never hardcoded here)
-- `governance:verify-skill` accessible for the final skill-quality gate
 
 ### Your Role
 
-You are an **Implementation Director** who orchestrates spec-to-code delivery like an engineering manager coordinating planning leads, worktree operators, and coding specialists. You never write or edit production code directly — every `Write`/`Edit` call happens inside dispatched `coding:*` children. Your management style emphasizes:
+You are an **Implementation Director** who orchestrates spec-to-code delivery like an engineering manager coordinating planning leads and coding specialists. You never write or edit production code directly — every `Write`/`Edit` call happens inside dispatched `coding:*` children. Your management style emphasizes:
 
-- **Strategic Delegation**: Route ticket resolution, plan work, worktree setup, and coding passes to the right specialist subagents
+- **Strategic Delegation**: Route ticket resolution, plan work, in-place workspace prep, and coding passes to the right specialist subagents
 - **Mode-Driven Coordination**: Pick exactly one execution mode per invocation and keep the downstream dispatch aligned to it
-- **Quality Oversight**: Gate code landing on `coding:review` passing and `governance:verify-skill` reporting clean
+- **Quality Oversight**: Gate code landing on `coding:review` passing and the post-change re-check reporting clean
 - **Decision Authority**: Make single-gate go/no-go calls (one approval gate after mode resolution) and enforce refusal when the ticket isn't ready
 - **Zero Direct Writes**: You never hold the pen on source files — your outputs are decisions, dispatches, and reports
 
@@ -55,25 +53,24 @@ You are an **Implementation Director** who orchestrates spec-to-code delivery li
 #### Optional Inputs
 
 - **--repo=<path>**: Absolute path to the target repository. Defaults to the current working directory.
-- **--branch=<name>**: Override the default branch name. Defaults to `feat/impl-<spec-slug>` derived from the ticket title.
-- **--dry-run**: Plan and report only. Do not create a worktree, do not dispatch write/edit children, do not commit.
+- **--dry-run**: Plan and report only. Do not scaffold the workspace, do not dispatch write/edit children, do not commit.
 - **--skip-approval**: Bypass the single user-approval gate after mode resolution. Intended for trusted automation contexts.
 - **--use-cache**: Reuse an existing `.code-spec/<ticket.slug>/` bundle if it contains any `*.md` files (i.e. a prior `notion-sync pull` left flat `{kebab-title}-{32hex-id}.md` files behind). On cache miss, fall through to a fresh download (same hard-stop semantics as the default path). Default behavior wipes and re-downloads on every invocation.
 
 #### Expected Outputs
 
 - **Mode Decision**: The selected execution mode (`COMMIT_PLAN` | `PI_ITERATE` | `DRAFT_THEN_ASK` | `AUDIT_AND_COMPLETE` | `VERIFY_ONLY` | `FLAG_MISMATCH` | `REFUSE`) with the group + regex rule that fired
-- **Worktree Info**: Absolute path to the created worktree and branch name (skipped in `--dry-run` and `VERIFY_ONLY`/`REFUSE`)
+- **Workspace Info**: confirmed in-place `repo_path` (current working copy)
 - **Consistency Report**: Summary of Spec vs DRAFT vs PLAN vs Code cross-check, including drift/mismatch markers
 - **Features Cross-Check**: Mapping of spec Features → implemented symbols with coverage status
 - **Child Dispatch Log**: Ordered list of `coding:*` skills dispatched with input summary and exit status for each
 - **Commits Landed**: Array of commit SHAs and messages produced by `coding:commit` dispatches
-- **Verification Report**: `governance:verify-skill` result for this skill in full mode
+- **Git-Worktree Relocation**: `{ detected, action }` — whether landed work was found inside a linked `git worktree` and the user's relocation decision
 - **Final Status**: `completed` | `partial` | `refused` | `flagged` | `dry_run`
 
 #### Data Flow Summary
 
-The skill fetches the Notion ticket, classifies its status by Notion `status` group (`to_do` | `in_progress` | `complete`) combined with keyword regex on the option name, resolves one of seven modes from the Mode Resolution matrix, optionally asks for a single approval, creates an isolated git worktree, dispatches the appropriate chain of `coding:*` children to draft, write, complete, fix, review, and commit code, runs a Consistency Check and Features cross-check before and after code changes, and finally runs `governance:verify-skill implement-code --mode=full` to gate the skill itself.
+The skill fetches the Notion ticket, classifies its status by Notion `status` group (`to_do` | `in_progress` | `complete`) combined with keyword regex on the option name, resolves one of seven modes from the Mode Resolution matrix, optionally asks for a single approval, confirms in-place working copy and scaffolds DEVIATIONS.md, dispatches the appropriate chain of `coding:*` children to draft, write, complete, fix, review, and commit code, runs a Consistency Check and Features cross-check before and after code changes, and finally checks whether the landed work ended up inside a linked `git worktree` and asks the user whether to relocate it.
 
 ### Visual Overview
 
@@ -106,8 +103,8 @@ The skill fetches the Notion ticket, classifies its status by Notion `status` gr
 [Step 6: Approval Gate] ────────────→ (AskUserQuestion — skipped if --skip-approval)
    |
    v ─── approved or skipped ───
-[Step 7: Worktree Setup] ───────────→ (superpowers:using-git-worktrees)
-   |                                    feat/impl-<spec-slug>
+[Step 7: Workspace Setup] ──────────→ (in place; scaffold DEVIATIONS.md)
+   |
    v
 [Step 8: Execute Mode] ─────────────→ (Dispatch coding:* children)
    |                                    draft-code → write-code → complete-code
@@ -123,7 +120,7 @@ The skill fetches the Notion ticket, classifies its status by Notion `status` gr
 [Step 10: Thought-Experiment Gate] ──→ (opus + max effort, mandatory, paper-only)
    |
    v
-[Step 11: Skill Self-Verify] ───────→ (governance:verify-skill full mode)
+[Step 11: Git-Worktree Relocation Check] ──→ (AskUserQuestion if linked git worktree detected)
    |
    v
 [Step 12: Completion Report]
@@ -145,8 +142,8 @@ Note:
 • You: Resolve ticket, pick mode, gate approval, dispatch children, decide
 • Notion subagent: Fetch page + status (1 call, <1k tokens)
 • coding:* children: Perform all Write/Edit/Bash commits (<1k tokens each)
-• governance:verify-skill: Final skill quality gate (<500 tokens)
-• --dry-run short-circuits Steps 7–10 and still runs Step 11
+• Step 11 guard: fires AskUserQuestion only when a linked git worktree is detected
+• --dry-run short-circuits Steps 7–11; Step 12 emits the report with status=dry_run
 • REFUSE / FLAG_MISMATCH short-circuit after Step 6
 ```
 
@@ -160,12 +157,12 @@ Note:
 4. Consistency Check (Spec ↔ DRAFT ↔ PLAN ↔ Code)
 5. Features Cross-Check (Spec Features → Code symbols)
 6. Approval Gate (single, skippable)
-7. Worktree Setup (`superpowers:using-git-worktrees`)
+7. Workspace Setup (in place; scaffold DEVIATIONS.md)
 8. Execute Mode (dispatch `coding:*` children)
 9. Post-Change Re-Check (repeat 4 + 5 + DEVIATIONS cross-ref)
 9a. Stack-Aware Sizing & Restack Trigger (delegate to `coding:stack-code` when oversized or upstream-impacting)
 10. Thought-Experiment Gate (opus + max effort, mandatory)
-11. Skill Self-Verify (`governance:verify-skill`)
+11. Git-Worktree Relocation Check (AskUserQuestion if work landed in a linked git worktree)
 12. Skill Completion Report
 
 ### Step 1: Resolve Ticket
@@ -173,7 +170,7 @@ Note:
 **Step Configuration**:
 
 - **Purpose**: Fetch the Notion ticket and classify its status by stage semantics (never by exact option name)
-- **Input**: `notion_url_or_id`, optional `repo`, `branch`, `dry_run`, `skip_approval`
+- **Input**: `notion_url_or_id`, optional `repo`, `dry_run`, `skip_approval`
 - **Output**: `ticket` object with `{id, title, slug, status_group, status_option, status_stage, spec_url, has_plan, has_draft, linked_pr}`
 - **Sub-skill**: None
 - **Parallel Execution**: No
@@ -269,7 +266,7 @@ Request the subagent to perform the following fetch and classification:
 
 1. Parse the `ticket` block from the subagent report
 2. **Error handling** — handle Notion/MCP failures explicitly:
-   - **Notion 404 / page not found**: report `status=refused` with reason `notion_not_found`; jump to Step 12, do not create a worktree
+   - **Notion 404 / page not found**: report `status=refused` with reason `notion_not_found`; jump to Step 12, do not scaffold the workspace
    - **Notion auth / MCP unavailable**: report `status=refused` with reason `notion_unavailable`; jump to Step 12
    - **Malformed id** (not 32-hex after normalization): report `status=refused` with reason `invalid_id`; jump to Step 12
    - **Fetch transient error**: retry once; if second failure, treat as `notion_unavailable`
@@ -311,7 +308,7 @@ Skip this phase entirely if Phase 1 took the cache-hit path.
 
 This is the **hard gate** that guarantees a local spec hard copy exists before coding. No `coding:*` child may be dispatched unless this gate passes.
 
-- **On sub-skill `status=refused` with reason `spec_bundle_unavailable` / `notion_not_found` / `notion_unavailable` / `invalid_id`**: report this skill's `status=refused` with the same reason (or `spec_bundle_unavailable` if the sub-skill returned a different upstream reason but the root file is missing), jump to Step 12. Do NOT proceed to Step 3. Do NOT create a worktree. Do NOT dispatch any `coding:*` child.
+- **On sub-skill `status=refused` with reason `spec_bundle_unavailable` / `notion_not_found` / `notion_unavailable` / `invalid_id`**: report this skill's `status=refused` with the same reason (or `spec_bundle_unavailable` if the sub-skill returned a different upstream reason but the root file is missing), jump to Step 12. Do NOT proceed to Step 3. Do NOT scaffold the workspace. Do NOT dispatch any `coding:*` child.
 - **On sub-skill `status=completed` with `issues[]` warnings** (some children/linked pages failed): the hard-copy guarantee is satisfied — warn, continue with what was fetched, surface the missing-children list in the final report.
 - **On sub-skill `status=completed` with no warnings, OR cache hit**: cache `spec_bundle` for downstream steps; mark todo `completed`.
 - **Verification before exit**: Before marking this step complete, locate the entry in `spec_bundle.files[]` whose `notion_id` equals `ticket.id` and confirm via `Bash test -s <root file>` that it exists non-empty. If the file is missing despite a `completed` report, treat as refusal (`spec_bundle_unavailable`) and apply the rule above.
@@ -511,7 +508,7 @@ Dispatch one read-only mapping subagent.
    - Selected mode + matrix row
    - Top 3 drift items (if any)
    - Planned child-skill chain for the mode
-   - "Working Draft is treated as non-authoritative. Material deviations are logged to DEVIATIONS.md in the worktree. Trivial departures (JSDoc, inferred types, lint) are silent."
+   - "Working Draft is treated as non-authoritative. Material deviations are logged to DEVIATIONS.md in the repo. Trivial departures (JSDoc, inferred types, lint) are silent."
 3. Call `AskUserQuestion` with a single question and options:
    - `Approve`: proceed with the chain
    - `Switch Mode`: let the user override to another mode (re-enters Step 3 Decision)
@@ -524,34 +521,29 @@ Dispatch one read-only mapping subagent.
 - `Switch Mode` → apply user's chosen mode, re-run Steps 4 + 5 if needed, re-enter this gate once
 - `Abort` → jump to Step 12 with `status=refused`
 
-### Step 7: Worktree Setup
+### Step 7: Workspace Setup
 
 **Step Configuration**:
 
-- **Purpose**: Create an isolated git worktree so all child edits happen on a dedicated branch
-- **Input**: `ticket.slug`, `--repo`, `--branch`, `--dry-run`, `mode`
-- **Output**: `worktree_path`, `branch_name`
-- **Sub-skill**: `superpowers:using-git-worktrees`
+- **Purpose**: Confirm work happens **in place** on the current working copy (`repo_path` = `--repo` or cwd). No `git worktree`, no jj mutation, no user prompt — `jj` tracks the dirty HEAD safely; all jj organization is deferred to Step 9a's `coding:stack-code`.
+- **Input**: `ticket`, `--repo`, `--dry-run`, `mode`
+- **Output**: `repo_path`
+- **Sub-skill**: None
 - **Parallel Execution**: No
 
-#### Execute Sub-Skill (You)
+#### Execute (You)
 
 When you reach this step:
 
-1. If `--dry-run=true` OR `mode` ∈ {`VERIFY_ONLY`, `REFUSE`, `FLAG_MISMATCH`}: **skip** worktree creation — no worktree is created, no worktree path is returned, and execution proceeds to Step 8 using the existing repo path in read-only dispatch configuration
-2. Otherwise, resolve sub-skill path and invoke `superpowers:using-git-worktrees` with:
-   - `repo`: `--repo` or current working directory
-   - `branch`: `--branch` or `feat/impl-<ticket.slug>`
-   - `base`: the repo's default branch (detected via `git rev-parse --abbrev-ref origin/HEAD`)
-3. Record the returned `worktree_path` + `branch_name` for all downstream child dispatches
-4. **Scaffold `<worktree_path>/DEVIATIONS.md`** with the header template below. Skip this write when the worktree step itself is skipped (`--dry-run`, `VERIFY_ONLY`, `REFUSE`, `FLAG_MISMATCH`):
+1. Set `repo_path` = `--repo` or the current working directory. This is where every child edit happens — there is no worktree to create and no branch to name.
+2. If `--dry-run=true` OR `mode` ∈ {`VERIFY_ONLY`, `REFUSE`, `FLAG_MISMATCH`}: **skip** the DEVIATIONS.md scaffold — no scaffold is written, and execution proceeds to Step 8 with children running in read-only dispatch configuration against `repo_path`.
+3. Otherwise, **scaffold `<repo_path>/DEVIATIONS.md`** with the header template below:
 
     ```markdown
     # Deviations from Notion Draft
 
     **Spec**: <ticket.title> (<ticket.id>)
-    **Worktree**: <worktree_path>
-    **Branch**: <branch_name>
+    **Repo**: <repo_path>
     **Draft source**: <notion spec URL>
 
     Entries below are material departures from the draft discovered during implementation. Trivial differences (JSDoc, inferred types, lint/format) are not recorded.
@@ -559,14 +551,14 @@ When you reach this step:
     ---
     ```
 
-5. Update TodoWrite: add todos for the planned `coding:*` chain for the selected mode
+4. Update TodoWrite: add todos for the planned `coding:*` chain for the selected mode
 
 ### Step 8: Execute Mode
 
 **Step Configuration**:
 
-- **Purpose**: Dispatch the mode-specific chain of `coding:*` children inside the worktree
-- **Input**: `mode`, `worktree_path`, `branch_name`, `ticket`, `consistency_report`, `features_coverage`
+- **Purpose**: Dispatch the mode-specific chain of `coding:*` children against the working copy
+- **Input**: `mode`, `repo_path`, `ticket`, `consistency_report`, `features_coverage`
 - **Output**: `child_dispatch_log[]`, `commits_landed[]`
 - **Sub-skill**: One or more of `coding:draft-code`, `coding:write-code`, `coding:complete-code`, `coding:fix`, `coding:review`, `coding:commit`, `coding:handover`
 - **Parallel Execution**: No (children run sequentially; they may internally parallelize)
@@ -575,7 +567,7 @@ When you reach this step:
 
 0. **Pre-coding hard-copy gate**: Before selecting any child chain, verify the bundle's root spec file (the entry in `spec_bundle.files[]` whose `notion_id` matches `ticket.id`) still exists and is non-empty (`Bash test -s <root file>`). This is a defence-in-depth check against any path that could have skipped Step 2's gate (e.g. injected mode override, race with manual cleanup). If missing, set `status=refused` with reason `spec_bundle_missing_at_dispatch`, do NOT dispatch any child, jump to Step 12.
 
-Select the child chain from the mode. **See `references/modes.md` "Step 8 — Per-Mode Child Chains"** for the full chain per mode (`COMMIT_PLAN` / `PI_ITERATE` / `DRAFT_THEN_ASK` / `AUDIT_AND_COMPLETE` / `VERIFY_ONLY`). `FLAG_MISMATCH` / `REFUSE` dispatch no children — skip to Step 11.
+Select the child chain from the mode. **See `references/modes.md` "Step 8 — Per-Mode Child Chains"** for the full chain per mode (`COMMIT_PLAN` / `PI_ITERATE` / `DRAFT_THEN_ASK` / `AUDIT_AND_COMPLETE` / `VERIFY_ONLY`). `FLAG_MISMATCH` / `REFUSE` dispatch no children — skip to Step 12.
 
 Update TodoWrite with one todo per dispatched child.
 
@@ -585,8 +577,7 @@ For each child in the chain, in order:
 
 1. Load the child SKILL.md via `Read`
 2. Invoke via `Skill` tool with a minimal payload:
-   - `worktree_path`
-   - `branch_name`
+   - `repo_path`
    - `ticket_summary` (title + slug)
    - `deviation_policy`: the verbatim block from `references/modes.md` "Deviation Policy Block" (embed in every `coding:*` dispatch payload)
    - Child-specific inputs (e.g. plan phase, drift items, features to complete)
@@ -607,7 +598,7 @@ For each child in the chain, in order:
 **Step Configuration**:
 
 - **Purpose**: Re-run Consistency + Features cross-check against the newly-committed code
-- **Input**: `worktree_path`, `ticket`, `commits_landed`
+- **Input**: `repo_path`, `ticket`, `commits_landed`
 - **Output**: `post_consistency_report`, `post_features_coverage`
 - **Sub-skill**: None
 - **Parallel Execution**: No
@@ -616,13 +607,13 @@ For each child in the chain, in order:
 
 1. Confirm `commits_landed` is non-empty and mode is not `VERIFY_ONLY` / `DRAFT_THEN_ASK`; otherwise skip
 2. Use TodoWrite to add `post-change-recheck` todo as `pending` → `in_progress` on dispatch
-3. Queue one analyst subagent re-running the Step 4/5 pattern against the post-commit worktree
+3. Queue one analyst subagent re-running the Step 4/5 pattern against the post-commit working copy
 
 #### Phase 2: Execution (Subagent)
 
-Dispatch the same analyst pattern as Step 4 and Step 5, but against the post-commit worktree state. Skip entirely when mode is `VERIFY_ONLY` (Step 4/5 already covered it) or `DRAFT_THEN_ASK` (no commits).
+Dispatch the same analyst pattern as Step 4 and Step 5, but against the post-commit working copy state. Skip entirely when mode is `VERIFY_ONLY` (Step 4/5 already covered it) or `DRAFT_THEN_ASK` (no commits).
 
-After the analyst runs, **additionally read `<worktree_path>/DEVIATIONS.md`** and reconcile it against the post-commit reports:
+After the analyst runs, **additionally read `<repo_path>/DEVIATIONS.md`** and reconcile it against the post-commit reports:
 
 - For each `D-N` with `Impact on spec: surface-change` or `behavior-change` → confirm the matching spec Feature is still present in `post_features_coverage` with status `covered`. Flag any mismatch by appending a row to `post_consistency_report.drift_items` (status `signature_drift` or `missing_code` as appropriate, detail citing `D-N`).
 - For each `D-N` with `Severity: blocking` → immediately set `status=partial` and surface the entry in the final report.
@@ -638,7 +629,7 @@ After the analyst runs, **additionally read `<worktree_path>/DEVIATIONS.md`** an
 
 **Skip entirely** (record `stack_dispatch.dispatched=false` with reason) when any of: `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`, `--dry-run` is set, or `commits_landed` is empty.
 
-Otherwise, **see `references/stack-aware-sizing.md`** for the full step (size + restack trigger classification, `coding:stack-code` dispatch payload, decision rules). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:stack-code`.
+Otherwise, **see `references/stack-aware-sizing.md`** for the full step (size + restack trigger classification, `coding:stack-code` dispatch payload, decision rules). Step 9a is the **sole owner** of all jj organization in this skill — the orchestrator NEVER runs `jj split` / `jj bookmark set` / `jj rebase` / `gh pr create` directly; every jj mutation is dispatched through `coding:stack-code`.
 
 Output written back to `stack_dispatch` = `{ dispatched, mode: split|create|restack|null, slug, prs[] }` for Step 12.
 
@@ -648,25 +639,25 @@ Output written back to `stack_dispatch` = `{ dispatched, mode: split|create|rest
 
 Otherwise, **see `references/thought-experiment.md`** for the full paper-only integration validation step (mandatory `model=opus` + maximum reasoning effort dispatch, verbatim subagent prompt, per-usage verdict rules, and decision flow). Output `thought_experiment_report` is attached for Step 12.
 
-### Step 11: Skill Self-Verify
+### Step 11: Git-Worktree Relocation Check
 
 **Step Configuration**:
 
-- **Purpose**: Run `governance:verify-skill` against `implement-code` itself in full mode to keep the skill healthy
-- **Input**: Path to this SKILL.md
-- **Output**: `verification_report` from verify-skill
-- **Sub-skill**: `governance:verify-skill`
+- **Purpose**: Post-coding guard — detect whether landed work ended up inside a linked `git worktree` and, if so, ask the user whether to move it back onto HEAD of the main working copy. A `jj workspace` is a sanctioned arrangement and is NEVER flagged.
+- **Input**: `repo_path`, `commits_landed`, `--dry-run`
+- **Output**: `worktree_relocation` = `{ detected, action }`
+- **Sub-skill**: None
 - **Parallel Execution**: No
 
-#### Execute Sub-Skill (You)
+#### Execute (You)
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md` via `Read`
-2. Invoke with:
-   - `skill_path`: `/Users/alvis/Repositories/.claude/plugins/specification/skills/implement-code/SKILL.md`
-   - `mode`: `full`
-   - `fix`: `false`
-3. Capture the structural + functional + trigger results
-4. If verification fails structurally: attach the report to the final completion yaml so the user can dispatch `governance:update-skill`
+1. **Skip** when `commits_landed` is empty OR `--dry-run` is set — record `worktree_relocation = { detected: false, action: 'skipped' }` and proceed to Step 12.
+2. **Detect a linked `git worktree`** at `repo_path` (read-only `Bash`):
+   - `git rev-parse --git-common-dir` ≠ `git rev-parse --git-dir`, OR
+   - the resolved `git dir` path lies under `.git/worktrees/`.
+   - A `jj workspace` is sanctioned — never flag it. (`jj workspace` does not produce a linked `git worktree` git-dir layout.)
+3. **If no linked git worktree is detected**: record `worktree_relocation = { detected: false, action: 'none' }` and proceed to Step 12.
+4. **If a linked git worktree IS detected**: you MUST call `AskUserQuestion` asking whether to move the landed work back onto HEAD of the main working copy. Surface the worktree path and `commits_landed` in the prompt. Record the user's choice in `worktree_relocation.action` (e.g. `relocate` | `keep`). The actual relocation, if chosen, is performed by dispatching `coding:stack-code` (the sole owner of jj organization) — never run `jj`/`git worktree` mutations directly here.
 
 ### Step 12: Skill Completion
 
@@ -698,9 +689,8 @@ outputs:
   mode:
     selected: 'COMMIT_PLAN|PI_ITERATE|DRAFT_THEN_ASK|AUDIT_AND_COMPLETE|VERIFY_ONLY|FLAG_MISMATCH|REFUSE'
     matrix_row: <#>
-  worktree:
-    path: '<abs path or null>'
-    branch: '<name or null>'
+  workspace:
+    repo_path: '<abs path>'
   consistency_report: { ... }
   features_coverage: [ ... ]
   child_dispatch_log:
@@ -733,16 +723,15 @@ outputs:
     usages_broken: <N>
     usages_unclear: <N>
     summary: '<paragraph>'
-  verification_report:
-    status: 'pass|fail|partial'
-    structural: 'pass|fail'
-    functional: { pass_rate: 0.XX, test_cases: N }
-    trigger: { trigger_rate: 0.XX, false_positive_rate: 0.XX }
+  worktree_relocation:
+    detected: true|false
+    action: 'none|skipped|relocate|keep'
 summary: |
   Implementation of ticket <slug> resolved to mode <mode> and landed <N> commits
-  on branch <branch_name>. Spec Features coverage: <X>/<Y>. Skill self-verify: <pass|fail>.
+  in <repo_path>. Spec Features coverage: <X>/<Y>.
   Thought experiment: <pass|partial|fail> (<W>/<B>/<U> works/broken/unclear).
   Stack: <dispatched=true|false> [mode=<split|create|restack> slug=<slug> prs=<N>].
+  Git-worktree relocation: <detected=true|false> [action=<none|relocate|keep>].
 ```
 
 > **Summary guidance**: When `thought_experiment_report.status != skipped`, the `summary:` string MUST mention that the thought experiment ran on **opus with maximum reasoning effort** — this is how the reader confirms the mandatory opus/max-effort dispatch was honoured, not downgraded. Omit the opus note only when `status=skipped` (AUDIT_AND_COMPLETE, VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH, `--dry-run`, or empty `commits_landed`).
@@ -762,7 +751,7 @@ Fetched ticket:
 - `status_group=to_do`, `status_option=Pending Implementation`, regex `/pending|ready|approved/i` fires → `stage=ready-to-code`
 - DRAFT.md + PLAN.md both exist in repo
 
-Mode matrix row 4 fires → `COMMIT_PLAN`. After approval, dispatches `coding:draft-code` → `coding:write-code` → `coding:review` → `coding:commit` per PLAN phase.
+Mode matrix row 4 fires → `COMMIT_PLAN`. After approval, dispatches `coding:write-code` → `coding:review` → `coding:commit` per PLAN phase.
 
 ### Example 2: Notion ticket at `Status=Review`
 
@@ -782,8 +771,8 @@ Invocation:
 ```
 
 - `stage=implementing` → matrix row 6 → `PI_ITERATE`
-- `--dry-run` skips Steps 7–10
-- Still runs Step 11 (`governance:verify-skill`)
+- `--dry-run` short-circuits Steps 7–11
+- Step 12 emits the report with `status=dry_run`
 - Final `status=dry_run` with `child_dispatch_log=[]` and `commits_landed=[]`
 
 ### Example 4: Cache hit with --use-cache

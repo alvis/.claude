@@ -13,14 +13,14 @@
 ## Step Configuration
 
 - **Purpose**: After `commits_landed` are produced, decide whether to delegate to `coding:stack-code` (split/create mode for oversized changes, restack mode for semantic upstream impact). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:stack-code` so its standards (`GIT-PR-STACK-01..06`, `GIT-PR-SIZE-01..04`) and detect-mode thresholds remain the single source of truth.
-- **Input**: `worktree_path`, `branch_name`, `commits_landed`, post-commit diff stats, `ticket.slug`
+- **Input**: `repo_path`, `commits_landed`, post-commit diff stats, `ticket.slug`
 - **Output**: `stack_dispatch` = `{ dispatched: true|false, mode: split|create|restack|null, slug: <slug>|null, prs: [...] }`
 - **Sub-skill**: `coding:stack-code` (only when triggered)
 - **Parallel Execution**: No
 
 ## Phase 1: Planning (You)
 
-1. **Compute aggregate change size** against the worktree base branch (read-only, via `Bash` `jj diff --stat` or `git diff --stat <base>...HEAD`):
+1. **Compute aggregate change size** against the base revision (read-only, via `Bash` `jj diff --stat` or `git diff --stat <base>...HEAD`):
    - `changed_files`: total files touched across `commits_landed`
    - `loc_delta`: total added + removed lines
    - `domains_touched`: distinct top-level path prefixes / package roots
@@ -44,7 +44,7 @@ When a trigger fires, dispatch `coding:stack-code` exactly once via the `Skill` 
    - `--slug <ticket.slug>`
    - For size-trigger: let `coding:stack-code`'s `detect-mode.py` pick `create` vs `split`; do not force `--mode` unless the user has already approved a specific path
    - For restack-trigger: invoke `scripts/restack.py --slug <ticket.slug>` per stack-code Step 8 (Ongoing Operations)
-   - Pass `worktree_path` and `branch_name` so stack-code operates inside the same worktree
+   - Pass `repo_path` so stack-code operates inside the same working copy
 3. Capture stack-code's `outputs.mode`, `outputs.slug`, and `outputs.prs[]` from its YAML report into `stack_dispatch`
 4. Append the dispatch entry to `child_dispatch_log` so Step 12 surfaces it alongside the `coding:*` chain
 
