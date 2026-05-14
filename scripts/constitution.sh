@@ -17,32 +17,32 @@ get_path_type() {
   fi
 }
 
-# Get first-level standard entries for a specific constitution path.
-# Directories are rendered by name only, while top-level markdown files keep
-# their .md extension.
+# List standards under <search_path>/constitution/standards/.
+# A standard is either a flat <name>.md file or a directory containing meta.md;
+# both are emitted as a bare <name> (no .md suffix), sorted and deduped,
+# each prefixed with "- ".
 get_first_level_standard_entries() {
   local search_path="$1"
   local standards_dir="${search_path}/constitution/standards"
-  local temp_file="/tmp/claude_standards_$$_$(basename "$search_path").txt"
+  local entry name
 
   if [[ ! -d "$standards_dir" ]]; then
     return
   fi
 
-  > "$temp_file"
-
-  find "$standards_dir" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null >> "$temp_file" || true
-  find "$standards_dir" -mindepth 1 -maxdepth 1 -type f -name "*.md" -exec basename {} \; 2>/dev/null >> "$temp_file" || true
-
-  if [[ -s "$temp_file" ]]; then
-    sort -u "$temp_file" | while IFS= read -r entry; do
-      if [[ -n "$entry" ]]; then
-        echo "- $entry"
+  {
+    for entry in "$standards_dir"/*; do
+      [[ -e "$entry" ]] || continue
+      name="${entry##*/}"
+      if [[ -d "$entry" && -f "$entry/meta.md" ]]; then
+        echo "$name"
+      elif [[ -f "$entry" && "$name" == *.md ]]; then
+        echo "${name%.md}"
       fi
     done
-  fi
-
-  rm -f "$temp_file"
+  } | sort -u | while IFS= read -r name; do
+    [[ -n "$name" ]] && echo "- $name"
+  done
 }
 
 # Get constitution context (workflows and standards) from a specific path
