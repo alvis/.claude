@@ -24,6 +24,18 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |
 
+## Change Tracking with `jj`
+
+1. **`jj` is the primary change-tracking tool** — every op snapshots the working copy, so a dirty HEAD is never a blocker. Do NOT create a `git worktree` to "isolate" a task; coding skills work in place.
+
+2. **Work in place on a dirty HEAD** — new changes layer onto existing uncommitted work; no isolation strategy to decide.
+
+3. **Atomic commits go through `coding:commit`** — it commits via `git` (expected in a jj-colocated repo; `jj` still tracks every change). Don't hand-run `git commit` / `jj describe`.
+
+4. **All jj organization goes through `coding:stack-code`** — bookmarks, `jj split`, `jj rebase`, `jj workspace`, `gh pr create` are owned exclusively by `/coding:stack-code` (per `GIT-PR-STACK-*`). Never run `jj split` / `jj bookmark set` directly.
+
+5. **Git-worktree guard** — a `git worktree` is NOT a `jj workspace`. If a coding task was carried out inside a linked `git worktree`, you MUST `AskUserQuestion` whether the work should be moved back onto HEAD.
+
 ## Your Actions
 
 <IMPORTANT>
