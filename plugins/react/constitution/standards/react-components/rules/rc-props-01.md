@@ -12,26 +12,26 @@ Props are flat, simple, and well-typed. Avoid deeply nested config objects that 
 
 ```typescript
 // ✅ GOOD: simple, focused props
-export interface AlertProps {
+export type AlertProps = {
   variant: "success" | "warning" | "error";
   message: string;
   onDismiss?: () => void;
-}
+};
 
 // ❌ BAD: complex nested structure
-export interface BadProps {
+export type BadProps = {
   config: {
     display: { variant: string; theme: object; };
     behavior: { dismissible: boolean; callbacks: object; };
   };
-}
+};
 ```
 
 ## Code Superpowers
 
-- Flag interfaces where a prop's type is an inline object literal of depth > 1
+- Flag Props type aliases where a prop's type is an inline object literal of depth > 1
 - Flag any prop typed as `object` or `Record<string, any>`
-- Count props per interface; >10 props is a refactor signal
+- Count props per Props type alias; >10 props is a refactor signal
 
 ## Common Mistakes
 

@@ -16,12 +16,11 @@ Cross-references:
 
 ```typescript
 // src/components/headless/Tabs.tsx
-export interface TabsProps {
+export type TabsProps = PropsWithChildren<{
   defaultValue: string;
   value?: string;
   onValueChange?: (value: string) => void;
-  children: ReactNode;
-}
+}>;
 
 export const Tabs: FC<TabsProps> = ({ defaultValue, value, onValueChange, children }) => {
   const [internal, setInternal] = useState(defaultValue);
@@ -215,10 +214,9 @@ export const ProjectTabsContainer: FC = () => {
 // src/components/adapters/RadixTabsAdapter.tsx
 import * as RadixTabs from '@radix-ui/react-tabs';
 
-export interface TabsProps {
+export type TabsProps = PropsWithChildren<{
   defaultValue: string;
-  children: ReactNode;
-}
+}>;
 
 export const Tabs: FC<TabsProps> & {
   List: typeof RadixTabs.List;

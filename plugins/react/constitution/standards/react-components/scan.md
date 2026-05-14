@@ -15,7 +15,10 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 ### Component Structure
 
 - DO NOT use class components except for Error Boundaries — use functional components with `FC<Props>` [`RC-STRUCT-01`]
-- DO NOT inline anonymous prop types — export an interface (`export interface ButtonProps`) and type the component with it [`RC-STRUCT-02`]
+- DO NOT inline anonymous prop types or use `interface` for Props — export a type alias (`export type ButtonProps = …`) and type the component with it [`RC-STRUCT-02`]
+- DO NOT hand-roll `children: ReactNode` in a Props block — wrap with `PropsWithChildren<…>` instead [`RC-STRUCT-03`]
+- DO NOT hand-roll native HTML attribute props (`href`, `onClick`, `target`, `disabled`) on a wrapper component — extend `ComponentPropsWithoutRef<'tag'>` [`RC-STRUCT-04`]
+- DO NOT re-export a component from a barrel without also re-exporting its `<Name>Props` type [`RC-STRUCT-05`]
 
 ### Props Design
 
@@ -48,7 +51,10 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 |---|---|---|
 | `RC-NAMING-01` | Wrong file casing for component or hook | `browser.tsx` (should be `Browser.tsx`); `UseScroll.ts` (should be `useScroll.ts`) |
 | `RC-STRUCT-01` | Class component used | `class BadButton extends Component { render() { ... } }` |
-| `RC-STRUCT-02` | Inline/non-exported props type | `const BadButton = ({ onClick }: { onClick: () => void }) => ...` |
+| `RC-STRUCT-02` | Inline/non-exported props type, or `interface .*Props` declaration | `const BadButton = ({ onClick }: { onClick: () => void }) => ...`; `export interface ButtonProps { … }` |
+| `RC-STRUCT-03` | Inline `children: ReactNode` inside a Props block instead of `PropsWithChildren<…>` | `export type CardProps = { children: ReactNode; variant?: 'a' }` |
+| `RC-STRUCT-04` | Hand-rolled HTML-attribute Props without `ComponentPropsWithoutRef`/`ComponentPropsWithRef` (also flags lingering `HTMLAttributes`/`AnchorHTMLAttributes`/`ButtonHTMLAttributes` imports in component files) | `export type LinkProps = { href: string; target?: string; onClick?: … }` |
+| `RC-STRUCT-05` | Barrel re-exports `<Name>` but not `<Name>Props` (and the component file declares `<Name>Props`) | `export { Button } from './button'` with no matching `export type { ButtonProps }` |
 | `RC-PROPS-01` | Deeply nested config-object props | `config: { display: { variant }, behavior: { dismissible } }` |
 | `RC-PROPS-02` | Prop explosion instead of composition | `<UserCard title="" showHeader headerStyle="primary" user={user} />` |
 | `RC-STATE-01` | State lifted unnecessarily / placed too far from use | Top-level state used by only one leaf component |

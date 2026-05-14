@@ -25,18 +25,16 @@ _Standards for React component structure, patterns, and performance optimization
 Always use functional components with proper TypeScript interfaces for type safety and maintainability.
 
 ```typescript
-// ✅ GOOD: proper component structure
-export interface ButtonProps {
+// ✅ GOOD: exported type alias, inherits element props, wraps children
+export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
   variant?: 'primary' | 'secondary';
-  onClick?: () => void;
-  children: ReactNode;
-}
+};
 
 export const Button: FC<ButtonProps> = ({ variant = 'primary', ...props }) => {
   return <button className={variant} {...props} />;
 };
 
-// ❌ BAD: missing interface export, class component
+// ❌ BAD: missing exported Props type, class component
 class BadButton extends Component {
   render() { return <button>...</button>; }
 }
@@ -129,7 +127,12 @@ Components are accessible by default: semantic HTML, `aria-*` attributes, keyboa
 ## Rule Groups
 
 - `RC-NAMING-*`: File naming conventions and directory structure for components, tests, and stories.
-- `RC-STRUCT-*`: Functional component structure with TypeScript interfaces; no class components except Error Boundaries.
+- `RC-STRUCT-*`: Functional component structure with TypeScript type aliases; no class components except Error Boundaries.
+  - `RC-STRUCT-01`: Functional Components Only
+  - `RC-STRUCT-02`: Exported Props Type Alias (use `export type <Name>Props = …`, not `interface`)
+  - `RC-STRUCT-03`: Use `PropsWithChildren` for `children`
+  - `RC-STRUCT-04`: Extend Element Props with React Helpers (`ComponentPropsWithoutRef<'tag'>`)
+  - `RC-STRUCT-05`: Barrel Files Re-export Props Types
 - `RC-PROPS-*`: Props design — exported interfaces, simple/predictable shapes, composition over configuration.
 - `RC-STATE-*`: State placement — local-first, lift only when necessary, Context for deep prop drilling.
 - `RC-PERF-*`: Performance — memoization with `memo`/`useMemo`/`useCallback`; avoid creating objects in render.

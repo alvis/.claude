@@ -36,19 +36,48 @@ Keep props simple, predictable, and well-typed.
 
 ```typescript
 // ✅ GOOD: simple, focused props
-export interface AlertProps {
+export type AlertProps = {
   variant: "success" | "warning" | "error";
   message: string;
   onDismiss?: () => void;
-}
+};
 
 // ❌ BAD: complex nested structure
-export interface BadProps {
+export type BadProps = {
   config: {
     display: { variant: string; theme: object; };
     behavior: { dismissible: boolean; callbacks: object; };
   };
-}
+};
+```
+
+### Extending Native Elements
+
+Wrappers around native HTML elements inherit element props with `ComponentPropsWithoutRef<'tag'>` and compose with `PropsWithChildren<…>` when they accept children. Never hand-roll `href`, `target`, `onClick`, `disabled`, etc.
+
+```typescript
+// ✅ GOOD: anchor wrapper inherits all <a> attributes
+export type LinkProps = ComponentPropsWithoutRef<'a'> & {
+  variant?: 'primary' | 'ghost';
+};
+
+// ✅ GOOD: button wrapper inherits <button> attributes AND accepts children
+export type ButtonProps = PropsWithChildren<ComponentPropsWithoutRef<'button'>> & {
+  variant?: 'primary' | 'secondary';
+};
+
+// ✅ GOOD: forwardRef variant uses `ComponentPropsWithRef`
+export type InputProps = ComponentPropsWithRef<'input'> & { invalid?: boolean };
+export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => (
+  <input ref={ref} {...props} />
+));
+
+// ❌ BAD: hand-rolled attribute fields
+export type LinkPropsBad = {
+  href: string;
+  target?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+};
 ```
 
 ### Component Composition
@@ -97,7 +126,7 @@ export const TodoItem: FC<Props> = ({ todo, onUpdate }) => {
 // ✅ GOOD: context for deep prop drilling
 const UserContext = createContext<User | null>(null);
 
-export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
+export const UserProvider: FC<PropsWithChildren> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
@@ -222,7 +251,7 @@ components/
 
 | Pattern | Use Case | Example | Notes |
 |---------|----------|---------|-------|
-| FC<Props> | All components | `const Button: FC<Props> = ...` | Always export interface |
+| FC<Props> | All components | `const Button: FC<Props> = ...` | Always export Props as a `type` alias |
 | memo() | Expensive renders | `memo(({ items }) => ...)` | Use sparingly |
 | useMemo | Heavy calculations | `useMemo(() => sort(items), [items])` | Memoize expensive ops |
 | useCallback | Stable handlers | `useCallback((id) => update(id), [])` | Prevent child re-renders |
@@ -243,18 +272,16 @@ components/
 **Implementation**:
 
 ```typescript
-// pattern template
-export interface ComponentProps {
+// pattern template — inherits element props, accepts children
+export type ComponentProps = PropsWithChildren<ComponentPropsWithoutRef<'button'>> & {
   variant?: 'primary' | 'secondary';
-  onClick?: () => void;
-  children: ReactNode;
-}
+};
 
 export const Component: FC<ComponentProps> = ({
   variant = 'primary',
   ...props
 }) => {
-  return <element className={variant} {...props} />;
+  return <button className={variant} {...props} />;
 };
 ```
 
