@@ -21,6 +21,7 @@
 - **DOC-CONT-02**: Inline comments must add value by explaining decisions or edge-case behavior.
 - **DOC-CONT-03**: No author/date stamps, modified-by history, temporary tags, or dead commented-out code.
 - **DOC-CONT-04**: Document exported APIs, interfaces, and complex types where behavior/contract is not self-evident.
+- **DOC-CONT-05**: Source-code comments must not name standard rule IDs (`DOC-FORM-03`, `TYP-IMPT-07`) or group prefixes (`TST-STRU`). Comments explain intent in their own terms; rule IDs belong in standards files and lint reports.
 
 ### Formatting (DOC-FORM)
 

@@ -13,6 +13,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT add inline comments that provide no value [`DOC-CONT-02`]
 - DO NOT leave forbidden comment patterns in source [`DOC-CONT-03`]
 - DO NOT ship exported APIs without required docs [`DOC-CONT-04`]
+- DO NOT reference standard rule IDs (`DOC-FORM-03`) or group prefixes (`TST-STRU`) inside source-code comments [`DOC-CONT-05`]
 - DO NOT start comments with uppercase (use lowercase), except for code/type references (`UserService`) and section headers (`// --- NAME --- //`), such as `// This validates token` [`DOC-FORM-01`]
 - DO NOT use one-line JSDoc on functions with params or non-void return, or block comments (`/* */`) for section headers, such as `/** one line */ fn(a)` or `/* USER */` [`DOC-FORM-02`]
 - DO NOT write JSDoc prose (function summary, `@returns`, `@throws`, `@example` description, or free `* …` lines) with uppercase first letter or trailing period; must use lowercase third-person verb (`/** validates input */` not `/** Validate input. */`); exception: first word is a code/type/acronym reference [`DOC-FORM-03`]
@@ -33,6 +34,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `DOC-CONT-02` | Inline comment is noise | `// set x to 1`; `return user.name; // obvious comment` |
 | `DOC-CONT-03` | Forbidden comment pattern present | `// modified by A on 2025-01-10`; `// modified by John on 2024-01-15` |
 | `DOC-CONT-04` | Exported API lacks docs | `export interface X {}` |
+| `DOC-CONT-05` | Comment references a standard rule ID or group prefix | `// per DOC-FORM-03`; `// ensure TST-STRU-01 compliance`; `/** see RPS-LAYOUT-01 */` |
 | `DOC-FORM-01` | Comment starts with uppercase (should be lowercase unless code reference or section header) | `// This validates token`; `// This function handles user authentication` |
 | `DOC-FORM-02` | One-line JSDoc on function with params/return, or block comment used for section header | `/** one line */ fn(a)`; `/* USER */` |
 | `DOC-FORM-03` | JSDoc prose (summary, `@returns`, `@throws`, `@example`, free `*` lines) uses uppercase or trailing period instead of lowercase third-person verb (exception: first word is a code/type/acronym reference) | `/** Validate token. */`; `/** validate email format */`; `* @returns The user object.`; `* @throws Error if input is invalid.` |

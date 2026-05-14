@@ -11,6 +11,7 @@ Categories (all opt-in via --category, default `all`):
   dynamic-import-static  dynamic `import()` with a string-literal or non-interpolated-template path (TYP-IMPT-07)
                          covers both runtime `await import('./x')` and type-position `typeof import('./x')`.
                          skips matches inside `vi.mock(...)` / `vi.hoist(...)` callbacks.
+  comment-rule-id     standard rule IDs (e.g. DOC-FORM-03, TST-STRU-01) inside source-code comments (DOC-CONT-05)
 
 Output is plain text grouped by category then file, with --before/--after
 context lines per match. The script always exits 0 — it is advisory, not a gate.
@@ -34,6 +35,7 @@ type Category = Literal[
     "let",
     "conditional-spread",
     "dynamic-import-static",
+    "comment-rule-id",
 ]
 CATEGORIES: tuple[Category, ...] = get_args(Category.__value__)
 CATEGORY_LABELS: dict[Category, str] = {
@@ -44,6 +46,7 @@ CATEGORY_LABELS: dict[Category, str] = {
     "let": "`let` declarations",
     "conditional-spread": "Conditional object spread (`...(cond ? {…} : {})`)",
     "dynamic-import-static": "Dynamic `import()` with static path (TYP-IMPT-07)",
+    "comment-rule-id": "Standard rule ID in source comment (DOC-CONT-05)",
 }
 
 SOURCE_GLOBS = ("*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs")
@@ -87,6 +90,22 @@ DYNAMIC_IMPORT_STATIC = re.compile(
 # header for the exempted scope — `vi.mock(` or `vi.hoist(` (optional whitespace
 # allowed around `.`). The trailing `(` is included so `m.end()` lands just past it.
 VI_MOCK_OR_HOIST_HEAD = re.compile(r"\bvi\s*\.\s*(?:mock|hoist)\s*\(")
+# DOC-CONT-05 — see plugins/coding/constitution/standards/documentation/rules/doc-cont-05.md
+# matches a known standard prefix followed by 1-3 hyphen-separated segments.
+# each trailing segment is either an UPPERCASE word (>=2 chars) or 1-3 digits.
+# the prefix whitelist is hardcoded; update when a new standard is added:
+#   ls plugins/*/constitution/standards/*/rules/ | sed -E 's/^([A-Za-z0-9]+)-.*/\1/' | tr '[:lower:]' '[:upper:]' | sort -u
+RULE_ID_PREFIXES = (
+    "A11Y", "DES", "DOC", "ERR", "FUNC", "GEN", "GIT", "LOG", "NAM",
+    "PY", "PYT", "RC", "RH", "RPS", "SB", "TST", "TYP", "OBS", "UNI",
+)
+RULE_ID_TOKEN = re.compile(
+    r"\b(?:" + "|".join(RULE_ID_PREFIXES) + r")"
+    r"(?:-(?:[A-Z]{2,10}|\d{1,3})){1,3}\b",
+)
+# per-line comment-scope detector: line-comment `//`, block-comment opener
+# `/*`, or JSDoc continuation line (leading `*` after whitespace).
+COMMENT_SCOPE = re.compile(r"(?://|/\*+|^\s*\*\s)")
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,6 +289,35 @@ def scan_dynamic_import_static(*, path: Path, lines: list[str], matches: list[Ma
         matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
 
 
+def scan_comment_rule_id(*, path: Path, lines: list[str], matches: list[Match]) -> None:
+    """flag rule-ID-shaped tokens inside source comments.
+
+    iterates physical lines, identifies the first comment opener per line
+    (line `//`, block `/*`, or JSDoc continuation `*`), and searches for a
+    rule-ID token in the substring from that point onward. multi-line block
+    comments without a `*` prefix on each line are tracked via a simple
+    in_block flag mirroring how jsdoc_prose_lines handles JSDoc opens/closes.
+    """
+    in_block = False
+    for lineno, raw in enumerate(lines, start=1):
+        line = raw.rstrip("\n")
+        scope_start: int | None = None
+        if in_block:
+            scope_start = 0
+            if "*/" in line:
+                in_block = False
+        else:
+            m = COMMENT_SCOPE.search(line)
+            if m:
+                scope_start = m.start()
+                if "/*" in line and "*/" not in line[m.start():]:
+                    in_block = True
+        if scope_start is None:
+            continue
+        if RULE_ID_TOKEN.search(line, scope_start):
+            matches.append(Match(path, lineno, line))
+
+
 SCANNERS: dict[Category, tuple[Scanner, tuple[str, ...], bool]] = {
     "jsdoc-uppercase": (scan_jsdoc_uppercase, SOURCE_GLOBS, False),
     "jsdoc-fullstop": (scan_jsdoc_fullstop, SOURCE_GLOBS, False),
@@ -278,6 +326,7 @@ SCANNERS: dict[Category, tuple[Scanner, tuple[str, ...], bool]] = {
     "let": (scan_let, SOURCE_GLOBS, False),
     "conditional-spread": (scan_conditional_spread, SOURCE_GLOBS, False),
     "dynamic-import-static": (scan_dynamic_import_static, SOURCE_GLOBS, False),
+    "comment-rule-id": (scan_comment_rule_id, SOURCE_GLOBS, False),
 }
 
 
