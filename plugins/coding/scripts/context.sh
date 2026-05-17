@@ -190,38 +190,139 @@ extract_python_scripts() {
   echo "$scripts"
 }
 
-get_repo_root_documents_context() {
-  local repo_root="$1"
-  local context=""
-  local docs=(
-    "CONTEXT.md"
-    "DESIGN.md"
-    "PLAN.md"
-    "NOTES.md"
-    "REQUIREMENTS.md"
-    "DATA.md"
-    "UI.md"
-    "REFERENCE.md"
+# walks upward from $1 (default pwd), returning the first ancestor that holds
+# any common project marker; stops at $HOME or /; falls back to start_dir
+find_project_root() {
+  local dir="${1:-$(pwd)}"
+  local markers=(
+    package.json pnpm-workspace.yaml deno.json bun.lock
+    pyproject.toml setup.py setup.cfg Pipfile poetry.lock
+    Cargo.toml go.mod
+    pom.xml build.gradle build.gradle.kts
+    Gemfile composer.json
+    .code-spec
   )
-  local found_docs=()
-  local doc
+  local stop="${HOME:-/}"
+  local marker
 
-  for doc in "${docs[@]}"; do
-    if [[ -f "$repo_root/$doc" ]]; then
-      found_docs+=("$repo_root/$doc")
+  while [[ -n "$dir" && "$dir" != "/" ]]; do
+    for marker in "${markers[@]}"; do
+      if [[ -e "$dir/$marker" ]]; then
+        printf '%s\n' "$dir"
+        return 0
+      fi
+    done
+    [[ "$dir" == "$stop" ]] && break
+    dir="$(dirname "$dir")"
+  done
+
+  printf '%s\n' "${1:-$(pwd)}"
+}
+
+# returns the VCS workspace root for $1 (default pwd): git toplevel, else
+# jj workspace root, else empty string when neither is available
+find_monorepo_root() {
+  local start="${1:-$(pwd)}"
+
+  if (cd "$start" 2>/dev/null && git rev-parse --git-dir >/dev/null 2>&1); then
+    (cd "$start" && git rev-parse --show-toplevel)
+    return 0
+  fi
+
+  if command -v jj >/dev/null 2>&1; then
+    local jj_root
+    if jj_root=$(cd "$start" 2>/dev/null && jj workspace root 2>/dev/null); then
+      [[ -n "$jj_root" ]] && printf '%s\n' "$jj_root" && return 0
+    fi
+  fi
+
+  printf '\n'
+}
+
+# lists markdown files at $1 (root) plus its immediate subdirectories, ordered
+# README -> curated docs -> remaining root *.md -> depth-1 *.md; emits "- <rel>"
+# bullets on stdout AND the absolute paths on FD 3 for caller-side dedupe;
+# $2 is a newline-delimited set of absolute paths to skip
+_collect_markdown() {
+  local root="$1"
+  local exclude_abs="$2"
+
+  local curated=(README.md CONTEXT.md DESIGN.md PLAN.md NOTES.md REQUIREMENTS.md DATA.md UI.md REFERENCE.md)
+  local exclude_dirs=(.git .jj .hg .svn node_modules .venv venv dist build out .next .turbo .cache coverage .code-spec)
+
+  local ordered=()
+  local seen=$'\n'"$exclude_abs"$'\n'
+  local name abs
+
+  # 1. Curated, root-level, in order (README first).
+  for name in "${curated[@]}"; do
+    abs="$root/$name"
+    if [[ -f "$abs" ]] && [[ "$seen" != *$'\n'"$abs"$'\n'* ]]; then
+      ordered+=("$abs")
+      seen+="$abs"$'\n'
     fi
   done
 
-  if [[ ${#found_docs[@]} -gt 0 ]]; then
-    context+="## Target Repo Documents\n\n"
+  # 2. Remaining *.md at root.
+  while IFS= read -r abs; do
+    [[ -z "$abs" ]] && continue
+    [[ "$seen" == *$'\n'"$abs"$'\n'* ]] && continue
+    ordered+=("$abs")
+    seen+="$abs"$'\n'
+  done < <(find "$root" -maxdepth 1 -type f -iname '*.md' 2>/dev/null | LC_ALL=C sort -f)
 
-    for doc in "${found_docs[@]}"; do
-      context+="- $doc\n"
-    done
+  # 3. *.md one level down, with exclusions.
+  local prune=()
+  for name in "${exclude_dirs[@]}"; do
+    prune+=(-path "$root/$name" -prune -o)
+  done
+  while IFS= read -r abs; do
+    [[ -z "$abs" ]] && continue
+    [[ "$seen" == *$'\n'"$abs"$'\n'* ]] && continue
+    ordered+=("$abs")
+    seen+="$abs"$'\n'
+  done < <(find "$root" -mindepth 2 -maxdepth 2 "${prune[@]}" -type f -iname '*.md' -print 2>/dev/null | LC_ALL=C sort -f)
 
-    context+="\n"
+  local rel
+  for abs in "${ordered[@]}"; do
+    rel="${abs#"$root"/}"
+    printf -- '- %s\n' "$rel"
+    printf '%s\n' "$abs" >&3
+  done
+}
+
+# renders the "## Target Repo Documents" section for $1 (project root) and an
+# optional "## Monorepo Documents" section for $2; paths listed under the
+# project section are suppressed from the monorepo section by absolute-path
+# dedupe so each file appears at most once
+get_repo_root_documents_context() {
+  local project_root="$1"
+  local monorepo_root="$2"
+  local context=""
+
+  local project_abs
+  project_abs="$(mktemp)"
+  local project_lines
+  project_lines="$(_collect_markdown "$project_root" "" 3>"$project_abs")"
+
+  if [[ -n "$project_lines" ]]; then
+    context+="## Target Repo Documents\n\n${project_lines}\n"
   fi
 
+  if [[ -n "$monorepo_root" ]]; then
+    local exclude_abs
+    exclude_abs="$(cat "$project_abs")"
+    local mono_abs
+    mono_abs="$(mktemp)"
+    local mono_lines
+    mono_lines="$(_collect_markdown "$monorepo_root" "$exclude_abs" 3>"$mono_abs")"
+    rm -f "$mono_abs"
+    if [[ -n "$mono_lines" ]]; then
+      context+="## Monorepo Documents\n\n${mono_lines}\n"
+    fi
+  fi
+
+  rm -f "$project_abs"
   echo -n "$context"
 }
 
@@ -229,13 +330,21 @@ get_plugin_context() {
   local context=""
   local current_dir="$(pwd)"
 
-  # Determine repository root
-  local REPO_ROOT
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-  else
-    REPO_ROOT="$current_dir"
+  local PROJECT_ROOT
+  PROJECT_ROOT="$(find_project_root "$current_dir")"
+
+  local MONOREPO_ROOT
+  MONOREPO_ROOT="$(find_monorepo_root "$current_dir")"
+
+  # single root when the project sits at the VCS top
+  if [[ "$MONOREPO_ROOT" == "$PROJECT_ROOT" ]]; then
+    MONOREPO_ROOT=""
   fi
+
+  # existing Node/Python detection below keys off REPO_ROOT (= PROJECT_ROOT)
+  local REPO_ROOT="$PROJECT_ROOT"
+
+  context+="## Project\n\n**Root**: $PROJECT_ROOT\n\n"
 
   # Git Repository Information
   if git rev-parse --git-dir >/dev/null 2>&1; then
@@ -352,7 +461,11 @@ get_plugin_context() {
     context+="\n"
   fi
 
-  context+=$(get_repo_root_documents_context "$REPO_ROOT")
+  if [[ -n "$MONOREPO_ROOT" ]]; then
+    context+="## Monorepo\n\n**Root**: $MONOREPO_ROOT\n\n"
+  fi
+
+  context+=$(get_repo_root_documents_context "$PROJECT_ROOT" "$MONOREPO_ROOT")
 
   # Agent Capabilities
   local agent_capabilities=""
