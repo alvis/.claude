@@ -5,8 +5,8 @@
 
 ## Key Principles
 
-- Apply the decision order **route → feature → shared → utility → type** and stop at the first yes.
-- Code starts route-local; promote outward only when a second real consumer appears.
+- Apply the decision order **workspace-package → route → feature → shared → utility → type** and stop at the first yes.
+- Code starts route-local; promote outward only when a second real consumer appears. In a monorepo, the next tier above `src/components/` is the shared workspace React package (e.g. `@company/ui`), triggered by a second **app** consumer.
 - Imports flow one-way: `app/` → `features/` → `components/` → `utilities/`. Never reverse, never sideways between features.
 - `src/components/` is domain-agnostic UI grouped by capability (primitives, layouts, composites, headless, boundaries, providers, adapters) — never by domain.
 - Inside `src/features/<domain>/`, split container (`api/`, `hooks/`, `containers/`) from presentational (`components/`).
@@ -41,6 +41,11 @@
 ### Promotion (RPS-PROMO)
 
 - **RPS-PROMO-01**: Promote on the second real consumer. Demote when reuse evaporates.
+
+### Workspace Package (RPS-WS)
+
+- **RPS-WS-01**: In a monorepo, hoist to the workspace React package only on the second **app** consumer. Within one app the in-app ladder still applies.
+- **RPS-WS-02**: The workspace package must be domain-agnostic and theme-aware — no feature imports, no brand identity, no `client="…"` props. Visual variation flows through CSS variables and semantic variants.
 
 ## Patterns
 
@@ -84,11 +89,14 @@ src/
 
 ### Decision Order (first-yes wins)
 
+Full ladder: **workspace-package → route → feature → shared → utility → type**.
+
 1. **Is this for exactly one route?** Place it in `src/app/<route>/components/` (`RPS-ROUTE-01`).
 2. **Is this domain-scoped and reused across routes inside that domain?** Place it in `src/features/<domain>/` (`RPS-FEAT-02`).
 3. **Is this domain-agnostic UI?** Place it in `src/components/<bucket>/` (`RPS-COMPS-02`).
-4. **Is this React-unaware logic?** Place it in `src/utilities/` (`RPS-UTIL-01`).
-5. **Is this a globally-shared type?** Place it in `src/types/` (`RPS-UTIL-01`).
+4. **Is this domain-agnostic UI already consumed by a second app in the monorepo?** Hoist it to the workspace React package (e.g. `packages/ui`, `@company/ui`) (`RPS-WS-01`).
+5. **Is this React-unaware logic?** Place it in `src/utilities/` (`RPS-UTIL-01`).
+6. **Is this a globally-shared type?** Place it in `src/types/` (`RPS-UTIL-01`).
 
 Stop at the first yes. Do not skip tiers.
 
@@ -224,6 +232,68 @@ src/components/<bucket>/
 - Demotion is allowed and encouraged: if a shared component ends up with only one consumer again, move it inward.
 - "Shared by default" is an anti-pattern — it locks in coupling before the shape is proven.
 
+### Workspace Package (RPS-WS)
+
+In a monorepo, the tier above `src/components/<bucket>/` is the shared workspace React package (e.g. `packages/ui`, `@company/ui`). It is reached only by the second-**app** consumer, not the second feature, not a guess.
+
+**When to hoist (`RPS-WS-01`)**
+
+- A component or hook already lives in `apps/<app>/src/components/<bucket>/` and a **second app** in the same monorepo now needs it.
+- The shape is proven across both apps — same props, same behavior, same accessibility contract.
+- Within a single app the in-app ladder (`RPS-PROMO-01`) still applies; do not skip it.
+
+**What belongs in the workspace package**
+
+- Domain-agnostic primitives, layouts, composites, headless logic, boundaries, providers, adapters — same bucket taxonomy as `src/components/`.
+- Theme-aware components driven by the CSS-variable contract from the `theming` standard (`RT-CONTRACT-01`).
+- Semantic variants only (`variant="primary" | "secondary" | "danger"`) — see `RT-VARIANT-01`.
+- Shared hooks that are React-aware but app-agnostic (e.g., `useMediaQuery`, `useFocusTrap`).
+
+**What never belongs (`RPS-WS-02`)**
+
+- Imports from any app's `features/**` or `app/**`.
+- Brand or client identity baked into the component (no `client="acme"` props, no `theme="acme"` enums, no hard-coded brand colors like `#ff6600`).
+- Domain-typed props (e.g., `props: { invoice: Invoice }`).
+- App-specific routing, analytics, or environment access.
+
+**Promotion Path**
+
+```plaintext
+route-local (src/app/<route>/components/)
+        │ second consumer in the SAME domain
+        ▼
+features/<domain>/components/
+        │ second consumer in a DIFFERENT domain (and domain-agnostic)
+        ▼
+src/components/<bucket>/
+        │ second consumer is a DIFFERENT app in the monorepo
+        ▼
+@company/ui (packages/ui)
+```
+
+```typescript
+// ✅ GOOD: theme-aware, semantic variant, no brand identity
+// packages/ui/src/primitives/Button.tsx
+export interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'danger';
+  children: ReactNode;
+}
+export const Button: FC<ButtonProps> = ({ variant = 'primary', children }) => (
+  <button data-variant={variant} className="ui-button">{children}</button>
+);
+// brand variation handled at the app root via [data-theme="acme"] + CSS variables (RT-CONTRACT-01, RT-VARIANT-01)
+
+// ❌ BAD: brand identity baked into the workspace package
+// packages/ui/src/primitives/Button.tsx
+export const Button: FC<{ client: 'acme' | 'globex' }> = ({ client }) => (
+  <button style={{ background: client === 'acme' ? '#ff6600' : '#0066ff' }} />
+);
+
+// ❌ BAD: workspace package importing an app feature
+// packages/ui/src/composites/InvoiceCard.tsx
+import type { Invoice } from 'apps/web/src/features/billing/types/Invoice'; // ← never
+```
+
 ### Commonly Confused Cases (FAQ)
 
 | Question                                                                 | Resolution                                                                                                                                  |
@@ -272,6 +342,9 @@ See `references/tabs-placement.md` for the full 8-section case study.
 - `page.tsx` doing data-fetching, mutations, or styled rendering of domain shapes (`RPS-ROUTE-02`).
 - `useDebounce` or any hook inside `src/utilities/` (`RPS-UTIL-01`).
 - Domain types in `src/types/` (`RPS-UTIL-01`).
+- A monorepo `packages/ui` consumed by exactly one app — single-app catch-all is not a workspace package (`RPS-WS-01`).
+- `client="acme"` / `theme="acme"` props or hard-coded brand colors inside the workspace package — brand identity belongs at the app root via CSS variables (`RPS-WS-02`, `RT-CONTRACT-01`, `RT-VARIANT-01`).
+- Workspace-package files importing from any app's `features/**` or `app/**` (`RPS-WS-02`).
 
 ## Quick Decision Tree
 
@@ -295,6 +368,7 @@ See `references/tabs-placement.md` for the full 8-section case study.
      - Error/Suspense boundary → `boundaries/`
      - Context provider → `providers/`
      - Third-party wrapping → `adapters/`
+     - **Used by a second app in the monorepo?** Hoist to the workspace React package (`@company/ui`, `packages/ui`) — but only if it stays domain-agnostic and theme-aware (`RPS-WS-01`, `RPS-WS-02`). Otherwise keep it in the app's `src/components/<bucket>/`.
    - No → continue.
 4. **Is it React-unaware logic?**
    - Yes → `src/utilities/` (`RPS-UTIL-01`).
@@ -303,4 +377,4 @@ See `references/tabs-placement.md` for the full 8-section case study.
    - Yes → `src/types/` (`RPS-UTIL-01`).
    - No → re-check step 1; the code probably belongs route-local.
 
-Apply first-yes-wins. Apply the second-consumer rule before promoting (`RPS-PROMO-01`).
+Apply first-yes-wins. Apply the second-consumer rule before promoting (`RPS-PROMO-01`), and the second-app rule before hoisting to a workspace package (`RPS-WS-01`).

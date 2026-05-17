@@ -35,4 +35,4 @@ When `src/components/<bucket>/<File>.tsx` imports from `features/**` or `app/**`
 - `RPS-COMPS-02` — allowed buckets under `src/components/`
 - `RPS-FEAT-01` — no cross-feature imports
 - `RPS-LAYOUT-01` — decision order and import direction
-- `standard:react-components` — component shape rules
+- `standard:components` — component shape rules

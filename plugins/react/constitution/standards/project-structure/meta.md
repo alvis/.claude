@@ -6,7 +6,7 @@ _Standards for where React code lives: routes, features, shared components, util
 
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- React Component Standards (standard:react-components) - Component naming, props, state, and performance rules apply to every file placed under this layout
+- React Component Standards (standard:components) - Component naming, props, state, and performance rules apply to every file placed under this layout
 - File Naming Standards (plugin:coding:standard:file-structure) - PascalCase component files, camelCase hook files, and co-located tests/stories underpin the directory layout
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
@@ -15,7 +15,9 @@ _Standards for where React code lives: routes, features, shared components, util
 
 ### Decision Order
 
-Where new code lands follows a strict first-yes-wins ladder: **route → feature → shared → utility → type**. If the code only serves one route, it belongs route-local. If it is reused across routes inside one domain, it belongs in `features/<domain>/`. If it is domain-agnostic UI, it belongs in `src/components/<bucket>/`. If it is React-unaware logic, it belongs in `src/utilities/`. Only globally-shared types belong in `src/types/`. Stop at the first match — never skip a tier.
+Where new code lands follows a strict first-yes-wins ladder: **workspace-package → route → feature → shared → utility → type**. If the code only serves one route, it belongs route-local. If it is reused across routes inside one domain, it belongs in `features/<domain>/`. If it is domain-agnostic UI, it belongs in `src/components/<bucket>/`. If it is React-unaware logic, it belongs in `src/utilities/`. Only globally-shared types belong in `src/types/`. Stop at the first match — never skip a tier.
+
+If the codebase is a monorepo and a second app needs the building block, the next promotion target is the shared workspace React package (e.g. `@company/ui`, `packages/ui`), not the app's local `src/components/`.
 
 ### Gravitational Pull
 
@@ -38,6 +40,7 @@ This standard enforces requirements beyond typical React/Next.js conventions:
 | `features/shared/` or `features/ui/` as a catch-all   | **"shared" is not a domain — domain-agnostic UI lives under `src/components/`**     |
 | `utilities/` may import React for "helper hooks"      | **`utilities/` is React-unaware: no JSX, no hooks, no React imports**               |
 | Promote to shared on first guess                      | **Promote only on the second real consumer; demote when reuse evaporates**          |
+| Shared by default across apps                         | **Hoist to workspace package only on second app consumer; never a single-app catch-all** |
 
 ## Exception Policy
 
@@ -64,3 +67,4 @@ If exception note is missing, submission is rejected.
 - `RPS-FEAT-*`: `src/features/<domain>/` rules — container/presentational split, no cross-feature imports, no `shared/`/`ui/` domain.
 - `RPS-UTIL-*`: `src/utilities/` and `src/types/` rules — pure & React-unaware; no domain types in global `types/`.
 - `RPS-PROMO-*`: Promotion rules — second-consumer trigger, demotion when reuse evaporates.
+- `RPS-WS-*`: Monorepo / shared-package rules — when to hoist a component or hook to a workspace package, what belongs there, what does not.

@@ -43,4 +43,4 @@ After moving, update imports project-wide and remove the now-empty disallowed fo
 - `RPS-FEAT-02` — containers live in features
 - `RPS-FEAT-03` — no `features/shared/` either
 - `RPS-LAYOUT-01` — decision order
-- `standard:react-components` — component shape rules
+- `standard:components` — component shape rules

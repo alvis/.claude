@@ -65,4 +65,4 @@ src/components/composites/InvoiceCard.tsx
 - `RPS-COMPS-01` — shared components must be domain-agnostic
 - `RPS-COMPS-02` — allowed buckets under `src/components/`
 - `RPS-FEAT-01` — no cross-feature imports (promote instead)
-- `standard:react-components` (especially `RC-PROPS-02`) — composition over prop explosion
+- `standard:components` (especially `RC-PROPS-02`) — composition over prop explosion

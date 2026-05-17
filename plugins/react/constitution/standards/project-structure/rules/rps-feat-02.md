@@ -68,4 +68,4 @@ export const InvoiceListContainer: FC = () => {
 - `RPS-FEAT-03` — no `features/shared/`
 - `RPS-ROUTE-02` — `page.tsx` is composition only (it imports containers)
 - `RPS-COMPS-02` — no `containers/` under `src/components/`
-- `standard:react-components` — component rules (especially `RC-STRUCT-*`)
+- `standard:components` — component rules (especially `RC-STRUCT-*`)

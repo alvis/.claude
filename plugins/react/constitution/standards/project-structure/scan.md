@@ -36,6 +36,11 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 - DO NOT promote a component to `src/components/` (or to `src/features/<domain>/`) with only one consumer — wait for the second real consumer; demote when reuse evaporates [`RPS-PROMO-01`]
 
+### Workspace Package
+
+- DO NOT promote a component to the workspace package on the basis of a single app's usage — the trigger is the **second app** consumer; within one app the in-app promotion ladder still applies [`RPS-WS-01`]
+- DO NOT put any app-specific feature import, brand/client identity, or `client="…"` prop logic inside the workspace package — everything visual flows through CSS variables and semantic variants [`RPS-WS-02`]
+
 ## Rule Matrix
 
 | Rule ID | Violation | Bad Examples |
@@ -50,3 +55,5 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `RPS-FEAT-03` | "shared" or "ui" used as a domain | `src/features/shared/Button.tsx`; `src/features/ui/Card.tsx` |
 | `RPS-UTIL-01` | React in utilities, or domain type in global types | `src/utilities/useDebounce.ts` (hook in utilities); `src/types/Invoice.ts` |
 | `RPS-PROMO-01` | Premature promotion | A `Button` lives in `src/components/primitives/` but is imported by exactly one feature |
+| `RPS-WS-01` | Premature hoist to workspace package | `packages/ui/Button.tsx` imported by exactly one app; a monorepo with one app and a "shared" `packages/ui` |
+| `RPS-WS-02` | App-specific or brand-coded code in workspace package | `packages/ui/Button.tsx` accepts a `client="acme"` prop; `packages/ui/Card.tsx` imports from `apps/web/src/features/checkout`; `#ff6600` hard-coded in a `packages/ui` component class |

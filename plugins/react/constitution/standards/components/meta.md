@@ -14,7 +14,7 @@ _Standards for React component structure, patterns, and performance optimization
 - File Naming Standards (plugin:coding:standard:file-structure) - Specific component file naming patterns (Button.tsx, Button.spec.tsx)
 - Accessibility Standards (standard:accessibility) - Frontend components must follow accessibility requirements
 - Storybook Standards (standard:storybook) - Component stories document behavior and verify accessibility; this standard enforces story existence per component
-- React Project Structure Standards (standard:react-project-structure) - Component placement and barrel conventions within the project tree
+- React Project Structure Standards (standard:project-structure) - Component placement and barrel conventions within the project tree
 
 **Note**: This standard requires the coding plugin to be enabled for referenced coding standards.
 

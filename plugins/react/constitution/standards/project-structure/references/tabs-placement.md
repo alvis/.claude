@@ -1,12 +1,12 @@
 # Tabs Placement — Full Case Study
 
-This is the long-form companion to the "Tabs Placement — Brief" section of `standard:react-project-structure/write.md`. It walks through eight concrete Tabs scenarios — from headless primitive to third-party wrapping — and shows where each lives and when to escalate from one bucket to the next.
+This is the long-form companion to the "Tabs Placement — Brief" section of `standard:project-structure/write.md`. It walks through eight concrete Tabs scenarios — from headless primitive to third-party wrapping — and shows where each lives and when to escalate from one bucket to the next.
 
 Cross-references:
 
-- `standard:react-project-structure/rules/rps-comps-02.md` (allowed buckets under `src/components/`)
-- `standard:react-project-structure/rules/rps-feat-02.md` (container/presentational split)
-- `standard:react-project-structure/rules/rps-promo-01.md` (second-consumer promotion)
+- `standard:project-structure/rules/rps-comps-02.md` (allowed buckets under `src/components/`)
+- `standard:project-structure/rules/rps-feat-02.md` (container/presentational split)
+- `standard:project-structure/rules/rps-promo-01.md` (second-consumer promotion)
 
 ---
 

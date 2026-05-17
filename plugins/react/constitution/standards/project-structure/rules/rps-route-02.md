@@ -63,4 +63,4 @@ export default function DashboardPage() {
 - `RPS-ROUTE-01` — route-local `components/` folder
 - `RPS-FEAT-02` — container/presentational split inside features
 - `RPS-LAYOUT-01` — overall decision order
-- `standard:react-components` — component structure rules
+- `standard:components` — component structure rules
