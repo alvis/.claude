@@ -14,6 +14,7 @@
 - Log-observable behavior: capture logger as typed `vi.fn<LogFn>()` and assert `log.mock.calls` structurally
 - `const` for shared fixtures; file-level instances by default
 - Structural assertions (`toEqual`), not field-by-field
+- No silent skips: missing env/config must hard-fail at file load (`throw`), never `runIf`/`skipIf`/conditional-return
 
 ## Naming Prefixes
 
@@ -62,6 +63,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-CORE-07**: Do not spy on internals when external behavior can be tested.
 - **TST-CORE-08**: Avoid `await import(...)` in tests. Keep imports static and predictable.
 - **TST-CORE-09**: For log-observable behavior, capture the logger as `vi.fn<LogFn>()` or `{ info: vi.fn<Logger['info']>() } satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])`. Do not use scattered `toHaveBeenCalledWith(...)` chains or count-only assertions. Prefer the SUT's exported `Log` type; a local alias is acceptable only when no real type is exported.
+- **TST-CORE-11**: Tests must run or hard-fail. Never gate with `describe.runIf`/`it.skipIf`/`if (!env.X) return`. Required env vars are validated at file load with `throw new Error(...)` so missing config breaks the suite loudly.
 
 ### Coverage (TST-COVR)
 
@@ -149,6 +151,7 @@ No `mock*` or `mocked` prefixes. Use semantic names: `userRepository`, `emailGat
 - Building large fake interfaces that diverge from real contracts.
 - Manual mock cleanup hooks instead of configuration-driven cleanup.
 - Wrapping an existing mock instance with nested `vi.fn` in a `vi.mock` module factory.
+- Silently skipping tests when env vars are missing (`runIf`/`skipIf`/early-return) — CI goes green without running anything.
 
 ## Quick Decision Tree
 
@@ -159,3 +162,4 @@ No `mock*` or `mocked` prefixes. Use semantic names: `userRepository`, `emailGat
 5. Reusing a hoisted/mock symbol in `vi.mock` factory? Export it directly, do not re-wrap with nested `vi.fn` (`TST-MOCK-15`).
 6. Adding a test now? Run coverage before and after, keep only positive-delta tests (`TST-COVR-03`, `TST-COVR-04`).
 7. Structuring a test file? Enforce naming, canonical layout, and AAA spacing (`TST-STRU-01`, `TST-STRU-02`, `TST-STRU-03`).
+8. Needs an env var? Validate at file top with `throw`; never `runIf`/`skipIf` (`TST-CORE-11`).

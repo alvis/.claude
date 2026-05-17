@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""Materialise a stack from a proposal JSON.
+"""Materialize a stack from a proposal JSON.
 
 For each PR in the proposal:
   1. `jj split` selecting the cluster's files (non-interactive)
   2. `jj describe -m <conventional-msg>`
   3. `jj bookmark set <slug>/NN-<scope>`
   4. `jj git push --bookmark <bookmark>`
-  5. read `../write-pr/references/templates/pr.md`, fill placeholders, write to tmpfile
+  5. resolve the PR template (repo's GitHub PR template if checked in, else the
+     bundled default at `../write-pr/references/templates/pr.md`), emit verbatim
+     when it's a repo template OR fill placeholders when it's the bundled default,
+     write to tmpfile
   6. `gh pr create --draft --title "<conventional-title>" --body-file <tmpfile> --base <prev_or_main>`
 
 `--dry-run` prints the entire plan without firing subprocess (still required to
 be approved before running for real, per skill contract).
 
 Title and body are produced inline here — no shell-out to `coding:write-pr`.
-The template file is the single source of truth (path resolved relative to this
-script). Subjects are validated with `lib.validate_conventional_subject`; a
-non-conventional subject aborts the run with a non-zero exit code.
+The bundled default template is the single source of truth (path resolved
+relative to this script) when no repo template exists. Subjects are validated
+with `lib.validate_conventional_subject`; a non-conventional subject aborts the
+run with a non-zero exit code.
 """
 
 from __future__ import annotations
@@ -46,15 +50,31 @@ from lib import (
 )
 
 
-# Single source of truth for the unified PR body template.
-TEMPLATE_PATH = (
+# bundled default PR template; used when the repo has no GitHub PR template of
+# its own checked in (see `_resolve_repo_template`).
+DEFAULT_TEMPLATE_PATH = (
     Path(__file__).resolve().parents[2] / "write-pr" / "references" / "templates" / "pr.md"
 )
 
 
-# Required placeholders always render. Optional placeholders whose value is
-# empty/whitespace cause their entire `## ... <body>` section to be dropped,
-# per pr.md schema. Schema-of-record lives in pr.md's leading HTML comment.
+# repo-relative GitHub PR template paths, in resolution order (first hit wins);
+# mirrors the "PR Template Resolution" section in `coding:write-pr/SKILL.md`.
+# multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are
+# intentionally excluded — selecting between them is a human choice.
+_REPO_TEMPLATE_CANDIDATES: tuple[str, ...] = (
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/pull_request_template.md",
+    "docs/PULL_REQUEST_TEMPLATE.md",
+    "docs/pull_request_template.md",
+    "PULL_REQUEST_TEMPLATE.md",
+    "pull_request_template.md",
+)
+
+
+# required placeholders always render; optional placeholders whose value is
+# empty/whitespace cause their entire `## ... <body>` section to be dropped.
+# applies only to the bundled default template; a repo's own PR template is
+# emitted verbatim with no placeholder substitution.
 _REQUIRED_PLACEHOLDERS: tuple[str, ...] = ("summary_paragraph",)
 _OPTIONAL_PLACEHOLDERS: tuple[str, ...] = (
     "context_body",
@@ -81,7 +101,7 @@ def _fill_template(template: str, values: dict[str, str]) -> str:
         if value.strip():
             out = out.replace(token, value)
             continue
-        # Drop the whole section: the `## ` header line preceding the token,
+        # drop the whole section: the `## ` header line preceding the token,
         # any blank lines between, the token line, and one trailing blank line.
         pattern = "## "
         idx = out.find(token)
@@ -91,7 +111,7 @@ def _fill_template(template: str, values: dict[str, str]) -> str:
         if header_start == -1:
             continue
         section_end = out.find("\n", idx) + 1
-        # Consume one trailing blank line if present.
+        # consume one trailing blank line if present.
         if section_end < len(out) and out[section_end] == "\n":
             section_end += 1
         out = out[: header_start + 1] + out[section_end:]
@@ -101,11 +121,33 @@ def _fill_template(template: str, values: dict[str, str]) -> str:
     return out
 
 
-def _compose_body(pr: dict[str, Any], *, slug: str) -> str:
-    """Build the unified PR body for one proposal entry."""
-    if not TEMPLATE_PATH.is_file():
-        raise SystemExit(f"PR template missing at {TEMPLATE_PATH}")
-    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+def _resolve_repo_template(root: Path) -> Path | None:
+    """Return the first repo PR template found, or `None` to fall back to default.
+
+    Mirrors the "PR Template Resolution" order in `coding:write-pr/SKILL.md`.
+    Returning `None` signals the caller to use `DEFAULT_TEMPLATE_PATH`.
+    """
+    for candidate in _REPO_TEMPLATE_CANDIDATES:
+        path = root / candidate
+        if path.is_file():
+            return path
+    return None
+
+
+def _compose_body(pr: dict[str, Any], *, slug: str, root: Path) -> str:
+    """Build the PR body for one proposal entry.
+
+    When the repo has its own GitHub PR template, emit it verbatim — repo
+    templates own their structure and we do NOT perform placeholder
+    substitution against them. When no repo template exists, fall back to the
+    bundled default and fill placeholders from the proposal entry.
+    """
+    repo_template = _resolve_repo_template(root)
+    if repo_template is not None:
+        return repo_template.read_text(encoding="utf-8")
+    if not DEFAULT_TEMPLATE_PATH.is_file():
+        raise SystemExit(f"default PR template missing at {DEFAULT_TEMPLATE_PATH}")
+    template = DEFAULT_TEMPLATE_PATH.read_text(encoding="utf-8")
     files = list(pr.get("files", []))
     file_lines = "\n".join(f"- `{f}`" for f in files) or "- (no file list available)"
     values: dict[str, str] = {
@@ -224,7 +266,7 @@ def _jj_diff_paths(*, dry_run: bool) -> list[str]:
         return []
     res = jj("diff", "--name-only")
     if res.returncode != 0:
-        # Conservative fallback: empty list means the loop will skip every
+        # conservative fallback: empty list means the loop will skip every
         # existing bookmark, which is the safe direction (no spurious mutation).
         return []
     return [ln.strip() for ln in res.stdout.splitlines() if ln.strip()]
@@ -261,7 +303,7 @@ def _follow_up_commit(
     iterations.
     """
     if not bm_changed_files:
-        # Defensive: caller is expected to skip in this case, but guard anyway
+        # defensive: caller is expected to skip in this case, but guard anyway
         # so a no-op never produces an empty follow-up commit.
         raise SystemExit(
             f"_follow_up_commit invoked for {bookmark!r} with no changed files"
@@ -286,7 +328,7 @@ def _follow_up_commit(
     res = jj("bookmark", "set", bookmark, "-r", "@", dry_run=dry_run)
     if res.returncode != 0 and not dry_run:
         raise SystemExit(f"jj bookmark set {bookmark} -r @ failed: {res.stderr.strip()}")
-    # 5. fast-forward push (force-with-lease helper centralises future hardening)
+    # 5. fast-forward push (force-with-lease helper centralizes future hardening)
     force_with_lease_push(bookmark, dry_run=dry_run)
     # 6. resolve the new tip's change_id for state persistence
     return _resolve_change_id(bookmark, dry_run=dry_run)
@@ -299,7 +341,7 @@ def execute(
     root: Path,
     fix_up: bool = False,
 ) -> tuple[dict[str, Any], list[str]]:
-    """Materialise a stack from a proposal.
+    """Materialize a stack from a proposal.
 
     Returns `(state, touched_unmerged_bookmarks)`. The orchestrator uses the
     second value to decide whether to invoke the mandatory post-rewrite/
@@ -318,16 +360,16 @@ def execute(
     prev_bookmark = base.split("@", 1)[0]
     touched_unmerged: list[str] = []
 
-    # Idempotence contract (per references/workflow-correct.md):
+    # idempotence contract (per references/workflow-correct.md):
     #   re-running with the same state and a clean working copy must be a no-op.
-    # Compute the working-copy diff filenames ONCE up front and use them to gate
+    # compute the working-copy diff filenames ONCE up front and use them to gate
     # every per-PR mutation against the bookmark's proposal `files`.
     wc_files: set[str] = set(_jj_diff_paths(dry_run=dry_run))
-    # Capture the orphan change_id (the working-copy commit that holds the
-    # edits) BEFORE the loop fires `jj new` for the first time. The same orphan
+    # capture the orphan change_id (the working-copy commit that holds the
+    # edits) BEFORE the loop fires `jj new` for the first time. the same orphan
     # is reused across iterations because each `jj new <bookmark>` only moves
     # `@` — the orphan persists as a regular commit until explicitly abandoned.
-    # Only relevant when we'll take the follow-up path; the fix-up path squashes
+    # only relevant when we'll take the follow-up path; the fix-up path squashes
     # from `@` directly so the orphan doesn't matter there.
     orphan_id: str = ""
     if not fix_up and wc_files:
@@ -338,15 +380,15 @@ def execute(
         files = list(pr["files"])
         title = _compose_title(pr)
         # commit message subject = title verbatim; body = summary paragraph.
-        # The title is already validated; we just append the body as the commit body.
+        # the title is already validated; we just append the body as the commit body.
         body_text = str(pr.get("summary", ""))
         msg = f"{title}\n\n{body_text}".rstrip() + "\n"
 
         existing_idx = _existing_pr_index(state, bookmark)
         if existing_idx >= 0:
-            # Re-run path: bookmark already exists in state.
-            # Idempotence guard: only mutate when the working copy actually
-            # touches files that this bookmark owns. Skipping here also keeps
+            # re-run path: bookmark already exists in state.
+            # idempotence guard: only mutate when the working copy actually
+            # touches files that this bookmark owns. skipping here also keeps
             # the bookmark out of `touched_unmerged_bookmarks` so restack is
             # not invoked unnecessarily.
             bm_changed_files = [f for f in files if f in wc_files]
@@ -358,23 +400,26 @@ def execute(
                 prev_bookmark = bookmark
                 continue
             if fix_up:
-                # Sub-flow A/B: rewrite the existing owning change. Refuse on MERGED (sub-flow C / GIT-PR-STACK-03).
+                # sub-flow A/B: rewrite the existing owning change; refuse on
+                # MERGED (sub-flow C — merged bookmarks require a corrective PR
+                # rather than a rewrite to preserve history downstream consumers
+                # have already pulled).
                 if is_bookmark_merged(bookmark, dry_run=dry_run):
                     raise SystemExit(
                         f"refusing to --fix-up MERGED bookmark {bookmark!r} "
                         f"(GIT-PR-STACK-03); see references/workflow-correct.md "
                         f"sub-flow C (corrective PR) instead."
                     )
-                # State may be stale — re-derive change_id from the bookmark itself.
+                # state may be stale — re-derive change_id from the bookmark itself.
                 fresh_cid = _resolve_change_id(bookmark, dry_run=dry_run)
                 state["prs"][existing_idx]["change_id"] = fresh_cid
-                # Squash only the intersection — never the proposal's full file
+                # squash only the intersection — never the proposal's full file
                 # list — so files the user did not touch are not silently moved.
                 squash_into_change(fresh_cid, files=bm_changed_files, dry_run=dry_run)
                 force_with_lease_push(bookmark, dry_run=dry_run)
                 touched_unmerged.append(bookmark)
             else:
-                # Sub-flow E: follow-up commit on top of the existing bookmark.
+                # sub-flow E: follow-up commit on top of the existing bookmark.
                 tip_cid = _resolve_change_id(bookmark, dry_run=dry_run)
                 new_tip = _follow_up_commit(
                     bookmark, tip_cid, msg, bm_changed_files, orphan_id,
@@ -385,13 +430,13 @@ def execute(
             prev_bookmark = bookmark
             continue
 
-        # New-bookmark path: unchanged from the original behaviour.
+        # new-bookmark path: unchanged from the original behavior.
         change = _split_into_change(files, dry_run=dry_run, message=msg)
         _describe(change, msg, dry_run=dry_run)
         _bookmark(bookmark, change, dry_run=dry_run)
         _push(bookmark, dry_run=dry_run)
 
-        body = _compose_body(pr, slug=slug)
+        body = _compose_body(pr, slug=slug, root=root)
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=f"-pr-{pr['n']:02d}.md", delete=False, encoding="utf-8"
         ) as tf:
@@ -445,7 +490,7 @@ def main(argv: list[str] | None = None) -> int:
     proposal = json.loads(raw)
     _print_plan(proposal)
 
-    # Validate every PR's title up-front so a violation aborts before any mutation.
+    # validate every PR's title up-front so a violation aborts before any mutation.
     for pr in proposal.get("prs", []):
         _compose_title(pr)
 
@@ -458,9 +503,9 @@ def main(argv: list[str] | None = None) -> int:
         proposal, dry_run=args.dry_run, root=repo_root(), fix_up=args.fix_up,
     )
 
-    # Mandatory post-rewrite/post-follow-up restack (references/workflow-correct.md
+    # mandatory post-rewrite/post-follow-up restack (references/workflow-correct.md
     # closing invariant): runs unconditionally when at least one unmerged bookmark
-    # was touched. restack.run() is itself idempotent.
+    # was touched; restack.run() is itself idempotent.
     restacked_downstream: list[str] = []
     if touched_unmerged:
         summary = restack.run(slug=str(state["slug"]), dry_run=args.dry_run)

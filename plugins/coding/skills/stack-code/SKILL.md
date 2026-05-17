@@ -2,6 +2,7 @@
 name: stack-code
 description: 'Orchestrate jj-based stacked GitHub PRs end-to-end: auto-detects create vs split mode, drives `jj split`/`jj describe`/`jj bookmark set`/`jj git push`, and opens each draft PR with a Conventional Commits title and the unified PR body from `coding:write-pr`. Triggers when: "/stack-code", "stack these PRs", "split this branch into a stack", "open a PR stack". Also use when: a working copy has multiple loosely-coupled changes that should land as ordered draft PRs, or main has moved and an open stack needs restacking. Examples: "stack-code this feature outline", "split my chunky branch into PRs", "restack my open stack against latest main".'
 model: opus
+allowed-tools: Bash(jj:*), Bash(gh:*), Bash(python3:*), Read
 argument-hint: [--slug <slug>] [--mode create|split] [--fix-up] [--dry-run]
 ---
 
@@ -21,7 +22,7 @@ argument-hint: [--slug <slug>] [--mode create|split] [--fix-up] [--dry-run]
 
 **Prerequisites**:
 - `jj` and `gh` on PATH (auto-installed via `coding:sync-tool` from `bootstrap.py` on first run; on macOS, Homebrew is also installed if missing). `gh` must be authenticated — `sync-tool` will block with instructions if not.
-- Sibling skill `coding:write-pr` available — the unified template lives at `../write-pr/references/templates/pr.md` and is read directly by `execute-stack.py`. No shell-out to `write-pr` Python scripts (they no longer exist).
+- Sibling skill `coding:write-pr` available — the unified template lives at `../write-pr/references/templates/pr.md` and is read directly by `execute-stack.py`. No shell-out to `write-pr` Python scripts (they no longer exist). Each stacked PR opens as a self-contained PR: `context_body` and `implementation_body` MUST be substantive narrative per slice — `execute-stack.py` HARD-FAILS when they are empty or carry stack-metadata padding.
 - Standards index resolves: `GIT-PR-STACK-01..06`, `GIT-PR-SIZE-01..04`.
 
 ### Your Role
@@ -161,6 +162,27 @@ A non-conformant subject aborts `execute-stack.py` BEFORE any mutation.
 - **Action**: if you find issues, present a revised plan to the user with rationale and a side-by-side diff against `propose-splits.py`'s original output. Otherwise, proceed unchanged to Step 5.
 - **Non-goal**: do NOT add a script for this — the LLM does all domain reasoning here. The script side stays deterministic and minimal.
 
+### Proposal Schema (required per-slice fields)
+
+Each entry in `proposal["prs"]` MUST carry the fields below. `execute-stack.py` hard-fails before any mutation when a required field is missing or boilerplate-only.
+
+| Field                     | Required | Source / Description                                                                |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `n`                       | yes      | PR ordinal (integer); drives `<slug>/NN-<scope>` bookmark naming.                   |
+| `scope`                   | yes      | Kebab-case scope; validated by `lib.bookmark_name`.                                 |
+| `bookmark`                | yes      | Full bookmark `<slug>/NN-<scope>`.                                                  |
+| `files`                   | yes      | Paths owned by this slice (used by `jj split`, diff inspection, idempotence guard).|
+| `title`                   | yes      | Conventional Commits title; validated by `lib.validate_conventional_subject`.       |
+| `summary`                 | yes      | Plain-language one-sentence purpose; fills `{{summary_paragraph}}`.                 |
+| `context_body`            | yes      | Substantive narrative — WHY this slice exists. MUST NOT reference other PRs in the stack. Hard-fails when empty or contains stack-metadata markers. |
+| `implementation_body`     | yes      | Substantive narrative — WHAT changed and WHY this approach. MUST NOT be a flat file list. Hard-fails when empty or contains stack-metadata markers. |
+| `breaking_changes_body`   | no       | Migration notes. Auto-filled with `None.` only when `title` carries `!` but body is blank. |
+| `related_issues_body`     | no       | `Closes:` / `Refs:` lines. Drop section when absent.                                |
+| `manual_testing_body`     | no       | Reviewer repro steps. Drop section when absent.                                     |
+| `additional_notes_body`   | no       | Limitations, follow-ups. Drop section when absent.                                  |
+| `delivered_trailer`       | no       | Extra `- [x]` items beyond the diff-derived defaults.                               |
+| `reviewer_trailer`        | no       | Extra `- [ ]` items beyond the change-shape-derived defaults.                       |
+
 ### Step 5: Plan Approval
 
 - Always print the plan table on stderr (PR#, scope, files, LOC, bookmark).
@@ -177,7 +199,7 @@ A non-conformant subject aborts `execute-stack.py` BEFORE any mutation.
   3. `jj describe -m <conventional-msg>` (msg composed by `lib.commit_message`, mirroring `coding:commit` format — do not shell out).
   4. `jj bookmark set <slug>/NN-<scope>` per `GIT-PR-STACK-01`.
   5. `jj git push --bookmark <name>`.
-  6. Read `../write-pr/references/templates/pr.md`, substitute placeholders from the proposal entry, and write the body to a tempfile.
+  6. Read `../write-pr/references/templates/pr.md`, substitute placeholders from the proposal entry, and write the body to a tempfile. Each slice's proposal MUST include a self-contained `context_body` and `implementation_body`; do not reference other PRs in the stack from the body. `execute-stack.py` HARD-FAILS (exits non-zero, names the offending slice) when either field is empty or contains stack-metadata boilerplate (e.g. `Part of stack ...`, `Files in this slice`). Fix the proposal at source — there is no auto-padding fallback.
   7. `gh pr create --draft --title "<conventional-title>" --body-file <tmp> --base <prev_or_main>` per `GIT-PR-STACK-06`.
 
 ### Step 7: Verify
@@ -211,6 +233,7 @@ A non-conformant subject aborts `execute-stack.py` BEFORE any mutation.
 - Each mutating script writes `state.last_op_id = jj op log -n1 --no-graph -T 'self.id().short()'`.
 - Rollback any step with `jj op restore <last_op_id>`.
 - A non-conventional commit subject aborts `execute-stack.py` BEFORE any `jj`/`gh` mutation, with a clear error message naming the failing token.
+- A slice with an empty or boilerplate-only `context_body` / `implementation_body` aborts `execute-stack.py` BEFORE any `jj`/`gh` mutation, with a clear error naming the offending slice (`#NN <bookmark>`). There is no auto-padding fallback; the proposal must be fixed at source.
 - `gh pr create` failures leave the bookmark pushed but the PR un-opened — re-run `execute-stack.py --dry-run` to see the residual plan, then re-execute for the failing entry only (state file dedupes by bookmark).
 - `--fix-up` against an already-merged bookmark aborts BEFORE any rewrite or push: `gh pr view --json state` returns `MERGED`, `execute-stack.py` exits with a non-zero status and prints the failing bookmark + a pointer to sub-flow C (corrective PR) in `references/workflow-correct.md`. No `jj` mutation is performed.
 - The mandatory post-rewrite/post-follow-up restack (`scripts/restack.py --slug <slug>`) runs even if the originating `--fix-up` (or follow-up) succeeded but pushed only a single bookmark — failure to restack downstream PRs is treated as a hard error and surfaced in the summary.
