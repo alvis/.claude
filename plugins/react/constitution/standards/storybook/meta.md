@@ -6,7 +6,7 @@ _Standards for Storybook stories, organization, and documentation patterns_
 
 🚨 **[IMPORTANT]** You MUST also read the following standards together with this file
 
-- React Components Standards (standard:react-components) - Storybook documents React components and requires understanding component implementation patterns
+- React Components Standards (standard:components) - Storybook documents React components and requires understanding component implementation patterns
 - Documentation Standards (plugin:coding:standard:documentation) - Storybook stories serve as living documentation and must follow documentation principles
 - TypeScript Standards (plugin:coding:standard:typescript) - All story examples use TypeScript patterns and type definitions
 - General Principles (plugin:coding:standard:universal) - Story code must follow foundational coding principles and best practices

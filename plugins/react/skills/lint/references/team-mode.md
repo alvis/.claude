@@ -30,9 +30,9 @@ You are the **Lead Orchestrator**. Your role is strictly **orchestration** — y
    a. **Collect all available standards**: Extract every standard file path listed under **all** "Plugin Constitution > Standards" sections in your system prompt. These paths span all active plugins (coding, react, backend, etc.) and system-level configurations. If the system prompt does not contain standard paths, fall back to `Glob` searching for `**/constitution/standards/*.md` across plugin directories.
    b. **Select the react base set**: From the collected paths, include every standard rooted under the react plugin (path contains `/plugins/react/constitution/standards/`). Match by filename stem against the following expected set:
       - `accessibility`
-      - `react-components`
-      - `react-hooks`
-      - `react-project-structure`
+      - `components`
+      - `hooks`
+      - `project-structure`
       - `storybook`
    c. **Append the universal coding subset**: `.tsx` / `.jsx` files are still TypeScript/JavaScript, so they obey the cross-cutting coding standards. From the collected paths, also include the standards from the coding plugin whose filename stem matches:
       - `documentation`

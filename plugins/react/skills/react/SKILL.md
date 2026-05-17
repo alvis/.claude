@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessag
 
 # React Standards
 
-Always-on enforcer for the React/Next.js surface. Loads the four React sub-standards and routes detail work to specialised skills. Standards content lives in the standard files — this skill links to them, it does not duplicate them.
+Always-on enforcer for the React/Next.js surface. Loads the six React sub-standards and routes detail work to specialised skills. Standards content lives in the standard files — this skill links to them, it does not duplicate them.
 
 ## When to use / triggers
 
@@ -22,13 +22,15 @@ Activate proactively whenever any of these are happening:
 - Managing React component state (local, lifted, or via Context)
 - Combining Tailwind CSS classes with React component markup
 - Writing or updating Storybook stories (`*.stories.tsx`, `*.demo.stories.tsx`)
+- Creating any reusable building block (component, hook, primitive, layout)
+- Authoring or overriding a theme / CSS variable contract / `[data-theme]` scope
 - Explicit user mentions of: React, Next.js, JSX, hooks, components, stories, memoization, ARIA, accessibility on web
 
 Skip when the work is purely backend, CLI, build-config, or non-UI library code with no React surface.
 
 ## Standards loaded
 
-Four sub-standards govern this surface. Each has a three-tier layout (`meta.md` for orientation, `scan.md` to audit existing code, `write.md` to author new code, plus a `rules/` directory for granular violations).
+Six sub-standards govern this surface. Each has a three-tier layout (`meta.md` for orientation, `scan.md` to audit existing code, `write.md` to author new code, plus a `rules/` directory for granular violations).
 
 ### Accessibility (WCAG 2.1 AA)
 
@@ -43,18 +45,18 @@ Semantic HTML, keyboard navigation, ARIA, focus management, forms, color/contras
 
 Functional components with TypeScript interfaces, single responsibility, prop design, state placement, performance (`memo`/`useMemo`/`useCallback`), Next.js integration patterns.
 
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-components/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-components/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-components/write.md`
+- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/meta.md`
+- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/scan.md`
+- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/write.md`
 - Rule groups: `RC-NAMING-*`, `RC-STRUCT-*`, `RC-PROPS-*`, `RC-STATE-*`, `RC-PERF-*`, `RC-NEXT-*`
 
 ### React Hooks
 
 `use*` naming, consistent return shapes, dependency arrays, async data hooks (`{ data, loading, error, refetch }`), cleanup, stable references, composition, `useReducer` for complex state.
 
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-hooks/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-hooks/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/react-hooks/write.md`
+- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/meta.md`
+- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/scan.md`
+- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/write.md`
 - Rule groups: `RH-NAMING-*`, `RH-RETURN-*`, `RH-DEPS-*`, `RH-ASYNC-*`, `RH-CLEANUP-*`, `RH-STABLE-*`, `RH-COMPOSE-*`, `RH-REDUCER-*`
 
 ### Storybook
@@ -65,6 +67,24 @@ PascalCase `.stories.tsx` filenames, path-based titles, complete state coverage 
 - Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/storybook/scan.md`
 - Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/storybook/write.md`
 - Rule groups: `SB-NAME-*`, `SB-ORG-*`, `SB-COVERAGE-*`, `SB-STRUCT-*`, `SB-PLAY-*`, `SB-CONTROLS-*`, `SB-PURE-*`
+
+### React Project Structure
+
+Reusability tiers (workspace-package → route → feature → shared → utility → type), folder layout, route organisation, component placement, feature boundaries, utility separation, promotion paths between tiers, workspace-package extraction.
+
+- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/meta.md`
+- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/scan.md`
+- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/write.md`
+- Rule groups: `RPS-LAYOUT-*`, `RPS-ROUTE-*`, `RPS-COMPS-*`, `RPS-FEAT-*`, `RPS-UTIL-*`, `RPS-PROMO-*`, `RPS-WS-*`
+
+### React Theming
+
+CSS variable contracts, theme variants, Tailwind integration, `[data-theme]` scopes, override patterns, theme authoring for shared components and client apps.
+
+- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/meta.md`
+- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/scan.md`
+- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/write.md`
+- Rule groups: `RT-CONTRACT-*`, `RT-VARIANT-*`, `RT-TAILWIND-*`, `RT-OVERRIDE-*`
 
 ## Workflow: scan → write → verify
 
@@ -107,8 +127,9 @@ When reading or reviewing existing `.tsx` / `.jsx` / hooks / stories:
 When creating or modifying components, hooks, or stories:
 
 - Load the relevant `write.md` files BEFORE drafting code so patterns are correct on first pass.
-- Always pair `react-components/write.md` with `accessibility/write.md` (every component must be accessible).
-- Add `react-hooks/write.md` whenever a `use*` function is involved.
+- Always pair `components/write.md` with `accessibility/write.md` (every component must be accessible).
+- Add `hooks/write.md` whenever a `use*` function is involved.
+- Before drafting, decide the reusability tier (workspace-package → route → feature → shared → utility → type). Pair `theming/write.md` whenever a shared component is authored or a client app sets up a theme.
 - Add `storybook/write.md` whenever a `*.stories.tsx` file is involved.
 - Honour the dependent-standard chain declared in each `meta.md` (TypeScript, Function, Naming, Documentation, Testing, File Structure standards from the coding plugin).
 
