@@ -10,7 +10,7 @@ argument-hint: <instruction> [--resume]
 
 # Write Code
 
-Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline. Takes a feature instruction and drives it through project setup, design discovery, skeleton drafting, implementation, test fixing, optimization, and refactoring -- producing production-ready, fully tested code.
+Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline, taking a feature instruction and driving it through project setup, design discovery, skeleton drafting, implementation, test fixing, optimization, and refactoring to produce production-ready, fully tested code. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Because this orchestrator threads work through skeleton, implementation, fix, and refactor in turn, each downstream pass must absorb the previous one rather than sit beside it — the finished module should read as if a single author had written it in one sitting, with no archaeology of the staged passes visible in its surface.
 
 ## Purpose & Scope
 

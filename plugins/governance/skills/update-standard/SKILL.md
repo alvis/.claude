@@ -10,7 +10,7 @@ argument-hint: [standard specifier] [--changes=...]
 
 # Update Standard
 
-Update standard directories to align with the latest three-tier standard templates and apply specified changes using intelligent delegation to subagents. Each standard is a directory containing `meta.md`, `scan.md`, `write.md`, and a `rules/` subdirectory. Handles both single standard updates and bulk updates of all standards in parallel.
+Update standard directories to align with the latest three-tier standard templates and apply specified changes using intelligent delegation to subagents — each standard is a directory containing `meta.md`, `scan.md`, `write.md`, and a `rules/` subdirectory, and the skill handles both single standard updates and bulk updates of all standards in parallel. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Standards are read as authoritative single voices, so updates must be folded into the existing meta/scan/write tiers — not deposited as "Update YYYY-MM" trailers or parallel "newer rule" blocks beside the original wording they supersede.
 
 ## Purpose & Scope
 
@@ -212,7 +212,7 @@ Spawn parallel specialized subagents (max 3 standard directories per batch, max 
 ### Multiple Complex Changes
 
 ```bash
-/update-standard "react-components" --change1="Add React 18 concurrent features" --change2="Update testing requirements for RTL" --change3="Add accessibility compliance"
+/update-standard "components" --change1="Add React 18 concurrent features" --change2="Update testing requirements for RTL" --change3="Add accessibility compliance"
 # Each change applied to the appropriate tier file (2a, 2b, 2c)
 # Agent ensures changes don't conflict across meta.md, scan.md, write.md
 # Ultrathink mode verifies comprehensive integration

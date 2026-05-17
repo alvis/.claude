@@ -10,7 +10,7 @@ argument-hint: [agent specifier] [--changes=...]
 
 # Update Agent
 
-Updates agent files to align with the latest template structure and applies any specified changes while preserving unique agent characteristics.
+Updates agent files to align with the latest template structure and applies any specified changes while preserving unique agent characteristics. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. That standard is precisely how an agent's voice is preserved across updates: revised expertise, collaboration links, and template sections must be woven into the agent's existing prose so the file still reads as one continuous personality — never as the original agent with a "Recent updates" or "Additional capabilities" section bolted beneath it.
 
 ## Purpose & Scope
 

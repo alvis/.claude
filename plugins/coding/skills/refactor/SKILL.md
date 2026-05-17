@@ -10,7 +10,7 @@ argument-hint: <area> [--focus=naming|structure|docs|all]
 
 # Refactor Code
 
-Refactors implementation for quality and maintainability without changing functionality. Improves code structure, enhances readability, applies proper naming conventions, adds comprehensive JSDoc documentation, and performs final quality validation ensuring all tests continue to pass.
+Refactors implementation for quality and maintainability without changing functionality, improving structure, readability, naming, and JSDoc while keeping every test green. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. That standard is why refactoring exists: it is the discipline by which earlier compromises are absorbed into the current shape of the code, not the act of layering new niceties on top — and the Two-Stage Rule below is its concrete application to file size.
 
 ## Purpose & Scope
 

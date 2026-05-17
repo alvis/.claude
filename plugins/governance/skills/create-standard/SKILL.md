@@ -8,7 +8,7 @@ argument-hint: <name> [--detail=...]
 
 # Create Standard
 
-Create a new technical standard directory in the [plugin]/constitution/standards directory following the three-tier structure (meta.md, scan.md, write.md, and rules/). $ARGUMENTS
+Create a new technical standard directory in the [plugin]/constitution/standards directory following the three-tier structure (meta.md, scan.md, write.md, and rules/) from $ARGUMENTS, producing a standard that already reads as a single deliberate voice across its three tiers — meta.md, scan.md, and write.md as one coherent statement of the rule — rather than a template skeleton with the author's intent dropped into trailing notes. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Future updates by `update-standard` will be held to the same bar, so the standard must be born integration-ready.
 
 ## Purpose & Scope
 

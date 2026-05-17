@@ -10,7 +10,7 @@ argument-hint: <instruction>
 
 # Draft Code Skeleton
 
-Creates TypeScript-compliant code skeletons with TODO placeholders. Drafts type definitions, function signatures, and test structure while leaving implementation details as TODOs for later completion. Corresponds to Steps 0-1 (Design Discovery + Skeleton Creation) of the TDD lifecycle.
+Creates TypeScript-compliant code skeletons with TODO placeholders — type definitions, function signatures, and test structure — leaving implementation details for later completion in Steps 0-1 (Design Discovery + Skeleton Creation) of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. The skeleton is the seed shape every later pass must grow from, not bolt onto: type signatures, file boundaries, and naming chosen here become the grain along which `complete-code` and `refactor` must work, so a skeleton that already feels native to the surrounding module saves downstream skills from having to graft a foreign shape into place.
 
 ## Purpose & Scope
 

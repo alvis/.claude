@@ -10,7 +10,7 @@ argument-hint: [specifier] [--scope=SCOPE] [--skip-unused]
 
 # Linting
 
-Apply applicable coding standards to ensure consistent code quality across the specified files. Standards are discovered at runtime from all active plugins and system context.
+Apply applicable coding standards to ensure consistent code quality across the specified files, with standards discovered at runtime from all active plugins and system context. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Lint corrections must therefore reshape the offending line into something that belongs, not wrap it in a disable comment or shadow it with a "compliant" twin — when the file is done, the only visible record of the violation is its absence.
 
 ## Arguments
 

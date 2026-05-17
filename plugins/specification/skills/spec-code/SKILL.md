@@ -10,7 +10,7 @@ argument-hint: <instruction> [--type=api|web-app|mobile|library|fullstack]
 
 # Spec Code
 
-Design new project specifications OR retrospectively document existing implementations in DESIGN.md format, following strict Notion template structure. Works in three modes: CREATE (greenfield design), UPDATE (modify existing specs), or DOCUMENT (analyze and document existing code). Performs 2-way merge with Notion by default.
+Design new project specifications OR retrospectively document existing implementations in DESIGN.md format, following strict Notion template structure across three modes — CREATE (greenfield design), UPDATE (modify existing specs), or DOCUMENT (analyze and document existing code) — performing 2-way merge with Notion by default. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. UPDATE and DOCUMENT modes are the high-risk surface here: new requirements must be folded into the spec's existing sections so the reader cannot tell which decisions are original and which were merged later — never as an "Addendum", "Revisions", or "Also note" trailer attached beneath the template.
 
 ## 🎯 Purpose & Scope
 

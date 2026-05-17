@@ -10,7 +10,7 @@ argument-hint: [specifier] [--area=AREA] [--note=...] [--plan=PATH]
 
 # Fix Code Issues
 
-Intelligently fixes code and test issues based on error messages, failing tests, or review feedback. Automatically detects the area of concern and applies the appropriate fix workflow. Corresponds to Steps 3-4 (Fix Test Issues + Optimize Test Structure) of the TDD lifecycle.
+Intelligently fixes code and test issues based on error messages, failing tests, or review feedback, automatically detecting the area of concern and applying the appropriate fix workflow across Steps 3-4 (Fix Test Issues + Optimize Test Structure) of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A fix is not a patch laid on top of the broken region; it is the smallest rewrite that lets the corrected logic sit in place as if the bug had never been there, with no `// fixed:` markers, no parallel "v2" helpers, and no defensive wrapper retained "just in case" the original path comes back.
 
 ## Purpose & Scope
 

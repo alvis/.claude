@@ -1,5 +1,10 @@
 <!--
-Unified PR template for coding:write-pr (and coding:stack-code).
+Default PR template for coding:write-pr (and coding:stack-code).
+
+This is the **default** PR template used when the repo has no GitHub PR
+template of its own checked in (e.g. `.github/PULL_REQUEST_TEMPLATE.md`).
+When a repo template exists, that template takes precedence and is emitted
+verbatim instead of this one.
 
 Required sections: Summary (first paragraph) + Checklist.
 Optional sections: Context, Implementation, Breaking, Related, Testing, Notes.
@@ -7,7 +12,7 @@ Optional sections: Context, Implementation, Breaking, Related, Testing, Notes.
 Authors fill placeholders in `{{double_braces}}`. Drop any optional section
 whose body is empty rather than leaving a stub.
 
-Placeholder schema (for non-LLM callers performing literal substitution):
+Placeholders (for non-LLM callers performing literal substitution):
 
   Name                       Required  Source / Description
   -------------------------  --------  ----------------------------------------

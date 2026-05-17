@@ -8,7 +8,7 @@ argument-hint: <command-name> [--purpose=...] [--skill1=...]
 
 # Create Custom Slash Command
 
-Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--skill1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from template:command. Ultrathink mode.
+Create a new slash command using $ARGUMENTS (format: <command-name> [--purpose=...] [--skill1=...]) following the latest best practices and template structure. Generates new slash commands from templates, configures appropriate tools and permissions, creates clean comment-free command files, and follows latest template structure from template:command. Ultrathink mode. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. The generated command must already read as a single coherent instruction sheet — purpose, tools, and workflow integrated into the template's voice — never as the template skeleton with the author's intent dropped into trailing notes or comment-style addenda for the next maintainer to merge.
 
 ## Purpose & Scope
 

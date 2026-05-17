@@ -13,7 +13,7 @@ argument-hint: <area> [--dry-run] [--target-version=X.Y]
 
 # Modernize
 
-Analyze project configuration and upgrade code to use the latest supported syntax, APIs, and patterns. Features are discovered at runtime from the reference catalog and filtered by the project's actual TypeScript/Node.js version.
+Analyze project configuration and upgrade code to use the latest supported syntax, APIs, and patterns, with features discovered at runtime from the reference catalog and filtered by the project's actual TypeScript/Node.js version. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A modernization is not a paint-over of an old idiom; the modern construct must take the legacy one's place fully, with no `// legacy:` fallbacks, no compatibility shims left behind once nothing calls them, and no parallel "new path" that the rest of the module can still bypass.
 
 ## Arguments
 

@@ -10,7 +10,7 @@ argument-hint: [--design=DESIGN.md] [--change="description"]
 
 # Plan Code
 
-Analyzes design proposals or existing specifications, generates comprehensive DRAFT.md with copy-paste ready commit blueprints, and creates lightweight PLAN.md execution roadmap. Transforms approved designs into actionable implementation plans with atomic, testable commits.
+Analyzes design proposals or existing specifications, generates a comprehensive DRAFT.md with copy-paste-ready commit blueprints, and produces a lightweight PLAN.md execution roadmap that transforms approved designs into actionable implementation plans with atomic, testable commits. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. When a proposal modifies an existing DRAFT.md or PLAN.md, the revised plan must read as a single coherent roadmap — not the prior plan with a "Proposed changes" appendix or a divergent second step list running in parallel beside the original.
 
 ## Purpose & Scope
 

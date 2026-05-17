@@ -10,7 +10,7 @@ argument-hint: [skill specifier] [--changes=...]
 
 # Update Skill
 
-Update skill files to align with the latest standard template and apply specified changes using intelligent delegation to subagents. Handles both single skill updates and bulk updates of all skills in parallel.
+Update skill files to align with the latest standard template and apply specified changes using intelligent delegation to subagents, handling both single skill updates and bulk updates of all skills in parallel. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Updates must therefore reshape the skill's existing sections in place — never a "Recent changes" trailer beneath the original workflow or a second parallel step list — and, as the Content Placement & Coherence Rule below makes binding, any updated skill that itself performs content edits on existing work must carry this same Coherence Mandate paragraph woven into its Role/Purpose section.
 
 ## Purpose & Scope
 
@@ -28,18 +28,19 @@ Update skill files to align with the latest standard template and apply specifie
 - Attempting to violate constitutional standards
 - Template file is missing or corrupted
 
-## Content Placement Rule
+## Content Placement & Coherence Rule
 
-> **SKILL.md must contain only the always-on core workflow — the path every invocation walks.**
->
-> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer (e.g. `For two-way merge mode, see references/two-way-merge.md`).
-> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** instead.
+SKILL.md is one document with one voice — the always-on core workflow every invocation walks — and what an update removes must be rewritten out cleanly rather than preserved as a vestigial trailing block. The same editorial stance governs both what stays in the file and how it stays:
+
+> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer woven into the surrounding step (e.g. `For two-way merge mode, see references/two-way-merge.md`) — not parked beneath the workflow as a "Modes" or "Variants" addendum.
+> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** rather than leaving it as a parallel path inside the current one.
 > 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
 > 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
->
-> Rationale: SKILL.md is loaded on every invocation; references are loaded on demand. Inline conditional bulk is paid for by every run that never enters the branch.
+> 5. **Editing skills carry the Coherence Mandate inline.** Any skill being updated here whose workflow performs content edits on existing work (prose, code, configuration, specs) MUST carry the verbatim Coherence Mandate paragraph woven into its own Role/Purpose narrative — not appended as a trailing bullet, callout, or "## Coherence Mandate" section at the bottom. If the target skill is missing the paragraph, the update MUST integrate it into the Role/Purpose section as part of the patch; if a prior update left it bolted on as a separate section, the patch MUST dissolve it back into the surrounding role description so the seam is invisible.
 
-**Default subtask for every update**: Before applying user-requested changes, scan SKILL.md for conditional bulk and propose offloads as part of the patch. Include the offload moves alongside the requested change set.
+Rationale: SKILL.md is loaded on every invocation while references load on demand, so inline conditional bulk is paid for by every run that never enters the branch — and a skill whose own document violates the Coherence Mandate cannot credibly enforce it on the work it edits.
+
+**Default subtask for every update**: Before applying user-requested changes, scan SKILL.md for (a) conditional bulk to offload per items 1-4 above and (b) Coherence Mandate compliance per item 5 (presence, placement, seam-test). Propose offloads and any required mandate integration as part of the patch, alongside the requested change set.
 
 ## Workflow
 

@@ -14,12 +14,12 @@ Compose a conventional-commit PR title and a unified PR body for a single commit
 
 ### Purpose & Context
 
-**Purpose**: Produce a single, consistent PR title (Conventional Commits) plus a single unified PR body (one Markdown template at `references/templates/pr.md`) from one commit's subject + body trailers. No type taxonomy, no zone classifier, no Python scripts.
+**Purpose**: Produce a single, consistent PR title (Conventional Commits) plus a single unified PR body from one commit's subject + body trailers. The PR body follows the repo's own GitHub PR template when one is checked into the repo; otherwise the bundled default at `references/templates/pr.md` is used. No type taxonomy, no zone classifier, no Python scripts.
 
 **When to use**:
 - A human asks for a PR title + body for the current `jj` change or a referenced commit.
-- The sibling `coding:stack-code` skill needs the unified template content per stacked PR (it inlines the same logic in `execute-stack.py`).
-- Any caller wants a deterministic, conventional-commit-validated title and a placeholder-filled body before opening a PR.
+- The sibling `coding:stack-code` skill needs the PR body per stacked PR (it inlines the same logic in `execute-stack.py`).
+- Any caller wants a deterministic, conventional-commit-validated title and a body built from the repo's PR template (or the bundled default) before opening a PR.
 
 **Prerequisites**:
 - `jj` CLI on PATH for change extraction (falls back to `git` when `jj` is absent).
@@ -27,7 +27,7 @@ Compose a conventional-commit PR title and a unified PR body for a single commit
 
 ### Your Role
 
-You are a **PR Author** who reads one commit, validates its subject against the Conventional Commits regex, and fills `references/templates/pr.md` with the commit's narrative content. You do not classify zones, do not append review boilerplate, and do not merge with repo-local PR templates — zone enforcement lives in `GIT-PR-SIZE-01..04` (reviewer's job, not the author's).
+You are a **PR Author** who reads one commit, validates its subject against the Conventional Commits regex, resolves which PR template to use (the repo's own GitHub PR template if checked in, else the bundled default at `references/templates/pr.md`), and — when using the bundled default — fills its placeholders from the commit's narrative content. A repo-local template is emitted verbatim with no substitution. You do not classify zones and do not append review boilerplate — zone enforcement lives in `GIT-PR-SIZE-01..04` (reviewer's job, not the author's).
 
 ## 2. SKILL OVERVIEW
 
@@ -39,13 +39,13 @@ You are a **PR Author** who reads one commit, validates its subject against the 
 
 #### Optional Inputs
 
-- None. Behaviour is deterministic given the commit ref.
+- None. Behavior is deterministic given the commit ref.
 
 #### Expected Outputs
 
 - **stdout** — exactly two blocks separated by a single blank line:
   1. The conventional-commit **title** (one line, regex-validated).
-  2. The unified **body** Markdown (template at `references/templates/pr.md` with placeholders filled).
+  2. The **body** Markdown — the repo's checked-in GitHub PR template when one is present, otherwise the bundled default (`references/templates/pr.md`) with placeholders filled.
 
 The caller is responsible for splitting the two and piping the body into `gh pr create`. Recommended one-liner:
 
@@ -55,7 +55,24 @@ write-pr | { read -r TITLE; read -r _; gh pr create --draft --title "$TITLE" --b
 
 #### Data Flow Summary
 
-The skill resolves the supplied (or default `@`) commit ref via `jj`/`git`, validates the subject against the Conventional Commits regex, then fills the unified `references/templates/pr.md` placeholders from commit body trailers. The result is a single deterministic stdout stream: title line, blank line, then the filled Markdown body — ready for the caller to pipe into `gh pr create`.
+The skill resolves the supplied (or default `@`) commit ref via `jj`/`git`, validates the subject against the Conventional Commits regex, then resolves which PR template to use: the repo's own GitHub PR template if checked in (see "PR Template Resolution" below), or the bundled default at `references/templates/pr.md`. It then fills placeholders (if the chosen template has any) from commit body trailers. The result is a single deterministic stdout stream: title line, blank line, then the Markdown body — ready for the caller to pipe into `gh pr create`.
+
+### PR Template Resolution
+
+The bundled default at `references/templates/pr.md` is just that — a **default**. If the repo defines its own GitHub PR template, that template takes precedence and is emitted verbatim (no placeholder substitution is performed against a foreign template).
+
+Resolution order (first hit wins; paths relative to the repo root):
+
+1. `.github/PULL_REQUEST_TEMPLATE.md`
+2. `.github/pull_request_template.md`
+3. `docs/PULL_REQUEST_TEMPLATE.md`
+4. `docs/pull_request_template.md`
+5. `PULL_REQUEST_TEMPLATE.md`
+6. `pull_request_template.md`
+
+Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are intentionally ignored — selecting between them is a human choice and out of scope for this skill.
+
+If none of the above exist, fall back to the bundled default at `references/templates/pr.md` and apply the placeholder fill rules in step 5.
 
 ### Conventional Commits Title
 
@@ -71,7 +88,7 @@ If the commit subject does not match, exit non-zero with a clear error: which to
 
 ### Contract with Caller (`stack-code`)
 
-`stack-code` does NOT shell out to this skill. It reads `references/templates/pr.md` directly via its own `execute-stack.py` and applies the same regex (via `lib.validate_conventional_subject`). This skill remains the single source of truth for the *template file* and the *title regex*; no Python is needed here.
+`stack-code` does NOT shell out to this skill. It applies the same template-resolution rules and reads either the repo PR template or `references/templates/pr.md` directly via its own `execute-stack.py`, and applies the same regex (via `lib.validate_conventional_subject`). This skill remains the single source of truth for the *default template file*, the *resolution order*, and the *title regex*; no Python is needed here.
 
 ### Dependencies
 
@@ -93,10 +110,10 @@ If the commit subject does not match, exit non-zero with a clear error: which to
 [Step 3: Validate subject regex]        -> conventional-commits allowlist
    |
    v
-[Step 4: Read template]                 -> references/templates/pr.md
+[Step 4: Resolve template]              -> repo's PR template if present, else bundled default
    |
    v
-[Step 5: Fill placeholders from body]   -> summary, context, implementation, etc.
+[Step 5: Fill placeholders from body]   -> summary, context, implementation, etc. (default template only)
    |
    v
 [Step 6: Emit title + blank line + body to stdout]
@@ -110,10 +127,10 @@ If the commit subject does not match, exit non-zero with a clear error: which to
 ### Skill Steps
 
 1. **Resolve the commit ref**. If a positional arg is given, use it; else default to `@`. Try `jj log -r <ref> --no-graph -T 'description'` first; fall back to `git log -1 --format=%B <ref>` when `jj` exits non-zero.
-2. **Extract subject + body**. The subject is the first non-empty line. The body is everything after the first blank line. Recognise commit trailers (e.g. `Refs: #123`, `Breaking-Change: <text>`) and route them to the matching template sections.
+2. **Extract subject + body**. The subject is the first non-empty line. The body is everything after the first blank line. Recognize commit trailers (e.g. `Refs: #123`, `Breaking-Change: <text>`) and route them to the matching template sections.
 3. **Validate the subject** against the Conventional Commits regex (above). On mismatch, exit 2 with a message naming the failing token and the regex.
-4. **Read the template** at `references/templates/pr.md`. Use `Read` tool on the absolute path resolved relative to this skill directory.
-5. **Fill placeholders** from the commit body:
+4. **Resolve the template**. Walk the resolution order in "PR Template Resolution" above against the repo root. If a repo PR template is found, emit it verbatim — skip step 5 entirely (the repo template owns its own sections, and we MUST NOT mutate it). If no repo template exists, fall back to the bundled default at `references/templates/pr.md` (absolute path resolved relative to this skill directory) and continue to step 5.
+5. **Fill placeholders** from the commit body (default template only):
    - `{{summary_paragraph}}` — first body paragraph (≤3 sentences); fall back to the subject's text after `: ` if the body is empty.
    - `{{context_body}}` — content under a `## Context` / `Why:` / `Background:` heading, if present.
    - `{{implementation_body}}` — content under `## Implementation` / `What:` / `How:`, if present.
@@ -134,16 +151,16 @@ If the commit subject does not match, exit non-zero with a clear error: which to
 
 ### Error Handling
 
-| Condition                                  | Behaviour                                                     |
+| Condition                                  | Behavior                                                      |
 |--------------------------------------------|---------------------------------------------------------------|
 | Unknown commit ref                         | Exit 2; print "no such revision" + the failing ref.           |
 | Subject violates conventional regex        | Exit 2; print the regex, the offending subject, and the failing token. |
 | Missing `jj` AND `git`                     | Exit 3; message "no commit source available".                 |
-| Template file missing                      | Exit 4; print the absolute path that failed to resolve.       |
+| Bundled default template missing           | Exit 4; print the absolute path that failed to resolve. Only reachable when no repo PR template exists AND the bundled default is missing. |
 
 ### Idempotence
 
-Same commit ref + same template file = byte-identical stdout. No timestamps, no random IDs, no diff stats.
+Same commit ref + same resolved template = byte-identical stdout. No timestamps, no random IDs, no diff stats.
 
 ## Examples
 

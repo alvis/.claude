@@ -10,7 +10,7 @@ argument-hint: <area> [--test-only]
 
 # Complete Code Implementation
 
-Completes all TODO-marked code in the specified area using a test-first approach (TDD Green Phase). Scans for TODO, FIXME, and HACK comments, then implements the missing functionality with minimal code to make tests pass. Corresponds to Step 2 (Implementation / Green Phase) of the TDD lifecycle.
+Completes all TODO-marked code in the specified area using a test-first approach (TDD Green Phase), scanning for TODO, FIXME, and HACK comments and implementing the missing functionality with minimal code to make tests pass — Step 2 of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A completed TODO must therefore replace the placeholder rather than crouch beside it: the implementation has to take the shape the skeleton promised, with no leftover comment scaffolds, no parallel "new" helpers duplicating an existing one, and no marker that this region was ever incomplete.
 
 ## Purpose & Scope
 
