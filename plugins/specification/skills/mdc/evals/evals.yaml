@@ -1,0 +1,43 @@
+# Evaluation definition for specification:mdc
+# Type: process (workflow skill with deterministic invariant checks)
+
+test_cases:
+  - name: read_mode_explains_block_tree
+    prompt: "Read /tmp/example.mdc and describe its block tree and the refs on each block."
+    expectations:
+      - text: "Identifies front matter, lists block annotations with their refs, and does NOT flag missing closing markers as errors."
+        type: content
+
+  - name: edit_mode_preserves_invariants
+    prompt: "In foo.mdc, update the annotation `confidence: low` to `confidence: high` on the block with ref `claim-7`."
+    expectations:
+      - text: "Uses Grep to locate the ref first, issues a minimal Edit that touches only the annotation line, re-Reads the modified region to verify no blank line was introduced between annotation and block."
+        type: content
+
+  - name: author_mode_emits_closing_markers
+    prompt: "Author a new MDC file describing a quarterly review with two top-level sections, each with two child paragraphs that have refs."
+    expectations:
+      - text: "Produces front matter delimited by ---, uses 2-space indentation for children, places block annotations on the line immediately above their target with NO blank line, and emits `--{ ref: <id> }--` closing markers on ref-bearing blocks that have children."
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "edit this .mdc file to add a child block under ref intro"
+    - "update the annotation for ref claim-7 in report.mdc"
+    - "add a closing marker to the parent block in foo.mdc"
+    - "convert this draft into MDC format"
+    - "author a new .mdc file for our quarterly review"
+    - "read .code-spec/notion-mdc-examples-bae07265f95c458d946dfda63f9b352a.mdc and summarise its block tree"
+    - "rename the ref `intro` to `overview` in this MDC file"
+    - "what does this .mdc file say"
+    - "append a paragraph as a child of ref highlights in review.mdc"
+
+  should_not_trigger:
+    - "validate this .mdc against its schema"           # validation is out of scope
+    - "sync this .mdc back to Notion"                   # belongs to specification:sync-notion
+    - "render this .mdc as HTML"                        # rendering is out of scope
+    - "diff these two .mdc files using mdc.diff()"      # @theriety/mdc runtime is out of scope
+    - "explain how the @theriety/mdc parser works"      # meta-question about the library, not a file op
+    - "create a new markdown README for this project"   # plain Markdown, not MDC
+    - "format this JSON file"                           # wrong file type
+    - "open the .mdc spec page in Notion"               # navigation, not file I/O
