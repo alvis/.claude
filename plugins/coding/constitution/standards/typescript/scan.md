@@ -38,6 +38,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use throw-only flow for expected failures [`TYP-TYPE-05`]
 - DO NOT cast unknown input without validation [`TYP-TYPE-06`]
 - DO NOT misuse testing-only cast/typing exception patterns in production paths, such as `as unknown as User` or `as never` [`TYP-TYPE-07`]
+- DO NOT defensively narrow caught exceptions with `error instanceof Error ? error.message : String(error)`; cast directly as `Error` or use an existing project helper such as `ensureError(exception)` [`TYP-TYPE-08`]
 
 ## Rule Matrix
 
@@ -71,3 +72,4 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TYP-TYPE-05` | Expected failure uses throw-only flow | `throw new Error("not found")` |
 | `TYP-TYPE-06` | Unknown input is cast without validation | `const user = payload as User` |
 | `TYP-TYPE-07` | Testing exception pattern is misused in production/runtime paths | `const u = {} as unknown as User`; `fn(partialClient as never)` |
+| `TYP-TYPE-08` | Catch block uses defensive `instanceof Error` narrowing or `String(error)` instead of casting to `Error` | `const m = e instanceof Error ? e.message : String(e)`; `log.error(String(error))` |

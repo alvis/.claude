@@ -57,6 +57,7 @@
 - **TYP-TYPE-05**: For expected operational failures, prefer typed result unions over exception-only control flow.
 - **TYP-TYPE-06**: Narrow unknown data using guard functions before reading fields.
 - **TYP-TYPE-07**: Testing partial-cast chains are test-only and forbidden in production/runtime modules.
+- **TYP-TYPE-08**: In catch blocks, cast caught values directly as `Error` (or use an existing project helper); do not defensively narrow with `instanceof Error ? ... : String(...)`.
 
 ## Patterns
 
@@ -83,6 +84,7 @@
 | Expected operational failure | Typed result union (`Result<T, E>`) |
 | Programmer error / invariant violation | `throw` |
 | External unknown input | Validate as `unknown` first |
+| Caught exception in catch block | Cast as `Error` directly or use existing helper (e.g. `ensureError`) |
 
 ## Anti-Patterns
 
@@ -95,6 +97,7 @@
 - Using `export * from './leaf-file'` in a barrel (leaks internals).
 - Explicitly picking named exports from another barrel (duplicates its surface area).
 - Skipping guards at external data boundaries.
+- Defensive `instanceof Error` narrowing or `String(error)` inside catch blocks (`TYP-TYPE-08`).
 
 ## Quick Decision Tree
 

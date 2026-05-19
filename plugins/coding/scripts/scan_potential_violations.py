@@ -12,6 +12,7 @@ Categories (all opt-in via --category, default `all`):
                          covers both runtime `await import('./x')` and type-position `typeof import('./x')`.
                          skips matches inside `vi.mock(...)` / `vi.hoist(...)` callbacks.
   comment-rule-id     standard rule IDs (e.g. DOC-FORM-03, TST-STRU-01) inside source-code comments (DOC-CONT-05)
+  catch-error-defensive  defensive `error instanceof Error ? ... : String(error)` ternary OR `String(<catch-binding>)` inside catch (TYP-TYPE-08)
 
 Output is plain text grouped by category then file, with --before/--after
 context lines per match. The script always exits 0 — it is advisory, not a gate.
@@ -36,6 +37,7 @@ type Category = Literal[
     "conditional-spread",
     "dynamic-import-static",
     "comment-rule-id",
+    "catch-error-defensive",
 ]
 CATEGORIES: tuple[Category, ...] = get_args(Category.__value__)
 CATEGORY_LABELS: dict[Category, str] = {
@@ -47,6 +49,7 @@ CATEGORY_LABELS: dict[Category, str] = {
     "conditional-spread": "Conditional object spread (`...(cond ? {…} : {})`)",
     "dynamic-import-static": "Dynamic `import()` with static path (TYP-IMPT-07)",
     "comment-rule-id": "Standard rule ID in source comment (DOC-CONT-05)",
+    "catch-error-defensive": "Defensive catch-block error narrowing (TYP-TYPE-08)",
 }
 
 SOURCE_GLOBS = ("*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs")
@@ -77,6 +80,20 @@ CONDITIONAL_SPREAD = re.compile(
     r"\s*\)",
     re.DOTALL,
 )
+# TYP-TYPE-08 — see plugins/coding/constitution/standards/typescript/rules/typ-type-08.md
+# Detector A: defensive instanceof-Error ternary, e.g.
+#   `e instanceof Error ? e.message : String(e)` (or `.stack`, `.cause`)
+# allows whitespace/newlines between tokens; uses a backreference to ensure the
+# same identifier appears on both branches.
+CATCH_INSTANCEOF_ERROR_TERNARY = re.compile(
+    r"\b(?P<id>[A-Za-z_$][\w$]*)\s+instanceof\s+Error\s*\?\s*"
+    r"(?P=id)\.\w+\s*:\s*String\s*\(\s*(?P=id)\s*\)",
+    re.DOTALL,
+)
+# Detector B: `String(<ident>)` whose <ident> matches an enclosing `catch (<ident>)`
+# binding. Implemented as a stateful scan rather than a single regex (see scanner fn).
+CATCH_BINDING = re.compile(r"\bcatch\s*\(\s*(?P<id>[A-Za-z_$][\w$]*)")
+STRING_OF_IDENT = re.compile(r"\bString\s*\(\s*(?P<id>[A-Za-z_$][\w$]*)\s*\)")
 # TYP-IMPT-07 — see plugins/coding/constitution/standards/typescript/rules/typ-impt-07.md
 # matches `import(<literal>)` where the argument is a string literal or a backtick
 # template literal WITHOUT `${...}`. Catches BOTH runtime (`await import('./x')`)
@@ -289,6 +306,48 @@ def scan_dynamic_import_static(*, path: Path, lines: list[str], matches: list[Ma
         matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
 
 
+def scan_catch_error_defensive(*, path: Path, lines: list[str], matches: list[Match]) -> None:
+    text = "\n".join(lines)
+
+    # Detector A — flag the instanceof-Error ternary anywhere (not just in catch),
+    # because the pattern is the anti-pattern regardless of position.
+    for hit in CATCH_INSTANCEOF_ERROR_TERNARY.finditer(text):
+        lineno = text.count("\n", 0, hit.start()) + 1
+        matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
+
+    # Detector B — String(<binding>) inside the lexical body of `catch (<binding>) { ... }`.
+    # Walk catch openers, track brace depth from the opening `{`, and within that span
+    # flag any `String(<binding>)`.
+    pos = 0
+    while True:
+        opener = CATCH_BINDING.search(text, pos)
+        if not opener:
+            break
+        binding = opener.group("id")
+        # advance past `catch (id)` and find the next `{`
+        brace_open = text.find("{", opener.end())
+        if brace_open == -1:
+            break
+        depth = 1
+        i = brace_open + 1
+        while i < len(text) and depth > 0:
+            ch = text[i]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            i += 1
+        body = text[brace_open + 1 : i - 1]
+        body_start = brace_open + 1
+        for hit in STRING_OF_IDENT.finditer(body):
+            if hit.group("id") != binding:
+                continue
+            abs_pos = body_start + hit.start()
+            lineno = text.count("\n", 0, abs_pos) + 1
+            matches.append(Match(path, lineno, lines[lineno - 1].rstrip("\n")))
+        pos = i
+
+
 def scan_comment_rule_id(*, path: Path, lines: list[str], matches: list[Match]) -> None:
     """flag rule-ID-shaped tokens inside source comments.
 
@@ -327,6 +386,7 @@ SCANNERS: dict[Category, tuple[Scanner, tuple[str, ...], bool]] = {
     "conditional-spread": (scan_conditional_spread, SOURCE_GLOBS, False),
     "dynamic-import-static": (scan_dynamic_import_static, SOURCE_GLOBS, False),
     "comment-rule-id": (scan_comment_rule_id, SOURCE_GLOBS, False),
+    "catch-error-defensive": (scan_catch_error_defensive, SOURCE_GLOBS, False),
 }
 
 
