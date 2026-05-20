@@ -14,7 +14,7 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] 
 
 ### Purpose & Context
 
-**Purpose**: Turn an approved Notion specification ticket into landed code by resolving ticket status, selecting the right execution mode (commit-plan, iterate, draft-then-ask, audit-and-complete, verify-only, flag-mismatch, or refuse), and orchestrating coding:* child skills in place against the current working copy, delegating all jj organization to `coding:stack-code`. Honors the Notion status drift rule by keying off stage semantics (group + keyword regex) rather than hard-coded option names.
+**Purpose**: Turn an approved Notion specification ticket into landed code by resolving ticket status, selecting the right execution mode (commit-plan, iterate, draft-then-ask, audit-and-complete, verify-only, flag-mismatch, or refuse), and orchestrating coding:* child skills in place against the current working copy, delegating all jj organization to `coding:commit` (with `--create-pr` when stacked PRs are required). Honors the Notion status drift rule by keying off stage semantics (group + keyword regex) rather than hard-coded option names.
 
 **When to use**:
 
@@ -22,7 +22,7 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] 
 - When an approved plan-code output (DRAFT.md + PLAN.md) is ready to be translated into commits
 - When a previously-started implementation needs to be audited and finished against its spec
 - When a Notion ticket status signals readiness for coding (group=to_do/in_progress with ready/approved/implementing keywords) and the user wants work to begin
-- Stack-aware: detects when landed changes exceed `coding:stack-code` size thresholds (or semantically modify code an open lower PR depends on) and delegates slicing/restacking to `coding:stack-code` rather than committing flat
+- Stack-aware: detects when landed changes exceed the stacked-PR size thresholds (or semantically modify code an open lower PR depends on) and delegates slicing/restacking to `coding:commit --create-pr` rather than committing flat
 
 **Prerequisites**:
 
@@ -30,7 +30,7 @@ argument-hint: <notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] 
 - Local git repository (current directory or `--repo=<path>`) with the target spec's codebase
 - `specification:sync-spec` available for the Step 2 spec bundle download (hard-gated)
 - `coding:*` child skills available (draft-code, write-code, complete-code, fix, review, commit, handover)
-- `coding:stack-code` available for size-triggered slicing and upstream-restack delegation (thresholds and modes are read from that skill, never hardcoded here)
+- `coding:commit` (with `--create-pr`) available for size-triggered slicing and upstream-restack delegation (thresholds documented in `references/stack-aware-sizing.md`)
 
 ### Your Role
 
@@ -112,8 +112,8 @@ The skill fetches the Notion ticket, classifies its status by Notion `status` gr
    v
 [Step 9: Post-Change Re-Check] ─────→ (Repeat Consistency + Features + DEVIATIONS cross-ref)
    |
-   ├──→ [Step 9a: Stack-aware sizing] ──→ coding:stack-code (split|create|restack)
-   |        • large change (>~5 files OR >300 LOC OR multi-domain — thresholds read from stack-code)
+   ├──→ [Step 9a: Stack-aware sizing] ──→ coding:commit --create-pr (stacked-PR or restack)
+   |        • large change (>5 files OR >300 LOC OR multi-domain)
    |        • OR open stack detected AND landed code semantically alters a lower PR's contract
    |        • orchestrator NEVER calls `jj split` / `gh pr create` directly — always delegates
    v
@@ -160,7 +160,7 @@ Note:
 7. Workspace Setup (in place; scaffold DEVIATIONS.md)
 8. Execute Mode (dispatch `coding:*` children)
 9. Post-Change Re-Check (repeat 4 + 5 + DEVIATIONS cross-ref)
-9a. Stack-Aware Sizing & Restack Trigger (delegate to `coding:stack-code` when oversized or upstream-impacting)
+9a. Stack-Aware Sizing & Restack Trigger (delegate to `coding:commit --create-pr` when oversized or upstream-impacting)
 10. Thought-Experiment Gate (opus + max effort, mandatory)
 11. Git-Worktree Relocation Check (AskUserQuestion if work landed in a linked git worktree)
 12. Skill Completion Report
@@ -525,7 +525,7 @@ Dispatch one read-only mapping subagent.
 
 **Step Configuration**:
 
-- **Purpose**: Confirm work happens **in place** on the current working copy (`repo_path` = `--repo` or cwd). No `git worktree`, no jj mutation, no user prompt — `jj` tracks the dirty HEAD safely; all jj organization is deferred to Step 9a's `coding:stack-code`.
+- **Purpose**: Confirm work happens **in place** on the current working copy (`repo_path` = `--repo` or cwd). No `git worktree`, no jj mutation, no user prompt — `jj` tracks the dirty HEAD safely; all jj organization is deferred to Step 9a's `coding:commit`.
 - **Input**: `ticket`, `--repo`, `--dry-run`, `mode`
 - **Output**: `repo_path`
 - **Sub-skill**: None
@@ -629,9 +629,9 @@ After the analyst runs, **additionally read `<repo_path>/DEVIATIONS.md`** and re
 
 **Skip entirely** (record `stack_dispatch.dispatched=false` with reason) when any of: `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`, `--dry-run` is set, or `commits_landed` is empty.
 
-Otherwise, **see `references/stack-aware-sizing.md`** for the full step (size + restack trigger classification, `coding:stack-code` dispatch payload, decision rules). Step 9a is the **sole owner** of all jj organization in this skill — the orchestrator NEVER runs `jj split` / `jj bookmark set` / `jj rebase` / `gh pr create` directly; every jj mutation is dispatched through `coding:stack-code`.
+Otherwise, **see `references/stack-aware-sizing.md`** for the full step (size + restack trigger classification, `coding:commit` dispatch payload, decision rules). Step 9a is the **sole owner** of all jj organization in this skill — the orchestrator NEVER runs `jj split` / `jj bookmark set` / `jj rebase` / `gh pr create` directly; every jj mutation is dispatched through `coding:commit`.
 
-Output written back to `stack_dispatch` = `{ dispatched, mode: split|create|restack|null, slug, prs[] }` for Step 12.
+Output written back to `stack_dispatch` = `{ dispatched, mode: stacked-pr|restack|null, branch_prefix, prs[] }` for Step 12.
 
 ### Step 10: Thought-Experiment Gate
 
@@ -657,7 +657,7 @@ Otherwise, **see `references/thought-experiment.md`** for the full paper-only in
    - the resolved `git dir` path lies under `.git/worktrees/`.
    - A `jj workspace` is sanctioned — never flag it. (`jj workspace` does not produce a linked `git worktree` git-dir layout.)
 3. **If no linked git worktree is detected**: record `worktree_relocation = { detected: false, action: 'none' }` and proceed to Step 12.
-4. **If a linked git worktree IS detected**: you MUST call `AskUserQuestion` asking whether to move the landed work back onto HEAD of the main working copy. Surface the worktree path and `commits_landed` in the prompt. Record the user's choice in `worktree_relocation.action` (e.g. `relocate` | `keep`). The actual relocation, if chosen, is performed by dispatching `coding:stack-code` (the sole owner of jj organization) — never run `jj`/`git worktree` mutations directly here.
+4. **If a linked git worktree IS detected**: you MUST call `AskUserQuestion` asking whether to move the landed work back onto HEAD of the main working copy. Surface the worktree path and `commits_landed` in the prompt. Record the user's choice in `worktree_relocation.action` (e.g. `relocate` | `keep`). The actual relocation, if chosen, is performed by dispatching `coding:commit` (the sole owner of jj organization) — never run `jj`/`git worktree` mutations directly here.
 
 ### Step 12: Skill Completion
 
