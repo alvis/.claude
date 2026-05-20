@@ -7,8 +7,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scanlib.loader import load_rules
-from scanlib.predicates import SOURCE_SUFFIXES, is_spec_file
+from scanlib.predicates import PY_SUFFIXES, SOURCE_SUFFIXES, is_spec_file
 from scanlib.rule import Rule
+
+# every suffix the engine ingests — TS/JS source plus Python; per-rule
+# `applies_to` predicates then narrow each rule to the files it cares about.
+SCANNED_SUFFIXES = SOURCE_SUFFIXES | PY_SUFFIXES
 
 SKIP_DIRS = {
     "node_modules",
@@ -40,7 +44,7 @@ def iter_files(root: Path, /) -> Iterator[Path]:
             continue
         if any(part in SKIP_DIRS for part in path.parts):
             continue
-        if path.suffix.lower() not in SOURCE_SUFFIXES:
+        if path.suffix.lower() not in SCANNED_SUFFIXES:
             continue
         yield path
 

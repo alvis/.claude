@@ -7,6 +7,8 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 > **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 
+> **Scanner-backed rules**: `PYT-CORE-03`, `PYT-IMPT-03`, and `PYT-IMPT-05` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
+
 ## Quick Scan
 
 - DO NOT leave public boundaries without explicit type hints, such as `def charge(invoice, *, retries=3):` [`PYT-CORE-01`]

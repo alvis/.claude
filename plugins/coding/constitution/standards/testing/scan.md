@@ -7,6 +7,8 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 > **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 
+> **Scanner-backed rules**: `TST-CORE-03`, `TST-CORE-08`, `TST-CORE-11`, `TST-DATA-04`, `TST-STRU-01`, and `TST-STRU-03` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
+
 ## Quick Scan
 
 - DO NOT bypass TypeScript safety requirements in tests [`TST-CORE-01`]

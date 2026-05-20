@@ -1,0 +1,10 @@
+=== Test file uses `.test.*` instead of `.spec.*` (TST-STRU-01) ===
+
+input.test.ts:1  // violation: this file uses the `.test.ts` extension instead of `.spec.ts`
+  >    1: // violation: this file uses the `.test.ts` extension instead of `.spec.ts`
+       2: export function placeholder(): number {
+       3:   return 1;
+       4: }
+
+=== Summary ===
+  test-file-naming: 1 matches in 1 files

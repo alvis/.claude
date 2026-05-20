@@ -85,13 +85,30 @@ class LoaderSmokeTests(unittest.TestCase):
         "dynamic-import-static",
         "comment-rule-id",
         "catch-error-defensive",
+        "escape-cast",
+        "star-import-export",
+        "test-conditional-skip",
+        "aaa-comment",
+        "test-title-convention",
+        "test-file-naming",
+        "test-dynamic-import",
+        "author-stamp",
+        "unit-suffix",
+        "abbreviation-denylist",
+        "canonical-param-name",
+        "silent-catch",
+        "undefined-override",
+        "section-name",
+        "py-type-ignore-format",
+        "py-future-annotations",
+        "py-missing-all",
     }
 
     def setUp(self) -> None:
         self.rules = load_rules()
 
-    def test_discovers_all_nine_rules(self) -> None:
-        self.assertEqual(len(self.rules), 9)
+    def test_discovers_all_rules(self) -> None:
+        self.assertEqual(len(self.rules), 26)
 
     def test_rule_ids_are_unique(self) -> None:
         ids = [rule.id for rule in self.rules]

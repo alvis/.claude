@@ -6,6 +6,9 @@ from pathlib import Path
 # shared engine keeps all 6 to preserve coding byte-identity — react rules gate
 # on `ts_only`/`index_files`, so the extra `.mjs`/`.cjs` files never match there.
 SOURCE_SUFFIXES = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"}
+# Python source files — gated by the `python_files` predicate so the `py-*`
+# rules see `.py` files while TS/JS rules (`source_files`) never match them.
+PY_SUFFIXES = {".py"}
 TS_SUFFIXES = {".ts", ".tsx"}
 SPEC_SUFFIXES = (
     ".spec.ts",
@@ -37,6 +40,11 @@ def source_files(path: Path, /) -> bool:
 def spec_files(path: Path, /) -> bool:
     """Match only spec files (``*.spec.*``, ``*.int.spec.*``, ``*.e2e.spec.*``)."""
     return is_spec_file(path)
+
+
+def python_files(path: Path, /) -> bool:
+    """Match any Python source file — used by the ``py-*`` rules."""
+    return path.suffix.lower() in PY_SUFFIXES
 
 
 def ts_only(path: Path, /) -> bool:

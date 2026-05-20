@@ -209,7 +209,15 @@ The review skill applies the following standards (all references use format `sta
 
 **File filtering by scope**: see `references/specifier-resolution.md` (File Filtering by Scope). Prepare a separate file list per selected scope.
 
-**Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and pass the slice into each subagent's dispatch prompt as a "Candidate violations (advisory; verify against scan.md before flagging)" section, using this routing: docs gets `jsdoc-*`; test gets `test-hooks`; code-quality gets `let`; style gets all four; security gets none. Subagents MUST re-check every candidate against the loaded rule files before adding a finding. If `python3` is unavailable, log a warning and proceed without the pre-pass.
+**Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and pass the slice into each subagent's dispatch prompt as a "Candidate violations (advisory; verify against scan.md before flagging)" section, using this routing:
+
+- **docs** gets `jsdoc-uppercase`, `jsdoc-fullstop`, `comment-rule-id`, `author-stamp`, `section-name` (DOC-* rules).
+- **test** gets `test-hooks`, `test-mock-stub`, `test-conditional-skip`, `aaa-comment`, `test-title-convention`, `test-file-naming`, `test-dynamic-import`, `undefined-override` (TST-* rules).
+- **code-quality** gets `let`, `conditional-spread`, `dynamic-import-static`, `catch-error-defensive`, `escape-cast`, `star-import-export`, `silent-catch`, `unit-suffix`, `abbreviation-denylist`, `canonical-param-name`, `py-type-ignore-format`, `py-future-annotations`, `py-missing-all` (TYP-*, FUNC-*, NAM-*, ERR-*, PYT-* rules).
+- **style** gets all categories.
+- **security** gets none.
+
+Subagents MUST re-check every candidate against the loaded rule files before adding a finding — the scanner is advisory, not authoritative. If `python3` is unavailable, log a warning and proceed without the pre-pass.
 
 #### Phase 2: Execution (Subagents via Task Tool)
 
