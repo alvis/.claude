@@ -23,7 +23,7 @@ Activate proactively whenever any of these are happening:
 - Combining Tailwind CSS classes with React component markup
 - Writing or updating Storybook stories (`*.stories.tsx`, `*.demo.stories.tsx`)
 - Creating any reusable building block (component, hook, primitive, layout)
-- Authoring or overriding a theme / CSS variable contract / `[data-theme]` scope
+- Authoring or overriding a theme / CSS variable contract / `[data-brand]` scope
 - Explicit user mentions of: React, Next.js, JSX, hooks, components, stories, memoization, ARIA, accessibility on web
 
 Skip when the work is purely backend, CLI, build-config, or non-UI library code with no React surface.
@@ -79,12 +79,12 @@ Reusability tiers (workspace-package → route → feature → shared → utilit
 
 ### React Theming
 
-CSS variable contracts, theme variants, Tailwind integration, `[data-theme]` scopes, override patterns, theme authoring for shared components and client apps.
+CSS variable contracts, theme variants, Tailwind integration, `[data-brand]` scopes, override patterns, theme authoring for shared components and client apps.
 
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/theming/write.md`
-- Rule groups: `RT-CONTRACT-*`, `RT-VARIANT-*`, `RT-TAILWIND-*`, `RT-OVERRIDE-*`
+- Meta: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/meta.md`
+- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/scan.md`
+- Write new code: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/write.md`
+- Rule groups: `WT-CONTRACT-*`, `WT-VARIANT-*`, `WT-TAILWIND-*`, `WT-OVERRIDE-*`
 
 ## Workflow: scan → write → verify
 
