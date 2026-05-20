@@ -31,6 +31,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use unsafe optional object destructuring [`TYP-PARM-01`] (→ `FUNC-SIGN-04`)
 - DO NOT use inline/weak typing for exported contracts [`TYP-PARM-02`] (→ `FUNC-SIGN-05`)
 - DO NOT ignore property ordering contracts, such as `type X = { meta: string; id: string }` when canonical order is `id` then `meta` [`TYP-PARM-03`]
+- DO NOT shape class dependency contracts as infrastructure containers, such as `Readonly<{ database: Database; logger: Logger; httpClient: HttpClient }>`; use capability-shaped action functions like `Readonly<{ readUserById(id: string): Promise<User>; writeAuditEvent(event: AuditEvent): Promise<void> }>` instead [`TYP-PARM-04`]
 - DO NOT use `type` for plain object shapes (use `interface`) or `interface` for unions/intersections (use `type`), such as `type User = { id: string }` [`TYP-TYPE-01`]
 - DO NOT leave public interfaces without required docs [`TYP-TYPE-02`]
 - DO NOT use `private` keyword instead of `#` prefix for class fields, or omit `readonly` where values are never reassigned, such as `class S { private repo: Repo }` [`TYP-TYPE-03`]
@@ -65,6 +66,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TYP-PARM-01` | Optional object destructuring is unsafe | `function run({id}:Opts){}`; `function processUser({ name, role = 'user' }: UserOptions) {` |
 | `TYP-PARM-02` | Exported contract uses inline/weak typing | `export function setUser(p:any){}` |
 | `TYP-PARM-03` | Property ordering contract is ignored | `type X={meta:string,id:string}` |
+| `TYP-PARM-04` | Class dependency contract shaped as infrastructure containers instead of named capabilities | `Readonly<{ database: Database; logger: Logger; httpClient: HttpClient }>` |
 | `TYP-TYPE-01` | `type` used for object shape (should be `interface`) or `interface` used for union/intersection (should be `type`) | `type User = { id: string }` |
 | `TYP-TYPE-02` | Public interface lacks required docs | `interface User { id: string }`; `interface User {` |
 | `TYP-TYPE-03` | `private` used instead of `#` prefix, or `readonly` omitted on never-reassigned field | `class S { private repo: Repo }`; `class Service {` |

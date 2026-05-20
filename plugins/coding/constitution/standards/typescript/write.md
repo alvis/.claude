@@ -47,6 +47,7 @@
 - **TYP-PARM-01**: Never destructure optional objects directly in signatures without safe defaults or guarded merging. (→ `FUNC-SIGN-04`)
 - **TYP-PARM-02**: Exported functions with non-trivial input/output must use named interfaces or types. (→ `FUNC-SIGN-05`)
 - **TYP-PARM-03**: Property ordering: required fields first, optional fields second, callback/function fields last.
+- **TYP-PARM-04**: Class dependency contracts (`XXXParams`/`XXXDependencies`/`XXXConfig`) name capabilities, not infrastructure handles. ✅ `Readonly<{ readUserById(id: string): Promise<User>; writeAuditEvent(event: AuditEvent): Promise<void> }>` ❌ `Readonly<{ database: Database; logger: Logger }>`.
 
 ### Type System (TYP-TYPE)
 
@@ -98,6 +99,7 @@
 - Explicitly picking named exports from another barrel (duplicates its surface area).
 - Skipping guards at external data boundaries.
 - Defensive `instanceof Error` narrowing or `String(error)` inside catch blocks (`TYP-TYPE-08`).
+- Dependency types shaped as infrastructure handles (`database`, `logger`, `httpClient`) instead of capabilities (`TYP-PARM-04`).
 
 ## Quick Decision Tree
 

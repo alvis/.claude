@@ -46,4 +46,5 @@ If exception note is missing, submission is rejected.
 - `TYP-IMPT-*`: Import ordering and subpath usage rules.
 - `TYP-MODL-*`: Module layout, export-shape, and barrel re-export strategy rules.
 - `TYP-PARM-*`: Parameter and contract-shape rules.
+  - `TYP-PARM-04`: Dependency-contract fields model named capabilities (action functions like `readContextSource`), not infrastructure containers (`database`, `logger`, `httpClient`).
 - `TYP-TYPE-*`: Type-system and narrowing strategy rules.
