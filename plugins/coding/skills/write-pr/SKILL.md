@@ -1,6 +1,6 @@
 ---
 name: write-pr
-description: 'Author conventional-commit PR titles and unified PR bodies from a `jj`/`git` change ref, emit to stdout for the caller to pipe into `gh pr create`. Triggers when: "write a PR description", "draft a pull request", "open a PR for this", "generate PR body". Also use when: stack-code needs a PR body for a stacked change, or any caller needs a conventional-title + unified-template body from a commit. Examples: "write a PR for this implementation", "draft a PR body for change @-", "open a draft PR for the current jj change".'
+description: 'Author conventional-commit PR titles and unified PR bodies from a `jj`/`git` change ref, emit to stdout for the caller to pipe into `gh pr create`. Triggers when: "write a PR description", "draft a pull request", "open a PR for this", "generate PR body". Also use when: `/coding:commit --create-pr` needs a PR body per stacked change, or any caller needs a conventional-title + unified-template body from a commit. Examples: "write a PR for this implementation", "draft a PR body for change @-", "open a draft PR for the current jj change".'
 model: opus
 allowed-tools: Bash(jj:*), Bash(gh:*), Bash(git:*), Read
 argument-hint: [<commit-ref>]
@@ -18,7 +18,7 @@ Compose a conventional-commit PR title and a unified PR body for a single commit
 
 **When to use**:
 - A human asks for a PR title + body for the current `jj` change or a referenced commit.
-- The sibling `coding:stack-code` skill needs the PR body per stacked PR (it inlines the same logic in `execute-stack.py`).
+- The sibling `coding:commit` skill (with `--create-pr`) invokes this skill once per stacked change; the orchestrating LLM consumes the `title\n\nbody` output and runs `gh pr create` directly.
 - Any caller wants a deterministic, conventional-commit-validated title and a body built from the repo's PR template (or the bundled default) before opening a PR.
 
 **Prerequisites**:
@@ -86,9 +86,9 @@ Allowlisted types: `build | chore | ci | docs | feat | fix | perf | refactor | r
 
 If the commit subject does not match, exit non-zero with a clear error: which token failed, the regex, and the offending subject.
 
-### Contract with Caller (`stack-code`)
+### Contract with Caller (`coding:commit`)
 
-`stack-code` does NOT shell out to this skill. It applies the same template-resolution rules and reads either the repo PR template or `references/templates/pr.md` directly via its own `execute-stack.py`, and applies the same regex (via `lib.validate_conventional_subject`). This skill remains the single source of truth for the *default template file*, the *resolution order*, and the *title regex*; no Python is needed here.
+`/coding:commit --create-pr` invokes this skill once per stacked change (LLM-driven; no shell-out from inside a script). The orchestrating LLM receives the `title\n\nbody` output on stdout, then runs `gh pr create --draft --title "$TITLE" --body-file -` directly. This skill remains the single source of truth for the *default template file*, the *resolution order*, and the *title regex*.
 
 ### Dependencies
 
@@ -147,7 +147,7 @@ If the commit subject does not match, exit non-zero with a clear error: which to
 - `plugins/coding/constitution/standards/git/rules/GIT-PR-SIZE-01..04` — zone thresholds. Informational only here: zone enforcement is the reviewer's job, not the PR author's. This skill does NOT classify zones nor append review-guide boilerplate.
 - `plugins/coding/constitution/standards/git/rules/GIT-PR-STACK-04` — drafts are non-negotiable when stacked. The caller passes `--draft` to `gh pr create`; this skill does not own that flag.
 - `plugins/coding/constitution/standards/git/rules/GIT-PR-STACK-06` — stacked PRs open as drafts; same caller responsibility.
-- The Conventional Commits subject convention (allowlist + regex) is enforced verbatim here and mirrored in `coding:stack-code` (`lib.validate_conventional_subject`). Both skills point at the same regex.
+- The Conventional Commits subject convention (allowlist + regex) is enforced verbatim here and mirrored in `coding:commit` (`references/conventional-commits.md`). Both skills point at the same regex.
 
 ### Error Handling
 

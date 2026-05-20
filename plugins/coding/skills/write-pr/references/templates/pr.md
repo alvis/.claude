@@ -1,5 +1,5 @@
 <!--
-Default PR template for coding:write-pr (and coding:stack-code).
+Default PR template for coding:write-pr (consumed by coding:commit --create-pr).
 
 This is the **default** PR template used when the repo has no GitHub PR
 template of its own checked in (e.g. `.github/PULL_REQUEST_TEMPLATE.md`).
