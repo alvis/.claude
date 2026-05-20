@@ -33,4 +33,4 @@ To register a new tool (e.g., `rg`):
 
 ## Why this is a closed registry
 
-`sync-tool` is intentionally not a generic package manager. It exists to guarantee a known set of coding CLIs are present at minimum versions for sibling skills (e.g., `coding:stack-code` needs `jj` and `gh`). Keeping the registry small and explicit means each tool gets a hand-tuned, audited installer that matches its upstream's official guidance.
+`sync-tool` is intentionally not a generic package manager. It exists to guarantee a known set of coding CLIs are present at minimum versions for sibling skills (e.g., `coding:commit` needs `jj` and `gh` for its save / stacked-PR flows). Keeping the registry small and explicit means each tool gets a hand-tuned, audited installer that matches its upstream's official guidance.

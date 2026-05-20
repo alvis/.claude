@@ -16,7 +16,7 @@ eval_type: process
 **When to use**:
 
 - A user requests installation/update of `brew`, `jj`, or `gh` (e.g., "install jj", "update my coding tools", "missing gh command").
-- A sibling skill (e.g., `coding:stack-code`) needs to ensure `jj`/`gh` are present before running.
+- A sibling skill (e.g., `coding:commit`) needs to ensure `jj`/`gh` are present before running.
 - Bootstrapping a fresh machine for coding work where the registered CLIs must be present at minimum versions.
 **Prerequisites**:
 
@@ -266,7 +266,7 @@ summary: |
 # Install/update everything in registry order (brew → jj → gh)
 python3 plugins/coding/skills/sync-tool/scripts/sync.py
 
-# Only sync jj and gh (e.g., from coding:stack-code)
+# Only sync jj and gh (e.g., from coding:commit)
 python3 plugins/coding/skills/sync-tool/scripts/sync.py --only=jj,gh
 
 # Status-only check; non-zero exit if anything is missing/outdated
