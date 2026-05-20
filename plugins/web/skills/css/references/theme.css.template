@@ -1,0 +1,49 @@
+/* Canonical light/dark/system color-mode scaffold.
+   Add new --ui-* semantic tokens in PAIRS: declare in :root, then override in BOTH [data-theme="light"]/[data-theme="dark"] selectors AND BOTH prefers-color-scheme media queries. */
+
+@layer theme {
+  :root {
+    --theme-light-bg: #ffffff;
+    --theme-light-fg: #18181b;
+
+    --theme-dark-bg: #09090b;
+    --theme-dark-fg: #fafafa;
+
+    color-scheme: light;
+
+    --ui-bg: var(--theme-light-bg);
+    --ui-fg: var(--theme-light-fg);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+      color-scheme: light;
+
+      --ui-bg: var(--theme-light-bg);
+      --ui-fg: var(--theme-light-fg);
+    }
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    --ui-bg: var(--theme-light-bg);
+    --ui-fg: var(--theme-light-fg);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+
+      --ui-bg: var(--theme-dark-bg);
+      --ui-fg: var(--theme-dark-fg);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --ui-bg: var(--theme-dark-bg);
+    --ui-fg: var(--theme-dark-fg);
+  }
+}
