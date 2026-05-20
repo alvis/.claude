@@ -129,6 +129,8 @@ No `mock*` or `mocked` prefixes. Use semantic names: `userRepository`, `emailGat
 
 ## Coverage Workflow
 
+0. Before measuring, remove dead code — unused constants, regexps, no-value
+   wrappers (`GEN-DESN-04`, `FUNC-ARCH-03`). Coverage applies to living code only.
 1. Write one test -> run coverage -> check delta
 2. Zero coverage gain? Delete the test
 3. Repeat until 100% line coverage

@@ -75,4 +75,4 @@ function createDefaultLogger(): Logger {
 
 ## Related
 
-FUNC-ARCH-03, GEN-DESN-01, GEN-DESN-02, GEN-CONS-01
+FUNC-ARCH-03, GEN-DESN-01, GEN-DESN-02, GEN-DESN-04, GEN-CONS-01

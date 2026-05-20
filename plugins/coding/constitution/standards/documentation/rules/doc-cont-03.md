@@ -48,4 +48,4 @@ constructor() { }
 
 ## Related
 
-DOC-CONT-01, DOC-CONT-02, DOC-LIFE-01
+DOC-CONT-01, DOC-CONT-02, DOC-LIFE-01, GEN-DESN-04

@@ -12,13 +12,13 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT bypass TypeScript safety requirements in tests [`TST-CORE-01`]
 - DO NOT implement code before writing a failing test [`TST-CORE-02`]
 - DO NOT use non-compliant test naming: `it(...)` must start with `should`; `describe(...)` titles scoped to a **symbol** (function, class, method, etc.) must use the correct approved prefix: `fn:` function, `op:` operation, `sv:` service, `cl:` class, `mt:` method, `gt:` getter, `st:` setter, `re:` regex, `ty:` type, `rc:` React component, `hk:` hook, `cmd:` CLI command — DO NOT change an existing valid prefix to a different prefix; IMPORTANT: general-purpose `describe(...)` titles (e.g. grouping by scenario or context) must **NOT** use prefixes [`TST-CORE-03`]
-- DO NOT add tests that provide no unique path or behavior [`TST-CORE-04`]
+- DO NOT add tests that provide no unique path or behavior (including a test whose name claims a path its input never reaches) [`TST-CORE-04`]
 - DO NOT add artificial variation-only tests [`TST-CORE-05`]
 - DO NOT write tests that only check wrapper/dependency calls [`TST-CORE-06`]
 - DO NOT assert implementation details in tests [`TST-CORE-07`]
 - DO NOT use dynamic imports in tests [`TST-CORE-08`]
 - DO NOT assert log output via scattered `toHaveBeenCalledWith(...)` or count-only checks; capture the logger as `vi.fn<LogFn>()` / `satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])` [`TST-CORE-09`]
-- DO NOT write tests that only assert literal contents of a constant export (frozen `Set`/`Map`/`Record`/array/scalar); encode shape via TypeScript types (`satisfies`, `as const`) in source, or test the consumer function that uses the constant [`TST-CORE-10`]
+- DO NOT write tests that only assert literal contents of a constant export (frozen `Set`/`Map`/`Record`/array/scalar/`RegExp`) or barrel re-export identity (`expect(barrel.X).toBe(X)`); encode shape via TypeScript types (`satisfies`, `as const`) in source, or test the consumer function that uses the constant [`TST-CORE-10`]
 - DO NOT silently skip tests on missing env/config; `describe.runIf(...)`, `it.skipIf(process.env.X)`, or `if (!env.X) return` at suite/test level are forbidden — gate with a file-level `throw` so missing config hard-fails [`TST-CORE-11`]
 - DO NOT merge with line coverage below 100% required threshold [`TST-COVR-01`]
 - DO NOT leave critical branch paths untested [`TST-COVR-02`]
@@ -63,7 +63,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-CORE-07` | Test asserts implementation details | `expect(useState).toHaveBeenCalled()` |
 | `TST-CORE-08` | Dynamic import is used in tests | `const m = await import("#mod")` |
 | `TST-CORE-09` | Log output asserted with scattered calls / count-only / untyped mock | `expect(log).toHaveBeenCalledWith('x')` + `expect(log).toHaveBeenCalledTimes(2)`; `const log = vi.fn()` without generic |
-| `TST-CORE-10` | Test only asserts literal contents of a constant export | `expect(SUPPORTED_MIME_TYPES.has('image/png')).toBe(true)`; `expect(ROLES).toEqual(['admin', 'user'])` |
+| `TST-CORE-10` | Test only asserts literal contents of a constant export | `expect(SUPPORTED_MIME_TYPES.has('image/png')).toBe(true)`; `expect(ROLES).toEqual(['admin', 'user'])`; `expect(INLINE_PATTERNS.source).toBe('...')`; `expect(barrel.UserService).toBe(UserService)` |
 | `TST-CORE-11` | Test silently skips on missing env/config | `describe.runIf(process.env.TEST_DATABASE_URL)("fn:fetchUser", ...)`; `it.skipIf(!process.env.TEST_DATABASE_URL)("should ...", ...)`; `if (!process.env.TEST_DATABASE_URL) return` inside `describe("fn:fetchUser", ...)` |
 | `TST-COVR-01` | Line coverage is below 100% required threshold | `lines: 98 // required: 100` |
 | `TST-COVR-02` | Critical branch path is untested | `if (err) throw err // untested` |

@@ -38,4 +38,4 @@ function findUsers(ids: string[]): Promise<User[]> {
 
 ## Related
 
-GEN-DESN-03, FUNC-ARCH-01, FUNC-ARCH-02
+GEN-DESN-03, GEN-DESN-04, FUNC-ARCH-01, FUNC-ARCH-02
