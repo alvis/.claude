@@ -50,6 +50,9 @@ trigger_eval:
     - "make sure jj is up to date"
     - "sync coding tools"
     - "install gh and jj"
+    - "install fallow"
+    - "missing fallow command"
+    - "set up fallow"
 
   should_not_trigger:
     - "write a function that parses dates"        # general coding, not tool sync

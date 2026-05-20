@@ -35,8 +35,13 @@ guidance. Fallbacks are listed in the relevant `installers/<tool>.sh`.
 | `brew` | official install script | _skip_ (mac-only in this registry)               | _skip_                       | _skip_                              | _skip_                             |
 | `jj`   | `brew install jj`       | `cargo install --locked --bin jj jj-cli` *       | `cargo install --locked …` * | musl tarball → `~/.local/bin`       | `winget install --id martinvonz.jj`|
 | `gh`   | `brew install gh`       | official `cli.github.com` apt repo + `apt install gh` | `dnf install gh` (after config-manager add-repo) | release tarball → `~/.local/bin` | `winget install --id GitHub.cli`   |
+| `fallow` | `cargo install fallow-cli` † | `cargo install fallow-cli` †                 | `cargo install fallow-cli` † | `cargo install fallow-cli` †        | `cargo install fallow-cli` †       |
 
 \* When `cargo` is not installed, falls back to the Linux tarball path.
+
+† `cargo` is cross-platform, so `fallow` uses the same command on every OS. It
+requires the Rust toolchain (`cargo`) as a prerequisite; the installer fails
+with a clear message pointing at https://rustup.rs when `cargo` is absent.
 
 ## Conventions
 
