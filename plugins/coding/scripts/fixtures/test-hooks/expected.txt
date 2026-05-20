@@ -1,0 +1,58 @@
+=== Lifecycle hooks (beforeAll/afterAll/beforeEach/afterEach) ===
+
+input.spec.ts:2  beforeAll(() => {});
+       1: describe('suite', () => {
+  >    2:   beforeAll(() => {});
+       3:   beforeEach(() => {});
+       4:   afterEach(() => {});
+       5:   afterAll(() => {});
+       6: 
+       7:   it('runs', () => {
+       8:     expect(true).toBe(true);
+       9:   });
+      10: });
+
+  --- next match ---
+
+input.spec.ts:3  beforeEach(() => {});
+       1: describe('suite', () => {
+       2:   beforeAll(() => {});
+  >    3:   beforeEach(() => {});
+       4:   afterEach(() => {});
+       5:   afterAll(() => {});
+       6: 
+       7:   it('runs', () => {
+       8:     expect(true).toBe(true);
+       9:   });
+      10: });
+
+  --- next match ---
+
+input.spec.ts:4  afterEach(() => {});
+       1: describe('suite', () => {
+       2:   beforeAll(() => {});
+       3:   beforeEach(() => {});
+  >    4:   afterEach(() => {});
+       5:   afterAll(() => {});
+       6: 
+       7:   it('runs', () => {
+       8:     expect(true).toBe(true);
+       9:   });
+      10: });
+
+  --- next match ---
+
+input.spec.ts:5  afterAll(() => {});
+       1: describe('suite', () => {
+       2:   beforeAll(() => {});
+       3:   beforeEach(() => {});
+       4:   afterEach(() => {});
+  >    5:   afterAll(() => {});
+       6: 
+       7:   it('runs', () => {
+       8:     expect(true).toBe(true);
+       9:   });
+      10: });
+
+=== Summary ===
+  test-hooks: 4 matches in 1 files

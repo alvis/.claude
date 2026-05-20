@@ -1,0 +1,60 @@
+=== Defensive catch-block error narrowing (TYP-TYPE-08) ===
+
+input.ts:5  return error instanceof Error ? error.message : String(error);
+       1: export function handleA(): string {
+       2:   try {
+       3:     return doWork();
+       4:   } catch (error) {
+  >    5:     return error instanceof Error ? error.message : String(error);
+       6:   }
+       7: }
+       8: 
+       9: export function handleB(): string {
+      10:   try {
+      11:     return doWork();
+      12:   } catch (err) {
+      13:     const detail = String(err);
+      14:     return detail;
+      15:   }
+
+  --- next match ---
+
+input.ts:5  return error instanceof Error ? error.message : String(error);
+       1: export function handleA(): string {
+       2:   try {
+       3:     return doWork();
+       4:   } catch (error) {
+  >    5:     return error instanceof Error ? error.message : String(error);
+       6:   }
+       7: }
+       8: 
+       9: export function handleB(): string {
+      10:   try {
+      11:     return doWork();
+      12:   } catch (err) {
+      13:     const detail = String(err);
+      14:     return detail;
+      15:   }
+
+  --- next match ---
+
+input.ts:13  const detail = String(err);
+       8: 
+       9: export function handleB(): string {
+      10:   try {
+      11:     return doWork();
+      12:   } catch (err) {
+  >   13:     const detail = String(err);
+      14:     return detail;
+      15:   }
+      16: }
+      17: 
+      18: export function handleClean(): string {
+      19:   try {
+      20:     return doWork();
+      21:   } catch (e) {
+      22:     if (e instanceof Error) {
+      23:       return e.message;
+
+=== Summary ===
+  catch-error-defensive: 3 matches in 1 files
