@@ -30,9 +30,9 @@ Each skill documents its own applicable standards internally. Route actions to t
 
 2. **Work in place on a dirty HEAD** — new changes layer onto existing uncommitted work; no isolation strategy to decide.
 
-3. **Atomic commits go through `coding:commit`** — it commits via `git` (expected in a jj-colocated repo; `jj` still tracks every change). Don't hand-run `git commit` / `jj describe`.
+3. **Saving changes goes through `coding:commit`** — jj-first. The skill auto-routes among save (`jj describe` + `git commit`), split (`jj split`), absorb (`jj absorb`), edit (`jj edit`), and parallel-workspace (`jj workspace add`) based on working-copy state. Explicit operations via flags: `--retrospective` (blame-trace fixups), `--reorder [--up-to <rev>]` (re-linearise history), `--create-pr` (materialise stacked PRs). Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create`.
 
-4. **All jj organization goes through `coding:stack-code`** — bookmarks, `jj split`, `jj rebase`, `jj workspace`, `gh pr create` are owned exclusively by `/coding:stack-code` (per `GIT-PR-STACK-*`). Never run `jj split` / `jj bookmark set` directly.
+4. **Stacked PRs are opt-in** — invoke `/coding:commit --create-pr`. All bookmarking and pushing happens inside the skill per `GIT-PR-STACK-*`. PR titles + bodies are produced by `/coding:write-pr`.
 
 5. **Git-worktree guard** — a `git worktree` is NOT a `jj workspace`. If a coding task was carried out inside a linked `git worktree`, you MUST `AskUserQuestion` whether the work should be moved back onto HEAD.
 

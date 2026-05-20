@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# post-rebase-hook.sh -- PostToolUse hook
-# Auto-verifies integrity after every successful git rebase.
+# post-rewrite-hook.sh -- PostToolUse hook
+# Auto-verifies integrity after any successful history-rewriting op (git or jj).
 # Input:  JSON on stdin { tool_name, tool_input: { command }, tool_output, exit_code }
 # Output: stderr = verify results (always shown to agent)
 
@@ -10,7 +10,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
-# Read JSON from stdin
 INPUT="$(cat)"
 
 extract_command() {
@@ -34,18 +33,19 @@ extract_exit_code() {
 COMMAND="$(extract_command "$INPUT")"
 EXIT_CODE="$(extract_exit_code "$INPUT")"
 
-# Only trigger on git rebase
+# Trigger on any history-rewriting op (git or jj)
 case "$COMMAND" in
   git\ rebase*) ;;
+  jj\ rebase*|jj\ split*|jj\ edit*|jj\ squash*|jj\ absorb*|jj\ abandon*) ;;
   *) exit 0 ;;
 esac
 
-# Only trigger on successful rebase
+# Only on successful op
 if [ "${EXIT_CODE:-1}" != "0" ]; then
   exit 0
 fi
 
-# Check for checkpoint
+# Need a checkpoint to compare against
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 CKPT_BASE="$(checkpoint_dir "$REPO_ROOT")"
 CKPT_FILE="${CKPT_BASE}/.checkpoint"
@@ -55,12 +55,13 @@ if [ ! -f "$CKPT_FILE" ]; then
   exit 0
 fi
 
-# Run verify -- capture output
 VERIFY_OUTPUT=""
+# VERIFY_EXIT captured for diagnostic visibility; verdict is parsed from VERIFY_OUTPUT
+# shellcheck disable=SC2034
 VERIFY_EXIT=0
+# shellcheck disable=SC2034
 VERIFY_OUTPUT="$(bash "$SCRIPT_DIR/verify.sh" 2>&1)" || VERIFY_EXIT=$?
 
-# Format output to stderr for agent visibility
 {
   printf '── Integrity Check ──────────────────────\n'
 
@@ -70,7 +71,6 @@ VERIFY_OUTPUT="$(bash "$SCRIPT_DIR/verify.sh" 2>&1)" || VERIFY_EXIT=$?
   printf 'GIT_TREE:  %s  (baseline vs HEAD)\n' "${GIT_MATCH:-UNKNOWN}"
   printf 'CONTENT:   %s  (filesystem check)\n' "${CONTENT_MATCH:-UNKNOWN}"
 
-  # Show diff details if any failure
   if [ "${GIT_MATCH:-}" = "FAIL" ] || [ "${CONTENT_MATCH:-}" = "FAIL" ]; then
     printf '%s\n' "$VERIFY_OUTPUT" | grep -v '^GIT_TREE_MATCH=' | grep -v '^CONTENT_MATCH=' | \
       grep -v '^POST_GIT_TREE_SHA=' | grep -v '^POST_CONTENT_HASH=' | \

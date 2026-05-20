@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # pre-commit-hook.sh -- PreToolUse hook
-# Always re-backups before every git commit/git rebase.
+# Backs up the working tree before any commit-ish or history-rewriting op (git or jj).
 # Input:  JSON on stdin { tool_name, tool_input: { command } }
 # Output: JSON on stdout (permissionDecision: "allow" + additionalContext)
 
@@ -13,7 +13,6 @@ source "$SCRIPT_DIR/common.sh"
 # Read JSON from stdin
 INPUT="$(cat)"
 
-# Extract command from nested tool_input.command
 extract_command() {
   local input="$1"
   if command -v jq >/dev/null 2>&1; then
@@ -25,9 +24,10 @@ extract_command() {
 
 COMMAND="$(extract_command "$INPUT")"
 
-# Only trigger on git commit or git rebase commands
+# Trigger on git commit/rebase OR any jj history-rewriting op
 case "$COMMAND" in
   git\ commit*|git\ rebase*) ;;
+  jj\ rebase*|jj\ split*|jj\ edit*|jj\ squash*|jj\ absorb*|jj\ abandon*|jj\ new*|jj\ describe*) ;;
   *) exit 0 ;;
 esac
 
