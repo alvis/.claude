@@ -1,4 +1,4 @@
-# RT-OVERRIDE-01: Override via Scoped CSS Variables, Not Forks or Branded Props
+# WT-OVERRIDE-01: Override via Scoped CSS Variables, Not Forks or Branded Props
 
 ## Intent
 
@@ -7,9 +7,9 @@ When a client app — or one feature within a client app — needs a shared comp
 ## Fix
 
 - For a feature-scoped re-skin, declare a scope class and override the component's variables inside it
-- For an app-wide re-skin, use the client `theme.css` `[data-theme="…"]` block (`RT-TAILWIND-01`)
+- For an app-wide re-skin, use the client `theme.css` `[data-brand="…"]` block (`WT-TAILWIND-01`)
 - For a one-off button with different copy or icon but same variant, render the same `<Button variant="primary">` inside the scoped class
-- If the variation cannot be expressed by variables alone, escalate to `RT-OVERRIDE-02` (slot, primitive, or wrapper) — never fork
+- If the variation cannot be expressed by variables alone, escalate to `WT-OVERRIDE-02` (slot, primitive, or wrapper) — never fork
 
 ```css
 /* ✅ GOOD: feature-scoped variable override */
@@ -62,4 +62,4 @@ export const CheckoutFlow: FC<PropsWithChildren> = ({ children }) => (
 
 ## Related
 
-RT-CONTRACT-01, RT-VARIANT-01, RT-OVERRIDE-02
+WT-CONTRACT-01, WT-VARIANT-01, WT-OVERRIDE-02

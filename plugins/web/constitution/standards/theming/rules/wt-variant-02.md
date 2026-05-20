@@ -1,4 +1,4 @@
-# RT-VARIANT-02: Variant Visuals Resolve Through CSS Variables
+# WT-VARIANT-02: Variant Visuals Resolve Through CSS Variables
 
 ## Intent
 
@@ -8,7 +8,7 @@ When a component switches variants, the only thing that changes in the JSX/TSX i
 
 - Each variant class (`.ui-button--primary`) sets the component-specific CSS variables that the base class consumes
 - Avoid declaring literal colors or pixel values inside variant CSS — point at semantic tokens or component tokens instead
-- The base component class consumes the variables via the three-tier chain (`RT-CONTRACT-01`)
+- The base component class consumes the variables via the three-tier chain (`WT-CONTRACT-01`)
 
 ```css
 /* ❌ BAD: variant bakes in literal color and radius */
@@ -50,7 +50,7 @@ When a component switches variants, the only thing that changes in the JSX/TSX i
 
 - Grep variant class selectors (`.<component>--<variant>`) for hex codes, `rgb(…)`, `hsl(…)`, or px values — every match is a violation
 - Confirm every variant class only re-assigns CSS variables (or applies a one-off non-themable property like `text-decoration`)
-- Verify that overriding `--color-brand` under `[data-theme="acme"]` re-skins ALL variants without touching variant CSS
+- Verify that overriding `--color-brand` under `[data-brand="acme"]` re-skins ALL variants without touching variant CSS
 
 ## Common Mistakes
 
@@ -65,4 +65,4 @@ When a component switches variants, the only thing that changes in the JSX/TSX i
 
 ## Related
 
-RT-CONTRACT-01, RT-VARIANT-01, RT-TAILWIND-01
+WT-CONTRACT-01, WT-VARIANT-01, WT-TAILWIND-01

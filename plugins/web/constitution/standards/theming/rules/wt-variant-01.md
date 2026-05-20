@@ -1,8 +1,8 @@
-# RT-VARIANT-01: Variants and Token Names Express Semantic Role, Never Appearance or Size
+# WT-VARIANT-01: Variants and Token Names Express Semantic Role, Never Appearance or Size
 
 ## Intent
 
-Names — both component variant unions AND CSS variable tokens — describe what something MEANS, not what it LOOKS LIKE. Semantic names (`primary`, `secondary`, `ghost`, `danger`, `--color-ink-heading`, `--color-surface-base`, `--radius-card`) survive re-skins and theme switches; visual, positional, or color-leaf names (`blue`, `rounded`, `acme`, `--ink-0`, `--c-violet`, `--line-soft`, `--glass-bg`, `--radius-md`) hardcode design decisions into the contract and force a rename every time a value changes. Theme switching is the job of `[data-theme]`, not a prop; size scaling is the job of Tailwind utilities, not a custom token whose name IS the size.
+Names — both component variant unions AND CSS variable tokens — describe what something MEANS, not what it LOOKS LIKE. Semantic names (`primary`, `secondary`, `ghost`, `danger`, `--color-ink-heading`, `--color-surface-base`, `--radius-card`) survive re-skins and brand switches; visual, positional, or color-leaf names (`blue`, `rounded`, `acme`, `--ink-0`, `--c-violet`, `--line-soft`, `--glass-bg`, `--radius-md`) hardcode design decisions into the contract and force a rename every time a value changes. Brand switching is the job of `[data-brand]` (color mode is the job of `[data-theme]` per `CSS-MODE-*`), not a prop; size scaling is the job of Tailwind utilities, not a custom token whose name IS the size.
 
 The rule has three pillars:
 
@@ -14,7 +14,7 @@ The rule has three pillars:
 
 - Use semantic union literals for `variant`: `primary | secondary | ghost | danger`
 - Use semantic union literals for `size`: `sm | md | lg`
-- Remove any `theme`, `client`, `brand`, `color`, or visually descriptive variant unions — those concerns live in CSS variables and `[data-theme]` scoping
+- Remove any `brand`, `client`, `color`, or visually descriptive variant unions — those concerns live in CSS variables and `[data-brand]` scoping (color mode lives on `[data-theme]` per `CSS-MODE-*`, not on a prop either)
 - Name CSS tokens with the pattern `--<category>-<role>[-<modifier>]`:
   - Color: `--color-<role>` (`--color-ink-heading`, `--color-surface-base`, `--color-border-subtle`, `--color-accent`, `--color-pillar-ingest`, `--color-surface-glass`)
   - Typography role: `--text-<role>` (`--text-eyebrow`, `--text-body`), `--tracking-<role>` (`--tracking-eyebrow`)
@@ -33,13 +33,13 @@ export type ButtonProps = {
   variant?: 'blue' | 'rounded' | 'wide';
 };
 
-// ❌ BAD: theme leaked into the component API
+// ❌ BAD: brand leaked into the component API
 export type ButtonProps = {
-  theme?: 'light' | 'dark';
+  brand?: 'acme' | 'globex';
   client?: 'acme' | 'globex';
 };
 
-// ✅ GOOD: semantic intent, theme handled by [data-theme]
+// ✅ GOOD: semantic intent, brand handled by [data-brand] (color mode by [data-theme])
 export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
@@ -119,7 +119,7 @@ export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
 
 ## Common Mistakes
 
-1. Adding `variant="acme"` so a client app gets its specific styling — should be `[data-theme="acme"]` with variable overrides
+1. Adding `variant="acme"` so a client app gets its specific styling — should be `[data-brand="acme"]` with variable overrides
 2. Letting designers' Figma layer names (`Button / Blue / Large`) leak into prop unions or token names verbatim
 3. Mixing semantic and visual variants in the same union (`'primary' | 'blue' | 'ghost'`)
 4. Splitting one semantic intent across two variants (`'primary'` and `'primary-rounded'`) instead of using a separate `shape` axis or scope override
@@ -140,4 +140,4 @@ export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
 
 ## Related
 
-RC-PROPS-01, RC-STRUCT-04, RT-CONTRACT-01, RT-CONTRACT-02, RT-VARIANT-02, RT-OVERRIDE-01
+RC-PROPS-01, RC-STRUCT-04, WT-CONTRACT-01, WT-CONTRACT-02, WT-VARIANT-02, WT-OVERRIDE-01

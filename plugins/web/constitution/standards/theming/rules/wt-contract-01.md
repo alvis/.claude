@@ -1,4 +1,4 @@
-# RT-CONTRACT-01: CSS Variable Contract with Three-Tier Fallback
+# WT-CONTRACT-01: CSS Variable Contract with Three-Tier Fallback
 
 ## Intent
 
@@ -34,7 +34,7 @@ Every styled declaration in a shared component MUST resolve through a three-tier
 
 - Grep component CSS files for `var\(--[^,)]+\)` (a `var()` call with no fallback) — every match is a violation
 - Grep for `var\(--[^,]+,\s*var\(--[^,)]+\)\s*\)` (two-tier chains missing the hardcoded default) — every match is a violation
-- Confirm the library compiles and renders correctly in a Storybook story that does NOT set `[data-theme]` — only the hardcoded defaults should be visible
+- Confirm the library compiles and renders correctly in a Storybook story that does NOT set `[data-brand]` — only the hardcoded defaults should be visible
 
 ## Common Mistakes
 
@@ -49,4 +49,4 @@ Every styled declaration in a shared component MUST resolve through a three-tier
 
 ## Related
 
-RT-CONTRACT-02, RT-VARIANT-02, RT-OVERRIDE-01
+WT-CONTRACT-02, WT-VARIANT-02, WT-OVERRIDE-01

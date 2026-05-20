@@ -1,4 +1,4 @@
-# RT-OVERRIDE-02: Use Slots / Primitives When Variables Aren't Enough
+# WT-OVERRIDE-02: Use Slots / Primitives When Variables Aren't Enough
 
 ## Intent
 
@@ -73,4 +73,4 @@ export const useToggleBehavior = (initial = false) => {
 
 ## Related
 
-RT-OVERRIDE-01, RT-VARIANT-01, RC-PROPS-01
+WT-OVERRIDE-01, WT-VARIANT-01, RC-PROPS-01

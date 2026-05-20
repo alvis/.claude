@@ -1,4 +1,4 @@
-# React Theming: Compliant Patterns
+# Web Theming: Compliant Patterns
 
 > **Prerequisite**: Read `meta.md` in this directory first for dependencies and rule groups.
 > **Compliance**: Also follow `scan.md` in this directory to avoid violations during writing. When unsure about a specific rule, consult its detailed guidance in `rules/<rule-id>.md`.
@@ -8,20 +8,20 @@
 - **Library = clay, client = sculpture** — the library publishes a base CSS-variable contract with safe fallbacks; the client owns the final theme.
 - **Three-tier fallback chain** — every styled declaration resolves through `var(--component-specific, var(--semantic-token, hardcoded-default))`.
 - **Variants are semantic intent** — `primary | secondary | ghost | danger`, never brand identity (`blue`, `acme`).
-- **Theme is scoped via `[data-theme="…"]`** — never via a component prop.
+- **Brand is scoped via `[data-brand="…"]`** — never via a component prop. Color mode rides alongside on `data-theme` (`light` / `dark`; absent = system) per `CSS-MODE-*`.
 
 ## Core Rules Summary
 
 | Rule              | One-liner                                                                                          |
 |-------------------|----------------------------------------------------------------------------------------------------|
-| `RT-CONTRACT-01`  | Every styled declaration uses `var(--component, var(--semantic, hardcoded))`.                       |
-| `RT-CONTRACT-02`  | Semantic tokens go in `@theme`; component tokens go in plain CSS.                                   |
-| `RT-VARIANT-01`   | Variants and CSS token names express semantic role (heading, base, accent, card), never appearance (blue, -0, soft) or size tier (-md, -sm). |
-| `RT-VARIANT-02`   | Variant CSS classes resolve visuals through CSS variables, not literals.                            |
-| `RT-TAILWIND-01`  | Library's `@theme { … }` owns the semantic token contract.                                          |
-| `RT-TAILWIND-02`  | CSS import order is library → client `theme.css` → app CSS.                                         |
-| `RT-OVERRIDE-01`  | Override via scoped CSS variables; no forks, no branded props.                                      |
-| `RT-OVERRIDE-02`  | When variables aren't enough, use slots / primitives / wrappers — never mutate the shared component. |
+| `WT-CONTRACT-01`  | Every styled declaration uses `var(--component, var(--semantic, hardcoded))`.                       |
+| `WT-CONTRACT-02`  | Semantic tokens go in `@theme`; component tokens go in plain CSS.                                   |
+| `WT-VARIANT-01`   | Variants and CSS token names express semantic role (heading, base, accent, card), never appearance (blue, -0, soft) or size tier (-md, -sm). |
+| `WT-VARIANT-02`   | Variant CSS classes resolve visuals through CSS variables, not literals.                            |
+| `WT-TAILWIND-01`  | Library's `@theme { … }` owns the semantic token contract.                                          |
+| `WT-TAILWIND-02`  | CSS import order is library → client `theme.css` → app CSS.                                         |
+| `WT-OVERRIDE-01`  | Override via scoped CSS variables; no forks, no branded props.                                      |
+| `WT-OVERRIDE-02`  | When variables aren't enough, use slots / primitives / wrappers — never mutate the shared component. |
 
 ## Library File Structure
 
@@ -47,7 +47,7 @@ The library publishes `styles.css` (the contract + components) and optionally a 
 
 ## Tailwind v4.3 `@theme {}` — Semantic Tokens
 
-Tailwind v4.3's `@theme` block declares the tokens that generate utility classes. A token named `--color-brand` produces `bg-brand`, `text-brand`, `border-brand`. A token named `--radius-card` produces `rounded-card`. The library owns this contract; clients override the same names under a `[data-theme]` scope.
+Tailwind v4.3's `@theme` block declares the tokens that generate utility classes. A token named `--color-brand` produces `bg-brand`, `text-brand`, `border-brand`. A token named `--radius-card` produces `rounded-card`. The library owns this contract; clients override the same names under a `[data-brand="…"]` scope.
 
 ```css
 /* packages/ui/src/styles/theme.css */
@@ -166,11 +166,11 @@ If a button needs a radius one notch larger than `rounded-md`, mint `--radius-bu
 
 ## Client `theme.css` — Overriding Tokens
 
-A client app overrides the semantic tokens (preferred, broad reach) and/or component tokens (narrow, targeted) under a `[data-theme="…"]` selector. Setting `<html data-theme="acme">` activates the theme for the entire tree.
+A client app overrides the semantic tokens (preferred, broad reach) and/or component tokens (narrow, targeted) under a `[data-brand="…"]` selector. Setting `<html data-brand="acme">` activates the theme for the entire tree.
 
 ```css
 /* apps/acme/src/theme.css */
-[data-theme="acme"] {
+[data-brand="acme"] {
   /* semantic-tier overrides — affects every component using --color-brand */
   --color-brand: #ff6600;
   --color-surface: #fffaf5;
@@ -185,16 +185,29 @@ A client app overrides the semantic tokens (preferred, broad reach) and/or compo
 
 Semantic overrides are the default tool. Drop to component overrides only when one component needs to diverge from the broader palette.
 
+### Composing brand with color mode
+
+Brand identity (`data-brand`) and color mode (`data-theme`) compose at the selector level. The library's `@theme` block carries the brand-wide semantic palette; the `@layer theme` rules from `CSS-MODE-*` (see `plugin:web:standard:css`) carry the raw-mode tokens (`--theme-dark-bg`, …) plus the active-UI aliases (`--ui-bg`, …). A brand override scoped to a color mode chains both attributes:
+
+```css
+:root[data-brand="acme"][data-theme="dark"] {
+  --color-accent: #ff6600;
+  --ui-bg: var(--theme-dark-bg);
+}
+```
+
+The brand selector reaches for raw-mode tokens via `var(--theme-dark-bg)` so the active-UI tokens still resolve through the mode layer — brand owns the semantic palette, color mode owns the surface/ink layer, and the cascade composes them without either side hardcoding the other's values.
+
 ## CSS Import Order
 
 ```typescript
 // apps/acme/src/app.tsx
 import '@company/ui/styles.css';   // 1. library — declares @theme + component contract
-import './theme.css';              // 2. client theme — overrides under [data-theme="acme"]
+import './theme.css';              // 2. client theme — overrides under [data-brand="acme"]
 import './app.css';                // 3. app-level CSS — page layouts, route-specific styles
 ```
 
-Reversing this order breaks the cascade: client overrides arrive before the contract they're meant to override, so they have nothing to override. This is `RT-TAILWIND-02`.
+Reversing this order breaks the cascade: client overrides arrive before the contract they're meant to override, so they have nothing to override. This is `WT-TAILWIND-02`.
 
 ## Variant Prop API
 
@@ -243,8 +256,8 @@ type ButtonProps = { variant?: 'blue' | 'rounded' | 'wide' };
 // ❌ BAD: brand baked into a prop
 type ButtonProps = { client?: 'acme' | 'globex' };
 
-// ❌ BAD: theme switched via prop instead of [data-theme]
-type ButtonProps = { theme?: 'light' | 'dark' };
+// ❌ BAD: brand switched via prop instead of [data-brand]
+type ButtonProps = { brand?: 'acme' | 'globex' };
 ```
 
 ## Scoped Local Override Pattern
@@ -269,7 +282,7 @@ export const CheckoutFlow: FC<PropsWithChildren> = ({ children }) => (
 );
 ```
 
-Any `<Button variant="primary">` rendered inside `.checkout-flow` now resolves to the scoped values. This is `RT-OVERRIDE-01`. No fork, no branded prop, no `isCheckout` flag.
+Any `<Button variant="primary">` rendered inside `.checkout-flow` now resolves to the scoped values. This is `WT-OVERRIDE-01`. No fork, no branded prop, no `isCheckout` flag.
 
 ## Client-Wrapper Pattern
 
@@ -290,7 +303,7 @@ export const CheckoutButton: FC<CheckoutButtonProps> = ({ children, ...props }) 
 );
 ```
 
-This is `RT-OVERRIDE-02`. The shared `Button` stays generic; behavior and DOM live in the client.
+This is `WT-OVERRIDE-02`. The shared `Button` stays generic; behavior and DOM live in the client.
 
 ## Decision Table
 
@@ -342,16 +355,16 @@ Each component's CSS MUST list its tokens in a comment block at the top of the f
 
 | Pattern                          | Use Case                                            | Example                                                          | Rule              |
 |----------------------------------|-----------------------------------------------------|------------------------------------------------------------------|-------------------|
-| Three-tier fallback              | All component CSS declarations                      | `var(--button-primary-bg, var(--color-brand, #111827))`          | `RT-CONTRACT-01`  |
-| `@theme` block                   | Semantic tokens that generate Tailwind utilities    | `@theme { --color-brand: …; --radius-card: …; }`                 | `RT-TAILWIND-01`  |
-| `@layer components`              | Component CSS lives here                            | `@layer components { .ui-button { … } }`                         | `RT-TAILWIND-01`  |
-| `[data-theme="…"]` scope         | Client theme activation                             | `<html data-theme="acme">…</html>`                               | `RT-VARIANT-01`   |
-| Semantic variants                | All component variant props                         | `variant?: 'primary' \| 'secondary' \| 'ghost' \| 'danger'`     | `RT-VARIANT-01`   |
-| Role-named tokens                | All CSS variable declarations                       | `--color-ink-heading`, `--color-surface-base`, `--color-accent` | `RT-VARIANT-01`   |
-| Tailwind utility for default sizes | Default radius / shadow / text scale              | `rounded-md`, `shadow-sm`, `text-lg`                            | `RT-VARIANT-01`   |
-| Role-named size token            | Component-specific scale that diverges from default | `--radius-card`, `--radius-button`, `--shadow-elevated`         | `RT-VARIANT-01`   |
-| Scoped CSS variables             | One-off variation in one feature                    | `.checkout-flow { --button-primary-bg: …; }`                     | `RT-OVERRIDE-01`  |
-| Client wrapper                   | Different DOM, behavior, or composition             | `CheckoutButton` composes `Button` and adds an icon              | `RT-OVERRIDE-02`  |
+| Three-tier fallback              | All component CSS declarations                      | `var(--button-primary-bg, var(--color-brand, #111827))`          | `WT-CONTRACT-01`  |
+| `@theme` block                   | Semantic tokens that generate Tailwind utilities    | `@theme { --color-brand: …; --radius-card: …; }`                 | `WT-TAILWIND-01`  |
+| `@layer components`              | Component CSS lives here                            | `@layer components { .ui-button { … } }`                         | `WT-TAILWIND-01`  |
+| `[data-brand="…"]` scope         | Client brand activation                             | `<html data-brand="acme" data-theme="dark">…</html>`             | `WT-VARIANT-01`   |
+| Semantic variants                | All component variant props                         | `variant?: 'primary' \| 'secondary' \| 'ghost' \| 'danger'`     | `WT-VARIANT-01`   |
+| Role-named tokens                | All CSS variable declarations                       | `--color-ink-heading`, `--color-surface-base`, `--color-accent` | `WT-VARIANT-01`   |
+| Tailwind utility for default sizes | Default radius / shadow / text scale              | `rounded-md`, `shadow-sm`, `text-lg`                            | `WT-VARIANT-01`   |
+| Role-named size token            | Component-specific scale that diverges from default | `--radius-card`, `--radius-button`, `--shadow-elevated`         | `WT-VARIANT-01`   |
+| Scoped CSS variables             | One-off variation in one feature                    | `.checkout-flow { --button-primary-bg: …; }`                     | `WT-OVERRIDE-01`  |
+| Client wrapper                   | Different DOM, behavior, or composition             | `CheckoutButton` composes `Button` and adds an icon              | `WT-OVERRIDE-02`  |
 
 ## Quick Decision Tree
 
@@ -363,14 +376,14 @@ Each component's CSS MUST list its tokens in a comment block at the top of the f
 
 2. **Adding a new variant to a shared component?**
    - If semantic intent (`primary`, `ghost`) → Add to the variant union, resolve via CSS variables
-   - If brand or visual (`blue`, `acme`) → STOP. Use `[data-theme]` and variable overrides instead.
+   - If brand or visual (`blue`, `acme`) → STOP. Use `[data-brand]` and variable overrides instead.
 
 3. **Adding a new design token?**
    - If it should generate a Tailwind utility (`bg-brand`) → Add to `@theme`
    - If it's component-specific (`--button-primary-bg`) → Plain CSS variable in component CSS
-   - Name by role (`--color-ink-heading`, `--radius-card`), NEVER by position (`--ink-0`), color leaf (`--c-violet`, `--color-accent-violet`), or size tier (`--radius-md`) — `RT-VARIANT-01`
-   - Need a default size (medium radius, small shadow)? Use the Tailwind utility (`rounded-md`, `shadow-sm`); don't mint `--radius-md` — `RT-VARIANT-01`
-   - Need a non-default size or component-specific scale? Mint a role-named token (`--radius-card`, `--radius-button`, `--shadow-elevated`) — `RT-VARIANT-01`
+   - Name by role (`--color-ink-heading`, `--radius-card`), NEVER by position (`--ink-0`), color leaf (`--c-violet`, `--color-accent-violet`), or size tier (`--radius-md`) — `WT-VARIANT-01`
+   - Need a default size (medium radius, small shadow)? Use the Tailwind utility (`rounded-md`, `shadow-sm`); don't mint `--radius-md` — `WT-VARIANT-01`
+   - Need a non-default size or component-specific scale? Mint a role-named token (`--radius-card`, `--radius-button`, `--shadow-elevated`) — `WT-VARIANT-01`
 
 4. **Importing CSS in the client app?**
    - Library stylesheet FIRST, client `theme.css` SECOND, app CSS LAST. Anything else breaks the cascade.

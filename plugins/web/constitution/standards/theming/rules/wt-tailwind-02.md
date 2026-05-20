@@ -1,8 +1,8 @@
-# RT-TAILWIND-02: CSS Import Order Is Fixed
+# WT-TAILWIND-02: CSS Import Order Is Fixed
 
 ## Intent
 
-The variable cascade depends on a strict CSS import order in client apps: the library's stylesheet declares the `@theme` contract and component CSS FIRST, the client's `theme.css` overrides tokens under `[data-theme="…"]` SECOND, and any app-level CSS (page layouts, route-specific styles) loads LAST. Reversing this order means a client override arrives before the contract it is overriding — the override has no target, and the cascade silently keeps the library defaults.
+The variable cascade depends on a strict CSS import order in client apps: the library's stylesheet declares the `@theme` contract and component CSS FIRST, the client's `theme.css` overrides tokens under `[data-brand="…"]` SECOND, and any app-level CSS (page layouts, route-specific styles) loads LAST. Reversing this order means a client override arrives before the contract it is overriding — the override has no target, and the cascade silently keeps the library defaults.
 
 ## Fix
 
@@ -49,4 +49,4 @@ import './app.css';
 
 ## Related
 
-RT-TAILWIND-01, RT-CONTRACT-01
+WT-TAILWIND-01, WT-CONTRACT-01

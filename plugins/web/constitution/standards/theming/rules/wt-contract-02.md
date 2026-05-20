@@ -1,4 +1,4 @@
-# RT-CONTRACT-02: Semantic Tokens Go in `@theme`, Component Tokens Go in Plain CSS
+# WT-CONTRACT-02: Semantic Tokens Go in `@theme`, Component Tokens Go in Plain CSS
 
 ## Intent
 
@@ -59,4 +59,4 @@ Tailwind v4.3's `@theme` block is special: every token inside it generates a uti
 
 ## Related
 
-RT-CONTRACT-01, RT-TAILWIND-01
+WT-CONTRACT-01, WT-TAILWIND-01
