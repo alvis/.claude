@@ -44,4 +44,5 @@ If exception note is missing, submission is rejected.
 - `NAM-CORE-*`: Base naming clarity, casing, abbreviation, unit precision, and path redundancy.
 - `NAM-FUNC-*`: Function and operation naming semantics.
 - `NAM-TYPE-*`: Type/interface and parameter-contract naming.
+  - `NAM-TYPE-03`: Class companion types use `<Class>Params` / `<Class>Config` / `<Class>Dependencies`; capability fields use explicit action phrases; `#private` fields mirror capability names 1:1.
 - `NAM-DATA-*`: Collection, map, boolean, and iteration naming patterns.

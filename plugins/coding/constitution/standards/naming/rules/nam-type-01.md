@@ -56,4 +56,4 @@ class ValidationError extends Error { /* ... */ }
 
 ## Related
 
-NAM-TYPE-02, NAM-CORE-01, NAM-CORE-02
+NAM-TYPE-02, NAM-TYPE-03, NAM-CORE-01, NAM-CORE-02

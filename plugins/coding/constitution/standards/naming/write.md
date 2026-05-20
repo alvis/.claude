@@ -13,6 +13,7 @@
 - Collections use plural names; maps use `*By*` or `*To*` naming
 - No legacy type prefixes (`I`, `T`, `E`)
 - File names must not repeat words from parent directories; let directory context provide the type
+- Class companion types use `<Class>Params` / `<Class>Config` / `<Class>Dependencies`; capability fields use explicit action phrases; `#private` fields on the class mirror the capability name 1:1
 
 ## Core Rules Summary
 
@@ -34,7 +35,22 @@
 ### Type Naming (NAM-TYPE)
 
 - **NAM-TYPE-01**: No `I`, `T`, `E` legacy type prefixes.
-- **NAM-TYPE-02**: Use canonical parameter vocabulary: `params`, `query`, `input`, `options`, `data`, `config`, `context`, `details`, `logger`, `id`. (→ `FUNC-SIGN-03`)
+- **NAM-TYPE-02**: Use canonical parameter vocabulary: `params`, `query`, `input`, `options`, `data`, `config`, `context`, `details`, `logger`, `id`. For class constructors, `params` (capability injection) and `config` (durable structural settings) are both canonical. (→ `FUNC-SIGN-03`)
+- **NAM-TYPE-03**: Class companion types use `<Class>Params` / `<Class>Config` / `<Class>Dependencies`; capability fields are explicit action phrases; `#private` fields mirror capability names 1:1.
+
+```typescript
+// ✅ GOOD
+interface SearchIndexDependencies {
+  tokenizeSearchQuery(query: string): readonly string[];
+}
+class SearchIndex {
+  readonly #tokenizeSearchQuery: SearchIndexDependencies['tokenizeSearchQuery'];
+}
+
+// ❌ BAD
+interface SearchIndexDeps { tokenize(query: string): readonly string[]; }
+class SearchIndex { readonly #tokenize: SearchIndexDeps['tokenize']; }
+```
 
 ### Data Naming (NAM-DATA)
 
