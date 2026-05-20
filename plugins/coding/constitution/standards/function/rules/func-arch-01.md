@@ -54,4 +54,4 @@ function validateEmail(email: string): boolean {
 
 ## Related
 
-FUNC-ARCH-02, FUNC-ARCH-03, FUNC-SIGN-01, GEN-DESN-01
+FUNC-ARCH-02, FUNC-ARCH-03, FUNC-ARCH-04, FUNC-SIGN-01, GEN-DESN-01

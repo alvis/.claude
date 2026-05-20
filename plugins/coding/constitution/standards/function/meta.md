@@ -40,6 +40,8 @@ If exception note is missing, submission is rejected.
 
 - `FUNC-SIGN-*`: Signature, parameter, and exported contract rules.
   - `FUNC-SIGN-06`: Avoid conditional spread for optional keys; pass the value directly unless the consumer distinguishes missing from undefined.
+  - `FUNC-SIGN-07`: Constructor takes exactly one object parameter (XXXParams or XXXConfig); destructure each capability into a named #privateField; no #dependencies bag.
 - `FUNC-STAT-*`: State safety (mutation, immutability, purity, side-effects).
 - `FUNC-ARCH-*`: Structural function-design rules and helper patterns.
-  - `FUNC-ARCH-04`: Remove short-circuit guards before small loops; use optional chaining at the call site.
+  - `FUNC-ARCH-04`: Never inject the parent class into a child; use a parent factory method (private parent state) or a standalone module-level helper (public parent surface).
+  - `FUNC-ARCH-05`: Remove short-circuit guards before small loops; use optional chaining at the call site.

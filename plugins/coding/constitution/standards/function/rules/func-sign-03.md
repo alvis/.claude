@@ -2,7 +2,7 @@
 
 ## Intent
 
-Use canonical semantic names: `params` (structured query/command input), `options` (optional modifiers), `data` (primary payload), `config` (initialization), `context` (execution metadata), `details` (supplemental metadata). Avoid opaque placeholders like `payload`, `cfg`, and `extra` when a canonical name fits.
+Use canonical semantic names: `params` (structured query/command input, OR class constructor capability contract — see `FUNC-SIGN-07`), `options` (optional modifiers), `data` (primary payload), `config` (initialization), `context` (execution metadata), `details` (supplemental metadata). Avoid opaque placeholders like `payload`, `cfg`, and `extra` when a canonical name fits.
 
 ## Fix
 
@@ -62,6 +62,28 @@ class Database {
 }
 ```
 
+### `params` for Capability Constructors
+
+```typescript
+interface SearchServiceParams {
+  tokenizeSearchQuery: (query: string) => Token[];
+  readContextSource: (id: string) => Promise<Source>;
+}
+
+class SearchService {
+  readonly #tokenizeSearchQuery: (query: string) => Token[];
+  readonly #readContextSource: (id: string) => Promise<Source>;
+
+  constructor(params: SearchServiceParams) {
+    const { tokenizeSearchQuery, readContextSource } = params;
+    this.#tokenizeSearchQuery = tokenizeSearchQuery;
+    this.#readContextSource = readContextSource;
+  }
+}
+```
+
+Use `params` for class-construction contracts that carry injected capabilities (function-typed fields the class calls). See `FUNC-SIGN-07` for the destructured-`#field` shape.
+
 ### `context` for Execution Metadata
 
 ```typescript
@@ -104,6 +126,8 @@ function logError(message: string, details: ErrorDetails): void {
 
 - **`options`** — optional runtime helpers the core logic can function *without*. Describes *how execution should behave or be observed* at call time. Common contents: runtime hooks (`onThinking`, `onProgress`, `onError`), callbacks, `log` loggers, retry/validation defaults, abort signals, per-call overrides, progress handlers. Options are ergonomic affordances; their absence never prevents the operation from running.
 
+- **`params` (class-construction variant)** — capability-heavy ⇒ `params`; structural-value-heavy ⇒ `config`; split when both apply. When a class constructor carries injected capability functions (`tokenizeSearchQuery`, `readContextSource`), prefer `params`; when it carries durable structural settings (host, port, ssl), prefer `config`. See `FUNC-SIGN-07` for the destructured-`#field` shape.
+
 ### Rule of thumb
 
 If removing the field would break the operation's ability to execute, it is `config`. If removing it would merely reduce observability or change a default, it is `options`.
@@ -126,6 +150,10 @@ class Operator<T> {
 
 This keeps the `config` object JSON-serializable where possible, makes the required-vs-optional distinction obvious at the call site, and gives consumers a place to pass loggers/hooks without polluting the persisted configuration.
 
+For class constructors, both `params` and `config` are canonical — the choice is a design decision (capability-heavy vs structural-value-heavy), not a lint violation. Scanners must not flag either form on class constructors.
+
+> **Legacy code**: pre-existing classes that use `config: { capabilities… }` are not retroactively violating; only new code is required to follow the capability-vs-structural split.
+
 ## Edge Cases
 
 - When existing code matches prior violation patterns such as ❌ `fn(payload, cfg, extra)`, refactor before adding new behavior.
@@ -134,4 +162,4 @@ This keeps the `config` object JSON-serializable where possible, makes the requi
 
 ## Related
 
-FUNC-SIGN-01, FUNC-SIGN-02, FUNC-SIGN-04, NAM-TYPE-02
+FUNC-SIGN-01, FUNC-SIGN-02, FUNC-SIGN-04, FUNC-SIGN-07, FUNC-ARCH-04, NAM-TYPE-02, NAM-TYPE-03, TYP-PARM-04
