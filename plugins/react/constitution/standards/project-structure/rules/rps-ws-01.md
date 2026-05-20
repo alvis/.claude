@@ -16,7 +16,7 @@ Within one app the existing `RPS-PROMO-01` ladder applies; the workspace package
 
 - `apps/web` and `apps/admin` both consume `Button` with identical props, behavior, and accessibility shape → hoist `Button` from `apps/web/src/components/primitives/` to `packages/ui/src/primitives/Button.tsx`. Both apps import from `@company/ui`.
 - A `useMediaQuery` hook is duplicated in `apps/web/src/utilities-react/` and `apps/admin/src/utilities-react/` with the same signature → hoist to `packages/ui/src/hooks/useMediaQuery.ts`.
-- A theme-aware, domain-agnostic `Card` composite is proven in `apps/web/src/components/composites/` and is now needed in `apps/marketing/` with the same prop shape → hoist to `packages/ui/src/composites/Card.tsx`. Brand variation continues to flow through CSS variables, not props (`RT-CONTRACT-01`).
+- A theme-aware, domain-agnostic `Card` composite is proven in `apps/web/src/components/composites/` and is now needed in `apps/marketing/` with the same prop shape → hoist to `packages/ui/src/composites/Card.tsx`. Brand variation continues to flow through CSS variables, not props (`WT-CONTRACT-01`).
 
 ## Don't (❌)
 
@@ -29,5 +29,5 @@ Within one app the existing `RPS-PROMO-01` ladder applies; the workspace package
 
 - `RPS-PROMO-01` — in-app promotion ladder; the prerequisite to ever considering a workspace-package hoist.
 - `RPS-WS-02` — the workspace package must stay domain-agnostic and theme-aware.
-- `RT-CONTRACT-01` — CSS-variable contract that lets one workspace component serve many app themes.
-- `RT-VARIANT-01` — semantic variants (`primary`/`secondary`/`danger`) instead of brand-coded variants.
+- `WT-CONTRACT-01` — CSS-variable contract that lets one workspace component serve many app themes.
+- `WT-VARIANT-01` — semantic variants (`primary`/`secondary`/`danger`) instead of brand-coded variants.

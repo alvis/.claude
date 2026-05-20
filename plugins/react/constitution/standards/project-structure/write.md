@@ -245,8 +245,8 @@ In a monorepo, the tier above `src/components/<bucket>/` is the shared workspace
 **What belongs in the workspace package**
 
 - Domain-agnostic primitives, layouts, composites, headless logic, boundaries, providers, adapters — same bucket taxonomy as `src/components/`.
-- Theme-aware components driven by the CSS-variable contract from the `theming` standard (`RT-CONTRACT-01`).
-- Semantic variants only (`variant="primary" | "secondary" | "danger"`) — see `RT-VARIANT-01`.
+- Theme-aware components driven by the CSS-variable contract from the `theming` standard (`WT-CONTRACT-01`).
+- Semantic variants only (`variant="primary" | "secondary" | "danger"`) — see `WT-VARIANT-01`.
 - Shared hooks that are React-aware but app-agnostic (e.g., `useMediaQuery`, `useFocusTrap`).
 
 **What never belongs (`RPS-WS-02`)**
@@ -281,7 +281,7 @@ export interface ButtonProps {
 export const Button: FC<ButtonProps> = ({ variant = 'primary', children }) => (
   <button data-variant={variant} className="ui-button">{children}</button>
 );
-// brand variation handled at the app root via [data-theme="acme"] + CSS variables (RT-CONTRACT-01, RT-VARIANT-01)
+// brand variation handled at the app root via [data-brand="acme"] + CSS variables (WT-CONTRACT-01, WT-VARIANT-01)
 
 // ❌ BAD: brand identity baked into the workspace package
 // packages/ui/src/primitives/Button.tsx
@@ -343,7 +343,7 @@ See `references/tabs-placement.md` for the full 8-section case study.
 - `useDebounce` or any hook inside `src/utilities/` (`RPS-UTIL-01`).
 - Domain types in `src/types/` (`RPS-UTIL-01`).
 - A monorepo `packages/ui` consumed by exactly one app — single-app catch-all is not a workspace package (`RPS-WS-01`).
-- `client="acme"` / `theme="acme"` props or hard-coded brand colors inside the workspace package — brand identity belongs at the app root via CSS variables (`RPS-WS-02`, `RT-CONTRACT-01`, `RT-VARIANT-01`).
+- `client="acme"` / `theme="acme"` props or hard-coded brand colors inside the workspace package — brand identity belongs at the app root via CSS variables (`RPS-WS-02`, `WT-CONTRACT-01`, `WT-VARIANT-01`).
 - Workspace-package files importing from any app's `features/**` or `app/**` (`RPS-WS-02`).
 
 ## Quick Decision Tree
