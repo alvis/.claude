@@ -7,7 +7,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 > **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 
-> **Scanner-backed rules**: `TST-CORE-03`, `TST-CORE-08`, `TST-CORE-11`, `TST-DATA-04`, `TST-STRU-01`, and `TST-STRU-03` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
+> **Scanner-backed rules**: `TST-CORE-03`, `TST-CORE-08`, `TST-CORE-11`, `TST-DATA-04`, `TST-DATA-06`, `TST-STRU-01`, and `TST-STRU-03` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
 
 ## Quick Scan
 
@@ -31,6 +31,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT create factories without real variation needs [`TST-DATA-03`]
 - DO NOT pass explicit `undefined` in override objects, such as `createUser({ role: undefined })` [`TST-DATA-04`]
 - DO NOT create per-test instances without mutation need [`TST-DATA-05`]
+- DO NOT use `.toBe(...)` against object/array literals or to compare structural values; use `.toEqual(...)` for value equality and reserve `.toBe(...)` for primitives or intentional referential-identity checks [`TST-DATA-06`]
 - DO NOT mock pure/internal logic unnecessarily [`TST-MOCK-01`]
 - DO NOT use `vi.hoisted` without spy/error need [`TST-MOCK-02`]
 - DO NOT define happy-path defaults via chained `.mockResolvedValue(...)` / `.mockReturnValue(...)`, such as `vi.fn().mockResolvedValue(...)`; define defaults inline via `vi.fn(() => value)` or `vi.fn(async () => value)` [`TST-MOCK-03`]
@@ -76,6 +77,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-DATA-03` | Factory exists without real variation need | `const mk = () => new Service()`; `const createDefaultUser = () => ({ id: "u1", role: "user" })` used once |
 | `TST-DATA-04` | Override passes explicit `undefined` field | `createUser({ role: undefined })`; `createSession({ expiresAt: undefined })` |
 | `TST-DATA-05` | Per-test instance created without mutation need | `beforeEach(() => svc = new Svc())` when constructor args and state never change |
+| `TST-DATA-06` | `.toBe` used for structural value comparison instead of `.toEqual` | `expect(result).toBe({ id: 'u1' })`; `expect(items).toBe(['a', 'b'])` |
 | `TST-MOCK-01` | Pure/internal logic is mocked unnecessarily | `vi.mock("#utils/math")`; `vi.spyOn(formatter, "formatCurrency").mockReturnValue("$0")` |
 | `TST-MOCK-02` | `vi.hoisted` used without spy/error need | `const h = vi.hoisted(() => ({ x: 1 }))` |
 | `TST-MOCK-03` | Mock lacks inline happy-path default or chains happy-path return mutators | `const run = vi.fn().mockResolvedValue("ok")`; `service.send.mockReturnValue("ok")` for baseline success |

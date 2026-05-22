@@ -102,13 +102,14 @@ class LoaderSmokeTests(unittest.TestCase):
         "py-type-ignore-format",
         "py-future-annotations",
         "py-missing-all",
+        "to-be-object-literal",
     }
 
     def setUp(self) -> None:
         self.rules = load_rules()
 
     def test_discovers_all_rules(self) -> None:
-        self.assertEqual(len(self.rules), 26)
+        self.assertEqual(len(self.rules), 27)
 
     def test_rule_ids_are_unique(self) -> None:
         ids = [rule.id for rule in self.rules]
