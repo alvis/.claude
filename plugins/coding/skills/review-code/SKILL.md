@@ -38,14 +38,14 @@ These mandates override tone and brevity. Reviewers MUST enforce them on every f
    - For each drift, require a documented justification (commit message, PR comment, or inline rationale). If no solid reason is present → severity **critical**. A "good reason" means: a constraint discovered during implementation, a correctness fix, or explicit user/reviewer approval — NOT convenience, scope creep, or "while I was here" cleanup.
    - If no plan exists, the reviewer MUST state this explicitly and treat the PR description / commit messages as the best-available contract.
 
-2. **Redundancy is a Defect** (human-detectable only — linters handle the mechanical cases): Aggressively flag code that does not need to exist. Focus on what ESLint / knip / `tsc` CANNOT see:
+2. **Redundancy is a Defect** (human-detectable only — linters handle the mechanical cases): Aggressively flag code that does not need to exist. Focus on what ESLint / `tsc` CANNOT see:
    - Defensive checks for conditions that cannot occur (trust internal invariants).
    - Wrapper functions that add no behaviour over what they wrap.
    - Duplicate logic that could reuse an existing helper.
    - Comments that restate what well-named code already says.
    - Backwards-compat shims, feature flags, or fallbacks for hypothetical futures.
    - Over-generalised abstractions with a single caller.
-   Every redundant construct is a finding — severity **high** minimum when in production paths. **DO NOT** flag dead branches, unused imports, unused exports, unused parameters, or unreachable code — the linter/knip step owns those.
+   Every redundant construct is a finding — severity **high** minimum when in production paths. **DO NOT** flag dead branches, unused imports, unused exports, unused parameters, or unreachable code — the linter step owns those.
 
 3. **Sibling Consistency (MANDATORY)**: Before approving any function, class, method (including internal/private ones), or module, search the codebase for siblings serving a similar role — e.g. adapters, mappers, repositories, handlers, clients, formatters, validators. For each match, verify:
    - **Naming**: follows the same verb/noun convention as its siblings (`fetchX` vs `getX`, `toDTO` vs `serialize`).
@@ -62,9 +62,9 @@ These mandates override tone and brevity. Reviewers MUST enforce them on every f
    - Logic that merely *looks* right — reviewers must trace it and prove it.
    Every plausible failure path must be called out. "Probably fine" is not acceptable.
 
-5. **Delegate Mechanical Checks to Tooling**: Reviewers MUST NOT spend effort on anything a linter, compiler, or static analyzer already enforces. Assume `npm run lint`, `tsc --noEmit`, and `knip` run in the pipeline. SKIP these entirely:
+5. **Delegate Mechanical Checks to Tooling**: Reviewers MUST NOT spend effort on anything a linter, compiler, or static analyzer already enforces. Assume `npm run lint`, `tsc --noEmit` run in the pipeline. SKIP these entirely:
    - Type mismatches, missing annotations, unknown properties, signature violations (→ `tsc`).
-   - Unused imports, unused variables/exports, unreachable code, dead branches (→ ESLint / knip).
+   - Unused imports, unused variables/exports, unreachable code, dead branches (→ ESLint).
    - Formatting, quote style, semicolons, import ordering (→ Prettier / ESLint).
    Focus human-review bandwidth on semantics, intent, plan fidelity, sibling consistency, and non-mechanical redundancy.
 
@@ -273,7 +273,7 @@ Prompt the agent as a **Code Quality Analyst** performing read-only code quality
 10. **Accessibility**: accessibility issues (if applicable).
 11. **Architecture**: architectural patterns and design decisions.
 
-**DO NOT** re-check what tooling already enforces — skip type errors (→ `tsc`), unused imports/vars/exports, unreachable code, dead branches (→ ESLint / knip), and formatting (→ Prettier). The `style` scope and CI lint step own these. Spend bandwidth on semantics, intent, sibling fit, and plan fidelity.
+**DO NOT** re-check what tooling already enforces — skip type errors (→ `tsc`), unused imports/vars/exports, unreachable code, dead branches (→ ESLint), and formatting (→ Prettier). The `style` scope and CI lint step own these. Spend bandwidth on semantics, intent, sibling fit, and plan fidelity.
 
 **Output**: write the area file using `references/review.template.md`. Code-quality findings are split between two area files based on category:
 
