@@ -10,7 +10,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 ### File Naming & Structure
 
 - DO NOT name component files in lowercase or kebab-case — use `PascalCase.tsx` (e.g., `Button.tsx`, not `browser.tsx`) [`RC-NAMING-01`]
-- DO NOT name hook files with PascalCase — use `camelCase.ts` starting with `use` (e.g., `useScroll.ts`, not `UseScroll.ts`) [`RC-NAMING-01`]
+- DO NOT co-locate `<Name>.spec.tsx` with a component — interaction coverage belongs in `<Name>.stories.tsx` `play()` [`RC-NAMING-01`]
 
 ### Component Structure
 
@@ -49,7 +49,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 | Rule ID | Violation | Bad Examples |
 |---|---|---|
-| `RC-NAMING-01` | Wrong file casing for component or hook | `browser.tsx` (should be `Browser.tsx`); `UseScroll.ts` (should be `useScroll.ts`) |
+| `RC-NAMING-01` | Wrong component file casing, or `<Name>.spec.tsx` co-located with a component | `browser.tsx` (should be `Browser.tsx`); `Button.spec.tsx` next to `Button.tsx` (move interaction coverage into `Button.stories.tsx` `play()`) |
 | `RC-STRUCT-01` | Class component used | `class BadButton extends Component { render() { ... } }` |
 | `RC-STRUCT-02` | Inline/non-exported props type, or `interface .*Props` declaration | `const BadButton = ({ onClick }: { onClick: () => void }) => ...`; `export interface ButtonProps { … }` |
 | `RC-STRUCT-03` | Inline `children: ReactNode` inside a Props block instead of `PropsWithChildren<…>` | `export type CardProps = { children: ReactNode; variant?: 'a' }` |

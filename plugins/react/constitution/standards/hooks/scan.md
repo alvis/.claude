@@ -11,6 +11,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 - DO NOT define a hook without the `use` prefix (`getUserData` for stateful logic) — React's lint rules require `use*` [`RH-NAMING-01`]
 - DO NOT name hooks with generic words (`useData`, `useStuff`) — use specific intent (`useUserData`, `useApiRequest`) [`RH-NAMING-01`]
+- DO NOT name hook files with PascalCase — use `camelCase.ts` starting with lowercase `use` (e.g., `useScroll.ts`, not `UseScroll.ts`) [`RH-NAMING-01`]
 
 ### Return Interface
 
@@ -39,7 +40,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 
 | Rule ID | Violation | Bad Examples |
 |---|---|---|
-| `RH-NAMING-01` | Missing `use` prefix or generic name | `getUserData(userId)`; `useData()` |
+| `RH-NAMING-01` | Missing `use` prefix, generic name, or PascalCase hook file | `getUserData(userId)`; `useData()`; `UseScroll.ts` (should be `useScroll.ts`) |
 | `RH-RETURN-01` | Inconsistent or unlabeled return | `return [data, isLoading, err, reload]` for a 4-value hook |
 | `RH-DEPS-01` | Missing/incorrect deps array | `useEffect(() => fetchUser(user.id), [])` (missing `user.id`) |
 | `RH-ASYNC-01` | Async hook missing loading/error | `return { data }` with no `loading`/`error` for an API call |

@@ -1,27 +1,26 @@
-# RC-NAMING-01: Component & Hook File Naming
+# RC-NAMING-01: Component File Naming
 
 ## Intent
 
-Component files use `PascalCase.tsx` (e.g., `Button.tsx`); hook files use `camelCase.ts` starting with `use` (e.g., `useScroll.ts`). Tests and stories sit alongside the implementation as `<Name>.spec.tsx` and `<Name>.stories.tsx`.
+Component files use `PascalCase.tsx` (e.g., `Button.tsx`). Every exported component requires a co-located `<Name>.stories.tsx` documenting its states and interactions (with `play()` for interaction tests; see `RC-DOC-01`). Component unit tests live in stories — no `.spec.tsx` for components.
 
 ## Fix
 
 - Rename component files from lowercase or kebab-case to PascalCase: `browser.tsx` → `Browser.tsx`
-- Rename hook files starting with capital `Use` to lowercase `use`: `UseScroll.ts` → `useScroll.ts`
-- Place tests next to the component: `Button.tsx` + `Button.spec.tsx`
-- Place stories next to the component: `Button.tsx` + `Button.stories.tsx`
+- Place stories next to the component: `Button.tsx` + `Button.stories.tsx` (required for every exported component)
+- Migrate any existing `<Name>.spec.tsx` interaction coverage into `<Name>.stories.tsx` via `play()`; delete the `.spec.tsx`
 
 ## Code Superpowers
 
 - Walk `components/` and flag any `.tsx` whose basename does not start with an uppercase letter (excluding `index.tsx`)
-- Walk `components/` and `hooks/` and flag any `.ts` whose basename starts with `Use` instead of `use`
-- Verify each `<Name>.tsx` has a sibling `<Name>.spec.tsx`
+- Verify each exported `<Name>.tsx` has a sibling `<Name>.stories.tsx`
+- Flag any `<Name>.spec.tsx` co-located with a component — interaction coverage belongs in `.stories.tsx`
 
 ## Common Mistakes
 
 1. Lowercase component files: `browser.tsx` instead of `Browser.tsx`
-2. PascalCase hook files: `UseScroll.ts` instead of `useScroll.ts`
-3. Tests in a separate `__tests__/` directory instead of co-located
+2. Missing `<Name>.stories.tsx` for an exported component
+3. Using `<Name>.spec.tsx` for component tests — interaction coverage belongs in `.stories.tsx` `play()` (see `RC-DOC-01`)
 
 ## Edge Cases
 
@@ -30,4 +29,4 @@ Component files use `PascalCase.tsx` (e.g., `Button.tsx`); hook files use `camel
 
 ## Related
 
-RC-STRUCT-01, RC-STRUCT-02
+RC-STRUCT-01, RC-STRUCT-02, RC-DOC-01, RH-NAMING-01

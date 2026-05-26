@@ -10,13 +10,11 @@
 ```plaintext
 ✅ GOOD:
 Button.tsx              # PascalCase components
-useScroll.ts            # camelCase hooks
-Button.spec.tsx         # Test files
-Button.stories.tsx      # Story files
+Button.stories.tsx      # Story files (required for every exported component; see RC-DOC-01)
 
 ❌ BAD:
 browser.tsx             # Should be Browser.tsx
-UseScroll.ts            # Should be useScroll.ts
+Button.spec.tsx         # Component tests live in stories — use play() in Button.stories.tsx
 ```
 
 ### Directory Structure
@@ -24,8 +22,7 @@ UseScroll.ts            # Should be useScroll.ts
 ```plaintext
 components/
 ├── Button.tsx          # Implementation
-├── Button.spec.tsx     # Tests with 'rc:' prefix
-└── Button.stories.tsx  # Storybook stories
+└── Button.stories.tsx  # Storybook stories (required; interaction tests via play())
 ```
 
 ## Component Architecture
@@ -227,15 +224,13 @@ If your story only renders `<MyComponent>`, it's `.stories.tsx`. If your story r
 ✅ GOOD: simple component — one story file
 components/
 ├── Button.tsx
-├── Button.stories.tsx
-└── Button.spec.tsx
+└── Button.stories.tsx
 
 ✅ GOOD: composition component — story + demo
 components/
 ├── Form.tsx
 ├── Form.stories.tsx          # Form rendered alone (empty, with one field, etc.)
-├── Form.demo.stories.tsx     # Form composed with TextField + SubmitButton
-└── Form.spec.tsx
+└── Form.demo.stories.tsx     # Form composed with TextField + SubmitButton
 
 ❌ BAD: exported component, no story
 components/
@@ -245,6 +240,12 @@ components/
 components/
 ├── Form.tsx
 └── Form.stories.tsx          # contains <Form><TextField/></Form> — should be .demo.stories.tsx
+
+❌ BAD: component co-located with a .spec.tsx
+components/
+├── Button.tsx
+├── Button.stories.tsx
+└── Button.spec.tsx           # interaction coverage belongs in Button.stories.tsx play()
 ```
 
 ## Quick Reference
