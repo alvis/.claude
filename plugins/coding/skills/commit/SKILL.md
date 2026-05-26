@@ -57,13 +57,26 @@ ultrathink: walk these steps for every invocation.
 
 ### Step 0 — Pre-flight
 
-PreToolUse hook auto-runs `backup.sh` on the first git/jj rewriting op and injects `Auto-backup: GIT_TREE_SHA=... CONTENT_HASH=... BACKUP_PATH=...` into context. **If absent**, run manually:
+**Backup only runs for history-rewriting routes.** Plain saves (default, split, parallel, empty) do not touch prior changes and therefore skip `backup.sh` entirely.
+
+| Route | Rewrites history? | Backup |
+|---|---|---|
+| Default save (`jj describe` + `git commit`) | No | skip |
+| Split current change (`jj split`) | No | skip |
+| Parallel workspace (`jj new` / `jj workspace add`) | No | skip |
+| Empty / divergent | No | skip |
+| Edit prior change (`jj edit`) | Yes | run |
+| `--retrospective` (`jj absorb` / `jj squash`) | Yes | run |
+| `--reorder` (`jj rebase`) | Yes | run |
+| Correct merged target (`git rebase` fallback) | Yes | run |
+
+When backup runs, the PreToolUse hook fires it on the first rewriting op and injects `Auto-backup: GIT_TREE_SHA=... CONTENT_HASH=... BACKUP_PATH=...` into context. **If the route rewrites history but the hook didn't fire**, run manually:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/backup.sh"
 ```
 
-Also capture `jj op log -n1 --no-graph -T 'self.id().short()'` as a rollback handle (`jj op restore <id>` undoes any jj operation).
+For every route, capture `jj op log -n1 --no-graph -T 'self.id().short()'` as a rollback handle (`jj op restore <id>` undoes any jj operation).
 
 ### Step 1 — Detect mode
 

@@ -2,7 +2,10 @@
 set -euo pipefail
 
 # pre-commit-hook.sh -- PreToolUse hook
-# Backs up the working tree before any commit-ish or history-rewriting op (git or jj).
+# Backs up the working tree before any history-rewriting op (git or jj).
+# Plain saves (git commit, jj describe, jj new, jj split) do NOT rewrite past
+# history and therefore skip backup. Backup only runs when an operation can
+# mutate prior changes (e.g. --retrospective / --reorder workflows).
 # Input:  JSON on stdin { tool_name, tool_input: { command } }
 # Output: JSON on stdout (permissionDecision: "allow" + additionalContext)
 
@@ -24,10 +27,12 @@ extract_command() {
 
 COMMAND="$(extract_command "$INPUT")"
 
-# Trigger on git commit/rebase OR any jj history-rewriting op
+# Trigger ONLY on history-rewriting ops. Plain saves are skipped.
+#   Rewriting:  git rebase, jj rebase / squash / absorb / abandon / edit
+#   Plain save: git commit, jj describe, jj new, jj split  (no backup)
 case "$COMMAND" in
-  git\ commit*|git\ rebase*) ;;
-  jj\ rebase*|jj\ split*|jj\ edit*|jj\ squash*|jj\ absorb*|jj\ abandon*|jj\ new*|jj\ describe*) ;;
+  git\ rebase*) ;;
+  jj\ rebase*|jj\ squash*|jj\ absorb*|jj\ abandon*|jj\ edit*) ;;
   *) exit 0 ;;
 esac
 
