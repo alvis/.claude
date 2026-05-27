@@ -47,6 +47,7 @@ The skill self-routes by reading `jj diff --stat`, `jj log -r '@-..@'`, and book
 | Target already merged on origin | auto-detected | `references/workflow-correct-merged.md` |
 | Blame-trace fixups into prior changes | `--retrospective` | `references/workflow-retrospective.md` |
 | Reorder existing history | `--reorder [--up-to <rev>]` | `references/workflow-reorder.md` |
+| Partial hunks → existing branch | user names a target branch + asks to save part of `@` | `references/workflow-partial-to-branch.md` |
 | Open stacked PRs | `--create-pr` | `references/workflow-stacked-pr.md` |
 
 Before writing any new code, plan the change structure so commits/PRs end up independent — see `references/workflow-plan-structure.md`.
@@ -68,6 +69,7 @@ ultrathink: walk these steps for every invocation.
 | Edit prior change (`jj edit`) | Yes | run |
 | `--retrospective` (`jj absorb` / `jj squash`) | Yes | run |
 | `--reorder` (`jj rebase`) | Yes | run |
+| Partial hunks → existing branch (`git add -p` + `git commit` + `jj git import` + `jj bookmark move --allow-backwards`) | Yes (bookmark move, possibly backward) | run |
 | Correct merged target (`git rebase` fallback) | Yes | run |
 
 When backup runs, the PreToolUse hook fires it on the first rewriting op and injects `Auto-backup: GIT_TREE_SHA=... CONTENT_HASH=... BACKUP_PATH=...` into context. **If the route rewrites history but the hook didn't fire**, run manually:

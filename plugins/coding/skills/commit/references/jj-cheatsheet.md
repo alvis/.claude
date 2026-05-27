@@ -41,6 +41,8 @@ One-line reference for every jj primitive this skill uses, with the closest git 
 | jj | Purpose | git equivalent |
 |---|---|---|
 | `jj bookmark set <name> --revision <rev>` | Move/create bookmark pointing at `<rev>` | `git branch -f <name> <rev>` |
+| `jj bookmark move <name> --to <rev>` | Move existing bookmark to `<rev>` (fast-forward only) | `git branch -f <name> <rev>` |
+| `jj bookmark move <name> --allow-backwards --to <rev>` | Move existing bookmark to `<rev>`; `--allow-backwards` permits non-fast-forward moves (e.g. landing partial hunks onto `master` via `workflow-partial-to-branch.md`) | `git branch -f <name> <rev>` (with force) |
 | `jj bookmark list` | List local bookmarks | `git branch --list` |
 | `jj bookmark list -r '<revset>'` | List bookmarks within revset | n/a |
 | `jj bookmark forget <name>` | Drop local bookmark without affecting commits | `git branch -d <name>` |
@@ -54,7 +56,7 @@ One-line reference for every jj primitive this skill uses, with the closest git 
 | `jj git push --bookmark <name> --allow-new` | First-time push for a new bookmark | `git push -u origin <name>` |
 | `jj bookmark forget <name>; jj bookmark set <name> -r <new>; jj git push --bookmark <name> --allow-new` | Rewind remote history (delete + recreate) — only with explicit consent per GIT-PR-STACK-03 | `git push --force origin <name>` |
 | `jj git push --bookmark <name> --option <key=val>` | v0.40+: pass push options to remote (e.g. GitLab MR flags) | `git push -o <key=val>` |
-| `jj git import` | Re-read git refs after external git ops | n/a (automatic in pure git) |
+| `jj git import` | Re-read git refs after external git ops (esp. after a hand-run `git commit` made via `git add -p` to land partial hunks) | n/a (automatic in pure git) |
 
 ## Logs and revsets
 

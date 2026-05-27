@@ -40,6 +40,7 @@ Read the diff. If files span more than one domain or scope (per [workflow-plan-s
 
 - Surface to the user: "`@` mixes <list of concerns>. Recommend splitting into N commits."
 - On confirmation, switch to [workflow-split.md](./workflow-split.md).
+- If one concern logically belongs on a different existing branch (e.g. a docs typo that should land on `master` while `@` is on a feature branch), prefer [workflow-partial-to-branch.md](./workflow-partial-to-branch.md) over [workflow-split.md](./workflow-split.md).
 
 ### 4. Compose conventional message
 
