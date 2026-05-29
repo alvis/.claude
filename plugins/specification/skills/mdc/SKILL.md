@@ -3,7 +3,7 @@ name: mdc
 description: Read, edit, and author MDC (Contextual Markdown, @theriety/mdc) files safely with native text tools. Use when asked to "edit this .mdc file", "add a block to <doc>.mdc", "update the annotation for ref <x>", "convert this to MDC", whenever a .mdc file must be read or written, or when mutating any file under .code-spec/.
 model: sonnet
 context: inherit
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(ls:*), Bash(cat:*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(ls:*), Bash(cat:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/*)
 argument-hint: [<path-to-.mdc>] [--mode=read|edit|author]
 ---
 
@@ -61,11 +61,14 @@ Safely read, edit, and author MDC documents — the @theriety/mdc dialect of Mar
 [Step 5: Verify Invariants] ─→ Re-Read modified region
    |                              Check: indent, adjacency, ref match
    v
+[Step 6: Stamp last_edited_time] → scripts/stamp-last-edited.sh <all edited files>
+   |   edit/author only · run ONCE after every file is verified · never mid-edit
+   v
 [END]
 
 Legend
 ═══════════════════════════════════════════════════════════════════
-• Skill is LINEAR: 1 → 2 → 3 → 4 → 5
+• Skill is LINEAR: 1 → 2 → 3 → 4 → 5 → 6
 • References (~750 lines total) load only when their mode is active
 • No subagent fan-out — single-agent text edits
 ═══════════════════════════════════════════════════════════════════
@@ -80,6 +83,8 @@ Legend
 | **author** | "convert to MDC", "create a new .mdc", "write an MDC for…"   | Write (+ Read for parents) | `syntax.md` + `closing-markers.md` + `examples.md`  |
 
 If the user did not pass `--mode`, infer it: missing file → `author`; file exists and verb is read/show/explain → `read`; everything else on an existing file → `edit`.
+
+The **edit** and **author** modes end by stamping `last_edited_time` (Step 5); **read** never writes and so never stamps.
 
 ## 4. Mandatory Invariants
 
@@ -152,7 +157,22 @@ When the edit causes a `ref:`-bearing block to gain its first child, add a match
 
 After every `Edit` or `Write`, **re-`Read` the modified region** (a window of ~5 lines before and ~10 lines after the edit is usually enough; for whole-file authoring read the head and tail). Run the checklist from §4 against what you see. If anything fails, fix it before yielding.
 
-### Step 5: Report
+### Step 5: Stamp `last_edited_time`
+
+**edit / author modes only — skip entirely in read mode.**
+
+Run this **once, as the final action, only after Steps 2–4 are complete and re-verified for *every* `.mdc` file you changed in this task.** Never run it after an individual file mid-batch — a later edit would leave an earlier file stamped with a stale time.
+
+Pass the paths of **exactly the files whose content you changed** (omit files you only read):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/stamp-last-edited.sh" \
+  path/to/a.mdc path/to/b.mdc
+```
+
+The script writes the current UTC time (`YYYY-MM-DDTHH:MM:SS.000Z`) into each file's front-matter `last_edited_time`, replacing the existing value or inserting the key (just before the closing `---`) if absent. All files in one invocation share one timestamp. A non-zero exit means a file was skipped (not `.mdc`, missing, or no front matter) — investigate before reporting done.
+
+### Step 6: Report
 
 State, in this order: file path, mode, what changed (with refs), and which invariants you re-verified. If you added or removed closing markers, say so explicitly — the user will want to know.
 
@@ -216,6 +236,8 @@ status: draft
 
 Closing marker on `highlights` because it has a `ref:` and children. `intro` has a `ref:` but no children — no marker needed. Each child annotation sits immediately above its `- ` item with no blank line. Inline annotations attach directly to the closing `]`.
 
+When authoring a `.code-spec`/Notion-bound document, emit `title`, `last_edited_time`, and `ref` in the front matter (in that order). The Step 5 stamp will refresh `last_edited_time` in place — or insert it for you if you omit it — so a placeholder value is fine on first write.
+
 ## 8. Skill Completion
 
 Report in this shape:
@@ -233,6 +255,9 @@ invariants_verified:
   annotation_adjacency: pass
   closing_marker_match: pass|n/a
   yaml_parses: pass
+last_edited_stamped: <ISO timestamp> | n/a (read mode)
+stamped_files:
+  - <path>            # the files passed to stamp-last-edited.sh
 notes: |
   <anything the user should know — e.g. "added closing marker on parent because
   it gained its first child", or "refused: target ref ambiguous">
