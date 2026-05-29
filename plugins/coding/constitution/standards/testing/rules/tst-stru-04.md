@@ -38,17 +38,17 @@ afterAll(() => server.close());
 | Per-test fixture mutation | Inline inside `it()` | `TST-DATA-05` |
 | System time setup | File / `describe` level | `TST-MOCK-12` |
 | Env stub | `vi.stubEnv` at file / `describe` level | `TST-MOCK-11` |
-| Server / DB / external resource lifecycle | Runner global setup or describe-level instance | — |
+| Server / DB / external resource lifecycle | Runner global setup or describe-level instance | `TST-STRU-05` |
 
 If a hook does not match a sanctioned case in the table, it is a violation.
 
 ## Edge Cases
 
 - **Library-mandated hook patterns**: when a third-party tool (e.g. testing-library `cleanup()`) requires a hook, document the dependency inline and treat it as the only allowed exception.
-- **Resource pools**: a shared HTTP server or DB connection should live at module/`describe` scope (or the runner's global setup), not inside `beforeAll`/`afterAll` per file.
+- **Resource pools**: a shared HTTP server or DB connection should live at module/`describe` scope (or the runner's global setup), not inside `beforeAll`/`afterAll` per file. For one-time async provisioning, follow `TST-STRU-05` (`globalSetup` + `project.provide`/`inject`).
 - **Random per-test state**: use a factory called inline in `it()` — do not rebuild it via `beforeEach`.
 - **Confirming a flagged occurrence is `TST-MOCK-04`/`TST-MOCK-10`-allowed**: if the hook only calls `client.resetHistory()` (or equivalent) or registers `ctx.onTestFailed(...)`, defer to those rules and do not double-flag.
 
 ## Related
 
-TST-MOCK-04, TST-MOCK-10, TST-MOCK-12, TST-DATA-01, TST-DATA-05, TST-STRU-03
+TST-MOCK-04, TST-MOCK-10, TST-MOCK-12, TST-DATA-01, TST-DATA-05, TST-STRU-03, TST-STRU-05

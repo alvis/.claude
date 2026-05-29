@@ -15,6 +15,7 @@
 - `const` for shared fixtures; file-level instances by default
 - Structural assertions (`toEqual`), not field-by-field
 - No silent skips: missing env/config must hard-fail at file load (`throw`), never `runIf`/`skipIf`/conditional-return
+- Async setup (server/DB/external resource): use runner `globalSetup` + `project.provide`/`inject` (bound to `const`), teardown returned from global setup — never `beforeAll`/`afterAll` or `let` (no `vi.provide`/`vi.inject`)
 
 ## Naming Prefixes
 
@@ -103,6 +104,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-STRU-01**: `*.spec.ts` for unit, `*.int.spec.ts` for integration, `*.e2e.spec.ts` for e2e. Unit tests isolated; integration tests must not use unit-style mocks.
 - **TST-STRU-02**: Canonical order: imports, constants/fixtures/mocks, setup hooks, then `describe`. No `describe` before setup.
 - **TST-STRU-03**: AAA with blank-line separation. Comments explain why, stay concise, lowercase style.
+- **TST-STRU-05**: One-time async setup lives in the runner `globalSetup`; expose serializable handles via `project.provide` and read them with `inject` into a `const`. No `beforeAll`/`afterAll`, no `let`.
 
 ## Mock Patterns
 
@@ -154,6 +156,7 @@ No `mock*` or `mocked` prefixes. Use semantic names: `userRepository`, `emailGat
 - Manual mock cleanup hooks instead of configuration-driven cleanup.
 - Wrapping an existing mock instance with nested `vi.fn` in a `vi.mock` module factory.
 - Silently skipping tests when env vars are missing (`runIf`/`skipIf`/early-return) — CI goes green without running anything.
+- Async server/DB setup in `beforeAll`/`afterAll` with `let` bindings instead of `globalSetup` + `inject`.
 
 ## Quick Decision Tree
 

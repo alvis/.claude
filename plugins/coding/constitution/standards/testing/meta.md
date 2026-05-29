@@ -22,6 +22,7 @@ This standard enforces requirements beyond typical Vitest practices:
 | Hoisted mocks used broadly            | **`vi.hoisted` only for spy/error scenarios**  |
 | Mock typing treated as optional       | **`satisfies`-based mock typing is mandatory** |
 | Per-test setup as default             | **File/describe instances by default**         |
+| Async setup via lifecycle hooks       | **Runner `globalSetup` + `provide`/`inject`, teardown returned** |
 
 ## Exception Policy
 

@@ -52,6 +52,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use ad-hoc test file layout/import order [`TST-STRU-02`]
 - DO NOT add AAA section comments or inline noise comments or `expect(result).toBe(x); // check ...` [`TST-STRU-03`]
 - DO NOT use `beforeAll`/`afterAll`/`beforeEach`/`afterEach` for any purpose other than the narrow allowances in `TST-MOCK-04`/`TST-MOCK-10`; every occurrence is review-worthy [`TST-STRU-04`]
+- DO NOT perform async test setup (server start, DB init, external resource) in `beforeAll`/`afterAll` or via `let`/mutable bindings; use the runner `globalSetup` with `project.provide(...)` + `inject(...)` bound to `const`, returning teardown from global setup (no `vi.provide`/`vi.inject` — that API does not exist) [`TST-STRU-05`]
 
 ## Rule Matrix
 
@@ -98,3 +99,4 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-STRU-02` | File layout/import order is ad-hoc | `describe(...) // before mock setup`; `import { describe, it, expect, vi } from 'vitest';` |
 | `TST-STRU-03` | AAA spacing/comment policy is violated | `// Arrange`; `expect(result.name).toBe('John'); // check that result has name` |
 | `TST-STRU-04` | Lifecycle hook used outside the narrow `TST-MOCK-04`/`TST-MOCK-10` allowances | `beforeEach(() => { user = createUser() })`; `afterAll(() => server.close())`; `beforeAll(() => seed(db))` |
+| `TST-STRU-05` | Async setup done in lifecycle hooks / mutable bindings instead of `globalSetup` + `inject` | `let server; beforeAll(async () => { server = await startServer() })`; `afterAll(() => server.close())`; `let db; beforeAll(async () => { db = await initDb() })` |
