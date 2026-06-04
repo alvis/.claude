@@ -1,14 +1,14 @@
-# Step 10 — Thought-Experiment Gate
+# Step 11 — Thought-Experiment Gate
 
-**When loaded**: After Step 9a, when the run is NOT in any of the skip conditions below.
+**When loaded**: After Step 10's spec-alignment review, when the run is NOT in any of the skip conditions below.
 
-**Skip entirely** (record `thought_experiment_report.status=skipped` with one-line reason and proceed to Step 11) when any of:
+**Skip entirely** (record `thought_experiment_report.status=skipped` with one-line reason and proceed to Step 12) when any of:
 
-- `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH, AUDIT_AND_COMPLETE}`
+- `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`
 - `--dry-run` is set
 - `commits_landed` is empty
 
-`AUDIT_AND_COMPLETE` is in the skip list because the mode's premise is that the draft is no longer authoritative — tracing spec→code loses meaning once the audit itself has overridden the draft.
+`AUDIT_AND_COMPLETE` **runs** this gate (it is NOT skipped): the mode finishes a real implementation, so tracing every intended usage through the landed code is exactly the integration confidence an audit needs. Recorded Step 5 soundness decisions and any DEVIATIONS keep the spec authoritative enough to trace against.
 
 ---
 
@@ -22,7 +22,7 @@
 
 ## Phase 1: Planning (You)
 
-1. Evaluate the skip list above. If any condition holds, record `thought_experiment_report.status=skipped` with a one-line reason and proceed to Step 11.
+1. Evaluate the skip list above. If any condition holds, record `thought_experiment_report.status=skipped` with a one-line reason and proceed to Step 12.
 2. Otherwise assemble the inputs bundle: `spec_bundle.root_path` + pre-computed pointer list of Usage/Example/Scenario/Verification sections, absolute `repo_path`, `DEVIATIONS.md` path, and the list of `commits_landed` shas for context.
 3. Update TodoWrite: add a `thought-experiment` todo set to `in_progress`.
 
@@ -72,11 +72,11 @@ Dispatch a single `Task` with `subagent_type=general-purpose`, `model=opus`, max
 
 ## Phase 3: Review (Subagents)
 
-**SKIPPED** — This step is itself the review layer; its output feeds Step 11 and Step 12 directly.
+**SKIPPED** — This step is itself the review layer; its output feeds Step 12 and Step 13 directly.
 
 ## Phase 4: Decision (You)
 
-- `status=pass` → proceed to Step 11 with `status=completed`
+- `status=pass` → proceed to Step 12 with `status=completed`
 - `status=partial` → final `status=partial`, list unclear usages in the final report, do not block
-- `status=fail` → append `D-<N>: thought-experiment-blocking / severity=blocking` to `DEVIATIONS.md`, final `status=partial`, recommend rerun after fix, proceed to Step 11
-- Always attach the full `thought_experiment_report` to running context so Step 12 can emit it
+- `status=fail` → append `D-<N>: thought-experiment-blocking / severity=blocking` to `DEVIATIONS.md`, final `status=partial`, recommend rerun after fix, proceed to Step 12
+- Always attach the full `thought_experiment_report` to running context so Step 13 can emit it

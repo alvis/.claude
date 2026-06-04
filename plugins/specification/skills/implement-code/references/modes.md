@@ -56,7 +56,7 @@ Per PLAN phase:
 
 ### FLAG_MISMATCH / REFUSE
 
-No children dispatched; skip to Step 12.
+No children dispatched; skip to Step 13.
 
 Update TodoWrite with one todo per dispatched child.
 

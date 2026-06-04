@@ -1,6 +1,6 @@
-# Step 9a — Stack-Aware Sizing & Restack Trigger
+# Step 9 — Stack-Aware Sizing & Restack Trigger
 
-**When loaded**: After Step 9's post-change re-check completes, when the run is NOT in any of the skip conditions below.
+**When loaded**: After Step 8's execution lands `commits_landed`, when the run is NOT in any of the skip conditions below.
 
 **Skip entirely** (record `stack_dispatch.dispatched=false` with one-line reason) when any of:
 
@@ -13,14 +13,14 @@
 ## Step Configuration
 
 - **Purpose**: After `commits_landed` are produced, decide whether to delegate to `coding:commit --create-pr` (oversized changes → stacked PRs; existing-stack semantic upstream impact → mandatory restack). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:commit` so its standards (`GIT-PR-STACK-01..06`, `GIT-PR-SIZE-01..04`) remain the single source of truth.
-- **Input**: `repo_path`, `commits_landed`, post-commit diff stats, `ticket.slug`
+- **Input**: `repo_path`, `commits_landed`, `base_rev` (from Step 7), post-commit diff stats, `ticket.slug`
 - **Output**: `stack_dispatch` = `{ dispatched: true|false, mode: stacked-pr|restack|null, branch_prefix: <slug>|null, prs: [...] }`
 - **Sub-skill**: `coding:commit` (only when triggered)
 - **Parallel Execution**: No
 
 ## Phase 1: Planning (You)
 
-1. **Compute aggregate change size** against the base revision (read-only, via `Bash` `jj diff --stat` or `git diff --stat <base>...HEAD`):
+1. **Compute aggregate change size** against `base_rev` (the marker captured in Step 7 Workspace Setup, read-only, via `Bash` `jj diff --from <base_rev> --stat` or `git diff --stat <base_rev>...HEAD`). Diffing against `base_rev` — not the working-copy parent — guarantees the size covers the FULL set of `commits_landed`, not just the last commit:
    - `changed_files`: total files touched across `commits_landed`
    - `loc_delta`: total added + removed lines
    - `domains_touched`: distinct top-level path prefixes / package roots
@@ -46,10 +46,10 @@ When a trigger fires, dispatch `coding:commit` exactly once via the `Skill` tool
    - For restack-trigger: no extra flag — the skill's mandatory Step 4 (`restack.sh`) runs after any rewrite touching a change with downstream bookmarks
    - Pass `repo_path` so the commit skill operates inside the same working copy
 3. Capture the commit skill's report `outputs.route`, `outputs.branch_prefix`, and `outputs.prs[]` into `stack_dispatch`
-4. Append the dispatch entry to `child_dispatch_log` so Step 12 surfaces it alongside the `coding:*` chain
+4. Append the dispatch entry to `child_dispatch_log` so Step 13 surfaces it alongside the `coding:*` chain
 
-## Phase 4: Decision (You)
+## Phase 3: Decision (You)
 
 - `coding:commit` reports `status=completed` → record `stack_dispatch` and proceed to Step 10
-- `coding:commit` reports `status=failed|partial` → mark this skill's final `status=partial`, attach the commit report to the running context, still proceed to Step 10 (paper-only review remains valuable)
+- `coding:commit` reports `status=failed|partial` → mark this skill's final `status=partial`, attach the commit report to the running context, still proceed to Step 10 (alignment review + paper-only thought experiment remain valuable)
 - Mark `stack-aware-sizing` todo as `completed`
