@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.13
+#!/usr/bin/env python3
 """advisory React-Props pre-pass scanner — thin shim over the shared scanlib engine.
 
 Rules are auto-discovered from the sibling `scanners/` package: drop one `.py`

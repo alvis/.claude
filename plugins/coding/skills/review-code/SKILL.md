@@ -209,7 +209,7 @@ The review skill applies the following standards (all references use format `sta
 
 **File filtering by scope**: see `references/specifier-resolution.md` (File Filtering by Scope). Prepare a separate file list per selected scope.
 
-**Pre-pass mechanical scan**: Run `python3 plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and pass the slice into each subagent's dispatch prompt as a "Candidate violations (advisory; verify against scan.md before flagging)" section, using this routing:
+**Pre-pass mechanical scan**: Run `plugins/coding/scripts/pyrun.sh plugins/coding/scripts/scan_potential_violations.py <discovered-files> --category all --before 5 --after 10` and capture the stdout. Slice the report by category and pass the slice into each subagent's dispatch prompt as a "Candidate violations (advisory; verify against scan.md before flagging)" section, using this routing:
 
 - **docs** gets `jsdoc-uppercase`, `jsdoc-fullstop`, `comment-rule-id`, `author-stamp`, `section-name` (DOC-* rules).
 - **test** gets `test-hooks`, `test-mock-stub`, `test-conditional-skip`, `aaa-comment`, `test-title-convention`, `test-file-naming`, `test-dynamic-import`, `undefined-override` (TST-* rules).
@@ -217,7 +217,7 @@ The review skill applies the following standards (all references use format `sta
 - **style** gets all categories.
 - **security** gets none.
 
-Subagents MUST re-check every candidate against the loaded rule files before adding a finding — the scanner is advisory, not authoritative. If `python3` is unavailable, log a warning and proceed without the pre-pass.
+Subagents MUST re-check every candidate against the loaded rule files before adding a finding — the scanner is advisory, not authoritative. The `pyrun.sh` wrapper resolves Python ≥3.13; if none is found it auto-heals by installing one via `coding:sync-tool`, then retries and runs the scanner. The pre-pass therefore effectively always runs — never skip it. Only a hard install failure surfaces as a loud non-zero exit; in that case the failure must be raised, not silently swallowed.
 
 #### Phase 2: Execution (Subagents via Task Tool)
 

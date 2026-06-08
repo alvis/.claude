@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.13
+#!/usr/bin/env python3
 """Fixture-driven and loader smoke tests for the coding standard scanner.
 
 Run directly: `python3.13 plugins/coding/scripts/test_scanner.py`.
