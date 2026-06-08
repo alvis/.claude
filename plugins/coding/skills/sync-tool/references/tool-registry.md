@@ -7,10 +7,11 @@ Order matters: on macOS, `brew` must be present before `jj` and `gh` are install
 
 | Order | Name   | Min version | macOS-only | Installer script              | Source of truth                                    |
 | ----- | ------ | ----------- | ---------- | ----------------------------- | -------------------------------------------------- |
-| 1     | `brew` | 4.0.0       | yes        | `scripts/installers/brew.sh`  | https://brew.sh                                    |
-| 2     | `jj`   | 0.18.0      | no         | `scripts/installers/jj.sh`    | https://github.com/jj-vcs/jj                       |
-| 3     | `gh`   | 2.0.0       | no         | `scripts/installers/gh.sh`    | https://cli.github.com / https://github.com/cli/cli |
-| 4     | `fallow` | 2.0.0     | no         | `scripts/installers/fallow.sh` | https://github.com/fallow-rs/fallow               |
+| 1     | `brew` | 4.0.0       | yes        | `scripts/installers/brew.sh`  | <https://brew.sh>                                    |
+| 2     | `jj`   | 0.18.0      | no         | `scripts/installers/jj.sh`    | <https://github.com/jj-vcs/jj>                       |
+| 3     | `gh`   | 2.0.0       | no         | `scripts/installers/gh.sh`    | <https://cli.github.com> / <https://github.com/cli/cli> |
+| 4     | `fallow` | 2.0.0     | no         | `scripts/installers/fallow.sh` | <https://github.com/fallow-rs/fallow>               |
+| 5     | `python` | latest available | no       | `scripts/installers/python.sh` | <https://www.python.org/downloads/>                 |
 
 ## Adding a new tool
 
