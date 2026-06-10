@@ -18,6 +18,7 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Linting code | `/coding:lint` |
 | Refactoring | `/coding:refactor` |
 | Committing | `/coding:commit` |
+| Finalizing un-pushed commits (per-commit QA) | `/coding:finalize-commits` |
 | Creating tests | `/coding:complete-test` |
 | Handing over work | `/coding:handover` |
 | Resuming work | `/coding:takeover` |
@@ -30,7 +31,7 @@ Each skill documents its own applicable standards internally. Route actions to t
 
 2. **Work in place on a dirty HEAD** — new changes layer onto existing uncommitted work; no isolation strategy to decide.
 
-3. **Saving changes goes through `coding:commit`** — jj-first. The skill auto-routes among save (`jj describe` + `git commit`), split (`jj split`), absorb (`jj absorb`), edit (`jj edit`), and parallel-workspace (`jj workspace add`) based on working-copy state. Explicit operations via flags: `--retrospective` (blame-trace fixups), `--reorder [--up-to <rev>]` (re-linearise history), `--create-pr` (materialise stacked PRs). Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create`.
+3. **Saving changes goes through `coding:commit`** — jj-first. The skill auto-routes among save (`jj describe` + `git commit`), split (`jj split`), absorb (`jj absorb`), edit (`jj edit`), and parallel-workspace (`jj workspace add`) based on working-copy state. Explicit operations via flags: `--retrospective` (blame-trace fixups), `--reorder [--up-to <rev>]` (re-linearise history), `--create-pr` (materialise stacked PRs). Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits (message conformance + folding QA edits).
 
 4. **Stacked PRs are opt-in** — invoke `/coding:commit --create-pr`. All bookmarking and pushing happens inside the skill per `GIT-PR-STACK-*`. PR titles + bodies are produced by `/coding:write-pr`.
 
