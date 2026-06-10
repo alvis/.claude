@@ -1,0 +1,298 @@
+#!/bin/bash
+
+# Claude Code Status Line - Bullet Train Style
+# Segments: time · ⎇ branch + VCS state (✎±N ∅ ×× ↑↓) · repo|relpath · ❯❯❯ · model · ⬩ ctx% (tokens) · 5h/7d rate limits · output style
+
+# read JSON input from stdin
+input=$(cat)
+
+# degrade gracefully when jq is unavailable: plain "dir ❯ model" line
+if ! command -v jq >/dev/null 2>&1; then
+    printf "\033[31m%s\033[0m \033[31m❯\033[33m❯\033[32m❯\033[0m \033[36mClaude\033[0m" "$(basename "$PWD")"
+    exit 0
+fi
+
+# extract all fields in a single jq pass, unit-separator joined so empty
+# fields survive word splitting (tabs are IFS whitespace and would collapse)
+IFS=$'\x1f' read -r model_name current_dir project_dir output_style \
+    ctx_tok ctx_pct fh_pct fh_resets sd_pct sd_resets < <(
+    jq -r '[(.model.display_name // "Claude"),
+            (.workspace.current_dir // ""),
+            (.workspace.project_dir // ""),
+            (.output_style.name // "default"),
+            (.context_window.total_input_tokens // 0),
+            (.context_window.used_percentage // ""),
+            (.rate_limits.five_hour.used_percentage // ""),
+            (.rate_limits.five_hour.resets_at // ""),
+            (.rate_limits.seven_day.used_percentage // ""),
+            (.rate_limits.seven_day.resets_at // "")]
+           | map(tostring) | join("\u001f")' <<<"$input" 2>/dev/null
+)
+
+# clean model name: strip parenthetical suffix and trailing spaces
+model_name=${model_name%%(*}
+while [[ "$model_name" == *" " ]]; do model_name=${model_name% }; done
+[[ -z "$model_name" ]] && model_name="Claude"
+
+# context usage: ⬩ XX% (xxxk) — tokens are current context-window contents
+# ⬩ color: cyan <60% and <150k; yellow 60-79% and <300k; red otherwise
+ctx_tok=${ctx_tok%%.*}
+[[ "$ctx_tok" =~ ^[0-9]+$ ]] || ctx_tok=0
+context_usage=""
+if [[ -n "$ctx_pct" ]]; then
+    ctx_pct_int=$(printf "%.0f" "$ctx_pct" 2>/dev/null)
+    ctx_tok_k=$((ctx_tok / 1000))
+    if [[ $ctx_pct_int -lt 60 && $ctx_tok_k -lt 150 ]]; then
+        ctx_char_color=36
+    elif [[ $ctx_pct_int -ge 80 || $ctx_tok_k -ge 300 ]]; then
+        ctx_char_color=31
+    else
+        ctx_char_color=33
+    fi
+    context_usage=$(printf " \033[%dm⬩ %s%% (%dk)\033[0m" "$ctx_char_color" "$ctx_pct_int" "$ctx_tok_k")
+fi
+
+# current time (matching bullet-train time format)
+current_time=$(date "+%H:%M:%S")
+
+# convert a resets_at value to epoch seconds; accepts epoch or ISO-8601
+to_epoch() {
+    local v="$1"
+    [[ -z "$v" || "$v" == "null" ]] && return 1
+    if [[ "$v" =~ ^[0-9]+$ ]]; then
+        printf '%s' "$v"
+        return 0
+    fi
+    if date --version >/dev/null 2>&1; then
+        date -d "$v" +%s 2>/dev/null
+    else
+        local cleaned="${v%%.*}"
+        cleaned="${cleaned%Z}"
+        date -j -u -f "%Y-%m-%dT%H:%M:%S" "$cleaned" +%s 2>/dev/null
+    fi
+}
+
+# directory display with path relative to nearest .git folder
+# returns "repo_name|relative_path|git_root" (empty fields when not in a repo)
+get_git_relative_path() {
+    local current="$1"
+
+    if [[ "$current" == "$HOME" ]]; then
+        echo "~||"
+        return
+    fi
+
+    # find the nearest .git (directory, or file for worktrees) by traversing up
+    local check_dir="$current"
+    local git_root=""
+
+    while [[ "$check_dir" != "/" && "$check_dir" != "$HOME" ]]; do
+        if [[ -e "$check_dir/.git" ]]; then
+            git_root="$check_dir"
+            break
+        fi
+        check_dir=$(dirname "$check_dir")
+    done
+
+    if [[ -n "$git_root" ]]; then
+        local repo_name
+        repo_name="$(basename "$git_root")"
+        if [[ "$current" == "$git_root" ]]; then
+            echo "${repo_name}||${git_root}"
+        else
+            echo "${repo_name}|${current#"$git_root"/}|${git_root}"
+        fi
+    else
+        echo "$(basename "$current")||"
+    fi
+}
+
+# both the path and git segments key off the actual working directory
+base_dir="$current_dir"
+[[ -z "$base_dir" ]] && base_dir="$project_dir"
+
+if [[ -n "$base_dir" ]]; then
+    path_info=$(get_git_relative_path "$base_dir")
+else
+    path_info="unknown|"
+fi
+
+repo_name=${path_info%%|*}
+path_rest=${path_info#*|}
+rel_path=${path_rest%%|*}
+git_root=${path_rest#*|}
+
+if [[ -n "$rel_path" ]]; then
+    dir_display=$(printf "\033[31m%s\033[0m \033[34m%s\033[0m" "$repo_name" "$rel_path")
+else
+    dir_display=$(printf "\033[31m%s\033[0m" "$repo_name")
+fi
+
+# VCS segment: ⎇ branch + state marker + sync arrows
+#   ××N conflicts (red) · ✎±N undescribed jj work / ±N dirty files (yellow) ·
+#   ∅ empty @ in jj (dim) · ↑N ahead (cyan) · ↓N behind / ↑N↓M diverged (red)
+# One porcelain-v2 call yields branch, detached oid, ahead/behind, dirty and
+# conflict counts. jj reads use --ignore-working-copy so the ~300ms render
+# cadence never triggers snapshots or fights the live session's repo lock.
+git_info=""
+vcs_status=""
+if [[ -n "$base_dir" ]]; then
+    vcs_status=$(git -C "$base_dir" status --porcelain=v2 --branch 2>/dev/null)
+fi
+if [[ -n "$vcs_status" ]]; then
+    branch_head=""; branch_oid=""; ahead=0; behind=0; dirty=0; conflicts=0
+    while IFS= read -r vcs_line; do
+        case "$vcs_line" in
+            "# branch.head "*) branch_head=${vcs_line#"# branch.head "} ;;
+            "# branch.oid "*)  branch_oid=${vcs_line#"# branch.oid "} ;;
+            "# branch.ab "*)
+                ab=${vcs_line#"# branch.ab "}
+                ahead=${ab%% *};  ahead=${ahead#+}
+                behind=${ab##* }; behind=${behind#-}
+                ;;
+            "u "*)     conflicts=$((conflicts + 1)) ;;
+            [12?]" "*) dirty=$((dirty + 1)) ;;
+        esac
+    done <<<"$vcs_status"
+    [[ "$ahead" =~ ^[0-9]+$ ]] || ahead=0
+    [[ "$behind" =~ ^[0-9]+$ ]] || behind=0
+
+    # jj colocated repo: @ metadata from the last snapshot — flags are
+    # "<d|u><e|f><c|n>" = described/undescribed, empty/full, conflict/none.
+    # Live file counts still come from the git pass above.
+    jj_flags=""
+    if [[ -n "$git_root" && -d "$git_root/.jj" ]] && command -v jj >/dev/null 2>&1; then
+        jj_flags=$(jj --ignore-working-copy -R "$git_root" log -r @ --no-graph \
+            -T 'if(description, "d", "u") ++ if(empty, "e", "f") ++ if(conflict, "c", "n")' \
+            2>/dev/null)
+    fi
+
+    # branch label: git HEAD when attached; nearest jj bookmark when jj keeps
+    # HEAD detached (↑ becomes stack depth above that bookmark); short oid last
+    branch_glyph="⎇"
+    branch_label=""
+    if [[ -n "$branch_head" && "$branch_head" != "(detached)" ]]; then
+        branch_label="$branch_head"
+    elif [[ -n "$jj_flags" ]]; then
+        bookmark=$(jj --ignore-working-copy -R "$git_root" log \
+            -r 'heads(::@ & bookmarks())' --no-graph \
+            -T 'bookmarks.join(" ") ++ " "' 2>/dev/null)
+        bookmark=${bookmark%%[[:space:]]*}
+        if [[ -n "$bookmark" ]]; then
+            branch_label="$bookmark"
+            ahead=$(git -C "$base_dir" rev-list --count "${bookmark}..HEAD" 2>/dev/null)
+            [[ "$ahead" =~ ^[0-9]+$ ]] || ahead=0
+            behind=0
+        fi
+    fi
+    if [[ -z "$branch_label" ]]; then
+        branch_glyph="➦"
+        branch_label=${branch_oid:0:7}
+        [[ -z "$branch_label" || "$branch_oid" == "(initial)" ]] && branch_label="(no commits)"
+    fi
+
+    # state marker: conflicts > dirty > empty-@; calm repo stays undecorated
+    state_part=""
+    if [[ $conflicts -gt 0 ]]; then
+        state_part=$(printf " \033[31m××%d\033[0m" "$conflicts")
+    elif [[ "$jj_flags" == ??c ]]; then
+        state_part=$(printf " \033[31m××\033[0m")
+    elif [[ $dirty -gt 0 ]]; then
+        if [[ "$jj_flags" == u* ]]; then
+            state_part=$(printf " \033[33m✎±%d\033[0m" "$dirty")
+        else
+            state_part=$(printf " \033[33m±%d\033[0m" "$dirty")
+        fi
+    elif [[ "$jj_flags" == ?e? ]]; then
+        state_part=$(printf " \033[2m∅\033[0m")
+    fi
+
+    # sync arrows: ahead cyan; behind or diverged red
+    arrows_part=""
+    if [[ $ahead -gt 0 && $behind -gt 0 ]]; then
+        arrows_part=$(printf " \033[31m↑%d↓%d\033[0m" "$ahead" "$behind")
+    elif [[ $ahead -gt 0 ]]; then
+        arrows_part=$(printf " \033[36m↑%d\033[0m" "$ahead")
+    elif [[ $behind -gt 0 ]]; then
+        arrows_part=$(printf " \033[31m↓%d\033[0m" "$behind")
+    fi
+
+    git_info=$(printf "\033[33m%s %s\033[0m" "$branch_glyph" "$branch_label")${state_part}${arrows_part}
+fi
+
+# Braille dot character and ANSI color for remaining percentage
+# 8 levels as vertical bar (bottom-to-top fill): ⡀ ⣀ ⣄ ⣤ ⣦ ⣶ ⣷ ⣿
+# Color: green (32) for 40%+, yellow (33) for 10-40%, red (31) for <10%
+get_limit_indicator() {
+    local remaining="$1"
+    local dot
+    if [[ $remaining -lt 2 ]]; then dot="⡀"
+    elif [[ $remaining -lt 5 ]]; then dot="⣀"
+    elif [[ $remaining -lt 10 ]]; then dot="⣄"
+    elif [[ $remaining -lt 20 ]]; then dot="⣤"
+    elif [[ $remaining -lt 40 ]]; then dot="⣦"
+    elif [[ $remaining -lt 60 ]]; then dot="⣶"
+    elif [[ $remaining -lt 80 ]]; then dot="⣷"
+    else dot="⣿"
+    fi
+    local color
+    if [[ $remaining -ge 40 ]]; then color=32
+    elif [[ $remaining -ge 10 ]]; then color=33
+    else color=31
+    fi
+    echo "$dot $color"
+}
+
+rate_limits_display=""
+
+if [[ -n "$fh_pct" ]]; then
+    five_pct_int=$(printf "%.0f" "$fh_pct" 2>/dev/null)
+    read -r five_dot five_ansi <<<"$(get_limit_indicator "$((100 - five_pct_int))")"
+    five_reset_text=""
+    if fh_epoch=$(to_epoch "$fh_resets"); then
+        diff_s=$((fh_epoch - $(date +%s)))
+        if [[ $diff_s -gt 0 ]]; then
+            diff_h=$((diff_s / 3600))
+            diff_m=$(((diff_s % 3600) / 60))
+            if [[ $diff_h -gt 0 ]]; then
+                five_reset_text=" (${diff_h}h${diff_m}m)"
+            else
+                five_reset_text=" (${diff_m}m)"
+            fi
+        fi
+    fi
+    rate_limits_display+=$(printf " \033[%sm%s 5h%s\033[0m" "$five_ansi" "$five_dot" "$five_reset_text")
+fi
+
+if [[ -n "$sd_pct" ]]; then
+    seven_pct_int=$(printf "%.0f" "$sd_pct" 2>/dev/null)
+    read -r seven_dot seven_ansi <<<"$(get_limit_indicator "$((100 - seven_pct_int))")"
+    seven_reset_text=""
+    if sd_epoch=$(to_epoch "$sd_resets"); then
+        reset_day=$(date -r "$sd_epoch" "+%a %I%p" 2>/dev/null || date -d "@$sd_epoch" "+%a %I%p" 2>/dev/null)
+        if [[ -n "$reset_day" ]]; then
+            reset_day=${reset_day/ 0/ }
+            reset_day=${reset_day/AM/am}
+            reset_day=${reset_day/PM/pm}
+            seven_reset_text=" (${reset_day})"
+        fi
+    fi
+    rate_limits_display+=$(printf " \033[%sm%s 7d%s\033[0m" "$seven_ansi" "$seven_dot" "$seven_reset_text")
+fi
+
+# build single-line status
+line=""
+line+=$(printf "\033[2m%s \033[0m" "$current_time")
+if [[ -n "$git_info" ]]; then
+    line+="${git_info} "
+fi
+line+="$dir_display"
+line+=$(printf " \033[31m❯\033[33m❯\033[32m❯\033[0m")
+line+=$(printf " \033[36m%s\033[0m" "$model_name")
+line+="$context_usage"
+line+="$rate_limits_display"
+if [[ "$output_style" != "default" ]]; then
+    line+=$(printf " \033[2m(%s)\033[0m" "$output_style")
+fi
+
+printf "%s" "$line"
