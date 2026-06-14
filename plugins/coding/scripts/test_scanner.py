@@ -103,13 +103,15 @@ class LoaderSmokeTests(unittest.TestCase):
         "py-future-annotations",
         "py-missing-all",
         "to-be-object-literal",
+        "mock-calls-index",
+        "spec-escape-cast",
     }
 
     def setUp(self) -> None:
         self.rules = load_rules()
 
     def test_discovers_all_rules(self) -> None:
-        self.assertEqual(len(self.rules), 27)
+        self.assertEqual(len(self.rules), 29)
 
     def test_rule_ids_are_unique(self) -> None:
         ids = [rule.id for rule in self.rules]
