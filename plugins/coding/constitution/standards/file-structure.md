@@ -10,8 +10,8 @@ Use kebab-case for files, PascalCase for React components.
 
 ```typescript
 // ✅ GOOD: proper casing
-user-service.ts         // Standalone (no typed directory)
-user.ts                 // Inside services/ directory
+user-service.ts         // Standalone fallback — suffix only because no typed directory
+user.ts                 // Inside services/ directory (preferred: one domain word)
 UserProfile.tsx         // React component
 api-client.spec.ts     // Test file
 
@@ -35,9 +35,9 @@ export class UserValidator { ... }
 export function validateUser() { ... }
 ```
 
-### Avoid Path Redundancy
+### Prefer Single-Word Domain Names
 
-Do not repeat a word in a file name that is already expressed by its parent directory. When a file lives inside a typed directory, omit the type suffix from the file name.
+Prefer a single, most-specific domain word for a file name. The parent directory and the export type carry the rest of the context — let them. Eliminating path redundancy is the strongest case of this: when a file lives inside a typed directory, omit the type suffix from the file name.
 
 ```typescript
 // ❌ BAD: word repeated in path
@@ -55,7 +55,14 @@ lib/token-store.ts
 src/user-service.ts
 ```
 
-> **Rule of thumb:** Read the full path aloud. If a word appears in both the directory and file name, remove it from the file name.
+> **Rule of thumb:** Read the full path aloud. Drop any word the directory already says; keep only what one specific domain word can't carry alone.
+
+**Keep more than one word only when a single word would be ambiguous:**
+
+- **Verb-first function files** keep verb+noun — `validate-user.ts` for `validateUser()` (see `NAM-FUNC-01`).
+- **Generic or ambiguous single word** keeps a qualifier — `api-client.ts`, not `client.ts`.
+- **Name collisions** within the same directory.
+- **Tooling / React suffixes** are unaffected — `.spec`, `.config`, `UserProfile.tsx`.
 
 ## File Naming Patterns
 
@@ -63,8 +70,8 @@ src/user-service.ts
 
 ```typescript
 // service files
-user-service.ts               // standalone (no typed directory)
-services/user.ts              // inside typed directory (preferred)
+services/user.ts              // preferred: one domain word, directory carries the type
+user-service.ts               // fallback: suffix only when there is no typed directory
 
 // test files
 user-service.spec.ts          // standalone
@@ -149,12 +156,12 @@ export function formatCurrency() { ... }  // Different domain
 
 When a file exceeds the project's `max-lines` threshold, apply the **two-stage rule** — never split arbitrarily.
 
-**Stage 1 — Extract shared helpers first.** Look for logic that genuinely belongs elsewhere (another existing file, or a new helper module) and move it out. Prefer this when the extracted code is reused by more than one caller, or when it represents a distinct concern that stands on its own.
+**Stage 1 — Relocate code that belongs elsewhere.** Look for logic that genuinely belongs to another module and move it to its **real home** (an existing module, or a proper typed directory). Prefer this when the code is reused by more than one caller, or represents a distinct concern that stands on its own. Do NOT create a `<base>-helpers.ts` / `<base>.helpers.ts` sibling — that is not its real home.
 
-**Stage 2 — Folder split if still too long.** If the file still exceeds `max-lines` after extraction, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern:
+**Stage 2 — Folder split if still too long.** If the file still exceeds `max-lines` after relocation, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern:
 
 - The entry file `<base>.ts` remains a thin re-exports/orchestrator and preserves the public surface.
-- Helpers live inside `<base>/*.ts` with **short names** — the folder name already provides the context, so do not repeat the base in the file name (see "Avoid Path Redundancy").
+- Helpers live inside `<base>/*.ts` with **short names** — the folder name already provides the context, so do not repeat the base in the file name (see "Prefer Single-Word Domain Names").
 
 ```typescript
 // ❌ BEFORE: single file is too long
@@ -171,7 +178,7 @@ adapters/anthropic/anthropic-schema.ts
 adapters/anthropic/anthropic-parse.ts
 ```
 
-> **Do not split into arbitrary sibling files** (e.g. `anthropic.schema.ts`, `anthropic.parse.ts` alongside `anthropic.ts`) unless that naming is already an established project convention. The folder pattern is preferred because it keeps related helpers grouped and lets the folder name carry the context.
+> **Never split into sibling files** (e.g. `anthropic.schema.ts`, `anthropic.parse.ts`, or `anthropic-helpers.ts` alongside `anthropic.ts`). Helpers go inside the `<base>/` folder, always — it keeps them grouped and lets the folder name carry the context.
 
 ## Quick Reference
 
