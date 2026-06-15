@@ -90,7 +90,7 @@ if [[ "$CODE_EDITED" != "true" ]]; then
   exit 0
 fi
 
-BASE_REASON="Before stopping: code was edited in this turn. Dispatch a subagent to run \`/coding:lint\` on the touched code files (derive the list from \`git status\` and the assistant's recent Edit/Write tool calls). Apply lint only to source-code files — \`.ts/.tsx/.js/.jsx/.mjs/.cjs/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.bash/.ipynb/.sql/.graphql/.proto/.vue/.svelte/.astro\` and similar — and skip any text-content files like \`.md/.mdx/.mdc/.txt/.rst/.json/.jsonc/.yaml/.yml/.toml/.html/.svg/.csv\` that were also touched in this turn, since \`/coding:lint\` has no rules for them. Only allow the stop to proceed once the lint loop reports zero standard violations."
+BASE_REASON="Before stopping: code was edited in this turn. Dispatch a subagent to run \`/coding:lint\` on the touched code files (derive the list from \`git status\` and the assistant's recent Edit/Write tool calls). Apply lint only to source-code files — \`.ts/.tsx/.js/.jsx/.mjs/.cjs/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.bash/.ipynb/.sql/.graphql/.proto/.vue/.svelte/.astro\` and similar — and skip any text-content files like \`.md/.mdx/.mdc/.txt/.rst/.json/.jsonc/.yaml/.yml/.toml/.html/.svg/.csv\` that were also touched in this turn, since \`/coding:lint\` has no rules for them. Skip any one-off, throwaway maintenance script that won't be committed (ad-hoc fix-ups, scratch utilities) — lint only real source files meant to land in the repo. Only allow the stop to proceed once the lint loop reports zero standard violations."
 
 PLAN_REASON=""
 
