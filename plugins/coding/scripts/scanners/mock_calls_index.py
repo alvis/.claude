@@ -27,7 +27,7 @@ def scan(*, path: Path, lines: list[str], matches: list[Match]) -> None:
 
 RULE = Rule(
     id="mock-calls-index",
-    label="Manual mock.calls[N] indexing — prefer toHaveBeenCalledWith/objectContaining (TST-CORE-09)",
+    label="Manual mock.calls[N] indexing — single call: toHaveBeenCalledWith; sequence: toEqual([...]) (TST-CORE-09/TST-DATA-02)",
     scan=scan,
     order=126,
     applies_to=spec_files,

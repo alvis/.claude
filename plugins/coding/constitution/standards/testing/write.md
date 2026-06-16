@@ -63,7 +63,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-CORE-06**: Do not test only that dependencies were called. Assert behavior and outcome.
 - **TST-CORE-07**: Do not spy on internals when external behavior can be tested.
 - **TST-CORE-08**: Avoid `await import(...)` in tests. Keep imports static and predictable.
-- **TST-CORE-09**: For log-observable behavior, capture the logger as `vi.fn<LogFn>()` or `{ info: vi.fn<Logger['info']>() } satisfies Partial<Logger>` and assert the full call sequence with `expect(log.mock.calls).toEqual([...])`. Do not use scattered `toHaveBeenCalledWith(...)` chains or count-only assertions. Prefer the SUT's exported `Log` type; a local alias is acceptable only when no real type is exported.
+- **TST-CORE-09**: For log-observable behavior, capture the logger as `vi.fn<LogFn>()` or `{ info: vi.fn<Logger['info']>() } satisfies Partial<Logger>` and assert the full call record with `expect(log.mock.calls).toEqual([...])` — the array pins how many lines were logged and each line's content (one call `[[...]]` or many). Do not use `toHaveBeenCalledTimes(...)` + scattered `toHaveBeenCalledWith(...)` pairs, count-only assertions, or `log.mock.calls[N]` indexing. Prefer the SUT's exported `Log` type; a local alias is acceptable only when no real type is exported.
 - **TST-CORE-11**: Tests must run or hard-fail. Never gate with `describe.runIf`/`it.skipIf`/`if (!env.X) return`. Required env vars are validated at file load with `throw new Error(...)` so missing config breaks the suite loudly.
 
 ### Coverage (TST-COVR)
@@ -129,6 +129,14 @@ Mock only IO/external/control dependencies. Keep pure internal logic real.
 ### Identifier Names
 
 No `mock*` or `mocked` prefixes. Use semantic names: `userRepository`, `emailGateway`, `clockStub`.
+
+### Asserting Calls
+
+Pick the form by *what you assert*, not by call count:
+
+- **Called with given args** (count not pinned) -> `expect(fn).toHaveBeenCalledWith(...)` (or `toHaveBeenNthCalledWith(n, ...)`).
+- **Complete call record** (exact count + exact args) -> `expect(fn.mock.calls).toEqual([...])`. When you'd otherwise pair `toHaveBeenCalledTimes(n)` with `toHaveBeenCalledWith(...)`, collapse both into this one structural assertion (works for one call `[[...]]` or many).
+- **Never** index a recorded call -> `fn.mock.calls[N]` / `fn.mock.results[N]` is banned (flagged by the `mock-calls-index` scanner); assert the whole `mock.calls` array with `toEqual`. See `TST-DATA-02`.
 
 ## Coverage Workflow
 

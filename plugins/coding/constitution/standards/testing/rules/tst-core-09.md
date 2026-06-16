@@ -2,7 +2,9 @@
 
 ## Intent
 
-When a unit's observable behavior includes writing to a logger, the test MUST capture the logger as a typed `vi.fn<LogFn>()` (or `{ info: vi.fn<Logger['info']>(), ... } satisfies Partial<Logger>`) and assert the **full call sequence** via `expect(log.mock.calls).toEqual([...])`. This replaces scattered `toHaveBeenCalledWith(...)` assertions and makes log output a structural contract.
+When a unit's observable behavior includes writing to a logger, the test MUST capture the logger as a typed `vi.fn<LogFn>()` (or `{ info: vi.fn<Logger['info']>(), ... } satisfies Partial<Logger>`) and assert the **full call record** via `expect(log.mock.calls).toEqual([...])` — the array pins both how many lines were logged and each line's exact content. This replaces `toHaveBeenCalledTimes(...)` + scattered `toHaveBeenCalledWith(...)` pairs and makes log output a structural contract.
+
+This holds whether the unit logs once (`[[...]]`) or many times — log output is a complete-record contract either way. Never index into the recorded array (`log.mock.calls[N]`); assert the whole array. See TST-DATA-02 for the general boundary across all mocks: bare `toHaveBeenCalledWith(...)` when you only assert that a call happened with given args, `mock.calls.toEqual([...])` when you assert the complete record.
 
 Applies when:
 
@@ -23,6 +25,9 @@ expect(log).toHaveBeenCalledTimes(2);
 
 // ❌ Untyped mock drops compile-time signature check
 const log = vi.fn();
+
+// ❌ Indexing into a recorded call — assert the whole array with toEqual
+expect(log.mock.calls[0]![0]).toBe('connected');
 ```
 
 ## Correct Patterns
@@ -64,6 +69,7 @@ it('should emit info then error on partial failure', async () => {
 
 ## Edge Cases
 
+- A single intentional log line is still the full record — assert `expect(log.mock.calls).toEqual([['msg', meta]])`. Bare `expect(log).toHaveBeenCalledWith(...)` is acceptable only when asserting that a specific log occurred without pinning the complete output.
 - Logs that are incidental (debug traces not specified by the contract) need not be asserted — do not lock in noise.
 - If order is irrelevant, use `expect(log.mock.calls).toEqual(expect.arrayContaining([...]))`.
 - Level-specific assertions: assert each method's `.mock.calls` separately rather than merging.
