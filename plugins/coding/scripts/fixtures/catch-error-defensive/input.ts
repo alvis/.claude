@@ -15,6 +15,14 @@ export function handleB(): string {
   }
 }
 
+export function handleLiteral(): string {
+  try {
+    return doWork();
+  } catch (error) {
+    return error instanceof Error ? error.message : 'An error occurred';
+  }
+}
+
 export function handleClean(): string {
   try {
     return doWork();

@@ -128,6 +128,7 @@ If `--skip-unused` is in $ARGUMENTS, skip this step entirely.
      2. Scan each file against the loaded standards' Quick Scan checklists.
      3. For each potential violation — including every advisory candidate from step 1 — read the matching rule file (`./rules/<rule-id>.md`) to confirm the violation and follow its Fix section.
      4. Run the project lint/type/test tools (eslint, tsc, pytest, …) — **NOT the scanner again** — and fix any remaining tool-reported issues.
+   - **Do not invent rewrites the standards do not ask for.** A correct direct `error as Error` cast in a catch block is compliant (`TYP-TYPE-08` / `ERR-HAND-04`) — leave it; never rewrite it into `instanceof Error ? … : …` narrowing. A whole-error assertion `expect(error).toEqual(new Error('…'))` is compliant (`TST-DATA-07`) — never split it into `toBeInstanceOf` + a separate `.message`/`.cause` check. These rewrites are themselves violations.
    - Expected YAML report format (see below) — **must include `violations_found` count** (integer, `0` if already compliant and no modifications were made) and **use `status: compliant`** when `violations_found` is `0` (distinct from `success`, which means violations were found and fixed).
    - Instruction that linters CANNOT further delegate work.
    - **Instruction to report `context_level`** (calculated as `input_tokens / context_window_size × 100`, default context window: 200K tokens) in their completion message.

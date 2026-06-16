@@ -4,6 +4,8 @@
 
 In catch blocks, immediately cast `error` to `Error` (via `as Error`) or use a `toError` helper. Never use inline conditional branching (`instanceof Error` if/else or ternary) just to handle the unknown catch type. Never add `v8 ignore`/`c8 ignore` to cover dead else branches.
 
+**An existing `as Error` cast is correct — leave it.** Never rewrite a direct `as Error` cast into `instanceof Error` narrowing, whatever the fallback (`String(error)`, a string literal, `undefined`). Introducing that narrowing during a lint/fix pass is itself the violation.
+
 ## Fix
 
 ```typescript

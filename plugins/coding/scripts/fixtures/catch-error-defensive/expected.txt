@@ -19,6 +19,26 @@ input.ts:5  return error instanceof Error ? error.message : String(error);
 
   --- next match ---
 
+input.ts:22  return error instanceof Error ? error.message : 'An error occurred';
+      17: 
+      18: export function handleLiteral(): string {
+      19:   try {
+      20:     return doWork();
+      21:   } catch (error) {
+  >   22:     return error instanceof Error ? error.message : 'An error occurred';
+      23:   }
+      24: }
+      25: 
+      26: export function handleClean(): string {
+      27:   try {
+      28:     return doWork();
+      29:   } catch (e) {
+      30:     if (e instanceof Error) {
+      31:       return e.message;
+      32:     }
+
+  --- next match ---
+
 input.ts:5  return error instanceof Error ? error.message : String(error);
        1: export function handleA(): string {
        2:   try {
@@ -49,12 +69,12 @@ input.ts:13  const detail = String(err);
       15:   }
       16: }
       17: 
-      18: export function handleClean(): string {
+      18: export function handleLiteral(): string {
       19:   try {
       20:     return doWork();
-      21:   } catch (e) {
-      22:     if (e instanceof Error) {
-      23:       return e.message;
+      21:   } catch (error) {
+      22:     return error instanceof Error ? error.message : 'An error occurred';
+      23:   }
 
 === Summary ===
-  catch-error-defensive: 3 matches in 1 files
+  catch-error-defensive: 4 matches in 1 files

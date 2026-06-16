@@ -10,11 +10,15 @@ from scanlib.rule import Rule
 # TYP-TYPE-08 — see plugins/coding/constitution/standards/typescript/rules/typ-type-08.md
 # Detector A: defensive instanceof-Error ternary, e.g.
 #   `e instanceof Error ? e.message : String(e)` (or `.stack`, `.cause`)
-# allows whitespace/newlines between tokens; uses a backreference to ensure the
-# same identifier appears on both branches.
+# The false branch is intentionally NOT pinned to `String(e)`: a string-literal
+# fallback (`: 'An error occurred'`), `undefined`, or any other expression is the
+# same anti-pattern and was previously slipping through. The match keys on the
+# specific true branch `<id> instanceof Error ? <id>.<prop> :` (a backreference
+# ties both `<id>`s to the same identifier), then accepts any fallback token.
+# Allows whitespace/newlines between tokens.
 CATCH_INSTANCEOF_ERROR_TERNARY = re.compile(
     r"\b(?P<id>[A-Za-z_$][\w$]*)\s+instanceof\s+Error\s*\?\s*"
-    r"(?P=id)\.\w+\s*:\s*String\s*\(\s*(?P=id)\s*\)",
+    r"(?P=id)\.\w+\s*:\s*\S",
     re.DOTALL,
 )
 # Detector B: `String(<ident>)` whose <ident> matches an enclosing `catch (<ident>)`

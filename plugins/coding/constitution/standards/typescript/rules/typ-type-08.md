@@ -4,6 +4,8 @@
 
 In catch blocks, treat the caught value as `Error` via a direct `as Error` cast — or via a project-provided helper such as `ensureError(exception)` when the codebase already exposes one. Defensive narrowing with `instanceof Error ? ... : String(...)` adds noise without practical benefit in modern runtimes and discourages structured error handling.
 
+> **An existing `as Error` cast is correct — leave it.** Never rewrite a direct `as Error` cast into an `instanceof Error` ternary or if/else, and never introduce such narrowing for the base `Error` type (regardless of the fallback — `String(error)`, a string literal, `undefined`, …). That rewrite is itself the violation; a lint pass must not produce it.
+
 ## Fix
 
 ```typescript
