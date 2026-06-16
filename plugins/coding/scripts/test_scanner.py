@@ -105,13 +105,14 @@ class LoaderSmokeTests(unittest.TestCase):
         "to-be-object-literal",
         "mock-calls-index",
         "spec-escape-cast",
+        "error-assertion-split",
     }
 
     def setUp(self) -> None:
         self.rules = load_rules()
 
     def test_discovers_all_rules(self) -> None:
-        self.assertEqual(len(self.rules), 29)
+        self.assertEqual(len(self.rules), 30)  # expecting 30 rules post error-assertion-split
 
     def test_rule_ids_are_unique(self) -> None:
         ids = [rule.id for rule in self.rules]

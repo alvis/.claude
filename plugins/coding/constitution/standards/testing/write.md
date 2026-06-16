@@ -80,6 +80,7 @@ AAA spacing: blank lines between arrange/act/assert. No `// Arrange` / `// Act` 
 - **TST-DATA-03**: No zero-argument factories. Use factories only when multiple valid variants are required.
 - **TST-DATA-04**: Do not pass explicit `undefined` in override objects. Omit the field or argument.
 - **TST-DATA-05**: Create instances at file/describe level by default. Per-test only when tests mutate state.
+- **TST-DATA-07**: Assert errors as a whole — `expect(error).toEqual(new Error('msg'))`. Never split into `toBeInstanceOf` + a separate `.message`/`.cause` check (`toEqual` ignores `cause`).
 
 ### Mocks (TST-MOCK)
 

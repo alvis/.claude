@@ -32,6 +32,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT pass explicit `undefined` in override objects, such as `createUser({ role: undefined })` [`TST-DATA-04`]
 - DO NOT create per-test instances without mutation need [`TST-DATA-05`]
 - DO NOT use `.toBe(...)` against object/array literals or to compare structural values; use `.toEqual(...)` for value equality and reserve `.toBe(...)` for primitives or intentional referential-identity checks [`TST-DATA-06`]
+- DO NOT split an error assertion into `toBeInstanceOf` + a separate `.message`/`.cause` check; assert the whole error with `expect(error).toEqual(new Error('…'))` [`TST-DATA-07`]
 - DO NOT mock pure/internal logic unnecessarily [`TST-MOCK-01`]
 - DO NOT use `vi.hoisted` without spy/error need [`TST-MOCK-02`]
 - DO NOT define happy-path defaults via chained `.mockResolvedValue(...)` / `.mockReturnValue(...)`, such as `vi.fn().mockResolvedValue(...)`; define defaults inline via `vi.fn(() => value)` or `vi.fn(async () => value)` [`TST-MOCK-03`]
@@ -79,6 +80,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `TST-DATA-04` | Override passes explicit `undefined` field | `createUser({ role: undefined })`; `createSession({ expiresAt: undefined })` |
 | `TST-DATA-05` | Per-test instance created without mutation need | `beforeEach(() => svc = new Svc())` when constructor args and state never change |
 | `TST-DATA-06` | `.toBe` used for structural value comparison instead of `.toEqual` | `expect(result).toBe({ id: 'u1' })`; `expect(items).toBe(['a', 'b'])` |
+| `TST-DATA-07` | Error assertion split into `toBeInstanceOf` + separate `.message`/`.cause` | `expect(error).toBeInstanceOf(Error); expect(error.message).toBe('boom')` |
 | `TST-MOCK-01` | Pure/internal logic is mocked unnecessarily | `vi.mock("#utils/math")`; `vi.spyOn(formatter, "formatCurrency").mockReturnValue("$0")` |
 | `TST-MOCK-02` | `vi.hoisted` used without spy/error need | `const h = vi.hoisted(() => ({ x: 1 }))` |
 | `TST-MOCK-03` | Mock lacks inline happy-path default or chains happy-path return mutators | `const run = vi.fn().mockResolvedValue("ok")`; `service.send.mockReturnValue("ok")` for baseline success |
