@@ -2,6 +2,8 @@
 
 > {{ONE_SENTENCE_DESIGN_PHILOSOPHY}}
 
+> **Handover contract**: Sections 10–13 (Context & Decision Log, Component Inventory & Sources, Implementation State & Next Steps, File Map) are mandatory in every run — a zero-context agent resumes from them. Keep them current at every save point, not just at the end.
+
 ---
 
 ## 1. Visual Theme & Atmosphere
@@ -10,7 +12,7 @@
 
 **Canvas**: The base canvas is `{{CANVAS_COLOR}}` in light mode and `{{CANVAS_COLOR_DARK}}` in dark mode. Content floats on elevated surfaces to create depth without visual noise.
 
-**Accent Philosophy**: {{ACCENT_PHILOSOPHY — e.g., "A single vibrant primary color is used sparingly for CTAs and active states. Secondary colors support without competing. The palette stays calm — accents earn attention by being rare."}}
+**Accent Philosophy**: {{ACCENT_PHILOSOPHY — e.g., "A single vibrant primary color is used sparingly for CTAs and active states. Accents support without competing. The palette stays calm — accents earn attention by being rare."}}
 
 **Visual Language**: {{VISUAL_LANGUAGE — e.g., "Rounded corners, generous whitespace, and subtle shadows. Motion is restrained and purposeful — elements ease in, never bounce."}}
 
@@ -18,62 +20,69 @@
 
 ## 2. Color Palette & Roles
 
-### Primary & Secondary
+Two-tier mode tokens (CSS-MODE-04): components consume **tier-2 `--ui-<role>` only**. Each tier-2 token is fed by a `--theme-light-<role>` / `--theme-dark-<role>` tier-1 pair living inside `@layer theme`, scaffolded by the `web:css` skill — never referenced from component CSS. The Light/Dark columns below are the tier-1 values.
 
-| Token Name | Role | Light Value | Dark Value |
+> Migration note (legacy DESIGN.md files): `--color-primary`→`--ui-primary` · `--color-secondary`→`--ui-accent` · `--surface-canvas`→`--ui-bg` · `--surface-primary`→`--ui-surface` · `--surface-secondary`→`--ui-surface-sunken` · `--surface-overlay`→`--ui-overlay` · `--text-primary`→`--ui-fg` · `--text-secondary`→`--ui-fg-muted` · `--text-tertiary`→`--ui-fg-subtle` · `--text-inverse`→`--ui-fg-inverse` · `--border-default`→`--ui-border` · `--border-strong`→`--ui-border-strong` · `--border-focus`→`--ui-focus-ring` · `--color-error*`→`--ui-danger*` · `--shadow-1..4`→`--ui-shadow-card|raised|overlay` · `--radius-sm/md/lg/xl`→`--radius-control|card|modal` · `--space-2xs..3xl`→`--space-1..12`.
+
+### Primary & Accent
+
+| Tier-2 Token (components use this) | Role | Tier-1 Light (`--theme-light-<role>`) | Tier-1 Dark (`--theme-dark-<role>`) |
 |---|---|---|---|
-| `--color-primary` | Primary brand / CTAs | `{{#6366f1}}` | `{{#818cf8}}` |
-| `--color-primary-hover` | Primary hover state | `{{#4f46e5}}` | `{{#a5b4fc}}` |
-| `--color-primary-active` | Primary pressed state | `{{#4338ca}}` | `{{#c7d2fe}}` |
-| `--color-primary-subtle` | Primary tinted backgrounds | `{{#eef2ff}}` | `{{#1e1b4b}}` |
-| `--color-secondary` | Secondary actions / accents | `{{#06b6d4}}` | `{{#22d3ee}}` |
-| `--color-secondary-hover` | Secondary hover state | `{{#0891b2}}` | `{{#67e8f9}}` |
-| `--color-secondary-subtle` | Secondary tinted backgrounds | `{{#ecfeff}}` | `{{#164e63}}` |
+| `--ui-primary` | Primary brand / CTAs | `{{#6366f1}}` | `{{#818cf8}}` |
+| `--ui-primary-hover` | Primary hover state | `{{#4f46e5}}` | `{{#a5b4fc}}` |
+| `--ui-primary-active` | Primary pressed state | `{{#4338ca}}` | `{{#c7d2fe}}` |
+| `--ui-primary-subtle` | Primary tinted backgrounds | `{{#eef2ff}}` | `{{#1e1b4b}}` |
+| `--ui-accent` | Secondary actions / accents | `{{#06b6d4}}` | `{{#22d3ee}}` |
+| `--ui-accent-hover` | Accent hover state | `{{#0891b2}}` | `{{#67e8f9}}` |
+| `--ui-accent-subtle` | Accent tinted backgrounds | `{{#ecfeff}}` | `{{#164e63}}` |
 
 ### Surfaces
 
-| Token Name | Role | Light Value | Dark Value |
+| Tier-2 Token (components use this) | Role | Tier-1 Light (`--theme-light-<role>`) | Tier-1 Dark (`--theme-dark-<role>`) |
 |---|---|---|---|
-| `--surface-canvas` | Page background | `{{#ffffff}}` | `{{#0a0a0a}}` |
-| `--surface-primary` | Card / panel background | `{{#ffffff}}` | `{{#141414}}` |
-| `--surface-secondary` | Nested / recessed areas | `{{#f9fafb}}` | `{{#1a1a1a}}` |
-| `--surface-tertiary` | Deeply nested / sidebar | `{{#f3f4f6}}` | `{{#262626}}` |
-| `--surface-overlay` | Modal / dropdown backdrop | `{{rgba(0,0,0,0.5)}}` | `{{rgba(0,0,0,0.7)}}` |
+| `--ui-bg` | Page background | `{{#ffffff}}` | `{{#0a0a0a}}` |
+| `--ui-surface` | Card / panel background | `{{#ffffff}}` | `{{#141414}}` |
+| `--ui-surface-sunken` | Nested / recessed areas | `{{#f9fafb}}` | `{{#1a1a1a}}` |
+| `--ui-overlay` | Modal / dropdown backdrop | `{{rgba(0,0,0,0.5)}}` | `{{rgba(0,0,0,0.7)}}` |
 
-### Neutrals
+### Text & Borders
 
-| Token Name | Role | Light Value | Dark Value |
+| Tier-2 Token (components use this) | Role | Tier-1 Light (`--theme-light-<role>`) | Tier-1 Dark (`--theme-dark-<role>`) |
 |---|---|---|---|
-| `--text-primary` | Headings, body text | `{{#111827}}` | `{{#f9fafb}}` |
-| `--text-secondary` | Supporting text | `{{#6b7280}}` | `{{#9ca3af}}` |
-| `--text-tertiary` | Placeholder, disabled | `{{#9ca3af}}` | `{{#6b7280}}` |
-| `--text-inverse` | Text on primary color | `{{#ffffff}}` | `{{#ffffff}}` |
-| `--border-default` | Default borders | `{{#e5e7eb}}` | `{{#2a2a2a}}` |
-| `--border-strong` | Emphasized borders | `{{#d1d5db}}` | `{{#404040}}` |
-| `--border-focus` | Focus ring color | `{{#6366f1}}` | `{{#818cf8}}` |
+| `--ui-fg` | Headings, body text | `{{#111827}}` | `{{#f9fafb}}` |
+| `--ui-fg-muted` | Supporting text | `{{#6b7280}}` | `{{#9ca3af}}` |
+| `--ui-fg-subtle` | Placeholder, disabled | `{{#9ca3af}}` | `{{#6b7280}}` |
+| `--ui-fg-inverse` | Text on primary color | `{{#ffffff}}` | `{{#ffffff}}` |
+| `--ui-border` | Default borders | `{{#e5e7eb}}` | `{{#2a2a2a}}` |
+| `--ui-border-strong` | Emphasized borders | `{{#d1d5db}}` | `{{#404040}}` |
+| `--ui-focus-ring` | Focus ring color | `{{#6366f1}}` | `{{#818cf8}}` |
 
-### Semantic
+### Feedback
 
-| Token Name | Role | Light Value | Dark Value |
+| Tier-2 Token (components use this) | Role | Tier-1 Light (`--theme-light-<role>`) | Tier-1 Dark (`--theme-dark-<role>`) |
 |---|---|---|---|
-| `--color-success` | Positive / confirmed | `{{#16a34a}}` | `{{#4ade80}}` |
-| `--color-success-subtle` | Success background | `{{#f0fdf4}}` | `{{#052e16}}` |
-| `--color-warning` | Caution / attention | `{{#d97706}}` | `{{#fbbf24}}` |
-| `--color-warning-subtle` | Warning background | `{{#fffbeb}}` | `{{#422006}}` |
-| `--color-error` | Destructive / invalid | `{{#dc2626}}` | `{{#f87171}}` |
-| `--color-error-subtle` | Error background | `{{#fef2f2}}` | `{{#450a0a}}` |
-| `--color-info` | Informational | `{{#2563eb}}` | `{{#60a5fa}}` |
-| `--color-info-subtle` | Info background | `{{#eff6ff}}` | `{{#172554}}` |
+| `--ui-success` | Positive / confirmed | `{{#16a34a}}` | `{{#4ade80}}` |
+| `--ui-success-subtle` | Success background | `{{#f0fdf4}}` | `{{#052e16}}` |
+| `--ui-warning` | Caution / attention | `{{#d97706}}` | `{{#fbbf24}}` |
+| `--ui-warning-subtle` | Warning background | `{{#fffbeb}}` | `{{#422006}}` |
+| `--ui-danger` | Destructive / invalid | `{{#dc2626}}` | `{{#f87171}}` |
+| `--ui-danger-subtle` | Danger background | `{{#fef2f2}}` | `{{#450a0a}}` |
+| `--ui-info` | Informational | `{{#2563eb}}` | `{{#60a5fa}}` |
+| `--ui-info-subtle` | Info background | `{{#eff6ff}}` | `{{#172554}}` |
 
 ---
 
 ## 3. Typography Rules
 
-**Font Family**: `{{FONT_FAMILY — e.g., "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif"}}`
-
-**Mono Font**: `{{MONO_FONT — e.g., "'JetBrains Mono', 'Fira Code', monospace"}}`
+| Token | Value | Usage |
+|---|---|---|
+| `--font-display` | `{{FONT_DISPLAY — e.g., "'Space Grotesk', -apple-system, sans-serif"}}` | Headings, hero display |
+| `--font-body` | `{{FONT_BODY — e.g., "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"}}` | Body copy, UI text |
+| `--font-mono` | `{{MONO_FONT — e.g., "'JetBrains Mono', ui-monospace, monospace"}}` | Code, tabular data |
 
 **Scale Ratio**: {{SCALE_RATIO — e.g., 1.25 (Major Third)}}
+
+The type scale is documented as a table — no per-level size tokens (`--text-body-lg` would violate WT-VARIANT-01). Mint a role type token (e.g. `--text-display`, `--text-eyebrow`) only where element defaults or utilities cannot express the role.
 
 | Level | Size | Weight | Line Height | Letter Spacing | Usage |
 |---|---|---|---|---|---|
@@ -97,105 +106,115 @@
 
 ### Buttons
 
-**Base**: `padding: {{0.625rem 1.25rem}}; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; transition: all 150ms ease;`
+**Base**: `padding: {{0.625rem 1.25rem}}; border-radius: var(--radius-control); font-weight: 600; font-size: 0.875rem; transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;`
 
 | Variant | Background | Text | Border |
 |---|---|---|---|
-| Primary | `var(--color-primary)` | `var(--text-inverse)` | none |
-| Secondary | `transparent` | `var(--color-primary)` | `1px solid var(--color-primary)` |
-| Ghost | `transparent` | `var(--text-primary)` | none |
-| Danger | `var(--color-error)` | `var(--text-inverse)` | none |
+| Primary | `var(--ui-primary)` | `var(--ui-fg-inverse)` | none |
+| Secondary | `transparent` | `var(--ui-primary)` | `1px solid var(--ui-primary)` |
+| Ghost | `transparent` | `var(--ui-fg)` | none |
+| Danger | `var(--ui-danger)` | `var(--ui-fg-inverse)` | none |
 
 **Interactive States**:
 
-| State | Transform | Notes |
+| State | Treatment | Notes |
 |---|---|---|
-| Hover | Lighten bg 8%, `translateY(-1px)`, add subtle shadow | Cursor pointer |
-| Active | Darken bg 4%, `translateY(0)`, remove shadow | Instant feedback |
+| Hover | Switch to the variant's hover token (e.g. `var(--ui-primary-hover)`), `translateY(-1px)`, add subtle shadow | Cursor pointer |
+| Active | Switch to the active token (e.g. `var(--ui-primary-active)`), `translateY(0)`, remove shadow | Instant feedback |
 | Disabled | `opacity: 0.5; cursor: not-allowed;` | No pointer events |
-| Focus | `box-shadow: 0 0 0 3px var(--border-focus) / 0.3` | Always visible ring |
+| Focus | `box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus-ring) 30%, transparent)` | Always visible ring |
 
 ### Cards
 
 | Variant | Background | Border | Shadow | Hover |
 |---|---|---|---|---|
-| Default | `var(--surface-primary)` | `1px solid var(--border-default)` | `var(--shadow-1)` | -- |
-| Elevated | `var(--surface-primary)` | none | `var(--shadow-2)` | -- |
-| Interactive | `var(--surface-primary)` | `1px solid var(--border-default)` | `var(--shadow-1)` | `var(--shadow-2)`, `translateY(-2px)` |
+| Default | `var(--ui-surface)` | `1px solid var(--ui-border)` | `var(--ui-shadow-card)` | -- |
+| Elevated | `var(--ui-surface)` | none | `var(--ui-shadow-raised)` | -- |
+| Interactive | `var(--ui-surface)` | `1px solid var(--ui-border)` | `var(--ui-shadow-card)` | `var(--ui-shadow-raised)`, `translateY(-2px)` |
 
 ### Inputs
 
-**Base**: `padding: {{0.625rem 0.75rem}}; border-radius: var(--radius-md); font-size: 1rem; border: 1px solid var(--border-default); transition: border-color 150ms ease, box-shadow 150ms ease;`
+**Base**: `padding: {{0.625rem 0.75rem}}; border-radius: var(--radius-control); font-size: 1rem; border: 1px solid var(--ui-border); transition: border-color 150ms ease, box-shadow 150ms ease;`
 
 | State | Border | Shadow | Label |
 |---|---|---|---|
-| Default | `var(--border-default)` | none | `var(--text-secondary)` |
-| Focus | `var(--color-primary)` | `0 0 0 3px var(--color-primary-subtle)` | `var(--color-primary)` |
-| Error | `var(--color-error)` | `0 0 0 3px var(--color-error-subtle)` | `var(--color-error)` |
-| Disabled | `var(--border-default)` | none | `var(--text-tertiary)`, bg `var(--surface-secondary)` |
+| Default | `var(--ui-border)` | none | `var(--ui-fg-muted)` |
+| Focus | `var(--ui-primary)` | `0 0 0 3px var(--ui-primary-subtle)` | `var(--ui-primary)` |
+| Error | `var(--ui-danger)` | `0 0 0 3px var(--ui-danger-subtle)` | `var(--ui-danger)` |
+| Disabled | `var(--ui-border)` | none | `var(--ui-fg-subtle)`, bg `var(--ui-surface-sunken)` |
 
 ### Navigation
 
-- **Top bar**: `height: {{3.5rem}}; background: var(--surface-primary); border-bottom: 1px solid var(--border-default); backdrop-filter: blur(12px);`
-- **Active item**: `color: var(--color-primary); font-weight: 600;` with bottom indicator (`2px solid var(--color-primary)`)
+- **Top bar**: `height: {{3.5rem}}; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); backdrop-filter: blur(12px);`
+- **Active item**: `color: var(--ui-primary); font-weight: 600;` with bottom indicator (`2px solid var(--ui-primary)`)
 - **Mobile**: Hamburger menu at `{{768px}}` breakpoint, slide-in drawer from left
 
 ### Images
 
-- **Border radius**: `var(--radius-lg)` for standalone images, `var(--radius-md)` for cards
+- **Border radius**: `var(--radius-card)` for standalone images, `var(--radius-control)` for images inside cards
 - **Aspect ratio**: Use `aspect-ratio: {{16/9}}` for hero, `{{1/1}}` for avatars, `{{4/3}}` for cards
-- **Loading**: Skeleton placeholder with `var(--surface-secondary)` background and shimmer animation
+- **Loading**: Skeleton placeholder with `var(--ui-surface-sunken)` background and shimmer animation
 - **Object fit**: `object-fit: cover` for fills, `object-fit: contain` for logos
 
 ---
 
 ## 5. Layout Principles
 
-**Base Unit**: `{{4px}}`
+**Base Unit**: `4px`
 
 **Max Content Width**: `{{1280px}}`
 
 ### Spacing Scale
 
-| Token | Value | Usage |
-|---|---|---|
-| `--space-2xs` | `{{0.25rem}}` (4px) | Inline icon gaps |
-| `--space-xs` | `{{0.5rem}}` (8px) | Tight element gaps |
-| `--space-sm` | `{{0.75rem}}` (12px) | Form field gaps |
-| `--space-md` | `{{1rem}}` (16px) | Default component padding |
-| `--space-lg` | `{{1.5rem}}` (24px) | Card padding, section gaps |
-| `--space-xl` | `{{2rem}}` (32px) | Between sections |
-| `--space-2xl` | `{{3rem}}` (48px) | Page-level vertical rhythm |
-| `--space-3xl` | `{{4rem}}` (64px) | Hero / major section breaks |
-
-### Border Radius Scale
+Fixed 4px-grid primitives (mode-independent, plain `:root` tokens):
 
 | Token | Value | Usage |
 |---|---|---|
-| `--radius-sm` | `{{0.25rem}}` | Badges, small chips |
-| `--radius-md` | `{{0.5rem}}` | Buttons, inputs, small cards |
-| `--radius-lg` | `{{0.75rem}}` | Cards, panels, modals |
-| `--radius-xl` | `{{1rem}}` | Hero cards, feature blocks |
-| `--radius-full` | `9999px` | Avatars, pills, toggles |
+| `--space-1` | `0.25rem` (4px) | Inline icon gaps |
+| `--space-2` | `0.5rem` (8px) | Tight element gaps |
+| `--space-3` | `0.75rem` (12px) | Form field gaps |
+| `--space-4` | `1rem` (16px) | Default component padding |
+| `--space-5` | `1.5rem` (24px) | Card padding, section gaps |
+| `--space-6` | `2rem` (32px) | Between sections |
+| `--space-7` | `2.5rem` (40px) | Large component separation |
+| `--space-8` | `3rem` (48px) | Page-level vertical rhythm |
+| `--space-9` | `3.5rem` (56px) | Major block separation |
+| `--space-10` | `4rem` (64px) | Hero / major section breaks |
+| `--space-11` | `5rem` (80px) | Oversized section breaks |
+| `--space-12` | `6rem` (96px) | Maximum single spacing value |
+
+### Border Radius Roles
+
+Role-named tokens only (WT-VARIANT-01) — names express what the radius is FOR, never its size:
+
+| Token | Value | Usage |
+|---|---|---|
+| `--radius-control` | `{{0.5rem}}` | Buttons, inputs, selects, chips |
+| `--radius-card` | `{{0.75rem}}` | Cards, panels, standalone images |
+| `--radius-modal` | `{{1rem}}` | Modals, sheets, large surfaces |
+
+Fully-round elements (avatars, pills, toggles) use the `9999px` literal — a shape constant, not a theme decision, so it is never a token.
 
 ### Grid System
 
 - **Columns**: `{{12}}`
-- **Column gap**: `var(--space-lg)`
-- **Row gap**: `var(--space-lg)`
-- **Container padding**: `var(--space-md)` (mobile), `var(--space-xl)` (desktop)
+- **Column gap**: `var(--space-5)`
+- **Row gap**: `var(--space-5)`
+- **Container padding**: `var(--space-4)` (mobile), `var(--space-6)` (desktop)
 
 ---
 
 ## 6. Depth & Elevation
 
-| Level | Token | CSS Value | Usage |
+Shadows are mode-dependent — they go through the two-tier chain like colors. Dark-mode values use light-overlay stepping (semi-transparent white rings/washes), because drop shadows are nearly invisible on dark surfaces (see design-reference.md, Surfaces).
+
+| Tier-2 Token | Role | Tier-1 Light | Tier-1 Dark |
 |---|---|---|---|
-| 0 | `--shadow-0` | `none` | Flat elements, inline content |
-| 1 | `--shadow-1` | `{{0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)}}` | Cards, subtle lift |
-| 2 | `--shadow-2` | `{{0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)}}` | Hovered cards, dropdowns |
-| 3 | `--shadow-3` | `{{0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)}}` | Modals, popovers |
-| 4 | `--shadow-4` | `{{0 20px 25px rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.04)}}` | Toast notifications, floating panels |
+| `--ui-shadow-card` | Cards, subtle lift | `{{0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)}}` | `{{0 0 0 1px rgba(255,255,255,0.05)}}` |
+| `--ui-shadow-raised` | Hovered cards, dropdowns | `{{0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)}}` | `{{0 0 0 1px rgba(255,255,255,0.08)}}` |
+| `--ui-shadow-overlay` | Modals, popovers, floating panels | `{{0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)}}` | `{{0 0 0 1px rgba(255,255,255,0.10), 0 10px 15px rgba(0,0,0,0.5)}}` |
+
+Flat elements simply omit `box-shadow` — there is no "level 0" token.
 
 ---
 
@@ -203,29 +222,29 @@
 
 ### Do
 
-1. Use `var(--color-primary)` for all CTA buttons — never hardcode hex values
-2. Maintain `{{4px}}` grid alignment — all spacing values are multiples of the base unit
+1. Use `var(--ui-primary)` for all CTA buttons — never hardcode hex values
+2. Maintain `4px` grid alignment — all spacing values are multiples of the base unit
 3. Use the type scale levels exactly as defined — do not invent in-between sizes
-4. Apply `var(--shadow-*)` tokens for elevation — keep depth usage consistent
-5. Use semantic color tokens (`--color-success`, `--color-error`) for feedback states
-6. Set `border-radius: var(--radius-md)` on interactive elements for a cohesive feel
-7. Animate with `transition: all 150ms ease` for micro-interactions — keep it subtle
+4. Apply `var(--ui-shadow-*)` tokens for elevation — keep depth usage consistent
+5. Use feedback tokens (`--ui-success`, `--ui-danger`) for status states
+6. Set `border-radius: var(--radius-control)` on interactive elements for a cohesive feel
+7. Animate with explicit properties (`transition: background-color 150ms ease`) for micro-interactions — keep it subtle
 8. Provide visible `:focus` styles on every interactive element (keyboard accessibility)
-9. Use `var(--surface-secondary)` for nested or recessed content areas
-10. Test every component at all breakpoints before considering it complete
+9. Use `var(--ui-surface-sunken)` for nested or recessed content areas
+10. Test every component at all breakpoints AND in both color modes before considering it complete
 
 ### Don't
 
 1. Do not use more than {{2}} accent colors simultaneously in a single view
-2. Do not set `font-size` below `var(--text-tiny)` ({{0.625rem}}) — it fails readability
-3. Do not use `box-shadow` values outside the shadow token scale
+2. Do not set `font-size` below the Tiny level (`{{0.625rem}}`) — it fails readability
+3. Do not use `box-shadow` values outside the `--ui-shadow-*` set
 4. Do not mix `px` and `rem` for the same property in a single component
 5. Do not rely on color alone to convey meaning — always pair with icon or text
 6. Do not use more than {{3}} font weights on a single screen
 7. Do not place interactive elements closer than `{{8px}}` to each other (touch target clearance)
-8. Do not exceed the `--space-3xl` token for any single spacing value
+8. Do not exceed `--space-12` for any single spacing value
 9. Do not use `opacity` below `0.5` for disabled states — it becomes invisible on some displays
-10. Do not nest elevated cards inside elevated cards — flatten the hierarchy
+10. Do not reference `--theme-light-*` / `--theme-dark-*` from component CSS — tier-1 lives only in `@layer theme`
 
 ---
 
@@ -233,19 +252,19 @@
 
 ### Breakpoints
 
-| Token | Value | Target |
+| Name | Value | Target |
 |---|---|---|
-| `--bp-sm` | `{{640px}}` | Mobile landscape |
-| `--bp-md` | `{{768px}}` | Tablets |
-| `--bp-lg` | `{{1024px}}` | Small desktop / landscape tablet |
-| `--bp-xl` | `{{1280px}}` | Desktop |
-| `--bp-2xl` | `{{1536px}}` | Wide desktop |
+| sm | `{{640px}}` | Mobile landscape |
+| md | `{{768px}}` | Tablets |
+| lg | `{{1024px}}` | Small desktop / landscape tablet |
+| xl | `{{1280px}}` | Desktop |
+| 2xl | `{{1536px}}` | Wide desktop |
 
 ### Touch Targets
 
 - Minimum interactive size: `{{44px}}` (WCAG 2.5.5 AAA)
 - Minimum spacing between targets: `{{8px}}`
-- Mobile CTAs: full-width at `< --bp-sm`
+- Mobile CTAs: full-width below the sm breakpoint
 
 ### Collapsing Strategy
 
@@ -265,43 +284,119 @@
 ### CSS Variable Quick-Reference
 
 ```css
-/* Colors */
-var(--color-primary)          var(--color-secondary)
-var(--color-primary-hover)    var(--color-secondary-hover)
-var(--color-primary-subtle)   var(--color-secondary-subtle)
-var(--color-success)          var(--color-warning)
-var(--color-error)            var(--color-info)
+/* Tier-2 color & surface tokens — components consume ONLY these */
+var(--ui-bg)              var(--ui-surface)        var(--ui-surface-sunken)  var(--ui-overlay)
+var(--ui-fg)              var(--ui-fg-muted)       var(--ui-fg-subtle)       var(--ui-fg-inverse)
+var(--ui-primary)         var(--ui-primary-hover)  var(--ui-primary-active)  var(--ui-primary-subtle)
+var(--ui-accent)          var(--ui-accent-hover)   var(--ui-accent-subtle)
+var(--ui-border)          var(--ui-border-strong)  var(--ui-focus-ring)
+var(--ui-success)         var(--ui-warning)        var(--ui-danger)          var(--ui-info)
+var(--ui-success-subtle)  var(--ui-warning-subtle) var(--ui-danger-subtle)   var(--ui-info-subtle)
 
-/* Surfaces */
-var(--surface-canvas)         var(--surface-primary)
-var(--surface-secondary)      var(--surface-tertiary)
+/* Mode-dependent shadows */
+var(--ui-shadow-card)     var(--ui-shadow-raised)  var(--ui-shadow-overlay)
 
-/* Text */
-var(--text-primary)           var(--text-secondary)
-var(--text-tertiary)          var(--text-inverse)
-
-/* Borders */
-var(--border-default)         var(--border-strong)
-var(--border-focus)
-
-/* Spacing */
-var(--space-2xs) var(--space-xs) var(--space-sm) var(--space-md)
-var(--space-lg)  var(--space-xl) var(--space-2xl) var(--space-3xl)
-
-/* Radius */
-var(--radius-sm) var(--radius-md) var(--radius-lg) var(--radius-xl) var(--radius-full)
-
-/* Shadows */
-var(--shadow-0) var(--shadow-1) var(--shadow-2) var(--shadow-3) var(--shadow-4)
+/* Primitives (mode-independent) */
+var(--space-1) … var(--space-12)   /* 4px grid: 4 8 12 16 24 32 40 48 56 64 80 96 */
+var(--radius-control) var(--radius-card) var(--radius-modal)  /* fully-round = 9999px literal */
+var(--font-display) var(--font-body) var(--font-mono)
 ```
 
 ### Example Component Prompts
 
 **Prompt 1 — Hero Section**:
-> "Build a hero section with a Display XL heading in `var(--text-primary)`, a Body LG subtitle in `var(--text-secondary)`, and a primary CTA button using `var(--color-primary)` with `var(--radius-md)`. Add `var(--space-3xl)` vertical padding. On mobile, stack vertically and make the CTA full-width."
+> "Build a hero section with a Display XL heading in `var(--ui-fg)` set in `var(--font-display)`, a Body LG subtitle in `var(--ui-fg-muted)`, and a primary CTA button using `var(--ui-primary)` with `var(--radius-control)`. Add `var(--space-10)` vertical padding. On mobile, stack vertically and make the CTA full-width."
 
 **Prompt 2 — Feature Card Grid**:
-> "Create a 3-column grid of interactive cards (`var(--surface-primary)`, `var(--shadow-1)`, `var(--radius-lg)`). Each card has an icon, an H4 title, and Body SM description. On hover, lift to `var(--shadow-2)` with `translateY(-2px)`. Collapse to single column below `var(--bp-md)`. Gap is `var(--space-lg)`."
+> "Create a 3-column grid of interactive cards (`var(--ui-surface)`, `var(--ui-shadow-card)`, `var(--radius-card)`). Each card has an icon, an H4 title, and Body SM description. On hover, lift to `var(--ui-shadow-raised)` with `translateY(-2px)`. Collapse to single column below the md breakpoint. Gap is `var(--space-5)`."
 
 **Prompt 3 — Settings Form**:
-> "Design a settings form on `var(--surface-secondary)` with `var(--space-lg)` padding and `var(--radius-lg)` corners. Use the Input styling from the design system (focus ring with `var(--color-primary-subtle)`). Group fields in sections with H5 headings. Place the Save button (primary variant) at the bottom-right. Show error states with `var(--color-error)` border and helper text."
+> "Design a settings form on `var(--ui-surface-sunken)` with `var(--space-5)` padding and `var(--radius-card)` corners. Use the Input styling from the design system (focus ring with `var(--ui-primary-subtle)`). Group fields in sections with H5 headings. Place the Save button (primary variant) at the bottom-right. Show error states with `var(--ui-danger)` border and helper text."
+
+---
+
+## 10. Context & Decision Log
+
+**Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
+
+> {{DIRECTION_SUMMARY_LINE_1}}
+> {{DIRECTION_SUMMARY_LINE_2}}
+> {{DIRECTION_SUMMARY_LINE_3}}
+
+**Rejected direction candidates**:
+
+| Candidate | Why rejected |
+|---|---|
+| {{CANDIDATE_NAME}} | {{ONE_LINE_RATIONALE}} |
+
+**Exemplar sites** (facelift runs — the rubric anchors):
+
+| Exemplar | What it anchors |
+|---|---|
+| {{EXEMPLAR_URL}} | {{TECHNIQUE / QUALITY BAR IT REPRESENTS}} |
+
+**Hard constraints**: {{BRAND_RULES, LEGAL, PLATFORM, PERFORMANCE — anything that binds the design}}
+
+**Decision log** (every AskUserQuestion outcome, dated):
+
+| Date | Question | Decision |
+|---|---|---|
+| {{YYYY-MM-DD}} | Component library | {{e.g. shadcn/ui (detected, confirmed)}} |
+| {{YYYY-MM-DD}} | Component architecture | {{e.g. local copies, shadcn-style}} |
+| {{YYYY-MM-DD}} | Styling delivery | {{e.g. Tailwind utilities + @theme}} |
+| {{YYYY-MM-DD}} | Patch upstream vs local ({{component}}) | {{decision + follow-up if any}} |
+
+---
+
+## 11. Component Inventory & Sources
+
+Every component this design touches, where it comes from, and its reuse status:
+
+| Component | Source | Path | Consumers | Promotion status / follow-up |
+|---|---|---|---|---|
+| {{Button}} | {{library / patched-upstream / local}} | {{src/components/ui/button.tsx}} | {{routes/features using it}} | {{e.g. "local — promote to packages/ui when checkout ships (second consumer)"}} |
+
+Source values: `library` (consumed as-is or via theme bridge), `patched-upstream` (change landed in the shared package), `local` (lives at the lowest tier per RPS-LAYOUT-01).
+
+---
+
+## 12. Implementation State & Next Steps
+
+**Built so far** (paths + one-line status):
+
+- {{path}} — {{status}}
+
+**Current slice / phase**: {{WHERE_WORK_STOPPED}}
+
+**Per-slice ledger** (facelift runs — append one block per slice):
+
+```
+Slice: <name>
+Change: <what changed>
+Technique: <named technique + exemplar it borrows from>
+Critic: <score per axis> — divergence cited: <exemplar>: <specific difference>
+Metrics: LCP <n>s · INP <n>ms · CLS <n> · long tasks <n> · contrast <pass/fail>
+Status: pass | rework (<reason>)
+Save point: <jj change id>
+```
+
+**Known issues**: {{ANYTHING_FAILING_OR_DEFERRED}}
+
+**Next actions** (exact, ordered — a fresh agent starts at #1):
+
+1. {{NEXT_ACTION}}
+2. {{NEXT_ACTION}}
+
+---
+
+## 13. File Map
+
+| Artifact | Path |
+|---|---|
+| Theme stylesheet (`@layer theme`, scaffolded by `web:css`) | {{src/styles/theme.css}} |
+| Preview catalog | {{preview.html location}} |
+| This DESIGN.md | {{path}} |
+| Key component directories | {{src/components/ui/, packages/ui/…}} |
+| Direction board (tmp) | {{<scratchpad>/design-directions/index.html}} |
+| Facelift inventories (tmp) | {{<scratchpad>/facelift-inventory-before.json / -after.json}} |
+| Save points | {{jj change ids, newest last}} |

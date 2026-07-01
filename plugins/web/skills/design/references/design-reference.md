@@ -62,7 +62,7 @@ Non-negotiable requirements before handoff. Only apply craft details when they s
 - Minimum hit area: every interactive target at least 40x40px; extend with a centered pseudo-element when the visible element is smaller; never let hit areas of two interactive elements overlap
 - Light-mode surface hierarchy: adjacent nested surfaces must be visually distinguishable. Minimum: background-color step of at least 4% lightness between sidebar and main area, and between main area and cards; or a shadow of at least `0 1px 3px rgba(0,0,0,0.10)` on elevated cards. A white card on a near-white background with `box-shadow: 0 1px 2px rgba(0,0,0,0.05)` is invisible -- that is not depth
 - Dark-mode surface hierarchy: page canvas is near-black solid (e.g., `#08090a`). Elevation uses semi-transparent white overlays: cards at `rgba(255,255,255,0.02)`, elevated surfaces at `0.04`, prominent panels at `0.05`. Borders follow the same logic: `rgba(255,255,255,0.05)` for subtle, `0.08` for standard. Traditional drop shadows are nearly invisible on dark surfaces; luminance stepping through background opacity is the primary depth cue
-- Border radius system: define a named radius scale during direction lock (e.g., 3-4 tiers: `{4px, 8px, 12px, pill}`). Commit to a named set before the first component so all surfaces share the same spatial language
+- Border radius system: define role-named radius tokens during direction lock (`--radius-control`, `--radius-card`, `--radius-modal`; fully-round elements use the `9999px` literal). Commit to the set before the first component so all surfaces share the same spatial language — never size-tier names like `--radius-md` (WT-VARIANT-01)
 
 ### Animation
 
@@ -137,7 +137,7 @@ These patterns appear in the majority of AI-generated interfaces. Each has a spe
 | `background-clip: text` gradient text | Decorative rather than meaningful; illegible when printed or in high-contrast mode | Use a solid brand color, tinted neutral, or typographic weight for emphasis |
 | `backdrop-filter: blur` glassmorphism as the default card surface | Expensive on low-power devices; overused; layered-depth illusion breaks with a solid border | Use elevated surfaces via background color steps and `box-shadow` |
 | Purple-to-blue gradients or cyan-on-dark accent systems | The canonical "AI design" color palette; communicates nothing about the brand | Pick a palette from brand words via the OKLCH rules above |
-| `border-radius: 9999px` on containers and section cards | Pill radius on large containers looks bloated and unanchored; intended for small elements (pills, toggles, avatars) | Use the project's radius scale; containers get `--radius-lg` or `--radius-xl` at most |
+| `border-radius: 9999px` on containers and section cards | Pill radius on large containers looks bloated and unanchored; intended for small elements (pills, toggles, avatars) | Use the project's radius roles; containers get `--radius-card` or `--radius-modal` at most |
 | Generic rounded-rect card with `box-shadow` as the default container | Template thinking; applies the same container to every content type | Default to cardless sections; only add card treatment when content type requires it |
 | Modals as a lazy escape for overflow UI | Interrupts flow and breaks browser back navigation | Inline expand, detail panel, or dedicated route; modals only when the action truly requires focus-lock |
 | `transition: all` or animating width/height/padding/margin | Forces layout recalculation on every frame | List exact properties; use `grid-template-rows: 0fr` to `1fr` for height reveals |
@@ -160,19 +160,25 @@ No bounce or elastic easing. Real objects decelerate smoothly. Do not use `trans
 
 ## DESIGN.md Scaffold
 
-For multi-page or production UIs, emit a DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. See `design.template.md` for the full 308-line template with token tables and component specifications.
+For multi-page or production UIs, emit a DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. See `design.template.md` for the full 13-section template with two-tier token tables and component specifications.
 
 | Section | Purpose |
 |---|---|
 | 1. Visual Theme and Atmosphere | Mood, density, design philosophy |
-| 2. Color Palette and Roles | Semantic name + value + functional role per token |
-| 3. Typography Rules | Font family, size scale, weight, line-height, letter-spacing |
+| 2. Color Palette and Roles | Tier-2 `--ui-*` token + role + tier-1 light/dark values |
+| 3. Typography Rules | Font tokens, size scale, weight, line-height, letter-spacing |
 | 4. Component Stylings | Buttons, cards, inputs, navigation with all states |
-| 5. Layout Principles | Spacing scale, grid columns, whitespace philosophy |
-| 6. Depth and Elevation | Shadow system or background-color-step system per level |
+| 5. Layout Principles | Spacing scale, radius roles, grid columns, whitespace philosophy |
+| 6. Depth and Elevation | Mode-dependent `--ui-shadow-*` roles (dark = light-overlay stepping) |
 | 7. Do's and Don'ts | 5-10 guardrails specific to this project |
 | 8. Responsive Behavior | Breakpoints, navigation collapse, touch target minimums |
-| 9. Agent Prompt Guide | Color quick-reference + 3-5 component prompts with inline values |
+| 9. Agent Prompt Guide | Token quick-reference + 3-5 component prompts with inline values |
+| 10. Context and Decision Log | Chosen + rejected directions, exemplars, constraints, AskUserQuestion outcomes |
+| 11. Component Inventory and Sources | Per component: library/patched-upstream/local, path, consumers, promotion status |
+| 12. Implementation State and Next Steps | Built paths, current slice, per-slice ledger, exact ordered next actions |
+| 13. File Map | theme.css, preview, component dirs, tmp artifacts, save-point ids |
+
+Sections 10–13 are the handover contract — mandatory in every run; a zero-context agent resumes from them.
 
 For single components or quick prototypes, skip this scaffold. A three-line visual thesis (mood, content plan, interaction plan) is sufficient.
 
