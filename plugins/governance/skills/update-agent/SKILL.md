@@ -14,7 +14,7 @@ Updates agent files to align with the latest template structure and applies any 
 
 ## Purpose & Scope
 
-This skill systematically updates agent files to maintain consistency with the current template while preserving each agent's unique personality, expertise, and collaboration networks.
+This skill systematically updates agent files to maintain consistency with the current template while preserving each agent's unique personality, expertise, collaboration networks, and base-context (`SD-`/`RP-`) assignments — the standards each agent preloads and the repo-derived context it resolves lazily, per `constitution/references/context-catalog.md`.
 
 **What this skill does NOT do**:
 
@@ -48,7 +48,13 @@ Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` 
    - Count total agents if updating all
 
 2. **Load Template Reference**
-   - Read template:agent for latest agent structure
+   - Read template:agent for latest agent structure — the frontmatter key surface (`name`, `description`, `color`,
+     `model`, `effort`, `permissionMode`, `tools`, `disallowedTools`, `skills`, `mcpServers`, `hooks`, `memory`,
+     `background`, `isolation`, `maxTurns`, `initialPrompt`) plus the base.md body sections (Base Context,
+     Coordination Posture, Collaboration)
+   - Before applying any frontmatter change, re-check the live Claude Code docs for the current valid frontmatter
+     key surface — template:agent mirrors it at time of writing, but the live docs win on conflict; log any
+     conflict found rather than silently trusting the template
    - Identify template sections and required elements
    - Note any template updates since last agent refresh
 
@@ -70,6 +76,30 @@ Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` 
      - All change specifications
      - Detailed instructions
      - Request to ultrathink
+   - Each delegated subagent picks `model`/`effort`/`permissionMode`/`memory`/`isolation` by running this
+     checklist, not by copying whatever the file already had:
+     - **model**: match to cognitive demand (haiku for deterministic/mechanical roles, sonnet for branching
+       investigation, opus for judgment-heavy production, fable for adversarial/deep-reasoning review) — never
+       default every role to the largest model
+     - **effort**: set only for model families that support it; OMIT the key entirely when `model: haiku` (haiku
+       does not support `effort`)
+     - **permissionMode**: EXACTLY ONE of `default`/`acceptEdits`/`auto` — never `plan`, `bypassPermissions`, or
+       `dontAsk` — chosen by the agent's launch scenario:
+       - **main-session** or **spawned-subagent**: `auto` for opus/fable producers running unattended,
+         `acceptEdits` for sonnet/haiku producers, `default` for critics (read-mostly, edit-prevention via
+         `disallowedTools`/hooks/worktree instead)
+       - **workflow-spawned** (dispatched inside a dynamic `Workflow` run): **always `acceptEdits`**, regardless
+         of role — a workflow has no interactive fallback
+       - **teammate** (member of a formed Agent Team): **inherits the lead's `permissionMode`** — do not set one
+         independently on a teammate
+     - **memory**: `user`/`project`/`local` only if this agent genuinely self-curates a persistent
+       `.claude/agent-memory/<name>/MEMORY.md` across sessions; OMIT the key to disable — there is no
+       `memory:none`
+     - **isolation**: `worktree` only for agents that must not race the main working copy (adversarial red-team,
+       parallel research); otherwise omit
+   - Base-context assignment (the `SD-`/`RP-` subset in the agent's Base Context section) is re-verified against
+     `constitution/references/context-catalog.md` on every update — an agent's role-scoped `SD-*` list and its
+     lazily-resolved `RP-*` aliases are corrected to match the catalog, never left to drift from a prior edit
 
 3. **Progress Monitoring**
    - Track completion status of each delegated agent
@@ -80,8 +110,11 @@ Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` 
 
 1. **Template Compliance Verification**
    - Verify each updated agent follows template:agent structure
-   - Check all mandatory sections are present and properly formatted
-   - Validate frontmatter and metadata consistency
+   - Check all mandatory sections are present and properly formatted, including Base Context (`SD-`/`RP-`
+     assignments matching `constitution/references/context-catalog.md`), Coordination Posture, and Collaboration
+   - Validate frontmatter and metadata consistency against the live-doc-checked key surface (only the valid keys
+     listed in template:agent — reject any invented key), and confirm `permissionMode` matches the launch
+     scenario the agent actually runs under
 
 2. **Change Application Verification**
    - Confirm all specified changes were applied correctly
