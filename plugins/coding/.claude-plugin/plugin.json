@@ -1,17 +1,40 @@
 {
   "name": "coding",
   "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
-  "version": "2026-06-04",
+  "version": "2026-07-02",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+      },
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/hooks/lean-code/instructions.md\"",
+            "timeout": 5,
+            "statusMessage": "Loading lean-code mode..."
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/lean-code/subagent-start.sh",
+            "timeout": 5,
+            "statusMessage": "Loading lean-code mode..."
+          }
+        ]
       }
     ],
     "Stop": [
