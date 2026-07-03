@@ -1,8 +1,8 @@
 ---
 name: design
-version: 3.0.0
-description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; produces DESIGN.md and an HTML preview catalog with WCAG contrast checks via Chrome DevTools MCP. Interactive direction picking with a local HTML candidate board; --facelift mode redesigns an existing site into a stunning v2 while preserving content and brand intent. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup", "facelift my site", "give this website a makeover", "make a v2 of this design". Also use when: proposing layouts, picking color palettes, adding visual polish, revamping an existing site''s look. Examples: "design a landing page", "make the dashboard look modern", "facelift https://example.com".'
-argument-hint: "[page/component/site to design or improve] [--facelift] [--style=<style>] [--skip-directions]"
+version: 4.0.0
+description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; produces DESIGN.md and an HTML preview catalog with WCAG contrast checks via Chrome DevTools MCP. Interactive direction picking with a local HTML candidate board, then area-by-area design selection: every page area gets a rendered board of 5+ ranked variants sent as a realistic image, chosen one question at a time; --facelift mode redesigns an existing site into a stunning v2 while preserving content and brand intent. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup", "facelift my site", "give this website a makeover", "make a v2 of this design". Also use when: proposing layouts, picking color palettes, adding visual polish, revamping an existing site''s look. Examples: "design a landing page", "make the dashboard look modern", "facelift https://example.com".'
+argument-hint: "[page/component/site to design or improve] [--facelift] [--style=<style>] [--skip-directions] [--quick]"
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet, AskUserQuestion, SendUserFile
 ---
 
@@ -30,6 +30,7 @@ The most important goal of this skill is to produce **modern, visually stunning,
 - Create mockup or prototype visuals
 - Facelift an existing site into a stunning v2 (`--facelift`) — content and brand intent preserved, presentation rebuilt to impress
 - Let the user pick the aesthetic direction visually from a local HTML candidate board
+- Walk a page area by area (hero, nav, sections, footer), each chosen from a rendered image of 5+ ranked variants
 
 </identity>
 
@@ -83,6 +84,7 @@ Extract the design target and flags from $ARGUMENTS. If a flag is present, it fo
 | `--facelift` | Makeover mode for an EXISTING site: capture and study the current design, preserve content meaning / brand intent / conversion paths, rebuild the presentation as a stunning v2. Routes through `references/facelift.md` after the direction gate. Applies the independent Design Critic + Perf/A11y Auditor sign-off gates and the performance budget gate. |
 | `--style=<style>` | Seed the aesthetic direction (e.g. `--style=minimal`, `--style=bold`, `--style=editorial`). Pre-fills direction question 2 and biases the generated direction candidates; does NOT skip the direction gate. |
 | `--skip-directions` | Skip the interactive direction board. Requires `--style=<style>` OR an already-confirmed Direction Summary in an existing DESIGN.md (Context & Decision Log). The 3-line Direction Summary is still written and confirmed via a single AskUserQuestion (default: proceed). |
+| `--quick` | Skip the per-area choice questions in `<area_boards>`. The direction board (unless `--skip-directions`) and Direction Summary confirmation still run; area boards are still generated and ranked, but the reviewer-ranked #1 variant is auto-picked per area, recorded in DESIGN.md §10, and the full set is summarized for overturn at the Phase 3 sign-off gate. |
 
 Parsing: target = everything in $ARGUMENTS that is not a flag (default: ask what to design).
 `--facelift` without a URL or runnable local app → the intake gate in references/facelift.md stops and asks.
@@ -98,7 +100,7 @@ Determine what was provided and how to acquire the design context:
 
 | Input Type | Acquisition Method |
 |---|---|
-| **URL / running app** | `list_pages` → `new_page <url>` → `agent-browser --cdp <port> open <url>` → `take_snapshot` + `take_screenshot` + `emulate` + `evaluate_script` (computed styles) |
+| **URL / running app** | Run the Standard Capture Sequence (`<contrast_protocol>`) steps 1–4, plus `evaluate_script` for computed styles |
 | **Facelift target (URL / local app)** | Full capture per `references/facelift.md` Intake Gate & Capture — screenshots (desktop + mobile), DOM snapshot, computed token harvest, content inventory, baseline perf trace |
 | **Screenshot / image** | Examine directly — note: confidence Medium (no computed values) |
 | **Code (HTML/CSS/React/Vue/Tailwind)** | Read files, detect framework, prepare implementation |
@@ -153,27 +155,15 @@ Before any design workflow begins, answer these five questions. Do not proceed u
 ### Interactive Direction Picking
 
 After the five questions are answered (skip only on --skip-directions), never ask the user
-to pick a direction from prose. Build a local HTML direction board so they choose with
-their eyes:
-
-1. Generate 3–5 direction candidates (team mode: each style-explorer owns one; solo:
-   generate sequentially). Candidates must differ on at least two of: palette strategy,
-   display typeface, layout rhythm, motion language. --style=<style> biases but does not
-   collapse the set. Facelift mode: candidates anchor to the keep/kill analysis and named
-   exemplars per references/facelift.md.
-2. Build the board at <session scratchpad>/design-directions/index.html per
-   references/direction-picker.md: one full-width tile per direction — palette strip,
-   live type specimen (real project words), mini hero mock from REAL content, CSS-only
-   motion demo of the signature micro-interaction.
-3. Present it BOTH ways (remote users cannot see the local Chrome window):
-   - `list_pages` → `new_page file://<abs path>` → `take_screenshot` (verify render first)
-   - `SendUserFile` (files: [path], display: render) when the tool is available
-4. Capture the choice via AskUserQuestion (one battery): Q1 "Which direction?" — one
-   option per candidate + "Mix and match (tell me which pieces)"; Q2 optional
-   density/mood adjustment. Safe default: the reviewer-ranked top candidate, stated.
-5. Mix-and-match → append ONE merged tile to the board, re-present (steps 3–4). Loop
-   until an explicit pick. Record the pick AND rejected candidates + why into DESIGN.md
-   §10 immediately.
+to pick a direction from prose. Run the **Direction Board** per `references/design-boards.md`
+(Part A shared mechanics + Part B): generate 3–5 direction candidates (team mode: each
+style-explorer owns one; solo: generate sequentially; `--style=<style>` biases but does not
+collapse the set; facelift mode: candidates anchor to the keep/kill analysis and named
+exemplars per references/facelift.md), build the board, rank the tiles, render → screenshot →
+send the image → capture the pick with one AskUserQuestion, loop on mix-and-match, and record
+the pick + rejections into DESIGN.md §10 immediately. All mechanics — tile requirements,
+rank badges, presentation, battery wording, recording — live in `references/design-boards.md`;
+do not improvise them here.
 
 ### Direction Summary
 
@@ -183,9 +173,97 @@ Write exactly three lines before proceeding:
 2. **Content plan** — How copy, imagery, and data are balanced.
 3. **Interaction thesis** — The motion and feedback philosophy (e.g., "Spring physics on all interactive elements, 200ms ease-out entrances").
 
-> **Gate**: Do not proceed to the Design Workflow until the direction summary is written and the user has confirmed it via `AskUserQuestion` (single question; safe default: proceed as summarized). `--skip-directions` skips the board, never this confirmation.
+> **Gate**: Do not proceed until the direction summary is written and the user has confirmed it via `AskUserQuestion` (single question; safe default: proceed as summarized). `--skip-directions` skips the board, never this confirmation. After confirmation, proceed to `<area_boards>`.
 
 </direction>
+
+<area_boards>
+
+## Area-by-Area Design Selection
+
+The direction lock settles the page-wide aesthetic; it does NOT settle how each area of the
+page is composed. Never design a full page from one global pick — after the Direction Summary
+is confirmed, walk the page area by area and let the user choose each area's design with
+their eyes. All board mechanics live in `references/design-boards.md` (Part A + Part C).
+
+### Enumerate the areas
+
+Derive the area list from the content plan (Direction Summary line 2). Typical full page:
+navigation, hero, each content/feature section, social proof, pricing, CTA band, footer.
+Component-level runs have exactly one area (the component). Close the list with one final
+**connective-tissue board** (design-boards.md C4) for the cross-cutting choices the per-area
+picks did not settle: page-transition style, section-separator vocabulary, scroll-reveal
+language. State the area list to the user before the first board.
+
+### Per-area loop (sequential — one image, one question, next area)
+
+For EACH area, in page order:
+
+1. **Generate ≥5 variants** of that area in the locked direction (team mode: style-explorers
+   split them). Variants must differ on at least two of: composition, density, imagery
+   treatment, separator treatment, motion. Every variant demonstrates the
+   `<world_class_elements>` items relevant to the area — visible hover-state demos, an
+   entrance-transition demo, explicit top and bottom separator treatments, real content.
+2. **Rank** — the visual-reviewer ranks all variants; each tile gets a visible rank badge
+   (#1 · recommended … #N) and a one-line "why this rank" (design-boards.md A3).
+3. **Build the board** at `<session scratchpad>/design-boards/<area-slug>.html` per
+   design-boards.md C1–C2: one column of stacked variants in rank order.
+4. **Render → verify → send as a realistic image**: `new_page file://…` → full-page
+   `take_screenshot`; inspect the screenshot for defects first; then `SendUserFile` the
+   screenshot image (display: render) with a caption naming the numbered variants.
+5. **Ask ONE AskUserQuestion** (design-boards.md C3): "{Area}: which design?" — options
+   `#1 (Recommended)`, `#2`, `#3`, and "Another variant or mix — name the number(s)".
+   Mix/other → build the merged variant, re-present, re-ask until an explicit pick.
+6. **Record immediately** into DESIGN.md §10 (per-area picks table): chosen variant,
+   rejected variants + one-line why.
+7. Move to the next area. Later boards are generated KNOWING the earlier picks, so choices
+   compound coherently — never present two areas' boards before capturing the first pick,
+   and never batch multiple areas into one question round.
+
+`--quick` short-circuits steps 4–5 only: boards are still generated and ranked, the #1
+variant is auto-picked and recorded per area, and the full set is presented for overturn at
+the Phase 3 sign-off gate (design-boards.md C5).
+
+`--facelift`: the area list follows the facelift slice order (hero → navigation →
+sections → footer), variants anchor to the keep/kill analysis and named exemplars per
+`references/facelift.md`, and the connective-tissue board doubles as the plan for the
+facelift motion pass. Each slice's build starts from that area's recorded pick.
+
+> **Gate**: Do not enter the Design Workflow's Phase 2 (Propose) until every enumerated area
+> plus the connective-tissue board has a recorded pick.
+
+</area_boards>
+
+<world_class_elements>
+
+## World-Class Element Checklist
+
+Every design this skill produces — and every board variant it shows the user — covers this
+checklist as standard. These are not enhancements to bolt on at the end; they are part of the
+proposal (Phase 2), the DESIGN.md spec (Phase 3, "Motion, Transitions & Separators"), and the
+evaluation (Phase 4). Motion values (durations, easings, distances, staggers) come from
+`references/design-reference.md` Motion Specifics — do not restate or invent them.
+
+| # | Element | Standard |
+|---|---------|----------|
+| 1 | **Page transitions** | Route/page-level transition specced per direction (View Transitions API or equivalent); crossfade, shared-element morph, slide, or wipe — a deliberate choice, ≤300ms. |
+| 2 | **Section entrance transitions** | Scroll-triggered reveals with stagger (IntersectionObserver or `animation-timeline`); ONE consistent reveal language per page, once-only. |
+| 3 | **Section separators** | Every section boundary gets a deliberate treatment from the Section Separator Vocabulary (design-reference.md); "plain whitespace" must be a stated choice, never an omission; consecutive boundaries never repeat the same treatment. |
+| 4 | **Hover-state animations** | Every interactive element — links, buttons, cards, nav items, images — has a designed hover treatment consistent with the motion language. No default-browser hover anywhere. |
+| 5 | **Focus-visible states** | Designed `:focus-visible` on every interactive element — part of the visual language, not the browser default ring. |
+| 6 | **Signature micro-interaction** | The one from direction question 5, visible above the fold. |
+| 7 | **Scroll behavior** | Sticky elements, scroll progress, and parallax are specced deliberately; parallax budget ≤1 layer. |
+| 8 | **Reduced-motion fallbacks** | `prefers-reduced-motion` honored for every animation above — reduced, not merely disabled, where motion carries meaning. |
+| 9 | **Loading, empty & error states** | Every dynamic content region has skeleton/loading, empty, and error designs. |
+| 10 | **Image treatment** | Consistent radius + inset outline (design-reference.md Surfaces) plus any direction-specific treatment (duotone, grain, mask). |
+| 11 | **Responsive proof** | Verified at 375 / 768 / 1280 px; touch targets ≥44px; no horizontal scroll. |
+| 12 | **Light/dark parity** | Both modes designed and contrast-verified per `<contrast_protocol>` — never light-only with an inverted afterthought. |
+
+Applicability: full pages cover all 12; single components cover every row that has a surface
+to land on (a button has no section separator; it still has hover, focus, motion, states,
+responsive, and mode parity).
+
+</world_class_elements>
 
 <theming>
 
@@ -278,9 +356,11 @@ plugins/web/constitution/standards/theming/rules/wt-override-01.md, wt-override-
 
 > This protocol is a **hard requirement**. No design may be declared complete without passing all steps.
 
-### Default Capture Sequence
+### Standard Capture Sequence
 
-Every evaluation cycle MUST follow this exact sequence:
+The single definition of the browser capture procedure — every other section of this skill
+refers here instead of restating the steps. Every evaluation cycle MUST follow this exact
+sequence:
 
 1. Confirm chrome-devtools MCP's Chrome is running and navigate:
    - `1a.` `list_pages` — confirm Chrome running, capture port from `webSocketDebuggerUrl`
@@ -446,10 +526,13 @@ You are the Lead Orchestrator. Create a persistent team via `TeamCreate`:
 - 1× visual-reviewer (sonnet) — audits candidates against design standards
   at plugins/web/constitution/standards/design/ and WCAG contrast rules
 
-Cycle: lead briefs each style-explorer with a distinct aesthetic constraint →
-reviewer scores all 3 against the standards → lead presents ranked options to
-the user → user picks one to refine → chosen explorer iterates with reviewer
-until convergence → `TeamDelete` on completion.
+Cycle (direction): lead briefs each style-explorer with a distinct aesthetic
+constraint → reviewer ranks all candidates against the standards → lead runs the
+Direction Board per `<direction>` → user picks → chosen direction locks.
+Cycle (area boards): for each area in `<area_boards>`, lead splits the ≥5 variants
+across style-explorers → reviewer ranks them (rank badges + why-this-rank) → lead
+presents the board image and captures the pick → next area. Chosen designs iterate
+with reviewer until convergence → `TeamDelete` on completion.
 
 In `--facelift` mode, extend the team with the Design Critic and Perf/A11y Auditor
 seats defined in `references/facelift.md` — independence rules apply.
@@ -464,10 +547,7 @@ decisions made).
 
 1. Load `references/design-reference.md` to prime aesthetic constraints, font bans, color system rules, and anti-pattern awareness.
 2. Parse what to design: new page, improve existing, or specific component
-3. If improving existing: Call `list_pages`, then `new_page <url>` and `agent-browser --cdp <port> open <url>`, then capture current state via Chrome DevTools (facelift: full capture per `references/facelift.md` instead):
-   - `take_screenshot` — see current design
-   - `take_snapshot` — get DOM structure
-   - `evaluate_script` — extract computed styles (colors, fonts, spacing)
+3. If improving existing: run the Standard Capture Sequence (`<contrast_protocol>`) against the current site, plus `evaluate_script` to extract computed styles — colors, fonts, spacing (facelift: full capture per `references/facelift.md` instead)
 4. Load prescriptive patterns from `constitution/standards/design/write.md`
 5. Load HCI principles from `references/design-psychology.md`
 6. Load component patterns from `references/component-patterns.md`
@@ -475,12 +555,15 @@ decisions made).
 
 ### Phase 2: Propose
 
+The proposal is the synthesis of the recorded picks: the locked direction plus every
+per-area choice from `<area_boards>` (DESIGN.md §10). Do not re-litigate settled picks.
+
 1. **Define hierarchy**: what is the ONE thing the user should do on this page?
 2. **Select color palette** following write.md Color Palette Construction (primary/accent/neutrals/semantic); express it as the two-tier token vocabulary from `<theming>`
 3. **Select type scale** following write.md Type Scale (1.25 ratio, Display → Tiny)
 4. **Define spacing system** following write.md Spacing Scale (4px/8px grid)
-5. **Design layout** using component-type patterns and HCI principles
-6. **Propose animations** for state changes (fade → translate+fade → scale+fade vocabulary)
+5. **Design layout** by assembling the chosen area variants, using component-type patterns and HCI principles to resolve the joins
+6. **Fill the World-Class Element Checklist** (`<world_class_elements>`) — page transition, scroll reveals, per-boundary separators (from the connective-tissue pick), hover/focus states, states for dynamic regions; motion values per `references/design-reference.md` Motion Specifics
 7. **Write implementation** code in the detected framework (React/Vue/Tailwind/vanilla)
 
 #### Aesthetic Constraints
@@ -489,7 +572,7 @@ Apply these constraints to every proposal:
 
 - **Color**: One color owns the page; one or two accents cut against it. Use OKLCH over HSL for perceptual uniformity. See `references/design-reference.md` for the full color system rules.
 - **Typography**: No Inter, Roboto, or system-ui as a primary display typeface — these are reflex fonts. Follow the Font Selection procedure in `references/design-reference.md`. System fonts are acceptable for body/UI text only.
-- **Motion**: Entrance animations 200–400ms ease-out; exits 150–250ms ease-in. Limit to 2–3 intentional motion types per project. Every animation must have a purpose.
+- **Motion**: Every animation must have a purpose; durations, easings, staggers, and the 2–3-motion-types budget follow `references/design-reference.md` Motion Specifics (single source for motion values).
 - **Surfaces**: Textured backgrounds over flat white. Subtle noise, grain, or gradient mesh adds depth without distraction.
 
 #### Non-Negotiable Composition Rules
@@ -505,18 +588,15 @@ Apply these constraints to every proposal:
 >
 > When creating a design system for a production UI, use the DESIGN.md scaffold from `references/design-reference.md` as the starting structure.
 
-1. **Create DESIGN.md** — From `references/design.template.md` (13 sections), at the project root, capturing all agreed design tokens (colors, typography, spacing, radii, shadows, component styles). Fill §10 Context & Decision Log immediately: the chosen direction, every REJECTED candidate with a one-line rationale, exemplars (facelift), hard constraints, and every AskUserQuestion outcome so far.
+1. **Create DESIGN.md** — From `references/design.template.md` (13 sections), at the project root, capturing all agreed design tokens (colors, typography, spacing, radii, shadows, component styles) AND the "Motion, Transitions & Separators" spec (§4) from the connective-tissue pick and the World-Class Element Checklist. Fill §10 Context & Decision Log immediately: the chosen direction, the per-area picks table, every REJECTED candidate/variant with a one-line rationale, exemplars (facelift), hard constraints, and every AskUserQuestion outcome so far.
 2. **Scaffold the theme via `web:css`** — Invoke the `web:css` skill (Skill tool) to create or align the project's theme stylesheet with the agreed tier-1/tier-2 tokens; pass the full token list from DESIGN.md. This skill never hand-writes the 5-branch `@layer theme` block into project code.
 3. **Create preview.html** — From `references/preview.template.html`: a single self-contained catalog whose `@layer theme` block mirrors the project theme stylesheet values exactly, with the preview-only 3-state toggle.
-4. **Visual verification** — `new_page file://<preview>` and `agent-browser --cdp <port> open <preview>`; `take_screenshot` in system, light, AND dark (set/remove `data-theme` via `evaluate_script`); run the contrast script in light and dark per `<contrast_protocol>`.
-5. **User sign-off** — Present DESIGN.md + preview screenshots and gate on `AskUserQuestion` (safe default: approve as presented). Do not start implementation before approval.
+4. **Visual verification** — run the Standard Capture Sequence (`<contrast_protocol>`) against `file://<preview>`; `take_screenshot` in system, light, AND dark (set/remove `data-theme` via `evaluate_script`); run the contrast script in light and dark.
+5. **User sign-off** — Present DESIGN.md + preview screenshots (in `--quick` runs, include the auto-picked area variants for overturn) and gate on `AskUserQuestion` (safe default: approve as presented). Do not start implementation before approval.
 
 ### Phase 4: Evaluate (Browser Feedback Loop)
 
-1. **Execute capture sequence** (MANDATORY — follow Protocol above):
-   - `list_pages` → `new_page <url>` → `agent-browser --cdp <port> open <url>` → `take_snapshot` → `take_screenshot` (desktop)
-   - `emulate("iPhone 14")` → `take_screenshot` (mobile)
-   - `evaluate_script` with the WCAG contrast script from the Protocol
+1. **Execute the Standard Capture Sequence** (MANDATORY — defined once in `<contrast_protocol>`; do not improvise the steps)
 2. **MANDATORY: Element-level WCAG contrast check**:
    - Parse script results: identify ALL failing elements (ratio < threshold)
    - For each failure: record selector, text, computed fg/bg, ratio, threshold
@@ -532,9 +612,10 @@ Apply these constraints to every proposal:
 5. **Self-audit against `constitution/standards/design/scan.md`**:
    - Check each quick-scan item against the rendered result
    - Run Code Superpowers from rule files (spacing grid check, token usage)
-6. Score each of the 12 categories 1-10
-7. **Verify token discipline** — implementation consumes only `--ui-*` and primitive tokens: grep component CSS for `--theme-` (must return zero matches — CSS-MODE-04) and for hardcoded hex/shadow literals; check rendered values match DESIGN.md.
-8. Cross-check the implementation against the **Gotchas** table in `<verification>`. Any match requires immediate remediation before scoring.
+6. **Verify the World-Class Element Checklist** (`<world_class_elements>`) row by row against the rendered result — page transition, scroll reveals, every section boundary's separator, hover AND focus-visible on every interactive element, reduced-motion, dynamic-region states; any missing row is a defect, not a nice-to-have
+7. Score each of the 12 categories 1-10
+8. **Verify token discipline** — implementation consumes only `--ui-*` and primitive tokens: grep component CSS for `--theme-` (must return zero matches — CSS-MODE-04) and for hardcoded hex/shadow literals; check rendered values match DESIGN.md.
+9. Cross-check the implementation against the **Gotchas** table in `<verification>`. Any match requires immediate remediation before scoring.
 
 ### Phase 5: Refine (ITERATE UNTIL 10/10)
 
@@ -574,7 +655,7 @@ Understand  Propose   Codify    Evaluate   Refine
 
 A facelift is a **v2 of an existing site** — a makeover, not a from-scratch design. The scope contract in one line: the existing site is both the raw material and the constraint — presentation, hierarchy, typography, motion, and craft are rebuilt to impress; content meaning, brand intent, and conversion paths are preserved; nothing is silently dropped or invented.
 
-Complete workflow — intake gate, capture & inventory, keep/kill analysis, exemplar anchoring, slice loop with independent Design Critic + Perf/A11y Auditor, performance budgets, content parity, rubric, stop conditions — lives in `references/facelift.md`. When `--facelift` is set, follow it after `<direction>` completes.
+Complete workflow — intake gate, capture & inventory, keep/kill analysis, exemplar anchoring, slice loop with independent Design Critic + Perf/A11y Auditor, performance budgets, content parity, rubric, stop conditions — lives in `references/facelift.md`. When `--facelift` is set, follow it after `<direction>` completes; `<area_boards>` runs in the facelift slice order (see that section's `--facelift` note) so each slice builds from a recorded pick.
 
 </facelift>
 
@@ -633,6 +714,10 @@ Before any design is considered complete, it must pass all of these checks:
 | 8 | **Mobile Real-Check** | Layout reviewed at 375px width — no horizontal scroll, touch targets ≥44px. |
 | 9 | **AI Slop Test** | Show the page to someone without context. If they say "looks AI-generated," it fails. Rework the weakest element and retest. |
 | 10 | **Handover Test** | DESIGN.md sections 10–13 filled such that a zero-context agent could resume without asking what was decided. |
+| 11 | **Area Picks Locked** | Every enumerated area plus the connective-tissue board has a recorded pick in DESIGN.md §10 (`--quick`: auto-picks logged and surfaced at sign-off). |
+| 12 | **Separators Designed** | Every section boundary has a deliberate treatment from the Section Separator Vocabulary; no two consecutive boundaries repeat it. |
+| 13 | **States Complete** | Every interactive element has a designed hover AND `:focus-visible` state; dynamic regions have loading/empty/error designs. |
+| 14 | **Transitions Specced** | Page transition and scroll-reveal language implemented per the connective-tissue pick, with `prefers-reduced-motion` fallbacks. |
 
 </verification>
 
@@ -681,7 +766,7 @@ When making design decisions, apply these principles from `references/design-psy
 - **`references/design.template.md`**: Canonical 13-section DESIGN.md template — sections 10–13 are the handover contract
 - **`references/preview.template.html`**: Single compliant design-token catalog (5-branch `@layer theme`, two-tier tokens, preview-only 3-state toggle)
 - **`references/facelift.md`**: Complete `--facelift` workflow — intake gate, capture & inventory, keep/kill, critic/auditor seats, perf gate, content parity, rubric, stop conditions
-- **`references/direction-picker.md`**: Direction board mechanics — tile checklist, HTML skeleton, presentation procedure, choice-capture battery
+- **`references/design-boards.md`**: All board mechanics — shared present-and-ask procedure (Part A), direction board tile checklist + skeleton (Part B), area boards with ranked variants + connective-tissue board (Part C)
 - **`references/design-reference.md`**: Aesthetic constraints, font selection, color system, anti-patterns, DESIGN.md scaffold
 - **`plugins/web/skills/css/SKILL.md`**: Invoked in Phase 3 to scaffold the theme stylesheet; its `references/theme.css.template` + `references/runtime-toggle.md` are the mode-contract source
 - **`plugins/web/skills/audit/SKILL.md`**: Deep performance/accessibility audits beyond this skill's gates

@@ -76,7 +76,7 @@ Present the table via `AskUserQuestion` (confirm / adjust). This confirmation do
 
 ## 5. V2 Direction Candidates
 
-Run the standard Interactive Direction Picking from SKILL.md `<direction>` / `references/direction-picker.md`, with exactly **3 candidates** and two extra constraints:
+Run the standard Interactive Direction Picking from SKILL.md `<direction>` / `references/design-boards.md` (Parts A + B), with exactly **3 candidates** and two extra constraints:
 
 1. Every tile keeps the KEEP list visible — real logo, real headline, real brand cues. The user must see their site in each future, not a stranger's.
 2. Every tile names its **anchor exemplar** and the specific technique borrowed (e.g. "linear.app — sticky product shot with scroll-driven feature reveal"), so the choice is between named futures, not vibes.
@@ -106,7 +106,7 @@ Deliver the v2 in slices, each independently verified and saved:
 
 Per slice:
 
-1. **Build** — theming contract and component-reuse gate are already locked; the builder works inside them.
+1. **Build** — theming contract and component-reuse gate are already locked; the builder works inside them, starting from this area's recorded pick (SKILL.md `<area_boards>` runs the boards in this slice order; the motion pass builds from the connective-tissue pick).
 2. **Critic verdict** — per §6 format, against the rubric.
 3. **Auditor metrics** — component-scope slices: contrast protocol only; page-scope slices (hero, motion pass, final assembly): full §8 budget.
 4. **Below excellent on design or motion** → back to the builder with the cited exemplar divergence as the rework brief. Not "make it better" — "here is the specific gap".
