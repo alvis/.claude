@@ -156,6 +156,32 @@ The type scale is documented as a table — no per-level size tokens (`--text-bo
 - **Loading**: Skeleton placeholder with `var(--ui-surface-sunken)` background and shimmer animation
 - **Object fit**: `object-fit: cover` for fills, `object-fit: contain` for logos
 
+### Motion, Transitions & Separators
+
+The World-Class Element Checklist spec for this project (values follow design-reference.md Motion Specifics; picks come from the connective-tissue board):
+
+- **Page transition**: {{STYLE — e.g., "View Transitions API crossfade + 8px upward drift, 240ms cubic-bezier(0.16, 1, 0.3, 1)"}}
+- **Scroll-reveal language**: {{TRIGGER, DISTANCE, STAGGER — e.g., "IntersectionObserver at 20% visibility; opacity 0→1 + translateY(16px)→0; 90ms stagger per chunk; once-only"}}
+- **Signature micro-interaction**: {{FROM_DIRECTION_QUESTION_5 — e.g., "CTA magnetic hover: 4px cursor-follow + scale(1.02)"}}
+- **Reduced motion**: {{BEHAVIOR — e.g., "reveals become instant opacity fades; page transition falls back to plain crossfade; parallax disabled"}}
+
+**Section separators** (every boundary deliberate; no two consecutive boundaries repeat):
+
+| Boundary | Treatment |
+|---|---|
+| {{Hero → Features}} | {{e.g., "gradient fade from hero canvas into `--ui-surface-sunken`"}} |
+| {{Features → Social proof}} | {{e.g., "full-bleed color band with overlap: cards break the boundary by −32px"}} |
+
+**Hover & focus treatments** (every interactive element class):
+
+| Element class | Hover | `:focus-visible` |
+|---|---|---|
+| {{Links}} | {{e.g., "underline grows in 150ms from left"}} | {{e.g., "2px `--ui-focus-ring` outline, 2px offset"}} |
+| {{Cards}} | {{e.g., "`--ui-shadow-raised` + translateY(-2px)"}} | {{same ring on the card surface}} |
+| {{Images}} | {{e.g., "scale(1.03) inside overflow-hidden frame, 300ms"}} | {{ring on the wrapping link}} |
+
+**Dynamic-region states**: {{PER REGION — loading/skeleton, empty, error designs, e.g., "testimonial wall: shimmer skeleton rows; empty → quote CTA; error → muted retry inline"}}
+
 ---
 
 ## 5. Layout Principles
@@ -329,6 +355,13 @@ var(--font-display) var(--font-body) var(--font-mono)
 |---|---|
 | {{CANDIDATE_NAME}} | {{ONE_LINE_RATIONALE}} |
 
+**Per-area design picks** (one row per area board, recorded immediately after each pick):
+
+| Area | Chosen variant (# + name) | Rejected variants + one-line why |
+|---|---|---|
+| {{Hero}} | {{#2 "Split editorial"}} | {{#1 too dense for the audience; #3–5 weaker hierarchy / repeated separator / off-direction imagery}} |
+| {{Connective tissue}} | {{#1 "Fade + band system"}} | {{#2–5 one-line reasons}} |
+
 **Exemplar sites** (facelift runs — the rubric anchors):
 
 | Exemplar | What it anchors |
@@ -397,6 +430,6 @@ Save point: <jj change id>
 | Preview catalog | {{preview.html location}} |
 | This DESIGN.md | {{path}} |
 | Key component directories | {{src/components/ui/, packages/ui/…}} |
-| Direction board (tmp) | {{<scratchpad>/design-directions/index.html}} |
+| Design boards (tmp: direction + per-area) | {{<scratchpad>/design-boards/*.html + *.png}} |
 | Facelift inventories (tmp) | {{<scratchpad>/facelift-inventory-before.json / -after.json}} |
 | Save points | {{jj change ids, newest last}} |

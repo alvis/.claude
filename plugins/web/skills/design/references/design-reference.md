@@ -154,31 +154,31 @@ These patterns appear in the majority of AI-generated interfaces. Each has a spe
 | Stagger delay | ~80-100ms per element | Titles at ~80ms per word, content chunks at ~100ms |
 | Icon swap | 120ms cross-fade | `opacity` + subtle `scale(0.9)` to `scale(1)`; no rotation unless semantically meaningful |
 | Height reveal | `grid-template-rows: 0fr` to `1fr` | Avoids the `height: auto` animation trap |
+| Page transition | ≤300ms | View Transitions API or equivalent; crossfade / shared-element morph / directional slide — one style per site, with a reduced-motion fallback |
+| Scroll reveal | translate ≤24px, stagger 80-100ms | Trigger at ~20% visibility; once-only (never re-animate on scroll-up); opacity + translate (+ optional `blur(4px)→0`) |
 | Animate only | `transform`, `opacity`, `filter` | Every other property triggers layout or paint |
 
 No bounce or elastic easing. Real objects decelerate smoothly. Do not use `transition: all` even as a prototype shortcut.
 
+## Section Separator Vocabulary
+
+Every boundary between page sections is a design decision. Boards and final pages pick each boundary's treatment from this menu — "plain whitespace" is a legitimate pick, but it must be stated, never defaulted into. No two consecutive boundaries repeat the same treatment (the variety rule applies to joins, not just layouts).
+
+| Treatment | When to use |
+|---|---|
+| Whitespace scale-shift | Quiet editorial rhythm; jump the section gap a full step (e.g., `--space-8` → `--space-12`) so the pause itself reads as the divider |
+| Hairline rule | Dense, structured content; a 1px `--ui-border` line, often inset from the edges to feel typographic |
+| Color band / background shift | Signal a change of register (proof, pricing); adjacent section canvases step by ≥4% lightness or switch to a tinted surface |
+| Angled clip-path | Energetic, brand-forward pages; keep one consistent angle site-wide (2–6°) and never alternate directions per boundary |
+| Curve / wave | Softer brands; ONE gentle curve, not a repeating wave pattern — and at most one curved boundary style per page |
+| Overlap & negative margin | Hero-to-content or card-to-band joins; the next section's lead element breaks the boundary by 24–48px for depth |
+| Gradient fade | Atmospheric/textured canvases; fade one canvas into the next over 80–160px instead of a hard edge |
+| Full-bleed image band | Chaptering long pages; an edge-to-edge visual (with contrast-safe treatment) acts as the divider |
+| Marquee / ticker divider | Playful or fashion-adjacent directions; a single-line scrolling strip (logos, keywords) — honors `prefers-reduced-motion` by pausing |
+
 ## DESIGN.md Scaffold
 
-For multi-page or production UIs, emit a DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. See `design.template.md` for the full 13-section template with two-tier token tables and component specifications.
-
-| Section | Purpose |
-|---|---|
-| 1. Visual Theme and Atmosphere | Mood, density, design philosophy |
-| 2. Color Palette and Roles | Tier-2 `--ui-*` token + role + tier-1 light/dark values |
-| 3. Typography Rules | Font tokens, size scale, weight, line-height, letter-spacing |
-| 4. Component Stylings | Buttons, cards, inputs, navigation with all states |
-| 5. Layout Principles | Spacing scale, radius roles, grid columns, whitespace philosophy |
-| 6. Depth and Elevation | Mode-dependent `--ui-shadow-*` roles (dark = light-overlay stepping) |
-| 7. Do's and Don'ts | 5-10 guardrails specific to this project |
-| 8. Responsive Behavior | Breakpoints, navigation collapse, touch target minimums |
-| 9. Agent Prompt Guide | Token quick-reference + 3-5 component prompts with inline values |
-| 10. Context and Decision Log | Chosen + rejected directions, exemplars, constraints, AskUserQuestion outcomes |
-| 11. Component Inventory and Sources | Per component: library/patched-upstream/local, path, consumers, promotion status |
-| 12. Implementation State and Next Steps | Built paths, current slice, per-slice ledger, exact ordered next actions |
-| 13. File Map | theme.css, preview, component dirs, tmp artifacts, save-point ids |
-
-Sections 10–13 are the handover contract — mandatory in every run; a zero-context agent resumes from them.
+For multi-page or production UIs, emit a DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. The 13-section structure, two-tier token tables, component specifications, and the "Motion, Transitions & Separators" spec live in `design.template.md` — that file is the single source for the scaffold. Sections 10–13 are the handover contract — mandatory in every run; a zero-context agent resumes from them.
 
 For single components or quick prototypes, skip this scaffold. A three-line visual thesis (mood, content plan, interaction plan) is sufficient.
 
