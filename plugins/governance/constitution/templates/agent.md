@@ -13,7 +13,7 @@
   "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' so the subagent auto-selects for matching tasks",
   "color": "red|blue|green|yellow|purple|orange|pink|cyan",
   "model": "opus|sonnet|haiku|fable — claude-fable-5 only if you have direct evidence the loader rejects the fable alias, noted inline",
-  "effort": "low|medium|high|xhigh|max — model-dependent; OMIT this key entirely for haiku (haiku does not support effort)",
+  "effort": "low|medium|high|xhigh|max — model-dependent; scale to task difficulty, and raise effort before upgrading model; OMIT this key entirely for haiku (haiku does not support effort)",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
   "tools": "OMIT to grant the full default toolset, UNLESS this agent is a leaf or needs restriction (see Leaf & Spawn Encoding below)",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",

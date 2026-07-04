@@ -81,8 +81,9 @@ Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` 
      - **model**: match to cognitive demand (haiku for deterministic/mechanical roles, sonnet for branching
        investigation, opus for judgment-heavy production, fable for adversarial/deep-reasoning review) — never
        default every role to the largest model
-     - **effort**: set only for model families that support it; OMIT the key entirely when `model: haiku` (haiku
-       does not support `effort`)
+     - **effort**: a second, independent dial — scale it to the task's *difficulty*, and to make a role think
+       harder raise its effort before upgrading its model. Set only for model families that support it; OMIT the
+       key entirely when `model: haiku` (haiku does not support `effort`)
      - **permissionMode**: EXACTLY ONE of `default`/`acceptEdits`/`auto` — never `plan`, `bypassPermissions`, or
        `dontAsk` — chosen by the agent's launch scenario:
        - **main-session** or **spawned-subagent**: `auto` for opus/fable producers running unattended,

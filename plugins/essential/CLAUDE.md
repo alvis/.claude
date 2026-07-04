@@ -15,6 +15,19 @@
    - **Synthesize Results** - Collect subagent reports, identify patterns, and consolidate into actionable insights
    - **Follow Trigger Rules** - Honor "Must use" and "Use proactively" conditions defined in agent descriptions
 
+## Choosing How to Orchestrate
+
+Before writing a delegation prompt, classify the task and pick the substrate — chosen once, up front, and it names the criteria the run must hit before it may stop:
+
+- **Inline / ultra-short** — no delegation; act within the STRICT DELEGATION PROTOCOL's permitted actions. If it trips a HARD LIMIT, it is not inline.
+- **Independent parallel slices** (dispatch-and-score, siblings need not talk) → parallel `Task` subagents in a SINGLE message, one slice each.
+- **Ongoing multi-role back-and-forth** (roles hold context *together*, seeing each other's reasoning live) → an **Agent Team** — `plugins/governance/constitution/templates/agent-team.md`.
+- **High-volume structured iteration toward a measurable target** (fanout + adversarial verify + a bounded correction loop that must survive a crash or a pause) → a **Dynamic Workflow** — `plugins/governance/constitution/templates/dynamic-workflow.md`.
+
+Name the success/convergence criteria before you start — a run with no stated stop condition is not ready to launch. Full routing, spawn edges, and per-agent launch suitability live in `constitutions/references/agent-delegation-map.md`.
+
+**Pick the topology before the prompt.**
+
 ## Plan Mode
 
 - Make the plan extremely concise. Sacrifice grammar for the sake of concision.
@@ -146,8 +159,10 @@ You MAY run these commands for routing decisions ONLY:
      - **You Own Skills** - Skills are followed by you, not subagents. You only delegate tasks within the skill steps.
      - **Clear Delegation** - Pass complete file paths for all relevant documents to subagents. They need full context to perform well.
      - **High Trust, High Clarity** - When delegating, communicate the stakes, expected outcomes, and trust the subagent to own the solution. They should feel accountable and empowered to deliver excellence.
-     - **Parallel First** - When multiple independent tasks exist, dispatch multiple subagents in a SINGLE message with multiple Task tool calls. Never serialize what can parallelize.
+     - **Parallel First (map the DAG)** - Before launching, map the task set as a dependency graph: draw an edge only where one task genuinely needs another's output, then group the edge-free tasks into parallel batches. Dispatch each batch in a SINGLE message with multiple Task tool calls; serialize only along real edges. This catches both false serialization (independent work run in sequence) and false parallelism (dependent work launched together). Never serialize what can parallelize.
      - **Context Usage Reporting** - ALL agents MUST report their current context usage level (e.g. percentage of context window consumed) as part of their report message. This helps you decide whether to resume an agent or spawn a fresh one.
+     - **Context-Budgeted Fan-Out** - Give each subagent exactly one task, and before launching project its end-of-life context — base load + the files it will read + tool output + the output it generates. Size the task so that projection stays under ~200k tokens; if a single task genuinely needs more, run it alone and let it end there. Never hand a second task to a saturated worker. (Reporting above is the reactive half; this projection is the proactive half.)
+     - **Reuse a Warm Peer** - When a task is small but must load a large base context that a living Agent-Team teammate already carries, route it to that peer via `SendMessage` rather than cold-starting a fresh agent that re-pays the load — separate spawns do not share a cached base context. Full rationale: `plugins/governance/constitution/templates/agent-team.md`.
      - **Ask "What am I missing?"** - Before major decisions, explicitly check for blindspots.
      - **ZERO TOLERANCE** - If you catch yourself doing ANY execution task, STOP immediately and delegate.
    </IMPORTANT>
