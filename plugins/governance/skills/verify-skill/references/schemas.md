@@ -1,10 +1,10 @@
 # Verify-Skill YAML Schemas
 
-## Report Boundary Convention
+## Section & Report Boundary Convention
 
-Every machine-readable report or output contract in a skill — subagent execution/review reports, per-step reports, and the final Skill Completion block — is wrapped in `<report> … </report>` boundary tags so the block is unambiguously extractable and cannot bleed into the surrounding prose it is embedded in. The `<report>` tags are the boundary; a ` ```yaml ` fence kept inside them is a syntax hint. Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters, and prose sections stay delimited by markdown headings. The canonical statement lives in `plugins/governance/constitution/references/authoring-invariants.md`.
+Each important section of a skill is encircled with a semantic XML boundary tag alongside its markdown heading — `<introduction>`, `<skill_overview>`, `<skill_implementation>` — and every machine-readable report or output contract (subagent reports, per-step reports, the final Skill Completion block) is wrapped in `<report> … </report>`, so every major part carries an unambiguous boundary and cannot bleed into a neighbour. The tags are the boundary; a ` ```yaml ` fence kept inside `<report>` is a syntax hint. Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters. The canonical statement (full tag set + rules) lives in `../../../constitution/references/authoring-invariants.md`.
 
-Template Compliance (Step 2, Subagent B) records this as `report_boundary_tags: pass | warn`, rolled up under `template_compliance` in the final report. It is **advisory** — a `warn` means some report blocks are not yet wrapped and MUST NOT set the compliance status (or the final verification status) to `fail`. Skills authored before the convention are flagged for gradual migration via `update-skill`, not failed.
+Template Compliance (Step 2, Subagent B) records this as `boundary_tags: pass | warn`, rolled up under `template_compliance` in the final report. It is **advisory** — a `warn` means some sections or reports are not yet wrapped and MUST NOT set the compliance status (or the final verification status) to `fail`. Skills authored before the convention are flagged for gradual migration via `update-skill`, not failed.
 
 ## evals.yaml — Evaluation Definition
 

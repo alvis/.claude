@@ -10,6 +10,8 @@ argument-hint: [skill specifier] [--changes=...]
 
 # Update Skill
 
+<introduction>
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -37,6 +39,10 @@ You are a **Skill Update Director** who orchestrates skill updates like a docume
 - **Parallel Coordination**: Run independent skill updates simultaneously when dependencies allow
 - **Quality Oversight**: Review updates objectively without being involved in editing details
 - **Decision Authority**: Make go/no-go decisions based on subagent reports and verify-skill results
+
+</introduction>
+
+<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -102,11 +108,15 @@ Note:
 • Skill is LINEAR: Step 1 → 2 → 3
 ```
 
+</skill_overview>
+
+<skill_implementation>
+
 ## 3. SKILL IMPLEMENTATION
 
 ### Content Placement & Coherence Rule
 
-Every update is performed under the **Content Placement & Coherence Rule**, whose canonical statement lives in `plugins/governance/constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. **Default subtask for every update**: before applying user-requested changes, scan the target SKILL.md for (a) conditional bulk to offload and (b) Coherence Mandate compliance (presence, placement, seam test), and fold any required offload or mandate integration into the same patch as the requested change set — passed through as Task 0 of every subagent assignment.
+Every update is performed under the **Content Placement & Coherence Rule**, whose canonical statement lives in `../../constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. **Default subtask for every update**: before applying user-requested changes, scan the target SKILL.md for (a) conditional bulk to offload and (b) Coherence Mandate compliance (presence, placement, seam test), and fold any required offload or mandate integration into the same patch as the requested change set — passed through as Task 0 of every subagent assignment.
 
 ### Skill Steps
 
@@ -186,7 +196,7 @@ Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls pe
       - Remove any outdated or deprecated content
       - Ensure consistent formatting throughout
       - Verify subagent instruction blocks follow >>> <<< format
-      - Wrap every report/output-contract block in `<report>...</report>` boundary tags (keep the >>> <<< envelopes as-is)
+      - Encircle each important section in its semantic boundary tag (`<introduction>`, `<skill_overview>`, `<skill_implementation>`, wrapping the heading) and wrap every report/output-contract block in `<report>...</report>` (keep the >>> <<< envelopes as-is) — see ../../constitution/references/authoring-invariants.md
       - Ensure all placeholder content has been replaced
 
    **Report**
@@ -276,7 +286,7 @@ verification:
 - **Purpose**: Invoke verify-skill on each updated skill to ensure template compliance and quality
 - **Input**: List of updated skill file paths from Step 1/2
 - **Output**: Per-skill verification results, potentially improved skill files
-- **Sub-skill**: plugins/governance/skills/verify-skill/SKILL.md
+- **Sub-skill**: ../verify-skill/SKILL.md
 - **Parallel Execution**: Yes — verify each updated skill independently
 
 #### Execute Verify Sub-Skill (You)
@@ -377,6 +387,8 @@ summary: |
   in place, verified each via verify-skill, and aggregated the results.
 ```
 </report>
+
+</skill_implementation>
 
 ## Examples
 

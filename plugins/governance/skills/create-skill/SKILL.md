@@ -8,6 +8,8 @@ agent: general-purpose
 
 # Create Skill
 
+<introduction>
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -34,6 +36,10 @@ You are a **Skill Creation Director** who orchestrates the skill creation proces
 - **Quality Oversight**: Review completed skills objectively without being involved in content creation details
 - **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance review
 - **Efficient Management**: Minimize overhead by using systematic, single-step comprehensive execution
+
+</introduction>
+
+<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -108,11 +114,15 @@ Note:
 • Skill is LINEAR: Step 1 → 2 → 3 → 4 → 5
 ```
 
+</skill_overview>
+
+<skill_implementation>
+
 ## 3. SKILL IMPLEMENTATION
 
 ### Content Placement & Coherence Rule
 
-Every new SKILL.md is drafted under the **Content Placement & Coherence Rule**, whose canonical statement lives in `plugins/governance/constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. The Step 2 subagent applies the rule during creation, and the Step 5 verify-skill sub-skill audits compliance — including the editing-skill mandate-presence and seam-test checks.
+Every new SKILL.md is drafted under the **Content Placement & Coherence Rule**, whose canonical statement lives in `../../constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. The Step 2 subagent applies the rule during creation, and the Step 5 verify-skill sub-skill audits compliance — including the editing-skill mandate-presence and seam-test checks.
 
 ### Skill Steps
 
@@ -231,7 +241,7 @@ Request the subagent to perform the following skill creation:
        - Create ASCII skill diagram following the template pattern
        - Implement skill steps using the template's phase structure
        - Format subagent instructions using template's >>> <<< delimiters
-       - Wrap every report/output-contract block (subagent reports, step reports, Skill Completion) in `<report>...</report>` boundary tags, keeping the >>> <<< subagent envelopes as-is
+       - Encircle each important section in its semantic boundary tag — `<introduction>`, `<skill_overview>`, `<skill_implementation>` (wrapping the markdown heading, not replacing it) — and wrap every report/output-contract block (subagent reports, step reports, Skill Completion) in `<report>...</report>`, keeping the >>> <<< subagent envelopes as-is (see ../../constitution/references/authoring-invariants.md)
        - Apply skill path guidance from Phase 1 planning
 
     4. **Clean & Finalize**:
@@ -249,7 +259,7 @@ Request the subagent to perform the following skill creation:
        - Create evals/evals.yaml based on eval plan from Step 1
        - Include 2-3 test cases with prompts and expectations
        - Include trigger_eval with should_trigger and should_not_trigger queries
-       - Reference template: plugins/governance/skills/verify-skill/references/eval-template.yaml
+       - Reference template: ../verify-skill/references/eval-template.yaml
 
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
@@ -399,7 +409,7 @@ Request the subagent to perform the following validation review:
 - **Purpose**: Invoke verify-skill to perform comprehensive verification and iterate on fixes if needed
 - **Input**: Skill file path from Step 2, decision to proceed from Step 4
 - **Output**: Verification report, potentially improved skill file
-- **Sub-skill**: plugins/governance/skills/verify-skill/SKILL.md
+- **Sub-skill**: ../verify-skill/SKILL.md
 - **Parallel Execution**: No
 
 #### Execute Verify & Iterate Sub-Skill (You)
@@ -496,3 +506,5 @@ summary: |
   and properly structured for Claude Code auto-discovery.
 ```
 </report>
+
+</skill_implementation>

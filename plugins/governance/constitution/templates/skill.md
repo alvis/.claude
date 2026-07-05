@@ -13,6 +13,10 @@ description: [Brief description of what the skill does and when to use it]
 
 <!-- INSTRUCTION: Replace [Skill Name] with a clear, action-oriented title matching the frontmatter name -->
 
+<!-- INSTRUCTION: Each numbered section below is encircled with a semantic boundary tag (<introduction>, <skill_overview>, <skill_implementation>) that wraps the markdown heading — keep BOTH the tag and the heading. Reports stay wrapped in <report>. See ../references/authoring-invariants.md. -->
+
+<introduction>
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -44,6 +48,10 @@ You are a **[Management Title]** who orchestrates the skill like a [metaphor, e.
 - List 3-5 management principles focused on delegation and coordination
 - Emphasize that management NEVER executes, only orchestrates
 -->
+
+</introduction>
+
+<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -147,6 +155,10 @@ Note:
 • Skill is LINEAR: Step 1 → 2 → 3 → ... → N
 ```
 
+</skill_overview>
+
+<skill_implementation>
+
 ## 3. SKILL IMPLEMENTATION
 
 <!-- INSTRUCTION:
@@ -241,7 +253,7 @@ You sends this exact message template to subagents.
 - List 3-5 technical principles for execution excellence
 - Dispatch up to [X] subagents in parallel (typically 5-10)
 - Decide a list of relevant standards to follow (can be none)
-- Boundary tags: wrap the returned report in <report>...</report> so it is unambiguously extractable, and use the <IMPORTANT>...</IMPORTANT> block form for hard guardrails inside the prompt (see plugins/governance/constitution/references/authoring-invariants.md)
+- Boundary tags: wrap the returned report in <report>...</report> so it is unambiguously extractable, and use the <IMPORTANT>...</IMPORTANT> block form for hard guardrails inside the prompt (see ../references/authoring-invariants.md)
 -->
 
 **What You Send to Subagents**:
@@ -419,3 +431,5 @@ Request each review subagent to perform the following review with full scrutiny:
 # INSTRUCTION: Construct a skill output template in yaml format
 ```
 </report>
+
+</skill_implementation>

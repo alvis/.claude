@@ -8,6 +8,8 @@ agent: general-purpose
 
 # Verify Skill
 
+<introduction>
+
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -24,6 +26,10 @@ You are a **Skill Verification Director** who orchestrates verification like a Q
 - **Parallel Coordination**: Run independent checks simultaneously when dependencies allow
 - **Quality Oversight**: Review verification results objectively
 - **Decision Authority**: Make pass/fail decisions based on subagent reports
+
+</introduction>
+
+<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -126,11 +132,15 @@ Note:
 • Skill is LINEAR: Step 1 → 2 → 3 → ... → 7
 ```
 
+</skill_overview>
+
+<skill_implementation>
+
 ## 3. SKILL IMPLEMENTATION
 
 ### Content Placement Rule
 
-The **Content Placement & Coherence Rule** this skill validates against is defined canonically in `plugins/governance/constitution/references/authoring-invariants.md`: SKILL.md holds only the always-on core workflow, conditional bulk (>~50 lines, gated) offloads to `references/<topic>.md` or splits into a separate skill, and references must not hide always-on core steps. Step 2 Structural Validation enforces it via the **Content Placement Validator** subagent (D), while the **Content Quality Assessor** subagent (C) enforces the inline Coherence Mandate.
+The **Content Placement & Coherence Rule** this skill validates against is defined canonically in `../../constitution/references/authoring-invariants.md`: SKILL.md holds only the always-on core workflow, conditional bulk (>~50 lines, gated) offloads to `references/<topic>.md` or splits into a separate skill, and references must not hide always-on core steps. Step 2 Structural Validation enforces it via the **Content Placement Validator** subagent (D), while the **Content Quality Assessor** subagent (C) enforces the inline Coherence Mandate.
 
 ### Skill Steps
 
@@ -296,7 +306,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
 
     **Inputs**
     - Target skill file: [skill_path]
-    - Rubric/template: `template:skill` (resolves to `plugins/governance/constitution/templates/skill.md`; follow references recursively if A points to B)
+    - Rubric/template: `template:skill` (resolves to `../../constitution/templates/skill.md`; follow references recursively if A points to B)
     - Report template: YAML block below
 
     **Checklist**
@@ -308,7 +318,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     5. Verify ASCII diagram exists and is properly formatted.
     6. Check subagent instruction blocks use `>>>` / `<<<` delimiters.
     7. Verify report YAML blocks exist at step outputs.
-    8. Check report/output blocks are wrapped in `<report>...</report>` boundary tags (advisory convention — see `plugins/governance/constitution/references/authoring-invariants.md`). Record `report_boundary_tags: pass|warn`, never `fail`; list any unwrapped report blocks under issues as a recommendation. This check MUST NOT set the overall status to fail.
+    8. Check boundary tags (advisory convention — see `../../constitution/references/authoring-invariants.md`): each important section is encircled with its semantic tag (`<introduction>`, `<skill_overview>`, `<skill_implementation>`) wrapping the markdown heading, and every report/output block is wrapped in `<report>...</report>`. Verify tags are balanced and cleanly nested. Record `boundary_tags: pass|warn`, never `fail`; list any missing or unbalanced tags under issues as a recommendation. This check MUST NOT set the overall status to fail.
     9. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments.
 
     **Report**
@@ -325,7 +335,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
       section_ordering: pass|fail
       ascii_diagram: pass|fail
       subagent_formatting: pass|fail
-      report_boundary_tags: pass|warn
+      boundary_tags: pass|warn
       no_template_placeholders: pass|fail
     issues: [...]
     fix_instructions: [...]
@@ -383,7 +393,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     **Inputs**
     - Target skill file: [skill_path]
     - Skill directory (for sibling `references/` lookup): [skill_dir]
-    - Rubric: Content Placement & Coherence Rule (see `plugins/governance/constitution/references/authoring-invariants.md`) and the structured findings schema in `plugins/governance/skills/verify-skill/references/schemas.md` ("Content Placement Validation Report")
+    - Rubric: Content Placement & Coherence Rule (see `../../constitution/references/authoring-invariants.md`) and the structured findings schema in `references/schemas.md` ("Content Placement Validation Report")
     - Report template: YAML block below
 
     **Duties**
@@ -518,3 +528,5 @@ summary: |
   [Summary of findings and recommendations]
 ```
 </report>
+
+</skill_implementation>
