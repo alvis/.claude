@@ -80,9 +80,12 @@ Spawn parallel specialized subagents (one per agent file, max 8 parallel `Task` 
      checklist, not by copying whatever the file already had:
      - **model**: match to cognitive demand (haiku for deterministic/mechanical roles, sonnet for branching
        investigation, opus for judgment-heavy production, fable for adversarial/deep-reasoning review) — never
-       default every role to the largest model
-     - **effort**: set only for model families that support it; OMIT the key entirely when `model: haiku` (haiku
-       does not support `effort`)
+       default every role to the largest model; see `governance:create-agent` for the full selection heuristic
+     - **effort**: a second, independent dial, FIXED for this agent — set it to the reasoning depth the role's
+       work demands (one value for all the role's tasks, not per-task), preferring a higher effort over a costlier
+       model when the role needs more depth; see `governance:create-agent` for the full selection heuristic. Set
+       only for model families that support it; OMIT the key entirely when `model: haiku` (haiku does not support
+       `effort`)
      - **permissionMode**: EXACTLY ONE of `default`/`acceptEdits`/`auto` — never `plan`, `bypassPermissions`, or
        `dontAsk` — chosen by the agent's launch scenario:
        - **main-session** or **spawned-subagent**: `auto` for opus/fable producers running unattended,

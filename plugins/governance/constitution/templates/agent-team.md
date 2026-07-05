@@ -10,8 +10,9 @@
 An Agent Team earns its overhead when the task needs several roles holding context *together* over an extended,
 back-and-forth exchange — design review, an incident bridge, a multi-role build where James, Ava, and Marcus need
 to see each other's reasoning live, not just each other's final artifacts. If the task decomposes into
-independent slices that only need to be dispatched and scored, that is a Dynamic Workflow's job, not a team's —
-don't form a team to do a workflow's work more expensively.
+independent slices that only need to be dispatched and scored, that is work for parallel `Task` subagents — or a
+Dynamic Workflow when the scoring must be adversarial and survive a bounded correction loop — not a team's; don't
+form a team to do dispatch-and-score work more expensively.
 
 ## Warm core
 
@@ -20,6 +21,24 @@ sections: familiar with each other's working style, quick to hand off without re
 disagreeing without re-litigating settled ground. This warmth is authored once, in each agent's own
 `Coordination Posture` section (templates/agent.md) — a team roster does not add warmth the agents don't already
 carry; it activates agents whose posture already expects a team.
+
+## Reusing a warm teammate
+
+Warmth is also operational, not just social. A teammate persists for the whole session: it loads its base context
+once at spawn — the standards, docs, and tool definitions its role carries — and stays warm across every task it
+is handed afterwards. Separate spawns do NOT share a cached base context; forming a team is the only mechanism
+that keeps agents warm. So:
+
+- **Reuse a living teammate rather than re-spawning.** A fresh agent re-pays the full base-context load before it
+  does any work; a warm peer has already paid it. When a task is small but its base load is large, route it to
+  the peer that already carries that base — don't cold-start what you can reuse.
+- **Check the pool before spawning**: if an idle teammate with a low `context_level` already holds the right
+  base, hand it the new unit via `SendMessage`; only spawn a fresh teammate when none fits.
+- **Never route a new unit to a saturated peer.** A teammate reporting a high `context_level` is retired and
+  replaced, not topped up — reuse is for warm-and-roomy peers, not warm-and-full ones (this is the same
+  context-budget projection the main orchestrator applies before any fan-out).
+
+When startup context dwarfs the task, hand it to a living peer — not a cache.
 
 ## Roles in a formed team
 

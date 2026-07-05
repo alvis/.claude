@@ -16,6 +16,10 @@ no fanout and no adversarial check, this is over-engineering — use a plain seq
 (Mechanism B below is exactly that fallback, and is also the right choice when the `Workflow` tool is
 unavailable or disabled).
 
+The launch shape is two-phase: the main session first plans architecture and direction with explore agents, then
+hands off to the workflow, which consts the goal and spec every later step reads (see The spec const). Planning is
+not a workflow phase — it is the step that decides a workflow is the right substrate and fixes what its spec says.
+
 ## Meta block
 
 Every workflow script exports a `meta` object naming itself and its args — this is what the main session passes
@@ -63,6 +67,15 @@ const spec = {
   race; the cost is wall-clock, not correctness, and wall-clock is the cheaper thing to spend.
 - A single workflow commonly mixes both: parallel Generate feeding a pipeline'd Verify-then-Evolve tail.
 
+## Shared-context generator (first stage)
+
+When the editor/verifier prompts depend on files or web context that every slice needs, don't bake that reading
+into each worker — make the workflow's FIRST stage a generator subagent that reads the shared context once and
+emits one ready-to-run prompt per slice. Later stages consume those prompts; the orchestrator never loads the raw
+context itself, and every worker gets a self-contained prompt. This is two-stage dispatch realized as a workflow
+phase — a prompt-generation stage feeding the execution stages: generate the prompts with a subagent, keep the
+orchestrator's context clean, and let the deterministic script fan them out.
+
 ## Editor + verifier stages
 
 The two-stage pattern that gives a workflow its adversarial teeth:
@@ -71,10 +84,13 @@ The two-stage pattern that gives a workflow its adversarial teeth:
   action. They never score their own output. On a slice needing a decision the spec does not resolve, an editor
   emits a `pending_decision` and returns `blocked` rather than guessing.
 - **Verifier stage** (Verify / Score / Refute): agents whose ONLY job is to attempt to disprove the editor's
-  claim of success — a missing case, a broken contract, gamed metric, a harness bug. A verifier that cannot
-  produce a concrete refutation (file:line, reproducible failure) must accept; suspicion alone never refutes.
-  Verifiers never see sibling candidates or sibling verifier verdicts — independence is structural (a separate
-  `agent()` dispatch per verifier), not a promise made in the prompt.
+  claim of success — a missing case, a broken contract, gamed metric, a harness bug. A verifier receives the
+  editor's artifact and the spec claim ONLY — never the editor's reasoning, so it cannot inherit the editor's
+  blind spots. A verifier that cannot produce a concrete refutation (file:line, reproducible failure) must
+  accept; suspicion alone never refutes. On refutation it returns the defect, the exact spec criterion the defect
+  breaks (file:line), and the minimal fix — that triplet is what the bounded correction loop re-queues to the
+  editor. Verifiers never see sibling candidates or sibling verifier verdicts — independence is structural (a
+  separate `agent()` dispatch per verifier), not a promise made in the prompt.
 - The orchestrator (the workflow script itself) never generates or verifies — it dispatches, persists, and
   computes the deterministic parts (ranking, stop-checks, next-round breeding). If the orchestrator is writing
   code or judging quality inline, that logic belongs in a dispatched agent instead.
