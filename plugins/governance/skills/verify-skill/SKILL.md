@@ -130,16 +130,7 @@ Note:
 
 ### Content Placement Rule
 
-> **SKILL.md must contain only the always-on core workflow — the path every invocation walks.**
->
-> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer (e.g. `For two-way merge mode, see references/two-way-merge.md`).
-> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** instead.
-> 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
-> 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
->
-> Rationale: SKILL.md is loaded on every invocation; references are loaded on demand. Inline conditional bulk is paid for by every run that never enters the branch.
-
-Step 2 Structural Validation enforces this rule via the **Content Placement Validator** subagent (D).
+The **Content Placement & Coherence Rule** this skill validates against is defined canonically in `../../constitution/references/authoring-invariants.md`: SKILL.md holds only the always-on core workflow, conditional bulk (>~50 lines, gated) offloads to `references/<topic>.md` or splits into a separate skill, and references must not hide always-on core steps. Step 2 Structural Validation enforces it via the **Content Placement Validator** subagent (D), while the **Content Quality Assessor** subagent (C) enforces the inline Coherence Mandate.
 
 ### Skill Steps
 
@@ -204,6 +195,7 @@ Request the subagent to perform the following steps:
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: success|failure
     summary: 'Analysis of [skill name]'
@@ -218,6 +210,7 @@ Request the subagent to perform the following steps:
       trigger_queries_count: N
     issues: [...]
     ```
+    </report>
     <<<
 
 #### Phase 4: Decision (You)
@@ -279,6 +272,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     **Report**
     Return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Frontmatter validation of [skill name]'
@@ -292,6 +286,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     issues: [...]
     fix_instructions: [...]
     ```
+    </report>
     <<<
 
 **Subagent B: Template Compliance Checker**
@@ -301,7 +296,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
 
     **Inputs**
     - Target skill file: [skill_path]
-    - Rubric/template: `/Users/alvis/Repositories/.claude/plugins/governance/constitution/templates/skill.md` (follow references recursively if A points to B)
+    - Rubric/template: `template:skill` (resolves to `../../constitution/templates/skill.md`; follow references recursively if A points to B)
     - Report template: YAML block below
 
     **Checklist**
@@ -313,11 +308,13 @@ In a single message, you spin up **4** subagents to perform validation in parall
     5. Verify ASCII diagram exists and is properly formatted.
     6. Check subagent instruction blocks use `>>>` / `<<<` delimiters.
     7. Verify report YAML blocks exist at step outputs.
-    8. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments.
+    8. Check boundary tags (advisory convention — see `../../constitution/references/authoring-invariants.md`): important/long content is enclosed in a semantically-named tag so it cannot bleed into surrounding prose — every report/output block in `<report>...</report>`, and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Tag names must describe the content's role, NOT merely echo a `##` section heading. Verify tags are balanced. Record `boundary_tags: pass|warn`, never `fail`; list any unenclosed report/guardrail blocks under issues as a recommendation. This check MUST NOT set the overall status to fail.
+    9. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments.
 
     **Report**
     Return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Template compliance check of [skill name]'
@@ -328,10 +325,12 @@ In a single message, you spin up **4** subagents to perform validation in parall
       section_ordering: pass|fail
       ascii_diagram: pass|fail
       subagent_formatting: pass|fail
+      boundary_tags: pass|warn
       no_template_placeholders: pass|fail
     issues: [...]
     fix_instructions: [...]
     ```
+    </report>
     <<<
 
 **Subagent C: Content Quality Assessor**
@@ -358,6 +357,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     **Report**
     Return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Content quality assessment of [skill name]'
@@ -372,6 +372,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     issues: [...]
     suggestions: [...]
     ```
+    </report>
     <<<
 
 **Subagent D: Content Placement Validator**
@@ -382,7 +383,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     **Inputs**
     - Target skill file: [skill_path]
     - Skill directory (for sibling `references/` lookup): [skill_dir]
-    - Rubric: Content Placement Rule (see SKILL.md Section 3) and the structured findings schema in `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/references/schemas.md` ("Content Placement Validation Report")
+    - Rubric: Content Placement & Coherence Rule (see `../../constitution/references/authoring-invariants.md`) and the structured findings schema in `references/schemas.md` ("Content Placement Validation Report")
     - Report template: YAML block below
 
     **Duties**
@@ -397,6 +398,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     **Report**
     Return the following execution report (<1500 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Content placement validation of [skill name]'
@@ -414,6 +416,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     issues: [...]
     suggestions: [...]
     ```
+    </report>
     <<<
 
 #### Phase 4: Decision (You)
@@ -485,6 +488,7 @@ No subagent needed -- you aggregate the results yourself.
 
 **Report the skill output as specified**:
 
+<report>
 ```yaml
 skill: verify-skill
 status: completed
@@ -513,3 +517,4 @@ summary: |
   Verification of [skill name] completed with status [status].
   [Summary of findings and recommendations]
 ```
+</report>

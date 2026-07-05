@@ -112,17 +112,7 @@ Note:
 
 ### Content Placement & Coherence Rule
 
-SKILL.md is one document with one voice — the always-on core workflow every invocation walks — and what it omits must be removed cleanly, not preserved as a vestigial trailing block. The same editorial stance governs both what stays in the file and how it stays:
-
-> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer woven into the surrounding step (e.g. `For two-way merge mode, see references/two-way-merge.md`) — not parked beneath the workflow as a "Modes" or "Variants" addendum.
-> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** rather than letting it sit as a parallel path inside the current one.
-> 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
-> 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
-> 5. **Editing skills carry the Coherence Mandate inline.** Any skill being created here whose workflow performs content edits on existing work (prose, code, configuration, specs) MUST carry the verbatim Coherence Mandate paragraph woven into its own Role/Purpose narrative — not appended as a trailing bullet, callout, or "## Coherence Mandate" section at the bottom. The mandate paragraph and the surrounding role description must read as a single continuous statement of how that skill works.
-
-Rationale: SKILL.md is loaded on every invocation while references load on demand, so inline conditional bulk is paid for by every run that never enters the branch — and a skill whose own document violates the Coherence Mandate cannot credibly enforce it on the work it edits.
-
-This rule MUST be enforced when drafting any new SKILL.md. The Step 2 subagent applies it during creation; the Step 5 verify-skill sub-skill audits compliance, including the editing-skill mandate-presence and seam-test checks.
+Every new SKILL.md is drafted under the **Content Placement & Coherence Rule**, whose canonical statement lives in `../../constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. The Step 2 subagent applies the rule during creation, and the Step 5 verify-skill sub-skill audits compliance — including the editing-skill mandate-presence and seam-test checks.
 
 ### Skill Steps
 
@@ -241,6 +231,7 @@ Request the subagent to perform the following skill creation:
        - Create ASCII skill diagram following the template pattern
        - Implement skill steps using the template's phase structure
        - Format subagent instructions using template's >>> <<< delimiters
+       - Enclose important/long content in a named tag so it cannot get lost: wrap every report/output-contract block (subagent reports, step reports, Skill Completion) in `<report>...</report>` and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Name tags for the content's role, never after a `##` heading; keep the >>> <<< subagent envelopes as-is (see ../../constitution/references/authoring-invariants.md)
        - Apply skill path guidance from Phase 1 planning
 
     4. **Clean & Finalize**:
@@ -258,11 +249,12 @@ Request the subagent to perform the following skill creation:
        - Create evals/evals.yaml based on eval plan from Step 1
        - Include 2-3 test cases with prompts and expectations
        - Include trigger_eval with should_trigger and should_not_trigger queries
-       - Reference template: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/references/eval-template.yaml
+       - Reference template: ../verify-skill/references/eval-template.yaml
 
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of skill creation completion'
@@ -275,6 +267,7 @@ Request the subagent to perform the following skill creation:
       evals_generated: true|false
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
+    </report>
     <<<
 
 ### Step 3: Validation Review
@@ -354,6 +347,7 @@ Request the subagent to perform the following validation review:
     **Report**
     **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Brief validation summary'
@@ -369,6 +363,7 @@ Request the subagent to perform the following validation review:
     warnings: ['warning1', 'warning2', ...]  # Non-blocking issues
     recommendation: proceed|retry|rollback
     ```
+    </report>
     <<<
 
 ### Step 4: Decision & Completion
@@ -404,7 +399,7 @@ Request the subagent to perform the following validation review:
 - **Purpose**: Invoke verify-skill to perform comprehensive verification and iterate on fixes if needed
 - **Input**: Skill file path from Step 2, decision to proceed from Step 4
 - **Output**: Verification report, potentially improved skill file
-- **Sub-skill**: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md
+- **Sub-skill**: ../verify-skill/SKILL.md
 - **Parallel Execution**: No
 
 #### Execute Verify & Iterate Sub-Skill (You)
@@ -453,6 +448,7 @@ When you reach this step:
     4. Save the updated file
 
     **Report**
+    <report>
     ```yaml
     status: success|failure
     summary: 'Fixed N issues in skill file'
@@ -462,12 +458,14 @@ When you reach this step:
       issues_remaining: N
     issues: [...]
     ```
+    </report>
     <<<
 
 ### Skill Completion
 
 **Report the skill output as specified**:
 
+<report>
 ```yaml
 skill: create-skill
 status: completed
@@ -497,3 +495,4 @@ summary: |
   customization and validation. Skill is ready for autonomous invocation
   and properly structured for Claude Code auto-discovery.
 ```
+</report>

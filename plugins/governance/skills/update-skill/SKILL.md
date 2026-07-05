@@ -10,60 +10,109 @@ argument-hint: [skill specifier] [--changes=...]
 
 # Update Skill
 
-Update skill files to align with the latest standard template and apply specified changes using intelligent delegation to subagents, handling both single skill updates and bulk updates of all skills in parallel. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Updates must therefore reshape the skill's existing sections in place — never a "Recent changes" trailer beneath the original workflow or a second parallel step list — and, as the Content Placement & Coherence Rule below makes binding, any updated skill that itself performs content edits on existing work must carry this same Coherence Mandate paragraph woven into its Role/Purpose section.
+## 1. INTRODUCTION
 
-## Purpose & Scope
+### Purpose & Context
 
-**What this skill does NOT do**:
+**Purpose**: Update existing skill document(s) to align with the latest `template:skill` structure and apply specified changes, using intelligent delegation to subagents — handling both single-skill updates and bulk updates of all skills in parallel.
+**When to use**:
 
-- Create new skills (use create-skill)
-- Modify non-skill files
-- Update templates themselves
-- Override constitutional requirements
+- When bulk-updating skills to the latest template structure
+- When ensuring template compliance across the skill system
+- When applying consistent modifications across one or many skill files
+**Prerequisites**:
 
-**When to REJECT**:
+- Access to `template:skill` and the skill-authoring invariants
+- A valid skill specifier (skill name/path, or empty for a full sweep), and well-formed change specifications if changes are requested
 
-- Invalid skill file paths
-- Malformed change specifications
-- Attempting to violate constitutional standards
-- Template file is missing or corrupted
+**What this skill does NOT do**: create new skills (use create-skill), modify non-skill files, update templates themselves, or override constitutional requirements.
 
-## Content Placement & Coherence Rule
+**When to REJECT**: invalid skill file paths, malformed change specifications, attempts to violate constitutional standards, or a missing/corrupted template file.
 
-SKILL.md is one document with one voice — the always-on core workflow every invocation walks — and what an update removes must be rewritten out cleanly rather than preserved as a vestigial trailing block. The same editorial stance governs both what stays in the file and how it stays:
+### Your Role
 
-> 1. **Conditional content** (instructions reached only when a mode, scope, flag, language, or branch condition is true) MUST be offloaded to `references/<topic>.md` and referenced from SKILL.md by a one-line pointer woven into the surrounding step (e.g. `For two-way merge mode, see references/two-way-merge.md`) — not parked beneath the workflow as a "Modes" or "Variants" addendum.
-> 2. **Bulky AND conditional** content (>~50 lines, branch-only) MUST be offloaded. If the conditional branch is itself a coherent independently-triggerable workflow, **split it into a separate skill** rather than leaving it as a parallel path inside the current one.
-> 3. **Bulky AND always-on** content (long checklists, tables every run consults) MAY stay in SKILL.md if every invocation uses it; offload only if it is genuinely optional.
-> 4. **Non-bulky conditional** content (short `if X then do Y` lines) MAY stay inline.
-> 5. **Editing skills carry the Coherence Mandate inline.** Any skill being updated here whose workflow performs content edits on existing work (prose, code, configuration, specs) MUST carry the verbatim Coherence Mandate paragraph woven into its own Role/Purpose narrative — not appended as a trailing bullet, callout, or "## Coherence Mandate" section at the bottom. If the target skill is missing the paragraph, the update MUST integrate it into the Role/Purpose section as part of the patch; if a prior update left it bolted on as a separate section, the patch MUST dissolve it back into the surrounding role description so the seam is invisible.
+You are a **Skill Update Director** who orchestrates skill updates like a documentation manager coordinating specialist editors across many files at once, never editing content directly but delegating and coordinating. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Updates must therefore reshape the skill's existing sections in place — never a "Recent changes" trailer beneath the original workflow or a second parallel step list — and, as the Content Placement & Coherence Rule below makes binding, any updated skill that itself performs content edits on existing work must carry this same Coherence Mandate paragraph woven into its Role/Purpose section. Your management style emphasizes:
 
-Rationale: SKILL.md is loaded on every invocation while references load on demand, so inline conditional bulk is paid for by every run that never enters the branch — and a skill whose own document violates the Coherence Mandate cannot credibly enforce it on the work it edits.
+- **Strategic Delegation**: Batch skills across parallel specialist subagents (max 8 per batch, max 8 parallel `Task` calls) for efficient bulk updates
+- **Parallel Coordination**: Run independent skill updates simultaneously when dependencies allow
+- **Quality Oversight**: Review updates objectively without being involved in editing details
+- **Decision Authority**: Make go/no-go decisions based on subagent reports and verify-skill results
 
-**Default subtask for every update**: Before applying user-requested changes, scan SKILL.md for (a) conditional bulk to offload per items 1-4 above and (b) Coherence Mandate compliance per item 5 (presence, placement, seam-test). Propose offloads and any required mandate integration as part of the patch, alongside the requested change set.
+## 2. SKILL OVERVIEW
 
-## Workflow
+### Skill Input/Output Specification
 
-ultrathink: you'd perform the following steps
+#### Required Inputs
 
-**Skill Steps**:
+- **Skill Specifier**: The skill name or path to update — or empty to sweep every skill in scope (e.g. `create-skill`)
+
+#### Optional Inputs
+
+- **Change Specifications**: One or more `--changeN=...` modifications to apply beyond template alignment
+- **Plugin Scope**: The plugin whose `skills/` directory should be swept (defaults to all skills)
+
+#### Expected Outputs
+
+- **Updated Skill File(s)**: Each target `SKILL.md` aligned to `template:skill` with requested changes applied in place
+- **Update Report**: Per-skill status, changes applied, and template-alignment result
+- **Verification Results**: Per-skill verify-skill pass/fail with iteration counts
+
+#### Data Flow Summary
+
+The skill takes a specifier and optional change set, discovers the target skill file(s), dispatches parallel subagents that align each skill to the template and apply the changes in place, then invokes verify-skill on each updated skill and aggregates the per-skill results into a consolidated report.
+
+### Visual Overview
+
+#### Main Skill Flow
+
+```plaintext
+   YOU                              SUBAGENTS
+(Orchestrates Only)             (Perform Tasks)
+   |                                   |
+   v                                   v
+[START]
+   |
+   v
+[Step 1: Subagent Orchestration] ─→ (Subagents: align to template + apply changes, in batches)
+   |                ├─ Subagent: Batch 1 (max 8 skills)  ─┐
+   |                ├─ Subagent: Batch 2                   ─┼─→ [Decision: All updated?]
+   |                └─ Subagent: Batch N                   ─┘
+   v
+[Step 2: Reporting] ──────────────→ (Aggregate per-subagent reports)
+   |
+   v
+[Step 3: Verify & Iterate] ───────→ (Sub-skill: governance:verify-skill per updated skill)
+   |                                  Loop max 2 iterations per skill
+   v
+[END]
+
+Legend:
+═══════════════════════════════════════════════════════════════════
+• LEFT COLUMN: You plan & orchestrate (no execution)
+• RIGHT SIDE: Subagents execute updates in parallel batches
+• ARROWS (───→): You assign work to subagents
+• DECISIONS: You decide based on subagent reports
+• Step 3 invokes verify-skill as a sub-skill per updated skill
+═══════════════════════════════════════════════════════════════════
+
+Note:
+• You: Discover skills, batch work, assign tasks, make decisions
+• Step 1 Subagents: Align each skill to template + apply changes, report back
+• Step 3: Invokes verify-skill sub-skill, loops until pass or max 2 iterations per skill
+• Skill is LINEAR: Step 1 → 2 → 3
+```
+
+## 3. SKILL IMPLEMENTATION
+
+### Content Placement & Coherence Rule
+
+Every update is performed under the **Content Placement & Coherence Rule**, whose canonical statement lives in `../../constitution/references/authoring-invariants.md`: conditional bulk (mode-, scope-, flag-, or language-gated) offloads to `references/<topic>.md` or splits into a separate skill, always-on core stays inline, and any editing skill carries the Coherence Mandate inline in its Role/Purpose. **Default subtask for every update**: before applying user-requested changes, scan the target SKILL.md for (a) conditional bulk to offload and (b) Coherence Mandate compliance (presence, placement, seam test), and fold any required offload or mandate integration into the same patch as the requested change set — passed through as Task 0 of every subagent assignment.
+
+### Skill Steps
 
 1. Subagent Orchestration
 2. Reporting
 3. Verify & Iterate
-
-```
-[Step 1: Subagent Orchestration]
-   |
-   v
-[Step 2: Reporting]
-   |
-   v
-[Step 3: Verify & Iterate] ─→ (Sub-skill: governance:verify-skill per updated skill)
-   |                           Loop max 2 iterations per skill
-   v
-[END]
-```
 
 ### Step 1: Subagent Orchestration
 
@@ -137,11 +186,13 @@ Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls pe
       - Remove any outdated or deprecated content
       - Ensure consistent formatting throughout
       - Verify subagent instruction blocks follow >>> <<< format
+      - Enclose important/long content in a named tag so it cannot get lost: wrap every report/output-contract block in `<report>...</report>` and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Name tags for the content's role, never after a `##` heading; keep the >>> <<< envelopes as-is — see ../../constitution/references/authoring-invariants.md
       - Ensure all placeholder content has been replaced
 
    **Report**
    **[IMPORTANT]** You MUST return the following execution report (<500 tokens):
 
+   <report>
    ```yaml
    status: success|failure|partial
    skill: '[skill-name]'
@@ -153,6 +204,7 @@ Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls pe
    process_preserved: true|false
    issues: ['issue1', 'issue2', ...]  # only if problems encountered
    ```
+   </report>
 
    <<<
 
@@ -197,6 +249,7 @@ Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls pe
   **Resolution**: [Applied fix or escalation]
 
 ## Verification Results (Step 3)
+<report>
 ```yaml
 verification:
   total_verified: N
@@ -208,6 +261,7 @@ verification:
       status: pass|fail
       iterations: N
 ```
+</report>
 
 ## Next Steps (if applicable)
 - Review updated skills for accuracy
@@ -222,7 +276,7 @@ verification:
 - **Purpose**: Invoke verify-skill on each updated skill to ensure template compliance and quality
 - **Input**: List of updated skill file paths from Step 1/2
 - **Output**: Per-skill verification results, potentially improved skill files
-- **Sub-skill**: /Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/SKILL.md
+- **Sub-skill**: ../verify-skill/SKILL.md
 - **Parallel Execution**: Yes — verify each updated skill independently
 
 #### Execute Verify Sub-Skill (You)
@@ -270,6 +324,7 @@ For each updated skill file in the batch:
     4. Save the updated file
 
     **Report**
+    <report>
     ```yaml
     status: success|failure
     summary: 'Fixed N issues in skill file'
@@ -279,6 +334,7 @@ For each updated skill file in the batch:
       issues_remaining: N
     issues: [...]
     ```
+    </report>
     <<<
 
 #### Aggregate Verification Results (You)
@@ -292,6 +348,35 @@ After all skills have been verified:
    - Skills requiring fix iterations
    - Skills with remaining issues
 3. Include in final report from Step 2
+
+### Skill Completion
+
+**Report the skill output as specified**:
+
+<report>
+```yaml
+skill: update-skill
+status: completed
+outputs:
+  skills_updated: N
+  changes_applied: ['--changeN: description', ...]
+  template_alignment: complete|partial|failed
+  per_skill:
+    - skill: '[skill-name]'
+      status: success|failure|partial
+      changes: ['...']
+      verification: pass|fail
+      iterations: N
+  verification_summary:
+    total_verified: N
+    passed_first_try: N
+    passed_after_fix: N
+    remaining_issues: N
+summary: |
+  Updated N skill(s) to the latest template with the requested changes applied
+  in place, verified each via verify-skill, and aggregated the results.
+```
+</report>
 
 ## Examples
 
