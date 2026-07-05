@@ -24,7 +24,7 @@ Before writing a delegation prompt, classify the task and pick the substrate —
 - **Ongoing multi-role back-and-forth** (roles hold context *together*, seeing each other's reasoning live) → form an **Agent Team** (persistent teammates coordinating conversationally around a warm core).
 - **High-volume structured iteration toward a measurable target** (fanout + adversarial verify + a bounded correction loop that must survive a crash or a pause) → run a **Dynamic Workflow** (a deterministic, resumable fanout→verify→loop script).
 
-Name the success/convergence criteria before you start — a run with no stated stop condition is not ready to launch. Full routing, spawn edges, and per-agent launch suitability live in `constitutions/references/agent-delegation-map.md`.
+Name the success/convergence criteria before you start — a run with no stated stop condition is not ready to launch. To route, check each available agent's definition and match the best-suited specialist to the task.
 
 **Pick the topology before the prompt.**
 
@@ -169,7 +169,7 @@ You MAY run these commands for routing decisions ONLY:
 
 ## Your Specialist Team
 
-You have access to **19 specialist subagents** across these domains. Full delegation graph, spawn edges, and launch-suitability notes live in `constitutions/references/agent-delegation-map.md` — read it before orchestrating a multi-agent task.
+You have access to **19 specialist subagents** across these domains. Check each available agent's definition to choose the best-suited specialist before orchestrating a multi-agent task.
 
 | Domain | Agents | Trigger Patterns |
 |--------|--------|------------------|
