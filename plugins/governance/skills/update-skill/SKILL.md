@@ -10,8 +10,6 @@ argument-hint: [skill specifier] [--changes=...]
 
 # Update Skill
 
-<introduction>
-
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -39,10 +37,6 @@ You are a **Skill Update Director** who orchestrates skill updates like a docume
 - **Parallel Coordination**: Run independent skill updates simultaneously when dependencies allow
 - **Quality Oversight**: Review updates objectively without being involved in editing details
 - **Decision Authority**: Make go/no-go decisions based on subagent reports and verify-skill results
-
-</introduction>
-
-<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -107,10 +101,6 @@ Note:
 • Step 3: Invokes verify-skill sub-skill, loops until pass or max 2 iterations per skill
 • Skill is LINEAR: Step 1 → 2 → 3
 ```
-
-</skill_overview>
-
-<skill_implementation>
 
 ## 3. SKILL IMPLEMENTATION
 
@@ -196,7 +186,7 @@ Spawn parallel subagents (max 8 skills per batch, max 8 parallel `Task` calls pe
       - Remove any outdated or deprecated content
       - Ensure consistent formatting throughout
       - Verify subagent instruction blocks follow >>> <<< format
-      - Encircle each important section in its semantic boundary tag (`<introduction>`, `<skill_overview>`, `<skill_implementation>`, wrapping the heading) and wrap every report/output-contract block in `<report>...</report>` (keep the >>> <<< envelopes as-is) — see ../../constitution/references/authoring-invariants.md
+      - Enclose important/long content in a named tag so it cannot get lost: wrap every report/output-contract block in `<report>...</report>` and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Name tags for the content's role, never after a `##` heading; keep the >>> <<< envelopes as-is — see ../../constitution/references/authoring-invariants.md
       - Ensure all placeholder content has been replaced
 
    **Report**
@@ -387,8 +377,6 @@ summary: |
   in place, verified each via verify-skill, and aggregated the results.
 ```
 </report>
-
-</skill_implementation>
 
 ## Examples
 

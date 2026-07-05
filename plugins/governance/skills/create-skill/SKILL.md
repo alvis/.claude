@@ -8,8 +8,6 @@ agent: general-purpose
 
 # Create Skill
 
-<introduction>
-
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -36,10 +34,6 @@ You are a **Skill Creation Director** who orchestrates the skill creation proces
 - **Quality Oversight**: Review completed skills objectively without being involved in content creation details
 - **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance review
 - **Efficient Management**: Minimize overhead by using systematic, single-step comprehensive execution
-
-</introduction>
-
-<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -113,10 +107,6 @@ Note:
 • Step 5: Invokes verify-skill sub-skill, loops until pass or max 3 iterations
 • Skill is LINEAR: Step 1 → 2 → 3 → 4 → 5
 ```
-
-</skill_overview>
-
-<skill_implementation>
 
 ## 3. SKILL IMPLEMENTATION
 
@@ -241,7 +231,7 @@ Request the subagent to perform the following skill creation:
        - Create ASCII skill diagram following the template pattern
        - Implement skill steps using the template's phase structure
        - Format subagent instructions using template's >>> <<< delimiters
-       - Encircle each important section in its semantic boundary tag — `<introduction>`, `<skill_overview>`, `<skill_implementation>` (wrapping the markdown heading, not replacing it) — and wrap every report/output-contract block (subagent reports, step reports, Skill Completion) in `<report>...</report>`, keeping the >>> <<< subagent envelopes as-is (see ../../constitution/references/authoring-invariants.md)
+       - Enclose important/long content in a named tag so it cannot get lost: wrap every report/output-contract block (subagent reports, step reports, Skill Completion) in `<report>...</report>` and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Name tags for the content's role, never after a `##` heading; keep the >>> <<< subagent envelopes as-is (see ../../constitution/references/authoring-invariants.md)
        - Apply skill path guidance from Phase 1 planning
 
     4. **Clean & Finalize**:
@@ -506,5 +496,3 @@ summary: |
   and properly structured for Claude Code auto-discovery.
 ```
 </report>
-
-</skill_implementation>

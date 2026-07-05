@@ -8,8 +8,6 @@ agent: general-purpose
 
 # Verify Skill
 
-<introduction>
-
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -26,10 +24,6 @@ You are a **Skill Verification Director** who orchestrates verification like a Q
 - **Parallel Coordination**: Run independent checks simultaneously when dependencies allow
 - **Quality Oversight**: Review verification results objectively
 - **Decision Authority**: Make pass/fail decisions based on subagent reports
-
-</introduction>
-
-<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -131,10 +125,6 @@ Note:
 • Execution Subagents: Perform actual verification, report back (<1k tokens)
 • Skill is LINEAR: Step 1 → 2 → 3 → ... → 7
 ```
-
-</skill_overview>
-
-<skill_implementation>
 
 ## 3. SKILL IMPLEMENTATION
 
@@ -318,7 +308,7 @@ In a single message, you spin up **4** subagents to perform validation in parall
     5. Verify ASCII diagram exists and is properly formatted.
     6. Check subagent instruction blocks use `>>>` / `<<<` delimiters.
     7. Verify report YAML blocks exist at step outputs.
-    8. Check boundary tags (advisory convention — see `../../constitution/references/authoring-invariants.md`): each important section is encircled with its semantic tag (`<introduction>`, `<skill_overview>`, `<skill_implementation>`) wrapping the markdown heading, and every report/output block is wrapped in `<report>...</report>`. Verify tags are balanced and cleanly nested. Record `boundary_tags: pass|warn`, never `fail`; list any missing or unbalanced tags under issues as a recommendation. This check MUST NOT set the overall status to fail.
+    8. Check boundary tags (advisory convention — see `../../constitution/references/authoring-invariants.md`): important/long content is enclosed in a semantically-named tag so it cannot bleed into surrounding prose — every report/output block in `<report>...</report>`, and hard guardrails in `<IMPORTANT>...</IMPORTANT>`. Tag names must describe the content's role, NOT merely echo a `##` section heading. Verify tags are balanced. Record `boundary_tags: pass|warn`, never `fail`; list any unenclosed report/guardrail blocks under issues as a recommendation. This check MUST NOT set the overall status to fail.
     9. Flag any remaining template placeholder text or `<!-- INSTRUCTION: -->` comments.
 
     **Report**
@@ -528,5 +518,3 @@ summary: |
   [Summary of findings and recommendations]
 ```
 </report>
-
-</skill_implementation>

@@ -13,10 +13,6 @@ description: [Brief description of what the skill does and when to use it]
 
 <!-- INSTRUCTION: Replace [Skill Name] with a clear, action-oriented title matching the frontmatter name -->
 
-<!-- INSTRUCTION: Each numbered section below is encircled with a semantic boundary tag (<introduction>, <skill_overview>, <skill_implementation>) that wraps the markdown heading — keep BOTH the tag and the heading. Reports stay wrapped in <report>. See ../references/authoring-invariants.md. -->
-
-<introduction>
-
 ## 1. INTRODUCTION
 
 ### Purpose & Context
@@ -48,10 +44,6 @@ You are a **[Management Title]** who orchestrates the skill like a [metaphor, e.
 - List 3-5 management principles focused on delegation and coordination
 - Emphasize that management NEVER executes, only orchestrates
 -->
-
-</introduction>
-
-<skill_overview>
 
 ## 2. SKILL OVERVIEW
 
@@ -154,10 +146,6 @@ Note:
 • Review Subagents: Check quality when needed (<500 tokens)
 • Skill is LINEAR: Step 1 → 2 → 3 → ... → N
 ```
-
-</skill_overview>
-
-<skill_implementation>
 
 ## 3. SKILL IMPLEMENTATION
 
@@ -431,5 +419,3 @@ Request each review subagent to perform the following review with full scrutiny:
 # INSTRUCTION: Construct a skill output template in yaml format
 ```
 </report>
-
-</skill_implementation>

@@ -20,24 +20,23 @@ SKILL.md is one document with one voice — the always-on core workflow every in
 
 Rationale: SKILL.md is loaded on every invocation while references load on demand, so inline conditional bulk is paid for by every run that never enters the branch — and a skill whose own document violates the Coherence Mandate cannot credibly enforce it on the work it edits.
 
-## Section & Report Boundary Convention
+## Content Boundary Convention
 
-Each important section of a skill is encircled with a semantic XML boundary tag, so every major part of the document carries an unambiguous, machine- and eye-visible boundary and its content cannot bleed into a neighbour. Tags wrap the section **alongside** its markdown heading — the heading stays for readability and for the existing template-compliance checks; the tag adds the boundary. Tags never replace headings.
+Enclose each block of **important or long content** in a semantically-named XML tag, so the block has an unambiguous, machine- and eye-visible boundary and cannot bleed into the surrounding prose or get lost inside a longer document. The tag names the *content's role* — it is NOT a copy of the section heading, and it does not replace the `##` / `###` headings that give the document its outline.
 
-The tag set:
+Tags in use:
 
-| Tag | Encircles |
+| Tag | Encloses |
 |---|---|
-| `<introduction>` | The `## 1. INTRODUCTION` section — Purpose & Context and Your Role |
-| `<skill_overview>` | The `## 2. SKILL OVERVIEW` section — I/O Specification and Visual Overview |
-| `<skill_implementation>` | The `## 3. SKILL IMPLEMENTATION` section — Content Placement, Skill Steps, every Step, and Skill Completion |
-| `<report>` | Every machine-readable report / output contract — each subagent report, each step report, and the final Skill Completion output |
+| `<report>` | A machine-readable report / output contract — each subagent report, each step report, and the final Skill Completion output |
+| `<IMPORTANT>` | A hard guardrail or critical instruction that must not be missed (e.g. "you CANNOT further delegate the work") |
 
 Rules:
 
-- **Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters** — they already encircle the prompt payload, and the `<report>` block lives *inside* the envelope. Do not convert `>>>` to a tag.
-- **Tags wrap alongside headings, never replace them** — keep the markdown heading as the first line inside the opening tag.
+- **Name tags for the content, never for the section.** Do NOT create tags like `<introduction>` or `<skill_overview>` that merely echo a `## heading` — headings already delimit sections, and wrapping a short structural section in a same-named tag adds nothing. Reserve tags for content genuinely important or long enough to get lost.
+- **Tags never replace headings.** Where a tag encloses content that sits under a heading, keep both.
+- **Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters** — they already enclose the long prompt payload, and the `<report>` / `<IMPORTANT>` blocks live *inside* the envelope. Do not convert `>>>` to a tag.
 - **Retain a language hint** on a fenced report where it aids reading (` ```yaml ` inside the `<report>` tags) — the tags are the boundary, the fence is the syntax hint.
-- **Balanced and non-overlapping** — every opening tag has a matching close, and `<report>` nests cleanly inside `<skill_implementation>`.
+- **Balanced** — every opening tag has a matching close.
 
-`verify-skill`'s Template Compliance subagent checks for these boundaries and reports `boundary_tags`. The check is a non-blocking recommendation ("encourage"), so skills authored before this convention are flagged for gradual migration — via `update-skill` — rather than failed.
+`verify-skill`'s Template Compliance subagent checks that important/long content is enclosed and reports `boundary_tags`. The check is a non-blocking recommendation ("encourage"), so skills authored before this convention are flagged for gradual migration — via `update-skill` — rather than failed.
