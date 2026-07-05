@@ -94,7 +94,11 @@ the agents already declared for themselves.
    `skills`/`mcpServers`/`permissionMode` frontmatter is set aside while the team runs.
 4. The team works the hand-off chain until the lead judges the task done — a team does not have a Dynamic
    Workflow's formal `stopCheck()`; convergence is the lead's call, informed by each teammate's own convergence
-   predicate (from its base.md Axis-2 section) firing on its own piece of the work.
+   predicate (from its base.md Axis-2 section) firing on its own piece of the work. That absent stop-check makes
+   liveness the lead's job too: it periodically re-polls each teammate and re-dispatches the work of any that have
+   gone silent, errored, or stalled, so one hung teammate cannot quietly stall the whole session. For a long
+   unattended run, bind that convergence criterion to a session-level `/goal` so it is re-checked every turn and
+   the team keeps working until the criterion holds or a turn bound trips.
 
 ## Worked example — star topology, coding-team core
 
