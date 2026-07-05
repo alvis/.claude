@@ -102,7 +102,7 @@ Extend the standard team (SKILL.md `<workflow>` Step 1) with two seats via `Team
 
 Deliver the v2 in slices, each independently verified and saved:
 
-**Slice order**: hero → navigation → section-by-section (top to bottom) → footer → motion pass (site-wide micro-interactions + entrances, honoring `prefers-reduced-motion`).
+**Slice order**: hero → navigation → section-by-section (top to bottom) → footer → motion pass (site-wide micro-interactions + entrances, honoring `prefers-reduced-motion`). Any scroll-scrubbed or 3D work in the motion pass follows the **Motion Libraries** teardown + perf rules in `design-reference.md` so the §8 budget and the no-leak bar hold.
 
 Per slice:
 

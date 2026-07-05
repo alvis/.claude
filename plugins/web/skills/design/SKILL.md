@@ -1,6 +1,6 @@
 ---
 name: design
-version: 4.0.0
+version: 4.1.0
 description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; produces DESIGN.md and an HTML preview catalog with WCAG contrast checks via Chrome DevTools MCP. Interactive direction picking with a local HTML candidate board, then area-by-area design selection: every page area gets a rendered board of 5+ ranked variants sent as a realistic image, chosen one question at a time; --facelift mode redesigns an existing site into a stunning v2 while preserving content and brand intent. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup", "facelift my site", "give this website a makeover", "make a v2 of this design". Also use when: proposing layouts, picking color palettes, adding visual polish, revamping an existing site''s look. Examples: "design a landing page", "make the dashboard look modern", "facelift https://example.com".'
 argument-hint: "[page/component/site to design or improve] [--facelift] [--style=<style>] [--skip-directions] [--quick]"
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet, AskUserQuestion, SendUserFile
@@ -242,7 +242,10 @@ Every design this skill produces — and every board variant it shows the user �
 checklist as standard. These are not enhancements to bolt on at the end; they are part of the
 proposal (Phase 2), the DESIGN.md spec (Phase 3, "Motion, Transitions & Separators"), and the
 evaluation (Phase 4). Motion values (durations, easings, distances, staggers) come from
-`references/design-reference.md` Motion Specifics — do not restate or invent them.
+`references/design-reference.md` Motion Specifics — do not restate or invent them. When a
+direction needs scroll-scrubbed or 3D motion, that file's **Motion Libraries** section
+(GSAP/Three.js scoped teardown, DPR caps, offscreen pausing, reduced-motion branches) is how
+that motion clears the perf and no-leak gates — binding, not optional.
 
 | # | Element | Standard |
 |---|---------|----------|
@@ -697,6 +700,7 @@ Check every implementation against this table. Any match is a red flag.
 | 10 | Same visual language every project | "House style" becomes "house rut." | Re-run direction-lock for each new project; reference different inspiration. |
 | 11 | 2015 UI kit defaults | Overly rounded cards, pastel gradients, generic icons. | Audit against current design trends; check references less than 2 years old. |
 | 12 | White-on-white surfaces with no depth | Everything floats on the same plane. | Use elevation (shadow or background shift), color blocking, or border accents. |
+| 13 | JS motion library (GSAP/Three.js) mounted without scoped teardown | Orphan tweens and undisposed GPU resources leak memory, double-bind on route change, and drop frames — fails the perf and no-leak bar. | Scope in `gsap.context()` + `revert()`; `dispose()` every Three.js resource and pause offscreen. See `references/design-reference.md` Motion Libraries. |
 
 ## Handoff Litmus Checks
 
