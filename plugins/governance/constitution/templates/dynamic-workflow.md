@@ -72,9 +72,9 @@ const spec = {
 When the editor/verifier prompts depend on files or web context that every slice needs, don't bake that reading
 into each worker — make the workflow's FIRST stage a generator subagent that reads the shared context once and
 emits one ready-to-run prompt per slice. Later stages consume those prompts; the orchestrator never loads the raw
-context itself, and every worker gets a self-contained prompt. This is the two-stage dispatch pattern
-(`plugins/coding/CLAUDE.md`, "Two-Stage Dispatch") realized as a workflow phase: generate the prompts with a
-subagent, keep the orchestrator's context clean, and let the deterministic script fan them out.
+context itself, and every worker gets a self-contained prompt. This is two-stage dispatch realized as a workflow
+phase — a prompt-generation stage feeding the execution stages: generate the prompts with a subagent, keep the
+orchestrator's context clean, and let the deterministic script fan them out.
 
 ## Editor + verifier stages
 

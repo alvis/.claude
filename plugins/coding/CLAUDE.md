@@ -40,7 +40,7 @@ When designing a dynamic workflow or spawning agents, match the model to the cog
 | **opus** | General coding — implementing features, fixing non-trivial bugs, refactoring with judgment. |
 | **fable** | Advanced coding, deep reasoning, research, and code review — anything where correctness hinges on subtle judgment, adversarial scrutiny, or synthesizing across many sources. |
 
-Effort is a second, independent dial. Assign it (`low|medium|high|xhigh|max`; omit for haiku, which does not support it) by the task's *difficulty*, not its model. Pick the cheapest model that clears the quality bar — a stronger model that would not change the output is wasted — then, **to make a worker think harder, raise its effort, not its model.** Per-agent model+effort choices live in `constitutions/references/agent-delegation-map.md`; the `effort` frontmatter key is documented in `plugins/governance/constitution/templates/agent.md`.
+Effort is a second, independent dial. When you spawn a subagent for a task, assign it (`low|medium|high|xhigh|max`; omit for haiku, which does not support it) by the task's *difficulty*, not its model. Pick the cheapest model that clears the quality bar — a stronger model that would not change the output is wasted — then, **to make a worker think harder, raise its effort, not its model.**
 
 ### Nesting
 
@@ -49,7 +49,7 @@ Effort is a second, independent dial. Assign it (`low|medium|high|xhigh|max`; om
 
 ### Two-Stage Dispatch
 
-When a worker's prompt cannot be written without first reading files, do NOT pull those files into the orchestrator's own context to write the prompt. Dispatch a **prompt-generation subagent** that reads the shared context and emits one ready-to-run worker prompt per batch; then spawn the workers on those prompts — or run a `Workflow` whose first step *is* that generator (see the shared-context generator stage in `plugins/governance/constitution/templates/dynamic-workflow.md`). Generate the prompts with a subagent; keep the launcher's context clean.
+When a worker's prompt cannot be written without first reading files, do NOT pull those files into the orchestrator's own context to write the prompt. Dispatch a **prompt-generation subagent** that reads the shared context and emits one ready-to-run worker prompt per batch; then spawn the workers on those prompts — or, if the run is a `Workflow`, make that generator its first stage. Generate the prompts with a subagent; keep the launcher's context clean.
 
 ### Review Responsibility
 

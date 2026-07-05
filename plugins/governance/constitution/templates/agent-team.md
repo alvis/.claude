@@ -32,9 +32,8 @@ that keeps agents warm. So:
 - **Reuse a living teammate rather than re-spawning.** A fresh agent re-pays the full base-context load before it
   does any work; a warm peer has already paid it. When a task is small but its base load is large, route it to
   the peer that already carries that base — don't cold-start what you can reuse.
-- **Check the pool before spawning** (mirror `plugins/coding/skills/lint/SKILL.md`): if an idle teammate with a
-  low `context_level` already holds the right base, hand it the new unit via `SendMessage`; only spawn a fresh
-  teammate when none fits.
+- **Check the pool before spawning**: if an idle teammate with a low `context_level` already holds the right
+  base, hand it the new unit via `SendMessage`; only spawn a fresh teammate when none fits.
 - **Never route a new unit to a saturated peer.** A teammate reporting a high `context_level` is retired and
   replaced, not topped up — reuse is for warm-and-roomy peers, not warm-and-full ones (this is the same
   context-budget projection the main orchestrator applies before any fan-out).
