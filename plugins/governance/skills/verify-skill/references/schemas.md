@@ -1,5 +1,11 @@
 # Verify-Skill YAML Schemas
 
+## Report Boundary Convention
+
+Every machine-readable report or output contract in a skill — subagent execution/review reports, per-step reports, and the final Skill Completion block — is wrapped in `<report> … </report>` boundary tags so the block is unambiguously extractable and cannot bleed into the surrounding prose it is embedded in. The `<report>` tags are the boundary; a ` ```yaml ` fence kept inside them is a syntax hint. Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters, and prose sections stay delimited by markdown headings. The canonical statement lives in `plugins/governance/constitution/references/authoring-invariants.md`.
+
+Template Compliance (Step 2, Subagent B) records this as `report_boundary_tags: pass | warn`, rolled up under `template_compliance` in the final report. It is **advisory** — a `warn` means some report blocks are not yet wrapped and MUST NOT set the compliance status (or the final verification status) to `fail`. Skills authored before the convention are flagged for gradual migration via `update-skill`, not failed.
+
 ## evals.yaml — Evaluation Definition
 
 Located at: `[skill-dir]/evals/evals.yaml`

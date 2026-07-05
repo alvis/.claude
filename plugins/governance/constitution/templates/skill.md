@@ -241,6 +241,7 @@ You sends this exact message template to subagents.
 - List 3-5 technical principles for execution excellence
 - Dispatch up to [X] subagents in parallel (typically 5-10)
 - Decide a list of relevant standards to follow (can be none)
+- Boundary tags: wrap the returned report in <report>...</report> so it is unambiguously extractable, and use the <IMPORTANT>...</IMPORTANT> block form for hard guardrails inside the prompt (see plugins/governance/constitution/references/authoring-invariants.md)
 -->
 
 **What You Send to Subagents**:
@@ -293,6 +294,7 @@ Request each subagent to perform the following steps with full detail:
 
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
 
+    <report>
     ```yaml
     status: success|failure|partial
     summary: 'Brief description of what was accomplished'
@@ -302,6 +304,7 @@ Request each subagent to perform the following steps with full detail:
       [field2]: ...
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```
+    </report>
     <<<
 
 #### Phase 3: Review (Subagents)
@@ -363,6 +366,7 @@ Request each review subagent to perform the following review with full scrutiny:
 
     **[IMPORTANT]** You MUST return the following review report (<500 tokens):
 
+    <report>
     ```yaml
     status: pass|fail
     summary: 'Brief review summary'
@@ -374,6 +378,7 @@ Request each review subagent to perform the following review with full scrutiny:
     warnings: ['warning1', 'warning2', ...]  # Non-blocking issues
     recommendation: proceed|retry|rollback
     ```
+    </report>
     <<<
 
 #### Phase 4: Decision (You)
@@ -409,6 +414,8 @@ Request each review subagent to perform the following review with full scrutiny:
 
 **Report the skill output as specified**:
 
+<report>
 ```yaml
 # INSTRUCTION: Construct a skill output template in yaml format
 ```
+</report>

@@ -185,7 +185,7 @@ For each test result:
     - Prompt: [prompt]
     - Expectations: [expectations list]
     - Actual output: [raw output from Step 4]
-    - Rubric: `/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/grader.md`
+    - Rubric: `plugins/governance/skills/verify-skill/agents/grader.md`
     - Report template: YAML block below
 
     **Steps**
@@ -274,7 +274,7 @@ In a single message, you spin up **1** subagent to perform iterative optimizatio
     4. If improvement > 5%, keep new description and iterate
     5. If no improvement after 2 iterations, stop
     6. Max 5 iterations total
-    7. Use comparator agent reference (`/Users/alvis/Repositories/.claude/plugins/governance/skills/verify-skill/agents/comparator.md`) for blind A/B comparison between iterations
+    7. Use comparator agent reference (`plugins/governance/skills/verify-skill/agents/comparator.md`) for blind A/B comparison between iterations
 
     **Report**
     **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
