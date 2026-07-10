@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Glob, Grep
-argument-hint: [prefix]
+argument-hint: "[prefix]"
 ---
 
 # Work Takeover

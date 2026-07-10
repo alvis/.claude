@@ -6,7 +6,7 @@ description: >
   problem — forces deliberate reasoning before any modification or creation begins.
 model: opus
 allowed-tools: Read, Glob, Grep, Bash
-argument-hint: [problem-or-question]
+argument-hint: "[problem-or-question]"
 ---
 
 # Think

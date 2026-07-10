@@ -3,7 +3,7 @@ name: commit
 description: 'Save any code change cleanly — jj-first, git-compatible. The skill auto-routes among save / split / absorb / edit / parallel-workspace based on working-copy state. Explicit operations via flags: --retrospective (blame-trace fixups), --reorder (re-linearise history), --create-pr (materialise stacked PRs). Triggers when: "commit my changes", "save this", "split this branch", "edit a prior commit", "absorb fixes", "create a stack", "restack", "reorder history".'
 model: opus
 allowed-tools: Bash(jj:*), Bash(git:*), Bash(gh:*), Bash(npm:*), Bash(pnpm:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/*), Read, Grep, Glob, Agent
-argument-hint: [--retrospective] [--reorder [--up-to <rev>]] [--create-pr] [--branch-prefix <name>] [--no-verify] [--dry-run] [--allow-rewrite-merged]
+argument-hint: "[--retrospective] [--reorder [--up-to <rev>]] [--create-pr] [--branch-prefix <name>] [--no-verify] [--dry-run] [--allow-rewrite-merged]"
 hooks:
   PreToolUse:
     - matcher: "Bash"

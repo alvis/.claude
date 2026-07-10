@@ -2,7 +2,6 @@
 name: react
 description: 'Apply React, Next.js, JSX, hooks, accessibility, and Storybook standards proactively whenever React work happens. Triggers when: editing or creating .tsx/.jsx files, writing JSX, building React/Next.js components, authoring custom hooks (use*), managing React state, combining Tailwind with React, writing Storybook .stories.tsx files, or whenever the user mentions "React", "Next.js", "JSX", "hook", "component", "useState/useEffect/useMemo/useCallback", "memo", "Server Component", "client component", or "story". Use to enforce naming, structure, performance, accessibility (WCAG 2.1 AA), and story-coverage rules across the React surface.'
 model: sonnet
-context: inline
 allowed-tools: Read, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
 

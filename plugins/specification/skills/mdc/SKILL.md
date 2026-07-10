@@ -2,9 +2,8 @@
 name: mdc
 description: Read, edit, and author MDC (Contextual Markdown, @theriety/mdc) files safely with native text tools. Use when asked to "edit this .mdc file", "add a block to <doc>.mdc", "update the annotation for ref <x>", "convert this to MDC", whenever a .mdc file must be read or written, or when mutating any file under .code-spec/.
 model: sonnet
-context: inherit
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(ls:*), Bash(cat:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/*)
-argument-hint: [<path-to-.mdc>] [--mode=read|edit|author]
+argument-hint: "[<path-to-.mdc>] [--mode=read|edit|author]"
 ---
 
 # MDC

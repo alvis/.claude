@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
-argument-hint: [specifier] [--area=AREA] [--note=...] [--plan=PATH]
+argument-hint: "[specifier] [--area=AREA] [--note=...] [--plan=PATH]"
 ---
 
 # Fix Code Issues

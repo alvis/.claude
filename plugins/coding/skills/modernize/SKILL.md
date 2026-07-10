@@ -8,7 +8,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <area> [--dry-run] [--target-version=X.Y]
+argument-hint: "<area> [--dry-run] [--target-version=X.Y]"
 ---
 
 # Modernize

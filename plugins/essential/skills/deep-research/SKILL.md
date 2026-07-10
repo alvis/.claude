@@ -3,7 +3,7 @@ name: deep-research
 description: Conduct comprehensive multi-source research with AI-powered analysis. Use when investigating complex topics, gathering information from multiple sources, or synthesizing research findings.
 model: opus
 allowed-tools: Bash, Task, Read, Write, Edit, MultiEdit, WebSearch, WebFetch, Grep, Glob, TodoWrite
-argument-hint: <research-topic> [optional-focus-area]
+argument-hint: "<research-topic> [optional-focus-area]"
 ---
 
 # Deep Research Command

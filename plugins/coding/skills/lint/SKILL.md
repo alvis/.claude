@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: [specifier] [--scope=SCOPE] [--skip-unused]
+argument-hint: "[specifier] [--scope=SCOPE] [--skip-unused]"
 ---
 
 # Linting

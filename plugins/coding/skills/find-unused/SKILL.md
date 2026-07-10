@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Glob, Grep, Task
-argument-hint: [path/to/scan] [--exclude=pattern]
+argument-hint: "[path/to/scan] [--exclude=pattern]"
 ---
 
 # Find Unused Code

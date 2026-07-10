@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Read, Grep, Glob, Bash, TodoWrite
-argument-hint: <notion-url-or-id> [--spec-path=<dir>]
+argument-hint: "<notion-url-or-id> [--spec-path=<dir>]"
 ---
 
 # Sync Spec

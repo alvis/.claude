@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
-argument-hint: <service-name> [--operation=...] [--area=...] [--auto-fix]
+argument-hint: "<service-name> [--operation=...] [--area=...] [--auto-fix]"
 ---
 
 # Audit Service

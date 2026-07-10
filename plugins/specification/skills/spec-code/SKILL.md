@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion
-argument-hint: <instruction> [--type=api|web-app|mobile|library|fullstack]
+argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack]"
 ---
 
 # Spec Code

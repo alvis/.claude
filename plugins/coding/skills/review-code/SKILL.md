@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion
-argument-hint: [specifier] [--area=test|documentation|code-quality|security|style|all] [--out=reviews]
+argument-hint: "[specifier] [--area=test|documentation|code-quality|security|style|all] [--out=reviews]"
 enforcement: mandatory-post-implementation
 orchestration: subagent-spawning
 ---

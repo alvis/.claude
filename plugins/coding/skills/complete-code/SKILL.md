@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <area> [--test-only]
+argument-hint: "<area> [--test-only]"
 ---
 
 # Complete Code Implementation

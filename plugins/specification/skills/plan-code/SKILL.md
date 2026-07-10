@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Read, Glob, Grep, Bash, Write, Task, TodoWrite, AskUserQuestion, ExitPlanMode
-argument-hint: [--design=DESIGN.md] [--change="description"]
+argument-hint: "[--design=DESIGN.md] [--change=\"description\"]"
 ---
 
 # Plan Code

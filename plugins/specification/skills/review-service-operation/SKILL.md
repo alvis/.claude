@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Grep, Glob, Task
-argument-hint: <service-name> [--area=...]
+argument-hint: "<service-name> [--area=...]"
 ---
 
 # Review Service Operation

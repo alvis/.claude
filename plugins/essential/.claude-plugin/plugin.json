@@ -2,6 +2,7 @@
   "name": "essential",
   "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
   "version": "2026-07-10",
+  "author": {"name": "Alvis HT Tang", "email": "alvis@hilbert.space"},
   "hooks": {
     "SessionStart": [
       {

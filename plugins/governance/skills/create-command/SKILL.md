@@ -3,7 +3,7 @@ name: create-command
 description: Create a new slash command following best practices. Use when establishing new CLI commands, documenting reusable command patterns, or building automated command templates.
 model: opus
 allowed-tools: Bash, Edit, Read, Write, WebSearch, WebFetch, Grep, Glob, Task
-argument-hint: <command-name> [--purpose=...] [--skill1=...]
+argument-hint: "<command-name> [--purpose=...] [--skill1=...]"
 ---
 
 # Create Custom Slash Command

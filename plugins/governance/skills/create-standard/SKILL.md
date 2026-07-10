@@ -3,7 +3,7 @@ name: create-standard
 description: Create a new technical standard directory with three-tier structure (meta.md, scan.md, write.md, rules/) from templates. Use when establishing new coding standards, documenting technical requirements, or creating compliance guidelines.
 model: opus
 allowed-tools: Bash, Read, Write, Glob, Task
-argument-hint: <name> [--detail=...]
+argument-hint: "<name> [--detail=...]"
 ---
 
 # Create Standard

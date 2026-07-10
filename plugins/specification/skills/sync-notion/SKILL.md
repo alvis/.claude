@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, TodoWrite, AskUserQuestion
-argument-hint: <sync-mode> <file-paths...> [--database-id=ID] [--skip-verification]
+argument-hint: "<sync-mode> <file-paths...> [--database-id=ID] [--skip-verification]"
 ---
 
 # Sync Notion Documents

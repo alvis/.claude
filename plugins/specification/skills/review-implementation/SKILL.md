@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, TodoWrite, Workflow
-argument-hint: '[specifier] [--area=test|documentation|code-quality|security|style|alignment|all] [--out=reviews] [--spec-path=./.code-spec]'
+argument-hint: "'[specifier] [--area=test|documentation|code-quality|security|style|alignment|all] [--out=reviews] [--spec-path=./.code-spec]'"
 ---
 
 # Review Implementation

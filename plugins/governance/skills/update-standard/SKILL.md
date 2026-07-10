@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
-argument-hint: [standard specifier] [--changes=...]
+argument-hint: "[standard specifier] [--changes=...]"
 ---
 
 # Update Standard

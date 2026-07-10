@@ -3,7 +3,7 @@ name: handover
 description: Create/update detailed work handover notes for seamless continuation. Use when pausing work, switching contexts, documenting progress, or enabling another developer to continue your work.
 model: opus
 allowed-tools: Read, Write, Edit, Glob, Grep, Task, Bash, TodoRead, AskUserQuestion
-argument-hint: [prefix]
+argument-hint: "[prefix]"
 ---
 
 # Work Handover Documentation

@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <area> [--focus=naming|structure|docs|all]
+argument-hint: "<area> [--focus=naming|structure|docs|all]"
 ---
 
 # Refactor Code

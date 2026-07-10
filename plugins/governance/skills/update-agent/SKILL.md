@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Task, Read, Write, MultiEdit, Edit, Bash, Grep, Glob, TodoWrite
-argument-hint: [agent specifier] [--changes=...]
+argument-hint: "[agent specifier] [--changes=...]"
 ---
 
 # Update Agent

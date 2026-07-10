@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Read, Write, Grep, Glob, Bash, Task, Skill, Workflow, TodoWrite, AskUserQuestion, ExitPlanMode
-argument-hint: <notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] [--use-cache]
+argument-hint: "<notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval] [--use-cache]"
 ---
 
 # Implement Code

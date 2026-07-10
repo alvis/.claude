@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, Skill, Workflow, TodoWrite, AskUserQuestion
-argument-hint: <research-goal-or-brief-path> [--brief=<path>] [--resume=<run-dir>] [--max-rounds=<n>] [--backend=programmatic|judges|human]
+argument-hint: "<research-goal-or-brief-path> [--brief=<path>] [--resume=<run-dir>] [--max-rounds=<n>] [--backend=programmatic|judges|human]"
 ---
 
 # Autoresearch

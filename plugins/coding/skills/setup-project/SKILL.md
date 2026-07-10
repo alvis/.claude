@@ -5,7 +5,7 @@ model: opus
 context: fork
 agent: general-purpose
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
-argument-hint: <target-path> [--type=app|lib|service]
+argument-hint: "<target-path> [--type=app|lib|service]"
 ---
 
 # Setup Project
