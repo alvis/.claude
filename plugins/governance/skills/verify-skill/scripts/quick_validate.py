@@ -23,6 +23,8 @@ PLACEHOLDERS = (
     re.compile(r"\[(?:skill-name|Skill Name|Description|Step Name)\]"),
 )
 LOCAL_LINK = re.compile(r"\[[^]]+\]\((?![a-z]+:|#)([^)]+)\)", re.IGNORECASE)
+LOCAL_DIRECTORIES = {"agents", "assets", "evals", "hooks", "references", "scripts", "templates"}
+CLAUDE_TIMEOUT_SECONDS = 30
 
 
 def discover_skills(target: Path) -> list[Path]:
@@ -66,6 +68,21 @@ def scalar_value(frontmatter: list[str], key: str) -> str | None:
     return None
 
 
+def is_local_file_destination(destination: str) -> bool:
+    """Return whether a Markdown destination clearly denotes a local file."""
+    destination = destination.strip().split("#", 1)[0]
+    if not destination or destination in {"url", "...", "…"}:
+        return False
+    if destination[0] in "<[" or destination[-1] in ">]":
+        return False
+    path = Path(destination)
+    return (
+        destination.startswith(("./", "../"))
+        or (path.parts and path.parts[0] in LOCAL_DIRECTORIES)
+        or bool(path.suffix)
+    )
+
+
 def validate_policy(skill: Path) -> dict[str, object]:
     """Validate repository-specific content policies for one skill."""
     text = skill.read_text(encoding="utf-8")
@@ -92,7 +109,7 @@ def validate_policy(skill: Path) -> dict[str, object]:
             errors.append(issue("Placeholder text remains in the skill.", line=number))
         for match in LOCAL_LINK.finditer(line):
             raw = match.group(1).split("#", 1)[0]
-            if not raw:
+            if not is_local_file_destination(raw):
                 continue
             reference = (skill.parent / raw).resolve()
             if not reference.exists():
@@ -132,12 +149,38 @@ def run_claude_validation(targets: list[Path]) -> tuple[int, list[dict[str, obje
     results = []
     failed = False
     for target in targets:
-        completed = subprocess.run(
-            ["claude", "plugin", "validate", "--strict", str(target)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        command = ["claude", "plugin", "validate", "--strict", str(target)]
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=CLAUDE_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            failed = True
+            results.append(
+                {
+                    "path": str(target),
+                    "status": "fail",
+                    "output": (
+                        "Claude validator timed out after "
+                        f"{CLAUDE_TIMEOUT_SECONDS} seconds: {' '.join(command)}"
+                    ),
+                }
+            )
+            continue
+        except OSError as error:
+            failed = True
+            results.append(
+                {
+                    "path": str(target),
+                    "status": "fail",
+                    "output": f"Unable to launch Claude validator: {error}",
+                }
+            )
+            continue
         failed = failed or completed.returncode != 0
         results.append(
             {

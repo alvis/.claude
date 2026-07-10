@@ -17,7 +17,7 @@ SPEC.loader.exec_module(quick_validate)
 class QuickValidateTests(unittest.TestCase):
     def write_skill(self, root: Path, name: str, description: str, body: str) -> Path:
         path = root / "skills" / name / "SKILL.md"
-        path.parent.mkdir(parents=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             f'---\nname: {name}\ndescription: "{description}"\n---\n\n{body}\n',
             encoding="utf-8",
@@ -80,6 +80,27 @@ class QuickValidateTests(unittest.TestCase):
             self.assertIn("Unresolved local reference", messages)
             self.assertIn("Placeholder", messages)
             self.assertIn("500 lines", messages)
+
+    def test_local_link_policy_skips_examples_and_checks_real_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            references = root / "skills" / "links" / "references"
+            references.mkdir(parents=True)
+            (references / "present.md").write_text("present", encoding="utf-8")
+            skill = self.write_skill(
+                root,
+                "links",
+                "Use when validating conservative local Markdown destination handling in skill policy checks.",
+                "# Links\n\n"
+                "Examples: [label](url), [label](…), and [section](#anchor).\n\n"
+                "Read [present](references/present.md) and "
+                "[missing](references/missing.md).",
+            )
+
+            report = quick_validate.validate_policy(skill)
+            messages = [item["message"] for item in report["errors"]]
+
+            self.assertEqual(messages, ["Unresolved local reference: references/missing.md"])
 
     def test_marketplace_validation_includes_manifest_and_plugins(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -148,6 +169,39 @@ class QuickValidateTests(unittest.TestCase):
                     ],
                 ],
             )
+
+    def test_unavailable_claude_is_structured_and_other_targets_continue(self) -> None:
+        targets = [Path("/plugin/one"), Path("/plugin/two")]
+        completed = quick_validate.subprocess.CompletedProcess([], 0, "ok", "")
+        with patch.object(
+            quick_validate.subprocess,
+            "run",
+            side_effect=[FileNotFoundError("claude not found"), completed],
+        ) as mocked:
+            status, results = quick_validate.run_claude_validation(targets)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(results[0]["status"], "fail")
+        self.assertIn("Unable to launch Claude validator", results[0]["output"])
+        self.assertEqual(results[1]["status"], "pass")
+
+    def test_timed_out_claude_is_structured_and_other_targets_continue(self) -> None:
+        targets = [Path("/plugin/one"), Path("/plugin/two")]
+        timed_out = quick_validate.subprocess.TimeoutExpired(["claude"], 30)
+        completed = quick_validate.subprocess.CompletedProcess([], 0, "ok", "")
+        with patch.object(
+            quick_validate.subprocess,
+            "run",
+            side_effect=[timed_out, completed],
+        ) as mocked:
+            status, results = quick_validate.run_claude_validation(targets)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(results[0]["status"], "fail")
+        self.assertIn("timed out", results[0]["output"])
+        self.assertEqual(results[1]["status"], "pass")
 
 
 if __name__ == "__main__":
