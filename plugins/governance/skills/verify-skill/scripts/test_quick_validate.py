@@ -4,6 +4,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 MODULE_PATH = Path(__file__).with_name("quick_validate.py")
@@ -97,6 +98,54 @@ class QuickValidateTests(unittest.TestCase):
                     root.resolve(),
                     (root / "plugins" / "one").resolve(),
                     (root / "plugins" / "two").resolve(),
+                ],
+            )
+
+    def test_cli_runs_official_validator_for_every_target_and_propagates_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            marketplace = root / ".claude-plugin" / "marketplace.json"
+            marketplace.parent.mkdir()
+            marketplace.write_text("{}", encoding="utf-8")
+            for name in ("one", "two"):
+                plugin = root / "plugins" / name
+                manifest = plugin / ".claude-plugin" / "plugin.json"
+                manifest.parent.mkdir(parents=True)
+                manifest.write_text("{}", encoding="utf-8")
+                self.write_skill(
+                    plugin,
+                    name,
+                    "Use when testing official validation execution for every discovered plugin target.",
+                    f"# {name.title()}\n\n## Workflow\n\nValidate it.",
+                )
+
+            results = [
+                quick_validate.subprocess.CompletedProcess([], 0, "marketplace ok", ""),
+                quick_validate.subprocess.CompletedProcess([], 1, "", "plugin failed"),
+                quick_validate.subprocess.CompletedProcess([], 0, "plugin ok", ""),
+            ]
+            with patch.object(quick_validate.subprocess, "run", side_effect=results) as mocked:
+                exit_status = quick_validate.run([str(root)])
+
+            self.assertEqual(exit_status, 1)
+            self.assertEqual(
+                [call.args[0] for call in mocked.call_args_list],
+                [
+                    ["claude", "plugin", "validate", "--strict", str(root.resolve())],
+                    [
+                        "claude",
+                        "plugin",
+                        "validate",
+                        "--strict",
+                        str((root / "plugins" / "one").resolve()),
+                    ],
+                    [
+                        "claude",
+                        "plugin",
+                        "validate",
+                        "--strict",
+                        str((root / "plugins" / "two").resolve()),
+                    ],
                 ],
             )
 

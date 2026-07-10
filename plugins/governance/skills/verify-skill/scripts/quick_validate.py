@@ -149,7 +149,8 @@ def run_claude_validation(targets: list[Path]) -> tuple[int, list[dict[str, obje
     return (1 if failed else 0), results
 
 
-def main() -> None:
+def run(argv: list[str] | None = None) -> int:
+    """Execute the CLI and return a process-compatible status code."""
     parser = argparse.ArgumentParser(
         description="Run official Claude validation and repository skill-policy checks."
     )
@@ -159,7 +160,7 @@ def main() -> None:
         action="store_true",
         help="Skip the official validator (intended for unit tests and focused policy checks).",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     skills = discover_skills(args.target)
     if not skills:
@@ -182,7 +183,11 @@ def main() -> None:
         },
     }
     print(json.dumps(report, indent=2))
-    sys.exit(1 if claude_status or policy_errors else 0)
+    return 1 if claude_status or policy_errors else 0
+
+
+def main() -> None:
+    sys.exit(run())
 
 
 if __name__ == "__main__":
