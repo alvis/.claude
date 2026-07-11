@@ -3,7 +3,7 @@ name: complete-test
 description: Author and improve tests for pending test cases, coverage gaps, fixtures, and redundancy cleanup. Use for test TODOs, it.todo or describe.todo entries, explicit test-writing requests, or coverage work. Production implementation stubs belong to complete-code; diagnosed failures belong to fix.
 model: opus
 context: fork
-allowed-tools: Bash, Task, Read, Glob, Edit, Grep
+allowed-tools: Bash, Task, Read, Write, Edit, Glob, Grep
 argument-hint: "[scope] [--coverage=<percent>] [--framework=<name>]"
 ---
 
