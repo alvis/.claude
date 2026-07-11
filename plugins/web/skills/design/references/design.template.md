@@ -2,7 +2,11 @@
 
 > {{ONE_SENTENCE_DESIGN_PHILOSOPHY}}
 
-> **Handover contract**: Sections 10–13 (Context & Decision Log, Component Inventory & Sources, Implementation State & Next Steps, File Map) are mandatory in every run — a zero-context agent resumes from them. Keep them current at every save point, not just at the end.
+> /goal Follow the decisions in ./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md for this design task.
+
+> **Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/` · **Context**: `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` · **Detailed decisions**: `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md`
+
+> **Handover contract**: Sections 10–13 (Context & Decision Log, Component Inventory & Sources, Implementation State & Next Steps, File Map) are mandatory in every run — a zero-context agent resumes from them. `CONTEXT.md` documents the active task context and `DECISIONS.md` is the authoritative detailed visual decision history. Keep all of them current at every save point, not just at the end.
 
 ---
 
@@ -343,6 +347,12 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 ## 10. Context & Decision Log
 
+**Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/`
+
+**Context**: [`CONTEXT.md`](./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md) — task target, audience, inputs, constraints, confirmed general direction, current phase, and next action.
+
+**Detailed visual decisions**: [`DECISIONS.md`](./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md) — every presented candidate's concrete design details, rank rationale, chosen design, rejected designs and reasons, confirmations, and follow-up actions. This file is the detailed source of truth; the tables below are the concise DESIGN.md summary.
+
 **Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
 
 > {{DIRECTION_SUMMARY_LINE_1}}
@@ -359,8 +369,8 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 | Area | Chosen variant (# + name) | Rejected variants + one-line why |
 |---|---|---|
-| {{Hero}} | {{#2 "Split editorial"}} | {{#1 too dense for the audience; #3–5 weaker hierarchy / repeated separator / off-direction imagery}} |
-| {{Connective tissue}} | {{#1 "Fade + band system"}} | {{#2–5 one-line reasons}} |
+| {{Hero}} | {{#2 "Split editorial"}} | {{#1 too dense for the audience; #3 weaker hierarchy / repeated separator / off-direction imagery}} |
+| {{Connective tissue}} | {{#1 "Fade + band system"}} | {{#2–3 one-line reasons}} |
 
 **Exemplar sites** (facelift runs — the rubric anchors):
 
@@ -370,7 +380,7 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 **Hard constraints**: {{BRAND_RULES, LEGAL, PLATFORM, PERFORMANCE — anything that binds the design}}
 
-**Decision log** (every AskUserQuestion outcome, dated):
+**Decision summary** (every AskUserQuestion outcome, dated; full records live in `DECISIONS.md`):
 
 | Date | Question | Decision |
 |---|---|---|
@@ -427,9 +437,12 @@ Save point: <jj change id>
 | Artifact | Path |
 |---|---|
 | Theme stylesheet (`@layer theme`, scaffolded by `web:css`) | {{src/styles/theme.css}} |
-| Preview catalog | {{preview.html location}} |
+| Preview catalog | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/preview.html` |
+| Preview screenshots | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/screenshot*.webp` |
 | This DESIGN.md | {{path}} |
 | Key component directories | {{src/components/ui/, packages/ui/…}} |
-| Design boards (tmp: direction + per-area) | {{<scratchpad>/design-boards/*.html + *.png}} |
-| Facelift inventories (tmp) | {{<scratchpad>/facelift-inventory-before.json / -after.json}} |
+| Task workspace | `./.design-{{AREA_NOUN_PHRASE}}/` |
+| Context and detailed decisions | `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` + `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md` |
+| Design boards and rendered images | `./.design-{{AREA_NOUN_PHRASE}}/boards/*.html` + `./.design-{{AREA_NOUN_PHRASE}}/boards/*.webp` |
+| Facelift inventories | `./.design-{{AREA_NOUN_PHRASE}}/inventories/facelift-inventory-before.json` / `-after.json` |
 | Save points | {{jj change ids, newest last}} |
