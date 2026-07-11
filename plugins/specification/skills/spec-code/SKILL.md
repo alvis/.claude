@@ -1,6 +1,6 @@
 ---
 name: spec-code
-description: Design/document specifications following strict template structure (syncs to Notion). Use when creating technical specifications, documenting API designs, or synchronizing specs with Notion.
+description: "Design or document technical specifications in the canonical template, then delegate Notion synchronization to sync-notion. Use for greenfield specs, updates to an existing DESIGN.md, or documenting an implementation without inventing requirements."
 model: opus
 context: fork
 agent: general-purpose
@@ -47,14 +47,7 @@ ultrathink: you'd perform the following steps
 
 ### Step 2: Resolve Merge Conflicts
 
-(Only if existing Notion pages found)
-
-- Spawn Merge Resolution Subagent
-- Compare local vs Notion content
-- Ask user for each difference (Keep Local / Keep Remote / Keep Both / Skip)
-- Apply decisions to create merged content and return a merge report
-
-See `references/merge-resolution.md` for the full conflict-resolution protocol, AskUserQuestion decision tree, and merge report format.
+(Only if existing Notion pages are found.) Pass the local files and known refs to `Skill(sync-notion)` in `two-way-merge` mode. It owns remote materialization, conflict decisions, merged content, and verification; spec-code does not maintain a parallel merge protocol.
 
 ### Step 3: Gather Requirements
 
@@ -103,14 +96,7 @@ See `references/frontmatter.md` for the exact frontmatter schema (`notion_url`, 
 
 ### Step 10: Sync to Notion
 
-(Unless --skip-notion-sync)
-
-1. **Spawn Notion Sync Subagent** (create or update in Design Specification database)
-2. **Spawn Verification Subagent** (fetch Notion content, compare vs local)
-3. **Spawn Patching Subagent** (if verification fails, max 3 retries)
-4. **Update Frontmatter** with Notion URLs and `last_synced_at`
-
-See `references/notion-sync.md` for the full 4-step sync protocol, subagent inputs/responsibilities, and database/page property rules.
+(Unless `--skip-notion-sync`.) Invoke `Skill(sync-notion)` with the generated files, selected mode, and any known Notion refs. That skill owns pull/push, merge resolution, verification, retries, and frontmatter metadata. Do not implement a second synchronization protocol here.
 
 ### Step 11: Reporting
 
@@ -157,7 +143,7 @@ See `references/notion-sync.md` for the full 4-step sync protocol, subagent inpu
 # Mode: CREATE
 # Creates DESIGN.md with frontmatter
 # Creates child page files
-# Syncs to Notion
+# Delegates synchronization to `sync-notion`
 ```
 
 ### UPDATE Mode - Add Feature
@@ -167,7 +153,7 @@ See `references/notion-sync.md` for the full 4-step sync protocol, subagent inpu
 # Mode: UPDATE
 # Updates Architecture section only
 # Preserves all other sections
-# Syncs changes to Notion
+# Delegates changes to `sync-notion`
 ```
 
 ### DOCUMENT Mode - Document Existing Code
