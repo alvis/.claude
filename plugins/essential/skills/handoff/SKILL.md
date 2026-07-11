@@ -9,6 +9,9 @@ Create or execute a context-complete cross-domain plan. This skill owns portable
 planning and coordinated execution; `coding:handover` instead persists the current
 coding session in continuation files.
 
+Coding integration is optional. Before routing to a `coding:*` skill, confirm it
+is available; otherwise name the equivalent action or files without invoking it.
+
 Write the plan with as much detail and context as possible such that it can be
 handed over to another agent — without your context and idea about what you're
 working on — to take over without getting lost.

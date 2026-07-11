@@ -3,7 +3,6 @@ name: update-skill
 description: "Use when revising one or more existing Claude Code skills, aligning skill instructions with current repository policy, narrowing overlapping ownership, or applying a deliberate behavior change without creating a competing skill."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Task, Read, Glob, Edit, MultiEdit, TodoWrite
 argument-hint: "[skill specifier] [--changes=...]"
 ---
@@ -18,9 +17,9 @@ argument-hint: "[skill specifier] [--changes=...]"
   removes or reassigns it.
 - Do not modernize unrelated skills merely because they are nearby.
 
-Follow `../../constitution/references/authoring-invariants.md`. The current
-skill and its real callers are authoritative; the template is a concise aid,
-not a migration target whose headings must be copied.
+Follow `${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md`.
+The current skill and its real callers are authoritative; the template is a
+concise aid, not a migration target whose headings must be copied.
 
 ## Inputs
 
@@ -51,7 +50,7 @@ name exact paths and constraints; review the combined diff afterward.
 
 ```bash
 claude plugin validate --strict <plugin-path>
-python3 <governance-plugin>/skills/verify-skill/scripts/quick_validate.py <target>
+python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" <target>
 ```
 
 Use `governance:verify-skill` for functional and trigger evaluation.

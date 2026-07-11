@@ -3,7 +3,6 @@ name: modernize
 description: 'Apply version-supported syntax and API upgrades based on the project runtime and toolchain. Use when replacing legacy constructs with supported modern equivalents; do not claim general refactoring, dependency upgrades, or behavioral feature work.'
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
 argument-hint: "<area> [--dry-run] [--target-version=X.Y]"
 ---

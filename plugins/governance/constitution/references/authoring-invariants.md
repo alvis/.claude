@@ -10,6 +10,10 @@ frontmatter syntax.
   remove superseded prose instead of appending corrections or addenda.
 - Keep the always-used workflow in `SKILL.md` and move bulky conditional detail
   to `references/<topic>.md`, linked at the decision point.
+- Concision must preserve operational sufficiency. A skill is not complete when
+  it names an outcome but omits the commands, decision gates, state handoff,
+  failure behavior, or verification procedure needed to produce that outcome.
+  Trim repetition and ceremony; never trim the executable contract.
 - Keep a main `SKILL.md` below 500 body lines. Prefer concise instructions over
   personas, metaphors, diagrams, repeated phase descriptions, and fixed report
   envelopes.

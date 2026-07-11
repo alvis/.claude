@@ -3,7 +3,6 @@ name: verify-skill
 description: "Use when validating a new or changed Claude Code skill, checking structural and repository policy compliance, testing whether descriptions trigger accurately, or grading representative skill outputs before deployment."
 model: opus
 context: fork
-agent: general-purpose
 ---
 
 # Verify Skill
@@ -16,8 +15,8 @@ agent: general-purpose
 - Functional and trigger checks are required when behavior or discovery changed,
   not for a wording-only edit with unchanged meaning.
 
-Shared authoring policy lives in
-`../../constitution/references/authoring-invariants.md`.
+Shared authoring policy lives at
+`${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md`.
 
 ## Inputs
 
@@ -28,10 +27,11 @@ Shared authoring policy lives in
 ## Workflow
 
 1. Resolve the target and enumerate affected skills and plugin roots.
-2. Run official strict validation for every affected plugin. Report Claude's
+2. Resolve each affected plugin root from the target path, then run official
+   strict validation for every affected plugin. Report Claude's
    errors verbatim enough to identify their source; do not reinterpret valid
    fields through a private schema.
-3. Run `scripts/quick_validate.py` on the target. Review body length,
+3. Run `${CLAUDE_SKILL_DIR}/scripts/quick_validate.py` on the target. Review body length,
    description budget, unresolved local references, and placeholders.
 4. For functional or full mode, load existing evals or derive a small set from
    the owned outcome. Follow `references/functional-mode.md` for execution and
@@ -48,8 +48,8 @@ prompts, XML report envelopes, or a section literally named “Skill Completion.
 
 ```bash
 claude plugin validate --strict <plugin-path>
-python3 scripts/quick_validate.py <skill-or-plugin-path>
-python3 scripts/run_trigger_eval.py --help
+python3 "${CLAUDE_SKILL_DIR}/scripts/quick_validate.py" <skill-or-plugin-path>
+python3 "${CLAUDE_SKILL_DIR}/scripts/run_trigger_eval.py" --help
 ```
 
 Run the first two commands after every fix iteration. Trigger and functional

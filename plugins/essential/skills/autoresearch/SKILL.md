@@ -3,7 +3,6 @@ name: autoresearch
 description: 'Run a metric-driven research loop: define a metric, evaluator, baseline, and target; evolve candidate solutions; score and adversarially verify them; then mutate survivors until the target, budget, or plateau ends the run. Use for measurable optimization of prompts, code, experiments, or creative variants; use deep-research for fact-finding.'
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, Skill, Workflow, TodoWrite, AskUserQuestion
 argument-hint: "<research-goal-or-brief-path> [--brief=<path>] [--resume=<run-dir>] [--max-rounds=<n>] [--backend=programmatic|judges|human]"
 ---
@@ -29,6 +28,7 @@ argument-hint: "<research-goal-or-brief-path> [--brief=<path>] [--resume=<run-di
 - `backend: programmatic` needs an eval command that prints exactly one number on stdout; `backend: judges` needs a rubric the interview can anchor; `backend: human` needs the user present each round
 - Code mode (`artifact_type: code`) needs a git repository and an explicit user execution grant — never assumed
 - The dynamic `Workflow` tool is optional: when present the loop runs unattended (Mechanism A); otherwise the sequential fallback (Mechanism B) delivers identical round semantics
+- Coding integration is optional: before invoking `coding:commit`, confirm it is available; otherwise leave the verified winning diff applied but uncommitted and report that landing state.
 
 ### Your Role
 

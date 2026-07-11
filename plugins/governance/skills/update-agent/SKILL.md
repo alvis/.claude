@@ -1,34 +1,43 @@
 ---
 name: update-agent
-description: Update one or more existing agent definitions to the current template or an explicit change request while preserving each role's useful expertise, triggers, context assignments, and collaboration links. Use for agent maintenance or migration; use create-agent when no suitable agent exists.
+description: Update explicitly selected agent definitions to the current two-file template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use for bounded migrations and corrections; require an exact selector and route genuinely new roles to create-agent.
 model: opus
 context: fork
-agent: general-purpose
-allowed-tools: Task, Read, Write, Edit, Glob, Grep
-argument-hint: "<agent path, name, or glob> [--changes=...]"
+allowed-tools: Task, Read, Write, Edit, Glob, Grep, Bash
+argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 ---
 
 # Update agent
 
-Update selected existing agents only. An empty selector is not permission to update every agent.
+Update selected `base.md` and `frontmatter/claude.json` pairs. An empty selector never means all; intentional repository-wide work requires explicit `--all`.
 
-## Inputs and boundaries
+## Resolve and preserve
 
-- Required explicit agent path, name, or glob.
-- Optional changes to frontmatter, triggers, context links, or role guidance.
-- Read `../../constitution/templates/agent.md` and each selected agent's source files before editing.
-- Preserve unique role expertise and `initialPrompt`; do not create, delete, or silently change protected characteristics.
+Read `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`, `role-prompt.md`, `references/context-catalog.md`, relevant team edges, every selected source pair, and real callers. List exact targets before mutation. Reject missing/malformed pairs, ambiguous globs, locked/in-use targets, or a request that actually creates a new role.
 
-Reject an unresolved selector, missing template, malformed source, or request to create a new role.
+For each target, snapshot:
 
-## Workflow
+- owned outcome, positive/negative triggers, expertise, role-specific working voice, and stop rule;
+- exact `SD-*`/`RP-*` context, collaboration/spawn edges, skills/MCP/hooks;
+- model, fixed effort, permissionMode, tools, memory, isolation, background, maxTurns, and `initialPrompt`;
+- explicit requested changes and protected fields not authorized to change.
 
-1. Resolve the selector to an exact file list and record the requested end state.
-2. Compare each `base.md` and `frontmatter/claude.json` with the live template and real callers. Fold approved changes into existing sections; remove superseded wording instead of appending an update log.
-3. Delegate independent batches only when they are large enough to justify it. Give each worker exact paths, boundaries, and acceptance checks.
-4. Validate trigger ownership, context references, JSON/frontmatter, required `initialPrompt`, and compatibility with neighboring agents. Run strict Claude validation and repository policy checks.
-5. Report selected files, preserved behavior, changed fields, validation evidence, and unresolved ambiguity.
+Do not “modernize” by replacing role-specific prose with template boilerplate. Integrate approved changes into the existing voice and remove superseded instructions; never append an update log or second personality.
 
-## Completion
+## Update procedure
 
-No selected agent is complete until its stitched output validates and its trigger surface remains distinct. Keep the document concise; personas, diagrams, and fixed-phase ceremony are not required.
+1. Re-evaluate the role classification and launch scenario. Change model, effort, permission, tools, memory, isolation, or collaboration only when the requested migration/template requires it; report every such change.
+2. Reconcile `frontmatter/claude.json` with the live template key surface. Remove obsolete keys only with evidence. Ensure a leaf has an explicit tools list omitting `Agent`; ensure described delegation is actually permitted; restrict mutation tools for read-mostly roles.
+3. Reconcile `base.md` with required functional sections while preserving expertise and voice. Correct context aliases against the catalog and collaboration edges against actual team definitions.
+4. Rewrite `initialPrompt` from `role-prompt.md` whenever loop, context, stop rule, budget, or guardrail changed. It must remain 3–6 role-specific sentences and agree exactly with `base.md`.
+5. Recheck positive and near-miss triggers against neighboring agents and real dispatch sites. Do not widen role ownership incidentally.
+
+Independent targets may be delegated in bounded batches, but each assignment must name exact source pairs and protected behavior. Review the integrated diff for cross-agent trigger and edge conflicts.
+
+## Validation and fallback
+
+Run the actual repository stitch/build/agent validator when discoverable; inspect generated definitions. Always parse each JSON file with `python3 -m json.tool`, check placeholders, and validate key surface, model/effort compatibility, permission, tool/spawn posture, context paths, namespaced skills, MCP/hooks, initialPrompt/base consistency, and trigger separation.
+
+When no repository validator exists, state that fact and use the deterministic fallback: template-key allowlist, reference checks, temporary stitched artifact inspection, and representative positive/negative dispatch examples. Do not claim official runtime validation unless the loader was actually run.
+
+Return selector, targets, preserved role traits, changed fields, trigger examples, validation evidence, runtime-loading status, and unresolved issues. Completion requires every selected pair to validate and no unrequested role, voice, permission, or ownership change.

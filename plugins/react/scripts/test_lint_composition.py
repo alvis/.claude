@@ -156,9 +156,11 @@ class LintProfileRunnerContract(unittest.TestCase):
 class PluginManifestContract(unittest.TestCase):
     def test_exact_dependencies_live_only_in_plugin_manifests(self):
         expected = {
-            "react": ["coding"], "essential": ["coding"],
-            "specification": ["coding"], "theriety": ["coding", "specification"],
-            "web": ["coding"], "coding": None, "client": None, "governance": None,
+            "react": ["coding", "essential"], "essential": None,
+            "specification": ["coding", "essential"],
+            "theriety": ["coding", "specification", "essential"],
+            "web": ["coding", "essential"], "coding": ["essential"],
+            "client": ["essential"], "governance": ["essential"],
         }
         actual = {}
         for path in PLUGINS.glob("*/.claude-plugin/plugin.json"):

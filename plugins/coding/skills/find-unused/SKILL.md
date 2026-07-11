@@ -3,7 +3,6 @@ name: find-unused
 description: Perform read-only dead-code discovery for commented-out code, unused symbols, and unused test helpers. Use when identifying removal candidates; report evidence without deleting, refactoring, linting, or otherwise modifying the inspected source.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Glob, Grep, Task
 argument-hint: "[path/to/scan] [--exclude=pattern]"
 ---

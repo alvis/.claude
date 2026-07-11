@@ -3,7 +3,6 @@ name: review-code
 description: Review semantic correctness, security, test intent, documentation, sibling consistency, and alignment with the implementation plan. Use after code changes or for explicit review requests; report findings without editing code and leave mechanical standards enforcement to lint.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion
 argument-hint: "[specifier] [--area=test|documentation|code-quality|security|style|all] [--out=reviews]"
 enforcement: mandatory-post-implementation

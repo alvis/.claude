@@ -3,7 +3,6 @@ name: create-skill
 description: "Use when creating a reusable Claude Code skill, defining a new repeatable agent capability, or replacing a one-off workflow with discoverable instructions that need clear ownership, validation, and trigger behavior."
 model: opus
 context: fork
-agent: general-purpose
 ---
 
 # Create Skill
@@ -15,8 +14,9 @@ agent: general-purpose
 - Search existing skills first. Update an existing owner when the capability
   overlaps instead of creating a competing trigger.
 
-Follow `../../constitution/references/authoring-invariants.md`. Start from
-`../../constitution/templates/skill.md`, adapting headings to the capability.
+Follow `${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md`.
+Start from `${CLAUDE_SKILL_DIR}/../../constitution/templates/skill.md`, adapting
+headings to the capability.
 
 ## Inputs
 
@@ -42,7 +42,7 @@ Follow `../../constitution/references/authoring-invariants.md`. Start from
 
 ```bash
 claude plugin validate --strict <plugin-path>
-python3 <governance-plugin>/skills/verify-skill/scripts/quick_validate.py <skill-or-plugin-path>
+python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" <skill-or-plugin-path>
 ```
 
 Use `governance:verify-skill` when functional or trigger evaluation is needed.

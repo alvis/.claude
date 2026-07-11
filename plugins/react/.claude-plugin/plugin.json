@@ -1,18 +1,18 @@
 {
   "name": "react",
-  "dependencies": ["coding"],
+  "dependencies": ["coding", "essential"],
   "description": "React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities",
   "version": "2026-07-10",
   "author": {"name": "Alvis HT Tang", "email": "alvis@hilbert.space"},
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"$(claude plugin list --json | jq -r '[.[] | select(.id == \"essential@alvis\" and .enabled)][0].installPath // empty')\"; test -n \"$essential_root\"; exec \"$essential_root/bin/alvis-session-start\" \"$@\"", "alvis-session-start", "--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-id", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"$(claude plugin list --json | jq -r '[.[] | select(.id == \"essential@alvis\" and .enabled)][0].installPath // empty')\"; test -n \"$essential_root\"; exec \"$essential_root/bin/alvis-user-prompt-submit\" \"$@\"", "alvis-user-prompt-submit", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ]
   }

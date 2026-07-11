@@ -3,7 +3,6 @@ name: fix
 description: Fix diagnosed incorrect behavior, failed tests, type errors, lint failures, or broken CI. Use when a concrete failure can be reproduced or review findings identify a defect; route new functionality to write-code and green structural cleanup to refactor.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
 argument-hint: "[specifier] [--area=AREA] [--note=...] [--plan=PATH]"
 ---

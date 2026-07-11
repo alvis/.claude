@@ -10,6 +10,9 @@ argument-hint: "[problem-or-question]"
 
 Structured deliberate reasoning before acting. Activates whenever a problem lacks a crystal-clear solution path. **You do all thinking yourself — no subagent delegation.**
 
+Coding integration is optional. Before recommending a `coding:*` follow-up,
+confirm it is available; otherwise describe the implementation step generically.
+
 ## Purpose & Scope
 
 **Purpose**: Force explicit reasoning about ambiguous problems before any code, file, or configuration is touched. The output is a decision, not an artifact.

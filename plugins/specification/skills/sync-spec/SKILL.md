@@ -3,7 +3,6 @@ name: sync-spec
 description: Materialize a guaranteed-on-disk Notion specification tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files plus `.gitignore`. Use before downstream analysis or code generation, when refreshing a stale bundle, or when a ticket requires local spec evidence; fail unless the root id-suffix file exists and is non-empty.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Read, Grep, Glob, Bash, TodoWrite
 argument-hint: "<notion-url-or-id> [--spec-path=<dir>]"
 ---

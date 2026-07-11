@@ -30,6 +30,12 @@ class CoreProcedureContract(unittest.TestCase):
             "worktree_relocation",
         ):
             self.assertIn(token, text)
+        modes = body("plugins/specification/skills/implement-code/references/modes.md")
+        self.assertIn("Explicit production stubs", modes)
+        self.assertIn("Unmarked, missing, or newly requested functionality", modes)
+        self.assertIn("Test TODOs", modes)
+        self.assertNotIn("finish TODOs", modes)
+        self.assertNotIn("complete-code for gaps", modes)
 
     def test_sync_notion_exposes_modes_not_cli_verbs(self) -> None:
         text = body("plugins/specification/skills/sync-notion/SKILL.md")
@@ -38,6 +44,9 @@ class CoreProcedureContract(unittest.TestCase):
         self.assertNotIn("--- Merged from Notion ---", body(
             "plugins/specification/skills/sync-notion/references/two-way-merge.md"
         ))
+        merge = body("plugins/specification/skills/sync-notion/references/two-way-merge.md")
+        self.assertIn("modifications:", merge)
+        self.assertIn("MUST NOT push", merge)
 
     def test_test_and_document_skills_keep_quality_gates(self) -> None:
         tests = body("plugins/coding/skills/complete-test/SKILL.md")
@@ -56,6 +65,7 @@ class CoreProcedureContract(unittest.TestCase):
         self.assertIn("references/markers.md", finalize)
         self.assertIn("skipped_by_marker", finalize)
         self.assertIn("pending_decision", finalize)
+        self.assertLess(finalize.index("marker"), finalize.index("skippable lint/test"))
 
     def test_backend_and_composite_ownership(self) -> None:
         backend = "\n".join(
@@ -69,6 +79,11 @@ class CoreProcedureContract(unittest.TestCase):
         write = body("plugins/coding/skills/write-code/SKILL.md")
         self.assertIn("coding:complete-test", write)
         self.assertIn("Do not pass it to `complete-code` or `complete-test`", write)
+        self.assertIn("Mechanical standards violations route to `coding:lint`", write)
+        self.assertIn("Fixture, mock, pending-test, and coverage work routes to `coding:complete-test`", write)
+        self.assertNotIn("Fixing test issues and standards compliance", write)
+        self.assertNotIn("Optimizing test fixtures and mocks", write)
+        self.assertNotIn("write integration tests", build_data.lower())
 
 
 if __name__ == "__main__":

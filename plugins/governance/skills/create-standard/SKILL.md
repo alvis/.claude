@@ -1,31 +1,36 @@
 ---
 name: create-standard
-description: Create a new technical standard under a plugin constitution with meta.md, scan.md, write.md, and rules/. Use when a reusable policy is missing and needs explicit scope, detection guidance, implementation guidance, and actionable rules. Do not use for revising an existing standard or creating a skill.
+description: Create a new technical standard at a plugin's canonical constitution/standards root using meta.md, scan.md, write.md, and per-rule guides. Use when reusable policy is missing and needs explicit dependencies, detection, compliant patterns, and stable rule IDs. Route existing-standard revisions to update-standard.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Task
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "<plugin>/<standard-name> [--detail=...]"
 ---
 
 # Create standard
 
-Create one new three-tier standard directory. `update-standard` owns existing standards; `create-skill` owns reusable workflow capabilities.
+Create exactly one new directory at `plugins/<plugin>/constitution/standards/<standard-name>/`. The name is lowercase kebab-case; the rule prefix is a unique short uppercase mnemonic. Never write to a repository-level shorthand root or overwrite an existing standard.
 
-## Inputs and validation
+## Required templates and discovery
 
-- Required lowercase, hyphenated standard name and target plugin.
-- Optional detail, examples, related standards, and rule identifiers.
-- Target directory must exist and must not already contain the standard.
-- Read the standard templates and neighboring standards before authoring.
+Resolve these installed governance templates from `${CLAUDE_SKILL_DIR}/../../constitution/templates/`:
 
-Reject an unclear name, duplicate directory, invalid target, or request for non-standard files.
+- `standard-meta.md` → `<target>/meta.md`
+- `standard-scan.md` → `<target>/scan.md`
+- `standard-write.md` → `<target>/write.md`
 
-## Workflow
+Read all three templates, the target plugin's constitution references, and neighboring standards before writing. Search every standard under `plugins/*/constitution/standards/` for the proposed prefix and rule IDs. Reject a duplicate target, duplicate prefix/ID, unknown plugin, missing templates, or policy that belongs to an existing owner.
 
-1. Define the owned outcome, non-goals, related standards, severity model, and rule IDs.
-2. Create `meta.md`, `scan.md`, `write.md`, and `rules/` from the current templates. Keep meta (why), scan (how to detect), and write (how to comply) consistent; include only examples that clarify a rule.
-3. Delegate authoring when the standard is substantial; provide exact paths and require the smallest coherent documents without personas, diagrams, or fixed phases.
-4. Review for contradictions, duplicate rule IDs, unresolved local links, and actionable scan/write guidance. Run strict Claude validation and repository policy checks.
+## Authoring procedure
 
-## Completion
+1. Define scope, non-goals, dependent standards, stricter requirements, exception policy, rule groups, and stable IDs before drafting examples.
+2. Create the target and `rules/`. Populate `meta.md` from the meta template: dependencies use `standard:<name>` within the plugin or `plugin:<plugin>:standard:<name>` across plugins; every declared group matches the chosen prefix.
+3. Populate `scan.md` from the scan template. Every quick-scan item and matrix row names one declared rule ID and describes a mechanically or reviewably detectable violation.
+4. Populate `write.md` from the write template. Every rule ID has actionable compliant guidance; patterns and decisions do not contradict scan criteria.
+5. Create `rules/<lowercase-rule-id>.md` for every rule that requires detail. Link it from the tiers using relative links and ensure no guide introduces an undeclared ID.
+6. Remove all template placeholders and instructions. Keep examples only when they disambiguate detection or compliance.
 
-Report the standard path, tier files, rule IDs, related standards, validation commands, and any deferred rule. Do not overwrite an existing standard without an explicit update request.
+## Cross-tier verification
+
+Build sets of IDs from meta groups, scan bullets/matrix, write summaries, and rule filenames. Fail when an ID is undeclared, missing from scan or write, duplicated, uses another prefix, or links to a missing guide. Resolve every local Markdown link from its containing file. Verify dependent-standard targets exist and no dependency cycle is introduced.
+
+Run `claude plugin validate --strict plugins/<plugin>` plus governance repository policy checks. Exercise at least one violating and one compliant example per rule group against scan/write guidance. Return target, source templates, prefix, complete rule-ID list, dependency/link checks, validation commands/results, and unresolved policy questions.

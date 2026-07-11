@@ -3,7 +3,6 @@ name: setup-project
 description: Ensure project structure exists before development, creating barebone scaffolding only if needed. Use when initializing new projects, validating project setup, or ensuring monorepo component structure.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "<target-path> [--type=app|lib|service]"
 ---

@@ -3,7 +3,6 @@ name: refactor
 description: Improve green code through behavior-preserving structural changes to organization, naming, readability, or documentation. Use when existing tests pass and the requested outcome is maintainability rather than a bug fix, new feature, or version-driven API upgrade.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
 argument-hint: "<area> [--focus=naming|structure|docs|all]"
 ---

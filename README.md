@@ -12,7 +12,7 @@ Dependencies are declared in each plugin's `.claude-plugin/plugin.json`; install
 
 ## Plugins and skills
 
-### coding
+### coding (depends on: essential)
 
 General code writing tools including quality checks, testing, architecture, and implementation support
 
@@ -35,7 +35,7 @@ General code writing tools including quality checks, testing, architecture, and 
 - `coding:write-code` — Write production-ready code end to end through a TDD lifecycle of design, skeleton, implementation, tests, and refactoring. Use for new functions, features, modules, components, CLI or API endpoints, or approved tickets; route diagnosed failures to fix and explicit production stubs to complete-code.
 - `coding:write-pr` — Author a conventional-commit PR title and unified body from a jj or git change ref, emitting output for gh pr create. Use for PR descriptions, draft pull requests, stacked coding:commit PR bodies, and callers that need a unified title/body template from a commit.
 
-### essential (depends on: coding)
+### essential
 
 Documentation creation, code design, product strategy, and Notion integration for knowledge management
 
@@ -45,7 +45,7 @@ Documentation creation, code design, product strategy, and Notion integration fo
 - `essential:install-statusline` — Install the bundled Bullet Train statusline into ~/.claude and wire settings.json statusLine. Use when setting up Claude Code on a new machine, installing or restoring the statusline, or repairing its configuration; preserve the bundled executable and report permission or platform limitations.
 - `essential:think` — Structure pre-implementation reasoning for ambiguous problems. Use when the requested outcome, constraints, or safe solution are unclear and deliberate options, objections, dependencies, edge cases, and rollback need to be resolved before any modification or creation begins.
 
-### governance
+### governance (depends on: essential)
 
 Tools for creating and managing Claude Code configuration files including commands, skills, standards, and agents
 
@@ -57,14 +57,14 @@ Tools for creating and managing Claude Code configuration files including comman
 - `governance:update-standard` — Update explicitly selected technical standards to the current three-tier template or a stated policy change, preserving valid rules and examples while removing superseded wording. Use for standard maintenance or bounded bulk migration; use create-standard when the target directory does not exist.
 - `governance:verify-skill` — Use when validating a new or changed Claude Code skill, checking structural and repository policy compliance, testing whether descriptions trigger accurately, or grading representative skill outputs before deployment.
 
-### react (depends on: coding)
+### react (depends on: coding, essential)
 
 React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities
 
 - `react:lint` — Use when React JSX, components, hooks, accessibility, project structure, tests, or Storybook files need mechanical standards enforcement through the shared Coding lint workflow; React owns framework rules while Coding owns generic execution and reporting.
 - `react:react` — Use when creating, editing, reviewing, or routing work involving React, JSX, hooks, components, accessibility behavior, project structure, tests, or Storybook stories; this router selects React standards while Coding owns generic execution.
 
-### specification (depends on: coding)
+### specification (depends on: coding, essential)
 
 Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration for knowledge management
 
@@ -76,7 +76,7 @@ Design specifications, architecture specs, requirements gathering, and technical
 - `specification:sync-notion` — Synchronize local Markdown files with Notion through the notion-sync CLI, including recursive pulls, creates, updates, diffs, conflict resolution, and integrity checks. Use when documentation must move between local files and Notion. Keep specification authoring in spec-code and implementation planning in plan-code.
 - `specification:sync-spec` — Materialize a guaranteed-on-disk Notion specification tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files plus `.gitignore`. Use before downstream analysis or code generation, when refreshing a stale bundle, or when a ticket requires local spec evidence; fail unless the root id-suffix file exists and is non-empty.
 
-### web (depends on: coding)
+### web (depends on: coding, essential)
 
 Web development tools including UX design, growth optimization, rapid prototyping, browser automation via agent-browser, Next.js debugging via Chrome DevTools, and design auditing
 
@@ -87,7 +87,7 @@ Web development tools including UX design, growth optimization, rapid prototypin
 - `web:next` — Diagnose Next.js runtime behavior with next-browser and Chrome DevTools MCP: React components, routes, SSR errors, DOM/styles, performance, Lighthouse, network, device emulation, JavaScript debugging, storage, screenshots, and interactions. Use for evidence-backed browser diagnosis; route visual creation to design and story-state assessment to storybook.
 - `web:storybook` — Audit a Storybook instance for setup failures, accessibility violations, interaction errors, and visual regressions across meaningful story states. Use when checking stories before release, validating addon panels, or finding missing focus behavior. Report evidence and findings; do not edit components or stories.
 
-### theriety (depends on: coding, specification)
+### theriety (depends on: coding, specification, essential)
 
 Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers
 
@@ -96,7 +96,7 @@ Domain-specific service and data orchestrator lifecycle management for Theriety 
 - `theriety:build-data` — Build complete data orchestrators from spec to commit, including schema setup, operations, controllers, and quality gates. Use when creating new data domains, adding operations to existing orchestrators, or implementing Prisma schemas from Notion.
 - `theriety:build-service` — Build complete backend services from spec to commit, including operation declaration, implementation, and quality gates. Use when creating new services, adding operations to existing services, or declaring manifest schemas.
 
-### client
+### client (depends on: essential)
 
 Client-facing screen design and UX documentation with Notion integration
 

@@ -3,7 +3,6 @@ name: lint
 description: Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope, including calls extended by another plugin's portable lint profile.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 argument-hint: "[specifier] [--scope=SCOPE] [--profile=ABSOLUTE_PATH]"
 ---

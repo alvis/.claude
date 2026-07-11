@@ -3,7 +3,6 @@ name: spec-code
 description: "Design or document technical specifications in the canonical template, then delegate Notion synchronization to sync-notion. Use for greenfield specs, updates to an existing DESIGN.md, or documenting an implementation without inventing requirements."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
 argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack]"
 ---

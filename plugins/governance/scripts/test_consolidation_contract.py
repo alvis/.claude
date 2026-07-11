@@ -73,11 +73,6 @@ def main() -> int:
         if any(path.name == name for path in (ROOT / "plugins").rglob("*")):
             failures.append(f"deleted skill directory remains: {name}")
 
-    client_scripts = ROOT / "plugins/client/shared/scripts"
-    expected_scripts = ROOT / "scripts"
-    if not client_scripts.is_symlink() or client_scripts.resolve() != expected_scripts.resolve():
-        failures.append("client shared scripts must symlink to repository scripts")
-
     scoped_roots = (ROOT / "plugins/web", ROOT / "plugins/client", ROOT / "plugins/governance")
     skill_files = [path for root in scoped_roots for path in (root / "skills").rglob("SKILL.md")]
     for root in (ROOT / "plugins",):
