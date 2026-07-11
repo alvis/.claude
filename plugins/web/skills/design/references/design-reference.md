@@ -204,9 +204,9 @@ Every boundary between page sections is a design decision. Boards and final page
 
 ## DESIGN.md Scaffold
 
-For multi-page or production UIs, initialize `./.design-<noun-phrase>/CONTEXT.md` and `DECISIONS.md`, then emit the root DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. The 13-section structure, two-tier token tables, component specifications, and the "Motion, Transitions & Separators" spec live in `design.template.md` — that file is the single source for the root scaffold. Sections 10–13 plus the task workspace files are the handover contract — mandatory in every run; a zero-context agent resumes from them.
+For multi-page or production UIs, initialize `./.design-<area-noun-phrase>/CONTEXT.md` and `./.design-<area-noun-phrase>/DECISIONS.md`, then emit the root DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. The 13-section structure, two-tier token tables, component specifications, and the "Motion, Transitions & Separators" spec live in `design.template.md` — that file is the single source for the root scaffold. Sections 10–13 plus the task workspace files are the handover contract — mandatory in every run; a zero-context agent resumes from them.
 
-For single components or quick prototypes, use a lightweight root DESIGN.md containing the one-line `/goal` handoff and three-line visual thesis (mood, content plan, interaction plan) instead of the full 13-section scaffold. The `.design-<noun-phrase>/CONTEXT.md` and `DECISIONS.md` workspace remains required.
+For single components or quick prototypes, use a lightweight root DESIGN.md containing the one-line `/goal` handoff and three-line visual thesis (mood, content plan, interaction plan) instead of the full 13-section scaffold. The `.design-<area-noun-phrase>/CONTEXT.md` and `DECISIONS.md` workspace remains required.
 
 ## AI Slop Test
 

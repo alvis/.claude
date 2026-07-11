@@ -3,21 +3,23 @@
 Every design task owns one durable workspace at the project root:
 
 ```text
-./.design-<noun-phrase>/
+./.design-<area-noun-phrase>/
 ├── CONTEXT.md
 ├── DECISIONS.md
-├── design-boards/       # direction, area, and connective-tissue HTML boards
-├── screenshots/         # rendered board and preview images
-├── previews/            # temporary preview HTML/CSS and exports
+├── boards/        # each board HTML file and its rendered image
+├── previews/            # each preview gets its own directory and screenshot
+│   └── tokens/          # preview.html + screenshot.webp (+ light/dark variants)
 ├── captures/            # temporary browser captures and computed-style data
 └── inventories/         # facelift/content inventories and comparison data
 ```
 
 Create only the subdirectories needed by the task, but every temporary design
-artifact must remain below `./.design-<noun-phrase>/`. This includes HTML, CSS,
-JSON, PNG, screenshots, browser captures, preview exports, and facelift
-inventories. Do not use a session scratchpad or `$TMPDIR` fallback. Production
-implementation files remain in their normal source locations.
+artifact must remain below `./.design-<area-noun-phrase>/`. This includes HTML, CSS,
+JSON, PNG, WebP, screenshots, browser captures, preview exports, and facelift
+inventories. Board images stay beside their board HTML in `boards/`. Preview
+screenshots stay beside their preview HTML under `previews/<preview-slug>/`.
+Do not use a session scratchpad or `$TMPDIR` fallback. Production implementation
+files remain in their normal source locations.
 
 ## Bootstrap and resume gate
 
@@ -27,7 +29,7 @@ implementation files remain in their normal source locations.
 2. Before creating anything, inspect the project root for `./.design` and every
    `./.design-*` directory.
 3. If an existing design directory is found, ask the user whether to resume one
-   of the existing tasks or start a new `./.design-<noun-phrase>/` task. For a
+   of the existing tasks or start a new `./.design-<area-noun-phrase>/` task. For a
    legacy `./.design` directory, explicitly offer to resume/migrate it or start
    a new named workspace. Never silently reuse, overwrite, or merge workspaces.
 4. On resume, read `CONTEXT.md` and `DECISIONS.md` before generating a board and
@@ -92,7 +94,7 @@ Put this exact one-line goal statement near the top of the root `DESIGN.md`,
 replacing the placeholder with the active noun phrase:
 
 ```text
-/goal Follow the decisions in ./.design-<noun-phrase>/DECISIONS.md for this design task.
+/goal Follow the decisions in ./.design-<area-noun-phrase>/DECISIONS.md for this design task.
 ```
 
 `DESIGN.md` §10 must link to both `CONTEXT.md` and `DECISIONS.md` and summarize

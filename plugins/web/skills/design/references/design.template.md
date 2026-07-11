@@ -2,9 +2,9 @@
 
 > {{ONE_SENTENCE_DESIGN_PHILOSOPHY}}
 
-> /goal Follow the decisions in ./.design-{{NOUN_PHRASE}}/DECISIONS.md for this design task.
+> /goal Follow the decisions in ./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md for this design task.
 
-> **Task workspace**: `./.design-{{NOUN_PHRASE}}/` · **Context**: `./.design-{{NOUN_PHRASE}}/CONTEXT.md` · **Detailed decisions**: `./.design-{{NOUN_PHRASE}}/DECISIONS.md`
+> **Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/` · **Context**: `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` · **Detailed decisions**: `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md`
 
 > **Handover contract**: Sections 10–13 (Context & Decision Log, Component Inventory & Sources, Implementation State & Next Steps, File Map) are mandatory in every run — a zero-context agent resumes from them. `CONTEXT.md` documents the active task context and `DECISIONS.md` is the authoritative detailed visual decision history. Keep all of them current at every save point, not just at the end.
 
@@ -347,11 +347,11 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 ## 10. Context & Decision Log
 
-**Task workspace**: `./.design-{{NOUN_PHRASE}}/`
+**Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/`
 
-**Context**: [`CONTEXT.md`](./.design-{{NOUN_PHRASE}}/CONTEXT.md) — task target, audience, inputs, constraints, confirmed general direction, current phase, and next action.
+**Context**: [`CONTEXT.md`](./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md) — task target, audience, inputs, constraints, confirmed general direction, current phase, and next action.
 
-**Detailed visual decisions**: [`DECISIONS.md`](./.design-{{NOUN_PHRASE}}/DECISIONS.md) — every presented candidate's concrete design details, rank rationale, chosen design, rejected designs and reasons, confirmations, and follow-up actions. This file is the detailed source of truth; the tables below are the concise DESIGN.md summary.
+**Detailed visual decisions**: [`DECISIONS.md`](./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md) — every presented candidate's concrete design details, rank rationale, chosen design, rejected designs and reasons, confirmations, and follow-up actions. This file is the detailed source of truth; the tables below are the concise DESIGN.md summary.
 
 **Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
 
@@ -437,11 +437,12 @@ Save point: <jj change id>
 | Artifact | Path |
 |---|---|
 | Theme stylesheet (`@layer theme`, scaffolded by `web:css`) | {{src/styles/theme.css}} |
-| Preview catalog | `./.design-{{NOUN_PHRASE}}/previews/preview.html` |
+| Preview catalog | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/preview.html` |
+| Preview screenshots | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/screenshot*.webp` |
 | This DESIGN.md | {{path}} |
 | Key component directories | {{src/components/ui/, packages/ui/…}} |
-| Task workspace | `./.design-{{NOUN_PHRASE}}/` |
-| Context and detailed decisions | `./.design-{{NOUN_PHRASE}}/CONTEXT.md` + `./.design-{{NOUN_PHRASE}}/DECISIONS.md` |
-| Design boards and rendered screenshots | `./.design-{{NOUN_PHRASE}}/design-boards/*.html` + `./.design-{{NOUN_PHRASE}}/screenshots/*.png` |
-| Facelift inventories | `./.design-{{NOUN_PHRASE}}/inventories/facelift-inventory-before.json` / `-after.json` |
+| Task workspace | `./.design-{{AREA_NOUN_PHRASE}}/` |
+| Context and detailed decisions | `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` + `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md` |
+| Design boards and rendered images | `./.design-{{AREA_NOUN_PHRASE}}/boards/*.html` + `./.design-{{AREA_NOUN_PHRASE}}/boards/*.webp` |
+| Facelift inventories | `./.design-{{AREA_NOUN_PHRASE}}/inventories/facelift-inventory-before.json` / `-after.json` |
 | Save points | {{jj change ids, newest last}} |

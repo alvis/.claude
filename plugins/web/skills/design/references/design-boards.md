@@ -7,7 +7,7 @@ Two board types share one mechanic:
 | Board type | Chooses | Tiles | When |
 |---|---|---|---|
 | **Direction board** (Part B) | The page-wide aesthetic direction | 3–5 direction candidates | Once, during `<direction>` |
-| **Area board** (Part C) | One area's composition/treatment within the locked direction | Exactly 3 ranked variants of ONE area | Once per area, during `<area_boards>` |
+| **Area board** (Part C) | One area's composition/treatment within the locked direction | `N` ranked variants of ONE area (`N=3` by default) | Once per area, during `<area_boards>` |
 
 ---
 
@@ -19,7 +19,7 @@ The user picks with their eyes, not from prose. Every board is rendered in Chrom
 
 ### A2. File Location & Constraints
 
-- Path: `./.design-<noun-phrase>/design-boards/<board-slug>.html` (`direction.html`, `hero.html`, `footer.html`, `connective-tissue.html`, …). Store the matching rendered image at `./.design-<noun-phrase>/screenshots/<board-slug>.png`.
+- Path: `./.design-<area-noun-phrase>/boards/<board-slug>.html` (`direction.html`, `hero.html`, `footer.html`, `connective-tissue.html`, …). Store the matching rendered image beside it at `./.design-<area-noun-phrase>/boards/<board-slug>.webp`.
 - ONE self-contained file per board: inline CSS only, no JS frameworks, no build step. Google Fonts `<link>` tags are allowed (boards are throwaway local files), but every tile declares system-stack fallbacks so it still reads without network.
 - REAL project content only — never lorem ipsum, never placeholder-gray boxes where the project has actual imagery or copy.
 - Honor `prefers-reduced-motion` on every board (blanket media-query kill switch).
@@ -38,7 +38,7 @@ Tiles appear on the board in rank order, best first.
 Present the rendered image — remote users cannot see the local Chrome window:
 
 1. `list_pages` → `new_page file://<absolute path>` → `take_screenshot` (full-page). **Look at the screenshot**: broken layout, missing fonts, clipped tiles, or unreadable rank badges get fixed BEFORE the user sees anything.
-2. Save the screenshot at `./.design-<noun-phrase>/screenshots/<board-slug>.png`, then `SendUserFile` with `files: [<screenshot image path>]`, `display: render`, and a caption naming each numbered candidate/variant. The screenshot IS the deliverable; optionally attach the board HTML as a secondary file for users who want live hover/motion.
+2. Save or convert the screenshot to `./.design-<area-noun-phrase>/boards/<board-slug>.webp`, then `SendUserFile` with `files: [<screenshot image path>]`, `display: render`, and a caption naming each numbered candidate/variant. The screenshot IS the deliverable; optionally attach the board HTML as a secondary file for users who want live hover/motion.
 
 ### A5. Choice Capture — the AskUserQuestion convention
 
@@ -48,11 +48,11 @@ One `AskUserQuestion` call per board (never batch two boards into one call). The
 - The reviewer-ranked **#1 candidate is the stated safe default**, marked "(Recommended)" and listed first.
 - The final option is always an escape hatch: **"Another variant or mix — name the number(s)"** — this is how users pick #4+ or combine pieces, since all candidates stay numbered in the image.
 - **Mix-and-match loop**: build ONE merged tile from the named pieces, append it to the board (with its own rank assessment), re-present (A4), re-ask. Loop until an explicit pick.
-- **Record immediately** after each pick into `./.design-<noun-phrase>/DECISIONS.md`: every presented candidate's concrete design details, the chosen candidate, every REJECTED candidate with a one-line reason, the confirmation or auto-pick rationale, and any adjustment answers. Summarize the result in DESIGN.md §10. Do not defer recording to the end of the run.
+- **Record immediately** after each pick into `./.design-<area-noun-phrase>/DECISIONS.md`: every presented candidate's concrete design details, the chosen candidate, every REJECTED candidate with a one-line reason, the confirmation or auto-pick rationale, and any adjustment answers. Summarize the result in DESIGN.md §10. Do not defer recording to the end of the run.
 
 ### A6. Cleanup
 
-Boards are task artifacts under `./.design-<noun-phrase>/`, not system temp files. Keep them alive through sign-off and do not delete the workspace automatically; ask before archiving or removing it so the task can be resumed later.
+Boards are task artifacts under `./.design-<area-noun-phrase>/`, not system temp files. Keep them alive through sign-off and do not delete the workspace automatically; ask before archiving or removing it so the task can be resumed later.
 
 ---
 
@@ -157,20 +157,20 @@ Per A5. Q1 — "Which direction?": with 3 candidates, one option per candidate (
 
 ## Part C — Area Boards
 
-One board per area of the page (navigation, hero, each content section, social proof, pricing, CTA band, footer…), run sequentially AFTER the direction is locked. Each board shows **exactly 3 variants of that single area**, all in the locked direction, stacked in one column so the full-page screenshot reads as a single top-to-bottom comparison image.
+One board per area of the page (navigation, hero, each content section, social proof, pricing, CTA band, footer…), run sequentially AFTER the direction is locked. Resolve `N` from `--variants=<N>` (`N=3` by default; `N` must be ≥2). Each board shows **N variants of that single area**, all in the locked direction, stacked in one column so the full-page screenshot reads as a single top-to-bottom comparison image.
 
 ### C1. Per-Variant Required Contents
 
 Every variant must contain ALL of:
 
-- [ ] Rank badge + "why this rank" (A3), numbered `1..3`
+- [ ] Rank badge + "why this rank" (A3), numbered `1..N`
 - [ ] The area rendered at realistic content width (desktop, ~1280px frame) with REAL project content
 - [ ] **Explicit top AND bottom separator treatment** — how this variant meets its neighbors (chosen from the Section Separator Vocabulary in `design-reference.md`); label the treatment in small print at each boundary
 - [ ] **Visible hover-state demos** — CSS-only `:hover`/`:active`/`:focus-visible` on every interactive element in the variant; where hover can't be conveyed statically, render the key element twice side by side (rest + hover state) with a small "hover" label so the SCREENSHOT still shows it
 - [ ] **Entrance-transition demo** — ONE `@keyframes` reveal showing this variant's scroll-entrance language (stagger, distance, easing)
 - [ ] A one-line spec strip in small print: composition scheme · density · imagery treatment · separator pair · motion notes
 
-Variants must differ on at least two of: composition, density, imagery treatment, separator treatment, motion. Three near-identical variants is a failed board. Every variant demonstrates the World-Class Element Checklist items (SKILL.md `<world_class_elements>`) relevant to its area.
+Variants must differ on at least two of: composition, density, imagery treatment, separator treatment, motion. Near-identical variants are a failed board regardless of `N`. Every variant demonstrates the World-Class Element Checklist items (SKILL.md `<world_class_elements>`) relevant to its area.
 
 ### C2. Board Layout
 
@@ -182,7 +182,7 @@ Variants must differ on at least two of: composition, density, imagery treatment
 
 Per A5, one `AskUserQuestion` per area board:
 
-- **Q — "{Area}: which design?"** Options: `#1 {name} (Recommended)`, `#2 {name}`, `#3 {name}`, and **"Another variant or mix — name the number(s)"**. Each description = the variant's one-line spec strip + why-this-rank. The fourth option is reserved for a mix, adjustment, or a user-named alternative beyond the three shown variants.
+- **Q — "{Area}: which design?"** Options: up to the top three ranked variants that exist (`#1 {name} (Recommended)`, `#2 {name}`, and `#3 {name}` when present) plus **"Another variant or mix — name the number(s)"**. Each description = the variant's one-line spec strip + why-this-rank. If `N>3`, variants `#4..#N` remain fully pickable through the fourth option or free-text Other; if `N=2`, omit the nonexistent `#3` option.
 
 Then move to the next area. One image → one question → next area. Never present two areas' boards before capturing the first pick (later areas are generated knowing the earlier picks, so choices compound coherently).
 
@@ -194,8 +194,8 @@ After all content areas are picked, run ONE more board for the cross-cutting cho
 - **Page-transition style** — route/page-level transition options (crossfade, shared-element morph, directional slide, wipe…), each demonstrated as a two-frame before/after strip with duration/easing labels
 - **Scroll-reveal language** — the page-wide entrance system (distance, stagger, blur, once-only), demonstrated per option on a real chosen section
 
-Exactly 3 combinations, ranked, same battery as C3. The winning combination becomes the "Motion, Transitions & Separators" spec in DESIGN.md §4.
+`N` combinations, ranked, using the same battery as C3. The winning combination becomes the "Motion, Transitions & Separators" spec in DESIGN.md §4.
 
 ### C5. `--quick` Mode
 
-When the run has `--quick`, area boards are still generated and ranked but NOT presented one-by-one: the reviewer-ranked #1 variant of every board is auto-picked, each pick and its rank rationale are recorded in `./.design-<noun-phrase>/DECISIONS.md`, and the full set is summarized in DESIGN.md §10 at the Phase 3 sign-off gate (the user can still overturn any pick there).
+When the run has `--quick`, `N`-variant area boards are still generated and ranked but NOT presented one-by-one: the reviewer-ranked #1 variant of every board is auto-picked, each pick and its rank rationale are recorded in `./.design-<area-noun-phrase>/DECISIONS.md`, and the full set is summarized in DESIGN.md §10 at the Phase 3 sign-off gate (the user can still overturn any pick there).
