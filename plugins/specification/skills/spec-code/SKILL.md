@@ -4,7 +4,7 @@ description: "Design or document technical specifications in the canonical templ
 model: opus
 context: fork
 agent: general-purpose
-allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion
+allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
 argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack]"
 ---
 
@@ -47,7 +47,7 @@ ultrathink: you'd perform the following steps
 
 ### Step 2: Resolve Merge Conflicts
 
-(Only if existing Notion pages are found.) Pass the local files and known refs to `Skill(sync-notion)` in `two-way-merge` mode. It owns remote materialization, conflict decisions, merged content, and verification; spec-code does not maintain a parallel merge protocol.
+(Only if existing Notion pages are found.) Record the local files and known refs for the final `Skill(sync-notion)` call. It owns remote materialization, conflict decisions, merged content, and verification; spec-code does not maintain a parallel merge protocol.
 
 ### Step 3: Gather Requirements
 

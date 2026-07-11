@@ -1,6 +1,6 @@
 ---
 name: draft-code
-description: Draft TypeScript-compliant code skeleton with TODO placeholders. Use when starting new implementations, creating code scaffolds, or preparing test structure for TDD.
+description: Draft TypeScript-compliant code skeletons with canonical TODO(implementation) placeholders. Use when starting an already-specified implementation or preparing typed production structure for later completion; do not implement business logic or create ambiguous plain TODO markers.
 model: opus
 context: fork
 agent: general-purpose
@@ -10,7 +10,7 @@ argument-hint: "<instruction>"
 
 # Draft Code Skeleton
 
-Creates TypeScript-compliant code skeletons with TODO placeholders — type definitions, function signatures, and test structure — leaving implementation details for later completion in Steps 0-1 (Design Discovery + Skeleton Creation) of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. The skeleton is the seed shape every later pass must grow from, not bolt onto: type signatures, file boundaries, and naming chosen here become the grain along which `complete-code` and `refactor` must work, so a skeleton that already feels native to the surrounding module saves downstream skills from having to graft a foreign shape into place.
+Creates TypeScript-compliant production skeletons with explicit `TODO(implementation):` markers, type definitions, and function signatures. It may outline pending tests, but test markers belong to `coding:complete-test`; production stubs belong to `coding:complete-code`.
 
 ## Purpose & Scope
 
@@ -91,16 +91,16 @@ Skip Steps: [2, 3, 4, 5]   # only draft, no implementation
    - Draft interfaces with JSDoc
    - Create type aliases
    - Define enums where appropriate
-   - Add TODO comments for validation logic
+   - Add `TODO(implementation):` comments for validation logic
 
 2. **Draft Function Signatures**
    - Create function stubs with proper parameter and return types
-   - Mark bodies with TODO using the CODE DRAFTING PATTERNS below
+   - Mark bodies with `TODO(implementation):` using the code drafting patterns below
    - Follow function design standards
 
 **CODE DRAFTING PATTERNS**: When drafting incomplete implementations:
-- Use `describe.todo`, `it.todo` for test placeholders that need implementation
-- Use `// TODO:` comments to mark incomplete code sections
+- Use `describe.todo`, `it.todo` only for test placeholders that will be completed by `coding:complete-test`
+- Use `// TODO(implementation): <explicit production behavior>` for incomplete code sections
 - For incomplete code where a return is expected or return type is void:
   - Throw `new Error('IMPLEMENTATION: <description of what is missing>, requiring <parameters required as JSON object>')`
   - This prevents TypeScript type errors and unused variable complaints
@@ -172,7 +172,7 @@ Skip Steps: [2, 3, 4, 5]   # only draft, no implementation
 
 ## Next Steps
 1. Review type definitions
-2. Complete implementations with /coding:complete-code
+2. Complete production implementations with /coding:complete-code, then route pending test markers to /coding:complete-test
 3. Add test assertions
 ```
 

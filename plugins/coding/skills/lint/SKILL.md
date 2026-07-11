@@ -1,6 +1,6 @@
 ---
 name: lint
-description: Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope.
+description: Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope, including calls extended by another plugin's portable lint profile.
 model: opus
 context: fork
 agent: general-purpose
@@ -45,8 +45,8 @@ Fail before editing if the profile is invalid, references a missing standard/sca
 4. Discover generic coding standards from active plugin context. Add profile standards without replacing or duplicating generic standards.
 5. Batch related files, with at most two files per batch.
 6. For each batch, delegate mechanical linting to a suitable available subagent that cannot delegate further:
-   - Run `plugins/coding/scripts/pyrun.sh plugins/coding/scripts/scan_potential_violations.py <files> --category all --before 5 --after 10` exactly once.
-   - Run each profile scanner exactly once, in declared order.
+   - Run `${CLAUDE_SKILL_DIR}/../../scripts/pyrun.sh ${CLAUDE_SKILL_DIR}/../../scripts/lint_profile_runner.py [--profile=<absolute-path>] <files>` exactly once. The runner resolves Coding resources from its installed location.
+   - The runner executes the generic scanner exactly once, then each profile scanner exactly once in declared order. Profile resources resolve relative to the absolute profile path.
    - Treat scanner output as advisory; confirm candidates against the matching rule before editing.
    - Apply generic and profile standards only within the requested scope.
    - Run project lint, type, and focused test commands after edits.

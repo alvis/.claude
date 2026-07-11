@@ -1,6 +1,6 @@
 ---
 name: handover
-description: Create/update detailed work handover notes for seamless continuation. Use when pausing work, switching contexts, documenting progress, or enabling another developer to continue your work.
+description: Persist CONTEXT.md, NOTES.md, and PLAN.md for later continuation of coding work. Use when pausing implementation or transferring repository state; this skill records the current session and does not create or execute a cross-domain plan.
 model: opus
 allowed-tools: Read, Write, Edit, Glob, Grep, Task, Bash, TodoRead, AskUserQuestion
 argument-hint: "[prefix]"
@@ -8,7 +8,8 @@ argument-hint: "[prefix]"
 
 # Work Handover Documentation
 
-Generates comprehensive handover documentation capturing current project & work context across three complementary files: CONTEXT.md (status & decisions), NOTES.md (implementation insights & solutions), and PLAN.md (goals & tasks) for seamless project continuation without requiring prior context
+Persist `CONTEXT.md`, `NOTES.md`, and `PLAN.md` for later continuation without
+requiring the next worker to share the current session context.
 
 ## 🎯 Purpose & Scope
 

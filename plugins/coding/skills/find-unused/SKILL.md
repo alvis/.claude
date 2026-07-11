@@ -1,6 +1,6 @@
 ---
 name: find-unused
-description: Identify commented-out code, unused symbols, and unused test helpers using LSP-based analysis. Use when cleaning up dead code, finding orphaned functions, or optimizing codebase size.
+description: Perform read-only dead-code discovery for commented-out code, unused symbols, and unused test helpers. Use when identifying removal candidates; report evidence without deleting, refactoring, linting, or otherwise modifying the inspected source.
 model: opus
 context: fork
 agent: general-purpose

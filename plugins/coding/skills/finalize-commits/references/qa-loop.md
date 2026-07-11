@@ -1,104 +1,20 @@
-# Per-Commit Atomic Finalize — procedure (jj + git)
+# Per-Commit QA
 
-Referenced from SKILL.md Step 4. Run by one `model:'haiku'` agent per commit. Finalizes EXACTLY ONE commit through seven sub-steps — replay, isolate, marker-check, gate, fold, reword, mark — that execute inside ONE dispatch. The operation is atomic: no sub-step may be deferred to a later phase or batched across commits, a commit is never left QA'd-but-unfolded, and the walk never advances past an unfolded commit. Patch-id marker mechanics: `markers.md`. Conventional Commits contract: `../../commit/references/conventional-commits.md`. Inline `GIT-MSG-*` rules: `../../../constitution/standards/git/write.md`.
+This reference defines observation and verification only. It never mutates
+history. Run one isolated QA pass per unpushed commit, oldest first:
 
-The Coherence Mandate binds every edit here: a lint/test fix must dissolve into the commit so it reads as originally authored, and a reworded subject must describe the commit's real contents — never narrate the QA pass.
+1. Record the target revision and create a disposable worktree through the
+   repository's supported tooling.
+2. Run the complete install, lint, test/coverage, and build gate in that clean
+   worktree. Capture each exit status directly and report failures.
+3. Check markers and conventional-commit conformance without changing the
+   target. A skipped gate still reports its reason and required follow-up.
+4. Return the existing per-commit report fields: `status`, `skipped_by_marker`,
+   `qa`, `lock_folded`, `gate_bypassed_wrappers`, `message_action`, `marked`,
+   `pending_decision`, and `newSha`, plus the target revision. Preserve these
+   keys even when their value is false, empty, or `none`.
 
-## Isolation model
-
-- **jj**: `jj edit <rev>` — the working copy becomes that commit; edits land in it directly. The original `@` change-id was captured at start (SKILL.md Step 1) and is restored at end (SKILL.md Step 5). Every rule below still binds on this path: one atomic dispatch per commit, the gate run whole, the lock fold mandatory, wrappers bypassed, exit codes captured directly. Generated artifacts (install output, build output) must be ignored so jj's automatic snapshot never sweeps them into the commit — the fold takes tracked edits only.
-- **git**: replay each commit onto a rebuild branch and QA it in a fresh throwaway worktree (Steps 1–2). A `git rebase` walk with `edit`/`break` stops is BANNED: every commit then shares one working tree, untracked generated files (install artifacts, build output) accumulate between commits and pollute later gates, and the only counter-move — `git clean` — is destructive and frequently sandbox-blocked. A worktree created fresh per commit contains tracked files only: isolation by construction, nothing to clean.
-
-### git path — working-copy capture (step 0)
-
-Run once, before target enumeration begins for the git path, so the rebuild walk starts from a clean tree and any pre-existing changes survive the run:
-
-0. Record the pre-run HEAD as `originalHead` (`git rev-parse HEAD`). If the working tree is dirty (`git status --porcelain` non-empty), snapshot it as a temporary WIP commit: `git add -A && git commit -m "finalize-commits: WIP @ (auto)"`. `-A` is correct here and ONLY here — the snapshot must capture the user's untracked files to give them back later, and it never enters finalized history. This WIP commit is a snapshot bracket only — it must NEVER itself be enumerated or finalized as a QA target, which target enumeration enforces structurally by bounding at `originalHead` (`@{upstream}..originalHead`), not `HEAD`. Never use `git stash push`/`git stash pop`; the user's existing stash entries must remain untouched. (`git stash create` may serve as a snapshot fallback if exact staged/unstaged fidelity is ever required; the WIP-commit round-trip below restores modified + untracked files but not an exact staged/unstaged split.) Undoing this bracket (see "working-copy restore (final)") is an UNCONDITIONAL exit obligation, owed on every exit path.
-
-## Step 1 — Replay (cherry-pick onto the rebuild branch)
-
-Given `cur` (the rebuilt parent: the previous iteration's folded sha, or the stack base for position 1) and `target` (the original commit), create this commit's worktree and replay into it:
-
-```bash
-dir=$(mktemp -d)
-git worktree add --detach "$dir" "$cur"
-cd "$dir"
-git cherry-pick -n "$target"; ec=$?
-git commit --no-verify -C "$target"     # signed per repo config; reuses message + authorship; hooks bypassed
-```
-
-Conflict handling — exactly one kind auto-resolves:
-
-1. **Lockfile-only conflict** (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`): take the incoming side (`git checkout --theirs <lockfile>`), then run the project install so the lockfile is regenerated against the tree's actual manifests, stage it, and complete the commit. No user prompt. Note that a regeneration happened — it obligates an install + lock fold even on a marker skip (Step 3).
-2. **Any other conflict**: do NOT attempt a best-effort merge. Destroy the worktree and raise `pending_decision { kind: semantic_conflict }` so opus decides before anything is committed.
-
-- **jj**: no replay is needed — `jj edit <rev>` positions the working copy directly, and conflicts surface as jj conflict markers. The same rule applies: a lockfile conflict regenerates-and-resolves silently; anything else raises `pending_decision { kind: semantic_conflict }`.
-
-## Step 2 — Isolate (the worktree is the boundary)
-
-The worktree created in Step 1 now sits at the replayed result and holds tracked files only — that is the entire isolation mechanism. All QA for this commit runs inside it; nothing from any other commit's gate can be present, and nothing this gate generates can leak forward, because the worktree is destroyed in Step 7. Never run the gate on a tree another commit has touched, and never reach for `git clean` to scrub one. (jj: the working copy on `<rev>` plays this role; keep generated artifacts ignored so the boundary holds.)
-
-## Step 3 — Marker skip
-
-Compute the commit's lock-excluded patch id (`markers.md`). If a green marker with a matching patch id exists, report `skipped_by_marker: true`, `status: green`, and skip the lint and test legs. One obligation survives the skip: if Step 1 regenerated the lockfile (an upstream fold cascaded into this commit), run the project install and fold the lock (Step 5) before advancing — the marker certifies the commit's content, not a stale lock. Then jump to Step 7.
-
-## Step 4 — QA gate (install + lint + test/coverage, together)
-
-One indivisible gate, run whole inside the worktree. A commit that skips any leg is NOT green, and the gate is never split across phases or batched across commits. Always prefer project scripts over raw tools (per coding CLAUDE.md); run in order, stop at first hard failure:
-
-1. **install** — project install (e.g. `npm ci` / `pnpm install`). Failure → `pending_decision { kind: test_fail, detail: install }` (rare; usually environmental).
-2. **lint `--fix`** — run the project lint with autofix. Lint and lockfile fixes are **auto-applied silently**.
-3. **test / coverage** — run the project test script; the coverage gate is the test script's exit 0. A failure is NOT auto-fixed: raise `pending_decision { kind: test_fail | coverage_fail }`.
-
-Code fixes are made through `coding:fix` (never hand-edited here) so they meet project standards.
-
-Two execution rules, both born from real false-green incidents:
-
-- **Bypass output-rewriting wrappers.** Shell hooks that rewrite or summarize command output corrupt machine-readable results and have produced false-green gates. Invoke gate commands via `rtk proxy <cmd>` or the direct binaries (`node_modules/.bin/...`), never through the rewriting layer.
-- **Capture exit codes directly, never through pipes.** `cmd; ec=$?` — immediately after the command, nothing in between. A pipeline's `$?` is the LAST command's status, and a real false pass came from misreading `$PIPESTATUS` under zsh (zsh spells it `$pipestatus` and indexes from 1). When output must be kept, redirect to a file instead of piping.
-
-## Step 5 — Fold, immediately
-
-Everything the gate changed amends into THIS commit before anything else happens — the fold is part of the same atomic operation, never a later cleanup pass:
-
-- **git** (inside the worktree):
-
-  ```bash
-  git add -u                                  # NEVER -A: bootstrap-generated untracked files must not enter history
-  git commit --amend --no-edit --no-verify    # signed per repo config
-  ```
-
-- **jj**: edits are already in the working copy on `<rev>`; `jj squash` any stray working-copy delta into it so nothing leaks to `@`. Tracked edits only — generated untracked artifacts stay ignored.
-
-The lockfile this commit's OWN install regenerated is a MANDATORY part of the fold, not best-effort: a commit whose lockfile does not match its own manifests is not green, whatever its tests say. The fold must be seamless — the commit reads as if authored correctly the first time.
-
-## Step 6 — Message conformance
-
-1. Read the current subject. Validate against the regex and rules in `../../commit/references/conventional-commits.md` and the `GIT-MSG-*` rules in `../../../constitution/standards/git/write.md`. Sample repo style: `git log --format=%s -n 50`.
-2. **Mechanical fixes — auto-apply silently**: type prefix casing, trailing-period removal, length trim (≤50 target / ≤72 hard), imperative-mood correction, scope kebab-casing, dropping catalog prefixes. Apply via the sanctioned history-finalizing commands:
-   - **jj**: `jj describe -r <rev> -m "<subject>"`
-   - **git**: `git commit --amend --no-verify -m "<subject>"` (inside the worktree, before the checkpoint)
-3. **Meaning change — confirm first**: a type change (e.g. `feat`→`fix`) or a scope change that alters what the commit claims to do raises `pending_decision { kind: meaning_reword }`. Opus confirms via `AskUserQuestion` before the reword is applied.
-
-## Step 7 — Mark, checkpoint, advance
-
-Once install + lint + test/coverage pass, the fold is in, and the message conforms with no outstanding decision:
-
-1. Write the lock-excluded patch-id marker (`markers.md`); report `status: green`, `marked: true`.
-2. Checkpoint the result: `git update-ref refs/finalize/<run>/pos-<N> <foldedSha>` — an abort at any later position resumes from the last such ref. (jj: the op log is the checkpoint; record the change-id in the report.)
-3. Destroy the worktree: leave the directory, then `git worktree remove --force "$dir"`.
-4. Report the folded sha as `newSha` so the walk chains `cur = newSha` into the next iteration (`workflow.md`).
-
-The branch head and the user's original ref move only after SKILL.md Step 5's end-state verify (Gate B in `workflow.md`); a mid-walk abort leaves the original ref untouched and the checkpoint refs resumable.
-
-## git path — working-copy restore (final)
-
-Undoing the step-0 snapshot bracket is an UNCONDITIONAL exit obligation: it runs on EVERY exit path — green completion, `pending_decision` halt, abort, error. A WIP commit stranded at the tip is an integrity failure, never an acceptable end state.
-
-- If a WIP commit was created in step 0, soft-reset it away and return its contents to the working tree unstaged: `git reset --soft HEAD^` then `git restore --staged .`. The tree is back to its pre-run dirty state (modified + untracked files restored, though not an exact staged/unstaged split). If `git stash create` was used as the fallback snapshot, apply that snapshot instead. Never touch the user's existing `git stash` entries.
-
-The jj path needs no equivalent teardown here — its original `@` change-id is restored in SKILL.md Step 5.
-
-## Reporting
-
-Return the Step 4 YAML report — `skipped_by_marker`, the per-leg `qa` results, `lock_folded`, `gate_bypassed_wrappers`, `message_action`, `marked` — plus `newSha` for the chain. If any `pending_decision` was raised, set `status: pending_decision` and populate the `pending_decision` block; opus resolves and resumes (see `workflow.md`).
+If a correction, fold, reword, reorder, checkpoint, reset, branch move, or push
+is approved, invoke `coding:commit` with the exact operation and target. Do not
+run `git` or `jj` history-mutating commands directly from this reference or its
+workers. Re-run the full QA pass after every delegated mutation.

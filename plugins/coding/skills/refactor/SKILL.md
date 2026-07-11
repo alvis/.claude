@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: 'Refactor code for quality and maintainability without changing behavior; improves structure, naming, and JSDoc. Triggers when: "refactor this", "clean up this code", "rename these variables", "improve readability", "add JSDoc comments". Also use when: simplifying complex functions, extracting helpers, standardizing naming across a module. Examples: "refactor src/utils", "clean up this file", "add JSDoc to all exports".'
+description: Improve green code through behavior-preserving structural changes to organization, naming, readability, or documentation. Use when existing tests pass and the requested outcome is maintainability rather than a bug fix, new feature, or version-driven API upgrade.
 model: opus
 context: fork
 agent: general-purpose

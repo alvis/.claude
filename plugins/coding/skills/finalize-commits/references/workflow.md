@@ -1,63 +1,10 @@
-# Per-Commit Loop as an ultracode Workflow (+ Mechanism B fallback)
+# Finalization Workflow
 
-Referenced from SKILL.md Step 4. Defines how the atomic per-commit walk runs as a dynamic Workflow when the `Workflow` tool is available, and the inline fallback when it is not. Per-commit procedure: `qa-loop.md`.
+`finalize-commits` coordinates read-only inspection, isolated QA, and approval
+gates. It delegates every mutation to `coding:commit`, including correction
+folds, message changes, stack movement, rollback, checkpointing, and push.
 
-## Shape
-
-Strictly sequential walk, oldest-first, one commit at a time. One `model:'haiku'` agent per commit executes the FULL atomic seven-sub-step operation from `qa-loop.md` — replay, isolate, marker-check, gate, fold, reword, mark — inside a single dispatch; nothing is split across workflow steps or batched across commits. **opus governs** — it owns every `pending_decision` and resumes the run. Sequential (not fanout) because each commit replays onto the previous commit's folded result and history rewrites must not race; N isolated installs of wall-clock is the accepted price of atomicity.
-
-The walk chains the rebuilt head forward:
-
-```
-cur = stackBase                              # parent of the oldest target
-for each target (oldest-first):
-    result = haiku(qa-loop.md, cur, target)
-    cur = result.newSha                      # the folded, marked commit
-```
-
-An abort at any position returns the last-good checkpoint (`refs/finalize/<run>/pos-N`; jj: the op log) and leaves the original ref untouched; the run is resumable from the checkpoint refs via `resumeFromRunId`.
-
-## Two-gate pattern (order surgery is verified before QA is spent)
-
-When the run includes order changes or hunk folds — Step 2's recommendation — they run as a separate surgery pass FIRST, before any per-commit QA:
-
-- **Gate A — tip invariance, before any QA spend**: every order fix is an internal move, so the tip tree must be invariant. Verify `git diff <originalTip> <rebuiltTip> -- . ':(exclude)<lockfile>'` is EMPTY (jj: `jj diff --from <original> --to <rebuilt> --git -- '~<lockfile>'`). Non-empty means the surgery changed content — roll back; the walk does not start.
-- **Gate B — after the walk, before the branch head moves**: the same tip-equivalence check against the fully rebuilt tip (only QA folds and rewords may differ), PLUS the lock fixed-point: run the project install at the rebuilt tip and verify `git status --porcelain -- <lockfile>` is empty — the tip's lockfile is already self-consistent. Only after Gate B passes does the branch head (and `HEAD`/`@`) advance to the rebuilt stack.
-
-## Mechanism A — Workflow tool
-
-1. Build one step per target commit, each dispatching one haiku agent that runs the full `qa-loop.md` operation for that `<rev/sha>`, receiving `cur` and returning `newSha`.
-2. A step returning `status: green` chains `cur = newSha` and advances the walk.
-3. A step returning `status: pending_decision` **stops** the workflow and surfaces the `pending_decision` block to opus.
-4. Opus resolves it:
-   - `test_fail` / `coverage_fail` → `AskUserQuestion` (fix now via `coding:fix` / accept / abort); on fix, re-run that commit's full atomic operation.
-   - `semantic_conflict` → `AskUserQuestion` to decide the resolution (nothing was auto-merged).
-   - `meaning_reword` → `AskUserQuestion` to confirm the type/scope change; on confirm, apply the sanctioned `jj describe` / `git commit --amend`.
-5. Opus resumes the workflow from the stopped step via `resumeFromRunId`; the checkpoint ref for the last green position supplies `cur`.
-6. The run completes when every commit reports `green`; Gate B then clears the head to move.
-
-## Mechanism B — no Workflow tool (fallback)
-
-Drive the identical loop inline, with identical atomic semantics:
-
-```
-cur = stackBase
-for rev in targets (oldest-first):
-    report = Agent(model='haiku', task=qa-loop.md for rev onto cur)
-    while report.status == 'pending_decision':
-        decision = AskUserQuestion(report.pending_decision)
-        apply(decision)            # coding:fix for code; confirm+describe/amend for message
-        report = Agent(model='haiku', task=qa-loop.md for rev onto cur)   # re-run the full atomic op
-    assert report.status == 'green'
-    cur = report.newSha
-```
-
-Same governance, same stop/resume semantics — opus blocks on each `pending_decision` and only advances when the current commit is green.
-
-## Invariants (both mechanisms)
-
-- One commit finalized fully — green + folded + marked — before the next begins; the walk never advances past an unfolded commit.
-- No commit is marked while a `pending_decision` is outstanding.
-- The branch head moves only after Gate B; mid-walk state lives entirely in the rebuild chain and the checkpoint refs, and a mid-walk abort leaves the original ref untouched.
-- History rewrites stay guarded by `../../commit/scripts/backup.sh` + `../../commit/scripts/verify.sh`; integrity failure rolls back and STOPs.
-- Working-copy restore (`qa-loop.md` step 0 / final) is an unconditional exit obligation — every exit path, including aborts, ends with the WIP bracket removed; the original `@` (jj) is restored in Step 5.
+For a failed gate, route code changes to `coding:fix`, then ask `coding:commit`
+to apply the approved change. For a semantic conflict or meaning-changing
+reword, stop for approval. Resume only after `coding:commit` reports success and
+rerun the affected commit's complete QA.
