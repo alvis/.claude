@@ -1,7 +1,7 @@
 ---
 name: design
-version: 4.1.0
-description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; produces DESIGN.md and an HTML preview catalog with WCAG contrast checks via Chrome DevTools MCP. Interactive direction picking with a local HTML candidate board, then area-by-area design selection: every page area gets a rendered board of 5+ ranked variants sent as a realistic image, chosen one question at a time; --facelift mode redesigns an existing site into a stunning v2 while preserving content and brand intent. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup", "facelift my site", "give this website a makeover", "make a v2 of this design". Also use when: proposing layouts, picking color palettes, adding visual polish, revamping an existing site''s look. Examples: "design a landing page", "make the dashboard look modern", "facelift https://example.com".'
+version: 4.2.0
+description: 'Design modern, visually stunning UIs with layouts, palettes, typography, and animations; maintains a .design-<noun-phrase> task workspace with CONTEXT.md, DECISIONS.md, rendered HTML boards, and a root DESIGN.md general direction, plus an HTML preview catalog with WCAG contrast checks via Chrome DevTools MCP. Interactive direction picking with a local HTML candidate board, then area-by-area design selection: every page area gets a rendered board of 3 ranked variants sent as a realistic image, chosen one question at a time; --facelift mode redesigns an existing site into a stunning v2 while preserving content and brand intent. Triggers when: "design the UI", "make this page beautiful", "redesign this component", "improve the visual design", "modernize the UI", "create a mockup", "facelift my site", "give this website a makeover", "make a v2 of this design". Also use when: proposing layouts, picking color palettes, adding visual polish, revamping an existing site''s look. Examples: "design a landing page", "make the dashboard look modern", "facelift https://example.com".'
 argument-hint: "[page/component/site to design or improve] [--facelift] [--style=<style>] [--skip-directions] [--quick]"
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet, AskUserQuestion, SendUserFile
 ---
@@ -16,7 +16,9 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, Tea
 
 The most important goal of this skill is to produce **modern, visually stunning, pleasing, impressive, and functional** user interfaces. Visual excellence is the north star — every design must be beautiful, delightful, and contemporary while remaining fully usable. This skill actively designs and iterates using a browser feedback loop powered by Chrome DevTools MCP and agent-browser, referencing the design standard (`constitution/standards/design/`) for prescriptive patterns.
 
-**Reusability is the key theme**: every visual decision lands in the CSS theme, every component decision favors the shared library, every artifact must be resumable by an agent with zero context.
+**Reusability is the key theme**: every visual decision lands in the CSS theme, every component decision favors the shared library, and every artifact must be resumable by an agent with zero context. Each task keeps its temporary boards, captures, previews, context, and detailed decision history under one `./.design-<noun-phrase>/` workspace; the root `DESIGN.md` carries the general direction and implementation handoff.
+
+Coherence Mandate. Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Updates must therefore reshape the skill's existing sections in place — never a "Recent changes" trailer beneath the original workflow or a second parallel step list.
 
 ## When to use
 
@@ -30,7 +32,7 @@ The most important goal of this skill is to produce **modern, visually stunning,
 - Create mockup or prototype visuals
 - Facelift an existing site into a stunning v2 (`--facelift`) — content and brand intent preserved, presentation rebuilt to impress
 - Let the user pick the aesthetic direction visually from a local HTML candidate board
-- Walk a page area by area (hero, nav, sections, footer), each chosen from a rendered image of 5+ ranked variants
+- Walk a page area by area (hero, nav, sections, footer), each chosen from a rendered image of exactly 3 ranked variants
 
 </identity>
 
@@ -83,14 +85,47 @@ Extract the design target and flags from $ARGUMENTS. If a flag is present, it fo
 |---|---|
 | `--facelift` | Makeover mode for an EXISTING site: capture and study the current design, preserve content meaning / brand intent / conversion paths, rebuild the presentation as a stunning v2. Routes through `references/facelift.md` after the direction gate. Applies the independent Design Critic + Perf/A11y Auditor sign-off gates and the performance budget gate. |
 | `--style=<style>` | Seed the aesthetic direction (e.g. `--style=minimal`, `--style=bold`, `--style=editorial`). Pre-fills direction question 2 and biases the generated direction candidates; does NOT skip the direction gate. |
-| `--skip-directions` | Skip the interactive direction board. Requires `--style=<style>` OR an already-confirmed Direction Summary in an existing DESIGN.md (Context & Decision Log). The 3-line Direction Summary is still written and confirmed via a single AskUserQuestion (default: proceed). |
-| `--quick` | Skip the per-area choice questions in `<area_boards>`. The direction board (unless `--skip-directions`) and Direction Summary confirmation still run; area boards are still generated and ranked, but the reviewer-ranked #1 variant is auto-picked per area, recorded in DESIGN.md §10, and the full set is summarized for overturn at the Phase 3 sign-off gate. |
+| `--skip-directions` | Skip the interactive direction board. Requires `--style=<style>` OR an already-confirmed Direction Summary in the active task's `CONTEXT.md` and root `DESIGN.md`. The 3-line Direction Summary is still written and confirmed via a single AskUserQuestion (default: proceed). |
+| `--quick` | Skip the per-area choice questions in `<area_boards>`. The direction board (unless `--skip-directions`) and Direction Summary confirmation still run; exactly 3-variant area boards are still generated and ranked, but the reviewer-ranked #1 variant is auto-picked per area, recorded in `.design-<noun-phrase>/DECISIONS.md`, and summarized in DESIGN.md §10 for overturn at the Phase 3 sign-off gate. |
 
 Parsing: target = everything in $ARGUMENTS that is not a flag (default: ask what to design).
 `--facelift` without a URL or runnable local app → the intake gate in references/facelift.md stops and asks.
 `--skip-directions` without `--style` and without a prior confirmed direction → ignore the flag and run the picker (say so).
 
 </flags>
+
+<workspace>
+
+## Design Task Workspace
+
+Before any design questions, create or resume the task workspace described in
+`references/design-workspace.md`:
+
+1. Derive a short noun-phrase slug from the target and inspect the project root
+   for `./.design` and every `./.design-*` directory.
+2. If an existing workspace is present, ask the user whether to resume the
+   selected task or start a new `./.design-<noun-phrase>/` workspace. For a
+   legacy `./.design` directory, explicitly ask whether to resume/migrate it or
+   start a new named workspace. Never silently overwrite or merge workspaces.
+3. For a new task, create `./.design-<noun-phrase>/CONTEXT.md` and
+   `./.design-<noun-phrase>/DECISIONS.md` before generating any board. For a
+   resumed task, read both files before generating anything and continue from
+   their recorded phase and next action.
+4. Store every temporary design artifact — HTML, CSS, JSON, PNG, board,
+   screenshot, capture, preview, and inventory — below the active workspace.
+   Do not use a session scratchpad or `$TMPDIR` fallback.
+5. Create or update `<root>/DESIGN.md` for the overall design direction and
+   place this exact one-line handoff near its top, with the active slug:
+
+   `/goal Follow the decisions in ./.design-<noun-phrase>/DECISIONS.md for this design task.`
+
+Keep `CONTEXT.md` current with the design context and general direction. Append
+each visual choice immediately to `DECISIONS.md`, including the presented
+candidate details, chosen design, rejected designs and reasons, confirmation,
+and next action. Keep the workspace after sign-off unless the user explicitly
+chooses to archive or remove it.
+
+</workspace>
 
 <inputs>
 
@@ -161,7 +196,8 @@ style-explorer owns one; solo: generate sequentially; `--style=<style>` biases b
 collapse the set; facelift mode: candidates anchor to the keep/kill analysis and named
 exemplars per references/facelift.md), build the board, rank the tiles, render → screenshot →
 send the image → capture the pick with one AskUserQuestion, loop on mix-and-match, and record
-the pick + rejections into DESIGN.md §10 immediately. All mechanics — tile requirements,
+the pick + rejections into `./.design-<noun-phrase>/DECISIONS.md` immediately, with a concise
+summary in DESIGN.md §10. All mechanics — tile requirements,
 rank badges, presentation, battery wording, recording — live in `references/design-boards.md`;
 do not improvise them here.
 
@@ -199,14 +235,14 @@ language. State the area list to the user before the first board.
 
 For EACH area, in page order:
 
-1. **Generate ≥5 variants** of that area in the locked direction (team mode: style-explorers
+1. **Generate exactly 3 variants** of that area in the locked direction (team mode: style-explorers
    split them). Variants must differ on at least two of: composition, density, imagery
    treatment, separator treatment, motion. Every variant demonstrates the
    `<world_class_elements>` items relevant to the area — visible hover-state demos, an
    entrance-transition demo, explicit top and bottom separator treatments, real content.
 2. **Rank** — the visual-reviewer ranks all variants; each tile gets a visible rank badge
    (#1 · recommended … #N) and a one-line "why this rank" (design-boards.md A3).
-3. **Build the board** at `<session scratchpad>/design-boards/<area-slug>.html` per
+3. **Build the board** at `./.design-<noun-phrase>/design-boards/<area-slug>.html` per
    design-boards.md C1–C2: one column of stacked variants in rank order.
 4. **Render → verify → send as a realistic image**: `new_page file://…` → full-page
    `take_screenshot`; inspect the screenshot for defects first; then `SendUserFile` the
@@ -214,15 +250,18 @@ For EACH area, in page order:
 5. **Ask ONE AskUserQuestion** (design-boards.md C3): "{Area}: which design?" — options
    `#1 (Recommended)`, `#2`, `#3`, and "Another variant or mix — name the number(s)".
    Mix/other → build the merged variant, re-present, re-ask until an explicit pick.
-6. **Record immediately** into DESIGN.md §10 (per-area picks table): chosen variant,
-   rejected variants + one-line why.
+6. **Record immediately** into `./.design-<noun-phrase>/DECISIONS.md`: the chosen
+   variant, full details for all presented variants, rejected variants + one-line
+   why, the user's confirmation, and the next action. Summarize the pick in
+   DESIGN.md §10.
 7. Move to the next area. Later boards are generated KNOWING the earlier picks, so choices
    compound coherently — never present two areas' boards before capturing the first pick,
    and never batch multiple areas into one question round.
 
-`--quick` short-circuits steps 4–5 only: boards are still generated and ranked, the #1
-variant is auto-picked and recorded per area, and the full set is presented for overturn at
-the Phase 3 sign-off gate (design-boards.md C5).
+`--quick` short-circuits steps 4–5 only: exactly 3-variant boards are still generated
+and ranked, the #1 variant is auto-picked and recorded in `DECISIONS.md` with its
+rank rationale, and the full set is presented for overturn at the Phase 3 sign-off
+gate (design-boards.md C5).
 
 `--facelift`: the area list follows the facelift slice order (hero → navigation →
 sections → footer), variants anchor to the keep/kill analysis and named exemplars per
@@ -532,7 +571,7 @@ You are the Lead Orchestrator. Create a persistent team via `TeamCreate`:
 Cycle (direction): lead briefs each style-explorer with a distinct aesthetic
 constraint → reviewer ranks all candidates against the standards → lead runs the
 Direction Board per `<direction>` → user picks → chosen direction locks.
-Cycle (area boards): for each area in `<area_boards>`, lead splits the ≥5 variants
+Cycle (area boards): for each area in `<area_boards>`, lead splits the exactly 3 variants
 across style-explorers → reviewer ranks them (rank badges + why-this-rank) → lead
 presents the board image and captures the pick → next area. Chosen designs iterate
 with reviewer until convergence → `TeamDelete` on completion.
@@ -565,7 +604,7 @@ per-area choice from `<area_boards>` (DESIGN.md §10). Do not re-litigate settle
 2. **Select color palette** following write.md Color Palette Construction (primary/accent/neutrals/semantic); express it as the two-tier token vocabulary from `<theming>`
 3. **Select type scale** following write.md Type Scale (1.25 ratio, Display → Tiny)
 4. **Define spacing system** following write.md Spacing Scale (4px/8px grid)
-5. **Design layout** by assembling the chosen area variants, using component-type patterns and HCI principles to resolve the joins
+5. **Design layout** by assembling the chosen area variants, using component-type patterns and HCI principles to resolve the joins. Follow the recorded choices in `./.design-<noun-phrase>/DECISIONS.md`; do not re-litigate a confirmed decision.
 6. **Fill the World-Class Element Checklist** (`<world_class_elements>`) — page transition, scroll reveals, per-boundary separators (from the connective-tissue pick), hover/focus states, states for dynamic regions; motion values per `references/design-reference.md` Motion Specifics
 7. **Write implementation** code in the detected framework (React/Vue/Tailwind/vanilla)
 
@@ -591,11 +630,11 @@ Apply these constraints to every proposal:
 >
 > When creating a design system for a production UI, use the DESIGN.md scaffold from `references/design-reference.md` as the starting structure.
 
-1. **Create DESIGN.md** — From `references/design.template.md` (13 sections), at the project root, capturing all agreed design tokens (colors, typography, spacing, radii, shadows, component styles) AND the "Motion, Transitions & Separators" spec (§4) from the connective-tissue pick and the World-Class Element Checklist. Fill §10 Context & Decision Log immediately: the chosen direction, the per-area picks table, every REJECTED candidate/variant with a one-line rationale, exemplars (facelift), hard constraints, and every AskUserQuestion outcome so far.
+1. **Create or update `<root>/DESIGN.md`** — Use `references/design.template.md` for the overall design direction and implementation handoff. It must include the visual thesis, content plan, interaction thesis, agreed design tokens (colors, typography, spacing, radii, shadows, component styles), and the "Motion, Transitions & Separators" spec (§4) from the connective-tissue pick and World-Class Element Checklist. Keep the detailed candidate records in `./.design-<noun-phrase>/DECISIONS.md`; DESIGN.md §10 links to `CONTEXT.md` and `DECISIONS.md` and summarizes the chosen direction, per-area picks, rejected candidates, hard constraints, and AskUserQuestion outcomes. Keep the exact `/goal Follow the decisions in ./.design-<noun-phrase>/DECISIONS.md for this design task.` line near the top.
 2. **Scaffold the theme via `web:css`** — Invoke the `web:css` skill (Skill tool) to create or align the project's theme stylesheet with the agreed tier-1/tier-2 tokens; pass the full token list from DESIGN.md. This skill never hand-writes the 5-branch `@layer theme` block into project code.
-3. **Create preview.html** — From `references/preview.template.html`: a single self-contained catalog whose `@layer theme` block mirrors the project theme stylesheet values exactly, with the preview-only 3-state toggle.
-4. **Visual verification** — run the Standard Capture Sequence (`<contrast_protocol>`) against `file://<preview>`; `take_screenshot` in system, light, AND dark (set/remove `data-theme` via `evaluate_script`); run the contrast script in light and dark.
-5. **User sign-off** — Present DESIGN.md + preview screenshots (in `--quick` runs, include the auto-picked area variants for overturn) and gate on `AskUserQuestion` (safe default: approve as presented). Do not start implementation before approval.
+3. **Create `./.design-<noun-phrase>/previews/preview.html`** — From `references/preview.template.html`: a single self-contained catalog whose `@layer theme` block mirrors the project theme stylesheet values exactly, with the preview-only 3-state toggle.
+4. **Visual verification** — run the Standard Capture Sequence (`<contrast_protocol>`) against `file://<root>/.design-<noun-phrase>/previews/preview.html`; `take_screenshot` in system, light, AND dark (set/remove `data-theme` via `evaluate_script`), saving images under `./.design-<noun-phrase>/screenshots/`; run the contrast script in light and dark.
+5. **User sign-off** — Present DESIGN.md, the active workspace path, the decision-log summary, and preview screenshots (in `--quick` runs, include the auto-picked area variants for overturn) and gate on `AskUserQuestion` (safe default: approve as presented). Do not start implementation before approval.
 
 ### Phase 4: Evaluate (Browser Feedback Loop)
 
@@ -717,8 +756,8 @@ Before any design is considered complete, it must pass all of these checks:
 | 7 | **Variety Verified** | No two consecutive sections share the same layout pattern. |
 | 8 | **Mobile Real-Check** | Layout reviewed at 375px width — no horizontal scroll, touch targets ≥44px. |
 | 9 | **AI Slop Test** | Show the page to someone without context. If they say "looks AI-generated," it fails. Rework the weakest element and retest. |
-| 10 | **Handover Test** | DESIGN.md sections 10–13 filled such that a zero-context agent could resume without asking what was decided. |
-| 11 | **Area Picks Locked** | Every enumerated area plus the connective-tissue board has a recorded pick in DESIGN.md §10 (`--quick`: auto-picks logged and surfaced at sign-off). |
+| 10 | **Handover Test** | DESIGN.md sections 10–13 plus the active workspace `CONTEXT.md` and `DECISIONS.md` let a zero-context agent resume without asking what was decided. |
+| 11 | **Area Picks Locked** | Every enumerated area plus the connective-tissue board has a recorded pick in `./.design-<noun-phrase>/DECISIONS.md` and a summary in DESIGN.md §10 (`--quick`: auto-picks logged and surfaced at sign-off). |
 | 12 | **Separators Designed** | Every section boundary has a deliberate treatment from the Section Separator Vocabulary; no two consecutive boundaries repeat it. |
 | 13 | **States Complete** | Every interactive element has a designed hover AND `:focus-visible` state; dynamic regions have loading/empty/error designs. |
 | 14 | **Transitions Specced** | Page transition and scroll-reveal language implemented per the connective-tissue pick, with `prefers-reduced-motion` fallbacks. |
@@ -731,18 +770,21 @@ Before any design is considered complete, it must pass all of these checks:
 
 Every run's outputs must let a zero-context follow-up agent resume without getting lost.
 
-- DESIGN.md is the single handover artifact. Sections 10–13 (Context & Decision Log,
-  Component Inventory & Sources, Implementation State & Next Steps, File Map) are
-  MANDATORY: record the chosen direction AND each rejected candidate with one-line
-  rationale, every AskUserQuestion outcome (library, architecture, styling strategy,
-  patch-upstream decisions), the exemplar list, and exact file paths touched.
+- DESIGN.md is the overall design-direction and implementation handoff. Sections 10–13
+  (Context & Decision Log, Component Inventory & Sources, Implementation State & Next
+  Steps, File Map) are MANDATORY. The active `./.design-<noun-phrase>/CONTEXT.md`
+  documents the current task context and the active `DECISIONS.md` is the detailed
+  visual decision source of truth: record every presented candidate's design details,
+  chosen design, rejected candidates with one-line rationale, every AskUserQuestion
+  outcome, the exemplar list, and exact file paths touched.
 - Update Implementation State at every save point (facelift: every slice), not at the end.
 - Facelift runs additionally record: content-parity inventory location, per-slice ledger
   (change, technique, critic verdict + cited exemplar divergence, metrics, status,
   save-point change id), rollback points.
 - Save points go through the `coding:commit` skill (Skill tool) — jj-first; never raw git.
-- Litmus: paste DESIGN.md alone into a fresh session and ask "what do I do next?" — if
-  the answer is not obvious, the documentation gate fails.
+- Litmus: paste DESIGN.md plus the active workspace's CONTEXT.md and DECISIONS.md into
+  a fresh session and ask "what do I do next?" — if the answer is not obvious, the
+  documentation gate fails.
 
 </handover>
 
@@ -768,6 +810,7 @@ When making design decisions, apply these principles from `references/design-psy
 - **`constitution/standards/design/scan.md`**: Self-audit violation checklist (24 rules across 12 categories)
 - **`constitution/standards/design/rules/`**: Individual rule files with Intent, Fix, Code Superpowers, Common Mistakes
 - **`references/design.template.md`**: Canonical 13-section DESIGN.md template — sections 10–13 are the handover contract
+- **`references/design-workspace.md`**: Task workspace bootstrap, resume gate, CONTEXT.md requirements, DECISIONS.md schema, and `/goal` handoff line
 - **`references/preview.template.html`**: Single compliant design-token catalog (5-branch `@layer theme`, two-tier tokens, preview-only 3-state toggle)
 - **`references/facelift.md`**: Complete `--facelift` workflow — intake gate, capture & inventory, keep/kill, critic/auditor seats, perf gate, content parity, rubric, stop conditions
 - **`references/design-boards.md`**: All board mechanics — shared present-and-ask procedure (Part A), direction board tile checklist + skeleton (Part B), area boards with ranked variants + connective-tissue board (Part C)
