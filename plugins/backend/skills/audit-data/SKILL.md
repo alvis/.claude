@@ -85,7 +85,7 @@ Load spec from Notion → audit schema, operations, controllers → generate AUD
    |                    +- Schema audit (Prisma vs Notion entities)
    |                    +- Operation audit (coverage + patterns)
    |                    +- Controller audit (method alignment)
-   |                    +- coding:review + coding:lint + coding:find-unused
+   |                    +- coding:review-code + coding:lint + coding:find-unused
    v
 [Step 3: Generate Report] --------- (You: compile AUDIT.md)
    |
@@ -132,7 +132,7 @@ Legend:
 - **Purpose**: Fetch data domain specification from Notion
 - **Input**: Domain name
 - **Output**: Entity definitions, operation specs, controller expectations
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
+- **Sub-skill**: `specification:sync-notion`
 - **Parallel Execution**: No
 
 #### Execute Sync Sub-Skill (You)
@@ -150,7 +150,7 @@ Legend:
 **Step Configuration**:
 
 - **Purpose**: Validate schema, operations, and controllers against specification
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/lint/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/find-unused/SKILL.md`
+- **Sub-skills**: `coding:review`, `coding:lint`, `coding:find-unused`
 - **Parallel Execution**: Yes (3 audit streams in parallel)
 
 #### Phase 1: Planning (You)
@@ -176,7 +176,7 @@ Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST cont
     **Implementation**: [absolute path(s) to prisma/ schema files]
     **Output Template**: [absolute path to AUDIT.md schema-findings template]
     **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
+    - backend constitution/standards/data-entity.md
 
     **Report** (<1000 tokens):
     ```yaml
@@ -202,7 +202,7 @@ Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST cont
     **Implementation**: [absolute path(s) to src/operations/ and src/operations/index.ts]
     **Output Template**: [absolute path to AUDIT.md operation-findings template]
     **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
+    - backend constitution/standards/data-operation.md
 
     **Report** (<1000 tokens):
     ```yaml
@@ -228,8 +228,8 @@ Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST cont
     **Implementation**: [absolute path to source/index.ts and src/operations/index.ts]
     **Output Template**: [absolute path to AUDIT.md controller-findings template]
     **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
+    - backend constitution/standards/data-operation.md
+    - backend constitution/standards/data-entity.md
 
     **Report** (<1000 tokens):
     ```yaml
@@ -243,7 +243,7 @@ Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST cont
     ```
     <<<
 
-Also execute in parallel: `coding:review`, `coding:lint`, `coding:find-unused`
+Also execute in parallel: `coding:review-code`, `coding:lint`, `coding:find-unused`
 
 #### Phase 4: Decision (You)
 
@@ -307,7 +307,7 @@ Present AUDIT.md to user. Collect accept/reject/defer per finding. If `--auto-fi
 
 ### Step 5: Sync Decisions to Notion
 
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
+- **Sub-skill**: `specification:sync-notion`
 - Execute in **push mode**
 
 ---
@@ -317,13 +317,13 @@ Present AUDIT.md to user. Collect accept/reject/defer per finding. If `--auto-fi
 **Step Configuration**:
 
 - **Purpose**: Remediate accepted findings
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-data/SKILL.md`
+- **Sub-skill**: `backend:build-data`
 - **Skip condition**: No accepted findings
 
 #### Execute Build Sub-Skill (You)
 
 1. Compile accepted schema changes, missing operations, and controller fixes into a domain extension spec
-2. Load `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-data/SKILL.md`
+2. Load `backend:build-data`
 3. Execute in **extend mode** with the accepted changes
 
 ---

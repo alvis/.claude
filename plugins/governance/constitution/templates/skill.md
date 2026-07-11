@@ -1,6 +1,6 @@
 ---
 name: skill-name
-description: "Use when a concrete trigger requires this reusable capability and neighboring skills do not own the work."
+description: "Use when a concrete trigger requires this reusable capability and neighboring skills do not own the work. Define one reusable outcome with explicit inputs, boundaries, verification, and completion evidence."
 ---
 
 # Skill Name

@@ -356,8 +356,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--plugins",
         type=str,
-        default="/Users/alvis/Repositories/.claude/plugins",
-        help="Directory containing plugin definitions",
+        default=str(Path(__file__).resolve().parents[1] / "plugins"),
+        help="Directory containing plugin definitions (defaults to this repository's plugins)",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of human-readable tables")
     parser.add_argument(

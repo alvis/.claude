@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: Conduct comprehensive multi-source research with AI-powered analysis. Use when investigating complex topics, gathering information from multiple sources, or synthesizing research findings.
+description: Conduct comprehensive multi-source research with AI-assisted analysis and explicit source synthesis. Use when investigating complex topics, comparing evidence, gathering current information, or producing a fact-finding report with citations and uncertainty notes. Do not use for metric-driven candidate optimization.
 model: opus
 allowed-tools: Bash, Task, Read, Write, Edit, MultiEdit, WebSearch, WebFetch, Grep, Glob, TodoWrite
 argument-hint: "<research-topic> [optional-focus-area]"

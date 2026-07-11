@@ -103,7 +103,7 @@ User provides service specification → Step 1 discovers/validates requirements 
 [Step 5: Quality Gate] ---------> (Sub-skills: coding:fix + coding:lint + coding:refactor)
    |                                  Fix cycle (max 3)
    v
-[Step 6: Review] ----------------> (Sub-skill: coding:review)
+[Step 6: Review] ----------------> (Sub-skill: coding:review-code)
    |
    v
 [Step 7: Commit Gate] -----------> (Sub-skill: coding:commit or coding:handover)
@@ -155,13 +155,13 @@ Legend:
    - External integrations, peer services, webhooks, guards (all optional)
 
 2. **Detect mode**:
-   - Run `ls /Users/alvis/Repositories/core/services/{name}/ 2>/dev/null`
+   - Run `ls <repository-root>/services/{name}/ 2>/dev/null`
    - If directory exists → **extend mode**
    - If not → **new mode**
 
 3. **Verify packages exist**:
-   - Run `ls /Users/alvis/Repositories/core/packages/manifest-{name}/ 2>/dev/null`
-   - Run `ls /Users/alvis/Repositories/core/packages/data-{domain}/ 2>/dev/null`
+   - Run `ls <repository-root>/packages/manifest-{name}/ 2>/dev/null`
+   - Run `ls <repository-root>/packages/data-{domain}/ 2>/dev/null`
    - If manifest missing and new mode → Step 2 will create it
    - If data package missing → STOP and inform user
 
@@ -214,13 +214,13 @@ For Phase 2 (schema/manifest subagent prompt + schema patterns), Phase 3 (review
 - **Purpose**: Scaffold the service directory tree with boilerplate files
 - **Input**: Validated requirements from Step 1
 - **Output**: Service directory with skeleton files
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/setup-project/SKILL.md`
+- **Sub-skill**: `coding:setup-project`
 - **Parallel Execution**: No
 - **Skip condition**: If extend mode, skip entirely
 
 #### Execute Setup Sub-Skill (You)
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/setup-project/SKILL.md`
+1. Load `coding:setup-project`
 2. Execute with context specifying the `@theriety/service-{name}` package structure
 3. After complete, continue to Step 4
 
@@ -240,9 +240,9 @@ For Phase 2 (schema/manifest subagent prompt + schema patterns), Phase 3 (review
 
 For per-batch context (files to create, implementation patterns, test patterns, and reference file paths), see `references/implementation-patterns.md`.
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/draft-code/SKILL.md` and execute with the **Draft Phase Context** from the reference.
-2. After draft complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-code/SKILL.md` and execute with the **Implementation Phase Context** from the reference.
-3. After implementation complete, load `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-test/SKILL.md` and execute with the **Test Phase Context** from the reference.
+1. Load `coding:draft-code` and execute with the **Draft Phase Context** from the reference.
+2. After draft complete, load `coding:complete-code` and execute with the **Implementation Phase Context** from the reference.
+3. After implementation complete, load `coding:complete-test` and execute with the **Test Phase Context** from the reference.
 
 ---
 
@@ -253,7 +253,7 @@ For per-batch context (files to create, implementation patterns, test patterns, 
 - **Purpose**: Fix issues, lint, and refactor for production quality
 - **Input**: Implemented service from Step 4
 - **Output**: Clean, production-ready code
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/fix/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/lint/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/refactor/SKILL.md`
+- **Sub-skills**: `coding:fix`, `coding:lint`, `coding:refactor`
 - **Parallel Execution**: No (sequential — fix first, then lint, then refactor)
 
 #### Execute Quality Sub-Skills (You)
@@ -272,12 +272,12 @@ For per-batch context (files to create, implementation patterns, test patterns, 
 - **Purpose**: Comprehensive code review before commit
 - **Input**: Quality-gated code from Step 5
 - **Output**: Review report with approval or required changes
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`
+- **Sub-skill**: `coding:review`
 - **Parallel Execution**: No
 
 #### Execute Review Sub-Skill (You)
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`
+1. Load `coding:review`
 2. Execute review covering: correctness, patterns, security, test coverage
 3. If review finds issues → loop back to Step 5
 4. If review passes → proceed to Step 7
@@ -291,7 +291,7 @@ For per-batch context (files to create, implementation patterns, test patterns, 
 - **Purpose**: Commit changes or create handover notes
 - **Input**: Reviewed code from Step 6
 - **Output**: Git commit or handover document
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/commit/SKILL.md` or `/Users/alvis/Repositories/.claude/plugins/coding/skills/handover/SKILL.md`
+- **Sub-skill**: `coding:commit` or `coding:handover`
 - **Parallel Execution**: No
 
 #### Phase 4: Decision (You)
@@ -309,8 +309,8 @@ For per-batch context (files to create, implementation patterns, test patterns, 
 status: success|failure|partial
 service_name: '{name}'
 mode: new|extend
-package_path: '/Users/alvis/Repositories/core/services/{name}/'
-manifest_path: '/Users/alvis/Repositories/core/manifests/{name}/'
+package_path: '<repository-root>/services/{name}/'
+manifest_path: '<repository-root>/manifests/{name}/'
 operations_declared: ['op1', 'op2', ...]
 operations_implemented: ['op1', 'op2', ...]
 integrations_implemented: ['system1', ...] # if any

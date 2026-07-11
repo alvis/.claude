@@ -1,14 +1,6 @@
 ---
 name: imagine
-description: >-
-  Generate or edit images via a multi-provider Image API using a bundled Python CLI, or craft
-  structured image prompts and analyze visual styles from reference images.
-  Supports Google Gemini (default), OpenAI, and Recraft. Use when generating, creating, editing,
-  inpainting, masking, removing or replacing backgrounds, creating product shots,
-  concept art, covers, batch image variants, working with transparent backgrounds,
-  vector/SVG output, named artistic styles, crafting image prompts,
-  analyzing image styles, extracting visual styles from references,
-  or prompt-only generation without producing images.
+description: "Generate or edit images through the bundled multi-provider CLI, or write structured prompts and analyze visual styles from references. Use for concept art, product shots, covers, UI assets, transparent or vector output, inpainting, background changes, batch variants, and prompt-only work. Keep image generation separate from web design decisions and visual audits."
 argument-hint: "[prompt, instruction, or reference image for style analysis]"
 ---
 

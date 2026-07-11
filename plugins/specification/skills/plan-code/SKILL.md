@@ -1,6 +1,6 @@
 ---
 name: plan-code
-description: Generate DRAFT.md (commit blueprint) and PLAN.md (execution roadmap) from proposals. Use when planning implementations, creating execution roadmaps, or documenting change proposals.
+description: Generate DRAFT.md as a commit blueprint and PLAN.md as an execution roadmap from an approved proposal or specification. Use when planning implementations, defining atomic commits, documenting change proposals, or preparing a coding workflow with explicit verification and ownership boundaries.
 model: opus
 context: fork
 agent: general-purpose

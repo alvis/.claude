@@ -1,6 +1,6 @@
 ---
 name: sync-tool
-description: 'Install or update coding CLI tools (brew, jj, gh) across macOS, Linux, and Windows. Triggers when: "install jj", "install gh", "install brew", "update my coding tools", "missing gh command", "missing jj command", "set up CLI dependencies". Also use when: a sibling skill needs to ensure a tool is on PATH before running. Examples: "install gh and jj", "make sure jj is up to date", "sync coding tools".'
+description: 'Install or update coding CLI tools (brew, jj, gh) across macOS, Linux, and Windows. Use when tools are missing, stale, or needed on PATH for a sibling skill, including requests to install jj/gh/brew, update coding tools, or verify CLI dependencies before work.'
 model: sonnet
 argument-hint: "[--only <name1,name2>] [--check] [--dry-run] [--force]"
 eval_type: process

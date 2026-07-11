@@ -1,202 +1,31 @@
 ---
 name: create-standard
-description: Create a new technical standard directory with three-tier structure (meta.md, scan.md, write.md, rules/) from templates. Use when establishing new coding standards, documenting technical requirements, or creating compliance guidelines.
+description: Create a new technical standard under a plugin constitution with meta.md, scan.md, write.md, and rules/. Use when a reusable policy is missing and needs explicit scope, detection guidance, implementation guidance, and actionable rules. Do not use for revising an existing standard or creating a skill.
 model: opus
-allowed-tools: Bash, Read, Write, Glob, Task
-argument-hint: "<name> [--detail=...]"
+allowed-tools: Bash, Read, Write, Edit, Glob, Task
+argument-hint: "<plugin>/<standard-name> [--detail=...]"
 ---
 
-# Create Standard
+# Create standard
 
-Create a new technical standard directory in the [plugin]/constitution/standards directory following the three-tier structure (meta.md, scan.md, write.md, and rules/) from $ARGUMENTS, producing a standard that already reads as a single deliberate voice across its three tiers — meta.md, scan.md, and write.md as one coherent statement of the rule — rather than a template skeleton with the author's intent dropped into trailing notes. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Future updates by `update-standard` will be held to the same bar, so the standard must be born integration-ready.
+Create one new three-tier standard directory. `update-standard` owns existing standards; `create-skill` owns reusable workflow capabilities.
 
-## Purpose & Scope
+## Inputs and validation
 
-**What this command does NOT do**:
+- Required lowercase, hyphenated standard name and target plugin.
+- Optional detail, examples, related standards, and rule identifiers.
+- Target directory must exist and must not already contain the standard.
+- Read the standard templates and neighboring standards before authoring.
 
-- Modify existing standards (use update-standard)
-- Create skills (use create-skill)
-- Override existing directories without confirmation
-- Create non-standard documentation
-
-**When to REJECT**:
-
-- Empty or unclear standard name
-- Standard directory already exists
-- Invalid name format
-- Updating existing standards
-- Creating non-standard files
+Reject an unclear name, duplicate directory, invalid target, or request for non-standard files.
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Define the owned outcome, non-goals, related standards, severity model, and rule IDs.
+2. Create `meta.md`, `scan.md`, `write.md`, and `rules/` from the current templates. Keep meta (why), scan (how to detect), and write (how to comply) consistent; include only examples that clarify a rule.
+3. Delegate authoring when the standard is substantial; provide exact paths and require the smallest coherent documents without personas, diagrams, or fixed phases.
+4. Review for contradictions, duplicate rule IDs, unresolved local links, and actionable scan/write guidance. Run strict Claude validation and repository policy checks.
 
-### Step 1: Planning
+## Completion
 
-1. **Analyze Requirements**
-   - Parse $ARGUMENTS to extract standard name and details
-   - Determine appropriate category (code, frontend, backend, security, quality, project)
-   - Identify related existing standards
-   - Plan three-tier directory structure: meta.md, scan.md, write.md, and rules/
-
-2. **Identify Applicable Skills & Standards**
-   - Check `create-standard` skill for creation process
-   - Review existing standards in target category for patterns
-   - Note related standards to reference
-
-3. **Risk Assessment**
-   - Check for existing directory with the same name
-   - Verify category directory exists
-   - Ensure no duplicate standards
-
-### Step 2: Execution
-
-1. **Skill Compliance**
-   - Follow `create-standard` skill
-   - Load templates from template:standard-meta, template:standard-scan, and template:standard-write
-   - Apply standard naming conventions
-
-2. **Primary Implementation**
-   - Generate standard title from arguments
-   - Determine category placement
-   - Create standard directory and rules/ subdirectory using `mkdir -p <name>/rules/`
-   - Populate `<name>/meta.md` from template:standard-meta with metadata, principles, and overview
-   - Populate `<name>/scan.md` from template:standard-scan with scanning/review rules
-   - Populate `<name>/write.md` from template:standard-write with writing/implementation guidance
-   - Include practical code examples across all three files
-   - Add decision matrices and quick references
-
-3. **Standards Enforcement**
-   - Use lowercase, hyphen-separated naming for the directory
-   - Follow each template structure exactly for its corresponding file
-   - Include both good and bad examples
-   - Add related standards references
-
-4. **Edge Case Handling**
-   - Check if directory already exists before creating
-   - Create category directory if needed
-   - Handle complex multi-word names properly
-   - Preserve any existing backups
-
-### Step 3: Verification
-
-1. **Template-Based Verification**
-   - Verify meta.md follows template:standard-meta structure
-   - Verify scan.md follows template:standard-scan structure
-   - Verify write.md follows template:standard-write structure
-   - Check all required sections present in each file
-   - Validate code examples are TypeScript
-   - Verify rules/ subdirectory exists
-
-2. **Automated Testing**
-   - Verify markdown syntax is valid in all three files
-   - Check all files saved to correct locations within the standard directory
-   - Ensure proper formatting
-
-3. **Quality Assurance**
-   - Confirm examples include good and bad patterns
-   - Validate related standards links
-   - Check decision trees are complete
-   - Ensure content is distributed correctly across the three tier files
-
-4. **Side Effect Validation**
-   - Directory and all three files saved to correct locations
-   - No existing files or directories overwritten
-   - Category directory created if needed
-
-### Step 4: Reporting
-
-**Output Format**:
-
-```
-[✅/❌] Command: $ARGUMENTS
-
-## Summary
-- Standard created: [name]/
-- Files: meta.md, scan.md, write.md, rules/
-- Location: [plugin]/constitution/standards/[name]/
-- Category: [category]
-
-## Actions Taken
-1. Created standard directory and rules/ subdirectory
-2. Generated meta.md from template:standard-meta
-3. Generated scan.md from template:standard-scan
-4. Generated write.md from template:standard-write
-5. Populated all files with relevant guidelines
-
-## Content Structure
-- Core Principles: [count]
-- Main Topics: [list]
-- Code Examples: [count]
-- Anti-patterns: [count]
-
-## Related Standards
-- [Related standard 1]
-- [Related standard 2]
-
-## Next Steps
-- Review generated standard files for completeness
-- Add specific code examples if needed
-- Add individual rule files to rules/ subdirectory
-- Link from related documentation
-```
-
-## Examples
-
-### Basic Standard Creation
-
-```bash
-/create-standard "error-handling"
-# Generates: error-handling/meta.md, error-handling/scan.md, error-handling/write.md, error-handling/rules/
-# Category: Automatically determined as 'code'
-```
-
-### Frontend Standard with Detail
-
-```bash
-/create-standard "component-testing" --detail="React component testing patterns"
-# Generates: component-testing/meta.md, component-testing/scan.md, component-testing/write.md, component-testing/rules/
-# Includes: React-specific testing examples
-```
-
-### Security Standard
-
-```bash
-/create-standard "api-authentication" --category=security
-# Generates: api-authentication/meta.md, api-authentication/scan.md, api-authentication/write.md, api-authentication/rules/
-# Category: Explicitly set to 'security'
-```
-
-### Backend Standard with Context
-
-```bash
-/create-standard "database-migrations" --detail="PostgreSQL migration patterns" --category=backend
-# Generates: database-migrations/meta.md, database-migrations/scan.md, database-migrations/write.md, database-migrations/rules/
-# Includes: PostgreSQL-specific examples
-```
-
-### Quality Standard
-
-```bash
-/create-standard "code-coverage" --category=quality
-# Generates: code-coverage/meta.md, code-coverage/scan.md, code-coverage/write.md, code-coverage/rules/
-# Includes: Coverage metrics and thresholds
-```
-
-### Error Case Handling
-
-```bash
-/create-standard ""
-# Error: Empty standard name
-# Prompt: "What is the name of the standard you want to create?"
-# Action: Wait for user input before proceeding
-```
-
-### With Existing Directory
-
-```bash
-/create-standard "naming"
-# Warning: naming/ directory already exists
-# Prompt: "Standard 'naming' already exists. Create with different name?"
-# Alternative: Use /update-standard to modify existing
-```
+Report the standard path, tier files, rule IDs, related standards, validation commands, and any deferred rule. Do not overwrite an existing standard without an explicit update request.

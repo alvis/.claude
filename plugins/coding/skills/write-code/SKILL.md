@@ -1,6 +1,6 @@
 ---
 name: write-code
-description: 'Write production-ready code end-to-end via a full TDD lifecycle (design, skeleton, implement, test, refactor). Triggers when: "write a function", "implement this feature", "build a new module", "add a feature". Also use when: starting a new component from scratch, turning a spec or ticket into working code, creating a CLI or API endpoint with tests. Examples: "write a function that parses dates", "implement user authentication", "build a rate limiter module".'
+description: 'Write production-ready code end to end through a TDD lifecycle of design, skeleton, implementation, tests, and refactoring. Use for new functions, features, modules, components, CLI or API endpoints, or approved tickets; route diagnosed failures to fix and explicit production stubs to complete-code.'
 model: opus
 context: fork
 agent: general-purpose
@@ -17,10 +17,10 @@ Orchestrates the complete TDD lifecycle by composing atomic skills into a sequen
 **What this command does NOT do**:
 
 - Create only a skeleton without implementation (use `/coding:draft-code`)
-- Complete only TODO-marked placeholders (use `/coding:complete-code`)
+- Complete only accepted production implementation stubs (use `/coding:complete-code`)
 - Fix only test/lint/type issues (use `/coding:fix`)
 - Refactor without the full lifecycle (use `/coding:refactor`)
-- Perform code review (use `/coding:review`)
+- Perform code review (use `/coding:review-code`)
 
 **When to REJECT**:
 
@@ -94,8 +94,8 @@ Invoke `coding:draft-code` with the parsed instruction and `--from-composite`.
 
 This skill handles:
 - Design direction discovery (searching for DESIGN.md, handover docs)
-- Code skeleton creation with TODO placeholders
-- Test structure creation with describe.todo/it.todo patterns
+- Code skeleton creation with canonical `TODO(implementation):` markers
+- Test structure creation with describe.todo/it.todo patterns, completed later by `coding:complete-test`
 - TypeScript and lint validation of the skeleton
 
 **Interactive gate**: After this skill completes, present the user with options:
@@ -106,10 +106,11 @@ This skill handles:
 
 ### Step 4: Implementation (green phase)
 
-Invoke `coding:complete-code` with the target area and `--from-composite`.
+Invoke `coding:complete-code` with the target area and `--from-composite`; then
+invoke `coding:complete-test` for any pending test markers it reports.
 
 This skill handles:
-- Replacing TODO placeholders with minimal working implementations
+- Replacing accepted production implementation stubs with minimal working implementations
 - TDD Green phase: implementing just enough code to make tests pass
 - Continuous test execution to verify progress
 

@@ -108,7 +108,7 @@ User provides domain specification → Step 1 discovers requirements → Step 2 
 [Step 7: Quality Gate] ---------> (Sub-skills: coding:fix + coding:lint + coding:refactor)
    |
    v
-[Step 8: Review] ----------------> (Sub-skill: coding:review)
+[Step 8: Review] ----------------> (Sub-skill: coding:review-code)
    |
    v
 [Step 9: Commit Gate] -----------> (Sub-skill: coding:commit or coding:handover)
@@ -153,7 +153,7 @@ Legend:
 #### Phase 1: Planning (You)
 
 1. **Parse inputs**: domain name, operations list (with verb validation), entities list, selector pattern
-2. **Detect mode**: Check `ls /Users/alvis/Repositories/core/data/{domain}/`
+2. **Detect mode**: Check `ls <repository-root>/data/{domain}/`
 3. **Verify packages**: `@theriety/data` and `@theriety/core` must exist
 4. **Validate operation verbs**: Must start with get/list/set/drop/resolve/attach/detach/initiate
 5. **Determine selector pattern**: simple (≤3 entities) or complex (>3 entities)
@@ -237,7 +237,7 @@ Spin up **1** comprehensive subagent:
 **Step Configuration**:
 
 - **Purpose**: Scaffold the data orchestrator directory tree
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/setup-project/SKILL.md`
+- **Sub-skill**: `coding:setup-project`
 - **Skip condition**: If extend mode, skip entirely
 
 #### Execute Setup Sub-Skill (You)
@@ -249,7 +249,7 @@ Execute with the `@theriety/data-{domain}` package structure including:
 - src/ with operations/, types/, optional entities/ or selectors.ts
 - spec/ with orchestrator.ts, fixture.ts, operations/
 
-Reference: `/Users/alvis/Repositories/core/data/product/` for simple, `/Users/alvis/Repositories/core/data/vault/` for complex
+Reference: `<repository-root>/data/product/` for simple, `<repository-root>/data/vault/` for complex
 
 ---
 
@@ -258,7 +258,7 @@ Reference: `/Users/alvis/Repositories/core/data/product/` for simple, `/Users/al
 **Step Configuration**:
 
 - **Purpose**: Implement types, selectors, operations, and factory
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/draft-code/SKILL.md` → `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-code/SKILL.md` → `/Users/alvis/Repositories/.claude/plugins/coding/skills/complete-test/SKILL.md`
+- **Sub-skills**: `coding:draft-code` → `coding:complete-code` → `coding:complete-test`
 
 #### Execute Sub-Skills (You)
 
@@ -272,7 +272,7 @@ Reference: `/Users/alvis/Repositories/core/data/product/` for simple, `/Users/al
    - **attach/detach**: junction record management
    - **initiate**: idempotent upsert with nested relations
 
-   Reference files per verb in `/Users/alvis/Repositories/core/data/`
+   Reference files per verb in `<repository-root>/data/`
 
 3. **Test** with `coding:complete-test` — write unit tests (mocked Prisma) + integration tests (real DB)
 
@@ -374,7 +374,7 @@ Reference: `/Users/alvis/Repositories/core/data/product/` for simple, `/Users/al
 
 **Step Configuration**:
 
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/fix/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/lint/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/refactor/SKILL.md`
+- **Sub-skills**: `coding:fix`, `coding:lint`, `coding:refactor`
 
 Execute sequentially: fix → lint → refactor → verify with `pnpm typecheck && pnpm lint && pnpm test`
 
@@ -382,7 +382,7 @@ Execute sequentially: fix → lint → refactor → verify with `pnpm typecheck 
 
 ### Step 8: Review
 
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`
+- **Sub-skill**: `coding:review`
 
 If review finds issues → loop back to Step 7. If passes → Step 9.
 
@@ -390,7 +390,7 @@ If review finds issues → loop back to Step 7. If passes → Step 9.
 
 ### Step 9: Commit Gate
 
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/commit/SKILL.md` or `/Users/alvis/Repositories/.claude/plugins/coding/skills/handover/SKILL.md`
+- **Sub-skill**: `coding:commit` or `coding:handover`
 
 ---
 
@@ -400,7 +400,7 @@ If review finds issues → loop back to Step 7. If passes → Step 9.
 status: success|failure|partial
 domain_name: '{domain}'
 mode: new|extend
-package_path: '/Users/alvis/Repositories/core/data/{domain}/'
+package_path: '<repository-root>/data/{domain}/'
 package_name: '@theriety/data-{domain}'
 entities: ['entity1', ...]
 selector_pattern: simple|complex

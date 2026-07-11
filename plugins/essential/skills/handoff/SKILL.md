@@ -1,13 +1,13 @@
 ---
 name: handoff
-description: >
-  Write a hand-off-ready plan and drive its execution as an orchestrator. Use when
-  producing a plan that another agent — without your current context or mental
-  model — must pick up without getting lost, or when executing a multi-phase plan
-  that should run as a workflow while you stay the orchestrator and decision maker.
+description: 'Create or execute a context-complete cross-domain plan as an orchestrator. Use when another agent must continue without prior context, or when a multi-domain plan needs coordinated execution while this skill retains decision ownership. For coding-session persistence, use coding:handover.'
 ---
 
 # Handoff
+
+Create or execute a context-complete cross-domain plan. This skill owns portable
+planning and coordinated execution; `coding:handover` instead persists the current
+coding session in continuation files.
 
 Write the plan with as much detail and context as possible such that it can be
 handed over to another agent — without your context and idea about what you're

@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: Run a metric-driven automated research loop — interview to pin down a metric, eval method, baseline, and target; then evolve 4-8 candidate solutions per round (generate → score via programmatic metric, independent LLM judge panel, or human scoring → adversarially verify scores → mutate/recombine survivors) until the target is met, budget is exhausted, or progress plateaus, producing a research dossier with leaderboard and per-round logs. Works for anything with a scoreable outcome — ML experiments, prompt/code optimization, creative ideation like taglines. Use when asked to "optimize X until metric Y reaches Z", "run an autoresearch loop", "iterate candidates until the score passes a threshold", "evolve/breed better versions of", or "keep trying approaches and measure which wins". Do NOT use for literature/web research or fact-finding reports — that is deep-research.
+description: 'Run a metric-driven research loop: define a metric, evaluator, baseline, and target; evolve candidate solutions; score and adversarially verify them; then mutate survivors until the target, budget, or plateau ends the run. Use for measurable optimization of prompts, code, experiments, or creative variants; use deep-research for fact-finding.'
 model: opus
 context: fork
 agent: general-purpose

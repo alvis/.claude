@@ -1,9 +1,6 @@
 ---
 name: modernize
-description: >-
-  Analyze project configuration and upgrade code to use the latest supported
-  syntax, APIs, and patterns. Use when adopting new language features, upgrading
-  runtime versions, or ensuring code uses modern idioms the project supports.
+description: 'Apply version-supported syntax and API upgrades based on the project runtime and toolchain. Use when replacing legacy constructs with supported modern equivalents; do not claim general refactoring, dependency upgrades, or behavioral feature work.'
 model: opus
 context: fork
 agent: general-purpose

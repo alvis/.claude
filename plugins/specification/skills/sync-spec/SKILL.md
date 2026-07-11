@@ -1,6 +1,6 @@
 ---
 name: sync-spec
-description: Materialize a hard local copy of a Notion specification page tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files (plus an auto-written `.gitignore`). Hard-gates on root spec persistence — the file whose 32-hex suffix matches the input id MUST exist non-empty. Use when downloading a Notion spec to disk, mirroring a Notion spec page tree locally, pulling a spec bundle for a ticket, refreshing a stale .code-spec bundle, or any time a guaranteed-on-disk copy of a Notion spec is needed before downstream analysis or codegen.
+description: Materialize a guaranteed-on-disk Notion specification tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files plus `.gitignore`. Use before downstream analysis or code generation, when refreshing a stale bundle, or when a ticket requires local spec evidence; fail unless the root id-suffix file exists and is non-empty.
 model: opus
 context: fork
 agent: general-purpose

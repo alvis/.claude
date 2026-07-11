@@ -1,10 +1,6 @@
 ---
 name: next
-description: >-
-  Debug Next.js apps using **next-browser CLI** (React components, Next.js routes, SSR,
-  errors, screenshots, interactions) and **Chrome DevTools MCP** (DOM/styles, performance,
-  Lighthouse, network, device emulation, JS debugging, storage). next-browser connects via
-  CDP to a Chrome DevTools-launched browser.
+description: "Diagnose Next.js runtime behavior with next-browser and Chrome DevTools MCP: React components, routes, SSR errors, DOM/styles, performance, Lighthouse, network, device emulation, JavaScript debugging, storage, screenshots, and interactions. Use for evidence-backed browser diagnosis; route visual creation to design and story-state assessment to storybook."
 argument-hint: "[debug instruction or URL]"
 allowed-tools: Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

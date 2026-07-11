@@ -1,9 +1,6 @@
 ---
 name: think
-description: >
-  Structured pre-implementation thinking for ambiguous problems.
-  Use when there is no crystal-clear instruction or solution on how to solve a
-  problem — forces deliberate reasoning before any modification or creation begins.
+description: 'Structure pre-implementation reasoning for ambiguous problems. Use when the requested outcome, constraints, or safe solution are unclear and deliberate options, objections, dependencies, edge cases, and rollback need to be resolved before any modification or creation begins.'
 model: opus
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: "[problem-or-question]"

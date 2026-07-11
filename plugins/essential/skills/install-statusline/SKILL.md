@@ -1,10 +1,6 @@
 ---
 name: install-statusline
-description: >
-  Install the bundled Bullet Train statusline (bin/statusline) into ~/.claude
-  and wire settings.json statusLine. Use when asked to "install the
-  statusline", "set up my statusline", "fix/restore statusline", or after
-  setting up Claude Code on a new machine.
+description: 'Install the bundled Bullet Train statusline into ~/.claude and wire settings.json statusLine. Use when setting up Claude Code on a new machine, installing or restoring the statusline, or repairing its configuration; preserve the bundled executable and report permission or platform limitations.'
 allowed-tools: Bash, Read
 ---
 

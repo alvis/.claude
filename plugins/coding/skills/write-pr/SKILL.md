@@ -1,6 +1,6 @@
 ---
 name: write-pr
-description: 'Author conventional-commit PR titles and unified PR bodies from a `jj`/`git` change ref, emit to stdout for the caller to pipe into `gh pr create`. Triggers when: "write a PR description", "draft a pull request", "open a PR for this", "generate PR body". Also use when: `/coding:commit --create-pr` needs a PR body per stacked change, or any caller needs a conventional-title + unified-template body from a commit. Examples: "write a PR for this implementation", "draft a PR body for change @-", "open a draft PR for the current jj change".'
+description: 'Author a conventional-commit PR title and unified body from a jj or git change ref, emitting output for gh pr create. Use for PR descriptions, draft pull requests, stacked coding:commit PR bodies, and callers that need a unified title/body template from a commit.'
 model: opus
 allowed-tools: Bash(jj:*), Bash(gh:*), Bash(git:*), Read
 argument-hint: "[<commit-ref>]"
