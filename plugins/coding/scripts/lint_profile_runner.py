@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run the generic lint scanner and optional profile scanners portably."""
 
+from __future__ import annotations
+
 import argparse
 import fnmatch
 import json
