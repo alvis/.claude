@@ -91,11 +91,13 @@ class PrReviewContractTest(unittest.TestCase):
                 if hook.get("type") == "command"
             ]
             serialized_hooks = json.dumps(hooks)
-            self.assertIn("alvis-session-start", serialized_hooks)
-            self.assertIn("alvis-user-prompt-submit", serialized_hooks)
+            self.assertIn("bin/session-start", serialized_hooks)
+            self.assertIn("bin/user-prompt-submit", serialized_hooks)
+            self.assertNotIn("alvis", serialized_hooks)
             if name != "essential":
                 self.assertIn("claude plugin list --json", serialized_hooks)
-                self.assertIn("essential@alvis", serialized_hooks)
+                self.assertIn('startswith(\\"essential@\\")', serialized_hooks)
+                self.assertIn("${CLAUDE_PLUGIN_ROOT}/../essential", serialized_hooks)
             self.assertFalse(any("shared/scripts" in command for command in commands))
 
     def test_essential_hook_executables_run_for_consumer_plugin(self) -> None:
@@ -108,7 +110,7 @@ class PrReviewContractTest(unittest.TestCase):
             )
             completed = subprocess.run(
                 [
-                    str(PLUGINS / "essential/bin/alvis-session-start"),
+                    str(PLUGINS / "essential/bin/session-start"),
                     "--plugin-dir",
                     str(plugin_root),
                     "--constitution-paths",

@@ -51,7 +51,7 @@ class PluginDependencyIntegration(unittest.TestCase):
                 plugins,
             )
             essential_root = Path(records["essential@alvis"]["installPath"])
-            session_hook = essential_root / "bin/alvis-session-start"
+            session_hook = essential_root / "bin/session-start"
             self.assertTrue(session_hook.is_file())
             self.assertTrue(os.access(session_hook, os.X_OK))
             self.assertFalse(any((essential_root / "shared").glob("**/*")))

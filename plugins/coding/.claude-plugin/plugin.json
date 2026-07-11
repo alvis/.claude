@@ -8,7 +8,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"$(claude plugin list --json | jq -r '[.[] | select(.id == \"essential@alvis\" and .enabled)][0].installPath // empty')\"; test -n \"$essential_root\"; exec \"$essential_root/bin/alvis-session-start\" \"$@\"", "alvis-session-start", "--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"\"; if command -v jq >/dev/null 2>&1; then essential_root=\"$(claude plugin list --json 2>/dev/null | jq -r '[.[] | select((.id | startswith(\"essential@\")) and .enabled)][0].installPath // empty')\"; fi; [ -n \"$essential_root\" ] || essential_root=\"${CLAUDE_PLUGIN_ROOT}/../essential\"; [ -x \"$essential_root/bin/session-start\" ] || { echo \"session-start hook: essential plugin dependency not found\" >&2; exit 1; }; exec \"$essential_root/bin/session-start\" \"$@\"", "session-start", "--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
       },
       {
         "matcher": "startup|resume|clear|compact",
@@ -24,7 +24,7 @@
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"$(claude plugin list --json | jq -r '[.[] | select(.id == \"essential@alvis\" and .enabled)][0].installPath // empty')\"; test -n \"$essential_root\"; exec \"$essential_root/bin/alvis-user-prompt-submit\" \"$@\"", "alvis-user-prompt-submit", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"\"; if command -v jq >/dev/null 2>&1; then essential_root=\"$(claude plugin list --json 2>/dev/null | jq -r '[.[] | select((.id | startswith(\"essential@\")) and .enabled)][0].installPath // empty')\"; fi; [ -n \"$essential_root\" ] || essential_root=\"${CLAUDE_PLUGIN_ROOT}/../essential\"; [ -x \"$essential_root/bin/user-prompt-submit\" ] || { echo \"user-prompt-submit hook: essential plugin dependency not found\" >&2; exit 1; }; exec \"$essential_root/bin/user-prompt-submit\" \"$@\"", "user-prompt-submit", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ],
     "SubagentStart": [
