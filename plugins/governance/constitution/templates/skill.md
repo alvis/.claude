@@ -23,7 +23,9 @@ description: "Use when a concrete trigger requires this reusable capability and 
 
 Put bulky conditional instructions in `references/<topic>.md` and link them at
 the decision point. Keep short conditions inline. Delegate only when the work
-actually benefits from independent execution.
+actually benefits from independent execution. Condensing a skill must never
+drop skill-specific procedure — concrete bounds, dispatch rules, decision
+criteria, and command sequences move to `references/`, they are not deleted.
 
 ## Verification
 
