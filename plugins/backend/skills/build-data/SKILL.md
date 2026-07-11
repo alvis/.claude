@@ -302,7 +302,7 @@ Reference: `<repository-root>/data/product/` for simple, `<repository-root>/data
 
     **Steps** (per operation):
     1. Implement operation function with types in `operations/{operationName}.ts`
-    2. Write integration tests in `spec/operations/{operationName}.spec.int.ts`
+    2. Complete the pending test markers in `spec/operations/{operationName}.spec.int.ts` drafted in Step 4; broader coverage work routes to `coding:complete-test`
     3. Follow patterns: types at top of file, selectors from `#selectors`, `MissingDataError` for not-found
     4. Controller integration: `Parameters<typeof op>[1]` / `ReturnType<typeof op>` delegation pattern
 

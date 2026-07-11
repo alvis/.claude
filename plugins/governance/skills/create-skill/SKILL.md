@@ -29,7 +29,12 @@ headings to the capability.
 2. Define the new skill's owned outcome, positive triggers, near-miss prompts,
    exclusions, inputs, failure behavior, and verification.
 3. Write failing trigger or behavior evaluations before the skill when the
-   change is testable; capture the baseline failure.
+   change is testable; capture the baseline failure. Store them as
+   `skills/<name>/evals/evals.yaml` following
+   `${CLAUDE_SKILL_DIR}/../verify-skill/references/eval-template.yaml`: classify
+   the eval type (objective, subjective, or process), draft 2-3 test cases with
+   prompts and expectations, and list 5+ should_trigger plus 5+
+   should_not_trigger queries (near-misses are the most valuable).
 4. Create the smallest `skills/<name>/SKILL.md` that teaches the missing
    behavior. Keep always-used instructions inline and conditional bulk in
    references.
@@ -45,7 +50,9 @@ claude plugin validate --strict <plugin-path>
 python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" <skill-or-plugin-path>
 ```
 
-Use `governance:verify-skill` when functional or trigger evaluation is needed.
+Use `governance:verify-skill` when functional or trigger evaluation is needed,
+with `fix: true`; loop fix and re-verify at most 3 times, then report partial
+completion with the remaining issues.
 
 ## Completion
 

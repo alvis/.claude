@@ -42,7 +42,7 @@ owner of history mutations.
 
 ## QA markers
 
-Load [references/markers.md](references/markers.md) when reading or writing QA markers. A marker is valid only when its stored lockfile-excluded stable patch ID equals the current commit's. It may skip lint/test legs, but never a required install/lock regeneration. Write or replace it only after install, lint, test/coverage, build, message checks, and delegated folds are green with no pending decision.
+Load [references/markers.md](references/markers.md) when reading or writing QA markers. A marker is valid only when its stored lockfile-excluded stable patch ID equals the current commit's. It may skip the skippable lint/test legs, but never a required install/lock regeneration. Write or replace it only after install, lint, test/coverage, build, message checks, and delegated folds are green with no pending decision.
 
 ## Completion
 

@@ -40,7 +40,7 @@ resolved_spec_path: <absolute path>
 
 1. Resolve the project root and `--spec-path`. For a Notion URL or ID, invoke `Skill(sync-spec)` once to materialize `.code-spec`, then verify the bundle contains a readable root specification.
 2. Resolve the implementation file set with the same semantics as `coding:review-code`.
-3. Run the alignment area first. Enumerate requirements, map each to code evidence, and record omissions, drift, or unsanctioned additions. Use independent find/verify checks when the scope warrants them.
+3. Run the alignment area first. Enumerate every requirement in the bundle (contracts, schemas, invariants, acceptance criteria, non-functional posture), then trace both directions: spec-to-code for omissions and drift, code-to-spec for unsanctioned additions. The specifier bounds only which code gets drift scrutiny — before flagging a requirement as missing, search the whole repository for an implementing site; a requirement implemented anywhere is satisfied. Treat every detection as a candidate: adversarially try to refute it (covered elsewhere, sanctioned by another spec section or an optional/future marker, drift within tolerance) and record only survivors. When scope warrants delegation, dispatch auditors blind — spec path, file set, template, and standards paths only, never the expected conclusion — and keep the verifier independent of the finder. `ALIGNMENT.md` follows `coding:review-code`'s `references/review.template.md` with prefix `ALIGN`, so finding IDs stay stable across re-runs per the base skill's rules.
 4. Always invoke `Skill(coding:review-code)` for the requested non-alignment areas, including its general semantic review and security review, even when alignment has P0/P1 findings. Pass the target and output directory; tell the base skill that specification conformance belongs only in `ALIGNMENT.md`.
 5. Reconcile each alignment deviation with the user: update the spec, update code, accept with rationale, or defer. Do not silently choose a resolution.
 6. Regenerate `ALIGNMENT.md` and `README.md`, retaining the base review's findings and recording any refusal or skipped area.
@@ -48,7 +48,7 @@ resolved_spec_path: <absolute path>
 
 ## Alignment contract
 
-For each requirement, record `requirement`, `spec_location`, `implementation_location`, `status` (`satisfied`, `missing`, `drift`, or `unsanctioned`), severity, evidence, and next action. Keep spec-conformance findings out of the base review files. Semantic bugs that are wrong regardless of the specification remain in the base review's correctness area.
+For each requirement, record `requirement`, `spec_location`, `implementation_location`, `status` (`satisfied`, `missing`, `drift`, or `unsanctioned`), severity, evidence, and next action. Severity follows impact: a broken acceptance criterion or weakened invariant is P0; contract drift is P0 or P1 by blast radius; an unsanctioned addition is P1 minimum unless trivial (logging, internal helpers consistent with siblings); documentation-only divergence is P2 or P3. Keep spec-conformance findings out of the base review files. Semantic bugs that are wrong regardless of the specification remain in the base review's correctness area.
 
 Alignment is a gate for the next action, not a gate for evidence collection: a failed alignment must still have general and security findings so the user can see the complete risk picture.
 

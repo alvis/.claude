@@ -43,8 +43,9 @@ concise aid, not a migration target whose headings must be copied.
 7. Run relevant functional and trigger evaluations. Fix regressions without
    widening the requested scope.
 
-Independent targets may be delegated in bounded batches. Each assignment must
-name exact paths and constraints; review the combined diff afterward.
+Independent targets may be delegated in bounded batches — at most 8 skills per
+batch and 8 parallel `Task` calls per dispatch. Each assignment must name exact
+paths and constraints; review the combined diff afterward.
 
 ## Verification
 
@@ -53,7 +54,9 @@ claude plugin validate --strict <plugin-path>
 python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" <target>
 ```
 
-Use `governance:verify-skill` for functional and trigger evaluation.
+Use `governance:verify-skill` for functional and trigger evaluation with
+`fix: true`; in bulk updates bound the loop to 2 fix iterations per skill,
+record remaining issues, and continue to the next target.
 
 ## Completion
 

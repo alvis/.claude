@@ -13,14 +13,13 @@ Create `agents/<name>/base.md` and `agents/<name>/frontmatter/claude.json` for o
 
 ## Grounding and decision gate
 
-Read `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`, `role-prompt.md`, `references/context-catalog.md`, relevant team/edge definitions, and neighboring agents. Search existing descriptions and callers. Reject a duplicate role, unclear outcome, invalid kebab name, or missing authoritative template.
+Read `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`, `role-prompt.md`, and `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`, relevant team/edge definitions, and neighboring agents. Search existing descriptions and callers. Reject a duplicate role, unclear outcome, invalid kebab name, or missing authoritative template.
 
 Classify the role as producer, critic, or orchestrator; leaf or spawn-capable; interactive, workflow-spawned, teammate, or background. Derive:
 
 - positive trigger phrases, near-miss exclusions, owned outcome, and stop condition;
 - the exact `SD-*` and `RP-*` aliases from the context catalog;
-- model and fixed effort from cognitive demand, not prestige;
-- launch-appropriate `permissionMode`;
+- model, fixed effort, and launch-appropriate `permissionMode` from the archetype table in `references/model-effort-heuristic.md` — pick the cheapest model that clears the role's bar and raise effort within a tier before upgrading the model;
 - an explicit tools list omitting `Agent` for a leaf, or a spawn-capable tool surface;
 - memory, isolation, background, maxTurns, skills, MCP, hooks, and collaboration edges only when the role needs them.
 

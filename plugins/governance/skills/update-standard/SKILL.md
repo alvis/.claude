@@ -23,7 +23,7 @@ Reject an empty/ambiguous selector, missing tier, malformed request, duplicate t
 2. Reconcile structure with the exact templates without replacing valid content with placeholders. Fold new policy into existing sections and remove superseded contradictions; do not append changelogs.
 3. Keep meta concise and authoritative for dependencies, stricter requirements, exception policy, and groups. Keep scan violation-oriented and write compliance-oriented.
 4. Update every affected `rules/<lowercase-rule-id>.md` and every inbound/outbound local link. Preserve unrelated rule examples and IDs.
-5. For multiple independent targets, bounded delegation is allowed, but review the combined ID/dependency/link graph before validation.
+5. For multiple independent targets, bounded delegation is allowed — at most 3 standard directories per batch (each directory is 3 tier files plus rules) and 8 parallel `Task` calls per dispatch — but review the combined ID/dependency/link graph before validation.
 
 ## Cross-tier verification
 

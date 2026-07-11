@@ -125,10 +125,10 @@ This skill handles:
 Invoke `coding:fix` with the target area and `--from-composite`.
 
 This skill handles:
-- Fixing test issues and standards compliance
-- Critical root cause analysis for test failures
-- Optimizing test fixtures and mocks
+- Diagnosed test, type, and lint failures with critical root cause analysis
 - Batch processing for large file sets (>25 files)
+
+Mechanical standards violations route to `coding:lint`. Fixture, mock, pending-test, and coverage work routes to `coding:complete-test`.
 
 **Interactive gate**: After this skill completes, present the user with options:
 1. Proceed to refactoring

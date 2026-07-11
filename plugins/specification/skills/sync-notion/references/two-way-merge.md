@@ -109,7 +109,7 @@ Request each subagent to perform the following comparison and conflict resolutio
            ```
            <!-- TODO: Resolve merge conflict manually - Section [name] -->
            ```
-       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. Step 3 (`references/sync-mode-execution.md`) will then push it to Notion via `notion-sync push <file>`.
+       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. You MUST NOT push to Notion in this step — Step 3 (`references/sync-mode-execution.md`) owns the push via `notion-sync push <file>`.
        - Preserve original order, frontmatter, and structure.
 
     5. **Generate Conflict Report**:

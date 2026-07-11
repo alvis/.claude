@@ -13,7 +13,7 @@ Update selected `base.md` and `frontmatter/claude.json` pairs. An empty selector
 
 ## Resolve and preserve
 
-Read `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`, `role-prompt.md`, `references/context-catalog.md`, relevant team edges, every selected source pair, and real callers. List exact targets before mutation. Reject missing/malformed pairs, ambiguous globs, locked/in-use targets, or a request that actually creates a new role.
+Read `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`, `role-prompt.md`, and `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`, relevant team edges, every selected source pair, and real callers. List exact targets before mutation. Reject missing/malformed pairs, ambiguous globs, locked/in-use targets, or a request that actually creates a new role.
 
 For each target, snapshot:
 
@@ -26,13 +26,13 @@ Do not “modernize” by replacing role-specific prose with template boilerplat
 
 ## Update procedure
 
-1. Re-evaluate the role classification and launch scenario. Change model, effort, permission, tools, memory, isolation, or collaboration only when the requested migration/template requires it; report every such change.
+1. Re-evaluate the role classification and launch scenario against the archetype table in `../create-agent/references/model-effort-heuristic.md`. Change model, effort, permission, tools, memory, isolation, or collaboration only when the requested migration/template requires it; report every such change.
 2. Reconcile `frontmatter/claude.json` with the live template key surface. Remove obsolete keys only with evidence. Ensure a leaf has an explicit tools list omitting `Agent`; ensure described delegation is actually permitted; restrict mutation tools for read-mostly roles.
 3. Reconcile `base.md` with required functional sections while preserving expertise and voice. Correct context aliases against the catalog and collaboration edges against actual team definitions.
 4. Rewrite `initialPrompt` from `role-prompt.md` whenever loop, context, stop rule, budget, or guardrail changed. It must remain 3–6 role-specific sentences and agree exactly with `base.md`.
 5. Recheck positive and near-miss triggers against neighboring agents and real dispatch sites. Do not widen role ownership incidentally.
 
-Independent targets may be delegated in bounded batches, but each assignment must name exact source pairs and protected behavior. Review the integrated diff for cross-agent trigger and edge conflicts.
+Independent targets may be delegated in bounded batches — one agent pair per subagent, at most 8 parallel `Task` calls per dispatch — but each assignment must name exact source pairs and protected behavior. Review the integrated diff for cross-agent trigger and edge conflicts.
 
 ## Validation and fallback
 
