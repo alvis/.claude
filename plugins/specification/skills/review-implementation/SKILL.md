@@ -3,7 +3,6 @@ name: review-implementation
 description: "Review an implementation against an authoritative local or Notion specification, then run the general coding and security review. Use for specification alignment, delivered-ticket validation, or detecting omissions, drift, and unsanctioned behavior before handoff."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, TodoWrite, Skill
 argument-hint: "[specifier] [--area=alignment|test|documentation|code-quality|security|style|all] [--out=reviews] [--spec-path=./.code-spec]"
 ---
@@ -21,7 +20,7 @@ Review delivered code against a concrete specification and the general review co
 
 ## Inputs and outputs
 
-`specifier` accepts the same file, directory, package, PR, or range forms as `coding:review-code`. `--spec-path` defaults to `./.code-spec`; `--out` defaults to `reviews/`. `--area=all` is the default. `--area=alignment` produces only alignment findings; any other selection still runs alignment when a spec is available.
+`specifier` accepts the same file, directory, package, PR, or range forms as `coding:review-code`. `--spec-path` defaults to `./.code-spec`; `--out` defaults to `reviews/`. `--area=all` is the default. `--area=alignment` narrows the specification-specific artifact, but it still runs the mandatory general semantic and security areas from `coding:review-code`.
 
 Write:
 
@@ -60,10 +59,12 @@ status: success|partial|refused
 specifier: <target>
 spec_path: <absolute path>
 alignment: pass|fail|refused
-base_review: completed|partial|skipped
-general_review: completed
-security_review: completed
+base_review: completed|partial|refused
+general_review: completed|partial|refused
+security_review: completed|partial|refused
 open_findings: 0
 reports: [ALIGNMENT.md, SECURITY.md, ...]
 next_action: execute|handover|defer
 ```
+
+`success` requires alignment plus general and security review to complete with no blocking finding. Use `partial` when any required area fails, is unavailable, or retains findings; use `refused` only when no authoritative specification can be materialized. Never label a run complete when general/security evidence is absent.

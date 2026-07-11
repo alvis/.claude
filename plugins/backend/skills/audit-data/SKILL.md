@@ -3,7 +3,6 @@ name: audit-data
 description: "Audit data orchestrators against specifications, generate discrepancy reports, and remediate approved changes. Use when reviewing data domain completeness, checking schema compliance, or performing data layer quality audits."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<domain-name> [--operation=...] [--entity=...] [--auto-fix]"
 ---
@@ -150,7 +149,7 @@ Legend:
 **Step Configuration**:
 
 - **Purpose**: Validate schema, operations, and controllers against specification
-- **Sub-skills**: `coding:review`, `coding:lint`, `coding:find-unused`
+- **Sub-skills**: `coding:review-code`, `coding:lint`, `coding:find-unused`
 - **Parallel Execution**: Yes (3 audit streams in parallel)
 
 #### Phase 1: Planning (You)

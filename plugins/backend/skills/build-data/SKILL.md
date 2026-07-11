@@ -3,7 +3,6 @@ name: build-data
 description: "Build complete data orchestrators from spec to commit, including schema setup, operations, controllers, and quality gates. Use when creating new data domains, adding operations to existing orchestrators, or implementing Prisma schemas from Notion."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<domain-name> <operations...> [--extend] [--notion-url=...]"
 ---
@@ -253,17 +252,17 @@ Reference: `<repository-root>/data/product/` for simple, `<repository-root>/data
 
 ---
 
-### Step 4: Build Orchestrator
+### Step 4: Scaffold Orchestrator Surface
 
 **Step Configuration**:
 
-- **Purpose**: Implement types, selectors, operations, and factory
-- **Sub-skills**: `coding:draft-code` → `coding:complete-code` → `coding:complete-test`
+- **Purpose**: Establish types, selectors, operation signatures, exports, and factory wiring without implementing operation bodies
+- **Sub-skill**: `coding:draft-code`
 
 #### Execute Sub-Skills (You)
 
-1. **Draft** with `coding:draft-code` — create TODO-placeholder files for all operation verbs, types, selectors, factory
-2. **Implement** with `coding:complete-code` — fill implementations following verb patterns:
+1. **Draft once** with `coding:draft-code` — create typed operation signatures with canonical implementation markers, selectors, exports, and factory/controller wiring.
+2. Record the operation inventory for Step 5. Step 4 must not implement or test operation bodies; Step 5 is their sole implementation stage. Follow these verb contracts when drafting signatures:
    - **get**: `findUnique` + `MissingDataError`
    - **list**: `findMany` with filter/cursor/sort
    - **set**: upsert with `CreateInput | UpdateInput`
@@ -274,23 +273,6 @@ Reference: `<repository-root>/data/product/` for simple, `<repository-root>/data
 
    Reference files per verb in `<repository-root>/data/`
 
-3. **Test** with `coding:complete-test` — write unit tests (mocked Prisma) + integration tests (real DB)
-
-   Unit test pattern (mocked Prisma, NOT operationMockFactory):
-   ```typescript
-   const client = {
-     entity: { findUnique: vi.fn(async () => entity) },
-   } satisfies PartialDeep<PrismaClient> as PartialDeep<PrismaClient> as PrismaClient;
-   ```
-
-   Integration test pattern (real DB):
-   ```typescript
-   beforeEach(async () => { await setup(); });
-   it('should return entity', async () => {
-     const result = await orchestrator.getEntity({ slug: 'test' });
-     expect(result).toMatchObject({ slug: 'test' });
-   });
-   ```
 
 ---
 
@@ -382,7 +364,7 @@ Execute sequentially: fix → lint → refactor → verify with `pnpm typecheck 
 
 ### Step 8: Review
 
-- **Sub-skill**: `coding:review`
+- **Sub-skill**: `coding:review-code`
 
 If review finds issues → loop back to Step 7. If passes → Step 9.
 

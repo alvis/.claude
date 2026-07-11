@@ -3,14 +3,13 @@ name: write-code
 description: 'Write production-ready code end to end through a TDD lifecycle of design, skeleton, implementation, tests, and refactoring. Use for new functions, features, modules, components, CLI or API endpoints, or approved tickets; route diagnosed failures to fix and explicit production stubs to complete-code.'
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<instruction> [--resume]"
 ---
 
 # Write Code
 
-Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline, taking a feature instruction and driving it through project setup, design discovery, skeleton drafting, implementation, test fixing, optimization, and refactoring to produce production-ready, fully tested code. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Because this orchestrator threads work through skeleton, implementation, fix, and refactor in turn, each downstream pass must absorb the previous one rather than sit beside it — the finished module should read as if a single author had written it in one sitting, with no archaeology of the staged passes visible in its surface.
+Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline. Each pass updates the same implementation cleanly: remove superseded scaffolding and avoid duplicate code paths or addendum-style patches.
 
 ## Purpose & Scope
 
@@ -41,9 +40,10 @@ write-code (this orchestrator)
   |-- 1. Skill: coding:setup-project   (conditional: only if no project exists)
   |-- 2. Skill: coding:draft-code      (Steps 0-1: design discovery + skeleton)
   |-- 3. Skill: coding:complete-code   (Step 2: implementation / green phase)
-  |-- 4. Skill: coding:fix             (Steps 3-4: fix issues + optimize fixtures)
-  |-- 5. Skill: coding:refactor        (Step 5: refactor + documentation)
-  |-- 6. Skill: coding:commit --create-pr  (conditional: only if change is large or upstream stack exists)
+  |-- 4. Skill: coding:complete-test    (test TODOs + coverage owned by test workflow)
+  |-- 5. Skill: coding:fix              (diagnosed failures only)
+  |-- 6. Skill: coding:refactor         (green behavior-preserving cleanup)
+  |-- 7. Skill: coding:commit --create-pr  (conditional: only if change is large or upstream stack exists)
 ```
 
 ### State Handover Between Steps
@@ -60,7 +60,7 @@ When `--resume` is provided, the orchestrator reads handover documents to determ
 
 ### Composite Convention
 
-When calling child skills, this orchestrator passes `--from-composite` as an argument. Child skills receiving this flag suppress their own confirmation gates and trust the orchestrator to handle user interaction.
+`--from-composite` is an internal flag only for children that explicitly declare it (`setup-project`, `draft-code`, `fix`, and `refactor`). Do not pass it to `complete-code` or `complete-test`; pass their normal scope plus a concise parent context in the Skill payload. Unknown internal flags are errors, not silently ignored compatibility options.
 
 ## Workflow
 
@@ -106,7 +106,7 @@ This skill handles:
 
 ### Step 4: Implementation (green phase)
 
-Invoke `coding:complete-code` with the target area and `--from-composite`; then
+Invoke `coding:complete-code` with the target area; then
 invoke `coding:complete-test` for any pending test markers it reports.
 
 This skill handles:

@@ -3,7 +3,6 @@ name: document
 description: Create or update a package README and optional ARCHITECTURE.md from the actual implementation. Use after meaningful code changes, when docs are missing or stale, or when a package needs a source-backed structure overview. Preserve existing project voice and route specification documentation to specification skills.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "[--project=<path>] [--architecture|--no-architecture] [--readme-only] [--force-plan] [notes]"
 ---
@@ -14,7 +13,7 @@ Produce accurate package documentation from code. This skill owns README and opt
 
 ## Inputs and boundaries
 
-- Project defaults to the nearest package root with `package.json`; accept an explicit path.
+- Project resolution order: explicit `--project`, nearest workspace/package manifest containing the target, then repository root. In a monorepo, document only the selected package unless the selector is the workspace root.
 - `--architecture` is on by default; `--no-architecture` and `--readme-only` disable it.
 - `--force-plan` asks for an outline even when a local template or sibling README is authoritative.
 - Optional notes may clarify audience or positioning but cannot override code evidence.
@@ -24,12 +23,14 @@ Reject a missing project root, unreadable source, or request to document a diffe
 
 ## Workflow
 
-1. Resolve the package and locate its README template, checklist, sibling package examples, exports, CLI entry points, scripts, environment requirements, and architecture signals. Prefer repository scripts for discovery and validation.
-2. Plan only when no template or sibling README exists (or `--force-plan` is set). Otherwise follow the authoritative structure: overview, install, quick start, usage, API/commands, configuration, architecture, and verification as applicable.
-3. Draft claims against observed files. Include executable commands, real paths, public exports, failure behavior, and a short architecture map. Omit sections with no evidence; move deep examples to references when available.
-4. Write README.md and, when enabled, ARCHITECTURE.md. Preserve valid existing content, fold changes into its owning section, and remove stale claims rather than appending an update log.
-5. Cross-check every path, command, export, and dependency against the source. Run the package's documentation/build/test checks when configured and report limitations.
+1. Resolve the package/workspace and its anchors. Precedence is local explicit template/checklist, existing README/ARCHITECTURE structure, repository documentation rules, then closest same-archetype sibling. Use this skill's `references/README.template.md`, `ARCHITECTURE.template.md`, `package-types.md`, and one matching example only when repository anchors do not decide the shape.
+2. Build an evidence map before drafting: manifest metadata, public exports, entry points, scripts, environment/configuration, tested examples, error behavior, dependency direction, and important source modules. Classify the package archetype (library, CLI, service, data/IaC, stateless app, or monorepo) and map each intended claim to a file or executable command.
+3. Keep artifact ownership separate. README explains audience, installation, quick start, public usage/API, configuration, and links. ARCHITECTURE explains boundaries, components, runtime/data flow, dependency direction, extension points, and operational constraints; do not duplicate README tutorials.
+4. Draft from the evidence map. Use real imports, commands, paths, inputs, outputs, and failure cases that were verified against code/tests. Never invent a convenience API. Preserve the existing voice and integrate updates into the owning sections.
+5. Generate a table of contents only when the document benefits from one. Use `${CLAUDE_SKILL_DIR}/scripts/toc_width.py` for width calculations; never use a checkout-specific absolute path.
+6. Create ARCHITECTURE.md when explicitly requested or when the package has multiple public/runtime entry points, cross-process or persistent data flow, meaningful dependency layering, or at least three cooperating components whose relationship is not clear from README. Otherwise omit it and state why.
+7. Cross-check every claim, link, path, export, command, and dependency against evidence. Run documentation/build/test examples where safe. Delegate an independent read-only review for unsupported claims, wrong archetype, README/ARCH overlap, unusable examples, and stale text; apply corrections and rerun checks.
 
 ## Completion
 
-Report project path, files written, source evidence reviewed, commands verified, stale claims removed, and unresolved documentation gaps. Keep the output source-backed and concise; do not claim product or design decisions.
+Report project path and archetype, anchors/templates/examples used, evidence-map coverage, files written, architecture create/skip decision, commands/examples verified, independent-review verdict, stale claims removed, and unresolved gaps. Keep the output source-backed and concise; do not claim product or design decisions.

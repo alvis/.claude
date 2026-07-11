@@ -3,7 +3,6 @@ name: audit-service
 description: "Audit a backend service against its implementation and documentation contract, producing evidence-backed findings and optionally remediating approved gaps. Use for operation completeness, service quality, or documentation-only audits; choose --scope to keep the review focused."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<service-name> [--scope=implementation|docs|all] [--operation=...] [--area=...] [--auto-fix]"
 ---
@@ -49,11 +48,13 @@ report: AUDIT.md
 1. Resolve the service and specification. Refuse with `status: refused` when either cannot be identified; do not invent requirements.
 2. Apply `--scope`, `--operation`, and `--area` before dispatching checks.
 3. For `implementation`, inspect manifests, declarations, operation handlers, tests, and diagnostics. Delegate generic semantic review to `coding:review-code`, mechanical checks to `coding:lint`, and dead-code discovery to `coding:find-unused` as needed.
-4. For `docs`, compare service and operation pages with the specification: required pages, operation names, inputs/outputs, error behavior, examples, status, and links. Documentation findings remain in this report; do not route them to a deleted skill.
+4. For `docs`, discover the documentation set before comparing it: resolve the service page from its spec ref/database entry, enumerate declared operations, follow child/linked operation pages in one recursive pull, and map each expected operation to exactly one page. Record missing, duplicate, orphaned, or ambiguously named pages. Then compare overview, operation names, signatures, inputs/outputs, errors, examples, status, ownership, and cross-links against the specification and implementation evidence. Documentation findings remain in this report; do not route them to a deleted skill.
 5. Run independent checks in parallel where their inputs do not overlap. Keep each check read-only and record its evidence.
 6. Consolidate duplicate findings, classify severity, and write `AUDIT.md`.
-7. Present the report and wait for decisions unless `--auto-fix` was explicitly supplied. Approved implementation fixes route to `build-service` or `coding:fix`; approved documentation edits use the owning documentation workflow. Never mutate Notion or code merely because a discrepancy exists.
-8. Re-run the affected checks, record verification, and return the structured summary.
+7. Present the report and wait for decisions unless `--auto-fix` was explicitly supplied. Approved implementation fixes route to `build-service` or `coding:fix`. For approved documentation remediation, edit the paired local Markdown, preserve page identity/frontmatter, show `notion-sync diff`, and delegate the push to `specification:sync-notion local-to-notion`; create a missing page only with an explicit parent. Never mutate Notion or code merely because a discrepancy exists.
+8. Re-pull or diff every remediated page, re-run affected implementation checks, record before/after evidence, and return the structured summary.
+
+For documentation scope, the report also includes `pages_expected`, `pages_found`, `missing_pages`, `duplicate_pages`, `orphan_pages`, `operation_page_map`, `sync_actions`, and `post_sync_verification`. A command exit without content/metadata verification is not remediation success.
 
 ## Boundaries
 

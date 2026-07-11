@@ -3,7 +3,6 @@ name: build-service
 description: "Build complete backend services from spec to commit, including operation declaration, implementation, and quality gates. Use when creating new services, adding operations to existing services, or declaring manifest schemas."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<service-name> <operations...> [--extend] [--notion-url=...]"
 ---
@@ -272,12 +271,12 @@ For per-batch context (files to create, implementation patterns, test patterns, 
 - **Purpose**: Comprehensive code review before commit
 - **Input**: Quality-gated code from Step 5
 - **Output**: Review report with approval or required changes
-- **Sub-skill**: `coding:review`
+- **Sub-skill**: `coding:review-code`
 - **Parallel Execution**: No
 
 #### Execute Review Sub-Skill (You)
 
-1. Load `coding:review`
+1. Load `coding:review-code`
 2. Execute review covering: correctness, patterns, security, test coverage
 3. If review finds issues → loop back to Step 5
 4. If review passes → proceed to Step 7
