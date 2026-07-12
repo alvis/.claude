@@ -6,21 +6,50 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: "[--product=<name>] [--screens=<selector>] [--changes=<request>] [--all]"
 ---
 
-# Update screen design
+# Update Screen Design
 
-Update existing screen pages only. This skill does not create a missing screen, implement frontend code, or modify the canonical template. Never treat an omitted selector as all pages.
+Update explicitly selected existing pages in the canonical Notion Screens
+database. `create-screen-design` owns new pages; the canonical template itself
+is never modified here.
 
-## Canonical Notion contract and gate
+## Boundaries
+
+- Use for: scoped revisions, template migrations, and accessibility
+  corrections on existing Screens-database pages while preserving approved
+  content, relations, and page identity.
+- Do not use for: creating a missing screen (`create-screen-design`),
+  source-facing design work (`web:design`), rendered assessment
+  (`web:audit`), story-state audits (`storybook`), or editing the canonical
+  template.
+
+## Inputs
+
+- **Required**: an explicit selection — `--screens=<selector>`,
+  `--product=<name>` resolving to an unambiguous bounded set, or explicit
+  `--all`. An empty, ambiguous, or unexpectedly broad selection blocks
+  mutation; an omitted selector never means all pages.
+- **Optional**: `--changes=<request>` for stated modifications beyond
+  template alignment.
+- **Prerequisites**: the `notion-sync` executable and `NOTION_TOKEN`; stop
+  and report if either is missing or auth fails.
+
+## Canonical Notion contract
 
 - Template: `https://www.notion.so/4555730e74b44592b77dd8a97620d3f2`
 - Screens database parent: `https://www.notion.so/110161382ea64eefa46a4907574d4530`
 - Screens collection: `collection://c7bc479b-71db-41b1-b5ab-a07c641816b5`
 
-Require `notion-sync` and `NOTION_TOKEN`; use no other Notion client. Require `--screens`, `--product` plus an unambiguous bounded result, or explicit `--all`. Before pulling, search and list the exact page set for confirmation in the execution record. Empty, ambiguous, or unexpectedly broad results block mutation.
+<IMPORTANT>
+All Notion operations use `notion-sync` through Bash — no other Notion
+client. Recursive pulls are one-shot per tree, never a pull loop over
+discovered links. Before pulling, search and list the exact page set for
+confirmation in the execution record; no page outside that recorded selection
+may be written.
+</IMPORTANT>
 
-## One-shot snapshot and mapping
+## Workflow
 
-1. Pull the Screens database tree once:
+1. Pull the Screens database tree once into this run's before-snapshot:
 
    ```bash
    notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 \
@@ -34,25 +63,52 @@ Require `notion-sync` and `NOTION_TOKEN`; use no other Notion client. Require `-
      --follow-children --follow-links --out "$RUN_DIR/template"
    ```
 
-3. Select only from the mirrored database snapshot. Record a manifest mapping each selected Notion `ref:` and URL to its local Markdown file, product relation, requested change, and original content snapshot. Never follow discovered links with per-page pull loops.
-4. Verify every selected page belongs to the parent/collection above and already has a stable `ref:`. A missing page routes to `create-screen-design`; a missing/duplicate reference blocks that page.
+3. Resolve the selection only against the mirrored snapshot and record a
+   manifest mapping each selected page's `ref:` and URL to its local Markdown
+   file, product relation, requested change, and original content snapshot. A
+   requested page missing from the database routes to `create-screen-design`;
+   a missing or duplicate reference blocks that page. Verify every selected
+   page belongs to the canonical parent/collection. If a recursive pull or
+   the manifest is incomplete, stop before any push and report partial
+   coverage.
+4. For each selected page in stable manifest order, compare its headings and
+   frontmatter with the template and build a section mapping that says where
+   every existing substantive block will live after migration. Preserve
+   approved decisions, rationale, alternatives, product relations,
+   attachments and links, and still-valid responsive/accessibility content —
+   never discard content merely because a template heading changed.
+5. Apply only the requested change and necessary template alignment to the
+   local file that carries the page's `ref:`, keeping the parent and database
+   properties intact. Alternatives may use prose, tables, images, or ASCII;
+   no format is mandatory unless the page or request requires it.
+6. Run `notion-sync diff <file>` and inspect the complete diff before any
+   push. Reject unintended deletion, relation changes, unselected pages, and
+   unresolved placeholders; save the diff output as evidence. Record
+   already-compliant pages without pushing them.
+7. Run `notion-sync push <file>`, then re-read the local frontmatter and
+   require the same persisted `ref:`. On auth failure, conflict, partial
+   push, changed or missing `ref:`, or uncertain remote state, stop the batch
+   immediately — do not retry blindly or continue with later pages. Bulk
+   `--all` still requires an exact manifest and per-page diff.
+8. Run the verification below for each updated page; when a check fails, fix
+   the cause and re-run that check. Repeat until every check passes or a
+   concrete blocker remains, then report the blocker instead of looping.
 
-If either recursive pull or mapping is incomplete, stop before pushes and report partial coverage.
+## Verification
 
-## Preserve, diff, push, verify
-
-For each selected page, in stable order:
-
-1. Compare its headings/frontmatter with the template. Build a section mapping that says where every existing substantive block will live after migration. Preserve approved decisions, rationale, alternatives, product relations, attachments/links, and still-valid responsive/accessibility content. Do not discard content merely because a template heading changed.
-2. Apply only the requested change and necessary template alignment to the local file that carries the page's `ref:`. Keep the parent and database properties intact. Alternatives may use prose, tables, images, or ASCII; no format is mandatory unless the page or request requires it.
-3. Run `notion-sync diff <file>` and inspect the complete diff. Reject unintended deletion, relation changes, unselected pages, and unresolved placeholders before push. Save the diff path/output as evidence.
-4. Run `notion-sync push <file>`. Re-read the local frontmatter and require the same persisted `ref:`. On auth, conflict, partial push, changed/missing ref, or uncertain remote state, stop the batch immediately; do not retry blindly or continue with later pages.
-5. Verify using `notion-sync diff <file>` or one post-update pull of the selected subtree. Check requested change, template sections, preserved-content mapping, product/database relations, responsive states, and accessibility decisions. Record already-compliant pages without pushing them.
-
-Bulk `--all` still requires an exact manifest and per-page diff. No page outside the recorded selector may be written.
+- Verify each pushed page with `notion-sync diff <file>` or one post-update
+  pull of the selected subtree.
+- Confirm the requested change landed, template sections are present, the
+  preserved-content mapping is honored, and product/database relations,
+  responsive states, and accessibility decisions are intact.
+- Confirm no page outside the recorded selection was written and every pushed
+  file retains its original stable `ref:`.
 
 ## Completion
 
-Return `success`, `partial`, or `blocked`; selector and `--all` state; canonical IDs; before/template/after snapshot paths; page mapping; pages inspected, changed, already compliant, not attempted, or failed; each diff, URL and stable `ref:`; preservation checks; and recovery instructions. Never claim full migration when any selected page lacks verified remote and local state.
-
-Use `create-screen-design` for new pages, `web:design` for source-facing design work, `web:audit` for rendered QA, and `storybook` for story-state audits.
+Return `success`, `partial`, or `blocked`; the selector and `--all` state;
+canonical IDs; before/template/after snapshot paths; the page manifest; pages
+inspected, changed, already compliant, not attempted, or failed; each diff,
+URL, and stable `ref:`; preservation checks; and recovery instructions for
+any uncertain page. Never claim full migration when any selected page lacks
+verified remote and local state.
