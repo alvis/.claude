@@ -37,8 +37,18 @@ owner of history mutations.
 5. If a subject is non-conforming, propose the truthful replacement and invoke
    `coding:commit` for the approved reword.
 6. Load [references/squash-fixups.md](references/squash-fixups.md) only when a fixup/fold is approved. Re-run the affected commit and all dependent later commits after any mutation.
-7. Verify a clean, conflict-free final stack. If requested, invoke `coding:commit`
-   for the push only after every commit passes.
+7. Run the verification below; when a check fails, route the correction (steps
+   4-6) and re-run that commit and its dependents. Repeat until every commit is
+   green or a concrete blocker or pending decision remains, then report it
+   instead of looping. If requested, invoke `coding:commit` for the push only
+   after every commit passes.
+
+## Verification
+
+- Every unpushed commit passes its full install, lint, test/coverage, and build
+  gate in a fresh isolated worktree (or carries a valid QA marker).
+- The final stack is linear and conflict-free, and every commit subject conforms.
+- No history-mutating command was issued outside `coding:commit`.
 
 ## QA markers
 

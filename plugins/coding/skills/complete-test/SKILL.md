@@ -11,12 +11,16 @@ argument-hint: "[scope] [--coverage=<percent>] [--framework=<name>]"
 
 Own test authoring and test-suite maintenance. Do not implement production behavior, rewrite a failing application fix, or create placeholders for unspecified features.
 
-## Inputs and boundaries
+## Boundaries
 
-- Scope: files, package, feature, or explicit pending-test marker.
-- Optional coverage target (default: 100% statements, branches, functions, and lines unless an explicit repository policy sets another target), framework, and existing test paths.
-- Read project test scripts/configuration and the source under test before editing.
-- `FIXME` and production failures route to `coding:fix`; production stubs route to `coding:complete-code`; new behavior without a testable contract routes to `coding:write-code`.
+- Use for: pending test markers, coverage gaps, fixture restructuring, and test-suite redundancy cleanup within the requested scope.
+- Do not use for: `FIXME` markers and production failures (`coding:fix`), production stubs (`coding:complete-code`), or new behavior without a testable contract (`coding:write-code`).
+
+## Inputs
+
+- Required: scope — files, package, feature, or explicit pending-test marker.
+- Optional: coverage target (default: 100% statements, branches, functions, and lines unless an explicit repository policy sets another target), framework, and existing test paths.
+- Prerequisites: read project test scripts/configuration and the source under test before editing.
 
 ## Workflow
 
@@ -29,7 +33,7 @@ Load [references/orchestration.md](references/orchestration.md) for the full coo
 5. Plan fixtures before changing them: identify consumers, lifecycle, mutation, and migration order. For a fixture rewrite, migrate every consumer, run focused suites, then the full suite. Do not leave old and new fixture systems in parallel.
 6. Test redundancy cleanup by remove → measure → restore: remove one candidate, rerun focused tests and coverage, keep it removed only if signal and coverage are unchanged; otherwise restore it. Scope the coverage check to the test's mirrored source file: a test that contributes to its own source file's coverage stays even when globally redundant, and a test verifying a distinct behavior stays even when it covers the same lines as another. Never infer redundancy from similar prose alone; remove least-risky candidates first.
 7. After each batch, run focused tests and coverage. If production behavior is wrong, route to `coding:fix`; do not edit source here. After all batches, run the complete repository test, coverage, type, and lint gates that apply.
-8. Request one independent final test review covering missing behavior, weak assertions, fixture correctness, nondeterminism, and per-source coverage. Apply justified test-only corrections and rerun the affected and full gates.
+8. Request one independent final test review covering missing behavior, weak assertions, fixture correctness, nondeterminism, and per-source coverage. Apply justified test-only corrections and rerun the affected and full gates. When a gate fails, fix the cause and re-run that gate; repeat until every gate passes or a concrete blocker remains, then report the blocker instead of looping.
 
 ## Verification
 

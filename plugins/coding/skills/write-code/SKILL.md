@@ -9,242 +9,113 @@ argument-hint: "<instruction> [--resume]"
 
 # Write Code
 
-Orchestrates the complete TDD lifecycle by composing atomic skills into a sequential pipeline. Each pass updates the same implementation cleanly: remove superseded scaffolding and avoid duplicate code paths or addendum-style patches.
+Composite orchestrator for the complete TDD lifecycle: it owns sequencing,
+interactive gates, and state handover, while each phase is owned by the
+atomic child skill it invokes. Each pass updates the same implementation
+cleanly — remove superseded scaffolding; never leave duplicate code paths or
+addendum-style patches.
 
-## Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+- Use for: new functions, features, modules, components, CLI or API endpoints
+  built with tests end to end; turning a spec or approved ticket into working
+  code; resuming interrupted lifecycle work with `--resume`.
+- Do not use for: skeleton only (`coding:draft-code`), completing accepted
+  production stubs only (`coding:complete-code`), fixing failing
+  tests/lint/types only (`coding:fix`), refactoring without the full
+  lifecycle (`coding:refactor`), code review (`coding:review-code`), or a
+  stack with no implementation (`coding:commit --create-pr` directly).
+- Reject when: the instruction is too vague to define acceptance criteria
+  (ask for specific requirements), or the target project has no testing
+  framework configured.
 
-- Create only a skeleton without implementation (use `/coding:draft-code`)
-- Complete only accepted production implementation stubs (use `/coding:complete-code`)
-- Fix only test/lint/type issues (use `/coding:fix`)
-- Refactor without the full lifecycle (use `/coding:refactor`)
-- Perform code review (use `/coding:review-code`)
+## Inputs
 
-**When to REJECT**:
+- **Required**: `<instruction>` — feature requirements with enough detail to
+  derive scope and acceptance criteria.
+- **Optional**: `--resume` — continue from handover documents instead of
+  starting fresh.
+- **Prerequisites**: for `--resume`, CONTEXT.md, NOTES.md, and PLAN.md exist
+  in the working directory; otherwise reject with "No handover files found.
+  Create them first with /coding:handover".
 
-- If the user only wants a scaffold/skeleton -> tell them to use `/coding:draft-code`
-- If the user only wants to complete existing TODOs -> tell them to use `/coding:complete-code`
-- If the user only wants to fix failing tests/lint/types -> tell them to use `/coding:fix`
-- If the user has explicitly asked for a stack and only a stack (no implementation) -> redirect them to `/coding:commit --create-pr` directly
-- If the instruction is too vague to define acceptance criteria
-- If the target project has no testing framework configured
+## Composition
 
-## Composition Structure
+Child skills run in `context: fork`, in this order:
 
-This is a **composite skill** that orchestrates the following atomic skills in sequence. Each child skill runs in `context: fork` and receives the `--from-composite` flag to suppress redundant confirmation gates.
+1. `coding:setup-project` — conditional: only when essential structure is
+   missing.
+2. `coding:draft-code` — design discovery plus skeleton with canonical
+   `TODO(implementation):` markers and describe.todo/it.todo test structure.
+3. `coding:complete-code` — green phase: minimal implementations that make
+   tests pass; then `coding:complete-test` for any pending test markers it
+   reports.
+4. `coding:fix` — diagnosed test/type/lint failures with root-cause analysis
+   (batches file sets over 25 files). Mechanical standards violations route
+   to `coding:lint`; fixture, mock, pending-test, and coverage work routes to
+   `coding:complete-test`.
+5. `coding:refactor` — green behavior-preserving cleanup, naming, JSDoc, and
+   final quality validation.
+6. `coding:commit --create-pr` — conditional stack split or restack; see
+   [references/stack-split.md](references/stack-split.md).
 
-```
-write-code (this orchestrator)
-  |
-  |-- 1. Skill: coding:setup-project   (conditional: only if no project exists)
-  |-- 2. Skill: coding:draft-code      (Steps 0-1: design discovery + skeleton)
-  |-- 3. Skill: coding:complete-code   (Step 2: implementation / green phase)
-  |-- 4. Skill: coding:complete-test    (test TODOs + coverage owned by test workflow)
-  |-- 5. Skill: coding:fix              (diagnosed failures only)
-  |-- 6. Skill: coding:refactor         (green behavior-preserving cleanup)
-  |-- 7. Skill: coding:commit --create-pr  (conditional: only if change is large or upstream stack exists)
-```
+State handover: children read and update CONTEXT.md, NOTES.md, and PLAN.md.
 
-### State Handover Between Steps
-
-State is passed between child skills via handover documents (CONTEXT.md, NOTES.md, PLAN.md). Each child skill reads these documents for context and updates them upon completion.
-
-### Resume Support
-
-When `--resume` is provided, the orchestrator reads handover documents to determine which step to resume from:
-- Files with `need-draft` -> resume from `coding:draft-code`
-- Files with `need-completion` -> resume from `coding:complete-code`
-- Files with `need-fixing` -> resume from `coding:fix`
-- Files with `need-refactoring` -> resume from `coding:refactor`
-
-### Composite Convention
-
-`--from-composite` is an internal flag only for children that explicitly declare it (`setup-project`, `draft-code`, `fix`, and `refactor`). Do not pass it to `complete-code` or `complete-test`; pass their normal scope plus a concise parent context in the Skill payload. Unknown internal flags are errors, not silently ignored compatibility options.
+Composite convention: pass the internal `--from-composite` flag only to
+children that declare it (`setup-project`, `draft-code`, `fix`, `refactor`)
+to suppress redundant confirmation gates. Never pass it to `complete-code` or
+`complete-test` — give them their normal scope plus a concise parent context
+in the Skill payload. Unknown internal flags are errors, not silently ignored
+compatibility options.
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Parse `<instruction>` and flags; identify requirements, scope, and
+   acceptance criteria, asking for clarification when ambiguous. With
+   `--resume`, read the handover documents, map the file substate to the
+   resume point (`need-draft` → draft-code, `need-completion` →
+   complete-code, `need-fixing` → fix, `need-refactoring` → refactor), and
+   extract change direction from PLAN.md next steps or NOTES.md open
+   questions.
+2. Conditional setup: check for essential structure (package.json, source
+   directories, test framework); invoke `coding:setup-project` with the
+   target path and `--from-composite` only when missing.
+3. Invoke `coding:draft-code` with the instruction and `--from-composite`,
+   then hold the interactive gate below.
+4. Invoke `coding:complete-code` with the target area, then
+   `coding:complete-test` for pending test markers; gate.
+5. Invoke `coding:fix` with the target area and `--from-composite`; gate.
+6. Invoke `coding:refactor` with the target area and `--from-composite`;
+   gate.
 
-### Step 1: Parse Arguments
+   Interactive gate (after each of steps 3-6): offer the user
+   (1) proceed to the next step, (2) re-run the current child with change
+   direction, (3) resume from a different step, (4) pause and create handover
+   documentation via `coding:handover`.
+7. Stack decision: apply
+   [references/stack-split.md](references/stack-split.md) — compute change
+   size, detect open stacks, and dispatch `coding:commit` in split or restack
+   mode when a trigger fires, surfacing the rationale to the user first.
+   <IMPORTANT>Never invoke `jj split` or `gh pr create` directly; stacking is
+   always delegated to `coding:commit`.</IMPORTANT>
+8. Run the verification below; when a check fails, route the failure to the
+   owning child (`coding:fix` for diagnosed failures, `coding:complete-test`
+   for test/coverage gaps) and re-run that check. Repeat until every check
+   passes or a concrete blocker remains, then report the blocker instead of
+   looping.
 
-1. **Extract Instruction**
-   - Parse `<instruction>` from $ARGUMENTS
-   - Identify feature requirements, scope, and acceptance criteria
-   - If instruction is ambiguous, ask for clarification before proceeding
+## Verification
 
-2. **Detect Resume Mode**
-   - Check if `--resume` flag is present in $ARGUMENTS
-   - If `--resume`:
-     - Search for handover documents (CONTEXT.md, NOTES.md, PLAN.md) in the working directory
-     - Parse file substates from CONTEXT.md to determine which skill to resume from
-     - Extract change direction from PLAN.md next steps or NOTES.md open questions
-     - If handover files are missing, reject with: "No handover files found. Create them first with `/coding:handover`"
+- Tests pass, types check, and lint is clean for the touched area.
+- Coverage meets the project target; no `TODO(implementation):` or pending
+  it.todo markers remain in scope.
+- When a stack dispatch was triggered, `coding:commit` reported the opened or
+  restacked draft PRs.
 
-### Step 2: Conditional Project Setup
+## Completion
 
-Check if the target project has essential structure (package.json, source directories, test framework).
-
-- **If project is NOT set up**: Invoke `coding:setup-project` with the target path and `--from-composite`
-- **If project IS set up**: Skip this step
-
-### Step 3: Draft Code Skeleton (design + skeleton)
-
-Invoke `coding:draft-code` with the parsed instruction and `--from-composite`.
-
-This skill handles:
-- Design direction discovery (searching for DESIGN.md, handover docs)
-- Code skeleton creation with canonical `TODO(implementation):` markers
-- Test structure creation with describe.todo/it.todo patterns, completed later by `coding:complete-test`
-- TypeScript and lint validation of the skeleton
-
-**Interactive gate**: After this skill completes, present the user with options:
-1. Proceed to implementation
-2. Request changes to the skeleton (re-run draft-code with change direction)
-3. Resume from a different step
-4. Pause and create handover documentation
-
-### Step 4: Implementation (green phase)
-
-Invoke `coding:complete-code` with the target area; then
-invoke `coding:complete-test` for any pending test markers it reports.
-
-This skill handles:
-- Replacing accepted production implementation stubs with minimal working implementations
-- TDD Green phase: implementing just enough code to make tests pass
-- Continuous test execution to verify progress
-
-**Interactive gate**: After this skill completes, present the user with options:
-1. Proceed to fixing
-2. Request changes to implementation (re-run complete-code with direction)
-3. Resume from a different step
-4. Pause and create handover documentation
-
-### Step 5: Fix Issues and Optimize (fix + optimize)
-
-Invoke `coding:fix` with the target area and `--from-composite`.
-
-This skill handles:
-- Diagnosed test, type, and lint failures with critical root cause analysis
-- Batch processing for large file sets (>25 files)
-
-Mechanical standards violations route to `coding:lint`. Fixture, mock, pending-test, and coverage work routes to `coding:complete-test`.
-
-**Interactive gate**: After this skill completes, present the user with options:
-1. Proceed to refactoring
-2. Request changes to fixes (re-run fix with specific notes)
-3. Resume from a different step
-4. Pause and create handover documentation
-
-### Step 6: Refactor and Document
-
-Invoke `coding:refactor` with the target area and `--from-composite`.
-
-This skill handles:
-- Code structure improvements without changing functionality
-- Naming convention enforcement
-- Comprehensive JSDoc documentation
-- Final quality validation (tests, lint, types, coverage)
-
-**Interactive gate**: After this skill completes, present the user with options:
-1. Complete the workflow
-2. Request changes to refactoring (re-run refactor with focus)
-3. Resume from a different step
-4. Pause and create handover documentation
-
-### Step 7: Conditional Stack Split
-
-After refactor lands and BEFORE reporting, decide whether the resulting change should be sliced into a stack of ordered draft PRs, or whether an existing open stack needs restacking. The orchestrator NEVER invokes `jj split` / `gh pr create` directly -- it always delegates to `coding:commit --create-pr`.
-
-1. **Compute change size** via `jj diff --summary --stat` (preferred when the working copy is jj-colocated) or `git diff --shortstat HEAD` as fallback. Capture: changed-file count and LOC diff.
-
-2. **Detect open stack**: scan for bookmarks matching `<branch-prefix>/NN-<scope>` (e.g. `jj bookmark list` / `git branch --list '*/[0-9][0-9]-*'`).
-
-3. **Apply triggers**:
-   - **Large change** -- `>5 changed files OR >300 LOC diff OR multiple loosely-coupled domains`. Dispatch `coding:commit --create-pr --from-composite` (split + stacked-PR flow) to slice the working copy into reviewable, ordered draft PRs.
-   - **Restack on semantic upstream change** -- if an open stack is detected AND this change semantically modifies code that a lower (earlier-in-order) PR in the stack depends on (signature/behavior/contract of a symbol the lower PR establishes or relies on), MUST dispatch `coding:commit --from-composite` so the post-rewrite restack runs automatically. Incidental file overlap alone (formatting, unrelated co-edit) does NOT trigger restack -- judge by lower-PR correctness dependence.
-
-4. **Otherwise** (small, single-domain change, no semantic upstream impact): skip and proceed straight to Step 8 reporting.
-
-**Interactive gate**: If a dispatch is triggered, surface the rationale (size metrics or named lower PRs at risk) and proposed mode to the user before delegating. The child skill drives its own confirmation gates.
-
-### Step 8: Reporting
-
-**Output Format**:
-
-```
-[OK/FAIL] Command: write-code $ARGUMENTS
-
-## Summary
-- Instruction: [parsed instruction]
-- Steps executed: [list of skills run]
-- Steps skipped: [list of skills skipped, if any]
-- Files created: [count]
-- Files modified: [count]
-- Tests passing: [count]
-- Coverage: [percentage]
-
-## Actions Taken
-1. [setup-project] Project setup: [brief summary or "skipped"]
-2. [draft-code] Drafted skeleton: [files created]
-3. [complete-code] Implemented: [functions/modules completed]
-4. [fix] Fixed: [issues resolved, fixtures optimized]
-5. [refactor] Refactored: [quality improvements, docs added]
-6. [commit --create-pr] Stacked: [skipped | dispatched in <split|restack> mode -- N draft PRs opened/restacked]
-
-## Validation Results
-- Tests: PASS/FAIL ([X] passing, [Y] failing)
-- Types: PASS/FAIL ([N] errors)
-- Lint: PASS/FAIL ([N] warnings)
-- Coverage: [percentage]
-
-## Next Steps
-1. [Follow-up action if any]
-2. [If `commit --create-pr` was dispatched: list opened/restacked PRs (bookmark + URL) for review]
-3. [Commit with /coding:commit]
-```
-
-## Examples
-
-### Implement a New Feature
-
-```bash
-/write-code "Create user authentication service with login, logout, and token refresh"
-# Runs full TDD lifecycle:
-# 1. setup-project (if needed)
-# 2. draft-code: Discovers design, drafts types, service skeleton, test structure
-# 3. complete-code: Implements auth logic to pass tests
-# 4. fix: Fixes any test/lint/type issues, optimizes fixtures
-# 5. refactor: Refactors for quality and adds documentation
-```
-
-### Implement from Design Spec
-
-```bash
-/write-code "Implement the payment processing module per DESIGN.md"
-# Reads DESIGN.md for requirements, then runs full cycle
-```
-
-### Resume Interrupted Work
-
-```bash
-/write-code "Continue implementing the notification system" --resume
-# Reads CONTEXT.md, NOTES.md, PLAN.md
-# Auto-detects resume point from file substates
-# Continues from the appropriate skill
-```
-
-### Error Cases
-
-```bash
-/write-code "thing"
-# Error: Instruction too vague to define acceptance criteria
-# Suggestion: Provide specific requirements like
-#   "Create validation helpers for user input with email, phone, and URL validators"
-
-/write-code "Fix the failing tests"
-# Rejected: For fixing issues only, use /coding:fix instead
-
-/write-code "Create a skeleton for the API"
-# Rejected: For scaffolding only, use /coding:draft-code instead
-```
+Report the parsed instruction, steps executed and skipped, files created and
+modified, test/type/lint/coverage results, the stack outcome (skipped, or the
+opened/restacked PRs with bookmark and URL), and next steps (typically
+`/coding:commit` when no stack was dispatched). For a rejection, name the
+matching boundary and the skill to use instead.

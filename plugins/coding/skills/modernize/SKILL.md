@@ -9,169 +9,86 @@ argument-hint: "<area> [--dry-run] [--target-version=X.Y]"
 
 # Modernize
 
-Analyze project configuration and upgrade code to use the latest supported syntax, APIs, and patterns, with features discovered at runtime from the reference catalog and filtered by the project's actual TypeScript/Node.js version. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A modernization is not a paint-over of an old idiom; the modern construct must take the legacy one's place fully, with no `// legacy:` fallbacks, no compatibility shims left behind once nothing calls them, and no parallel "new path" that the rest of the module can still bypass.
+Upgrade code to the latest syntax, APIs, and patterns the project already
+supports, with features discovered at runtime from the reference catalog and
+gated by the detected TypeScript/Node.js versions. `coding:refactor` owns
+general structural cleanup; dependency upgrades are out of scope.
 
-## Arguments
+<IMPORTANT>
+Coherence Mandate: every edit must produce one continuous, deliberate work —
+rewrite over restructure, restructure over integrate, never append. A
+modernization is not a paint-over of an old idiom; the modern construct must
+take the legacy one's place fully, with no `// legacy:` fallbacks, no
+compatibility shims left behind once nothing calls them, and no parallel "new
+path" that the rest of the module can still bypass.
+</IMPORTANT>
 
-- **area** (positional, required): File path, directory, or glob pattern selecting which files to modernize.
-- **--dry-run** (optional): Report what would change without applying any edits.
-- **--target-version** (optional): Override the detected TypeScript version (e.g., `--target-version=5.4`). Useful for previewing upgrades before bumping the project version.
+## Boundaries
 
-## 🎯 Purpose & Scope
+- Use for: replacing legacy constructs with modern equivalents the project's
+  detected versions already support — safe, mechanical, pattern-for-pattern
+  transforms.
+- Do not use for: upgrading package.json dependencies or the TypeScript
+  version, modifying configuration files (tsconfig.json, eslintrc, etc.),
+  introducing dependencies, refactoring architecture or business logic
+  (`coding:refactor`), or processing binary, gitignored, or vendor files.
+  Reject configuration-file targets, areas with no valid source files,
+  targets outside the project, and versions with no applicable features.
 
-**What this command does**:
+## Inputs
 
-- Detects the project's TypeScript version, tsconfig targets, and Node.js engine version
-- Identifies legacy patterns that can be replaced with modern equivalents the project already supports
-- Applies safe, mechanical transforms (pattern-for-pattern replacements)
+- **Required**: `area` — file path, directory, or glob selecting the files to
+  modernize.
+- **Optional**: `--dry-run` reports what would change without editing;
+  `--target-version=X.Y` overrides the detected TypeScript version (useful
+  for previewing upgrades before bumping the project version).
 
-**What this command does NOT do**:
+## Workflow
 
-- Does not upgrade `package.json` dependencies or TypeScript version
-- Does not modify configuration files (tsconfig.json, eslintrc, etc.)
-- Does not introduce new dependencies
-- Does not refactor architecture or business logic
-- Does not process binary files or non-code assets
-- Does not modify gitignored or vendor files
-
-**When to REJECT**:
-
-- Target is a configuration file
-- No valid source files found in the specified area
-- Target is outside the project directory
-- No applicable modernization features for the detected version
-
-## 🔄 Workflow
-
-ultrathink: you'd perform the following steps
-
-### Step 1: Detect Config
-
-Read the project's `tsconfig.json` and `package.json` to determine the modernization ceiling:
-
-1. **TypeScript version**: Extract from `devDependencies.typescript` or `dependencies.typescript` in `package.json`. Strip range prefixes (`^`, `~`) to get the base version.
-2. **Compiler options**: Read `target`, `module`, and `lib` from `tsconfig.json` `compilerOptions`. Follow `extends` if present to resolve the full effective config.
-3. **Node.js engine version**: Extract from `package.json` `engines.node` field. Strip range prefixes to get the minimum supported version.
-
-If `--target-version` is provided, use that instead of the detected TypeScript version.
-
-Record these values — they gate which features are applicable in Step 2.
-
-### Step 2: Load Reference
-
-Read the feature reference catalog at `references/typescript.md` (relative to this skill's directory).
-
-Filter entries to only those whose required TypeScript version is ≤ the version detected (or overridden) in Step 1. Discard features that require a higher version than the project supports.
-
-The reference file uses a compact one-line-per-feature format with `use xxx` entries. Each entry points to a corresponding example file for detection patterns and transforms.
-
-### Step 3: Load Examples
-
-For each applicable feature from Step 2, read the corresponding example file at `examples/typescript/<name>.md` (relative to this skill's directory). Example filenames are prefixed with the version they were introduced in (e.g., `ts50-tc39-decorators.md`).
-
-Each example file contains:
-
-- **Detection patterns**: Grep-compatible regex patterns that identify legacy code eligible for the transform
-- **Before/after transforms**: Concrete code showing the old pattern and its modern replacement
-- **Edge cases**: Situations where the transform should NOT be applied
-
-Collect all detection patterns and their associated transforms.
-
-### Step 4: Scan
-
-Using the detection patterns from Step 3, grep the target files for legacy patterns:
-
-1. For each applicable feature, run Grep with the detection pattern against the target area
-2. Collect all matches with file paths, line numbers, and matched content
-3. Cross-reference with edge cases — exclude matches that fall under documented exceptions
-4. Group results by feature for organized reporting and application
-
-If no matches are found, report that the target files are already using modern patterns and exit.
-
-### Step 5: Apply
-
-**If `--dry-run` is NOT set**:
-
-1. For each match found in Step 4, apply the corresponding transform using the Edit tool
-2. Process files one at a time to avoid conflicts between overlapping edits
-3. After all edits are complete:
-   - Run `npx tsc --noEmit` to verify no type errors were introduced
-   - Run project tests via `npm test` (or the appropriate test script from `package.json`)
-4. If verification fails:
-   - Identify which transform caused the failure
-   - Revert that specific transform
-   - Add it to the "skipped" list with reason "verification failed"
-   - Re-run verification to confirm the revert resolved the issue
-
-**If `--dry-run` IS set**:
-
-- Do NOT apply any edits
-- For each match, report: file path, line number, current pattern, proposed replacement, and the feature that motivated the change
-- Skip verification steps entirely
-
-### Step 6: Report
-
-Output a structured summary:
-
-```
-[✅/❌] Command: modernize $ARGUMENTS
-
-## Configuration Detected
-- TypeScript: [version]
-- Target: [target]
-- Module: [module]
-- Node.js: [version]
-- Features applicable: [count] of [total] in catalog
-
-## Changes Applied
-| File | Line | Feature | Description |
-|------|------|---------|-------------|
-| src/utils/foo.ts | 42 | using-declarations | Replaced manual cleanup with `using` |
-| ... | ... | ... | ... |
-
-## Changes Skipped
-| File | Line | Feature | Reason |
-|------|------|---------|--------|
-| src/lib/bar.ts | 15 | satisfies-operator | Edge case: computed property |
-| ... | ... | ... | ... |
-
-## Manual Review Needed
-- [file:line] — [description of what needs human judgment]
+1. **Detect the ceiling.** From `package.json` take the TypeScript version
+   (`devDependencies.typescript` or `dependencies.typescript`, range prefixes
+   `^`/`~` stripped) and the minimum Node.js engine (`engines.node`, prefixes
+   stripped); from `tsconfig.json` read the effective `target`, `module`, and
+   `lib`, following `extends` to resolve the full config. `--target-version`
+   overrides the detected TypeScript version. These values gate which
+   features apply.
+2. **Load the catalog.** Read `references/typescript.md` (relative to this
+   skill's directory) — a compact one-line-per-feature format of `use xxx`
+   entries, each pointing to an example file — and keep only entries whose
+   required TypeScript version is ≤ the ceiling from step 1.
+3. **Load examples.** For each applicable feature, read
+   `examples/typescript/<name>.md` (filenames are version-prefixed, e.g.
+   `ts50-tc39-decorators.md`) and collect its grep-compatible detection
+   patterns, before/after transforms, and the edge cases where the transform
+   must NOT be applied.
+4. **Scan.** Grep the target area with each detection pattern; collect
+   matches with file path, line number, and content; exclude matches covered
+   by documented edge cases; group results by feature. If nothing matches,
+   report that the area already uses modern patterns and stop.
+5. **Apply.** On `--dry-run`, apply nothing: report each match's file, line,
+   current pattern, proposed replacement, and motivating feature, and skip
+   verification. Otherwise apply each transform via Edit, one file at a time
+   to avoid overlapping edits, then run `npx tsc --noEmit` and the project
+   test script (`npm test` or the script from `package.json`). When
+   verification fails, identify the offending transform, revert it, record it
+   as skipped with reason "verification failed", and re-run the checks.
+   Repeat until every check passes or a concrete blocker remains, then report
+   the blocker instead of looping.
 
 ## Verification
-- Type check: [PASS/FAIL]
-- Tests: [PASS/FAIL]
-```
 
-If `--dry-run` was set, replace "Changes Applied" with "Changes Proposed" and omit the Verification section.
+- `npx tsc --noEmit` and the project tests pass after edits (not applicable
+  on `--dry-run`).
+- Every applied transform corresponds to a catalog feature within the
+  detected version ceiling, and no documented edge case was transformed.
+- No configuration file, dependency manifest, or gitignored/vendor file was
+  modified.
 
-## 📝 Examples
+## Completion
 
-### Modernize a Directory
-
-```bash
-/modernize src/services/
-# Detects TS 5.4, scans services for legacy patterns,
-# applies transforms, verifies with tsc and tests
-```
-
-### Dry Run to Preview Changes
-
-```bash
-/modernize src/ --dry-run
-# Reports all modernization opportunities without applying any edits
-```
-
-### Target a Specific Version
-
-```bash
-/modernize src/utils/ --target-version=5.2
-# Only applies features available in TS 5.2, even if project uses 5.4
-```
-
-### Single File
-
-```bash
-/modernize src/components/Button.tsx
-# Modernizes a single file
-```
+Report the detected configuration (TypeScript version, target, module,
+Node.js version, applicable feature count out of the catalog total), changes
+applied per feature with file:line and description, changes skipped with
+their reasons, items needing manual review, and the type-check and test
+results. On `--dry-run`, present the same summary with proposed changes and
+omit verification results.

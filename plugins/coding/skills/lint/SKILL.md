@@ -1,6 +1,6 @@
 ---
 name: lint
-description: Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope, including calls extended by another plugin's portable lint profile.
+description: Enforce coding standards mechanically across a selected scope with batched linters and independent reviewers. Use when source files need lint-error correction, standards enforcement, or consistent formatting, including calls extended by another plugin's portable lint profile; behavior-changing repairs belong to fix.
 model: opus
 context: fork
 allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
@@ -9,14 +9,21 @@ argument-hint: "[specifier] [--scope=SCOPE] [--skip-unused] [--profile=ABSOLUTE_
 
 # Linting
 
-Apply generic coding standards mechanically. This skill owns file discovery, scope handling, batching, the generic scanner, verification, aggregation, and the final report. It does not select or dispatch framework skills.
+Apply generic coding standards mechanically. This skill owns file discovery, scope handling, batching, the generic scanner, verification, aggregation, and the final report. It does not select or dispatch framework skills; a framework plugin extends it by passing a portable profile.
+
+## Boundaries
+
+- Use for: mechanical standards enforcement, lint-error correction, and consistent formatting on eligible source files, with an optional pre-flight unused-code prune.
+- Do not use for: modifying configuration files, installing or updating lint tooling, authoring lint rules, or processing binary, gitignored, generated, or vendor files. Behavior-changing repairs belong to `coding:fix`; structural cleanup belongs to `coding:refactor`.
 
 ## Inputs
 
-- `specifier`: optional file, directory, or glob. Default: repository root.
-- `--scope`: `uncommitted` (default), `all`, or a focused section hint.
-- `--skip-unused`: bypass the pre-flight unused-code scan entirely.
-- `--profile=<absolute-path>`: internal extension contract for another plugin. Reject relative or unreadable paths.
+- **Required**: none — defaults to the repository root with `--scope=uncommitted`.
+- **Optional**:
+  - `specifier`: file, directory, or glob.
+  - `--scope`: `uncommitted` (default), `all`, or a focused section hint.
+  - `--skip-unused`: bypass the pre-flight unused-code scan entirely.
+  - `--profile=<absolute-path>`: internal extension contract for another plugin. Reject relative or unreadable paths.
 
 The caller forwards its original arguments unchanged and may append one profile. Direct calls without a profile apply generic checks to every eligible source file, regardless of framework.
 
@@ -45,7 +52,7 @@ You are the lead orchestrator: coordinate, delegate, and aggregate only — neve
    - `all` or a custom scope: resolve the specifier directly.
    - Always exclude ignored files, dependencies, generated output, and paths outside the repository.
 3. Apply profile eligibility and exclusions when supplied. Stop cleanly if no files remain.
-4. Discover generic coding standards from active plugin context. Add profile standards without replacing or duplicating generic standards.
+4. Discover generic coding standards from active plugin context: collect the standard file paths listed under the "Plugin Constitution > Standards" sections of the system prompt (fall back to a Glob for `**/constitution/standards/**` when absent), select the set named by the linting Delegation Rule by matching names to filename stems (partial-stem matching tolerates renamed or split standards), and add testing standards when any target is a `*.spec.*` or `*.test.*` file. Add profile standards without replacing or duplicating generic standards. Pass standard paths to teammates as strings — the lead never reads their contents.
 5. Batch related files, with at most two files per batch.
 6. For each batch, delegate mechanical linting to a suitable available subagent that cannot delegate further (haiku linters, max 4 concurrent — see the team reference for the full task contents and lifecycle):
    - Run `${CLAUDE_SKILL_DIR}/../../scripts/pyrun.sh ${CLAUDE_SKILL_DIR}/../../scripts/lint_profile_runner.py [--profile=<absolute-path>] <files>` exactly once. The runner resolves Coding resources from its installed location.
@@ -56,6 +63,7 @@ You are the lead orchestrator: coordinate, delegate, and aggregate only — neve
    - Return `violations_found`, `status`, files changed, checks run, and remaining issues.
 7. Independently review batches that changed files with two sonnet reviewers per batch, repeating the fix–review round until both approve (see the team reference). Already-compliant batches need no review.
 8. Aggregate batch counts and use the worst status: `failure > partial > success > compliant`.
+9. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
 
 ## Verification
 
@@ -65,13 +73,17 @@ You are the lead orchestrator: coordinate, delegate, and aggregate only — neve
 - Relevant project checks pass, or their exact failure is reported.
 - All delegated work is complete and temporary teams are shut down.
 
-## Report
+## Completion
 
-Begin with these keys:
+Begin with these keys (a `/goal` evaluator reads convergence directly from them):
+
+<report>
 
 ```yaml
 violations_found_total: 0
 status: compliant # compliant | success | partial | failure
 ```
+
+</report>
 
 Then report the command, the unused-code pre-flight (ran/skipped, findings/removed/kept), profile report label when present, scope, files scanned and modified, standards and scanners applied, verification commands, review coverage, agent lifecycle counts, and remaining issues. Use `compliant` only for a clean pass with no edits and `success` when violations were fixed. A caller using a profile receives this same report shape.

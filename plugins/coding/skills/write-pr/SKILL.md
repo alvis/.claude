@@ -8,190 +8,116 @@ argument-hint: "[<commit-ref>]"
 
 # Write Pull Request
 
-Compose a conventional-commit PR title and a unified PR body for a single commit (working-copy `jj` change by default, or any `<commit-ref>` resolvable by `jj log` / `git log`). Output the title + body to stdout; the caller pipes the body into `gh pr create --draft --title "$TITLE" --body-file -`.
+Compose a deterministic, regex-validated Conventional Commits PR title and a
+unified PR body from one commit, emitted to stdout. Opening the PR is the
+caller's job: it splits the output and pipes the body into
+`gh pr create --draft --title "$TITLE" --body-file -`. Zone enforcement
+(GIT-PR-SIZE-01..04) belongs to the reviewer, and the `--draft` flag
+(GIT-PR-STACK-04/06) belongs to the caller — never to this author.
 
-## 1. INTRODUCTION
+## Boundaries
 
-### Purpose & Context
+- Use for: a PR title and body for the current jj working-copy change or any
+  resolvable commit ref, including one invocation per stacked change from
+  `coding:commit --create-pr`.
+- Do not use for: opening the PR (the caller runs `gh pr create`), zone
+  classification or review boilerplate (reviewer's job), or committing
+  changes (`coding:commit`).
+- Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are
+  intentionally ignored — selecting between them is a human choice and out of
+  scope.
 
-**Purpose**: Produce a single, consistent PR title (Conventional Commits) plus a single unified PR body from one commit's subject + body trailers. The PR body follows the repo's own GitHub PR template when one is checked into the repo; otherwise the bundled default at `references/templates/pr.md` is used. No type taxonomy, no zone classifier, no Python scripts.
+## Inputs
 
-**When to use**:
-- A human asks for a PR title + body for the current `jj` change or a referenced commit.
-- The sibling `coding:commit` skill (with `--create-pr`) invokes this skill once per stacked change; the orchestrating LLM consumes the `title\n\nbody` output and runs `gh pr create` directly.
-- Any caller wants a deterministic, conventional-commit-validated title and a body built from the repo's PR template (or the bundled default) before opening a PR.
+- **Required**: none — defaults to `@`, the current jj working-copy change.
+- **Optional**: `<commit-ref>` — any jj revset (`@`, `@-`, a change id) or
+  git ref (`HEAD`, `HEAD~1`, a SHA). Behavior is deterministic given the ref.
+- **Prerequisites**: `jj` on PATH (falls back to `git` when `jj` is absent).
+  `gh` is needed only by the caller; this skill never invokes it.
 
-**Prerequisites**:
-- `jj` CLI on PATH for change extraction (falls back to `git` when `jj` is absent).
-- `gh` CLI only required by the *caller* if they choose to open the PR via `gh pr create`. This skill itself does not invoke `gh`.
+## Workflow
 
-### Your Role
+1. Resolve the commit ref: try `jj log -r <ref> --no-graph -T 'description'`
+   first; fall back to `git log -1 --format=%B <ref>` when `jj` exits
+   non-zero. Unknown ref: exit 2, print "no such revision" plus the failing
+   ref. Neither `jj` nor `git` available: exit 3, "no commit source
+   available".
+2. Extract the subject (first non-empty line) and body (everything after the
+   first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
+   `Fixes:`, `Breaking-Change:`, `Testing:`, `Manual-Test:`) for routing in
+   step 5.
+3. Validate the subject against the Conventional Commits regex — the
+   canonical conventional-commits.org type allowlist with optional `(scope)`
+   and `!` for breaking changes:
 
-You are a **PR Author** who reads one commit, validates its subject against the Conventional Commits regex, resolves which PR template to use (the repo's own GitHub PR template if checked in, else the bundled default at `references/templates/pr.md`), and — when using the bundled default — fills its placeholders from the commit's narrative content. A repo-local template is emitted verbatim with no substitution. You do not classify zones and do not append review boilerplate — zone enforcement lives in `GIT-PR-SIZE-01..04` (reviewer's job, not the author's).
+   ```
+   ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w./-]+\))?!?: .+
+   ```
 
-## 2. SKILL OVERVIEW
+   On mismatch, exit 2 with the failing token, the regex, and the offending
+   subject. This skill is the single source of truth for the regex; it is
+   mirrored in `coding:commit` (`references/conventional-commits.md`).
+4. Resolve the template — first hit wins, paths relative to the repo root:
 
-### Inputs
+   1. `.github/PULL_REQUEST_TEMPLATE.md`
+   2. `.github/pull_request_template.md`
+   3. `docs/PULL_REQUEST_TEMPLATE.md`
+   4. `docs/pull_request_template.md`
+   5. `PULL_REQUEST_TEMPLATE.md`
+   6. `pull_request_template.md`
 
-#### Required Inputs
+   <IMPORTANT>A repo-local template is emitted verbatim — never fill
+   placeholders in or otherwise mutate a foreign template; skip step 5
+   entirely.</IMPORTANT> When none exist, fall back to the bundled default at
+   [references/templates/pr.md](references/templates/pr.md) and continue.
+   When the bundled default is also missing: exit 4, print the path that
+   failed to resolve.
+5. Fill the bundled default's placeholders from the commit body:
+   - `{{summary_paragraph}}` — first body paragraph (≤3 sentences); fall back
+     to the subject text after `: ` when the body is empty.
+   - `{{context_body}}` — content under `## Context` / `Why:` /
+     `Background:`, if present.
+   - `{{implementation_body}}` — content under `## Implementation` / `What:`
+     / `How:`, if present.
+   - `{{breaking_changes_body}}` — `Breaking-Change:` trailers; "None." when
+     absent.
+   - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
+     "None." when absent.
+   - `{{manual_testing_body}}` — `Testing:` / `Manual-Test:` trailers;
+     "Covered by automated tests." when absent.
+   - `{{additional_notes_body}}` — remaining unmapped body content; "None."
+     when absent.
 
-- **Commit reference** (positional, optional): Any `jj` revset (e.g. `@`, `@-`, a change id) or `git` ref (e.g. `HEAD`, `HEAD~1`, a SHA). Defaults to `@` (current `jj` working-copy change) when omitted.
+   Drop any optional section that resolves to "None." rather than leaving a
+   stub — keep Summary and the Checklist only.
+6. Emit the title line, a single blank line, then the Markdown body to
+   stdout. Recommended caller one-liner:
 
-#### Optional Inputs
+   ```bash
+   write-pr | { read -r TITLE; read -r _; gh pr create --draft --title "$TITLE" --body-file -; }
+   ```
 
-- None. Behavior is deterministic given the commit ref.
+7. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker remains
+   (for example a non-conventional subject that needs a reword by
+   `coding:commit`), then report the blocker with its exit code instead of
+   looping.
 
-#### Expected Outputs
+## Verification
 
-- **stdout** — exactly two blocks separated by a single blank line:
-  1. The conventional-commit **title** (one line, regex-validated).
-  2. The **body** Markdown — the repo's checked-in GitHub PR template when one is present, otherwise the bundled default (`references/templates/pr.md`) with placeholders filled.
+- The title matches the Conventional Commits regex.
+- stdout is exactly the title, one blank line, and the body — nothing else.
+- A repo template was emitted byte-for-byte verbatim; a bundled default has
+  no `{{placeholder}}` left unfilled and no dropped-section stubs.
+- Idempotence: the same commit ref plus the same resolved template produces
+  byte-identical output — no timestamps, random IDs, or diff stats.
 
-The caller is responsible for splitting the two and piping the body into `gh pr create`. Recommended one-liner:
+## Completion
 
-```bash
-write-pr | { read -r TITLE; read -r _; gh pr create --draft --title "$TITLE" --body-file -; }
-```
-
-#### Data Flow Summary
-
-The skill resolves the supplied (or default `@`) commit ref via `jj`/`git`, validates the subject against the Conventional Commits regex, then resolves which PR template to use: the repo's own GitHub PR template if checked in (see "PR Template Resolution" below), or the bundled default at `references/templates/pr.md`. It then fills placeholders (if the chosen template has any) from commit body trailers. The result is a single deterministic stdout stream: title line, blank line, then the Markdown body — ready for the caller to pipe into `gh pr create`.
-
-### PR Template Resolution
-
-The bundled default at `references/templates/pr.md` is just that — a **default**. If the repo defines its own GitHub PR template, that template takes precedence and is emitted verbatim (no placeholder substitution is performed against a foreign template).
-
-Resolution order (first hit wins; paths relative to the repo root):
-
-1. `.github/PULL_REQUEST_TEMPLATE.md`
-2. `.github/pull_request_template.md`
-3. `docs/PULL_REQUEST_TEMPLATE.md`
-4. `docs/pull_request_template.md`
-5. `PULL_REQUEST_TEMPLATE.md`
-6. `pull_request_template.md`
-
-Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are intentionally ignored — selecting between them is a human choice and out of scope for this skill.
-
-If none of the above exist, fall back to the bundled default at `references/templates/pr.md` and apply the placeholder fill rules in step 5.
-
-### Conventional Commits Title
-
-Title MUST match:
-
-```
-^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w./-]+\))?!?: .+
-```
-
-Allowlisted types: `build | chore | ci | docs | feat | fix | perf | refactor | revert | style | test` (the canonical conventional-commits.org set). Optional `(scope)` and `!` for breaking changes.
-
-If the commit subject does not match, exit non-zero with a clear error: which token failed, the regex, and the offending subject.
-
-### Contract with Caller (`coding:commit`)
-
-`/coding:commit --create-pr` invokes this skill once per stacked change (LLM-driven; no shell-out from inside a script). The orchestrating LLM receives the `title\n\nbody` output on stdout, then runs `gh pr create --draft --title "$TITLE" --body-file -` directly. This skill remains the single source of truth for the *default template file*, the *resolution order*, and the *title regex*.
-
-### Dependencies
-
-- `jj` (preferred) or `git` for commit extraction.
-- No third-party tools. No Python. The skill is content-only.
-
-### Visual Overview
-
-```plaintext
-[START]
-   |
-   v
-[Step 1: Resolve commit ref]            -> default @, else jj log -r <ref> | git log -1 <ref>
-   |
-   v
-[Step 2: Extract subject + body]        -> first line = subject; rest = body trailers
-   |
-   v
-[Step 3: Validate subject regex]        -> conventional-commits allowlist
-   |
-   v
-[Step 4: Resolve template]              -> repo's PR template if present, else bundled default
-   |
-   v
-[Step 5: Fill placeholders from body]   -> summary, context, implementation, etc. (default template only)
-   |
-   v
-[Step 6: Emit title + blank line + body to stdout]
-   |
-   v
-[END]
-```
-
-## 3. SKILL IMPLEMENTATION
-
-### Skill Steps
-
-1. **Resolve the commit ref**. If a positional arg is given, use it; else default to `@`. Try `jj log -r <ref> --no-graph -T 'description'` first; fall back to `git log -1 --format=%B <ref>` when `jj` exits non-zero.
-2. **Extract subject + body**. The subject is the first non-empty line. The body is everything after the first blank line. Recognize commit trailers (e.g. `Refs: #123`, `Breaking-Change: <text>`) and route them to the matching template sections.
-3. **Validate the subject** against the Conventional Commits regex (above). On mismatch, exit 2 with a message naming the failing token and the regex.
-4. **Resolve the template**. Walk the resolution order in "PR Template Resolution" above against the repo root. If a repo PR template is found, emit it verbatim — skip step 5 entirely (the repo template owns its own sections, and we MUST NOT mutate it). If no repo template exists, fall back to the bundled default at `references/templates/pr.md` (absolute path resolved relative to this skill directory) and continue to step 5.
-5. **Fill placeholders** from the commit body (default template only):
-   - `{{summary_paragraph}}` — first body paragraph (≤3 sentences); fall back to the subject's text after `: ` if the body is empty.
-   - `{{context_body}}` — content under a `## Context` / `Why:` / `Background:` heading, if present.
-   - `{{implementation_body}}` — content under `## Implementation` / `What:` / `How:`, if present.
-   - `{{breaking_changes_body}}` — `Breaking-Change:` trailers; "None." when absent.
-   - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers; "None." when absent.
-   - `{{manual_testing_body}}` — `Testing:` / `Manual-Test:` trailers; "Covered by automated tests." when absent.
-   - `{{additional_notes_body}}` — anything left in the commit body that didn't map elsewhere; "None." when absent.
-
-   Drop any optional section whose body resolves to "None." rather than leaving a stub — keep Summary and the Checklist only.
-6. **Emit** the title line, a blank line, then the filled Markdown body to stdout.
-
-### Standards Referenced
-
-- `plugins/coding/constitution/standards/git/rules/GIT-PR-SIZE-01..04` — zone thresholds. Informational only here: zone enforcement is the reviewer's job, not the PR author's. This skill does NOT classify zones nor append review-guide boilerplate.
-- `plugins/coding/constitution/standards/git/rules/GIT-PR-STACK-04` — drafts are non-negotiable when stacked. The caller passes `--draft` to `gh pr create`; this skill does not own that flag.
-- `plugins/coding/constitution/standards/git/rules/GIT-PR-STACK-06` — stacked PRs open as drafts; same caller responsibility.
-- The Conventional Commits subject convention (allowlist + regex) is enforced verbatim here and mirrored in `coding:commit` (`references/conventional-commits.md`). Both skills point at the same regex.
-
-### Error Handling
-
-| Condition                                  | Behavior                                                      |
-|--------------------------------------------|---------------------------------------------------------------|
-| Unknown commit ref                         | Exit 2; print "no such revision" + the failing ref.           |
-| Subject violates conventional regex        | Exit 2; print the regex, the offending subject, and the failing token. |
-| Missing `jj` AND `git`                     | Exit 3; message "no commit source available".                 |
-| Bundled default template missing           | Exit 4; print the absolute path that failed to resolve. Only reachable when no repo PR template exists AND the bundled default is missing. |
-
-### Idempotence
-
-Same commit ref + same resolved template = byte-identical stdout. No timestamps, no random IDs, no diff stats.
-
-## Examples
-
-```bash
-# Default — write a PR for the current jj change, pipe to gh
-write-pr | { read -r TITLE; read -r _; gh pr create --draft --title "$TITLE" --body-file -; }
-
-# Inspect title + body without opening a PR
-write-pr @-
-
-# A specific git SHA in a non-jj repo
-write-pr abc1234
-
-# Reject a non-conventional subject loudly (exit 2)
-write-pr deadbeef   # commit subject "WIP fix stuff" -> regex error
-```
-
-### Skill Completion
-
-**Report the skill output as specified**:
-
-```yaml
-skill: write-pr
-status: completed|failed
-outputs:
-  commit_ref: '<resolved jj/git ref>'
-  title: '<conventional-commit title>'
-  body: '<filled Markdown body>'
-  exit_code: 0|2|3|4
-issues: [...]
-summary: |
-  PR title + body emitted to stdout for commit <ref>.
-  [Title regex pass/fail; placeholders filled; sections dropped where empty.]
-```
+Report the resolved commit ref, the template used (repo path or bundled
+default), the emitted title, sections dropped as empty, and the exit code:
+`0` success, `2` unknown ref or non-conventional subject, `3` no commit
+source available, `4` bundled default template missing. For `coding:commit
+--create-pr` callers: this skill remains the single source of truth for the
+default template file, the resolution order, and the title regex; the caller
+consumes the `title\n\nbody` stream and runs `gh pr create` itself.
