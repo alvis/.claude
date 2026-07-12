@@ -3,7 +3,6 @@
   "dependencies": ["coding", "specification", "essential"],
   "description": "Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers",
   "version": "2026-07-10",
-  "author": {"name": "Alvis HT Tang", "email": "alvis@hilbert.space"},
   "hooks": {
     "SessionStart": [
       {

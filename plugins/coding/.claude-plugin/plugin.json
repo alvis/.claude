@@ -3,7 +3,6 @@
   "dependencies": ["essential"],
   "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
   "version": "2026-07-10",
-  "author": {"name": "Alvis HT Tang", "email": "alvis@hilbert.space"},
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [
