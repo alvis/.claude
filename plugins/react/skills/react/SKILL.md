@@ -7,27 +7,84 @@ allowed-tools: Read, Glob, Grep, Skill
 
 # React Standards Router
 
-Load only the React standards relevant to the current work. This skill supplies context and routes work; it does not create implementation teams or duplicate another skill's workflow.
+Load only the React standards relevant to the current work and route the work
+itself to its owning skill. This skill supplies context; it does not create
+implementation teams or duplicate another skill's workflow.
+
+## Boundaries
+
+- Use for: selecting and loading React standards when React work happens —
+  editing `.tsx`/`.jsx` files, building components, authoring `use*` hooks,
+  or writing Storybook stories — and routing enforcement, implementation, and
+  review to their owning skills.
+- Do not use for: mechanical lint execution (`react:lint`), implementation
+  (`coding:write-code`), semantic review (`coding:review-code`), or work with
+  no React surface such as backend, CLI, or build configuration.
+
+## Inputs
+
+- **Required**: the files or task at hand, enough to identify which React
+  surfaces are touched (components, hooks, stories, structure, theming).
+- **Prerequisites**: React standards under
+  `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`.
 
 ## Standards
 
-Standards live under `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`:
+Standards live under `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`; rule
+files in each standard's `rules/` directory define the prefixed violation
+codes:
 
-- `accessibility`: semantics, keyboard access, ARIA, focus, forms, and screen readers.
-- `components`: component boundaries, props, state, naming, and performance.
-- `hooks`: dependencies, cleanup, stable references, return shapes, and composition.
-- `project-structure`: placement, feature boundaries, and promotion paths.
-- `storybook`: story naming, coverage, controls, interactions, and purity.
+- `accessibility` (`A11Y-*`): semantics, keyboard access, ARIA, focus, forms,
+  and screen readers.
+- `components` (`RC-*`): component boundaries, props, state, naming, and
+  performance.
+- `hooks` (`RH-*`): dependencies, cleanup, stable references, return shapes,
+  and composition.
+- `project-structure` (`RPS-*`): placement, feature boundaries, and promotion
+  paths.
+- `storybook` (`SB-*`): story naming, coverage, controls, interactions, and
+  purity.
 
-Read `write.md` before authoring and `scan.md` when reviewing. Read an individual rule only after its scan identifies a candidate violation.
+For shared-component theme contracts (`[data-brand]` scopes, CSS-variable
+overrides, Tailwind theme integration), apply the web plugin's `theming`
+standard (`WT-*`) when that plugin is available; otherwise record that
+theming rules were not evaluated.
 
-When authoring, pair `components` with `accessibility` — every component must be accessible; add `hooks` whenever a `use*` function is involved, add `storybook` for `*.stories.tsx` files, and decide the `project-structure` reusability tier before drafting. For shared-component theme contracts (`[data-brand]` scopes, CSS-variable overrides, Tailwind theme integration), apply the web plugin's `theming` standard when that plugin is available; otherwise record that theming rules were not evaluated.
+## Workflow
 
-## Routing
+1. Identify the surfaces the task touches and load only their standards.
+   Read `write.md` before authoring and `scan.md` when reviewing; read an
+   individual rule only after its scan identifies a candidate violation.
+2. When authoring, pair `components` with `accessibility` — every component
+   must be accessible; add `hooks` whenever a `use*` function is involved,
+   add `storybook` for `*.stories.tsx` files, and decide the
+   `project-structure` reusability tier before drafting.
+3. Route the work itself:
+   - Mechanical enforcement across one or more eligible files: `react:lint`
+     — never route React linting through generic lint first.
+   - Feature or bug implementation: `coding:write-code` with the applicable
+     React standards.
+   - Generic semantic review: `coding:review-code` with the applicable React
+     standards.
+   - Visual design or runtime diagnosis: recommend an optional web skill when
+     available; otherwise state the recommendation without invoking it.
+4. When a scan or review flags a violation code, open the matching rule file
+   under the standard's `rules/` directory for the precise definition and
+   remediation, apply or route the fix, and re-run the relevant `scan.md`
+   heuristic to confirm. Repeat until every flagged code is resolved or a
+   concrete blocker remains, then report the blocker instead of looping.
 
-- Mechanical enforcement across one or more eligible files: use `react:lint`.
-- Feature or bug implementation: use `coding:write-code` with the applicable React standards.
-- Generic semantic review: use `coding:review-code` with the applicable React standards.
-- Visual design or runtime diagnosis may be recommended through an optional web skill if available; otherwise state the recommendation without invoking it.
+## Verification
 
-When the task is React linting, route to `react:lint`; never route it through generic lint first.
+- Every touched surface has its standard loaded, and `accessibility` is
+  loaded alongside `components` whenever authoring.
+- Every flagged violation code was checked against its rule file and either
+  re-scanned clean, routed to its owning skill, or reported as blocked.
+- The theming decision is recorded — applied, or explicitly noted as not
+  evaluated when the web plugin is absent.
+
+## Completion
+
+Report the standards loaded, violation codes flagged and their resolution
+(fixed, routed, or blocked), routing decisions made, and whether theming was
+evaluated or explicitly skipped.
