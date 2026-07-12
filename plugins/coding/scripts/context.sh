@@ -346,28 +346,6 @@ get_plugin_context() {
 
   context+="## Project\n\n**Root**: $PROJECT_ROOT\n\n"
 
-  # Git Repository Information
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    local repo_name=$(basename "$REPO_ROOT")
-    local current_branch=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD)
-
-    context+="## Git Repository\n\n"
-    context+="**Repository**: $repo_name\n"
-    context+="**Current Branch**: \`$current_branch\`\n"
-
-    # Git status
-    local git_status=$(git status --short)
-    if [[ -n "$git_status" ]]; then
-      context+="**Git Status**:\n\`\`\`\n$git_status\n\`\`\`\n"
-    else
-      context+="**Git status**: Clean working directory\n"
-    fi
-
-    # Recent commits
-    local recent_commits=$(git log --oneline -5 2>/dev/null || echo "No commits")
-    context+="**Recent commits**:\n\`\`\`\n$recent_commits\n\`\`\`\n\n"
-  fi
-
   # Node.js Project
   if [[ -f "package.json" ]] || [[ -f "$REPO_ROOT/package.json" ]]; then
     local pkg_json="package.json"
