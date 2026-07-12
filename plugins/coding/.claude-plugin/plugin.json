@@ -8,29 +8,11 @@
     "SessionStart": [
       {
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../essential/bin/session-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
-      },
-      {
-        "matcher": "startup|resume|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/hooks/lean-code/instructions.md\"",
-            "timeout": 5,
-            "statusMessage": "Loading lean-code mode..."
-          }
-        ]
       }
     ],
     "SubagentStart": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/lean-code/subagent-start.sh",
-            "timeout": 5,
-            "statusMessage": "Loading lean-code mode..."
-          }
-        ]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../essential/bin/subagent-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ]
   }
