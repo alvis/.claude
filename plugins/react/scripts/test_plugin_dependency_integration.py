@@ -83,5 +83,31 @@ class PluginDependencyIntegration(unittest.TestCase):
             )
 
 
+class EssentialHookExecutable(unittest.TestCase):
+    def test_session_start_runs_for_consumer_plugin(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary)
+            (plugin_root / "scripts").mkdir()
+            (plugin_root / "scripts/context.sh").write_text(
+                "get_plugin_context() { echo -n consumer-context; }\n",
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                [
+                    str(ROOT / "plugins/essential/bin/session-start"),
+                    "--plugin-dir",
+                    str(plugin_root),
+                    "--constitution-paths",
+                    str(plugin_root),
+                ],
+                input='{"source":"startup","session_id":"test"}',
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            self.assertIn("consumer-context", completed.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
