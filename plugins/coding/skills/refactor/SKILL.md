@@ -1,186 +1,97 @@
 ---
 name: refactor
-description: 'Refactor code for quality and maintainability without changing behavior; improves structure, naming, and JSDoc. Triggers when: "refactor this", "clean up this code", "rename these variables", "improve readability", "add JSDoc comments". Also use when: simplifying complex functions, extracting helpers, standardizing naming across a module. Examples: "refactor src/utils", "clean up this file", "add JSDoc to all exports".'
+description: Improve green code through behavior-preserving structural changes to organization, naming, readability, or documentation. Use when existing tests pass and the requested outcome is maintainability rather than a bug fix, new feature, or version-driven API upgrade.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <area> [--focus=naming|structure|docs|all]
+argument-hint: "<area> [--focus=naming|structure|docs|all]"
 ---
 
 # Refactor Code
 
-Refactors implementation for quality and maintainability without changing functionality, improving structure, readability, naming, and JSDoc while keeping every test green. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. That standard is why refactoring exists: it is the discipline by which earlier compromises are absorbed into the current shape of the code, not the act of layering new niceties on top — and the Two-Stage Rule below is its concrete application to file size.
+Improve green code's structure, readability, naming, and documentation
+without changing behavior, keeping every test passing throughout.
+`coding:fix` owns failing code; `coding:write-code` owns new functionality;
+`coding:modernize` owns version-driven API upgrades.
 
-## Purpose & Scope
+<IMPORTANT>
+Coherence Mandate: every edit must produce one continuous, deliberate work —
+rewrite over restructure, restructure over integrate, never append. A reader
+must not be able to tell which parts are new. That standard is why
+refactoring exists: it absorbs earlier compromises into the current shape of
+the code rather than layering niceties on top — and the Two-Stage Rule in
+step 2 is its concrete application to file size.
+</IMPORTANT>
 
-**What this command does NOT do**:
+## Boundaries
 
-- Change functionality or behavior of existing code
-- Add new features or business logic
-- Fix failing tests (use `/coding:fix` instead)
-- Create new test cases
-- Modify project configuration
+- Use for: behavior-preserving improvements to structure, complexity,
+  naming, readability, JSDoc, and inline documentation on code whose tests
+  pass.
+- Do not use for: new features or business logic (`coding:write-code`),
+  fixing bugs or failing tests (`coding:fix`), creating new test cases, or
+  modifying project configuration. Reject when tests fail in the target area
+  (fix first) or the area path resolves to no files.
 
-**When to REJECT**:
+## Inputs
 
-- Request is for new feature development (use `/coding:write-code`)
-- Request is to fix bugs or failing tests (use `/coding:fix`)
-- Area path is invalid or no files found
-- Code has failing tests (fix tests first before refactoring)
+- **Required**: `area` — path to the code to refactor.
+- **Optional**: `--focus=naming|structure|docs|all` (default `all`);
+  `--from-composite` when invoked from a composite workflow.
+- **Prerequisites**: all tests in the target area pass.
 
-## Applicable Standards
+## Standards
 
-When executing this skill, the following standards apply:
-
-| Standard | Purpose |
-|---|---|
-| `universal/write` | General code authoring conventions |
-| `typescript/write` | TypeScript patterns and type safety |
-| `function/write` | Function design, signatures, and complexity |
-| `documentation/write` | JSDoc, inline comments, usage examples |
-| `naming/write` | Naming conventions for variables, functions, files |
+Apply `universal/write` (general authoring conventions), `typescript/write`
+(patterns and type safety), `function/write` (function design and
+complexity), `documentation/write` (JSDoc and inline comments), and
+`naming/write` (variable, function, and file naming).
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. **Analyze.** Parse the area and `--focus`. Run the existing tests; if any
+   fail, reject and direct to `coding:fix`. Read the target files and list
+   opportunities: structural improvements (extract functions, reduce
+   complexity), readability enhancements, naming violations, missing or
+   incomplete JSDoc, inline-comment gaps on complex logic, and
+   inconsistencies with established codebase patterns.
+2. **Restructure** (focus `structure` or `all`). Apply design patterns per
+   the standards, reduce function complexity, extract reusable helpers, and
+   run tests continuously so no functionality breaks. When a file exceeds the
+   project's `max-lines` threshold, apply the Two-Stage Rule before any
+   ad-hoc split: Stage 1 — extract logic into another file as a genuinely
+   reusable helper, preferred when more than one caller shares it; Stage 2 —
+   if still over the threshold, split into the `<base>.ts` + `<base>/*.ts`
+   folder pattern, keeping `<base>.ts` as a thin re-export/orchestrator and
+   moving helpers into `<base>/*.ts` with short names (the folder provides
+   the context). Never split into arbitrary sibling files (e.g.
+   `foo.schema.ts`, `foo.parse.ts`) unless that naming is already an
+   established project convention. The full rule and examples live in the
+   coding constitution's `standards/file-structure.md` under "Splitting Long
+   Files".
+3. **Improve readability** (focus `naming` or `all`). Apply naming standards
+   to variables, functions, and files; simplify complex expressions; improve
+   flow and logical grouping; remove dead code and unnecessary comments.
+4. **Document** (focus `docs` or `all`). Add JSDoc for all public functions,
+   classes, and interfaces — parameters, returns, behavior, and `@example`
+   blocks where appropriate — and inline comments that explain why, not what;
+   mark known limitations with TODO/FIXME.
+5. **Validate.** Run the full test suite with coverage, the linter, and the
+   type checker. When a check fails, fix the cause and re-run that check;
+   repeat until every check passes or a concrete blocker remains, then report
+   the blocker instead of looping.
 
-### Step 1: Analyze Current State
+## Verification
 
-1. **Parse Arguments**
-   - Extract area path from $ARGUMENTS
-   - Parse `--focus` flag (naming, structure, docs, all; default: all)
-   - Determine if running as standalone or as part of composite (`--from-composite`)
+- All tests pass with coverage maintained at its prior level; behavior is
+  unchanged.
+- Lint and type checks pass.
+- Public APIs in the area carry complete JSDoc, and no file exceeds
+  `max-lines` without a recorded blocker.
 
-2. **Pre-flight Check**
-   - Run existing tests to confirm they all pass before refactoring
-   - If any tests fail, reject with guidance to use `/coding:fix` first
-   - Read files in the target area to understand current structure
+## Completion
 
-3. **Identify Refactoring Opportunities**
-   - Code structure improvements (extract functions, reduce complexity)
-   - Readability enhancements (clearer variable names, better flow)
-   - Naming convention violations
-   - Missing or incomplete JSDoc documentation
-   - Inline comment gaps for complex logic
-   - Pattern inconsistencies with the rest of the codebase
-
-### Step 2: Refactor Implementation
-
-1. **Improve Code Structure**
-   - Apply proper design patterns following standards
-   - Reduce function complexity where possible
-   - Extract reusable utilities and helpers
-   - Ensure code follows all established patterns in the codebase
-   - Run tests continuously to ensure no functionality is broken
-
-2. **Split Long Files (Two-Stage Rule)**
-   - When a file exceeds the project's `max-lines` threshold, apply the two-stage rule before making any ad-hoc splits:
-     - **Stage 1 — Extract shared helpers:** Look for logic that can live in another file (existing or new) as a genuinely reusable helper. Prefer this when the extracted code is shared by more than one caller.
-     - **Stage 2 — Folder split:** If the file still exceeds `max-lines` after extraction, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern. The entry file `<base>.ts` stays as a thin re-exports/orchestrator; helpers move into `<base>/*.ts` with short names (the folder already provides the context).
-   - Do NOT split a file into arbitrary sibling files (e.g. `foo.schema.ts`, `foo.parse.ts`) unless that naming is already an established project convention; prefer the folder pattern.
-   - See `constitution/standards/file-structure.md` → "Splitting Long Files" for the full rule and examples.
-
-3. **Enhance Readability**
-   - Apply proper naming conventions per naming standards
-   - Improve code flow and logical grouping
-   - Simplify complex expressions
-   - Remove dead code and unnecessary comments
-
-### Step 3: Add Documentation
-
-1. **Add JSDoc Comments**
-   - Document all public functions, classes, and interfaces
-   - Include parameter descriptions, return types, and behavior
-   - Add `@example` blocks where appropriate
-   - Follow documentation standards for format and content
-
-2. **Add Inline Comments**
-   - Explain complex algorithms and non-obvious logic
-   - Document "why" decisions, not "what" the code does
-   - Add TODO/FIXME markers for known limitations (if any)
-
-### Step 4: Validate Quality
-
-1. **Run Full Test Suite**
-   - Execute all related tests to verify no regressions
-   - Confirm coverage is maintained at expected levels
-
-2. **Run Quality Checks**
-   - Execute linting to ensure standards compliance
-   - Run type checker to verify TypeScript correctness
-   - Verify all quality gates pass
-
-3. **Final Assessment**
-   - Confirm refactoring improved code quality metrics
-   - Verify documentation completeness
-   - Ensure production readiness
-
-### Step 5: Reporting
-
-**Output Format**:
-
-```
-[OK/FAIL] Command: refactor $ARGUMENTS
-
-## Summary
-- Area: [path]
-- Focus: [naming|structure|docs|all]
-- Files refactored: [count]
-- Documentation added: [count] JSDoc blocks
-- Quality improvements: [list]
-
-## Actions Taken
-1. Refactored [N] files for [improvements]
-2. Added [M] JSDoc documentation blocks
-3. Applied naming convention fixes to [K] identifiers
-4. Verified all tests still pass
-
-## Quality Results
-- Tests: PASS ([X] passing, [Y] coverage)
-- Types: PASS ([N] errors)
-- Lint: PASS ([N] warnings)
-
-## Improvements Applied
-- [file:line] - [improvement description]
-- [file:line] - [improvement description]
-
-## Next Steps
-1. Review refactored code
-2. Run full test suite
-3. Commit with /coding:commit
-```
-
-## Examples
-
-### Refactor All Aspects
-
-```bash
-/refactor "src/services/auth/"
-# Improves structure, naming, and documentation
-# Runs tests continuously to verify no regressions
-```
-
-### Focus on Documentation
-
-```bash
-/refactor "src/utils/" --focus=docs
-# Adds JSDoc to all public functions
-# Adds inline comments for complex logic
-```
-
-### Focus on Naming
-
-```bash
-/refactor "src/models/" --focus=naming
-# Applies naming convention standards
-# Renames variables, functions, and files
-```
-
-### Error Case
-
-```bash
-/refactor "src/broken-tests/"
-# Error: 3 tests failing in target area
-# Fix tests first with /coding:fix, then refactor
-```
+Report the area and focus, files refactored, improvements applied with
+file:line entries, JSDoc blocks added, naming fixes, and quality-gate
+results (tests, coverage, types, lint). Suggest commit via `coding:commit`
+when relevant. A partial result names the failing check and the blocker.

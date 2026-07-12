@@ -7,7 +7,7 @@ from pathlib import Path
 #   ls plugins/*/constitution/standards/*/rules/*.md
 FALLBACK_PREFIXES = (
     "A11Y", "CSS", "DES", "DOC", "ERR", "FUNC", "GEN", "GIT", "LOG", "NAM",
-    "PYT", "RC", "RH", "RPS", "SB", "TST", "TYP", "WT",
+    "PYT", "RC", "RH", "RPS", "RST", "SB", "TST", "TYP", "WT",
 )
 
 

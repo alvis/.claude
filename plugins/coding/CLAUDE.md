@@ -1,7 +1,3 @@
-## File Discovery
-
-- At the beginning of each session, greet the user with summary of the project context, including handover and design documents, as well as all relevant skills and standards files that may apply to the project
-
 ## Delegation Rule
 
 **When delegating tasks to subagents, you MUST pass the full file paths of relevant skill and standard files to the subagent.**
@@ -14,12 +10,14 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Setting up project | `/coding:setup-project` |
 | Completing TODOs | `/coding:complete-code` |
 | Fixing issues | `/coding:fix` |
-| Reviewing code | `/coding:review` |
+| Reviewing code | `/coding:review-code` |
 | Linting code | `/coding:lint` |
 | Refactoring | `/coding:refactor` |
 | Committing | `/coding:commit` |
 | Finalizing un-pushed commits (per-commit QA) | `/coding:finalize-commits` |
 | Creating tests | `/coding:complete-test` |
+| Documenting code | `/coding:document` |
+| Writing PR title/body | `/coding:write-pr` |
 | Handing over work | `/coding:handover` |
 | Resuming work | `/coding:takeover` |
 | Finding dead code | `/coding:find-unused` |
@@ -63,13 +61,9 @@ Unreviewed subagent output must never be accepted, merged, or reported upward as
 ## Change Tracking with `jj`
 
 1. **`jj` is the primary change-tracking tool** — every op snapshots the working copy, so a dirty HEAD is never a blocker. Do NOT create a `git worktree` to "isolate" a task; coding skills work in place.
-
 2. **Work in place on a dirty HEAD** — new changes layer onto existing uncommitted work; no isolation strategy to decide.
-
-3. **Saving changes goes through `coding:commit`** — jj-first. The skill auto-routes among save (`jj describe` + `git commit`), split (`jj split`), absorb (`jj absorb`), edit (`jj edit`), and parallel-workspace (`jj workspace add`) based on working-copy state. Explicit operations via flags: `--retrospective` (blame-trace fixups), `--reorder [--up-to <rev>]` (re-linearise history), `--create-pr` (materialise stacked PRs). Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits (message conformance + folding QA edits).
-
-4. **Stacked PRs are opt-in** — invoke `/coding:commit --create-pr`. All bookmarking and pushing happens inside the skill per `GIT-PR-STACK-*`. PR titles + bodies are produced by `/coding:write-pr`.
-
+3. **Saving changes goes through `coding:commit`** — the skill owns routing among save/split/absorb/edit/parallel-workspace and all explicit flag operations. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
+4. **Stacked PRs are opt-in** — invoke `/coding:commit --create-pr`. All bookmarking and pushing happens inside the skill. PR titles + bodies are produced by `/coding:write-pr`.
 5. **Git-worktree guard** — a `git worktree` is NOT a `jj workspace`. If a coding task was carried out inside a linked `git worktree`, you MUST `AskUserQuestion` whether the work should be moved back onto HEAD.
 
 ## Your Actions
@@ -86,18 +80,15 @@ Unreviewed subagent output must never be accepted, merged, or reported upward as
   - `ide__getDiagnostics` mcp tool
   - running `npm run build`
   - running `npx tsc --noEmit`
-- **Diagnostics**: You MUST run run `lsp_get_diagnostics` or `ide__getDiagnostics` mcp tools before and after code changes (you only can skip if `get_project_overview` has just run)
-- **Complete Check**: **[IMPORTANT]**  After completing your coding or test writing task, you MUST run all of the following under the project root (not monorepo root) to make sure no issues are introduced by your changes
-    1. `lsp_get_diagnostics` mcp tool
-    2. running `npx tsc --noEmit`
-    3. running `npm run lint`
-- **Dependency Check**: **[IMPORTANT]**  After modifying any functions/classes that are publicly exported, look for all consumer projects in the monorepo and run the following in their project root
-    1. running `npm run build`
-- **Type Safety**: No `any` types allowed (& preferably no `unknown` unless absolute necessarily)
-- **Test Coverage**: Maintain 100% coverage for all code
-- **TDD**: Follow Red-Green-Refactor cycle for new features
-- **Standards**: All code must follow TypeScript, naming, and documentation standards
-- **Check Documentation**: Before using an external library, consult **context7**  to confirm the correct import or call signature from the documentation, and **grep** to search for real world github usage
+- **Diagnostics**: You MUST run `lsp_get_diagnostics` or `ide__getDiagnostics` mcp tools before and after code changes (you only can skip if `get_project_overview` has just run)
+- **Complete Check**: **[IMPORTANT]** After completing your coding or test writing task, you MUST run all of the following under the project root (not monorepo root) to make sure no issues are introduced by your changes
+  1. `lsp_get_diagnostics` mcp tool
+  2. running `npx tsc --noEmit`
+  3. running `npm run lint`
+- **Dependency Check**: **[IMPORTANT]** After modifying any functions/classes that are publicly exported, look for all consumer projects in the monorepo and run `npm run build` in their project root
+- **Check Documentation**: Before using an external library, consult **context7** to confirm the correct import or call signature from the documentation, and **grep** to search for real world github usage
 - **Runtime Exploration**: When you need to understand the runtime behaviour of a library or API, write a test file (or add a test case to an existing spec) instead of running ad-hoc commands like `node -e "..."`, `npx ts-node -e "..."`, or equivalent. Test files are version-controlled, repeatable, and serve as living documentation.
+
+Type safety, test coverage, TDD, and naming/documentation rules are defined by the constitution standards under `constitution/standards/` — follow them in full; they are not restated here.
 
 </IMPORTANT>

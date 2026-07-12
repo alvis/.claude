@@ -1,150 +1,90 @@
 ---
 name: react
-description: 'Apply React, Next.js, JSX, hooks, accessibility, and Storybook standards proactively whenever React work happens. Triggers when: editing or creating .tsx/.jsx files, writing JSX, building React/Next.js components, authoring custom hooks (use*), managing React state, combining Tailwind with React, writing Storybook .stories.tsx files, or whenever the user mentions "React", "Next.js", "JSX", "hook", "component", "useState/useEffect/useMemo/useCallback", "memo", "Server Component", "client component", or "story". Use to enforce naming, structure, performance, accessibility (WCAG 2.1 AA), and story-coverage rules across the React surface.'
+description: Use when creating, editing, reviewing, or routing work involving React, JSX, hooks, components, accessibility behavior, project structure, tests, or Storybook stories; this router selects React standards while Coding owns generic execution.
 model: sonnet
-context: inline
-allowed-tools: Read, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+allowed-tools: Read, Glob, Grep, Skill
 ---
 
-# React Standards
+# React Standards Router
 
-Always-on enforcer for the React/Next.js surface. Loads the six React sub-standards and routes detail work to specialised skills. Standards content lives in the standard files — this skill links to them, it does not duplicate them.
+Load only the React standards relevant to the current work and route the work
+itself to its owning skill. This skill supplies context; it does not create
+implementation teams or duplicate another skill's workflow.
 
-## When to use / triggers
+## Boundaries
 
-Activate proactively whenever any of these are happening:
+- Use for: selecting and loading React standards when React work happens —
+  editing `.tsx`/`.jsx` files, building components, authoring `use*` hooks,
+  or writing Storybook stories — and routing enforcement, implementation, and
+  review to their owning skills.
+- Do not use for: mechanical lint execution (`react:lint`), implementation
+  (`coding:write-code`), semantic review (`coding:review-code`), or work with
+  no React surface such as backend, CLI, or build configuration.
 
-- Reading, editing, or creating `.tsx` / `.jsx` files
-- Writing JSX (component returns, fragments, JSX expressions)
-- Building React or Next.js components (functional components, FC, RSC, client components)
-- Authoring or modifying custom hooks (any function with the `use*` prefix)
-- Using built-in hooks: `useState`, `useEffect`, `useMemo`, `useCallback`, `useReducer`, `useRef`, `useContext`
-- Managing React component state (local, lifted, or via Context)
-- Combining Tailwind CSS classes with React component markup
-- Writing or updating Storybook stories (`*.stories.tsx`, `*.demo.stories.tsx`)
-- Creating any reusable building block (component, hook, primitive, layout)
-- Authoring or overriding a theme / CSS variable contract / `[data-brand]` scope
-- Explicit user mentions of: React, Next.js, JSX, hooks, components, stories, memoization, ARIA, accessibility on web
+## Inputs
 
-Skip when the work is purely backend, CLI, build-config, or non-UI library code with no React surface.
+- **Required**: the files or task at hand, enough to identify which React
+  surfaces are touched (components, hooks, stories, structure, theming).
+- **Prerequisites**: React standards under
+  `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`.
 
-## Standards loaded
+## Standards
 
-Six sub-standards govern this surface. Each has a three-tier layout (`meta.md` for orientation, `scan.md` to audit existing code, `write.md` to author new code, plus a `rules/` directory for granular violations).
+Standards live under `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`; rule
+files in each standard's `rules/` directory define the prefixed violation
+codes:
 
-### Accessibility (WCAG 2.1 AA)
+- `accessibility` (`A11Y-*`): semantics, keyboard access, ARIA, focus, forms,
+  and screen readers.
+- `components` (`RC-*`): component boundaries, props, state, naming, and
+  performance.
+- `hooks` (`RH-*`): dependencies, cleanup, stable references, return shapes,
+  and composition.
+- `project-structure` (`RPS-*`): placement, feature boundaries, and promotion
+  paths.
+- `storybook` (`SB-*`): story naming, coverage, controls, interactions, and
+  purity.
 
-Semantic HTML, keyboard navigation, ARIA, focus management, forms, color/contrast, screen-reader support.
+For shared-component theme contracts (`[data-brand]` scopes, CSS-variable
+overrides, Tailwind theme integration), apply the web plugin's `theming`
+standard (`WT-*`) when that plugin is available; otherwise record that
+theming rules were not evaluated.
 
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/accessibility/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/accessibility/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/accessibility/write.md`
-- Rule groups: `A11Y-SEMA-*`, `A11Y-KBD-*`, `A11Y-HEAD-*`, `A11Y-ARIA-*`, `A11Y-FOCUS-*`, `A11Y-FORM-*`, `A11Y-COLOR-*`, `A11Y-SR-*`
+## Workflow
 
-### React Components
+1. Identify the surfaces the task touches and load only their standards.
+   Read `write.md` before authoring and `scan.md` when reviewing; read an
+   individual rule only after its scan identifies a candidate violation.
+2. When authoring, pair `components` with `accessibility` — every component
+   must be accessible; add `hooks` whenever a `use*` function is involved,
+   add `storybook` for `*.stories.tsx` files, and decide the
+   `project-structure` reusability tier before drafting.
+3. Route the work itself:
+   - Mechanical enforcement across one or more eligible files: `react:lint`
+     — never route React linting through generic lint first.
+   - Feature or bug implementation: `coding:write-code` with the applicable
+     React standards.
+   - Generic semantic review: `coding:review-code` with the applicable React
+     standards.
+   - Visual design or runtime diagnosis: recommend an optional web skill when
+     available; otherwise state the recommendation without invoking it.
+4. When a scan or review flags a violation code, open the matching rule file
+   under the standard's `rules/` directory for the precise definition and
+   remediation, apply or route the fix, and re-run the relevant `scan.md`
+   heuristic to confirm. Repeat until every flagged code is resolved or a
+   concrete blocker remains, then report the blocker instead of looping.
 
-Functional components with TypeScript interfaces, single responsibility, prop design, state placement, performance (`memo`/`useMemo`/`useCallback`), Next.js integration patterns.
+## Verification
 
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/components/write.md`
-- Rule groups: `RC-NAMING-*`, `RC-STRUCT-*`, `RC-PROPS-*`, `RC-STATE-*`, `RC-PERF-*`, `RC-NEXT-*`
+- Every touched surface has its standard loaded, and `accessibility` is
+  loaded alongside `components` whenever authoring.
+- Every flagged violation code was checked against its rule file and either
+  re-scanned clean, routed to its owning skill, or reported as blocked.
+- The theming decision is recorded — applied, or explicitly noted as not
+  evaluated when the web plugin is absent.
 
-### React Hooks
+## Completion
 
-`use*` naming, consistent return shapes, dependency arrays, async data hooks (`{ data, loading, error, refetch }`), cleanup, stable references, composition, `useReducer` for complex state.
-
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/hooks/write.md`
-- Rule groups: `RH-NAMING-*`, `RH-RETURN-*`, `RH-DEPS-*`, `RH-ASYNC-*`, `RH-CLEANUP-*`, `RH-STABLE-*`, `RH-COMPOSE-*`, `RH-REDUCER-*`
-
-### Storybook
-
-PascalCase `.stories.tsx` filenames, path-based titles, complete state coverage (default/disabled/loading/error/edge), `Meta`/`StoryObj` typing, `tags: ['autodocs']`, `play` interactions, comprehensive `argTypes`, pure stories using existing components and mock data.
-
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/storybook/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/storybook/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/storybook/write.md`
-- Rule groups: `SB-NAME-*`, `SB-ORG-*`, `SB-COVERAGE-*`, `SB-STRUCT-*`, `SB-PLAY-*`, `SB-CONTROLS-*`, `SB-PURE-*`
-
-### React Project Structure
-
-Reusability tiers (workspace-package → route → feature → shared → utility → type), folder layout, route organisation, component placement, feature boundaries, utility separation, promotion paths between tiers, workspace-package extraction.
-
-- Meta: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/project-structure/write.md`
-- Rule groups: `RPS-LAYOUT-*`, `RPS-ROUTE-*`, `RPS-COMPS-*`, `RPS-FEAT-*`, `RPS-UTIL-*`, `RPS-PROMO-*`, `RPS-WS-*`
-
-### React Theming
-
-CSS variable contracts, theme variants, Tailwind integration, `[data-brand]` scopes, override patterns, theme authoring for shared components and client apps.
-
-- Meta: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/meta.md`
-- Scan existing code: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/scan.md`
-- Write new code: `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/theming/write.md`
-- Rule groups: `WT-CONTRACT-*`, `WT-VARIANT-*`, `WT-TAILWIND-*`, `WT-OVERRIDE-*`
-
-## Workflow: scan → write → verify
-
-Pick the tier that matches the activity. Do not load every file — load only what the current task touches.
-
-### Step 1: Spin up the implementation team
-
-You are the Lead Orchestrator. Estimate scope: count components + hooks +
-files implied by the task. Create a persistent team via `TeamCreate`:
-
-- implementer teammates (haiku) — `ceil(files / 10)`, minimum 1
-- 1× reviewer teammate (sonnet)
-
-Partition the file set so each implementer owns a coherent slice (by
-feature / route / component cluster — never random shards). Pass standards
-as paths only:
-  - plugins/react/constitution/standards/
-
-Cycle: lead briefs each implementer with their slice + standards paths →
-implementers stream completed files → reviewer audits each batch → lead
-orchestrates and aggregates only (never reads file bodies) → `TeamDelete` on
-completion.
-
-Context monitoring: every `SendMessage` reply MUST include
-`context_used: <token-count>`. When `context_used > 150_000` for any teammate,
-lead `TeamDelete`s that teammate, spawns a replacement via `TeamCreate`, and
-re-issues the in-flight slice with a brief handover (files completed, files
-remaining, decisions made).
-
-### Scan (auditing existing React code)
-
-When reading or reviewing existing `.tsx` / `.jsx` / hooks / stories:
-
-- Load the relevant `scan.md` files for the surfaces you are inspecting (components, hooks, accessibility, storybook).
-- Apply the heuristics in those files to flag violations by rule group code (e.g. `RC-PERF-*`, `A11Y-KBD-*`).
-- For deep enforcement across many files, delegate to `coding:lint` and pass the standards paths above so the linter agent applies them.
-
-### Write (authoring new React code)
-
-When creating or modifying components, hooks, or stories:
-
-- Load the relevant `write.md` files BEFORE drafting code so patterns are correct on first pass.
-- Always pair `components/write.md` with `accessibility/write.md` (every component must be accessible).
-- Add `hooks/write.md` whenever a `use*` function is involved.
-- Before drafting, decide the reusability tier (workspace-package → route → feature → shared → utility → type). Pair `theming/write.md` whenever a shared component is authored or a client app sets up a theme.
-- Add `storybook/write.md` whenever a `*.stories.tsx` file is involved.
-- Honour the dependent-standard chain declared in each `meta.md` (TypeScript, Function, Naming, Documentation, Testing, File Structure standards from the coding plugin).
-
-### Verify (after a flagged violation)
-
-When a scan or review surfaces a specific violation code, open the matching file under the standard's `rules/` directory for the precise rule definition and remediation. Re-run the relevant `scan.md` heuristic to confirm the fix.
-
-## Hand-off / routing
-
-Defer to the right skill instead of doing the work inline:
-
-- Detailed implementation work (full TDD lifecycle: design → skeleton → implement → test → refactor) → `coding:write-code`
-- Design, visual, layout, palette, typography, animation work → `web:design`
-- Next.js debugging (SSR, App Router, route handlers, build issues, RSC boundaries, hydration) → `web:next`
-- Linting / standards enforcement across many files → `coding:lint` (pass the standard paths above)
-- Story authoring as part of a broader feature → keep scope here
-
-This skill itself does NOT scaffold components, run lifecycles, or fix lint at scale — it loads context, surfaces the right standards, and routes.
+Report the standards loaded, violation codes flagged and their resolution
+(fixed, routed, or blocked), routing decisions made, and whether theming was
+evaluated or explicitly skipped.

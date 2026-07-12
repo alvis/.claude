@@ -104,18 +104,12 @@ Request each subagent to perform the following comparison and conflict resolutio
        - For each conflict resolved:
          * Keep Local: Use local section content (no write needed)
          * Keep Remote: Replace local section with Notion section content (use Edit on the local file)
-         * Keep Both: Combine both sections with clear markers:
-           ```
-           [section from local]
-
-           --- Merged from Notion ---
-           [section from Notion]
-           ```
+         * Keep Both: Reconcile both versions into the existing owning section. Preserve all non-conflicting facts, remove duplication, and do not add provenance banners or parallel "local"/"Notion" sections.
          * Skip: Add TODO marker on the local side:
            ```
            <!-- TODO: Resolve merge conflict manually - Section [name] -->
            ```
-       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. Step 3 (`references/sync-mode-execution.md`) will then push it to Notion via `notion-sync push <file>`.
+       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. You MUST NOT push to Notion in this step — Step 3 (`references/sync-mode-execution.md`) owns the push via `notion-sync push <file>`.
        - Preserve original order, frontmatter, and structure.
 
     5. **Generate Conflict Report**:

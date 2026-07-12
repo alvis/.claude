@@ -1,266 +1,123 @@
 ---
 name: fix
-description: 'Fix failing code, tests, lint, or type errors with auto area detection. Triggers when: "fix the bug", "fix this error", "fix failing tests", "fix the lint errors", "fix type errors". Also use when: resolving TypeScript complaints, addressing PR review feedback, repairing broken CI. Examples: "fix the bug in parseDate", "the tests are failing, fix them", "fix these eslint warnings".'
+description: Fix diagnosed incorrect behavior, failed tests, type errors, lint failures, or broken CI. Use when a concrete failure can be reproduced or review findings identify a defect; route new functionality to write-code and green structural cleanup to refactor.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
-argument-hint: [specifier] [--area=AREA] [--note=...] [--plan=PATH]
+argument-hint: "[specifier] [--area=AREA] [--note=...] [--plan=PATH]"
 ---
 
 # Fix Code Issues
 
-Intelligently fixes code and test issues based on error messages, failing tests, or review feedback, automatically detecting the area of concern and applying the appropriate fix workflow across Steps 3-4 (Fix Test Issues + Optimize Test Structure) of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A fix is not a patch laid on top of the broken region; it is the smallest rewrite that lets the corrected logic sit in place as if the bug had never been there, with no `// fixed:` markers, no parallel "v2" helpers, and no defensive wrapper retained "just in case" the original path comes back.
+Diagnose and repair concrete failures — failing tests, type errors, lint
+failures, broken CI, review findings — restoring green without adding
+behavior. `coding:write-code` owns new functionality; `coding:refactor` owns
+structural cleanup of working code.
 
-## Purpose & Scope
+<IMPORTANT>
+Coherence Mandate: every edit must produce one continuous, deliberate work —
+rewrite over restructure, restructure over integrate, never append. A fix is
+not a patch laid on top of the broken region; it is the smallest rewrite that
+lets the corrected logic sit in place as if the bug had never been there — no
+visible patch seams, no `// fixed:` markers, no parallel "v2" helpers, no
+defensive wrapper retained "just in case" the original path comes back.
+</IMPORTANT>
 
-**What this command does NOT do**:
+## Boundaries
 
-- Add new features
-- Refactor working code (use `/coding:refactor`)
-- Change architecture
-- Create new files (unless needed for fixes)
+- Use for: reproducible failures (tests, types, lint, CI) and defects
+  identified by review findings, including incorrect test behavior, fixtures,
+  and mocks.
+- Do not use for: new features (`coding:write-code`), refactoring working
+  code (`coding:refactor`), architecture changes, or fixes requiring external
+  service changes. Reject when all checks pass and no defect is identified,
+  or when the requested change would break existing functionality.
 
-**When to REJECT**:
+## Inputs
 
-- No errors or issues found
-- Request is for new feature development
-- Changes would break existing functionality
-- Fix requires external service changes
+- **Required**: a failure to fix — an error message, failing check, review
+  finding, or a specifier (file, directory, or pattern) to diagnose.
+- **Optional**: `--area=test|lint|type|review|impl|fixtures|refactor` to skip
+  auto-detection; `--note=...` for focus guidance; `--plan=PATH` to pin the
+  plan contract for post-review fixes; `--from-composite` when invoked from a
+  composite workflow.
 
-## Applicable Standards
+## Standards
 
-When executing this skill, the following standards apply:
-
-### For Test Correction (Step 3 -- Fix Issues)
-
-| Standard | Purpose |
-|---|---|
-| `testing/scan` | Test quality, patterns, coverage analysis |
-| `typescript/scan` | Type safety verification |
-| `documentation/scan` | Documentation completeness check |
-
-When a specific rule violation is detected, load its fix guidance from `testing/rules/<rule-id>.md`.
-
-### For Fixture Optimization (Step 4 -- Optimize)
-
-| Standard | Purpose |
-|---|---|
-| `universal/write` | General code authoring conventions |
-| `typescript/write` | TypeScript patterns and type safety |
-| `function/write` | Function design and complexity |
-| `documentation/write` | Documentation for test utilities |
-| `testing/write` | Test fixture and mock patterns |
+For test correction (step 3) apply `testing/scan`, `typescript/scan`, and
+`documentation/scan`; when a specific rule violation is detected, load its
+fix guidance from `testing/rules/<rule-id>.md`. For fixture optimization
+(step 4) apply the `universal`, `typescript`, `function`, `documentation`,
+and `testing` write standards.
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. **Diagnose.** Parse the specifier and flags. Without `--area`, auto-detect
+   by running tests, the type checker, and the linter, prioritizing tests >
+   types > lint. Map the area to its entry step — `test` → step 3, `fixtures`
+   → step 4, `impl` → step 2, `refactor` → step 5 — and with multiple areas
+   start from the earliest and run all relevant steps. Collect error
+   messages and map each to its code location; for broader project context
+   (handover docs, review findings, planning notes) see
+   [references/context-discovery.md](references/context-discovery.md). When
+   this run follows a `/coding:review-code`, pin the plan contract per
+   [references/plan-context.md](references/plan-context.md) so the follow-up
+   review validates against the identical plan.
+2. **Plan.** Read the affected files and their test descriptions; determine
+   expected behavior from tests, DESIGN.md, and specification files; decide
+   whether each issue is source-code logic or test implementation, asking the
+   user when expected behavior is ambiguous. List the changes needed, ordered
+   by dependency.
+3. **Fix tests.** Fix incorrect test behavior and logic — never modify a test
+   just to make it pass — plus standards violations, imports, and references.
+   For unused-code errors, check design and handover docs first: if the code
+   is planned but unimplemented, use the `throw new Error('IMPLEMENTATION:
+   ...')` pattern; remove only genuinely unnecessary code. When more than 25
+   files are affected, batch at most 10 test files per subagent and dispatch
+   batches in parallel (per the constitution's delegation guidance); the
+   bound keeps each report reviewable and a failed batch cheap to retry.
+   Re-run checks after each fix and address newly surfaced errors.
+4. **Optimize fixtures** (skip when no fixtures or mocks exist). Fix
+   incorrect fixture definitions and mock behavior, type-safety issues, and
+   organization problems; keep fixture data realistic and valid; run tests to
+   confirm they still pass.
 
-### Step 1: Diagnose Issues
+   <IMPORTANT>
+   In steps 3-4, modify only test files, mock files, fixtures, and test
+   support files — never the source code under test.
+   </IMPORTANT>
 
-1. **Parse Arguments**
-   - Extract specifier (file, directory, or pattern) from $ARGUMENTS
-   - Parse `--area` flag (test, lint, type, review)
-   - Parse `--note` for specific guidance
-   - Determine if running as standalone or as part of composite (`--from-composite`)
+5. **Validate.** Run the full test suite, linter, and type checker across the
+   affected scope. When a check fails, fix the cause and re-run that check;
+   repeat until every check passes or a concrete blocker remains, then report
+   the blocker instead of looping. For each failure that occurred, record its
+   root cause, the systemic cause that allowed it, the assumption that proved
+   wrong, and how to prevent that class of error.
 
-2. **Auto-Detect Area** (if not specified)
-   - Run tests to check for failures
-   - Run linter to check for violations
-   - Run type check for TypeScript errors
-   - Prioritize: tests > types > lint
+## Verification
 
-3. **Map Area to Workflow Step**
+- The originally reported failure no longer reproduces.
+- Tests, type check, and lint pass across the affected scope with no
+  regressions.
+- Edits are confined to the diagnosed defect: no new features, no unrelated
+  restructuring, and for test-area fixes no source-under-test modifications.
 
-   Use the detected (or `--area`-specified) area to determine which workflow step to enter. When multiple areas are present, start from the earliest step and execute all relevant steps:
+## Completion
 
-   | Area | Workflow Step |
-   |---|---|
-   | `test` | Step 3 (Apply Test Fixes) |
-   | `fixtures` | Step 4 (Optimize Test Fixtures) |
-   | `impl` | Step 2 (Plan Fixes) |
-   | `refactor` | Step 5 (Validate) |
+Report the area (detected or specified), issues found and fixed, files
+modified, the root-cause classification
+(`source_code_logic` / `test_implementation` / `requirements_unclear`) with
+the reasoning behind it, per-issue file:line entries with what changed,
+fixture optimizations when step 4 ran, and validation results
+(tests/types/lint). Suggest next steps (refactor, commit) only when relevant.
+When the run followed a review, include the keys the follow-up review
+consumes:
 
-4. **Gather Error Context**
-   - Collect error messages
-   - Identify affected files
-   - Map error to code location
-   - For broader project context (handover docs, review findings, planning notes), see `references/context-discovery.md`
+<report>
 
-5. **Capture Plan Context (Post-Review in Plan Mode)**
-
-   When this skill runs **after a `/coding:review` in the same session** (i.e. the triggering input is a review report, the argument includes review findings, or the conversation shows a prior review invocation), the plan that `/review` validated against MUST be pinned into the fix context so a subsequent `/coding:review` can be re-run against the identical contract.
-
-   - **Detect the trigger** (no dedicated flag needed — existing Step 1 rules already infer this): input references a review report, YAML findings from `/review`, or `--note="...review..."`; OR the prior turn ran `/coding:review`.
-   - **Resolve the plan source** (first match wins):
-     1. Explicit path passed via `--plan=<path>` — always wins when provided.
-     2. The **active plan-mode plan file** surfaced by the Claude Code harness for the current session (path provided by the harness; typically under `~/.claude/plans/`). This is the authoritative source when the session is in — or has just exited — plan mode. Do NOT hardcode this path; read it from the harness-provided session context.
-     3. The `plan_source` echoed by the preceding review report, if one is present.
-     4. **Repo-level fallback (requires confirmation)**: if none of the above resolves but a repo-level plan doc is discoverable (`PLAN.md`, `DRAFT.md`, or `DESIGN.md` at repo root or scope directory), use `AskUserQuestion` to ask the user whether to adopt one of them (or none). Do **not** silently adopt a repo plan when there is no plan-mode plan — a stale repo doc may not match what `/review` actually validated against.
-     5. If neither a plan-mode plan nor a confirmed repo plan is available → record `plan_source: none_found` and treat the review report itself as the best-available contract.
-   - **Inject into context**: read the resolved plan document in full and treat it as a first-class input alongside the error context. Echo its absolute path and a one-line digest into every fix subtask prompt so downstream agents remain aligned with the same contract.
-   - **Preserve across iterations**: the plan path MUST be carried into the Step 6 report under `plan_source` so the follow-up `/coding:review` can be invoked with the same `--plan` argument and produce comparable drift verdicts.
-
-### Step 2: Plan Fixes
-
-1. **Critical Root Cause Analysis**
-   - Read affected files and their test descriptions
-   - Determine expected behavior from test descriptions and specification files
-   - Analyze whether issues are in source code logic vs. test implementation
-   - Check DESIGN.md and specification files for expected behavior hints
-   - If uncertain about expected behavior, ask user for clarification
-
-2. **Create Fix Plan**
-   - List changes needed
-   - Order by dependency
-   - Estimate impact
-
-### Step 3: Apply Test Fixes
-
-Fix issues in test files including incorrect behavior, standards violations, and test-related problems while preserving test intent and correctness.
-
-1. **For Batch Execution** (when >25 files affected):
-   - Generate batches at runtime based on test files found
-   - Limit each batch to max 10 test files
-   - Process batches in parallel
-
-2. **Execute Test Corrections**
-   - Apply code modifications to fix test issues
-   - Fix incorrect test behavior and logic (never modify tests just to make them pass)
-   - Fix standards violations
-   - Update tests if needed
-   - Fix imports and references
-   - **CRITICAL**: Only modify test files, mock files, and fixture files -- NEVER modify source code under test
-
-3. **Handle Unused Code Errors**
-   - Check design documentation first to verify if code is part of planned functionality
-   - Check handover documentation to see if this is intentional incomplete implementation
-   - If code is planned but not yet implemented: use `throw new Error('IMPLEMENTATION: ...')` pattern
-   - Only remove code that is genuinely unnecessary
-
-4. **Iterate Until Passing**
-   - Re-run checks after each fix
-   - Address new errors that emerge
-   - Continue until clean
-
-### Step 4: Optimize Test Fixtures (Conditional)
-
-Fix issues in test fixtures and mocks, ensuring proper structure and organization while maintaining correctness. **Skip this step if no fixtures/mocks exist**.
-
-1. **Identify Fixture Issues**
-   - Incorrect fixture definitions or mock behavior
-   - Type safety issues in fixtures/mocks
-   - Organizational problems
-   - Standards violations in test support files
-
-2. **Apply Fixture Corrections**
-   - Fix fixture/mock behavior and accuracy
-   - Ensure fixtures represent realistic and valid test data
-   - Apply proper organization patterns
-   - **CRITICAL**: Only modify test fixtures, mock files, and test support files
-
-3. **Verify Fixtures**
-   - Run tests to verify fixtures work correctly
-   - Maintain test accuracy after changes
-
-### Step 5: Validate
-
-1. **Run Full Checks**
-   - Execute test suite via `npm run test` or equivalent
-   - Run linter via `npm run lint` or equivalent
-   - Run type checker
-   - Verify no regressions
-
-2. **Error Anthropology** (when failures occurred)
-   - Root Cause: Why did this specific error occur?
-   - Systemic Cause: Why did the process allow this error?
-   - Belief Update: What assumptions proved wrong?
-   - System Improvement: How to prevent this class of error?
-
-### Step 6: Reporting
-
-**Output Format**:
-
-```
-[OK/FAIL] Command: fix $ARGUMENTS
-
-## Summary
-- Area: [detected or specified area]
-- Issues found: [count]
-- Issues fixed: [count]
-- Files modified: [count]
-- Plan source: [absolute path to PLAN.md/DRAFT.md/DESIGN.md, or `none_found`] <!-- present only when triggered post-review under plan mode; re-run `/coding:review --plan=<path>` to verify -->
-- Review re-run command: `/coding:review <scope> --plan=<plan_source>` <!-- omit if plan_source is none_found -->>
-
-## Root Cause Analysis
-- Expected behavior: [description]
-- Root cause: [source_code_logic|test_implementation|requirements_unclear]
-- Reasoning: [how expected behavior was determined]
-
-## Issues Resolved
-1. [file:line] - [issue description]
-   Fix: [what was changed]
-2. [file:line] - [issue description]
-   Fix: [what was changed]
-
-## Fixture Optimizations (if applicable)
-- Fixtures processed: [count]
-- Issues fixed: [count]
-- Organization improvements: [count]
-
-## Validation Results
-- Tests: [PASS/FAIL] ([X] passing, [Y] failing)
-- Types: [PASS/FAIL] ([N] errors)
-- Lint: [PASS/FAIL] ([N] warnings)
-
-## Next Steps
-1. Review changes
-2. Run full test suite
-3. Refactor with /coding:refactor
-4. Commit with /coding:commit
+```yaml
+plan_source: <absolute path or none_found>
+review_rerun: /coding:review-code <scope> --plan=<plan_source> # omit when plan_source is none_found
 ```
 
-## Examples
-
-### Auto-Detect and Fix
-
-```bash
-/fix
-# Automatically detects issues and fixes them
-```
-
-### Fix Specific Area
-
-```bash
-/fix --area=test
-# Focuses only on fixing test failures
-```
-
-### Fix Specific File
-
-```bash
-/fix "src/auth/login.ts"
-# Fixes issues in specific file
-```
-
-### Fix with Guidance
-
-```bash
-/fix --area=lint --note="Focus on unused variables"
-# Fixes lint issues with specific focus
-```
-
-### Fix from Review
-
-```bash
-/fix "src/utils/" --note="Address code review feedback: improve error handling"
-# Applies specific improvements based on review notes
-```
-
-### Error Case
-
-```bash
-/fix "src/perfect-code.ts"
-# No issues found in src/perfect-code.ts
-# All checks passing -- nothing to fix
-```
+</report>

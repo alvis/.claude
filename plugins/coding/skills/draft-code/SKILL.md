@@ -1,36 +1,40 @@
 ---
 name: draft-code
-description: Draft TypeScript-compliant code skeleton with TODO placeholders. Use when starting new implementations, creating code scaffolds, or preparing test structure for TDD.
+description: Draft TypeScript-compliant code skeletons with canonical TODO(implementation) placeholders. Use when starting an already-specified implementation or preparing typed production structure for later completion; do not implement business logic or create ambiguous plain TODO markers.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <instruction>
+argument-hint: "<instruction>"
 ---
 
 # Draft Code Skeleton
 
-Creates TypeScript-compliant code skeletons with TODO placeholders — type definitions, function signatures, and test structure — leaving implementation details for later completion in Steps 0-1 (Design Discovery + Skeleton Creation) of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. The skeleton is the seed shape every later pass must grow from, not bolt onto: type signatures, file boundaries, and naming chosen here become the grain along which `complete-code` and `refactor` must work, so a skeleton that already feels native to the surrounding module saves downstream skills from having to graft a foreign shape into place.
+Creates TypeScript-compliant production skeletons with explicit
+`TODO(implementation):` markers, type definitions, and function signatures. It
+may outline pending tests, but test markers belong to `coding:complete-test`;
+production stubs belong to `coding:complete-code`.
 
-## Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+- Use for: starting an already-specified implementation, or preparing typed
+  production structure and test scaffolds for later completion.
+- Do not use for: implementing business logic or producing production-ready
+  code (`coding:write-code`), writing complete tests with assertions beyond the
+  scaffold (`coding:complete-test`), or modifying existing implementations
+  (`coding:refactor` or `coding:fix`).
+- Reject when: the instruction is too vague to create meaningful types, the
+  request is for implementation rather than a skeleton, the target directory
+  does not exist, or the skeleton would conflict with existing code structure.
 
-- Implement actual business logic
-- Create production-ready code
-- Write complete tests with assertions
-- Modify existing implementations
+## Inputs
 
-**When to REJECT**:
+- **Required**: `<instruction>` — the feature or module to skeleton, specific
+  enough to derive types, interfaces, and function signatures.
+- **Optional**: design and handover documents discovered in step 1 refine the
+  skeleton's shape.
+- **Prerequisites**: an existing target directory inside a TypeScript project.
 
-- Instructions are too vague to create meaningful types
-- Request is for implementation rather than skeleton
-- Target directory does not exist
-- Conflicting with existing code structure
-
-## Applicable Standards
-
-When executing this skill, the following standards apply:
+Apply these constitution standards while drafting:
 
 | Standard | Purpose |
 |---|---|
@@ -44,168 +48,46 @@ When executing this skill, the following standards apply:
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Parse the instruction into required types, interfaces, functions, and file
+   structure, then discover context with Glob (never `find` in Bash): design
+   docs (`DESIGN.md`, architecture `**/*.md`) and handover files — extract
+   current state, decisions, gotchas, and established patterns from
+   `CONTEXT.md`; solved problems and insights from `NOTES.md`; goals, success
+   criteria, and current phase from `PLAN.md`. Read neighboring modules for
+   existing patterns and merge design with handover context.
+2. Plan the structure before writing: file organization, type hierarchy, and
+   test layout per the standards above.
+3. Draft type definitions (interfaces, type aliases, enums) and function stubs
+   with JSDoc, marking every incomplete body with the canonical placeholders in
+   [references/drafting-patterns.md](references/drafting-patterns.md) —
+   `TODO(implementation):` comments plus the `IMPLEMENTATION:` sentinel throw
+   wherever a value is expected.
+4. Draft the test structure: describe blocks per behavior, planned cases
+   covering all functionality, and only the mock factories, fixtures, and
+   helpers the skeleton needs. When no interface exists yet, use
+   `describe.todo()`/`it.todo()`; once an interface exists, write real
+   assertions that fail red until implementation — the desired TDD signal
+   (details in references/drafting-patterns.md).
+5. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker remains,
+   then report the blocker instead of looping.
 
-**Resume Pattern**: When resuming partial work, pass parameters to the underlying write-code workflow to skip already-completed steps. Example:
+## Verification
 
-```
-Resume From Step: 1
-Change Direction: "Use factory pattern for object creation"
-Skip Steps: [2, 3, 4, 5]   # only draft, no implementation
-```
+- TypeScript compiles with no errors and all imports resolve (`npx tsc
+  --noEmit` or the repository equivalent).
+- `npm run lint` (or equivalent) passes; file organization and naming match the
+  standards above.
+- `npm run test` (or equivalent) runs without collection errors; scaffolded
+  tests are pending or red exactly as designed.
+- Every placeholder uses a canonical form from
+  references/drafting-patterns.md — no bare `TODO:` markers, which
+  `coding:complete-code` refuses to claim.
 
-### Step 1: Design Direction Discovery
+## Completion
 
-1. **Parse Instructions**
-   - Extract feature requirements from $ARGUMENTS
-   - Identify types, interfaces, and functions needed
-   - Determine file structure
-   - Determine if running as standalone or as part of composite (`--from-composite`)
-
-2. **Discover Design Documentation**
-   - Look for `DESIGN.md` in project root using Glob (NEVER use `find` in bash)
-   - Search for `**/*.md` files that might contain design specifications
-   - Look for architecture documentation files
-
-3. **Discover Handover Documentation**
-   - Look for `CONTEXT.md`, `NOTES.md`, `PLAN.md` in project root using Glob
-   - If handover files exist, extract:
-     - **From CONTEXT.md**: Current state, key decisions, gotchas, established patterns
-     - **From NOTES.md**: Problems already solved, what worked/didn't, key insights
-     - **From PLAN.md**: Goals, success criteria, current phase, task breakdown
-
-4. **Research Context**
-   - Read existing patterns in codebase
-   - Identify related modules
-   - Check coding standards
-   - Merge design specifications with handover context
-
-5. **Plan Structure**
-   - Map out file organization
-   - Define type hierarchy
-   - Plan test structure
-
-### Step 2: Draft Types and Interfaces
-
-1. **Create Type Definitions**
-   - Draft interfaces with JSDoc
-   - Create type aliases
-   - Define enums where appropriate
-   - Add TODO comments for validation logic
-
-2. **Draft Function Signatures**
-   - Create function stubs with proper parameter and return types
-   - Mark bodies with TODO using the CODE DRAFTING PATTERNS below
-   - Follow function design standards
-
-**CODE DRAFTING PATTERNS**: When drafting incomplete implementations:
-- Use `describe.todo`, `it.todo` for test placeholders that need implementation
-- Use `// TODO:` comments to mark incomplete code sections
-- For incomplete code where a return is expected or return type is void:
-  - Throw `new Error('IMPLEMENTATION: <description of what is missing>, requiring <parameters required as JSON object>')`
-  - This prevents TypeScript type errors and unused variable complaints
-  - Example: `throw new Error(\`IMPLEMENTATION: user authentication logic needed, requiring \${JSON.stringify({ userId, token })}\`)`
-
-### Step 3: Draft Test Structure
-
-1. **Create Test Files**
-   - Set up test suites with describe blocks
-   - If no interface provided: Use `describe.todo()` and `it.todo()` syntax
-   - If interface provided: Create actual test cases with assertions (tests will fail until implementation)
-   - Structure tests following AAA pattern preparation
-   - Plan test cases covering all functionality
-
-   **Conditional stub style**: Use `describe.todo()` / `it.todo()` only when no interface is provided yet — these mark tests as pending without compile-time coupling. As soon as an interface is provided, write real assertions against it (the suite will fail red until implementation lands, which is the desired TDD signal).
-
-2. **Add Test Utilities**
-   - Draft mock factories
-   - Create fixture templates
-   - Set up test helpers
-
-### Step 4: Validation
-
-1. **TypeScript Check**
-   - Verify types compile with no errors
-   - Check for type errors
-   - Ensure imports resolve
-
-2. **Standards Check**
-   - Run linter to ensure standards compliance
-   - Verify file organization
-   - Check naming conventions
-   - Validate TODO format
-
-3. **Run Scripts**
-   - Execute `npm run test` or equivalent
-   - Execute `npm run lint` or equivalent
-   - Report any issues found
-
-### Step 5: Reporting
-
-**Output Format**:
-
-```
-[OK/FAIL] Command: draft-code $ARGUMENTS
-
-## Summary
-- Instruction: [parsed instruction]
-- Files created: [count]
-- Types defined: [count]
-- Functions drafted: [count]
-- TODOs placed: [count]
-
-## Actions Taken
-1. Discovered design context from [sources]
-2. Created type definitions at [path]
-3. Drafted function signatures at [path]
-4. Set up test structure at [path]
-5. Verified TypeScript compilation
-
-## Files Created
-- [path] - [description]
-- [path] - [description]
-
-## TODOs Summary
-- Implementation: [count]
-- Tests: [count]
-- Documentation: [count]
-
-## Next Steps
-1. Review type definitions
-2. Complete implementations with /coding:complete-code
-3. Add test assertions
-```
-
-## Examples
-
-### Draft New Service
-
-```bash
-/draft-code "Create user authentication service with login, logout, and token refresh"
-# Creates:
-# - src/services/auth/types.ts (interfaces)
-# - src/services/auth/auth.service.ts (stubs)
-# - src/services/auth/auth.test.ts (test structure)
-```
-
-### Draft API Endpoint
-
-```bash
-/draft-code "REST endpoint for product CRUD operations"
-# Creates skeleton for controller, service, and tests
-```
-
-### Draft Utility Module
-
-```bash
-/draft-code "Date formatting utilities with timezone support"
-# Creates type-safe utility functions with TODOs
-```
-
-### Error Case
-
-```bash
-/draft-code "thing"
-# Error: Instruction too vague
-# Suggestion: Provide specific requirements like "Create validation helpers for user input"
-```
+Report the parsed instruction; context sources discovered; files created with a
+one-line purpose each; counts of types defined, functions drafted, and markers
+placed; verification commands with results; and next steps — complete
+production stubs with `coding:complete-code`, then route pending test markers
+to `coding:complete-test`.

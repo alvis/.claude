@@ -76,7 +76,7 @@ DOCUMENT mode does NOT research; it extracts.
 When syncing a DOCUMENT-mode spec to Notion:
 
 - Set page property `Status = "Implemented"` (CREATE mode uses `"Drafting"`).
-- Otherwise the standard 4-step sync protocol applies (see `references/notion-sync.md`).
+- Otherwise delegate the standard synchronization flow to `Skill(sync-notion)`; spec-code owns document generation, not Notion transport or conflict mechanics.
 
 ## Examples
 

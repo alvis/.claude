@@ -37,7 +37,7 @@ The workflow first builds a slice list — one independently-implementable unit 
 
 - **`COMMIT_PLAN`** — one slice per PLAN.md phase / commit blueprint.
 - **`PI_ITERATE`** — one slice per pending-TODO-and-failing-test cluster.
-- **`AUDIT_AND_COMPLETE`** — one slice per audit gap surfaced by a baseline `coding:review`.
+- **`AUDIT_AND_COMPLETE`** — one slice per audit gap surfaced by a baseline `coding:review-code`.
 
 Each slice carries its spec requirement(s), the target file(s), and a stable slice id.
 
@@ -49,7 +49,7 @@ Each slice goes to one implementation agent that:
 2. **If the slice needs an architectural decision not resolvable from the spec, it does NOT guess** — it emits a
    structured `pending_decision` (see contract below) and returns its slice as `blocked`, implementing nothing.
 3. Otherwise dispatches the mode-appropriate `coding:*` child for its slice (`coding:write-code` /
-   `coding:complete-code` / `coding:fix`) with the `deviation_policy` embedded, then `coding:review`; on review failure
+   `coding:complete-code` / `coding:fix`) with the `deviation_policy` embedded, then `coding:review-code`; on review failure
    it runs `coding:fix` and re-reviews (max 3 internal iterations).
 4. On success, dispatches `coding:commit` for its slice and records the SHA.
 

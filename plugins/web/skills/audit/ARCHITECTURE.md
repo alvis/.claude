@@ -36,17 +36,17 @@ flowchart LR
 
 | Path | Responsibility |
 | --- | --- |
-| [`cli/audit_cli/cli.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/cli.py) | CLI entrypoint, crawl orchestration, report assembly |
-| [`cli/audit_cli/crawl/page.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/crawl/page.py) | Per-page, per-viewport runtime pipeline |
-| [`cli/audit_cli/crawl/queue.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/crawl/queue.py) | Same-origin BFS queue and interaction dedup |
-| [`cli/audit_cli/discover/interactions.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/discover/interactions.py) | AX snapshot based interaction planning |
-| [`cli/audit_cli/discover/routes.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/discover/routes.py) | Source route discovery across frameworks |
-| [`cli/audit_cli/discover/sitemap.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/discover/sitemap.py) | `sitemap.xml` and `robots.txt` discovery |
-| [`cli/audit_cli/drive/browser.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/drive/browser.py) | Thin `agent-browser batch` wrapper |
-| [`cli/audit_cli/drive/inject.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/drive/inject.py) | Hosts and injects JS scripts |
-| [`cli/audit_cli/report/*.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/report) | Scoring, AI routing, JSON emission |
-| [`cli/audit_cli/types.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/types.py) | Contract dataclasses |
-| [`scripts/*.js`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/scripts) | In-browser audit modules |
+| [`cli/audit_cli/cli.py`](./cli/audit_cli/cli.py) | CLI entrypoint, crawl orchestration, report assembly |
+| [`cli/audit_cli/crawl/page.py`](./cli/audit_cli/crawl/page.py) | Per-page, per-viewport runtime pipeline |
+| [`cli/audit_cli/crawl/queue.py`](./cli/audit_cli/crawl/queue.py) | Same-origin BFS queue and interaction dedup |
+| [`cli/audit_cli/discover/interactions.py`](./cli/audit_cli/discover/interactions.py) | AX snapshot based interaction planning |
+| [`cli/audit_cli/discover/routes.py`](./cli/audit_cli/discover/routes.py) | Source route discovery across frameworks |
+| [`cli/audit_cli/discover/sitemap.py`](./cli/audit_cli/discover/sitemap.py) | `sitemap.xml` and `robots.txt` discovery |
+| [`cli/audit_cli/drive/browser.py`](./cli/audit_cli/drive/browser.py) | Thin `agent-browser batch` wrapper |
+| [`cli/audit_cli/drive/inject.py`](./cli/audit_cli/drive/inject.py) | Hosts and injects JS scripts |
+| [`cli/audit_cli/report/*.py`](./cli/audit_cli/report) | Scoring, AI routing, JSON emission |
+| [`cli/audit_cli/types.py`](./cli/audit_cli/types.py) | Contract dataclasses |
+| [`scripts/*.js`](./scripts) | In-browser audit modules |
 
 ## 🛣️ End-to-End Runtime Flow
 
@@ -95,7 +95,7 @@ sequenceDiagram
 
 ### 🔌 Entrypoint And Process Model
 
-[`cli.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/cli.py) exposes:
+[`cli.py`](./cli/audit_cli/cli.py) exposes:
 
 - `python3 -m audit_cli`
 - `audit-cli`
@@ -135,7 +135,7 @@ The code currently defines four default viewports, not three:
 
 ### 🧭 Queue Semantics
 
-[`queue.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/crawl/queue.py) implements:
+[`queue.py`](./cli/audit_cli/crawl/queue.py) implements:
 
 - Same-origin BFS URL storage
 - URL normalization
@@ -164,7 +164,7 @@ This keeps crawl identity stable without over-normalizing dynamic query-based pa
 
 ### 🤖 `BrowserDriver`
 
-[`drive/browser.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/drive/browser.py) is deliberately thin. It does not maintain a persistent REPL. Instead, every action shells out to:
+[`drive/browser.py`](./cli/audit_cli/drive/browser.py) is deliberately thin. It does not maintain a persistent REPL. Instead, every action shells out to:
 
 ```bash
 agent-browser batch --bail --json
@@ -194,13 +194,13 @@ The driver has two ownership modes:
 
 That means the current implementation optimizes for browser-session ownership boundaries, not for fully browser-managed multi-page navigation when attached to an external session.
 
-Tests in [`test_browser_cdp_url.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/tests/test_browser_cdp_url.py) and [`test_cli_cdp_url.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/tests/test_cli_cdp_url.py) pin this behavior.
+Tests in [`test_browser_cdp_url.py`](./cli/tests/test_browser_cdp_url.py) and [`test_cli_cdp_url.py`](./cli/tests/test_cli_cdp_url.py) pin this behavior.
 
 ## 🚚 Script Serving And Injection
 
 ### 🖥️ Localhost Script Server
 
-[`drive/inject.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/drive/inject.py) starts a temporary `ThreadingHTTPServer` rooted at the shared `scripts/` directory.
+[`drive/inject.py`](./cli/audit_cli/drive/inject.py) starts a temporary `ThreadingHTTPServer` rooted at the shared `scripts/` directory.
 
 This exists for a concrete reason:
 
@@ -240,12 +240,12 @@ window.runDesignAudit({ viewport, viewportLabel })
 
 Two script-side files are not part of the current active path:
 
-- [`scripts/navigation-audit.js`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/scripts/navigation-audit.js): implemented, but not injected and not referenced by the aggregator
-- [`scripts/serve.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/scripts/serve.py): a standalone legacy file server; current CLI uses `serve_audit_scripts()` instead
+- [`scripts/navigation-audit.js`](./scripts/navigation-audit.js): implemented, but not injected and not referenced by the aggregator
+- [`scripts/serve.py`](./scripts/serve.py): a standalone legacy file server; current CLI uses `serve_audit_scripts()` instead
 
 ## 📄 Per-Page Audit Pipeline
 
-[`crawl/page.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/crawl/page.py) is the runtime heart of the system.
+[`crawl/page.py`](./cli/audit_cli/crawl/page.py) is the runtime heart of the system.
 
 For each page and each viewport it performs:
 
@@ -276,7 +276,7 @@ The Python layer therefore behaves like a small state explorer wrapped around de
 
 ### 🪪 Snapshot-Driven Discovery
 
-[`discover/interactions.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/discover/interactions.py) does not inspect DOM directly. It works from the `agent-browser snapshot -i --json` accessibility tree.
+[`discover/interactions.py`](./cli/audit_cli/discover/interactions.py) does not inspect DOM directly. It works from the `agent-browser snapshot -i --json` accessibility tree.
 
 This makes interaction planning resilient to framework differences and aligns with `agent-browser`’s element addressing model (`@e<uid>`).
 
@@ -593,7 +593,7 @@ Returned by `window.runDesignAudit()`:
 
 ### 🟦 Python Emitted Contract
 
-Written by [`types.Report`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/types.py):
+Written by [`types.Report`](./cli/audit_cli/types.py):
 
 - `contract_version: "3.0"`
 - `target`
@@ -612,7 +612,7 @@ The Python contract is richer in shape but only partially populated today.
 
 ### 🧊 Immutable Core Types
 
-[`types.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/types.py) defines frozen dataclasses for:
+[`types.py`](./cli/audit_cli/types.py) defines frozen dataclasses for:
 
 - `Finding`
 - `Evidence`
@@ -647,7 +647,7 @@ These are meant to be stable wire-contract objects, not mutable runtime accumula
 
 ### 🤔 AI Review Routing
 
-[`flag_ai.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/report/flag_ai.py) marks findings for subjective review if any of these are true:
+[`flag_ai.py`](./cli/audit_cli/report/flag_ai.py) marks findings for subjective review if any of these are true:
 
 1. The rule is one of the 11 AI-grounded design rules.
 2. The issue confidence is below `0.7`.
@@ -673,7 +673,7 @@ Both the JS aggregator and Python port implement the same scoring model:
 - category score is `round(100 - penalty)`
 - overall score is the average of category scores
 
-Parity is enforced by [`test_aggregate_score_parity.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/tests/test_aggregate_score_parity.py).
+Parity is enforced by [`test_aggregate_score_parity.py`](./cli/tests/test_aggregate_score_parity.py).
 
 ### 🧮 Current Python Aggregation Caveat
 
@@ -695,7 +695,7 @@ That is the actual current behavior.
 
 ## 🧭 Source Discovery Architecture
 
-[`discover/routes.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/audit_cli/discover/routes.py) supports framework-specific route harvesting for:
+[`discover/routes.py`](./cli/audit_cli/discover/routes.py) supports framework-specific route harvesting for:
 
 - Next.js App Router and Pages Router
 - Vite + React Router
@@ -709,7 +709,7 @@ Dynamic segments are replaced with `sample-slug` and annotated with the warning:
 
 `dynamic route — supply real id via --seeds`
 
-Tests in [`test_discover_routes.py`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/cli/tests/test_discover_routes.py) pin that behavior.
+Tests in [`test_discover_routes.py`](./cli/tests/test_discover_routes.py) pin that behavior.
 
 ## 🧪 Test Strategy
 
@@ -742,7 +742,7 @@ Several parts of the type system or skill design exist ahead of the current impl
 - `copy_crop()` exists in `emit.py`, but the current CLI path does not capture or copy crop assets.
 - `navigation-audit.js` is implemented but not wired into injection or aggregation.
 
-These are important because the skill-level narrative in [`SKILL.md`](/Users/alvis/Repositories/.claude/plugins/web/skills/audit/SKILL.md) describes a fuller human-review workflow than the current CLI code alone performs.
+These are important because the skill-level narrative in [`SKILL.md`](./SKILL.md) describes a fuller human-review workflow than the current CLI code alone performs.
 
 ## 🧠 Design Intent
 

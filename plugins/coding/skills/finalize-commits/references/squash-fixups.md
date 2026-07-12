@@ -1,6 +1,6 @@
 # Auto-Squash Fixups — detect + squash (jj + git)
 
-Referenced from SKILL.md Step 3. Folds fixup-style commits into their targets before QA so each commit reads as one authored change (Coherence Mandate). All rewrites are guarded by `../../commit/scripts/backup.sh` then `../../commit/scripts/verify.sh`.
+Referenced from SKILL.md Step 6. Folds fixup-style commits into their targets before QA so each commit reads as one authored change. Detection here is read-only; the squash itself is applied by `coding:commit` after approval, guarded by its `backup.sh` / `verify.sh` pair.
 
 ## Detect
 
@@ -20,7 +20,11 @@ jj has no literal `fixup!` convention; instead detect **absorb candidates** — 
 - `jj absorb --dry-run` (preview which hunks would flow into which ancestor).
 - Also treat any mutable commit whose description starts with `fixup!`/`squash!` (e.g. imported from git) as an explicit target reference.
 
-## Squash
+Report `status`, `summary`, `outputs.squashed`, `outputs.new_targets`, and `issues`; use empty arrays when no fixups are found.
+
+## Squash (delegated to `coding:commit`)
+
+After approval, invoke `coding:commit` with the target and requested operation — it owns autosquash, absorb, rollback, and all other history mutations. The operations to request:
 
 ### git
 
@@ -28,7 +32,7 @@ jj has no literal `fixup!` convention; instead detect **absorb candidates** — 
 git rebase --autosquash --interactive @{upstream}~1   # autosquash orders fixup!/squash! onto targets
 ```
 
-Prefer non-interactive where the sequence is unambiguous: set `GIT_SEQUENCE_EDITOR=:` to accept the autosquash plan.
+Prefer non-interactive where the sequence is unambiguous: `GIT_SEQUENCE_EDITOR=:` accepts the autosquash plan.
 
 ### jj
 
@@ -37,10 +41,11 @@ jj absorb                                  # flow eligible hunks into the ancest
 jj squash --from <src> --into <dst>        # explicit fixup commit → its target
 ```
 
-For an explicit `fixup!`-described commit, resolve `<dst>` from the referenced subject, then `jj squash --from <fixup-rev> --into <dst>`.
+For an explicit `fixup!`-described commit, resolve `<dst>` from the referenced subject, then request `jj squash --from <fixup-rev> --into <dst>`.
 
 ## After squashing
 
-- Run `verify.sh`; on integrity failure roll back (`jj op restore` / `git reset --hard ORIG_HEAD`) and STOP.
+- `coding:commit` runs its integrity verify; on failure it rolls back (`jj op restore` / `git reset --hard ORIG_HEAD`) and the run STOPs.
 - Re-enumerate targets (per SKILL.md Step 1) so the QA loop walks the post-squash stack.
-- The squashed commit's message must still describe its full contents — if the fold changed what the commit does, message conformance in Step 4 will catch and reword it.
+- Re-run the affected commit and all dependent later commits through the per-commit QA reference.
+- The squashed commit's message must still describe its full contents — if the fold changed what the commit does, message conformance in `qa-loop.md` Step 6 will catch and reword it.

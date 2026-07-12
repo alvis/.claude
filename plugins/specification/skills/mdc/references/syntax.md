@@ -32,8 +32,8 @@ title: Quarterly Review
 ref: review-2026-q1
 tags: [finance, q1]
 owner:
-  - name: Alvis Tang
-    email: alvis@hilbert.space
+  - name: Jane Doe
+    email: jane@example.com
 ---
 
 # First block starts here

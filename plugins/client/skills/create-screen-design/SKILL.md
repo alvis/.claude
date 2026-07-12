@@ -1,335 +1,113 @@
 ---
 name: create-screen-design
-description: Create UX design docs with responsive ASCII variations
+description: Create new responsive screen-design documentation in the canonical Notion Screens database for a named product and screen. Use when a product needs a new UX contract, layout alternatives, interaction states, or handoff notes. Preserve the live template and database relations; route existing-page changes to update-screen-design.
 model: opus
-allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
-argument-hint: <product name> <screen descriptions...> [--constraints=...] [--platforms=...]
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+argument-hint: "<product> <screen descriptions...> [--constraints=...] [--platforms=...]"
 ---
 
 # Create Screen Design
 
-Creates comprehensive design documentation for interactive screens (web page/app or mobile client) on Notion, following best UX standards with responsive design variations.
+Create new screen-design pages in the canonical Notion Screens database.
+`update-screen-design` owns every change to an existing page.
 
-## Purpose & Scope
+## Boundaries
 
-**When to use**: When you need to document screen designs for a product, create design alternatives for user interfaces, or establish design specifications for development teams.
+- Use for: authoring and pushing new screen-design documentation — UX
+  contract, layout alternatives, interaction states, responsive behavior, and
+  handoff notes — under the Screens database for a resolved product.
+- Do not use for: updating an existing screen (`update-screen-design`),
+  implementation-facing visual design (`web:design`), rendered assessment
+  (`web:audit`), frontend code, clickable prototypes, or modifying the
+  canonical template itself.
 
-**Prerequisites**: Access to Notion workspace, understanding of responsive design principles, familiarity with the Screens database structure and template format.
+## Inputs
 
-**What this command does NOT do**:
+- **Required**: a product that resolves on Notion and at least one screen
+  description. An unresolved product blocks creation.
+- **Optional**: `--constraints` (brand, layout, or design limits; default:
+  follow the template) and `--platforms` (default: web and mobile).
+- **Prerequisites**: the `notion-sync` executable and `NOTION_TOKEN`. If
+  either is missing or auth fails, stop before local authoring and report the
+  prerequisite.
 
-- Implement frontend components or code
-- Deploy designs to production environments
-- Create clickable prototypes or interactive mockups
-- Modify existing screen designs (use update-screen-design instead)
+## Canonical Notion contract
 
-**When to REJECT**:
+- Template: `https://www.notion.so/4555730e74b44592b77dd8a97620d3f2`
+- Screens database parent: `https://www.notion.so/110161382ea64eefa46a4907574d4530`
+- Screens collection: `collection://c7bc479b-71db-41b1-b5ab-a07c641816b5`
 
-- Product name is missing or does not exist on Notion
-- No screen descriptions provided
-- Request is for updating existing designs rather than creating new ones
-
-## Role
-
-You are a **UX Director** who orchestrates the design workflow like a creative director. You never execute design tasks directly, only delegate and coordinate. Your management style emphasizes:
-
-- **Strategic Design Delegation**: Break complex design work into parallel tasks and assign to specialist design subagents
-- **Parallel Design Coordination**: Maximize efficiency by running multiple design subagents simultaneously for different screen variations
-- **Design Quality Oversight**: Review design work objectively without being involved in execution details
-- **Design Decision Authority**: Make go/no-go decisions based on subagent design reports and review results
-
-## Inputs and Outputs
-
-### Required Inputs
-
-- **Product Name**: Name of the product (must exist on Notion) for which screens are being designed
-- **Screen Descriptions**: Array of screen names/descriptions to be designed (e.g., "Login Screen", "Dashboard", "User Profile")
-
-### Optional Inputs
-
-- **Design Constraints**: Specific layout design, brand guidelines, color schemes, or design limitations (default: follow template guidelines)
-- **Target Platforms**: Specific platforms to focus on (default: web and mobile)
-
-### Expected Outputs
-
-- **Notion Design Page**: Complete design documentation page created under the Screens database
-- **Responsive Design Variations**: 5 main design variations with 3 responsive sub-variations each (15 total ASCII designs)
-- **Design Specifications**: Complete design documentation following the template structure
-- **Design Alternatives Section**: Detailed ASCII representations of all design variations
+<IMPORTANT>
+All Notion operations use `notion-sync` through Bash. Never open Notion URLs
+directly or substitute another API. Recursive pulls are one-shot: a single
+`--follow*` invocation per tree, never a separate pull for each discovered
+link.
+</IMPORTANT>
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Resolve the product and search for colliding screen names with
+   `notion-sync search "<query>" -j`. A found existing screen routes to
+   `update-screen-design`.
+2. Create a run directory and pull the template once:
 
-### Step 1: Create Screen Design Documentation
+   ```bash
+   notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 \
+     --follow-children --follow-links --out "$RUN_DIR/template"
+   ```
 
-Create comprehensive screen design documentation on Notion with responsive variations.
+3. Pull the resolved product/context tree once with
+   `--follow-children --follow-links` (or `--follow` when file or database
+   children are required). Preserve the downloaded Markdown files as this
+   run's content snapshot. If any recursive pull is incomplete, mark the
+   affected screens `partial`; do not push from a guessed template or
+   relation.
+4. Read the mirrored template and context completely, then record a mapping
+   from every requested screen to its product relation, source context files,
+   platform constraints, and local destination file.
+5. For each screen, copy the template's frontmatter shape and required
+   headings into `<run-dir>/<screen-slug>.md`, set
+   `parent: https://www.notion.so/110161382ea64eefa46a4907574d4530`, and
+   preserve database property names with the product relation exactly as
+   represented in the pulled context. Do not add a fake `ref:`;
+   `notion-sync push` writes the created page reference back into the source
+   file.
+6. Fill each page with screen purpose, audience and task, content hierarchy,
+   navigation, responsive behavior for the requested platforms, interaction
+   and loading/empty/error states, accessibility, meaningfully distinct
+   alternatives with rationale, accepted and open decisions, implementation
+   notes, and linked product context. Neither five variants nor ASCII
+   rendering is mandatory — structured layout notes or supplied visuals may
+   communicate the contract better.
+7. Before each push, compare the local page with the template snapshot:
+   required headings, frontmatter and property keys, product relation,
+   responsive coverage, and no unresolved placeholders. Save this pre-push
+   snapshot and the screen-to-source mapping.
+8. Run `notion-sync diff <file>` when supported, then `notion-sync push
+   <file>`. Re-read the file and require a persisted `ref:` plus the returned
+   Notion URL. If the push succeeds remotely but `ref:` is not persisted
+   locally, stop and report `partial` rather than retrying creation and
+   risking a duplicate. Do not push later screens after an auth failure,
+   template mismatch, unresolved identity, or uncertain previous create;
+   retain local files and mappings so continuation can determine exactly what
+   exists.
+9. Run the verification below for each created screen; when a check fails,
+   fix the cause and re-run that check. Repeat until every check passes or a
+   concrete blocker remains, then report the blocker instead of looping.
 
-#### Phase 1: Planning (You)
+## Verification
 
-1. **Receive inputs** from user (product name, screen descriptions)
-2. **Validate Notion access** and verify Screens database and template availability
-3. **Analyze design requirements** based on screen descriptions and product context
-4. **Create dynamic page-based batches** following these rules:
-   - Generate one batch per screen/page requested
-   - Each batch represents one complete page with all 15 ASCII designs
-   - If 1 screen requested: 1 subagent for phase 2, 1 for phase 3
-   - If N screens requested: N subagents for phase 2, N for phase 3
-   - Each subagent handles the complete design documentation for their assigned page
-5. **Use TodoWrite** to create task list from all page batches (each page = one todo item with status 'pending')
-6. **Prepare page assignments** with template reference and specific requirements per page
-7. **Queue all page batches** for parallel execution by subagents
+- Pull each created page once into a verification directory, or run
+  `notion-sync diff <file>` against its new `ref:`.
+- Confirm title, required template sections, parent database, collection
+  relationship, product relation, and responsive/state coverage.
+- Confirm each source file carries exactly one persisted `ref:` matching the
+  created page — one unambiguous remote page per screen.
 
-#### Phase 2: Execution (Subagents)
+## Completion
 
-In a single message, spin up subagents to perform design tasks in parallel, **one subagent per page** requested.
-
-- **[IMPORTANT]** Each subagent is responsible for creating ONE complete design page with all 15 ASCII designs
-- **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
-- **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update each page's status from 'pending' to 'in_progress' when dispatched
-
-Request each subagent to perform the following steps with full detail:
-
-    >>>
-    **ultrathink: adopt the Senior UX Designer mindset**
-
-    - You're a **Senior UX Designer** with deep expertise in responsive design who follows these design principles:
-      - **User-Centric Design**: Always prioritize user experience and usability
-      - **Responsive Excellence**: Create designs that work seamlessly across all device types
-      - **Design System Consistency**: Follow established patterns and maintain visual coherence
-      - **Accessibility First**: Ensure designs are accessible and inclusive
-      - **Innovation Balance**: Blend creativity with proven UX patterns
-
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
-
-    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for ALL Notion operations (the `NOTION_TOKEN` env var must be set):
-    - Read pages/databases by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` then use `Glob` + `Read` on the resulting `.md` files
-    - For a full screen-design subtree (children + database + links + files), use `Bash: notion-sync pull <url> --follow --out <tmp>`
-    - To create new pages: author a local `.md` file with `parent:` in frontmatter, then run `Bash: notion-sync push <file>` — the CLI creates the Notion page and writes the resulting `ref:` back into the source file
-      - The `parent:` value can be a Notion page id, a Notion URL, OR a sibling local file path (in which case the CLI will push the parent first if it lacks `ref:`)
-    - To find existing pages: `Bash: notion-sync search "<query>" -j`
-    - **Fetch linked pages in a single `--follow*` invocation — never spawn additional `notion-sync pull` calls for individually discovered references.** One-shot recursive pulls only; never iterate across tool-call turns.
-    - Never access Notion URLs directly without `notion-sync`
-
-    **Assignment**
-    You're assigned to create ONE complete screen design documentation page for:
-
-    Product: [Product Name]
-    Your Assigned Screen: [Specific Screen Description - e.g., "Login Screen" or "Dashboard"]
-    Design Constraints: [Any specific constraints]
-
-    **Reference Template**
-    Follow the design template structure at: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Mirror this template locally with a single recursive call: `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>`, then `Read` the resulting `.md` file
-
-    **Steps**
-
-    1. **Copy Template First**:
-       - Run `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` (one recursive call — do NOT loop into discovered references) and `Read` the resulting `.md` file
-       - Copy the entire template structure to ensure consistency
-       - This ensures all sections and formatting are preserved
-
-    2. **Modify Template Content**:
-       - Update page title with your assigned screen name
-       - Fill in all template sections with screen-specific content
-       - Maintain all section headings from the template
-       - Customize content while preserving template structure
-
-    3. **Create All 15 ASCII Designs**:
-       - Design 5 main variations for your assigned screen
-       - For EACH variation, create 3 responsive versions:
-         * Desktop version (wide layout)
-         * Tablet version (medium layout)
-         * Mobile version (narrow layout)
-       - Total: 5 variations x 3 devices = 15 ASCII designs
-       - Place all designs in the "Design Alternatives" section
-
-    4. **Complete Documentation**:
-       - Document design rationale for each variation
-       - Explain key features and user flow considerations
-       - Link to product pages and maintain database relationships
-       - Ensure all template sections are thoroughly completed
-       - Author the new page locally as `<kebab-screen-name>.md` with frontmatter `parent: https://www.notion.so/110161382ea64eefa46a4907574d4530` (the Screens database), then run `Bash: notion-sync push <file>` to create the page on Notion. The CLI will write the resulting `ref:` back into the local file
-         - The `parent:` value can also be a sibling local file path; the CLI will push the parent first if it lacks `ref:`
-       - Database collection URL: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
-       - Parent database URL: https://www.notion.so/110161382ea64eefa46a4907574d4530
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success|failure|partial
-    summary: 'Brief description of what was accomplished'
-    modifications: ['notion-page-created', 'design-variations-completed', ...]
-    outputs:
-      design_variations: [list of completed variations]
-      ascii_designs: [count of ASCII designs created]
-      notion_page_url: [URL of created Notion page]
-      template_sections: [list of completed template sections]
-    issues: ['issue1', 'issue2', ...]  # only if problems encountered
-    ```
-    <<<
-
-#### Phase 3: Review (Subagents)
-
-In a single message, spin up review subagents to check quality, **one review subagent per page** created.
-
-- **[IMPORTANT]** Each review subagent reviews ONE complete page created by a Phase 2 subagent
-- **[IMPORTANT]** Review is read-only - subagents must NOT modify any resources
-- **[IMPORTANT]** You MUST ask review subagents to be thorough and critical
-- **[IMPORTANT]** Use TodoWrite to track review tasks separately from execution tasks
-
-Request each review subagent to perform the following review with full scrutiny:
-
-    >>>
-    **ultrathink: adopt the Design Quality Auditor mindset**
-
-    - You're a **Design Quality Auditor** with expertise in UX standards who follows these principles:
-      - **Template Compliance**: Ensure strict adherence to template structure and requirements
-      - **Design Excellence**: Verify designs meet professional UX standards
-      - **Responsiveness Validation**: Confirm all device variations are properly implemented
-      - **Documentation Completeness**: Check all required sections are thoroughly completed
-
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
-
-    **Review Assignment**
-    You're assigned to verify ONE complete design page:
-
-    Page to Review: [Specific Screen Name created in Phase 2]
-    Template Reference: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-
-    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for all review operations (review is read-only — pull only, never push):
-    - Read the created page and template by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` (single recursive call per URL — never iterate into discovered references) then `Read` the resulting `.md` files
-    - To find related pages: `Bash: notion-sync search "<query>" -j`
-
-    Review ALL aspects of this single page:
-    - Template Conformance: Verify page structure matches template exactly
-    - All Sections Complete: Check every template section is properly filled
-    - 15 ASCII Designs: Confirm all 5 variations x 3 devices are present
-    - Design Quality: Assess ASCII design clarity and readability
-    - Responsive Effectiveness: Verify desktop, tablet, mobile adaptations
-    - Documentation Completeness: Review design rationale and descriptions
-    - Database Integration: Confirm proper Screens database relationships
-
-    **Review Steps**
-
-    1. **Template Verification**:
-       - Mirror both pages locally with `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` (one recursive call for the created page, one for the template at https://www.notion.so/4555730e74b44592b77dd8a97620d3f2) and `Read` the resulting `.md` files
-       - Verify ALL template sections are present and properly structured
-       - Confirm section headings match the template exactly
-    2. **Design Count Verification**:
-       - Count and verify exactly 15 ASCII designs are present
-       - Check 5 main variations exist
-       - Confirm each variation has desktop, tablet, and mobile versions
-    3. **Design Quality Assessment**:
-       - Evaluate ASCII designs for clarity and professional appearance
-       - Verify responsive adaptations are meaningful and effective
-    4. **Content Review**:
-       - Check all template sections have substantive content
-       - Verify design rationales are complete and logical
-    5. **Integration Check**:
-       - Run `Bash: notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 --follow-children --follow-links --out <tmp>` (single recursive call) and `Glob`/`Read` the resulting files to verify proper placement in the Screens database
-       - Confirm the page exists in collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
-       - Verify product linking and relationships
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following review report (<500 tokens):
-
-    ```yaml
-    status: pass|fail
-    summary: 'Brief review summary'
-    checks:
-      template_compliance: pass|fail
-      design_quality: pass|fail
-      documentation_completeness: pass|fail
-      notion_integration: pass|fail
-    fatals: ['issue1', 'issue2', ...]  # Only critical blockers
-    warnings: ['warning1', 'warning2', ...]  # Non-blocking issues
-    recommendation: proceed|retry|rollback
-    ```
-    <<<
-
-#### Phase 4: Decision (You)
-
-1. **Analyze all reports** (execution + review)
-2. **Apply decision criteria**:
-   - Review template compliance status
-   - Consider design quality feedback
-   - Assess documentation completeness
-3. **Select next action**:
-   - **PROCEED**: All success or acceptable partial success - Workflow complete
-   - **FIX ISSUES**: Partial success with minor issues - Create new batches for failed items and perform phase 2 again - Review following phase 3 again
-   - **ROLLBACK**: Critical failures - Revert changes - Create new batches for failed items and perform phase 2 again - Review following phase 3 again
-4. **Use TodoWrite** to update task list based on decision:
-   - If PROCEED: Mark remaining 'in_progress' items as 'completed'
-   - If RETRY: Add new todo items for retry batches
-   - If ROLLBACK: Mark all items as 'failed' and add rollback todos
-5. **Prepare final output**: Package Notion page URL and design documentation summary
-
-### Step 2: Reporting
-
-**Output Format**:
-
-```
-[pass/fail] Command: create-screen-design $ARGUMENTS
-
-## Summary
-- Product: [product name]
-- Screens created: [count]
-- Design variations per screen: 5
-- Total ASCII designs: [count x 15]
-
-## Outputs
-status: success|failure|partial
-summary: 'Screen design documentation workflow completion status'
-outputs:
-  notion_page_url: 'URL of created Notion page under Screens database'
-  design_variations_count: 5
-  total_ascii_designs: 15
-  responsive_breakpoints: ['desktop', 'tablet', 'mobile']
-  template_compliance: true|false
-  product_integration: 'Product name linked and integrated'
-modifications: ['notion-screens-database', 'design-documentation-created']
-issues: ['issue1', 'issue2', ...]  # only if problems encountered
-
-## Next Steps
-1. Review design documentation on Notion
-2. Gather stakeholder feedback on variations
-3. Select preferred design variation for implementation
-```
-
-## Examples
-
-### Create Single Screen Design
-
-```bash
-/create-screen-design "MyProduct" "Login Screen"
-# Creates complete design documentation with 15 ASCII design variations for the login screen
-```
-
-### Create Multiple Screen Designs
-
-```bash
-/create-screen-design "MyProduct" "Dashboard" "User Profile" "Settings"
-# Creates 3 design pages, each with 15 ASCII design variations (45 total)
-```
-
-### With Design Constraints
-
-```bash
-/create-screen-design "MyProduct" "Landing Page" --constraints="dark theme, minimal, no sidebar"
-# Creates design documentation following specific brand constraints
-```
-
-### Error Case
-
-```bash
-/create-screen-design
-# Error: Product name and screen descriptions required
-# Suggestion: Provide product and screens like '/create-screen-design "MyProduct" "Dashboard"'
-```
+Return `success`, `partial`, or `blocked`; the canonical IDs used; template
+and context snapshot paths; per-screen local file, product mapping, persisted
+`ref:`, URL, and verification result; screens not attempted; and any recovery
+action. A successful screen has one unambiguous remote page, a locally
+persisted reference, and verified database/product placement.

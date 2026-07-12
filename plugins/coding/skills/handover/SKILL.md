@@ -1,200 +1,106 @@
 ---
 name: handover
-description: Create/update detailed work handover notes for seamless continuation. Use when pausing work, switching contexts, documenting progress, or enabling another developer to continue your work.
+description: Persist CONTEXT.md, NOTES.md, and PLAN.md for later continuation of coding work. Use when pausing implementation or transferring repository state; this skill records the current session and does not create or execute a cross-domain plan.
 model: opus
 allowed-tools: Read, Write, Edit, Glob, Grep, Task, Bash, TodoRead, AskUserQuestion
-argument-hint: [prefix]
+argument-hint: "[prefix]"
 ---
 
 # Work Handover Documentation
 
-Generates comprehensive handover documentation capturing current project & work context across three complementary files: CONTEXT.md (status & decisions), NOTES.md (implementation insights & solutions), and PLAN.md (goals & tasks) for seamless project continuation without requiring prior context
+Persist `CONTEXT.md`, `NOTES.md`, and `PLAN.md` so the next worker can
+continue without sharing the current session context. `coding:takeover` owns
+resuming work from these documents.
 
-## 🎯 Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+- Use for: recording session state — background, file status, decisions,
+  implementation insights, and remaining tasks — into the three handover
+  documents when pausing or transferring work.
+- Do not use for: git operations (commit, push, branch management), builds,
+  tests, deployments, code review or analysis, or modifying any project file
+  other than the handover documents; it does not replace project-management
+  or issue-tracking tools.
 
-- Does not perform git operations like commit, push, or branch management
-- Does not execute project builds, tests, or deployments
-- Does not analyze code quality or perform code reviews
-- Does not modify any project files except the handover documents themselves
-- Does not replace project management tools or issue tracking systems
+## Inputs
 
-**When to REJECT**:
+- **Required**: none — defaults to `CONTEXT.md`, `NOTES.md`, and `PLAN.md` in
+  the working directory.
+- **Optional**: a prefix argument producing `<prefix>-CONTEXT.md`,
+  `<prefix>-NOTES.md`, and `<prefix>-PLAN.md` (e.g. `sprint1-CONTEXT.md`);
+  reject prefixes containing slashes or file extensions.
+- **Prerequisites**: the working directory is a git repository.
 
-- When file path argument points to non-markdown files
-- When requested to perform git operations instead of documentation
-- When asked to modify project source code
-- When the working directory is not a git repository
-- When user requests code analysis instead of handover documentation
+## Workflow
 
-- Untracked files: !`git ls-files --others --exclude-standard`
+1. **Analyze project context.** Validate the prefix and git repository per
+   Inputs, rejecting invalid input with a clear message. Retrieve all todos
+   via TodoRead, preserving status, relationships, and patterns noted in task
+   content. Gather git state: current branch, `git status`, staged and
+   unstaged diffs, untracked files (`git ls-files --others
+   --exclude-standard`), and recent commit messages. Identify background,
+   goals, decisions, architectural patterns, and conventions from project
+   docs and commit history.
+2. **Classify every changed or planned file** into three categories with
+   substates, recording per file: path, status with substate, relevant
+   TODO/FIXME/REFACTOR comments, what specifically remains, and blockers.
+   - Completed: committed and unchanged (absent from git status).
+   - In progress: modified or staged — substate `need-completion`
+     (TODO/FIXME comments), `need-fixing` (test failures, errors, or
+     HACK/WORKAROUND comments), `need-linting` (style violations), or
+     `need-refactoring` (REFACTOR comments or quality concerns).
+   - Planned: untracked or referenced in TODO comments — substate
+     `need-draft` (skeleton required) or `need-testing` (no test coverage).
+3. **Extract content and prune.** Map content to documents — CONTEXT.md:
+   background and goals, active reference documents, impactful decisions,
+   current architectural patterns, gotchas and workarounds, dependency and
+   configuration changes; NOTES.md: implementation issues and the solutions
+   applied, key discoveries, workarounds still needed, hard-won gotchas, only
+   what was learned through doing; PLAN.md: goal breakdown, incomplete tasks,
+   active phases, current dependencies, active risks, and unmet success
+   criteria. When updating existing files, proactively remove content useless
+   to future execution: outdated context, resolved issues (keep the lesson
+   only), details of completed tasks (keep path plus one-line summary), stale
+   references, and verbose history — archive it under a "Historical Notes"
+   section at the document bottom. Keep only the last 5 commits under "Recent
+   Changes", condense completed files into a summary with the top 3-5 listed,
+   rewrite any section exceeding 100 lines down to actionable items, and
+   consolidate similar gotchas and decisions into single entries.
+4. **Consult the user on open decisions** found in steps 1-3 (pending
+   architecture, technology, scope, or configuration choices) via
+   AskUserQuestion — never make architectural, technical, or strategic
+   decisions unilaterally. Follow
+   [references/decision-consultation.md](references/decision-consultation.md)
+   for identification, categorization, the mandatory "Perform research" and
+   "Defer decision" options, and outcome processing.
+5. **Write the documents.** Generate one timestamp via
+   `date -u +"%Y-%m-%dT%H:%M:%SZ"` and use it for every "Last Updated",
+   "Created", and "Updated" field — never placeholders. Update existing files
+   in place: refresh dynamic sections (Current State, File Status, Recent
+   Changes), preserve historical content, and integrate decision outcomes —
+   finalized decisions with rationale into CONTEXT.md "Key Decisions &
+   Patterns", deferred decisions into NOTES.md "Open Questions", research
+   files referenced from NOTES.md, and decision-driven or blocked tasks into
+   PLAN.md. Create missing files from the structures in
+   [references/document-templates.md](references/document-templates.md).
+6. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker remains,
+   then report the blocker instead of looping.
 
-## 🔄 Workflow
+## Verification
 
-ultrathink: you'd perform the following steps
+- All three documents exist under the requested names and follow the
+  template structure.
+- Every timestamp is a real ISO 8601 value from the `date` command.
+- Each decision identified in step 4 was consulted, and its outcome landed in
+  the correct document section.
+- No project file outside the handover documents was modified.
 
-### Step 0: Analyze Project Context
+## Completion
 
-Before performing handover documentation, deeply analyze the complete project context:
-
-- **Project State Analysis**: Examine git status, recent commits, file changes to understand current work trajectory
-- **Existing Work Review**: Read all current todos from TodoRead to understand ongoing tasks and their status
-- **Context Discovery**: Identify background, goals, decisions from project docs and commit history
-- **Pattern Recognition**: Detect architectural patterns, established conventions, recurring issues
-- **Comprehensive Synthesis**: Integrate all gathered context into coherent handover documentation
-
-### Step 1: Parse Arguments and Validate
-
-- Extract the optional prefix argument from $ARGUMENTS
-- If no prefix provided, use empty prefix (default files: CONTEXT.md, NOTES.md, PLAN.md)
-- If prefix provided, construct file names: [prefix]-CONTEXT.md, [prefix]-NOTES.md, [prefix]-PLAN.md
-- Validate prefix format (no slashes, no extensions)
-- Verify the working directory is a git repository
-- If validation fails, reject with clear error message
-
-**File naming examples**:
-
-- Default: `CONTEXT.md`, `NOTES.md`, `PLAN.md`
-- With prefix: `sprint1-CONTEXT.md`, `sprint1-NOTES.md`, `sprint1-PLAN.md`
-
-### Step 2: Discover Project Context
-
-- Use TodoRead to retrieve all existing todos from the task tracker
-- Organize todos by status for inclusion in PLAN.md:
-- Preserve task relationships and dependencies if indicated in task content
-- Note any context or patterns from task descriptions
-- Run git commands to gather current state (branch, status, recent commits)
-- Capture recent commit messages for context on what was done
-
-### Step 3: Classify File Status
-
-Classify each file into one of three categories with detailed substates:
-
-- **✅ Completed**: Files that are committed and unchanged (not in git status output)
-- **🚧 In Progress**: Files that are modified or staged (in git diff or git diff --cached), with substates:
-  - `need-completion`: Files with TODO/FIXME comments indicating incomplete implementation
-  - `need-fixing`: Files with test failures, errors, or HACK/WORKAROUND comments
-  - `need-linting`: Files with linting/formatting issues or style violations
-  - `need-refactoring`: Files with REFACTOR comments or code quality concerns
-- **📋 Planned**: Untracked files or files mentioned in TODO comments, with substates:
-  - `need-draft`: Untracked files or files with mostly TODOs requiring initial skeleton
-  - `need-testing`: Files without corresponding test files or lacking test coverage
-
-For each file, gather:
-
-- File path and type
-- Current status with substate (e.g., "🚧 need-completion", "📋 need-draft")
-- Relevant TODO/FIXME/REFACTOR comments if present
-- Brief description of what specifically needs to be done
-- Any blockers or dependencies
-
-### Step 4: Extract Key Information and Apply Intelligent Pruning
-
-When updating existing handover files, apply intelligent pruning to keep documentation focused and actionable:
-
-**Pruning Rules**:
-
-- **Proactive Content Removal**: When writing to handover docs, the agent MUST proactively remove any content that is not useful for future execution phases, including:
-  - Outdated context that no longer affects current work
-  - Resolved issues and their detailed resolution steps (keep only lessons learned)
-  - Detailed descriptions of completed tasks (keep file path + brief summary only)
-  - Stale references to deprecated patterns or removed dependencies
-  - Historical discussions that don't inform current decisions
-  - Verbose background information that can be condensed
-- Keep only last 5 commits in "Recent Changes" (archive older commits to Historical Notes)
-- Condense completed files into summary statements (e.g., "15 files completed" with top 3-5 listed)
-- Rewrite sections exceeding 100 lines to focus on actionable items only
-- Consolidate similar gotchas/decisions into single entries
-- Remove detailed descriptions of completed tasks (keep file path + brief summary only)
-- Archive verbose historical content to "Historical Notes" section at document bottom
-- Remove outdated context that no longer affects current work
-
-Search for and document (with pruning applied):
-
-**For CONTEXT.md**:
-
-- Background & context - why this work is being done (concise, actionable only; remove outdated context)
-- Goals & objectives - current goals only (remove completed goals)
-- Reference documents - active/relevant links only (remove stale links)
-- Important decisions made - recent and impactful only (consolidate similar decisions)
-- Architectural patterns used - current patterns only (remove deprecated patterns)
-- Gotchas and workarounds - consolidate similar items
-- Dependencies added or modified - recent changes only
-- Configuration changes - current config only (remove historical config)
-
-**For NOTES.md**:
-
-- **Implementation Issues**: Problems encountered during implementation that required multiple tool calls to resolve
-- Solutions applied - keep distinct solutions for issues faced (merge duplicates)
-- Exploration attempts - keep failures only if relevant to understanding current state
-- Key discoveries - document insights from actual implementation challenges
-- Workarounds - document any temporary workarounds that might be needed
-- Dependencies & gotchas - issues that took time to discover and understand
-- Keep entries concise and actionable - only document what was learned through doing
-
-**For PLAN.md**:
-
-- Goals breakdown - current goals
-- Task lists - incomplete tasks only, archive completed
-- Phases/milestones - active phases (archive completed)
-- Dependencies - current dependencies only
-- Decisions made - impactful decisions only
-- Risks identified - active risks only
-- Success criteria - unmet criteria only
-- Current todos - actionable items only
-- Task progress - incomplete tasks focus
-- Pending work items - prioritized items
-
-### Step 5: Consult User on Key Decisions
-
-Before documenting handover content, identify decision points from Steps 0-4 (TODOs, pending architecture/tech/scope/config choices) and consult the user via AskUserQuestion. NEVER make architectural, technical, or strategic decisions without user consultation. See `references/decision-consultation.md` for the full decision-identification, categorization, consultation, and outcome-processing procedure (including the mandatory "Perform research" / "Defer decision" options and worked example).
-
-### Step 6: Generate or Update Handover Documents
-
-**First, generate current timestamp**:
-
-- Execute: `date -u +"%Y-%m-%dT%H:%M:%SZ"` to get current ISO 8601 timestamp
-- Store the result to use consistently across all documents
-- Use this actual timestamp (not placeholders) for all "Last Updated", "Created", "Updated" fields
-
-**Then, prepare decision-based content from Step 5**:
-
-Before generating/updating documents, organize all decision outcomes from Step 5:
-
-- **Finalized Decisions**: List of decisions made with rationale and alternatives considered
-- **Deferred Decisions**: List of decisions deferred with context for future resolution
-- **Research Files**: List of generated research files with their topics
-- **Decision-Driven Tasks**: New tasks resulting from finalized decisions
-- **Blocked Tasks**: Tasks that cannot proceed due to deferred decisions
-
-**Apply Pruning Principles**: Before updating or creating files, remember to proactively remove any content that is not useful for future execution phases (see Step 4 pruning rules). This ensures handover documentation remains focused and actionable.
-
-If the files exist:
-
-- Read the existing content of each file
-- Update the "Last Updated" timestamp with the actual current timestamp from `date` command
-- Refresh dynamic sections (Current State, File Status, Recent Changes)
-- **Integrate decision outcomes from Step 5**:
-  - Add finalized decisions to CONTEXT.md "Key Decisions & Patterns"
-  - Add deferred decisions to NOTES.md "Open Questions"
-  - Update PLAN.md with decision-driven tasks and blocked tasks
-  - Reference research files in NOTES.md
-- Append new items where appropriate
-- Preserve historical content
-
-If the files don't exist:
-
-- Create new documents with complete structure for all three files
-- Use actual timestamp from `date` command for all timestamp fields
-- **Include decision outcomes from Step 5** in initial content
-
-**Document Templates**: Use the CONTEXT.md, NOTES.md, and PLAN.md structures defined in `references/document-templates.md`. All timestamps must use ISO 8601 format (`YYYY-MM-DDTHH:MM:SSZ`) generated via `date -u +"%Y-%m-%dT%H:%M:%SZ"`.
-
-### Step 7: Reporting
-
-Emit the final summary using the format in `references/output-format.md` (covers file paths, classification counts, decisions consulted, plan updates, research files, document-section checklist, and next steps).
-
-## 📝 Examples
-
-See `references/examples.md` for usage variants (default invocation, custom prefix, updating existing files, error cases) and the three-file workflow / takeover continuation scenario.
+Emit the summary defined in
+[references/output-format.md](references/output-format.md): file paths,
+classification counts, decisions consulted with outcomes, plan updates,
+research files, the document-section checklist, and next steps. See
+[references/examples.md](references/examples.md) for usage variants (default,
+custom prefix, updates, error cases) and the takeover continuation scenario.

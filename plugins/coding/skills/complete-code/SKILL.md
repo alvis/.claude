@@ -1,168 +1,87 @@
 ---
 name: complete-code
-description: Complete all TODO-marked code in specified area with test-first approach. Use when finishing incomplete implementations, converting TODO placeholders to working code, or completing test-driven development cycles.
+description: Complete explicit production implementation stubs in an existing scope. Use for canonical implementation TODOs, temporary production stubs, and draft-code sentinels; route bugs, test work, unstubbed functionality, new features, and ambiguous markers to their owning workflows.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task
-argument-hint: <area> [--test-only]
+argument-hint: "<scope>"
 ---
 
-# Complete Code Implementation
+# Complete Code
 
-Completes all TODO-marked code in the specified area using a test-first approach (TDD Green Phase), scanning for TODO, FIXME, and HACK comments and implementing the missing functionality with minimal code to make tests pass — Step 2 of the TDD lifecycle. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. A completed TODO must therefore replace the placeholder rather than crouch beside it: the implementation has to take the shape the skeleton promised, with no leftover comment scaffolds, no parallel "new" helpers duplicating an existing one, and no marker that this region was ever incomplete.
+Finish only explicit production implementation stubs. The surrounding contract,
+types, tests, and specification must already make the intended behavior clear.
+`coding:complete-test` owns test authoring; `coding:write-code` owns new
+functionality.
 
-## Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+Use for these accepted markers only:
 
-- Create new features not mentioned in TODOs
-- Refactor existing working code (use `/coding:refactor`)
-- Modify configuration files
-- Change project architecture
+- `TODO(implementation):` markers.
+- A legacy implementation TODO only when its text unambiguously requests a
+  production implementation.
+- `TEMP:` stub implementations whose replacement behavior is explicit.
+- The exact sentinel form `throw new Error('IMPLEMENTATION: ...')` emitted by
+  `coding:draft-code`.
 
-**When to REJECT**:
+Do not claim neighboring work:
 
-- No TODOs found in specified area
-- Area path is invalid
-- TODOs require external dependencies not installed
-- TODOs involve security-sensitive operations without clear requirements
-
-## Applicable Standards
-
-When executing this skill, the following standards apply:
-
-| Standard | Purpose |
+| Finding | Action |
 |---|---|
-| `documentation/write` | JSDoc and inline comments for new implementations |
-| `function/write` | Function design, error handling, complexity |
-| `observability/write` | Logging, metrics, and tracing for new code |
-| `testing/write` | Test-first implementation, coverage requirements |
-| `typescript/write` | Type safety, no `any`, proper generics |
-| `universal/write` | General code authoring conventions |
+| `FIXME` | Route to `coding:fix`. |
+| Test-file TODO, `it.todo`, or `describe.todo` | Route to `coding:complete-test`. |
+| Missing functionality without an explicit stub | Route to `coding:write-code`. |
+| Newly requested feature | Route to `coding:write-code`. |
+| Ambiguous marker | Leave untouched and report it as blocked. |
+| `HACK` or `WORKAROUND` | Preserve unless the user explicitly routes it to `coding:fix` or `coding:refactor`. |
+
+This skill may read and run existing tests to discover and verify the established
+contract. It does not author broad test suites, pursue coverage, create replacement
+placeholders, or guess behavior that the repository does not specify. Also report
+as blocked, instead of implementing: markers that require an external dependency
+that is not installed, and security-sensitive operations (authentication,
+authorization, cryptography, secrets) whose requirements are not clearly
+specified.
+
+## Inputs
+
+- **Required**: `<scope>` — the file, directory, or package to scan.
+- **Optional**: none. If `$ARGUMENTS` contains `--test-only`, stop immediately
+  with exactly:
+  > `--test-only` was removed; use `coding:complete-test <scope>`.
+- **Prerequisites**: implementations must satisfy the constitution standards for
+  `universal/write`, `function/write`, `typescript/write`,
+  `documentation/write`, `observability/write`, and `testing/write` (when
+  touching tests to verify a contract).
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Validate the scope and reject the removed flag before scanning. If the scope
+   contains no accepted marker, report that and stop.
+2. Find accepted markers, then classify every nearby TODO-like marker using the
+   routing table above. Plan completion order by dependency: group related
+   markers and complete prerequisites before the code that depends on them.
+3. Read the specification, types, call sites, siblings, and existing tests needed
+   to establish each accepted stub's behavior.
+4. If behavior remains ambiguous, leave the marker untouched and record the
+   blocker. Do not infer a new feature contract.
+5. Replace each accepted stub with the smallest production implementation that
+   satisfies the established contract. Remove the marker; never replace it with a
+   new placeholder. Run the focused existing tests after each replacement so a
+   regression is caught at the marker that introduced it.
+6. Run the verification below; when a check fails, fix the cause and re-run that
+   check. Repeat until every check passes or a concrete blocker remains, then
+   report the blocker instead of looping.
 
-### Step 1: Discovery
+## Verification
 
-1. **Scan for TODOs**
-   - Use Grep to find TODO, FIXME, HACK comments in the area from $ARGUMENTS
-   - Classify by type and priority
-   - Determine if running as standalone or as part of composite (`--from-composite`)
+- Focused existing tests for the changed scope pass.
+- The repository type check passes for the changed scope.
+- Mechanical lint checks for the changed scope pass.
+- No accepted marker remains in scope other than the reported blocked ones.
 
-2. **Analyze Dependencies**
-   - Read files containing TODOs
-   - Identify related test files
-   - Map implementation dependencies
+## Completion
 
-3. **Plan Completion Order**
-   - Prioritize by dependency order
-   - Group related TODOs
-   - Estimate complexity
-
-### Step 2: Test-First Implementation
-
-Follow TDD Green Phase principles: write only enough code to make tests pass.
-
-1. **For Each TODO Group**:
-   - Read existing tests to understand expected behavior
-   - Write failing tests for missing functionality (if tests do not exist yet)
-   - Implement minimal code to pass tests
-   - Replace TODO placeholders with simplest working implementation
-   - Apply proper error handling per standards
-   - Ensure type safety throughout
-   - Run tests after each implementation increment to verify progress
-
-2. **Handle --test-only Flag**:
-   - If set, only write tests without implementation
-   - Mark implementation as ready for next phase
-
-3. **CODE DRAFTING PATTERNS** for any remaining incomplete sections:
-   - Use `// TODO:` comments to mark sections still incomplete
-   - For incomplete code where a return is expected:
-     - Throw `new Error('IMPLEMENTATION: <description>')`
-     - This prevents TypeScript type errors
-
-### Step 3: Validation
-
-1. **Run Test Suite**
-   - Execute all related tests
-   - Verify Green phase achievement (all tests passing)
-   - Ensure no existing tests are broken
-   - Confirm tests pass for correct reasons
-
-2. **Code Quality**
-   - Run linting via `npm run lint` or equivalent
-   - Run type checking via `npx tsc --noEmit` or equivalent
-   - Verify coding standards compliance
-
-### Step 4: Reporting
-
-**Output Format**:
-
-```
-[OK/FAIL] Command: complete-code $ARGUMENTS
-
-## Summary
-- Area: [path]
-- TODOs found: [count]
-- TODOs completed: [count]
-- Tests added: [count]
-- Tests passing: [count]
-
-## Actions Taken
-1. Discovered [N] TODOs in [area]
-2. Created [M] tests
-3. Implemented [K] functions
-4. Verified all tests pass (Green phase)
-
-## Completed TODOs
-- [file:line] - [description]
-- [file:line] - [description]
-
-## Remaining TODOs (if any)
-- [file:line] - [reason not completed]
-
-## Validation Results
-- Tests: PASS/FAIL ([X] passing, [Y] failing)
-- Types: PASS/FAIL ([N] errors)
-- Lint: PASS/FAIL ([N] warnings)
-
-## Next Steps
-1. Review implementations
-2. Fix any remaining issues with /coding:fix
-3. Refactor with /coding:refactor
-```
-
-## Examples
-
-### Complete All TODOs in Area
-
-```bash
-/complete-code "src/services/"
-# Finds and completes all TODOs in services directory
-```
-
-### Test-Only Mode
-
-```bash
-/complete-code "src/utils/" --test-only
-# Only writes tests for TODOs, no implementation
-```
-
-### Single File
-
-```bash
-/complete-code "src/auth/login.ts"
-# Completes TODOs in specific file
-```
-
-### Error Case
-
-```bash
-/complete-code "src/nonexistent/"
-# Error: Path not found
-# Suggestion: Check path exists with 'ls src/'
-```
+Report completed markers with file locations, routed findings, blocked ambiguous
+markers, changed files, and exact verification commands and results.

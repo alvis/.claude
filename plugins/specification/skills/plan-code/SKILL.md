@@ -1,215 +1,112 @@
 ---
 name: plan-code
-description: Generate DRAFT.md (commit blueprint) and PLAN.md (execution roadmap) from proposals. Use when planning implementations, creating execution roadmaps, or documenting change proposals.
+description: Generate DRAFT.md as a commit blueprint and PLAN.md as an execution roadmap from an approved proposal or specification. Use when planning implementations, defining atomic commits, documenting change proposals, or preparing a coding workflow with explicit verification and ownership boundaries.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Read, Glob, Grep, Bash, Write, Task, TodoWrite, AskUserQuestion, ExitPlanMode
-argument-hint: [--design=DESIGN.md] [--change="description"]
+argument-hint: "[--design=DESIGN.md] [--change=\"description\"]"
 ---
 
 # Plan Code
 
-Analyzes design proposals or existing specifications, generates a comprehensive DRAFT.md with copy-paste-ready commit blueprints, and produces a lightweight PLAN.md execution roadmap that transforms approved designs into actionable implementation plans with atomic, testable commits. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. When a proposal modifies an existing DRAFT.md or PLAN.md, the revised plan must read as a single coherent roadmap — not the prior plan with a "Proposed changes" appendix or a divergent second step list running in parallel beside the original.
+Turn approved design documents into two artifacts: `DRAFT.md`, a commit
+blueprint with copy-paste-ready code, and `PLAN.md`, a lightweight execution
+roadmap of atomic, testable commits. `specification:spec-code` owns creating
+the specifications this skill plans against; `coding:takeover` and
+`specification:implement-code` own executing the resulting plan.
 
-## Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+- Use for: generating `DRAFT.md` and `PLAN.md` from design documents,
+  processing `*_PROPOSED.md` proposals into `*_CHANGE.md` change records, and
+  refining commit structure interactively before implementation begins.
+- Do not use for: implementing code or touching source files, running git
+  commits/pushes/branches, creating design specifications from scratch
+  (`specification:spec-code`), executing an existing plan
+  (`coding:takeover`), or modifying original design files directly.
+- Refuse when: no design specification exists (run `specification:spec-code`
+  first), the working directory is not a git repository, the request is
+  implementation or commit execution rather than planning, or the design is
+  too vague to plan against — name the missing sections when refusing.
 
-- Does not implement code or make changes to source files
-- Does not execute git commits, push, or branch management
-- Does not create new design specifications from scratch (use /spec-code for that)
-- Does not execute builds, tests, or deployments
-- Does not follow plans to execute tasks (use /takeover for that)
-- Does not modify original design files directly
+## Inputs
 
-**When to REJECT**:
+- **Required**: at least one design document reachable from the working
+  directory (`DESIGN.md`, `REQUIREMENTS.md`, `DATA.md`, `UI.md`, `NOTES.md`,
+  or `REFERENCE.md`).
+- **Optional**: `--design=<path>` to point at a specific design file
+  (default: scan the current directory); `--change="description"` to focus
+  planning on a described change.
+- **Prerequisites**: the working directory is a git repository.
 
-- When no design specifications exist (run /spec-code first)
-- When requesting code implementation instead of planning
-- When asking to execute commits from DRAFT.md (use /takeover for that)
-- When the working directory is not a git repository
-- When design specs are too vague or incomplete to plan against
+<IMPORTANT>
+Coherence mandate: every plan revision must produce one continuous,
+deliberate document. When a proposal modifies an existing `DRAFT.md` or
+`PLAN.md`, rewrite the affected sections so the result reads as a single
+coherent roadmap — never the prior plan with a "Proposed changes" appendix,
+a parallel second step list, or visible patch seams.
+</IMPORTANT>
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Validate the environment: confirm the git repository, parse `--design`
+   and `--change`, then scan for and read every design document present
+   (`DESIGN.md`, `REQUIREMENTS.md`, `DATA.md`, `UI.md`, `NOTES.md`,
+   `REFERENCE.md`).
+2. Scan for `*_PROPOSED.md` proposals. When found, present a summary and ask
+   for approval; on approval, compare each proposal against its original and
+   write the differences to a matching `*_CHANGE.md`. With no proposals,
+   continue directly.
+3. Generate `DRAFT.md`: gather implementation context (current architecture,
+   technology stack, code quality issues, tests and coverage),
+   cross-reference every design document, plan the atomic commits, then
+   write the draft with a file-structure section showing commit associations
+   and a commit plan carrying full copy-paste-ready file contents. Every
+   commit must satisfy this checklist:
+   - self-contained and independently testable
+   - 100% test coverage for its scope
+   - clear separation of concerns from other commits
+   - conventional commit format `type(scope): description`
+   - multiple commits per phase allowed
+   - full file contents provided, copy-paste ready
+4. Refine interactively via `AskUserQuestion`: each question offers 2-4
+   alternatives with clear rationales, focused where `--change` applies or
+   the design is ambiguous, across architecture, technology, implementation
+   trade-offs, and constraints (performance, scalability, maintainability,
+   edge cases). Update `DRAFT.md` after each answer — adjust commit
+   structure when architectural decisions change and record the rationale in
+   commit descriptions — and repeat until the user is satisfied.
+5. Present a draft summary and request approval of `DRAFT.md`.
+6. On approval, generate `PLAN.md`: group commits into phases and write the
+   implementation phases, execution order, and success criteria.
+7. Run the quality gate: spawn one review subagent via `Task` (a single
+   reviewer — the artifacts are few and interdependent, so fan-out buys
+   nothing), passing `DRAFT.md`, `PLAN.md`, and all design documents. It
+   must verify architecture alignment with `DESIGN.md`, that every
+   `REQUIREMENTS.md` item has both implementation and tests, schema accuracy
+   against `DATA.md`, component fidelity to `UI.md`, adherence to `NOTES.md`
+   decisions, and the absence of test-coverage gaps. Reviews are read-only.
+   On findings, update `DRAFT.md`/`PLAN.md` and re-run the checklist.
+8. Finalize proposals: replace each `*_PROPOSED.md` with its final version
+   and preserve the `*_CHANGE.md` records.
+9. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker
+   remains, then report the blocker instead of looping.
 
-### Step 1: Load All Design Documents & Detect Proposals
+## Verification
 
-1. **Validate Environment**:
-   - Confirm working directory is a git repository
-   - Parse --design argument (default: look in current directory)
-   - Parse --change argument if provided
+- Every commit in `DRAFT.md` satisfies the six-point checklist.
+- Every `REQUIREMENTS.md` item maps to at least one commit containing both
+  implementation and tests.
+- The review subagent's checklist passed with no open findings.
+- Every `DRAFT.md` commit appears in exactly one `PLAN.md` phase and the
+  execution order respects inter-commit dependencies.
 
-2. **Scan for Design Documents**:
-   - Find DESIGN.md, REQUIREMENTS.md, DATA.md, UI.md, NOTES.md, REFERENCE.md
-   - Read and parse each found document
+## Completion
 
-3. **Scan for Proposals**:
-   - Find `*_PROPOSED.md` files
-   - Present summary and ask for approval
-
-4. **Handle Proposal Detection**:
-   - If approved: Proceed to Step 2
-   - If no proposals: Skip to Step 3
-
-### Step 2: Analyze Approved Proposal & Document Changes
-
-1. **Compare Against Originals**
-2. **Generate Change Documentation** (`*_CHANGE.md`)
-
-### Step 3: Generate DRAFT.md
-
-1. **Gather Implementation Context**
-2. **Analyze Implementation Architecture**
-3. **Assess Technology Stack**
-4. **Check Code Quality and Issues**
-5. **Review Tests and Coverage**
-6. **Cross-Reference ALL Design Documents**
-7. **Plan Atomic Commits**
-8. **Write DRAFT.md** with:
-   - File Structure showing commit associations
-   - Commit Plan with copy-paste ready code
-   - Each commit: atomic, testable, 100% coverage
-
-**Commit Requirements Checklist** (every commit in DRAFT.md must satisfy):
-
-- [ ] Self-contained (independently testable)
-- [ ] 100% test coverage for its scope
-- [ ] Clear separation of concerns from other commits
-- [ ] Conventional commit format: `type(scope): description`
-- [ ] Multiple commits per phase allowed
-- [ ] Full file contents provided — copy-paste ready
-
-### Step 4: Interactive Design Refinement
-
-1. **Ask Clarifying Questions** via AskUserQuestion:
-   - Each question offers 2–4 alternatives with clear rationales
-   - Focus on areas where `--change` is proposed or design is ambiguous
-   - Question categories:
-     - **Architecture**: patterns, structure, modularity
-     - **Technology**: libraries, frameworks, tools
-     - **Implementation**: trade-offs between approaches
-     - **Constraints**: performance, scalability, maintainability, edge cases
-   - Example: "Which state management approach: Redux, Zustand, or Context API?"
-
-2. **Update DRAFT.md Based on Answers** — adjust commit structure if architectural decisions change; document rationale in commit descriptions.
-
-3. **User Review Cycle** — repeat follow-up questions via AskUserQuestion until the user is satisfied with the draft.
-
-### Step 5: Present Draft for Review
-
-1. **Generate Draft Summary**
-2. **Request Approval**
-
-### Step 6: Generate PLAN.md (on approval)
-
-1. **Group Commits by Phase**
-2. **Write PLAN.md** with:
-   - Implementation Phases
-   - Execution Order
-   - Success Criteria
-
-### Step 7: Subagent Review (Quality Gate)
-
-1. **Spawn Review Subagent** via the Task tool, passing DRAFT.md, PLAN.md, and all design documents.
-
-2. **Review Checklist** — the subagent must verify:
-   - **Architecture Alignment**: plan matches DESIGN.md patterns and component relationships
-   - **Requirements Coverage**: every REQUIREMENTS.md item has implementation AND tests
-   - **Data Model Accuracy**: schemas match DATA.md exactly
-   - **UI Components**: components match UI.md layout, behavior, styling
-   - **Implementation Patterns**: follow NOTES.md guidelines and decisions
-   - **Test Coverage**: no requirement gaps, no missing tests
-
-3. **Action on Issues**: if issues found, update DRAFT.md / PLAN.md and re-run the checklist; otherwise proceed to Step 8.
-
-### Step 8: Finalize Proposals
-
-1. **Replace Proposals with Finals**
-2. **Preserve Change Documentation**
-
-### Step 9: Reporting
-
-**Output Format**:
-
-```
-[OK] Command: plan-code $ARGUMENTS
-
-## Summary
-
-- Design source: [path]
-- Proposals processed: [count]
-- DRAFT.md: Created with [X] commits
-- PLAN.md: Created with [Y] phases
-- Quality Review: [PASSED]
-
-## Files Created
-
-- DRAFT.md: Implementation blueprint
-- PLAN.md: Execution roadmap
-- [*_CHANGE.md files]
-
-## Commit Summary
-
-1. `type(scope): description` - [X files]
-2. `type(scope): description` - [Y files]
-
-## Phases Overview
-
-- Phase 1 (Foundation): [X] commits
-- Phase 2 (Core): [Y] commits
-
-## Next Steps
-
-1. Review DRAFT.md for code accuracy
-2. Review PLAN.md for execution order
-3. Run `/takeover` to begin implementation
-```
-
-## 📝 Examples
-
-### Basic Usage
-
-```bash
-/plan-code
-# Scans for design documents
-# Generates DRAFT.md with atomic commits
-# Creates PLAN.md with phases
-```
-
-### With Design Path
-
-```bash
-/plan-code --design=docs/DESIGN.md
-# Uses specific design file
-```
-
-### With Change Description
-
-```bash
-/plan-code --change="add authentication"
-# Focuses on authentication-related changes
-```
-
-### With Proposals
-
-```bash
-/plan-code
-# Finds DESIGN_PROPOSED.md
-# Asks for approval
-# If approved: Creates DRAFT.md, PLAN.md, DESIGN_CHANGE.md
-```
-
-### Error Cases
-
-```bash
-/plan-code
-# Error: No design specification found
-# Suggestion: Run '/spec-code' first
-
-/plan-code --design=docs/DESIGN.md
-# Error: Design too vague
-# Suggestion: Add required sections
-```
+Report the design source, proposals processed (and `*_CHANGE.md` files
+written), the number of commits in `DRAFT.md` and phases in `PLAN.md`, the
+quality-gate result, and next steps: review `DRAFT.md` for code accuracy,
+review `PLAN.md` for execution order, then start implementation with
+`coding:takeover` or `specification:implement-code`. A refusal names the
+missing prerequisite — absent specs, vague sections, or a non-git directory.

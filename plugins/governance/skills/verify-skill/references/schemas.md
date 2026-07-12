@@ -1,11 +1,5 @@
 # Verify-Skill YAML Schemas
 
-## Content Boundary Convention
-
-Enclose each block of important or long content in a semantically-named XML tag so it cannot bleed into surrounding prose or get lost — `<report> … </report>` around every machine-readable report / output contract (subagent reports, per-step reports, the final Skill Completion block), and `<IMPORTANT> … </IMPORTANT>` around hard guardrails. Tag names describe the content's role and must NOT echo `##` section headings; tags never replace headings. The `<report>` tags are the boundary; a ` ```yaml ` fence kept inside them is a syntax hint. Subagent-prompt envelopes keep the `>>>` / `<<<` delimiters. The canonical statement lives in `../../../constitution/references/authoring-invariants.md`.
-
-Template Compliance (Step 2, Subagent B) records this as `boundary_tags: pass | warn`, rolled up under `template_compliance` in the final report. It is **advisory** — a `warn` means some important/long content is not yet enclosed and MUST NOT set the compliance status (or the final verification status) to `fail`. Skills authored before the convention are flagged for gradual migration via `update-skill`, not failed.
-
 ## evals.yaml — Evaluation Definition
 
 Located at: `[skill-dir]/evals/evals.yaml`

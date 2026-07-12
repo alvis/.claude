@@ -1,233 +1,114 @@
 ---
 name: update-screen-design
-description: Update Notion design docs to latest template
+description: Update explicitly selected responsive screen-design pages in the canonical Notion Screens database while preserving approved content and applying a template migration or stated change. Use for scoped revisions and accessibility corrections. Require a selector or --all; route missing/new pages to create-screen-design.
 model: opus
-allowed-tools: Bash, Edit, MultiEdit, Read, Write, Grep, Glob, Task
-argument-hint: [--product=...] [--screens=...] [--changes=...]
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+argument-hint: "[--product=<name>] [--screens=<selector>] [--changes=<request>] [--all]"
 ---
 
 # Update Screen Design
 
-Updates design documentation for interactive screens on Notion to conform to the latest template while preserving existing content and applying optional custom change requests.
+Update explicitly selected existing pages in the canonical Notion Screens
+database. `create-screen-design` owns new pages; the canonical template itself
+is never modified here.
 
-## Purpose & Scope
+## Boundaries
 
-**When to use**: When screen design documents need to be updated to match the current template standard, when implementing design improvements across multiple screens, or when standardizing documentation format across product designs.
+- Use for: scoped revisions, template migrations, and accessibility
+  corrections on existing Screens-database pages while preserving approved
+  content, relations, and page identity.
+- Do not use for: creating a missing screen (`create-screen-design`),
+  source-facing design work (`web:design`), rendered assessment
+  (`web:audit`), story-state audits (`storybook`), or editing the canonical
+  template.
 
-**Prerequisites**: Access to Notion workspace with design documentation database, understanding of design documentation standards, and familiarity with the current template structure.
+## Inputs
 
-**What this command does NOT do**:
+- **Required**: an explicit selection — `--screens=<selector>`,
+  `--product=<name>` resolving to an unambiguous bounded set, or explicit
+  `--all`. An empty, ambiguous, or unexpectedly broad selection blocks
+  mutation; an omitted selector never means all pages.
+- **Optional**: `--changes=<request>` for stated modifications beyond
+  template alignment.
+- **Prerequisites**: the `notion-sync` executable and `NOTION_TOKEN`; stop
+  and report if either is missing or auth fails.
 
-- Create new screen designs from scratch (use create-screen-design instead)
-- Implement frontend code changes
-- Delete or remove existing design documentation
-- Modify the template itself
+## Canonical Notion contract
 
-**When to REJECT**:
+- Template: `https://www.notion.so/4555730e74b44592b77dd8a97620d3f2`
+- Screens database parent: `https://www.notion.so/110161382ea64eefa46a4907574d4530`
+- Screens collection: `collection://c7bc479b-71db-41b1-b5ab-a07c641816b5`
 
-- No design pages exist to update
-- Notion workspace is inaccessible
-- Request is for creating new designs rather than updating existing ones
-
-## Role
-
-You are a **UX Design Management Director** who orchestrates the workflow like a design operations conductor. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
-
-- **Strategic Delegation**: Break design update work into parallel tasks across multiple screens and assign to specialized UX design subagents
-- **Parallel Coordination**: Maximize efficiency by running multiple subagents simultaneously to update different design documents in parallel
-- **Quality Oversight**: Review template conformance and design completeness objectively without being involved in execution details
-- **Decision Authority**: Make go/no-go decisions based on subagent reports and template compliance verification
-
-## Inputs and Outputs
-
-### Required Inputs
-
-*No required inputs - all inputs are optional to provide maximum flexibility*
-
-### Optional Inputs
-
-- **Product**: Product name to filter design documents (default: all products in database)
-- **Screens**: Specific screen names or IDs to update (default: all screens under specified product)
-- **Change Requests**: Specific modifications beyond template conformance (default: none - only template alignment)
-
-### Expected Outputs
-
-- **Updated Pages List**: Array of Notion page URLs that were successfully updated with modification summaries
-- **Compliance Report**: Status of each page's conformance to the latest template with before/after analysis
-- **Update Summary**: Overall workflow results including pages processed, changes made, and any issues encountered
+<IMPORTANT>
+All Notion operations use `notion-sync` through Bash — no other Notion
+client. Recursive pulls are one-shot per tree, never a pull loop over
+discovered links. Before pulling, search and list the exact page set for
+confirmation in the execution record; no page outside that recorded selection
+may be written.
+</IMPORTANT>
 
 ## Workflow
 
-ultrathink: you'd perform the following steps
+1. Pull the Screens database tree once into this run's before-snapshot:
 
-### Step 1: Update Design Documentation Pages
+   ```bash
+   notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 \
+     --follow-children --follow-links --out "$RUN_DIR/screens-before"
+   ```
 
-Update Notion design documentation pages to conform to the latest template while preserving content and applying custom changes.
+2. Pull the current template once:
 
-#### Phase 1: Planning (You)
+   ```bash
+   notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 \
+     --follow-children --follow-links --out "$RUN_DIR/template"
+   ```
 
-1. **Fetch design pages** from the Notion database using the `notion-sync` CLI
-   - Run `Bash: notion-sync pull https://www.notion.so/110161382ea64eefa46a4907574d4530 --follow-children --follow-links --out <tmp>` (single recursive call — never iterate per linked page)
-   - Database collection: collection://c7bc479b-71db-41b1-b5ab-a07c641816b5
-   - Use `Glob: <tmp>/*.md` and `Read` resulting files to inspect each page locally
-   - Apply product filter if specified in inputs
-   - Apply screen filter if specified in inputs
-2. **Analyze template structure** by running `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` to mirror the current template, then `Read` the resulting `{kebab-title}-{32hex-id}.md` file
-3. **Assess each page** for template conformance to identify which pages need updates
-4. **Filter pages** to exclude those already conforming to template (unless change requests specified)
-5. **Create dynamic batches** following these rules:
-   - Generate batches at runtime based on pages found that need updates
-   - Limit each batch to max 10 pages
-   - Assign one UX Design Expert subagent per batch
-6. **Use TodoWrite** to create task list from all batches (each batch = one todo item with status 'pending')
-7. **Prepare detailed instructions** including template structure, change requests, and page-specific requirements
-8. **Queue all batches** for parallel execution by subagents
+3. Resolve the selection only against the mirrored snapshot and record a
+   manifest mapping each selected page's `ref:` and URL to its local Markdown
+   file, product relation, requested change, and original content snapshot. A
+   requested page missing from the database routes to `create-screen-design`;
+   a missing or duplicate reference blocks that page. Verify every selected
+   page belongs to the canonical parent/collection. If a recursive pull or
+   the manifest is incomplete, stop before any push and report partial
+   coverage.
+4. For each selected page in stable manifest order, compare its headings and
+   frontmatter with the template and build a section mapping that says where
+   every existing substantive block will live after migration. Preserve
+   approved decisions, rationale, alternatives, product relations,
+   attachments and links, and still-valid responsive/accessibility content —
+   never discard content merely because a template heading changed.
+5. Apply only the requested change and necessary template alignment to the
+   local file that carries the page's `ref:`, keeping the parent and database
+   properties intact. Alternatives may use prose, tables, images, or ASCII;
+   no format is mandatory unless the page or request requires it.
+6. Run `notion-sync diff <file>` and inspect the complete diff before any
+   push. Reject unintended deletion, relation changes, unselected pages, and
+   unresolved placeholders; save the diff output as evidence. Record
+   already-compliant pages without pushing them.
+7. Run `notion-sync push <file>`, then re-read the local frontmatter and
+   require the same persisted `ref:`. On auth failure, conflict, partial
+   push, changed or missing `ref:`, or uncertain remote state, stop the batch
+   immediately — do not retry blindly or continue with later pages. Bulk
+   `--all` still requires an exact manifest and per-page diff.
+8. Run the verification below for each updated page; when a check fails, fix
+   the cause and re-run that check. Repeat until every check passes or a
+   concrete blocker remains, then report the blocker instead of looping.
 
-#### Phase 2: Execution (Subagents)
+## Verification
 
-In a single message, spin up subagents to perform subtasks in parallel, up to **8** subtasks at a time.
+- Verify each pushed page with `notion-sync diff <file>` or one post-update
+  pull of the selected subtree.
+- Confirm the requested change landed, template sections are present, the
+  preserved-content mapping is honored, and product/database relations,
+  responsive states, and accessibility decisions are intact.
+- Confirm no page outside the recorded selection was written and every pushed
+  file retains its original stable `ref:`.
 
-- **[IMPORTANT]** When there are any issues reported, you must stop dispatching further subagents until all issues have been rectified
-- **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update each batch's status from 'pending' to 'in_progress' when dispatched
+## Completion
 
-Request each subagent to perform the following steps with full detail:
-
-    >>>
-    **ultrathink: adopt the UX Design Expert mindset**
-
-    - You're a **UX Design Expert** with deep expertise in design documentation who follows these technical principles:
-      - **Template Fidelity**: Maintain strict adherence to template structure while preserving existing content value
-      - **Content Preservation**: Carefully migrate existing content to appropriate template sections without loss
-      - **Design Consistency**: Ensure all design documentation follows consistent formatting and structure standards
-
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
-
-    **[IMPORTANT]** You MUST use the `notion-sync` CLI via `Bash` for ALL Notion operations (the `NOTION_TOKEN` env var must be set):
-    - Read pages/databases/collections by running `Bash: notion-sync pull <url> --follow-children --follow-links --out <tmp>` then use `Glob` + `Read` on the resulting `.md` files
-    - For a full screen-design subtree (children + database + links + files), use `Bash: notion-sync pull <url> --follow --out <tmp>`
-    - To modify existing pages: `Edit` the local `.md` (it already has `ref:` from the prior pull) then run `Bash: notion-sync push <file>`
-    - To find pages in the database: `Bash: notion-sync search "<query>" -j`
-    - **Fetch linked pages in a single `--follow*` invocation — never spawn additional `notion-sync pull` calls for individually discovered references.** One-shot recursive pulls only; never iterate across tool-call turns.
-    - Never access Notion URLs directly without `notion-sync`
-
-    **Assignment**
-    You're assigned to update the following Notion design pages to conform to the latest template:
-
-    - [Page URL 1]: [Brief description of current state]
-    - [Page URL 2]: [Brief description of current state]
-    - ...
-
-    **Template Reference**: https://www.notion.so/4555730e74b44592b77dd8a97620d3f2
-    **[IMPORTANT]** Mirror this template locally via `Bash: notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 --follow-children --follow-links --out <tmp>` (single recursive call), then `Read` the resulting `.md` file
-
-    **Change Requests**: [List any specific change requests beyond template conformance, or "None" if only template alignment needed]
-
-    **Steps**
-
-    1. **Fetch and analyze template structure** by running `Bash: notion-sync pull <template-url> --follow-children --follow-links --out <tmp>` (one recursive call) and `Read` the resulting `.md` to understand current standard format
-    2. **Mirror each assigned page** with `Bash: notion-sync pull <page-url> --follow-children --follow-links --out <tmp>` (single call per page; do NOT loop into discovered references) and `Read` the resulting `.md` to understand current content and structure
-    3. **Compare against template** to identify specific sections that need updating or restructuring
-    4. **Preserve valuable content** by mapping existing content to appropriate template sections
-    5. **Apply template structure** while maintaining design intent and information completeness
-    6. **Implement change requests** if any were specified in the assignment
-    7. **Update pages** by `Edit`ing the local `.md` files (they already have `ref:` frontmatter from the pull) and then running `Bash: notion-sync push <file>` to push changes back to Notion
-    8. **Verify template conformance** by checking all required sections are present and properly formatted (use `Bash: notion-sync diff <file>` to confirm what was changed)
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success|failure|partial
-    summary: 'Brief description of pages updated and template conformance achieved'
-    modifications: ['page_url_1', 'page_url_2', ...] # pages that were modified
-    outputs:
-      updated_pages: ['url1: changes made', 'url2: changes made', ...]
-      compliance_status: {'url1': 'compliant', 'url2': 'compliant', ...}
-      content_preserved: true|false
-    issues: ['issue1', 'issue2', ...]  # only if problems encountered
-    ```
-    <<<
-
-#### Phase 3: Decision (You)
-
-1. **Analyze all execution reports** from UX Design Expert subagents
-2. **Apply decision criteria**:
-   - Review any failures or issues reported
-   - Verify template compliance achievements
-   - Check content preservation status
-3. **Select next action**:
-   - **PROCEED**: All success or acceptable partial success - Complete workflow
-   - **FIX ISSUES**: Partial success with minor issues - Create new batches for failed pages and perform phase 2 again
-   - **ROLLBACK**: Critical failures - Revert changes - Create new batches for failed pages and perform phase 2 again
-4. **Use TodoWrite** to update task list based on decision:
-   - If PROCEED: Mark remaining 'in_progress' items as 'completed'
-   - If RETRY: Add new todo items for retry batches
-   - If ROLLBACK: Mark all items as 'failed' and add rollback todos
-5. **Prepare final outputs**:
-   - Consolidate updated pages list from all successful batches
-   - Generate compliance report showing before/after status
-   - Create update summary with overall results and statistics
-
-### Step 2: Reporting
-
-**Output Format**:
-
-```
-[pass/fail] Command: update-screen-design $ARGUMENTS
-
-## Summary
-- Pages processed: [count]
-- Pages updated: [count]
-- Pages already compliant: [count]
-- Template conformance rate: [percentage]
-
-## Outputs
-updated_pages: ['url1: summary of changes', 'url2: summary of changes', ...]
-compliance_report:
-  total_pages_processed: number
-  pages_updated: number
-  pages_already_compliant: number
-  template_conformance_rate: percentage
-update_summary:
-  workflow_status: 'success|partial|failure'
-  total_modifications: number
-  issues_encountered: number
-
-## Next Steps
-1. Review updated pages on Notion
-2. Verify content preservation
-3. Address any reported issues
-```
-
-## Examples
-
-### Update All Product Screens
-
-```bash
-/update-screen-design --product="MyProduct"
-# Updates all screen designs for MyProduct to latest template
-```
-
-### Update Specific Screens
-
-```bash
-/update-screen-design --product="MyProduct" --screens="Login Screen,Dashboard"
-# Updates only specified screens to latest template
-```
-
-### Update With Change Requests
-
-```bash
-/update-screen-design --product="MyProduct" --changes="Add dark mode variations"
-# Updates template conformance AND applies specific design changes
-```
-
-### Update All Screens (No Filter)
-
-```bash
-/update-screen-design
-# Updates all screen designs across all products to latest template
-```
+Return `success`, `partial`, or `blocked`; the selector and `--all` state;
+canonical IDs; before/template/after snapshot paths; the page manifest; pages
+inspected, changed, already compliant, not attempted, or failed; each diff,
+URL, and stable `ref:`; preservation checks; and recovery instructions for
+any uncertain page. Never claim full migration when any selected page lacks
+verified remote and local state.

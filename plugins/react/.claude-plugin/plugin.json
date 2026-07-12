@@ -1,16 +1,17 @@
 {
   "name": "react",
+  "dependencies": ["coding", "essential"],
   "description": "React component development with UI implementation, design systems, Next.js expertise, and fullstack capabilities",
   "version": "2026-07-10",
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"\"; if command -v jq >/dev/null 2>&1; then essential_root=\"$(claude plugin list --json 2>/dev/null | jq -r '[.[] | select((.id | startswith(\"essential@\")) and .enabled)][0].installPath // empty')\"; fi; [ -n \"$essential_root\" ] || essential_root=\"${CLAUDE_PLUGIN_ROOT}/../essential\"; [ -x \"$essential_root/bin/session-start\" ] || { echo \"session-start hook: essential plugin dependency not found\" >&2; exit 1; }; exec \"$essential_root/bin/session-start\" \"$@\"", "session-start", "--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-id", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/shared/scripts/user-prompt-submit.sh ${CLAUDE_PLUGIN_ROOT}"}]
+        "hooks": [{"type": "command", "command": "bash", "args": ["-c", "essential_root=\"\"; if command -v jq >/dev/null 2>&1; then essential_root=\"$(claude plugin list --json 2>/dev/null | jq -r '[.[] | select((.id | startswith(\"essential@\")) and .enabled)][0].installPath // empty')\"; fi; [ -n \"$essential_root\" ] || essential_root=\"${CLAUDE_PLUGIN_ROOT}/../essential\"; [ -x \"$essential_root/bin/user-prompt-submit\" ] || { echo \"user-prompt-submit hook: essential plugin dependency not found\" >&2; exit 1; }; exec \"$essential_root/bin/user-prompt-submit\" \"$@\"", "user-prompt-submit", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ]
   }

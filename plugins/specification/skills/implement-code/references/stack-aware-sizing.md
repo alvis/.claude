@@ -39,7 +39,7 @@
 
 When a trigger fires, dispatch `coding:commit` exactly once via the `Skill` tool:
 
-1. Load `/Users/alvis/Repositories/.claude/plugins/coding/skills/commit/SKILL.md` via `Read`
+1. Load `coding:commit` via `Read`
 2. Invoke with a minimal payload:
    - `--branch-prefix <ticket.slug>`
    - For size-trigger: `--create-pr` (the skill auto-routes split + stacked-PR materialisation)

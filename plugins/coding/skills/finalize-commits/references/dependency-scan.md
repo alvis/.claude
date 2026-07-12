@@ -1,6 +1,6 @@
 # Order Verification & Recommendation — detectors + remedies (jj + git)
 
-Referenced from SKILL.md Step 2. Runs BEFORE any QA so an isolated per-commit gate is never doomed by an ordering defect — a symbol, dependency spec, or behavior that only a later commit supplies. Three detector classes, ALL mandatory on every run. The output is not a list of flags but a recommended order, presented for confirmation before any rewrite.
+Referenced from SKILL.md Step 1. Runs BEFORE any QA so an isolated per-commit gate is never doomed by an ordering defect — a symbol, dependency spec, or behavior that only a later commit supplies. Three detector classes, ALL mandatory on every run. The scan itself is read-only; the output is not a list of flags but a recommended order, presented for confirmation. Every approved move is then delegated to `coding:commit`, the sole owner of rebase, split, squash, reorder, rollback, and checkpoint operations.
 
 ## What an order defect is
 
@@ -38,7 +38,7 @@ import .*\bfrom ['"]([^'"]+)['"]
 \b(?:export\s+)?(?:function|const|let|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)
 ```
 
-Treat module-path imports (`from './foo'`) as a dependency only when the imported file is itself added by a later commit. Heuristic-first: this pass flags suspects; the isolated gate in Step 4 confirms precisely.
+Treat module-path imports (`from './foo'`) as a dependency only when the imported file is itself added by a later commit. Heuristic-first: this pass flags suspects; the isolated gate in SKILL.md Step 3 confirms precisely.
 
 ## Detector 2 — manifest/catalog cross-check
 
@@ -54,36 +54,36 @@ Look for paired commits where the earlier one predictably breaks the gate and a 
 
 ## Output — a recommended order, not a list of flags
 
-For every defect record `consumer`, `artifact` (symbol | spec | behavior), `resolved_by` (the defining/curing commit), and `remedy`, then compose ALL remedies into one recommended order: a full permutation of the stack plus any hoist-hunk / fold-into moves. Present the recommendation for confirmation (SKILL.md Step 2 Phase 4); nothing is rewritten until it is approved. The remedies:
+For every defect record `consumer`, `artifact` (symbol | spec | behavior), `resolved_by` (the defining/curing commit), and `remedy`, then compose ALL remedies into one recommended order: a full permutation of the stack plus any hoist-hunk / fold-into moves. Return `status`, `summary`, and `outputs.order_defects` with the full `recommended_order`; include `modifications` as an empty list until an approved operation is delegated. Present the recommendation for confirmation; nothing is rewritten until it is approved. The remedies:
 
 - **reorder-before** — move the resolving commit before the consumer
 - **fold-into** — squash consumer and resolver when they are truly one change
 - **hoist-hunk** — split a minimal hunk out of the resolver and place it at or before the consumer, when only a fragment (one catalog line, one config flag) is needed earlier
 
-## Remedy commands
+## Remedy operations (delegated to `coding:commit`)
 
-Apply per move; all are guarded by `../../commit/scripts/backup.sh` then `../../commit/scripts/verify.sh`, with rollback on integrity failure.
+Once the recommended order is approved, request each move from `coding:commit` — never run these directly from this skill or its workers. Name the exact operation and targets; `coding:commit` guards every rewrite with its `backup.sh` / `verify.sh` pair and rolls back on integrity failure. The operations to request:
 
 ### Reorder the resolving commit before the consumer
 
 - **jj**: `jj rebase -r <resolver> --insert-before <consumer>`
-- **git**: interactive `git rebase -i <base>` moving the resolving commit above the consumer, or `git rebase --onto` to re-anchor.
+- **git**: an interactive rebase from `<base>` moving the resolving commit above the consumer, or `git rebase --onto` to re-anchor.
 
 ### Fold consumer and resolver together (when they are truly one change)
 
 - **jj**: `jj squash --from <consumer> --into <resolver>` (or the reverse, keeping the earlier slot)
-- **git**: mark the later commit `fixup`/`squash` against the earlier one in `git rebase -i`.
+- **git**: mark the later commit `fixup`/`squash` against the earlier one in the rebase plan.
 
 ### Hoist a hunk into or out of a commit
 
 - **jj**: `jj split -r <resolver>` to carve the minimal hunk into its own commit, then `jj rebase -r <hunk>` with `--insert-before <consumer>` (or `jj squash --from <hunk> --into <consumer>` to fold it in).
-- **git**: at the resolver's `edit` stop in `git rebase -i`, split with `git reset HEAD^` + `git add -p` into the hunk commit and the remainder, then move or `fixup` the hunk commit into place.
+- **git**: at the resolver's `edit` stop, split with `git reset HEAD^` + `git add -p` into the hunk commit and the remainder, then move or `fixup` the hunk commit into place.
 
-## Rollback
+### Rollback (owned by `coding:commit`)
 
 - **jj**: `jj op log` then `jj op restore <op-id>` to the pre-remedy operation.
-- **git**: `git reset --hard ORIG_HEAD` or recover via `git reflog`.
+- **git**: `git reset --hard ORIG_HEAD` or recovery via `git reflog`.
 
 ## Loop
 
-After applying an approved recommendation, re-run all three detectors from the top. Proceed to Step 3 only when the order is clean. Because every approved move is an internal reshuffle, Gate A in `workflow.md` then verifies the rewritten tip tree is identical to the original (lockfile excluded) before any QA is spent.
+After `coding:commit` reports an approved recommendation applied, re-run all three detectors from the top. Proceed to Step 3 only when the order is clean. Because every approved move is an internal reshuffle, Gate A in `workflow.md` then verifies the rewritten tip tree is identical to the original (lockfile excluded) before any QA is spent.

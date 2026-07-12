@@ -1,375 +1,113 @@
 ---
 name: audit-service
-description: "Audit backend services against specifications, generate discrepancy reports, and remediate approved changes. Use when reviewing service completeness, checking spec compliance, or performing service quality audits."
+description: "Audit a backend service against its implementation and documentation contract, producing evidence-backed findings and optionally remediating approved gaps. Use for operation completeness, service quality, or documentation-only audits; choose --scope to keep the review focused."
 model: opus
 context: fork
-agent: general-purpose
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
-argument-hint: <service-name> [--operation=...] [--area=...] [--auto-fix]
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
+argument-hint: "<service-name> [--scope=implementation|docs|all] [--operation=...] [--area=...] [--auto-fix]"
 ---
 
 # Audit Service
 
-Audits backend services against their Notion specifications, validates operation completeness and coding standards compliance, generates discrepancy reports, and remediates approved changes by invoking `build-service`.
-
-## 1. INTRODUCTION
-
-### Purpose & Context
-
-**Purpose**: Audit backend services against their specifications to identify gaps, generate actionable discrepancy reports, sync decisions to Notion, and remediate approved changes.
-**When to use**:
-- Reviewing service operations for standards compliance before release
-- Validating completeness after specification updates
-- Conducting quality assurance on service operation documentation
-- Checking operation manifest alignment with Notion specs
-
-**Prerequisites**:
-- Service must exist as `@theriety/service-{name}` or `@theriety/manifest-{name}`
-- Specification must be available in DESIGN.md or Notion
-- Access to Notion workspace with Services and Service Operations databases
-
-**What this skill does NOT do**:
-- Build new services from scratch (use `build-service`)
-- Create data packages (use `build-data`)
-- Modify Notion specifications without user approval
-
-### Your Role
-
-You are a **Service Audit Director** who orchestrates like a quality assurance executive overseeing comprehensive service reviews. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
-
-- **Systematic Auditing**: Methodically compare implementation against specification
-- **Evidence-Based Reporting**: Every finding backed by specific file/line references
-- **User-Driven Remediation**: Present findings and wait for user decisions before fixing
-- **Traceability**: Every change tracked from spec → finding → decision → implementation
-
-## 2. SKILL OVERVIEW
-
-### Skill Input/Output Specification
-
-#### Required Inputs
-
-- **Service Name**: The name of the service to audit (maps to `@theriety/service-{name}`)
-
-#### Optional Inputs
-
-- **Operation Filter**: Specific operation name(s) for focused audit (default: all operations)
-- **Area Filter**: Functional domain filter (default: all areas)
-- **--auto-fix**: Automatically approve and implement all findings (default: interactive)
-
-#### Expected Outputs
-
-- **AUDIT.md**: Comprehensive discrepancy report with per-operation findings
-- **Updated Notion Spec**: Decisions synced back to Notion (if approved)
-- **Remediated Code**: Implemented fixes for approved changes (via `build-service`)
-- **Compliance Status**: Pass/fail for each operation
-
-#### Data Flow Summary
-
-Load spec from Notion → audit each operation against spec → generate AUDIT.md → present findings to user → sync decisions to Notion → remediate approved changes → final report.
-
-### Visual Overview
-
-```plaintext
-  YOU                              SUBAGENTS
-(Orchestrates Only)             (Perform Tasks)
-   |                                   |
-   v                                   v
-[START]
-   |
-   v
-[Step 1: Load Spec] -------------> (Sub-skill: specification:sync-notion)
-   |
-   v
-[Step 2: Audit vs Spec] ---------> (Subagents: validate operations in parallel batches)
-   |                    +- coding:review
-   |                    +- coding:lint
-   |                    +- coding:find-unused
-   |                    +- Operation completeness check
-   v
-[Step 3: Generate Report] --------- (You: compile AUDIT.md)
-   |
-   v
-[Step 4: Decision Gate] ----------- (You: present findings, collect user decisions)
-   |
-   v
-[Step 5: Sync to Notion] --------> (Sub-skill: specification:sync-notion)
-   |
-   v
-[Step 6: Remediate] -------------> (Sub-skill: backend:build-service)
-   |
-   v
-[Step 7: Final Report] ----------- (You: compile summary)
-   |
-   v
-[END]
-
-Legend:
-═══════════════════════════════════════════════════════════════
-• Steps 1,5: Notion sync via specification plugin
-• Step 2: Parallel validation subagents
-• Step 6: Remediation via build-service
-• Steps 3,4,7: Orchestrator decisions
-═══════════════════════════════════════════════════════════════
-```
-
-## 3. SKILL IMPLEMENTATION
-
-### Skill Steps
-
-1. Step 1: Load Spec
-2. Step 2: Audit vs Spec
-3. Step 3: Generate Discrepancy Report
-4. Step 4: Decision Gate
-5. Step 5: Sync Decisions to Notion
-6. Step 6: Implement Approved Changes
-7. Step 7: Final Report
-
----
-
-### Step 1: Load Spec
-
-**Step Configuration**:
-
-- **Purpose**: Fetch service specification from Notion
-- **Input**: Service name
-- **Output**: Complete spec with operations list, data operations, service context
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
-- **Parallel Execution**: No
-
-#### Execute Sync Sub-Skill (You)
-
-1. Load `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
-2. Execute in **pull mode** to fetch the latest spec from Notion
-3. Extract: service metadata, all service operation pages, data operation dependencies
-4. Continue to Step 2
-
----
-
-### Step 2: Audit vs Spec
-
-**Step Configuration**:
-
-- **Purpose**: Validate each operation against its specification for completeness and standards compliance
-- **Input**: Spec from Step 1 + local service codebase
-- **Output**: Per-operation validation results
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/lint/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/find-unused/SKILL.md`
-- **Parallel Execution**: Yes (operations validated in parallel, max 2 at a time)
-
-#### Phase 1: Planning (You)
-
-1. **List all operations** from the spec
-2. **Apply filters** (operation filter, area filter) if specified
-3. **Discover service** by searching Notion for the Services database, locating the service page, extracting operation metadata
-4. **Create batches** (max 2 operations per batch)
-5. **Use TodoWrite** to track
-
-#### Phase 2: Execution (Subagents)
-
-Spin up read-only validation subagents, up to **2** at a time. The dispatch prompt MUST contain ONLY: spec path, implementation path(s), output template path, and applicable standards paths. Do not include parent narrative, intent, or expected conclusions.
-
-    >>>
-    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
-
-    This is a read-only audit. Do not modify any file.
-
-    **Spec**: [absolute path to operation spec page export or DESIGN.md section]
-    **Implementation**: [absolute path(s) to operation source file(s) and related tests]
-    **Output Template**: [absolute path to AUDIT.md template or finding row schema]
-    **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
-
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    outputs:
-      operation_name: '[name]'
-      validation_status: 'pass|issues_found'
-      issues_found: ['issue with location and fix', ...]
-      recommendations: ['improvement', ...]
-    issues: []
-    ```
-    <<<
-
-**Issue Escalation**: When issues found, pause further validation, present detailed report with code snippets and fix suggestions, await user approval before continuing.
-
-Also execute in parallel:
-- `coding:review` — code quality review of the service package
-- `coding:lint` — lint check
-- `coding:find-unused` — dead code detection
-
-#### Phase 4: Decision (You)
-
-1. Collect all validation reports
-2. Consolidate into per-operation findings
-3. Categorize by functional domain
-4. **PROCEED** to Step 3
-
----
-
-### Step 3: Generate Discrepancy Report
-
-**Step Configuration**:
-
-- **Purpose**: Produce AUDIT.md with consolidated findings
-- **Input**: All validation results from Step 2
-- **Output**: AUDIT.md file
-- **Sub-skill**: (none — orchestrator compiles)
-- **Parallel Execution**: No
-
-#### Phase 1: Planning (You)
-
-Generate AUDIT.md with this structure:
-
-```markdown
-# Service Audit: @theriety/service-{name}
-Date: [YYYY-MM-DD]
-
-## Summary
-- Operations audited: [count]
-- Issues found: [count]
-- Overall status: [PASS/NEEDS_ATTENTION/CRITICAL]
-
-## Operations by Domain
-
-### [Domain Group]
-
-#### ✅ [Operation Name] — PASS
-No issues found.
-
-#### ❌ [Operation Name] — ISSUES FOUND
-| # | Severity | Category | Finding | Recommendation |
-|---|----------|----------|---------|----------------|
-| 1 | critical | Pseudo Code | Missing error handling | Add MissingDataError check |
-| 2 | warning | Requirements | Input type incomplete | Add constraints for field X |
-
-## Code Quality
-- Review: [summary]
-- Lint: [N warnings]
-- Unused code: [list]
-
-## Decisions Required
-- [ ] Finding #1: [accept/reject/defer]
-- [ ] Finding #2: [accept/reject/defer]
-```
-
----
-
-### Step 4: Decision Gate
-
-**Step Configuration**:
-
-- **Purpose**: Present findings and collect user decisions
-- **Input**: AUDIT.md from Step 3
-- **Output**: User decisions per finding (accept/reject/defer)
-- **Parallel Execution**: No
-
-#### Phase 4: Decision (You)
-
-1. Present AUDIT.md to user
-2. For each finding, collect: **accept** (will fix), **reject** (won't fix), **defer** (later)
-3. If `--auto-fix` flag: auto-accept all findings
-4. Record decisions for Step 5
-
----
-
-### Step 5: Sync Decisions to Notion
-
-**Step Configuration**:
-
-- **Purpose**: Update Notion spec with audit decisions
-- **Input**: User decisions from Step 4
-- **Output**: Updated Notion pages
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
-- **Parallel Execution**: No
-
-#### Execute Sync Sub-Skill (You)
-
-1. Load sync-notion sub-skill
-2. Execute in **push mode** to sync decisions back to Notion
-3. Continue to Step 6
-
----
-
-### Step 6: Implement Approved Changes
-
-**Step Configuration**:
-
-- **Purpose**: Remediate accepted findings using build-service
-- **Input**: Accepted findings from Step 4
-- **Output**: Implemented fixes
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-service/SKILL.md`
-- **Parallel Execution**: No
-- **Skip condition**: If no findings accepted, skip to Step 7
-
-#### Execute Build Sub-Skill (You)
-
-1. Compile list of accepted changes into a service extension specification
-2. Load `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-service/SKILL.md`
-3. Execute in **extend mode** with the accepted changes
-4. Continue to Step 7
-
----
-
-### Step 7: Final Report
-
-**Step Configuration**:
-
-- **Purpose**: Compile final audit summary
-- **Input**: Results from all previous steps
-- **Output**: Final report to user
-- **Parallel Execution**: No
-
-#### Phase 4: Decision (You)
-
-Compile and present:
-
-```yaml
-status: success|partial|failure
-service_name: '{name}'
-operations_audited: [count]
-findings_total: [count]
-findings_accepted: [count]
-findings_rejected: [count]
-findings_deferred: [count]
-remediation_status: completed|partial|skipped
-notion_synced: true|false
-```
-
----
-
-### Skill Completion
-
-```yaml
-status: success|partial|failure
-service_name: '{name}'
-audit_report: 'AUDIT.md'
-operations_audited: ['op1', 'op2', ...]
-compliance_status:
-  op1: pass|fail
-  op2: pass|fail
-findings: [count]
-remediated: [count]
-deferred: [count]
-```
-
-## Examples
-
-### Audit All Operations
-
-```bash
-/audit-service "billing"
-# Audits all operations in the billing service against Notion spec
-```
-
-### Audit Specific Operation
-
-```bash
-/audit-service "billing" --operation="create-checkout-session"
-```
-
-### Auto-Fix Mode
-
-```bash
-/audit-service "product" --auto-fix
-# Accepts and implements all findings automatically
-```
+Owns read-only auditing of a backend service against its current
+specification and local implementation, plus approved remediation of the
+gaps it finds. Every finding includes a source location, expected contract,
+observed behavior, severity, and a proposed next action.
+
+## Boundaries
+
+- Use for: implementation audits (`--scope=implementation` owns
+  code/manifest/operation completeness — declared operations, manifests,
+  handlers, tests, code quality), documentation audits (`--scope=docs` is
+  the single owner of documentation-only audits — service and operation
+  documentation against the specification), or both (`--scope=all`, the
+  default, is a composition of those two scopes, not a third review
+  protocol).
+- Do not use for: creating a service (`backend:build-service`), building a
+  data layer (`backend:build-data`), implementing an unapproved feature
+  (`coding:write-code`), or generic code review (`coding:review-code` owns
+  broad semantic/security review; this skill supplies service contract
+  context).
+- `specification:sync-notion` owns Notion pull/push/merge mechanics; this
+  skill only delegates to it.
+- Findings without concrete evidence are incomplete and must not be reported
+  as verified.
+
+## Inputs
+
+- **Required**: service name or package path.
+- **Optional**: `--scope=implementation|docs|all` (default `all`);
+  `--operation=<name>` limits findings to one or more operations;
+  `--area=<name>` narrows the selected scope to a documented functional
+  area; `--auto-fix` may apply only explicitly approved remediation and
+  never changes the specification implicitly.
+- **Prerequisites**: the specification is reachable — load it through
+  `specification:sync-notion` when a Notion source is supplied, or use the
+  local DESIGN/spec bundle when one is already present.
+
+## Workflow
+
+1. Resolve the service and specification. Refuse with `status: refused`
+   when either cannot be identified; do not invent requirements.
+2. Apply `--scope`, `--operation`, and `--area` before dispatching checks.
+3. For `implementation`, inspect manifests, declarations, operation
+   handlers, tests, and diagnostics. Delegate generic semantic review to
+   `coding:review-code`, mechanical checks to `coding:lint`, and dead-code
+   discovery to `coding:find-unused` as needed.
+4. For `docs`, discover the documentation set before comparing it: resolve
+   the service page from its spec ref/database entry, enumerate declared
+   operations, follow child/linked operation pages in one recursive pull,
+   and map each expected operation to exactly one page. Record missing,
+   duplicate, orphaned, or ambiguously named pages. Then compare overview,
+   operation names, signatures, inputs/outputs, errors, examples, status,
+   ownership, and cross-links against the specification and implementation
+   evidence. Documentation findings remain in this report; do not route
+   them to a deleted skill.
+5. Run independent checks in parallel where their inputs do not overlap, at
+   most 2 operation audits at a time (per the bounds in
+   plugins/governance/constitution/references/delegation.md). Keep each
+   check read-only and record its evidence.
+   <IMPORTANT>
+   Dispatch each auditing subagent blind: the prompt contains ONLY the spec
+   path, implementation path(s), output template, and applicable standards
+   paths — never the parent narrative, intent, or expected conclusions —
+   and instructs the auditor to treat the implementation as unfamiliar
+   rather than assuming it matches the spec.
+   </IMPORTANT>
+6. Consolidate duplicate findings, classify severity, and write `AUDIT.md`
+   beside the service (or at the requested output path) with: the selected
+   scope and filters; contract and implementation/documentation sources;
+   findings grouped by severity and operation; evidence with file/line or
+   Notion references; remediation decisions and verification status.
+7. Present the report and collect an explicit **accept** (will fix),
+   **reject** (won't fix), or **defer** (later) decision per finding;
+   `--auto-fix` auto-accepts all findings. Approved implementation fixes
+   route to `backend:build-service` or `coding:fix`. For approved
+   documentation remediation, edit the paired local Markdown, preserve page
+   identity/frontmatter, show `notion-sync diff`, and delegate the push to
+   `specification:sync-notion local-to-notion`; create a missing page only
+   with an explicit parent. Never mutate Notion or code merely because a
+   discrepancy exists.
+8. Re-pull or diff every remediated page, re-run the affected
+   implementation checks, and record before/after evidence. Then run the
+   verification below; when a check fails, fix the cause and re-run that
+   check. Repeat until every check passes or a concrete blocker remains,
+   then report the blocker instead of looping.
+
+## Verification
+
+- `AUDIT.md` exists and every finding carries file/line or Notion evidence
+  with severity and a proposed next action.
+- Every remediated page is re-pulled or diffed and every affected
+  implementation check re-run, with before/after evidence recorded. A
+  command exit without content/metadata verification is not remediation
+  success.
+
+## Completion
+
+Return a structured summary naming the status (success, partial, failure, or
+refused), service, scope, operations audited, finding count, remediated
+count, and the report path (`AUDIT.md`). For documentation scope also
+include `pages_expected`, `pages_found`, `missing_pages`,
+`duplicate_pages`, `orphan_pages`, `operation_page_map`, `sync_actions`,
+and `post_sync_verification`.

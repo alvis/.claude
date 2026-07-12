@@ -13,10 +13,10 @@ Files to create with TODO placeholders:
 
 Reference files:
 
-- `/Users/alvis/Repositories/core/services/billing/package.json` — package structure
-- `/Users/alvis/Repositories/core/services/product/src/factory.ts` — createServiceFactory pattern
-- `/Users/alvis/Repositories/core/services/atc/src/config.ts` — ServiceConfigSpecification
-- `/Users/alvis/Repositories/core/services/billing/src/client.ts` — ClientInitializer
+- `<repository-root>/services/billing/package.json` — package structure
+- `<repository-root>/services/product/src/factory.ts` — createServiceFactory pattern
+- `<repository-root>/services/atc/src/config.ts` — ServiceConfigSpecification
+- `<repository-root>/services/billing/src/client.ts` — ClientInitializer
 
 ## Implementation Phase Context (passed to coding:complete-code)
 
@@ -25,7 +25,7 @@ Implementation patterns:
 - Operations: `createOperation.opName(async (payload, { data, integration, emit }, { initiator }) => { ... })`
 - Use `ensure()` from `@theriety/core` for authorization
 - Use `retry()`, `RetryableError` for transient failures
-- Reference: `/Users/alvis/Repositories/core/services/product/src/operations/set-offering/index.ts`
+- Reference: `<repository-root>/services/product/src/operations/set-offering/index.ts`
 
 ## Test Phase Context (passed to coding:complete-test)
 
@@ -39,5 +39,5 @@ Implementation patterns:
 
 Reference files:
 
-- `/Users/alvis/Repositories/core/services/product/spec/operations/set-offering.spec.ts` — unit test
-- `/Users/alvis/Repositories/core/services/billing/spec/integrations/stripe/invoice.spec.ts` — integration test
+- `<repository-root>/services/product/spec/operations/set-offering.spec.ts` — unit test
+- `<repository-root>/services/billing/spec/integrations/stripe/invoice.spec.ts` — integration test

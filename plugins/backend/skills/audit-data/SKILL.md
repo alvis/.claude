@@ -3,385 +3,90 @@ name: audit-data
 description: "Audit data orchestrators against specifications, generate discrepancy reports, and remediate approved changes. Use when reviewing data domain completeness, checking schema compliance, or performing data layer quality audits."
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
-argument-hint: <domain-name> [--operation=...] [--entity=...] [--auto-fix]
+argument-hint: "<domain-name> [--operation=...] [--entity=...] [--auto-fix]"
 ---
 
 # Audit Data
 
-Audits data orchestrators against their Notion specifications, validates schema completeness, operation coverage, and controller alignment, generates discrepancy reports, and remediates approved changes by invoking `build-data`.
-
-## 1. INTRODUCTION
-
-### Purpose & Context
-
-**Purpose**: Audit data orchestrators against their specifications to identify schema gaps, missing operations, controller mismatches, and coding standards violations, then remediate approved changes.
-**When to use**:
-- Reviewing data domain completeness after spec updates
-- Validating Prisma schema alignment with Notion entity definitions
-- Checking operation coverage for all declared entities
-- Verifying controller methods match implemented operations
-- Quality assurance before release
-
-**Prerequisites**:
-- Data orchestrator must exist as `@theriety/data-{domain}`
-- Specification must be available in DESIGN.md or Notion
-- Access to Notion workspace with Data Controllers database
-
-**What this skill does NOT do**:
-- Build new data orchestrators from scratch (use `build-data`)
-- Create service packages (use `build-service`)
-- Modify Notion specifications without user approval
-
-### Your Role
-
-You are a **Data Audit Director** who orchestrates like a database integrity auditor. You never execute tasks directly, only delegate and coordinate. Your management style emphasizes:
-
-- **Systematic Schema Auditing**: Compare every Prisma model against Notion entity definitions
-- **Operation Coverage Analysis**: Verify every entity has appropriate CRUD operations
-- **Controller Alignment**: Ensure controller methods match implemented operations 1:1
-- **Evidence-Based Reporting**: Every finding backed by specific file/line/model references
-
-## 2. SKILL OVERVIEW
-
-### Skill Input/Output Specification
-
-#### Required Inputs
-
-- **Domain Name**: The data domain to audit (maps to `@theriety/data-{domain}`)
-
-#### Optional Inputs
-
-- **Operation Filter**: Specific operation(s) for focused audit
-- **Entity Filter**: Specific entity(ies) for focused audit
-- **--auto-fix**: Automatically approve all findings
-
-#### Expected Outputs
-
-- **AUDIT.md**: Discrepancy report with schema/operation/controller findings
-- **Updated Notion Spec**: Decisions synced back (if approved)
-- **Remediated Code**: Fixes implemented via `build-data`
-- **Compliance Status**: Pass/fail per entity and operation
-
-#### Data Flow Summary
-
-Load spec from Notion → audit schema, operations, controllers → generate AUDIT.md → collect user decisions → sync to Notion → remediate via build-data → final report.
-
-### Visual Overview
-
-```plaintext
-  YOU                              SUBAGENTS
-(Orchestrates Only)             (Perform Tasks)
-   |                                   |
-   v                                   v
-[START]
-   |
-   v
-[Step 1: Load Spec] -------------> (Sub-skill: specification:sync-notion)
-   |
-   v
-[Step 2: Audit vs Spec] ---------> (Subagents: 3 parallel streams)
-   |                    +- Schema audit (Prisma vs Notion entities)
-   |                    +- Operation audit (coverage + patterns)
-   |                    +- Controller audit (method alignment)
-   |                    +- coding:review + coding:lint + coding:find-unused
-   v
-[Step 3: Generate Report] --------- (You: compile AUDIT.md)
-   |
-   v
-[Step 4: Decision Gate] ----------- (You: present findings, collect decisions)
-   |
-   v
-[Step 5: Sync to Notion] --------> (Sub-skill: specification:sync-notion)
-   |
-   v
-[Step 6: Remediate] -------------> (Sub-skill: backend:build-data)
-   |
-   v
-[Step 7: Final Report] ----------- (You: compile summary)
-   |
-   v
-[END]
-
-Legend:
-═══════════════════════════════════════════════════════════════
-• Step 2: Three parallel audit streams for comprehensive coverage
-• Step 6: Remediation via build-data (NOT build-service)
-═══════════════════════════════════════════════════════════════
-```
-
-## 3. SKILL IMPLEMENTATION
-
-### Skill Steps
-
-1. Step 1: Load Spec
-2. Step 2: Audit vs Spec
-3. Step 3: Generate Discrepancy Report
-4. Step 4: Decision Gate
-5. Step 5: Sync Decisions to Notion
-6. Step 6: Implement Approved Changes
-7. Step 7: Final Report
-
----
-
-### Step 1: Load Spec
-
-**Step Configuration**:
-
-- **Purpose**: Fetch data domain specification from Notion
-- **Input**: Domain name
-- **Output**: Entity definitions, operation specs, controller expectations
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
-- **Parallel Execution**: No
-
-#### Execute Sync Sub-Skill (You)
-
-1. Load specification:sync-notion in **pull mode**
-2. Search for Data Controllers database in Notion
-3. Locate the controller page for the specified domain
-4. Extract: entity definitions with attributes, operation specifications, relationship definitions
-5. Continue to Step 2
-
----
-
-### Step 2: Audit vs Spec
-
-**Step Configuration**:
-
-- **Purpose**: Validate schema, operations, and controllers against specification
-- **Sub-skills**: `/Users/alvis/Repositories/.claude/plugins/coding/skills/review/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/lint/SKILL.md`, `/Users/alvis/Repositories/.claude/plugins/coding/skills/find-unused/SKILL.md`
-- **Parallel Execution**: Yes (3 audit streams in parallel)
-
-#### Phase 1: Planning (You)
-
-1. **List all entities** from Notion spec
-2. **List all operations** from Notion spec
-3. **Read local codebase**: prisma schema, operations directory, controller class
-4. **Create 3 audit streams**: schema, operations, controllers
-5. **Apply filters** if specified
-
-#### Phase 2: Execution (Subagents)
-
-Spin up **3 parallel read-only audit subagents**. Each dispatch prompt MUST contain ONLY: spec path, implementation path(s), output template path, and applicable standards paths. Do not include parent narrative, intent, or expected conclusions.
-
-**Stream 1 — Schema Audit**:
-
-    >>>
-    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
-
-    This is a read-only audit. Do not modify any file.
-
-    **Spec**: [absolute path to entity spec export or DESIGN.md section]
-    **Implementation**: [absolute path(s) to prisma/ schema files]
-    **Output Template**: [absolute path to AUDIT.md schema-findings template]
-    **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
-
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    outputs:
-      models_checked: N
-      missing_models: ['Model1', ...]
-      orphaned_models: ['Model2', ...]
-      field_mismatches: ['Model.field: expected X got Y', ...]
-      missing_relations: ['Model1 -> Model2', ...]
-    issues: []
-    ```
-    <<<
-
-**Stream 2 — Operation Audit**:
-
-    >>>
-    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
-
-    This is a read-only audit. Do not modify any file.
-
-    **Spec**: [absolute path to operation spec export or DESIGN.md section]
-    **Implementation**: [absolute path(s) to src/operations/ and src/operations/index.ts]
-    **Output Template**: [absolute path to AUDIT.md operation-findings template]
-    **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
-
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    outputs:
-      operations_checked: N
-      missing_operations: ['op1', ...]
-      extra_operations: ['op2', ...]
-      pattern_violations: ['op3: wrong verb pattern', ...]
-      missing_tests: ['op4: no int test', ...]
-    issues: []
-    ```
-    <<<
-
-**Stream 3 — Controller Audit**:
-
-    >>>
-    You are an independent auditor. Treat the implementation as unfamiliar. Compare it against the spec and the listed standards. Do not assume the implementation matches the spec.
-
-    This is a read-only audit. Do not modify any file.
-
-    **Spec**: [absolute path to controller spec export or DESIGN.md section]
-    **Implementation**: [absolute path to source/index.ts and src/operations/index.ts]
-    **Output Template**: [absolute path to AUDIT.md controller-findings template]
-    **Applicable Standards**:
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-operation.md
-    - /Users/alvis/Repositories/.claude/plugins/backend/constitution/standards/data-entity.md
-
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    outputs:
-      methods_checked: N
-      missing_methods: ['method1', ...]
-      extra_methods: ['method2', ...]
-      pattern_violations: ['method3: wrong delegation', ...]
-    issues: []
-    ```
-    <<<
-
-Also execute in parallel: `coding:review`, `coding:lint`, `coding:find-unused`
-
-#### Phase 4: Decision (You)
-
-Consolidate all 3 audit streams + quality results → proceed to Step 3
-
----
-
-### Step 3: Generate Discrepancy Report
-
-**Step Configuration**:
-
-- **Purpose**: Produce AUDIT.md
-- **Parallel Execution**: No
-
-#### Phase 1: Planning (You)
-
-Generate AUDIT.md:
-
-```markdown
-# Data Audit: @theriety/data-{domain}
-Date: [YYYY-MM-DD]
-
-## Summary
-- Entities audited: [count]
-- Operations audited: [count]
-- Controller methods: [count]
-- Total findings: [count]
-- Overall: [PASS/NEEDS_ATTENTION/CRITICAL]
-
-## Schema Findings
-| # | Severity | Entity | Finding | Recommendation |
-|---|----------|--------|---------|----------------|
-| 1 | critical | Offering | Missing field: quota | Add quota field to Prisma model |
-
-## Operation Findings
-| # | Severity | Operation | Finding | Recommendation |
-|---|----------|-----------|---------|----------------|
-| 1 | critical | getOffering | Missing int test | Add spec/operations/getOffering.spec.int.ts |
-
-## Controller Findings
-| # | Severity | Method | Finding | Recommendation |
-|---|----------|--------|---------|----------------|
-| 1 | warning | setOffering | Wrong delegation | Use Parameters<typeof op>[1] pattern |
-
-## Code Quality
-- Review: [summary]
-- Lint: [N warnings]
-- Unused code: [list]
-
-## Decisions Required
-- [ ] Finding #1: [accept/reject/defer]
-```
-
----
-
-### Step 4: Decision Gate
-
-Present AUDIT.md to user. Collect accept/reject/defer per finding. If `--auto-fix`: auto-accept all.
-
----
-
-### Step 5: Sync Decisions to Notion
-
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/specification/skills/sync-notion/SKILL.md`
-- Execute in **push mode**
-
----
-
-### Step 6: Implement Approved Changes
-
-**Step Configuration**:
-
-- **Purpose**: Remediate accepted findings
-- **Sub-skill**: `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-data/SKILL.md`
-- **Skip condition**: No accepted findings
-
-#### Execute Build Sub-Skill (You)
-
-1. Compile accepted schema changes, missing operations, and controller fixes into a domain extension spec
-2. Load `/Users/alvis/Repositories/.claude/plugins/backend/skills/build-data/SKILL.md`
-3. Execute in **extend mode** with the accepted changes
-
----
-
-### Step 7: Final Report
-
-```yaml
-status: success|partial|failure
-domain_name: '{domain}'
-entities_audited: [count]
-operations_audited: [count]
-findings_total: [count]
-findings_accepted: [count]
-findings_rejected: [count]
-findings_deferred: [count]
-remediation_status: completed|partial|skipped
-notion_synced: true|false
-```
-
----
-
-### Skill Completion
-
-```yaml
-status: success|partial|failure
-domain_name: '{domain}'
-audit_report: 'AUDIT.md'
-schema_compliance:
-  Entity1: pass|fail
-  Entity2: pass|fail
-operation_compliance:
-  op1: pass|fail
-  op2: pass|fail
-controller_compliance: pass|fail
-findings: [count]
-remediated: [count]
-deferred: [count]
-```
-
-## Examples
-
-### Audit All
-
-```bash
-/audit-data "product"
-# Audits schema, operations, and controller for the product domain
-```
-
-### Audit Specific Entity
-
-```bash
-/audit-data "product" --entity="Offering"
-# Focus audit on the Offering entity only
-```
-
-### Auto-Fix Mode
-
-```bash
-/audit-data "vault" --auto-fix
-# Accepts and implements all findings automatically
-```
+Owns read-only auditing of a `@theriety/data-{domain}` orchestrator against
+its Notion specification — schema completeness, operation coverage,
+controller alignment, and code quality — plus approved remediation through
+`backend:build-data`. `backend:audit-service` owns service audits.
+
+## Boundaries
+
+- Use for: reviewing data domain completeness after spec updates; validating
+  Prisma schema alignment with Notion entity definitions; checking operation
+  coverage for declared entities; verifying controller methods match
+  implemented operations; quality assurance before release.
+- Do not use for: building new data orchestrators (`backend:build-data`),
+  auditing services (`backend:audit-service`), or modifying Notion
+  specifications without user approval.
+- The audit is read-only until the user approves remediation; every finding
+  carries specific file, line, or model evidence.
+
+## Inputs
+
+- **Required**: domain name (maps to `@theriety/data-{domain}`).
+- **Optional**: `--operation=<name>` and `--entity=<name>` to focus the
+  audit; `--auto-fix` to auto-accept every finding.
+- **Prerequisites**: the data orchestrator package exists; the specification
+  is reachable in the Notion Data Controllers database (or a local DESIGN.md
+  export).
+
+## Workflow
+
+1. **Load the spec.** Run `specification:sync-notion` in pull mode: search
+   for the Data Controllers database, locate the controller page for the
+   domain, and extract entity definitions with attributes, operation
+   specifications, and relationship definitions.
+2. **Plan the audit.** List all entities and operations from the spec; read
+   the local Prisma schema, operations directory, and controller class;
+   apply the `--operation`/`--entity` filters; define three audit streams —
+   schema, operations, controller.
+3. **Dispatch the audit streams.** Run three parallel read-only audit
+   subagents with the blind-dispatch prompts in
+   [references/audit-streams.md](references/audit-streams.md), and execute
+   `coding:review-code`, `coding:lint`, and `coding:find-unused` alongside
+   them. Reports stay under 1000 tokens each, per the bounds in
+   plugins/governance/constitution/references/delegation.md.
+   <IMPORTANT>
+   Dispatch each auditor blind: the prompt contains ONLY the spec path,
+   implementation path(s), output template path, and applicable standards
+   paths — never the parent narrative, intent, or expected conclusions — and
+   instructs the auditor to treat the implementation as unfamiliar and to
+   modify nothing.
+   </IMPORTANT>
+4. **Generate AUDIT.md.** Consolidate the three stream reports and the
+   quality results into `AUDIT.md` using the structure in
+   [references/audit-streams.md](references/audit-streams.md): summary
+   counts, findings tables (schema, operation, controller) with severity and
+   recommendation, code-quality summary, and a decisions checklist.
+5. **Decision gate.** Present AUDIT.md to the user and collect an explicit
+   accept (will fix), reject (won't fix), or defer (fix later) decision per
+   finding; `--auto-fix` auto-accepts all findings.
+6. **Sync decisions to Notion.** Run `specification:sync-notion` in push
+   mode to record the decisions on the controller page.
+7. **Remediate.** Skip when no finding was accepted. Compile the accepted
+   schema changes, missing operations, and controller fixes into a domain
+   extension spec and run `backend:build-data` in extend mode with it.
+8. Re-run the audit checks affected by remediation, then the verification
+   below; when a check fails, fix the cause and re-run that check. Repeat
+   until every check passes or a concrete blocker remains, then report the
+   blocker instead of looping.
+
+## Verification
+
+- `AUDIT.md` exists and every finding carries file, line, or model evidence
+  with severity and recommendation.
+- Every accepted finding is remediated and its originating audit check
+  passes on re-run.
+- Notion reflects the recorded decisions after the push sync.
+
+## Completion
+
+Report the domain, entities and operations audited, findings total and per
+decision (accepted, rejected, deferred), schema/operation/controller
+compliance per item, remediation status (completed, partial, or skipped),
+and whether Notion was synced. Point to `AUDIT.md` as the evidence record.

@@ -14,8 +14,8 @@ title: Quarterly Review
 last_edited_time: 2026-01-15T10:00:00.000Z
 Status: Draft
 Owner:
-  - name: Alvis Tang
-    email: alvis@hilbert.space
+  - name: Jane Doe
+    email: jane@example.com
 ref: 2dab2572-f788-8060-9764-eb325cb0c894
 ---
 

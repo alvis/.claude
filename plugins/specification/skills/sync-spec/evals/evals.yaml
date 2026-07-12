@@ -52,7 +52,7 @@ trigger_eval:
     - "sync this markdown file back to Notion"            # → sync-notion
     - "implement this Notion ticket"                       # → implement-code
     - "plan this spec into PLAN.md"                        # → plan-code
-    - "review the spec doc on Notion"                      # → review-service-operation
+    - "review the spec doc on Notion"                      # → theriety:audit-service --scope=docs
     - "create a new Notion page"                           # → notion-sync push (sam-taylor-specification)
-    - "audit the service spec for completeness"            # → audit-service / review-service-operation
+    - "audit the service spec for completeness"            # → theriety:audit-service --scope=docs
     - "commit my changes"                                  # → coding:commit

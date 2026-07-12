@@ -1,5 +1,19 @@
 # Recraft — API reference
 
+## Contents
+
+- [Authentication](#authentication)
+- [Models](#models)
+- [Endpoints](#endpoints)
+- [Size Tables](#size-tables)
+- [Named Styles](#named-styles)
+- [Custom Style Creation (V3 only)](#custom-style-creation-v3-only)
+- [Controls (via `extra_body`)](#controls-via-extra_body)
+- [Response Format](#response-format)
+- [Pricing (approximate)](#pricing-approximate)
+- [Limits](#limits)
+- [MCP Tools](#mcp-tools)
+
 ## Authentication
 
 - Base URL: `https://external.api.recraft.ai/v1`
@@ -100,3 +114,20 @@ Standard OpenAI-compatible response with `b64_json` encoding. Vector models retu
 ## Limits
 
 - Input images/masks < 50 MB
+
+## MCP Tools
+
+When the Recraft MCP server is available, prefer MCP tools over the CLI for Recraft operations:
+
+| MCP Tool | Purpose | When to use |
+|----------|---------|-------------|
+| `mcp__recraft__create_style` | Extract reusable style from reference image(s) | Only when generating with Recraft V3 models (`recraftv3`, `recraftv3_vector`) and the user provides a reference image |
+| `mcp__recraft__generate_image` | Generate image with optional style | Recraft generation with an extracted `styleID` |
+| `mcp__recraft__image_to_image` | Transform existing image | Style transfer, image-to-image with Recraft |
+| `mcp__recraft__remove_background` | Remove image background | Background extraction tasks |
+| `mcp__recraft__replace_background` | Replace image background | Background replacement tasks |
+| `mcp__recraft__vectorize_image` | Convert raster to vector | SVG/vector conversion |
+| `mcp__recraft__creative_upscale` | Upscale with creative enhancement | Quality enhancement with artistic interpretation |
+| `mcp__recraft__crisp_upscale` | Upscale with detail preservation | Quality enhancement preserving original details |
+
+**MCP vs CLI decision**: Use MCP tools when working within Recraft's ecosystem (style extraction + generation). Use the CLI (`python "$IMAGINE" --provider recraft`) when you need cross-provider batch runs, custom output paths, or flags not exposed by MCP.

@@ -3,8 +3,8 @@
 `ground.sh` selects one section below by state name and embeds the screenshot's absolute path so Claude Code reads the image. Each prompt MUST end with the standard output contract so `ground.sh` can parse the response deterministically.
 
 Cited standards (model should reference mentally when judging):
-- `/Users/alvis/Repositories/.claude/plugins/react/constitution/standards/accessibility/` (WCAG 2.1 AA, focus indication, contrast)
-- `/Users/alvis/Repositories/.claude/plugins/web/constitution/standards/design/` (visual hierarchy, spacing, state distinctness)
+- `the React plugin accessibility standard` (WCAG 2.1 AA, focus indication, contrast)
+- `the Web plugin design standard` (visual hierarchy, spacing, state distinctness)
 
 ## default
 

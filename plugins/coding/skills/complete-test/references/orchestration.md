@@ -1,0 +1,98 @@
+# Complete-Test Orchestration — batches, dispatch prompts, and reports
+
+Referenced from SKILL.md. You are the orchestrator: drive the workflow end-to-end via fire-and-forget `Task` subagents with TodoWrite-based status tracking, dispatching a maximum of **8 parallel subagents** at any time. After each sub-step, aggregate the returned reports before moving on. Every dispatch names the standards to read (`testing/meta.md` + `testing/write.md`, `typescript/write.md`, `documentation/write.md`) and forbids further delegation.
+
+## Sub-step 1 — Initial coverage analysis (single subagent)
+
+Discover existing test files with Glob (`**/*.spec.{ts,tsx}`, `**/*.test.{ts,tsx}` — never `find` in bash). Dispatch one Coverage Analysis subagent to:
+
+1. **Discover test configuration**: locate `vitest.config.ts` or equivalent, verify the coverage provider (v8), check excluded patterns.
+2. **Run existing tests** and note any failures.
+3. **Generate a coverage report** (`npm run coverage` / `vitest --coverage`) and extract line, branch, statement, and function coverage.
+4. **Identify uncovered code**: fully uncovered files, and for partially covered files the uncovered line ranges, branches, and functions.
+5. **Report baseline metrics**: overall and per-file percentages, `uncovered_files`, `partially_covered_files`, existing test count, failing tests.
+
+Verify the baseline is present and accurate before planning batches from it.
+
+## Sub-step 2 — Progressive test writing (parallel batches)
+
+Each subagent owns 2–5 source files (max 500 source lines per batch) and writes tests ONE at a time, verifying coverage after each and deleting tests that don't improve it.
+
+**Batching algorithm**: start with the first uncovered file, add files until 5 files OR 500 lines is reached, create the batch, repeat until all files are assigned. Example:
+
+```
+Source files: auth/service.ts (120), auth/controller.ts (180), users/service.ts (150),
+              users/controller.ts (200), posts/service.ts (100), posts/controller.ts (300)
+Batches:      1: auth/service, auth/controller, users/service   (450 lines, 3 files)
+              2: users/controller, posts/service                (300 lines, 2 files)
+              3: posts/controller                               (300 lines, 1 file)
+```
+
+Record the batch-to-file map in TodoWrite (one todo per batch) so no source file is skipped. Dispatch all batches in a single message, at most 8 concurrent. Each batch subagent runs this loop **for each source file**:
+
+1. **Initial coverage check**: `vitest --coverage <spec path>`; note current coverage and the first uncovered line/branch.
+2. **Progressive writing loop** (repeat until 100%):
+   a. Write ONE test targeting a specific uncovered line/branch (AAA pattern, proper types, per standards).
+   b. Re-run the focused coverage command and parse the new numbers.
+   c. Decide: coverage increased (even by 1 line) → KEEP and move to the next uncovered target; coverage unchanged → DELETE the test immediately and write a different one.
+   d. 100% reached → next file in the batch; otherwise repeat from (a).
+3. **Batch completion verification**: run coverage for all the batch's test files together; verify every source file is at target; count tests created vs deleted.
+4. **Standards compliance**: lint the created test files, fix type errors, verify documentation.
+
+Each batch reports: per-file coverage (lines/branches/statements/functions), `tests_created` / `tests_kept` / `tests_deleted`, standards compliance, and whether all files reached target. **Retry rule**: if any batch reports partial or failed, re-batch the incomplete files and dispatch again (still capped at 8 concurrent).
+
+## Sub-step 3 — Remove redundant tests (plan, then parallel removal)
+
+**CRITICAL RULE — source-file-scoped coverage**: each test file mirrors exactly one source file (`src/auth/service.ts` → `spec/auth/service.spec.ts`), and coverage is verified per mirrored source file. A test is redundant ONLY IF it does not contribute to its mirrored source file's coverage. Tests that contribute to their mirrored file MUST be kept even when globally redundant, and tests that verify distinct behavioral aspects must be kept even when they cover the same lines.
+
+**Phase A — plan**: dispatch one Plan subagent (`subagent_type="Plan"`) to read every test file and, per test, determine lines covered, branches exercised, and the unique behavior verified. Redundancy patterns to flag (always scoped to the mirrored source file):
+
+- same logic with different data values that adds neither coverage nor a distinct behavior;
+- same lines AND same behavioral aspect as another test;
+- artificial scenarios contributing neither coverage nor behavioral documentation;
+- wrapper-function tests without unique coverage or insight.
+
+The plan groups candidates by file, marks each `safe_to_remove` | `uncertain` | `keep`, and emits removal tasks (max 10 tests per task, least-risky first).
+
+**Phase B — parallel removal**: dispatch removal subagents (max 8 concurrent). For each assigned test:
+
+1. Pre-removal check: run the mirrored source file's focused coverage; it must read 100%.
+2. Remove the single test and save.
+3. Re-run the focused coverage and compare.
+4. Decide: mirrored coverage maintained → keep removed; dropped (even 1%) → RESTORE immediately and mark `essential`. Before removing, also verify the test does not document a unique behavioral aspect (distinct semantic concept, invariant, or edge case) — if it does, keep it.
+
+Aggregate removal reports, verify 100% is maintained per mirrored source file, and compute redundancy metrics (removed, kept-as-essential, redundancy %).
+
+## Sub-step 4 — Fix test issues & standards compliance
+
+List all test files with Glob. ≤25 files → one subagent; >25 files → batches of 10, max 8 concurrent. Each subagent: identify standards violations and logic errors; fix type errors (no `any`), apply the AAA pattern, correct naming, add missing documentation; then verify with the project test, lint, and type-check commands and confirm coverage is unchanged. Retry any batch that leaves issues open.
+
+## Sub-step 5 — Restructure fixtures & test doubles (plan, then execute)
+
+**Phase A — plan**: dispatch one Plan subagent to inventory all test support files (`spec/fixtures/**`, `spec/mocks/**`, inline fixtures/mocks), identify duplication (similar fixture data, repeated mock configurations, inline fixtures that could be shared), assess organization and naming, find unused files (fixtures never imported, mocks never used, factories without references), and emit a restructuring plan: consolidations, organization moves, deletion candidates, and the migration order.
+
+**Phase B — execute**: one subagent for a simple plan, several (max 8) for a complex one:
+
+1. Create the new shared fixture/mock files.
+2. Migrate fixtures/mocks from old locations.
+3. Update imports in every consuming test file.
+4. Remove the old definitions, then delete unused files named by the plan.
+5. Verify after each major change: run the tests, fix broken imports, then type-check and lint.
+
+Never leave old and new fixture systems in parallel. Report created/deleted files, consolidation counts, and verification results.
+
+## Sub-step 6 — Final verification (single subagent)
+
+Dispatch one independent validator to verify every claim:
+
+1. **Coverage**: run the full coverage command; line/branch/statement/function must all meet the target; no uncovered code remains.
+2. **Execution**: full test run passes; count tests; note execution time; check for flaky tests.
+3. **Standards**: lint clean, type-check clean, structure review (AAA, naming, docs, no `any`).
+4. **Efficiency metrics**: source files, test files, total tests, tests per source file, coverage-per-test ratio, suite execution time; assess minimality and fixture organization.
+5. **Verdict**: pass/fail with blockers and recommendations.
+
+PASS → workflow complete. FAIL → return to the sub-step that owns each blocker; report failure with details only when a blocker is not fixable here.
+
+## Final report shape
+
+Aggregate into one report covering: baseline coverage → batches executed, tests created/kept/deleted → redundancy candidates, removed, kept-essential → issues fixed → fixtures consolidated, unused files deleted → final verified coverage, all-passing status, efficiency metrics, and per-source statements/branches/functions/lines. Name every justified gap.

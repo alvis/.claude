@@ -1,148 +1,77 @@
 ---
 name: find-unused
-description: Identify commented-out code, unused symbols, and unused test helpers using LSP-based analysis. Use when cleaning up dead code, finding orphaned functions, or optimizing codebase size.
+description: Perform read-only dead-code discovery for commented-out code, unused symbols, and unused test helpers. Use when identifying removal candidates; report evidence without deleting, refactoring, linting, or otherwise modifying the inspected source.
 model: opus
 context: fork
-agent: general-purpose
 allowed-tools: Bash, Read, Glob, Grep, Task
-argument-hint: [path/to/scan] [--exclude=pattern]
+argument-hint: "[path/to/scan] [--exclude=pattern]"
 ---
 
 # Find Unused Code
 
-Analyzes codebase to identify commented-out code blocks, unused exports, unused functions, and unused test helpers. Uses parallel analysis agents for comprehensive coverage.
+Own read-only dead-code discovery: commented-out code blocks, unused exports
+and symbols, unused test helpers, and production code referenced only by
+tests. Removal belongs to the caller — `coding:lint` runs this skill as its
+pre-flight and handles user-confirmed deletion.
 
-## 🎯 Purpose & Scope
+## Boundaries
 
-**What this command does NOT do**:
+- Use for: identifying removal candidates with file:line evidence across a
+  path, directory, or glob; LSP-backed unused-symbol analysis; commented-out
+  code detection; finding orphaned fixtures, mocks, and test helpers.
+- Do not use for: deleting or modifying code (report only; `coding:lint` owns
+  confirmed removal), running tests, refactoring (`coding:refactor`), or
+  scanning binary and non-code files.
 
-- Delete any code (read-only analysis)
-- Modify files
-- Run tests
-- Create new files
+## Inputs
 
-**When to REJECT**:
+- **Required**: none — defaults to the current directory.
+- **Optional**: a path, directory, or glob to scan; `--exclude=pattern` to
+  drop matching files from analysis.
 
-- Path doesn't exist
-- Request to delete code (suggest manual review)
-- Binary or non-code files targeted
+## Workflow
 
-## 🔄 Workflow
+1. Validate the target path exists; reject missing paths and binary or
+   non-code targets with a clear message and a suggested correction. Discover
+   source files via Glob, apply `--exclude` patterns, and group by file type.
+2. Launch three analysis agents in parallel via Task — Commented Code, Unused
+   Symbols (hierarchical LSP: file-level reachability, then symbol-level,
+   then test helpers), and Test-Only Production Code — following the
+   decomposition in
+   [references/parallel-analysis.md](references/parallel-analysis.md). Each
+   agent maps detection tasks to LSP operations and classifies references per
+   [references/lsp-operations.md](references/lsp-operations.md): only
+   actual-usage references (calls, instantiations, reads, type annotations)
+   count — exports, re-exports, imports, and type-only imports do not.
+3. Merge agent findings: deduplicate across agents, drop false positives
+   (documentation comments, license headers, dynamic imports), and prioritize
+   — high: unused exports (potential dead code); medium: commented-out code
+   blocks; low: unused test helpers.
+4. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker remains,
+   then report the blocker instead of looping.
 
-ultrathink: you'd perform the following steps
+<IMPORTANT>
+This skill never edits, deletes, or creates project files. Every finding is
+evidence for the user or a calling skill to act on.
+</IMPORTANT>
 
-### Step 1: Setup Analysis
+## Verification
 
-1. **Parse Arguments**
-   - Extract path from $ARGUMENTS (default: current directory)
-   - Parse --exclude patterns
-   - Validate path exists
+- The scanned path was valid, and every discovered file was analyzed or
+  explicitly excluded.
+- All three analysis agents returned reports, and merged findings carry no
+  duplicates.
+- Each unused-symbol finding cites only non-usage references under the
+  classification rules in
+  [references/lsp-operations.md](references/lsp-operations.md).
+- No project file was modified by this run.
 
-2. **Discover Files**
-   - Use Glob to find source files
-   - Filter by exclude patterns
-   - Group by file type
+## Completion
 
-### Step 2: Parallel Analysis
-
-Launch three parallel analysis agents (Commented Code / Unused Exports / Unused Test Helpers). See `references/parallel-analysis.md` for the full three-agent decomposition, including the hierarchical LSP phases (file-level → symbol-level → test helpers) and the test-only production code detector. See `references/lsp-operations.md` for the LSP→task mapping and reference-classification rules each agent relies on.
-
-1. **Commented Code Agent**
-   - Find multi-line comment blocks
-   - Identify commented-out code patterns
-   - Distinguish from documentation
-   - Report locations and context
-
-2. **Unused Exports Agent**
-   - Find all exports in codebase
-   - Trace import references
-   - Identify unreferenced exports
-   - Check for dynamic imports
-
-3. **Unused Test Helpers Agent**
-   - Find test utility functions
-   - Check usage across test files
-   - Identify orphaned fixtures
-   - Report unused mocks
-
-### Step 3: Consolidate Results
-
-1. **Merge Findings**
-   - Combine agent reports
-   - Remove duplicates
-   - Categorize by severity
-
-2. **Prioritize**
-   - High: Unused exports (potential dead code)
-   - Medium: Commented code blocks
-   - Low: Unused test helpers
-
-### Step 4: Reporting
-
-**Output Format**:
-
-```
-[✅] Command: find-unused $ARGUMENTS
-
-## Summary
-- Path scanned: [path]
-- Files analyzed: [count]
-- Commented blocks: [count]
-- Unused exports: [count]
-- Unused test helpers: [count]
-
-## Findings
-
-### 🔴 Unused Exports (High Priority)
-- [file:line] `exportName` - No references found
-- [file:line] `exportName` - Only internal use
-
-### 🟡 Commented Code Blocks (Medium Priority)
-- [file:line] - [N] lines of commented code
-- [file:line] - [N] lines of commented code
-
-### 🟢 Unused Test Helpers (Low Priority)
-- [file:line] `helperName` - No test references
-- [file:line] `fixtureName` - Unused fixture
-
-## Recommendations
-1. Review unused exports for potential removal
-2. Delete or restore commented code blocks
-3. Clean up unused test helpers
-
-## Next Steps
-- Review findings manually
-- Remove confirmed dead code
-- Update tests if needed
-```
-
-## 📝 Examples
-
-### Scan Entire Project
-
-```bash
-/find-unused
-# Analyzes all code in current directory
-```
-
-### Scan Specific Directory
-
-```bash
-/find-unused "src/services/"
-# Focuses analysis on services directory
-```
-
-### Exclude Patterns
-
-```bash
-/find-unused "src/" --exclude="*.test.ts"
-# Excludes test files from analysis
-```
-
-### Error Case
-
-```bash
-/find-unused "nonexistent/"
-# Error: Path 'nonexistent/' does not exist
-# Suggestion: Check path with 'ls' or use '.' for current directory
-```
+Report the path scanned, files analyzed, and per-category counts, then list
+findings grouped by priority — high: unused exports; medium: commented-out
+blocks; low: unused test helpers — each with file:line, the symbol or
+snippet, and its evidence (for example "no usage references"). Recommend next
+steps (manual review, removal via the `coding:lint` pre-flight). A partial
+result must state which agent or phase failed and what was still scanned.

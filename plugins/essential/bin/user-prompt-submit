@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ESSENTIAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec "$ESSENTIAL_ROOT/hooks/lib/user-prompt-submit.sh" "$@"
