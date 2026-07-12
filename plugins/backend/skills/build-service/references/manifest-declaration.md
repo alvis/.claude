@@ -1,93 +1,99 @@
 # Manifest Declaration — Schema & Operation Patterns
 
-This reference is consulted by **Step 2 (Declare Operations)** when a new manifest package needs to be created or new operations added to an existing manifest. Skip if all operations already have manifests (extend mode with existing ops).
+Consulted by workflow step 2 (Declare operation manifests) when a new manifest
+package must be created or new operations added to an existing manifest. Skip
+when all operations already have manifests.
 
-## Phase 2: Execution (Subagents)
+## Dispatch prompt (one subagent per operation, at most 3 concurrent)
 
-Spin up subagents for schema creation, up to **3** at a time:
+Each dispatch prompt contains the assignment, steps, schema patterns, and
+report contract below.
 
-    >>>
-    **ultrathink: adopt the Schema Definition Specialist mindset**
+<IMPORTANT>
+The subagent performs the task itself; it must not delegate the work to
+another subagent.
+</IMPORTANT>
 
-    - You're a **Schema Definition Specialist** with deep expertise in JSON Schema and TypeScript integration who follows these technical principles:
-      - **Type Safety First**: Ensure all schemas compile to strict TypeScript types
-      - **Validation Completeness**: Include all necessary validation rules and constraints
-      - **Documentation Integration**: Every schema field must have clear descriptions
+**Assignment**: create schema and manifest for operation `[OPERATION_NAME]`
+in service `[SERVICE_NAME]`.
 
-    <IMPORTANT>
-      You've to perform the task yourself. You CANNOT further delegate the work to another subagent
-    </IMPORTANT>
+**Steps**:
 
-    **Assignment**
-    Create schema and manifest for operation: [OPERATION_NAME] in service: [SERVICE_NAME]
+1. Create the operation directory with camelCase naming under
+   `manifests/{service}/source/operations/`
+2. Define the input schema using the `as const satisfies JsonSchema` pattern
+3. Define the output schema (when the operation returns data)
+4. Export TypeScript types using the `FromSchema` pattern
+5. Create the operation manifest with `createOperationManifest`, including a
+   comprehensive mock
+6. Register the operation in `source/index.ts` (alphabetical order)
 
-    **Steps**
-    1. Create operation directory with camelCase naming under `manifests/{service}/source/operations/`
-    2. Define input schema using `as const satisfies JsonSchema` pattern
-    3. Define output schema (if operation returns data)
-    4. Export TypeScript types using `FromSchema` pattern
-    5. Create operation manifest with `createOperationManifest` including comprehensive mock
-    6. Register operation in `source/index.ts` (alphabetical order)
+**Schema patterns**:
 
-    **Schema Patterns**:
+Input schema:
 
-    Input Schema:
-    ```typescript
-    import type { JsonSchema } from '@theriety/manifest';
-    export default {
-      type: 'object',
-      additionalProperties: false,
-      required: ['field1'],
-      properties: { field1: { type: 'string', format: 'uuid', description: '...' } },
-    } as const satisfies JsonSchema;
-    ```
+```typescript
+import type { JsonSchema } from '@theriety/manifest';
+export default {
+  type: 'object',
+  additionalProperties: false,
+  required: ['field1'],
+  properties: { field1: { type: 'string', format: 'uuid', description: '...' } },
+} as const satisfies JsonSchema;
+```
 
-    Schema Export:
-    ```typescript
-    import input from './input';
-    import output from './output';
-    import type { FromSchema } from '@theriety/manifest';
-    export type Input = FromSchema<typeof input>;
-    export type Output = FromSchema<typeof output>;
-    export default { input, output };
-    ```
+Schema export:
 
-    Manifest:
-    ```typescript
-    import { createOperationManifest } from '@theriety/manifest';
-    import schema from './schema';
-    import type { Input, Output } from './schema';
-    export default createOperationManifest({
-      path: import.meta.url,
-      schema,
-      async: true,
-      mock: async (input: Input): Promise<Output> => ({ /* realistic mock */ }),
-    });
-    ```
+```typescript
+import input from './input';
+import output from './output';
+import type { FromSchema } from '@theriety/manifest';
+export type Input = FromSchema<typeof input>;
+export type Output = FromSchema<typeof output>;
+export default { input, output };
+```
 
-    **Report** (<1000 tokens):
-    ```yaml
-    status: success|failure|partial
-    summary: 'Schema and manifest created for [operation]'
-    modifications: ['schema/input.ts', 'schema/output.ts', 'schema/index.ts', 'index.ts']
-    outputs:
-      input_schema_created: true|false
-      output_schema_created: true|false|not_required
-      manifest_created: true|false
-    issues: []
-    ```
-    <<<
+Manifest:
 
-## Phase 3: Review (Subagents)
+```typescript
+import { createOperationManifest } from '@theriety/manifest';
+import schema from './schema';
+import type { Input, Output } from './schema';
+export default createOperationManifest({
+  path: import.meta.url,
+  schema,
+  async: true,
+  mock: async (input: Input): Promise<Output> => ({ /* realistic mock */ }),
+});
+```
 
-Review TypeScript compilation, schema format, FromSchema types, and requirements alignment (read-only).
+**Report** (under 1000 tokens):
 
-## Phase 4: Decision (You)
+<report>
 
-- **PROCEED** if schemas validated → Step 3
-- **FIX ISSUES** if compilation failures → retry Phase 2
+```yaml
+status: success|failure|partial
+summary: 'Schema and manifest created for [operation]'
+modifications: ['schema/input.ts', 'schema/output.ts', 'schema/index.ts', 'index.ts']
+outputs:
+  input_schema_created: true|false
+  output_schema_created: true|false|not_required
+  manifest_created: true|false
+issues: []
+```
 
-## Manifest Project Structure (when creating a new manifest package)
+</report>
+
+## Review and decision
+
+- Review TypeScript compilation, schema format, `FromSchema` types, and
+  requirements alignment. Reviews are read-only — a review subagent must not
+  modify files.
+- Proceed to the next workflow step when all schemas validate; on compilation
+  failures, re-dispatch only the failed operations (bound retries to 2, then
+  report the remaining issues).
+
+## Manifest project structure (when creating a new manifest package)
 
 ```
 manifests/{name}/
