@@ -20,6 +20,8 @@ Own test authoring and test-suite maintenance. Do not implement production behav
 
 ## Workflow
 
+Load [references/orchestration.md](references/orchestration.md) for the full coordination procedure: batching algorithm, subagent dispatch prompts, the per-test coverage-verification loop, redundancy-removal phases, fixture-restructuring phases, and report shapes.
+
 1. Resolve scope and repository-native test/coverage commands. Inventory each source file, current tests, pending markers, fixture ownership, and configured exclusions. Capture per-source and aggregate coverage before editing.
 2. Partition independent source/test pairs into coherent batches: 2-5 source files and at most 500 source lines per batch, dispatched at most 8 in parallel; re-batch and retry any incomplete batch. Parallelize only disjoint files and fixtures; serialize shared fixtures, global setup, snapshots, and integration state. Record the batch-to-file map so no source is skipped.
 3. For every proposed case apply **test → measure → keep**: add the smallest test, run its focused suite, measure the intended source/branch, and keep it only when it adds behavioral evidence or coverage. Delete tests that merely restate another assertion.

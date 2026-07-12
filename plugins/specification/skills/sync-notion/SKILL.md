@@ -35,6 +35,28 @@ After every pair:
 2. Verify content, page identity, `ref:`/`parent:` metadata, recursive child/link coverage, and that unrelated local frontmatter was preserved.
 3. Treat a non-empty unexpected diff, lost metadata, unresolved conflict, failed create/ref write-back, or missing child as partial/failure. Never call a push successful merely because the command exited zero.
 
+When local is authoritative (`local-to-notion`, or `two-way-merge` after the
+merge landed locally) and the diff shows drift, re-push the drifted file and
+re-diff — at most 3 full cycles — before treating the pair as failed.
+
+On an integrity failure, stop before touching further pairs and escalate: print
+the failing pair (file path, notion ref, the critical issues) followed by the
+complete corrected local content in copy-paste-ready markdown, then ask the
+user via `AskUserQuestion` whether they have fixed the page manually
+(`Fixed` — optionally re-verify the pair), want to `Skip` the pair (final
+status becomes partial), or `Abort` the run. Never silently continue past a
+data-loss signal.
+
+## Update tracking metadata
+
+For every pair that synced and verified successfully, update the local file's
+frontmatter: confirm `ref:` (the CLI writes it back on create), and set
+`last_synced_at` (the sync timestamp, ISO 8601), `sync_mode`, and
+`sync_status` (`success` or `partial`). Preserve every other existing field
+(`parent:`, related files, custom fields) and leave the body untouched. A
+metadata-update failure is non-critical — the sync itself already happened —
+so report it as partial rather than failure.
+
 ## Completion
 
 ```yaml

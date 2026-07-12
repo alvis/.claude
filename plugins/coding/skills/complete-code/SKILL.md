@@ -42,6 +42,13 @@ This skill may read and run existing tests to discover and verify the establishe
 contract. It does not author broad test suites, pursue coverage, create replacement
 placeholders, or guess behavior that the repository does not specify.
 
+## Applicable standards
+
+Implementations must satisfy the constitution standards for `universal/write`,
+`function/write`, `typescript/write`, `documentation/write`,
+`observability/write`, and `testing/write` (when touching tests to verify a
+contract).
+
 ## Workflow
 
 1. Validate the scope and reject the removed flag before scanning.

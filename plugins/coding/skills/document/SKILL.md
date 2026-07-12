@@ -23,6 +23,11 @@ Reject a missing project root, unreadable source, or request to document a diffe
 
 ## Workflow
 
+Load [references/authoring-rules.md](references/authoring-rules.md) for the
+concrete drafting rules (section order, TOC discipline, Support Matrix, folder
+notation, banned behaviors), the ARCHITECTURE tree/diagram/split rules, the
+independent-review audit checklist, and the retry/rollback criteria.
+
 1. Resolve the package/workspace and its anchors. Precedence is local explicit template/checklist, existing README/ARCHITECTURE structure, repository documentation rules, then closest same-archetype sibling. Use this skill's `references/README.template.md`, `ARCHITECTURE.template.md`, `package-types.md`, and one matching example only when repository anchors do not decide the shape.
 2. Build an evidence map before drafting: manifest metadata, public exports, entry points, scripts, environment/configuration, tested examples, error behavior, dependency direction, and important source modules. Classify the package archetype (library, CLI, service, data/IaC, stateless app, or monorepo) and map each intended claim to a file or executable command.
 3. Keep artifact ownership separate. README explains audience, installation, quick start, public usage/API, configuration, and links. ARCHITECTURE explains boundaries, components, runtime/data flow, dependency direction, extension points, and operational constraints; do not duplicate README tutorials.

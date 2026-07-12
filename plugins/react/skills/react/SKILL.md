@@ -21,6 +21,8 @@ Standards live under `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`:
 
 Read `write.md` before authoring and `scan.md` when reviewing. Read an individual rule only after its scan identifies a candidate violation.
 
+When authoring, pair `components` with `accessibility` — every component must be accessible; add `hooks` whenever a `use*` function is involved, add `storybook` for `*.stories.tsx` files, and decide the `project-structure` reusability tier before drafting. For shared-component theme contracts (`[data-brand]` scopes, CSS-variable overrides, Tailwind theme integration), apply the web plugin's `theming` standard when that plugin is available; otherwise record that theming rules were not evaluated.
+
 ## Routing
 
 - Mechanical enforcement across one or more eligible files: use `react:lint`.

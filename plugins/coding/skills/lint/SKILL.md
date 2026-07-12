@@ -3,8 +3,8 @@ name: lint
 description: Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope, including calls extended by another plugin's portable lint profile.
 model: opus
 context: fork
-allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
-argument-hint: "[specifier] [--scope=SCOPE] [--profile=ABSOLUTE_PATH]"
+allowed-tools: Bash, Task, Read, Glob, Edit, Grep, Skill, AskUserQuestion, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
+argument-hint: "[specifier] [--scope=SCOPE] [--skip-unused] [--profile=ABSOLUTE_PATH]"
 ---
 
 # Linting
@@ -15,6 +15,7 @@ Apply generic coding standards mechanically. This skill owns file discovery, sco
 
 - `specifier`: optional file, directory, or glob. Default: repository root.
 - `--scope`: `uncommitted` (default), `all`, or a focused section hint.
+- `--skip-unused`: bypass the pre-flight unused-code scan entirely.
 - `--profile=<absolute-path>`: internal extension contract for another plugin. Reject relative or unreadable paths.
 
 The caller forwards its original arguments unchanged and may append one profile. Direct calls without a profile apply generic checks to every eligible source file, regardless of framework.
@@ -35,6 +36,9 @@ Fail before editing if the profile is invalid, references a missing standard/sca
 
 ## Workflow
 
+You are the lead orchestrator: coordinate, delegate, and aggregate only — never scan, lint, review, or read standard files yourself. Load [references/team-lint-cycle.md](references/team-lint-cycle.md) for the lead rules, agent pool lifecycle, per-batch task contents, the lint–review cycle, and `/goal` convergence semantics.
+
+0. Unless `--skip-unused` is set, run the pre-flight unused-code scan: invoke `coding:find-unused` with the specifier (or repo root). Zero findings → proceed silently. Otherwise present each finding via `AskUserQuestion` (file:line + symbol, Remove/Keep, ≤4 questions per call, paginated), then dispatch one haiku cleanup agent with the confirmed-unused list to delete precisely and report. Record scan/removed/kept counts for the final report; they never count toward `violations_found_total`. `--scope` does not apply here — dead-code detection is project-wide by nature.
 1. Parse `specifier`, `--scope`, and the optional profile independently of argument order.
 2. Resolve candidate files:
    - `uncommitted`: union unstaged, staged, and untracked files, then apply the specifier.
@@ -43,14 +47,14 @@ Fail before editing if the profile is invalid, references a missing standard/sca
 3. Apply profile eligibility and exclusions when supplied. Stop cleanly if no files remain.
 4. Discover generic coding standards from active plugin context. Add profile standards without replacing or duplicating generic standards.
 5. Batch related files, with at most two files per batch.
-6. For each batch, delegate mechanical linting to a suitable available subagent that cannot delegate further:
+6. For each batch, delegate mechanical linting to a suitable available subagent that cannot delegate further (haiku linters, max 4 concurrent — see the team reference for the full task contents and lifecycle):
    - Run `${CLAUDE_SKILL_DIR}/../../scripts/pyrun.sh ${CLAUDE_SKILL_DIR}/../../scripts/lint_profile_runner.py [--profile=<absolute-path>] <files>` exactly once. The runner resolves Coding resources from its installed location.
    - The runner executes the generic scanner exactly once, then each profile scanner exactly once in declared order. Profile resources resolve relative to the absolute profile path.
    - Treat scanner output as advisory; confirm candidates against the matching rule before editing.
    - Apply generic and profile standards only within the requested scope.
    - Run project lint, type, and focused test commands after edits.
    - Return `violations_found`, `status`, files changed, checks run, and remaining issues.
-7. Independently review batches that changed files. Already-compliant batches need no review.
+7. Independently review batches that changed files with two sonnet reviewers per batch, repeating the fix–review round until both approve (see the team reference). Already-compliant batches need no review.
 8. Aggregate batch counts and use the worst status: `failure > partial > success > compliant`.
 
 ## Verification
@@ -70,4 +74,4 @@ violations_found_total: 0
 status: compliant # compliant | success | partial | failure
 ```
 
-Then report the command, profile report label when present, scope, files scanned and modified, standards and scanners applied, verification commands, review coverage, and remaining issues. Use `compliant` only for a clean pass with no edits and `success` when violations were fixed. A caller using a profile receives this same report shape.
+Then report the command, the unused-code pre-flight (ran/skipped, findings/removed/kept), profile report label when present, scope, files scanned and modified, standards and scanners applied, verification commands, review coverage, agent lifecycle counts, and remaining issues. Use `compliant` only for a clean pass with no edits and `success` when violations were fixed. A caller using a profile receives this same report shape.

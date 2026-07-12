@@ -53,17 +53,17 @@ For team runs, create three specialist roles via `TeamCreate` (no seat names a m
 ## Direction and artifact procedure
 
 1. Acquire the baseline: source structure, rendered desktop and mobile captures, computed styles/tokens, existing states, content hierarchy, and any prior `DESIGN.md`. In facelift mode also record preserved content and conversion paths.
-2. Write a three-part direction summary: visual thesis, content plan, and interaction thesis. Resolve audience, aesthetic properties, signature element, hard constraints, and signature micro-interaction.
+2. Write a three-part direction summary: visual thesis, content plan, and interaction thesis. Resolve audience, aesthetic properties, signature element, hard constraints, and signature micro-interaction. Prime the craft baseline from `references/design-reference.md` (font selection, OKLCH color rules, motion values, separator vocabulary, absolute bans), HCI principles from `references/design-psychology.md`, and component-type patterns from `references/component-patterns.md`.
 3. Unless `--skip-directions` is valid, generate 3-5 distinct direction candidates using `references/design-boards.md`; render and inspect the board, send the image, and obtain one explicit choice. Record the choice and rejected alternatives in `DECISIONS.md`.
-4. Enumerate page areas. For each area, generate `N` materially different layout/density/state alternatives (default 3), render them in the locked direction under the workspace `boards/` directory, inspect the board, and select one — one choice at a time, later boards generated knowing earlier picks. `--quick` records the top-ranked choice and alternatives without a question. Use `references/component-patterns.md`, `references/design-psychology.md`, and `references/design-reference.md` only when their conditional guidance applies.
-5. Create or update `DESIGN.md` from `references/design.template.md`. Preserve the template's contract: context and decision log, visual thesis, content hierarchy, token/color/type system, responsive rules, component states, motion and reduced-motion behavior, accessibility, chosen area variants, implementation mapping, verification evidence, and open decisions.
+4. Enumerate page areas. For each area, generate `N` materially different layout/density/state alternatives (default 3), render them in the locked direction under the workspace `boards/` directory, inspect the board, and select one — one choice at a time, later boards generated knowing earlier picks. `--quick` records the top-ranked choice and alternatives without a question.
+5. Create or update `DESIGN.md` from `references/design.template.md`. Preserve the template's contract: context and decision log, visual thesis, content hierarchy, token/color/type system, responsive rules, component states, motion and reduced-motion behavior, accessibility, chosen area variants, implementation mapping, verification evidence, and open decisions. Cover every applicable row of `references/world-class-checklist.md` in the spec — page transition, reveal language, per-boundary separators, hover and focus states, dynamic-region states.
 6. Produce the HTML preview at `previews/tokens/preview.html` in the workspace from `references/preview.template.html` when a preview or design-only artifact is required. Render it in the browser and iterate until it represents `DESIGN.md` at desktop and mobile, then gate on user sign-off before any implementation.
 
 ## Authorized implementation loop
 
 When source changes are authorized, the frontend-implementer builds from the signed-off design:
 
-1. Map every selected area and state to concrete files/components before editing. Preserve framework conventions and reuse the existing component system.
+1. Run the component-reuse gate in `references/component-reuse.md` before writing any component or hook: detect the existing library and architecture, confirm library/architecture/styling strategy with the user, and apply its promotion rules to every new shareable component. Then map every selected area and state to concrete files/components before editing. Preserve framework conventions and reuse the existing component system.
 2. Invoke `web:css` for root theme/color-mode changes. Apply layout, typography, semantic tokens, interactions, and states in the owning framework files; do not replace working application logic with preview-only markup.
 3. Run the project formatter, typecheck, and focused tests. Start or reuse the documented dev server.
 4. Render the changed route through the shared browser and capture it in light and dark at desktop and 375px under the workspace `captures/` directory.
@@ -77,11 +77,13 @@ Implementation may delegate bounded file work, but this skill retains the visual
 All completed design work must record:
 
 - rendered desktop and mobile evidence, plus tablet when layout behavior changes there;
-- text/UI contrast from computed foreground and background values, including light and dark modes;
+- text/UI contrast measured with the capture sequence and verbatim WCAG script in `references/contrast-protocol.md`, in both light and dark modes; Lighthouse is a secondary signal only;
 - keyboard reachability and designed `:focus-visible` states;
 - hover, active, loading, empty, and error states for relevant interactive/dynamic regions;
 - `prefers-reduced-motion` behavior for every meaningful animation;
 - no unintended horizontal overflow at each tested viewport;
+- every applicable row of `references/world-class-checklist.md` verified against the rendered result — a missing row is a defect;
+- the AI Slop Test and anti-pattern checks from `references/design-reference.md`;
 - consistency between `DESIGN.md`, preview, and authorized implementation — all 12 design categories at 10/10 from the evaluator, with no unresolved design-vs-implementation divergence except those the user explicitly accepted at the confirmation gate;
 - formatter/type/test results for source edits.
 
