@@ -5,204 +5,62 @@ argument-hint: "[debug instruction or URL]"
 allowed-tools: Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
 
-# Next.js Development & Debugging Skill
+# Next.js debugging
 
-Debugs and inspects Next.js applications by combining **Chrome DevTools MCP** and **next-browser CLI**. Architecture: Chrome DevTools opens the browser page (foundation layer) → next-browser connects via CDP port on top of it → each tool handles what it's best at. Chrome DevTools provides browser-level instrumentation (DOM/styles, performance, Lighthouse, network, device emulation, JS debugging, storage); next-browser provides Next.js-aware introspection (React components, Next.js routes, SSR, errors, screenshots, user interactions).
+Debug and inspect Next.js applications by combining Chrome DevTools MCP and the next-browser CLI. Chrome DevTools opens the browser page (foundation layer); next-browser connects via CDP port on top of it; each tool handles what it is best at. This skill owns runtime diagnosis; `design` owns visual creation, `audit` owns independent design assessment, `storybook` owns story-state auditing.
 
-## When to use
+## Boundaries
 
-- Inspect DOM elements, computed styles, or accessibility tree
-- Debug React component tree, props, or state
-- Analyze console messages, errors, or warnings
-- Profile performance (CPU, memory, traces)
-- Run Lighthouse audits (performance, accessibility, SEO, best practices)
-- Monitor network requests and responses
-- Emulate mobile devices or custom viewports
-- Capture screenshots or visual comparisons
-- Inspect cookies, localStorage, sessionStorage
-- Debug Next.js routes, server actions, or SSR behavior
+- Use for: inspecting DOM, computed styles, or the accessibility tree; debugging React component trees, props, and state; analyzing console messages and errors; profiling performance and memory; Lighthouse audits; network monitoring; device emulation; screenshots and visual comparisons; cookies and web storage; and Next.js routes, server actions, and SSR behavior.
+- Do not use for: creating or iterating UI visuals (`design`), independent design QA (`audit`), or Storybook story audits (`storybook`).
 
-## Environment Setup
+## Inputs
 
-1. **Start dev server** (if not running): `npm run dev` (or detect a running server on the expected port)
-2. **Open browser via Chrome DevTools**: `navigate_page` to the target URL — this launches the controllable browser instance (foundation layer)
-3. **Connect next-browser**: `next-browser open <url>` — connects via CDP port to the Chrome DevTools-launched browser
-4. **Verify**: Both tools now share the same browser session
-
-Chrome DevTools MCP is configured via the plugin's `mcp.json` and available automatically. The `next-browser` CLI must be installed globally or via `npx`.
-
-## Task Classification & Routing
-
-### Page Opening
-
-- **Primary**: Chrome DevTools — `navigate_page`
-- **Fallback**: next-browser — `open`, `goto` for subsequent navigation
-- Chrome DevTools must open the page first (foundation layer); next-browser connects on top
-
-### DOM & Styles
-
-- **Primary**: Chrome DevTools — `evaluate_script`, `take_snapshot`
-- **Fallback**: next-browser — `snapshot` for quick structural view
-- Full programmatic DOM access + computed style inspection via Chrome DevTools
-
-### React Components
-
-- **Primary**: next-browser — `tree`, `tree <id>` (**exclusive**)
-- Inspect component hierarchy, props, and state via next-browser's React-aware tree
-- No Chrome DevTools equivalent for React-level introspection
-
-### Console & Errors
-
-- **Primary**: next-browser — `errors`, `logs`
-- **Fallback**: Chrome DevTools — `list_console_messages` for raw console stream
-- next-browser parses Next.js error overlay and provides structured output
-
-### Performance
-
-- **Primary**: Chrome DevTools — `performance_start_trace`, `performance_stop_trace`, `take_memory_snapshot` (**exclusive**)
-- No next-browser equivalent
-
-### Lighthouse
-
-- **Primary**: Chrome DevTools — `lighthouse_audit` (**exclusive**)
-- No next-browser equivalent
-
-### Network
-
-- **Primary**: Chrome DevTools — `list_network_requests`
-- **Fallback**: next-browser — `network` for quick checks
-- Chrome DevTools provides richer request/response detail
-
-### Screenshots
-
-- **Primary**: next-browser — `screenshot`, `preview`
-- **Fallback**: Chrome DevTools — `take_screenshot` when already in a CDT workflow
-- next-browser saves to file path and provides quick preview convenience
-
-### Device Emulation
-
-- **Primary**: Chrome DevTools — `emulate`, `resize_page`
-- **Fallback**: next-browser — `viewport` for simple width/height
-- Chrome DevTools provides named device profiles with UA, DPR, and screen dimensions
-
-### User Interaction
-
-- **Primary**: next-browser — `click`, `type` (selector-based, more reliable)
-- **Fallback**: Chrome DevTools — `click`, `fill`, `drag`, `upload_file`, `handle_dialog` for advanced interactions
-- Use Chrome DevTools for complex interactions: drag, file upload, dialog handling, checkboxes, dropdowns
-
-### Storage
-
-- **Primary**: Chrome DevTools — `evaluate_script` (JS access to localStorage, sessionStorage, cookies) (**exclusive**)
-- No next-browser equivalent
-
-### Next.js Specific
-
-- **Routes**: next-browser — `routes`, `page`, `project` (**exclusive**)
-- **Server actions**: next-browser — `action <id>` (**exclusive**)
-- **SSR debugging**: next-browser — `ssr lock/unlock` (**exclusive**)
-- No Chrome DevTools equivalent for these
-
-### JS Debugging
-
-- **Primary**: Chrome DevTools — breakpoints, stepping, `evaluate_script` (**exclusive**)
-- No next-browser equivalent for JavaScript debugging
-
-### Accessibility Tree
-
-- **Either**: Chrome DevTools `take_snapshot` or next-browser `snapshot`
-- Functionally equivalent — use whichever tool is already active in the current workflow
+- **Required**: a debug instruction or a target URL.
+- **Optional**: scope hints — routes, components, or files implicated by the issue.
+- **Prerequisites**: a Next.js project whose dev server is running or startable with `npm run dev`; Chrome DevTools MCP (configured via the plugin's `mcp.json`, available automatically); the `next-browser` CLI installed globally or via `npx`.
 
 ## Workflow
 
-### Step 1: Spin up the implementation team
+1. Set up the shared session: start the dev server if not running (or detect a running server on the expected port), open the target URL with Chrome DevTools `navigate_page` — this launches the controllable browser instance — then connect next-browser with `next-browser open <url>` via the CDP port. Verify both tools share the same browser session.
+2. Classify the instruction into a routing category and pick the primary tool:
 
-You are the Lead Orchestrator. Estimate scope: count components + hooks +
-files implied by the task. Create a persistent team via `TeamCreate`:
+   | Category | Primary tool |
+   |---|---|
+   | Page opening | Chrome DevTools `navigate_page` (foundation; next-browser `open`/`goto` for subsequent navigation) |
+   | DOM & styles | Chrome DevTools `evaluate_script`, `take_snapshot` |
+   | React components | next-browser `tree`, `tree <id>` (exclusive — no Chrome DevTools equivalent) |
+   | Console & errors | next-browser `errors`, `logs` (parses the Next.js error overlay) |
+   | Performance | Chrome DevTools `performance_start_trace`, `performance_stop_trace`, `take_memory_snapshot` (exclusive) |
+   | Lighthouse | Chrome DevTools `lighthouse_audit` (exclusive) |
+   | Network | Chrome DevTools `list_network_requests` |
+   | Screenshots | next-browser `screenshot`, `preview` |
+   | Device emulation | Chrome DevTools `emulate`, `resize_page` (named device profiles with UA, DPR, screen dimensions) |
+   | User interaction | next-browser `click`, `type`; Chrome DevTools for drag, file upload, dialogs, checkboxes, dropdowns |
+   | Storage | Chrome DevTools `evaluate_script` for localStorage/sessionStorage/cookies (exclusive) |
+   | Next.js specific | next-browser `routes`/`page`/`project`, `action <id>`, `ssr lock`/`ssr unlock` (all exclusive) |
+   | JS debugging | Chrome DevTools breakpoints, stepping, `evaluate_script` (exclusive) |
+   | Accessibility tree | either Chrome DevTools `take_snapshot` or next-browser `snapshot` — use whichever is already active |
 
-- implementer teammates (haiku) — `ceil(files / 10)`, minimum 1
-- 1× reviewer teammate (sonnet)
+   Fallback order, per-category rationale, and multi-step recipes (slow page, broken component render, mobile layout, failed API call, SSR inspection): see [references/tool-routing.md](references/tool-routing.md). Full tool inventories: [references/chrome-devtools-tools.md](references/chrome-devtools-tools.md) and [references/next-browser-commands.md](references/next-browser-commands.md).
+3. Execute with the primary tool; fall back to the secondary when the primary is unavailable or insufficient.
+4. Analyze and summarize findings with evidence. If code fixes are needed, provide file paths and specific changes. When the fix spans enough files that direct editing would swamp session context, dispatch an implementation team per [references/implementation-team.md](references/implementation-team.md); otherwise fix inline.
+5. When this skill creates or modifies any visible page or component, integrate design quality:
+   - Invoke the `design` skill first for all visual decisions — layout, color, typography, spacing, animation. Do not implement UI without it; it iterates in a browser feedback loop until all 12 design categories score 10/10.
+   - After implementation, spawn a subagent to run the `audit` skill on the affected URL/component; it checks compliance against the web plugin's `constitution/standards/design/scan.md`. Address all P0 findings before considering work complete, P1 when feasible; P2 is optional polish. Work is not done until the audit subagent confirms visual quality.
+   - Consult the web plugin's `constitution/standards/design/write.md` for the spacing scale (4px/8px grid), type scale (1.25 ratio), color palette construction, component state requirements (loading/empty/error/success/permission), and token usage.
+6. If the issue is not resolved, try the fallback tool or a different approach and loop back to step 3.
+7. When done, optionally close skill-opened sessions with `next-browser close`; never close a browser session owned by another skill.
+8. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
 
-Partition the file set so each implementer owns a coherent slice (by
-feature / route / component cluster — never random shards). Pass standards
-as paths only:
-  - plugins/react/constitution/standards/
-  - plugins/web/constitution/standards/
+## Verification
 
-Cycle: lead briefs each implementer with their slice + standards paths →
-implementers stream completed files → reviewer audits each batch → lead
-orchestrates and aggregates only (never reads file bodies) → `TeamDelete` on
-completion.
+- Every diagnostic claim cites tool evidence (trace, snapshot, log, request, or screenshot), not inference alone.
+- Exclusive capabilities were routed to their owning tool per the table above.
+- For UI-creating or UI-modifying work: the design skill ran first and the audit subagent reported no unaddressed P0 findings.
+- Any dispatched implementation team was deleted and its reviewed slices accounted for.
+- Session teardown honored ownership.
 
-Context monitoring: every `SendMessage` reply MUST include
-`context_used: <token-count>`. When `context_used > 150_000` for any teammate,
-lead `TeamDelete`s that teammate, spawns a replacement via `TeamCreate`, and
-re-issues the in-flight slice with a brief handover (files completed, files
-remaining, decisions made).
+## Completion
 
-### Step 2: Setup, classify, execute
-
-1. **Setup** — Start the dev server. Open the browser via Chrome DevTools `navigate_page` (foundation). Connect next-browser via CDP.
-2. **Classify** — Parse the user's debug instruction. Map to a category from the routing table above.
-3. **Execute** — Use the routing table to pick the correct primary tool for the category. Fall back to the secondary tool if the primary is unavailable or insufficient.
-4. **Analyze** — Summarize findings. If code fixes are needed, provide file paths and specific changes.
-5. **Iterate** — If the issue is not resolved, try the fallback tool or a different approach. Loop back to step 3.
-6. **Complete** — When done, optionally close browser sessions: `next-browser close`.
-
-## Design Quality Integration
-
-**MANDATORY**: When this skill creates or modifies UI pages or components, it MUST integrate with the design and audit skills.
-
-### Design First (Required for All UI Work)
-
-When creating or modifying ANY visible page or component:
-1. **Invoke the `design` skill** to handle all visual decisions — layout, color palette, typography, spacing, animations
-2. The design skill owns visual excellence. It will iterate in a browser feedback loop until all 12 design categories score 10/10
-3. Do not implement UI without running through the design skill first
-
-### Audit at End (Required via Subagent)
-
-After implementation is complete:
-1. **Spawn a subagent** to run the `audit` skill on the affected URL/component
-2. The audit skill checks compliance against `constitution/standards/design/scan.md`
-3. Address all P0 findings before considering work complete
-4. Address P1 findings when feasible
-5. P2 findings are optional polish
-6. Work is NOT done until the audit subagent confirms visual quality
-
-### Design Standard Awareness
-
-Reference `constitution/standards/design/write.md` for:
-- Spacing scale (4px/8px grid system)
-- Type scale (1.25 ratio)
-- Color palette construction
-- Component state requirements (loading/empty/error/success/permission)
-- Token usage expectations
-
-## Common Recipes
-
-### "Why is this page slow?"
-
-`performance_start_trace` — navigate to page — `performance_stop_trace` — `lighthouse_audit` — analyze results and recommend fixes. (Performance and Lighthouse are Chrome DevTools exclusive.)
-
-### "This component isn't rendering correctly"
-
-`tree` (next-browser) — find the component in the React tree — `tree <id>` to inspect props/state — `take_snapshot` (Chrome DevTools) for DOM structure — `evaluate_script` to check computed styles.
-
-### "Check mobile layout"
-
-`emulate` (Chrome DevTools, e.g., iPhone 14) — `screenshot` (next-browser) — `lighthouse_audit` with mobile preset — compare against desktop.
-
-### "Debug API call failure"
-
-`list_network_requests` (Chrome DevTools) — find the failed request — `errors` (next-browser) — correlate Next.js error details — inspect request/response payloads.
-
-### "Inspect SSR behavior"
-
-`ssr lock` (next-browser) — navigate to the page — `snapshot` (capture server-rendered output) — `ssr unlock` — compare with client-hydrated output.
-
-## Reference Map
-
-- **`references/chrome-devtools-tools.md`**: Chrome DevTools MCP tool reference (all available tools organized by category)
-- **`references/next-browser-commands.md`**: next-browser CLI command reference (commands, flags, examples)
-- **`references/tool-routing.md`**: Decision tree and common recipes for tool selection
+Report the diagnosis with supporting evidence, the tools used per category, recommended or applied fixes with file paths and specific changes, audit results for UI work, and any unresolved issues or blocked prerequisites (dev server, browser, or next-browser CLI unavailable).
