@@ -7,11 +7,6 @@
       {
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/session-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-header", "--constitution-paths", "${HOME}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/user-prompt-submit", "args": ["${CLAUDE_PLUGIN_ROOT}"]}]
-      }
     ]
   }
 }
