@@ -45,6 +45,14 @@ resolved_spec_path: <absolute path>
 5. Reconcile each alignment deviation with the user: update the spec, update code, accept with rationale, or defer. Do not silently choose a resolution. Batch the questions, but every deviation must receive a decision.
 6. Regenerate `ALIGNMENT.md` and `README.md`, retaining the base review's findings and recording any refusal or skipped area. Follow [references/deviation-lifecycle.md](references/deviation-lifecycle.md) for the severity ladders, the three-state `open`/`decided`/`resolved` verdict model (only `resolved` clears; `decided` still counts as outstanding), how reconciliation decisions are woven into each issue block, re-run ID stability, and the read-only structural validation pass.
 7. Return a structured summary and the report's `## Next-Action Plan`, then ask the user which branch to take. Approved implementation changes route to `coding:fix` or `specification:implement-code`; spec changes route to `specification:spec-code` plus a sync; continuation notes route to `coding:handover`. Flip each `decided` deviation to `resolved` as its close-the-gap action completes, and offer a re-detection round to confirm closure.
+8. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
+
+## Verification
+
+- Every alignment finding cites both a specification location and an implementation location, and survived the adversarial refutation pass.
+- `ALIGNMENT.md`, the requested base review files, and the `README.md` index exist with per-area verdicts; the structural validation pass from [references/deviation-lifecycle.md](references/deviation-lifecycle.md) is clean.
+- Every deviation carries a recorded reconciliation decision; only `resolved` deviations are counted as cleared.
+- General and security review evidence is present even when alignment failed.
 
 ## Alignment contract
 

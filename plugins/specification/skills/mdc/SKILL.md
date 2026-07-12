@@ -8,256 +8,164 @@ argument-hint: "[<path-to-.mdc>] [--mode=read|edit|author]"
 
 # MDC
 
-Safely read, edit, and author MDC documents — the @theriety/mdc dialect of Markdown that layers `{{ key: value }}` block annotations, `[text]{{ key: value }}` inline annotations, optional `--{ ref: id }--` closing markers, and YAML front matter on top of CommonMark — by driving Claude's native text tools (Read / Edit / Write / Grep) without invoking the `@theriety/mdc` Node runtime, and codifying the invariants the parser checks so edits round-trip cleanly. **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike. Because MDC's `ref:`-keyed blocks are the unit of identity the parser preserves, edits must land inside the existing block tree — refining the targeted block in place rather than appending a sibling block that duplicates its concern or trailing a new section beneath the document's final closing marker.
-
-## 1. Purpose & Scope
-
-**What this skill does**:
-
-- **Read** an `.mdc` file and explain its block tree, annotations, and refs.
-- **Edit** an existing `.mdc` file — update annotation values, append child blocks, rename refs, replace block content — while preserving every invariant the parser checks.
-- **Author** a new `.mdc` file from scratch with correct front matter, indentation, annotations, and (by default) closing markers on ref-bearing blocks that have children.
-
-**What this skill does NOT do**:
-
-- Validate against a JSON schema or domain-specific spec (no `validate()` call).
-- Sync the file to Notion (handled by `specification:sync-notion` / `specification:sync-spec`).
-- Render to HTML or any visual surface.
-- Translate arbitrary plain Markdown into MDC as a first-class workflow.
-- Reason about `@theriety/mdc`'s `diff()` ref-identity semantics.
-
-**When to REJECT**:
-
-- File is not `.mdc` (refuse and suggest a plain-Markdown workflow).
-- Edit target is ambiguous — user says "update the section about X" but no block carries `ref:` or unique text and the user has not pointed at a line range. Ask for a `ref:` or quote the exact opening line.
-- Request requires the `@theriety/mdc` runtime (parser AST, `diff()`, `validate()`, `stringify()`-via-library) — out of scope; suggest the user run the npm package directly.
-
-## 2. Visual Overview
-
-```plaintext
-   YOU                              TOOLS / REFERENCES
-(Drive the workflow)              (Loaded on demand)
-   |                                       |
-   v                                       v
-[START]
-   |
-   v
-[Step 1: Detect Mode] ───────→ argument-hint --mode OR infer from request
-   |
-   v
-[Step 2: Load References] ───→ references/{syntax,closing-markers,
-   |                              editing-rules,examples}.md
-   |
-   v
-[Step 3: Locate Target] ─────→ Grep for `ref:` / opening line
-   |                              Read file (or tail) for context
-   v
-[Step 4: Apply Operation] ───→ Edit / Write
-   |       ├─ read   → describe tree + annotations
-   |       ├─ edit   → preserve invariants, manage closing markers
-   |       └─ author → emit closing markers by default on ref+children
-   v
-[Step 5: Verify Invariants] ─→ Re-Read modified region
-   |                              Check: indent, adjacency, ref match
-   v
-[Step 6: Stamp last_edited_time] → scripts/stamp-last-edited.sh <all edited files>
-   |   edit/author only · run ONCE after every file is verified · never mid-edit
-   v
-[END]
-
-Legend
-═══════════════════════════════════════════════════════════════════
-• Skill is LINEAR: 1 → 2 → 3 → 4 → 5 → 6
-• References (~750 lines total) load only when their mode is active
-• No subagent fan-out — single-agent text edits
-═══════════════════════════════════════════════════════════════════
-```
-
-## 3. The Three Modes
-
-| Mode       | Trigger                                                      | Primary tools             | Reference loaded                                    |
-| ---------- | ------------------------------------------------------------ | ------------------------- | --------------------------------------------------- |
-| **read**   | "show me this .mdc", "what does <doc>.mdc say"               | Read, Grep                | `syntax.md`                                         |
-| **edit**   | "edit", "update annotation", "add a child block", "rename ref" | Read, Grep, Edit          | `syntax.md` + `closing-markers.md` + `editing-rules.md` |
-| **author** | "convert to MDC", "create a new .mdc", "write an MDC for…"   | Write (+ Read for parents) | `syntax.md` + `closing-markers.md` + `examples.md`  |
-
-If the user did not pass `--mode`, infer it: missing file → `author`; file exists and verb is read/show/explain → `read`; everything else on an existing file → `edit`.
-
-The **edit** and **author** modes end by stamping `last_edited_time` (Step 5); **read** never writes and so never stamps.
-
-## 4. Mandatory Invariants
-
-Every read/edit/author MUST respect these. They are exactly what `@theriety/mdc`'s parser enforces; violating any of them is the most common LLM-produced corruption.
-
-1. **Indentation**: 2 spaces per nesting level, **cumulative** (depth 3 = 6 spaces). **No tabs, ever.**
-2. **Annotation adjacency**: A block annotation `{{ … }}` must sit on the line **immediately before** its target block — **no blank line between them**. A blank line *detaches* the annotation and silently breaks the binding. This is the single most common LLM-edit failure.
-3. **Front matter**: If present, it is the very first content; opening and closing `---` are alone on their lines; the body parses as standard YAML.
-4. **Annotation body syntax**: Content inside `{{ … }}` is **YAML object syntax** (`key: value, key2: [a, b]`, quoted strings allowed, end-of-line `#` comments allowed inside the outer braces).
-5. **Inline annotations**: `[content]{{ … }}` or `[text](url){{ … }}` or `[]{{ type: x }}` for empty-content type markers — annotation immediately follows the closing `]` or `)`, no whitespace between.
-6. **Closing markers (when present)**: syntax is exactly `--{ ref: <name> }--`; the `ref` must match the opening block's `ref`; the marker's indent must equal the opening block's indent. See `references/closing-markers.md`.
-7. **Escapes**: `\{\{`, `\}\}`, `\[`, `\]`, `\\` to render those characters literally. Inside fenced code blocks, no escaping is required (code fences are parser-opaque).
-
-A quick checklist to run mentally after every edit:
-
-- [ ] Indent is multiple of 2 spaces, matches surrounding depth.
-- [ ] No blank line between an annotation and its block.
-- [ ] All opened `{{` are closed by `}}` on the same line.
-- [ ] Every `--{ ref: X }--` matches an opening `{{ … ref: X … }}` at the same indent.
-- [ ] YAML inside `{{ }}` and inside front matter parses (commas between keys, quotes balanced).
-
-For full grammar, see `references/syntax.md`.
-
-## 5. Closing-Marker Policy
-
-The closing-marker rules are subtle and central to safe editing; the summary here is authoritative for the skill, with full rationale in `references/closing-markers.md`.
-
-- **Reading**: closing markers are **optional**. **Never** flag a missing marker as a defect or error.
-- **Editing**: **preserve** every closing marker that is already present. **Add** a closing marker for any block that has (or after the edit will have) both a `ref:` annotation and at least one child block — this matches the `@theriety/mdc` stringifier default and protects the block against indentation drift.
-- **Authoring**: emit closing markers by default on every block that has a `ref:` and at least one child. (Mirrors `stringify({ omitClosingMarkers: false })`, which is the default.)
-- **Resilience semantics**: a closing marker extends the parent block's hierarchical scope **beyond what indentation alone implies** — under-indented children inside the marker boundary are still treated as descendants of that parent. This is why adding markers makes LLM edits robust: even if a later edit drops an indent level, the parse still recovers.
-
-## 6. Workflow
-
-ultrathink: walk every read/edit/author through these steps in order.
-
-### Step 1: Detect Mode and Load References
-
-1. Parse `--mode` from arguments. If absent, infer per §3.
-2. Read the relevant reference file(s) for the mode (see the table in §3) before touching the document.
-3. Confirm the target path ends in `.mdc`. If not, REJECT per §1.
-
-### Step 2: Locate the Target
-
-For edit-mode operations on a non-trivial file, never edit blind. Use Grep first:
-
-```bash
-# find a block by its ref
-grep -n "ref:\s*${REF_ID}" path/to/doc.mdc
-
-# enumerate all block annotations at top level
-grep -nE "^\{\{\s*ref:" path/to/doc.mdc
-
-# find existing closing markers (to know what to preserve)
-grep -nE "^\s*--\{\s*ref:" path/to/doc.mdc
-```
-
-Then `Read` the file (or a focused range) so the surrounding indent and adjacent blocks are in context.
-
-### Step 3: Apply the Operation
-
-Choose the smallest safe operation. The catalogue lives in `references/editing-rules.md`; the short list:
-
-- **Safe**: update an annotation key/value, append a child block at the correct indent, replace a block's text content (same type), add a `ref:` to a previously unref'd block.
-- **Risky** (require an explicit confirmation back to the user before applying): move a block under a new parent, delete a block that has children, change a block's inferred type (e.g., turn a paragraph into a heading), rename a `ref:` that is referenced elsewhere.
-
-When the edit causes a `ref:`-bearing block to gain its first child, add a matching `--{ ref: <id> }--` closing marker at the parent's indent on the line after the last child. When it removes the last child of such a block, also remove the now-orphaned closing marker.
-
-### Step 4: Verify Invariants
-
-After every `Edit` or `Write`, **re-`Read` the modified region** (a window of ~5 lines before and ~10 lines after the edit is usually enough; for whole-file authoring read the head and tail). Run the checklist from §4 against what you see. If anything fails, fix it before yielding.
-
-### Step 5: Stamp `last_edited_time`
-
-**edit / author modes only — skip entirely in read mode.**
-
-Run this **once, as the final action, only after Steps 2–4 are complete and re-verified for *every* `.mdc` file you changed in this task.** Never run it after an individual file mid-batch — a later edit would leave an earlier file stamped with a stale time.
-
-Pass the paths of **exactly the files whose content you changed** (omit files you only read):
-
-```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/stamp-last-edited.sh" \
-  path/to/a.mdc path/to/b.mdc
-```
-
-The script writes the current UTC time (`YYYY-MM-DDTHH:MM:SS.000Z`) into each file's front-matter `last_edited_time`, replacing the existing value or inserting the key (just before the closing `---`) if absent. All files in one invocation share one timestamp. A non-zero exit means a file was skipped (not `.mdc`, missing, or no front matter) — investigate before reporting done.
-
-### Step 6: Report
-
-State, in this order: file path, mode, what changed (with refs), and which invariants you re-verified. If you added or removed closing markers, say so explicitly — the user will want to know.
-
-## 7. Worked Examples (Three Idioms)
-
-See `references/examples.md` for the long versions and four more domain idioms (Notion sync, spreadsheet expressions, medical provenance, intelligence classification). Three quick patterns:
-
-### 7.1 Update an annotation on an existing ref
-
-Goal: change `confidence: low` to `confidence: high` on block `ref: claim-7`.
-
-```bash
-grep -n "ref:\s*claim-7" report.mdc
-# → 142:{{ source: HUMINT, confidence: low, ref: claim-7 }}
-```
-
-Edit line 142 only, swapping the value. Do **not** touch surrounding indent. Re-Read lines 140–146. Verify: annotation still immediately precedes its block (no blank line introduced), YAML still parses.
-
-### 7.2 Append a child block (and add a closing marker)
-
-Starting state — parent has a `ref:` but no children, so no closing marker yet:
-
-```markdown
-{{ ref: parent-block }}
-- Parent item
-```
-
-After appending a child:
-
-```markdown
-{{ ref: parent-block }}
-- Parent item
-  {{ ref: child-block }}
-  - Child item
---{ ref: parent-block }--
-```
-
-Note: child is indented 2 spaces; child annotation is at the **same** indent as the child block (2 spaces), with no blank line between them; the closing marker is at the **parent's** indent (0 spaces) and its `ref` matches the parent.
-
-### 7.3 Author a new MDC document from scratch
-
-```markdown
----
-title: Quarterly Review
-ref: review-2026-q1
-status: draft
----
-
-{{ ref: intro }}
-# Introduction
-
-{{ ref: highlights }}
-## Highlights
-
-  {{ ref: highlight-1 }}
-  - Revenue up [+18%]{{ trend: positive, delta: 0.18 }} vs Q4.
-  {{ ref: highlight-2 }}
-  - Churn down to [2.1%]{{ metric: churn_rate }}.
---{ ref: highlights }--
-```
-
-Closing marker on `highlights` because it has a `ref:` and children. `intro` has a `ref:` but no children — no marker needed. Each child annotation sits immediately above its `- ` item with no blank line. Inline annotations attach directly to the closing `]`.
-
-When authoring a `.code-spec`/Notion-bound document, emit `title`, `last_edited_time`, and `ref` in the front matter (in that order). The Step 5 stamp will refresh `last_edited_time` in place — or insert it for you if you omit it — so a placeholder value is fine on first write.
-
-## 8. Skill Completion
-
-Report in this shape:
-
-```yaml
-skill: mdc
-mode: read|edit|author
-file: <absolute path to .mdc>
-changes:
-  - block_ref: <ref or "(unref'd)">
-    operation: update-annotation|append-child|replace-content|rename-ref|add|delete|author
-    closing_marker: added|removed|preserved|n/a
-invariants_verified:
-  indentation: pass
-  annotation_adjacency: pass
-  closing_marker_match: pass|n/a
-  yaml_parses: pass
-last_edited_stamped: <ISO timestamp> | n/a (read mode)
-stamped_files:
-  - <path>            # the files passed to stamp-last-edited.sh
-notes: |
-  <anything the user should know — e.g. "added closing marker on parent because
-  it gained its first child", or "refused: target ref ambiguous">
-```
+Safely read, edit, and author MDC documents — the @theriety/mdc dialect of
+Markdown that layers `{{ key: value }}` block annotations,
+`[text]{{ key: value }}` inline annotations, optional `--{ ref: id }--`
+closing markers, and YAML front matter on top of CommonMark — by driving
+native text tools (Read/Edit/Write/Grep) without the `@theriety/mdc` Node
+runtime, while honoring every invariant the parser checks so edits round-trip
+cleanly. Notion transport belongs to `specification:sync-notion` and
+`specification:sync-spec`.
+
+## Boundaries
+
+- Use for: reading an `.mdc` file and explaining its block tree, annotations,
+  and refs; editing an existing `.mdc` (update annotation values, append
+  child blocks, rename refs, replace block content); authoring a new `.mdc`
+  with correct front matter, indentation, annotations, and closing markers.
+  This skill is the only writer for `.code-spec/*.md`.
+- Do not use for: JSON-schema or domain validation (no `validate()`), syncing
+  to Notion (`specification:sync-notion` / `specification:sync-spec`),
+  rendering to HTML, translating arbitrary plain Markdown into MDC as a
+  first-class workflow, or reasoning about `diff()` ref-identity semantics.
+- Refuse when: the file is not `.mdc` (suggest a plain-Markdown workflow);
+  the edit target is ambiguous — no `ref:`, no unique text, no line range —
+  in which case ask for a `ref:` or the exact opening line; or the request
+  needs the `@theriety/mdc` runtime (parser AST, `diff()`, `validate()`,
+  library `stringify()`) — suggest running the npm package directly.
+
+## Inputs
+
+- **Required**: the target `.mdc` path, or for authoring, the destination
+  path plus the content to express.
+- **Optional**: `--mode=read|edit|author`. When absent, infer: missing file →
+  `author`; existing file with a read/show/explain verb → `read`; anything
+  else on an existing file → `edit`.
+
+## Mandatory invariants
+
+<IMPORTANT>
+Every read, edit, and author operation must respect these — they are exactly
+what the `@theriety/mdc` parser enforces, and violating them is the most
+common LLM-produced corruption:
+
+1. **Indentation**: 2 spaces per nesting level, cumulative (depth 3 =
+   6 spaces). No tabs, ever.
+2. **Annotation adjacency**: a block annotation `{{ … }}` sits on the line
+   immediately before its target block — no blank line between them. A blank
+   line detaches the annotation and silently breaks the binding; this is the
+   single most common edit failure.
+3. **Front matter**: when present, it is the very first content; opening and
+   closing `---` alone on their lines; the body parses as standard YAML.
+4. **Annotation body syntax**: content inside `{{ … }}` is YAML object
+   syntax (`key: value, key2: [a, b]`, quoted strings allowed, end-of-line
+   `#` comments allowed inside the outer braces).
+5. **Inline annotations**: `[content]{{ … }}`, `[text](url){{ … }}`, or
+   `[]{{ type: x }}` for empty-content type markers — the annotation
+   immediately follows the closing `]` or `)`, no whitespace between.
+6. **Closing markers (when present)**: syntax is exactly
+   `--{ ref: <name> }--`; the `ref` must match the opening block's `ref`;
+   the marker's indent must equal the opening block's indent.
+7. **Escapes**: `\{\{`, `\}\}`, `\[`, `\]`, `\\` render those characters
+   literally. Inside fenced code blocks no escaping is required — fences are
+   parser-opaque.
+</IMPORTANT>
+
+Post-edit checklist: indent is a multiple of 2 spaces matching surrounding
+depth; no blank line between an annotation and its block; every opened `{{`
+closes with `}}` on the same line; every `--{ ref: X }--` matches an opening
+`{{ … ref: X … }}` at the same indent; YAML inside `{{ }}` and front matter
+parses. Full grammar: [references/syntax.md](references/syntax.md).
+
+## Closing-marker policy
+
+Full rationale in
+[references/closing-markers.md](references/closing-markers.md); the summary
+here is authoritative for the skill:
+
+- **Reading**: markers are optional — never flag a missing marker as a
+  defect.
+- **Editing**: preserve every existing marker; add one for any block that has
+  (or after the edit will have) both a `ref:` and at least one child — this
+  matches the stringifier default and protects against indentation drift.
+- **Authoring**: emit markers by default on every block with a `ref:` and at
+  least one child.
+- **Resilience semantics**: a marker extends the parent's scope beyond what
+  indentation implies — under-indented children inside the marker boundary
+  still parse as descendants, so markers make later edits recoverable.
+
+## Workflow
+
+1. Detect the mode (argument or inference above) and confirm the target path
+   ends in `.mdc`; otherwise refuse per Boundaries. Load the mode's
+   references before touching the document: `read` →
+   [references/syntax.md](references/syntax.md); `edit` → syntax plus
+   [references/closing-markers.md](references/closing-markers.md) and
+   [references/editing-rules.md](references/editing-rules.md); `author` →
+   syntax plus closing-markers and
+   [references/examples.md](references/examples.md).
+2. Locate the target — for edit mode on a non-trivial file, never edit
+   blind:
+
+   ```bash
+   grep -n "ref:\s*${REF_ID}" path/to/doc.mdc     # block by ref
+   grep -nE "^\{\{\s*ref:" path/to/doc.mdc         # top-level annotations
+   grep -nE "^\s*--\{\s*ref:" path/to/doc.mdc      # existing closing markers
+   ```
+
+   Then Read the file or a focused range so surrounding indent and adjacent
+   blocks are in context.
+3. Apply the smallest safe operation; the full catalogue lives in
+   [references/editing-rules.md](references/editing-rules.md). Safe (apply
+   directly): update an annotation key/value, append a child block at the
+   correct indent, replace a block's text content (same type), add a `ref:`
+   to an unref'd block. Risky (confirm with the user first): move a block
+   under a new parent, delete a block with children, change a block's
+   inferred type, rename a `ref:` referenced elsewhere. Edits must land
+   inside the existing block tree — refine the targeted block in place
+   rather than appending a duplicate sibling or trailing a new section after
+   the document's final closing marker. When a `ref:`-bearing block gains
+   its first child, add its closing marker at the parent's indent after the
+   last child; when it loses its last child, remove the orphaned marker.
+   When authoring a `.code-spec`/Notion-bound document, emit `title`,
+   `last_edited_time`, and `ref` in the front matter in that order — a
+   placeholder `last_edited_time` is fine, step 5 refreshes it.
+4. Verify invariants: after every Edit or Write, re-Read the modified region
+   (about 5 lines before and 10 after; for whole-file authoring, the head
+   and tail) and run the post-edit checklist. Fix any failure before
+   yielding.
+5. Stamp `last_edited_time` — edit/author modes only; read mode never writes
+   and never stamps. Run once, as the final action, after every changed file
+   is verified — never mid-batch, or a later edit leaves an earlier file
+   stamped with a stale time. Pass exactly the files whose content changed:
+
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/stamp-last-edited.sh" \
+     path/to/a.mdc path/to/b.mdc
+   ```
+
+   The script writes the current UTC time (`YYYY-MM-DDTHH:MM:SS.000Z`) into
+   each file's front-matter `last_edited_time`, replacing or inserting the
+   key; all files in one invocation share one timestamp. A non-zero exit
+   means a file was skipped (not `.mdc`, missing, or no front matter) —
+   investigate before reporting done.
+6. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker
+   remains, then report the blocker instead of looping.
+
+## Verification
+
+- The post-edit checklist passes on a fresh Read of every modified region.
+- Every closing marker matches its opening `ref:` at the opening block's
+  indent, and no `ref:`-bearing parent with children lacks one after an
+  edit.
+- The stamp script exited zero and touched exactly the changed files
+  (edit/author modes).
+
+## Completion
+
+Report the file path, mode, and each change with its block ref and operation;
+say explicitly whether closing markers were added, removed, or preserved;
+name the invariants re-verified; and give the stamped timestamp and file list
+(or note read mode). A refusal states which boundary rule applied and what
+the user should supply — typically a `ref:` or the exact opening line.
