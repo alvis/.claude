@@ -1,36 +1,82 @@
 ---
 name: create-standard
-description: Create a new technical standard at a plugin's canonical constitution/standards root using meta.md, scan.md, write.md, and per-rule guides. Use when reusable policy is missing and needs explicit dependencies, detection, compliant patterns, and stable rule IDs. Route existing-standard revisions to update-standard.
+description: Create a new technical standard at a plugin's canonical constitution/standards root using meta.md, scan.md, write.md, and per-rule guides. Use when establishing new coding standards, documenting technical requirements, or creating compliance guidelines for reusable policy with explicit dependencies, detection, compliant patterns, and stable rule IDs. Route existing-standard revisions to update-standard.
 model: opus
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "<plugin>/<standard-name> [--detail=...]"
 ---
 
-# Create standard
+# Create Standard
 
-Create exactly one new directory at `plugins/<plugin>/constitution/standards/<standard-name>/`. The name is lowercase kebab-case; the rule prefix is a unique short uppercase mnemonic. Never write to a repository-level shorthand root or overwrite an existing standard.
+Create exactly one new directory at
+`plugins/<plugin>/constitution/standards/<standard-name>/` holding the
+three-tier standard (meta.md, scan.md, write.md, rules/). `update-standard`
+owns revisions to existing standards.
 
-## Required templates and discovery
+## Boundaries
 
-Resolve these installed governance templates from `${CLAUDE_SKILL_DIR}/../../constitution/templates/`:
+- Use for: establishing a missing reusable policy as a new three-tier
+  standard with a unique rule-ID prefix.
+- Do not use for: revising an existing standard (`update-standard`), creating
+  skills (`create-skill`), writing to a repository-level shorthand root,
+  overwriting an existing directory, or policy that belongs to an existing
+  owner.
 
-- `standard-meta.md` → `<target>/meta.md`
-- `standard-scan.md` → `<target>/scan.md`
-- `standard-write.md` → `<target>/write.md`
+## Inputs
 
-Read all three templates, the target plugin's constitution references, and neighboring standards before writing. Search every standard under `plugins/*/constitution/standards/` for the proposed prefix and rule IDs. Reject a duplicate target, duplicate prefix/ID, unknown plugin, missing templates, or policy that belongs to an existing owner.
+- **Required**: the target plugin and a lowercase kebab-case standard name,
+  plus enough policy intent to define scope and rules.
+- **Optional**: `--detail=...` with domain specifics that shape examples and
+  rule guidance.
+- **Prerequisites**: the installed governance templates resolvable from
+  `${CLAUDE_SKILL_DIR}/../../constitution/templates/` — `standard-meta.md`,
+  `standard-scan.md`, and `standard-write.md` (one per target tier file).
 
-## Authoring procedure
+## Workflow
 
-1. Define scope, non-goals, dependent standards, stricter requirements, exception policy, rule groups, and stable IDs before drafting examples.
-2. Create the target and `rules/`. Populate `meta.md` from the meta template: dependencies use `standard:<name>` within the plugin or `plugin:<plugin>:standard:<name>` across plugins; every declared group matches the chosen prefix.
-3. Populate `scan.md` from the scan template. Every quick-scan item and matrix row names one declared rule ID and describes a mechanically or reviewably detectable violation.
-4. Populate `write.md` from the write template. Every rule ID has actionable compliant guidance; patterns and decisions do not contradict scan criteria.
-5. Create `rules/<lowercase-rule-id>.md` for every rule that requires detail. Link it from the tiers using relative links and ensure no guide introduces an undeclared ID.
-6. Remove all template placeholders and instructions. Keep examples only when they disambiguate detection or compliance.
+1. Read all three tier templates, the target plugin's constitution
+   references, and neighboring standards. Search every standard under
+   `plugins/*/constitution/standards/` for the proposed prefix and rule IDs.
+   Reject a duplicate target, duplicate prefix/ID, unknown plugin, missing
+   templates, or policy that belongs to an existing owner.
+2. Define scope, non-goals, dependent standards, stricter requirements,
+   exception policy, rule groups, and stable IDs before drafting examples.
+   The rule prefix is a unique short uppercase mnemonic.
+3. Create the target directory and `rules/`. Populate `meta.md` from the meta
+   template: dependencies use `standard:<name>` within the plugin or
+   `plugin:<plugin>:standard:<name>` across plugins; every declared group
+   matches the chosen prefix.
+4. Populate `scan.md` from the scan template. Every quick-scan item and
+   matrix row names one declared rule ID and describes a mechanically or
+   reviewably detectable violation.
+5. Populate `write.md` from the write template. Every rule ID has actionable
+   compliant guidance; patterns and decisions do not contradict scan
+   criteria.
+6. Create `rules/<lowercase-rule-id>.md` for every rule that requires detail.
+   Link it from the tiers using relative links and ensure no guide introduces
+   an undeclared ID.
+7. Remove all template placeholders and instructions. Keep examples only when
+   they disambiguate detection or compliance.
+8. Run the verification below; when a check fails, fix the cause and re-run
+   that check. Repeat until every check passes or a concrete blocker remains,
+   then report the blocker instead of looping.
 
-## Cross-tier verification
+## Verification
 
-Build sets of IDs from meta groups, scan bullets/matrix, write summaries, and rule filenames. Fail when an ID is undeclared, missing from scan or write, duplicated, uses another prefix, or links to a missing guide. Resolve every local Markdown link from its containing file. Verify dependent-standard targets exist and no dependency cycle is introduced.
+- Cross-tier consistency: build sets of IDs from meta groups, scan
+  bullets/matrix, write summaries, and rule filenames. Fail when an ID is
+  undeclared, missing from scan or write, duplicated, uses another prefix, or
+  links to a missing guide.
+- Resolve every local Markdown link from its containing file. Verify
+  dependent-standard targets exist and no dependency cycle is introduced.
+- Run `claude plugin validate --strict plugins/<plugin>` and
+  `python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" plugins/<plugin>`
+  for repository policy checks.
+- Exercise at least one violating and one compliant example per rule group
+  against the scan/write guidance.
 
-Run `claude plugin validate --strict plugins/<plugin>` plus governance repository policy checks. Exercise at least one violating and one compliant example per rule group against scan/write guidance. Return target, source templates, prefix, complete rule-ID list, dependency/link checks, validation commands/results, and unresolved policy questions.
+## Completion
+
+Return the target path, source templates, prefix, complete rule-ID list,
+dependency and link check results, validation commands with their results,
+and any unresolved policy questions.

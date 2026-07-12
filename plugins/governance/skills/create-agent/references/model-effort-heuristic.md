@@ -38,3 +38,8 @@ Omit for `haiku` (it does not support effort); live Claude Code docs win on exac
 ## Tools
 
 Omit for the full set, or provide an explicit leaf list. Leaf encoding: a leaf agent gets an explicit `tools` list that OMITS `Agent` — `disallowedTools: ["Agent"]` is NOT valid for leafing.
+
+## Memory and isolation
+
+- `memory`: set `user`/`project`/`local` only when the agent genuinely self-curates a persistent `.claude/agent-memory/<name>/MEMORY.md` across sessions; OMIT the key to disable — there is no `memory: none`.
+- `isolation`: set `worktree` only for agents that must not race the main working copy (adversarial red-team, parallel research); otherwise omit.

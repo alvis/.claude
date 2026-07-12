@@ -44,7 +44,7 @@ Shared authoring policy lives at
 The validator does not require fixed headings, personas, diagrams, subagent
 prompts, XML report envelopes, or a section literally named “Skill Completion.”
 
-## Verification commands
+## Verification
 
 ```bash
 claude plugin validate --strict <plugin-path>
