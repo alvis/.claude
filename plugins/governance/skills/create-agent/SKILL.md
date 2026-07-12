@@ -66,10 +66,12 @@ anything is written. `update-agent` owns changes to existing definitions.
 4. Create only the two canonical source files. `frontmatter/claude.json` must
    be valid JSON using only keys currently allowed by the live template;
    `initialPrompt` is required.
-5. Build `initialPrompt` from `role-prompt.md` in 3-6 sentences: load exact
-   context, state loop, convergence predicate, hard iteration budget, and one
-   role-specific guardrail. It must agree with `base.md` and must not be
-   generic kickoff prose.
+5. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
+   first-turn directive: its first move (propose if the role's next work is
+   legible from repo state, else greet and state the artifact/brief it needs),
+   an explicit wait, then deferred context loading and one role-specific
+   guardrail. It must NOT restate identity, announce that no task was given, or
+   preload standards, and it must agree with `base.md`.
 6. Write `base.md` as the role's own continuous working voice, preserving the
    template's functional sections: role/mission, expertise and operating
    style, communication style, exact base context, coordination loop and stop

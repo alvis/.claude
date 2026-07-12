@@ -16,8 +16,8 @@ form a team to do dispatch-and-score work more expensively.
 
 ## Warm core
 
-The warm-core agents — Raj, Marcus, Ava, James, Dexter — read as a trusting team in their own base.md Axis-2
-sections: familiar with each other's working style, quick to hand off without re-explaining context, comfortable
+The warm-core agents — Raj, Marcus, Ava, James, Dexter — read as a trusting team in their own base.md
+`Coordination Posture` sections: familiar with each other's working style, quick to hand off without re-explaining context, comfortable
 disagreeing without re-litigating settled ground. This warmth is authored once, in each agent's own
 `Coordination Posture` section (templates/agent.md) — a team roster does not add warmth the agents don't already
 carry; it activates agents whose posture already expects a team.
@@ -94,7 +94,7 @@ the agents already declared for themselves.
    `skills`/`mcpServers`/`permissionMode` frontmatter is set aside while the team runs.
 4. The team works the hand-off chain until the lead judges the task done — a team does not have a Dynamic
    Workflow's formal `stopCheck()`; convergence is the lead's call, informed by each teammate's own convergence
-   predicate (from its base.md Axis-2 section) firing on its own piece of the work.
+   predicate (from its base.md `Coordination Posture` section) firing on its own piece of the work.
 
 ## Worked example — star topology, coding-team core
 

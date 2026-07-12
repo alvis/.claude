@@ -62,9 +62,11 @@ roles.
    and remove superseded instructions — never append an update log or second
    personality. Correct context aliases against the catalog and collaboration
    edges against actual team definitions.
-6. Rewrite `initialPrompt` from `role-prompt.md` whenever loop, context, stop
-   rule, budget, or guardrail changed. It must remain 3-6 role-specific
-   sentences and agree exactly with `base.md`.
+6. Rewrite `initialPrompt` from `role-prompt.md` whenever the role's first
+   move, the artifact/brief it needs, or its guardrail changed. It must remain
+   a 2-4 sentence no-task first-turn directive (first move → wait → deferred
+   context + guardrail), must not restate identity, announce no task, or
+   preload standards, and must agree exactly with `base.md`.
 7. Recheck positive and near-miss triggers against neighboring agents and
    real dispatch sites. Do not widen role ownership incidentally.
 8. Independent targets may be delegated per
