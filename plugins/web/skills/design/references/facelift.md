@@ -83,14 +83,14 @@ Run the standard Interactive Direction Picking from SKILL.md `<direction>` / `re
 
 ## 6. Team & Independence
 
-Extend the standard team (SKILL.md `<workflow>` Step 1) with two seats via `TeamCreate`:
+The **frontend-evaluator** seat (SKILL.md `<workflow>` Step 1) carries two lenses on facelift/full-page runs. Each is briefed independently — the lead composes each `SendMessage` payload from scratch containing ONLY the permitted artifacts:
 
-| Seat | Model | Receives | Never receives |
-|------|-------|----------|----------------|
-| `design-critic` | **fable** (deep adversarial scrutiny) | Rendered artifact only (URL / screenshots), the exemplar list, and the rubric (§10) | Builder reasoning, chat history, `DESIGN.md`, `CONTEXT.md`, `DECISIONS.md`, and "why we did it this way" |
-| `perf-a11y-auditor` | sonnet | Artifact URL + the budget table (§8) | Design rationale |
+| Lens | Receives | Never receives |
+|------|----------|----------------|
+| `design-critic` (deep adversarial scrutiny) | Rendered artifact only (URL / screenshots), the exemplar list, and the rubric (§10) | Builder reasoning, chat history, `DESIGN.md`, `CONTEXT.md`, `DECISIONS.md`, and "why we did it this way" |
+| `perf-a11y-auditor` | Artifact URL + the budget table (§8) | Design rationale |
 
-**Independence is the point.** The lead composes each `SendMessage` payload from scratch containing ONLY the permitted artifacts. A critic who reads the builder's reasoning inherits the builder's blind spots.
+**Independence is the point.** A critic who reads the builder's reasoning inherits the builder's blind spots.
 
 - **Critic verdict format**: per-axis score (rubric §10) + at least one SPECIFIC divergence from a NAMED exemplar ("stripe.com's section transitions carry 3 distinct scroll speeds; this page has one"). "Feels premium" or "looks great" is invalid — bounce it back for specifics.
 - **Auditor reply format**: raw metric numbers (LCP, INP, CLS, long tasks, contrast counts). The lead PASTES them into the conversation — proof lives in the transcript, not in a teammate's memory.
@@ -106,10 +106,10 @@ Deliver the v2 in slices, each independently verified and saved:
 
 Per slice:
 
-1. **Build** — theming contract and component-reuse gate are already locked; the builder works inside them, starting from this area's recorded pick (SKILL.md `<area_boards>` runs the boards in this slice order; the motion pass builds from the connective-tissue pick).
-2. **Critic verdict** — per §6 format, against the rubric.
-3. **Auditor metrics** — component-scope slices: contrast protocol only; page-scope slices (hero, motion pass, final assembly): full §8 budget.
-4. **Below excellent on design or motion** → back to the builder with the cited exemplar divergence as the rework brief. Not "make it better" — "here is the specific gap".
+1. **Build** — theming contract and component-reuse gate are already locked; the frontend-implementer works inside them, starting from this area's recorded pick (SKILL.md `<area_boards>` runs the boards in this slice order; the motion pass builds from the connective-tissue pick).
+2. **Critic verdict** — frontend-evaluator's design-critic lens, per §6 format, against the rubric.
+3. **Auditor metrics** — frontend-evaluator's perf/a11y lens: component-scope slices: contrast protocol only; page-scope slices (hero, motion pass, final assembly): full §8 budget.
+4. **Below excellent on design or motion** → back to the frontend-implementer with the cited exemplar divergence as the rework brief. Not "make it better" — "here is the specific gap".
 5. **Pass** → save point via the `coding:commit` skill (record the change id; never raw git).
 6. **Append the ledger entry** to DESIGN.md §12:
 

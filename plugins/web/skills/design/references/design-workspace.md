@@ -10,6 +10,7 @@ Every design task owns one durable workspace at the project root:
 ├── previews/            # each preview gets its own directory and screenshot
 │   └── tokens/          # preview.html + screenshot.webp (+ light/dark variants)
 ├── captures/            # temporary browser captures and computed-style data
+├── diffs/               # design-vs-implementation comparison boards + renders
 └── inventories/         # facelift/content inventories and comparison data
 ```
 
@@ -18,6 +19,8 @@ artifact must remain below `./.design-<area-noun-phrase>/`. This includes HTML, 
 JSON, PNG, WebP, screenshots, browser captures, preview exports, and facelift
 inventories. Board images stay beside their board HTML in `boards/`. Preview
 screenshots stay beside their preview HTML under `previews/<preview-slug>/`.
+Visual-diff confirmation boards (design reference beside implementation capture, per
+area and mode) live in `diffs/`, each rendered image beside its HTML.
 Do not use a session scratchpad or `$TMPDIR` fallback. Production implementation
 files remain in their normal source locations.
 

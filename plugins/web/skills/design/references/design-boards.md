@@ -2,12 +2,15 @@
 
 Mechanics for every visual choice board referenced by SKILL.md `<direction>` and `<area_boards>`. A board is bespoke design work — each tile IS a miniature of its candidate — so there is no rigid `.template.html`; the skeletons below guarantee structure, self-containment, and the choice UX while leaving the visuals to each candidate.
 
-Two board types share one mechanic:
+These board types share one mechanic:
 
 | Board type | Chooses | Tiles | When |
 |---|---|---|---|
 | **Direction board** (Part B) | The page-wide aesthetic direction | 3–5 direction candidates | Once, during `<direction>` |
 | **Area board** (Part C) | One area's composition/treatment within the locked direction | `N` ranked variants of ONE area (`N=3` by default) | Once per area, during `<area_boards>` |
+| **Diff board** | Confirms the built implementation matches the design | Two panes — design-reference render beside the implementation capture — for one area and mode | Once per area × {light, dark} (+ full page), during Phase 6 |
+
+The diff board is a confirmation artifact, not a choice board: no rank badges, no mix-and-match loop. It reuses Part A's render → screenshot → `SendUserFile` presentation (A4) and records its user sign-off per A5, but each tile pairs the agreed design with what was built rather than presenting competing candidates. SKILL.md Phase 6 governs its scope and file naming under `./.design-<area-noun-phrase>/diffs/`.
 
 ---
 
