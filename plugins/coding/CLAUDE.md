@@ -58,13 +58,30 @@ Whoever spawns an agent owns the quality of its output. After a subagent or team
 
 Unreviewed subagent output must never be accepted, merged, or reported upward as done.
 
-## Change Tracking with `jj`
+## Before Coding
 
-1. **`jj` is the primary change-tracking tool** — every op snapshots the working copy, so a dirty HEAD is never a blocker. Do NOT create a `git worktree` to "isolate" a task; coding skills work in place.
-2. **Work in place on a dirty HEAD** — new changes layer onto existing uncommitted work; no isolation strategy to decide.
-3. **Saving changes goes through `coding:commit`** — the skill owns routing among save/split/absorb/edit/parallel-workspace and all explicit flag operations. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
-4. **Stacked PRs are opt-in** — invoke `/coding:commit --create-pr`. All bookmarking and pushing happens inside the skill. PR titles + bodies are produced by `/coding:write-pr`.
-5. **Git-worktree guard** — a `git worktree` is NOT a `jj workspace`. If a coding task was carried out inside a linked `git worktree`, you MUST `AskUserQuestion` whether the work should be moved back onto HEAD.
+Decide where the work will live before editing:
+
+- **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); if `jj` isn't initialized, use `git` on the current branch as usual.
+- **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `../.worktree/<repo-name>/<work-name>`.
+
+## After Coding
+
+Completed code goes through a **fix loop** before it is saved — any failing gate returns to implementation:
+
+```
+edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to code) → commit
+```
+
+1. **Verify delivery (review) first.** Dispatch a review subagent to confirm every requirement was actually delivered — if a plan was executed, open the plan file and walk each task, confirming code/tests/docs match; otherwise verify the task's stated requirements. For large changes, dispatch a **review coordinator** that fans out sub-review agents per area and consolidates their findings. Have the reviewer invoke the `coding:review-code` skill with the Skill tool (skills and agent types are separate namespaces — never pass a skill name as a `subagent_type`). **If any task is unmet, return to implementation, fix it, and restart the loop at review.**
+
+2. **Then lint.** Once review passes, dispatch a lint subagent (or a lint sub-team for large changes) to invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. **If lint reports any violation, return to implementation, fix it, then re-run review and lint.** Proceed only once both review and lint are clean.
+
+3. **Then commit.**
+   - `jj` is the **preferred** change-tracking tool when it is available and initialized — every op snapshots the working copy, so a dirty HEAD is never a blocker; work in place and don't create a `git worktree` just to isolate a task. **If `jj` is not initialized in the repo, use `git` as usual.**
+   - Saving changes goes through `coding:commit`, which owns routing among save/split/absorb/edit/parallel-workspace and all explicit flag operations for both `jj` and `git`. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
+   - **If the user did not explicitly request a commit, ask whether to commit the work** (via `coding:commit`).
+   - **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` — all bookmarking and pushing happens inside the skill; titles + bodies via `/coding:write-pr`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
 
 ## Your Actions
 

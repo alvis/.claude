@@ -2,5 +2,5 @@
 set -euo pipefail
 
 ESSENTIAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$ESSENTIAL_ROOT/hooks/lib/session-start.sh"
+source "$ESSENTIAL_ROOT/shared/scripts/session-start.sh"
 run_session_start_hook "$@"
