@@ -2,7 +2,7 @@
   "name": "client",
   "dependencies": ["essential"],
   "description": "Client-facing screen design and UX documentation with Notion integration",
-  "version": "2026-07-10",
+  "version": "2026-07-13a",
   "hooks": {
     "SessionStart": [
       {
