@@ -28,13 +28,21 @@ CLAUDE_TIMEOUT_SECONDS = 30
 
 
 def discover_skills(target: Path) -> list[Path]:
-    """Return all SKILL.md files represented by a file, skill, or tree."""
+    """Return all SKILL.md files represented by a file, skill, or tree.
+
+    Files under a ``templates`` directory are seeds that legitimately contain
+    placeholder text, so they are excluded from discovery.
+    """
     target = target.resolve()
     if target.is_file():
         return [target] if target.name == "SKILL.md" else []
     if (target / "SKILL.md").is_file():
         return [target / "SKILL.md"]
-    return sorted(target.glob("**/SKILL.md")) if target.is_dir() else []
+    if not target.is_dir():
+        return []
+    return sorted(
+        path for path in target.glob("**/SKILL.md") if "templates" not in path.parent.parts
+    )
 
 
 def issue(message: str, *, line: int | None = None) -> dict[str, object]:

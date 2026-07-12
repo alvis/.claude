@@ -19,8 +19,30 @@ frontmatter syntax.
   envelopes.
 - Use headings that fit the capability. Boundaries, inputs, workflow,
   verification, and completion are useful defaults, not mandatory names.
-- Delegate only when the workflow benefits from independent work. A skill does
-  not need subagents, diagrams, or orchestration ceremony to be complete.
+- Delegate when performing a step directly would consume more session context
+  than describing the task to a subagent and reading its report; keep small
+  work inline — a skill does not need subagents, diagrams, or orchestration
+  ceremony to be complete. When a skill does delegate, follow the batching,
+  report, and decision guidance in [delegation.md](delegation.md).
+
+## Content Boundary Convention
+
+Enclose each block of important or long content in a semantically-named XML
+tag so the block has an unambiguous, machine- and eye-visible boundary and
+cannot bleed into surrounding prose. The tag names the content's role — it is
+not a copy of the section heading and does not replace the `##`/`###`
+headings that give the document its outline.
+
+Tags in use: `<report>` encloses a machine-readable report or output
+contract; `<IMPORTANT>` encloses a hard guardrail or critical instruction
+that must not be missed.
+
+- Name tags for the content, never for the section; do not wrap a short
+  structural section in a tag that merely echoes its heading.
+- Tags never replace headings — where both apply, keep both.
+- Keep a language hint on a fenced block inside the tags (the tags are the
+  boundary, the fence is the syntax hint).
+- Every opening tag has a matching close.
 
 ## Frontmatter and discovery
 
