@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 RESTACK_SH="$SCRIPT_DIR/restack.sh"
 TMP_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/test-restack.XXXXXX") || exit 1
 trap 'rm -rf "$TMP_ROOT"' EXIT HUP INT TERM
