@@ -145,9 +145,14 @@ selected change merged on origin, and a derived or supplied branch prefix. If
 needed, invoke `coding:commit --reorder`; for merged history follow
 [workflow-correct-merged.md](../commit/references/workflow-correct-merged.md).
 
-For each change bottom-up, index `NN` from `01`, and set
+For each change bottom-up, preserve its existing bookmark when the caller
+selected an existing branch, it is already the head of an open PR, or the
+ordered stack already has explicit bookmarks. This is existing-bookmark mode:
+push and update that exact head; never replace it with a generated bookmark.
+Only for an unbookmarked new change/stack, index `NN` from `01` and set
 `BOOKMARK=<branch-prefix>/NN-<scope>` where scope matches the conventional
-commit scope (kebab-case, at most 30 characters):
+commit scope (kebab-case, at most 30 characters). Record which mode selected
+each bookmark before mutation.
 
 ```bash
 jj bookmark set "$BOOKMARK" --revision "$CHANGE_ID"

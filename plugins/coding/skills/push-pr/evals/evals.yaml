@@ -75,6 +75,8 @@ test_cases:
         type: content
       - text: "Pushes the bookmark with jj git push despite --skip-local-test"
         type: content
+      - text: "Preserves the exact existing bookmark when updating a branch or open pull request"
+        type: content
       - text: "Invokes coding:write-pr for the pull-request title and body despite --skip-local-test"
         type: content
       - text: "Creates or updates the draft pull request despite --skip-local-test"
