@@ -38,7 +38,7 @@ stack:
     head_oid: <current remote PR head SHA>
     base: <base branch>
     config_ref: <workflow/ruleset ref confirmed for this head/base>
-    state: green | green_no_checks | pending | red | blocked
+    state: green | pending | red
     expected_checks:
       - name: <workflow job or required status name>
         source: <workflow path/job, branch protection, or ruleset>
@@ -71,6 +71,8 @@ fixer:
 schedule:
   task_id: <active_loop_id>
   action: keep | cancel | replace
+blocker: <configuration or provider access blocker, or null>
+unresolved: [<remaining blocker>]
 action: notify_and_cancel | wait | cancel_and_parent_repair | blocked
 ```
 
@@ -94,13 +96,14 @@ for its current base, and record the expected/observed evidence in the report:
   `action: wait`.
 - **Green**: every returned check is pass/success, skipping/skipped, or an
   explicitly accepted neutral result. Zero observed checks is
-  `green_no_checks` only when the remote PR head and its current workflow/base
-  configuration are confirmed and the expected list is empty. Cancel
-  `active_loop_id`, notify the parent, and stop. This is the only success
-  state.
-- **Blocked**: zero checks with inaccessible or unconfirmed expected-check
-  sources. Report the head, config, source, and access error; do not wait
-  forever or infer green.
+  `state: green` only when the remote PR head and its current workflow/base
+  configuration are confirmed and the expected list is empty; retain that
+  evidence in `expected_checks` and `observed_checks`. Cancel `active_loop_id`,
+  notify the parent, and stop. This is the only success state.
+- **Configuration blocker**: for zero checks with inaccessible or unconfirmed
+  expected-check sources, keep the PR at `state: pending` and report the head,
+  config, source, and access error through top-level
+  `action: blocked`, `blocker`, and `unresolved`; do not infer green.
 
 Never use an arbitrary timeout to turn zero observed checks into green or red.
 
