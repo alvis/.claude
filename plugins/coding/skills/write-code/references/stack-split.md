@@ -21,7 +21,7 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
 
 - **Large change** — more than 5 changed files, OR more than 300 LOC diff,
   OR multiple loosely-coupled domains (the bounds keep each PR independently
-  reviewable). Dispatch `coding:commit --create-pr --from-composite` to slice
+  reviewable). Dispatch `coding:commit --create-pr`; its auto-detection slices
   the working copy into reviewable, ordered draft PRs.
 - **Restack on semantic upstream change** — when an open stack is detected
   AND this change semantically modifies code that a lower (earlier-in-order)

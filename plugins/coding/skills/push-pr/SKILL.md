@@ -65,14 +65,15 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
 1. **Resolve and plan.** Inspect `jj status`, `jj log`, `jj bookmark list`,
    `git status --short`, and open PRs. Resolve `<commit-ref>` or the current
    saved change; list the bottom-to-top changes, bookmarks, PR heads, and
-   bases. If unsaved or mixed work must be committed/split/reordered, invoke
-   `coding:commit`, then restart discovery. Reject an unknown ref, nonlinear
-   chain, an unapproved merged-history rewrite, missing authentication, or
-   remote ambiguity with concrete evidence. A rewrite already completed by
-   `coding:commit` proceeds only when that route reports the user's explicit
-   merged-history consent. With `--dry-run`, print this plan and stop.
+   bases. If unsaved or mixed work must be committed/split/reordered, record
+   that prerequisite without dispatch when `--dry-run` is present; otherwise
+   invoke `coding:commit`, then restart discovery. Reject an unknown ref,
+   nonlinear chain, an unapproved merged-history rewrite, missing
+   authentication, or remote ambiguity with concrete evidence. A rewrite
+   already completed by `coding:commit` proceeds only when that route reports
+   the user's explicit merged-history consent.
 
-2. **Discover local CI parity; execute it unless skipped.** Read
+2. **Discover local CI parity; execute it unless skipped or dry-run.** Read
    `.github/workflows/*` and the
    repository's script definitions (`package.json`, workspace manifests,
    Makefiles, task files, or equivalent). Derive the exact compile, type,
@@ -83,10 +84,10 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    branch status checks/rulesets when `gh api` can read them. Record an
    inaccessible source rather than assuming it is empty. Dispatch one
    small-model test subagent for the whole command set unless
-   `--skip-local-test` is present. The tester is read-only: it MUST NOT edit,
-   format, commit, or push anything. It runs every discovered runnable command
-   in CI order, continuing through independent commands after a failure, and
-   returns under 1000 tokens:
+   `--skip-local-test` or `--dry-run` is present. The tester is read-only: it
+   MUST NOT edit, format, commit, or push anything. It runs every discovered
+   runnable command in CI order, continuing through independent commands after
+   a failure, and returns under 1000 tokens:
 
    <report>
 
@@ -137,6 +138,11 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    With `--skip-local-test`, retain the discovery and expected-check record but
    do not dispatch the tester; continue directly to publication and hosted
    convergence.
+   With `--dry-run`, retain the same discovery, then load the publication and
+   convergence references to print the complete local-test, bookmark/PR-base,
+   push, expected-check, and monitoring plan. Do not dispatch a tester or
+   fixer, mutate local or remote state, publish, or schedule monitoring; stop
+   only after that complete plan is printed.
 
 3. **Publish bottom-up.** Load and follow
    [references/publish-stack.md](references/publish-stack.md) for bookmark

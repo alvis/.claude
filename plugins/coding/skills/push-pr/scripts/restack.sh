@@ -35,9 +35,13 @@ run jj git fetch >/dev/null 2>&1 || true
 # Enumerate `<prefix>/*` bookmarks that are NOT ancestors of main@origin
 # (i.e., not yet merged into main as of this fetch). Sort lexicographically so
 # `01-foo` < `02-bar` < `10-baz` -- matches the intended stack order.
-mapfile -t bookmarks < <(
+bookmarks=()
+while IFS= read -r bookmark; do
+  case "$bookmark" in
+    "$PREFIX"/*) bookmarks[${#bookmarks[@]}]="$bookmark" ;;
+  esac
+done < <(
   jj bookmark list -r "all() ~ ::main@origin" --templater 'name ++ "\n"' 2>/dev/null \
-    | grep "^${PREFIX}/" \
     | sort
 )
 
@@ -51,11 +55,6 @@ for bm in "${bookmarks[@]}"; do
     prev_base="$bm"
     continue
   fi
-  if ! run jj rebase -b "$bm" -d "$prev_base@origin" 2>&1; then
-    errors+=("rebase:$bm")
-    prev_base="$bm"
-    continue
-  fi
   if ! run jj git push --bookmark "$bm" 2>&1; then
     errors+=("push:$bm")
     prev_base="$bm"
@@ -63,7 +62,9 @@ for bm in "${bookmarks[@]}"; do
   fi
   if [ "$state" != "NONE" ]; then
     # PR is open -- reparent to the current base (prev bookmark or main)
-    run gh pr edit "$bm" --base "$prev_base" >/dev/null 2>&1 || true
+    if ! run gh pr edit "$bm" --base "$prev_base" >/dev/null 2>&1; then
+      errors+=("pr-edit:$bm")
+    fi
   fi
   restacked+=("$bm")
   prev_base="$bm"
