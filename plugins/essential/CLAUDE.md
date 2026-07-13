@@ -52,7 +52,7 @@ Effort is a second, independent dial. When you spawn a subagent for a task, assi
 
 ### Nesting
 
-- **Only opus and fable agents may spawn nested subagents.** haiku and sonnet agents are leaves — they execute and report; they never delegate further.
+- **Only agent under opus and fable models may spawn nested subagents.** agents under haiku and sonnet models are leaves — they execute and report; they never delegate further.
 - When an opus or fable agent spawns a nested subagent, it MUST pass down a brief direction of the standards the subagent must follow, derived from what it has itself observed so far — the relevant standard/skill file paths, the conventions seen in the surrounding code, and any constraints discovered during its own work. A nested subagent starts blind; the parent's observations are its only context.
 
 ### Two-Stage Dispatch
