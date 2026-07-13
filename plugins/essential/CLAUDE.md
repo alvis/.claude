@@ -53,6 +53,17 @@ Name the success/convergence criteria before you start — a run with no stated 
 
 Delegation is a tool for managing signal, not a default reflex. Spawn a subagent or agent teammate ONLY when the task is big or its expected output is large — i.e. when an agent is needed to digest a haystack of files, logs, or search results and hand back the distilled signal. If a task is small enough that you could do it inline with a couple of tool calls, delegating it just adds latency and a lossy hand-off; do it yourself.
 
+### Runtime Agent Naming
+
+When a spawn surface offers a configurable runtime `name` or `label`, use `[persona-]<role>-<model>-<task>`:
+
+- Use lowercase kebab-case.
+- For a registered specialist, keep the given name and role but drop the surname: `raj-patel-techlead` becomes `raj-techlead-opus-fix-auth`.
+- For an ad-hoc or workflow agent, omit the persona: `reviewer-fable-audit-auth`.
+- Use the actual assigned model alias and keep the task to an ultra-short verb-object phrase.
+- Give parallel slices meaningful task qualifiers, such as `reviewer-fable-audit-auth-api` and `reviewer-fable-audit-auth-ui`. Only identical duplicates use numeric suffixes: the first stays unsuffixed, then `-2`, `-3`.
+- This convention applies only to configurable runtime names and labels. Do not rename registry IDs, routing entries, templates, or frontmatter; when no configurable name or label exists, take no action.
+
 ### Model Selection
 
 When designing a dynamic workflow or spawning agents, match the model to the cognitive demand of the task — never default everything to the largest model, and never starve a hard task with a small one:
