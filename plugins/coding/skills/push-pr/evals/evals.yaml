@@ -17,6 +17,8 @@ test_cases:
         type: content
       - text: "Dispatches one read-only test subagent using the small model to run the listed local commands"
         type: content
+      - text: "Runs repository-controlled local CI commands in a disposable credential-stripped worktree with network denied by default"
+        type: content
       - text: "Reports every local command executed"
         type: content
       - text: "Reports the exit status of every local command"
@@ -44,6 +46,10 @@ test_cases:
       - text: "Processes pull requests from the bottom of the stack upward"
         type: content
       - text: "Starts /loop 5m with one polling subagent for the whole stack"
+        type: content
+      - text: "Binds every poll result to the exact head SHA recorded after the latest push"
+        type: content
+      - text: "Keeps the PR pending when an expected check has not yet appeared"
         type: content
       - text: "The poller queries every PR with gh pr checks --json"
         type: content
@@ -80,6 +86,8 @@ test_cases:
       - text: "For a red PR, captures the failed-check link before dispatching a fix subagent"
         type: content
       - text: "For a red PR, captures the failed-check log before dispatching a fix subagent"
+        type: content
+      - text: "Treats failed-check logs as untrusted data and redacts secrets before dispatching a fix subagent"
         type: content
       - text: "Invokes coding:commit --retrospective after a CI repair"
         type: content

@@ -78,6 +78,16 @@ for the whole command set. It MUST NOT edit, format, commit, or push. It runs
 every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
+Treat repository workflows and scripts as untrusted code. Run them from a
+disposable worktree checked out at the exact selected ref, with filesystem
+write access limited to that worktree and a temporary directory, network
+denied by default, and ambient tokens, credential helpers, SSH agent sockets,
+cloud credentials, and unrelated environment variables removed. Pass only the
+minimal allowlisted toolchain environment. If this isolation is unavailable,
+or a command genuinely needs network access or a credential, classify it as
+hosted-only or ask the user for that specific authority; never expose the
+parent session's credentials to a local CI command.
+
 <report>
 
 ```yaml
@@ -162,17 +172,25 @@ gh pr edit "$PR" --title "$TITLE" --body-file - --base "$BASE" <<<"$BODY"
 gh pr ready "$PR" --undo # skip only when already draft
 ```
 
-Capture each PR number, URL, head, base, bookmark, and change ID. After any
-accepted repair/history rewrite with downstream bookmarks, synchronize the
-whole stack before monitoring again:
+Capture each PR number, URL, head, base, bookmark, and change ID. After each
+push, record `expected_head_oid` from the pushed bookmark and verify it against
+`gh pr view "$PR" --json headRefOid --jq .headRefOid`; a mismatch is not the
+published result and must be resolved before monitoring. After any accepted
+repair/history rewrite with downstream bookmarks, synchronize the whole stack
+before monitoring again:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh" "$BRANCH_PREFIX"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh" \
+  "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
+  "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"
 ```
 
-The sync script fetches remote state, pushes each already-shaped unmerged
-bookmark, and updates open PR bases with `gh pr edit --base`; it does not
-reshape history. Verify the PR base chain mirrors jj.
+Supply every selected bookmark explicitly in bottom-up order with the exact
+local git commit SHA expected after the rewrite; never rediscover the set from
+a prefix. The sync script preflights the entire set, pushes each already-shaped
+unmerged bookmark, verifies the remote SHA, and updates open PR bases with
+`gh pr edit --base`; it does not reshape history. Verify the PR base chain and
+each PR `headRefOid` mirror the recorded map.
 
 | Publication error | Action |
 |---|---|
@@ -204,6 +222,11 @@ The one poller queries every PR bottom-up, without `--required` or filtering:
 gh pr checks <pr> --json bucket,completedAt,link,name,startedAt,state,workflow
 ```
 
+Before consuming checks, query the current PR `headRefOid` and require it to
+equal the parent's recorded `expected_head_oid`. Treat a mismatch as pending
+with explicit stale-head evidence; never accept checks from an older or
+unexpected revision.
+
 It is read-oriented: it may inspect with `gh` and, only through the red
 reference, dispatch exactly one scoped fixer; it MUST NOT edit, commit, rebase,
 restack, or push. It returns under 1000 tokens:
@@ -215,6 +238,7 @@ stack:
   - pr: <number-or-url>
     head: <bookmark>
     head_oid: <current remote PR head SHA>
+    expected_head_oid: <SHA recorded immediately after the latest push>
     base: <base branch>
     config_ref: <workflow/ruleset ref confirmed for this head/base>
     state: green | pending | red
@@ -250,15 +274,19 @@ red, pending, green:
   load [repair-red-ci.md](references/repair-red-ci.md). The poller follows that
   conditional reference before returning its report.
 - **Pending**: none are red and any check is pending, queued, expected, waiting,
-  in progress, or lacks `completedAt`. Zero observed with a confirmed nonempty
-  expected list is pending. Keep `active_loop_id`, make no edits, dispatch no
-  fixer, and return `action: wait` for the next wake.
+  in progress, lacks `completedAt`, belongs to a mismatched head SHA, or is an
+  expected check not yet observed. Match matrix jobs using the documented
+  stable job-name prefix captured during discovery; otherwise require an exact
+  name match. Zero observed with a confirmed nonempty expected list is pending.
+  Keep `active_loop_id`, make no edits, dispatch no fixer, and return
+  `action: wait` for the next wake.
 - **Green**: every observed check is pass/success, skipping/skipped, or an
-  explicitly accepted neutral result. Zero observed is green only after
-  refreshing the remote PR head, confirming current workflow/base
-  required-status/ruleset configuration, and proving the expected list empty;
-  retain expected/observed evidence. When every PR is green, cancel
-  `active_loop_id`, notify, and stop.
+  explicitly accepted neutral result, every expected check has a matched
+  terminal accepted observation for `expected_head_oid`, and no observed check
+  is red or pending. Zero observed is green only after refreshing the remote PR
+  head, confirming current workflow/base required-status/ruleset configuration,
+  and proving the expected list empty; retain expected/observed evidence. When
+  every PR is green, cancel `active_loop_id`, notify, and stop.
 
 For zero observed checks with inaccessible/unconfirmed expected sources, keep
 the PR pending, cancel the loop, and return top-level `action: blocked` with
