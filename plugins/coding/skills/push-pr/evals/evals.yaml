@@ -1,0 +1,67 @@
+# Evaluation definition for push-pr.
+# Skill type: process/objective — grading checks observable lifecycle behavior.
+
+eval_type: process
+
+test_cases:
+  - name: default_local_ci_publish_and_converge
+    prompt: "Publish my saved change as a draft PR, run the repository's CI-equivalent checks locally first, and stay on it until every GitHub check is green."
+    expectations:
+      - text: "Inspects GitHub workflows and repository scripts, then dispatches one read-only small test subagent to run every feasible local CI-equivalent compile, lint, and test command and report commands, status, duration, and failure evidence"
+        type: content
+      - text: "Diagnoses any local failure at its root cause, uses the smallest relevant fixer, invokes coding:commit --retrospective after edits, and reruns affected checks until locally green or concretely blocked"
+        type: content
+      - text: "Pushes with jj git push, invokes coding:write-pr, and creates or updates draft pull requests in stack order"
+        type: content
+      - text: "Starts /loop 5m with one small polling subagent for the whole stack, classifies every PR as pending, green, or red from gh pr checks evidence, and reports success only when every PR is green"
+        type: content
+      - text: "Does not weaken correct tests, change valid expectations, or add ignore or suppression comments to obtain green checks; changes a test only when evidence proves the test itself is the root cause"
+        type: content
+
+  - name: skip_local_test_preserves_ci_convergence
+    prompt: "Push this branch and open or update its draft PR with --skip-local-test. Skip the local preflight because I already ran it, but monitor GitHub CI and fix any failures until green."
+    expectations:
+      - text: "Treats --skip-local-test as skipping only the read-only local CI preflight, without treating it as permission to skip publication, hosted CI monitoring, failure diagnosis, repair, or the stack-wide green gate"
+        type: content
+      - text: "Publishes with jj git push, uses coding:write-pr for title and body, and creates or updates the draft PR"
+        type: content
+      - text: "Starts /loop 5m and continues polling GitHub checks; pending waits, red gathers failed-check links and logs for a relevant fixer, and green stops monitoring only after every PR is green"
+        type: content
+      - text: "After a CI fix, invokes coding:commit --retrospective, republishes the rewritten bookmark, and keeps monitoring rather than claiming success from local or partial results"
+        type: content
+      - text: "Does not weaken correct tests, alter valid expectations, or add ignore or suppression comments to make CI pass; edits a test only when evidence proves the test itself is the root cause"
+        type: content
+
+  - name: red_ci_evidence_repair_and_lower_stack_route
+    prompt: "CI is red on the current PR because a shared helper introduced below it is wrong. Use the failure evidence, fix the real cause without adding an ignore, put the fix below this PR, repush, and keep the entire stack under observation until green."
+    expectations:
+      - text: "The polling subagent collects failed-check links, logs, states, and measured CI wall time before dispatching the smallest relevant fixer, which reports its evidence-backed diagnosis, edits, and check results"
+        type: content
+      - text: "Rejects weakening correct tests, changing valid expectations, and adding ignore or suppression comments; changes a test only when evidence proves the test itself caused the failure"
+        type: content
+      - text: "Because the root cause belongs below the current PR, creates the fix as a separate earlier commit and invokes coding:stack-code to rebase or reparent the current PR and its downstream PRs above that fix"
+        type: content
+      - text: "Invokes coding:commit --retrospective for the repair, reruns affected checks, pushes the rewritten bookmark, and restacks downstream PRs as required"
+        type: content
+      - text: "After repush schedules one check for the previous CI wall time plus one minute, starts /loop 1m if that check remains pending, and succeeds only when every PR in the resulting stack is green"
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "push this branch, open the PR, and watch CI until it is green"
+    - "publish my saved change as a draft pull request"
+    - "update the current PR and babysit its GitHub checks"
+    - "push these commits and fix any CI failures that appear"
+    - "open draft PRs for this existing stack and monitor every check"
+    - "run commit --create-pr and keep working until the PR is green"
+    - "repush my PR after the fix and stay on the checks"
+
+  should_not_trigger:
+    - "commit my working-copy changes with a Conventional Commit message"
+    - "split the current commit into two clean commits"
+    - "rewrite the last commit message and reorder my local history"
+    - "write a title and body for my pull request without publishing it"
+    - "revise this PR description to explain the breaking change"
+    - "turn these changes into a new stacked series of commits"
+    - "rebase and reparent my existing commits into a stack"
+    - "review the code in this pull request"
