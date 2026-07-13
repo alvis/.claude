@@ -15,17 +15,17 @@
 **Files:**
 - Create: `plugins/coding/skills/push-pr/evals/evals.yaml`
 
-- [ ] **Step 1: Run the failing baseline pressure scenario**
+- [x] **Step 1: Run the failing baseline pressure scenario**
 
 Dispatch one read-only subagent against the existing `commit --create-pr` flow with deadline pressure, pending CI, an out-of-scope failure, and a suggestion to weaken the test. Record that the current flow ends after PR creation and does not guarantee green CI.
 
-- [ ] **Step 2: Write objective/process evaluations**
+- [x] **Step 2: Write objective/process evaluations**
 
 Create three cases: default local-check/publish/monitor behavior, `--skip-local-test`, and red CI requiring retrospective repair plus `stack-code` when the root cause belongs below the PR. Each expectation must assert root-cause repair and prohibit unjustified test weakening.
 
 Add at least five trigger prompts for publishing/babysitting PR CI and five near misses for commit-only history work, PR-body composition, and stack construction.
 
-- [ ] **Step 3: Verify the eval file has no placeholders**
+- [x] **Step 3: Verify the eval file has no placeholders**
 
 Run:
 
@@ -39,10 +39,19 @@ Expected: no placeholder matches.
 
 **Files:**
 - Create: `plugins/coding/skills/push-pr/SKILL.md`
-- Move: `plugins/coding/skills/commit/references/workflow-stacked-pr.md` to `plugins/coding/skills/push-pr/references/publish-stack.md`
-- Create: `plugins/coding/skills/push-pr/references/ci-convergence.md`
+- Create: `plugins/coding/skills/push-pr/references/repair-red-ci.md`
+- Move and harden: `plugins/coding/skills/commit/scripts/restack.sh` to
+  `plugins/coding/skills/push-pr/scripts/restack.sh`
+- Create: `plugins/coding/skills/push-pr/scripts/test-restack.sh`
+- Delete after inlining:
+  `plugins/coding/skills/commit/references/workflow-stacked-pr.md`
 
-- [ ] **Step 1: Write the always-used skill contract**
+The publication and poll contracts were inlined in `SKILL.md` so the
+always-used path cannot be missed. Only the conditional red-CI repair branch
+remains in a reference. Review also required an executable fail-closed stack
+sync helper and test rather than a prose-only restack contract.
+
+- [x] **Step 1: Write the always-used skill contract**
 
 Use frontmatter equivalent to:
 
@@ -56,11 +65,11 @@ argument-hint: '[<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--d
 
 The inline workflow must resolve the target, discover feasible local equivalents from GitHub workflows and repository scripts, dispatch one read-only small test runner unless skipped, repair failures through relevant agents, invoke `coding:commit --retrospective`, publish with `jj`/`gh`, and start `/loop 5m`.
 
-- [ ] **Step 2: Relocate and adapt publication instructions**
+- [x] **Step 2: Relocate and adapt publication instructions**
 
 Move the existing stacked publication procedure without leaving a second implementation under `commit`. Keep `jj git push`, `coding:write-pr`, draft PRs, bookmark/base ordering, restacking, and existing error behavior.
 
-- [ ] **Step 3: Write conditional CI convergence instructions**
+- [x] **Step 3: Write conditional CI convergence instructions**
 
 Define the poll contract around:
 
@@ -72,7 +81,7 @@ Green cancels monitoring and reports success. Pending waits. Red collects failed
 
 Wrap the prohibition against weakening correct tests, adding ignores, or suppressing failures in `<IMPORTANT>`; allow test edits only when evidence shows the test itself is the root cause.
 
-- [ ] **Step 4: Run policy validation**
+- [x] **Step 4: Run policy validation**
 
 Run:
 
@@ -86,12 +95,16 @@ Expected: zero policy errors and zero policy warnings.
 
 **Files:**
 - Modify: `plugins/coding/skills/commit/SKILL.md`
+- Modify: commit, finalize-commits, write-code, write-pr, specification, and
+  coding ownership references that previously named commit as the publication
+  owner.
+- Modify: `README.md` and `plugins/coding/references/CODING.md` catalogs.
 
-- [ ] **Step 1: Replace implementation with delegation**
+- [x] **Step 1: Replace implementation with delegation**
 
 Keep `--create-pr` and `--branch-prefix` in frontmatter, inputs, routing, and completion. Replace the create-PR route with a short required handoff to `coding:push-pr`, forwarding the resolved change/stack, branch prefix, `--dry-run`, and verification intent. Remove `commit` claims that it invokes `gh`, pushes bookmarks, or owns the per-PR loop.
 
-- [ ] **Step 2: Prove single ownership**
+- [x] **Step 2: Prove single ownership**
 
 Run:
 
@@ -101,11 +114,11 @@ rg -n 'gh pr create|jj git push|workflow-stacked-pr' plugins/coding/skills/commi
 
 Expected: no matches outside a concise `coding:push-pr` delegation explanation.
 
-- [ ] **Step 3: Run structural and behavior verification**
+- [x] **Step 3: Run structural and behavior verification**
 
 Run the quick validator on both changed skills and the whole coding plugin. Run `claude plugin validate --strict plugins/coding`; accept only the two recorded baseline warnings, with no new warning or error. Exercise the positive and near-miss eval prompts with an independent verifier.
 
-- [ ] **Step 4: Review and commit**
+- [x] **Step 4: Review and commit**
 
 Review the diff for coherent ownership, exact flag forwarding, executable scheduling instructions, and preservation of the publication workflow. Run `git diff --check`, then commit with a Conventional Commit message.
 
