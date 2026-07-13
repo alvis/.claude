@@ -1,93 +1,148 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# push-pr restack.sh -- publish an unmerged stack after coding:commit has
-#                      shaped or auto-rebased its local history. Fetch current
-#                      bookmarks, re-push via jj, and repair open PR bases.
-#
-# Bookmarks in the stack are ordered by lexicographic sort of the `NN-<scope>`
-# suffix (per GIT-PR-STACK-01). For bookmark #1 the parent is main@origin; for
-# bookmark #N the parent is bookmark #N-1.
-#
-# Usage:   ${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh <branch-prefix> [--dry-run]
-# Stdout:  JSON summary { restacked, skipped_merged, errors }
-# Exit:    0 = all ok or all skipped; non-zero only on hard failure of the loop
+# publish an explicitly ordered pull request stack and repair each live base
+# usage: restack.sh [--dry-run] <bookmark>=<expected-git-sha>...
+# stdout: a json summary with restacked, skipped_merged, and errors arrays
 
-PREFIX="${1:-}"
-[ -z "$PREFIX" ] && { echo "usage: push-pr/scripts/restack.sh <branch-prefix> [--dry-run]" >&2; exit 2; }
-DRY="${2:-}"
-
+dry_run=false
+bookmarks=()
+expected_shas=()
+states=()
 restacked=()
-skipped=()
+skipped_merged=()
 errors=()
 
-run() {
-  if [ "$DRY" = "--dry-run" ]; then
-    printf '[dry] %s\n' "$*" >&2
-  else
-    "$@"
-  fi
+json_array() {
+  separator=
+  printf '['
+  for value in "$@"; do
+    printf '%s"%s"' "$separator" "$value"
+    separator=,
+  done
+  printf ']'
 }
 
-# Refresh remote tracking before reading the current bookmarks
-run jj git fetch >/dev/null 2>&1 || true
+emit_json() {
+  printf '{"restacked":'
+  json_array ${restacked[@]+"${restacked[@]}"}
+  printf ',"skipped_merged":'
+  json_array ${skipped_merged[@]+"${skipped_merged[@]}"}
+  printf ',"errors":'
+  json_array ${errors[@]+"${errors[@]}"}
+  printf '}\n'
+}
 
-# Enumerate `<prefix>/*` bookmarks that are NOT ancestors of main@origin
-# (i.e., not yet merged into main as of this fetch). Sort lexicographically so
-# `01-foo` < `02-bar` < `10-baz` -- matches the intended stack order.
-bookmarks=()
-while IFS= read -r bookmark; do
-  case "$bookmark" in
-    "$PREFIX"/*) bookmarks[${#bookmarks[@]}]="$bookmark" ;;
+fail_with() {
+  status=$1
+  error=$2
+  errors[${#errors[@]}]=$error
+  emit_json
+  exit "$status"
+}
+
+valid_bookmark() {
+  candidate=$1
+  case "$candidate" in
+    ''|-*|/*|*/|*//*|*..*|*.lock|*[!A-Za-z0-9._/-]*) return 1 ;;
   esac
-done < <(
-  jj bookmark list -r "all() ~ ::main@origin" --templater 'name ++ "\n"' 2>/dev/null \
-    | sort
-)
 
-prev_base="main"
-for bm in "${bookmarks[@]}"; do
-  [ -z "$bm" ] && continue
-  state="$(gh pr view "$bm" --json state -q .state 2>/dev/null || echo "NONE")"
-  if [ "$state" = "MERGED" ]; then
-    skipped+=("$bm")
-    # A merged bookmark advances the base for the next unmerged PR
-    prev_base="$bm"
-    continue
-  fi
-  if ! run jj git push --bookmark "$bm" 2>&1; then
-    errors+=("push:$bm")
-    prev_base="$bm"
-    continue
-  fi
-  if [ "$state" != "NONE" ]; then
-    # PR is open -- reparent to the current base (prev bookmark or main)
-    if ! run gh pr edit "$bm" --base "$prev_base" >/dev/null 2>&1; then
-      errors+=("pr-edit:$bm")
-    fi
-  fi
-  restacked+=("$bm")
-  prev_base="$bm"
-done
-
-# Emit JSON summary. Build each array with `jq -R . | jq -s .` only when it has
-# entries; otherwise emit an empty array literal so the output is well-formed.
-to_json_array() {
-  if [ "$#" -eq 0 ]; then
-    printf '[]'
-  else
-    printf '%s\n' "$@" | jq -R . | jq -s -c .
-  fi
+  remainder=$candidate
+  while :; do
+    component=${remainder%%/*}
+    case "$component" in
+      ''|.*|*.) return 1 ;;
+    esac
+    [ "$remainder" = "$component" ] && break
+    remainder=${remainder#*/}
+  done
 }
 
-if command -v jq >/dev/null 2>&1; then
-  printf '{"restacked":%s,"skipped_merged":%s,"errors":%s}\n' \
-    "$(to_json_array "${restacked[@]+"${restacked[@]}"}")" \
-    "$(to_json_array "${skipped[@]+"${skipped[@]}"}")" \
-    "$(to_json_array "${errors[@]+"${errors[@]}"}")"
-else
-  echo "jq not on PATH -- cannot emit JSON summary" >&2
-  exit 2
+if [ "${1:-}" = --dry-run ]; then
+  dry_run=true
+  shift
 fi
 
-[ "${#errors[@]}" -eq 0 ] || exit 1
+[ "$#" -gt 0 ] || fail_with 2 no-specs
+
+for spec in "$@"; do
+  case "$spec" in
+    -*) fail_with 2 unknown-flag ;;
+    *=*) ;;
+    *) fail_with 2 invalid-spec ;;
+  esac
+
+  bookmark=${spec%%=*}
+  expected_sha=${spec#*=}
+  [ -n "$bookmark" ] && [ -n "$expected_sha" ] || fail_with 2 invalid-spec
+  valid_bookmark "$bookmark" || fail_with 2 invalid-bookmark
+  case "$expected_sha" in
+    *[!0-9A-Fa-f]*) fail_with 2 invalid-sha ;;
+  esac
+
+  bookmarks[${#bookmarks[@]}]=$bookmark
+  expected_shas[${#expected_shas[@]}]=$expected_sha
+done
+
+# fetch and preflight every supplied bookmark before changing remote state
+jj git fetch >/dev/null 2>&1 || fail_with 1 fetch
+
+index=0
+while [ "$index" -lt "${#bookmarks[@]}" ]; do
+  bookmark=${bookmarks[$index]}
+  expected_sha=${expected_shas[$index]}
+
+  if ! local_sha=$(jj log -r "$bookmark" --no-graph -T 'commit_id ++ "\n"' 2>/dev/null); then
+    fail_with 1 "local-sha-mismatch:$bookmark"
+  fi
+  [ "$local_sha" = "$expected_sha" ] || fail_with 1 "local-sha-mismatch:$bookmark"
+
+  if ! state=$(gh pr list --head "$bookmark" --state all --json state \
+    --jq '.[0].state // "NONE"' 2>/dev/null); then
+    fail_with 1 "gh-discovery:$bookmark"
+  fi
+  case "$state" in
+    NONE|OPEN|MERGED) ;;
+    *) fail_with 1 "gh-discovery:$bookmark" ;;
+  esac
+  states[${#states[@]}]=$state
+  index=$((index + 1))
+done
+
+# merged pull requests never become the base of a remaining live item
+previous_base=main
+index=0
+while [ "$index" -lt "${#bookmarks[@]}" ]; do
+  bookmark=${bookmarks[$index]}
+  expected_sha=${expected_shas[$index]}
+  state=${states[$index]}
+
+  if [ "$state" = MERGED ]; then
+    skipped_merged[${#skipped_merged[@]}]=$bookmark
+    index=$((index + 1))
+    continue
+  fi
+
+  if [ "$dry_run" = true ]; then
+    index=$((index + 1))
+    continue
+  fi
+
+  jj git push --bookmark "$bookmark" >/dev/null 2>&1 || fail_with 1 "push:$bookmark"
+  if ! remote_sha=$(jj log -r "$bookmark@origin" --no-graph \
+    -T 'commit_id ++ "\n"' 2>/dev/null); then
+    fail_with 1 "remote-sha-mismatch:$bookmark"
+  fi
+  [ "$remote_sha" = "$expected_sha" ] || fail_with 1 "remote-sha-mismatch:$bookmark"
+
+  if [ "$state" = OPEN ]; then
+    gh pr edit "$bookmark" --base "$previous_base" >/dev/null 2>&1 || \
+      fail_with 1 "pr-edit:$bookmark"
+  fi
+
+  restacked[${#restacked[@]}]=$bookmark
+  previous_base=$bookmark
+  index=$((index + 1))
+done
+
+emit_json
