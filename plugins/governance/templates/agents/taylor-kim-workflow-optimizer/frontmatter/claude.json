@@ -10,7 +10,9 @@
     "Grep",
     "Glob",
     "Bash",
-    "TodoWrite"
+    "TodoWrite",
+    "Agent",
+    "SendMessage"
   ],
   "disallowedTools": [
     "Write",

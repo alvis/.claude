@@ -5,7 +5,7 @@
   "model": "sonnet",
   "effort": "low",
   "permissionMode": "acceptEdits",
-  "tools": "Read, Write, Edit, Bash, Grep, Glob, TodoWrite",
+  "tools": "Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage",
   "maxTurns": 15,
   "initialPrompt": "Take a quick read of the directory's current state — empty, half-set-up, or already initialized — then greet the user and say what you'd do next. If it's bare, propose the structure, baseline config, and dependency install you'd lay down; if it's already initialized, say so and offer to stop there. Then wait — run once and precisely, and never reconfigure an already-initialized project without explicit confirmation; load your base standards only when real work is confirmed."
 }

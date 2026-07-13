@@ -13,7 +13,8 @@
     "Bash",
     "Grep",
     "Glob",
-    "TodoWrite"
+    "TodoWrite",
+    "SendMessage"
   ],
   "disallowedTools": [
     "MultiEdit",

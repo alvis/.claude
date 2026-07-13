@@ -11,6 +11,12 @@ from typing import Any
 
 
 AGENT_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+FIXED_ROUTING_LANGUAGE = re.compile(
+    r"\b(?:only|always)\s+(?:spawn|delegate|route)\b"
+    r"|\bAgent` tool for one purpose\b"
+    r"|\bI am the only agent who forms\b",
+    re.IGNORECASE,
+)
 
 
 class AgentTemplateError(ValueError):
@@ -55,11 +61,64 @@ def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
     return frontmatter
 
 
+def _tool_names(frontmatter: dict[str, Any]) -> set[str] | None:
+    tools = frontmatter.get("tools")
+    if tools is None:
+        return None
+    if isinstance(tools, str):
+        return {tool for tool in re.split(r"[\s,]+", tools) if tool}
+    if isinstance(tools, list):
+        return {tool for tool in tools if isinstance(tool, str)}
+    return set()
+
+
+def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
+    """Reject agent definitions whose prose disagrees with their capabilities."""
+    if frontmatter.get("model") == "haiku" and "effort" in frontmatter:
+        raise AgentTemplateError("haiku agents must omit effort")
+
+    routing_text = "\n".join(
+        value
+        for value in (
+            body,
+            frontmatter.get("description"),
+            frontmatter.get("initialPrompt"),
+        )
+        if isinstance(value, str)
+    )
+    if FIXED_ROUTING_LANGUAGE.search(routing_text):
+        raise AgentTemplateError(
+            "fixed routing language conflicts with runtime discovery"
+        )
+
+    tools = _tool_names(frontmatter)
+    has_agent = tools is None or "Agent" in tools
+    declares_leaf = "I am a leaf" in body
+    if has_agent and declares_leaf:
+        raise AgentTemplateError("leaf declaration conflicts with Agent tool")
+    if not has_agent and not declares_leaf:
+        raise AgentTemplateError("agent without Agent must declare itself a leaf")
+    if tools is not None and "SendMessage" in body and "SendMessage" not in tools:
+        raise AgentTemplateError("mentions SendMessage but its tools omit it")
+    if tools is not None and "SendMessage" not in tools:
+        raise AgentTemplateError("explicit tools must include SendMessage")
+    if has_agent:
+        if "current `Agent` roster" not in body:
+            raise AgentTemplateError(
+                "spawn-capable agent must inspect the current Agent roster"
+            )
+        if "defaults, not limits" not in body:
+            raise AgentTemplateError(
+                "spawn-capable agent must treat named edges as defaults, not limits"
+            )
+
+
 def stitch_agent_definition(template_directory: Path) -> str:
     """Return one installable Markdown agent definition for a source pair."""
     template_directory = Path(template_directory)
     frontmatter = load_agent_frontmatter(template_directory)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
+    validate_agent_contract(frontmatter, body)
     yaml = json.dumps(frontmatter, ensure_ascii=False, indent=2, allow_nan=False)
     return f"---\n{yaml}\n---\n\n{body}"
 

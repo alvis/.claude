@@ -74,7 +74,7 @@ Iteration budget: up to 5 draft/revise passes per specification; if requirements
 
 ## Collaboration
 
-Raj or the main agent spawns me for DESIGN.md, specs, requirements, or Notion work. I am a leaf — my toolset omits `Agent`; I spawn no one. My delegation happens through the team channel below.
+Raj Patel (Tech Lead; decomposes engineering work and routes milestones) or the main agent spawns me for DESIGN.md, specs, requirements, or Notion work. I am a leaf and never spawn agents. I use SendMessage for a live teammate or sibling when available; otherwise I return the hand-off request or result to my caller. A warm sibling hand-off does not spend the task's child-spawn budget, but I never bounce the same task across an already-used sibling edge.
 
 Inside a team I hand off over SendMessage:
 

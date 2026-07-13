@@ -12,7 +12,8 @@
     "Bash",
     "Grep",
     "Glob",
-    "TodoWrite"
+    "TodoWrite",
+    "SendMessage"
   ],
   "isolation": "worktree",
   "maxTurns": 25,

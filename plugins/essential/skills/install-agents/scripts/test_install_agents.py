@@ -14,15 +14,33 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 from install_agents import discover_agent_templates, install_agents
-from stitch_agent import AgentTemplateError, stitch_agent_definition
+from run_delegation_eval import build_command, extract_agent_targets
+from stitch_agent import (
+    AgentTemplateError,
+    stitch_agent_definition,
+    validate_agent_contract,
+)
 
 
 def write_template(plugin_root: Path, name: str, frontmatter: dict, body: str = "# Body\n") -> Path:
     template = plugin_root / "templates/agents" / name
     (template / "frontmatter").mkdir(parents=True)
+    tools = frontmatter.get("tools")
+    if isinstance(tools, list) and "SendMessage" not in tools:
+        tools.append("SendMessage")
+    elif isinstance(tools, str) and "SendMessage" not in tools.split(", "):
+        frontmatter["tools"] = f"{tools}, SendMessage"
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
     )
+    tools = frontmatter.get("tools")
+    contract = (
+        "\nI inspect the current `Agent` roster and treat named edges as defaults, not limits.\n"
+        if tools is None or "Agent" in tools
+        else "\nI am a leaf and never spawn agents.\n"
+    )
+    if "current `Agent` roster" not in body and "I am a leaf" not in body:
+        body += contract
     (template / "base.md").write_text(body, encoding="utf-8")
     return template
 
@@ -59,7 +77,9 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 json.loads((template / "frontmatter/claude.json").read_text()),
                 json.loads(frontmatter_text),
             )
-            self.assertTrue(stitched.endswith("---\n\n# Test agent\n"))
+            self.assertTrue(
+                stitched.endswith("---\n\n# Test agent\n\nI am a leaf and never spawn agents.\n")
+            )
             self.assertEqual(stitched, stitch_agent_definition(template))
 
     def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(self):
@@ -93,8 +113,155 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(nonstandard_number)
 
+    def test_rejects_haiku_effort_and_tool_posture_mismatches(self):
+        cases = (
+            (
+                {"name": "test-agent", "model": "haiku", "effort": "medium"},
+                "I inspect the current `Agent` roster before delegating.",
+                "haiku agents must omit effort",
+            ),
+            (
+                {"name": "test-agent", "tools": ["Read", "Agent"]},
+                "I am a leaf — I execute and report.",
+                "leaf declaration conflicts with Agent tool",
+            ),
+            (
+                {"name": "test-agent", "tools": ["Read"]},
+                "I delegate work when useful.",
+                "agent without Agent must declare itself a leaf",
+            ),
+            (
+                {"name": "test-agent", "tools": ["Read"]},
+                "I am a leaf and hand results over SendMessage.",
+                "mentions SendMessage but its tools omit it",
+            ),
+            (
+                {"name": "test-agent", "tools": ["Read", "Agent"]},
+                "I inspect the current `Agent` roster; named edges are defaults, not limits.",
+                "explicit tools must include SendMessage",
+            ),
+            (
+                {"name": "test-agent"},
+                "I inspect the current `Agent` roster and treat named edges as defaults, not limits. I only spawn fixed-reviewer.",
+                "fixed routing language conflicts with runtime discovery",
+            ),
+            (
+                {
+                    "name": "test-agent",
+                    "description": "Always route reviews to fixed-reviewer",
+                    "initialPrompt": "Only spawn fixed-reviewer for review",
+                },
+                "I inspect the current `Agent` roster and treat named edges as defaults, not limits.",
+                "fixed routing language conflicts with runtime discovery",
+            ),
+        )
+
+        for frontmatter, body, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(
+                AgentTemplateError, message
+            ):
+                validate_agent_contract(frontmatter, body)
+
+    def test_spawn_capable_agent_requires_runtime_discovery_contract(self):
+        with self.assertRaisesRegex(
+            AgentTemplateError, "spawn-capable agent must inspect the current Agent roster"
+        ):
+            validate_agent_contract(
+                {"name": "test-agent"},
+                "I spawn the reviewer named in this file.",
+            )
+
+        validate_agent_contract(
+            {"name": "test-agent"},
+            "I inspect the current `Agent` roster and treat named edges as defaults, not limits.",
+        )
+
+
+class DelegationEvalTest(unittest.TestCase):
+    def test_live_command_isolates_user_settings_and_customizations(self):
+        command = build_command(
+            {"runtime-aware-router": {"description": "router", "prompt": "route"}},
+            budget="0.10",
+            model="sonnet",
+        )
+
+        self.assertIn(("--setting-sources", ""), list(zip(command, command[1:])))
+        self.assertIn("--disable-slash-commands", command)
+        self.assertIn("--no-chrome", command)
+        self.assertIn("--bare", command)
+        self.assertIn(("--mcp-config", "{}"), list(zip(command, command[1:])))
+        self.assertIn("--strict-mcp-config", command)
+        self.assertEqual(["--model", "sonnet"], command[-2:])
+
+    def test_extracts_actual_agent_tool_targets_from_stream_json(self):
+        events = (
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {
+                        "content": [
+                            {"type": "text", "text": "routing"},
+                            {
+                                "type": "tool_use",
+                                "name": "Agent",
+                                "input": {"subagent_type": "synthetic-runtime-reviewer"},
+                            },
+                        ]
+                    },
+                }
+            ),
+            "not-json",
+            json.dumps(
+                {
+                    "type": "tool_use",
+                    "name": "Read",
+                    "input": {"subagent_type": "not-an-agent"},
+                }
+            ),
+        )
+
+        self.assertEqual(
+            ["synthetic-runtime-reviewer"], extract_agent_targets(events)
+        )
+
 
 class AgentDiscoveryTest(unittest.TestCase):
+    def test_essential_runtime_context_uses_measured_dynamic_delegation(self):
+        essential = ROOT / "plugins/essential"
+        shared_context = "\n".join(
+            (essential / name).read_text(encoding="utf-8")
+            for name in ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md")
+        )
+
+        self.assertIn("current `Agent` roster", shared_context)
+        self.assertIn("REVIEWED: source=<specialist|general|external|none>", shared_context)
+        self.assertNotIn("75%", shared_context)
+        self.assertNotIn("~200k", shared_context)
+
+    def test_session_start_actually_injects_essential_runtime_context(self):
+        essential = ROOT / "plugins/essential"
+        completed = subprocess.run(
+            [
+                str(essential / "bin/session-start"),
+                "--plugin-dir",
+                str(essential),
+                "--constitution-paths",
+                str(essential),
+            ],
+            input='{"source":"startup"}',
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        context = json.loads(completed.stdout)["hookSpecificOutput"][
+            "additionalContext"
+        ]
+        self.assertIn("Discover before dispatching", context)
+        self.assertIn("REVIEWED: source=<specialist|general|external|none>", context)
+        self.assertNotIn("75%", context)
+
     def test_installed_mode_reports_plugin_list_failures(self):
         with tempfile.TemporaryDirectory() as temporary:
             essential = Path(temporary) / "cache/alvis/essential/1"
@@ -151,6 +318,58 @@ class AgentDiscoveryTest(unittest.TestCase):
 
         for template in templates:
             self.assertIn(f"`{template.name}` |", instructions[template.owner])
+
+    def test_distributed_agents_satisfy_the_delegation_contract(self):
+        templates = discover_agent_templates(ROOT / "plugins/essential")
+
+        for template in templates:
+            with self.subTest(agent=template.name):
+                stitch_agent_definition(template.path)
+
+    def test_only_true_leaf_roles_omit_agent_and_every_role_can_handoff(self):
+        templates = discover_agent_templates(ROOT / "plugins/essential")
+        expected_leaves = {
+            "ada-bishop-initializer",
+            "ava-thompson-testing-evangelist",
+            "kai-raven-adversarial-redteam",
+            "penelope-sterling-aesthetic-evaluator",
+            "sam-taylor-specification",
+            "tess-park-test-runner",
+        }
+        actual_leaves = set()
+
+        for template in templates:
+            frontmatter = json.loads(
+                (template.path / "frontmatter/claude.json").read_text(encoding="utf-8")
+            )
+            tools = frontmatter.get("tools")
+            if tools is not None:
+                self.assertIn("SendMessage", tools, template.name)
+                if "Agent" not in tools:
+                    actual_leaves.add(template.name)
+
+        self.assertEqual(expected_leaves, actual_leaves)
+
+    def test_changed_code_gates_use_runtime_review_routing(self):
+        templates = discover_agent_templates(ROOT / "plugins/essential")
+        gated_agents = set()
+
+        for template in templates:
+            frontmatter = json.loads(
+                (template.path / "frontmatter/claude.json").read_text(encoding="utf-8")
+            )
+            for matcher in frontmatter.get("hooks", {}).get("Stop", []):
+                for hook in matcher.get("hooks", []):
+                    prompt = hook.get("prompt", "")
+                    if "review-routing gate" not in prompt:
+                        continue
+                    gated_agents.add(template.name)
+                    self.assertIn("current Agent roster", prompt)
+                    self.assertIn("source=<specialist|general|external|none>", prompt)
+                    self.assertIn("configured external review tool", prompt)
+                    self.assertNotIn("REVIEWED: marcus", prompt)
+
+        self.assertEqual(8, len(gated_agents))
 
     def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -288,7 +507,11 @@ class InstallAgentsTest(unittest.TestCase):
             )
 
             self.assertEqual(1, install_agents(essential, destination))
-            (template / "base.md").write_text("# Version two\n", encoding="utf-8")
+            (template / "base.md").write_text(
+                "# Version two\n\nI inspect the current `Agent` roster and treat "
+                "named edges as defaults, not limits.\n",
+                encoding="utf-8",
+            )
             self.assertEqual(1, install_agents(essential, destination))
 
             self.assertIn(

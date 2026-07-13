@@ -3,7 +3,7 @@ name: create-agent
 description: "Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing model, effort, and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
 model: opus
 context: fork
-allowed-tools: Task, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
+allowed-tools: Agent, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
 argument-hint: "<role description> [--plugin=<owner>] [--model=...] [--effort=...] [--permission=...] [--yes]"
 ---
 
@@ -61,7 +61,7 @@ anything is written. `update-agent` owns changes to existing definitions.
      — pick the cheapest model that clears the role's bar and raise effort
      within a tier before upgrading the model;
    - an explicit tools list omitting `Agent` for a leaf, or a spawn-capable
-     tool surface;
+     tool surface based on role needs rather than model tier;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
      when the role needs them.
 4. Confirm before writing: compose one `AskUserQuestion` battery of at most
@@ -89,8 +89,9 @@ anything is written. `update-agent` owns changes to existing definitions.
 8. Add or update the task-to-agent routing row in the owning plugin's
    `CLAUDE.md`, creating that file if necessary. Keep only this agent's owned
    tasks there; do not rebuild a central roster table.
-9. Check tools against behavior: a leaf cannot mention delegation; a
-   spawn-capable agent must have `Agent`; read-mostly critics must not
+9. Check tools against behavior: a leaf cannot claim it can spawn; a
+   spawn-capable agent must have `Agent`, inspect the current runtime roster,
+   and treat named edges as defaults rather than limits; read-mostly critics must not
    accidentally receive mutation tools; workflow-spawned and teammate
    permissions must follow template rules. Also check model/effort
    compatibility, allowed permission values, valid color/model values,
@@ -109,7 +110,8 @@ anything is written. `update-agent` owns changes to existing definitions.
   `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
 - Check placeholders, the template key allowlist and required keys, referenced
   files/aliases/skills, duplicate seams, prompt contradictions, and the owning
-  plugin routing row. Official runtime loading remains "not exercised" unless
+  plugin routing row, runtime-discovery contract, and `SendMessage` claims against
+  the actual tool list. Official runtime loading remains "not exercised" unless
   the installed loader was actually run.
 
 ## Completion

@@ -20,7 +20,7 @@
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
-  "hooks": "gated:true agents embed the Marcus-gate Stop hook verbatim (only <NAME> substituted, never hand-edited); critic:true+fence:true agents embed the PreToolUse fence verbatim — both are provided by the overhaul spec, not authored per-agent",
+  "hooks": "gated:true agents embed the runtime review-routing Stop hook verbatim; critic:true+fence:true agents embed the PreToolUse fence verbatim — both are provided by the overhaul spec, not authored per-agent",
   "memory": "user|project|local — OMIT the key entirely to disable; there is no memory:none",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
@@ -50,7 +50,8 @@ A `leaf:true` agent must not be able to spawn further agents. The control surfac
 `tools`**, not `disallowedTools`:
 
 - To make an agent a leaf: give it an **explicit `tools` list that omits `Agent`** (e.g.
-  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite"`).
+  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage"`). Every explicit tool list includes
+  `SendMessage` so the role can return a hand-off request or result without gaining spawn authority.
 - `disallowedTools: ["Agent"]` is **NOT valid** for this purpose — it does not reliably prevent spawning; don't
   reach for it here.
 - A spawn-capable agent either **omits `tools` entirely** (grants the full default set, `Agent` included) or
@@ -131,7 +132,28 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
 
 <!-- INSTRUCTION: state the intended spawn edges (agentEdges) for this agent — who it may dispatch to, and who
      dispatches it. If this agent is a leaf (see Leaf & Spawn Encoding above), say so explicitly and note it
-     holds no Agent tool. Only Raj initiates Agent Teams / Dynamic Workflows, and only from the main session. -->
+     holds no Agent tool. For a spawn-capable agent, include the runtime-discovery paragraph below verbatim.
+     Known edges are defaults, never an allowlist. Only the runtime-selected lead initiates Agent Teams or
+     Dynamic Workflows, and only from the main session; Raj is the coding-team default, not a universal limit. -->
 
-I [spawn / am spawned by] [agent names, from templates/agent-team.md's edge list if this agent participates in a
-team]. [If leaf: I am a leaf — I execute and report; I never delegate further.]
+I [spawn / am spawned by] [agent names plus each role and main task, from templates/agent-team.md's edge list if
+this agent participates in a team]. [If leaf: I am a leaf and never spawn agents; I hand work back through
+`SendMessage`.]
+
+<!-- REQUIRED for spawn-capable agents: -->
+Before I delegate, I inspect the current `Agent` roster and its descriptions, then choose the best available
+specialist for the required outcome, tools, independence, and context. Named collaboration edges are proven
+defaults, not limits; I never invent or assume an unavailable agent.
+
+<!-- REQUIRED for every agent that hands work off: -->
+I use `SendMessage` for a live teammate or sibling when available; otherwise I return the hand-off request or
+result to my caller. A warm sibling hand-off does not spend the task's child-spawn budget, but I never bounce the
+same task across an already-used sibling edge.
+
+For consequential output, I seek the best available independent domain critic. If none fits, I use a
+general-purpose agent as an independent criteria-based reviewer; when no better internal reviewer is available,
+I may consult an already-configured external review tool allowed by the current permission policy. I pass only
+the artifact, constraints, and acceptance criteria, never the producer's reasoning. If no review path is
+available, I finish with an explicit warning that independent review did not occur.
+
+For changed code, I end with `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>`.

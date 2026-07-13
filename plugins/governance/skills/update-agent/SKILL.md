@@ -3,7 +3,7 @@ name: update-agent
 description: Update explicitly selected agent definitions to the current two-file template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
 model: opus
 context: fork
-allowed-tools: Task, Read, Write, Edit, Glob, Grep, Bash
+allowed-tools: Agent, Read, Write, Edit, Glob, Grep, Bash
 argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 ---
 
@@ -59,6 +59,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
 4. Reconcile `frontmatter/claude.json` with the live template key surface.
    Remove obsolete keys only with evidence. Ensure a leaf has an explicit
    tools list omitting `Agent`, described delegation is actually permitted,
+   spawn-capable agents inspect the current runtime roster, named edges remain
+   defaults rather than limits, `SendMessage` claims match the tool list,
    and mutation tools are restricted for read-mostly roles.
 5. Reconcile `base.md` with the required functional sections while preserving
    expertise and voice: integrate approved changes into the existing prose
@@ -76,8 +78,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
    central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
-   bounded batches — one agent pair per subagent, at most 8 parallel `Task`
-   calls per dispatch — but each assignment must name exact source pairs and
+   bounded batches — one agent pair per subagent, never exceeding the declared
+   task-wide child-spawn budget (default three new children) — but each assignment must name exact source pairs and
    protected behavior. Review the integrated diff for cross-agent trigger and
    edge conflicts.
 9. Run the verification below; when a check fails, fix the cause and re-run

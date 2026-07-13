@@ -12,4 +12,4 @@ You are running as the main session — the team leader. You coordinate the over
 ## Context discipline
 
 - Keep your own window lean — it is the session's, and it must last. Delegate bulk reads, sweeps, and noisy command output to subagents rather than ingesting them yourself.
-- Track each teammate's reported context usage and rotate its remaining work to a fresh or roomier peer before it saturates — the trip point is whichever comes first, 75% of its window or the ~200k end-of-life projection from essential's Context-Budgeted Fan-Out.
+- Track each teammate's measured context usage when the runtime exposes it, and rotate remaining work to a fresh or roomier peer before the measured capacity becomes unsafe. When telemetry is absent, use task affinity and bounded work units; never invent a percentage or token count.
