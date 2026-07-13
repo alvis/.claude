@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# push-pr restack.sh -- rebase every unmerged bookmark in the current stack onto its
-#               (now-up-to-date) parent in the stack, re-push (force-with-lease
-#               via jj), and reparent the open PR.
+# push-pr restack.sh -- publish an unmerged stack after coding:commit has
+#                      shaped or auto-rebased its local history. Fetch current
+#                      bookmarks, re-push via jj, and repair open PR bases.
 #
 # Bookmarks in the stack are ordered by lexicographic sort of the `NN-<scope>`
 # suffix (per GIT-PR-STACK-01). For bookmark #1 the parent is main@origin; for
@@ -29,7 +29,7 @@ run() {
   fi
 }
 
-# Refresh remote tracking before deciding what to rebase
+# Refresh remote tracking before reading the current bookmarks
 run jj git fetch >/dev/null 2>&1 || true
 
 # Enumerate `<prefix>/*` bookmarks that are NOT ancestors of main@origin

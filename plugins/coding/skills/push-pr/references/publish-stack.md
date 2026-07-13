@@ -118,16 +118,16 @@ Move `@` (or the LLM-tracked pointer) to the next change in the chain and repeat
 
 ## Mandatory follow-ups
 
-- **`restack.sh` is required after every subsequent rewrite** of a change with
-  a downstream bookmark:
+- After `coding:commit` shapes or auto-rebases local history, **`restack.sh` is
+  required** when the rewritten change has a downstream bookmark:
 
   ```bash
   bash "${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh" <branch-prefix>
   ```
 
-  This loops over unmerged bookmarks in the stack, rebases each, re-pushes,
-  and reparents each open PR via `gh pr edit --base`. The parent then confirms
-  every PR base mirrors the jj parent chain.
+  The helper fetches current unmerged bookmarks, re-pushes them, and repairs
+  each open PR base via `gh pr edit --base`. The parent then confirms every PR
+  base mirrors the already-shaped jj parent chain.
 
 - Run the `coding:commit` integrity check after any history rewrite and report
   every pushed bookmark and PR URL.
