@@ -67,8 +67,10 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    saved change; list the bottom-to-top changes, bookmarks, PR heads, and
    bases. If unsaved or mixed work must be committed/split/reordered, invoke
    `coding:commit`, then restart discovery. Reject an unknown ref, nonlinear
-   chain, merged-history rewrite, missing authentication, or remote ambiguity
-   with concrete evidence. With `--dry-run`, print this plan and stop.
+   chain, an unapproved merged-history rewrite, missing authentication, or
+   remote ambiguity with concrete evidence. A rewrite already completed by
+   `coding:commit` proceeds only when that route reports the user's explicit
+   merged-history consent. With `--dry-run`, print this plan and stop.
 
 2. **Discover local CI parity; execute it unless skipped.** Read
    `.github/workflows/*` and the

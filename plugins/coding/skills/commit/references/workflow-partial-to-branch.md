@@ -6,7 +6,7 @@ Save a subset of `@`'s hunks directly onto an existing bookmark (typically `mast
 
 - User names a target branch AND asks to save part of `@` (e.g. "land just the typo on master", "commit the doc fix to master and keep the rest on the feature branch").
 - One concern in `@` logically belongs to a different already-existing branch.
-- Not for stacked PRs — those still go through `--create-pr` ([workflow-stacked-pr.md](./workflow-stacked-pr.md)).
+- Not for stacked PR publication — `/coding:commit --create-pr` remains the compatibility call and delegates to [`coding:push-pr`](../../push-pr/SKILL.md).
 
 If `@` mixes concerns but they all belong on the same new change → [workflow-split.md](./workflow-split.md).
 
@@ -68,13 +68,12 @@ jj bookmark move <target> --allow-backwards --to <new-change-id>
 - `--allow-backwards` is required only when the move is non-fast-forward. The skill MUST check (`jj log -r '<target>..<new-change-id>'` vs `jj log -r '<new-change-id>..<target>'`) and confirm with the user before a backward move.
 - Outside this route, backward bookmark moves require explicit `--allow-rewrite-merged` consent per `GIT-PR-STACK-03`.
 
-### 6. Push the bookmark
+### 6. Hand off publication when requested
 
-```bash
-jj git push --bookmark <target>
-```
-
-Force-with-lease semantics per [jj-cheatsheet.md](./jj-cheatsheet.md). If the bookmark is not yet tracking a remote branch, append `--allow-new`.
+Invoke [`coding:push-pr`](../../push-pr/SKILL.md) with `<target>` after the
+local bookmark move and integrity check. Its
+[publication workflow](../../push-pr/references/publish-stack.md) owns the
+push, remote tracking, and PR update.
 
 ### 7. Confirm leftover working copy
 
@@ -86,7 +85,7 @@ The unstaged hunks remain on `@` untouched — verify they match the user's expe
 
 ## Verification
 
-The PostToolUse hook fires `verify.sh` after the rewrite ops. Read the `── Integrity Check ──` block per [SKILL.md](../SKILL.md) Step 5. `GIT_TREE_MATCH` reflects the new HEAD on the target branch, not `@`.
+The PostToolUse hook fires `verify.sh` after the rewrite ops. Read the `── Integrity Check ──` block per [SKILL.md](../SKILL.md) Verification. `GIT_TREE_MATCH` reflects the new HEAD on the target branch, not `@`.
 
 Run project scripts (unless `--no-verify`):
 
@@ -105,8 +104,10 @@ npm run build
 
 ## Mandatory follow-ups
 
-- If the target branch carries unmerged bookmarks downstream, run `restack.sh <branch-prefix>` per [SKILL.md](../SKILL.md) Step 4.
-- Report per [SKILL.md](../SKILL.md) Step 6.
+- If the target branch carries unmerged bookmarks downstream, invoke
+  `coding:push-pr` with the resolved stack per the [SKILL.md](../SKILL.md)
+  publication handoff.
+- Report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
 
@@ -115,7 +116,7 @@ npm run build
 | `git add -p` selected zero hunks | Abort, no-op. |
 | `git commit` fails (pre-commit hook) | Surface output; fix; re-run from Step 3. Do NOT `--amend`. |
 | Conventional regex fails | Fix subject; re-run from Step 3. Do not bypass. |
-| Target bookmark not tracking remote | `jj git push --bookmark <target> --allow-new`. |
+| Target bookmark not tracking remote | Let `coding:push-pr` publish it with the required new-bookmark handling. |
 | Target already merged on origin | Defer to [workflow-correct-merged.md](./workflow-correct-merged.md). |
 | Backward move not desired | Drop `--allow-backwards`; jj rejects the move; reconsider target. |
 | Integrity check FAIL | STOP, surface diff, `jj op restore <id>` from Step 0 to roll back. |

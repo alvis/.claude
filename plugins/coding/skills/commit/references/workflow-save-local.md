@@ -77,7 +77,7 @@ This creates an empty `@` on top of the just-described change so subsequent edit
 
 ## Verification
 
-The PostToolUse hook fires `verify.sh` after `git commit`. Read the `── Integrity Check ──` stderr block per [SKILL.md](../SKILL.md) Step 5.
+The PostToolUse hook fires `verify.sh` after `git commit`. Read the `── Integrity Check ──` stderr block per [SKILL.md](../SKILL.md) Verification.
 
 Run project scripts (unless `--no-verify`):
 
@@ -87,7 +87,7 @@ npm run test
 npm run build
 ```
 
-Failure → STOP, surface to user. Do not proceed to Step 6 (report) until clean.
+Failure → STOP, surface to user. Do not report completion until clean.
 
 ## Hard rules
 
@@ -98,8 +98,8 @@ Failure → STOP, surface to user. Do not proceed to Step 6 (report) until clean
 
 ## Mandatory follow-ups
 
-- None. Default save touches no downstream bookmarks, so [SKILL.md](../SKILL.md) Step 4 (`restack.sh`) is skipped.
-- Report per [SKILL.md](../SKILL.md) Step 6.
+- None. Default save touches no downstream bookmarks, so the publication-impact handoff in [SKILL.md](../SKILL.md) is skipped.
+- Report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
 
@@ -108,4 +108,4 @@ Failure → STOP, surface to user. Do not proceed to Step 6 (report) until clean
 | `git commit` fails (pre-commit hook) | Surface output; fix; re-run from Step 5. Do NOT `--amend` — create a new attempt by re-describing if needed. |
 | `jj describe` rejected (immutable) | Target is on a protected revset. Run `jj new` first, then describe the new `@`. |
 | Conventional regex fails | Fix subject; re-run. Do not bypass. |
-| User wants to skip lint/test | Pass `--no-verify`. Skip Step 5 project scripts only; integrity hook still runs. |
+| User wants to skip lint/test | Pass `--no-verify`. Skip project scripts only; the integrity hook still runs. |

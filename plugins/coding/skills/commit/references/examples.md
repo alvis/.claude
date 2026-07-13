@@ -96,7 +96,8 @@ jj edit abc123
 jj new
 ```
 
-Downstream bookmark exists → `restack.sh feat-avatar` reparents two downstream PRs. Integrity PASS. Report.
+Downstream bookmark exists → after local integrity passes, `coding:push-pr`
+owns republishing and reparenting the affected stack. Report.
 
 ---
 
@@ -188,7 +189,8 @@ jj log -r 'change_id(abc123)' --no-graph
 # (single result — divergence resolved)
 ```
 
-`restack.sh feat-avatar` re-syncs the chain. Report.
+After local integrity passes, `coding:push-pr` re-syncs the affected remote
+stack. Report.
 
 ---
 
@@ -219,7 +221,8 @@ jj describe @ -m "fix(auth): raise login rate limit from 5 to 10 per minute" \
 git commit ...
 ```
 
-Subsequently `/coding:commit --create-pr` opens a single new PR on `main`.
+Subsequently `/coding:commit --create-pr` delegates the saved change to
+`coding:push-pr`, which opens and monitors the single new PR on `main`.
 
 ---
 
@@ -252,7 +255,8 @@ jj diff --stat
 # (empty — Stage 2 complete)
 ```
 
-Stage 3 not needed (no git-only target). `restack.sh feat-auth` re-syncs descendants. Integrity PASS. Per-change build PASS. Report.
+Stage 3 not needed (no git-only target). Integrity PASS. Per-change build
+PASS. `coding:push-pr` owns any requested descendant republication. Report.
 
 ---
 
@@ -283,7 +287,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 # CONTENT_MATCH:  PASS
 ```
 
-`restack.sh feat-avatar` reparents the three open PRs (each PR's base now matches the new parent). Report.
+Integrity passes locally, then `coding:push-pr` republishes and reparents the
+three open PRs so each base matches the new parent. Report.
 
 ---
 
@@ -291,30 +296,17 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 
 User: "/coding:commit --create-pr --branch-prefix feat-avatar"
 
-Chain is already clean + linear (from prior `--reorder`). Skill walks per [workflow-stacked-pr.md](./workflow-stacked-pr.md):
+Chain is already clean + linear (from prior `--reorder`). `coding:commit`
+finishes local history work, then delegates publication and hosted-CI
+convergence:
 
-```bash
-# PR 01
-jj bookmark set feat-avatar/01-data --revision ghi789
-jj git push --bookmark feat-avatar/01-data --allow-new
-# Invoke /coding:write-pr ghi789
-# → title + body returned
-gh pr create --draft --title "feat(data): add avatar field" --body-file - --base main --head feat-avatar/01-data <<<"$BODY"
-
-# PR 02
-jj bookmark set feat-avatar/02-service --revision def456
-jj git push --bookmark feat-avatar/02-service --allow-new
-# /coding:write-pr def456
-gh pr create --draft --title "feat(service): add upload endpoint" --body-file - --base feat-avatar/01-data --head feat-avatar/02-service <<<"$BODY"
-
-# PR 03
-jj bookmark set feat-avatar/03-web --revision abc123
-jj git push --bookmark feat-avatar/03-web --allow-new
-# /coding:write-pr abc123
-gh pr create --draft --title "feat(web): add AvatarPicker" --body-file - --base feat-avatar/02-service --head feat-avatar/03-web <<<"$BODY"
+```text
+coding:push-pr <resolved-stack: ghi789..abc123> --branch-prefix feat-avatar
 ```
 
-Report 3 PR URLs.
+`coding:push-pr` owns bookmarks, pushes, `coding:write-pr`, draft PRs, CI
+polling, and repairs. `coding:commit` preserves the returned 3 PR URLs and
+final green state in its report.
 
 ---
 
@@ -325,7 +317,8 @@ Report 3 PR URLs.
 ```bash
 /coding:commit --no-verify
 # Default save runs. git commit --no-verify skips pre-commit hooks.
-# Step 5 SKIPS `npm run lint/test/build`.
+# Local `npm run lint/test/build` verification is skipped.
+# With --create-pr, --no-verify maps to coding:push-pr --skip-local-test.
 # PostToolUse integrity hook STILL fires (independent of --no-verify).
 ```
 
@@ -340,6 +333,8 @@ Report 3 PR URLs.
 #   02 fix(auth): correct token expiry off-by-one
 #      - packages/auth/src/tokenExpiry.ts ...
 # No jj/git mutation. No bookmarks set. No PRs opened.
+# With --create-pr, coding:push-pr also receives --dry-run and prints its
+# publication/monitoring plan without mutation.
 ```
 
 ### `--allow-rewrite-merged`
@@ -349,5 +344,5 @@ Report 3 PR URLs.
 # Target ancestor is merged-on-origin.
 # AskUserQuestion is SKIPPED.
 # Skill proceeds to Option 2 (rewrite) per workflow-correct-merged.md.
-# For rewind (non-descendant push): jj bookmark forget; jj bookmark set; jj git push --allow-new.
+# After local integrity passes, coding:push-pr owns republishing the rewrite.
 ```

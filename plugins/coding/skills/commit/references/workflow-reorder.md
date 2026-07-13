@@ -118,11 +118,10 @@ The git log should reflect the new order with the same descriptions.
 
 ## Mandatory follow-ups
 
-- **`restack.sh` is REQUIRED** if any unmerged bookmark sits inside the reordered range:
-
-  ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
-  ```
+- If any unmerged bookmark sits inside the reordered range, invoke
+  `coding:push-pr` with the resolved stack after local integrity passes. Its
+  [publication workflow](../../push-pr/references/publish-stack.md) owns
+  remote restacking, pushing, and PR-base repair.
 
 - Per-change build: `jj edit <each_change> && npm run build` to confirm each compiles in its new position.
 - Final integrity + project scripts.

@@ -116,13 +116,12 @@ After git rebase completes, jj will see the rewritten objects on next op; run `j
 
 ## Mandatory follow-ups
 
-- **`restack.sh` is REQUIRED** whenever any unmerged bookmark sits at or below a rewritten change:
+- Whenever any unmerged bookmark sits at or below a rewritten change, invoke
+  `coding:push-pr` with the resolved stack after local integrity passes. Its
+  [publication workflow](../../push-pr/references/publish-stack.md) owns
+  remote restacking, pushing, and PR-base repair.
 
-  ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
-  ```
-
-- Integrity check ([SKILL.md](../SKILL.md) Step 5) — the dual-checksum backup ensures the merged tree at `@` matches pre-state (since logically the same content lands, just redistributed across ancestors).
+- Integrity check ([SKILL.md](../SKILL.md) Verification) — the dual-checksum backup ensures the merged tree at `@` matches pre-state (since logically the same content lands, just redistributed across ancestors).
 - Project scripts: `npm run lint`, `npm run test`, `npm run build` for EACH affected change (check by `jj edit <change_id>` then build).
 
 ## Error / edge cases

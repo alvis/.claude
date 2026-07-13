@@ -60,13 +60,11 @@ jj log -r 'change_id(<id>)' --no-graph
 # Confirm single result
 ```
 
-### 5. Mandatory `restack.sh`
+### 5. Surface remote stack impact
 
-If any unmerged bookmark sat at or below the divergent change, restack:
-
-```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
-```
+If any unmerged bookmark sat at or below the divergent change, invoke
+`coding:push-pr` with the resolved stack after local integrity passes. It owns
+remote restacking and republication.
 
 ## Prevention rules
 
@@ -82,8 +80,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
 
 ## Mandatory follow-ups
 
-- Restack downstream bookmarks per Step 5.
-- Integrity check ([SKILL.md](../SKILL.md) Step 5) — the working copy may shift if `@` was a divergent side.
+- Hand affected downstream bookmarks to `coding:push-pr` per Step 5.
+- Integrity check ([SKILL.md](../SKILL.md) Verification) — the working copy may shift if `@` was a divergent side.
 - Re-run project scripts if the canonical side replaced uncommitted work.
 
 ## Error / edge cases

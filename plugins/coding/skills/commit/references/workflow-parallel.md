@@ -85,7 +85,8 @@ jj new <default_change_id> <parallel_change_id>
 
 Creates a merge change with both as parents.
 
-**Option C — leave them parallel** (no integration yet, e.g. each will become its own PR via [workflow-stacked-pr.md](./workflow-stacked-pr.md)).
+**Option C — leave them parallel** (no integration yet; publish each saved
+change through [`coding:push-pr`](../../push-pr/SKILL.md) when requested).
 
 ### 6. Tear down the workspace
 
@@ -108,8 +109,10 @@ rm -rf ../<repo-name>-<task-slug>
 
 ## Mandatory follow-ups
 
-- After integrating back (Option A or B), verify chain via `jj log -r '::@'` and run integrity check ([SKILL.md](../SKILL.md) Step 5).
-- If the integrated work touched any unmerged bookmark, run `restack.sh` per Step 4.
+- After integrating back (Option A or B), verify chain via `jj log -r '::@'` and run the [SKILL.md](../SKILL.md) integrity check.
+- If the integrated work touched any unmerged bookmark, invoke
+  `coding:push-pr` with the affected stack per the [SKILL.md](../SKILL.md)
+  publication handoff.
 
 ## Error / edge cases
 

@@ -13,8 +13,10 @@ do not create a JSON proposal file or publication script.
 2. Each change in the chain compiles + lints + tests standalone.
 3. All conventional titles match
    [conventional-commits.md](../../commit/references/conventional-commits.md).
-4. No selected change is merged on origin; otherwise stop and route through
-   [workflow-correct-merged.md](../../commit/references/workflow-correct-merged.md).
+4. No selected change is merged on origin unless
+   [workflow-correct-merged.md](../../commit/references/workflow-correct-merged.md)
+   already completed the local rewrite and recorded the user's explicit
+   consent; otherwise stop and route through that workflow.
 5. Branch prefix is known: derive from the chain's overall scope, or take from `--branch-prefix <name>`.
 
 ## Procedure

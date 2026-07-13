@@ -1,6 +1,6 @@
 ---
 name: write-pr
-description: 'Author a conventional-commit PR title and unified body from a jj or git change ref, emitting output for gh pr create. Use for PR descriptions, draft pull requests, stacked coding:commit PR bodies, and callers that need a unified title/body template from a commit.'
+description: 'Author a conventional-commit PR title and unified body from a jj or git change ref, emitting output for gh pr create. Use for PR descriptions, draft pull requests, stacked coding:push-pr PR bodies, and callers that need a unified title/body template from a commit.'
 model: opus
 allowed-tools: Bash(jj:*), Bash(gh:*), Bash(git:*), Read
 argument-hint: "[<commit-ref>]"
@@ -9,8 +9,8 @@ argument-hint: "[<commit-ref>]"
 # Write Pull Request
 
 Compose a deterministic, regex-validated Conventional Commits PR title and a
-unified PR body from one commit, emitted to stdout. Opening the PR is the
-caller's job: it splits the output and pipes the body into
+unified PR body from one commit, emitted to stdout. `coding:push-pr` owns
+publication; a caller splits the output and pipes the body into
 `gh pr create --draft --title "$TITLE" --body-file -`. Zone enforcement
 (GIT-PR-SIZE-01..04) belongs to the reviewer, and the `--draft` flag
 (GIT-PR-STACK-04/06) belongs to the caller — never to this author.
@@ -19,7 +19,8 @@ caller's job: it splits the output and pipes the body into
 
 - Use for: a PR title and body for the current jj working-copy change or any
   resolvable commit ref, including one invocation per stacked change from
-  `coding:commit --create-pr`.
+  `coding:push-pr`; `coding:commit --create-pr` reaches this path through that
+  required handoff.
 - Do not use for: opening the PR (the caller runs `gh pr create`), zone
   classification or review boilerplate (reviewer's job), or committing
   changes (`coding:commit`).
@@ -119,5 +120,5 @@ default), the emitted title, sections dropped as empty, and the exit code:
 `0` success, `2` unknown ref or non-conventional subject, `3` no commit
 source available, `4` bundled default template missing. For `coding:commit
 --create-pr` callers: this skill remains the single source of truth for the
-default template file, the resolution order, and the title regex; the caller
-consumes the `title\n\nbody` stream and runs `gh pr create` itself.
+default template file, the resolution order, and the title regex;
+`coding:push-pr` consumes the `title\n\nbody` stream and owns `gh pr create`.
