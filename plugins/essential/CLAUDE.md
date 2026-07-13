@@ -43,7 +43,7 @@ Before writing a delegation prompt, classify the task and pick the substrate —
 - **Inline / ultra-short** — no delegation; act within the STRICT DELEGATION PROTOCOL's permitted actions. If it trips a HARD LIMIT, it is not inline.
 - **Independent parallel slices** (dispatch-and-score, siblings need not talk) → parallel `Task` subagents in a SINGLE message, one slice each.
 - **Ongoing multi-role back-and-forth** (roles hold context *together*, seeing each other's reasoning live) → form an **Agent Team** (persistent teammates coordinating conversationally around a warm core).
-- **High-volume structured iteration toward a measurable target** (fanout + adversarial verify + a bounded correction loop that must survive a crash or a pause) → run a **Dynamic Workflow** (a deterministic, resumable fanout→verify→loop script).
+- **High-volume structured iteration toward a measurable target** (fanout + adversarial verify + a bounded correction loop that must survive a crash or a pause) → run a **Dynamic Workflow** (a deterministic, resumable fanout→verify→loop script). Dynamic Workflow is encouraged for large-scale tasks that have a well-defined repeatable procedure, such as linting 100 projects in batches with a fix → lint → re-fix-or-pass loop; when a subagent proposes such a workflow, it must ask the main agent to run the Dynamic Workflow on the subagent's behalf rather than launching it independently.
 
 Name the success/convergence criteria before you start — a run with no stated stop condition is not ready to launch. To route, check each available agent's definition and match the best-suited specialist to the task.
 
