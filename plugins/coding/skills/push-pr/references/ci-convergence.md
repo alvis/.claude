@@ -8,7 +8,7 @@ Immediately after publication, run this command with the actual bottom-to-top
 PR URLs substituted for `<stack PR URLs>`:
 
 ```text
-/loop 5m Check every PR in <stack PR URLs> bottom-up. Run gh pr checks <pr> --json bucket,completedAt,link,name,startedAt,state,workflow for every PR, classify every returned check per ci-convergence.md, collect accessible evidence for red checks, dispatch at most one scoped fixer, and return the bounded poll report to the parent.
+/loop 5m Dispatch ONE small read-oriented polling subagent for <stack PR URLs> in bottom-up order. Pass it the stack and discovered expected hosted checks, and require it to load and follow the Poll contract in ci-convergence.md. Consume its bounded <report>, then take the parent action it requests. The scheduled parent MUST NOT run gh polling itself.
 ```
 
 Capture the returned task/job ID as `active_loop_id`. On green, or before a red
@@ -35,9 +35,15 @@ allowed to edit, and any review agent is read-only.
 stack:
   - pr: <number-or-url>
     head: <bookmark>
+    head_oid: <current remote PR head SHA>
     base: <base branch>
-    state: green | pending | red
-    checks:
+    config_ref: <workflow/ruleset ref confirmed for this head/base>
+    state: green | green_no_checks | pending | red | blocked
+    expected_checks:
+      - name: <workflow job or required status name>
+        source: <workflow path/job, branch protection, or ruleset>
+    inaccessible_expected_sources: [<source and access error>]
+    observed_checks:
       - name: <name>
         workflow: <workflow>
         bucket: <bucket>
@@ -73,19 +79,30 @@ action: notify_and_cancel | wait | cancel_and_parent_repair | blocked
 ## Classify every returned check
 
 Do not add `--required` or filter the response. Classify every check from both
-its `bucket` and `state`, with precedence red, then pending, then green:
+its `bucket` and `state`, with precedence red, then pending, then green. Before
+classifying an empty result, refresh the PR's remote `head_oid`, confirm the
+workflow configuration at that head and required-status/ruleset configuration
+for its current base, and record the expected/observed evidence in the report:
 
 - **Red**: any returned check has a failing/cancel bucket or a failure,
   cancelled, or timed-out state. Process the earliest red PR first because
   descendants may be derivative.
 - **Pending**: none are red and any returned check is pending, queued,
-  expected, waiting, or in progress, or has no completion timestamp. A newly
-  pushed PR with no returned checks is also pending. Keep `active_loop_id`, do
-  not edit or dispatch a fixer, and return `action: wait`.
-- **Green**: at least one check was returned for each PR and every returned
-  check is pass/success, skipping/skipped, or an explicitly accepted neutral
-  result. Cancel `active_loop_id`, notify the parent, and stop. This is the
-  only success state.
+  expected, waiting, or in progress, or has no completion timestamp. Zero
+  observed checks is pending when the confirmed expected list is nonempty.
+  Keep `active_loop_id`, do not edit or dispatch a fixer, and return
+  `action: wait`.
+- **Green**: every returned check is pass/success, skipping/skipped, or an
+  explicitly accepted neutral result. Zero observed checks is
+  `green_no_checks` only when the remote PR head and its current workflow/base
+  configuration are confirmed and the expected list is empty. Cancel
+  `active_loop_id`, notify the parent, and stop. This is the only success
+  state.
+- **Blocked**: zero checks with inaccessible or unconfirmed expected-check
+  sources. Report the head, config, source, and access error; do not wait
+  forever or infer green.
+
+Never use an arbitrary timeout to turn zero observed checks into green or red.
 
 ## Red evidence and repair
 

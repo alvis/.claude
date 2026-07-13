@@ -70,15 +70,21 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    chain, merged-history rewrite, missing authentication, or remote ambiguity
    with concrete evidence. With `--dry-run`, print this plan and stop.
 
-2. **Run local CI parity unless skipped.** Read `.github/workflows/*` and the
+2. **Discover local CI parity; execute it unless skipped.** Read
+   `.github/workflows/*` and the
    repository's script definitions (`package.json`, workspace manifests,
    Makefiles, task files, or equivalent). Derive the exact compile, type,
    lint, test, and build commands that reproduce CI without hosted services;
    record each hosted-only check and the unavailable service or credential.
-   Dispatch one small-model test subagent for the whole command set. The
-   tester is read-only: it MUST NOT edit, format, commit, or push anything.
-   It runs every discovered runnable command in CI order, continuing through
-   independent commands after a failure, and returns under 1000 tokens:
+   For every selected change, also record expected hosted PR check/job names
+   from `pull_request`-triggered workflow jobs at that ref and from required
+   branch status checks/rulesets when `gh api` can read them. Record an
+   inaccessible source rather than assuming it is empty. Dispatch one
+   small-model test subagent for the whole command set unless
+   `--skip-local-test` is present. The tester is read-only: it MUST NOT edit,
+   format, commit, or push anything. It runs every discovered runnable command
+   in CI order, continuing through independent commands after a failure, and
+   returns under 1000 tokens:
 
    <report>
 
@@ -93,7 +99,12 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    hosted_only:
      - check: <job or step>
        unavailable_requirement: <service, secret, runner, or credential>
-   overall: pass | fail | blocked
+   expected_hosted_checks:
+     - ref: <change-id or head SHA>
+       names: [<workflow job or required status name>]
+       sources: [<workflow path/job, branch protection, or ruleset>]
+       inaccessible_sources: [<source and access error>]
+   overall: pass | fail | blocked | skipped
    ```
 
    </report>
@@ -121,8 +132,9 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
    `coding:commit --retrospective`, and sends the tester back to rerun the
    affected commands and then the full runnable set. Publish only when every
    runnable command exits zero. Any separate review is read-only.
-   With `--skip-local-test`, do not dispatch the tester; continue directly to
-   publication and hosted convergence.
+   With `--skip-local-test`, retain the discovery and expected-check record but
+   do not dispatch the tester; continue directly to publication and hosted
+   convergence.
 
 3. **Publish bottom-up.** Load and follow
    [references/publish-stack.md](references/publish-stack.md) for bookmark
