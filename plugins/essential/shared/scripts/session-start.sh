@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Reusable session start hook utilities for Claude Code plugins
+# Reusable session start hook utilities for Claude Code plugins.
+# In addition to the shared constitution context, any constitution path
+# carrying a MAINAGENT.md gets it embedded as main-agent-specific instructions
+# (the SessionStart counterpart to subagent-start's SUBAGENT.md block).
 # Compatible with bash 3.2+
 
 # Get script directory
@@ -120,6 +123,18 @@ run_session_start_hook() {
   # Add constitution context for each specified path
   for path in "${constitution_paths[@]}"; do
     CONTEXT+=$(get_constitution_context "$path")
+  done
+
+  # Embed main-agent-specific instructions (MAINAGENT.md) for each path,
+  # resolving the {{PLUGIN_DIR}} placeholder to the absolute plugin path so
+  # embedded file references work from any project repo.
+  local abs_path
+  for path in "${constitution_paths[@]}"; do
+    if [[ -f "$path/MAINAGENT.md" ]]; then
+      abs_path="$(cd "$path" && pwd)"
+      CONTEXT+="# As the team leader\n\n"
+      CONTEXT+="$(sed "s|{{PLUGIN_DIR}}|$abs_path|g" "$path/MAINAGENT.md")\n\n"
+    fi
   done
 
   # Output hook context as JSON

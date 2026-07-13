@@ -23,41 +23,6 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |
 
-## Agent Orchestration
-
-Delegation is a tool for managing signal, not a default reflex. Spawn a subagent or agent teammate ONLY when the task is big or its expected output is large — i.e. when an agent is needed to digest a haystack of files, logs, or search results and hand back the distilled signal. If a task is small enough that you could do it inline with a couple of tool calls, delegating it just adds latency and a lossy hand-off; do it yourself.
-
-### Model Selection
-
-When designing a dynamic workflow or spawning agents, match the model to the cognitive demand of the task — never default everything to the largest model, and never starve a hard task with a small one:
-
-| Model | Use for |
-|-------|---------|
-| **haiku** | Simple, routine, deterministic tasks with a known procedure — executing tests, running lint, collecting command output, mechanical file sweeps. You can always rely on haiku here. |
-| **sonnet** | Tasks that expect branching — investigation where the next step depends on what is found, triage, moderate-complexity edits with a few decision points. |
-| **opus** | General coding — implementing features, fixing non-trivial bugs, refactoring with judgment. |
-| **fable** | Advanced coding, deep reasoning, research, and code review — anything where correctness hinges on subtle judgment, adversarial scrutiny, or synthesizing across many sources. |
-
-Effort is a second, independent dial. When you spawn a subagent for a task, assign it (`low|medium|high|xhigh|max`; omit for haiku, which does not support it) by the task's *difficulty*, not its model. Pick the cheapest model that clears the quality bar — a stronger model that would not change the output is wasted — then, **to make a worker think harder, raise its effort, not its model.**
-
-### Nesting
-
-- **Only opus and fable agents may spawn nested subagents.** haiku and sonnet agents are leaves — they execute and report; they never delegate further.
-- When an opus or fable agent spawns a nested subagent, it MUST pass down a brief direction of the standards the subagent must follow, derived from what it has itself observed so far — the relevant standard/skill file paths, the conventions seen in the surrounding code, and any constraints discovered during its own work. A nested subagent starts blind; the parent's observations are its only context.
-
-### Two-Stage Dispatch
-
-When a worker's prompt cannot be written without first reading files, do NOT pull those files into the orchestrator's own context to write the prompt. Dispatch a **prompt-generation subagent** that reads the shared context and emits one ready-to-run worker prompt per batch; then spawn the workers on those prompts — or, if the run is a `Workflow`, make that generator its first stage. Generate the prompts with a subagent; keep the launcher's context clean.
-
-### Review Responsibility
-
-Whoever spawns an agent owns the quality of its output. After a subagent or teammate completes work, the parent agent MUST either:
-
-1. **Review the work directly** — read the diff/output and verify it against the original instruction and applicable standards, or
-2. **Request an independent review** — dispatch a separate agent teammate (one not involved in producing the work) to review it. Give the reviewer the artifact and the success criteria ONLY — never the producer's reasoning or chat, since a reviewer who reads the rationale inherits its blind spots. Its job is to make the criteria fail; it returns each defect, the exact criterion that defect breaks, and the minimal fix.
-
-Unreviewed subagent output must never be accepted, merged, or reported upward as done.
-
 ## Before Coding
 
 Decide where the work will live before editing:

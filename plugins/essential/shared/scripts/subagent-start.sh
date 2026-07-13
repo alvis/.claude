@@ -65,7 +65,7 @@ run_subagent_start_hook() {
   for path in "${constitution_paths[@]}"; do
     if [[ -f "$path/SUBAGENT.md" ]]; then
       abs_path="$(cd "$path" && pwd)"
-      CONTEXT+="### Subagent Instructions\n\n"
+      CONTEXT+="# As a team player\n\n"
       CONTEXT+="$(sed "s|{{PLUGIN_DIR}}|$abs_path|g" "$path/SUBAGENT.md")\n\n"
     fi
   done
