@@ -88,12 +88,13 @@ every row additionally carries the lazy `RP-*` aliases implied by its producer/c
 | `sam-taylor-specification` | `SD-DOCS`, `SD-NAMING`, `SD-UNIVERSAL` |
 | `ada-bishop-initializer` | `SD-UNIVERSAL`, `SD-FILE-STRUCTURE`, `SD-GIT` |
 | `coco-laurent-frontend-designer` | `SD-DESIGN`, `SD-UNIVERSAL`, `SD-TYPESCRIPT` |
+| `priya-sharma-frontend-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
 | `penelope-sterling-aesthetic-evaluator` | `SD-DESIGN`, `SD-REVIEW` |
 | `kai-raven-adversarial-redteam` | `SD-REVIEW`, `SD-UNIVERSAL` |
 | `dexter-cho-harness-eval-engineer` | `SD-TESTING`, `SD-UNIVERSAL`, `SD-FUNCTION` |
 | `tess-park-test-runner` | `SD-TESTING` |
 
-19 agents total. Each row is exhaustive for that agent's `SD-*` subset — do not add standards beyond what is
+20 agents total. Each row is exhaustive for that agent's `SD-*` subset — do not add standards beyond what is
 listed here without updating this catalog first; the catalog, not the agent file, is authoritative.
 
 ## How an agent cites this catalog

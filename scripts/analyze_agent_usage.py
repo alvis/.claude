@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -15,8 +14,6 @@ from typing import Iterable, Iterator
 
 
 BUILTIN_PLUGIN = "built-in"
-FRONTMATTER_DELIM = "---"
-NAME_RE = re.compile(r"^name:\s*(.+?)\s*$", re.MULTILINE)
 
 
 @dataclass
@@ -50,46 +47,30 @@ class Stats:
     defined_agents: dict[str, dict]
 
 
-def _strip_quotes(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
-        return value[1:-1]
-    return value
-
-
-def _extract_frontmatter_name(text: str) -> str | None:
-    lines = text.splitlines()
-    delim_indices = [i for i, line in enumerate(lines) if line.strip() == FRONTMATTER_DELIM]
-    if len(delim_indices) < 2:
-        return None
-    block = "\n".join(lines[delim_indices[0] + 1:delim_indices[1]])
-    match = NAME_RE.search(block)
-    if not match:
-        return None
-    return _strip_quotes(match.group(1).strip())
-
-
 def discover_plugin_agents(plugins_dir: Path) -> dict[str, dict]:
-    """Walk plugins/<plugin>/agents (recursively one level) and parse frontmatter names."""
+    """Discover distributed plugins/*/templates/agents/* JSON frontmatter."""
     result: dict[str, dict] = {}
     if not plugins_dir.is_dir():
         return result
     for plugin_path in sorted(plugins_dir.iterdir()):
         if not plugin_path.is_dir():
             continue
-        agents_dir = plugin_path / "agents"
+        agents_dir = plugin_path / "templates" / "agents"
         if not agents_dir.is_dir():
             continue
-        for md_path in agents_dir.rglob("*.md"):
+        for frontmatter_path in sorted(agents_dir.glob("*/frontmatter/claude.json")):
             try:
-                text = md_path.read_text(encoding="utf-8", errors="replace")
-            except OSError:
+                frontmatter = json.loads(frontmatter_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
                 continue
-            name = _extract_frontmatter_name(text) or md_path.stem
+            name = frontmatter.get("name") if isinstance(frontmatter, dict) else None
+            if not isinstance(name, str) or not name:
+                continue
             canonical_id = f"{plugin_path.name}:{name}"
             result[canonical_id] = {
                 "plugin": plugin_path.name,
                 "agent": name,
-                "path": str(md_path),
+                "path": str(frontmatter_path),
             }
     return result
 
@@ -180,17 +161,30 @@ def _count_files(projects_dir: Path) -> int:
 
 def tally(invocations: Iterable[Invocation], defined_agents: dict[str, dict], files_scanned: int) -> Stats:
     tallies: dict[str, AgentTally] = {}
+    ids_by_name: dict[str, list[str]] = {}
+    for canonical_id, definition in defined_agents.items():
+        ids_by_name.setdefault(definition["agent"], []).append(canonical_id)
+    unique_ids_by_name = {
+        name: canonical_ids[0]
+        for name, canonical_ids in ids_by_name.items()
+        if len(canonical_ids) == 1
+    }
     sessions: set[str] = set()
     range_from: datetime | None = None
     range_to: datetime | None = None
     total = 0
     for inv in invocations:
+        canonical_id = inv.canonical_id
+        plugin = inv.plugin
+        if plugin == BUILTIN_PLUGIN and inv.agent in unique_ids_by_name:
+            canonical_id = unique_ids_by_name[inv.agent]
+            plugin = defined_agents[canonical_id]["plugin"]
         total += 1
         sessions.add(inv.session_id)
-        bucket = tallies.get(inv.canonical_id)
+        bucket = tallies.get(canonical_id)
         if bucket is None:
-            bucket = AgentTally(canonical_id=inv.canonical_id, plugin=inv.plugin)
-            tallies[inv.canonical_id] = bucket
+            bucket = AgentTally(canonical_id=canonical_id, plugin=plugin)
+            tallies[canonical_id] = bucket
         bucket.count += 1
         bucket.sessions.add(inv.session_id)
         if inv.timestamp is not None:

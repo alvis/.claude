@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Validate and stitch a split agent template into a Claude agent file."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+
+AGENT_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+class AgentTemplateError(ValueError):
+    """Raised when an agent source pair cannot produce a valid definition."""
+
+
+def _reject_nonstandard_number(value: str) -> None:
+    raise ValueError(f"non-standard JSON number: {value}")
+
+
+def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
+    frontmatter_path = template_directory / "frontmatter/claude.json"
+    base_path = template_directory / "base.md"
+    if not frontmatter_path.is_file():
+        raise AgentTemplateError(f"missing frontmatter/claude.json in {template_directory}")
+    if not base_path.is_file():
+        raise AgentTemplateError(f"missing base.md in {template_directory}")
+    resolved_template = template_directory.resolve()
+    for source_path in (frontmatter_path, base_path):
+        try:
+            source_path.resolve().relative_to(resolved_template)
+        except ValueError as error:
+            raise AgentTemplateError(
+                f"template symlink or path escapes agent directory: {source_path}"
+            ) from error
+    try:
+        frontmatter = json.loads(
+            frontmatter_path.read_text(encoding="utf-8"),
+            parse_constant=_reject_nonstandard_number,
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as error:
+        raise AgentTemplateError(f"invalid JSON in {frontmatter_path}: {error}") from error
+    if not isinstance(frontmatter, dict):
+        raise AgentTemplateError(f"frontmatter must be a JSON object: {frontmatter_path}")
+    name = frontmatter.get("name")
+    if not isinstance(name, str) or not AGENT_NAME.fullmatch(name):
+        raise AgentTemplateError(f"invalid agent name in {frontmatter_path}: {name!r}")
+    if name != template_directory.name:
+        raise AgentTemplateError(
+            f"frontmatter name {name!r} does not match directory {template_directory.name!r}"
+        )
+    return frontmatter
+
+
+def stitch_agent_definition(template_directory: Path) -> str:
+    """Return one installable Markdown agent definition for a source pair."""
+    template_directory = Path(template_directory)
+    frontmatter = load_agent_frontmatter(template_directory)
+    body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
+    yaml = json.dumps(frontmatter, ensure_ascii=False, indent=2, allow_nan=False)
+    return f"---\n{yaml}\n---\n\n{body}"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("template", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    try:
+        stitched = stitch_agent_definition(args.template)
+    except AgentTemplateError as error:
+        parser.error(str(error))
+    if args.output:
+        args.output.write_text(stitched, encoding="utf-8")
+    else:
+        print(stitched, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -4,13 +4,14 @@ description: "Creates a new specialist agent as two stitched source files, base.
 model: opus
 context: fork
 allowed-tools: Task, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
-argument-hint: "<role description> [--model=...] [--effort=...] [--permission=...] [--yes]"
+argument-hint: "<role description> [--plugin=<owner>] [--model=...] [--effort=...] [--permission=...] [--yes]"
 ---
 
 # Create Agent
 
-Create `agents/<name>/base.md` and `agents/<name>/frontmatter/claude.json` for
-one genuinely distinct role, with the critical settings confirmed before
+Create `plugins/<owner>/templates/agents/<name>/base.md` and
+`plugins/<owner>/templates/agents/<name>/frontmatter/claude.json` for one
+genuinely distinct role, with ownership and critical settings confirmed before
 anything is written. `update-agent` owns changes to existing definitions.
 
 ## Boundaries
@@ -26,9 +27,12 @@ anything is written. `update-agent` owns changes to existing definitions.
 
 - **Required**: a role name or description clear enough to classify into an
   archetype and to write trigger-bearing frontmatter.
-- **Optional**: `--model=...`, `--effort=...`, `--permission=...` pin that
+- **Optional**: `--plugin=<owner>` pins the plugin that owns the role;
+  `--model=...`, `--effort=...`, `--permission=...` pin that
   setting and skip its confirmation prompt; `--yes` accepts every
   recommendation without prompting.
+- **Owner token**: use the plugin's source-directory name under `plugins/`
+  (for example, `backend`; its manifest namespace remains `theriety`).
 - **Prerequisites**: `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`,
   `role-prompt.md` beside it, and
   `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`.
@@ -40,7 +44,11 @@ anything is written. `update-agent` owns changes to existing definitions.
    descriptions and callers. Reject a duplicate role, unclear outcome,
    invalid name (lowercase kebab, personalized-name-role such as
    `priya-fullstack`), or missing authoritative template.
-2. Classify the role — producer, critic, or orchestrator; leaf or
+2. Select the owning plugin by responsibility and existing trigger surface.
+   If `--plugin` is omitted, recommend the closest owner and confirm it with
+   the user before the settings confirmation. The owner must be a plugin in
+   this repository; do not default all agents to Governance or Essential.
+3. Classify the role — producer, critic, or orchestrator; leaf or
    spawn-capable; interactive, workflow-spawned, teammate, or background —
    and derive:
    - positive trigger phrases, near-miss exclusions, owned outcome, and stop
@@ -56,28 +64,32 @@ anything is written. `update-agent` owns changes to existing definitions.
      tool surface;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
      when the role needs them.
-3. Confirm before writing: compose one `AskUserQuestion` battery of at most
+4. Confirm before writing: compose one `AskUserQuestion` battery of at most
    four questions covering model, effort, and — only when they deviate from
    the archetype default — permissionMode and leaf-vs-spawn posture. List the
    recommended value first marked "(Recommended)" with a free-text override
    as the last option. Flags override their named fields and skip their
    prompts; `--yes` accepts all recommendations. No file is written before
    this gate resolves; record the confirmed settings.
-4. Create only the two canonical source files. `frontmatter/claude.json` must
+5. Create only the two canonical source files beneath the confirmed owner's
+   `templates/agents/<name>/` directory. `frontmatter/claude.json` must
    be valid JSON using only keys currently allowed by the live template;
    `initialPrompt` is required.
-5. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
+6. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
    first-turn directive: its first move (propose if the role's next work is
    legible from repo state, else greet and state the artifact/brief it needs),
    an explicit wait, then deferred context loading and one role-specific
    guardrail. It must NOT restate identity, announce that no task was given, or
    preload standards, and it must agree with `base.md`.
-6. Write `base.md` as the role's own continuous working voice, preserving the
+7. Write `base.md` as the role's own continuous working voice, preserving the
    template's functional sections: role/mission, expertise and operating
    style, communication style, exact base context, coordination loop and stop
    rule, and collaboration/spawn posture. "Voice" means stable role-specific
    instructions, not a disposable persona or decorative biography.
-7. Check tools against behavior: a leaf cannot mention delegation; a
+8. Add or update the task-to-agent routing row in the owning plugin's
+   `CLAUDE.md`, creating that file if necessary. Keep only this agent's owned
+   tasks there; do not rebuild a central roster table.
+9. Check tools against behavior: a leaf cannot mention delegation; a
    spawn-capable agent must have `Agent`; read-mostly critics must not
    accidentally receive mutation tools; workflow-spawned and teammate
    permissions must follow template rules. Also check model/effort
@@ -85,23 +97,20 @@ anything is written. `update-agent` owns changes to existing definitions.
    context aliases and paths, namespaced skills, MCP references, hooks,
    memory semantics, initialPrompt/base consistency, explicit triggers, and
    non-overlap with neighbors.
-8. Run the verification below; when a check fails, fix the cause and re-run
+10. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
    then report the blocker instead of looping.
 
 ## Verification
 
-- Use the repository's real stitch/build/agent validator when one is
-  discoverable from scripts or documentation, then inspect its generated
-  definition. Do not invent a command.
-- Always run `python3 -m json.tool agents/<name>/frontmatter/claude.json` and
-  a placeholder/search check over both files.
-- If no repository agent validator exists, perform and report the fallback
-  explicitly: parse the JSON, enforce the template key allowlist and required
-  keys, verify referenced files/aliases/skills, stitch JSON-as-frontmatter
-  plus `base.md` into a temporary artifact, and inspect that artifact for
-  duplicate frontmatter/body seams and prompt contradictions. Official
-  runtime loading remains "not exercised," not "passed."
+- Run `python3 -m json.tool plugins/<owner>/templates/agents/<name>/frontmatter/claude.json`.
+- Run Essential's deterministic stitch helper against the source directory,
+  writing only to a temporary output, then inspect that artifact:
+  `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
+- Check placeholders, the template key allowlist and required keys, referenced
+  files/aliases/skills, duplicate seams, prompt contradictions, and the owning
+  plugin routing row. Official runtime loading remains "not exercised" unless
+  the installed loader was actually run.
 
 ## Completion
 

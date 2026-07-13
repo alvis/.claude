@@ -1,7 +1,8 @@
-<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from two source files under <dir>/:
-     - <dir>/base.md              — the BODY below (pure markdown, persona/charter/loop/context, no frontmatter)
-     - <dir>/frontmatter/claude.json — the FRONTMATTER below, as valid JSON (this is verified, not YAML-in-md)
-     Build step: `---\n${yaml.dump(JSON.parse(claude.json))}---\n\n${base.md}`.
+<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from two canonical source files under
+     plugins/<owner>/templates/agents/<name>/:
+     - base.md — the BODY below (pure markdown, persona/charter/loop/context, no frontmatter)
+     - frontmatter/claude.json — the FRONTMATTER below, as valid JSON (this is verified, not YAML-in-md)
+     Validate and build only a temporary artifact with Essential's install-agents stitch helper.
      Before editing any agent, re-check the live Claude Code docs for the current valid frontmatter key surface —
      this template mirrors it at time of writing, but the docs win on conflict. Log any conflict you find. -->
 

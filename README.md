@@ -1,6 +1,6 @@
 # Claude Code Plugin Marketplace
 
-Nine focused plugins provide composable Claude Code skills. Plugin manifests and each skill's `SKILL.md` are the source of truth for plugin details.
+Eight focused plugins provide composable Claude Code skills. Plugin manifests and each skill's `SKILL.md` are the source of truth; this file is generated.
 
 ## Install
 
@@ -25,12 +25,12 @@ General code writing tools including quality checks, testing, architecture, and 
 - `coding:find-unused` — Perform read-only dead-code discovery for commented-out code, unused symbols, and unused test helpers. Use when identifying removal candidates; report evidence without deleting, refactoring, linting, or otherwise modifying the inspected source.
 - `coding:fix` — Fix diagnosed incorrect behavior, failed tests, type errors, lint failures, or broken CI. Use when a concrete failure can be reproduced or review findings identify a defect; route new functionality to write-code and green structural cleanup to refactor.
 - `coding:handover` — Persist CONTEXT.md, NOTES.md, and PLAN.md for later continuation of coding work. Use when pausing implementation or transferring repository state; this skill records the current session and does not create or execute a cross-domain plan.
-- `coding:lint` — Use when source files need mechanical coding-standard enforcement, lint-error correction, or consistent formatting across a selected scope, including calls extended by another plugin's portable lint profile.
+- `coding:lint` — Enforce coding standards mechanically across a selected scope with batched linters and independent reviewers. Use when source files need lint-error correction, standards enforcement, or consistent formatting, including calls extended by another plugin's portable lint profile; behavior-changing repairs belong to fix.
 - `coding:modernize` — Apply version-supported syntax and API upgrades based on the project runtime and toolchain. Use when replacing legacy constructs with supported modern equivalents; do not claim general refactoring, dependency upgrades, or behavioral feature work.
 - `coding:refactor` — Improve green code through behavior-preserving structural changes to organization, naming, readability, or documentation. Use when existing tests pass and the requested outcome is maintainability rather than a bug fix, new feature, or version-driven API upgrade.
 - `coding:review-code` — Review semantic correctness, security, test intent, documentation, sibling consistency, and alignment with the implementation plan. Use after code changes or for explicit review requests; report findings without editing code and leave mechanical standards enforcement to lint.
 - `coding:setup-project` — Ensure project structure exists before development, creating barebone scaffolding only if needed. Use when initializing new projects, validating project setup, or ensuring monorepo component structure.
-- `coding:sync-tool` — Install or update coding CLI tools (brew, jj, gh) across macOS, Linux, and Windows. Use when tools are missing, stale, or needed on PATH for a sibling skill, including requests to install jj/gh/brew, update coding tools, or verify CLI dependencies before work.
+- `coding:sync-tool` — Install or update registered coding CLI tools (brew, jj, gh, fallow, python) across macOS, Linux, and Windows. Use when tools are missing, stale, or needed on PATH for a sibling skill, including requests to install jj/gh/brew, update coding tools, or verify CLI dependencies before work.
 - `coding:takeover` — Resume interrupted implementation from persisted handover documents. Use when CONTEXT.md, NOTES.md, and PLAN.md describe valid continuation state; this adapter validates those inputs and delegates the actual continuation to the standard write-code resume workflow.
 - `coding:write-code` — Write production-ready code end to end through a TDD lifecycle of design, skeleton, implementation, tests, and refactoring. Use for new functions, features, modules, components, CLI or API endpoints, or approved tickets; route diagnosed failures to fix and explicit production stubs to complete-code.
 - `coding:write-pr` — Author a conventional-commit PR title and unified body from a jj or git change ref, emitting output for gh pr create. Use for PR descriptions, draft pull requests, stacked coding:commit PR bodies, and callers that need a unified title/body template from a commit.
@@ -42,6 +42,7 @@ Documentation creation, code design, product strategy, and Notion integration fo
 - `essential:autoresearch` — Run a metric-driven research loop: define a metric, evaluator, baseline, and target; evolve candidate solutions; score and adversarially verify them; then mutate survivors until the target, budget, or plateau ends the run. Use for measurable optimization of prompts, code, experiments, or creative variants; use deep-research for fact-finding.
 - `essential:deep-research` — Conduct comprehensive multi-source research with AI-assisted analysis and explicit source synthesis. Use when investigating complex topics, comparing evidence, gathering current information, or producing a fact-finding report with citations and uncertainty notes. Do not use for metric-driven candidate optimization.
 - `essential:handoff` — Create or execute a context-complete cross-domain plan as an orchestrator. Use when another agent must continue without prior context, or when a multi-domain plan needs coordinated execution while this skill retains decision ownership. For coding-session persistence, use coding:handover.
+- `essential:install-agents` — Discover, validate, stitch, and install specialist agent templates contributed by Essential and other enabled plugins in the same marketplace. Use when asked to install agents, set up subagents, refresh the agent team, or configure Claude Code on a new machine.
 - `essential:install-statusline` — Install the bundled Bullet Train statusline into ~/.claude and wire settings.json statusLine. Use when setting up Claude Code on a new machine, installing or restoring the statusline, or repairing its configuration; preserve the bundled executable and report permission or platform limitations.
 - `essential:think` — Structure pre-implementation reasoning for ambiguous problems. Use when the requested outcome, constraints, or safe solution are unclear and deliberate options, objections, dependencies, edge cases, and rollback need to be resolved before any modification or creation begins.
 
@@ -49,12 +50,12 @@ Documentation creation, code design, product strategy, and Notion integration fo
 
 Tools for creating and managing Claude Code configuration files including commands, skills, standards, and agents
 
-- `governance:create-agent` — Create a new specialist agent from the repository agent template as base.md plus frontmatter/claude.json. Use when adding a distinct role, trigger surface, or delegation capability that existing agents do not own. Confirm model, effort, and permission settings before authoring unless explicit overrides are supplied.
+- `governance:create-agent` — Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing model, effort, and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation.
 - `governance:create-skill` — Use when creating a reusable Claude Code skill, defining a new repeatable agent capability, or replacing a one-off workflow with discoverable instructions that need clear ownership, validation, and trigger behavior.
-- `governance:create-standard` — Create a new technical standard under a plugin constitution with meta.md, scan.md, write.md, and rules/. Use when a reusable policy is missing and needs explicit scope, detection guidance, implementation guidance, and actionable rules. Do not use for revising an existing standard or creating a skill.
-- `governance:update-agent` — Update one or more existing agent definitions to the current template or an explicit change request while preserving each role's useful expertise, triggers, context assignments, and collaboration links. Use for agent maintenance or migration; use create-agent when no suitable agent exists.
+- `governance:create-standard` — Create a new technical standard at a plugin's canonical constitution/standards root using meta.md, scan.md, write.md, and per-rule guides. Use when establishing new coding standards, documenting technical requirements, or creating compliance guidelines for reusable policy with explicit dependencies, detection, compliant patterns, and stable rule IDs. Route existing-standard revisions to update-standard.
+- `governance:update-agent` — Update explicitly selected agent definitions to the current two-file template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
 - `governance:update-skill` — Use when revising one or more existing Claude Code skills, aligning skill instructions with current repository policy, narrowing overlapping ownership, or applying a deliberate behavior change without creating a competing skill.
-- `governance:update-standard` — Update explicitly selected technical standards to the current three-tier template or a stated policy change, preserving valid rules and examples while removing superseded wording. Use for standard maintenance or bounded bulk migration; use create-standard when the target directory does not exist.
+- `governance:update-standard` — Update explicitly selected plugin standards to the current meta.md, scan.md, write.md, and rules contract while preserving valid policy and stable rule IDs. Use when applying scoped rule changes, migrating standards to a template revision, or batch-updating the standards library. Require a path, glob, or --all; route missing targets to create-standard.
 - `governance:verify-skill` — Use when validating a new or changed Claude Code skill, checking structural and repository policy compliance, testing whether descriptions trigger accurately, or grading representative skill outputs before deployment.
 
 ### react (depends on: coding, essential)
@@ -68,24 +69,24 @@ React component development with UI implementation, design systems, Next.js expe
 
 Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration for knowledge management
 
-- `specification:implement-code` — Execute approved specification tickets end to end by resolving ticket intent, materializing the authoritative spec bundle, coordinating implementation and tests, and reviewing alignment. Use after plan-code approval or to resume an explicitly scoped implementation. Keep contract authoring in spec-code and generic coding in the coding plugin.
+- `specification:implement-code` — Execute an approved specification ticket from authoritative contract through implementation, review, and commit planning. Use after plan-code approval, when resuming partial ticket work, or when auditing a delivered ticket. Keep contract authoring in spec-code and generic feature work in coding:write-code.
 - `specification:mdc` — Read, edit, and author MDC (Contextual Markdown, @theriety/mdc) files safely with native text tools. Use when asked to "edit this .mdc file", "add a block to <doc>.mdc", "update the annotation for ref <x>", "convert this to MDC", whenever a .mdc file must be read or written, or when mutating any file under .code-spec/.
 - `specification:plan-code` — Generate DRAFT.md as a commit blueprint and PLAN.md as an execution roadmap from an approved proposal or specification. Use when planning implementations, defining atomic commits, documenting change proposals, or preparing a coding workflow with explicit verification and ownership boundaries.
 - `specification:review-implementation` — Review an implementation against an authoritative local or Notion specification, then run the general coding and security review. Use for specification alignment, delivered-ticket validation, or detecting omissions, drift, and unsanctioned behavior before handoff.
 - `specification:spec-code` — Design or document technical specifications in the canonical template, then delegate Notion synchronization to sync-notion. Use for greenfield specs, updates to an existing DESIGN.md, or documenting an implementation without inventing requirements.
-- `specification:sync-notion` — Synchronize local Markdown files with Notion through the notion-sync CLI, including recursive pulls, creates, updates, diffs, conflict resolution, and integrity checks. Use when documentation must move between local files and Notion. Keep specification authoring in spec-code and implementation planning in plan-code.
+- `specification:sync-notion` — Synchronize one or more paired Markdown files and Notion pages in a declared direction. Use when local documentation must be published, remote pages must be materialized locally, or both sides require an explicit conflict-resolved merge. Keep specification authoring in spec-code.
 - `specification:sync-spec` — Materialize a guaranteed-on-disk Notion specification tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files plus `.gitignore`. Use before downstream analysis or code generation, when refreshing a stale bundle, or when a ticket requires local spec evidence; fail unless the root id-suffix file exists and is non-empty.
 
 ### web (depends on: coding, essential)
 
 Web development tools including UX design, growth optimization, rapid prototyping, browser automation via agent-browser, Next.js debugging via Chrome DevTools, and design auditing
 
-- `web:audit` — Audit a rendered web interface against the 60-rule design standard with deterministic DOM checks, isolated-browser evidence, responsive viewports, accessibility checks, and focused visual review. Use for design QA, WCAG checks, visual review, or launch assessment. Report findings only; route implementation changes to the owning coding or client skill.
-- `web:css` — Scaffold or maintain a project's root stylesheet using the CSS-only light, dark, and system color-mode contract. Use for theme.css, globals.css, or app.css setup, migration from class-driven dark mode, semantic token wiring, or color-mode corrections. This skill edits CSS only and never ships JavaScript.
-- `web:design` — Design or redesign a web interface with a coherent visual direction, responsive layout, typography, color, motion, and accessible interaction states. Use for new pages, component polish, mockups, or a facelift of an existing site. Produce DESIGN.md and a verifiable preview; route assessment to audit and runtime debugging to next.
+- `web:audit` — Audit a rendered web interface against the design standard with the bundled deterministic CLI, shared-browser evidence, responsive viewports, accessibility checks, and focused visual adjudication. Use for design QA, WCAG checks, visual review, or launch assessment. Produce reports and evidence only; route fixes to the owning implementation skill.
+- `web:css` — Scaffold or maintain a project's root stylesheet using the CSS-only light, dark, and system color-mode contract. Use for theme.css, globals.css, or app.css setup, migration from class-driven dark mode, semantic token wiring, or color-mode corrections. Detect conflicts, obtain migration approval, preserve existing tokens, and edit CSS only.
+- `web:design` — Design or redesign a web interface — and implement it when authorized — with coherent visual direction, responsive layout, typography, color, motion, and accessible states. Maintains a .design task workspace and ranked variant boards, then drives an independent implement-evaluate loop with visual-diff confirmation. Use for new pages, component polish, mockups, or facelifts.
 - `web:imagine` — Generate or edit images through the bundled multi-provider CLI, or write structured prompts and analyze visual styles from references. Use for concept art, product shots, covers, UI assets, transparent or vector output, inpainting, background changes, batch variants, and prompt-only work. Keep image generation separate from web design decisions and visual audits.
 - `web:next` — Diagnose Next.js runtime behavior with next-browser and Chrome DevTools MCP: React components, routes, SSR errors, DOM/styles, performance, Lighthouse, network, device emulation, JavaScript debugging, storage, screenshots, and interactions. Use for evidence-backed browser diagnosis; route visual creation to design and story-state assessment to storybook.
-- `web:storybook` — Audit a Storybook instance for setup failures, accessibility violations, interaction errors, and visual regressions across meaningful story states. Use when checking stories before release, validating addon panels, or finding missing focus behavior. Report evidence and findings; do not edit components or stories.
+- `web:storybook` — Audit a Storybook instance for setup failures, accessibility violations, interaction errors, and visual regressions across meaningful story states. Use before release or when validating addons and focus behavior. Run the bundled lifecycle in order, preserve evidence, and report findings; do not edit components, stories, or configuration.
 
 ### theriety (depends on: coding, specification, essential)
 
@@ -100,20 +101,14 @@ Domain-specific service and data orchestrator lifecycle management for Theriety 
 
 Client-facing screen design and UX documentation with Notion integration
 
-- `client:create-screen-design` — Create new responsive screen-design documentation in Notion for a named product and screen. Use when a product needs a new UX contract, layout alternatives, interaction states, or handoff-ready design notes. Do not use for changing an existing screen; route those requests to update-screen-design.
-- `client:update-screen-design` — Update existing responsive screen-design pages in Notion while preserving approved content and applying an explicit change request. Use for template migrations, accessibility corrections, or scoped screen revisions. Do not use for new pages; route creation to create-screen-design.
-
-### agent (depends on: essential, coding, web, react, backend)
-
-Specialist subagent team + delegation map. `/install-agents` materializes the 20-agent roster into `~/.claude/agents`; the delegation routing map is injected as plugin instructions each session.
-
-- `agent:install-agents` — Install the bundled specialist agent roster into ~/.claude/agents. Use when asked to "install the agents", "set up my subagents", "refresh the agent team", or after setting up Claude Code on a new machine.
+- `client:create-screen-design` — Create new responsive screen-design documentation in the canonical Notion Screens database for a named product and screen. Use when a product needs a new UX contract, layout alternatives, interaction states, or handoff notes. Preserve the live template and database relations; route existing-page changes to update-screen-design.
+- `client:update-screen-design` — Update explicitly selected responsive screen-design pages in the canonical Notion Screens database while preserving approved content and applying a template migration or stated change. Use for scoped revisions and accessibility corrections. Require a selector or --all; route missing/new pages to create-screen-design.
 
 ## Agent team
 
-A 20-agent specialist team for Claude Code, plus the operating rules that make it work as a team: a team-first mandate for the main session (`plugins/agent/CLAUDE.md`, injected every session), subagent conduct including the Workflow-proxy protocol (`plugins/agent/SUBAGENT.md`, injected at every subagent start), and per-agent delegation topology carried in each agent's own definition.
+A 20-agent specialist team for Claude Code, plus the operating rules that make it work as a team: shared main-session rules in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol in `plugins/essential/SUBAGENT.md`, owner-specific routing in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology carried in each agent's own definition.
 
-Install via the `agent:install-agents` skill (ask Claude to "install the agents"). It copies `plugins/agent/skills/install-agents/references/agents/*.md` into `~/.claude/agents/`, overwriting managed same-named files and leaving unrelated user agents untouched. The definitions there are the source of truth — edits require a re-install, and the agent list is fixed at session start, so changes take effect in the next session.
+Install via the `essential:install-agents` skill (ask Claude to "install the agents"). Canonical sources live under `plugins/<owner>/templates/agents/<name>/` as `base.md` plus `frontmatter/claude.json`. The installer discovers source-checkout siblings or enabled same-marketplace plugins, validates the complete discovered roster, stages stitched files, and copies them into `~/.claude/agents/`. It overwrites current same-named discoveries and leaves unrelated or stale files untouched. Edits require a re-install, and changes take effect in the next session.
 
 ### Roster
 
@@ -181,7 +176,7 @@ dexter ↔ marcus: gate-charter alignment
 sam → lead: spec delivery, routed to implementers
 ada → raj: bootstrap complete
 any producer → maya: blocked on a hard technical problem
-any agent → main agent: Workflow launch request (see plugins/agent/SUBAGENT.md)
+any agent → main agent: Workflow launch request (see plugins/essential/SUBAGENT.md)
 ```
 
 Note: an `Agent(name)` parenthetical allowlist binds on the main session thread only — a spawned agent holding the `Agent` tool can technically spawn any registered agent. The edges above are design intent, enforced by each agent's own instructions; true leaves are enforced by tool-list omission.
@@ -200,16 +195,16 @@ Note: an `Agent(name)` parenthetical allowlist binds on the main session thread 
 
 ### Team operation
 
-- Works team-first: The main agent initiates an agentic team for any non-trivial task, hands each task to the owning specialist and its team (coding is always raj's), and keeps teammates warm while their context stays under 75% of the window. `plugins/agent/CLAUDE.md` carries these rules plus a task→specialist routing table for matching work to the roster.
-- Subagents reply to the teammate that assigned the work over SendMessage and delegate only along their own `## Collaboration` edges (see `plugins/agent/CLAUDE.md` / `plugins/agent/SUBAGENT.md`).
-- Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/agent/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for ExitPlanMode presentation.
+- Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while their context stays under 75% of the window. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
+- Subagents reply to the teammate that assigned the work over SendMessage and delegate only along their own `## Collaboration` edges (see `plugins/essential/SUBAGENT.md`).
+- Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 
 ### Notes
 
 - The copy-install into `~/.claude/agents/` is load-bearing for the hooks: Claude Code honors `hooks`, `permissionMode`, and `mcpServers` frontmatter only for agents in `~/.claude/agents/` / `.claude/agents/` — agents registered via a plugin ignore those fields. Do not convert the roster to plugin-registered agents, or every embedded gate and fence goes dead.
 - `zara-ahmad-ml-engineer` uses the `theriety:build-service` skill — it requires the plugin whose manifest name is `theriety` (this marketplace registers it under the entry name `backend`; the manifest-vs-marketplace name mismatch is known).
-- Agent definitions are intentionally single self-contained files (the install step copies them to `~/.claude/agents/`, so they can't reference plugin-relative shared files) — this is why the routing Stop gate is embedded verbatim in all eight gated producers, diverging from the governance stitch-pipeline template.
-- Standards references (`SD-*`) in the definitions never use literal plugin paths — they name a standard plus its owning plugin's constitution, resolved at runtime against the `Root Path` each standards plugin announces under "Plugin Constitution" in the subagent start context. This works because this plugin declares `coding`, `web`, `react`, and `backend` as dependencies, so their SubagentStart constitution hooks run for every spawned agent.
+- Installed agent definitions are intentionally single self-contained files even though their canonical source is split. This is why the routing Stop gate is embedded verbatim in all eight gated producers.
+- Standards references (`SD-*`) in the definitions never use literal installation paths. They name a standard plus its owning plugin constitution, resolved at runtime when that plugin is enabled. A partial enabled roster is valid, so cross-plugin handoffs and context are best-effort when their owner plugin is absent.
 
 ## Validation
 
@@ -217,3 +212,5 @@ Note: an `Agent(name)` parenthetical allowlist binds on the main session thread 
 claude plugin validate --strict .
 python3 plugins/governance/skills/verify-skill/scripts/quick_validate.py .
 ```
+
+Run `python3 scripts/generate_readme.py --check` to confirm this inventory is current.

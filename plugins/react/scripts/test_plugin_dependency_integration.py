@@ -28,8 +28,9 @@ class PluginDependencyIntegration(unittest.TestCase):
         for key, value in substitutions.items():
             command = command.replace(key, value)
             args = [argument.replace(key, value) for argument in args]
+        invocation = [command, *args] if args else ["/bin/bash", "-c", command]
         return subprocess.run(
-            [command, *args],
+            invocation,
             cwd="/tmp",
             env=os.environ | {"CLAUDE_CONFIG_DIR": config},
             input=input_json,
@@ -54,7 +55,9 @@ class PluginDependencyIntegration(unittest.TestCase):
             session_hook = essential_root / "bin/session-start"
             self.assertTrue(session_hook.is_file())
             self.assertTrue(os.access(session_hook, os.X_OK))
-            self.assertFalse(any((essential_root / "shared").glob("**/*")))
+            self.assertTrue(
+                (essential_root / "shared/scripts/subagent-start.sh").is_file()
+            )
             consumer_root = Path(records["react@alvis"]["installPath"])
             hook = self.run_installed_hook(
                 config,
@@ -107,6 +110,56 @@ class EssentialHookExecutable(unittest.TestCase):
             )
             self.assertEqual(0, completed.returncode, completed.stderr)
             self.assertIn("consumer-context", completed.stdout)
+
+    def test_essential_session_start_includes_consolidated_main_agent_instructions(self):
+        completed = subprocess.run(
+            [
+                str(ROOT / "plugins/essential/bin/session-start"),
+                "--plugin-dir",
+                str(ROOT / "plugins/essential"),
+                "--constitution-paths",
+                str(ROOT / "plugins/essential"),
+            ],
+            input='{"source":"startup","session_id":"test"}',
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        output = json.loads(completed.stdout)["hookSpecificOutput"]
+        self.assertEqual("SessionStart", output["hookEventName"])
+        context = output["additionalContext"]
+        self.assertIn("You are running as the main session", context)
+        self.assertIn("greet the user a good day", context)
+
+    def test_essential_subagent_hook_loads_consolidated_instructions(self):
+        manifest = json.loads(
+            (ROOT / "plugins/essential/.claude-plugin/plugin.json").read_text()
+        )
+        self.assertIn("SubagentStart", manifest["hooks"])
+
+        completed = subprocess.run(
+            [
+                str(ROOT / "plugins/essential/bin/subagent-start"),
+                "--plugin-dir",
+                str(ROOT / "plugins/essential"),
+                "--constitution-paths",
+                str(ROOT / "plugins/essential"),
+            ],
+            input='{"session_id":"test"}',
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        output = json.loads(completed.stdout)["hookSpecificOutput"]
+        self.assertEqual("SubagentStart", output["hookEventName"])
+        context = output["additionalContext"]
+        self.assertIn("You are running as a subagent or teammate", context)
+        workflow_reference = str(
+            (ROOT / "plugins/essential/references/workflow-tool.md").resolve()
+        )
+        self.assertIn(workflow_reference, context)
 
 
 if __name__ == "__main__":
