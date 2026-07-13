@@ -9,9 +9,9 @@ argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 
 # Update Agent
 
-Update selected `base.md` and `frontmatter/claude.json` pairs to the current
-template or a stated behavior change. `create-agent` owns genuinely new
-roles.
+Find selected pairs under `plugins/*/templates/agents/<name>/`, then update
+their `base.md` and `frontmatter/claude.json` to the current template or a
+stated behavior change. `create-agent` owns genuinely new roles.
 
 ## Boundaries
 
@@ -28,14 +28,17 @@ roles.
 - **Required**: an agent path, name, or glob — or explicit `--all`.
 - **Optional**: `--changes=...` describing the requested behavior,
   configuration, or template migration.
+- **Owner token**: paths and ownership use the source-directory name under
+  `plugins/` (for example, `backend`; its manifest namespace is `theriety`).
 - **Prerequisites**: `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`,
   `role-prompt.md` beside it, and
   `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`.
 
 ## Workflow
 
-1. Read the agent template, `role-prompt.md`, the context catalog, relevant
-   team edges, every selected source pair, and real callers. List exact
+1. Search every plugin's `templates/agents/` directory for the selector. Read
+   the agent template, `role-prompt.md`, the context catalog, the owning
+   plugin's `CLAUDE.md`, relevant team edges, every selected source pair, and real callers. List exact
    targets before mutation. Reject missing or malformed pairs, ambiguous
    globs, locked/in-use targets, or a request that actually creates a new
    role.
@@ -68,7 +71,9 @@ roles.
    context + guardrail), must not restate identity, announce no task, or
    preload standards, and must agree exactly with `base.md`.
 7. Recheck positive and near-miss triggers against neighboring agents and
-   real dispatch sites. Do not widen role ownership incidentally.
+   real dispatch sites. Keep the task-to-agent row in the owning plugin's
+   `CLAUDE.md` aligned with the resulting trigger surface; do not create a
+   central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
    bounded batches — one agent pair per subagent, at most 8 parallel `Task`
@@ -81,17 +86,15 @@ roles.
 
 ## Verification
 
-- Run the actual repository stitch/build/agent validator when discoverable
-  and inspect the generated definitions; do not invent a command.
+- Run Essential's deterministic stitch helper for every selected source pair,
+  writing only temporary output, and inspect the generated definitions:
+  `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
 - Always parse each JSON file with `python3 -m json.tool`, check for
   placeholders, and validate the key surface, model/effort compatibility,
   permission values, tool/spawn posture, context paths, namespaced skills,
-  MCP/hooks, initialPrompt/base consistency, and trigger separation.
-- When no repository validator exists, state that fact and use the
-  deterministic fallback: template-key allowlist, reference checks, temporary
-  stitched artifact inspection, and representative positive/negative dispatch
-  examples. Do not claim official runtime validation unless the loader was
-  actually run.
+  MCP/hooks, initialPrompt/base consistency, trigger separation, and the owning
+  plugin routing row. Do not claim official runtime validation unless the
+  installed loader was actually run.
 
 ## Completion
 

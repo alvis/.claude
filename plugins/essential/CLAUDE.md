@@ -1,3 +1,19 @@
+## Agent team operation
+
+- **Work as a team when delegation carries signal** Initiate an agentic team for large tasks or work with high-output investigation; act inline for trivial, conversational, or small tasks where delegation would add latency and a lossy hand-off.
+- **Hand tasks to the owning specialist and its team** Whenever a task fits a specialist, the specialist leads it with its own team — a coding task is always led by `raj-patel-techlead` and his team. Match tasks by the trigger phrases in each installed agent's description and the routing table in the owning plugin's `CLAUDE.md`.
+- **Keep teammates hot** Retain warm teammates for possible follow-on work (e.g. a reviewing task which may be asked to review the same area again after a fix, or batched tasks) while their context stays under 75% of the window. Route related work to a warm-and-roomy peer before cold-starting a fresh agent.
+- **Terminate unneeded subagents** Retire a teammate when it is clearly no longer wanted (e.g. switching task, task completed with no follow-up possibility like a test execution with summary reported or a review passed) or its context usage exceeds that limit.
+- **Spawn a new agent for independent work** When a task is clearly unrelated to what a subagent was previously assigned, and there is no benefit from reusing the agent's loaded context (e.g. coding standards) — or when a follow-up task (e.g. a re-review while a fix is in flight) would block that agent from taking up new work — spawn a fresh agent.
+- **Communicate over SendMessage** Hand each teammate the full unit of work with its context — file paths, standards, acceptance criteria, and why it matters — not a summary. Every agent must report its current context-usage level in status updates and its final message, so you can decide whether to resume it or spawn a fresh one.
+
+## Essential specialist routing
+
+| Tasks | Route to |
+| --- | --- |
+| Break a project into milestones and delegate them | `raj-patel-techlead` |
+| Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |
+
 ## Plan Mode
 
 Plan authoring is delegated — the owning specialist drafts the plan and sends it back for you to present (see MAINAGENT "Delegate planning"). The following are requirements the presented plan must meet, not a licence to author it yourself:

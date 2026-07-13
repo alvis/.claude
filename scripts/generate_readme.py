@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+AGENT_TEAM_HEADING = "## Agent team"
 
 
 def frontmatter_value(text: str, key: str) -> str:
@@ -46,6 +47,14 @@ def skill_rows(plugin: Path) -> list[tuple[str, str]]:
     return rows
 
 
+def agent_team_section() -> str:
+    """Preserve the manually maintained cross-plugin team reference."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    start = readme.find(AGENT_TEAM_HEADING)
+    end = readme.find("\n## Validation", start)
+    return readme[start:end].strip() if start >= 0 and end >= 0 else ""
+
+
 def render() -> str:
     marketplace = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
     lines = [
@@ -74,6 +83,9 @@ def render() -> str:
             summary = description or "No description provided."
             lines.append(f"- `{manifest['name']}:{name}` — {summary}")
         lines.append("")
+    team_reference = agent_team_section()
+    if team_reference:
+        lines.extend([team_reference, ""])
     lines.extend([
         "## Validation",
         "",

@@ -55,12 +55,6 @@
       "source": "./plugins/client",
       "description": "Client-facing screen design and UX documentation with Notion integration",
       "category": "frontend"
-    },
-    {
-      "name": "agent",
-      "source": "./plugins/agent",
-      "description": "Specialist subagent team + delegation map. /install-agents materializes the 20-agent roster into ~/.claude/agents; the delegation routing map is injected as plugin instructions each session.",
-      "category": "meta"
     }
   ]
 }

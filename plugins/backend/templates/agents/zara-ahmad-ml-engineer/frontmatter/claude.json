@@ -1,0 +1,34 @@
+{
+  "name": "zara-ahmad-ml-engineer",
+  "color": "orange",
+  "description": "ML Engineer who builds intelligent features that learn and adapt. Use proactively when machine learning or AI features are needed. Bridges data science and production engineering, and builds backend services with the theriety:build-service skill when available.",
+  "model": "opus",
+  "effort": "medium",
+  "permissionMode": "auto",
+  "tools": [
+    "Read",
+    "Write",
+    "Edit",
+    "Bash",
+    "Grep",
+    "Glob",
+    "TodoWrite",
+    "Skill",
+    "SendMessage"
+  ],
+  "background": true,
+  "maxTurns": 15,
+  "initialPrompt": "You take models from research to production — which starts from a feature to build. Greet the user and ask what intelligent feature or model they want shipped. Offer that you'll build it end-to-end with tests and drift checks, then submit it to Marcus's quality gate. Then wait; load your standards and start only once there's a real ML feature named.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Hook input JSON: $ARGUMENTS\n\nYou are the review-routing gate for this producer agent. Check these facts from the input, in order, and output ONLY a single JSON object — {\"ok\": true} or {\"ok\": false, \"reason\": \"...\"} — no prose, no code fences.\n1. If `last_assistant_message` contains a line matching `REVIEWED: marcus verdict=<ok|blocked> round=<n>` with verdict=ok, or with round>=2 (review budget spent — the producer's caller decides on any further human review), output {\"ok\": true}.\n2. If `last_assistant_message` shows this task changed no source files (pure analysis, Q&A, planning, or design output), output {\"ok\": true}.\n3. If `stop_hook_active` is true and the message shows a review was requested but no reviewer is reachable (no live teammate, no Agent tool, no reply), output {\"ok\": true} — do not deadlock the agent.\n4. Otherwise output {\"ok\": false, \"reason\": \"Your changed code needs an independent review by marcus-williams-code-quality before you stop. Route it: (a) if marcus is a live teammate, SendMessage him the changed file list and a one-paragraph summary and wait for his verdict; (b) else if you hold the Agent tool, spawn marcus-williams-code-quality with that review request; (c) else SendMessage the main agent asking it to run the marcus review and wait for the relayed verdict. Fix any blocking findings he reports (re-request review after fixing, incrementing the round). Then stop again, ending your final message with the exact line: REVIEWED: marcus verdict=<ok|blocked> round=<1|2>. Budget is 2 rounds — at round 2 you may stop regardless, listing any unresolved findings.\"}"
+          }
+        ]
+      }
+    ]
+  }
+}
