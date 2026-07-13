@@ -2,7 +2,7 @@
   "name": "coding",
   "dependencies": ["essential"],
   "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
-  "version": "2026-07-13a",
+  "version": "2026-07-13b",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [

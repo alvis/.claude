@@ -1,7 +1,7 @@
 {
   "name": "agent",
   "description": "Specialist subagent team + delegation guidance. /install-agents materializes the 20-agent roster into ~/.claude/agents; the team-first mandate (CLAUDE.md) is injected each session and subagent conduct (SUBAGENT.md) at each subagent start.",
-  "version": "2026-07-13a",
+  "version": "2026-07-13b",
   "dependencies": ["essential", "coding", "web", "react", "backend"],
   "hooks": {
     "SessionStart": [
