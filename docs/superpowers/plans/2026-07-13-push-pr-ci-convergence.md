@@ -122,6 +122,6 @@ Run the quick validator on both changed skills and the whole coding plugin. Run 
 
 Review the diff for coherent ownership, exact flag forwarding, executable scheduling instructions, and preservation of the publication workflow. Run `git diff --check`, then commit with a Conventional Commit message.
 
-- [ ] **Step 5: Publish the implementation PR**
+- [x] **Step 5: Publish the implementation PR**
 
 Push `feat/push-pr-ci-convergence`, invoke `coding:write-pr` semantics for the title/body, and create a draft PR against `master`. Report the PR URL and verification evidence.
