@@ -344,5 +344,6 @@ final green state in its report.
 # Target ancestor is merged-on-origin.
 # AskUserQuestion is SKIPPED.
 # Skill proceeds to Option 2 (rewrite) per workflow-correct-merged.md.
-# After local integrity passes, coding:push-pr owns republishing the rewrite.
+# After local integrity passes, coding:commit lease-pushes only the authorized
+# bookmark. It invokes coding:push-pr only for relevant open downstream PRs.
 ```

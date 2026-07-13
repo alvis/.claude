@@ -86,19 +86,29 @@ jj new <merged_change_parent>
 jj rebase -s <merged_change> -d @
 ```
 
-After the local rewrite and integrity guard pass, follow the
-[SKILL.md](../SKILL.md) publication handoff with the affected stack metadata
-and the explicit merged-history rewrite consent already captured by this
-route. The
-[`coding:push-pr` core publication workflow](../../push-pr/SKILL.md#3-publish-bottom-up) owns
-force-with-lease publication, true-history rewinds, downstream restacking, and
-PR-base repair.
+After the local rewrite and integrity guard pass, synchronize only the existing
+bookmark whose rewrite the user authorized:
+
+```bash
+jj git fetch
+jj git push --bookmark <affected-bookmark>
+```
+
+The tracked remote bookmark gives `jj git push` force-with-lease semantics: a
+remote change since the fetch rejects the push. Do not include descendants or
+any other bookmark in this command. The explicit Option 2 consent authorizes
+this affected bookmark only.
+
+If relevant open downstream PRs remain, invoke `coding:push-pr` afterward only
+to monitor those PRs and their CI. Exclude the already-synchronized merged
+bookmark. If there are no relevant open downstream PRs, do not invoke
+`coding:push-pr`.
 
 Verify the integrity guard in [SKILL.md](../SKILL.md) passes.
 
 ### 4. Communicate to reviewers (Option 2 only)
 
-After `coding:push-pr` republishes the rewrite, the user MUST notify any open
+After the affected bookmark is synchronized, the user MUST notify any open
 downstream PRs / consumers that their base has been rewritten. This is
 procedural, not automated — the skill surfaces a reminder:
 
@@ -118,8 +128,9 @@ Notify reviewers and downstream consumers:
 ## Mandatory follow-ups
 
 - Option 1: normal save follow-ups ([workflow-save-local.md](./workflow-save-local.md)).
-- Option 2: integrity check and project scripts, then the [SKILL.md](../SKILL.md)
-  publication handoff for the affected saved stack.
+- Option 2: integrity check and project scripts, direct force-with-lease sync
+  of the affected bookmark only, then `coding:push-pr` only when relevant open
+  downstream PRs require monitoring.
 - Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
@@ -127,5 +138,5 @@ Notify reviewers and downstream consumers:
 | Symptom | Action |
 |---|---|
 | Force-push rejected by branch protection | Branch is protected against rewriting (correct posture for merged main). Route back to Option 1 (corrective PR). |
-| User picks Option 2 then changes mind mid-flow | `jj op restore <op_id>` rewinds locally; follow the publication handoff only if the restored state must be republished. |
+| User picks Option 2 then changes mind mid-flow | Before the push, `jj op restore <op_id>` rewinds locally. After the push, restoring the remote again requires fresh explicit consent and another lease-protected sync. |
 | Multiple merged targets in one rewrite | Run the prompt ONCE listing all targets; user's choice applies to the whole batch. |
