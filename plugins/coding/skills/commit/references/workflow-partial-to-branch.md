@@ -71,8 +71,8 @@ jj bookmark move <target> --allow-backwards --to <new-change-id>
 ### 6. Hand off publication when requested
 
 After the local bookmark move and integrity check, follow the
-[SKILL.md](../SKILL.md) publication handoff with `<target>`. The push-pr
-[publication workflow](../../push-pr/references/publish-stack.md) owns the
+[SKILL.md](../SKILL.md) publication handoff with `<target>`. The
+[`coding:push-pr` core publication workflow](../../push-pr/SKILL.md#3-publish-bottom-up) owns the
 push, remote tracking, and PR update.
 
 ### 7. Confirm leftover working copy

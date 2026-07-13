@@ -89,8 +89,8 @@ jj rebase -s <merged_change> -d @
 After the local rewrite and integrity guard pass, follow the
 [SKILL.md](../SKILL.md) publication handoff with the affected stack metadata
 and the explicit merged-history rewrite consent already captured by this
-route. The push-pr
-[publication workflow](../../push-pr/references/publish-stack.md) owns
+route. The
+[`coding:push-pr` core publication workflow](../../push-pr/SKILL.md#3-publish-bottom-up) owns
 force-with-lease publication, true-history rewinds, downstream restacking, and
 PR-base repair.
 
