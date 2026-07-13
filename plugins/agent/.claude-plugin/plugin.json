@@ -6,12 +6,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../essential/bin/session-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-id", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "b=\"$(ls -d \"${CLAUDE_PLUGIN_ROOT}\"/../../essential/*/bin 2>/dev/null | sort | tail -n1)\"; [ -n \"$b\" ] || exit 0; exec \"$b/session-start\" --plugin-dir \"${CLAUDE_PLUGIN_ROOT}\" --with-session-id --constitution-paths \"${CLAUDE_PLUGIN_ROOT}\""}]
       }
     ],
     "SubagentStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/../essential/bin/subagent-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "b=\"$(ls -d \"${CLAUDE_PLUGIN_ROOT}\"/../../essential/*/bin 2>/dev/null | sort | tail -n1)\"; [ -n \"$b\" ] || exit 0; exec \"$b/subagent-start\" --plugin-dir \"${CLAUDE_PLUGIN_ROOT}\" --constitution-paths \"${CLAUDE_PLUGIN_ROOT}\""}]
       }
     ]
   }
