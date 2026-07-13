@@ -9,8 +9,7 @@ argument-hint: "[<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--d
 
 Publish one saved change or an ordered stack as draft pull requests, then own
 the hosted-CI lifecycle until every PR is green or a concrete blocker requires
-user action or external state. `coding:commit` remains the history-mutation
-owner and `coding:write-pr` remains the PR-text owner.
+user action or external state. `coding:write-pr` remains the PR-text owner.
 
 **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike.
 
@@ -21,12 +20,21 @@ owner and `coding:write-pr` remains the PR-text owner.
 - Do not use for: saving an unsaved working copy or rewriting local history
   without publication (`coding:commit`), authoring PR text only
   (`coding:write-pr`), reviewing code, or merging PRs.
-- One parent orchestrator owns decisions and mutations. It delegates noisy
-  command execution to one small read-only tester before publication and one
-  small read-oriented poller after publication, following the repository
+- Delegate noisy command execution to one small read-only tester before
+  publication and one small read-oriented poller after publication, following
+  the repository
   [delegation contract](../../../governance/constitution/references/delegation.md).
 
 <IMPORTANT>
+- Ownership is singular: `coding:commit` owns direct history mutations;
+  `coding:stack-code` is invoked to orchestrate reshaping/reparenting when a
+  root cause belongs in a lower PR outside the current PR;
+  [publish-stack.md](references/publish-stack.md) owns push, restack, and PR
+  base mechanics; [ci-convergence.md](references/ci-convergence.md) only
+  decides status, gathers evidence, and directs the parent to
+  `publish-stack.md`.
+  The parent alone accepts fixer edits and performs commit, push, and restack
+  mutations; the poller may dispatch exactly one scoped fixer per red cycle.
 - `--skip-local-test` skips only the local pre-push test phase. It never skips
   publication, GitHub monitoring, evidence collection, repair, or convergence.
 - Fix root causes. MUST NOT weaken a correct test, alter a valid expectation,
@@ -92,27 +100,42 @@ owner and `coding:write-pr` remains the PR-text owner.
 
    On failure, diagnose from the captured output before editing. Dispatch one
    relevant fix agent, scoped to the named root cause and affected files. The
-   fixer may edit; it reports `root_cause`, `files_edited`, and every
-   post-repair `command`, `status`, and `duration_seconds`. The parent reviews
-   the diff, invokes `coding:commit --retrospective`, and sends the tester back
-   to rerun the affected commands and then the full runnable set. Publish only
-   when every runnable command exits zero. Any separate review is read-only.
+   fixer may edit and returns under 1000 tokens:
+
+   <report>
+
+   ```yaml
+   root_cause: <evidence-backed cause>
+   owning_change: <change-id or current-change>
+   files_edited: [<path>]
+   checks_run:
+     - command: <exact command>
+       status: <integer exit status>
+       duration_seconds: <elapsed seconds>
+   unresolved: [<blocker>]
+   ```
+
+   </report>
+
+   The parent reviews and accepts the diff, invokes
+   `coding:commit --retrospective`, and sends the tester back to rerun the
+   affected commands and then the full runnable set. Publish only when every
+   runnable command exits zero. Any separate review is read-only.
    With `--skip-local-test`, do not dispatch the tester; continue directly to
    publication and hosted convergence.
 
 3. **Publish bottom-up.** Load and follow
-   [references/publish-stack.md](references/publish-stack.md). It owns bookmark
+   [references/publish-stack.md](references/publish-stack.md) for bookmark
    naming, `jj git push`, `coding:write-pr`, draft `gh pr create`/update, stack
    bases, restacking, and publication errors. Capture every PR number, URL,
    head bookmark, base, and change ID.
 
 4. **Start hosted convergence immediately.** Immediately after publication,
-   schedule `/loop 5m` with one small read-oriented polling agent for the
-   entire stack, even when `--skip-local-test` was supplied. Load and follow
-   [references/ci-convergence.md](references/ci-convergence.md); that reference
-   exclusively owns green/pending/red classification, evidence collection,
-   fixer dispatch, repair commits, repush/restack, retry cadence, and stop
-   conditions.
+   load and follow
+   [references/ci-convergence.md](references/ci-convergence.md). Schedule its
+   executable `/loop 5m <explicit prompt>` with one small read-oriented poller
+   for the entire stack, capture the returned task/job ID, and retain it for
+   exact cancellation. Do this even when `--skip-local-test` was supplied.
 
 ## Verification and Completion
 
@@ -123,6 +146,6 @@ owner and `coding:write-pr` remains the PR-text owner.
 - The poller observed every PR green after the final push. Report the final
   stack map, local results, repair commits, push/restack actions, per-PR check
   state, CI wall times, and any blocker.
-- State the operational limit: `/loop` runs only while this session remains
-  open and cannot resume a closed conversation. If the session may close,
-  tell the user monitoring will require reopening/resuming it.
+- State the operational limit: scheduled tasks fire only while the session is
+  open and idle. Unexpired tasks are restored by `--resume` or `--continue`;
+  expired tasks are not replayed.
