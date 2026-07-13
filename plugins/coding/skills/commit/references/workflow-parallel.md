@@ -110,9 +110,8 @@ rm -rf ../<repo-name>-<task-slug>
 ## Mandatory follow-ups
 
 - After integrating back (Option A or B), verify chain via `jj log -r '::@'` and run the [SKILL.md](../SKILL.md) integrity check.
-- If the integrated work touched any unmerged bookmark, invoke
-  `coding:push-pr` with the affected stack per the [SKILL.md](../SKILL.md)
-  publication handoff.
+- If the integrated work touched any unmerged bookmark, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the affected stack metadata.
 
 ## Error / edge cases
 

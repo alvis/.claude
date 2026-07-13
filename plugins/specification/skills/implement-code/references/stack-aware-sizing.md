@@ -12,10 +12,10 @@
 
 ## Step Configuration
 
-- **Purpose**: After `commits_landed` are produced, decide whether to delegate to `coding:commit --create-pr` (oversized changes → stacked PRs; existing-stack semantic upstream impact → mandatory restack). The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly — every stack mutation is dispatched through `coding:commit` so its standards (`GIT-PR-STACK-01..06`, `GIT-PR-SIZE-01..04`) remain the single source of truth.
+- **Purpose**: After `commits_landed` are produced, decide whether oversized changes need the `coding:commit --create-pr` compatibility route or an existing stack needs `coding:push-pr` republication. The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly: `coding:commit` owns local history structure, while `coding:push-pr` owns bookmarks, remote restacking, PRs, and CI convergence.
 - **Input**: `repo_path`, `commits_landed`, `base_rev` (from Step 7), post-commit diff stats, `ticket.slug`
 - **Output**: `stack_dispatch` = `{ dispatched: true|false, mode: stacked-pr|restack|null, branch_prefix: <slug>|null, prs: [...] }`
-- **Sub-skill**: `coding:commit` (only when triggered)
+- **Sub-skill**: `coding:commit --create-pr` for a size trigger; `coding:push-pr` for a restack trigger
 - **Parallel Execution**: No
 
 ## Phase 1: Planning (You)
@@ -27,29 +27,29 @@
 2. **Threshold for stacked PRs**: `>5 changed files OR >300 LOC diff OR multiple loosely-coupled domains`. (Mirrored from `coding:commit`'s scenario router; bump in lockstep if upstream thresholds change.)
 3. **Detect open stack**: existing bookmarks matching `<branch-prefix>/NN-<scope>` per `GIT-PR-STACK-01` (via `jj bookmark list` or `git branch --list '*/[0-9][0-9]-*'`).
 4. **Classify the trigger**:
-   - **Size-trigger** → dispatch `coding:commit --create-pr --branch-prefix <ticket.slug>`. The commit skill auto-detects multi-concern `@` and splits before opening the PR stack.
+   - **Size-trigger** → dispatch `coding:commit --create-pr --branch-prefix <ticket.slug>`. The commit skill auto-detects and splits multi-concern `@`, then delegates the saved stack to `coding:push-pr`.
    - **Restack-trigger** → an open stack exists AND the landed code **semantically modifies a symbol/contract that a lower (earlier-in-order) PR in the stack establishes or relies on**. Apply this judgement per symbol, not per file:
      - Trigger: signature change of an exported symbol the lower PR consumes; behavior change in a shared helper a lower PR's tests assume; schema/contract change a lower PR's migration depends on.
      - Do NOT trigger: incidental file overlap (formatting, lint, unrelated co-edit in same file), purely additive code that lower PRs do not reference.
-   - **Both triggers fire** → `--create-pr` takes precedence; restack is implicit in the new stack layout (the commit skill's post-rewrite Step 4 invokes `restack.sh` automatically).
+   - **Both triggers fire** → the `coding:commit --create-pr` compatibility route takes precedence; after local history work it delegates the resulting stack once to `coding:push-pr`, which owns publication and restacking.
    - **Neither fires** → small, single-domain change; continue with the existing single-commit / single-PR path. Record `stack_dispatch.dispatched=false`.
 5. Update TodoWrite: add `stack-aware-sizing` todo set to `in_progress` when a trigger fires.
 
 ## Phase 2: Execution (Sub-Skill)
 
-When a trigger fires, dispatch `coding:commit` exactly once via the `Skill` tool:
+When a trigger fires, dispatch the owning sub-skill exactly once via the `Skill` tool:
 
-1. Load `coding:commit` via `Read`
+1. Load `coding:commit` for a size trigger or `coding:push-pr` for a restack trigger via `Read`.
 2. Invoke with a minimal payload:
    - `--branch-prefix <ticket.slug>`
-   - For size-trigger: `--create-pr` (the skill auto-routes split + stacked-PR materialisation)
-   - For restack-trigger: no extra flag — the skill's mandatory Step 4 (`restack.sh`) runs after any rewrite touching a change with downstream bookmarks
-   - Pass `repo_path` so the commit skill operates inside the same working copy
-3. Capture the commit skill's report `outputs.route`, `outputs.branch_prefix`, and `outputs.prs[]` into `stack_dispatch`
+   - For size-trigger: `coding:commit --create-pr` (it auto-routes local split/save work, then delegates publication)
+   - For restack-trigger: `coding:push-pr <resolved-stack>`
+   - Pass `repo_path` so the selected sub-skill operates inside the same working copy
+3. Capture the dispatched skill's report `outputs.route`, `outputs.branch_prefix`, and `outputs.prs[]` into `stack_dispatch`.
 4. Append the dispatch entry to `child_dispatch_log` so Step 13 surfaces it alongside the `coding:*` chain
 
 ## Phase 3: Decision (You)
 
-- `coding:commit` reports `status=completed` → record `stack_dispatch` and proceed to Step 10
-- `coding:commit` reports `status=failed|partial` → mark this skill's final `status=partial`, attach the commit report to the running context, still proceed to Step 10 (alignment review + paper-only thought experiment remain valuable)
+- The dispatched skill reports `status=completed` → record `stack_dispatch` and proceed to Step 10.
+- The dispatched skill reports `status=failed|partial` → mark this skill's final `status=partial`, attach its report to the running context, and still proceed to Step 10 (alignment review + paper-only thought experiment remain valuable).
 - Mark `stack-aware-sizing` todo as `completed`

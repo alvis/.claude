@@ -70,8 +70,8 @@ jj bookmark move <target> --allow-backwards --to <new-change-id>
 
 ### 6. Hand off publication when requested
 
-Invoke [`coding:push-pr`](../../push-pr/SKILL.md) with `<target>` after the
-local bookmark move and integrity check. Its
+After the local bookmark move and integrity check, follow the
+[SKILL.md](../SKILL.md) publication handoff with `<target>`. The push-pr
 [publication workflow](../../push-pr/references/publish-stack.md) owns the
 push, remote tracking, and PR update.
 
@@ -104,9 +104,8 @@ npm run build
 
 ## Mandatory follow-ups
 
-- If the target branch carries unmerged bookmarks downstream, invoke
-  `coding:push-pr` with the resolved stack per the [SKILL.md](../SKILL.md)
-  publication handoff.
+- If the target branch carries unmerged bookmarks downstream, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata.
 - Report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases

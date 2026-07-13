@@ -10,7 +10,8 @@ argument-hint: "<notion-url-or-id> [--repo=<path>] [--dry-run] [--skip-approval]
 # Implement Specification
 
 Orchestrate one specification ticket in the current working copy. Coding
-children own source edits; `coding:commit` owns every history mutation;
+children own source edits; `coding:commit` owns local history shaping,
+`coding:push-pr` owns publication and remote restacking, and
 `specification:mdc` is the only writer for `.code-spec/*.md`.
 
 ## Boundaries
@@ -99,8 +100,10 @@ children own source edits; `coding:commit` owns every history mutation;
    as unresolved and return partial with `coding:handover`.
 9. When commits landed, load
    [references/stack-aware-sizing.md](references/stack-aware-sizing.md).
-   Measure the aggregate diff from `base_rev`; route oversized splitting or
-   semantic restacking to `coding:commit`. Never mutate history directly.
+   Measure the aggregate diff from `base_rev`; route oversized splitting
+   through the `coding:commit --create-pr` compatibility entrypoint and
+   semantic restacking to `coding:push-pr`. Never mutate history or publish
+   directly.
 10. Run `specification:review-implementation` against the bundle. On P0/P1
     alignment findings, dispatch `coding:fix` and retry alignment — at most
     three passes, after which remaining findings are reported instead of
@@ -126,7 +129,8 @@ children own source edits; `coding:commit` owns every history mutation;
   and stack decision derives from it.
 - Acceptance evidence exists for every mapped feature; alignment, general,
   and security reviews are clean or their remaining findings are reported.
-- No history mutation happened outside `coding:commit` and no `.code-spec`
+- No local history shaping happened outside `coding:commit`, no publication or
+  remote restacking happened outside `coding:push-pr`, and no `.code-spec`
   write happened outside `specification:mdc`.
 
 ## Completion

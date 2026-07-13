@@ -97,11 +97,10 @@ All descendants should be auto-rebased and free of conflicts. If conflicts appea
 
 ## Mandatory follow-ups
 
-- If any unmerged bookmark sits at or below the edited change, invoke
-  `coding:push-pr` with the resolved stack after local integrity passes. The
-  descendants were auto-rebased by jj; `coding:push-pr` owns force-with-lease
-  republication and PR reparenting per the [SKILL.md](../SKILL.md)
-  publication handoff.
+- If any unmerged bookmark sits at or below the edited change, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
+  after local integrity passes. The descendants were auto-rebased by jj;
+  `coding:push-pr` owns force-with-lease republication and PR reparenting.
 
 - The [SKILL.md](../SKILL.md) integrity check and project scripts (`npm run lint/test/build`) MUST pass.
 

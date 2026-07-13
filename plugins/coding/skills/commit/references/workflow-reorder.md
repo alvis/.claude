@@ -118,8 +118,9 @@ The git log should reflect the new order with the same descriptions.
 
 ## Mandatory follow-ups
 
-- If any unmerged bookmark sits inside the reordered range, invoke
-  `coding:push-pr` with the resolved stack after local integrity passes. Its
+- If any unmerged bookmark sits inside the reordered range, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
+  after local integrity passes. The push-pr
   [publication workflow](../../push-pr/references/publish-stack.md) owns
   remote restacking, pushing, and PR-base repair.
 

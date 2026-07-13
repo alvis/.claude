@@ -116,8 +116,9 @@ After git rebase completes, jj will see the rewritten objects on next op; run `j
 
 ## Mandatory follow-ups
 
-- Whenever any unmerged bookmark sits at or below a rewritten change, invoke
-  `coding:push-pr` with the resolved stack after local integrity passes. Its
+- Whenever any unmerged bookmark sits at or below a rewritten change, follow
+  the [SKILL.md](../SKILL.md) publication handoff with the resolved stack
+  metadata after local integrity passes. The push-pr
   [publication workflow](../../push-pr/references/publish-stack.md) owns
   remote restacking, pushing, and PR-base repair.
 

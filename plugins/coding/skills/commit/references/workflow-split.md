@@ -133,9 +133,8 @@ jj edit <change_id> && npm run build
 
 ## Mandatory follow-ups
 
-- If any downstream bookmark exists on the affected chain, invoke
-  `coding:push-pr` with the resolved stack per the [SKILL.md](../SKILL.md)
-  publication handoff;
+- If any downstream bookmark exists on the affected chain, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata;
   it owns remote restacking and republication.
 - Final report per [SKILL.md](../SKILL.md) Completion.
 

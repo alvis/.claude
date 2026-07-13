@@ -52,11 +52,9 @@ One-line reference for every jj primitive this skill uses, with the closest git 
 | jj | Purpose | git equivalent |
 |---|---|---|
 | `jj git fetch` | Fetch all remotes; updates `main@origin` etc. | `git fetch --all` |
-| `jj git push --bookmark <name>` | Push bookmark; force-with-lease for unmerged | `git push --force-with-lease origin <name>` |
-| `jj git push --bookmark <name> --allow-new` | First-time push for a new bookmark | `git push -u origin <name>` |
-| `jj bookmark forget <name>; jj bookmark set <name> -r <new>; jj git push --bookmark <name> --allow-new` | Rewind remote history (delete + recreate) — only with explicit consent per GIT-PR-STACK-03 | `git push --force origin <name>` |
-| `jj git push --bookmark <name> --option <key=val>` | v0.40+: pass push options to remote (e.g. GitLab MR flags) | `git push -o <key=val>` |
 | `jj git import` | Re-read git refs after external git ops (esp. after a hand-run `git commit` made via `git add -p` to land partial hunks) | n/a (automatic in pure git) |
+
+Remote publication is outside this skill; route it to `coding:push-pr`.
 
 ## Logs and revsets
 
@@ -103,6 +101,6 @@ One-line reference for every jj primitive this skill uses, with the closest git 
 
 - `jj squash -i` — interactive squash; prefer explicit `--from`/`--into` for determinism.
 - `git rebase -i` — git interactive rebase. jj owns rewrite; git is downstream.
-- `git push` (direct) — only `jj git push --bookmark` is allowed.
+- Remote publication commands — `coding:push-pr` owns them.
 - `git commit --amend` — jj `edit` + `describe` is the equivalent.
 - `git checkout` — jj `new` / `jj edit` is the equivalent for changing `@`.

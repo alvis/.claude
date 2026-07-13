@@ -67,8 +67,8 @@ If the placeholder has a downstream bookmark (e.g. it represents a future PR), k
 ## Mandatory follow-ups
 
 - If the abandoned change had a downstream bookmark, the bookmark moved to
-  the parent automatically; invoke `coding:push-pr` with the affected stack
-  after local verification so it owns remote restacking. A merged-on-origin
+  the parent automatically; follow the [SKILL.md](../SKILL.md) publication
+  handoff with the affected stack after local verification. A merged-on-origin
   target still routes to [workflow-correct-merged.md](./workflow-correct-merged.md).
 - No integrity check is required for a pure abandon of a truly empty change (the working tree didn't change). For abandon of a non-`@` empty change with descendants, jj auto-rebases — verify with `jj log -r '::@'`.
 

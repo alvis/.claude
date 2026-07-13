@@ -62,9 +62,9 @@ jj log -r 'change_id(<id>)' --no-graph
 
 ### 5. Surface remote stack impact
 
-If any unmerged bookmark sat at or below the divergent change, invoke
-`coding:push-pr` with the resolved stack after local integrity passes. It owns
-remote restacking and republication.
+If any unmerged bookmark sat at or below the divergent change, follow the
+[SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
+after local integrity passes.
 
 ## Prevention rules
 
@@ -80,7 +80,7 @@ remote restacking and republication.
 
 ## Mandatory follow-ups
 
-- Hand affected downstream bookmarks to `coding:push-pr` per Step 5.
+- Follow the publication handoff for affected downstream bookmarks per Step 5.
 - Integrity check ([SKILL.md](../SKILL.md) Verification) — the working copy may shift if `@` was a divergent side.
 - Re-run project scripts if the canonical side replaced uncommitted work.
 

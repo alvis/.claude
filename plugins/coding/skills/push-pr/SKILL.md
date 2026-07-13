@@ -26,7 +26,7 @@ user action or external state. `coding:write-pr` remains the PR-text owner.
   [delegation contract](../../../governance/constitution/references/delegation.md).
 
 <IMPORTANT>
-- Ownership is singular: `coding:commit` owns direct history mutations;
+- Ownership is singular: `coding:commit` owns source-change history shaping;
   `coding:stack-code` is invoked to orchestrate reshaping/reparenting when a
   root cause belongs in a lower PR outside the current PR;
   [publish-stack.md](references/publish-stack.md) owns push, restack, and PR

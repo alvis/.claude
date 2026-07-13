@@ -57,7 +57,7 @@ jj new main@origin
 jj describe @ -m "<conventional-subject>" -m "Body explaining what the corrective change fixes from <merged_pr_url>."
 ```
 
-Then follow the normal save flow ([workflow-save-local.md](./workflow-save-local.md)) and, if the user wants a PR, invoke [`coding:push-pr`](../../push-pr/SKILL.md) for the saved corrective change.
+Then follow the normal save flow ([workflow-save-local.md](./workflow-save-local.md)) and, if the user wants a PR, follow the [SKILL.md](../SKILL.md) publication handoff for the saved corrective change.
 
 The corrective PR title typically uses `fix(scope): ...` referencing the regression. Link to the original merged PR in the body.
 
@@ -86,12 +86,13 @@ jj new <merged_change_parent>
 jj rebase -s <merged_change> -d @
 ```
 
-After the local rewrite and integrity guard pass, invoke
-[`coding:push-pr`](../../push-pr/SKILL.md) with the affected saved change or
-stack. Its [publication workflow](../../push-pr/references/publish-stack.md)
-owns force-with-lease publication, true-history rewinds, downstream restacking,
-and PR-base repair. Pass along the explicit merged-history rewrite consent
-already captured by this route.
+After the local rewrite and integrity guard pass, follow the
+[SKILL.md](../SKILL.md) publication handoff with the affected stack metadata
+and the explicit merged-history rewrite consent already captured by this
+route. The push-pr
+[publication workflow](../../push-pr/references/publish-stack.md) owns
+force-with-lease publication, true-history rewinds, downstream restacking, and
+PR-base repair.
 
 Verify the integrity guard in [SKILL.md](../SKILL.md) passes.
 
@@ -117,8 +118,8 @@ Notify reviewers and downstream consumers:
 ## Mandatory follow-ups
 
 - Option 1: normal save follow-ups ([workflow-save-local.md](./workflow-save-local.md)).
-- Option 2: integrity check and project scripts, then `coding:push-pr` for the
-  affected saved stack; it owns downstream restacking and publication.
+- Option 2: integrity check and project scripts, then the [SKILL.md](../SKILL.md)
+  publication handoff for the affected saved stack.
 - Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
@@ -126,5 +127,5 @@ Notify reviewers and downstream consumers:
 | Symptom | Action |
 |---|---|
 | Force-push rejected by branch protection | Branch is protected against rewriting (correct posture for merged main). Route back to Option 1 (corrective PR). |
-| User picks Option 2 then changes mind mid-flow | `jj op restore <op_id>` rewinds locally; invoke `coding:push-pr` only if the restored state must be republished. |
+| User picks Option 2 then changes mind mid-flow | `jj op restore <op_id>` rewinds locally; follow the publication handoff only if the restored state must be republished. |
 | Multiple merged targets in one rewrite | Run the prompt ONCE listing all targets; user's choice applies to the whole batch. |

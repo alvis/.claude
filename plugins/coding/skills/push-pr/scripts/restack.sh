@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# restack.sh -- rebase every unmerged bookmark in the current stack onto its
+# push-pr restack.sh -- rebase every unmerged bookmark in the current stack onto its
 #               (now-up-to-date) parent in the stack, re-push (force-with-lease
 #               via jj), and reparent the open PR.
 #
@@ -9,12 +9,12 @@ set -euo pipefail
 # suffix (per GIT-PR-STACK-01). For bookmark #1 the parent is main@origin; for
 # bookmark #N the parent is bookmark #N-1.
 #
-# Usage:   restack.sh <branch-prefix> [--dry-run]
+# Usage:   ${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh <branch-prefix> [--dry-run]
 # Stdout:  JSON summary { restacked, skipped_merged, errors }
 # Exit:    0 = all ok or all skipped; non-zero only on hard failure of the loop
 
 PREFIX="${1:-}"
-[ -z "$PREFIX" ] && { echo "usage: restack.sh <branch-prefix> [--dry-run]" >&2; exit 2; }
+[ -z "$PREFIX" ] && { echo "usage: push-pr/scripts/restack.sh <branch-prefix> [--dry-run]" >&2; exit 2; }
 DRY="${2:-}"
 
 restacked=()

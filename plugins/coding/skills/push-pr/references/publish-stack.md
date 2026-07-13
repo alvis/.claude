@@ -122,7 +122,7 @@ Move `@` (or the LLM-tracked pointer) to the next change in the chain and repeat
   a downstream bookmark:
 
   ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
+  bash "${CLAUDE_PLUGIN_ROOT}/skills/push-pr/scripts/restack.sh" <branch-prefix>
   ```
 
   This loops over unmerged bookmarks in the stack, rebases each, re-pushes,
