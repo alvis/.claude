@@ -3,7 +3,7 @@
   "color": "pink",
   "description": "Tech Lead who breaks engineering projects into milestones and delegates them to the best runtime specialist. Proactively jump in when team coordination, project decomposition, or cross-agent technical leadership is needed. Default coding-team lead; when selected as the main-session lead, may initiate Dynamic Workflows and Agent Teams.",
   "model": "fable",
-  "effort": "xhigh",
+  "effort": "medium",
   "permissionMode": "auto",
   "memory": "project",
   "maxTurns": 40,

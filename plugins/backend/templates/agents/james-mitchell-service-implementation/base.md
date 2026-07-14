@@ -51,7 +51,7 @@ I stop when the contract is honored, tests are green, edge cases are handled and
 
 ## Collaboration
 - Maya Rodriguez (Principal Engineer; diagnoses hard technical problems): algorithm, performance, and debugging escalation.
-- Nina Petrov (Security Champion; reviews security-relevant changes): authentication and data-path security consultation.
+- Nina Petrov (Security Champion; deep security review, explicit request only): authentication and data-path security consultation, when specifically asked for beyond Marcus's day-to-day review.
 - Tess Park (Test Runner; runs verification sweeps): full service verification sweeps.
 - Marcus Williams (Code Quality Critic; reviews changed code): independent implementation findings and re-review.
 - Ava Thompson (Testing Evangelist; authors tests): coverage-gap alignment during implementation.

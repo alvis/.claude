@@ -1,9 +1,9 @@
 {
   "name": "marcus-williams-code-quality",
   "color": "yellow",
-  "description": "Code Quality Critic who runs the independent quality gate on changed code. Must use after any code change to review it against code-review.md and the universal/function/typescript standards. Use proactively when reviewing code, enforcing patterns, or identifying technical debt; escalates to Nina for security depth or Kai for adversarial proof before signing off.",
+  "description": "Code Quality Critic who runs the independent quality gate on changed code. Must use after any code change to review it against code-review.md and the universal/function/typescript standards. Use proactively when reviewing code, enforcing patterns, or identifying technical debt — day-to-day code quality review includes security-aware review; call in Nina only when she's explicitly requested, and escalate to Kai for adversarial proof before signing off.",
   "model": "opus",
-  "effort": "high",
+  "effort": "medium",
   "permissionMode": "default",
   "disallowedTools": [
     "MultiEdit",

@@ -113,28 +113,28 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 
 ### Roster
 
-| Agent | Role | Model | Permission | Flags |
-| --- | --- | --- | --- | --- |
-| `raj-patel-techlead` | Tech Lead — decomposes projects and routes milestones | fable | auto | memory |
-| `maya-rodriguez-principal` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | auto | gated, worktree, memory |
-| `james-mitchell-service-implementation` | Service Implementation — backend/API build-out | sonnet | acceptEdits | gated, worktree |
-| `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | auto | gated |
-| `priya-sharma-frontend-implementer` | Frontend Implementer — builds approved designs in React/TS | sonnet | acceptEdits | gated, worktree |
-| `coco-laurent-frontend-designer` | Frontend Designer — designs only, never builds | fable | auto | worktree |
-| `zara-ahmad-ml-engineer` | ML Engineer — ML/AI features, one-shot background runs | opus | auto | gated, background |
-| `felix-anderson-devops` | DevOps — CI/CD and infra automation, background passes | sonnet | auto | gated, background |
-| `nova-chen-research-engineer` | Research Engineer — prototypes and reproducible benchmarks | opus | auto | worktree, memory |
-| `oliver-singh-data-scientist` | Data Scientist — analysis and ML insights | opus | auto | worktree |
-| `dexter-cho-harness-eval-engineer` | Harness & Eval Engineer — eval suites and quality gates as code | opus | auto | gated |
-| `ava-thompson-testing-evangelist` | Testing Evangelist — authors test suites via TDD | sonnet | acceptEdits | leaf, gated, memory |
-| `tess-park-test-runner` | Test Runner — mechanical lint/type/test sweeps, summarized | haiku | acceptEdits | leaf, background |
-| `marcus-williams-code-quality` | Code Quality Critic — the independent quality gate | opus | default | critic (write-fenced), memory |
-| `nina-petrov-security-champion` | Security Champion — read-only security review | fable | default | critic |
-| `kai-raven-adversarial-redteam` | Adversarial Red-Team — PoC exploits in an isolated worktree | opus | default | leaf, worktree |
-| `penelope-sterling-aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | default | leaf, critic (write-fenced), memory |
-| `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, Notion | sonnet | acceptEdits | leaf |
-| `ada-bishop-initializer` | Project Initializer — run-once bootstrap | sonnet | acceptEdits | leaf |
-| `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | auto | background, memory |
+| Agent | Role | Model | Effort | Permission | Flags |
+| --- | --- | --- | --- | --- | --- |
+| `raj-patel-techlead` | Tech Lead — decomposes projects and routes milestones | fable | medium | auto | memory |
+| `maya-rodriguez-principal` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
+| `james-mitchell-service-implementation` | Service Implementation — backend/API build-out | sonnet | medium | acceptEdits | gated, worktree |
+| `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | high | auto | gated |
+| `priya-sharma-frontend-implementer` | Frontend Implementer — builds approved designs in React/TS | sonnet | high | acceptEdits | gated, worktree |
+| `coco-laurent-frontend-designer` | Frontend Designer — designs only, never builds | fable | high | auto | worktree |
+| `zara-ahmad-ml-engineer` | ML Engineer — ML/AI features, one-shot background runs | opus | medium | auto | gated, background |
+| `felix-anderson-devops` | DevOps — CI/CD and infra automation, background passes | sonnet | medium | auto | gated, background |
+| `nova-chen-research-engineer` | Research Engineer — prototypes and reproducible benchmarks | opus | high | auto | worktree, memory |
+| `oliver-singh-data-scientist` | Data Scientist — analysis and ML insights | opus | medium | auto | worktree |
+| `dexter-cho-harness-eval-engineer` | Harness & Eval Engineer — eval suites and quality gates as code | opus | medium | auto | gated |
+| `ava-thompson-testing-evangelist` | Testing Evangelist — authors test suites via TDD | sonnet | medium | acceptEdits | leaf, gated, memory |
+| `tess-park-test-runner` | Test Runner — mechanical lint/type/test sweeps, summarized | haiku | — | acceptEdits | leaf, background |
+| `marcus-williams-code-quality` | Code Quality Critic — the independent quality gate, day-to-day quality and security review | opus | medium | default | critic (write-fenced), memory |
+| `nina-petrov-security-champion` | Security Champion — deep security review, explicit request only | fable | high | default | critic |
+| `kai-raven-adversarial-redteam` | Adversarial Red-Team — PoC exploits in an isolated worktree | opus | high | default | leaf, worktree |
+| `penelope-sterling-aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | medium | default | leaf, critic (write-fenced), memory |
+| `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, Notion | sonnet | medium | acceptEdits | leaf |
+| `ada-bishop-initializer` | Project Initializer — run-once bootstrap | sonnet | low | acceptEdits | leaf |
+| `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | high | auto | background, memory |
 
 Each agent's `## Collaboration` section records its proven outbound collaborators and delegation targets. These are runtime defaults, not an allowlist; shared discovery and handoff policy lives in `plugins/essential/CLAUDE.md`.
 
@@ -145,17 +145,17 @@ Spawn edges (the `Agent` tool channel — who dispatches whom as a subagent):
 ```
 raj-patel-techlead (team lead; ×N priya fan-out; independent quality gate)
   └── any registered agent
-james-mitchell ──► maya (escalation), nina (security), tess (sweeps), marcus (review), ava (coverage)
+james-mitchell ──► maya (escalation), nina (security, explicit request only), tess (sweeps), marcus (review), ava (coverage)
 ethan-kumar   ──► oliver (profiling), james (schema alignment), tess (sweeps), maya (escalation), marcus (review)
-maya-rodriguez ─► nina (security), tess (sweeps), marcus (review)
+maya-rodriguez ─► nina (security, explicit request only), tess (sweeps), marcus (review)
 coco-laurent  ──► penelope (design sign-off)
 priya-sharma  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), raj (structure)
 oliver-singh  ──► marcus (optional review)
 nova-chen     ──► marcus (prototype review), tess
-felix-anderson ► marcus, nina, tess; escalates to maya
+felix-anderson ► marcus, nina (explicit request only), tess; escalates to maya
 zara-ahmad    ──► ethan (data contracts), oliver (model analysis), tess (sweeps), maya (escalation), marcus (review)
 dexter-cho    ──► ava (test strategy), marcus (gate alignment), tess (sweeps)
-marcus-williams ► nina (security depth), kai (adversarial proof)
+marcus-williams ► nina (security depth, explicit request only), kai (adversarial proof)
 nina-petrov   ──► kai
 taylor-kim    ──► runtime specialists (bounded audit slices and second opinions)
 ```
