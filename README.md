@@ -114,13 +114,13 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 
 | Agent | Role | Model | Permission | Flags |
 | --- | --- | --- | --- | --- |
-| `raj-patel-techlead` | Tech Lead — decomposes projects, forms teams, sole Workflow initiator | fable | auto | memory |
+| `raj-patel-techlead` | Tech Lead — decomposes projects and routes milestones | fable | auto | memory |
 | `maya-rodriguez-principal` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | auto | gated, worktree, memory |
 | `james-mitchell-service-implementation` | Service Implementation — backend/API build-out | sonnet | acceptEdits | gated, worktree |
 | `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | auto | gated |
 | `priya-sharma-frontend-implementer` | Frontend Implementer — builds approved designs in React/TS | sonnet | acceptEdits | gated, worktree |
 | `coco-laurent-frontend-designer` | Frontend Designer — designs only, never builds | fable | auto | worktree |
-| `zara-ahmad-ml-engineer` | ML Engineer — ML/AI features, one-shot background runs | opus | auto | leaf, gated, background |
+| `zara-ahmad-ml-engineer` | ML Engineer — ML/AI features, one-shot background runs | opus | auto | gated, background |
 | `felix-anderson-devops` | DevOps — CI/CD and infra automation, background passes | sonnet | auto | gated, background |
 | `nova-chen-research-engineer` | Research Engineer — prototypes and reproducible benchmarks | opus | auto | worktree, memory |
 | `oliver-singh-data-scientist` | Data Scientist — analysis and ML insights | opus | auto | worktree |
@@ -133,31 +133,33 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 | `penelope-sterling-aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | default | leaf, critic (write-fenced), memory |
 | `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, Notion | sonnet | acceptEdits | leaf |
 | `ada-bishop-initializer` | Project Initializer — run-once bootstrap | sonnet | acceptEdits | leaf |
-| `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | auto | leaf, background, memory |
+| `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | auto | background, memory |
 
-Each agent's `## Collaboration` section is the authoritative statement of its own delegation edges; this section is the reference summary.
+Each agent's `## Collaboration` section records its proven outbound collaborators and delegation targets. These are runtime defaults, not an allowlist; shared discovery and handoff policy lives in `plugins/essential/CLAUDE.md`.
 
 ### Delegation topology
 
 Spawn edges (the `Agent` tool channel — who dispatches whom as a subagent):
 
 ```
-raj-patel-techlead (initiator; forms Agent Teams; ×N priya fan-out; final marcus gate)
+raj-patel-techlead (team lead; ×N priya fan-out; independent quality gate)
   └── any registered agent
-james-mitchell ──► maya (escalation), nina (security consult), tess
-ethan-kumar   ──► tess
-maya-rodriguez ─► nina (critic), tess
+james-mitchell ──► maya (escalation), nina (security), tess (sweeps), marcus (review), ava (coverage)
+ethan-kumar   ──► oliver (profiling), james (schema alignment), tess (sweeps), maya (escalation), marcus (review)
+maya-rodriguez ─► nina (security), tess (sweeps), marcus (review)
 coco-laurent  ──► penelope (design sign-off)
-priya-sharma  ──► penelope (fidelity check), tess
+priya-sharma  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), raj (structure)
 oliver-singh  ──► marcus (optional review)
 nova-chen     ──► marcus (prototype review), tess
 felix-anderson ► marcus, nina, tess; escalates to maya
-dexter-cho    ──► tess
+zara-ahmad    ──► ethan (data contracts), oliver (model analysis), tess (sweeps), maya (escalation), marcus (review)
+dexter-cho    ──► ava (test strategy), marcus (gate alignment), tess (sweeps)
 marcus-williams ► nina (security depth), kai (adversarial proof)
 nina-petrov   ──► kai
+taylor-kim    ──► runtime specialists (bounded audit slices and second opinions)
 ```
 
-Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `ava`, `zara`, `taylor`, `sam`, `ada`, `penelope`, `kai`, `tess`. They delegate through the team channel instead.
+Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `ava`, `sam`, `ada`, `penelope`, `kai`, `tess`. They hand work to live teammates through SendMessage or return it to their caller.
 
 Team hand-off edges (the SendMessage channel inside an agent team, `A → B: trigger`):
 
@@ -179,7 +181,7 @@ any producer → maya: blocked on a hard technical problem
 any agent → main agent: Workflow launch request (see plugins/essential/SUBAGENT.md)
 ```
 
-Note: an `Agent(name)` parenthetical allowlist binds on the main session thread only — a spawned agent holding the `Agent` tool can technically spawn any registered agent. The edges above are design intent, enforced by each agent's own instructions; true leaves are enforced by tool-list omission.
+Note: the edges above are proven defaults only. A spawn-capable agent discovers the current roster immediately before dispatch and chooses a better available specialist when one fits; true leaves are enforced by tool-list omission.
 
 ### Team shapes
 
@@ -190,13 +192,13 @@ Note: an `Agent(name)` parenthetical allowlist binds on the main session thread 
 
 ### Gates
 
-- **Gated producers** (embedded prompt-type routing Stop gate, verbatim in each definition; 2-round cap): maya, ava, james, ethan, felix, zara, dexter, priya. The gate is a single tool-less prompt hook that checks the producer's final message: if code changed and no `REVIEWED: marcus verdict=<ok|blocked> round=<n>` attestation is present, it blocks the stop with routing instructions — send the diff directly to marcus as a live teammate via SendMessage, or spawn `marcus-williams-code-quality` via the Agent tool so the review conversation stays with the targeted teammate — then attest his verdict and stop again. Pure-analysis output passes on first stop; an unreachable reviewer or a spent 2-round budget releases the gate rather than deadlocking. `oliver` is deliberately ungated — exploratory analysis isn't production code; his work passes through marcus only when it graduates.
+- **Gated producers** (embedded prompt-type routing Stop gate; 2-round cap): maya, ava, james, ethan, felix, zara, dexter, priya. Each gate checks the producer's final message for the generic `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>` attestation. When changed code lacks one, the gate names that producer's proven reviewer defaults with each role and main task, requires discovery of a better runtime specialist when available, and tells the producer to request an independent artifact review through SendMessage, Agent, or its caller. Pure-analysis output passes on first stop; an unreachable reviewer or a spent 2-round budget releases the gate rather than deadlocking. Oliver Singh (Data Scientist; produces analyses and ML insights) is deliberately ungated because exploratory analysis is not production code; his production-bound work still receives independent review.
 - **Write-fenced critics** (PreToolUse fence): marcus, penelope — may only write to their agent-memory dir or review reports.
 
 ### Team operation
 
-- Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while their context stays under 75% of the window. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
-- Subagents reply to the teammate that assigned the work over SendMessage and delegate only along their own `## Collaboration` edges (see `plugins/essential/SUBAGENT.md`).
+- Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while measured runtime telemetry and task affinity show reuse remains useful. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
+- Subagents reply to the teammate that assigned the work over SendMessage. Their `## Collaboration` edges are proven defaults, while runtime discovery may select a better available specialist (see `plugins/essential/SUBAGENT.md`).
 - Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 
 ### Notes

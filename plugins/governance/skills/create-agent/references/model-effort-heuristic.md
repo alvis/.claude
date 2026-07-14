@@ -38,6 +38,7 @@ Omit for `haiku` (it does not support effort); live Claude Code docs win on exac
 ## Tools
 
 Omit for the full set, or provide an explicit leaf list. Leaf encoding: a leaf agent gets an explicit `tools` list that OMITS `Agent` — `disallowedTools: ["Agent"]` is NOT valid for leafing.
+Spawn capability is role-based, not model-based: grant `Agent` only when the role needs nested specialists or independent reviewers. A sonnet agent may spawn; an opus or fable agent may remain a leaf.
 
 ## Memory and isolation
 

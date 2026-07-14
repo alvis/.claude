@@ -20,7 +20,7 @@
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
-  "hooks": "gated:true agents embed the Marcus-gate Stop hook verbatim (only <NAME> substituted, never hand-edited); critic:true+fence:true agents embed the PreToolUse fence verbatim — both are provided by the overhaul spec, not authored per-agent",
+  "hooks": "gated:true agents customize the runtime review-routing Stop hook with concrete default reviewers (each name, role, and main task) plus the independent-review action; critic:true+fence:true agents embed the PreToolUse fence verbatim",
   "memory": "user|project|local — OMIT the key entirely to disable; there is no memory:none",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
@@ -50,7 +50,8 @@ A `leaf:true` agent must not be able to spawn further agents. The control surfac
 `tools`**, not `disallowedTools`:
 
 - To make an agent a leaf: give it an **explicit `tools` list that omits `Agent`** (e.g.
-  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite"`).
+  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage"`). Every explicit tool list includes
+  `SendMessage` so the role can return a hand-off request or result without gaining spawn authority.
 - `disallowedTools: ["Agent"]` is **NOT valid** for this purpose — it does not reliably prevent spawning; don't
   reach for it here.
 - A spawn-capable agent either **omits `tools` entirely** (grants the full default set, `Agent` included) or
@@ -129,9 +130,9 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
 
 ## Collaboration
 
-<!-- INSTRUCTION: state the intended spawn edges (agentEdges) for this agent — who it may dispatch to, and who
-     dispatches it. If this agent is a leaf (see Leaf & Spawn Encoding above), say so explicitly and note it
-     holds no Agent tool. Only Raj initiates Agent Teams / Dynamic Workflows, and only from the main session. -->
+<!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets.
+     Name each known agent with its role and main task, followed by the reason for collaboration. Shared runtime
+     discovery, handoff, workflow proxy, spawn-budget, and independent-review policy comes from Essential's
+     CLAUDE.md; do not repeat it here. Do not narrate who spawns this agent or restate its tool list. -->
 
-I [spawn / am spawned by] [agent names, from templates/agent-team.md's edge list if this agent participates in a
-team]. [If leaf: I am a leaf — I execute and report; I never delegate further.]
+- [Agent Name] ([Role]; [main task]): [when and what to collaborate on or delegate].

@@ -3,7 +3,7 @@ name: update-agent
 description: Update explicitly selected agent definitions to the current two-file template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
 model: opus
 context: fork
-allowed-tools: Task, Read, Write, Edit, Glob, Grep, Bash
+allowed-tools: Agent, Read, Write, Edit, Glob, Grep, Bash
 argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 ---
 
@@ -59,12 +59,18 @@ stated behavior change. `create-agent` owns genuinely new roles.
 4. Reconcile `frontmatter/claude.json` with the live template key surface.
    Remove obsolete keys only with evidence. Ensure a leaf has an explicit
    tools list omitting `Agent`, described delegation is actually permitted,
+   `SendMessage` claims match the tool list,
    and mutation tools are restricted for read-mostly roles.
+   For every review-routing Stop hook, keep concrete default reviewers aligned
+   with Collaboration; include each reviewer's role and main task, the explicit
+   independent-review action, and the better-runtime-specialist override.
 5. Reconcile `base.md` with the required functional sections while preserving
    expertise and voice: integrate approved changes into the existing prose
    and remove superseded instructions — never append an update log or second
-   personality. Correct context aliases against the catalog and collaboration
-   edges against actual team definitions.
+   personality. Correct context aliases against the catalog. Keep Collaboration
+   to concise outbound collaborator/delegation bullets, naming each known agent's
+   role and main task. Do not duplicate Essential's shared runtime discovery,
+   handoff, workflow proxy, spawn-budget, or independent-review policy.
 6. Rewrite `initialPrompt` from `role-prompt.md` whenever the role's first
    move, the artifact/brief it needs, or its guardrail changed. It must remain
    a 2-4 sentence no-task first-turn directive (first move → wait → deferred
@@ -76,8 +82,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
    central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
-   bounded batches — one agent pair per subagent, at most 8 parallel `Task`
-   calls per dispatch — but each assignment must name exact source pairs and
+   bounded batches — one agent pair per subagent, never exceeding the declared
+   task-wide child-spawn budget (default three new children) — but each assignment must name exact source pairs and
    protected behavior. Review the integrated diff for cross-agent trigger and
    edge conflicts.
 9. Run the verification below; when a check fails, fix the cause and re-run

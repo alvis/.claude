@@ -11,6 +11,25 @@ from typing import Any
 
 
 AGENT_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+FIXED_ROUTING_LANGUAGE = re.compile(
+    r"\b(?:only|always)\s+(?:spawn|delegate|route)\b"
+    r"|\bAgent` tool for one purpose\b"
+    r"|\bI am the only agent who forms\b",
+    re.IGNORECASE,
+)
+SHARED_POLICY_LANGUAGE = (
+    "current `Agent` roster",
+    "When I need a Dynamic Workflow",
+    "For changed code, I inspect",
+    "REVIEWED: source=",
+    "I hold the `Agent` tool",
+    "I hold `Agent`",
+    "spawn target",
+    "spawned by",
+)
+REVIEWER_DEFAULT = re.compile(
+    r"[A-Z][a-z]+(?: [A-Z][a-z]+)+ \([^;\n()]+; [^)\n]+\)"
+)
 
 
 class AgentTemplateError(ValueError):
@@ -55,11 +74,84 @@ def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
     return frontmatter
 
 
+def _tool_names(frontmatter: dict[str, Any]) -> set[str] | None:
+    tools = frontmatter.get("tools")
+    if tools is None:
+        return None
+    if isinstance(tools, str):
+        return {tool for tool in re.split(r"[\s,]+", tools) if tool}
+    if isinstance(tools, list):
+        return {tool for tool in tools if isinstance(tool, str)}
+    return set()
+
+
+def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
+    """Reject agent definitions whose prose disagrees with their capabilities."""
+    if frontmatter.get("model") == "haiku" and "effort" in frontmatter:
+        raise AgentTemplateError("haiku agents must omit effort")
+
+    routing_text = "\n".join(
+        value
+        for value in (
+            body,
+            frontmatter.get("description"),
+            frontmatter.get("initialPrompt"),
+        )
+        if isinstance(value, str)
+    )
+    if FIXED_ROUTING_LANGUAGE.search(routing_text):
+        raise AgentTemplateError(
+            "fixed routing language conflicts with runtime discovery"
+        )
+
+    duplicated_policy = next(
+        (phrase for phrase in SHARED_POLICY_LANGUAGE if phrase in body), None
+    )
+    if duplicated_policy:
+        raise AgentTemplateError(
+            f"agent body repeats shared delegation policy: {duplicated_policy}"
+        )
+
+    tools = _tool_names(frontmatter)
+    if tools is not None and "SendMessage" in body and "SendMessage" not in tools:
+        raise AgentTemplateError("mentions SendMessage but its tools omit it")
+    if tools is not None and "SendMessage" not in tools:
+        raise AgentTemplateError("explicit tools must include SendMessage")
+
+    hooks = frontmatter.get("hooks", {})
+    if isinstance(hooks, dict):
+        for matcher in hooks.get("Stop", []):
+            if not isinstance(matcher, dict):
+                continue
+            for hook in matcher.get("hooks", []):
+                if not isinstance(hook, dict):
+                    continue
+                prompt = hook.get("prompt", "")
+                if not isinstance(prompt, str) or "review-routing gate" not in prompt:
+                    continue
+                if (
+                    len(REVIEWER_DEFAULT.findall(prompt)) < 1
+                    or "proven defaults" not in prompt
+                    or "better runtime specialist" not in prompt
+                ):
+                    raise AgentTemplateError(
+                        "review-routing hook must name concrete reviewer defaults"
+                    )
+                if (
+                    "independently inspect the changed artifact" not in prompt
+                    or "return verdict ok or blocked with findings" not in prompt
+                ):
+                    raise AgentTemplateError(
+                        "review-routing hook must state the independent review action"
+                    )
+
+
 def stitch_agent_definition(template_directory: Path) -> str:
     """Return one installable Markdown agent definition for a source pair."""
     template_directory = Path(template_directory)
     frontmatter = load_agent_frontmatter(template_directory)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
+    validate_agent_contract(frontmatter, body)
     yaml = json.dumps(frontmatter, ensure_ascii=False, indent=2, allow_nan=False)
     return f"---\n{yaml}\n---\n\n{body}"
 
