@@ -1,5 +1,9 @@
 If you intend to write, modify, or review code, you MUST first read `references/CODING.md` (in this plugin directory) for the full coding workflow, standards routing, and orchestration rules.
 
+## Pull Requests
+
+Creating or updating a pull request MUST go through the `write-pr` and `push-pr` skills, not a hand-rolled `git`/`gh` sequence. `write-pr` composes the conventional-commit title and unified body from the commit; `push-pr` publishes it and drives CI to green. This applies even when the request looks like a small, one-off PR.
+
 ## Coding specialist routing
 
 | Tasks | Route to |
