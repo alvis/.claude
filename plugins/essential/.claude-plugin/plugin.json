@@ -5,12 +5,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/session-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-header", "--constitution-paths", "${HOME}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/session-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-session-header", "--with-plugin-context", "--constitution-paths", "${HOME}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ],
     "SubagentStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/subagent-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--constitution-paths", "${HOME}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/subagent-start", "args": ["--plugin-dir", "${CLAUDE_PLUGIN_ROOT}", "--with-plugin-context", "--constitution-paths", "${HOME}/.claude", "${CLAUDE_PLUGIN_ROOT}"]}]
       }
     ]
   }

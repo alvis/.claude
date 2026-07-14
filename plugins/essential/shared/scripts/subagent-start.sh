@@ -20,6 +20,7 @@ source "$SCRIPTS_DIR/context.sh"
 #   run_subagent_start_hook --plugin-dir "$PLUGIN_ROOT" --constitution-paths "$PLUGIN_DIR"
 run_subagent_start_hook() {
   local plugin_dir=""
+  local with_plugin_context=false
   local constitution_paths=()
 
   # Parse arguments
@@ -28,6 +29,10 @@ run_subagent_start_hook() {
       --plugin-dir)
         plugin_dir="$2"
         shift 2
+        ;;
+      --with-plugin-context)
+        with_plugin_context=true
+        shift
         ;;
       --constitution-paths)
         shift
@@ -46,11 +51,16 @@ run_subagent_start_hook() {
   # No session-specific header/id for subagents.
   local CONTEXT=""
 
-  # Source plugin context and add plugin-specific context
-  if [[ -n "$plugin_dir" && -f "$plugin_dir/scripts/context.sh" ]]; then
+  # Source plugin context and add plugin-specific context, but only when the
+  # caller explicitly requests it via --with-plugin-context. Only essential's
+  # own hook passes the flag, so the environment block is emitted once instead
+  # of being duplicated across every plugin's hook. Calling get_plugin_context
+  # only after a successful source also avoids the latent "command not found"
+  # crash when a plugin ships no scripts/context.sh.
+  if [[ "$with_plugin_context" == "true" && -n "$plugin_dir" && -f "$plugin_dir/scripts/context.sh" ]]; then
     source "$plugin_dir/scripts/context.sh"
+    CONTEXT+=$(get_plugin_context)
   fi
-  CONTEXT+=$(get_plugin_context)
 
   # Add constitution context for each specified path
   local path

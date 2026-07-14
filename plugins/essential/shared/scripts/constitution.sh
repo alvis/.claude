@@ -17,34 +17,6 @@ get_path_type() {
   fi
 }
 
-# List standards under <search_path>/constitution/standards/.
-# A standard is either a flat <name>.md file or a directory containing meta.md;
-# both are emitted as a bare <name> (no .md suffix), sorted and deduped,
-# each prefixed with "- ".
-get_first_level_standard_entries() {
-  local search_path="$1"
-  local standards_dir="${search_path}/constitution/standards"
-  local entry name
-
-  if [[ ! -d "$standards_dir" ]]; then
-    return
-  fi
-
-  {
-    for entry in "$standards_dir"/*; do
-      [[ -e "$entry" ]] || continue
-      name="${entry##*/}"
-      if [[ -d "$entry" && -f "$entry/meta.md" ]]; then
-        echo "$name"
-      elif [[ -f "$entry" && "$name" == *.md ]]; then
-        echo "${name%.md}"
-      fi
-    done
-  } | sort -u | while IFS= read -r name; do
-    [[ -n "$name" ]] && echo "- $name"
-  done
-}
-
 # Get constitution context (workflows and standards) from a specific path
 # Parameters: $1 = search_path (e.g., /path/to/.claude or /path/to/plugins/coding)
 get_constitution_context() {
@@ -71,20 +43,21 @@ get_constitution_context() {
       ;;
   esac
 
-  # For plugins, check for and embed CLAUDE.md if it exists
+  # For plugins, check for and embed CLAUDE.md if it exists. The header names the
+  # plugin (its directory basename) so that relative `references/...` pointers in
+  # the embedded CLAUDE.md are unambiguous once several plugins' blocks are
+  # concatenated together.
   local claude_md_path="${search_path}/CLAUDE.md"
   if [[ "$path_type" == "plugin" && -f "$claude_md_path" ]]; then
-    context+="### ${label} Instructions\n\n"
+    context+="### ${search_path##*/} plugin\n\n"
     context+="$(cat "$claude_md_path")\n\n"
   fi
 
-  local standards_found=$(get_first_level_standard_entries "$search_path")
-
-  if [[ -n "$standards_found" ]]; then
-    context+="## ${label} Constitution\n\n"
-    context+="Root Path: ${search_path}/constitution/standards/\n"
-    context+="$standards_found\n"
-  fi
+  # Standards are intentionally NOT enumerated here. Listing every standard for
+  # every plugin dominated the injected boot context; each plugin's reference
+  # now catalogs its own standards, and essential's env emits one shared pointer
+  # to the standards directories (see get_standards_pointer_context). The full
+  # set is read on demand from <plugin>/constitution/standards/.
 
   echo -n "$context"
 }

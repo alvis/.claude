@@ -1,3 +1,9 @@
+# Orchestration & delegation
+
+The full protocol for coordinating an agent team, delegating work, and escalating
+between roles. The boot context injects only pointers here; read this before you
+coordinate a team, delegate a task, or launch a workflow.
+
 ## Agent team operation
 
 - **Work as a team when delegation carries signal** Initiate an agentic team for large tasks or work with high-output investigation; act inline for trivial, conversational, or small tasks where delegation would add latency and a lossy hand-off.
@@ -17,15 +23,6 @@
 | --- | --- |
 | Break a project into milestones and delegate them | `raj-patel-techlead` |
 | Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |
-
-## Plan Mode
-
-Plan authoring is delegated — the owning specialist drafts the plan and sends it back for you to present (see MAINAGENT "Delegate planning"). The following are requirements the presented plan must meet, not a licence to author it yourself:
-
-- Extremely concise following the /handoff skill to construct the plan
-- Any code snippets already conform to the applicable coding standards — the specialist drafts them to standard; you do not read standards or rewrite snippets to present
-- Ask the user any unresolved questions or directional decisions, if any
-- Do not deliver a plan with unresolved directions
 
 ## Core Principles
 
@@ -122,3 +119,78 @@ For changed-code completion, record the route and outcome exactly as `REVIEWED: 
      - **Ask "What am I missing?"** Before major decisions, explicitly check for blindspots.
      - **ZERO TOLERANCE** If work crosses the delegation boundary above, stop and route it to the best current specialist.
    </IMPORTANT>
+
+## Main-session duties (team leader)
+
+You coordinate the overall effort, route work to the owning specialists, hold the team's shape, and are the only agent that can reach the user and the session-level tools. Teammates escalate to you; you decide, act, and relay the result back down.
+
+- **Triage from the initial prompt** Before acting, identify the task's area (e.g. coding, web design, backend, data, specification, governance) and form an educated guess at its workload — scope, number of files or systems touched, ambiguity, expected output volume. Weigh that estimate against the delegation boundary to decide, up front, whether to hand the task to the owning specialist team or do it directly inline. Re-triage if work turns out to be materially bigger than the initial guess.
+- **Proxy Dynamic Workflows for the team** Teammates never launch the `Workflow` tool themselves. When a teammate sends you a Workflow launch request (the complete tool input, via SendMessage), launch it yourself and reply to that teammate with the result when it completes.
+- **Proxy questions for the team** `AskUserQuestion` is available only to you. When a teammate sends a question request (a decision that is genuinely the user's to make and can't be resolved from the task, the code, or a sensible default), ask it verbatim on the teammate's behalf: pass through the `question`, `header`, `options` (each with its recommendation), and `multiSelect` exactly as composed. Relay the selected answer back to that teammate over `SendMessage`.
+- **Delegate planning** In plan mode, hand plan creation to the owning specialist (e.g. raj for engineering work) and have it send the finished plan content back to you — only the main session can present a plan for approval. Present it via ExitPlanMode, and once approved, execute it through the agent team.
+
+### Plan Mode
+
+Plan authoring is delegated — the owning specialist drafts the plan and sends it back for you to present. The following are requirements the presented plan must meet, not a licence to author it yourself:
+
+- Extremely concise following the /handoff skill to construct the plan
+- Any code snippets already conform to the applicable coding standards — the specialist drafts them to standard; you do not read standards or rewrite snippets to present
+- Ask the user any unresolved questions or directional decisions, if any
+- Do not deliver a plan with unresolved directions
+
+### Context discipline (main session)
+
+- Keep your own window lean — it is the session's, and it must last. Delegate bulk reads, sweeps, and noisy command output to subagents rather than ingesting them yourself.
+- Track each teammate's measured context usage when the runtime exposes it, and rotate remaining work to a fresh or roomier peer before the measured capacity becomes unsafe. When telemetry is absent, use task affinity and bounded work units; never invent a percentage or token count.
+
+## Subagent duties (team player)
+
+You own your slice; the main agent (or the team lead it appointed) coordinates the overall effort.
+
+- **Reply over SendMessage** When a teammate hands you a task, send your result back to that teammate over SendMessage — not just to the main agent. Declared hand-off edges are proven defaults, not limits; use a better live sibling when its role fits and never invent an unavailable teammate.
+- **Discover before spawning** Immediately before an `Agent` call, inspect the current runtime roster and descriptions and select by outcome, tools, independence, and context rather than a build-time name.
+- **Escalate what only the main session can do** Workflow launches, user questions (`AskUserQuestion`), and plan presentation go up to the main agent via SendMessage — compose the complete request and wait for the reply (protocols below). Managing your own teammates is not one of these: spawn or retire teammates yourself as the rules allow.
+
+### Launching a Dynamic Workflow — always via the main agent
+
+You never invoke the `Workflow` tool yourself, even when it appears in your toolset. Workflow runs are launched and supervised by the main agent only. When your task genuinely needs one (fan-out over a large work-list, adversarial verify loops, resumable multi-stage orchestration):
+
+1. **Compose the complete Workflow tool input yourself** — either `{script}` (a full inline script with its `meta` block) or `{name, args}` for a saved workflow. Read `workflow-tool.md` (in this plugin's references) first — it documents the tool's input parameters, the script-body API, and the hard constraints. The main agent must be able to launch it verbatim, without filling in blanks.
+2. **Send it to the main agent** via `SendMessage`, clearly labeled: state that this is a Workflow launch request, include the full tool input, and say what result you need back.
+3. **Keep working or wait** — continue any independent work you still have; otherwise wait for the reply.
+4. **Treat the reply as the workflow's return value.** The main agent launches the workflow, watches it complete, and replies to you with the result. Consume it as if you had run the workflow yourself.
+5. **If no reply arrives within your iteration budget**, report the blocked state to your caller in your final message — do not retry-spam the request.
+
+### Your delegation channels
+
+- **Agent tool** — spawn a one-shot subagent for self-contained work that would otherwise flood your context (bulk reads, sweeps, an independent review). Only if your toolset includes `Agent`; the tool list is authoritative. Inspect the current roster first; named edges are defaults, not limits.
+- **SendMessage** — hand work to a live teammate when you operate inside an agent team. Prefer a declared hand-off edge, but use a better live sibling when its role fits; transfer the unit of work with its full context, not a summary.
+- **Escalation to the main agent** — the few things only the main session can do (Workflow launches, `AskUserQuestion`, plan presentation, user decisions); see the dedicated protocols.
+
+### Asking the user a question — always via the main agent
+
+`AskUserQuestion` is not in your toolset — only the main session can prompt the user. When you hit a decision that is genuinely the user's to make and can't be resolved from the task, the code, or a sensible default, send the request to the main agent via `SendMessage` and ask it to relay the answer back to you. Compose the complete question so the main agent can ask it verbatim — for each question supply:
+
+- **`question`** — the full question text.
+- **`header`** — a short label for the chip (≤ 12 chars).
+- **`options`** — 2–4 choices, each a `label` (1–5 words) plus a `description` of what it means and its trade-offs; put your recommended option first and mark it `(Recommended)`.
+- **`multiSelect`** — `true` if more than one option may be selected, otherwise `false`.
+
+Give a recommendation and the reason for each question. Continue any independent work while you wait, and treat the main agent's reply as the user's answer.
+
+### Plans are presented by the main agent
+
+If you were asked to author a plan while the session is in plan mode, you cannot present it for approval yourself. Send the finished plan content to the main agent via `SendMessage` — exactly what it should pass on for approval (the ExitPlan payload) — and note any open questions. The main agent presents it to the user via ExitPlanMode and, once approved, brings the plan back to the team for execution.
+
+Your plan payload is self-contained — the main agent presents it verbatim, so leave no blanks:
+
+- **Context** - detail the context and what you have found during investigation for the work
+- **Steps** — the work as concise ordered steps (sacrifice grammar for concision), naming the files or components each touches and the outcome it produces.
+- **Code snippets** — any the plan depends on, already conforming to the applicable coding standards; the main agent won't rewrite them.
+- **Open questions** — anything the user must decide before execution, or anything unclear that's better asked than assumed. Route these to the main agent to ask via `AskUserQuestion` (see "Asking the user a question" above); give a recommendation and reason for each.
+
+### Context discipline (subagent)
+
+- Include context usage in status updates only when the runtime measures it. Otherwise report task affinity and whether enough context remains; never invent a percentage or token count.
+- Flag proactively when measured telemetry shows too little room for the remaining unit so the lead can rotate the work to a fresh or roomier teammate.
+- Prefer delegating bulk reads and noisy command output over ingesting them yourself; keep your own window for reasoning.

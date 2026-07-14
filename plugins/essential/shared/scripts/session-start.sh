@@ -72,6 +72,7 @@ run_session_start_hook() {
   local plugin_dir=""
   local with_session_id=false
   local with_session_header=false
+  local with_plugin_context=false
   local constitution_paths=()
 
   # Parse arguments
@@ -87,6 +88,10 @@ run_session_start_hook() {
         ;;
       --with-session-header)
         with_session_header=true
+        shift
+        ;;
+      --with-plugin-context)
+        with_plugin_context=true
         shift
         ;;
       --constitution-paths)
@@ -114,11 +119,16 @@ run_session_start_hook() {
     CONTEXT+=$(get_session_type_header "$SOURCE")
   fi
 
-  # Source plugin context and add plugin-specific context
-  if [[ -n "$plugin_dir" && -f "$plugin_dir/scripts/context.sh" ]]; then
+  # Source plugin context and add plugin-specific context, but only when the
+  # caller explicitly requests it via --with-plugin-context. Only essential's
+  # own hook passes the flag, so the environment block is emitted once instead
+  # of being duplicated across every plugin's hook. Calling get_plugin_context
+  # only after a successful source also avoids the latent "command not found"
+  # crash when a plugin ships no scripts/context.sh.
+  if [[ "$with_plugin_context" == "true" && -n "$plugin_dir" && -f "$plugin_dir/scripts/context.sh" ]]; then
     source "$plugin_dir/scripts/context.sh"
+    CONTEXT+=$(get_plugin_context)
   fi
-  CONTEXT+=$(get_plugin_context)
 
   # Add constitution context for each specified path
   for path in "${constitution_paths[@]}"; do

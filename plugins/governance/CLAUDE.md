@@ -1,6 +1,1 @@
-# Governance specialist routing
-
-| Tasks | Route to |
-| --- | --- |
-| Build an eval harness or quality gate as repository code | `dexter-cho-harness-eval-engineer` |
-| Meta-review agents, skills, and collaboration patterns | `taylor-kim-workflow-optimizer` |
+Governance — eval harness, quality gate, or meta-review of agents/skills/patterns? See this plugin's `references/ROUTING.md`.
