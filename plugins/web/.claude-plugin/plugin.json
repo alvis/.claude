@@ -2,7 +2,7 @@
   "name": "web",
   "dependencies": ["coding", "essential"],
   "description": "Web development tools including UX design, growth optimization, rapid prototyping, browser automation via agent-browser, Next.js debugging via Chrome DevTools, and design auditing",
-  "version": "2026-07-14",
+  "version": "2026-07-14a",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [

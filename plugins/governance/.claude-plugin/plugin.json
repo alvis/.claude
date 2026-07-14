@@ -2,7 +2,7 @@
   "name": "governance",
   "dependencies": ["essential"],
   "description": "Tools for creating and managing Claude Code configuration files including commands, skills, standards, and agents",
-  "version": "2026-07-14",
+  "version": "2026-07-14a",
   "hooks": {
     "SessionStart": [
       {
