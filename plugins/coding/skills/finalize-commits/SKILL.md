@@ -1,6 +1,6 @@
 ---
 name: finalize-commits
-description: "Run isolated per-commit QA across every unpushed commit, report ordering or message issues, and coordinate approved corrections. Use before publishing a stack; coding:commit remains the sole owner of history mutations, reword, fold, reorder, and push."
+description: "Run isolated per-commit QA across every unpushed commit, report ordering or message issues, and coordinate approved corrections. Use before publishing a stack; coding:commit owns history mutations and coding:push-pr owns publication."
 model: opus
 context: fork
 allowed-tools: Bash, Read, Grep, Glob, Agent, AskUserQuestion, Skill, TodoWrite
@@ -20,12 +20,13 @@ owner of history mutations.
   isolated worktree.
 - Diagnose failures and propose the smallest correction. Code corrections route
   to `coding:fix` before the commit is tested again.
-- Route every fold, squash, amend, reword, reorder, restack, abandon, bookmark or
-  branch move, and push through `coding:commit`. Never issue a direct `git` or `jj`
-  history-mutating command from this skill or its QA workers.
+- Route every fold, squash, amend, reword, reorder, abandon, bookmark, or
+  branch move through `coding:commit`, and remote restack/publication through
+  `coding:push-pr`. Never issue a direct `git` or `jj` history-mutating command
+  from this skill or its QA workers.
 - Stop for user approval when a correction changes commit meaning or order.
-- Push only when `--auto-push` was explicitly supplied and all commits are green;
-  the push itself is delegated to `coding:commit`.
+- Publish only when `--auto-push` was explicitly supplied and all commits are
+  green; delegate publication to `coding:push-pr`.
 
 ## Workflow
 
@@ -40,8 +41,8 @@ owner of history mutations.
 7. Run the verification below; when a check fails, route the correction (steps
    4-6) and re-run that commit and its dependents. Repeat until every commit is
    green or a concrete blocker or pending decision remains, then report it
-   instead of looping. If requested, invoke `coding:commit` for the push only
-   after every commit passes.
+   instead of looping. If requested, invoke `coding:push-pr` only after every
+   commit passes.
 
 ## Verification
 

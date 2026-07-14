@@ -57,7 +57,7 @@ jj new main@origin
 jj describe @ -m "<conventional-subject>" -m "Body explaining what the corrective change fixes from <merged_pr_url>."
 ```
 
-Then follow the normal save flow ([workflow-save-local.md](./workflow-save-local.md)) and, if the user wants a PR, [workflow-stacked-pr.md](./workflow-stacked-pr.md) (single-PR variant works the same).
+Then follow the normal save flow ([workflow-save-local.md](./workflow-save-local.md)) and, if the user wants a PR, follow the [SKILL.md](../SKILL.md) publication handoff for the saved corrective change.
 
 The corrective PR title typically uses `fix(scope): ...` referencing the regression. Link to the original merged PR in the body.
 
@@ -86,25 +86,31 @@ jj new <merged_change_parent>
 jj rebase -s <merged_change> -d @
 ```
 
-Then force-push the affected bookmarks:
+After the local rewrite and integrity guard pass, synchronize only the existing
+bookmark whose rewrite the user authorized:
 
 ```bash
-jj git push --bookmark <bookmark_name>
+jj git fetch
+jj git push --bookmark <affected-bookmark>
 ```
 
-`jj git push --bookmark` enforces force-with-lease semantics natively (jj's operation log proves the local tip is a known rewrite of the remote tip — no extra flag needed for the rewrite case). When the bookmark needs to rewind to a non-descendant change (a true history rewind), `jj` refuses the push; resolve by:
+The tracked remote bookmark gives `jj git push` force-with-lease semantics: a
+remote change since the fetch rejects the push. Do not include descendants or
+any other bookmark in this command. The explicit Option 2 consent authorizes
+this affected bookmark only.
 
-```bash
-jj bookmark forget <bookmark_name>     # drop local tracking
-jj bookmark set <bookmark_name> -r <new_change>
-jj git push --bookmark <bookmark_name> --allow-new
-```
+If relevant open downstream PRs remain, invoke `coding:push-pr` afterward only
+to monitor those PRs and their CI. Exclude the already-synchronized merged
+bookmark. If there are no relevant open downstream PRs, do not invoke
+`coding:push-pr`.
 
-Verify the integrity guard ([SKILL.md](../SKILL.md) Step 5) passes.
+Verify the integrity guard in [SKILL.md](../SKILL.md) passes.
 
 ### 4. Communicate to reviewers (Option 2 only)
 
-After the force-push, the user MUST notify any open downstream PRs / consumers that their base has been rewritten. This is procedural, not automated — the skill surfaces a reminder:
+After the affected bookmark is synchronized, the user MUST notify any open
+downstream PRs / consumers that their base has been rewritten. This is
+procedural, not automated — the skill surfaces a reminder:
 
 ```text
 Rewrote merged-on-origin history at <bookmark>.
@@ -122,13 +128,15 @@ Notify reviewers and downstream consumers:
 ## Mandatory follow-ups
 
 - Option 1: normal save follow-ups ([workflow-save-local.md](./workflow-save-local.md)).
-- Option 2: integrity check; restack.sh if downstream bookmarks exist; project scripts.
-- Always: report the chosen route in [SKILL.md](../SKILL.md) Step 6 summary.
+- Option 2: integrity check and project scripts, direct force-with-lease sync
+  of the affected bookmark only, then `coding:push-pr` only when relevant open
+  downstream PRs require monitoring.
+- Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
 
 | Symptom | Action |
 |---|---|
 | Force-push rejected by branch protection | Branch is protected against rewriting (correct posture for merged main). Route back to Option 1 (corrective PR). |
-| User picks Option 2 then changes mind mid-flow | `jj op restore <op_id>` rewinds; `jj git push --bookmark <name>` re-syncs from clean state. |
+| User picks Option 2 then changes mind mid-flow | Before the push, `jj op restore <op_id>` rewinds locally. After the push, restoring the remote again requires fresh explicit consent and another lease-protected sync. |
 | Multiple merged targets in one rewrite | Run the prompt ONCE listing all targets; user's choice applies to the whole batch. |

@@ -3,8 +3,8 @@
 After `coding:refactor` lands and before reporting, decide whether the
 resulting change should be sliced into a stack of ordered draft PRs, or
 whether an existing open stack needs restacking. The orchestrator never
-invokes `jj split` or `gh pr create` directly — it always delegates to
-`coding:commit`.
+invokes `jj split` or `gh pr create` directly: it delegates local history
+shaping to `coding:commit` and publication to `coding:push-pr`.
 
 ## 1. Compute change size
 
@@ -21,16 +21,15 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
 
 - **Large change** — more than 5 changed files, OR more than 300 LOC diff,
   OR multiple loosely-coupled domains (the bounds keep each PR independently
-  reviewable). Dispatch `coding:commit --create-pr --from-composite` to slice
+  reviewable). Dispatch `coding:commit --create-pr`; its auto-detection slices
   the working copy into reviewable, ordered draft PRs.
 - **Restack on semantic upstream change** — when an open stack is detected
   AND this change semantically modifies code that a lower (earlier-in-order)
   PR in the stack depends on: the signature, behavior, or contract of a
-  symbol the lower PR establishes or relies on. Dispatch
-  `coding:commit --from-composite` so the post-rewrite restack runs
-  automatically. Incidental file overlap alone (formatting, unrelated
-  co-edits) does not trigger a restack — judge by lower-PR correctness
-  dependence.
+  symbol the lower PR establishes or relies on. Dispatch `coding:push-pr` with
+  the affected saved stack so it owns remote restacking and republication.
+  Incidental file overlap alone (formatting, unrelated co-edits) does not
+  trigger a restack — judge by lower-PR correctness dependence.
 - **Otherwise** (small, single-domain change with no semantic upstream
   impact): skip the dispatch and proceed straight to reporting.
 

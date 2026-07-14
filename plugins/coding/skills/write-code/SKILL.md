@@ -56,7 +56,8 @@ Child skills run in `context: fork`, in this order:
    `coding:complete-test`.
 5. `coding:refactor` — green behavior-preserving cleanup, naming, JSDoc, and
    final quality validation.
-6. `coding:commit --create-pr` — conditional stack split or restack; see
+6. `coding:commit --create-pr` for a conditional stack split, or
+   `coding:push-pr` for an existing-stack restack; see
    [references/stack-split.md](references/stack-split.md).
 
 State handover: children read and update CONTEXT.md, NOTES.md, and PLAN.md.
@@ -94,10 +95,12 @@ compatibility options.
    documentation via `coding:handover`.
 7. Stack decision: apply
    [references/stack-split.md](references/stack-split.md) — compute change
-   size, detect open stacks, and dispatch `coding:commit` in split or restack
-   mode when a trigger fires, surfacing the rationale to the user first.
-   <IMPORTANT>Never invoke `jj split` or `gh pr create` directly; stacking is
-   always delegated to `coding:commit`.</IMPORTANT>
+   size, detect open stacks, and dispatch `coding:commit --create-pr` for a
+   split or `coding:push-pr` for an existing-stack restack when a trigger
+   fires, surfacing the rationale to the user first.
+   <IMPORTANT>Never invoke `jj split` or `gh pr create` directly; local history
+   shaping belongs to `coding:commit` and publication belongs to
+   `coding:push-pr`.</IMPORTANT>
 8. Run the verification below; when a check fails, route the failure to the
    owning child (`coding:fix` for diagnosed failures, `coding:complete-test`
    for test/coverage gaps) and re-run that check. Repeat until every check
@@ -109,7 +112,7 @@ compatibility options.
 - Tests pass, types check, and lint is clean for the touched area.
 - Coverage meets the project target; no `TODO(implementation):` or pending
   it.todo markers remain in scope.
-- When a stack dispatch was triggered, `coding:commit` reported the opened or
+- When a stack dispatch was triggered, the owning child reported the opened or
   restacked draft PRs.
 
 ## Completion

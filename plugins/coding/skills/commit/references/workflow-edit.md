@@ -97,15 +97,12 @@ All descendants should be auto-rebased and free of conflicts. If conflicts appea
 
 ## Mandatory follow-ups
 
-- **`restack.sh` is REQUIRED if any unmerged bookmark sits at or below the edited change** in the stack. Per [SKILL.md](../SKILL.md) Step 4:
+- If any unmerged bookmark sits at or below the edited change, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
+  after local integrity passes. The descendants were auto-rebased by jj;
+  `coding:push-pr` owns force-with-lease republication and PR reparenting.
 
-  ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/restack.sh" <branch-prefix>
-  ```
-
-  The descendants were auto-rebased by jj but their remote refs need to be re-pushed (force-with-lease) and their PRs reparented.
-
-- Integrity check (Step 5) and project scripts (`npm run lint/test/build`) MUST pass.
+- The [SKILL.md](../SKILL.md) integrity check and project scripts (`npm run lint/test/build`) MUST pass.
 
 ## Error / edge cases
 

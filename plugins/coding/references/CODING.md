@@ -18,6 +18,7 @@ Each skill documents its own applicable standards internally. Route actions to t
 | Creating tests | `/coding:complete-test` |
 | Documenting code | `/coding:document` |
 | Writing PR title/body | `/coding:write-pr` |
+| Publishing or updating PRs and driving CI green | `/coding:push-pr` |
 | Handing over work | `/coding:handover` |
 | Resuming work | `/coding:takeover` |
 | Finding dead code | `/coding:find-unused` |
@@ -81,9 +82,9 @@ edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to 
 
 3. **Then commit.**
    - `jj` is the **preferred** change-tracking tool when it is available and initialized — every op snapshots the working copy, so a dirty HEAD is never a blocker; work in place and don't create a `git worktree` just to isolate a task. **If `jj` is not initialized in the repo, use `git` as usual.**
-   - Saving changes goes through `coding:commit`, which owns routing among save/split/absorb/edit/parallel-workspace and all explicit flag operations for both `jj` and `git`. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
+   - Saving changes goes through `coding:commit`, which owns routing among save/split/absorb/edit/parallel-workspace and all explicit history operations for both `jj` and `git`. It directly synchronizes only the explicitly authorized correct-merged bookmark and the chosen partial-to-branch target; PR publication and CI convergence go through `coding:push-pr`. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
    - **If the user did not explicitly request a commit, ask whether to commit the work** (via `coding:commit`).
-   - **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` — all bookmarking and pushing happens inside the skill; titles + bodies via `/coding:write-pr`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
+   - **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` remains the compatibility call: it finishes local history work, then delegates bookmark/PR publication and CI convergence to `/coding:push-pr`; titles + bodies come from `/coding:write-pr`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
 
 ## Your Actions
 

@@ -110,7 +110,7 @@ After EACH split + describe pair, run:
 jj log -r '@-..@' --no-graph
 ```
 
-After all splits, run integrity ([SKILL.md](../SKILL.md) Step 5) and project scripts (unless `--no-verify`):
+After all splits, run the [SKILL.md](../SKILL.md) integrity verification and project scripts (unless `--no-verify`):
 
 ```bash
 npm run lint
@@ -133,8 +133,10 @@ jj edit <change_id> && npm run build
 
 ## Mandatory follow-ups
 
-- If any downstream bookmark exists on the affected chain, run `restack.sh` per [SKILL.md](../SKILL.md) Step 4.
-- Final report per [SKILL.md](../SKILL.md) Step 6.
+- If any downstream bookmark exists on the affected chain, follow the
+  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata;
+  it owns remote restacking and republication.
+- Final report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
 
