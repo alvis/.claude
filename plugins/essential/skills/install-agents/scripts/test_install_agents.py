@@ -327,7 +327,7 @@ class AgentDiscoveryTest(unittest.TestCase):
             ),
             "james-mitchell-service-implementation": (
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
-                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+                "Nina Petrov (Security Champion; deep security review, explicit request only)",
             ),
             "zara-ahmad-ml-engineer": (
                 "Oliver Singh (Data Scientist; produces analyses and ML insights)",
@@ -339,11 +339,11 @@ class AgentDiscoveryTest(unittest.TestCase):
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
             ),
             "felix-anderson-devops": (
-                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+                "Nina Petrov (Security Champion; deep security review, explicit request only)",
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
             ),
             "maya-rodriguez-principal": (
-                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+                "Nina Petrov (Security Champion; deep security review, explicit request only)",
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
             ),
             "dexter-cho-harness-eval-engineer": (
