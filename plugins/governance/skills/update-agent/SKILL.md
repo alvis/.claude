@@ -59,14 +59,18 @@ stated behavior change. `create-agent` owns genuinely new roles.
 4. Reconcile `frontmatter/claude.json` with the live template key surface.
    Remove obsolete keys only with evidence. Ensure a leaf has an explicit
    tools list omitting `Agent`, described delegation is actually permitted,
-   spawn-capable agents inspect the current runtime roster, named edges remain
-   defaults rather than limits, `SendMessage` claims match the tool list,
+   `SendMessage` claims match the tool list,
    and mutation tools are restricted for read-mostly roles.
+   For every review-routing Stop hook, keep concrete default reviewers aligned
+   with Collaboration; include each reviewer's role and main task, the explicit
+   independent-review action, and the better-runtime-specialist override.
 5. Reconcile `base.md` with the required functional sections while preserving
    expertise and voice: integrate approved changes into the existing prose
    and remove superseded instructions — never append an update log or second
-   personality. Correct context aliases against the catalog and collaboration
-   edges against actual team definitions.
+   personality. Correct context aliases against the catalog. Keep Collaboration
+   to concise outbound collaborator/delegation bullets, naming each known agent's
+   role and main task. Do not duplicate Essential's shared runtime discovery,
+   handoff, workflow proxy, spawn-budget, or independent-review policy.
 6. Rewrite `initialPrompt` from `role-prompt.md` whenever the role's first
    move, the artifact/brief it needs, or its guardrail changed. It must remain
    a 2-4 sentence no-task first-turn directive (first move → wait → deferred

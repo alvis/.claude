@@ -8,6 +8,8 @@
 - **Spawn a new agent for independent work** When a task is clearly unrelated to what a subagent was previously assigned, and there is no benefit from reusing the agent's loaded context (e.g. coding standards) — or when a follow-up task (e.g. a re-review while a fix is in flight) would block that agent from taking up new work — spawn a fresh agent.
 - **Bound fan-out** Declare a task-wide child-spawn budget before the first nested spawn; default to three new children when omitted. `SendMessage` hand-offs to warm siblings do not spend this budget, but the same task must not traverse the same sibling edge twice.
 - **Communicate over SendMessage** Hand each teammate the full unit of work with its context — file paths, standards, acceptance criteria, and why it matters — not a summary. If `SendMessage` is unavailable, return the hand-off request or result to the caller.
+- **Proxy Dynamic Workflows through the main session** A subagent never launches `Workflow` itself. It composes the complete tool input, sends it to the main agent over `SendMessage`, and consumes the returned result.
+- **Keep agent definitions role-specific** An agent's `Collaboration` section lists only outbound collaborators or delegation targets as concise bullets. Do not repeat this shared protocol, narrate who spawns the agent, or restate its tool list.
 
 ## Essential specialist routing
 
@@ -91,7 +93,7 @@ Use a prompt-generation subagent only when constructing the worker prompt would 
 
 ### Review Responsibility
 
-Whoever spawns an agent owns the quality of its output. For consequential output or changed code, inspect the current roster and choose the best independent domain critic. Give the reviewer only the artifact, constraints, and acceptance criteria — never the producer's reasoning.
+Whoever spawns an agent owns the quality of its output. For consequential output or changed code, inspect the current roster and choose the best independent domain critic. Invoke that reviewer to independently inspect the artifact against its acceptance criteria and applicable standards, identify concrete defects, and return an `ok` or `blocked` verdict with findings. Give the reviewer only the artifact, constraints, and acceptance criteria — never the producer's reasoning.
 
 If no domain critic fits, spawn a general-purpose agent as an independent criteria-based reviewer. When no better internal reviewer is available, any agent may ask an already-configured external review tool for another opinion if its current tools and permission policy allow it. Never install or authenticate a reviewer, broaden permissions, or bypass project deny rules. The internal agent owns the verdict; external output is evidence, not authority.
 

@@ -16,7 +16,7 @@ You never invoke the `Workflow` tool yourself, even when it appears in your tool
 
 ## Your delegation channels
 
-- **Agent tool** — spawn a one-shot subagent for self-contained work that would otherwise flood your context (bulk reads, sweeps, an independent review). Only if your toolset includes `Agent`; leaf agents state in their Collaboration section that it does not. Inspect the current roster first; named edges are defaults, not limits.
+- **Agent tool** — spawn a one-shot subagent for self-contained work that would otherwise flood your context (bulk reads, sweeps, an independent review). Only if your toolset includes `Agent`; the tool list is authoritative. Inspect the current roster first; named edges are defaults, not limits.
 - **SendMessage** — hand work to a live teammate when you operate inside an agent team. Prefer a declared hand-off edge, but use a better live sibling when its role fits; transfer the unit of work with its full context, not a summary.
 - **Escalation to the main agent** — the few things only the main session can do (Workflow launches, `AskUserQuestion`, plan presentation, user decisions); see the dedicated protocols above and below.
 

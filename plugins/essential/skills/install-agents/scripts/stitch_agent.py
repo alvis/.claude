@@ -17,6 +17,19 @@ FIXED_ROUTING_LANGUAGE = re.compile(
     r"|\bI am the only agent who forms\b",
     re.IGNORECASE,
 )
+SHARED_POLICY_LANGUAGE = (
+    "current `Agent` roster",
+    "When I need a Dynamic Workflow",
+    "For changed code, I inspect",
+    "REVIEWED: source=",
+    "I hold the `Agent` tool",
+    "I hold `Agent`",
+    "spawn target",
+    "spawned by",
+)
+REVIEWER_DEFAULT = re.compile(
+    r"[A-Z][a-z]+(?: [A-Z][a-z]+)+ \([^;\n()]+; [^)\n]+\)"
+)
 
 
 class AgentTemplateError(ValueError):
@@ -91,26 +104,46 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
             "fixed routing language conflicts with runtime discovery"
         )
 
+    duplicated_policy = next(
+        (phrase for phrase in SHARED_POLICY_LANGUAGE if phrase in body), None
+    )
+    if duplicated_policy:
+        raise AgentTemplateError(
+            f"agent body repeats shared delegation policy: {duplicated_policy}"
+        )
+
     tools = _tool_names(frontmatter)
-    has_agent = tools is None or "Agent" in tools
-    declares_leaf = "I am a leaf" in body
-    if has_agent and declares_leaf:
-        raise AgentTemplateError("leaf declaration conflicts with Agent tool")
-    if not has_agent and not declares_leaf:
-        raise AgentTemplateError("agent without Agent must declare itself a leaf")
     if tools is not None and "SendMessage" in body and "SendMessage" not in tools:
         raise AgentTemplateError("mentions SendMessage but its tools omit it")
     if tools is not None and "SendMessage" not in tools:
         raise AgentTemplateError("explicit tools must include SendMessage")
-    if has_agent:
-        if "current `Agent` roster" not in body:
-            raise AgentTemplateError(
-                "spawn-capable agent must inspect the current Agent roster"
-            )
-        if "defaults, not limits" not in body:
-            raise AgentTemplateError(
-                "spawn-capable agent must treat named edges as defaults, not limits"
-            )
+
+    hooks = frontmatter.get("hooks", {})
+    if isinstance(hooks, dict):
+        for matcher in hooks.get("Stop", []):
+            if not isinstance(matcher, dict):
+                continue
+            for hook in matcher.get("hooks", []):
+                if not isinstance(hook, dict):
+                    continue
+                prompt = hook.get("prompt", "")
+                if not isinstance(prompt, str) or "review-routing gate" not in prompt:
+                    continue
+                if (
+                    len(REVIEWER_DEFAULT.findall(prompt)) < 1
+                    or "proven defaults" not in prompt
+                    or "better runtime specialist" not in prompt
+                ):
+                    raise AgentTemplateError(
+                        "review-routing hook must name concrete reviewer defaults"
+                    )
+                if (
+                    "independently inspect the changed artifact" not in prompt
+                    or "return verdict ok or blocked with findings" not in prompt
+                ):
+                    raise AgentTemplateError(
+                        "review-routing hook must state the independent review action"
+                    )
 
 
 def stitch_agent_definition(template_directory: Path) -> str:

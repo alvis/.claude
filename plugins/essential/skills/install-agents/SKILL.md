@@ -13,7 +13,7 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 `scripts/install-agents.sh` is idempotent and safe to re-run:
 
 1. In a source checkout, discovers `plugins/*/templates/agents/*`; from an installed Essential plugin, reads `claude plugin list --json` and discovers templates only from enabled plugins in Essential's marketplace.
-2. Validates every `base.md` + `frontmatter/claude.json` pair, including its role-based spawn/leaf, runtime-roster, model/effort, and `SendMessage` capability contract, and rejects malformed or duplicate names before touching the destination.
+2. Validates every `base.md` + `frontmatter/claude.json` pair, including its role-based spawn posture, model/effort, `SendMessage` capability, and centralized-policy boundary, and rejects malformed or duplicate names before touching the destination.
 3. Stitches all definitions into a temporary staging directory.
 4. Copies staged files into `~/.claude/agents/`, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
@@ -36,11 +36,10 @@ head -3 ~/.claude/agents/raj-patel-techlead.md
 
 In a fresh Claude Code session, the roster appears in the agent list.
 
-For maintainer verification, run the deterministic contract suite first. The live check is intentionally opt-in because it makes a paid Claude CLI call; it injects a better-fit synthetic reviewer and requires an actual `Agent` tool call to that runtime-only role. It uses Claude's `--bare` mode to exclude filesystem-installed agents, so authenticate with `ANTHROPIC_API_KEY` or an `apiKeyHelper` rather than OAuth/keychain state.
+For maintainer verification, run the deterministic contract suite:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest plugins/essential/skills/install-agents/scripts/test_install_agents.py
-RUN_LIVE_AGENT_EVAL=1 python3 plugins/essential/skills/install-agents/scripts/run_delegation_eval.py
 ```
 
 ### Step 3: Report

@@ -14,7 +14,6 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 from install_agents import discover_agent_templates, install_agents
-from run_delegation_eval import build_command, extract_agent_targets
 from stitch_agent import (
     AgentTemplateError,
     stitch_agent_definition,
@@ -33,14 +32,6 @@ def write_template(plugin_root: Path, name: str, frontmatter: dict, body: str = 
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
     )
-    tools = frontmatter.get("tools")
-    contract = (
-        "\nI inspect the current `Agent` roster and treat named edges as defaults, not limits.\n"
-        if tools is None or "Agent" in tools
-        else "\nI am a leaf and never spawn agents.\n"
-    )
-    if "current `Agent` roster" not in body and "I am a leaf" not in body:
-        body += contract
     (template / "base.md").write_text(body, encoding="utf-8")
     return template
 
@@ -77,9 +68,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 json.loads((template / "frontmatter/claude.json").read_text()),
                 json.loads(frontmatter_text),
             )
-            self.assertTrue(
-                stitched.endswith("---\n\n# Test agent\n\nI am a leaf and never spawn agents.\n")
-            )
+            self.assertTrue(stitched.endswith("---\n\n# Test agent\n"))
             self.assertEqual(stitched, stitch_agent_definition(template))
 
     def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(self):
@@ -113,36 +102,26 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(nonstandard_number)
 
-    def test_rejects_haiku_effort_and_tool_posture_mismatches(self):
+    def test_rejects_haiku_effort_fixed_routing_and_tool_mismatches(self):
         cases = (
             (
                 {"name": "test-agent", "model": "haiku", "effort": "medium"},
-                "I inspect the current `Agent` roster before delegating.",
+                "A role-specific body.",
                 "haiku agents must omit effort",
             ),
             (
-                {"name": "test-agent", "tools": ["Read", "Agent"]},
-                "I am a leaf — I execute and report.",
-                "leaf declaration conflicts with Agent tool",
-            ),
-            (
                 {"name": "test-agent", "tools": ["Read"]},
-                "I delegate work when useful.",
-                "agent without Agent must declare itself a leaf",
-            ),
-            (
-                {"name": "test-agent", "tools": ["Read"]},
-                "I am a leaf and hand results over SendMessage.",
+                "I hand results over SendMessage.",
                 "mentions SendMessage but its tools omit it",
             ),
             (
                 {"name": "test-agent", "tools": ["Read", "Agent"]},
-                "I inspect the current `Agent` roster; named edges are defaults, not limits.",
+                "A role-specific body.",
                 "explicit tools must include SendMessage",
             ),
             (
                 {"name": "test-agent"},
-                "I inspect the current `Agent` roster and treat named edges as defaults, not limits. I only spawn fixed-reviewer.",
+                "I only spawn fixed-reviewer.",
                 "fixed routing language conflicts with runtime discovery",
             ),
             (
@@ -151,7 +130,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                     "description": "Always route reviews to fixed-reviewer",
                     "initialPrompt": "Only spawn fixed-reviewer for review",
                 },
-                "I inspect the current `Agent` roster and treat named edges as defaults, not limits.",
+                "A role-specific body.",
                 "fixed routing language conflicts with runtime discovery",
             ),
         )
@@ -162,67 +141,44 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             ):
                 validate_agent_contract(frontmatter, body)
 
-    def test_spawn_capable_agent_requires_runtime_discovery_contract(self):
-        with self.assertRaisesRegex(
-            AgentTemplateError, "spawn-capable agent must inspect the current Agent roster"
+    def test_rejects_shared_delegation_policy_in_agent_body(self):
+        for phrase in (
+            "current `Agent` roster",
+            "When I need a Dynamic Workflow",
+            "For changed code, I inspect",
+            "REVIEWED: source=",
+            "I hold the `Agent` tool",
+            "I hold `Agent`",
+            "spawn target",
+            "spawned by",
         ):
+            with self.subTest(phrase=phrase), self.assertRaisesRegex(
+                AgentTemplateError, "repeats shared delegation policy"
+            ):
+                validate_agent_contract({"name": "test-agent"}, phrase)
+
+    def test_review_hook_requires_concrete_defaults_and_review_action(self):
+        def frontmatter(prompt):
+            return {
+                "name": "test-agent",
+                "hooks": {"Stop": [{"hooks": [{"prompt": prompt}]}]},
+            }
+
+        with self.assertRaisesRegex(AgentTemplateError, "concrete reviewer defaults"):
             validate_agent_contract(
-                {"name": "test-agent"},
-                "I spawn the reviewer named in this file.",
+                frontmatter("You are the review-routing gate. Use named defaults."),
+                "A role-specific body.",
             )
 
-        validate_agent_contract(
-            {"name": "test-agent"},
-            "I inspect the current `Agent` roster and treat named edges as defaults, not limits.",
-        )
-
-
-class DelegationEvalTest(unittest.TestCase):
-    def test_live_command_isolates_user_settings_and_customizations(self):
-        command = build_command(
-            {"runtime-aware-router": {"description": "router", "prompt": "route"}},
-            budget="0.10",
-            model="sonnet",
-        )
-
-        self.assertIn(("--setting-sources", ""), list(zip(command, command[1:])))
-        self.assertIn("--disable-slash-commands", command)
-        self.assertIn("--no-chrome", command)
-        self.assertIn("--bare", command)
-        self.assertIn(("--mcp-config", "{}"), list(zip(command, command[1:])))
-        self.assertIn("--strict-mcp-config", command)
-        self.assertEqual(["--model", "sonnet"], command[-2:])
-
-    def test_extracts_actual_agent_tool_targets_from_stream_json(self):
-        events = (
-            json.dumps(
-                {
-                    "type": "assistant",
-                    "message": {
-                        "content": [
-                            {"type": "text", "text": "routing"},
-                            {
-                                "type": "tool_use",
-                                "name": "Agent",
-                                "input": {"subagent_type": "synthetic-runtime-reviewer"},
-                            },
-                        ]
-                    },
-                }
-            ),
-            "not-json",
-            json.dumps(
-                {
-                    "type": "tool_use",
-                    "name": "Read",
-                    "input": {"subagent_type": "not-an-agent"},
-                }
-            ),
-        )
-
-        self.assertEqual(
-            ["synthetic-runtime-reviewer"], extract_agent_targets(events)
-        )
+        with self.assertRaisesRegex(AgentTemplateError, "independent review action"):
+            validate_agent_contract(
+                frontmatter(
+                    "You are the review-routing gate. Use Marcus Williams "
+                    "(Code Quality Critic; reviews changed code) as proven defaults, "
+                    "but choose a better runtime specialist when available."
+                ),
+                "A role-specific body.",
+            )
 
 
 class AgentDiscoveryTest(unittest.TestCase):
@@ -326,6 +282,17 @@ class AgentDiscoveryTest(unittest.TestCase):
             with self.subTest(agent=template.name):
                 stitch_agent_definition(template.path)
 
+    def test_distributed_collaboration_sections_are_point_form_only(self):
+        templates = discover_agent_templates(ROOT / "plugins/essential")
+
+        for template in templates:
+            body = (template.path / "base.md").read_text(encoding="utf-8")
+            collaboration = body.split("\n## Collaboration\n", 1)[1]
+            lines = [line for line in collaboration.splitlines() if line.strip()]
+            with self.subTest(agent=template.name):
+                self.assertTrue(lines)
+                self.assertTrue(all(line.startswith("- ") for line in lines), lines)
+
     def test_only_true_leaf_roles_omit_agent_and_every_role_can_handoff(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
         expected_leaves = {
@@ -353,6 +320,41 @@ class AgentDiscoveryTest(unittest.TestCase):
     def test_changed_code_gates_use_runtime_review_routing(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
         gated_agents = set()
+        expected_defaults = {
+            "ethan-kumar-data-architect": (
+                "Oliver Singh (Data Scientist; produces analyses and ML insights)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "james-mitchell-service-implementation": (
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+            ),
+            "zara-ahmad-ml-engineer": (
+                "Oliver Singh (Data Scientist; produces analyses and ML insights)",
+                "Ethan Kumar (Data Architect; designs schemas and data pipelines)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "ava-thompson-testing-evangelist": (
+                "Dexter Cho (Harness & Eval Engineer; builds quality gates)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "felix-anderson-devops": (
+                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "maya-rodriguez-principal": (
+                "Nina Petrov (Security Champion; reviews security-relevant changes)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "dexter-cho-harness-eval-engineer": (
+                "Ava Thompson (Testing Evangelist; authors tests)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "priya-sharma-frontend-implementer": (
+                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+        }
 
         for template in templates:
             frontmatter = json.loads(
@@ -367,9 +369,18 @@ class AgentDiscoveryTest(unittest.TestCase):
                     self.assertIn("current Agent roster", prompt)
                     self.assertIn("source=<specialist|general|external|none>", prompt)
                     self.assertIn("configured external review tool", prompt)
+                    self.assertIn("independently inspect the changed artifact", prompt)
+                    self.assertIn("return verdict ok or blocked with findings", prompt)
+                    self.assertNotIn("named collaborators are defaults", prompt)
+                    collaboration = (template.path / "base.md").read_text(
+                        encoding="utf-8"
+                    ).split("\n## Collaboration\n", 1)[1]
+                    for reviewer in expected_defaults[template.name]:
+                        self.assertIn(reviewer, prompt)
+                        self.assertIn(reviewer, collaboration)
                     self.assertNotIn("REVIEWED: marcus", prompt)
 
-        self.assertEqual(8, len(gated_agents))
+        self.assertEqual(set(expected_defaults), gated_agents)
 
     def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -508,8 +519,7 @@ class InstallAgentsTest(unittest.TestCase):
 
             self.assertEqual(1, install_agents(essential, destination))
             (template / "base.md").write_text(
-                "# Version two\n\nI inspect the current `Agent` roster and treat "
-                "named edges as defaults, not limits.\n",
+                "# Version two\n",
                 encoding="utf-8",
             )
             self.assertEqual(1, install_agents(essential, destination))

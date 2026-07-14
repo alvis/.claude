@@ -20,7 +20,7 @@
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
-  "hooks": "gated:true agents embed the runtime review-routing Stop hook verbatim; critic:true+fence:true agents embed the PreToolUse fence verbatim — both are provided by the overhaul spec, not authored per-agent",
+  "hooks": "gated:true agents customize the runtime review-routing Stop hook with concrete default reviewers (each name, role, and main task) plus the independent-review action; critic:true+fence:true agents embed the PreToolUse fence verbatim",
   "memory": "user|project|local — OMIT the key entirely to disable; there is no memory:none",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
@@ -130,30 +130,9 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
 
 ## Collaboration
 
-<!-- INSTRUCTION: state the intended spawn edges (agentEdges) for this agent — who it may dispatch to, and who
-     dispatches it. If this agent is a leaf (see Leaf & Spawn Encoding above), say so explicitly and note it
-     holds no Agent tool. For a spawn-capable agent, include the runtime-discovery paragraph below verbatim.
-     Known edges are defaults, never an allowlist. Only the runtime-selected lead initiates Agent Teams or
-     Dynamic Workflows, and only from the main session; Raj is the coding-team default, not a universal limit. -->
+<!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets.
+     Name each known agent with its role and main task, followed by the reason for collaboration. Shared runtime
+     discovery, handoff, workflow proxy, spawn-budget, and independent-review policy comes from Essential's
+     CLAUDE.md; do not repeat it here. Do not narrate who spawns this agent or restate its tool list. -->
 
-I [spawn / am spawned by] [agent names plus each role and main task, from templates/agent-team.md's edge list if
-this agent participates in a team]. [If leaf: I am a leaf and never spawn agents; I hand work back through
-`SendMessage`.]
-
-<!-- REQUIRED for spawn-capable agents: -->
-Before I delegate, I inspect the current `Agent` roster and its descriptions, then choose the best available
-specialist for the required outcome, tools, independence, and context. Named collaboration edges are proven
-defaults, not limits; I never invent or assume an unavailable agent.
-
-<!-- REQUIRED for every agent that hands work off: -->
-I use `SendMessage` for a live teammate or sibling when available; otherwise I return the hand-off request or
-result to my caller. A warm sibling hand-off does not spend the task's child-spawn budget, but I never bounce the
-same task across an already-used sibling edge.
-
-For consequential output, I seek the best available independent domain critic. If none fits, I use a
-general-purpose agent as an independent criteria-based reviewer; when no better internal reviewer is available,
-I may consult an already-configured external review tool allowed by the current permission policy. I pass only
-the artifact, constraints, and acceptance criteria, never the producer's reasoning. If no review path is
-available, I finish with an explicit warning that independent review did not occur.
-
-For changed code, I end with `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>`.
+- [Agent Name] ([Role]; [main task]): [when and what to collaborate on or delegate].
