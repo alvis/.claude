@@ -77,9 +77,16 @@ stated behavior change. `create-agent` owns genuinely new roles.
    context + guardrail), must not restate identity, announce no task, or
    preload standards, and must agree exactly with `base.md`.
 7. Recheck positive and near-miss triggers against neighboring agents and
-   real dispatch sites. Keep the task-to-agent row in the owning plugin's
-   `CLAUDE.md` aligned with the resulting trigger surface; do not create a
-   central routing table or widen role ownership incidentally.
+   real dispatch sites through a paper-only thought experiment and blindspot
+   test. If notes are written down, keep them temporary as a Markdown scratch
+   document in an OS temp
+   folder (for example `${TMPDIR:-/tmp}/check.md`) using
+   `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the
+   example table format with `:white_check_mark:`/`:x:` status markers,
+   and delete them before staging; they are not deliverables and must not be
+   committed. Keep the task-to-agent row in the
+   owning plugin's `CLAUDE.md` aligned with the resulting trigger surface; do
+   not create a central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
    bounded batches — one agent pair per subagent, never exceeding the declared
@@ -105,6 +112,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
 ## Completion
 
 Return the selector, targets, preserved role traits, changed fields, trigger
-examples, validation evidence, runtime-loading status, and unresolved issues.
+examples, thought-experiment and blindspot coverage, validation evidence,
+runtime-loading status, confirmation that temporary Markdown
+thought-experiment notes were deleted before commit, and unresolved issues.
 Completion requires every selected pair to validate and no unrequested role,
 voice, permission, or ownership change.

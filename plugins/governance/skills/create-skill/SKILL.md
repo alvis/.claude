@@ -28,20 +28,24 @@ headings to the capability.
 1. Inspect neighboring skills, plugin conventions, and call sites.
 2. Define the new skill's owned outcome, positive triggers, near-miss prompts,
    exclusions, inputs, failure behavior, and verification.
-3. Write failing trigger or behavior evaluations before the skill when the
-   change is testable; capture the baseline failure. Store them as
-   `skills/<name>/evals/evals.yaml` following
-   `${CLAUDE_SKILL_DIR}/../verify-skill/references/eval-template.yaml`: classify
-   the eval type (objective, subjective, or process), draft 2-3 test cases with
-   prompts and expectations, and list 5+ should_trigger plus 5+
-   should_not_trigger queries (near-misses are the most valuable).
+3. Before writing the skill, conduct a paper-only thought experiment and
+   blindspot test for trigger or behavior changes. If written notes are useful,
+   keep them temporary as a Markdown scratch document in an OS temp
+   folder (for example `${TMPDIR:-/tmp}/check.md`) using
+   `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the
+   example table format with `:white_check_mark:`/`:x:` status markers.
+   Delete the scratch document before staging; these notes are reasoning aids,
+   not deliverables, and must not be committed.
 4. Create the smallest `skills/<name>/SKILL.md` that teaches the missing
    behavior. Keep always-used instructions inline and conditional bulk in
    references.
 5. Add supporting scripts only for deterministic operations that prose should
    not reproduce. Test scripts before documenting them.
-6. Run structural and policy validation, then exercise positive and near-miss
-   evaluations. Revise until the intended skill triggers and neighbors do not.
+6. Run structural and policy validation, then re-run the thought experiment and
+   blindspot test against positive and near-miss prompts. Revise until the
+   intended trigger boundary is explicit and neighboring work remains excluded.
+   Do not claim runtime trigger behavior was exercised unless an executable
+   evaluation actually ran.
 
 ## Verification
 
@@ -56,5 +60,7 @@ completion with the remaining issues.
 
 ## Completion
 
-Report the created path, ownership boundary, evaluations, validation results,
-and any intentionally deferred cases.
+Report the created path, ownership boundary, thought-experiment and blindspot
+coverage, validation results, runtime evaluation status (including "not
+exercised"), and any intentionally deferred cases. Confirm any temporary
+Markdown thought-experiment notes were deleted before commit.

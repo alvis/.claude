@@ -60,5 +60,12 @@ that must not be missed.
 1. Run `claude plugin validate --strict <plugin-path>` for schema correctness.
 2. Run `quick_validate.py` for repository policies such as body length,
    placeholders, description budget, and unresolved local Markdown links.
-3. Exercise the skill with representative positive and near-miss prompts when
-   behavior or trigger ownership changed.
+3. Reason through representative positive and near-miss prompts when behavior
+   or trigger ownership changed. This is a paper-only thought experiment and
+   blindspot test unless an executable evaluation runs; do not report runtime
+   behavior as exercised from paper reasoning alone. Any
+   written scratch notes should be Markdown tables following
+   [check.md](check.md) with `:white_check_mark:`/`:x:` status
+   markers, stored only in an OS temp folder (for example
+   `${TMPDIR:-/tmp}/check.md`). They are temporary reasoning aids,
+   not deliverables, and must be deleted before staging or committing.

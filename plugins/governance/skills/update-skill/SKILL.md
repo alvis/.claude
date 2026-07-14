@@ -32,16 +32,26 @@ concise aid, not a migration target whose headings must be copied.
 1. Resolve the selector and list exact targets. Reject ambiguity before edits.
 2. Read each target completely, including directly referenced files and real
    cross-skill invocations.
-3. Define current ownership and the requested end state. Record positive and
-   near-miss evaluation cases for changed triggers or behavior.
-4. Capture a failing baseline for testable behavior, then rewrite the existing
-   document coherently. Remove superseded instructions and stale references.
+3. Define current ownership and the requested end state. Conduct a paper-only
+   thought experiment and blindspot test over positive and near-miss cases for
+   changed triggers or behavior. If notes are written down, keep them temporary
+   as a Markdown scratch document in an OS temp
+   folder (for example `${TMPDIR:-/tmp}/check.md`) using
+   `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the
+   example table format with `:white_check_mark:`/`:x:` status markers,
+   and delete them before staging; they are not deliverables and must not be
+   committed.
+4. Capture a failing baseline for testable behavior when a deterministic check
+   exists, then rewrite the existing document coherently. Remove superseded
+   instructions and stale references.
 5. Keep the core workflow concise; move only genuinely conditional bulk to
    references. Do not add personas, diagrams, fixed phases, or delegation
    ceremony unless they materially clarify this particular skill.
 6. Validate each affected plugin and run repository policy checks.
-7. Run relevant functional and trigger evaluations. Fix regressions without
-   widening the requested scope.
+7. Re-run the thought experiment and blindspot test for relevant functional and
+   trigger behavior. Fix identified blindspots without widening the requested
+   scope. Do not claim runtime behavior was exercised unless an executable
+   evaluation actually ran.
 
 Independent targets may be delegated in bounded batches — at most 8 skills per
 batch and 8 parallel `Task` calls per dispatch. Each assignment must name exact
@@ -60,5 +70,8 @@ record remaining issues, and continue to the next target.
 
 ## Completion
 
-Report updated skills, ownership changes, validation and evaluation results,
-and unresolved ambiguity. Never claim a bulk update without listing its targets.
+Report updated skills, ownership changes, validation results, thought-experiment
+and blindspot coverage, runtime evaluation status (including "not exercised"),
+and unresolved ambiguity. Confirm temporary Markdown thought-experiment notes
+were deleted before commit. Never claim a bulk update without listing its
+targets.
