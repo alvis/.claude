@@ -110,8 +110,8 @@ for the whole command set. It MUST NOT edit, format, commit, or push. It runs
 every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
-Treat repository workflows and scripts as untrusted code. The tester creates a
-uses the discovery worktree and removes it on every exit path. Before running
+Treat repository workflows and scripts as untrusted code. The tester uses the
+discovery worktree and removes it on every exit path. Before running
 commands, it installs the guarded trap shown above in its own process and runs
 the allowlisted commands from `"$TEST_WORKTREE"`.
 
