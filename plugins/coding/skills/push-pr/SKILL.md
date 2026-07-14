@@ -64,9 +64,21 @@ ambiguity with evidence. With `--dry-run`, print the exact plan and stop.
 
 ### 2. Discover local CI parity and run it unless skipped
 
-Before reading repository-controlled workflow or environment files, create a
-detached disposable worktree at the resolved target SHA and install a guarded
-cleanup trap:
+Resolve the target repository's main source checkout first:
+
+```bash
+SOURCE_REPO_ROOT=$(git rev-parse --show-toplevel)
+```
+
+Use that main checkout for read-only discovery of local environment sources and
+command-level references. Inspect `.github/workflows/*`, `package.json`,
+workspace manifests, Makefiles, and task files there, plus `.env`, `.env.local`,
+and `.env.test` when present. These local files may be ignored and therefore
+absent from a disposable worktree. Do not execute repository commands from the
+main checkout or copy secret values into a report.
+
+Then create a detached disposable worktree at the resolved target SHA and
+install a guarded cleanup trap:
 
 ```bash
 TEST_WORKTREE=$(mktemp -d)
@@ -80,23 +92,24 @@ trap cleanup EXIT HUP INT TERM
 git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
 ```
 
-The parent uses this worktree for discovery. If local testing is dispatched,
+The parent uses this worktree to confirm selected-revision commands. If local
+testing is dispatched,
 give the path and cleanup ownership to the tester; it must install the same
 guarded trap in its process before running commands and report cleanup status.
 If testing is skipped or blocked, the parent runs `cleanup` before proceeding.
 
-Read `.github/workflows/*` plus repository script definitions (`package.json`,
-workspace manifests, Makefiles, task files, or equivalent). List the exact
-compile, type, lint, test, and build commands that reproduce CI without hosted
-services. Inspect workflow `env`, `secrets.*`, `vars.*`, and command-level
-environment references, then inspect likely local sources (`.env`,
-`.env.local`, `.env.test`, and `package.json`) in the disposable worktree.
-Record variable names and source presence only; never copy secret values into a
-report. For every required variable, verify that the isolated tester can
-receive it from a user-approved source in that worktree. Record hosted-only
-checks and unavailable services or credentials. If a required variable is
-missing and `--skip-local-test` was not supplied, ask the user to confirm its
-intended source or location; if it remains unavailable, ask whether to use
+Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
+confirm the exact commands at the selected SHA, and inspect workflow `env`,
+`secrets.*`, `vars.*`, and command-level environment references there for
+revision drift. List the exact compile, type, lint, test, and build commands
+that reproduce CI without hosted services. Record variable names and source
+presence only; never copy secret values into a report. For every required
+variable, verify that the isolated tester can receive it from a user-approved
+source in the main checkout or another explicitly approved location; an env
+file does not need to be copied into the worktree. Record hosted-only checks
+and unavailable services or credentials. If a required variable is missing and
+`--skip-local-test` was not supplied, ask the user to confirm its intended
+source or location; if it remains unavailable, ask whether to use
 `--skip-local-test` and proceed with publishing. When the flag was supplied,
 record the missing variable as a hosted-only gap and do not execute local
 commands. Do not guess a secret source or silently run with an empty value.
