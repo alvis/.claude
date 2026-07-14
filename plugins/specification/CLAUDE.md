@@ -1,1 +1,1 @@
-Specification — DESIGN.md, requirements, or Notion document? See this plugin's `references/ROUTING.md`.
+Delegate any DESIGN.md, requirements, or Notion document work to the specialist in `specification:references/ROUTING.md`.

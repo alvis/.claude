@@ -1,40 +1,17 @@
 #!/usr/bin/env bash
-# Reusable session start hook utilities for Claude Code plugins.
-# In addition to the shared constitution context, any constitution path
-# carrying a MAINAGENT.md gets it embedded as main-agent-specific instructions
-# (the SessionStart counterpart to subagent-start's SUBAGENT.md block).
+# Session start hook: emits the session-type header and the plugin environment
+# block as one payload. Each instruction file (CLAUDE.md, MAINAGENT.md) is
+# emitted by its own emit-context hook, not from here, so every payload stays
+# under the per-payload preview limit.
 # Compatible with bash 3.2+
 
 # Get script directory
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source context library scripts
-source "$SCRIPTS_DIR/constitution.sh"
+# Source shared context library (output_hook_context)
 source "$SCRIPTS_DIR/context.sh"
 
-# Read session input from stdin and extract variables
-# Parameters:
-#   $1: "true" to export SESSION_ID, "false" to skip
-# Sets global variables:
-#   INPUT - The full JSON input
-#   SOURCE - The session source (startup/resume/clear/compact/unknown)
-#   SESSION_ID - Session identifier (if requested)
-read_session_input() {
-  local with_session_id="$1"
-
-  INPUT=$(cat)
-  SOURCE=$(echo "$INPUT" | jq -r '.source // "unknown"')
-
-  if [[ "$with_session_id" == "true" ]]; then
-    export SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
-  fi
-}
-
-# Get session type header based on SOURCE
-# Parameters:
-#   $1: SOURCE value (startup/resume/clear/compact/unknown)
-# Returns:
-#   Formatted header string with emoji
+# Get session type header based on the session source.
 get_session_type_header() {
   local source="$1"
   local header=""
@@ -57,96 +34,23 @@ get_session_type_header() {
   echo -n "$header"
 }
 
-# Main session start hook orchestrator
-# Parameters:
-#   --plugin-dir: Path to plugin root directory (required for sourcing plugin context)
-#   --with-session-id: Export SESSION_ID from input
-#   --with-session-header: Add session type header to context
-#   --constitution-paths: Space-separated list of paths for get_constitution_context
-#
-# Example usage:
-#   run_session_start_hook --plugin-dir "$PLUGIN_ROOT" --with-session-id --constitution-paths "$PLUGIN_DIR"
-#   run_session_start_hook --plugin-dir "$PLUGIN_ROOT" --with-session-header --constitution-paths "$HOME/.claude"
-#   run_session_start_hook --plugin-dir "$PLUGIN_ROOT" --with-session-id --constitution-paths "$PROJECT_DIR/.claude" "$PLUGIN_DIR"
+# Emit the session header and the essential plugin environment block. Only
+# essential registers this hook, so the environment block is emitted exactly
+# once — no per-plugin flag gating is needed.
 run_session_start_hook() {
-  local plugin_dir=""
-  local with_session_id=false
-  local with_session_header=false
-  local with_plugin_context=false
-  local constitution_paths=()
+  local input src
+  input=$(cat)
+  src=$(echo "$input" | jq -r '.source // "unknown"')
 
-  # Parse arguments
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      --plugin-dir)
-        plugin_dir="$2"
-        shift 2
-        ;;
-      --with-session-id)
-        with_session_id=true
-        shift
-        ;;
-      --with-session-header)
-        with_session_header=true
-        shift
-        ;;
-      --with-plugin-context)
-        with_plugin_context=true
-        shift
-        ;;
-      --constitution-paths)
-        shift
-        # Collect all remaining arguments as paths
-        while [[ $# -gt 0 ]]; do
-          constitution_paths+=("$1")
-          shift
-        done
-        ;;
-      *)
-        shift
-        ;;
-    esac
-  done
+  local CONTEXT=""
+  CONTEXT+=$(get_session_type_header "$src")
 
-  # Read input from stdin
-  read_session_input "$with_session_id"
-
-  # Initialize context
-  CONTEXT=""
-
-  # Add session type header if requested
-  if [[ "$with_session_header" == "true" ]]; then
-    CONTEXT+=$(get_session_type_header "$SOURCE")
-  fi
-
-  # Source plugin context and add plugin-specific context, but only when the
-  # caller explicitly requests it via --with-plugin-context. Only essential's
-  # own hook passes the flag, so the environment block is emitted once instead
-  # of being duplicated across every plugin's hook. Calling get_plugin_context
-  # only after a successful source also avoids the latent "command not found"
-  # crash when a plugin ships no scripts/context.sh.
-  if [[ "$with_plugin_context" == "true" && -n "$plugin_dir" && -f "$plugin_dir/scripts/context.sh" ]]; then
-    source "$plugin_dir/scripts/context.sh"
+  local plugin_root
+  plugin_root="$(cd "$SCRIPTS_DIR/../.." && pwd)"
+  if [[ -f "$plugin_root/scripts/context.sh" ]]; then
+    source "$plugin_root/scripts/context.sh"
     CONTEXT+=$(get_plugin_context)
   fi
 
-  # Add constitution context for each specified path
-  for path in "${constitution_paths[@]}"; do
-    CONTEXT+=$(get_constitution_context "$path")
-  done
-
-  # Embed main-agent-specific instructions (MAINAGENT.md) for each path,
-  # resolving the {{PLUGIN_DIR}} placeholder to the absolute plugin path so
-  # embedded file references work from any project repo.
-  local abs_path
-  for path in "${constitution_paths[@]}"; do
-    if [[ -f "$path/MAINAGENT.md" ]]; then
-      abs_path="$(cd "$path" && pwd)"
-      CONTEXT+="# As the team leader\n\n"
-      CONTEXT+="$(sed "s|{{PLUGIN_DIR}}|$abs_path|g" "$path/MAINAGENT.md")\n\n"
-    fi
-  done
-
-  # Output hook context as JSON
   output_hook_context "SessionStart" "$CONTEXT"
 }

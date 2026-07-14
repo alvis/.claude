@@ -1,1 +1,1 @@
-Backend — schema, data model, pipeline, service, API, or ML/AI feature? See this plugin's `references/ROUTING.md`.
+Delegate any backend, schema, data model, pipeline, service, API, or ML/AI work to the specialists in `backend:references/ROUTING.md`.

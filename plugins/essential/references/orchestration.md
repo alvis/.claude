@@ -1,9 +1,5 @@
 # Orchestration & delegation
 
-The full protocol for coordinating an agent team, delegating work, and escalating
-between roles. The boot context injects only pointers here; read this before you
-coordinate a team, delegate a task, or launch a workflow.
-
 ## Agent team operation
 
 - **Work as a team when delegation carries signal** Initiate an agentic team for large tasks or work with high-output investigation; act inline for trivial, conversational, or small tasks where delegation would add latency and a lossy hand-off.

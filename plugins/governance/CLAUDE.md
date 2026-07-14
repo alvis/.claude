@@ -1,1 +1,1 @@
-Governance — eval harness, quality gate, or meta-review of agents/skills/patterns? See this plugin's `references/ROUTING.md`.
+Delegate any eval harness, quality gate, or meta-review of agents, skills, or patterns to the specialists in `governance:references/ROUTING.md`.

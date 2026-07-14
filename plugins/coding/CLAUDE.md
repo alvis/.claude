@@ -1,1 +1,1 @@
-Writing, modifying, or reviewing code? You MUST first read this plugin's `references/CODING.md` — coding workflow, standards routing, PR mandate, and specialist routing.
+Delegate any code you write, modify, or review through the coding workflow: read `coding:references/CODING.md` first for the workflow, standards routing, and PR mandate, then route the work to a specialist listed in `coding:references/ROUTING.md`.
