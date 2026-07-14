@@ -67,7 +67,18 @@ ambiguity with evidence. With `--dry-run`, print the exact plan and stop.
 Read `.github/workflows/*` plus repository script definitions (`package.json`,
 workspace manifests, Makefiles, task files, or equivalent). List the exact
 compile, type, lint, test, and build commands that reproduce CI without hosted
-services. Record hosted-only checks and the unavailable service/credential.
+services. Inspect workflow `env`, `secrets.*`, `vars.*`, and command-level
+environment references, then inspect likely local sources (`.env`,
+`.env.local`, `.env.test`, and `package.json`) in the disposable worktree.
+Record variable names and source presence only; never copy secret values into a
+report. For every required variable, verify that the isolated tester can
+receive it from a user-approved source in that worktree. Record hosted-only
+checks and unavailable services or credentials. If a required variable is
+missing and `--skip-local-test` was not supplied, ask the user to confirm its
+intended source or location; if it remains unavailable, ask whether to use
+`--skip-local-test` and proceed with publishing. When the flag was supplied,
+record the missing variable as a hosted-only gap and do not execute local
+commands. Do not guess a secret source or silently run with an empty value.
 For each selected change, record expected hosted PR check/job names from
 `pull_request`-triggered jobs at that ref and required branch status
 checks/rulesets when accessible through `gh api`; record inaccessible sources
@@ -78,20 +89,39 @@ for the whole command set. It MUST NOT edit, format, commit, or push. It runs
 every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
-Treat repository workflows and scripts as untrusted code. Run them from a
-disposable worktree checked out at the exact selected ref, with filesystem
-write access limited to that worktree and a temporary directory, network
-denied by default, and ambient tokens, credential helpers, SSH agent sockets,
-cloud credentials, and unrelated environment variables removed. Pass only the
-minimal allowlisted toolchain environment. If this isolation is unavailable,
-or a command genuinely needs network access or a credential, classify it as
-hosted-only or ask the user for that specific authority; never expose the
-parent session's credentials to a local CI command.
+Treat repository workflows and scripts as untrusted code. The tester creates a
+detached disposable worktree and removes it on every exit path:
+
+```bash
+TEST_WORKTREE=$(mktemp -d)
+cleanup() {
+  if [ -n "${TEST_WORKTREE:-}" ] && [ "$TEST_WORKTREE" != / ]; then
+    git worktree remove --force "$TEST_WORKTREE" >/dev/null 2>&1 ||
+      rm -rf -- "$TEST_WORKTREE"
+  fi
+}
+trap cleanup EXIT HUP INT TERM
+git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
+# run the allowlisted commands from "$TEST_WORKTREE"
+```
+
+The cleanup trap is mandatory after pass, failure, cancellation, or blocked
+environment discovery. Limit filesystem writes to that worktree and a
+temporary directory, deny network by default, and remove ambient tokens,
+credential helpers, SSH agent sockets, cloud credentials, and unrelated
+environment variables. Pass only the minimal allowlisted toolchain environment.
+If this isolation is unavailable, or a command genuinely needs network access
+or a credential, classify it as hosted-only or ask the user for that specific
+authority; never expose the parent session's credentials to a local CI command.
 
 <report>
 
 ```yaml
 sources_read: [<workflow-or-script-path>]
+required_environment:
+  - name: <variable name>
+    declared_source: <workflow/package/.env source>
+    worktree_status: present | missing | hosted-only
 runnable_commands:
   - command: <exact command>
     source: <path and job/script>
@@ -101,6 +131,7 @@ runnable_commands:
 hosted_only:
   - check: <job or step>
     unavailable_requirement: <service, secret, runner, or credential>
+temporary_worktree_cleanup: passed | blocked
 expected_hosted_checks:
   - ref: <change-id or head SHA>
     names: [<workflow job or required status name>]
