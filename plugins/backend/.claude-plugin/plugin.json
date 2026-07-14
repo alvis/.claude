@@ -2,7 +2,7 @@
   "name": "theriety",
   "dependencies": ["coding", "specification", "essential"],
   "description": "Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers",
-  "version": "2026-07-13b",
+  "version": "2026-07-14",
   "hooks": {
     "SessionStart": [
       {

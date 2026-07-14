@@ -2,7 +2,7 @@
   "name": "specification",
   "dependencies": ["coding", "essential"],
   "description": "Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration for knowledge management",
-  "version": "2026-07-13b",
+  "version": "2026-07-14",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [
