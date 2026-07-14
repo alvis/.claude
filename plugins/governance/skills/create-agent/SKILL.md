@@ -91,7 +91,16 @@ anything is written. `update-agent` owns changes to existing definitions.
 8. Add or update the task-to-agent routing row in the owning plugin's
    `CLAUDE.md`, creating that file if necessary. Keep only this agent's owned
    tasks there; do not rebuild a central roster table.
-9. Check tools against behavior: a leaf cannot claim it can spawn and a
+9. Conduct a paper-only thought experiment and blindspot test over positive
+   trigger phrases, near-miss exclusions, collaboration edges, and first-turn
+   behavior. If notes are written down, keep them temporary as a Markdown scratch
+   document in an OS temp
+   folder (for example `${TMPDIR:-/tmp}/check.md`) using
+   `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the
+   example table format with `:white_check_mark:`/`:x:` status markers,
+   and delete them before staging; they are not deliverables and must not be
+   committed.
+10. Check tools against behavior: a leaf cannot claim it can spawn and a
    spawn-capable agent must have `Agent`; read-mostly critics must not
    accidentally receive mutation tools; workflow-spawned and teammate
    permissions must follow template rules. Also check model/effort
@@ -99,7 +108,7 @@ anything is written. `update-agent` owns changes to existing definitions.
    context aliases and paths, namespaced skills, MCP references, hooks,
    memory semantics, initialPrompt/base consistency, explicit triggers, and
    non-overlap with neighbors.
-10. Run the verification below; when a check fails, fix the cause and re-run
+11. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
    then report the blocker instead of looping.
 
@@ -121,7 +130,9 @@ anything is written. `update-agent` owns changes to existing definitions.
 
 Report created paths, the confirmed settings and who confirmed them (user,
 flags, or `--yes`), archetype, trigger/near-miss examples, context
-assignments, validation commands and results, whether runtime loading was
-exercised, and any unresolved concern. Completion requires both files, a
+assignments, thought-experiment and blindspot coverage, validation commands and
+results, whether runtime loading was exercised, confirmation that temporary
+Markdown thought-experiment notes were deleted before commit, and any unresolved
+concern. Completion requires both files, a
 non-overlapping trigger surface, a role-specific voice, and all available
 validation passing.
