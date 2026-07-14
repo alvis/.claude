@@ -64,6 +64,27 @@ ambiguity with evidence. With `--dry-run`, print the exact plan and stop.
 
 ### 2. Discover local CI parity and run it unless skipped
 
+Before reading repository-controlled workflow or environment files, create a
+detached disposable worktree at the resolved target SHA and install a guarded
+cleanup trap:
+
+```bash
+TEST_WORKTREE=$(mktemp -d)
+cleanup() {
+  if [ -n "${TEST_WORKTREE:-}" ] && [ "$TEST_WORKTREE" != / ]; then
+    git worktree remove --force "$TEST_WORKTREE" >/dev/null 2>&1 ||
+      rm -rf -- "$TEST_WORKTREE"
+  fi
+}
+trap cleanup EXIT HUP INT TERM
+git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
+```
+
+The parent uses this worktree for discovery. If local testing is dispatched,
+give the path and cleanup ownership to the tester; it must install the same
+guarded trap in its process before running commands and report cleanup status.
+If testing is skipped or blocked, the parent runs `cleanup` before proceeding.
+
 Read `.github/workflows/*` plus repository script definitions (`package.json`,
 workspace manifests, Makefiles, task files, or equivalent). List the exact
 compile, type, lint, test, and build commands that reproduce CI without hosted
@@ -90,20 +111,9 @@ every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
 Treat repository workflows and scripts as untrusted code. The tester creates a
-detached disposable worktree and removes it on every exit path:
-
-```bash
-TEST_WORKTREE=$(mktemp -d)
-cleanup() {
-  if [ -n "${TEST_WORKTREE:-}" ] && [ "$TEST_WORKTREE" != / ]; then
-    git worktree remove --force "$TEST_WORKTREE" >/dev/null 2>&1 ||
-      rm -rf -- "$TEST_WORKTREE"
-  fi
-}
-trap cleanup EXIT HUP INT TERM
-git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
-# run the allowlisted commands from "$TEST_WORKTREE"
-```
+uses the discovery worktree and removes it on every exit path. Before running
+commands, it installs the guarded trap shown above in its own process and runs
+the allowlisted commands from `"$TEST_WORKTREE"`.
 
 The cleanup trap is mandatory after pass, failure, cancellation, or blocked
 environment discovery. Limit filesystem writes to that worktree and a
