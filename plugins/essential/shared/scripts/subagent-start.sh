@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Subagent start hook: emits the plugin environment block as one payload. It
-# omits the session-type header (subagents have no session source). Each
-# instruction file (CLAUDE.md, SUBAGENT.md) is emitted by its own emit-context
-# hook, not from here, so every payload stays under the per-payload preview
-# limit.
+# omits the session-type header (subagents have no session source). Instruction
+# files (CLAUDE.md, SUBAGENT.md) are emitted by their own `sed | jq` hooks in
+# plugin.json, not from here, so every payload stays under the per-payload
+# preview limit.
 # Compatible with bash 3.2+
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

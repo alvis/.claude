@@ -5,18 +5,38 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/session-start"}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/session-start"
+          }
+        ]
       },
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/emit-context", "args": ["SessionStart", "${CLAUDE_PLUGIN_ROOT}/MAINAGENT.md"]}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/MAINAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
+          }
+        ]
       }
     ],
     "SubagentStart": [
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/subagent-start"}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/subagent-start"
+          }
+        ]
       },
       {
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/emit-context", "args": ["SubagentStart", "${CLAUDE_PLUGIN_ROOT}/SUBAGENT.md"]}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/SUBAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
+          }
+        ]
       }
     ]
   }

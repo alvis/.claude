@@ -1,7 +1,7 @@
 ## Routing
 
-- Pick a specialist for the work → `coding:references/ROUTING.md`.
-- Delegate, orchestrate, or review through the team → `essential:references/orchestration.md`.
+- Pick a specialist for the work → `ROUTING.md` in this same `references/` directory.
+- Delegate, orchestrate, or review through the team → `references/orchestration.md` in the essential plugin directory.
 - Match an action to a skill → the table under Delegation Rule below.
 - Follow the phase your task is in → Before / While / After Coding, then Pull Requests.
 
@@ -128,4 +128,4 @@ Creating or updating a pull request MUST go through the `write-pr` and `push-pr`
 
 ## Specialist routing
 
-Route to a coding specialist via `coding:references/ROUTING.md`.
+Route to a coding specialist via `ROUTING.md` in this same `references/` directory.

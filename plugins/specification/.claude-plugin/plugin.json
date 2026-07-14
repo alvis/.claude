@@ -1,13 +1,31 @@
 {
   "name": "specification",
-  "dependencies": ["coding", "essential"],
+  "dependencies": [
+    "coding",
+    "essential"
+  ],
   "description": "Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration for knowledge management",
   "version": "2026-07-14a",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "b=\"$(ls -d \"${CLAUDE_PLUGIN_ROOT}\"/../../essential/*/bin 2>/dev/null | sort | tail -n1)\"; [ -n \"$b\" ] || exit 0; exec \"$b/emit-context\" SessionStart \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\""}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
+          }
+        ]
       }
     ]
   }
