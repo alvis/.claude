@@ -16,6 +16,7 @@ Dependencies are declared in each plugin's `.claude-plugin/plugin.json`; install
 
 General code writing tools including quality checks, testing, architecture, and implementation support
 
+- `coding:cleanup` — Audit stale development state across git branches, remote branches, git worktrees, and jj workspaces. Use when a user asks to run /cleanup, find abandoned branches/workspaces, or safely remove already-merged or duplicate local work with backups and confirmation.
 - `coding:commit` — Save code changes cleanly with jj-first, git-compatible routing. Use for commits, split/absorb/edit operations, stacked changes, history reordering, retrospective blame fixes, or the --create-pr compatibility handoff; preserve the repository history policy and keep coding:commit as the sole history-mutation owner.
 - `coding:complete-code` — Complete explicit production implementation stubs in an existing scope. Use for canonical implementation TODOs, temporary production stubs, and draft-code sentinels; route bugs, test work, unstubbed functionality, new features, and ambiguous markers to their owning workflows.
 - `coding:complete-test` — Author and improve tests for pending test cases, coverage gaps, fixtures, and redundancy cleanup. Use for test TODOs, it.todo or describe.todo entries, explicit test-writing requests, or coverage work. Production implementation stubs belong to complete-code; diagnosed failures belong to fix.
@@ -26,8 +27,9 @@ General code writing tools including quality checks, testing, architecture, and 
 - `coding:fix` — Fix diagnosed incorrect behavior, failed tests, type errors, lint failures, or broken CI. Use when a concrete failure can be reproduced or review findings identify a defect; route new functionality to write-code and green structural cleanup to refactor.
 - `coding:handover` — Persist CONTEXT.md, NOTES.md, and PLAN.md for later continuation of coding work. Use when pausing implementation or transferring repository state; this skill records the current session and does not create or execute a cross-domain plan.
 - `coding:lint` — Enforce coding standards mechanically across a selected scope with batched linters and independent reviewers. Use when source files need lint-error correction, standards enforcement, or consistent formatting, including calls extended by another plugin's portable lint profile; behavior-changing repairs belong to fix.
+- `coding:merge-pr` — Merge a linear stack of GitHub pull requests while restacking descendants between merges. Use when a user invokes /merge-pr with PR numbers, asks to merge stacked PRs, or needs gh-driven bottom-up PR merging with automatic downstream rebase.
 - `coding:modernize` — Apply version-supported syntax and API upgrades based on the project runtime and toolchain. Use when replacing legacy constructs with supported modern equivalents; do not claim general refactoring, dependency upgrades, or behavioral feature work.
-- `coding:push-pr` — Publish saved changes as draft pull requests and drive GitHub CI to green. Use when asked to push or update a PR, babysit pending checks, repair red CI, or converge every PR in a stack.
+- `coding:push-pr` — Publish saved changes as draft pull requests and drive GitHub CI to green. Use when asked to push the latest commit, create or update a PR, repush after a fix, babysit pending checks, repair red CI, monitor every check, or converge a PR stack.
 - `coding:refactor` — Improve green code through behavior-preserving structural changes to organization, naming, readability, or documentation. Use when existing tests pass and the requested outcome is maintainability rather than a bug fix, new feature, or version-driven API upgrade.
 - `coding:review-code` — Review semantic correctness, security, test intent, documentation, sibling consistency, and alignment with the implementation plan. Use after code changes or for explicit review requests; report findings without editing code and leave mechanical standards enforcement to lint.
 - `coding:setup-project` — Ensure project structure exists before development, creating barebone scaffolding only if needed. Use when initializing new projects, validating project setup, or ensuring monorepo component structure.
@@ -107,7 +109,7 @@ Client-facing screen design and UX documentation with Notion integration
 
 ## Agent team
 
-A 20-agent specialist team for Claude Code, plus the operating rules that make it work as a team: shared main-session rules in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol in `plugins/essential/SUBAGENT.md`, owner-specific routing in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology carried in each agent's own definition.
+A 23-agent specialist team for Claude Code, plus the operating rules that make it work as a team: shared main-session rules in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol in `plugins/essential/SUBAGENT.md`, owner-specific routing in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology carried in each agent's own definition.
 
 Install via the `essential:install-agents` skill (ask Claude to "install the agents"). Canonical sources live under `plugins/<owner>/templates/agents/<name>/` as `base.md` plus `frontmatter/claude.json`. The installer discovers source-checkout siblings or enabled same-marketplace plugins, validates the complete discovered roster, stages stitched files, and copies them into `~/.claude/agents/`. It overwrites current same-named discoveries and leaves unrelated or stale files untouched. Edits require a re-install, and changes take effect in the next session.
 
@@ -116,23 +118,26 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 | Agent | Role | Model | Effort | Permission | Flags |
 | --- | --- | --- | --- | --- | --- |
 | `raj-patel-techlead` | Tech Lead — decomposes projects and routes milestones | fable | medium | auto | memory |
+| `isla-moreau-design-lead` | Design Lead — decomposes design initiatives across web/mobile/desktop | opus | high | auto | memory |
+| `amara-okonkwo-ai-research-lead` | AI Research Lead — decomposes ML/RL/AI research initiatives | fable | medium | auto | memory |
 | `maya-rodriguez-principal` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
 | `james-mitchell-service-implementation` | Service Implementation — backend/API build-out | sonnet | medium | acceptEdits | gated, worktree |
+| `leo-fabbri-generalist-engineer` | Generalist Engineer — libraries, data pipelines, CLIs, glue code | sonnet | high | acceptEdits | gated, worktree |
 | `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | high | auto | gated |
+| `coco-laurent-frontend-designer` | Frontend Designer — designs all app screens (web/mobile/desktop), never builds | fable | high | auto | worktree |
 | `priya-sharma-frontend-implementer` | Frontend Implementer — builds approved designs in React/TS | sonnet | high | acceptEdits | gated, worktree |
-| `coco-laurent-frontend-designer` | Frontend Designer — designs only, never builds | fable | high | auto | worktree |
-| `zara-ahmad-ml-engineer` | ML Engineer — ML/AI features, one-shot background runs | opus | medium | auto | gated, background |
+| `theo-nakamura-desktop-implementer` | Desktop Implementer — builds approved designs as Electron/desktop apps | sonnet | high | acceptEdits | gated, worktree |
+| `mila-vasquez-mobile-implementer` | Mobile Implementer — builds approved designs as mobile apps in React Native | sonnet | high | acceptEdits | gated, worktree |
+| `zara-ahmad-ml-engineer` | ML Engineer — full ML lifecycle: data analysis and ML/AI features | opus | high | auto | gated, worktree |
 | `felix-anderson-devops` | DevOps — CI/CD and infra automation, background passes | sonnet | medium | auto | gated, background |
-| `nova-chen-research-engineer` | Research Engineer — prototypes and reproducible benchmarks | opus | high | auto | worktree, memory |
-| `oliver-singh-data-scientist` | Data Scientist — analysis and ML insights | opus | medium | auto | worktree |
-| `dexter-cho-harness-eval-engineer` | Harness & Eval Engineer — eval suites and quality gates as code | opus | medium | auto | gated |
+| `dexter-cho-harness-eval-engineer` | Harness & Eval Engineer — eval suites, benchmarks, and prototypes as code | opus | high | auto | gated, worktree, memory |
 | `ava-thompson-testing-evangelist` | Testing Evangelist — authors test suites via TDD | sonnet | medium | acceptEdits | leaf, gated, memory |
 | `tess-park-test-runner` | Test Runner — mechanical lint/type/test sweeps, summarized | haiku | — | acceptEdits | leaf, background |
 | `marcus-williams-code-quality` | Code Quality Critic — the independent quality gate, day-to-day quality and security review | opus | medium | default | critic (write-fenced), memory |
 | `nina-petrov-security-champion` | Security Champion — deep security review, explicit request only | fable | high | default | critic |
 | `kai-raven-adversarial-redteam` | Adversarial Red-Team — PoC exploits in an isolated worktree | opus | high | default | leaf, worktree |
 | `penelope-sterling-aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | medium | default | leaf, critic (write-fenced), memory |
-| `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, Notion | sonnet | medium | acceptEdits | leaf |
+| `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, user docs, Notion | sonnet | medium | acceptEdits | leaf |
 | `ada-bishop-initializer` | Project Initializer — run-once bootstrap | sonnet | low | acceptEdits | leaf |
 | `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | high | auto | background, memory |
 
@@ -145,16 +150,19 @@ Spawn edges (the `Agent` tool channel — who dispatches whom as a subagent):
 ```
 raj-patel-techlead (team lead; ×N priya fan-out; independent quality gate)
   └── any registered agent
+isla-moreau   ──► coco (design), priya (web build), theo (desktop build), mila (mobile build), penelope (sign-off)
+amara-okonkwo ──► zara (analysis/model), dexter (benchmark/eval), ethan (data pipelines)
 james-mitchell ──► maya (escalation), nina (security, explicit request only), tess (sweeps), marcus (review), ava (coverage)
-ethan-kumar   ──► oliver (profiling), james (schema alignment), tess (sweeps), maya (escalation), marcus (review)
+leo-fabbri    ──► ethan (pipeline/schema), marcus (review), tess (sweeps), ava (coverage), maya (escalation), raj (structure)
+ethan-kumar   ──► zara (profiling), james (schema alignment), tess (sweeps), maya (escalation), marcus (review)
 maya-rodriguez ─► nina (security, explicit request only), tess (sweeps), marcus (review)
-coco-laurent  ──► penelope (design sign-off)
+coco-laurent  ──► penelope (design sign-off), priya (web build), theo (desktop build), mila (mobile build)
 priya-sharma  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), raj (structure)
-oliver-singh  ──► marcus (optional review)
-nova-chen     ──► marcus (prototype review), tess
+theo-nakamura ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), isla (escalation)
+mila-vasquez  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), isla (escalation)
 felix-anderson ► marcus, nina (explicit request only), tess; escalates to maya
-zara-ahmad    ──► ethan (data contracts), oliver (model analysis), tess (sweeps), maya (escalation), marcus (review)
-dexter-cho    ──► ava (test strategy), marcus (gate alignment), tess (sweeps)
+zara-ahmad    ──► ethan (data contracts), tess (sweeps), maya (escalation), marcus (review)
+dexter-cho    ──► ava (test strategy), marcus (gate alignment), tess (sweeps), raj (feasibility)
 marcus-williams ► nina (security depth, explicit request only), kai (adversarial proof)
 nina-petrov   ──► kai
 taylor-kim    ──► runtime specialists (bounded audit slices and second opinions)
@@ -165,17 +173,26 @@ Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `ava`, `s
 Team hand-off edges (the SendMessage channel inside an agent team, `A → B: trigger`):
 
 ```
+isla → coco/priya/theo/mila (via lead): design-initiative slice per platform
+isla → penelope: initiative sign-off
+amara → zara/dexter/ethan (via lead): research/experiment slice
 james → marcus: implementation complete, before commit (gate)
 marcus → james: gate failure, with findings
 marcus → lead:  gate pass, or 2 rounds exhausted
-ava → james/priya: coverage gap found mid-implementation
+leo → marcus: implementation complete, before commit (gate)
+leo → ethan/ava/tess (via lead): pipeline/schema, coverage, and sweep hand-offs
+ava → james/priya/leo: coverage gap found mid-implementation
 ava → tess (via lead): sweep execution
-coco → priya (via lead): approved design handoff
+coco → priya/theo/mila (via lead): approved design handoff per platform
 priya → penelope: build complete, fidelity check
-ethan ↔ oliver: schema design ↔ data-profiling consults
-zara → ethan/oliver (via lead): data questions
+theo → penelope: desktop build complete, fidelity check
+mila → penelope: mobile build complete, fidelity check
+theo/mila → coco: design mismatch mid-build; → isla: cross-platform/scope escalation
+ethan ↔ zara: schema design ↔ data-profiling consults
+zara → ethan (via lead): data questions
 dexter ↔ ava: test-strategy/harness alignment
 dexter ↔ marcus: gate-charter alignment
+dexter → raj (via lead): feasibility verdict with benchmark data
 sam → lead: spec delivery, routed to implementers
 ada → raj: bootstrap complete
 any producer → maya: blocked on a hard technical problem
@@ -186,14 +203,14 @@ Note: the edges above are proven defaults only. A spawn-capable agent discovers 
 
 ### Team shapes
 
-- **Warm core** (trusting, low-friction hand-offs): raj, marcus, ava, james, dexter.
-- **On-demand specialists**: maya, ethan, nina, nova, oliver, coco, priya, penelope, kai, sam, ada.
-- **Background** (one run per spawn): felix, zara, taylor.
+- **Warm core** (trusting, low-friction hand-offs): raj, marcus, ava, james, leo, dexter.
+- **On-demand specialists**: isla, amara, maya, ethan, coco, priya, theo, mila, zara, nina, penelope, kai, sam, ada.
+- **Background** (one run per spawn): felix, taylor.
 - **Mechanical**: tess.
 
 ### Gates
 
-- **Gated producers** (embedded prompt-type routing Stop gate; 2-round cap): maya, ava, james, ethan, felix, zara, dexter, priya. Each gate checks the producer's final message for the generic `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>` attestation. When changed code lacks one, the gate names that producer's proven reviewer defaults with each role and main task, requires discovery of a better runtime specialist when available, and tells the producer to request an independent artifact review through SendMessage, Agent, or its caller. Pure-analysis output passes on first stop; an unreachable reviewer or a spent 2-round budget releases the gate rather than deadlocking. Oliver Singh (Data Scientist; produces analyses and ML insights) is deliberately ungated because exploratory analysis is not production code; his production-bound work still receives independent review.
+- **Gated producers** (embedded prompt-type routing Stop gate; 2-round cap): maya, ava, james, ethan, felix, zara, dexter, priya, leo, theo, mila. Each gate checks the producer's final message for the generic `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>` attestation. When changed code lacks one, the gate names that producer's proven reviewer defaults with each role and main task, requires discovery of a better runtime specialist when available, and tells the producer to request an independent artifact review through SendMessage, Agent, or its caller. Pure-analysis output passes on first stop; an unreachable reviewer or a spent 2-round budget releases the gate rather than deadlocking.
 - **Write-fenced critics** (PreToolUse fence): marcus, penelope — may only write to their agent-memory dir or review reports.
 
 ### Team operation
@@ -206,7 +223,7 @@ Note: the edges above are proven defaults only. A spawn-capable agent discovers 
 
 - The copy-install into `~/.claude/agents/` is load-bearing for the hooks: Claude Code honors `hooks`, `permissionMode`, and `mcpServers` frontmatter only for agents in `~/.claude/agents/` / `.claude/agents/` — agents registered via a plugin ignore those fields. Do not convert the roster to plugin-registered agents, or every embedded gate and fence goes dead.
 - `zara-ahmad-ml-engineer` uses the `theriety:build-service` skill — it requires the plugin whose manifest name is `theriety` (this marketplace registers it under the entry name `backend`; the manifest-vs-marketplace name mismatch is known).
-- Installed agent definitions are intentionally single self-contained files even though their canonical source is split. This is why the routing Stop gate is embedded verbatim in all eight gated producers.
+- Installed agent definitions are intentionally single self-contained files even though their canonical source is split. This is why the routing Stop gate is embedded verbatim in all eleven gated producers.
 - Standards references (`SD-*`) in the definitions never use literal installation paths. They name a standard plus its owning plugin constitution, resolved at runtime when that plugin is enabled. A partial enabled roster is valid, so cross-plugin handoffs and context are best-effort when their owner plugin is absent.
 
 ## Validation

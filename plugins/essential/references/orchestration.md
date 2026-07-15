@@ -81,4 +81,3 @@ Report context usage only when the runtime measures it; otherwise report task af
 | Tasks | Route to |
 | --- | --- |
 | Break a project into milestones and delegate them | `raj-patel-techlead` |
-| Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |

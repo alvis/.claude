@@ -246,19 +246,19 @@ class AgentDiscoveryTest(unittest.TestCase):
                     with self.assertRaisesRegex(AgentTemplateError, message):
                         discover_agent_templates(essential)
 
-    def test_source_checkout_discovers_the_distributed_twenty_agent_roster(self):
+    def test_source_checkout_discovers_the_distributed_twenty_three_agent_roster(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
         owners = {}
         for template in templates:
             owners.setdefault(template.owner, set()).add(template.name)
 
-        self.assertEqual(20, len(templates))
+        self.assertEqual(23, len(templates))
         self.assertEqual(
             {
-                "essential": 2,
-                "coding": 8,
+                "essential": 1,
+                "coding": 9,
                 "governance": 2,
-                "web": 3,
+                "web": 6,
                 "backend": 4,
                 "specification": 1,
             },
@@ -322,7 +322,7 @@ class AgentDiscoveryTest(unittest.TestCase):
         gated_agents = set()
         expected_defaults = {
             "ethan-kumar-data-architect": (
-                "Oliver Singh (Data Scientist; produces analyses and ML insights)",
+                "Zara Ahmad (ML Engineer; data analysis and ML/AI features)",
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
             ),
             "james-mitchell-service-implementation": (
@@ -330,8 +330,18 @@ class AgentDiscoveryTest(unittest.TestCase):
                 "Nina Petrov (Security Champion; deep security review, explicit request only)",
             ),
             "zara-ahmad-ml-engineer": (
-                "Oliver Singh (Data Scientist; produces analyses and ML insights)",
                 "Ethan Kumar (Data Architect; designs schemas and data pipelines)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "leo-fabbri-generalist-engineer": (
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "theo-nakamura-desktop-implementer": (
+                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
+                "Marcus Williams (Code Quality Critic; reviews changed code)",
+            ),
+            "mila-vasquez-mobile-implementer": (
+                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
                 "Marcus Williams (Code Quality Critic; reviews changed code)",
             ),
             "ava-thompson-testing-evangelist": (
@@ -473,16 +483,16 @@ class InstallAgentsTest(unittest.TestCase):
             )
 
             self.assertEqual(0, completed.returncode, completed.stderr)
-            self.assertEqual(20, len(list(destination.glob("*.md"))))
+            self.assertEqual(23, len(list(destination.glob("*.md"))))
 
-    def test_source_checkout_installs_all_twenty_agents(self):
+    def test_source_checkout_installs_all_twenty_three_agents(self):
         with tempfile.TemporaryDirectory() as temporary, redirect_stdout(StringIO()):
             destination = Path(temporary) / "agents"
 
             count = install_agents(ROOT / "plugins/essential", destination)
 
-            self.assertEqual(20, count)
-            self.assertEqual(20, len(list(destination.glob("*.md"))))
+            self.assertEqual(23, count)
+            self.assertEqual(23, len(list(destination.glob("*.md"))))
             self.assertTrue((destination / "priya-sharma-frontend-implementer.md").is_file())
 
     def test_duplicate_names_fail_before_any_destination_write(self):

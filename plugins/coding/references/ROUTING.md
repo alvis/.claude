@@ -4,6 +4,7 @@
 | --- | --- |
 | Bootstrap and scaffold a new project | `ada-bishop-initializer` |
 | Author tests via TDD | `ava-thompson-testing-evangelist` |
+| Implement a general library, data pipeline, CLI, or glue code | `leo-fabbri-generalist-engineer` |
 | Automate CI/CD and infrastructure | `felix-anderson-devops` |
 | Validate an exploit with an adversarial PoC | `kai-raven-adversarial-redteam` |
 | Review changed code for quality, including day-to-day security review | `marcus-williams-code-quality` |
