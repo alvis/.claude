@@ -62,11 +62,27 @@ get_environment_context() {
     shell_version="version unknown"
   fi
 
-  context+="\n**Environment**: $(uname -s) $(uname -m)\n"
-  context+="**Shell**: $shell_name ($shell_version)\n"
-  context+="**⚠️ Compatibility Note**: When writing shell scripts, ensure compatibility with $shell_name $shell_version\n"
+  context+="**Environment**: $(uname -s) $(uname -m)\n"
+  context+="**Shell**: $shell_version — write $shell_name-compatible scripts\n"
 
   echo -n "$context"
+}
+
+# Get agent capability signal.
+# Emitted here (essential's env) because essential is the only plugin that still
+# injects an environment block after the env dedup; the coding/governance hooks
+# that used to carry this signal now run without --with-plugin-context.
+get_agent_capabilities_context() {
+  if [[ "${CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS:-}" == "1" ]]; then
+    echo -n "## Agent Capabilities\n\n**Agent Teams**: enabled\n"
+  fi
+}
+
+# One shared pointer to the constitution standards, replacing the per-plugin
+# enumeration that used to dominate the boot context. Each plugin's reference
+# catalogs its own standards; the full set lives under the directory below.
+get_standards_pointer_context() {
+  echo -n "Standards: each plugin's \`constitution/standards/\` (cataloged in its reference).\n"
 }
 
 # Get all basic context in one call
@@ -79,5 +95,7 @@ get_plugin_context() {
   context+=$(get_working_directory_context)
   context+=$(get_environment_context)
   context+=$(get_repo_root_documents_context "$repo_root")
+  context+=$(get_agent_capabilities_context)
+  context+=$(get_standards_pointer_context)
   echo -n "$context"
 }

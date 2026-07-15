@@ -1,5 +1,1 @@
-# Specification specialist routing
-
-| Tasks | Route to |
-| --- | --- |
-| Write a DESIGN.md, specification, requirements, or Notion document | `sam-taylor-specification` |
+To delegate any DESIGN.md, requirements, or Notion document work, read `{{PLUGIN_DIR}}/references/ROUTING.md` and route it to the specialist.

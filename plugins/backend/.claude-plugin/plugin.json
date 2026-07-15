@@ -1,12 +1,31 @@
 {
   "name": "theriety",
-  "dependencies": ["coding", "specification", "essential"],
-  "description": "Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers",
+  "dependencies": [
+    "coding",
+    "specification",
+    "essential"
+  ],
+  "description": "Domain-specific service and data orchestrator lifecycle management for Theriety \u2014 build and audit services and data layers",
   "version": "2026-07-14a",
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{"type": "command", "command": "b=\"$(ls -d \"${CLAUDE_PLUGIN_ROOT}\"/../../essential/*/bin 2>/dev/null | sort | tail -n1)\"; [ -n \"$b\" ] || exit 0; exec \"$b/session-start\" --plugin-dir \"${CLAUDE_PLUGIN_ROOT}\" --with-session-id --constitution-paths \"${CLAUDE_PLUGIN_ROOT}\""}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
+          }
+        ]
       }
     ]
   }
