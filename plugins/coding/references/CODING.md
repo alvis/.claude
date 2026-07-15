@@ -4,21 +4,27 @@ Read this before you write, modify, or review code, then follow the phase your t
 
 ## Before Coding
 
-### Understand what's already there
-
-Before writing or fixing any code, build an understanding of the current implementation and its issues — run this once, by whichever is available: the `get_project_overview` MCP tool, the `ide__getDiagnostics` MCP tool, `npm run build`, or `npx tsc --noEmit`.
-
 ### Decide who does the work
 
-Choose whether to do the work yourself or hand it to a specialist **agent**:
+Settle this first, from where the task came:
 
-- To delegate, pick the agent whose role fits the work from `ROUTING.md` in this same `references/` directory.
-- To delegate, orchestrate, or review across a team, follow the protocol in `references/orchestration.md` in the essential plugin directory.
-- When you delegate to a subagent, you MUST pass the full file paths of every relevant skill and standard file — a subagent starts blind.
+- **From the user** — do it yourself when the change is small (low expected token spend); delegate it otherwise.
+- **From another agent** — do it yourself, unless you are a lead (an orchestrator). A lead never implements; it only advises and delegates.
 
-### Use skills to carry out the work
+To delegate, read `ROUTING.md` in this same `references/` directory and route the work to the specialist whose role fits; and read `references/orchestration.md` in the essential plugin directory before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
 
-A **skill is a tool you invoke** with the Skill tool to perform an action — it is not an agent. You never delegate work "to" a skill and never pass a skill name as a `subagent_type`; you *use* a skill to do the work yourself or inside a subagent. Each skill documents its own applicable standards internally. Invoke the skill that matches your action:
+### Decide where the work will live
+
+Settle this before editing:
+
+- **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); if `jj` isn't initialized, use `git` on the current branch as usual.
+- **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `../.worktree/<repo-name>/<work-name>`.
+
+### If you're writing it yourself
+
+**Understand what you're changing first.** Before writing or fixing any code, build an understanding of the current implementation and its issues — run this once, by whichever is available: the `get_project_overview` MCP tool, the `ide__getDiagnostics` MCP tool, `npm run build`, or `npx tsc --noEmit`.
+
+**Carry out each action with the skill that matches it.** A skill is a tool you invoke with the Skill tool — it is not an agent. You never delegate work "to" a skill and never pass a skill name as a `subagent_type`; you *use* a skill to do the work yourself or inside a subagent. Each skill documents its own applicable standards internally.
 
 | Action | Skill to invoke |
 |--------|-----------------|
@@ -39,13 +45,6 @@ A **skill is a tool you invoke** with the Skill tool to perform an action — it
 | Resuming work | `/coding:takeover` |
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |
-
-### Decide where the work will live
-
-Settle this before editing:
-
-- **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); if `jj` isn't initialized, use `git` on the current branch as usual.
-- **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `../.worktree/<repo-name>/<work-name>`.
 
 ## While Coding
 

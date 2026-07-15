@@ -10,4 +10,4 @@ Honor these rules — main agent or sub — before reaching for the full protoco
 - **Own what you spawn.** Own the quality of every agent's output. Put consequential or changed code through an independent reviewer before calling it done.
 - **Never invent a number.** Report context usage only when the runtime measures it; otherwise report task affinity and whether enough room remains.
 
-Full protocol — boundary, topology, model and effort, nesting, dispatch, review recording: `{{PLUGIN_DIR}}/references/orchestration.md`.
+Before you delegate, orchestrate, or record a review, read `{{PLUGIN_DIR}}/references/orchestration.md` — it holds the boundary, topology, model and effort, nesting, dispatch, and review recording.

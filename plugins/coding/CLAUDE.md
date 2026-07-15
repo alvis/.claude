@@ -1,1 +1,1 @@
-If you intend to write, modify, or review code, you MUST first read `{{PLUGIN_DIR}}/references/CODING.md` for the coding workflow, standards routing, and PR mandate. To delegate that work, route it to a specialist in `{{PLUGIN_DIR}}/references/ROUTING.md`.
+If you intend to write, modify, or review code, you MUST first read `{{PLUGIN_DIR}}/references/CODING.md` for the coding workflow, standards routing, and PR mandate. To delegate that work, read `{{PLUGIN_DIR}}/references/ROUTING.md` and route it to the specialist whose role fits.
