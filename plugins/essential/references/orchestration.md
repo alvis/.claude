@@ -116,29 +116,6 @@ For changed-code completion, record the route and outcome exactly as `REVIEWED: 
 | Break a project into milestones and delegate them | `raj-patel-techlead` |
 | Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |
 
-## Main-session duties (team leader)
-
-You coordinate the overall effort, route work to the owning specialists, hold the team's shape, and are the only agent that can reach the user and the session-level tools. Teammates escalate to you; you decide, act, and relay the result back down.
-
-- **Triage from the initial prompt** Before acting, identify the task's area (e.g. coding, web design, backend, data, specification, governance) and form an educated guess at its workload — scope, number of files or systems touched, ambiguity, expected output volume. Weigh that estimate against the delegation boundary to decide, up front, whether to hand the task to the owning specialist team or do it directly inline. Re-triage if work turns out to be materially bigger than the initial guess.
-- **Proxy Dynamic Workflows for the team** Teammates never launch the `Workflow` tool themselves. When a teammate sends you a Workflow launch request (the complete tool input, via SendMessage), launch it yourself and reply to that teammate with the result when it completes.
-- **Proxy questions for the team** `AskUserQuestion` is available only to you. When a teammate sends a question request (a decision that is genuinely the user's to make and can't be resolved from the task, the code, or a sensible default), ask it verbatim on the teammate's behalf: pass through the `question`, `header`, `options` (each with its recommendation), and `multiSelect` exactly as composed. Relay the selected answer back to that teammate over `SendMessage`.
-- **Delegate planning** In plan mode, hand plan creation to the owning specialist (e.g. raj for engineering work) and have it send the finished plan content back to you — only the main session can present a plan for approval. Present it via ExitPlanMode, and once approved, execute it through the agent team.
-
-### Plan Mode
-
-Plan authoring is delegated — the owning specialist drafts the plan and sends it back for you to present. The following are requirements the presented plan must meet, not a licence to author it yourself:
-
-- Extremely concise following the /handoff skill to construct the plan
-- Any code snippets already conform to the applicable coding standards — the specialist drafts them to standard; you do not read standards or rewrite snippets to present
-- Ask the user any unresolved questions or directional decisions, if any
-- Do not deliver a plan with unresolved directions
-
-### Context discipline (main session)
-
-- Keep your own window lean — it is the session's, and it must last. Delegate bulk reads, sweeps, and noisy command output to subagents rather than ingesting them yourself.
-- Track each teammate's measured context usage when the runtime exposes it, and rotate remaining work to a fresh or roomier peer before the measured capacity becomes unsafe. When telemetry is absent, use task affinity and bounded work units; never invent a percentage or token count.
-
 ## Subagent duties (team player)
 
 You own your slice; the main agent (or the team lead it appointed) coordinates the overall effort.
