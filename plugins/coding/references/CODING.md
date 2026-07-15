@@ -93,6 +93,12 @@ edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to 
    - **If the user did not explicitly request a commit, ask whether to commit the work** (via `coding:commit`).
    - **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` remains the compatibility call: it finishes local history work, then delegates bookmark/PR publication and CI convergence to `/coding:push-pr`; titles + bodies come from `/coding:write-pr`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
 
+## Pull Requests
+
+Creating or updating a pull request MUST go through the `write-pr` and `push-pr` skills, not a hand-rolled `git`/`gh` sequence. `write-pr` composes the conventional-commit title and unified body from the commit; `push-pr` publishes it and drives CI to green. This applies even when the request looks like a small, one-off PR.
+
+`push-pr` requires a jj-colocated repository and never substitutes plain `git push` for `jj git push` — that is its contract, not a detail this mandate may override. A git-only repository is therefore not exempt from this mandate; it is out of `push-pr`'s supported shape and must be brought into it. Attempt colocation with `jj git init` (non-destructive — it layers jj metadata onto the existing git history and objects; confirm with the user before running it on a repo they haven't already set up with jj), then verify it actually took effect with a functional check, not a directory-existence check: a `.jj` and a `.git` directory can both be present without being colocated (e.g. a `.jj` created independently of an unrelated `.git`), so `.jj`/`.git`/`jj st` presence alone proves nothing. Instead confirm `git rev-parse HEAD` equals `jj log -r @- --no-graph -T 'commit_id'` — only a match proves jj and git share the same backing repository; treat any mismatch, or a failing `git rev-parse HEAD`, as colocation having failed. Only when colocation genuinely fails or is declined, publish directly with `gh pr create`/`gh pr edit` using `write-pr`'s title/body verbatim and confirm CI state (or its documented absence) before reporting success — and record this explicitly as a one-off exception to `push-pr`, never as an equivalent path through it.
+
 ## Your Actions
 
 <IMPORTANT>
@@ -119,13 +125,3 @@ edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to 
 Type safety, test coverage, TDD, and naming/documentation rules are defined by the constitution standards under `constitution/standards/` — follow them in full; they are not restated here.
 
 </IMPORTANT>
-
-## Pull Requests
-
-Creating or updating a pull request MUST go through the `write-pr` and `push-pr` skills, not a hand-rolled `git`/`gh` sequence. `write-pr` composes the conventional-commit title and unified body from the commit; `push-pr` publishes it and drives CI to green. This applies even when the request looks like a small, one-off PR.
-
-`push-pr` requires a jj-colocated repository and never substitutes plain `git push` for `jj git push` — that is its contract, not a detail this mandate may override. A git-only repository is therefore not exempt from this mandate; it is out of `push-pr`'s supported shape and must be brought into it. Attempt colocation with `jj git init` (non-destructive — it layers jj metadata onto the existing git history and objects; confirm with the user before running it on a repo they haven't already set up with jj), then verify it actually took effect with a functional check, not a directory-existence check: a `.jj` and a `.git` directory can both be present without being colocated (e.g. a `.jj` created independently of an unrelated `.git`), so `.jj`/`.git`/`jj st` presence alone proves nothing. Instead confirm `git rev-parse HEAD` equals `jj log -r @- --no-graph -T 'commit_id'` — only a match proves jj and git share the same backing repository; treat any mismatch, or a failing `git rev-parse HEAD`, as colocation having failed. Only when colocation genuinely fails or is declined, publish directly with `gh pr create`/`gh pr edit` using `write-pr`'s title/body verbatim and confirm CI state (or its documented absence) before reporting success — and record this explicitly as a one-off exception to `push-pr`, never as an equivalent path through it.
-
-## Specialist routing
-
-Route to a coding specialist via `ROUTING.md` in this same `references/` directory.

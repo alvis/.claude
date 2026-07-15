@@ -1,25 +1,5 @@
 # Orchestration & delegation
 
-## Agent team operation
-
-- **Work as a team when delegation carries signal** Initiate an agentic team for large tasks or work with high-output investigation; act inline for trivial, conversational, or small tasks where delegation would add latency and a lossy hand-off.
-- **Discover before dispatching** Inspect the current `Agent` roster and descriptions immediately before every spawn. Match the task's required outcome and capabilities to the best available specialist; named collaboration edges and plugin routing rows are proven defaults, not limits. Never invent or assume an unavailable agent.
-- **Hand tasks to the owning specialist and its team** Whenever a task fits a specialist, the specialist leads it with its own team — a coding task is always led by `raj-patel-techlead` (Tech Lead; decomposes engineering work and assigns milestones). Honor mandatory trigger phrases in installed agent descriptions.
-- **Keep teammates hot** Route related work to an idle teammate whose loaded context remains relevant. Report context usage only when the runtime measures it; otherwise report task affinity and whether enough context remains, never an invented percentage.
-- **Terminate unneeded subagents** Retire a teammate when it is clearly no longer wanted (e.g. switching task, task completed with no follow-up possibility like a test execution with summary reported or a review passed) or measured runtime telemetry shows retaining it no longer helps.
-- **Spawn a new agent for independent work** When a task is clearly unrelated to what a subagent was previously assigned, and there is no benefit from reusing the agent's loaded context (e.g. coding standards) — or when a follow-up task (e.g. a re-review while a fix is in flight) would block that agent from taking up new work — spawn a fresh agent.
-- **Bound fan-out** Declare a task-wide child-spawn budget before the first nested spawn; default to three new children when omitted. `SendMessage` hand-offs to warm siblings do not spend this budget, but the same task must not traverse the same sibling edge twice.
-- **Communicate over SendMessage** Hand each teammate the full unit of work with its context — file paths, standards, acceptance criteria, and why it matters — not a summary. If `SendMessage` is unavailable, return the hand-off request or result to the caller.
-- **Proxy Dynamic Workflows through the main session** A subagent never launches `Workflow` itself. It composes the complete tool input, sends it to the main agent over `SendMessage`, and consumes the returned result.
-- **Keep agent definitions role-specific** An agent's `Collaboration` section lists only outbound collaborators or delegation targets as concise bullets. Do not repeat this shared protocol, narrate who spawns the agent, or restate its tool list.
-
-## Essential specialist routing
-
-| Tasks | Route to |
-| --- | --- |
-| Break a project into milestones and delegate them | `raj-patel-techlead` |
-| Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |
-
 ## Core Principles
 
 1. **Delegate Proactively and Deliberately**
@@ -45,6 +25,41 @@ Before writing a delegation prompt, classify the task and pick the substrate —
 Name the success/convergence criteria before you start — a run with no stated stop condition is not ready to launch. To route, inspect each currently available agent's description and choose the best-suited specialist; a hard-coded name never overrides a better runtime fit.
 
 **Pick the topology before the prompt.**
+
+## STRICT DELEGATION PROTOCOL
+
+### Delegation boundary
+
+- Keep conversational, trivial, and bounded work inline.
+- Route work when a specialist owns the outcome, the output would materially consume parent context, independent work can run in parallel, or a separate reviewer is required.
+- A coding change remains owned by `raj-patel-techlead` (Tech Lead; decomposes engineering work and assigns milestones) and the appropriate implementation specialist.
+- The parent reviews and synthesizes returned evidence; delegation never transfers accountability.
+
+   <IMPORTANT>
+     - **Know Your Resources** You must know paths to all standards and skills; DON'T ask others to find them. You don't need to read them all, but MUST know where they are.
+     - **You Own Skills** Skills are followed by you, not subagents. You only delegate tasks within the skill steps.
+     - **Clear Delegation** Pass complete file paths for all relevant documents to subagents. They need full context to perform well.
+     - **High Trust, High Clarity** When delegating, communicate the stakes, expected outcomes, and trust the subagent to own the solution. They should feel accountable and empowered to deliver excellence.
+     - **Parallel First (map the DAG)** Before launching, map the task set as a dependency graph: draw an edge only where one task genuinely needs another's output, then group the edge-free tasks into parallel batches. Dispatch each batch in a SINGLE message with multiple `Agent` calls; serialize only along real edges.
+     - **Context Usage Reporting** Report context usage only when the runtime measures it. Otherwise report task affinity and whether enough context remains without inventing a percentage.
+     - **Context-Budgeted Fan-Out** Give each subagent exactly one task. Before launching, estimate the context sources it will need — base load, files, tool output, and generated output — and keep the unit bounded. Use runtime context telemetry when available; never invent a token count or percentage. Do not hand more work to a worker whose measured remaining context cannot safely hold it.
+     - **Reuse a Warm Peer** When a task is small but must load a large base context that a living Agent-Team teammate already carries, route it to that peer via `SendMessage` rather than cold-starting a fresh agent that re-pays the load — separate spawns do not share a cached base context.
+     - **Ask "What am I missing?"** Before major decisions, explicitly check for blindspots.
+     - **ZERO TOLERANCE** If work crosses the delegation boundary above, stop and route it to the best current specialist.
+   </IMPORTANT>
+
+## Agent team operation
+
+- **Work as a team when delegation carries signal** Initiate an agentic team for large tasks or work with high-output investigation; act inline for trivial, conversational, or small tasks where delegation would add latency and a lossy hand-off.
+- **Discover before dispatching** Inspect the current `Agent` roster and descriptions immediately before every spawn. Match the task's required outcome and capabilities to the best available specialist; named collaboration edges and plugin routing rows are proven defaults, not limits. Never invent or assume an unavailable agent.
+- **Hand tasks to the owning specialist and its team** Whenever a task fits a specialist, the specialist leads it with its own team — a coding task is always led by `raj-patel-techlead` (Tech Lead; decomposes engineering work and assigns milestones). Honor mandatory trigger phrases in installed agent descriptions.
+- **Keep teammates hot** Route related work to an idle teammate whose loaded context remains relevant. Report context usage only when the runtime measures it; otherwise report task affinity and whether enough context remains, never an invented percentage.
+- **Terminate unneeded subagents** Retire a teammate when it is clearly no longer wanted (e.g. switching task, task completed with no follow-up possibility like a test execution with summary reported or a review passed) or measured runtime telemetry shows retaining it no longer helps.
+- **Spawn a new agent for independent work** When a task is clearly unrelated to what a subagent was previously assigned, and there is no benefit from reusing the agent's loaded context (e.g. coding standards) — or when a follow-up task (e.g. a re-review while a fix is in flight) would block that agent from taking up new work — spawn a fresh agent.
+- **Bound fan-out** Declare a task-wide child-spawn budget before the first nested spawn; default to three new children when omitted. `SendMessage` hand-offs to warm siblings do not spend this budget, but the same task must not traverse the same sibling edge twice.
+- **Communicate over SendMessage** Hand each teammate the full unit of work with its context — file paths, standards, acceptance criteria, and why it matters — not a summary. If `SendMessage` is unavailable, return the hand-off request or result to the caller.
+- **Proxy Dynamic Workflows through the main session** A subagent never launches `Workflow` itself. It composes the complete tool input, sends it to the main agent over `SendMessage`, and consumes the returned result.
+- **Keep agent definitions role-specific** An agent's `Collaboration` section lists only outbound collaborators or delegation targets as concise bullets. Do not repeat this shared protocol, narrate who spawns the agent, or restate its tool list.
 
 ## Agent Orchestration
 
@@ -94,27 +109,12 @@ If every review path is unavailable, completion is allowed only with an explicit
 
 For changed-code completion, record the route and outcome exactly as `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>`.
 
-## STRICT DELEGATION PROTOCOL
+## Essential specialist routing
 
-### Delegation boundary
-
-- Keep conversational, trivial, and bounded work inline.
-- Route work when a specialist owns the outcome, the output would materially consume parent context, independent work can run in parallel, or a separate reviewer is required.
-- A coding change remains owned by `raj-patel-techlead` (Tech Lead; decomposes engineering work and assigns milestones) and the appropriate implementation specialist.
-- The parent reviews and synthesizes returned evidence; delegation never transfers accountability.
-
-   <IMPORTANT>
-     - **Know Your Resources** You must know paths to all standards and skills; DON'T ask others to find them. You don't need to read them all, but MUST know where they are.
-     - **You Own Skills** Skills are followed by you, not subagents. You only delegate tasks within the skill steps.
-     - **Clear Delegation** Pass complete file paths for all relevant documents to subagents. They need full context to perform well.
-     - **High Trust, High Clarity** When delegating, communicate the stakes, expected outcomes, and trust the subagent to own the solution. They should feel accountable and empowered to deliver excellence.
-     - **Parallel First (map the DAG)** Before launching, map the task set as a dependency graph: draw an edge only where one task genuinely needs another's output, then group the edge-free tasks into parallel batches. Dispatch each batch in a SINGLE message with multiple `Agent` calls; serialize only along real edges.
-     - **Context Usage Reporting** Report context usage only when the runtime measures it. Otherwise report task affinity and whether enough context remains without inventing a percentage.
-     - **Context-Budgeted Fan-Out** Give each subagent exactly one task. Before launching, estimate the context sources it will need — base load, files, tool output, and generated output — and keep the unit bounded. Use runtime context telemetry when available; never invent a token count or percentage. Do not hand more work to a worker whose measured remaining context cannot safely hold it.
-     - **Reuse a Warm Peer** When a task is small but must load a large base context that a living Agent-Team teammate already carries, route it to that peer via `SendMessage` rather than cold-starting a fresh agent that re-pays the load — separate spawns do not share a cached base context.
-     - **Ask "What am I missing?"** Before major decisions, explicitly check for blindspots.
-     - **ZERO TOLERANCE** If work crosses the delegation boundary above, stop and route it to the best current specialist.
-   </IMPORTANT>
+| Tasks | Route to |
+| --- | --- |
+| Break a project into milestones and delegate them | `raj-patel-techlead` |
+| Prototype and benchmark feasibility of new tech | `nova-chen-research-engineer` |
 
 ## Main-session duties (team leader)
 
