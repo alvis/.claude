@@ -1,12 +1,12 @@
 # Orchestration & delegation
 
-Delegation manages signal; it is not a reflex. Keep conversational, trivial, and bounded work inline; delegate when a specialist owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. A coding change is always led by `raj-patel-techlead` (Tech Lead — decomposes engineering work into milestones) with the implementing specialist. Delegation never transfers accountability: you review and synthesize what comes back. If work crosses this boundary, stop and route it to the best current specialist — zero tolerance.
+Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a specialist owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. Route every coding change through `raj-patel-techlead` (Tech Lead — decomposes engineering work into milestones) with the implementing specialist. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current specialist — zero tolerance.
 
 ## Choosing the topology
 
 Classify the task and pick the substrate once, up front, then name the success or convergence criteria before you launch — a run with no stop condition is not ready:
 
-- **Inline** — don't dispatch when it would save no context, add no independence, and only cost latency or a lossy hand-off.
+- **Inline** — don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off.
 - **Parallel slices** — independent, dispatch-and-score work whose siblings needn't talk → parallel `Agent` calls in a SINGLE message, one slice each.
 - **Agent Team** — ongoing multi-role back-and-forth where roles hold context together and see each other's reasoning live → persistent teammates around a warm core.
 - **Dynamic Workflow** — high-volume structured iteration toward a measurable target: fan-out plus adversarial verify plus a bounded, resumable correction loop, e.g. linting 100 projects with a fix → lint → re-fix-or-pass loop. A subagent never launches `Workflow` itself — it composes the input and asks the main agent to run it.
@@ -15,10 +15,10 @@ Classify the task and pick the substrate once, up front, then name the success o
 
 - **Route to the best runtime specialist.** Inspect each available agent's description immediately before every spawn and match by outcome, tools, independence, and context. Named routing rows and collaboration edges are proven defaults, not limits; never invent an unavailable agent, and honor the "Must use" and "Use proactively" triggers in each agent's own description.
 - **Pass complete context.** Give each subagent the mission, constraints, acceptance criteria, and why the work matters, plus full file paths to every relevant standard, skill, and design document — not a summary. Communicate the stakes and trust it to own the solution.
-- **You own skills.** You follow a skill yourself and delegate only the tasks within its steps — subagents do not run your skills. Know where every standard and skill lives; never ask others to find them.
+- **You own skills.** Follow a skill yourself and delegate only the tasks within its steps — subagents do not run your skills. Know where every standard and skill lives; never ask others to find them.
 - **Parallel first.** Map the task set as a dependency graph, drawing an edge only where one task truly needs another's output; batch the edge-free tasks into a SINGLE message of multiple `Agent` calls, and serialize only along real edges.
 - **One bounded task per subagent.** Give each worker exactly one task; before launching, estimate its context load — base, files, tool output, generated output — and keep the unit bounded. Never hand more work to a worker whose measured remaining context cannot safely hold it.
-- **Reuse a warm peer.** When a small task needs a large base context a live teammate already carries, route it there via `SendMessage` rather than cold-starting a fresh agent — separate spawns do not share a cached base.
+- **Reuse a warm peer.** Route a small task that needs a large base context a live teammate already carries to that teammate via `SendMessage` rather than cold-starting a fresh agent — separate spawns do not share a cached base.
 - **Check blindspots.** Before major decisions, ask "what am I missing?"
 - **Synthesize.** Collect what returns, identify patterns, and consolidate it into actionable results.
 
