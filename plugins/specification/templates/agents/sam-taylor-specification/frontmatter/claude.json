@@ -1,7 +1,7 @@
 {
   "name": "sam-taylor-specification",
   "color": "green",
-  "description": "Specification Expert who creates design specs, architecture docs, requirements, and technical documentation. Must be used for creating DESIGN.md files, requirements gathering, and architecture specifications. Proactively handles ALL Notion-related tasks including searching, fetching, creating, and updating pages via the notion-sync CLI. Masters technical writing, design specifications, requirements documentation, and Notion workspace organization.",
+  "description": "Specification Expert who creates design specs, architecture docs, requirements, and technical documentation, and authors user-facing documentation — user guides, API docs, tutorials, and end-user READMEs. Must be used for creating DESIGN.md files, requirements gathering, architecture specifications, and user-facing docs. Proactively handles ALL Notion-related tasks including searching, fetching, creating, and updating pages via the notion-sync CLI. Masters technical writing, design specifications, requirements documentation, user documentation, and Notion workspace organization.",
   "model": "sonnet",
   "effort": "medium",
   "permissionMode": "acceptEdits",

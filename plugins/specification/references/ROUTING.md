@@ -2,4 +2,4 @@
 
 | Tasks | Route to |
 | --- | --- |
-| Write a DESIGN.md, specification, requirements, or Notion document | `sam-taylor-specification` |
+| Write a DESIGN.md, specification, requirements, user-facing documentation, or Notion document | `sam-taylor-specification` |

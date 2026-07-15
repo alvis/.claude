@@ -81,9 +81,12 @@ every row additionally carries the lazy `RP-*` aliases implied by its producer/c
 | `james-mitchell-service-implementation` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DATA`, `SD-TESTING` |
 | `ethan-kumar-data-architect` | `SD-DATA`, `SD-UNIVERSAL`, `SD-TYPESCRIPT`, `SD-NAMING` |
 | `felix-anderson-devops` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-GIT` |
-| `nova-chen-research-engineer` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-REVIEW` |
-| `oliver-singh-data-scientist` | `SD-UNIVERSAL`, `SD-PYTHON`, `SD-OBSERVABILITY` |
-| `zara-ahmad-ml-engineer` | `SD-UNIVERSAL`, `SD-PYTHON`, `SD-FUNCTION`, `SD-TESTING` |
+| `zara-ahmad-ml-engineer` | `SD-UNIVERSAL`, `SD-PYTHON`, `SD-FUNCTION`, `SD-TESTING`, `SD-OBSERVABILITY` |
+| `amara-okonkwo-ai-research-lead` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-REVIEW` |
+| `leo-fabbri-generalist-engineer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-TESTING` |
+| `isla-moreau-design-lead` | `SD-UNIVERSAL`, `SD-DESIGN`, `SD-REVIEW` |
+| `theo-nakamura-desktop-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
+| `mila-vasquez-mobile-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
 | `taylor-kim-workflow-optimizer` | `SD-UNIVERSAL`, `SD-DOCS` |
 | `sam-taylor-specification` | `SD-DOCS`, `SD-NAMING`, `SD-UNIVERSAL` |
 | `ada-bishop-initializer` | `SD-UNIVERSAL`, `SD-FILE-STRUCTURE`, `SD-GIT` |
@@ -91,10 +94,10 @@ every row additionally carries the lazy `RP-*` aliases implied by its producer/c
 | `priya-sharma-frontend-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
 | `penelope-sterling-aesthetic-evaluator` | `SD-DESIGN`, `SD-REVIEW` |
 | `kai-raven-adversarial-redteam` | `SD-REVIEW`, `SD-UNIVERSAL` |
-| `dexter-cho-harness-eval-engineer` | `SD-TESTING`, `SD-UNIVERSAL`, `SD-FUNCTION` |
+| `dexter-cho-harness-eval-engineer` | `SD-TESTING`, `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-OBSERVABILITY`, `SD-REVIEW` |
 | `tess-park-test-runner` | `SD-TESTING` |
 
-20 agents total. Each row is exhaustive for that agent's `SD-*` subset — do not add standards beyond what is
+23 agents total. Each row is exhaustive for that agent's `SD-*` subset — do not add standards beyond what is
 listed here without updating this catalog first; the catalog, not the agent file, is authoritative.
 
 ## How an agent cites this catalog
