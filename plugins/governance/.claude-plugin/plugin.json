@@ -4,7 +4,7 @@
     "essential"
   ],
   "description": "Tools for creating and managing Claude Code configuration files including commands, skills, standards, and agents",
-  "version": "2026-07-14a",
+  "version": "2026-07-15",
   "hooks": {
     "SessionStart": [
       {
