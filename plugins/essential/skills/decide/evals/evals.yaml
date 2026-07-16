@@ -1,0 +1,38 @@
+# Evaluation definition for decide.
+
+eval_type: objective
+
+test_cases:
+  - name: converges_after_discovery
+    prompt: "Use this DISCOVERY.md to decide between the three viable storage approaches."
+    expectations:
+      - text: "checks that material unknowns are resolved before converging"
+        type: content
+      - text: "compares materially distinct options including the smallest viable change"
+        type: content
+      - text: "names evidence, tradeoffs, objections, a falsification signal, rollback, and deferred decisions"
+        type: content
+      - text: "waits for explicit approval before invoking an implementing skill"
+        type: content
+
+  - name: routes_sparse_evidence_back
+    prompt: "Decide the architecture, but I do not know the repository and we have not inspected it yet."
+    expectations:
+      - text: "does not force a recommendation from sparse evidence"
+        type: content
+      - text: "routes the material evidence gap to essential:discover"
+        type: content
+
+trigger_eval:
+  should_trigger:
+    - "decide which of these researched approaches we should take"
+    - "challenge this recommendation and choose an approach"
+    - "we have enough evidence; make the architecture decision"
+    - "compare these options, define rollback, and get my approval"
+
+  should_not_trigger:
+    - "do a blindspot pass on this unfamiliar module"                    # essential:discover
+    - "brainstorm ten possible interventions"                            # essential:discover
+    - "prototype several layouts so I can react"                         # essential:discover or web:design
+    - "implement the approved approach"                                  # implementing skill
+    - "review the implementation for security issues"                    # coding:review-code

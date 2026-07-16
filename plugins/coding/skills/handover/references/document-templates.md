@@ -63,6 +63,13 @@ Brief summary of where the work currently stands (2-3 sentences).
   **Impact**: [what it affects]
   **Alternatives Considered**: [options that were evaluated but not chosen - from Step 5]
 
+## Accepted Assumptions
+
+- **Assumption**: [low-impact reversible assumption]
+  **Evidence**: [user-stated source, observed repository fact, or explicit inference]
+  **Recheck trigger**: [evidence or event that invalidates it]
+  **Affected work**: [paths, tasks, or phases]
+
 ## Gotchas & Workarounds
 
 - **Issue**: [problem encountered]
@@ -108,17 +115,37 @@ Additional context needed to pick up this work:
 ### Issue: [Another implementation challenge]
 ...
 
+## Discoveries
+
+- **Kind**: observed | inference
+  **Statement**: [what was learned]
+  **Evidence**: [path, command output, runtime observation, or user decision]
+  **Impact**: [affected task, contract, or assumption]
+
+## Deviations
+
+- **Plan said**: [expected path]
+  **Territory showed**: [observed contradiction]
+  **Disposition**: proceeded-reversibly | pending-decision | plan-invalidated
+  **Affected steps**: [tasks or phases to revalidate]
+
+## Pending Decisions
+
+- **Question**: [material unresolved decision]
+  **Evidence**: [why the existing contract does not decide it]
+  **Options**: [viable choices]
+  **Recommendation**: [evidence-backed default]
+  **Owner and deadline**: [who decides and when]
+  **Research available**: [research path or none]
+
+## Invalidated Plan Steps
+
+- [Step] - invalidated by [discovery/deviation]; replacement or blocker: [status]
+
 ## Quick Workarounds
 
 - [Temporary solution for common issue] - [why needed]
 - [Dependency/gotcha discovered] - [how it affects work]
-
-## Open Questions
-
-- [Unresolved question - from Step 5 deferred decisions OR from code/comments]
-- [Uncertainty needing resolution]
-- **[Decision Topic]**: [Context and options to consider - from Step 5 deferred decisions]
-  - Research available: [Link to research-[topic].md if "Perform research" was selected]
 
 ## Quick Tips for Next Agent
 
@@ -162,7 +189,7 @@ Tasks:
 
 ### Decisions & Research
 
-- ⚠️ **DECISION REQUIRED**: [Topic from Step 5 deferred decisions] - See NOTES.md Open Questions
+- ⚠️ **DECISION REQUIRED**: [Topic from decision consultation] - See NOTES.md Pending Decisions
 - 📊 **RESEARCH AVAILABLE**: Review research-[topic].md and decide on [topic from Step 5 "Perform research" selections]
 
 ### Phase 2: [Next phase...]
@@ -181,6 +208,12 @@ Tasks:
 ### Risk: [From FIXME/HACK comments]
 **Impact**: [High/Medium/Low]
 **Mitigation**: [Strategy]
+
+## Pivot Signals
+
+- **Signal**: [new evidence that requires replanning]
+  **Affected phases**: [phase or task identifiers]
+  **Action**: [stop, return to discovery/decision, or rewrite the plan]
 
 ## Decision Log
 

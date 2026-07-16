@@ -54,12 +54,14 @@ resuming work from these documents.
 3. **Extract content and prune.** Map content to documents — CONTEXT.md:
    background and goals, active reference documents, impactful decisions,
    current architectural patterns, gotchas and workarounds, dependency and
-   configuration changes; NOTES.md: implementation issues and the solutions
-   applied, key discoveries, workarounds still needed, hard-won gotchas, only
-   what was learned through doing; PLAN.md: goal breakdown, incomplete tasks,
-   active phases, current dependencies, active risks, and unmet success
-   criteria. When updating existing files, proactively remove content useless
-   to future execution: outdated context, resolved issues (keep the lesson
+   configuration changes, accepted assumptions and their recheck triggers;
+   NOTES.md: implementation issues and the solutions applied, provenance-labeled
+   discoveries, deviations, workarounds still needed, pending decisions,
+   invalidated plan steps, hard-won gotchas, and only what was learned through
+   doing; PLAN.md: goal breakdown, incomplete tasks, active phases, current
+   dependencies, active risks, unmet success criteria, and evidence that
+   requires a pivot. When updating existing files, proactively remove content
+   useless to future execution: outdated context, resolved issues (keep the lesson
    only), details of completed tasks (keep path plus one-line summary), stale
    references, and verbose history — archive it under a "Historical Notes"
    section at the document bottom. Keep only the last 5 commits under "Recent
@@ -79,9 +81,11 @@ resuming work from these documents.
    in place: refresh dynamic sections (Current State, File Status, Recent
    Changes), preserve historical content, and integrate decision outcomes —
    finalized decisions with rationale into CONTEXT.md "Key Decisions &
-   Patterns", deferred decisions into NOTES.md "Open Questions", research
-   files referenced from NOTES.md, and decision-driven or blocked tasks into
-   PLAN.md. Create missing files from the structures in
+   Patterns", accepted assumptions with recheck triggers into CONTEXT.md,
+   deferred decisions into NOTES.md "Pending Decisions", research files and
+   deviations referenced from NOTES.md, and decision-driven, blocked, or
+   invalidated tasks plus pivot signals into PLAN.md. Create missing files from
+   the structures in
    [references/document-templates.md](references/document-templates.md).
 6. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
@@ -94,6 +98,9 @@ resuming work from these documents.
 - Every timestamp is a real ISO 8601 value from the `date` command.
 - Each decision identified in step 4 was consulted, and its outcome landed in
   the correct document section.
+- Accepted assumptions name their evidence and recheck triggers; deviations and
+  invalidated plan steps are preserved, and every pivot signal has an affected
+  phase or task.
 - No project file outside the handover documents was modified.
 
 ## Completion

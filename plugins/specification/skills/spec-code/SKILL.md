@@ -4,7 +4,7 @@ description: "Design or document technical specifications in the canonical templ
 model: opus
 context: fork
 allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
-argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack]"
+argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack] [--discovery=<path>]"
 ---
 
 # Spec Code
@@ -35,6 +35,7 @@ implementation.
 - **Required**: `<instruction>` describing what to specify or document.
 - **Optional**: `--type=api|web-app|mobile|library|fullstack` to select
   template patterns; `--reference=<doc>` to load supporting documentation;
+  `--discovery=<path>` to load a `DISCOVERY.md` evidence ledger;
   `--sync-template` to reorganize an existing spec to the latest template
   while preserving content; `--skip-notion-sync` to write local files only.
 - **Prerequisites**: for the sync step, `notion-sync` CLI and `NOTION_TOKEN`
@@ -57,15 +58,21 @@ seams.
    DOCUMENT when a codebase exists but no `DESIGN.md`. Then load materials:
    the existing design (UPDATE), the codebase analysis workflow in
    [references/document-mode.md](references/document-mode.md) (DOCUMENT),
-   the Notion template, any `--reference` documentation, and the
-   `--sync-template` flag.
+   the Notion template, any `--reference` documentation, `--discovery` or a
+   reachable `DISCOVERY.md`, and the `--sync-template` flag. Preserve discovery
+   provenance: intent and observations may ground requirements; inferences and
+   accepted assumptions remain labeled; unresolved material decisions block
+   invented requirements.
 2. When existing Notion pages are found, record the local files and known
    refs for the final `Skill(sync-notion)` call. That skill owns remote
    materialization, conflict decisions, merged content, and verification —
    do not maintain a parallel merge protocol here.
-3. Gather requirements: parse the arguments, clarify scope per mode with
-   `AskUserQuestion` where the instruction leaves real choices open, and lay
-   out the work as a todo list.
+3. Gather requirements: parse the arguments and discovery ledger, clarify scope
+   per mode with `AskUserQuestion` where the instruction leaves real choices
+   open, and lay out the work as a todo list. Route underexplored choices that
+   could change the contract to `essential:discover`; route grounded competing
+   options to `essential:decide`. Never convert a hypothesis or accepted
+   implementation assumption into a requirement without an explicit decision.
 4. Research the tech stack: CREATE researches an appropriate stack; UPDATE
    researches only the technologies that change; DOCUMENT extracts the stack
    from existing code with no research — follow
@@ -99,6 +106,8 @@ seams.
   `references/frontmatter.md`.
 - In UPDATE and DOCUMENT modes, merged content is integrated into owning
   sections with no addendum trailers or duplicate parallel sections.
+- Discovery provenance is preserved and no unresolved material decision was
+  invented into the contract.
 - The sync step reports verified success, or the skip is explicit
   (`--skip-notion-sync`) and recorded.
 

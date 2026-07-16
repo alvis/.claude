@@ -1,6 +1,6 @@
-# Step 5: Consult User on Key Decisions
+# Consult the user on key decisions
 
-Use this reference when Step 5 of the handover workflow runs. Before documenting any information in the handover files, identify and consult the user on all high-level decisions that require user input. You MUST NOT make architectural, technical, or strategic decisions without user consultation.
+Use this reference when the handover workflow consults on open decisions. Before documenting the handover, identify and consult the user on every material decision requiring input. Low-impact reversible assumptions may be recorded with evidence and a recheck trigger; architectural, technical, product, security, data, destructive, or strategic choices are never decided unilaterally.
 
 **Actions**:
 
@@ -13,7 +13,8 @@ Use this reference when Step 5 of the handover workflow runs. Before documenting
      - Implementation approaches with multiple valid options
      - Feature scope or priority decisions
      - Configuration or deployment strategy choices
-   - Identify any assumptions you would make without user input
+   - Identify assumptions, their evidence, impact, reversibility, and recheck
+     triggers; promote material assumptions to decisions
 
 2. **Categorize Decisions**:
    - **Architectural Decisions**: System design patterns, component structure, data flow
@@ -27,7 +28,8 @@ Use this reference when Step 5 of the handover workflow runs. Before documenting
      - Present the decision clearly with context
      - Provide 3-5 viable options with brief pros/cons
      - ALWAYS include these TWO special options:
-       - **"Defer decision"** - Document as open question in handover
+       - **"Defer decision"** - Document under Pending Decisions with an owner
+         and decision deadline
        - **"Perform research"** - Launch deep research subagent, save results
      - Use AskUserQuestion tool with format:
 
@@ -54,7 +56,7 @@ Use this reference when Step 5 of the handover workflow runs. Before documenting
    - Prepare implementation tasks for PLAN.md
 
    **For "Perform research" selections:**
-   - Launch Task tool with subagent_type="general-purpose" for deep research
+   - Route the bounded investigation to the best available research specialist
    - Provide comprehensive research prompt including:
      - Decision context and importance
      - Key questions to answer
@@ -62,11 +64,11 @@ Use this reference when Step 5 of the handover workflow runs. Before documenting
      - Best practices to identify
    - Save research output as `research-[topic-slug].md` in working directory
    - Add to PLAN.md: "📊 **RESEARCH AVAILABLE**: Review research-[topic].md and decide on [topic]"
-   - Reference research file in NOTES.md under "Open Questions" section
+   - Reference the research file in NOTES.md under "Pending Decisions"
 
    **For "Defer decision" selections:**
-   - Mark for inclusion in NOTES.md "Open Questions" section
-   - Prepare for PLAN.md: "⚠️ **DECISION REQUIRED**: [Topic] - See NOTES.md Open Questions"
+   - Mark for inclusion in NOTES.md "Pending Decisions" with owner and deadline
+   - Prepare for PLAN.md: "⚠️ **DECISION REQUIRED**: [Topic] - See NOTES.md Pending Decisions"
    - Identify tasks blocked by this decision
 
 5. **Handle Multiple Decisions**:
@@ -101,10 +103,10 @@ Options:
 → Launch research agent on "session caching strategies for high-load Node.js applications"
 → Save results to research-session-caching.md
 → Prepare for PLAN.md: "📊 Review research-session-caching.md and decide on caching strategy"
-→ Prepare for NOTES.md: Link to research file in "Open Questions"
+→ Prepare for NOTES.md: Link to research file in "Pending Decisions"
 
 [If user selects "Defer decision"]
-→ Prepare for NOTES.md: "Open Questions - Session Caching Strategy: Redis vs Memcached vs in-memory"
+→ Prepare for NOTES.md: "Pending Decisions - Session Caching Strategy: Redis vs Memcached vs in-memory"
 → Prepare for PLAN.md: "⚠️ DECISION REQUIRED: Session caching strategy - See NOTES.md"
 → Identify blocked tasks: "Implement session persistence - ⏸️ Blocked by caching decision"
 ```

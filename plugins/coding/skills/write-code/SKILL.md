@@ -60,7 +60,10 @@ Child skills run in `context: fork`, in this order:
    `coding:push-pr` for an existing-stack restack; see
    [references/stack-split.md](references/stack-split.md).
 
-State handover: children read and update CONTEXT.md, NOTES.md, and PLAN.md.
+State handover: children read and update CONTEXT.md, NOTES.md, and PLAN.md. For
+a fresh run, create NOTES.md before the first child and keep it live across the
+lifecycle; `coding:handover` later completes the full three-file bundle when a
+pause or transfer is requested.
 
 Composite convention: pass the internal `--from-composite` flag only to
 children that declare it (`setup-project`, `draft-code`, `fix`, `refactor`)
@@ -72,7 +75,15 @@ compatibility options.
 ## Workflow
 
 1. Parse `<instruction>` and flags; identify requirements, scope, and
-   acceptance criteria, asking for clarification when ambiguous. With
+   acceptance criteria. Separate user-stated intent, observed repository facts,
+   inferences, accepted assumptions, and unresolved questions. A material
+   unknown affecting architecture, public API, data model, security/privacy,
+   destructive migration, user-visible semantics, or acceptance criteria must
+   be resolved or explicitly deferred before its dependent work starts. A
+   low-impact reversible assumption may proceed conservatively with a recheck
+   trigger recorded in NOTES.md. Initialize or refresh NOTES.md sections for
+   Discoveries, Accepted Assumptions, Deviations, Pending Decisions, and
+   Invalidated Plan Steps. With
    `--resume`, read the handover documents, map the file substate to the
    resume point (`need-draft` → draft-code, `need-completion` →
    complete-code, `need-fixing` → fix, `need-refactoring` → refactor), and
@@ -88,6 +99,11 @@ compatibility options.
 5. Invoke `coding:fix` with the target area and `--from-composite`; gate.
 6. Invoke `coding:refactor` with the target area and `--from-composite`;
    gate.
+
+   After each child, update NOTES.md from territory evidence. When a material
+   deviation invalidates a plan premise, record the observed evidence and
+   affected steps, stop the stale branch, and revalidate the remaining plan
+   before continuing.
 
    Interactive gate (after each of steps 3-6): offer the user
    (1) proceed to the next step, (2) re-run the current child with change
@@ -114,11 +130,16 @@ compatibility options.
   it.todo markers remain in scope.
 - When a stack dispatch was triggered, the owning child reported the opened or
   restacked draft PRs.
+- NOTES.md distinguishes observations, accepted reversible assumptions,
+  deviations, pending decisions, and invalidated plan steps; no material
+  unknown was silently implemented.
 
 ## Completion
 
 Report the parsed instruction, steps executed and skipped, files created and
 modified, test/type/lint/coverage results, the stack outcome (skipped, or the
 opened/restacked PRs with bookmark and URL), and next steps (typically
-`/coding:commit` when no stack was dispatched). For a rejection, name the
+`/coding:commit` when no stack was dispatched). Include material discoveries,
+accepted assumptions and recheck triggers, deviations, pending decisions, and
+plan pivots from NOTES.md. For a rejection, name the
 matching boundary and the skill to use instead.

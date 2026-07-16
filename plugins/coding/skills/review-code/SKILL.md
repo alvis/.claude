@@ -37,7 +37,8 @@ semantic error, and delegating mechanical checks to tooling.
   number, or git range;
   `--area=test|documentation|code-quality|security|style|all` (default all);
   `--out=<dir>` — report directory relative to the project root (default
-  `reviews/`).
+  `reviews/`); `--explain` — additionally generate a change-comprehension
+  artifact and quiz from actual code paths after the independent review.
 - **Prerequisites**: a repository checkout; lint and `tsc` are assumed to run
   in the pipeline, so reviewers skip everything tooling already enforces.
 
@@ -67,6 +68,9 @@ semantic error, and delegating mechanical checks to tooling.
   area file and stable across re-runs for the same finding.
 - Each issue's `Solution` is direction, not a full patch — enough for a
   downstream `coding:fix` agent to act.
+- With `--explain`, `<out>/CHANGE_EXPLAINER.md` follows
+  [references/explainer.md](references/explainer.md); it teaches the integrated
+  behavior and does not change the review verdict.
 
 </report>
 
@@ -102,9 +106,15 @@ semantic error, and delegating mechanical checks to tooling.
    PASS_WITH_SUGGESTIONS; all areas PASS: PASS — and rewrite `<out>/README.md`
    entirely from the current area files (per-area verdict rows, timestamp,
    aggregate counts, systemic addendum, overall status).
-5. Render the final summary in the mode-appropriate format (CI vs
+5. When `--explain` is present, load
+   [references/explainer.md](references/explainer.md) and generate
+   `<out>/CHANGE_EXPLAINER.md` from the final diff, relevant pre-existing code
+   paths, plans/specifications, implementation notes, deviations, and review
+   reports. Keep the explainer evidence-backed and the quiz about behavior,
+   invariants, failure modes, and integration—not file-name trivia.
+6. Render the final summary in the mode-appropriate format (CI vs
    interactive) per [references/output-formats.md](references/output-formats.md).
-6. When a check in the verification below fails — a missing or malformed area
+7. When a check in the verification below fails — a missing or malformed area
    file, a failed agent — fix the cause (typically re-dispatching only that
    area) and re-run that check. Repeat until every check passes or a concrete
    blocker remains, then report the blocker instead of looping.
@@ -117,12 +127,16 @@ semantic error, and delegating mechanical checks to tooling.
 - `<out>/README.md` was rewritten with per-area verdicts, aggregate priority
   counts, and the overall status.
 - No code file was modified by the review.
+- With `--explain`, `CHANGE_EXPLAINER.md` cites actual code and context paths,
+  distinguishes pre-existing behavior from the change, and contains a separate
+  answer key for its comprehension quiz.
 
 ## Completion
 
 Report the per-area file listing (one line per area with its verdict),
 aggregate counts per priority, the overall status, and the path to
-`<out>/README.md`. Detailed findings live in the area files, not the console
-summary. For invocation examples — single/multi-area, glob/PR/git/package
+`<out>/README.md`; include the explainer path when requested. Detailed findings
+live in the area files, not the console summary. For invocation examples —
+single/multi-area, glob/PR/git/package
 specifiers, CI vs interactive, clean pass, Pending Decisions, error handling
 — see [references/examples.md](references/examples.md).

@@ -19,8 +19,17 @@ Classify the task and pick the substrate once, up front, then name the success o
 - **Parallel first.** Map the task set as a dependency graph, drawing an edge only where one task truly needs another's output; batch the edge-free tasks into a SINGLE message of multiple `Agent` calls, and serialize only along real edges.
 - **One bounded task per subagent.** Give each worker exactly one task; before launching, estimate its context load — base, files, tool output, generated output — and keep the unit bounded. Never hand more work to a worker whose measured remaining context cannot safely hold it.
 - **Reuse a warm peer.** Route a small task that needs a large base context a live teammate already carries to that teammate via `SendMessage` rather than cold-starting a fresh agent — separate spawns do not share a cached base.
-- **Check blindspots.** Before major decisions, ask "what am I missing?"
 - **Synthesize.** Collect what returns, identify patterns, and consolidate it into actionable results.
+
+## Working with uncertainty
+
+Treat the prompt and plan as the map; repository and runtime evidence are the territory. Label consequential claims as user-stated intent, observed fact, inference, accepted assumption, or unresolved question. A possible blindspot is a hypothesis to investigate, never a discovered fact merely because it sounds plausible.
+
+Before a long-horizon or materially ambiguous decision, inspect the relevant territory and ask what evidence, latent preference, integration constraint, failure mode, or historical choice may be missing. Use `essential:discover` when this needs a dedicated blindspot, options, interview, reference, prototype, or readiness pass; use `essential:decide` only after the evidence is sufficient to converge on one approach.
+
+Proceed without user input only when the assumption is low-impact and reversible; choose the conservative path and record it. Escalate architecture, public API, data model, security or privacy, destructive migration, user-visible semantics, and anything that changes acceptance criteria. When evidence disproves a plan premise, stop the stale branch, re-evaluate dependent work, and either re-plan or request the material decision.
+
+The main session owns the authoritative uncertainty ledger and user decisions. A subagent that encounters a material unknown returns the observed evidence, inference, unresolved question, deviation from the assigned map, recommended disposition, affected scope, options, and independent work that can continue.
 
 ## Team lifecycle
 

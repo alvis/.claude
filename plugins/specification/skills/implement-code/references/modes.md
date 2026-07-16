@@ -70,7 +70,7 @@ Update TodoWrite with one todo per dispatched child.
 ```markdown
 ## Deviation Policy
 
-The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, DEVIATE and proceed, appending an entry to `<repo>/DEVIATIONS.md`:
+The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, record the territory evidence and append an entry to `<repo>/DEVIATIONS.md`:
 
 - Missing or wrong dependency (package not installed, wrong version, replaced)
 - Wrong integration assumption (API signature, event name, schema field, import path, module layout differs from what the draft assumes)
@@ -91,12 +91,16 @@ SKIP logging for trivial differences:
     ### D-<N>: <short title>
     - **When**: <step name / commit label>
     - **Draft said**: <one-line summary>
+    - **Territory evidence**: <path, symbol, test, runtime observation, or dependency state>
     - **What I did instead**: <one-line summary>
     - **Reason**: missing-dep | wrong-integration | standard-violation | arch-conflict | stale-symbol
     - **Impact on spec**: none | surface-change | behavior-change
     - **Severity**: minor | major | blocking
+    - **Disposition**: proceeded-reversibly | pending-decision | plan-invalidated
+    - **Invalidated plan steps**: <step ids or none>
+    - **Recheck trigger**: <evidence requiring another pivot or none>
 
-DO NOT refuse the task over a deviation. DO NOT ask the user mid-implementation for trivial choices. Record and proceed.
+After every material deviation, revalidate the remaining PLAN dependencies and acceptance map before dependent work continues. Proceed only when the departure is low-impact and reversible. When it affects architecture, public API, data model, security/privacy, destructive migration, user-visible semantics, or acceptance criteria, stop the stale branch and return `pending_decision` with evidence, affected scope, options, and a recommendation. Do not ask the user mid-implementation for trivial choices.
 ```
 
 ---
