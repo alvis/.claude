@@ -60,8 +60,8 @@ anything is written. `update-agent` owns changes to existing definitions.
      [references/model-effort-heuristic.md](references/model-effort-heuristic.md)
      — pick the cheapest model that clears the role's bar and raise effort
      within a tier before upgrading the model;
-   - an explicit tools list omitting `Agent` for a leaf, or a spawn-capable
-     tool surface based on role needs rather than model tier;
+   - no `tools` field, so both leaf-by-charter and coordinating roles inherit
+     the complete runtime tool surface;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
      when the role needs them. A review-routing Stop hook names the producer's
      concrete default reviewers with each role and main task, states the review
@@ -102,10 +102,9 @@ anything is written. `update-agent` owns changes to existing definitions.
    example table format with `:white_check_mark:`/`:x:` status markers,
    and delete them before staging; they are not deliverables and must not be
    committed.
-10. Check tools against behavior: a leaf cannot claim it can spawn and a
-   spawn-capable agent must have `Agent`; read-mostly critics must not
-   accidentally receive mutation tools; workflow-spawned and teammate
-   permissions must follow template rules. Also check model/effort
+10. Check runtime-tool behavior: every definition omits `tools`; a leaf does not claim it will spawn, and a
+   coordinating role follows the shared nested-spawn policy. Use `disallowedTools` only for narrow durable
+   restrictions; workflow-spawned and teammate permissions must follow template rules. Also check model/effort
    compatibility, allowed permission values, valid color/model values,
    context aliases and paths, namespaced skills, MCP references, hooks,
    memory semantics, initialPrompt/base consistency, explicit triggers, and

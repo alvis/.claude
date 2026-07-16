@@ -70,7 +70,7 @@ Effort is a second, independent dial (`low|medium|high|xhigh|max`; omit for haik
 
 ## Nesting
 
-- Nesting is exceptional and one-off: an agent may consider it only when its tools include `Agent` and the helper's single returned artifact or summary ends the delegation. A true leaf omits `Agent`.
+- Nesting is exceptional and one-off: an agent may consider it only when `Agent` is available at runtime and the helper's single returned artifact or summary ends the delegation. A leaf-by-charter does not spawn even when the runtime exposes `Agent`.
 - The nested call specifies an agent type such as `test-reporter`, never a configured name. The parent passes the relevant standard and skill paths, surrounding conventions, discovered constraints, acceptance criteria, and remaining child-spawn budget — a nested agent starts blind.
 - For continuing or collaborative work, message the best-known teammate directly by `agent_id`. If that teammate is known but its ID is not, ask the main agent to resolve the ID; only when the owner is unknown should the main agent suggest a warm peer by prior folder/feature history or spawn a new named teammate.
 - Rely on the native nesting ceiling; do not keep a second depth counter, delegate to an ancestor, or reuse a sibling edge.

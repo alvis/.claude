@@ -5,9 +5,8 @@
   "model": "fable",
   "effort": "high",
   "permissionMode": "default",
+  "memory": "project",
   "disallowedTools": [
-    "Write",
-    "Edit",
     "MultiEdit",
     "NotebookEdit"
   ],

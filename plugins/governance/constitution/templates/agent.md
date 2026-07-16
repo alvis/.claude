@@ -16,12 +16,11 @@
   "model": "opus|sonnet|haiku|fable — claude-fable-5 only if you have direct evidence the loader rejects the fable alias, noted inline",
   "effort": "low|medium|high|xhigh|max — model-dependent; a FIXED per-agent choice (cannot vary per task) — set it to the reasoning depth this role's work demands; OMIT this key entirely for haiku (haiku does not support effort)",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
-  "tools": "OMIT to grant the full default toolset, UNLESS this agent is a leaf or needs restriction (see Leaf & Spawn Encoding below)",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
   "hooks": "gated:true agents customize the runtime review-routing Stop hook with concrete default reviewers (each name, role, and main task) plus the independent-review action; critic:true+fence:true agents embed the PreToolUse fence verbatim",
-  "memory": "user|project|local — OMIT the key entirely to disable; there is no memory:none",
+  "memory": "REQUIRED and always project — every roster agent owns .claude/agent-memory/<name>/MEMORY.md",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
   "maxTurns": "integer hard cap on agentic turns for this dispatch",
@@ -44,25 +43,16 @@ Per-role default (main-session/spawned-subagent scenarios only — workflow and 
 - `acceptEdits` — sonnet/haiku producers (edits flow without a prompt per file; Bash is still checked).
 - `default` — critics (read-mostly work where an interactive prompt is acceptable; edit-prevention rides `disallowedTools`, the hook fence, or worktree isolation, not the permission mode).
 
-### Leaf & spawn encoding — counterintuitive, get this right
+### Runtime tools and leaf posture
 
-A `leaf:true` agent must not be able to spawn further agents. The control surface for that is **presence in
-`tools`**, not `disallowedTools`:
+Every agent definition omits `tools` so Claude Code can supply the complete tool surface available at runtime.
+An explicit allowlist is a stale snapshot: tools introduced by plugins, MCP servers, or later runtime versions
+would be hidden from that agent.
 
-- To make an agent a leaf: give it an **explicit `tools` list that omits `Agent`** (e.g.
-  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage"`). Every explicit tool list includes
-  `SendMessage` so the role can return a hand-off request or result without gaining spawn authority.
-- `disallowedTools: ["Agent"]` is **NOT valid** for this purpose — it does not reliably prevent spawning; don't
-  reach for it here.
-- A spawn-capable agent either **omits `tools` entirely** (grants the full default set, `Agent` included) or
-  lists tools **including `Agent`** explicitly.
-- Binding note: on the main thread, an `Agent(...)` parenthetical allowlist binds the call. But a spawned
-  subagent that itself holds the `Agent` tool can spawn ANY registered agent, regardless of what allowlist
-  launched it — so a true leaf must omit `Agent` from its own tool list, full stop.
-- Capability is not permission to build a nested team. Only the main agent assigns configured teammate names.
-  A spawn-capable nested agent uses `Agent` only for a certainly one-off helper, supplies `subagent_type`, and
-  omits a configured name. For continuing work it messages the best-known teammate directly by `agent_id`; only
-  when it cannot identify the owner does it ask the main agent to suggest one and return the selected `agent_id`.
+`leaf` is therefore a behavioral charter, not a frontmatter capability boundary. A leaf does not spawn or
+coordinate nested work even when `Agent` is available at runtime; it returns results or hand-off requests to the
+caller. `disallowedTools` remains valid for narrow durable prohibitions, but never use it to recreate a general
+allowlist or to hide `Agent` merely to encode leaf posture.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 
@@ -114,11 +104,22 @@ to at task time):
 - `RP-CONFIG` — the target repo's build/lint/test configuration
 - (add `RP-HANDOVER` / `RP-STANDARDS` only if this role actually consults them)
 
-<!-- INSTRUCTION: if this agent carries a `memory` frontmatter key, state self-curation explicitly, in this
-     agent's voice — there is no external memory steward. -->
+## Memory
 
-I self-curate my own `.claude/agent-memory/<name>/MEMORY.md` — pruning stale entries and rewriting it as my own
-judgment dictates; no one else tends it for me.
+<!-- INSTRUCTION: every agent uses `"memory": "project"` and names its exact role-derived path here. State the
+     role-specific durable knowledge worth retaining. The section must also carry the maintenance contract from
+     plugins/governance/constitution/templates/agent-memory.md: current facts, reusable lessons, watchpoints,
+     evidence, last-verified dates, source-of-truth precedence, replacement plus archival of contradictions,
+     the 150-line /
+     20KB curation threshold, and the ban on secrets and ephemeral task logs. There is no external steward. -->
+
+I self-curate `.claude/agent-memory/<name>/MEMORY.md`. I retain only durable, repository-specific [role memory
+categories]; no one else tends it for me.
+
+I follow `plugins/governance/constitution/templates/agent-memory.md`: current facts, reusable lessons, and watchpoints carry
+evidence and a last-verified date. Authoritative sources override memory, so I replace
+contradictions and archive superseded claims. Before 150 lines or 20KB, I move detail to `topics/<slug>.md` and
+obsolete history to `archive/YYYY-MM.md`. I never store secrets, personal data, or ephemeral task logs.
 
 ## Coordination Posture
 

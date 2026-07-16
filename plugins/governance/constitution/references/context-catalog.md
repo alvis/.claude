@@ -15,9 +15,11 @@ its own alias or path; it cites entries from here verbatim.
   what they currently point to.
 - **`SD-*` are stable standards.** These live at fixed paths in this repo (the plugin `constitution/standards/`
   trees) and MAY be named as preload candidates for producers/critics per the assignment map.
-- **Each memory-carrying agent self-curates its own `MEMORY.md`.** There is no external memory steward role and
-  no shared memory file. An agent with a `memory` frontmatter key maintains
-  `.claude/agent-memory/<name>/MEMORY.md` itself, pruning and rewriting it as its own judgment dictates.
+- **Every agent self-curates project memory.** Every roster definition carries `"memory": "project"` and owns
+  `.claude/agent-memory/<name>/MEMORY.md`; there is no external memory steward or shared runtime memory file.
+  Each definition names role-specific durable content and follows
+  `plugins/governance/constitution/templates/agent-memory.md` for
+  evidence, verification, contradiction replacement, archival, size control, and sensitive-data exclusions.
 
 ## SD- menu (stable standards, real paths)
 
@@ -105,5 +107,7 @@ listed here without updating this catalog first; the catalog, not the agent file
 An agent's `base.md` Base Context section lists its `SD-*` subset by alias + real path (copied verbatim from the
 menu above — no re-deriving), states which `RP-*` aliases it resolves lazily, and — if it carries a `memory`
 frontmatter key — states that it self-curates `.claude/agent-memory/<name>/MEMORY.md`. See
-`templates/agent.md` for the section shape and `templates/role-prompt.md` for how the same context list is
-compressed into an `initialPrompt` load-context clause.
+`templates/agent.md` for the required `## Memory` section,
+`plugins/governance/constitution/templates/agent-memory.md` for its maintenance schema, and
+`templates/role-prompt.md` for how the same context
+list is compressed into an `initialPrompt` load-context clause.

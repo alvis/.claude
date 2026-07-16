@@ -23,6 +23,16 @@ from stitch_agent import (
 )
 
 
+def memory_section(name: str) -> str:
+    return (
+        f"\n## Memory\n\nI retain durable repository knowledge in "
+        f"`.claude/agent-memory/{name}/MEMORY.md`. Current facts, reusable "
+        "lessons, and watchpoints carry evidence and a last-verified date. "
+        "Sources override memory; I replace contradictions "
+        "and archive old claims before 150 lines or 20KB.\n"
+    )
+
+
 def write_template(
     plugin_root: Path,
     name: str,
@@ -36,14 +46,12 @@ def write_template(
         "description",
         "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
     )
-    tools = frontmatter.get("tools")
-    if isinstance(tools, list) and "SendMessage" not in tools:
-        tools.append("SendMessage")
-    elif isinstance(tools, str) and "SendMessage" not in tools.split(", "):
-        frontmatter["tools"] = f"{tools}, SendMessage"
+    frontmatter.setdefault("memory", "project")
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
     )
+    if "## Memory" not in body:
+        body += memory_section(name)
     (template / "base.md").write_text(body, encoding="utf-8")
     return template
 
@@ -59,7 +67,6 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 frontmatter={
                     "name": "test-agent",
                     "description": "first line\nsecond line. Preferably named Ava, Kit, or June when the main agent spawns this role.",
-                    "tools": ["Read", "Bash"],
                     "emptyObject": {},
                     "emptyList": [],
                     "hooks": {
@@ -82,7 +89,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 json.loads((template / "frontmatter/claude.json").read_text()),
                 json.loads(frontmatter_text),
             )
-            self.assertTrue(stitched.endswith("---\n\n# Test agent\n"))
+            self.assertIn("---\n\n# Test agent\n", stitched)
             self.assertEqual(stitched, stitch_agent_definition(template))
 
     def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
@@ -181,13 +188,8 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             ),
             (
                 {"name": "test-agent", "tools": ["Read"]},
-                "I hand results over SendMessage.",
-                "mentions SendMessage but its tools omit it",
-            ),
-            (
-                {"name": "test-agent", "tools": ["Read", "Agent"]},
                 "A role-specific body.",
-                "explicit tools must include SendMessage",
+                "must omit tools",
             ),
             (
                 {"name": "test-agent"},
@@ -226,6 +228,36 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 AgentTemplateError, "repeats shared delegation policy"
             ):
                 validate_agent_contract({"name": "test-agent"}, phrase)
+
+    def test_requires_project_memory_path_section_and_maintenance_contract(self) -> None:
+        valid_body = memory_section("test-agent")
+        valid_frontmatter = {"name": "test-agent", "memory": "project"}
+
+        cases = (
+            ({"name": "test-agent", "memory": "local"}, valid_body, "project-scoped"),
+            (valid_frontmatter, "# No memory\n", "exactly one ## Memory"),
+            (
+                valid_frontmatter,
+                valid_body + valid_body,
+                "exactly one ## Memory",
+            ),
+            (
+                valid_frontmatter,
+                valid_body.replace("test-agent", "other-agent"),
+                "must name exact path",
+            ),
+            (
+                valid_frontmatter,
+                valid_body.replace("last-verified", "checked"),
+                "missing maintenance marker: last-verified",
+            ),
+        )
+
+        for frontmatter, body, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(
+                AgentTemplateError, message
+            ):
+                validate_agent_contract(frontmatter, body)
 
     def test_review_hook_requires_concrete_defaults_and_review_action(self) -> None:
         def build_frontmatter(prompt: str) -> dict[str, object]:
@@ -328,6 +360,64 @@ class AgentDiscoveryTest(unittest.TestCase):
         for template in templates:
             with self.subTest(agent=template.name):
                 stitch_agent_definition(template.path)
+
+    def test_every_distributed_agent_has_project_memory(self) -> None:
+        templates = discover_agent_templates(ROOT / "plugins/essential")
+        self.assertEqual(23, len(templates))
+
+        for template in templates:
+            with self.subTest(agent=template.name):
+                frontmatter = json.loads(
+                    (template.path / "frontmatter/claude.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                body = (template.path / "base.md").read_text(encoding="utf-8")
+                self.assertEqual("project", frontmatter.get("memory"))
+                self.assertNotIn("tools", frontmatter)
+                self.assertEqual(1, body.count("\n## Memory\n"))
+                self.assertIn(
+                    f".claude/agent-memory/{template.name}/MEMORY.md", body
+                )
+
+    def test_memory_template_is_bounded_and_covers_lifecycle_rules(self) -> None:
+        path = ROOT / "plugins/governance/constitution/templates/agent-memory.md"
+        template = path.read_text(encoding="utf-8")
+
+        self.assertLessEqual(len(template.splitlines()), 150)
+        self.assertLessEqual(len(template.encode("utf-8")), 20 * 1024)
+        for heading in (
+            "## Template Instructions — Remove After Initialization",
+            "## Current Facts",
+            "## Reusable Lessons",
+            "## Watchpoints",
+            "## Topic Index",
+            "## Archive Index",
+        ):
+            self.assertIn(heading, template)
+        self.assertIn("remove this entire", template)
+        for marker in ("Evidence", "Last verified", "150 lines", "20KB"):
+            self.assertIn(marker, template)
+
+    def test_memory_writers_add_no_new_write_hooks(self) -> None:
+        templates = {
+            template.name: template
+            for template in discover_agent_templates(ROOT / "plugins/essential")
+        }
+
+        for name in ("security-champion", "test-runner", "workflow-optimizer"):
+            with self.subTest(agent=name):
+                frontmatter = json.loads(
+                    (templates[name].path / "frontmatter/claude.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                self.assertNotIn("tools", frontmatter)
+                self.assertNotIn("Write", frontmatter.get("disallowedTools", []))
+                self.assertNotIn("Edit", frontmatter.get("disallowedTools", []))
+                self.assertNotIn(
+                    "PreToolUse", frontmatter.get("hooks", {})
+                )
 
     def test_distributed_collaboration_sections_are_point_form_only(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
@@ -557,7 +647,9 @@ class InstallAgentsTest(unittest.TestCase):
 
             self.assertEqual(1, install_agents(essential, destination))
             (template / "base.md").write_text(
-                "# Version two\n",
+                (template / "base.md")
+                .read_text(encoding="utf-8")
+                .replace("# Version one", "# Version two"),
                 encoding="utf-8",
             )
             self.assertEqual(1, install_agents(essential, destination))

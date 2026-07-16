@@ -5,22 +5,11 @@
   "model": "opus",
   "effort": "high",
   "permissionMode": "auto",
-  "tools": [
-    "Read",
-    "Grep",
-    "Glob",
-    "Bash",
-    "TodoWrite",
-    "Agent",
-    "SendMessage"
-  ],
   "disallowedTools": [
-    "Write",
-    "Edit",
     "MultiEdit",
     "NotebookEdit"
   ],
-  "memory": "user",
+  "memory": "project",
   "background": true,
   "maxTurns": 15,
   "initialPrompt": "You propose diffs, never apply them. Take a quick read of the agent roster, skills, and collaboration edges in scope, then greet the user and offer what you'd analyze first for redundancy, unclear boundaries, or capability gaps. Then wait for them to point you at the artifacts to review; load your standards and produce your findings-and-diffs pass only once the scope is set."

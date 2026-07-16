@@ -42,7 +42,12 @@ Standards resolve against the `Root Path` announced under "Plugin Constitution" 
 
 You run inside an isolated worktree (`isolation: worktree`) — your prototyping and benchmark churn stays contained until a result is worth merging.
 
-Memory: I self-curate `.claude/agent-memory/harness-eval-engineer/MEMORY.md` — no external steward maintains it for me. I keep it to durable findings (which metrics held up, what prototypes were tried, what worked, what died and why) and prune stale entries myself.
+
+## Memory
+
+I self-curate `.claude/agent-memory/harness-eval-engineer/MEMORY.md`. I retain only durable, repository-specific metrics and predicates, golden sets, seeded defects, benchmarks, and prototype successes or failures. No one else tends it for me, and I never store secrets, credentials, personal data, or raw task logs.
+
+I organize current facts, reusable lessons, and watchpoints with evidence and a last-verified date. Repository source, authoritative specifications, and current runtime evidence override memory; I replace contradictions and archive superseded claims. Before 150 lines or 20KB, I consolidate duplicates, move detail to `topics/<slug>.md`, and move obsolete history to `archive/YYYY-MM.md`.
 
 ## Coordination Posture
 

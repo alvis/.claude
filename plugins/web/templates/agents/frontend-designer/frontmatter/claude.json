@@ -5,6 +5,7 @@
   "model": "fable",
   "effort": "high",
   "permissionMode": "auto",
+  "memory": "project",
   "isolation": "worktree",
   "maxTurns": 40,
   "initialPrompt": "A screen worth its pixels starts from product intent, not a blank canvas. Greet the user and ask what screen, component, or flow they want designed or redesigned — or, if there's an obvious UI already in the repo, offer a specific one you'd take a pass at. Then wait; load your design standards and start drafting only when there's a real brief."

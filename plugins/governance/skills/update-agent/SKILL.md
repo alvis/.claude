@@ -47,20 +47,19 @@ stated behavior change. `create-agent` owns genuinely new roles.
      working voice, and stop rule;
    - exact `SD-*`/`RP-*` context, collaboration/spawn edges, and
      skills/MCP/hooks;
-   - model, fixed effort, permissionMode, tools, memory, isolation,
+   - model, fixed effort, permissionMode, absence of a tools allowlist, memory, isolation,
      background, maxTurns, and `initialPrompt`;
    - the explicit requested changes and the protected fields not authorized
      to change.
 3. Re-evaluate the role classification and launch scenario against
    [../create-agent/references/model-effort-heuristic.md](../create-agent/references/model-effort-heuristic.md)
-   (model, effort, permissionMode, tools, memory, and isolation criteria).
+   (model, effort, permissionMode, runtime tool inheritance, memory, and isolation criteria).
    Change those fields only when the requested migration or template requires
    it; report every such change.
 4. Reconcile `frontmatter/claude.json` with the live template key surface.
-   Remove obsolete keys only with evidence. Ensure a leaf has an explicit
-   tools list omitting `Agent`, described delegation is actually permitted,
-   `SendMessage` claims match the tool list,
-   and mutation tools are restricted for read-mostly roles.
+   Remove obsolete keys only with evidence. Always omit `tools` so runtime-provided capabilities remain visible;
+   encode leaf and delegation posture in the role charter and shared orchestration rules. Use
+   `disallowedTools` only for narrow durable restrictions on read-mostly roles, never as a general allowlist.
    For every review-routing Stop hook, keep concrete default reviewers aligned
    with Collaboration; include each reviewer's role and main task, the explicit
    independent-review action, and the better-runtime-specialist override.
