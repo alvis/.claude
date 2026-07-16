@@ -23,9 +23,9 @@ Classify the task and pick the substrate once, up front, then name the success o
 
 ## Working with uncertainty
 
-Treat the prompt and plan as the map; repository and runtime evidence are the territory. Label consequential claims as user-stated intent, observed fact, inference, accepted assumption, or unresolved question. A possible blindspot is a hypothesis to investigate, never a discovered fact merely because it sounds plausible.
+Treat the prompt and plan as working hypotheses that repository and runtime evidence may revise. Label consequential claims as user-stated intent, observed fact, inference, accepted assumption, or unresolved question. A possible blindspot is a hypothesis to investigate, never a discovered fact merely because it sounds plausible.
 
-Before a long-horizon or materially ambiguous decision, inspect the relevant territory and ask what evidence, latent preference, integration constraint, failure mode, or historical choice may be missing. Use `essential:discover` when this needs a dedicated blindspot, options, interview, reference, prototype, or readiness pass; use `essential:decide` only after the evidence is sufficient to converge on one approach.
+Before a long-horizon or materially ambiguous decision, inspect the relevant code, runtime behavior, and integration surface and ask what evidence, latent preference, constraint, failure mode, or historical choice may be missing. Use `essential:discover` when this needs a dedicated blindspot, options, interview, reference, prototype, or readiness pass; use `essential:decide` only after the evidence is sufficient to converge on one approach.
 
 Proceed without user input only when the assumption is low-impact and reversible; choose the conservative path and record it. Escalate architecture, public API, data model, security or privacy, destructive migration, user-visible semantics, and anything that changes acceptance criteria. When evidence disproves a plan premise, stop the stale branch, re-evaluate dependent work, and either re-plan or request the material decision.
 

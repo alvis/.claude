@@ -9,7 +9,7 @@ opened before a decision.
    smallest viable intervention to the most ambitious. Differences must affect
    architecture, user experience, scope, cost, or reversibility—not merely names
    or styling.
-3. For each option record: mechanism, territory evidence, expected benefit,
+3. For each option record: mechanism, repository or runtime evidence, expected benefit,
    cost and dependencies, reversibility, failure mode, and which unknown it
    resolves or creates.
 4. Include one deliberately cheap probe when evidence could eliminate an option

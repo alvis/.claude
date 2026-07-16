@@ -125,7 +125,7 @@ Additional context needed to pick up this work:
 ## Deviations
 
 - **Plan said**: [expected path]
-  **Territory showed**: [observed contradiction]
+  **Evidence showed**: [observed contradiction]
   **Disposition**: proceeded-reversibly | pending-decision | plan-invalidated
   **Affected steps**: [tasks or phases to revalidate]
 

@@ -70,7 +70,7 @@ Update TodoWrite with one todo per dispatched child.
 ```markdown
 ## Deviation Policy
 
-The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, record the territory evidence and append an entry to `<repo>/DEVIATIONS.md`:
+The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, record the repository or runtime evidence and append an entry to `<repo>/DEVIATIONS.md`:
 
 - Missing or wrong dependency (package not installed, wrong version, replaced)
 - Wrong integration assumption (API signature, event name, schema field, import path, module layout differs from what the draft assumes)
@@ -91,7 +91,7 @@ SKIP logging for trivial differences:
     ### D-<N>: <short title>
     - **When**: <step name / commit label>
     - **Draft said**: <one-line summary>
-    - **Territory evidence**: <path, symbol, test, runtime observation, or dependency state>
+    - **Evidence**: <path, symbol, test, runtime observation, or dependency state>
     - **What I did instead**: <one-line summary>
     - **Reason**: missing-dep | wrong-integration | standard-violation | arch-conflict | stale-symbol
     - **Impact on spec**: none | surface-change | behavior-change

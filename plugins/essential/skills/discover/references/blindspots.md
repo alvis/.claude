@@ -3,12 +3,12 @@
 Use this mode to look beyond the questions already present in the prompt.
 
 1. Build four working buckets:
-   - **Known knowns**: user-stated intent and verified territory evidence.
+   - **Known knowns**: user-stated intent and verified repository or runtime evidence.
    - **Known unknowns**: questions already recognized.
    - **Latent preferences**: possible "unknown knowns" the user may recognize
      when shown alternatives; keep them as hypotheses until confirmed.
    - **Blindspot hypotheses**: possible unknown unknowns requiring evidence.
-2. Inspect the smallest relevant territory that can test the hypotheses:
+2. Inspect the smallest relevant code, runtime, or integration surface that can test the hypotheses:
    architecture and call paths, sibling implementations, history and decision
    records, tests and failure paths, integration boundaries, operational
    constraints, security/privacy/data migration, and user-visible states.

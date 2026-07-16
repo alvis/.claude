@@ -1,9 +1,9 @@
 ---
 name: takeover
-description: Resume paused coding work from CONTEXT.md, NOTES.md, and PLAN.md. Use for takeover, continuing yesterday's coding work, resuming a continuation bundle, or --refresh; trust recorded assumptions for 24 hours, revalidate older state, and invoke coding:write-code --resume. For saving current state, use the session-persistence workflow.
+description: Resume paused coding work from CONTEXT.md, NOTES.md, and PLAN.md. Use for takeover, continuing yesterday's coding work, resuming a continuation bundle, or --revalidate; trust recorded assumptions for 24 hours, revalidate older state, and invoke coding:write-code --resume. For saving current state, use the session-persistence workflow.
 model: opus
 allowed-tools: Read, Glob, Edit, Bash, AskUserQuestion, Skill
-argument-hint: "[prefix] [--refresh]"
+argument-hint: "[prefix] [--revalidate]"
 ---
 
 # Takeover
@@ -29,7 +29,7 @@ interrupted work by invoking `coding:write-code --resume` exactly once.
 - **Required**: none — defaults to `CONTEXT.md`, `NOTES.md`, and `PLAN.md` in
   the working directory.
 - **Optional**: `[prefix]` — resolves the bundle as `<prefix>-CONTEXT.md`,
-  `<prefix>-NOTES.md`, and `<prefix>-PLAN.md`; `--refresh` forces assumption
+  `<prefix>-NOTES.md`, and `<prefix>-PLAN.md`; `--revalidate` forces assumption
   revalidation regardless of bundle age.
 - **Prerequisites**: all three handover documents exist and are readable.
 
@@ -45,10 +45,10 @@ interrupted work by invoking `coding:write-code --resume` exactly once.
    Parse those document fields and compare them with the current UTC time; do
    not substitute filesystem modification time.
    - When those three timestamps match and are no more than 24 hours old, and
-     `--refresh` is absent, treat every recorded assumption as still valid and
+     `--revalidate` is absent, treat every recorded assumption as still valid and
      skip repository assumption revalidation.
    - When the bundle is older than 24 hours, timestamps are missing or
-     inconsistent, or `--refresh` is present, revalidate only assumptions that
+     inconsistent, or `--revalidate` is present, revalidate only assumptions that
      may drift: branch or baseline identity, dependency/API versions,
      configuration and schema state, external references, and explicit recheck
      triggers. Record contradictions before execution.
@@ -71,7 +71,7 @@ interrupted work by invoking `coding:write-code --resume` exactly once.
 ## Verification
 
 - All three handover documents were located and validated before delegation.
-- The freshness gate reports `trusted_24h`, `revalidated`, or `forced_refresh`;
+- The freshness gate reports `trusted_24h`, `revalidated`, or `forced_revalidation`;
   `trusted_24h` performed no repository assumption revalidation.
 - Every resolved decision is recorded in PLAN.md's Decision Log and its marker
   cleared; still-open questions remain in NOTES.md.

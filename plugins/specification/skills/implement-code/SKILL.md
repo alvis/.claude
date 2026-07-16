@@ -134,7 +134,7 @@ children own source edits; `coding:commit` owns local history shaping,
   and stack decision derives from it.
 - Acceptance evidence exists for every mapped feature; alignment, general,
   and security reviews are clean or their remaining findings are reported.
-- Every material deviation records territory evidence and disposition, and the
+- Every material deviation records repository or runtime evidence and disposition, and the
   remaining plan was revalidated before dependent work resumed.
 - No local history shaping happened outside `coding:commit`, no publication or
   remote restacking happened outside `coding:push-pr`, and no `.code-spec`

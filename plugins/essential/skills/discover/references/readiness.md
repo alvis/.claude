@@ -5,7 +5,7 @@ specification, planning, or implementation.
 
 1. Review every ledger item and relevant artifact. Reject unlabeled claims and
    inferences presented as facts.
-2. Require the goal, acceptance criteria, hard constraints, affected territory,
+2. Require the goal, acceptance criteria, hard constraints, affected systems,
    and material integration/failure surfaces to be known well enough for the
    proposed next owner.
 3. For each unresolved item classify:

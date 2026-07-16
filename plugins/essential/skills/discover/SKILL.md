@@ -50,7 +50,7 @@ owner, or marked blocking.
 ## Workflow
 
 1. **Capture the starting map.** State the goal, requested deliverable, why it
-   matters, what the user already knows, their familiarity with the territory,
+   matters, what the user already knows, their familiarity with the codebase or domain,
    known questions, hard constraints, and supplied references. Ask only when a
    missing answer changes which discovery mode is appropriate.
 2. **Resolve exactly one mode.** An explicit valid `--mode` wins; otherwise use:

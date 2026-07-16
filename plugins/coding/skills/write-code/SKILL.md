@@ -100,7 +100,7 @@ compatibility options.
 6. Invoke `coding:refactor` with the target area and `--from-composite`;
    gate.
 
-   After each child, update NOTES.md from territory evidence. When a material
+   After each child, update NOTES.md from repository or runtime evidence. When a material
    deviation invalidates a plan premise, record the observed evidence and
    affected steps, stop the stale branch, and revalidate the remaining plan
    before continuing.
