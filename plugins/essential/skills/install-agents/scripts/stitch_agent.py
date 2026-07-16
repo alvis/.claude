@@ -30,6 +30,25 @@ SHARED_POLICY_LANGUAGE = (
 REVIEWER_DEFAULT = re.compile(
     r"[A-Z][a-z]+(?: [A-Z][a-z]+)+ \([^;\n()]+; [^)\n]+\)"
 )
+# NOTE: Claude Code caps an agent description at 1024 characters.
+DESCRIPTION_LIMIT = 1024
+# NOTE: Stricter than Claude Code, which also accepts a full model ID. Agent
+# definitions track the aliases prescribed by references/orchestration.md (plus
+# `inherit`) so they never pin to a version that goes stale.
+VALID_MODELS = ("sonnet", "opus", "haiku", "fable", "inherit")
+VALID_EFFORTS = ("low", "medium", "high", "xhigh", "max")
+# NOTE: Kept deliberately permissive — these reject typos, not unfamiliar modes.
+# Claude Code owns this set and may extend it; a mode it accepts but we omit
+# would fail the whole roster here for no reason.
+VALID_PERMISSION_MODES = (
+    "default",
+    "acceptEdits",
+    "auto",
+    "dontAsk",
+    "bypassPermissions",
+    "plan",
+    "manual",
+)
 
 
 class AgentTemplateError(ValueError):
@@ -86,7 +105,25 @@ def _tool_names(frontmatter: dict[str, Any]) -> set[str] | None:
 
 
 def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
-    """Reject agent definitions whose prose disagrees with their capabilities."""
+    """Reject agent definitions whose fields are invalid or whose prose
+    disagrees with their capabilities."""
+    description = frontmatter.get("description", "")
+    if len(description) > DESCRIPTION_LIMIT:
+        raise AgentTemplateError(
+            f"description exceeds {DESCRIPTION_LIMIT} characters: {len(description)}"
+        )
+
+    for field, allowed in (
+        ("model", VALID_MODELS),
+        ("effort", VALID_EFFORTS),
+        ("permissionMode", VALID_PERMISSION_MODES),
+    ):
+        value = frontmatter.get(field)
+        if value is not None and value not in allowed:
+            raise AgentTemplateError(
+                f"invalid {field} {value!r}: expected one of {', '.join(allowed)}"
+            )
+
     if frontmatter.get("model") == "haiku" and "effort" in frontmatter:
         raise AgentTemplateError("haiku agents must omit effort")
 

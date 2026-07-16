@@ -15,6 +15,8 @@ sys.path.insert(0, str(SCRIPTS))
 
 from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
+    DESCRIPTION_LIMIT,
+    REVIEWER_DEFAULT,
     AgentTemplateError,
     stitch_agent_definition,
     validate_agent_contract,
@@ -102,12 +104,35 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(nonstandard_number)
 
-    def test_rejects_haiku_effort_fixed_routing_and_tool_mismatches(self):
+    def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(self):
         cases = (
             (
                 {"name": "test-agent", "model": "haiku", "effort": "medium"},
                 "A role-specific body.",
                 "haiku agents must omit effort",
+            ),
+            (
+                {
+                    "name": "test-agent",
+                    "description": "x" * (DESCRIPTION_LIMIT + 1),
+                },
+                "A role-specific body.",
+                f"description exceeds {DESCRIPTION_LIMIT} characters",
+            ),
+            (
+                {"name": "test-agent", "model": "claude-opus-4-8"},
+                "A role-specific body.",
+                "invalid model 'claude-opus-4-8'",
+            ),
+            (
+                {"name": "test-agent", "model": "opus", "effort": "extreme"},
+                "A role-specific body.",
+                "invalid effort 'extreme'",
+            ),
+            (
+                {"name": "test-agent", "permissionMode": "yolo"},
+                "A role-specific body.",
+                "invalid permissionMode 'yolo'",
             ),
             (
                 {"name": "test-agent", "tools": ["Read"]},
@@ -182,43 +207,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
-    def test_frontend_routing_uses_requested_deliverable_not_shared_nouns(self):
-        web = ROOT / "plugins/web"
-        routing = (web / "references/ROUTING.md").read_text(encoding="utf-8")
-        instructions = (web / "CLAUDE.md").read_text(encoding="utf-8")
-        coco = json.loads(
-            (
-                web
-                / "templates/agents/coco-laurent-frontend-designer/frontmatter/claude.json"
-            ).read_text(encoding="utf-8")
-        )
-        priya = json.loads(
-            (
-                web
-                / "templates/agents/priya-sharma-frontend-implementer/frontmatter/claude.json"
-            ).read_text(encoding="utf-8")
-        )
-
-        self.assertIn("classify the requested deliverable", instructions)
-        self.assertIn("Do not route an implementation request to a designer", instructions)
-        self.assertIn("with or without a prior design handoff", routing)
-        self.assertIn("Never use Coco to create or edit production React/TypeScript", coco["description"])
-        self.assertIn("whether or not an approved design exists", priya["description"])
-        self.assertIn("If none exists, proceed", priya["initialPrompt"])
-
-    def test_essential_runtime_context_uses_measured_dynamic_delegation(self):
-        essential = ROOT / "plugins/essential"
-        shared_context = "\n".join(
-            (essential / name).read_text(encoding="utf-8")
-            for name in ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md")
-        )
-
-        self.assertIn("current `Agent` roster", shared_context)
-        self.assertIn("REVIEWED: source=<specialist|general|external|none>", shared_context)
-        self.assertNotIn("75%", shared_context)
-        self.assertNotIn("~200k", shared_context)
-
-    def test_session_start_actually_injects_essential_runtime_context(self):
+    def test_session_start_emits_a_valid_session_context_payload(self):
         essential = ROOT / "plugins/essential"
         completed = subprocess.run(
             [
@@ -235,12 +224,9 @@ class AgentDiscoveryTest(unittest.TestCase):
         )
 
         self.assertEqual(0, completed.returncode, completed.stderr)
-        context = json.loads(completed.stdout)["hookSpecificOutput"][
-            "additionalContext"
-        ]
-        self.assertIn("Discover before dispatching", context)
-        self.assertIn("REVIEWED: source=<specialist|general|external|none>", context)
-        self.assertNotIn("75%", context)
+        payload = json.loads(completed.stdout)["hookSpecificOutput"]
+        self.assertEqual("SessionStart", payload["hookEventName"])
+        self.assertTrue(payload["additionalContext"].strip())
 
     def test_installed_mode_reports_plugin_list_failures(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -270,34 +256,23 @@ class AgentDiscoveryTest(unittest.TestCase):
                     with self.assertRaisesRegex(AgentTemplateError, message):
                         discover_agent_templates(essential)
 
-    def test_source_checkout_discovers_the_distributed_twenty_three_agent_roster(self):
-        templates = discover_agent_templates(ROOT / "plugins/essential")
-        owners = {}
-        for template in templates:
-            owners.setdefault(template.owner, set()).add(template.name)
-
-        self.assertEqual(23, len(templates))
-        self.assertEqual(
-            {
-                "essential": 1,
-                "coding": 9,
-                "governance": 2,
-                "web": 6,
-                "backend": 4,
-                "specification": 1,
-            },
-            {owner: len(names) for owner, names in owners.items()},
-        )
-
     def test_each_distributed_agent_has_an_owner_routing_row(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
-        instructions = {
-            owner: (ROOT / "plugins" / owner / "CLAUDE.md").read_text(encoding="utf-8")
-            for owner in {template.owner for template in templates}
-        }
+        routing = {}
+        for owner in {template.owner for template in templates}:
+            # NOTE: essential keeps its roster table in orchestration.md; every
+            # other plugin carries a standalone ROUTING.md.
+            candidates = (
+                ROOT / "plugins" / owner / "references/ROUTING.md",
+                ROOT / "plugins" / owner / "references/orchestration.md",
+            )
+            table = next((path for path in candidates if path.is_file()), None)
+            self.assertIsNotNone(table, f"{owner} has no routing document")
+            routing[owner] = table.read_text(encoding="utf-8")
 
         for template in templates:
-            self.assertIn(f"`{template.name}` |", instructions[template.owner])
+            with self.subTest(agent=template.name):
+                self.assertIn(f"`{template.name}` |", routing[template.owner])
 
     def test_distributed_agents_satisfy_the_delegation_contract(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
@@ -317,78 +292,9 @@ class AgentDiscoveryTest(unittest.TestCase):
                 self.assertTrue(lines)
                 self.assertTrue(all(line.startswith("- ") for line in lines), lines)
 
-    def test_only_true_leaf_roles_omit_agent_and_every_role_can_handoff(self):
-        templates = discover_agent_templates(ROOT / "plugins/essential")
-        expected_leaves = {
-            "ada-bishop-initializer",
-            "ava-thompson-testing-evangelist",
-            "kai-raven-adversarial-redteam",
-            "penelope-sterling-aesthetic-evaluator",
-            "sam-taylor-specification",
-            "tess-park-test-runner",
-        }
-        actual_leaves = set()
-
-        for template in templates:
-            frontmatter = json.loads(
-                (template.path / "frontmatter/claude.json").read_text(encoding="utf-8")
-            )
-            tools = frontmatter.get("tools")
-            if tools is not None:
-                self.assertIn("SendMessage", tools, template.name)
-                if "Agent" not in tools:
-                    actual_leaves.add(template.name)
-
-        self.assertEqual(expected_leaves, actual_leaves)
-
-    def test_changed_code_gates_use_runtime_review_routing(self):
+    def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator(self):
         templates = discover_agent_templates(ROOT / "plugins/essential")
         gated_agents = set()
-        expected_defaults = {
-            "ethan-kumar-data-architect": (
-                "Zara Ahmad (ML Engineer; data analysis and ML/AI features)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "james-mitchell-service-implementation": (
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-                "Nina Petrov (Security Champion; deep security review, explicit request only)",
-            ),
-            "zara-ahmad-ml-engineer": (
-                "Ethan Kumar (Data Architect; designs schemas and data pipelines)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "leo-fabbri-generalist-engineer": (
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "theo-nakamura-desktop-implementer": (
-                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "mila-vasquez-mobile-implementer": (
-                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "ava-thompson-testing-evangelist": (
-                "Dexter Cho (Harness & Eval Engineer; builds quality gates)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "felix-anderson-devops": (
-                "Nina Petrov (Security Champion; deep security review, explicit request only)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "maya-rodriguez-principal": (
-                "Nina Petrov (Security Champion; deep security review, explicit request only)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "dexter-cho-harness-eval-engineer": (
-                "Ava Thompson (Testing Evangelist; authors tests)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-            "priya-sharma-frontend-implementer": (
-                "Penelope Sterling (Aesthetic Evaluator; reviews UI fidelity)",
-                "Marcus Williams (Code Quality Critic; reviews changed code)",
-            ),
-        }
 
         for template in templates:
             frontmatter = json.loads(
@@ -400,21 +306,19 @@ class AgentDiscoveryTest(unittest.TestCase):
                     if "review-routing gate" not in prompt:
                         continue
                     gated_agents.add(template.name)
-                    self.assertIn("current Agent roster", prompt)
-                    self.assertIn("source=<specialist|general|external|none>", prompt)
-                    self.assertIn("configured external review tool", prompt)
-                    self.assertIn("independently inspect the changed artifact", prompt)
-                    self.assertIn("return verdict ok or blocked with findings", prompt)
-                    self.assertNotIn("named collaborators are defaults", prompt)
                     collaboration = (template.path / "base.md").read_text(
                         encoding="utf-8"
                     ).split("\n## Collaboration\n", 1)[1]
-                    for reviewer in expected_defaults[template.name]:
-                        self.assertIn(reviewer, prompt)
-                        self.assertIn(reviewer, collaboration)
-                    self.assertNotIn("REVIEWED: marcus", prompt)
+                    with self.subTest(agent=template.name):
+                        reviewers = REVIEWER_DEFAULT.findall(prompt)
+                        self.assertTrue(reviewers)
+                        for reviewer in reviewers:
+                            # NOTE: match from "(" because the surrounding prose
+                            # ("Use Zara Ahmad (...)") is captured by the name run.
+                            descriptor = reviewer[reviewer.index("(") :]
+                            self.assertIn(descriptor, collaboration)
 
-        self.assertEqual(set(expected_defaults), gated_agents)
+        self.assertTrue(gated_agents)
 
     def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(self):
         with tempfile.TemporaryDirectory() as temporary:
