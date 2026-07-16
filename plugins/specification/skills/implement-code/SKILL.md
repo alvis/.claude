@@ -82,7 +82,12 @@ children own source edits; `coding:commit` owns local history shaping,
    `base_rev` before any child runs. Scaffold `DEVIATIONS.md` only for
    code-producing modes. Material deviations are appended using the policy in
    `references/modes.md`; trivial formatter, inferred-type, or documentation
-   differences are not logged.
+   differences are not logged. After every material deviation, revalidate the
+   remaining PLAN dependencies and acceptance map before dispatching dependent
+   work. A low-impact reversible departure may continue and be logged; a
+   deviation affecting architecture, public API, data model, security/privacy,
+   destructive migration, user-visible semantics, or acceptance criteria must
+   return `pending_decision` and stop the stale branch.
 8. Select the execution mechanism by capability, not preference:
    - When `Workflow` is available and the mode is `COMMIT_PLAN`,
      `PI_ITERATE`, or `AUDIT_AND_COMPLETE`, load
@@ -129,6 +134,8 @@ children own source edits; `coding:commit` owns local history shaping,
   and stack decision derives from it.
 - Acceptance evidence exists for every mapped feature; alignment, general,
   and security reviews are clean or their remaining findings are reported.
+- Every material deviation records repository or runtime evidence and disposition, and the
+  remaining plan was revalidated before dependent work resumed.
 - No local history shaping happened outside `coding:commit`, no publication or
   remote restacking happened outside `coding:push-pr`, and no `.code-spec`
   write happened outside `specification:mdc`.

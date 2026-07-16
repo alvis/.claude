@@ -1,0 +1,106 @@
+---
+name: discover
+description: 'Discovers material unknowns before planning. Use for a blindspot pass or unknown unknowns, to brainstorm approaches from cheapest to ambitious, interview about architecture, extract reference implementation semantics, make a disposable prototype before touching the real app, or check whether discovery is ready for a decision; researched option selection belongs to essential:decide.'
+model: opus
+allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Task, AskUserQuestion, WebSearch, WebFetch, Skill
+argument-hint: "<problem> [--mode=blindspots|options|interview|reference|prototype|readiness] [--persist]"
+---
+
+# Discover
+
+Reduce consequential uncertainty before it becomes an implementation
+assumption. This skill owns divergent exploration and a decision-ready evidence
+ledger; `essential:decide` owns converging on one approach, domain skills own
+production artifacts, and implementing skills own application-source changes.
+
+## Boundaries
+
+- Use for: explicit "blindspot pass" or "unknown unknowns" requests,
+  unfamiliar code or domains, broad solution brainstorming, preferences the
+  user can recognize but not yet articulate, extracting semantics from a
+  reference, disposable prototypes, and readiness checks before planning.
+- Do not use for: fact-finding reports (`essential:deep-research`), metric-driven
+  optimization (`essential:autoresearch`), choosing among already-grounded
+  options (`essential:decide`), production UI design (`web:design`), or clear
+  bounded implementation.
+- Never claim an unknown unknown has been found merely because it is plausible;
+  record it as a hypothesis until evidence supports it.
+
+## Inputs and output
+
+- **Required**: the problem, goal, or artifact to explore.
+- **Optional**: `--mode`; `--persist`; the user's experience, confidence,
+  references, hard constraints, and known unanswered questions.
+
+Default to a conversational result. With `--persist`, a requested prototype, or
+a long-lived multi-session task, create `.discovery-<slug>/DISCOVERY.md`; keep
+disposable artifacts below its `prototypes/` and copied or summarized reference
+evidence below `references/`. Never modify application source in this skill.
+
+The evidence ledger uses these fields:
+
+| ID | Kind | Statement | Source or evidence | Decision impact | Reversibility | Disposition | Owner |
+|---|---|---|---|---|---|---|---|
+
+`Kind` is one of `intent`, `observed`, `inference`, `unknown`, or `assumption`.
+An accepted assumption must be low-impact, reversible, and have a recheck
+trigger. A material unknown must be resolved, explicitly deferred with an
+owner, or marked blocking.
+
+## Workflow
+
+1. **Capture the starting map.** State the goal, requested deliverable, why it
+   matters, what the user already knows, their familiarity with the codebase or domain,
+   known questions, hard constraints, and supplied references. Ask only when a
+   missing answer changes which discovery mode is appropriate.
+2. **Resolve exactly one mode.** An explicit valid `--mode` wins; otherwise use:
+   - `blindspots`: missing constraints, failure modes, history, or integration
+     surfaces may change the problem;
+   - `options`: the problem is understood but the solution space is too narrow
+     or too broad;
+   - `interview`: the user holds material intent or preferences not yet stated;
+   - `reference`: a codebase, document, site, image, or example defines the
+     desired semantics more precisely than prose;
+   - `prototype`: the cheapest way to learn is a disposable artifact and the
+     user has authorized creating it;
+   - `readiness`: existing evidence needs a plan/implementation go-no-go check.
+3. **Load only the selected mode reference** and execute it:
+   - [blindspots](references/blindspots.md)
+   - [options](references/options.md)
+   - [interview](references/interview.md)
+   - [reference](references/reference.md)
+   - [prototype](references/prototype.md)
+   - [readiness](references/readiness.md)
+4. **Update the ledger.** Preserve provenance. Move an item between kinds only
+   when evidence or a user decision justifies it; do not collapse inference into
+   observed fact. Record rejected alternatives and why they were rejected when
+   they would otherwise be rediscovered.
+5. **Choose the next probe or stop.** Continue only when another cheap probe can
+   resolve a material unknown. Stop when all material items are resolved,
+   explicitly deferred with an owner, or blocking; remaining assumptions must
+   be low-impact and reversible.
+6. **Route the result.** Recommend exactly one next owner: another discovery
+   mode, `essential:decide`, `specification:spec-code`,
+   `specification:plan-code`, `web:design`, an implementing skill, or stop. Pass
+   the evidence ledger and artifact paths without rewriting them as certainty.
+7. Run the verification below. Fix a failed check and repeat until it passes or
+   a concrete blocker remains.
+
+## Verification
+
+- Every consequential claim is labeled and carries evidence or an explicit
+  user source; hypotheses are not reported as facts.
+- No application source changed, and every prototype is visibly disposable and
+  contained inside the discovery workspace.
+- Every material unknown has a disposition and owner; every accepted assumption
+  is low-impact, reversible, and has a recheck trigger.
+- The recommended next owner receives the ledger and all artifact paths.
+- Validate the Essential plugin and run repository policy plus trigger checks.
+
+## Completion
+
+Report the selected mode, starting point, material unknowns found or resolved,
+accepted assumptions, decisions and rejected alternatives, persistent workspace
+when any, readiness verdict (`ready`, `more-discovery`, or `blocked`), and the
+single recommended next owner. Runtime trigger behavior is reported as exercised
+only when an executable evaluation actually ran.

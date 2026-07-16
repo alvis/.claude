@@ -27,16 +27,20 @@ persists the current coding session in continuation files.
 
 ## Workflow
 
-1. **Clarify until nothing is left to guess.** Ask as many clarifying
-   questions as needed; with every question give your recommended answer and
-   the reason for it, so the user can confirm quickly and whoever executes
-   never has to guess intent.
+1. **Resolve material uncertainty.** Separate user-stated intent, observed
+   evidence, inferences, accepted assumptions, and unresolved questions. Ask
+   only questions whose answers change scope, architecture, acceptance
+   criteria, sequencing, or another material decision; give a recommended
+   answer and reason. Remaining uncertainty must be low-impact and reversible,
+   explicitly deferred with an owner and decision deadline, or marked blocking.
 2. **Write the plan.** Open with a self-contained **Goal** block the user can
    copy and paste verbatim to initiate the work — it states the intended
    outcome fully on its own, without relying on your context. Then write the
    plan with enough detail and context that an agent with no idea what you
    are working on can take over without getting lost: concrete file paths,
-   constraints, decision criteria, and success checks per phase.
+   constraints, decision criteria, success checks, accepted assumptions with
+   recheck triggers, deferred decisions with owners, and plan-pivot signals per
+   phase.
 3. **Execute as orchestrator** (when execution is requested). Run a
    multi-phase plan as a `Workflow` — one phase per stage, fanning out to
    subagents where a phase allows — instead of doing the work inline. Act as
@@ -54,6 +58,9 @@ persists the current coding session in continuation files.
   the intended outcome.
 - A reader without this session's context could execute the plan — no step
   depends on unstated knowledge.
+- Every residual unknown is accepted and reversible, explicitly deferred with
+  an owner and deadline, or blocking; the plan names evidence that requires a
+  pivot.
 - When executed: every phase was delegated with complete context, and each
   phase's results were checked against the plan's success criteria before the
   next phase started.

@@ -29,12 +29,16 @@ Use this format for the final summary after handover documents are generated/upd
 - File Status: ✓/X
 - Recent Changes: ✓/X
 - Key Decisions: ✓/X
+- Accepted Assumptions: ✓/X
 - Next Steps: ✓/X
 
 ### NOTES.md
 - Implementation Issues: ✓/X
+- Discoveries: ✓/X
+- Deviations: ✓/X
+- Pending Decisions: ✓/X
+- Invalidated Plan Steps: ✓/X
 - Quick Workarounds: ✓/X
-- Open Questions: ✓/X
 - Quick Tips: ✓/X
 
 ### PLAN.md
@@ -43,6 +47,7 @@ Use this format for the final summary after handover documents are generated/upd
 - Dependencies: ✓/X
 - Timeline: ✓/X
 - Risks & Mitigation: ✓/X
+- Pivot Signals: ✓/X
 
 ## File Status Breakdown
 ### ✅ Completed ([count])
