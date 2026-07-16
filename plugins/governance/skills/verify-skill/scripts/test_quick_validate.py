@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.util
 import tempfile
 import unittest
@@ -145,12 +143,14 @@ class QuickValidateTests(unittest.TestCase):
                 quick_validate.subprocess.CompletedProcess([], 1, "", "plugin failed"),
                 quick_validate.subprocess.CompletedProcess([], 0, "plugin ok", ""),
             ]
-            with patch.object(quick_validate.subprocess, "run", side_effect=results) as mocked:
+            with patch.object(
+                quick_validate.subprocess, "run", side_effect=results
+            ) as subprocess_run:
                 exit_status = quick_validate.run([str(root)])
 
             self.assertEqual(exit_status, 1)
             self.assertEqual(
-                [call.args[0] for call in mocked.call_args_list],
+                [call.args[0] for call in subprocess_run.call_args_list],
                 [
                     ["claude", "plugin", "validate", "--strict", str(root.resolve())],
                     [
@@ -177,11 +177,11 @@ class QuickValidateTests(unittest.TestCase):
             quick_validate.subprocess,
             "run",
             side_effect=[FileNotFoundError("claude not found"), completed],
-        ) as mocked:
+        ) as subprocess_run:
             status, results = quick_validate.run_claude_validation(targets)
 
         self.assertEqual(status, 1)
-        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(subprocess_run.call_count, 2)
         self.assertEqual(results[0]["status"], "fail")
         self.assertIn("Unable to launch Claude validator", results[0]["output"])
         self.assertEqual(results[1]["status"], "pass")
@@ -194,11 +194,11 @@ class QuickValidateTests(unittest.TestCase):
             quick_validate.subprocess,
             "run",
             side_effect=[timed_out, completed],
-        ) as mocked:
+        ) as subprocess_run:
             status, results = quick_validate.run_claude_validation(targets)
 
         self.assertEqual(status, 1)
-        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(subprocess_run.call_count, 2)
         self.assertEqual(results[0]["status"], "fail")
         self.assertIn("timed out", results[0]["output"])
         self.assertEqual(results[1]["status"], "pass")

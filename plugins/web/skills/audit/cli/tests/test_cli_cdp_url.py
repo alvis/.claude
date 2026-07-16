@@ -1,7 +1,5 @@
 """Verify CLI plumbing for --cdp-url and the agent-browser preflight check."""
 
-from __future__ import annotations
-
 import subprocess
 from typing import Sequence
 

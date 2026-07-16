@@ -1,7 +1,5 @@
 """Verify BrowserDriver ownership semantics for external CDP sessions."""
 
-from __future__ import annotations
-
 import subprocess
 from typing import Sequence
 

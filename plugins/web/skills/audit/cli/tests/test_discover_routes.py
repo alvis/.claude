@@ -1,7 +1,5 @@
 """Verify Next.js source-route discovery against the fixture tree."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 from audit_cli.discover.routes import DYNAMIC_WARNING, discover_source_routes

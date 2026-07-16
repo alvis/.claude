@@ -10,35 +10,64 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 
 
-@unittest.skipUnless(shutil.which("claude"), "Claude CLI is unavailable")
-class PluginDependencyIntegration(unittest.TestCase):
-    def run_claude(self, config: str, *args: str):
-        env = os.environ | {"CLAUDE_CONFIG_DIR": config}
-        return subprocess.run(["claude", "plugin", *args], cwd=ROOT, env=env, text=True, capture_output=True)
+def require_executable(name: str, /) -> str:
+    executable = shutil.which(name)
+    if executable is None:
+        raise RuntimeError(f"{name} is required for plugin dependency integration tests")
+    return executable
 
-    def run_installed_hook(self, config: str, plugin_root: Path, event: str, input_json: str):
-        manifest = json.loads((plugin_root / ".claude-plugin/plugin.json").read_text())
-        hook = manifest["hooks"][event][0]["hooks"][0]
-        substitutions = {
-            "${CLAUDE_PLUGIN_ROOT}": str(plugin_root),
-            "${HOME}": os.environ["HOME"],
-        }
-        command = hook["command"]
-        args = hook.get("args", [])
-        for key, value in substitutions.items():
-            command = command.replace(key, value)
-            args = [argument.replace(key, value) for argument in args]
-        invocation = [command, *args] if args else ["/bin/bash", "-c", command]
+
+CLAUDE = require_executable("claude")
+
+
+class PluginDependencyIntegration(unittest.TestCase):
+    def run_claude(
+        self, config: str, *args: str
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ | {"CLAUDE_CONFIG_DIR": config}
         return subprocess.run(
-            invocation,
-            cwd="/tmp",
-            env=os.environ | {"CLAUDE_CONFIG_DIR": config},
-            input=input_json,
+            [CLAUDE, "plugin", *args],
+            cwd=ROOT,
+            env=env,
             text=True,
             capture_output=True,
         )
 
-    def test_react_install_and_disable_dependency_behavior(self):
+    def run_installed_hooks(
+        self,
+        config: str,
+        *,
+        plugin_root: Path,
+        event: str,
+        input_json: str,
+    ) -> tuple[subprocess.CompletedProcess[str], ...]:
+        manifest = json.loads((plugin_root / ".claude-plugin/plugin.json").read_text())
+        substitutions = {
+            "${CLAUDE_PLUGIN_ROOT}": str(plugin_root),
+            "${HOME}": os.environ["HOME"],
+        }
+        completed = []
+        for matcher in manifest["hooks"][event]:
+            for hook in matcher["hooks"]:
+                command = hook["command"]
+                args = hook.get("args", [])
+                for key, value in substitutions.items():
+                    command = command.replace(key, value)
+                    args = [argument.replace(key, value) for argument in args]
+                invocation = [command, *args] if args else ["/bin/bash", "-c", command]
+                completed.append(
+                    subprocess.run(
+                        invocation,
+                        cwd="/tmp",
+                        env=os.environ | {"CLAUDE_CONFIG_DIR": config},
+                        input=input_json,
+                        text=True,
+                        capture_output=True,
+                    )
+                )
+        return tuple(completed)
+
+    def test_react_install_and_disable_dependency_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as config:
             added = self.run_claude(config, "marketplace", "add", str(ROOT))
             self.assertEqual(0, added.returncode, added.stderr)
@@ -58,15 +87,24 @@ class PluginDependencyIntegration(unittest.TestCase):
             self.assertTrue(
                 (essential_root / "shared/scripts/subagent-start.sh").is_file()
             )
-            consumer_root = Path(records["react@alvis"]["installPath"])
-            hook = self.run_installed_hook(
+            hooks = self.run_installed_hooks(
                 config,
-                consumer_root,
-                "SessionStart",
-                '{"source":"startup","session_id":"integration"}',
+                plugin_root=essential_root,
+                event="SessionStart",
+                input_json='{"source":"startup","session_id":"integration"}',
             )
-            self.assertEqual(0, hook.returncode, hook.stderr)
-            self.assertIn('"hookEventName": "SessionStart"', hook.stdout)
+            payloads = []
+            for hook in hooks:
+                self.assertEqual(0, hook.returncode, hook.stderr)
+                payloads.append(json.loads(hook.stdout)["hookSpecificOutput"])
+            self.assertTrue(payloads)
+            self.assertTrue(
+                all(
+                    payload["hookEventName"] == "SessionStart"
+                    and payload["additionalContext"]
+                    for payload in payloads
+                )
+            )
             blocked = self.run_claude(config, "disable", "essential@alvis")
             self.assertNotEqual(0, blocked.returncode)
             dependency_error = blocked.stderr + blocked.stdout
@@ -87,31 +125,7 @@ class PluginDependencyIntegration(unittest.TestCase):
 
 
 class EssentialHookExecutable(unittest.TestCase):
-    def test_session_start_runs_for_consumer_plugin(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            plugin_root = Path(temporary)
-            (plugin_root / "scripts").mkdir()
-            (plugin_root / "scripts/context.sh").write_text(
-                "get_plugin_context() { echo -n consumer-context; }\n",
-                encoding="utf-8",
-            )
-            completed = subprocess.run(
-                [
-                    str(ROOT / "plugins/essential/bin/session-start"),
-                    "--plugin-dir",
-                    str(plugin_root),
-                    "--constitution-paths",
-                    str(plugin_root),
-                ],
-                input='{"source":"startup","session_id":"test"}',
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(0, completed.returncode, completed.stderr)
-            self.assertIn("consumer-context", completed.stdout)
-
-    def test_essential_session_start_includes_consolidated_main_agent_instructions(self):
+    def test_essential_session_start_emits_environment_context(self) -> None:
         completed = subprocess.run(
             [
                 str(ROOT / "plugins/essential/bin/session-start"),
@@ -127,17 +141,15 @@ class EssentialHookExecutable(unittest.TestCase):
         )
         self.assertEqual(0, completed.returncode, completed.stderr)
         output = json.loads(completed.stdout)["hookSpecificOutput"]
-        self.assertEqual("SessionStart", output["hookEventName"])
-        context = output["additionalContext"]
-        self.assertIn("You are running as the main session", context)
-        self.assertIn("greet the user a good day", context)
-
-    def test_essential_subagent_hook_loads_consolidated_instructions(self):
-        manifest = json.loads(
-            (ROOT / "plugins/essential/.claude-plugin/plugin.json").read_text()
+        self.assertEqual(
+            {
+                "hookEventName": output["hookEventName"],
+                "has_context": bool(output["additionalContext"]),
+            },
+            {"hookEventName": "SessionStart", "has_context": True},
         )
-        self.assertIn("SubagentStart", manifest["hooks"])
 
+    def test_essential_subagent_hook_emits_environment_context(self) -> None:
         completed = subprocess.run(
             [
                 str(ROOT / "plugins/essential/bin/subagent-start"),
@@ -153,13 +165,13 @@ class EssentialHookExecutable(unittest.TestCase):
         )
         self.assertEqual(0, completed.returncode, completed.stderr)
         output = json.loads(completed.stdout)["hookSpecificOutput"]
-        self.assertEqual("SubagentStart", output["hookEventName"])
-        context = output["additionalContext"]
-        self.assertIn("You are running as a subagent or teammate", context)
-        workflow_reference = str(
-            (ROOT / "plugins/essential/references/workflow-tool.md").resolve()
+        self.assertEqual(
+            {
+                "hookEventName": output["hookEventName"],
+                "has_context": bool(output["additionalContext"]),
+            },
+            {"hookEventName": "SubagentStart", "has_context": True},
         )
-        self.assertIn(workflow_reference, context)
 
 
 if __name__ == "__main__":

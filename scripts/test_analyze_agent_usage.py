@@ -7,7 +7,9 @@ from analyze_agent_usage import Invocation, discover_plugin_agents, tally
 
 
 class DiscoverPluginAgentsTest(unittest.TestCase):
-    def test_unqualified_installed_agent_usage_maps_to_its_unique_owner(self):
+    def test_unqualified_installed_agent_usage_maps_to_its_unique_owner(
+        self,
+    ) -> None:
         defined = {
             "web:priya-sharma-frontend-implementer": {
                 "plugin": "web",
@@ -29,7 +31,7 @@ class DiscoverPluginAgentsTest(unittest.TestCase):
         self.assertEqual(1, stats.tallies["web:priya-sharma-frontend-implementer"].count)
         self.assertNotIn("priya-sharma-frontend-implementer", stats.tallies)
 
-    def test_discovers_distributed_json_frontmatter_by_owner(self):
+    def test_discovers_distributed_json_frontmatter_by_owner(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             plugins = Path(temporary) / "plugins"
             frontmatter = (
@@ -52,7 +54,9 @@ class DiscoverPluginAgentsTest(unittest.TestCase):
             )
             self.assertEqual(str(frontmatter), agents["web:priya-sharma-frontend-implementer"]["path"])
 
-    def test_ignores_malformed_or_nameless_frontmatter_and_missing_root(self):
+    def test_ignores_malformed_or_nameless_frontmatter_and_missing_root(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             plugins = Path(temporary) / "plugins"
             malformed = plugins / "web/templates/agents/malformed/frontmatter/claude.json"
