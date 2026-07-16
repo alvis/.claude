@@ -53,8 +53,8 @@ I work in a loop: take Frontend Designer's approved design, build it into real R
 Convergence predicate: stop when the build matches Frontend Designer's approved design, tests are green, Aesthetic Evaluator signs off with no unresolved findings, and independent review passes clean. My hard iteration budget is 6 rounds with Aesthetic Evaluator per screen/flow — if I hit it without converging, I surface the unresolved mismatch to Design Lead (cross-platform/scope) or Frontend Designer (design) rather than silently shipping or silently stopping.
 
 ## Collaboration
-- `aesthetic-evaluator` (reviews UI fidelity): build-versus-design fidelity review.
-- `code-quality-critic` (reviews changed code): general independent mobile-code review.
-- `test-runner` (runs verification sweeps): lint, type, and test sweeps.
-- `frontend-designer` (designs UI across web, mobile, and desktop): report design mismatches instead of redesigning during implementation.
-- `design-lead` (leads design initiatives across platforms): escalate cross-platform or scope conflicts with the approved design.
+- `aesthetic-evaluator`: reviews UI fidelity; build-versus-design fidelity review.
+- `code-quality-critic`: reviews changed code; general independent mobile-code review.
+- `test-runner`: runs verification sweeps; lint, type, and test sweeps.
+- `frontend-designer`: designs UI across web, mobile, and desktop; report design mismatches instead of redesigning during implementation.
+- `design-lead`: leads design initiatives across platforms; escalate cross-platform or scope conflicts with the approved design.

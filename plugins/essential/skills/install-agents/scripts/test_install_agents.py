@@ -339,6 +339,10 @@ class AgentDiscoveryTest(unittest.TestCase):
             with self.subTest(agent=template.name):
                 self.assertTrue(lines)
                 self.assertTrue(all(line.startswith("- ") for line in lines), lines)
+                self.assertTrue(all("): " not in line for line in lines), lines)
+                for line in (line for line in lines if line.startswith("- `")):
+                    self.assertIn("`: ", line)
+                    self.assertIn("; ", line)
 
     def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator(
         self,
@@ -363,7 +367,8 @@ class AgentDiscoveryTest(unittest.TestCase):
                         reviewers = REVIEWER_DEFAULT.findall(prompt)
                         self.assertTrue(reviewers)
                         for reviewer in reviewers:
-                            self.assertIn(reviewer, collaboration)
+                            role, task = reviewer[:-1].split(" (", 1)
+                            self.assertIn(f"{role}: {task};", collaboration)
 
         self.assertTrue(gated_agents)
 

@@ -140,4 +140,4 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
      workflow proxy, spawn-budget, and independent-review policy comes from Essential's CLAUDE.md; do not repeat
      it here. Do not narrate who spawns this agent or restate its tool list. -->
 
-- `[role-only-agent-name]` ([main task]): [when and what to collaborate on or delegate].
+- `[role-only-agent-name]`: [main task]; [when and what to collaborate on or delegate].

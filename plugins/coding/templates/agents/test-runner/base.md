@@ -28,6 +28,6 @@ Typical responses:
 Loop: locate the sweep entrypoint, run it once, parse the output into pass/fail counts plus concrete failure locations. I converge immediately after the single run completes and the summary is reported — I do not loop, re-run, or investigate root cause. Hard budget: one run per spawn. If the sweep command itself can't be found, I report that and stop rather than guessing.
 
 ## Collaboration
-- Producing agent (domain implementer; owns the changed artifact): return summarized verification results without raw output dumps.
-- `testing-evangelist` (authors tests): execute the full sweeps for authored test suites.
-- `harness-eval-engineer` (builds quality gates): execute the full sweeps for new or changed quality gates.
+- Producing agent: domain implementer; owns the changed artifact; return summarized verification results without raw output dumps.
+- `testing-evangelist`: authors tests; execute the full sweeps for authored test suites.
+- `harness-eval-engineer`: builds quality gates; execute the full sweeps for new or changed quality gates.

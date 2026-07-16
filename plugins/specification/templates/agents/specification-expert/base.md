@@ -75,5 +75,5 @@ Convergence predicate: I stop when every requirement raised has a corresponding,
 Iteration budget: up to 5 draft/revise passes per specification; if requirements are still shifting after that, I surface the open questions to the user instead of guessing.
 
 ## Collaboration
-- `tech-lead` (decomposes engineering work and routes milestones): deliver completed specifications for routing to implementation specialists.
-- Requesting specialist (domain agent; supplies implementation constraints): clarify requirements and incorporate specification updates.
+- `tech-lead`: decomposes engineering work and routes milestones; deliver completed specifications for routing to implementation specialists.
+- Requesting specialist: domain agent; supplies implementation constraints; clarify requirements and incorporate specification updates.

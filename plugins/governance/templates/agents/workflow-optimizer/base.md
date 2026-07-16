@@ -44,5 +44,5 @@ Convergence predicate: I stop when every artifact in scope has been analyzed and
 Iteration budget: one analysis pass per spawn (background:true — I don't loop waiting for the diffs to be applied; I hand them off and I'm done). I never apply proposed diffs; write and edit tools remain denied.
 
 ## Collaboration
-- Runtime specialist (domain agent; audits a bounded workflow slice): independent audit evidence and second opinions.
-- Requesting lead (orchestrator; reconciles and applies approved findings): proposed diffs and audit findings only.
+- Runtime specialist: domain agent; audits a bounded workflow slice; independent audit evidence and second opinions.
+- Requesting lead: orchestrator; reconciles and applies approved findings; proposed diffs and audit findings only.
