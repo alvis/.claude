@@ -411,6 +411,60 @@ class AgentDiscoveryTest(unittest.TestCase):
                 {f"{template.owner}:{template.name}" for template in templates},
             )
 
+    def test_installed_mode_keeps_only_latest_record_per_plugin_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            essential = root / "cache/alvis/essential/2026-07-17"
+            web_old = root / "cache/alvis/web/2026-07-16"
+            web_new = root / "cache/alvis/web/2026-07-17"
+            web_null = root / "cache/alvis/web/unknown"
+            for path in (essential, web_old, web_new, web_null):
+                path.mkdir(parents=True)
+            write_template(
+                essential,
+                "essential-agent",
+                frontmatter={"name": "essential-agent"},
+            )
+            write_template(web_old, "old-agent", frontmatter={"name": "old-agent"})
+            write_template(web_new, "new-agent", frontmatter={"name": "new-agent"})
+            write_template(web_null, "null-agent", frontmatter={"name": "null-agent"})
+            records = [
+                {
+                    "id": "essential@alvis",
+                    "enabled": True,
+                    "installPath": str(essential),
+                    "lastUpdated": "2026-07-17T00:00:00.000Z",
+                },
+                {
+                    "id": "web@alvis",
+                    "enabled": True,
+                    "installPath": str(web_old),
+                    "version": "9.9.9",
+                    "lastUpdated": "2026-07-16T00:00:00.000Z",
+                },
+                {
+                    "id": "web@alvis",
+                    "enabled": True,
+                    "installPath": str(web_new),
+                    "version": "1.0.0",
+                    "lastUpdated": "2026-07-17T00:00:00.000Z",
+                },
+                {
+                    "id": "web@alvis",
+                    "enabled": True,
+                    "installPath": str(web_null),
+                    "version": "8.8.8",
+                    "lastUpdated": None,
+                },
+            ]
+
+            templates = discover_agent_templates(essential, records)
+
+            self.assertEqual(
+                {"essential:essential-agent", "web:new-agent"},
+                {f"{template.owner}:{template.name}" for template in templates},
+            )
+
     def test_installed_mode_rejects_wrong_or_ambiguous_essential_identity(
         self,
     ) -> None:
