@@ -88,7 +88,7 @@ the area file path(s) written, open-issue counts per priority, and
 
 ### test
 
-- `subagent_type: "coding:ava-thompson-testing-evangelist"`, prompted as a
+- `subagent_type: "coding:testing-evangelist"`, prompted as a
   Testing Quality Analyst.
 - Performs: coverage analysis (run coverage tools, identify uncovered
   lines/branches with exact `file:line`, recommend specific test cases); test
@@ -108,7 +108,7 @@ the area file path(s) written, open-issue counts per priority, and
 
 ### code-quality
 
-- `subagent_type: "coding:marcus-williams-code-quality"`, prompted as a Code
+- `subagent_type: "coding:code-quality-critic"`, prompted as a Code
   Quality Analyst. Must apply every mandate in `references/mandates.md`.
 - Performs, in order: plan adherence check (mandatory first step — locate the
   plan, map every change, flag drifts with severities per mandate 1); sibling
@@ -127,7 +127,7 @@ the area file path(s) written, open-issue counts per priority, and
 
 ### security
 
-- `subagent_type: "coding:nina-petrov-security-champion"`, prompted as a
+- `subagent_type: "coding:security-champion"`, prompted as a
   Security Analyst.
 - Checks: injection (SQL/XSS/command), authentication and authorization,
   input validation, sensitive data exposure (secrets, logging), dependency

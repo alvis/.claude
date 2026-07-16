@@ -32,6 +32,10 @@ def write_template(
 ) -> Path:
     template = plugin_root / "templates/agents" / name
     (template / "frontmatter").mkdir(parents=True)
+    frontmatter.setdefault(
+        "description",
+        "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
+    )
     tools = frontmatter.get("tools")
     if isinstance(tools, list) and "SendMessage" not in tools:
         tools.append("SendMessage")
@@ -54,7 +58,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 "test-agent",
                 frontmatter={
                     "name": "test-agent",
-                    "description": "first line\nsecond line",
+                    "description": "first line\nsecond line. Preferably named Ava, Kit, or June when the main agent spawns this role.",
                     "tools": ["Read", "Bash"],
                     "emptyObject": {},
                     "emptyList": [],
@@ -117,6 +121,31 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             )
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(nonstandard_number)
+
+    def test_requires_three_distinct_preferred_short_names(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            missing = write_template(
+                root,
+                "missing-preferences",
+                frontmatter={
+                    "name": "missing-preferences",
+                    "description": "A role without names.",
+                },
+            )
+            with self.assertRaisesRegex(AgentTemplateError, "three distinct"):
+                stitch_agent_definition(missing)
+
+            duplicate = write_template(
+                root,
+                "duplicate-preferences",
+                frontmatter={
+                    "name": "duplicate-preferences",
+                    "description": "A role. Preferably named Ava, Ava, or June when the main agent spawns this role.",
+                },
+            )
+            with self.assertRaisesRegex(AgentTemplateError, "three distinct"):
+                stitch_agent_definition(duplicate)
 
     def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
         self,
@@ -216,8 +245,8 @@ class StitchAgentDefinitionTest(unittest.TestCase):
         with self.assertRaisesRegex(AgentTemplateError, "independent review action"):
             validate_agent_contract(
                 build_frontmatter(
-                    "You are the review-routing gate. Use Marcus Williams "
-                    "(Code Quality Critic; reviews changed code) as proven defaults, "
+                    "You are the review-routing gate. Use `code-quality-critic` "
+                    "(reviews changed code) as proven defaults, "
                     "but choose a better runtime specialist when available."
                 ),
                 "A role-specific body.",
@@ -310,6 +339,10 @@ class AgentDiscoveryTest(unittest.TestCase):
             with self.subTest(agent=template.name):
                 self.assertTrue(lines)
                 self.assertTrue(all(line.startswith("- ") for line in lines), lines)
+                self.assertTrue(all("): " not in line for line in lines), lines)
+                for line in (line for line in lines if line.startswith("- `")):
+                    self.assertIn("`: ", line)
+                    self.assertIn("; ", line)
 
     def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator(
         self,
@@ -334,10 +367,8 @@ class AgentDiscoveryTest(unittest.TestCase):
                         reviewers = REVIEWER_DEFAULT.findall(prompt)
                         self.assertTrue(reviewers)
                         for reviewer in reviewers:
-                            # NOTE: match from "(" because the surrounding prose
-                            # ("Use Zara Ahmad (...)") is captured by the name run.
-                            descriptor = reviewer[reviewer.index("(") :]
-                            self.assertIn(descriptor, collaboration)
+                            role, task = reviewer[:-1].split(" (", 1)
+                            self.assertIn(f"{role}: {task};", collaboration)
 
         self.assertTrue(gated_agents)
 
@@ -475,6 +506,7 @@ class InstallAgentsTest(unittest.TestCase):
                 expected_names,
                 {path.name for path in destination.glob("*.md")},
             )
+            self.assertTrue((destination / "frontend-implementer.md").is_file())
 
     def test_duplicate_names_fail_before_any_destination_write(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

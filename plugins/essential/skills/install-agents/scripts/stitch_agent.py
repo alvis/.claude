@@ -11,6 +11,10 @@ from typing import Any
 
 
 AGENT_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+PREFERRED_NAMES = re.compile(
+    r"(?:^| )Preferably named ([A-Z][a-z]{1,15}), ([A-Z][a-z]{1,15}), "
+    r"or ([A-Z][a-z]{1,15}) when the main agent spawns this role\.$"
+)
 FIXED_ROUTING_LANGUAGE = re.compile(
     r"\b(?:only|always)\s+(?:spawn|delegate|route)\b"
     r"|\bAgent` tool for one purpose\b"
@@ -28,7 +32,7 @@ SHARED_POLICY_LANGUAGE = (
     "spawned by",
 )
 REVIEWER_DEFAULT = re.compile(
-    r"[A-Z][a-z]+(?: [A-Z][a-z]+)+ \([^;\n()]+; [^)\n]+\)"
+    r"`[a-z0-9]+(?:-[a-z0-9]+)*` \([^)\n]+\)"
 )
 # NOTE: Claude Code caps an agent description at 1024 characters.
 DESCRIPTION_LIMIT = 1024
@@ -89,6 +93,14 @@ def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
     if name != template_directory.name:
         raise AgentTemplateError(
             f"frontmatter name {name!r} does not match directory {template_directory.name!r}"
+        )
+    description = frontmatter.get("description")
+    preferred_names = (
+        PREFERRED_NAMES.search(description) if isinstance(description, str) else None
+    )
+    if preferred_names is None or len(set(preferred_names.groups())) != 3:
+        raise AgentTemplateError(
+            "description must end with exactly three distinct preferred short names"
         )
     return frontmatter
 

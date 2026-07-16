@@ -49,7 +49,7 @@ written anywhere in this repo. Any agent, template, or prior agent file that cit
 `data-protection.md`, `communication.md`, `checklist.md`, `infrastructure.md`, `monitoring.md`, `deployment.md`,
 `naming/README.md`, or the aliases `SD-AUTH`/`SD-DATA-PROTECT`/`SD-COMMS`/`SD-INFRA`/`SD-DEPLOY`/`SD-GOV`/
 `SD-MONITOR` is citing a standard that was never written — those are fake and MUST NOT appear in any agent's base
-context. Security- and data-protection-sensitive agents (e.g. `nina-petrov-security-champion`) fall back to
+context. Security- and data-protection-sensitive agents (e.g. `security-champion`) fall back to
 `SD-REVIEW` + `SD-UNIVERSAL` until a real auth/data-protection standard is authored; do not paper over the gap by
 inventing a path.
 
@@ -73,29 +73,29 @@ every row additionally carries the lazy `RP-*` aliases implied by its producer/c
 
 | Agent | SD- subset |
 |---|---|
-| `maya-rodriguez-principal` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-OBSERVABILITY`, `SD-REVIEW` |
-| `raj-patel-techlead` | `SD-UNIVERSAL`, `SD-REVIEW`, `SD-GIT` |
-| `marcus-williams-code-quality` | `SD-REVIEW`, `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT` |
-| `ava-thompson-testing-evangelist` | `SD-TESTING`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-REVIEW` |
-| `nina-petrov-security-champion` | `SD-REVIEW`, `SD-UNIVERSAL` |
-| `james-mitchell-service-implementation` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DATA`, `SD-TESTING` |
-| `ethan-kumar-data-architect` | `SD-DATA`, `SD-UNIVERSAL`, `SD-TYPESCRIPT`, `SD-NAMING` |
-| `felix-anderson-devops` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-GIT` |
-| `zara-ahmad-ml-engineer` | `SD-UNIVERSAL`, `SD-PYTHON`, `SD-FUNCTION`, `SD-TESTING`, `SD-OBSERVABILITY` |
-| `amara-okonkwo-ai-research-lead` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-REVIEW` |
-| `leo-fabbri-generalist-engineer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-TESTING` |
-| `isla-moreau-design-lead` | `SD-UNIVERSAL`, `SD-DESIGN`, `SD-REVIEW` |
-| `theo-nakamura-desktop-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
-| `mila-vasquez-mobile-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
-| `taylor-kim-workflow-optimizer` | `SD-UNIVERSAL`, `SD-DOCS` |
-| `sam-taylor-specification` | `SD-DOCS`, `SD-NAMING`, `SD-UNIVERSAL` |
-| `ada-bishop-initializer` | `SD-UNIVERSAL`, `SD-FILE-STRUCTURE`, `SD-GIT` |
-| `coco-laurent-frontend-designer` | `SD-DESIGN`, `SD-UNIVERSAL`, `SD-TYPESCRIPT` |
-| `priya-sharma-frontend-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
-| `penelope-sterling-aesthetic-evaluator` | `SD-DESIGN`, `SD-REVIEW` |
-| `kai-raven-adversarial-redteam` | `SD-REVIEW`, `SD-UNIVERSAL` |
-| `dexter-cho-harness-eval-engineer` | `SD-TESTING`, `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-OBSERVABILITY`, `SD-REVIEW` |
-| `tess-park-test-runner` | `SD-TESTING` |
+| `principal-engineer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-OBSERVABILITY`, `SD-REVIEW` |
+| `tech-lead` | `SD-UNIVERSAL`, `SD-REVIEW`, `SD-GIT` |
+| `code-quality-critic` | `SD-REVIEW`, `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT` |
+| `testing-evangelist` | `SD-TESTING`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-REVIEW` |
+| `security-champion` | `SD-REVIEW`, `SD-UNIVERSAL` |
+| `service-implementation-engineer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DATA`, `SD-TESTING` |
+| `data-architect` | `SD-DATA`, `SD-UNIVERSAL`, `SD-TYPESCRIPT`, `SD-NAMING` |
+| `devops` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-GIT` |
+| `ml-engineer` | `SD-UNIVERSAL`, `SD-PYTHON`, `SD-FUNCTION`, `SD-TESTING`, `SD-OBSERVABILITY` |
+| `ai-research-lead` | `SD-UNIVERSAL`, `SD-OBSERVABILITY`, `SD-REVIEW` |
+| `generalist-engineer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-TESTING` |
+| `design-lead` | `SD-UNIVERSAL`, `SD-DESIGN`, `SD-REVIEW` |
+| `desktop-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
+| `mobile-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
+| `workflow-optimizer` | `SD-UNIVERSAL`, `SD-DOCS` |
+| `specification-expert` | `SD-DOCS`, `SD-NAMING`, `SD-UNIVERSAL` |
+| `project-initializer` | `SD-UNIVERSAL`, `SD-FILE-STRUCTURE`, `SD-GIT` |
+| `frontend-designer` | `SD-DESIGN`, `SD-UNIVERSAL`, `SD-TYPESCRIPT` |
+| `frontend-implementer` | `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-TYPESCRIPT`, `SD-DESIGN`, `SD-TESTING` |
+| `aesthetic-evaluator` | `SD-DESIGN`, `SD-REVIEW` |
+| `adversarial-red-team` | `SD-REVIEW`, `SD-UNIVERSAL` |
+| `harness-eval-engineer` | `SD-TESTING`, `SD-UNIVERSAL`, `SD-FUNCTION`, `SD-OBSERVABILITY`, `SD-REVIEW` |
+| `test-runner` | `SD-TESTING` |
 
 23 agents total. Each row is exhaustive for that agent's `SD-*` subset — do not add standards beyond what is
 listed here without updating this catalog first; the catalog, not the agent file, is authoritative.

@@ -67,9 +67,11 @@ stated behavior change. `create-agent` owns genuinely new roles.
 5. Reconcile `base.md` with the required functional sections while preserving
    expertise and voice: integrate approved changes into the existing prose
    and remove superseded instructions — never append an update log or second
-   personality. Correct context aliases against the catalog. Keep Collaboration
-   to concise outbound collaborator/delegation bullets, naming each known agent's
-   role and main task. Do not duplicate Essential's shared runtime discovery,
+   personality. Keep definition paths, frontmatter names, headings, and identity
+   prose role-only; descriptions end with exactly three distinct preferred short
+   names for main-agent teammate naming. Correct context aliases against the
+   catalog. Keep Collaboration to concise outbound collaborator/delegation bullets,
+   referencing each known agent's role-only name and main task. Do not duplicate Essential's shared runtime discovery,
    handoff, workflow proxy, spawn-budget, or independent-review policy.
 6. Rewrite `initialPrompt` from `role-prompt.md` whenever the role's first
    move, the artifact/brief it needs, or its guardrail changed. It must remain

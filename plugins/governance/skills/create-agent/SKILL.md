@@ -42,8 +42,8 @@ anything is written. `update-agent` owns changes to existing definitions.
 1. Read the agent template, `role-prompt.md`, the context catalog, relevant
    team/edge definitions, and neighboring agents; search existing
    descriptions and callers. Reject a duplicate role, unclear outcome,
-   invalid name (lowercase kebab, personalized-name-role such as
-   `priya-fullstack`), or missing authoritative template.
+   invalid name (a role-only lowercase-kebab identifier such as
+   `frontend-implementer`), personalized definition name, or missing authoritative template.
 2. Select the owning plugin by responsibility and existing trigger surface.
    If `--plugin` is omitted, recommend the closest owner and confirm it with
    the user before the settings confirmation. The owner must be a plugin in
@@ -76,7 +76,9 @@ anything is written. `update-agent` owns changes to existing definitions.
 5. Create only the two canonical source files beneath the confirmed owner's
    `templates/agents/<name>/` directory. `frontmatter/claude.json` must
    be valid JSON using only keys currently allowed by the live template;
-   `initialPrompt` is required.
+   `initialPrompt` is required. The directory and `name` field contain only
+   the role. End `description` with exactly three distinct preferred short
+   names in the canonical sentence so the main agent can name a teammate.
 6. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
    first-turn directive: its first move (propose if the role's next work is
    legible from repo state, else greet and state the artifact/brief it needs),
@@ -87,7 +89,7 @@ anything is written. `update-agent` owns changes to existing definitions.
    template's functional sections: role/mission, expertise and operating
    style, communication style, exact base context, coordination loop and stop
    rule, and collaboration/spawn posture. "Voice" means stable role-specific
-   instructions, not a disposable persona or decorative biography.
+   instructions, not a disposable persona, personalized identity, or decorative biography.
 8. Add or update the task-to-agent routing row in the owning plugin's
    `CLAUDE.md`, creating that file if necessary. Keep only this agent's owned
    tasks there; do not rebuild a central roster table.
