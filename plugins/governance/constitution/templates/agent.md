@@ -61,7 +61,8 @@ A `leaf:true` agent must not be able to spawn further agents. The control surfac
   launched it — so a true leaf must omit `Agent` from its own tool list, full stop.
 - Capability is not permission to build a nested team. Only the main agent assigns configured teammate names.
   A spawn-capable nested agent uses `Agent` only for a certainly one-off helper, supplies `subagent_type`, and
-  omits a configured name. Continuing delegation is brokered by the main agent and returned as an `agent_id`.
+  omits a configured name. For continuing work it messages the best-known teammate directly by `agent_id`; only
+  when it cannot identify the owner does it ask the main agent to suggest one and return the selected `agent_id`.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 

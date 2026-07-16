@@ -1,7 +1,8 @@
 <!-- INSTRUCTION: This is the companion template for forming an Agent Team — persistent teammates that
      coordinate conversationally around a warm core, as distinct from a Dynamic Workflow. Only the main agent
      forms the team, assigns configured teammate names, and spawns new persistent teammates. A spawned subagent
-     or existing teammate asks the main agent to broker continuing delegation. `tech-lead` is the default coding
+     or existing teammate messages a best-known peer directly by `agent_id`, asking the main agent to suggest an
+     owner only when it cannot identify one. `tech-lead` is the default coding
      lead, not the only lead a runtime roster may expose. -->
 
 # Agent Team — Template
@@ -39,9 +40,10 @@ A teammate loads its base context once and stays warm across tasks. Separate spa
 - Reuse a living teammate by its `agent_id` when it has the right role, relevant folder/feature history, and
   enough measured room.
 - Retire a saturated teammate rather than topping it up; reuse is for warm-and-roomy peers.
-- If a subagent needs continuing help but does not know a suitable `agent_id`, it sends the main agent the role,
-  task, constraints, and relevant history. The main agent selects the best living match or spawns a new named
-  teammate and returns its ID.
+- If a subagent knows the best teammate and its `agent_id`, it messages that teammate directly. If the teammate
+  is known but the ID is not, the main agent resolves the ID. Only when the subagent cannot identify the owner
+  does it send the main agent the role, task, constraints, and relevant history so the main agent can select the
+  best living match or spawn a new named teammate and return its ID.
 - Nested spawning is reserved for certainly one-off work whose single result ends the delegation. Such a call
   specifies `subagent_type`, omits a configured name, and does not create a standing teammate.
 

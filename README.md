@@ -168,7 +168,7 @@ security-champion ──► adversarial-red-team
 workflow-optimizer ──► runtime specialists for bounded audit slices and second opinions
 ```
 
-Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `testing-evangelist`, `specification-expert`, `project-initializer`, `aesthetic-evaluator`, `adversarial-red-team`, and `test-runner`. They message known peers by `agent_id` or ask the main agent to broker continuing delegation.
+Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `testing-evangelist`, `specification-expert`, `project-initializer`, `aesthetic-evaluator`, `adversarial-red-team`, and `test-runner`. They message the best-known peer directly by `agent_id`; only when they cannot identify the owner do they ask the main agent to suggest one.
 
 Team hand-off edges are documented by role for readability, but every `SendMessage` call targets the captured runtime `agent_id`:
 
@@ -188,7 +188,7 @@ any producer → principal-engineer: blocked on a hard technical problem
 any agent → main agent: Workflow launch request (see plugins/essential/SUBAGENT.md)
 ```
 
-Only the main agent names persistent teammates. It chooses one of the three short names in the role description, formats `<short-name>-<role>-<task>`, and avoids collisions. Nested agents may spawn only certainly one-off helpers, specify `subagent_type`, and omit configured names; all other delegation requests go to the main agent.
+Only the main agent names persistent teammates. It chooses one of the three short names in the role description, formats `<short-name>-<role>-<task>`, and avoids collisions. Nested agents may spawn only certainly one-off helpers, specify `subagent_type`, and omit configured names; for continuing work they message the best-known teammate directly by `agent_id` and ask the main agent to suggest an owner only when they cannot identify one.
 
 ### Team shapes
 
@@ -205,7 +205,7 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 ### Team operation
 
 - Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while measured runtime telemetry and task affinity show reuse remains useful. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
-- Subagents reply to the assigning teammate's `agent_id`. Roles and configured names are never direct-message addresses. For continuing work without a known suitable ID, they ask the main agent to select a warm peer by folder/feature history or spawn a new named teammate.
+- Subagents reply to the assigning teammate's `agent_id`. Roles and configured names are never direct-message addresses. For continuing work they message the best-known teammate directly when they have its ID, ask the main agent to resolve the ID when the teammate is known, and ask the main agent to suggest a warm peer by folder/feature history or spawn a new named teammate only when they cannot identify the owner.
 - Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 
 ### Notes
