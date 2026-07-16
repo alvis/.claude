@@ -5,6 +5,7 @@
   "model": "opus",
   "effort": "high",
   "permissionMode": "auto",
+  "memory": "project",
   "tools": [
     "Read",
     "Write",

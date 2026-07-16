@@ -53,6 +53,16 @@ VALID_PERMISSION_MODES = (
     "plan",
     "manual",
 )
+MEMORY_SECTION = re.compile(r"^## Memory\n(?P<body>.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
+MEMORY_CONTRACT_MARKERS = (
+    "durable",
+    "evidence",
+    "last-verified",
+    "recheck",
+    "archive",
+    "150 lines",
+    "20kb",
+)
 
 
 class AgentTemplateError(ValueError):
@@ -193,6 +203,28 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
                     raise AgentTemplateError(
                         "review-routing hook must state the independent review action"
                     )
+
+    name = frontmatter.get("name")
+    if frontmatter.get("memory") != "project":
+        raise AgentTemplateError("agent memory must be project-scoped")
+    memory_sections = list(MEMORY_SECTION.finditer(body))
+    if len(memory_sections) != 1:
+        raise AgentTemplateError("agent body must contain exactly one ## Memory section")
+    expected_memory_path = f".claude/agent-memory/{name}/MEMORY.md"
+    memory_body = memory_sections[0].group("body")
+    if expected_memory_path not in memory_body:
+        raise AgentTemplateError(
+            f"Memory section must name exact path {expected_memory_path}"
+        )
+    normalized_body = memory_body.lower()
+    missing_memory_marker = next(
+        (marker for marker in MEMORY_CONTRACT_MARKERS if marker not in normalized_body),
+        None,
+    )
+    if missing_memory_marker:
+        raise AgentTemplateError(
+            f"Memory section is missing maintenance marker: {missing_memory_marker}"
+        )
 
 
 def stitch_agent_definition(template_directory: Path) -> str:

@@ -21,7 +21,7 @@
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
   "hooks": "gated:true agents customize the runtime review-routing Stop hook with concrete default reviewers (each name, role, and main task) plus the independent-review action; critic:true+fence:true agents embed the PreToolUse fence verbatim",
-  "memory": "user|project|local — OMIT the key entirely to disable; there is no memory:none",
+  "memory": "REQUIRED and always project — every roster agent owns .claude/agent-memory/<name>/MEMORY.md",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
   "maxTurns": "integer hard cap on agentic turns for this dispatch",
@@ -114,11 +114,22 @@ to at task time):
 - `RP-CONFIG` — the target repo's build/lint/test configuration
 - (add `RP-HANDOVER` / `RP-STANDARDS` only if this role actually consults them)
 
-<!-- INSTRUCTION: if this agent carries a `memory` frontmatter key, state self-curation explicitly, in this
-     agent's voice — there is no external memory steward. -->
+## Memory
 
-I self-curate my own `.claude/agent-memory/<name>/MEMORY.md` — pruning stale entries and rewriting it as my own
-judgment dictates; no one else tends it for me.
+<!-- INSTRUCTION: every agent uses `"memory": "project"` and names its exact role-derived path here. State the
+     role-specific durable knowledge worth retaining. The section must also carry the maintenance contract from
+     plugins/governance/constitution/templates/agent-memory.md: current facts, reusable lessons, watchpoints,
+     evidence, last-verified dates,
+     recheck triggers, source-of-truth precedence, replacement plus archival of contradictions, the 150-line /
+     20KB curation threshold, and the ban on secrets and ephemeral task logs. There is no external steward. -->
+
+I self-curate `.claude/agent-memory/<name>/MEMORY.md`. I retain only durable, repository-specific [role memory
+categories]; no one else tends it for me.
+
+I follow `plugins/governance/constitution/templates/agent-memory.md`: current facts, reusable lessons, and watchpoints carry
+evidence, a last-verified date, and a recheck trigger. Authoritative sources override memory, so I replace
+contradictions and archive superseded claims. Before 150 lines or 20KB, I move detail to `topics/<slug>.md` and
+obsolete history to `archive/YYYY-MM.md`. I never store secrets, personal data, or ephemeral task logs.
 
 ## Coordination Posture
 

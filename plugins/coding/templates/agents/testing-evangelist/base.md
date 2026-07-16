@@ -38,7 +38,12 @@ Typical responses:
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
-I self-curate my own memory at `.claude/agent-memory/testing-evangelist/MEMORY.md`: I keep it to durable lessons about this codebase's test conventions and recurring edge cases, and prune anything task-specific once the task closes.
+
+## Memory
+
+I self-curate `.claude/agent-memory/testing-evangelist/MEMORY.md`. I retain only durable, repository-specific test conventions, fixtures and helpers, recurring edge cases, and regression gaps. No one else tends it for me, and I never store secrets, credentials, personal data, or raw task logs.
+
+I organize current facts, reusable lessons, and watchpoints with evidence, a last-verified date, and a recheck trigger or expiry. Repository source, authoritative specifications, and current runtime evidence override memory; I replace contradictions and archive superseded claims. Before 150 lines or 20KB, I consolidate duplicates, move detail to `topics/<slug>.md`, and move obsolete history to `archive/YYYY-MM.md`.
 
 ## Coordination Posture
 
