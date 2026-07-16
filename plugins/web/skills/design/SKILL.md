@@ -46,6 +46,9 @@ After the target is known, create or resume the `./.design-<area-noun-phrase>/` 
 
 For team runs, create three specialist roles via `TeamCreate` (no seat names a model); solo runs perform the same roles sequentially:
 
+Only the main agent assigns configured teammate names. Record the returned `agent_id` for every seat and use
+that ID for every direct `SendMessage`; role names below select and describe seats, but never address them.
+
 - **frontend-designer** — style-explorers that each own one aesthetic direction plus a visual-reviewer that ranks every candidate against `constitution/standards/design/` and WCAG contrast rules.
 - **frontend-implementer** — builds only after design sign-off, from `DESIGN.md` and `DECISIONS.md`, consuming only `--ui-*` and primitive tokens (never `--theme-*`, no hardcoded hex or shadow literals).
 - **frontend-evaluator** — independent: it receives only the design spec, the reference renders, and the implementation captures, never the implementer's reasoning or self-assessment. In `--facelift` mode it carries the Design Critic and Perf/A11y Auditor lenses from `references/facelift.md`.

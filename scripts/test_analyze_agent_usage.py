@@ -11,16 +11,16 @@ class DiscoverPluginAgentsTest(unittest.TestCase):
         self,
     ) -> None:
         defined = {
-            "web:priya-sharma-frontend-implementer": {
+            "web:frontend-implementer": {
                 "plugin": "web",
-                "agent": "priya-sharma-frontend-implementer",
+                "agent": "frontend-implementer",
                 "path": "frontmatter.json",
             }
         }
         invocation = Invocation(
-            canonical_id="priya-sharma-frontend-implementer",
+            canonical_id="frontend-implementer",
             plugin="built-in",
-            agent="priya-sharma-frontend-implementer",
+            agent="frontend-implementer",
             timestamp=None,
             session_id="session",
             source_file="session.jsonl",
@@ -28,19 +28,19 @@ class DiscoverPluginAgentsTest(unittest.TestCase):
 
         stats = tally([invocation], defined, files_scanned=1)
 
-        self.assertEqual(1, stats.tallies["web:priya-sharma-frontend-implementer"].count)
-        self.assertNotIn("priya-sharma-frontend-implementer", stats.tallies)
+        self.assertEqual(1, stats.tallies["web:frontend-implementer"].count)
+        self.assertNotIn("frontend-implementer", stats.tallies)
 
     def test_discovers_distributed_json_frontmatter_by_owner(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             plugins = Path(temporary) / "plugins"
             frontmatter = (
                 plugins
-                / "web/templates/agents/priya-sharma-frontend-implementer/frontmatter/claude.json"
+                / "web/templates/agents/frontend-implementer/frontmatter/claude.json"
             )
             frontmatter.parent.mkdir(parents=True)
             frontmatter.write_text(
-                json.dumps({"name": "priya-sharma-frontend-implementer"}),
+                json.dumps({"name": "frontend-implementer"}),
                 encoding="utf-8",
             )
             legacy = plugins / "web/agents/legacy.md"
@@ -50,9 +50,9 @@ class DiscoverPluginAgentsTest(unittest.TestCase):
             agents = discover_plugin_agents(plugins)
 
             self.assertEqual(
-                {"web:priya-sharma-frontend-implementer"}, set(agents)
+                {"web:frontend-implementer"}, set(agents)
             )
-            self.assertEqual(str(frontmatter), agents["web:priya-sharma-frontend-implementer"]["path"])
+            self.assertEqual(str(frontmatter), agents["web:frontend-implementer"]["path"])
 
     def test_ignores_malformed_or_nameless_frontmatter_and_missing_root(
         self,

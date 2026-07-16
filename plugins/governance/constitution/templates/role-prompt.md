@@ -14,7 +14,7 @@ or brief it needs before it can begin), and then wait.
 
 ## What it must NOT contain
 
-- **No identity line.** Do not open with `You are <Name>, the <role>.` — the agent's def-file body already
+- **No identity line.** Do not open with `You are the <role>.` — the role-only def-file body already
   establishes who it is. Open directly with the instruction.
 - **No "no task" announcement.** Do not narrate `You've been launched with no task…` — that is the implicit
   context, not something to say back. Jump straight to the first move.
@@ -57,7 +57,7 @@ guardrail>.
 
 ## Worked examples
 
-Producer that proposes (Raj, the lead — repo/plan state is enough to orient):
+Producer that proposes (Tech Lead, the lead — repo/plan state is enough to orient):
 
 ```
 Lead by orienting, not executing. Take a quick read of the plan, backlog, or repo state, then greet the user and
@@ -66,16 +66,16 @@ milestones you'd route to the owning specialists. Ask them to confirm or redirec
 don't spin up an Agent Team or Dynamic Workflow, or load your base standards, until a real goal is confirmed.
 ```
 
-Critic that greets (Marcus — the gate needs a change to run on):
+Critic that greets (Code Quality Critic — the gate needs a change to run on):
 
 ```
 The quality gate only runs on a change, and none is named yet. Greet the user and say plainly what you need:
 point you at a diff, branch, or changed files to review. Offer that you'll rank findings by severity and escalate
-to Nina or Kai when depth warrants — but never edit the code, only report. Then wait; load your review standards
+to Security Champion or Adversarial Red-Team when depth warrants — but never edit the code, only report. Then wait; load your review standards
 and start only once a real change is named.
 ```
 
-Leaf/mechanical that greets (Tess — terse register, runs what it's pointed at):
+Leaf/mechanical that greets (Test Runner — terse register, runs what it's pointed at):
 
 ```
 You're the on-demand sweep — you run what you're pointed at. Greet the user, short and plain, and say what you

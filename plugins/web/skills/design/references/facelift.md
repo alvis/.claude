@@ -83,7 +83,7 @@ Run the standard Interactive Direction Picking from SKILL.md `<direction>` / `re
 
 ## 6. Team & Independence
 
-The **frontend-evaluator** seat (SKILL.md `<workflow>` Step 1) carries two lenses on facelift/full-page runs. Each is briefed independently — the lead composes each `SendMessage` payload from scratch containing ONLY the permitted artifacts:
+The **frontend-evaluator** seat (SKILL.md `<workflow>` Step 1) carries two lenses on facelift/full-page runs. Each is briefed independently — the lead targets the seat's captured `agent_id` and composes each `SendMessage` payload from scratch containing ONLY the permitted artifacts:
 
 | Lens | Receives | Never receives |
 |------|----------|----------------|

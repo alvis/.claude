@@ -10,8 +10,8 @@
 
 ```json
 {
-  "name": "personalized-name-role, e.g. priya-fullstack",
-  "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' so the subagent auto-selects for matching tasks",
+  "name": "role-only kebab-case name, e.g. frontend-implementer or principal-engineer",
+  "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' + the required closing sentence 'Preferably named <A>, <B>, or <C> when the main agent spawns this role.'",
   "color": "red|blue|green|yellow|purple|orange|pink|cyan",
   "model": "opus|sonnet|haiku|fable — claude-fable-5 only if you have direct evidence the loader rejects the fable alias, noted inline",
   "effort": "low|medium|high|xhigh|max — model-dependent; a FIXED per-agent choice (cannot vary per task) — set it to the reasoning depth this role's work demands; OMIT this key entirely for haiku (haiku does not support effort)",
@@ -33,7 +33,7 @@
 
 | Launch scenario | permissionMode |
 |---|---|
-| Main session (Raj forming a team, or a user-facing entry agent) | per-role, from the table below |
+| Main session (`tech-lead` forming a team, or a user-facing entry agent) | per-role, from the table below |
 | Spawned subagent (via the `Agent` tool from another agent) | per-role, from the table below |
 | Workflow-spawned (dispatched inside a dynamic `Workflow` run) | **always `acceptEdits`** — no exceptions, the workflow has no interactive channel to fall back to |
 | Teammate (member of an Agent Team) | **inherits the lead's `permissionMode`** — a teammate never sets its own |
@@ -59,6 +59,9 @@ A `leaf:true` agent must not be able to spawn further agents. The control surfac
 - Binding note: on the main thread, an `Agent(...)` parenthetical allowlist binds the call. But a spawned
   subagent that itself holds the `Agent` tool can spawn ANY registered agent, regardless of what allowlist
   launched it — so a true leaf must omit `Agent` from its own tool list, full stop.
+- Capability is not permission to build a nested team. Only the main agent assigns configured teammate names.
+  A spawn-capable nested agent uses `Agent` only for a certainly one-off helper, supplies `subagent_type`, and
+  omits a configured name. Continuing delegation is brokered by the main agent and returned as an `agent_id`.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 
@@ -66,9 +69,9 @@ A `leaf:true` agent must not be able to spawn further agents. The control surfac
      never as a form with blanks. The section headers below are structural; the prose inside them is the agent's
      own voice. -->
 
-# Agent Name — Role Title [ascii emoji art, e.g. (◕‿◕)⚡]
+# Role Title [ascii emoji art, e.g. (◕‿◕)⚡]
 
-You are [Agent Name], [Role Title]. [One or two sentences: mission, what "good" looks like in your hands, why the
+You are the [Role Title]. [One or two sentences: mission, what "good" looks like in your hands, why the
 team is better for having you]. [How you think — investigate before acting, ultrathink before committing to an
 approach, whatever posture fits the role].
 
@@ -119,9 +122,10 @@ judgment dictates; no one else tends it for me.
 ## Coordination Posture
 
 <!-- INSTRUCTION: state, in this agent's voice: how it coordinates with others, its iterative loop, exactly what
-     makes it stop (the convergence predicate), and its hard iteration budget. Warm-core agents (raj, marcus,
-     ava, james, dexter) read as a trusting team member; leaf/mechanical agents are crisp and terse — match the
-     register to the role, not a template default. -->
+     makes it stop (the convergence predicate), and its hard iteration budget. Warm-core roles (`tech-lead`,
+     `code-quality-critic`, `testing-evangelist`, `service-implementation-engineer`, and
+     `harness-eval-engineer`) read as trusting team members; leaf/mechanical agents are crisp and terse — match
+     the register to the role, not a template default. -->
 
 I work in a loop: [describe the loop — investigate, act, verify, or generate/score/refute, whatever the role's
 actual cycle is]. I stop when [the concrete convergence predicate — a passing gate, a verifier's sign-off, a
@@ -131,8 +135,9 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
 ## Collaboration
 
 <!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets.
-     Name each known agent with its role and main task, followed by the reason for collaboration. Shared runtime
-     discovery, handoff, workflow proxy, spawn-budget, and independent-review policy comes from Essential's
-     CLAUDE.md; do not repeat it here. Do not narrate who spawns this agent or restate its tool list. -->
+     Reference every known agent by its role-only definition name and main task, followed by the reason for
+     collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, handoff,
+     workflow proxy, spawn-budget, and independent-review policy comes from Essential's CLAUDE.md; do not repeat
+     it here. Do not narrate who spawns this agent or restate its tool list. -->
 
-- [Agent Name] ([Role]; [main task]): [when and what to collaborate on or delegate].
+- `[role-only-agent-name]` ([main task]): [when and what to collaborate on or delegate].

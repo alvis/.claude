@@ -9,6 +9,9 @@ Estimate scope by counting the components, hooks, and files implied by the task,
 - implementer teammates (haiku) — `ceil(files / 10)`, minimum 1; the 10-file bound keeps each slice reviewable and a failed slice cheap to retry
 - 1 reviewer teammate (sonnet)
 
+Only the main agent assigns the configured teammate names. Capture each returned `agent_id` beside its role and
+slice; all direct messages and hand-offs target that ID, never a role or configured name.
+
 ## Partitioning and briefing
 
 Partition the file set so each implementer owns a coherent slice — by feature, route, or component cluster, never random shards. Brief each implementer with its slice plus standards as paths only:
@@ -22,4 +25,4 @@ Implementers stream completed files; the reviewer audits each batch; the lead or
 
 ## Context rotation
 
-Every `SendMessage` reply must include `context_used: <token-count>`. When `context_used > 150_000` for any teammate, delete that teammate via `TeamDelete`, spawn a replacement via `TeamCreate`, and re-issue the in-flight slice with a brief handover: files completed, files remaining, decisions made.
+Every `SendMessage` reply must include `context_used: <token-count>`. When `context_used > 150_000` for any teammate, delete that teammate via `TeamDelete`, spawn a replacement via `TeamCreate`, record its new `agent_id`, and re-issue the in-flight slice to that ID with a brief handover: files completed, files remaining, decisions made.

@@ -13,7 +13,7 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 `scripts/install-agents.sh` is idempotent and safe to re-run:
 
 1. In a source checkout, discovers `plugins/*/templates/agents/*`; from an installed Essential plugin, reads `claude plugin list --json` and discovers templates only from enabled plugins in Essential's marketplace.
-2. Validates every `base.md` + `frontmatter/claude.json` pair, including its role-based spawn posture, model/effort, `SendMessage` capability, and centralized-policy boundary, and rejects malformed or duplicate names before touching the destination.
+2. Validates every `base.md` + `frontmatter/claude.json` pair, including its role-only definition name, three distinct preferred short teammate names, role-based spawn posture, model/effort, `SendMessage` capability, and centralized-policy boundary, and rejects malformed or duplicate names before touching the destination.
 3. Stitches all definitions into a temporary staging directory.
 4. Copies staged files into `~/.claude/agents/`, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
@@ -31,7 +31,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/install-agents/scripts/install-agents.sh"
 Smoke-check one representative definition after confirming the installer's reported count:
 
 ```bash
-head -3 ~/.claude/agents/raj-patel-techlead.md
+head -3 ~/.claude/agents/tech-lead.md
 ```
 
 In a fresh Claude Code session, the roster appears in the agent list.

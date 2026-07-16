@@ -118,112 +118,100 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 
 | Agent | Role | Model | Effort | Permission | Flags |
 | --- | --- | --- | --- | --- | --- |
-| `raj-patel-techlead` | Tech Lead — decomposes projects and routes milestones | fable | medium | auto | memory |
-| `isla-moreau-design-lead` | Design Lead — decomposes design initiatives across web/mobile/desktop | opus | high | auto | memory |
-| `amara-okonkwo-ai-research-lead` | AI Research Lead — decomposes ML/RL/AI research initiatives | fable | medium | auto | memory |
-| `maya-rodriguez-principal` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
-| `james-mitchell-service-implementation` | Service Implementation — backend/API build-out | sonnet | medium | acceptEdits | gated, worktree |
-| `leo-fabbri-generalist-engineer` | Generalist Engineer — libraries, data pipelines, CLIs, glue code | sonnet | high | acceptEdits | gated, worktree |
-| `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | high | auto | gated |
-| `coco-laurent-frontend-designer` | Frontend Designer — designs all app screens (web/mobile/desktop), never builds | fable | high | auto | worktree |
-| `priya-sharma-frontend-implementer` | Frontend Implementer — creates and edits production React/TS UI, with or without a design handoff | sonnet | high | acceptEdits | gated, worktree |
-| `theo-nakamura-desktop-implementer` | Desktop Implementer — builds approved designs as Electron/desktop apps | sonnet | high | acceptEdits | gated, worktree |
-| `mila-vasquez-mobile-implementer` | Mobile Implementer — builds approved designs as mobile apps in React Native | sonnet | high | acceptEdits | gated, worktree |
-| `zara-ahmad-ml-engineer` | ML Engineer — full ML lifecycle: data analysis and ML/AI features | opus | high | auto | gated, worktree |
-| `felix-anderson-devops` | DevOps — CI/CD and infra automation, background passes | sonnet | medium | auto | gated, background |
-| `dexter-cho-harness-eval-engineer` | Harness & Eval Engineer — eval suites, benchmarks, and prototypes as code | opus | high | auto | gated, worktree, memory |
-| `ava-thompson-testing-evangelist` | Testing Evangelist — authors test suites via TDD | sonnet | medium | acceptEdits | leaf, gated, memory |
-| `tess-park-test-runner` | Test Runner — mechanical lint/type/test sweeps, summarized | haiku | — | acceptEdits | leaf, background |
-| `marcus-williams-code-quality` | Code Quality Critic — the independent quality gate, day-to-day quality and security review | opus | medium | default | critic (write-fenced), memory |
-| `nina-petrov-security-champion` | Security Champion — deep security review, explicit request only | fable | high | default | critic |
-| `kai-raven-adversarial-redteam` | Adversarial Red-Team — PoC exploits in an isolated worktree | opus | high | default | leaf, worktree |
-| `penelope-sterling-aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | medium | default | leaf, critic (write-fenced), memory |
-| `sam-taylor-specification` | Specification Expert — DESIGN.md, requirements, user docs, Notion | sonnet | medium | acceptEdits | leaf |
-| `ada-bishop-initializer` | Project Initializer — run-once bootstrap | sonnet | low | acceptEdits | leaf |
-| `taylor-kim-workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | high | auto | background, memory |
+| `tech-lead` | Tech Lead — decomposes projects and routes milestones | fable | medium | auto | memory |
+| `design-lead` | Design Lead — decomposes design initiatives across web/mobile/desktop | opus | high | auto | memory |
+| `ai-research-lead` | AI Research Lead — decomposes ML/RL/AI research initiatives | fable | medium | auto | memory |
+| `principal-engineer` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
+| `service-implementation-engineer` | Service Implementation — backend/API build-out | sonnet | medium | acceptEdits | gated, worktree |
+| `generalist-engineer` | Generalist Engineer — libraries, data pipelines, CLIs, glue code | sonnet | high | acceptEdits | gated, worktree |
+| `data-architect` | Data Architect — schemas, data models, pipelines | opus | high | auto | gated |
+| `frontend-designer` | Frontend Designer — designs all app screens (web/mobile/desktop), never builds | fable | high | auto | worktree |
+| `frontend-implementer` | Frontend Implementer — creates and edits production React/TS UI, with or without a design handoff | sonnet | high | acceptEdits | gated, worktree |
+| `desktop-implementer` | Desktop Implementer — builds approved designs as Electron/desktop apps | sonnet | high | acceptEdits | gated, worktree |
+| `mobile-implementer` | Mobile Implementer — builds approved designs as mobile apps in React Native | sonnet | high | acceptEdits | gated, worktree |
+| `ml-engineer` | ML Engineer — full ML lifecycle: data analysis and ML/AI features | opus | high | auto | gated, worktree |
+| `devops` | DevOps — CI/CD and infra automation, background passes | sonnet | medium | auto | gated, background |
+| `harness-eval-engineer` | Harness & Eval Engineer — eval suites, benchmarks, and prototypes as code | opus | high | auto | gated, worktree, memory |
+| `testing-evangelist` | Testing Evangelist — authors test suites via TDD | sonnet | medium | acceptEdits | leaf, gated, memory |
+| `test-runner` | Test Runner — mechanical lint/type/test sweeps, summarized | haiku | — | acceptEdits | leaf, background |
+| `code-quality-critic` | Code Quality Critic — the independent quality gate, day-to-day quality and security review | opus | medium | default | critic (write-fenced), memory |
+| `security-champion` | Security Champion — deep security review, explicit request only | fable | high | default | critic |
+| `adversarial-red-team` | Adversarial Red-Team — PoC exploits in an isolated worktree | opus | high | default | leaf, worktree |
+| `aesthetic-evaluator` | Aesthetic Evaluator — design and build-vs-design judgment | fable | medium | default | leaf, critic (write-fenced), memory |
+| `specification-expert` | Specification Expert — DESIGN.md, requirements, user docs, Notion | sonnet | medium | acceptEdits | leaf |
+| `project-initializer` | Project Initializer — run-once bootstrap | sonnet | low | acceptEdits | leaf |
+| `workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | high | auto | background, memory |
 
-Each agent's `## Collaboration` section records its proven outbound collaborators and delegation targets. These are runtime defaults, not an allowlist; shared discovery and handoff policy lives in `plugins/essential/CLAUDE.md`.
+Each agent's `## Collaboration` section records proven role-level collaborators and delegation targets using role-only definition names. These are runtime defaults, not an allowlist; naming, `agent_id` messaging, main-agent brokering, and nested-spawn policy live in `plugins/essential/CLAUDE.md`.
 
 ### Delegation topology
 
-Spawn edges (the `Agent` tool channel — who dispatches whom as a subagent):
+Role-routing defaults (the main agent may reuse a matching live `agent_id` or spawn a new named teammate):
 
 ```
-raj-patel-techlead (team lead; ×N priya fan-out; independent quality gate)
+tech-lead (team lead; parallel frontend-implementer fan-out; independent quality gate)
   └── any registered agent
-isla-moreau   ──► coco (design), priya (web build), theo (desktop build), mila (mobile build), penelope (sign-off)
-amara-okonkwo ──► zara (analysis/model), dexter (benchmark/eval), ethan (data pipelines)
-james-mitchell ──► maya (escalation), nina (security, explicit request only), tess (sweeps), marcus (review), ava (coverage)
-leo-fabbri    ──► ethan (pipeline/schema), marcus (review), tess (sweeps), ava (coverage), maya (escalation), raj (structure)
-ethan-kumar   ──► zara (profiling), james (schema alignment), tess (sweeps), maya (escalation), marcus (review)
-maya-rodriguez ─► nina (security, explicit request only), tess (sweeps), marcus (review)
-coco-laurent  ──► penelope (design sign-off), priya (web build), theo (desktop build), mila (mobile build)
-priya-sharma  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), raj (structure)
-theo-nakamura ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), isla (escalation)
-mila-vasquez  ──► penelope (fidelity), marcus (review), tess (sweeps), coco (design mismatch), isla (escalation)
-felix-anderson ► marcus, nina (explicit request only), tess; escalates to maya
-zara-ahmad    ──► ethan (data contracts), tess (sweeps), maya (escalation), marcus (review)
-dexter-cho    ──► ava (test strategy), marcus (gate alignment), tess (sweeps), raj (feasibility)
-marcus-williams ► nina (security depth, explicit request only), kai (adversarial proof)
-nina-petrov   ──► kai
-taylor-kim    ──► runtime specialists (bounded audit slices and second opinions)
+design-lead ──► frontend-designer, frontend-implementer, desktop-implementer, mobile-implementer, aesthetic-evaluator
+ai-research-lead ──► ml-engineer, harness-eval-engineer, data-architect
+service-implementation-engineer ──► principal-engineer, security-champion, test-runner, code-quality-critic, testing-evangelist
+generalist-engineer ──► data-architect, code-quality-critic, test-runner, testing-evangelist, principal-engineer, tech-lead
+data-architect ──► ml-engineer, service-implementation-engineer, test-runner, principal-engineer, code-quality-critic
+principal-engineer ──► security-champion, test-runner, code-quality-critic
+frontend-designer ──► aesthetic-evaluator, frontend-implementer, desktop-implementer, mobile-implementer
+frontend-implementer ──► aesthetic-evaluator, code-quality-critic, test-runner, frontend-designer, tech-lead
+desktop-implementer/mobile-implementer ──► aesthetic-evaluator, code-quality-critic, test-runner, frontend-designer, design-lead
+devops ──► code-quality-critic, security-champion, test-runner; escalates to principal-engineer
+ml-engineer ──► data-architect, test-runner, principal-engineer, code-quality-critic
+harness-eval-engineer ──► testing-evangelist, code-quality-critic, test-runner, tech-lead
+code-quality-critic ──► security-champion, adversarial-red-team
+security-champion ──► adversarial-red-team
+workflow-optimizer ──► runtime specialists for bounded audit slices and second opinions
 ```
 
-Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `ava`, `sam`, `ada`, `penelope`, `kai`, `tess`. They hand work to live teammates through SendMessage or return it to their caller.
+Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `testing-evangelist`, `specification-expert`, `project-initializer`, `aesthetic-evaluator`, `adversarial-red-team`, and `test-runner`. They message known peers by `agent_id` or ask the main agent to broker continuing delegation.
 
-Team hand-off edges (the SendMessage channel inside an agent team, `A → B: trigger`):
+Team hand-off edges are documented by role for readability, but every `SendMessage` call targets the captured runtime `agent_id`:
 
 ```
-isla → coco/priya/theo/mila (via lead): design-initiative slice per platform
-isla → penelope: initiative sign-off
-amara → zara/dexter/ethan (via lead): research/experiment slice
-james → marcus: implementation complete, before commit (gate)
-marcus → james: gate failure, with findings
-marcus → lead:  gate pass, or 2 rounds exhausted
-leo → marcus: implementation complete, before commit (gate)
-leo → ethan/ava/tess (via lead): pipeline/schema, coverage, and sweep hand-offs
-ava → james/priya/leo: coverage gap found mid-implementation
-ava → tess (via lead): sweep execution
-coco → priya/theo/mila (via lead): approved design handoff per platform
-priya → penelope: build complete, fidelity check
-theo → penelope: desktop build complete, fidelity check
-mila → penelope: mobile build complete, fidelity check
-theo/mila → coco: design mismatch mid-build; → isla: cross-platform/scope escalation
-ethan ↔ zara: schema design ↔ data-profiling consults
-zara → ethan (via lead): data questions
-dexter ↔ ava: test-strategy/harness alignment
-dexter ↔ marcus: gate-charter alignment
-dexter → raj (via lead): feasibility verdict with benchmark data
-sam → lead: spec delivery, routed to implementers
-ada → raj: bootstrap complete
-any producer → maya: blocked on a hard technical problem
+design-lead → frontend-designer/frontend-implementer/desktop-implementer/mobile-implementer: initiative slice per platform
+design-lead → aesthetic-evaluator: initiative sign-off
+ai-research-lead → ml-engineer/harness-eval-engineer/data-architect: research or experiment slice
+service-implementation-engineer → code-quality-critic: implementation complete, before commit
+code-quality-critic → service-implementation-engineer: gate failure, with findings
+code-quality-critic → tech-lead: gate pass, or two rounds exhausted
+testing-evangelist → service-implementation-engineer/frontend-implementer/generalist-engineer: coverage gap found
+frontend-designer → frontend-implementer/desktop-implementer/mobile-implementer: approved design handoff
+frontend-implementer/desktop-implementer/mobile-implementer → aesthetic-evaluator: build complete, fidelity check
+data-architect ↔ ml-engineer: schema design and data-profiling consults
+harness-eval-engineer ↔ testing-evangelist: test-strategy and harness alignment
+any producer → principal-engineer: blocked on a hard technical problem
 any agent → main agent: Workflow launch request (see plugins/essential/SUBAGENT.md)
 ```
 
-Note: the edges above are proven defaults only. A spawn-capable agent discovers the current roster immediately before dispatch and chooses a better available specialist when one fits; true leaves are enforced by tool-list omission.
+Only the main agent names persistent teammates. It chooses one of the three short names in the role description, formats `<short-name>-<role>-<task>`, and avoids collisions. Nested agents may spawn only certainly one-off helpers, specify `subagent_type`, and omit configured names; all other delegation requests go to the main agent.
 
 ### Team shapes
 
-- **Warm core** (trusting, low-friction hand-offs): raj, marcus, ava, james, leo, dexter.
-- **On-demand specialists**: isla, amara, maya, ethan, coco, priya, theo, mila, zara, nina, penelope, kai, sam, ada.
-- **Background** (one run per spawn): felix, taylor.
-- **Mechanical**: tess.
+- **Warm core** (trusting, low-friction hand-offs): `tech-lead`, `code-quality-critic`, `testing-evangelist`, `service-implementation-engineer`, `generalist-engineer`, `harness-eval-engineer`.
+- **On-demand specialists**: `design-lead`, `ai-research-lead`, `principal-engineer`, `data-architect`, `frontend-designer`, `frontend-implementer`, `desktop-implementer`, `mobile-implementer`, `ml-engineer`, `security-champion`, `aesthetic-evaluator`, `adversarial-red-team`, `specification-expert`, `project-initializer`.
+- **Background** (one run per spawn): `devops`, `workflow-optimizer`.
+- **Mechanical**: `test-runner`.
 
 ### Gates
 
-- **Gated producers** (embedded prompt-type routing Stop gate; 2-round cap): maya, ava, james, ethan, felix, zara, dexter, priya, leo, theo, mila. Each gate checks the producer's final message for the generic `REVIEWED: source=<specialist|general|external|none> reviewer=<runtime-name|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>` attestation. When changed code lacks one, the gate names that producer's proven reviewer defaults with each role and main task, requires discovery of a better runtime specialist when available, and tells the producer to request an independent artifact review through SendMessage, Agent, or its caller. Pure-analysis output passes on first stop; an unreachable reviewer or a spent 2-round budget releases the gate rather than deadlocking.
-- **Write-fenced critics** (PreToolUse fence): marcus, penelope — may only write to their agent-memory dir or review reports.
+- **Gated producers** (embedded prompt-type routing Stop gate; 2-round cap): `principal-engineer`, `testing-evangelist`, `service-implementation-engineer`, `data-architect`, `devops`, `ml-engineer`, `harness-eval-engineer`, `frontend-implementer`, `generalist-engineer`, `desktop-implementer`, `mobile-implementer`. Each gate checks the producer's final message for the generic `REVIEWED: source=<specialist|general|external|none> reviewer=<agent-id|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>` attestation and requests review through a known reviewer `agent_id` or the main agent.
+- **Write-fenced critics** (PreToolUse fence): `code-quality-critic`, `aesthetic-evaluator` — may only write to their agent-memory dir or review reports.
 
 ### Team operation
 
 - Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while measured runtime telemetry and task affinity show reuse remains useful. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
-- Subagents reply to the teammate that assigned the work over SendMessage. Their `## Collaboration` edges are proven defaults, while runtime discovery may select a better available specialist (see `plugins/essential/SUBAGENT.md`).
+- Subagents reply to the assigning teammate's `agent_id`. Roles and configured names are never direct-message addresses. For continuing work without a known suitable ID, they ask the main agent to select a warm peer by folder/feature history or spawn a new named teammate.
 - Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 
 ### Notes
 
 - The copy-install into `~/.claude/agents/` is load-bearing for the hooks: Claude Code honors `hooks`, `permissionMode`, and `mcpServers` frontmatter only for agents in `~/.claude/agents/` / `.claude/agents/` — agents registered via a plugin ignore those fields. Do not convert the roster to plugin-registered agents, or every embedded gate and fence goes dead.
-- `zara-ahmad-ml-engineer` uses the `theriety:build-service` skill — it requires the plugin whose manifest name is `theriety` (this marketplace registers it under the entry name `backend`; the manifest-vs-marketplace name mismatch is known).
+- `ml-engineer` uses the `theriety:build-service` skill — it requires the plugin whose manifest name is `theriety` (this marketplace registers it under the entry name `backend`; the manifest-vs-marketplace name mismatch is known).
 - Installed agent definitions are intentionally single self-contained files even though their canonical source is split. This is why the routing Stop gate is embedded verbatim in all eleven gated producers.
 - Standards references (`SD-*`) in the definitions never use literal installation paths. They name a standard plus its owning plugin constitution, resolved at runtime when that plugin is enabled. A partial enabled roster is valid, so cross-plugin handoffs and context are best-effort when their owner plugin is absent.
 
