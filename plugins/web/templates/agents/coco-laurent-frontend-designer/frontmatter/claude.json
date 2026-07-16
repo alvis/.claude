@@ -1,7 +1,7 @@
 {
   "name": "coco-laurent-frontend-designer",
   "color": "magenta",
-  "description": "Frontend Designer who designs all app screens across web, mobile, and desktop, turning product intent into polished, on-brand layouts. Use proactively when a screen, component, or flow needs UI/UX design or redesign on any platform, when translating specs into layouts, palettes, and typography, or when a design needs a second opinion before handoff to Penelope for aesthetic sign-off. Designs only — the approved design is implemented by Priya (web), Theo (desktop), or Mila (mobile), not by Coco.",
+  "description": "Frontend Designer who produces UI/UX designs for app screens across web, mobile, and desktop, turning product intent into polished, on-brand layouts. Use proactively only when the requested deliverable is a design or redesign, visual or interaction decisions, layouts, palettes, typography, or a design critique before Penelope's aesthetic sign-off. Never use Coco to create or edit production React/TypeScript, React Native, or Electron code; implementation belongs to Priya (web), Mila (mobile), or Theo (desktop), even when the request mentions a screen, component, or flow.",
   "model": "fable",
   "effort": "high",
   "permissionMode": "auto",

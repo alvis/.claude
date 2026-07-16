@@ -182,6 +182,30 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
+    def test_frontend_routing_uses_requested_deliverable_not_shared_nouns(self):
+        web = ROOT / "plugins/web"
+        routing = (web / "references/ROUTING.md").read_text(encoding="utf-8")
+        instructions = (web / "CLAUDE.md").read_text(encoding="utf-8")
+        coco = json.loads(
+            (
+                web
+                / "templates/agents/coco-laurent-frontend-designer/frontmatter/claude.json"
+            ).read_text(encoding="utf-8")
+        )
+        priya = json.loads(
+            (
+                web
+                / "templates/agents/priya-sharma-frontend-implementer/frontmatter/claude.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertIn("classify the requested deliverable", instructions)
+        self.assertIn("Do not route an implementation request to a designer", instructions)
+        self.assertIn("with or without a prior design handoff", routing)
+        self.assertIn("Never use Coco to create or edit production React/TypeScript", coco["description"])
+        self.assertIn("whether or not an approved design exists", priya["description"])
+        self.assertIn("If none exists, proceed", priya["initialPrompt"])
+
     def test_essential_runtime_context_uses_measured_dynamic_delegation(self):
         essential = ROOT / "plugins/essential"
         shared_context = "\n".join(

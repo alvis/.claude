@@ -125,7 +125,7 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 | `leo-fabbri-generalist-engineer` | Generalist Engineer — libraries, data pipelines, CLIs, glue code | sonnet | high | acceptEdits | gated, worktree |
 | `ethan-kumar-data-architect` | Data Architect — schemas, data models, pipelines | opus | high | auto | gated |
 | `coco-laurent-frontend-designer` | Frontend Designer — designs all app screens (web/mobile/desktop), never builds | fable | high | auto | worktree |
-| `priya-sharma-frontend-implementer` | Frontend Implementer — builds approved designs in React/TS | sonnet | high | acceptEdits | gated, worktree |
+| `priya-sharma-frontend-implementer` | Frontend Implementer — creates and edits production React/TS UI, with or without a design handoff | sonnet | high | acceptEdits | gated, worktree |
 | `theo-nakamura-desktop-implementer` | Desktop Implementer — builds approved designs as Electron/desktop apps | sonnet | high | acceptEdits | gated, worktree |
 | `mila-vasquez-mobile-implementer` | Mobile Implementer — builds approved designs as mobile apps in React Native | sonnet | high | acceptEdits | gated, worktree |
 | `zara-ahmad-ml-engineer` | ML Engineer — full ML lifecycle: data analysis and ML/AI features | opus | high | auto | gated, worktree |
