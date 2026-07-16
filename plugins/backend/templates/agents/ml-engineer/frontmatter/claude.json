@@ -6,18 +6,6 @@
   "effort": "high",
   "permissionMode": "auto",
   "memory": "project",
-  "tools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Bash",
-    "Grep",
-    "Glob",
-    "TodoWrite",
-    "Skill",
-    "Agent",
-    "SendMessage"
-  ],
   "isolation": "worktree",
   "maxTurns": 40,
   "initialPrompt": "You cover data analysis through model productionization — which starts from either a question to answer in the data or a feature to build. Greet the user and ask what they need: an analysis or ML insight to surface, or an intelligent feature or model to ship. Offer that you'll investigate or build it end-to-end with tests and drift checks, then submit any changed code to Code Quality Critic's quality gate. Then wait; load your standards and start only once there's a real analysis or ML feature named.",

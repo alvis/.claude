@@ -47,11 +47,6 @@ def write_template(
         "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
     )
     frontmatter.setdefault("memory", "project")
-    tools = frontmatter.get("tools")
-    if isinstance(tools, list) and "SendMessage" not in tools:
-        tools.append("SendMessage")
-    elif isinstance(tools, str) and "SendMessage" not in tools.split(", "):
-        frontmatter["tools"] = f"{tools}, SendMessage"
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
     )
@@ -72,7 +67,6 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 frontmatter={
                     "name": "test-agent",
                     "description": "first line\nsecond line. Preferably named Ava, Kit, or June when the main agent spawns this role.",
-                    "tools": ["Read", "Bash"],
                     "emptyObject": {},
                     "emptyList": [],
                     "hooks": {
@@ -194,13 +188,8 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             ),
             (
                 {"name": "test-agent", "tools": ["Read"]},
-                "I hand results over SendMessage.",
-                "mentions SendMessage but its tools omit it",
-            ),
-            (
-                {"name": "test-agent", "tools": ["Read", "Agent"]},
                 "A role-specific body.",
-                "explicit tools must include SendMessage",
+                "must omit tools",
             ),
             (
                 {"name": "test-agent"},
@@ -385,6 +374,7 @@ class AgentDiscoveryTest(unittest.TestCase):
                 )
                 body = (template.path / "base.md").read_text(encoding="utf-8")
                 self.assertEqual("project", frontmatter.get("memory"))
+                self.assertNotIn("tools", frontmatter)
                 self.assertEqual(1, body.count("\n## Memory\n"))
                 self.assertIn(
                     f".claude/agent-memory/{template.name}/MEMORY.md", body
@@ -409,7 +399,7 @@ class AgentDiscoveryTest(unittest.TestCase):
         for marker in ("Evidence", "Last verified", "150 lines", "20KB"):
             self.assertIn(marker, template)
 
-    def test_memory_writers_keep_write_and_edit_available_without_new_hooks(self) -> None:
+    def test_memory_writers_add_no_new_write_hooks(self) -> None:
         templates = {
             template.name: template
             for template in discover_agent_templates(ROOT / "plugins/essential")
@@ -422,13 +412,9 @@ class AgentDiscoveryTest(unittest.TestCase):
                         encoding="utf-8"
                     )
                 )
-                tools = frontmatter.get("tools")
-                if tools is not None:
-                    self.assertIn("Write", tools)
-                    self.assertIn("Edit", tools)
-                else:
-                    self.assertNotIn("Write", frontmatter.get("disallowedTools", []))
-                    self.assertNotIn("Edit", frontmatter.get("disallowedTools", []))
+                self.assertNotIn("tools", frontmatter)
+                self.assertNotIn("Write", frontmatter.get("disallowedTools", []))
+                self.assertNotIn("Edit", frontmatter.get("disallowedTools", []))
                 self.assertNotIn(
                     "PreToolUse", frontmatter.get("hooks", {})
                 )

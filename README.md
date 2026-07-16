@@ -170,7 +170,7 @@ security-champion ──► adversarial-red-team
 workflow-optimizer ──► runtime specialists for bounded audit slices and second opinions
 ```
 
-Leaf agents (explicit `tools` list omitting `Agent` — cannot spawn): `testing-evangelist`, `specification-expert`, `project-initializer`, `aesthetic-evaluator`, `adversarial-red-team`, and `test-runner`. They message the best-known peer directly by `agent_id`; only when they cannot identify the owner do they ask the main agent to suggest one.
+Leaf-by-charter agents: `testing-evangelist`, `specification-expert`, `project-initializer`, `aesthetic-evaluator`, `adversarial-red-team`, and `test-runner`. Like every agent definition, they omit `tools` and inherit the runtime tool surface; their charter prohibits nested spawning. They message the best-known peer directly by `agent_id`; only when they cannot identify the owner do they ask the main agent to suggest one.
 
 Team hand-off edges are documented by role for readability, but every `SendMessage` call targets the captured runtime `agent_id`:
 

@@ -16,7 +16,6 @@
   "model": "opus|sonnet|haiku|fable — claude-fable-5 only if you have direct evidence the loader rejects the fable alias, noted inline",
   "effort": "low|medium|high|xhigh|max — model-dependent; a FIXED per-agent choice (cannot vary per task) — set it to the reasoning depth this role's work demands; OMIT this key entirely for haiku (haiku does not support effort)",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
-  "tools": "OMIT to grant the full default toolset, UNLESS this agent is a leaf or needs restriction (see Leaf & Spawn Encoding below)",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
@@ -44,25 +43,16 @@ Per-role default (main-session/spawned-subagent scenarios only — workflow and 
 - `acceptEdits` — sonnet/haiku producers (edits flow without a prompt per file; Bash is still checked).
 - `default` — critics (read-mostly work where an interactive prompt is acceptable; edit-prevention rides `disallowedTools`, the hook fence, or worktree isolation, not the permission mode).
 
-### Leaf & spawn encoding — counterintuitive, get this right
+### Runtime tools and leaf posture
 
-A `leaf:true` agent must not be able to spawn further agents. The control surface for that is **presence in
-`tools`**, not `disallowedTools`:
+Every agent definition omits `tools` so Claude Code can supply the complete tool surface available at runtime.
+An explicit allowlist is a stale snapshot: tools introduced by plugins, MCP servers, or later runtime versions
+would be hidden from that agent.
 
-- To make an agent a leaf: give it an **explicit `tools` list that omits `Agent`** (e.g.
-  `"Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage"`). Every explicit tool list includes
-  `SendMessage` so the role can return a hand-off request or result without gaining spawn authority.
-- `disallowedTools: ["Agent"]` is **NOT valid** for this purpose — it does not reliably prevent spawning; don't
-  reach for it here.
-- A spawn-capable agent either **omits `tools` entirely** (grants the full default set, `Agent` included) or
-  lists tools **including `Agent`** explicitly.
-- Binding note: on the main thread, an `Agent(...)` parenthetical allowlist binds the call. But a spawned
-  subagent that itself holds the `Agent` tool can spawn ANY registered agent, regardless of what allowlist
-  launched it — so a true leaf must omit `Agent` from its own tool list, full stop.
-- Capability is not permission to build a nested team. Only the main agent assigns configured teammate names.
-  A spawn-capable nested agent uses `Agent` only for a certainly one-off helper, supplies `subagent_type`, and
-  omits a configured name. For continuing work it messages the best-known teammate directly by `agent_id`; only
-  when it cannot identify the owner does it ask the main agent to suggest one and return the selected `agent_id`.
+`leaf` is therefore a behavioral charter, not a frontmatter capability boundary. A leaf does not spawn or
+coordinate nested work even when `Agent` is available at runtime; it returns results or hand-off requests to the
+caller. `disallowedTools` remains valid for narrow durable prohibitions, but never use it to recreate a general
+allowlist or to hide `Agent` merely to encode leaf posture.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 

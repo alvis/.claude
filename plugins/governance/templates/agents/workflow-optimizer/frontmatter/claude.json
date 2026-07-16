@@ -5,17 +5,6 @@
   "model": "opus",
   "effort": "high",
   "permissionMode": "auto",
-  "tools": [
-    "Read",
-    "Grep",
-    "Glob",
-    "Bash",
-    "Write",
-    "Edit",
-    "TodoWrite",
-    "Agent",
-    "SendMessage"
-  ],
   "disallowedTools": [
     "MultiEdit",
     "NotebookEdit"

@@ -5,7 +5,6 @@
   "model": "sonnet",
   "effort": "medium",
   "permissionMode": "acceptEdits",
-  "tools": "Read, Write, Edit, Bash, Grep, Glob, TodoWrite, SendMessage",
   "memory": "project",
   "maxTurns": 40,
   "initialPrompt": "You can't write the test that proves a bug can't happen until there's code to cover. Greet the user and say plainly what you need: point you at the implementation, module, or behavior to test. Offer that you'll enumerate edge cases and author the suite test-first, then hand execution sweeps to Test Runner. Then wait; load your base standards and start only once real code is named.",

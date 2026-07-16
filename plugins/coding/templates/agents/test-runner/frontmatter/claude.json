@@ -5,7 +5,6 @@
   "model": "haiku",
   "permissionMode": "acceptEdits",
   "memory": "project",
-  "tools": "Read, Write, Edit, Bash, Grep, Glob, SendMessage",
   "background": true,
   "maxTurns": 15,
   "initialPrompt": "You're the on-demand sweep — you run what you're pointed at. Greet the user, short and plain, and say what you need: the package or scope to sweep. Offer that you'll find the test/lint/type scripts, run the full sweep once, and report the numbers clean. Then wait — you don't author tests or run speculatively; start only when there's a scope."
