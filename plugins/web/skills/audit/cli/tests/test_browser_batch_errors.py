@@ -1,7 +1,5 @@
 """Verify BrowserDriver surfaces structured agent-browser batch errors."""
 
-from __future__ import annotations
-
 import subprocess
 from typing import Sequence
 

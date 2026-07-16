@@ -1,6 +1,8 @@
 """Regression coverage for stateful interaction audits."""
 
-from __future__ import annotations
+from pathlib import Path
+
+from pytest import MonkeyPatch
 
 from audit_cli.crawl.page import (
     ViewportSpec,
@@ -8,23 +10,33 @@ from audit_cli.crawl.page import (
     _probe_modal_backdrop,
     audit_page,
 )
-from audit_cli.drive.browser import BrowserDriverError
 from audit_cli.crawl.queue import CrawlQueue
+from audit_cli.drive.browser import BrowserDriver, BrowserDriverError, BrowserResult
+from audit_cli.drive.inject import AuditServer
 from audit_cli.types import InteractionCandidate, InteractionPlan
 
+SERVER = AuditServer(host="127.0.0.1", port=0, scripts_dir=Path())
+SUCCESS = BrowserResult(stdout="", stderr="", exit_code=0)
 
-class _FakeDriver:
+
+class _FakeDriver(BrowserDriver):
     def __init__(self) -> None:
+        super().__init__()
         self.calls: list[tuple[object, ...]] = []
 
-    def resize(self, width: int, height: int) -> None:
+    def resize(self, width: int, height: int) -> BrowserResult:
         self.calls.append(("resize", width, height))
+        return SUCCESS
 
-    def navigate(self, url: str) -> None:
+    def navigate(self, url: str) -> BrowserResult:
         self.calls.append(("navigate", url))
+        return SUCCESS
 
-    def wait_for_fn(self, expression: str, *, timeout_ms: int = 3000) -> None:
+    def wait_for_fn(
+        self, expression: str, *, timeout_ms: int = 3000
+    ) -> BrowserResult:
         self.calls.append(("wait_for_fn", expression, timeout_ms))
+        return SUCCESS
 
     def snapshot(self) -> dict[str, object]:
         self.calls.append(("snapshot",))
@@ -34,37 +46,40 @@ class _FakeDriver:
         self.calls.append(("get_url",))
         return "http://127.0.0.1:3200/"
 
-    def click(self, uid: int) -> None:
+    def click(self, uid: int) -> BrowserResult:
         self.calls.append(("click", uid))
+        return SUCCESS
 
-    def hover(self, target: int | str) -> None:
+    def hover(self, target: int | str) -> BrowserResult:
         self.calls.append(("hover", target))
+        return SUCCESS
 
-    def evaluate(self, expression: str) -> _EvalResult:
+    def evaluate(self, expression: str) -> BrowserResult:
         self.calls.append(("evaluate", expression))
-        return _EvalResult(
-            '[{"result":{"result":"false"},"success":true,"error":null}]'
+        return BrowserResult(
+            stdout='[{"result":{"result":"false"},"success":true,"error":null}]',
+            stderr="",
+            exit_code=0,
         )
 
 
-class _EvalResult:
-    def __init__(self, stdout: str) -> None:
-        self.stdout = stdout
-
-
 class _ModalDriver(_FakeDriver):
-    def evaluate(self, expression: str) -> _EvalResult:
+    def evaluate(self, expression: str) -> BrowserResult:
         self.calls.append(("evaluate", expression))
-        return _EvalResult(
-            '[{"result":{"result":"false"},"success":true,"error":null}]'
+        return BrowserResult(
+            stdout='[{"result":{"result":"false"},"success":true,"error":null}]',
+            stderr="",
+            exit_code=0,
         )
 
 
 class _TruthyEvalDriver(_FakeDriver):
-    def evaluate(self, expression: str) -> _EvalResult:
+    def evaluate(self, expression: str) -> BrowserResult:
         self.calls.append(("evaluate", expression))
-        return _EvalResult(
-            '[{"result":{"result":"true"},"success":true,"error":null}]'
+        return BrowserResult(
+            stdout='[{"result":{"result":"true"},"success":true,"error":null}]',
+            stderr="",
+            exit_code=0,
         )
 
 
@@ -72,31 +87,32 @@ class _LogoProbeDriver(_FakeDriver):
     def __init__(self, *, fail_wait: bool) -> None:
         super().__init__()
         self.fail_wait = fail_wait
-        self._evaluate_count = 0
 
-    def evaluate(self, expression: str) -> _EvalResult:
+    def evaluate(self, expression: str) -> BrowserResult:
         self.calls.append(("evaluate", expression))
-        self._evaluate_count += 1
-        if self._evaluate_count == 1:
-            return _EvalResult(
-                '[{"result":{"result":"true"},"success":true,"error":null}]'
-            )
-        if self._evaluate_count == 2:
-            return _EvalResult(
-                '[{"result":{"result":"240"},"success":true,"error":null}]'
-            )
-        return _EvalResult(
-            '[{"result":{"result":"true"},"success":true,"error":null}]'
+        if "window.scrollTo" in expression:
+            value = "240"
+        elif "document.querySelector" in expression:
+            value = "true"
+        else:
+            raise AssertionError(f"unexpected evaluation: {expression}")
+        return BrowserResult(
+            stdout=f'[{{"result":{{"result":"{value}"}},"success":true,"error":null}}]',
+            stderr="",
+            exit_code=0,
         )
 
-    def wait_for_fn(self, expression: str, *, timeout_ms: int = 3000) -> None:
+    def wait_for_fn(
+        self, expression: str, *, timeout_ms: int = 3000
+    ) -> BrowserResult:
         self.calls.append(("wait_for_fn", expression, timeout_ms))
         if self.fail_wait and "scrollY" in expression:
             raise BrowserDriverError("scroll did not return to top")
+        return SUCCESS
 
 
 def test_audit_page_clears_hover_before_follow_up_audit(
-    monkeypatch,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     from audit_cli.crawl import page as page_module
 
@@ -110,13 +126,11 @@ def test_audit_page_clears_hover_before_follow_up_audit(
     )
     inject_calls = 0
 
-    def fake_inject_and_run(*args, **kwargs):
+    def fake_inject_and_run(
+        *args: object, **kwargs: object
+    ) -> dict[str, dict[str, dict[str, list[object]]]]:
         nonlocal inject_calls
         inject_calls += 1
-        if inject_calls == 2:
-            click_index = driver.calls.index(("click", 4))
-            hover_index = driver.calls.index(("hover", "body"))
-            assert hover_index > click_index
         return {"categories": {"text": {"issues": []}}}
 
     monkeypatch.setattr(page_module, "inject_and_run", fake_inject_and_run)
@@ -144,7 +158,7 @@ def test_audit_page_clears_hover_before_follow_up_audit(
 
     audit_page(
         driver,
-        server=object(),
+        server=SERVER,
         queue=queue,
         url="http://127.0.0.1:3200/",
         viewports=(viewport,),
@@ -152,10 +166,15 @@ def test_audit_page_clears_hover_before_follow_up_audit(
         same_origin_host="127.0.0.1:3200",
     )
 
-    assert ("hover", "body") in driver.calls
+    click_index = driver.calls.index(("click", 4))
+    hover_index = driver.calls.index(("hover", "body"))
+    assert inject_calls == 2
+    assert hover_index > click_index
 
 
-def test_audit_page_reports_missing_modal_backdrop_blur(monkeypatch) -> None:
+def test_audit_page_reports_missing_modal_backdrop_blur(
+    monkeypatch: MonkeyPatch,
+) -> None:
     from audit_cli.crawl import page as page_module
 
     driver = _ModalDriver()
@@ -203,7 +222,7 @@ def test_audit_page_reports_missing_modal_backdrop_blur(monkeypatch) -> None:
 
     result = audit_page(
         driver,
-        server=object(),
+        server=SERVER,
         queue=queue,
         url="http://127.0.0.1:3200/",
         viewports=(viewport,),

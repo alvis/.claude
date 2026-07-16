@@ -1,7 +1,5 @@
 """Regression coverage for collecting findings from interaction follow-up states."""
 
-from __future__ import annotations
-
 from audit_cli import cli as cli_module
 from audit_cli.types import PageAuditResult
 

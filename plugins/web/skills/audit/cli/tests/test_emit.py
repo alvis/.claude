@@ -1,7 +1,5 @@
 """Round-trip a Report through asdict → json → parse and assert equality."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
@@ -58,12 +56,21 @@ def test_report_round_trip_preserves_primitive_fields(tmp_path: Path) -> None:
     assert final_path == tmp_path / "report.json"
 
     raw = json.loads(final_path.read_text(encoding="utf-8"))
-    assert raw["contract_version"] == "3.0"
-    assert raw["overall_score"] == 82
-    assert raw["risk"] == "MEDIUM"
-    assert raw["pages"][0]["url"] == "https://example.com/"
-    assert raw["findings"][0]["needs_ai_review"] is True
-    assert raw["findings"][0]["ai_prompt"] == "Does the heading hierarchy read correctly?"
+    assert {
+        "contract_version": raw["contract_version"],
+        "overall_score": raw["overall_score"],
+        "risk": raw["risk"],
+        "page_url": raw["pages"][0]["url"],
+        "needs_ai_review": raw["findings"][0]["needs_ai_review"],
+        "ai_prompt": raw["findings"][0]["ai_prompt"],
+    } == {
+        "contract_version": "3.0",
+        "overall_score": 82,
+        "risk": "MEDIUM",
+        "page_url": "https://example.com/",
+        "needs_ai_review": True,
+        "ai_prompt": "Does the heading hierarchy read correctly?",
+    }
     assert "crops" in [p.name for p in tmp_path.iterdir()]
 
 

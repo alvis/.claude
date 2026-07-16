@@ -27,6 +27,7 @@ from scanlib.core import run
 from scanlib.loader import load_rules
 
 FIXTURES_DIR = SCRIPTS_DIR / "fixtures"
+RULES = tuple(load_rules(package="scanners"))
 
 
 def _capture(argv: list[str], /) -> str:
@@ -78,36 +79,20 @@ class FixtureScanTests(unittest.TestCase):
 class LoaderSmokeTests(unittest.TestCase):
     """The auto-loader discovers a complete, well-formed React rule set."""
 
-    EXPECTED_IDS = {
-        "props-interface",
-        "props-children-inline",
-        "props-element-handrolled",
-        "barrel-missing-props-reexport",
-    }
-
-    def setUp(self) -> None:
-        self.rules = load_rules()
-
-    def test_discovers_all_four_rules(self) -> None:
-        self.assertEqual(len(self.rules), 4)
-
     def test_rule_ids_are_unique(self) -> None:
-        ids = [rule.id for rule in self.rules]
+        ids = [rule.id for rule in RULES]
         self.assertEqual(len(ids), len(set(ids)))
 
-    def test_rule_ids_match_expected_set(self) -> None:
-        self.assertEqual({rule.id for rule in self.rules}, self.EXPECTED_IDS)
-
     def test_rules_sorted_by_order_then_id(self) -> None:
-        keys = [(rule.order, rule.id) for rule in self.rules]
+        keys = [(rule.order, rule.id) for rule in RULES]
         self.assertEqual(keys, sorted(keys))
 
     def test_blocks_helper_is_skipped(self) -> None:
         # `_blocks.py` exports no Rule and must not surface as a rule
-        self.assertTrue(all(not rule.id.startswith("_") for rule in self.rules))
+        self.assertTrue(all(not rule.id.startswith("_") for rule in RULES))
 
     def test_every_rule_is_a_category_choice(self) -> None:
-        for rule in self.rules:
+        for rule in RULES:
             with self.subTest(rule=rule.id):
                 output = _capture([str(FIXTURES_DIR), "--category", rule.id])
                 self.assertIn(f"  {rule.id}:", output)

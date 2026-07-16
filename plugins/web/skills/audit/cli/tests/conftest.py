@@ -1,7 +1,5 @@
 """Shared pytest config — make the CLI package importable from tests/."""
 
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 

@@ -1,7 +1,5 @@
 """Verify audit action logging for browser commands and page events."""
 
-from __future__ import annotations
-
 import json
 import subprocess
 from pathlib import Path
@@ -27,14 +25,17 @@ def test_action_logger_writes_jsonl_entries(tmp_path: Path) -> None:
     logger.log("page_start", page="https://example.com", viewport="desktop")
     logger.log("page_finish", page="https://example.com", issues=2)
 
-    lines = log_path.read_text(encoding="utf-8").splitlines()
-    assert len(lines) == 2
-    first = json.loads(lines[0])
-    second = json.loads(lines[1])
-    assert first["event"] == "page_start"
-    assert first["page"] == "https://example.com"
-    assert second["event"] == "page_finish"
-    assert second["issues"] == 2
+    entries = [
+        json.loads(line)
+        for line in log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert [
+        (entry["event"], entry.get("page"), entry.get("issues"))
+        for entry in entries
+    ] == [
+        ("page_start", "https://example.com", None),
+        ("page_finish", "https://example.com", 2),
+    ]
 
 
 def test_browser_driver_logs_successful_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -49,6 +50,7 @@ def test_browser_driver_logs_successful_action(tmp_path: Path, monkeypatch: pyte
     driver.navigate("https://example.com")
 
     entries = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
-    assert entries[-1]["event"] == "browser_action"
-    assert entries[-1]["action"] == "open"
-    assert entries[-1]["success"] is True
+    assert {
+        key: entries[-1][key]
+        for key in ("event", "action", "success")
+    } == {"event": "browser_action", "action": "open", "success": True}

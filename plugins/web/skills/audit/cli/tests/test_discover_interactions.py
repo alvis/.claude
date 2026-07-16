@@ -1,7 +1,5 @@
 """Verify fingerprint dedup + cross-origin classification for interactions."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
@@ -23,9 +21,9 @@ def _load(name: str) -> dict[str, object]:
 def test_ten_identical_buttons_dedup_to_single_candidate() -> None:
     snapshot = _load("ax_snapshot_dup_buttons.json")
     plan = discover_interactions(snapshot)
-    assert len(plan.candidates) == 1
-    assert plan.candidates[0].role == "button"
-    assert plan.candidates[0].name == "Add to cart"
+    assert [
+        (candidate.role, candidate.name) for candidate in plan.candidates
+    ] == [("button", "Add to cart")]
 
 
 def test_social_link_is_dropped_silently() -> None:
@@ -60,10 +58,10 @@ def test_refs_snapshot_shape_discovers_button_candidates() -> None:
 
     plan = discover_interactions(snapshot)
 
-    assert len(plan.candidates) == 1
-    assert plan.candidates[0].uid == 17
-    assert plan.candidates[0].role == "button"
-    assert plan.candidates[0].name == "Open menu"
+    assert [
+        (candidate.uid, candidate.role, candidate.name)
+        for candidate in plan.candidates
+    ] == [(17, "button", "Open menu")]
 
 
 def test_refs_snapshot_shape_discovers_hover_targets() -> None:
@@ -107,9 +105,9 @@ def test_root_shell_same_origin_links_do_not_count_without_all_pages() -> None:
         DiscoverOptions(all_pages=False, same_origin_host="127.0.0.1:3200"),
     )
 
-    assert len(plan.candidates) == 1
-    assert plan.candidates[0].role == "button"
-    assert plan.candidates[0].name == "Open navigation menu"
+    assert [
+        (candidate.role, candidate.name) for candidate in plan.candidates
+    ] == [("button", "Open navigation menu")]
 
 
 def test_next_dev_overlay_button_is_ignored() -> None:
@@ -122,9 +120,9 @@ def test_next_dev_overlay_button_is_ignored() -> None:
 
     plan = discover_interactions(snapshot)
 
-    assert len(plan.candidates) == 1
-    assert plan.candidates[0].uid == 4
-    assert plan.candidates[0].name == "Open navigation menu"
+    assert [
+        (candidate.uid, candidate.name) for candidate in plan.candidates
+    ] == [(4, "Open navigation menu")]
 
 
 def test_next_dev_overlay_button_is_ignored_for_hover_targets() -> None:

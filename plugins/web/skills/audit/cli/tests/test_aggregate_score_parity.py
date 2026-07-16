@@ -5,14 +5,11 @@ Python port on the same issue-set and asserts equality on every numeric
 field that the JS side computes (category scores, overall, risk, counts).
 """
 
-from __future__ import annotations
-
 import json
 import shutil
 import subprocess
 from pathlib import Path
-
-import pytest
+from typing import TypedDict, cast
 
 from audit_cli.report.aggregate import (
     compute_category_score,
@@ -26,7 +23,40 @@ _JS_AGGREGATOR = (
 )
 
 
-def _run_js_baseline(categories: dict[str, list[dict[str, object]]]) -> dict[str, object]:
+def _require_executable(name: str, /) -> str:
+    executable = shutil.which(name)
+    if executable is None:
+        raise RuntimeError(f"{name} is required for aggregator parity tests")
+    return executable
+
+
+NODE = _require_executable("node")
+
+
+class _Category(TypedDict):
+    issues: list[dict[str, object]]
+
+
+class _Fixture(TypedDict):
+    categories: dict[str, _Category]
+
+
+class _CategoryScore(TypedDict):
+    score: int
+
+
+class _Summary(TypedDict):
+    byCategory: dict[str, _CategoryScore]
+    overallScore: int
+    bySeverity: dict[str, int]
+    risk: str
+
+
+class _JsReport(TypedDict):
+    summary: _Summary
+
+
+def _run_js_baseline(categories: dict[str, _Category]) -> _JsReport:
     """Drive the JS aggregator in Node and capture its unified output."""
     runner = f"""
 const globals = {{ window: {{}} }};
@@ -60,14 +90,16 @@ const report = globalThis.window.runDesignAudit({{
 process.stdout.write(JSON.stringify(report));
 """
     completed = subprocess.run(
-        ["node", "-e", runner], capture_output=True, text=True, check=True
+        [NODE, "-e", runner], capture_output=True, text=True, check=True
     )
-    return json.loads(completed.stdout)
+    return cast(_JsReport, json.loads(completed.stdout))
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
 def test_python_aggregator_matches_js_scoring() -> None:
-    fixture = json.loads(_FIXTURE_PATH.read_text(encoding="utf-8"))
+    fixture = cast(
+        _Fixture,
+        json.loads(_FIXTURE_PATH.read_text(encoding="utf-8")),
+    )
     categories = fixture["categories"]
 
     js_report = _run_js_baseline(categories)

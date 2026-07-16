@@ -13,7 +13,7 @@ RUNNER = PLUGINS / "coding/scripts/lint_profile_runner.py"
 PROFILE = PLUGINS / "react/skills/lint/profile.json"
 
 
-def write_scanner(path: Path, label: str, exit_code: int = 0) -> None:
+def write_scanner(path: Path, label: str, *, exit_code: int = 0) -> None:
     path.write_text(
         "import json, os, sys\n"
         f"print(json.dumps({{'label': '{label}', 'args': sys.argv[1:]}}))\n"
@@ -22,7 +22,9 @@ def write_scanner(path: Path, label: str, exit_code: int = 0) -> None:
 
 
 class LintProfileRunnerContract(unittest.TestCase):
-    def run_runner(self, root: Path, profile: Path, *files: str):
+    def run_runner(
+        self, root: Path, profile: Path, *files: str
+    ) -> subprocess.CompletedProcess[str]:
         generic = root / "coding/scripts/generic.py"
         scanlib = root / "coding/scripts/scanlib"
         scanlib.mkdir(parents=True)
@@ -40,7 +42,9 @@ class LintProfileRunnerContract(unittest.TestCase):
         ]
         return subprocess.run(command, text=True, capture_output=True)
 
-    def test_runs_each_scanner_once_in_order_and_resolves_from_installed_roots(self):
+    def test_runs_each_scanner_once_in_order_and_resolves_from_installed_roots(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             profile_dir = root / "react/skills/lint"
@@ -84,7 +88,7 @@ class LintProfileRunnerContract(unittest.TestCase):
             self.assertEqual("compliant", report["status"])
             self.assertEqual(0, report["violations_found_total"])
 
-    def test_propagates_scanner_failure_with_generic_report_contract(self):
+    def test_propagates_scanner_failure_with_generic_report_contract(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             profile_dir = root / "react/skills/lint"
@@ -107,7 +111,7 @@ class LintProfileRunnerContract(unittest.TestCase):
             self.assertIn("violations_found_total", report)
             self.assertEqual(2, len(report["scanner_runs"]))
 
-    def test_rejects_relative_profile_path(self):
+    def test_rejects_relative_profile_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run(
                 [sys.executable, str(RUNNER), "--profile", "relative.json", "src/App.tsx"],
@@ -118,7 +122,7 @@ class LintProfileRunnerContract(unittest.TestCase):
             self.assertEqual(2, result.returncode)
             self.assertIn("absolute path", json.loads(result.stdout)["error"])
 
-    def test_scanner_output_cannot_forge_process_metadata(self):
+    def test_scanner_output_cannot_forge_process_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             profile_dir = root / "react/skills/lint"
@@ -139,7 +143,9 @@ class LintProfileRunnerContract(unittest.TestCase):
             self.assertEqual(7, report["scanner_runs"][1]["exit_code"])
             self.assertEqual("forged", report["scanner_runs"][1]["output"]["label"])
 
-    def test_committed_profile_and_skills_are_portable_and_non_recursive(self):
+    def test_committed_profile_and_skills_are_portable_and_non_recursive(
+        self,
+    ) -> None:
         profile = json.loads(PROFILE.read_text())
         self.assertEqual([".tsx", ".jsx"], profile["eligibility"]["extensions"])
         self.assertTrue(profile["scanners"][0]["needs_coding_scanlib"])
@@ -154,7 +160,7 @@ class LintProfileRunnerContract(unittest.TestCase):
 
 
 class PluginManifestContract(unittest.TestCase):
-    def test_exact_dependencies_live_only_in_plugin_manifests(self):
+    def test_exact_dependencies_live_only_in_plugin_manifests(self) -> None:
         expected = {
             "react": ["coding", "essential"], "essential": None,
             "specification": ["coding", "essential"],

@@ -23,7 +23,13 @@ from stitch_agent import (
 )
 
 
-def write_template(plugin_root: Path, name: str, frontmatter: dict, body: str = "# Body\n") -> Path:
+def write_template(
+    plugin_root: Path,
+    name: str,
+    *,
+    frontmatter: dict[str, object],
+    body: str = "# Body\n",
+) -> Path:
     template = plugin_root / "templates/agents" / name
     (template / "frontmatter").mkdir(parents=True)
     tools = frontmatter.get("tools")
@@ -39,12 +45,14 @@ def write_template(plugin_root: Path, name: str, frontmatter: dict, body: str = 
 
 
 class StitchAgentDefinitionTest(unittest.TestCase):
-    def test_stitches_nested_json_lists_and_multiline_strings_deterministically(self):
+    def test_stitches_nested_json_lists_and_multiline_strings_deterministically(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             template = write_template(
                 Path(temporary),
                 "test-agent",
-                {
+                frontmatter={
                     "name": "test-agent",
                     "description": "first line\nsecond line",
                     "tools": ["Read", "Bash"],
@@ -60,7 +68,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                         ]
                     },
                 },
-                "\n\n# Test agent\n",
+                body="\n\n# Test agent\n",
             )
 
             stitched = stitch_agent_definition(template)
@@ -73,7 +81,9 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             self.assertTrue(stitched.endswith("---\n\n# Test agent\n"))
             self.assertEqual(stitched, stitch_agent_definition(template))
 
-    def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(self):
+    def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             missing = root / "templates/agents/missing"
@@ -91,12 +101,16 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(invalid)
 
-            mismatch = write_template(root, "directory-name", {"name": "other-name"})
+            mismatch = write_template(
+                root, "directory-name", frontmatter={"name": "other-name"}
+            )
             with self.assertRaisesRegex(AgentTemplateError, "does not match"):
                 stitch_agent_definition(mismatch)
 
             nonstandard_number = write_template(
-                root, "nonstandard-number", {"name": "nonstandard-number"}
+                root,
+                "nonstandard-number",
+                frontmatter={"name": "nonstandard-number"},
             )
             (nonstandard_number / "frontmatter/claude.json").write_text(
                 '{"name":"nonstandard-number","maxTurns":NaN}', encoding="utf-8"
@@ -104,7 +118,9 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             with self.assertRaisesRegex(AgentTemplateError, "invalid JSON"):
                 stitch_agent_definition(nonstandard_number)
 
-    def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(self):
+    def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
+        self,
+    ) -> None:
         cases = (
             (
                 {"name": "test-agent", "model": "haiku", "effort": "medium"},
@@ -166,7 +182,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             ):
                 validate_agent_contract(frontmatter, body)
 
-    def test_rejects_shared_delegation_policy_in_agent_body(self):
+    def test_rejects_shared_delegation_policy_in_agent_body(self) -> None:
         for phrase in (
             "current `Agent` roster",
             "When I need a Dynamic Workflow",
@@ -182,8 +198,8 @@ class StitchAgentDefinitionTest(unittest.TestCase):
             ):
                 validate_agent_contract({"name": "test-agent"}, phrase)
 
-    def test_review_hook_requires_concrete_defaults_and_review_action(self):
-        def frontmatter(prompt):
+    def test_review_hook_requires_concrete_defaults_and_review_action(self) -> None:
+        def build_frontmatter(prompt: str) -> dict[str, object]:
             return {
                 "name": "test-agent",
                 "hooks": {"Stop": [{"hooks": [{"prompt": prompt}]}]},
@@ -191,13 +207,15 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
         with self.assertRaisesRegex(AgentTemplateError, "concrete reviewer defaults"):
             validate_agent_contract(
-                frontmatter("You are the review-routing gate. Use named defaults."),
+                build_frontmatter(
+                    "You are the review-routing gate. Use named defaults."
+                ),
                 "A role-specific body.",
             )
 
         with self.assertRaisesRegex(AgentTemplateError, "independent review action"):
             validate_agent_contract(
-                frontmatter(
+                build_frontmatter(
                     "You are the review-routing gate. Use Marcus Williams "
                     "(Code Quality Critic; reviews changed code) as proven defaults, "
                     "but choose a better runtime specialist when available."
@@ -207,7 +225,7 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
-    def test_session_start_emits_a_valid_session_context_payload(self):
+    def test_session_start_emits_a_valid_session_context_payload(self) -> None:
         essential = ROOT / "plugins/essential"
         completed = subprocess.run(
             [
@@ -228,7 +246,7 @@ class AgentDiscoveryTest(unittest.TestCase):
         self.assertEqual("SessionStart", payload["hookEventName"])
         self.assertTrue(payload["additionalContext"].strip())
 
-    def test_installed_mode_reports_plugin_list_failures(self):
+    def test_installed_mode_reports_plugin_list_failures(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             essential = Path(temporary) / "cache/alvis/essential/1"
             essential.mkdir(parents=True)
@@ -256,9 +274,9 @@ class AgentDiscoveryTest(unittest.TestCase):
                     with self.assertRaisesRegex(AgentTemplateError, message):
                         discover_agent_templates(essential)
 
-    def test_each_distributed_agent_has_an_owner_routing_row(self):
+    def test_each_distributed_agent_has_an_owner_routing_row(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
-        routing = {}
+        routing: dict[str, str] = {}
         for owner in {template.owner for template in templates}:
             # NOTE: essential keeps its roster table in orchestration.md; every
             # other plugin carries a standalone ROUTING.md.
@@ -267,21 +285,22 @@ class AgentDiscoveryTest(unittest.TestCase):
                 ROOT / "plugins" / owner / "references/orchestration.md",
             )
             table = next((path for path in candidates if path.is_file()), None)
-            self.assertIsNotNone(table, f"{owner} has no routing document")
+            if table is None:
+                self.fail(f"{owner} has no routing document")
             routing[owner] = table.read_text(encoding="utf-8")
 
         for template in templates:
             with self.subTest(agent=template.name):
                 self.assertIn(f"`{template.name}` |", routing[template.owner])
 
-    def test_distributed_agents_satisfy_the_delegation_contract(self):
+    def test_distributed_agents_satisfy_the_delegation_contract(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
 
         for template in templates:
             with self.subTest(agent=template.name):
                 stitch_agent_definition(template.path)
 
-    def test_distributed_collaboration_sections_are_point_form_only(self):
+    def test_distributed_collaboration_sections_are_point_form_only(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
 
         for template in templates:
@@ -292,7 +311,9 @@ class AgentDiscoveryTest(unittest.TestCase):
                 self.assertTrue(lines)
                 self.assertTrue(all(line.startswith("- ") for line in lines), lines)
 
-    def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator(self):
+    def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator(
+        self,
+    ) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
         gated_agents = set()
 
@@ -320,7 +341,9 @@ class AgentDiscoveryTest(unittest.TestCase):
 
         self.assertTrue(gated_agents)
 
-    def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(self):
+    def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             essential = root / "cache/alvis/essential/1"
@@ -329,10 +352,20 @@ class AgentDiscoveryTest(unittest.TestCase):
             other = root / "cache/other/coding/1"
             for path in (essential, web, disabled, other):
                 path.mkdir(parents=True)
-            write_template(essential, "essential-agent", {"name": "essential-agent"})
-            write_template(web, "web-agent", {"name": "web-agent"})
-            write_template(disabled, "disabled-agent", {"name": "disabled-agent"})
-            write_template(other, "other-agent", {"name": "other-agent"})
+            write_template(
+                essential,
+                "essential-agent",
+                frontmatter={"name": "essential-agent"},
+            )
+            write_template(web, "web-agent", frontmatter={"name": "web-agent"})
+            write_template(
+                disabled,
+                "disabled-agent",
+                frontmatter={"name": "disabled-agent"},
+            )
+            write_template(
+                other, "other-agent", frontmatter={"name": "other-agent"}
+            )
             records = [
                 {"id": "essential@alvis", "enabled": True, "installPath": str(essential)},
                 {"id": "web@alvis", "enabled": True, "installPath": str(web)},
@@ -347,7 +380,9 @@ class AgentDiscoveryTest(unittest.TestCase):
                 {f"{template.owner}:{template.name}" for template in templates},
             )
 
-    def test_installed_mode_rejects_wrong_or_ambiguous_essential_identity(self):
+    def test_installed_mode_rejects_wrong_or_ambiguous_essential_identity(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             essential = Path(temporary) / "cache/alvis/essential/1"
             essential.mkdir(parents=True)
@@ -366,21 +401,23 @@ class AgentDiscoveryTest(unittest.TestCase):
 
 
 class InstallAgentsTest(unittest.TestCase):
-    def test_template_symlink_cannot_escape_its_plugin(self):
+    def test_template_symlink_cannot_escape_its_plugin(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             essential = root / "repo/plugins/essential"
             templates = essential / "templates/agents"
             templates.mkdir(parents=True)
             external = write_template(
-                root / "external", "escaped-agent", {"name": "escaped-agent"}
+                root / "external",
+                "escaped-agent",
+                frontmatter={"name": "escaped-agent"},
             )
             (templates / "escaped-agent").symlink_to(external, target_is_directory=True)
 
             with self.assertRaisesRegex(AgentTemplateError, "symlink"):
                 install_agents(essential, root / "destination")
 
-    def test_existing_destination_symlink_is_replaced_not_followed(self):
+    def test_existing_destination_symlink_is_replaced_not_followed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             essential = root / "repo/plugins/essential"
@@ -391,7 +428,10 @@ class InstallAgentsTest(unittest.TestCase):
             target = destination / "current-agent.md"
             target.symlink_to(external)
             write_template(
-                essential, "current-agent", {"name": "current-agent"}, "# Current\n"
+                essential,
+                "current-agent",
+                frontmatter={"name": "current-agent"},
+                body="# Current\n",
             )
 
             install_agents(essential, destination)
@@ -400,9 +440,13 @@ class InstallAgentsTest(unittest.TestCase):
             self.assertIn("# Current", target.read_text(encoding="utf-8"))
             self.assertEqual("do not overwrite", external.read_text(encoding="utf-8"))
 
-    def test_shell_entrypoint_resolves_essential_plugin_root(self):
+    def test_shell_entrypoint_resolves_essential_plugin_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             destination = Path(temporary) / "agents"
+            expected_names = {
+                f"{template.name}.md"
+                for template in discover_agent_templates(ROOT / "plugins/essential")
+            }
             completed = subprocess.run(
                 [str(SCRIPTS / "install-agents.sh"), "--destination", str(destination)],
                 text=True,
@@ -411,19 +455,28 @@ class InstallAgentsTest(unittest.TestCase):
             )
 
             self.assertEqual(0, completed.returncode, completed.stderr)
-            self.assertEqual(23, len(list(destination.glob("*.md"))))
+            self.assertEqual(
+                expected_names,
+                {path.name for path in destination.glob("*.md")},
+            )
 
-    def test_source_checkout_installs_all_twenty_three_agents(self):
+    def test_source_checkout_installs_every_discovered_agent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, redirect_stdout(StringIO()):
             destination = Path(temporary) / "agents"
+            expected_names = {
+                f"{template.name}.md"
+                for template in discover_agent_templates(ROOT / "plugins/essential")
+            }
 
             count = install_agents(ROOT / "plugins/essential", destination)
 
-            self.assertEqual(23, count)
-            self.assertEqual(23, len(list(destination.glob("*.md"))))
-            self.assertTrue((destination / "priya-sharma-frontend-implementer.md").is_file())
+            self.assertEqual(len(expected_names), count)
+            self.assertEqual(
+                expected_names,
+                {path.name for path in destination.glob("*.md")},
+            )
 
-    def test_duplicate_names_fail_before_any_destination_write(self):
+    def test_duplicate_names_fail_before_any_destination_write(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             essential = root / "repo/plugins/essential"
@@ -432,8 +485,18 @@ class InstallAgentsTest(unittest.TestCase):
             destination.mkdir(parents=True)
             existing = destination / "duplicate.md"
             existing.write_text("original", encoding="utf-8")
-            write_template(essential, "duplicate", {"name": "duplicate"}, "essential")
-            write_template(web, "duplicate", {"name": "duplicate"}, "web")
+            write_template(
+                essential,
+                "duplicate",
+                frontmatter={"name": "duplicate"},
+                body="essential",
+            )
+            write_template(
+                web,
+                "duplicate",
+                frontmatter={"name": "duplicate"},
+                body="web",
+            )
 
             with self.assertRaisesRegex(AgentTemplateError, "duplicate"):
                 install_agents(essential, destination)
@@ -441,7 +504,9 @@ class InstallAgentsTest(unittest.TestCase):
             self.assertEqual("original", existing.read_text(encoding="utf-8"))
             self.assertEqual([existing], list(destination.iterdir()))
 
-    def test_rerun_overwrites_discovered_agents_without_pruning_other_files(self):
+    def test_rerun_overwrites_discovered_agents_without_pruning_other_files(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             essential = root / "repo/plugins/essential"
@@ -452,7 +517,10 @@ class InstallAgentsTest(unittest.TestCase):
             unrelated.write_text("personal", encoding="utf-8")
             stale.write_text("stale", encoding="utf-8")
             template = write_template(
-                essential, "current-agent", {"name": "current-agent"}, "# Version one\n"
+                essential,
+                "current-agent",
+                frontmatter={"name": "current-agent"},
+                body="# Version one\n",
             )
 
             self.assertEqual(1, install_agents(essential, destination))

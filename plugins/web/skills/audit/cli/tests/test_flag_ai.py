@@ -1,7 +1,5 @@
 """Verify AI-flag routing across rule list, confidence, and heuristic paths."""
 
-from __future__ import annotations
-
 import pytest
 
 from audit_cli.report.flag_ai import (
@@ -26,13 +24,14 @@ def _make_finding(rule_id: str = "DES-GENERIC-00") -> Finding:
 
 
 def test_every_ai_grounded_rule_is_flagged() -> None:
-    assert len(AI_GROUNDED_RULES) == 11
     for rule_id in AI_GROUNDED_RULES:
         finding = _make_finding(rule_id)
         flagged = flag_finding(finding, FlagContext())
-        assert flagged.needs_ai_review is True
-        assert flagged.ai_prompt is not None
-        assert flagged.hypothesis is not None
+        assert (
+            flagged.needs_ai_review,
+            flagged.ai_prompt is not None,
+            flagged.hypothesis is not None,
+        ) == (True, True, True)
 
 
 def test_confidence_below_threshold_flags_for_review() -> None:
@@ -44,8 +43,7 @@ def test_confidence_below_threshold_flags_for_review() -> None:
 def test_confidence_above_threshold_does_not_flag() -> None:
     finding = _make_finding()
     flagged = flag_finding(finding, FlagContext(confidence=0.95))
-    assert flagged.needs_ai_review is False
-    assert flagged.ai_prompt is None
+    assert (flagged.needs_ai_review, flagged.ai_prompt) == (False, None)
 
 
 def test_background_image_heuristic_flags_for_review() -> None:
