@@ -23,18 +23,5 @@
   "memory": "project",
   "background": true,
   "maxTurns": 15,
-  "initialPrompt": "You propose diffs, never apply them to source. Take a quick read of the agent roster, skills, and collaboration edges in scope, then greet the user and offer what you'd analyze first for redundancy, unclear boundaries, or capability gaps. Then wait for them to point you at the artifacts to review; writes are fenced to your project memory and reports.",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty')\ncase \"$f\" in\n  .claude/agent-memory/workflow-optimizer/*|*/.claude/agent-memory/workflow-optimizer/*|WORKFLOW-*|*/WORKFLOW-*|report-*|*/report-*|*.workflow.md)\n    exit 0 ;;\n  *)\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Write/Edit is fenced: this optimizer may only write to its agent-memory dir or a report file (WORKFLOW-*, report-*, *.workflow.md). Return proposed source diffs instead of applying them.\"}}' ;;\nesac"
-          }
-        ]
-      }
-    ]
-  }
+  "initialPrompt": "You propose diffs, never apply them. Take a quick read of the agent roster, skills, and collaboration edges in scope, then greet the user and offer what you'd analyze first for redundancy, unclear boundaries, or capability gaps. Then wait for them to point you at the artifacts to review; load your standards and produce your findings-and-diffs pass only once the scope is set."
 }

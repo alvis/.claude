@@ -6,24 +6,7 @@
   "permissionMode": "acceptEdits",
   "memory": "project",
   "tools": "Read, Write, Edit, Bash, Grep, Glob, SendMessage",
-  "disallowedTools": [
-    "MultiEdit",
-    "NotebookEdit"
-  ],
   "background": true,
   "maxTurns": 15,
-  "initialPrompt": "You're the on-demand sweep — you run what you're pointed at. Greet the user, short and plain, and say what you need: the package or scope to sweep. Offer that you'll find the test/lint/type scripts, run the full sweep once, and report the numbers clean. Then wait — you don't author tests or edit source; writes are fenced to your project memory and reports.",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty')\ncase \"$f\" in\n  .claude/agent-memory/test-runner/*|*/.claude/agent-memory/test-runner/*|TEST-*|*/TEST-*|report-*|*/report-*|*.test-report.md)\n    exit 0 ;;\n  *)\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Write/Edit is fenced: this runner may only write to its agent-memory dir or a report file (TEST-*, report-*, *.test-report.md). Report test failures instead of editing source.\"}}' ;;\nesac"
-          }
-        ]
-      }
-    ]
-  }
+  "initialPrompt": "You're the on-demand sweep — you run what you're pointed at. Greet the user, short and plain, and say what you need: the package or scope to sweep. Offer that you'll find the test/lint/type scripts, run the full sweep once, and report the numbers clean. Then wait — you don't author tests or run speculatively; start only when there's a scope."
 }

@@ -27,8 +27,8 @@ def memory_section(name: str) -> str:
     return (
         f"\n## Memory\n\nI retain durable repository knowledge in "
         f"`.claude/agent-memory/{name}/MEMORY.md`. Current facts, reusable "
-        "lessons, and watchpoints carry evidence, a last-verified date, and a "
-        "recheck trigger. Sources override memory; I replace contradictions "
+        "lessons, and watchpoints carry evidence and a last-verified date. "
+        "Sources override memory; I replace contradictions "
         "and archive old claims before 150 lines or 20KB.\n"
     )
 
@@ -397,6 +397,7 @@ class AgentDiscoveryTest(unittest.TestCase):
         self.assertLessEqual(len(template.splitlines()), 150)
         self.assertLessEqual(len(template.encode("utf-8")), 20 * 1024)
         for heading in (
+            "## Template Instructions — Remove After Initialization",
             "## Current Facts",
             "## Reusable Lessons",
             "## Watchpoints",
@@ -404,39 +405,33 @@ class AgentDiscoveryTest(unittest.TestCase):
             "## Archive Index",
         ):
             self.assertIn(heading, template)
-        for marker in ("Evidence", "Last verified", "Recheck", "150 lines", "20KB"):
+        self.assertIn("remove this entire", template)
+        for marker in ("Evidence", "Last verified", "150 lines", "20KB"):
             self.assertIn(marker, template)
 
-    def test_source_read_only_agents_are_memory_and_report_write_fenced(self) -> None:
+    def test_memory_writers_keep_write_and_edit_available_without_new_hooks(self) -> None:
         templates = {
             template.name: template
             for template in discover_agent_templates(ROOT / "plugins/essential")
         }
 
-        for name in (
-            "aesthetic-evaluator",
-            "code-quality-critic",
-            "security-champion",
-            "test-runner",
-            "workflow-optimizer",
-        ):
+        for name in ("security-champion", "test-runner", "workflow-optimizer"):
             with self.subTest(agent=name):
                 frontmatter = json.loads(
                     (templates[name].path / "frontmatter/claude.json").read_text(
                         encoding="utf-8"
                     )
                 )
-                self.assertNotIn("Write", frontmatter.get("disallowedTools", []))
-                self.assertNotIn("Edit", frontmatter.get("disallowedTools", []))
                 tools = frontmatter.get("tools")
                 if tools is not None:
                     self.assertIn("Write", tools)
                     self.assertIn("Edit", tools)
-                hooks = frontmatter.get("hooks", {}).get("PreToolUse", [])
-                self.assertEqual("Write|Edit", hooks[0]["matcher"])
-                command = hooks[0]["hooks"][0]["command"]
-                self.assertIn(f".claude/agent-memory/{name}/*", command)
-                self.assertIn("permissionDecision\":\"deny", command)
+                else:
+                    self.assertNotIn("Write", frontmatter.get("disallowedTools", []))
+                    self.assertNotIn("Edit", frontmatter.get("disallowedTools", []))
+                self.assertNotIn(
+                    "PreToolUse", frontmatter.get("hooks", {})
+                )
 
     def test_distributed_collaboration_sections_are_point_form_only(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")

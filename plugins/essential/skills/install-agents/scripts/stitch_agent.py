@@ -58,7 +58,6 @@ MEMORY_CONTRACT_MARKERS = (
     "durable",
     "evidence",
     "last-verified",
-    "recheck",
     "archive",
     "150 lines",
     "20kb",
