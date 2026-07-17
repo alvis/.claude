@@ -26,10 +26,12 @@ from stitch_agent import (
 def memory_section(name: str) -> str:
     return (
         f"\n## Memory\n\nI retain durable repository knowledge in "
-        f"`.claude/agent-memory/{name}/MEMORY.md`. Current facts, reusable "
+        f"`.claude/agent-memory/{name}/MEMORY.md`. I follow "
+        "`plugins/essential/templates/memory.md`. Current facts, reusable "
         "lessons, and watchpoints carry evidence and a last-verified date. "
         "Sources override memory; I replace contradictions "
-        "and archive old claims before 150 lines or 20KB.\n"
+        "and archive old claims before 150 lines or 20KB. I move detail only "
+        "to `topics/<stable-area>/<specific-subject>.md`.\n"
     )
 
 
@@ -251,6 +253,14 @@ class StitchAgentDefinitionTest(unittest.TestCase):
                 valid_body.replace("last-verified", "checked"),
                 "missing maintenance marker: last-verified",
             ),
+            (
+                valid_frontmatter,
+                valid_body.replace(
+                    "topics/<stable-area>/<specific-subject>.md",
+                    "topics/<slug>.md",
+                ),
+                "missing maintenance marker: topics/",
+            ),
         )
 
         for frontmatter, body, message in cases:
@@ -379,11 +389,24 @@ class AgentDiscoveryTest(unittest.TestCase):
                 self.assertIn(
                     f".claude/agent-memory/{template.name}/MEMORY.md", body
                 )
+                self.assertIn("plugins/essential/templates/memory.md", body)
+                self.assertIn(
+                    "topics/<stable-area>/<specific-subject>.md", body
+                )
+                self.assertIn(
+                    "rather than task IDs, dates, counters, result counts, or conclusions",
+                    body,
+                )
 
-    def test_memory_template_is_bounded_and_covers_lifecycle_rules(self) -> None:
-        path = ROOT / "plugins/governance/constitution/templates/agent-memory.md"
+    def test_memory_template_is_essential_owned_bounded_and_covers_lifecycle_rules(
+        self,
+    ) -> None:
+        path = ROOT / "plugins/essential/templates/memory.md"
         template = path.read_text(encoding="utf-8")
 
+        self.assertFalse(
+            (ROOT / "plugins/governance/constitution/templates/agent-memory.md").exists()
+        )
         self.assertLessEqual(len(template.splitlines()), 150)
         self.assertLessEqual(len(template.encode("utf-8")), 20 * 1024)
         for heading in (
@@ -396,7 +419,18 @@ class AgentDiscoveryTest(unittest.TestCase):
         ):
             self.assertIn(heading, template)
         self.assertIn("remove this entire", template)
-        for marker in ("Evidence", "Last verified", "150 lines", "20KB"):
+        for marker in (
+            "Evidence",
+            "Last verified",
+            "150 lines",
+            "20KB",
+            "topics/<stable-area>/<specific-subject>.md",
+            "task IDs",
+            "dates",
+            "counters",
+            "conclusion sentences",
+            "never beside `MEMORY.md`",
+        ):
             self.assertIn(marker, template)
 
     def test_memory_writers_add_no_new_write_hooks(self) -> None:
