@@ -1,7 +1,7 @@
 <!-- INSTRUCTION: This is the companion template for forming an Agent Team — persistent teammates that
      coordinate conversationally around a warm core, as distinct from a Dynamic Workflow. The main-session
      Project Manager alone forms and names the team and spawns persistent teammates. Domain leads orchestrate
-     their specialists but ask the Project Manager to add teammates. A spawned subagent or existing teammate
+     their teammates but ask the Project Manager to add them. A spawned subagent or existing teammate
      messages a best-known peer directly by `agent_id`, asking the Project Manager to suggest an owner only when
      it cannot identify one. `tech-lead` is the default coding lead, not the only domain lead. -->
 
@@ -52,12 +52,12 @@ A teammate loads its base context once and stays warm across tasks. Separate spa
 - **Project Manager** — the main-session orchestrator responsible for the user contract and whole-project
   delivery. The Project Manager selects leads, forms and names the team, spawns teammates, brokers user and
   session-only tools, resolves cross-team dependencies, and decides when the overall delivery is complete.
-- **Domain leads** — selected from the live roster by role fit; `tech-lead` is the coding default. A lead asks a
-  suitable specialist to plan or decompose its domain goal, validates that breakdown, assigns and monitors its
-  bounded pieces, reconciles results, and escalates decisions or staffing needs to the Project Manager.
-- **Specialists** — teammates who own bounded planning, implementation, investigation, or review deliverables
-  and return evidence, blockers, and hand-offs to their assigning lead.
-- **Capabilities** — teammates inherit the Project Manager's `permissionMode`; their standalone values and own
+- **Domain leads** — selected from the live roster by role fit; `tech-lead` is the coding default. A lead gathers
+  relevant teammate advice, decomposes its domain goal, owns the resulting implementation decisions, assigns and
+  monitors work across the team, reconciles results, and escalates cross-team or staffing needs to the Project Manager.
+- **Teammates** — advisers, planners, implementers, investigators, and reviewers who contribute evidence or own
+  bounded pieces and return results, blockers, and hand-offs to their assigning lead.
+- **Capabilities** — teammates inherit the appointed lead's `permissionMode`; their standalone values and own
   `skills` or `mcpServers` frontmatter do not survive team formation. The Project Manager grants required
   capabilities when forming the team.
 
@@ -65,7 +65,7 @@ A teammate loads its base context once and stays warm across tasks. Separate spa
 
 State one topology when forming the team:
 
-- **Hierarchy** — specialists message their domain lead; domain leads message the Project Manager. This is the
+- **Hierarchy** — teammates message their domain lead; domain leads message the Project Manager. This is the
   default for managed delivery.
 - **Star** — every teammate messages the Project Manager's `agent_id`; use for a small team with no domain lead.
 - **Chain** — one known `agent_id` hands directly to another known `agent_id`; use only for stable hand-offs.
@@ -96,10 +96,10 @@ activates proven edges; it does not invent ownership.
 
 1. Inspect the live roster and select each domain lead by role fit; use `tech-lead` as the coding default.
 2. Confirm the task needs persistent multi-role exchange rather than independent slices.
-3. Select a planning or decomposition specialist and the likely execution specialists for each domain.
+3. Select the advisers and delivery teammates each domain lead is likely to need.
 4. Assign each teammate a collision-free `<short-name>-<role>-<task>` name, spawn it, and record its `agent_id`.
-5. Give every lead its domain goal and teammate IDs. The lead commissions and validates the breakdown, assigns
-   its bounded pieces, monitors progress and gates, and reports reconciled delivery.
+5. Give every lead its domain goal and teammate IDs. The lead gathers advice, decomposes the work, decides the
+   domain approach, assigns and monitors its pieces, and reports reconciled delivery.
 6. Broker requests for another continuing collaborator by reusing a matching ID or spawning a named teammate.
 7. Close only when every role converges, every lead reports its domain delivered, and the Project Manager judges
    the user contract complete.
