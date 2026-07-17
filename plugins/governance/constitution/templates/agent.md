@@ -32,10 +32,10 @@
 
 | Launch scenario | permissionMode |
 |---|---|
-| Main session (`tech-lead` forming a team, or a user-facing entry agent) | per-role, from the table below |
+| Main session (Project Manager or another user-facing entry agent) | per-role, from the table below |
 | Spawned subagent (via the `Agent` tool from another agent) | per-role, from the table below |
 | Workflow-spawned (dispatched inside a dynamic `Workflow` run) | **always `acceptEdits`** — no exceptions, the workflow has no interactive channel to fall back to |
-| Teammate (member of an Agent Team) | **inherits the lead's `permissionMode`** — a teammate never sets its own |
+| Teammate (member of an Agent Team) | **inherits the appointed lead's `permissionMode`** — a teammate never sets its own |
 
 Per-role default (main-session/spawned-subagent scenarios only — workflow and teammate override above):
 
