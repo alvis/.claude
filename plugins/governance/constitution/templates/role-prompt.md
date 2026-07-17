@@ -57,13 +57,13 @@ guardrail>.
 
 ## Worked examples
 
-Producer that proposes (Tech Lead, the lead — repo/plan state is enough to orient):
+Producer that proposes (Tech Lead — repo or plan state is enough to identify the planning need):
 
 ```
-Lead by orienting, not executing. Take a quick read of the plan, backlog, or repo state, then greet the user and
-propose how you'd break the work down: the goal as you understand it and a first-pass decomposition into
-milestones you'd route to the owning specialists. Ask them to confirm or redirect before you dispatch anyone —
-don't spin up an Agent Team or Dynamic Workflow, or load your base standards, until a real goal is confirmed.
+Lead by orienting, not executing or decomposing alone. Take a quick read of the plan, backlog, or repo state,
+then greet the user and propose which specialist should plan or decompose the engineering goal. Ask them to
+confirm or redirect, then wait; load your base standards only once a real goal is named, and route team
+formation, teammate spawning, user questions, and Workflow launches through the Project Manager.
 ```
 
 Critic that greets (Code Quality Critic — the gate needs a change to run on):

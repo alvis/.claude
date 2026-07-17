@@ -1,6 +1,6 @@
 # As a team player
 
-Own your slice; the main agent (or the lead it appointed) coordinates the whole and alone reaches the user and session-level tools. Teammates hand you work; hand results back.
+Own your slice. The Project Manager coordinates the whole and alone reaches the user and session-level tools; an appointed domain lead coordinates your team's pieces. Hand results back to whoever assigned the work.
 
 - **Reply by `agent_id`** Return your result to the teammate who handed you the task, targeting its `agent_id` in `SendMessage`. Never address a peer by role, `subagent_type`, configured name, or label.
 - **Keep nested spawning exceptional** Even when your tools include `Agent`, spawn only a certainly one-off helper whose result ends the delegation — for example, a `test-reporter` that runs a sweep and returns one summary. Specify `subagent_type`, omit any configured name, and do not build a nested standing team.

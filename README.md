@@ -110,7 +110,7 @@ Client-facing screen design and UX documentation with Notion integration
 
 ## Agent team
 
-A 23-agent specialist team for Claude Code, plus the operating rules that make it work as a team: shared main-session rules in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol in `plugins/essential/SUBAGENT.md`, owner-specific routing in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology carried in each agent's own definition.
+A 23-agent team for Claude Code organized into a main-session Project Manager, domain leads, and bounded specialists. Shared operation lives in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol lives in `plugins/essential/SUBAGENT.md`, owner-specific routing lives in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology lives in each agent definition.
 
 Install via the `essential:install-agents` skill (ask Claude to "install the agents"). Canonical sources live under `plugins/<owner>/templates/agents/<name>/` as `base.md` plus `frontmatter/claude.json`. The installer discovers source-checkout siblings or enabled same-marketplace plugins, validates the complete discovered roster, stages stitched files, and copies them into `~/.claude/agents/`. It overwrites current same-named discoveries and leaves unrelated or stale files untouched. Edits require a re-install, and changes take effect in the next session.
 
@@ -118,9 +118,9 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 
 | Agent | Role | Model | Effort | Permission | Flags |
 | --- | --- | --- | --- | --- | --- |
-| `tech-lead` | Tech Lead — decomposes projects and routes milestones | fable | medium | auto | memory |
-| `design-lead` | Design Lead — decomposes design initiatives across web/mobile/desktop | opus | high | auto | memory |
-| `ai-research-lead` | AI Research Lead — decomposes ML/RL/AI research initiatives | fable | medium | auto | memory |
+| `tech-lead` | Tech Lead — orchestrates specialist-planned engineering delivery | fable | medium | auto | memory |
+| `design-lead` | Design Lead — orchestrates specialist-planned cross-platform design delivery | opus | high | auto | memory |
+| `ai-research-lead` | AI Research Lead — orchestrates specialist-planned ML/RL/AI research delivery | fable | medium | auto | memory |
 | `principal-engineer` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
 | `service-implementation-engineer` | Service Implementation — backend/API build-out | sonnet | medium | acceptEdits | gated, worktree, memory |
 | `generalist-engineer` | Generalist Engineer — libraries, data pipelines, CLIs, glue code | sonnet | high | acceptEdits | gated, worktree, memory |
@@ -151,10 +151,11 @@ Every agent owns project-scoped memory at `.claude/agent-memory/<role>/MEMORY.md
 Role-routing defaults (the main agent may reuse a matching live `agent_id` or spawn a new named teammate):
 
 ```
-tech-lead (team lead; parallel frontend-implementer fan-out; independent quality gate)
-  └── any registered agent
-design-lead ──► frontend-designer, frontend-implementer, desktop-implementer, mobile-implementer, aesthetic-evaluator
-ai-research-lead ──► ml-engineer, harness-eval-engineer, data-architect
+Project Manager (forms and names teams; brokers the user and session tools)
+  ├── tech-lead (engineering-domain lead; commissions decomposition; monitors delivery and gates)
+  │   └── any registered specialist
+  ├── design-lead ──► frontend-designer, frontend-implementer, desktop-implementer, mobile-implementer, aesthetic-evaluator
+  └── ai-research-lead ──► ml-engineer, harness-eval-engineer, data-architect
 service-implementation-engineer ──► principal-engineer, security-champion, test-runner, code-quality-critic, testing-evangelist
 generalist-engineer ──► data-architect, code-quality-critic, test-runner, testing-evangelist, principal-engineer, tech-lead
 data-architect ──► ml-engineer, service-implementation-engineer, test-runner, principal-engineer, code-quality-critic
@@ -194,8 +195,9 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 
 ### Team shapes
 
-- **Warm core** (trusting, low-friction hand-offs): `tech-lead`, `code-quality-critic`, `testing-evangelist`, `service-implementation-engineer`, `generalist-engineer`, `harness-eval-engineer`.
-- **On-demand specialists**: `design-lead`, `ai-research-lead`, `principal-engineer`, `data-architect`, `frontend-designer`, `frontend-implementer`, `desktop-implementer`, `mobile-implementer`, `ml-engineer`, `security-champion`, `aesthetic-evaluator`, `adversarial-red-team`, `specification-expert`, `project-initializer`.
+- **Domain leads**: `tech-lead` for coding delivery, `design-lead` for design delivery, and `ai-research-lead` for research delivery.
+- **Warm-core specialists** (trusting, low-friction hand-offs): `code-quality-critic`, `testing-evangelist`, `service-implementation-engineer`, `generalist-engineer`, `harness-eval-engineer`.
+- **On-demand specialists**: `principal-engineer`, `data-architect`, `frontend-designer`, `frontend-implementer`, `desktop-implementer`, `mobile-implementer`, `ml-engineer`, `security-champion`, `aesthetic-evaluator`, `adversarial-red-team`, `specification-expert`, `project-initializer`.
 - **Background** (one run per spawn): `devops`, `workflow-optimizer`.
 - **Mechanical**: `test-runner`.
 
@@ -206,7 +208,7 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 
 ### Team operation
 
-- Works team-first: The main agent initiates an agentic team for non-trivial work, hands each task to the owning specialist and its team, and keeps teammates warm while measured runtime telemetry and task affinity show reuse remains useful. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
+- Works team-first: The Project Manager initiates the team, appoints domain leads, and handles staffing and user/session proxies. Each lead commissions a specialist-authored breakdown, assigns and monitors its bounded pieces, and reconciles delivery. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
 - Subagents reply to the assigning teammate's `agent_id`. Roles and configured names are never direct-message addresses. For continuing work they message the best-known teammate directly when they have its ID, ask the main agent to resolve the ID when the teammate is known, and ask the main agent to suggest a warm peer by folder/feature history or spawn a new named teammate only when they cannot identify the owner.
 - Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 

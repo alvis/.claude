@@ -1,6 +1,6 @@
 # Orchestration & delegation
 
-Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a specialist owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. Route every coding change through `tech-lead` (Tech Lead — decomposes engineering work into milestones) with the implementing specialist. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current specialist — zero tolerance.
+Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a specialist owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. The Project Manager owns delivery across teams; route every coding change through `tech-lead` (the engineering-domain orchestrator) and the implementing specialist. A domain lead commissions specialist planning or decomposition, validates the breakdown, assigns and monitors its bounded pieces, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current specialist — zero tolerance.
 
 ## Choosing the topology
 
@@ -95,4 +95,4 @@ Report context usage only when the runtime measures it; otherwise report task af
 
 | Tasks | Route to |
 | --- | --- |
-| Break a project into milestones and delegate them | `tech-lead` |
+| Coordinate specialist-planned engineering milestones through delivery | `tech-lead` |

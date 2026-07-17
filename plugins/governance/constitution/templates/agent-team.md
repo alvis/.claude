@@ -1,9 +1,9 @@
 <!-- INSTRUCTION: This is the companion template for forming an Agent Team — persistent teammates that
-     coordinate conversationally around a warm core, as distinct from a Dynamic Workflow. Only the main agent
-     forms the team, assigns configured teammate names, and spawns new persistent teammates. A spawned subagent
-     or existing teammate messages a best-known peer directly by `agent_id`, asking the main agent to suggest an
-     owner only when it cannot identify one. `tech-lead` is the default coding
-     lead, not the only lead a runtime roster may expose. -->
+     coordinate conversationally around a warm core, as distinct from a Dynamic Workflow. The main-session
+     Project Manager alone forms and names the team and spawns persistent teammates. Domain leads orchestrate
+     their specialists but ask the Project Manager to add teammates. A spawned subagent or existing teammate
+     messages a best-known peer directly by `agent_id`, asking the Project Manager to suggest an owner only when
+     it cannot identify one. `tech-lead` is the default coding lead, not the only domain lead. -->
 
 # Agent Team — Template
 
@@ -49,18 +49,25 @@ A teammate loads its base context once and stays warm across tasks. Separate spa
 
 ## Roles in a formed team
 
-- **Lead** — selected from the live roster by role fit and always operating in the main session. `tech-lead` is
-  the coding default. The lead alone forms and names the team.
-- **Teammates** — members the main agent brings in. A teammate inherits the lead's `permissionMode` for the team
-  session; its standalone value does not survive team formation.
-- **Capabilities** — a teammate's own `skills` and `mcpServers` frontmatter are not applied in a team. The lead
-  invokes or grants required capabilities at formation time.
+- **Project Manager** — the main-session orchestrator responsible for the user contract and whole-project
+  delivery. The Project Manager selects leads, forms and names the team, spawns teammates, brokers user and
+  session-only tools, resolves cross-team dependencies, and decides when the overall delivery is complete.
+- **Domain leads** — selected from the live roster by role fit; `tech-lead` is the coding default. A lead asks a
+  suitable specialist to plan or decompose its domain goal, validates that breakdown, assigns and monitors its
+  bounded pieces, reconciles results, and escalates decisions or staffing needs to the Project Manager.
+- **Specialists** — teammates who own bounded planning, implementation, investigation, or review deliverables
+  and return evidence, blockers, and hand-offs to their assigning lead.
+- **Capabilities** — teammates inherit the Project Manager's `permissionMode`; their standalone values and own
+  `skills` or `mcpServers` frontmatter do not survive team formation. The Project Manager grants required
+  capabilities when forming the team.
 
 ## Coordination topology
 
 State one topology when forming the team:
 
-- **Star** — every teammate messages the lead's `agent_id`.
+- **Hierarchy** — specialists message their domain lead; domain leads message the Project Manager. This is the
+  default for managed delivery.
+- **Star** — every teammate messages the Project Manager's `agent_id`; use for a small team with no domain lead.
 - **Chain** — one known `agent_id` hands directly to another known `agent_id`; use only for stable hand-offs.
 - **Mesh** — known peers message one another directly for a bounded exchange. Use sparingly.
 
@@ -85,30 +92,30 @@ At runtime, the sender uses the recipient's captured ID, for example
 Every planned edge should already exist as a `Collaboration` statement in the source role's `base.md`. The team
 activates proven edges; it does not invent ownership.
 
-## Forming the team (main session only)
+## Forming the team (Project Manager only)
 
-1. Inspect the live roster and select the lead by role fit; use `tech-lead` as the coding default.
+1. Inspect the live roster and select each domain lead by role fit; use `tech-lead` as the coding default.
 2. Confirm the task needs persistent multi-role exchange rather than independent slices.
-3. Select each teammate by role and prior working history, then read the three preferred short names in its
-   description.
-4. Assign a collision-free `<short-name>-<role>-<task>` configured name, spawn the teammate, and record the
-   returned `agent_id` beside its role and task.
-5. State the topology and role-level hand-off edges, then execute every direct hand-off with the recorded IDs.
-6. If a subagent requests another continuing collaborator, reuse the best matching existing ID or spawn and
-   name a new teammate; return the selected ID to the requester.
-7. Work until each role's convergence predicate fires and the lead judges the overall task complete.
+3. Select a planning or decomposition specialist and the likely execution specialists for each domain.
+4. Assign each teammate a collision-free `<short-name>-<role>-<task>` name, spawn it, and record its `agent_id`.
+5. Give every lead its domain goal and teammate IDs. The lead commissions and validates the breakdown, assigns
+   its bounded pieces, monitors progress and gates, and reports reconciled delivery.
+6. Broker requests for another continuing collaborator by reusing a matching ID or spawning a named teammate.
+7. Close only when every role converges, every lead reports its domain delivered, and the Project Manager judges
+   the user contract complete.
 
-## Worked example — star with one chain edge
+## Worked example — managed hierarchy
 
 ```text
-Lead role: tech-lead
-Lead configured name: raj-tech-lead-build-auth
-Lead agent_id: agent-main
+Project Manager agent_id: agent-main
 
 Teammates:
-  - role: principal-engineer
-    configured name: maya-principal-engineer-debug-cache
+  - role: tech-lead
+    configured name: raj-tech-lead-build-auth
     agent_id: agent-41a
+  - role: specification-expert
+    configured name: sam-specification-expert-plan-auth
+    agent_id: agent-42b
   - role: service-implementation-engineer
     configured name: james-service-implementation-engineer-build-auth
     agent_id: agent-52b
@@ -119,6 +126,7 @@ Teammates:
     configured name: marcus-code-quality-critic-review-auth
     agent_id: agent-74d
 
-Topology: star, plus agent-52b -> agent-74d for the review gate
-Convergence: agent-main closes when agent-74d reports gate pass and agent-63c reports no open coverage gap.
+Topology: hierarchy: agent-main -> agent-41a -> agent-42b/agent-52b/agent-63c/agent-74d
+Convergence: agent-41a reports the planned pieces reconciled after agent-74d reports gate pass and agent-63c
+reports no open coverage gap; agent-main then closes delivery.
 ```

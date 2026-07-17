@@ -286,6 +286,11 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
+    def test_main_agent_instructions_stay_under_two_kilobytes(self) -> None:
+        instructions = (ROOT / "plugins/essential/MAINAGENT.md").read_bytes()
+
+        self.assertLess(len(instructions), 2_000)
+
     def test_session_start_emits_a_valid_session_context_payload(self) -> None:
         essential = ROOT / "plugins/essential"
         completed = subprocess.run(
