@@ -15,7 +15,11 @@ section from the instantiated `.claude/agent-memory/<agent-name>/MEMORY.md`:
 4. When evidence contradicts an active entry, replace the active claim and move the superseded claim to
    `archive/YYYY-MM.md` with the reason it changed.
 5. Keep the primary file at or below 150 lines and 20KB. Before either threshold, consolidate duplicates, move
-   detailed material to `topics/<slug>.md`, and archive obsolete history.
+   detailed material only to `topics/<stable-area>/<specific-subject>.md`, and archive obsolete history. Use
+   lowercase kebab-case names for a durable repository area and concept that remain recognizable out of context.
+   Extend an existing subject file instead of creating one per task. Never use task IDs, dates, counters,
+   transient states, result counts, or conclusion sentences as path components. Keep topic files below `topics/`,
+   never beside `MEMORY.md`.
 6. Never store secrets, credentials, personal data, raw task logs, transient status, or unresolved sensitive
    exploit details.
 
@@ -46,7 +50,7 @@ section from the instantiated `.claude/agent-memory/<agent-name>/MEMORY.md`:
 
 ## Topic Index
 
-- [`topics/<slug>.md`](topics/<slug>.md) — <durable detail moved out of the primary file>
+- [`topics/<stable-area>/<specific-subject>.md`](topics/<stable-area>/<specific-subject>.md) — <one-line summary of the durable detail>
 
 ## Archive Index
 

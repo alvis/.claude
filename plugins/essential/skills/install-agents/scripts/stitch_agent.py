@@ -61,6 +61,8 @@ MEMORY_CONTRACT_MARKERS = (
     "archive",
     "150 lines",
     "20kb",
+    "plugins/essential/templates/memory.md",
+    "topics/<stable-area>/<specific-subject>.md",
 )
 
 
