@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>A spectrum of onboarding interventions</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview"
+        ><span class="essential-docmark">E_</span
+        ><span
+          ><strong>Essential</strong><small>Discover reference</small></span
+        ></a
+      >
+      <nav aria-label="Document utilities">
+        <span>Brainstorm spectrum</span
+        ><a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Brainstorm spectrum</p>
+      <a class="is-active" href="#overview">Outcome</a
+      ><a href="#horizon-now">This afternoon</a
+      ><a href="#horizon-sprint">This sprint</a
+      ><a href="#horizon-quarter">Quarter bets</a
+      ><a href="#assumptions">Eliminating assumptions</a
+      ><a href="#probe-selection">Probe portfolio</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Several ideas can survive together; selection is not a final
+        architecture decision.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span
+          ><strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span><strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span><small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-page-id="brainstorm-onboarding-spectrum-v2"
+      data-discovery-action="brainstorm-spectrum"
+      data-discovery-goal="Broaden the solution space for helping new workspace administrators reach a successful first configuration"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Outcome"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">Brainstorm spectrum · activation</p>
+          <h1>Ten grounded interventions across three horizons.</h1>
+          <p class="discovery-lede">
+            The outcome stays fixed: a new administrator completes one useful
+            configuration and knows how to recover. The ideas range from wiring
+            dormant code this afternoon to changing the product’s operating
+            model.
+          </p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta">
+            <div>
+              <dt>Outcome</dt>
+              <dd>One successful configuration</dd>
+            </div>
+            <div>
+              <dt>Current drop</dt>
+              <dd>Before permission mapping</dd>
+            </div>
+            <div>
+              <dt>Spectrum axis</dt>
+              <dd>Time horizon and organizational reach</dd>
+            </div>
+            <div>
+              <dt>Decision later</dt>
+              <dd>Which probe earns investment</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Ideas explain what they test, not just what they look like.
+          </p>
+        </aside>
+      </header>
+      <section
+        id="spectrum"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="spectrum"
+        data-section-label="Effort spectrum"
+        data-presentation-pattern="segmented brainstorm-spectrum"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Grounded opportunity space</p>
+          <h2>Move from dormant wiring to a structural bet.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="spectrum-lens"
+            data-question-label="Spectrum comparison lens"
+            data-spectrum-reaction
+          >
+            <legend>Which axis should organize the idea space?</legend>
+            <div class="discovery-segmented">
+              <label
+                ><input
+                  type="radio"
+                  name="spectrum-lens"
+                  value="Effort"
+                  checked
+                  data-recommended="true"
+                />Effort</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="spectrum-lens"
+                  value="Reversibility"
+                />Reversibility</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="spectrum-lens"
+                  value="Organizational reach"
+                />Reach</label
+              >
+            </div>
+          </fieldset>
+          <div class="mt-6 grid gap-3 sm:grid-cols-4">
+            <div class="rounded-[var(--radius-control)] bg-glass p-4">
+              <small class="font-mono text-muted">OBSERVED DROP</small
+              ><strong class="mt-1 block text-xl">Permission mapping</strong>
+            </div>
+            <div class="rounded-[var(--radius-control)] bg-glass p-4">
+              <small class="font-mono text-muted">INSPECTED</small
+              ><strong class="mt-1 block text-xl">3 app surfaces</strong>
+            </div>
+            <div class="rounded-[var(--radius-control)] bg-glass p-4">
+              <small class="font-mono text-muted">IDEA RANGE</small
+              ><strong class="mt-1 block text-xl">Hours → quarter</strong>
+            </div>
+            <div class="rounded-[var(--radius-control)] bg-glass p-4">
+              <small class="font-mono text-muted">SELECTION</small
+              ><strong class="mt-1 block text-xl">Several may live</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="horizon-now"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="horizon-now"
+        data-section-label="Ship this afternoon"
+        data-horizon-lane
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Horizon 01 · hours</p>
+          <h2>Wire what already exists.</h2>
+          <p class="mt-4 text-muted">
+            Cheap probes that distinguish a literal dead end from a deeper
+            workflow problem.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="ideas-now"
+            data-question-label="This-afternoon interventions"
+          >
+            <legend>Which immediate interventions resonate?</legend>
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="discovery-option md:col-span-2" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Add a real action to the dead-end empty state"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong
+                      >1 · Add a real action to the dead-end empty state</strong
+                    ><span class="discovery-checkpoint">S · hours</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/onboarding/EmptyState.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the zero-workspace view has explanatory
+                    copy but no primary action; the existing create button is
+                    only available in global navigation.</small
+                  ><small
+                    ><b>Tests:</b> whether the current failure is simply an
+                    invisible next step. <b>Signal:</b> first-project creation
+                    within the same session.</small
+                  ></span
+                >
+                <span class="discovery-badge">Cheapest probe</span>
+              </label>
+              <label class="discovery-option" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Enable the dormant sample workspace"
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>2 · Enable the dormant sample workspace</strong
+                    ><span class="discovery-checkpoint">S · flag</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >packages/samples/src/adminWorkspace.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a seeded permissions example is complete
+                    behind a disabled flag.</small
+                  ><small
+                    ><b>Tests:</b> whether users need a concrete model before
+                    configuring their own workspace.</small
+                  ></span
+                >
+              </label>
+              <label class="discovery-option" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Expose pending invitations in the setup screen"
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>3 · Expose pending invitations</strong
+                    ><span class="discovery-checkpoint">S · wiring</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/team/InviteStatus.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the API returns pending invites, but setup
+                    only renders accepted members.</small
+                  ><small
+                    ><b>Tests:</b> whether silent collaborator delay is mistaken
+                    for a broken configuration.</small
+                  ></span
+                >
+              </label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section
+        id="horizon-sprint"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="horizon-sprint"
+        data-section-label="This sprint"
+        data-horizon-lane
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Horizon 02 · days</p>
+          <h2>Make setup observable and safe.</h2>
+          <p class="mt-4 text-muted">
+            New UI and recovery paths that probe confidence, sequencing, and
+            failure visibility.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="ideas-sprint"
+            data-question-label="This-sprint interventions"
+          >
+            <legend>Which sprint-sized probes deserve evidence?</legend>
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="discovery-option" data-idea-card
+                ><input type="checkbox" value="Add a permission dry run" /><span
+                  class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>4 · Permission dry run</strong
+                    ><span class="discovery-checkpoint">M · local</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/api/src/permissions/evaluate.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the evaluator already returns a trace used
+                    by support tooling.</small
+                  ><small
+                    ><b>Tests:</b> whether administrators avoid saving because
+                    consequences are opaque. <b>Signal:</b> dry-run-to-save
+                    conversion.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Turn milestones into a setup checklist"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>5 · Wire milestones into a checklist</strong
+                    ><span class="discovery-checkpoint"
+                      >M · endpoint</span
+                    ></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/api/src/models/adminMilestones.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> four activation milestones are written for
+                    analytics but never read by the product.</small
+                  ><small
+                    ><b>Tests:</b> whether visible sequence and progress reduce
+                    abandonment.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Teach the first policy mapping in context"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>6 · Teach the first mapping in context</strong
+                    ><span class="discovery-checkpoint">M · hint</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/policies/MappingEditor.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a first-run hint remains as a TODO beside
+                    the mapping canvas.</small
+                  ><small
+                    ><b>Tests:</b> whether unfamiliar vocabulary—not product
+                    structure—is the blocker.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Recover silently failed directory syncs"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>7 · Recover failed directory syncs</strong
+                    ><span class="discovery-checkpoint">M · service</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/sync/src/jobs/directory.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a failed first sync logs internally while
+                    the UI remains in a permanent loading state.</small
+                  ><small
+                    ><b>Tests:</b> whether hidden operational failure is being
+                    misread as onboarding churn.</small
+                  ></span
+                ></label
+              >
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section
+        id="horizon-quarter"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="horizon-quarter"
+        data-section-label="Quarter-sized bets"
+        data-horizon-lane
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Horizon 03 · weeks</p>
+          <h2>Change the product shape.</h2>
+          <p class="mt-4 text-muted">
+            Structural interventions that expand who can succeed, not merely how
+            quickly they finish.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="ideas-quarter"
+            data-question-label="Quarter-sized interventions"
+          >
+            <legend>Which ambitious bets remain plausible?</legend>
+            <div class="grid gap-3">
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Build a role-aware administrator workspace"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>8 · Role-aware administrator workspace</strong
+                    ><span class="discovery-checkpoint"
+                      >L · cross-screen</span
+                    ></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/navigation/roleRoutes.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> role metadata exists, but every role
+                    receives the same navigation and empty states.</small
+                  ><small
+                    ><b>Tests:</b> whether administrators need a distinct
+                    information architecture. <b>Reach:</b> navigation,
+                    dashboard, setup, and support docs.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Ship opinionated configuration recipes"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>9 · Opinionated configuration recipes</strong
+                    ><span class="discovery-checkpoint"
+                      >L · lifecycle</span
+                    ></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >packages/policies/src/fixtures/</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> production-quality policy fixtures exist
+                    only for tests; customers copy setup recipes from support
+                    documents.</small
+                  ><small
+                    ><b>Tests:</b> whether picking a recognizable job beats
+                    configuring an abstraction from zero.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Create a live policy simulation lab"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>10 · Live policy simulation lab</strong
+                    ><span class="discovery-checkpoint"
+                      >XL · new surface</span
+                    ></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/api/src/permissions/evaluate.ts + audit
+                    stream</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the evaluator and audit events can already
+                    explain a decision separately, but no user-facing surface
+                    combines them.</small
+                  ><small
+                    ><b>Tests:</b> whether safe experimentation is the missing
+                    product capability. <b>Reach:</b> API, event replay, editor,
+                    and support workflow.</small
+                  ></span
+                ></label
+              >
+            </div>
+          </fieldset>
+        </div>
+      </section>
+      <section
+        id="assumptions"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="assumptions"
+        data-section-label="Eliminating assumptions"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Kill switches</p>
+          <h2>Evidence can remove whole regions.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-failure-map">
+            <article>
+              <h3>Users cannot see the next step</h3>
+              <p>
+                If the empty-state action restores completion, pause the new UI
+                and structural bets.
+              </p>
+            </article>
+            <article>
+              <h3>Users understand but fear impact</h3>
+              <p>
+                If explanation changes comprehension but not saves, advance the
+                dry run and simulation ideas.
+              </p>
+            </article>
+            <article>
+              <h3>The first sync is actually failing</h3>
+              <p>
+                If failed jobs correlate with abandonment, fix recovery before
+                interpreting the behavior as a product-shape problem.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section
+        id="probe-selection"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="probe-selection"
+        data-section-label="Probes to keep"
+        data-presentation-pattern="assembly"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your probe portfolio</p>
+          <h2>How should the selected ideas be tested?</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="portfolio-shape"
+            data-question-label="Preferred probe portfolio"
+            data-spectrum-reaction
+          >
+            <legend>
+              Choose the investigation strategy, not a final architecture.
+            </legend>
+            <div class="discovery-options">
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="portfolio-shape"
+                  value="Front-load the cheapest discriminating probes"
+                  data-recommended="true"
+                  checked
+                /><span class="discovery-option-copy"
+                  ><strong>Front-load discriminating probes</strong
+                  ><small
+                    >Run the empty-state, sample, and failure-recovery checks
+                    before funding larger surfaces.</small
+                  ></span
+                ><span class="discovery-badge">Recommended</span></label
+              >
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="portfolio-shape"
+                  value="Run one probe from every time horizon"
+                /><span class="discovery-option-copy"
+                  ><strong>One probe per horizon</strong
+                  ><small
+                    >Learn about immediate friction and structural fit in
+                    parallel.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="portfolio-shape"
+                  value="Prioritize the structural product-shape hypothesis"
+                /><span class="discovery-option-copy"
+                  ><strong>Prioritize the structural hypothesis</strong
+                  ><small
+                    >Use research or a disposable prototype to test role-aware
+                    setup before implementation.</small
+                  ></span
+                ></label
+              >
+            </div>
+          </fieldset>
+          <div
+            class="discovery-field"
+            data-discovery-question
+            data-question-id="missing-idea"
+            data-question-label="Missing solution-space idea"
+          >
+            <label for="missing-idea"
+              >What possibility is missing from this spectrum?</label
+            ><textarea
+              id="missing-idea"
+              placeholder="Add a materially different intervention or constraint."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+      <section
+        id="generated-brief"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="generated-brief"
+        data-section-label="Generated reply"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One live brief</p>
+          <h2>Send the probes back to the coder.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            Selections remain discovery probes rather than implementation
+            approval.
+          </p>
+          <div class="discovery-prompt-card">
+            <div class="discovery-prompt-toolbar">
+              <span>Generated from this page</span
+              ><button
+                class="discovery-button"
+                type="button"
+                data-copy-generated-prompt
+              >
+                Copy prompt for LLM coder
+              </button>
+            </div>
+            <textarea
+              id="brainstorm-spectrum-generated-prompt"
+              name="generated-prompt"
+              data-discovery-prompt-host
+              readonly
+              aria-label="Generated prompt for LLM coder"
+            >
+JavaScript will replace this fallback with the current decisions and annotations.</textarea>
+          </div>
+          <p
+            class="discovery-copy-status"
+            data-copy-status
+            aria-live="polite"
+          ></p>
+          <button
+            class="discovery-button discovery-button-secondary"
+            type="button"
+            data-clear-discovery-state
+          >
+            Clear answers and notes
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

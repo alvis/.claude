@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Changing a live database without a hard cutover</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>Essential</strong><small>Discover reference</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>Domain explainer</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Domain explainer</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#mental-model">Mental model</a>
+      <a href="#migration-sequence">Migration sequence</a>
+      <a href="#traffic-rehearsal">Traffic rehearsal</a>
+      <a href="#failure-boundaries">Failure boundaries</a>
+      <a href="#rollout-decision">Rollout decision</a>
+      <a href="#glossary">Working vocabulary</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-presentation-pattern="colors type sidebar-toc annotation-drawer sticky-reply"
+      data-page-id="domain-explainer-schema-migration-v1"
+      data-discovery-action="domain-explainer"
+      data-discovery-goal="Choose a rollout strategy for a live database schema migration without interrupting writes"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">
+            Domain explainer · migration mechanics
+          </p>
+          <h1>Change the track while the train keeps moving.</h1>
+          <p class="discovery-lede">
+            A live schema migration is safest when old and new application
+            versions can coexist. The work is less like a switch and more like a
+            sequence of reversible hand-offs.
+          </p>
+          <nav
+            class="discovery-pill-nav"
+            aria-label="Explainer highlights"
+            data-presentation-pattern="nav-pattern"
+          >
+            <a href="#mental-model">Mental model</a>
+            <a href="#migration-sequence">Migration flow</a>
+            <a href="#glossary">Vocabulary</a>
+          </nav>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta backdrop-blur-xl">
+            <div>
+              <dt>Decision</dt>
+              <dd>How traffic should move to the new schema</dd>
+            </div>
+            <div>
+              <dt>Primary risk</dt>
+              <dd>Old code writing data the new code cannot read</dd>
+            </div>
+            <div>
+              <dt>Safe property</dt>
+              <dd>Every stage can pause without losing writes</dd>
+            </div>
+            <div>
+              <dt>Exit signal</dt>
+              <dd>Legacy reads and writes reach zero</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Add a note to any section. Your decisions and annotations are
+            reflected immediately in the single prompt at the end.
+          </p>
+        </aside>
+      </header>
+
+      <section
+        id="mental-model"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="mental-model"
+        data-section-label="Mental model"
+        data-presentation-pattern="diagrams teach-me-explainer"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">The idea</p>
+          <h2>Compatibility creates room to move.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            Do not ask every server and every record to change at the same
+            instant. First make the system tolerate both shapes, then move data
+            and traffic, and only then remove the old path.
+          </p>
+          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+            <h3>The invariant</h3>
+            <p>
+              At every checkpoint, the currently deployed application must be
+              able to read every record it can encounter and safely write a
+              shape understood by the versions still receiving traffic.
+            </p>
+          </div>
+          <div class="discovery-diagram" aria-label="Compatibility topology">
+            <div><strong>Old readers</strong><br />legacy shape</div>
+            <div><strong>Compatible schema</strong><br />both shapes</div>
+            <div><strong>New readers</strong><br />new shape</div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="migration-sequence"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="migration-sequence"
+        data-section-label="Migration sequence"
+        data-presentation-pattern="sequence flow-strip flow-terminus tweakable-plan"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Four stages</p>
+          <h2>Expand, migrate, switch, contract.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <ol class="discovery-sequence">
+            <li data-mechanism-stage>
+              <div>
+                <h3>Expand the schema</h3>
+                <p>
+                  Add the new column or table without removing the old shape.
+                  Deploy code that can understand both, while continuing to use
+                  the established path.
+                </p>
+                <span class="discovery-checkpoint"
+                  >Rollback: remove unused addition</span
+                >
+              </div>
+            </li>
+            <li data-mechanism-stage>
+              <div>
+                <h3>Write both shapes</h3>
+                <p>
+                  New writes populate old and new locations. Observe mismatches
+                  before any reader depends exclusively on the new data.
+                </p>
+                <span class="discovery-checkpoint"
+                  >Pause: keep old reads authoritative</span
+                >
+              </div>
+            </li>
+            <li data-mechanism-stage>
+              <div>
+                <h3>Backfill and verify</h3>
+                <p>
+                  Move historical records in bounded batches. Compare counts,
+                  sampled values, and error rates until the new representation
+                  is complete enough to receive reads.
+                </p>
+                <span class="discovery-checkpoint"
+                  >Pause: resume from last batch</span
+                >
+              </div>
+            </li>
+            <li data-mechanism-stage>
+              <div>
+                <h3>Switch, then contract</h3>
+                <p>
+                  Move reads gradually. After no supported version uses the old
+                  path, stop legacy writes and remove the obsolete schema in a
+                  separate deployment.
+                </p>
+                <span class="discovery-checkpoint"
+                  >Rollback: restore old reader</span
+                >
+              </div>
+            </li>
+          </ol>
+          <div class="discovery-flow-strip" aria-label="Migration flow recap">
+            <span>Expand</span><span>Dual write</span><span>Backfill</span
+            ><span>Switch reads</span><span>Contract</span>
+          </div>
+          <div class="discovery-terminus">
+            <div>
+              <strong>Terminus: compatibility retired</strong>
+              <p>Only after legacy reads and writes remain at zero.</p>
+            </div>
+            <span class="discovery-badge">Reversible until here</span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="traffic-rehearsal"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="traffic-rehearsal"
+        data-section-label="Traffic rehearsal"
+        data-domain-simulation
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Feel the boundary</p>
+          <h2>Move traffic before you move authority.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            This rehearsal uses fake telemetry to make the safety trade-off
+            tangible. Raise the cohort and watch the same mismatch affect more
+            requests; keep fallback enabled until the new read path is proven.
+          </p>
+          <div
+            class="discovery-artifact-frame overflow-hidden"
+            aria-label="Simulated migration traffic console"
+          >
+            <div class="discovery-artifact-bar">
+              <span class="discovery-artifact-dots" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <span>migration rehearsal · sanitized telemetry</span>
+              <span class="discovery-badge" data-simulator-state>guarded</span>
+            </div>
+            <div class="discovery-artifact-body grid gap-5">
+              <div class="grid gap-3 sm:grid-cols-3" aria-live="polite">
+                <article
+                  class="rounded-[var(--ui-radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">New-read cohort</p>
+                  <strong class="text-3xl tabular-nums" data-simulator-cohort
+                    >10%</strong
+                  >
+                </article>
+                <article
+                  class="rounded-[var(--ui-radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">Affected mismatches</p>
+                  <strong class="text-3xl tabular-nums" data-simulator-mismatch
+                    >3 / min</strong
+                  >
+                </article>
+                <article
+                  class="rounded-[var(--ui-radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">Fallback result</p>
+                  <strong class="text-lg" data-simulator-fallback
+                    >legacy read serves</strong
+                  >
+                </article>
+              </div>
+              <div
+                class="discovery-field"
+                data-discovery-question
+                data-question-id="rehearsal-cohort"
+                data-question-label="Rehearsed new-read cohort"
+                data-prototype-control
+              >
+                <label for="rehearsal-cohort"
+                  >Send <strong data-simulator-label>10%</strong> of reads to
+                  the new representation</label
+                >
+                <input
+                  id="rehearsal-cohort"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="10"
+                  value="10"
+                  data-recommended="true"
+                />
+              </div>
+              <div
+                class="discovery-field"
+                data-discovery-question
+                data-question-id="rehearsal-fallback"
+                data-question-label="Legacy fallback during rehearsal"
+                data-prototype-control
+              >
+                <label class="discovery-switch">
+                  <input
+                    type="checkbox"
+                    value="Keep legacy fallback enabled while mismatches remain"
+                    checked
+                    data-recommended="true"
+                    data-simulator-fallback-control
+                  />
+                  <span aria-hidden="true"></span>
+                  <span>Keep the legacy read path as fallback</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+            <h3>What the simulation teaches</h3>
+            <p>
+              Cohort size changes blast radius, not correctness. The authority
+              switch is safe only when mismatch telemetry is understood and the
+              rollback path has been exercised.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="failure-boundaries"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="failure-boundaries"
+        data-section-label="Failure boundaries"
+        data-presentation-pattern="accordion callstack-walkthrough"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Where it breaks</p>
+          <h2>Three boundaries deserve explicit proof.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-failure-map">
+            <article>
+              <h3>Mixed application versions</h3>
+              <p>
+                A rolling deploy means old and new binaries overlap. The schema
+                must serve both until the final old instance is gone.
+              </p>
+            </article>
+            <article>
+              <h3>Partial backfill</h3>
+              <p>
+                Readers need a defined fallback when a record has not migrated,
+                rather than assuming the new location is complete.
+              </p>
+            </article>
+            <article>
+              <h3>Silent divergence</h3>
+              <p>
+                Dual writes can disagree. Measure and reconcile the difference
+                before changing which representation is authoritative.
+              </p>
+            </article>
+          </div>
+          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+            <h3>The irreversible moment comes last</h3>
+            <p>
+              Dropping the old column or table is the only step that removes an
+              easy rollback. Schedule it after telemetry shows no supported code
+              path reads or writes the legacy shape.
+            </p>
+          </div>
+          <details class="discovery-disclosure">
+            <summary>Walk the failing request path</summary>
+            <div>
+              API write → compatibility adapter → legacy column + new column →
+              mismatch telemetry → rollback threshold. Expand this before
+              implementation to verify every owner and fallback.
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section
+        id="rollout-decision"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="rollout-decision"
+        data-section-label="Rollout decision"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your decision</p>
+          <h2>How much evidence before the read switch?</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="rollout-cadence"
+            data-question-label="Read-switch rollout cadence"
+          >
+            <legend>
+              Choose the rollout cadence that matches this system's tolerance
+              for risk.
+            </legend>
+            <div class="discovery-options">
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="rollout-cadence"
+                  value="Measured stages with automatic rollback thresholds"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy">
+                  <strong>Measured stages</strong>
+                  <small
+                    >Move a small traffic cohort, compare behavior, then widen
+                    only while thresholds hold.</small
+                  >
+                </span>
+                <span class="discovery-badge">Recommended</span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="rollout-cadence"
+                  value="One coordinated read cutover after offline verification"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Coordinated cutover</strong>
+                  <small
+                    >Switch all reads together after verification; operationally
+                    simpler, with a larger failure radius.</small
+                  >
+                </span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="rollout-cadence"
+                  value="Shadow reads before any user-facing cutover"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Shadow first</strong>
+                  <small
+                    >Compare old and new reads in production without returning
+                    the new result to users.</small
+                  >
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div
+            class="discovery-field"
+            data-discovery-question
+            data-question-id="rollout-constraint"
+            data-question-label="Important rollout constraint"
+          >
+            <label for="rollout-constraint"
+              >What constraint should change this recommendation?</label
+            >
+            <textarea
+              id="rollout-constraint"
+              placeholder="For example: the database cannot sustain dual reads during peak traffic."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="glossary"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="glossary"
+        data-section-label="Working vocabulary"
+        data-presentation-pattern="term-rung"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Vocabulary</p>
+          <h2>Four terms carry the plan.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <dl class="discovery-glossary">
+            <div class="discovery-term-rung" data-domain-term>
+              <dt>Expand</dt>
+              <dd>
+                Add a compatible shape without removing what deployed code
+                expects.
+              </dd>
+            </div>
+            <div class="discovery-term-rung" data-domain-term>
+              <dt>Dual write</dt>
+              <dd>
+                Persist the same logical change to old and new representations.
+              </dd>
+            </div>
+            <div class="discovery-term-rung" data-domain-term>
+              <dt>Backfill</dt>
+              <dd>
+                Convert historical records in restartable, observable batches.
+              </dd>
+            </div>
+            <div class="discovery-term-rung" data-domain-term>
+              <dt>Contract</dt>
+              <dd>
+                Remove the legacy shape only after supported code no longer uses
+                it.
+              </dd>
+            </div>
+          </dl>
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="explainer-follow-ups"
+            data-question-label="Explain next"
+            data-response-kind="follow-up"
+          >
+            <legend>What should the coder explain next?</legend>
+            <div class="discovery-options">
+              <label class="discovery-option">
+                <input
+                  type="checkbox"
+                  value="Show a rollback rehearsal with concrete telemetry thresholds"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Rehearse rollback</strong>
+                  <small
+                    >Walk through the signal, trigger, and recovery path.</small
+                  >
+                </span>
+              </label>
+              <label class="discovery-option">
+                <input
+                  type="checkbox"
+                  value="Explain restartable backfill batching with a worked example"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Go deeper on backfill</strong>
+                  <small
+                    >Show batching, checkpoints, and safe resumption.</small
+                  >
+                </span>
+              </label>
+              <label class="discovery-option">
+                <input
+                  type="checkbox"
+                  value="Compare shadow reads with a coordinated cutover"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Compare rollout modes</strong>
+                  <small
+                    >Explain when each mode earns its operational cost.</small
+                  >
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section
+        id="generated-brief"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="generated-brief"
+        data-section-label="Generated reply"
+        data-presentation-pattern="prompt"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One live brief</p>
+          <h2>Send your decisions back to the coder.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            This is the only generated prompt on the page. It updates whenever
+            you change an answer or save an annotation in any section.
+          </p>
+          <div
+            class="discovery-prompt-card backdrop-blur-2xl ring-1 ring-[var(--ui-border)]"
+          >
+            <div class="discovery-prompt-toolbar">
+              <span>Generated from this page</span>
+              <button
+                class="discovery-button"
+                type="button"
+                data-copy-generated-prompt
+              >
+                Copy prompt for LLM coder
+              </button>
+            </div>
+            <textarea
+              id="domain-explainer-generated-prompt"
+              name="generated-prompt"
+              data-discovery-prompt-host
+              readonly
+              aria-label="Generated prompt for LLM coder"
+            >
+JavaScript will replace this fallback with the current decisions and annotations.
+            </textarea>
+          </div>
+          <p
+            class="discovery-copy-status"
+            data-copy-status
+            aria-live="polite"
+          ></p>
+          <button
+            class="discovery-button discovery-button-secondary"
+            type="button"
+            data-clear-discovery-state
+          >
+            Clear answers and notes
+          </button>
+        </div>
+      </section>
+    </main>
+    <script>
+      (() => {
+        const cohort = document.querySelector("#rehearsal-cohort");
+        const fallback = document.querySelector(
+          "[data-simulator-fallback-control]",
+        );
+        if (
+          !(cohort instanceof HTMLInputElement) ||
+          !(fallback instanceof HTMLInputElement)
+        )
+          return;
+
+        const update = () => {
+          const percent = Number(cohort.value);
+          const mismatch = Math.max(0, Math.round(percent * 0.3));
+          document
+            .querySelectorAll("[data-simulator-cohort]")
+            .forEach((node) => {
+              node.textContent = `${percent}%`;
+            });
+          const label = document.querySelector("[data-simulator-label]");
+          const mismatchNode = document.querySelector(
+            "[data-simulator-mismatch]",
+          );
+          const fallbackNode = document.querySelector(
+            "[data-simulator-fallback]",
+          );
+          const stateNode = document.querySelector("[data-simulator-state]");
+          if (label) label.textContent = `${percent}%`;
+          if (mismatchNode) mismatchNode.textContent = `${mismatch} / min`;
+          if (fallbackNode) {
+            fallbackNode.textContent = fallback.checked
+              ? "legacy read serves"
+              : "request fails";
+          }
+          if (stateNode) {
+            stateNode.textContent = fallback.checked ? "guarded" : "exposed";
+          }
+        };
+
+        cohort.addEventListener("input", update);
+        fallback.addEventListener("change", update);
+        update();
+      })();
+    </script>
+  </body>
+</html>

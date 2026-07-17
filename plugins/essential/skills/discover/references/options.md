@@ -19,3 +19,8 @@ opened before a decision.
 
 Complete with the option comparison, eliminated options and reasons, remaining
 material unknowns, and whether another probe or a decision is next.
+
+When users need to inspect tradeoffs or react to the breadth of the solution
+space, consider a **ranked options** or **brainstorm spectrum** presentation from
+[presentation](presentation.md). Recommendations remain suggestions until the
+user explicitly touches or confirms a choice.

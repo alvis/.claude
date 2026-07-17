@@ -25,3 +25,8 @@ specification, planning, or implementation.
 
 Complete with the verdict, evidence summary, blocking/deferred/accepted items,
 and the single next owner.
+
+When stakeholders need to inspect evidence, blockers, and accepted assumptions
+together, consider the **readiness check** direction in
+[presentation](presentation.md). Its generated prompt must preserve the single
+verdict and next owner rather than reopening settled decisions implicitly.

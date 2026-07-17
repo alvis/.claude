@@ -1,6 +1,6 @@
 ---
 name: discover
-description: 'Discovers material unknowns before planning. Use for a blindspot pass or unknown unknowns, to brainstorm approaches from cheapest to ambitious, interview about architecture, extract reference implementation semantics, make a disposable prototype before touching the real app, or check whether discovery is ready for a decision; researched option selection belongs to essential:decide.'
+description: "Discovers material unknowns before planning. Use for a blindspot pass or unknown unknowns, to brainstorm approaches from cheapest to ambitious, interview about architecture, extract reference implementation semantics, make a disposable prototype before touching the real app, or check whether discovery is ready for a decision; researched option selection belongs to essential:decide."
 model: opus
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Task, AskUserQuestion, WebSearch, WebFetch, Skill
 argument-hint: "<problem> [--mode=blindspots|options|interview|reference|prototype|readiness] [--persist]"
@@ -37,10 +37,18 @@ a long-lived multi-session task, create `.discovery-<slug>/DISCOVERY.md`; keep
 disposable artifacts below its `prototypes/` and copied or summarized reference
 evidence below `references/`. Never modify application source in this skill.
 
+When structured comparison, explanation, or preference capture would be easier
+to understand interactively, follow [presentation](references/presentation.md).
+Generated HTML is a temporary review surface, not a durable deliverable: always
+create it in a collision-safe OS temporary directory and discard it after its
+decisions and annotations have been transferred. A persisted discovery ledger
+may record the temporary path and extracted decisions, but must not treat the
+HTML as long-lived evidence.
+
 The evidence ledger uses these fields:
 
-| ID | Kind | Statement | Source or evidence | Decision impact | Reversibility | Disposition | Owner |
-|---|---|---|---|---|---|---|---|
+| ID  | Kind | Statement | Source or evidence | Decision impact | Reversibility | Disposition | Owner |
+| --- | ---- | --------- | ------------------ | --------------- | ------------- | ----------- | ----- |
 
 `Kind` is one of `intent`, `observed`, `inference`, `unknown`, or `assumption`.
 An accepted assumption must be low-impact, reversible, and have a recheck
@@ -83,7 +91,13 @@ owner, or marked blocking.
    mode, `essential:decide`, `specification:spec-code`,
    `specification:plan-code`, `web:design`, an implementing skill, or stop. Pass
    the evidence ledger and artifact paths without rewriting them as certainty.
-7. Run the verification below. Fix a failed check and repeat until it passes or
+7. **Present interactive results when useful.** If presentation criteria are
+   met, choose the most suitable directional action from the presentation
+   reference. Prefer the LLM environment's built-in local HTML viewer, then a
+   safe cloud artifact viewer when it can render the dependencies, then a local
+   browser such as Chrome. Capture the user's answers and section annotations
+   in the page's single generated prompt and transfer them back to the ledger.
+8. Run the verification below. Fix a failed check and repeat until it passes or
    a concrete blocker remains.
 
 ## Verification
@@ -95,6 +109,9 @@ owner, or marked blocking.
 - Every material unknown has a disposition and owner; every accepted assumption
   is low-impact, reversible, and has a recheck trigger.
 - The recommended next owner receives the ledger and all artifact paths.
+- Any HTML result is stored under the OS temporary root, supports annotation of
+  every user-facing section, and exposes exactly one live prompt intended for
+  replying to the LLM coder.
 - Validate the Essential plugin and run repository policy plus trigger checks.
 
 ## Completion
