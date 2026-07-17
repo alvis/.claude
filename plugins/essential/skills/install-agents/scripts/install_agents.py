@@ -61,6 +61,11 @@ def _read_plugin_records() -> list[dict[str, Any]]:
     return [record for record in records if isinstance(record, dict)]
 
 
+def _last_updated(record: dict[str, Any]) -> str:
+    value = record.get("lastUpdated")
+    return value if isinstance(value, str) else ""
+
+
 def _installed_plugin_roots(
     essential_root: Path, records: list[dict[str, Any]]
 ) -> list[tuple[str, Path]]:
@@ -89,7 +94,7 @@ def _installed_plugin_roots(
     marketplace = essential_id.rsplit("@", 1)[1]
     if not marketplace:
         raise AgentTemplateError(f"installed plugin id has no marketplace: {essential_id}")
-    roots: list[tuple[str, Path]] = []
+    best_by_id: dict[str, dict[str, Any]] = {}
     for record in records:
         plugin_id = record.get("id")
         install_path = record.get("installPath")
@@ -100,10 +105,21 @@ def _installed_plugin_roots(
             or "@" not in plugin_id
         ):
             continue
-        owner, record_marketplace = plugin_id.rsplit("@", 1)
-        if record_marketplace == marketplace:
-            roots.append((owner, Path(install_path)))
-    return sorted(roots, key=lambda item: item[0])
+        record_marketplace = plugin_id.rsplit("@", 1)[1]
+        if record_marketplace != marketplace:
+            continue
+        current = best_by_id.get(plugin_id)
+        if current is None or _last_updated(record) > _last_updated(current):
+            best_by_id[plugin_id] = record
+
+    roots = sorted(
+        (
+            (plugin_id.rsplit("@", 1)[0], Path(record["installPath"]))
+            for plugin_id, record in best_by_id.items()
+        ),
+        key=lambda item: item[0],
+    )
+    return roots
 
 
 def discover_agent_templates(
