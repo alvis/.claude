@@ -26,7 +26,7 @@ Omit for `haiku` (it does not support effort); live Claude Code docs win on exac
 - judgment producer → (`opus`, `high`)
 - critic → (`opus`, `high`)
 - adversarial / deep-reasoning / research / design → (`fable`, `high`–`xhigh`)
-- orchestrator / tech-lead → (`fable`, `high`)
+- orchestrator / tech-lead → (`fable`, `low`)
 - one-shot deep-reasoning gate → (`opus`/`fable`, `max`)
 
 ## permissionMode by launch scenario

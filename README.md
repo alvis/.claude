@@ -118,7 +118,7 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 
 | Agent | Role | Model | Effort | Permission | Flags |
 | --- | --- | --- | --- | --- | --- |
-| `tech-lead` | Tech Lead — decomposes projects, decides the approach, and routes milestones | fable | medium | auto | memory |
+| `tech-lead` | Tech Lead — decomposes projects, decides the approach, and routes milestones | fable | low | auto | memory |
 | `design-lead` | Design Lead — decomposes and directs design initiatives across platforms | opus | high | auto | memory |
 | `ai-research-lead` | AI Research Lead — decomposes and directs ML/RL/AI research initiatives | fable | medium | auto | memory |
 | `principal-engineer` | Principal Engineer — escalation sink for hard debugging/perf/algorithms | fable | high | auto | gated, worktree, memory |
