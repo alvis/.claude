@@ -273,9 +273,11 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
         errors.append(f"{path}: expected one multi-note summary host")
     if parser.search_controls:
         errors.append(f"{path}: static single-page artifact must not include search")
-    if "../../assets/html/discovery.css" not in parser.stylesheets:
+    stylesheet_urls = {"../../assets/html/discovery.css", "{{DISCOVERY_CSS_URL}}"}
+    runtime_urls = {"../../assets/html/discovery.js", "{{DISCOVERY_JS_URL}}"}
+    if not stylesheet_urls.intersection(parser.stylesheets):
         errors.append(f"{path}: does not link the shared discovery stylesheet")
-    if "../../assets/html/discovery.js" not in parser.scripts:
+    if not runtime_urls.intersection(parser.scripts):
         errors.append(f"{path}: does not link the shared discovery runtime")
     if parser.scripts.count("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4") != 1:
         errors.append(f"{path}: expected exactly one Tailwind browser runtime")

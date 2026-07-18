@@ -32,6 +32,7 @@
 
   let state = loadState();
   let activeSectionId = null;
+  let programmaticControlUpdate = false;
 
   function loadState() {
     try {
@@ -109,9 +110,21 @@
     return controls.length > 0 ? controlValue(controls[0]) : "";
   }
 
+  function defaultControlValue(control) {
+    if (control instanceof HTMLInputElement) return control.defaultValue;
+    if (control instanceof HTMLTextAreaElement) return control.defaultValue;
+    if (control instanceof HTMLOptionElement) return control.value;
+    if (control instanceof HTMLSelectElement) {
+      return [...control.options]
+        .filter((option) => option.defaultSelected)
+        .map((option) => option.value);
+    }
+    return control.value;
+  }
+
   function recommendedValues(question) {
     return [...question.querySelectorAll("[data-recommended='true']")]
-      .map((control) => control.value)
+      .flatMap(defaultControlValue)
       .filter(Boolean);
   }
 
@@ -134,6 +147,23 @@
       );
     }
     return recommendations.includes(answer);
+  }
+
+  function notifyQuestionControls(question) {
+    const controls = [
+      ...question.querySelectorAll(
+        "input:not([type='button']), select, textarea",
+      ),
+    ];
+    programmaticControlUpdate = true;
+    try {
+      controls.forEach((control) => {
+        control.dispatchEvent(new Event("input", { bubbles: true }));
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    } finally {
+      programmaticControlUpdate = false;
+    }
   }
 
   function hydrateQuestion(question) {
@@ -347,7 +377,7 @@
       const touched = Boolean(state.touched[id]);
       const kind = responseKind(question);
 
-      if (touched && hasValue(answer)) {
+      if (touched && (hasValue(answer) || kind === "decision")) {
         if (kind === "follow-up") {
           followUps.push(`- **${label}:** ${formatAnswer(answer)}`);
           return;
@@ -418,7 +448,9 @@
         ? "Update the implementation or plan using confirmed decisions and every annotation above, then answer each requested follow-up. Preserve unresolved items as questions; do not silently choose suggested defaults or optional follow-ups."
         : hasFollowUpQuestions
           ? "Answer each requested follow-up using the page context and annotations above. Do not treat untouched optional follow-ups as requests."
-          : "Update the implementation or plan using the confirmed decisions and every annotation above. Preserve unresolved items as questions; do not silently choose their suggested defaults. Report what changed and what still needs a user decision.",
+          : hasDecisionQuestions
+            ? "Update the implementation or plan using the confirmed decisions and every annotation above. Preserve unresolved items as questions; do not silently choose their suggested defaults. Report what changed and what still needs a user decision."
+            : "Use the page context and every annotation above as review guidance. Preserve the absence of decision questions; do not invent confirmed decisions or implementation orders.",
     );
     return lines.join("\n");
   }
@@ -437,7 +469,7 @@
       const touched = Boolean(state.touched[id]);
       const kind = responseKind(question);
 
-      if (touched && hasValue(answer)) {
+      if (touched && (hasValue(answer) || kind === "decision")) {
         const stateName = kind === "follow-up" ? "requested" : "confirmed";
         return [
           {
@@ -618,7 +650,7 @@
   function updateQuestion(question) {
     const id = questionId(question);
     state.answers[id] = readAnswer(question);
-    state.touched[id] = true;
+    if (!programmaticControlUpdate) state.touched[id] = true;
     saveState();
     renderPrompt();
   }
@@ -675,10 +707,14 @@
         } else if (control instanceof HTMLTextAreaElement) {
           control.value = control.defaultValue;
         } else if (control instanceof HTMLSelectElement) {
-          control.selectedIndex = 0;
+          const defaultIndex = [...control.options].findIndex(
+            (option) => option.defaultSelected,
+          );
+          control.selectedIndex = defaultIndex >= 0 ? defaultIndex : 0;
         }
       });
       state.answers[questionId(question)] = readAnswer(question);
+      notifyQuestionControls(question);
     });
     sections.forEach((section) =>
       updateSectionAnnotation(section.dataset.sectionId),
@@ -688,6 +724,7 @@
 
   questions.forEach((question) => {
     hydrateQuestion(question);
+    notifyQuestionControls(question);
     question.addEventListener("input", () => updateQuestion(question));
     question.addEventListener("change", () => updateQuestion(question));
   });
