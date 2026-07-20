@@ -111,7 +111,7 @@
           </nav>
         </div>
         <aside class="discovery-masthead-aside">
-          <dl class="discovery-meta backdrop-blur-xl">
+          <dl class="discovery-meta">
             <div>
               <dt>Decision</dt>
               <dd>How traffic should move to the new schema</dd>
@@ -154,7 +154,7 @@
             instant. First make the system tolerate both shapes, then move data
             and traffic, and only then remove the old path.
           </p>
-          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+          <div class="discovery-callout shadow-sm">
             <h3>The invariant</h3>
             <p>
               At every checkpoint, the currently deployed application must be
@@ -348,7 +348,7 @@
               </div>
             </div>
           </div>
-          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+          <div class="discovery-callout shadow-sm">
             <h3>What the simulation teaches</h3>
             <p>
               Cohort size changes blast radius, not correctness. The authority
@@ -395,7 +395,7 @@
               </p>
             </article>
           </div>
-          <div class="discovery-callout backdrop-blur-xl shadow-sm">
+          <div class="discovery-callout shadow-sm">
             <h3>The irreversible moment comes last</h3>
             <p>
               Dropping the old column or table is the only step that removes an
@@ -437,7 +437,7 @@
               for risk.
             </legend>
             <div class="discovery-options">
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="rollout-cadence"
@@ -454,7 +454,7 @@
                 </span>
                 <span class="discovery-badge">Recommended</span>
               </label>
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="rollout-cadence"
@@ -468,7 +468,7 @@
                   >
                 </span>
               </label>
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="rollout-cadence"
@@ -611,7 +611,7 @@
             you change an answer or save an annotation in any section.
           </p>
           <div
-            class="discovery-prompt-card backdrop-blur-2xl ring-1 ring-[var(--ui-border)]"
+            class="discovery-prompt-card ring-1 ring-[var(--ui-border)]"
           >
             <div class="discovery-prompt-toolbar">
               <span>Generated from this page</span>
@@ -630,7 +630,32 @@
               readonly
               aria-label="Generated prompt for LLM coder"
             >
-JavaScript will replace this fallback with the current decisions and annotations.
+# Feedback for the LLM coder
+
+## Goal
+Implement the schema migration using the expand–migrate–switch–contract pattern this board explains: change the track while the train keeps moving. Compatibility is what creates room to move — never break the running system to make progress.
+
+## The invariant — do not violate at any stage
+At every stage, readers and writers that have not yet moved must keep working. There is no window in which the old shape stops being valid before the new shape is proven. Backwards compatibility holds until the final contract step.
+
+## The four stages, in order
+- Expand the schema — add the new representation alongside the old; add, never replace.
+- Write both shapes — dual-write so old and new stay in sync while consumers migrate.
+- Migrate readers — move consumers to the new shape one at a time, backfilling historical rows.
+- Switch, then contract — flip the source of truth once every reader is on the new shape, then (and only then) remove the old shape.
+
+## Decision to make — rollout mode
+Choose how aggressively to advance through the stages:
+- Measured stages — advance one stage at a time, with a verification gate between each.
+- Coordinated cutover — compress the switch into a planned window.
+- Shadow first — run the new shape in shadow against sampled reads before any switch.
+Rehearse rollback before the switch regardless of mode; a stage you cannot revert is not ready to advance. Do not pick coordinated cutover to save time if rollback has not been rehearsed.
+
+## Open questions — do not silently resolve
+- Whether the datastore can sustain dual reads/writes during peak traffic is an assumption to validate, not a given (see the section note). Backfill depth and sampled error rates on the board are illustrative shapes for teaching the pattern, not measured capacity.
+
+## Requested next action
+Build to the selected rollout mode and the four stages in order, holding the compatibility invariant at every step. Keep rollback rehearsable and the peak-traffic question open until measured. Report which stage you reached and what must be true before the switch.
             </textarea>
           </div>
           <p

@@ -215,7 +215,7 @@
 
     const trigger = makeElement(
       "button",
-      "discovery-annotation-trigger backdrop-blur-xl",
+      "discovery-annotation-trigger",
     );
     trigger.type = "button";
     trigger.dataset.annotationFor = id;
@@ -223,7 +223,7 @@
 
     const summary = makeElement(
       "div",
-      "discovery-annotation-summary backdrop-blur-lg",
+      "discovery-annotation-summary",
     );
     summary.dataset.annotationSummary = id;
     summary.setAttribute("role", "note");
@@ -257,7 +257,7 @@
   function buildAnnotationDialog() {
     const dialog = makeElement(
       "dialog",
-      "discovery-annotation-dialog backdrop-blur-2xl",
+      "discovery-annotation-dialog",
     );
     dialog.dataset.annotationDialog = "";
 

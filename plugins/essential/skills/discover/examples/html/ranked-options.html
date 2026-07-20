@@ -176,7 +176,7 @@
           </div>
           <div class="discovery-section-body">
             <div
-              class="discovery-review-frame rounded-[calc(var(--radius-card)+.35rem)] bg-glass p-5 shadow-[var(--ui-shadow-small)] backdrop-blur-xl sm:p-7"
+              class="discovery-review-frame rounded-[calc(var(--radius-card)+.35rem)] bg-glass p-5 shadow-[var(--ui-shadow-small)] sm:p-7"
               data-direction-artifact
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
@@ -512,7 +512,7 @@ sample replay   → 18,420 / 18,420 equal</pre>
           </div>
           <div class="discovery-section-body">
             <div
-              class="discovery-review-frame rounded-[calc(var(--radius-card)+.35rem)] bg-glass p-5 shadow-[var(--ui-shadow-small)] backdrop-blur-xl sm:p-7"
+              class="discovery-review-frame rounded-[calc(var(--radius-card)+.35rem)] bg-glass p-5 shadow-[var(--ui-shadow-small)] sm:p-7"
               data-direction-artifact
             >
               <div class="flex flex-wrap items-end justify-between gap-3">
@@ -1013,7 +1013,32 @@ drop_policy = "never"</pre>
               readonly
               aria-label="Generated prompt for LLM coder"
             >
-JavaScript will replace this fallback with the current decisions and annotations.</textarea>
+# Feedback for the LLM coder
+
+## Goal
+Implement the contract migration from `order.created v1` to `v2` behind the compatibility mechanism ranked highest on this board, without breaking any of the six consumers. Only the compatibility mechanism is in question — the invariant and constraint below are fixed.
+
+## Invariant and constraint — do not relax
+- No consumer breaks during migration: every one of the six consumers keeps reading a shape it understands for the full 48-hour overlap window. (invariant)
+- Six consumers deploy independently: no mechanism may require a synchronized, all-at-once cutover. (constraint)
+- Objective: zero dropped messages across the migration.
+
+## Options, ranked (rollback, then ownership, then elegance)
+- Rank 01 — Producer adapter (recommended baseline). One owner publishes both envelopes from `order.created v2`; a `mapV2ToLegacy()` compatibility adapter feeds the v1 branch, and a single runtime switch disables it. Rollback is one flag, not six deployments. Pressure case: a legacy-only field returns — the producer team patches one adapter and replays the failed partition.
+- Rank 02 — Versioned topics. Parallel routes `orders.v2` and `orders.v1`; compatibility is visible to operators as two live routes with their own lag, retention, and cutover. Rollback: repoint a consumer group to `orders.v1` and replay retained offsets. Pressure case: a third contract version multiplies topics, retention policy, and retirement ceremony.
+- Rank 03 — Consumer translators. Each of the six consumers owns its own migration, retirement, and rollback. Maximum team autonomy; rollback and ownership are distributed, so there is no single revert.
+- Rank 04 — Schema gateway. A central `orders.contract-route` translates at read time. Elegant and centralized, but rollback and ownership concentrate in one hop.
+
+## Decision to make — which mechanism anchors the build
+Choose the mechanism that ranks highest on rollback first: Producer adapter is the current baseline because its rollback is one switch and its ownership is one team. Do not silently pick a lower-ranked option because it looks cleaner; elegance is the last tiebreak, not the first.
+
+## Open questions — do not silently resolve
+- Whether any consumer genuinely needs independent per-team rollback (which would lift Rank 03) is unconfirmed — keep it as a question, not an assumption.
+- The live-contract-check and sample-replay figures on the board are illustrative shapes for reviewing the mechanism, not measured throughput. Do not treat them as real numbers or size infrastructure to them.
+
+## Requested next action
+Build to the highest-ranked viable mechanism and every saved annotation. Preserve the invariant and the constraint exactly, keep the open questions open, and report which option you built to and what still needs a user decision.
+            </textarea>
           </div>
           <p
             class="discovery-copy-status"

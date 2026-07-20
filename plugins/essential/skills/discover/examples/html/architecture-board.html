@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Architecture board — Conflux real-time sync service</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>Architecture board · Conflux sync service</strong><small>Essential · Discover</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>Architecture board</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Architecture board</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#annotations">Pin notes</a>
+      <a href="#provenance">Provenance</a>
+      <a href="#tradeoffs">Trade-offs</a>
+      <a href="#boards">Boards</a>
+      <a href="#architecture-decision">Your input</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-presentation-pattern="colors type sidebar-toc annotation-drawer sticky-reply"
+      data-page-id="architecture-board-conflux-sync-v1"
+      data-discovery-action="architecture-board"
+      data-discovery-goal="Pin the service decomposition and data-flow decisions for the Conflux real-time sync backend before implementation"
+      data-board-id="architecture-board"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">Architecture board · Conflux sync service</p>
+          <h1>Pin the architecture on a real diagram, not a doc.</h1>
+          <p class="discovery-lede">
+            This board holds one layered picture of the Conflux real-time
+            editing backend — how the service is decomposed, how an edit flows
+            through it, and which patterns are load-bearing. Author pins mark the
+            decisions worth defending, and every claim carries where it came
+            from — observed, inferred, or still open.
+          </p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta">
+            <div>
+              <dt>Subject</dt>
+              <dd>Conflux collaborative-editing sync service</dd>
+            </div>
+            <div>
+              <dt>Shape</dt>
+              <dd>Four layers · event-sourced op log · CRDT merge</dd>
+            </div>
+            <div>
+              <dt>Decision</dt>
+              <dd>Which decomposition and data-flow choices are fixed</dd>
+            </div>
+            <div>
+              <dt>Next owner</dt>
+              <dd>Backend / service implementation</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Add a note to any section. Your decisions and annotations are
+            reflected immediately in the single prompt at the end.
+          </p>
+        </aside>
+      </header>
+
+      <section
+        id="architecture"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="architecture"
+        data-section-label="Architecture"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One diagram, layered</p>
+          <h2>The service in its own blueprint, under the tool's chrome.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            Everything inside the diagram frame renders in Conflux's own
+            blueprint palette
+            <span class="discovery-provenance" data-provenance="decided"
+              >decided</span
+            >. The frame, the teaching pins, and the rest of this page stay in
+            the house theme so the diagram's colours never leak into the tool's
+            own surface.
+          </p>
+
+          <!--
+            Specimen brand-palette scope (pattern: specimen-scope).
+            This is the ONE documented exception to "no hex in action pages":
+            hex literals may appear ONLY inside [data-specimen], re-pointing
+            house --ui-* tokens locally. Page chrome, the diagram frame, and
+            the pin layer stay OUTSIDE this re-point and keep house tokens.
+            Palette is intentionally theme-fixed: the diagram reads like a
+            captured export from a modelling tool in its own light theme.
+          -->
+          <style>
+            [data-specimen] {
+              --ui-canvas: #eef2f8;
+              --ui-surface: #ffffff;
+              --ui-glass: #f1f5fb;
+              --ui-glass-strong: #e4ebf5;
+              --ui-ink: #0f1b2e;
+              --ui-muted: #556377;
+              --ui-accent: #0e7490;
+              --ui-accent-soft: #d2edf3;
+              --ui-accent-ink: #0a4a58;
+              --ui-insight: #0e9f6e;
+              --ui-insight-soft: #d6f3e6;
+              --ui-border: #d3ddec;
+              /* Blueprint extensions, scoped to the diagram only. These let the
+                 layered picture carry a confident edge-blue and a warm open-item
+                 accent without leaking hex into the tool's chrome. */
+              --spec-edge: #2563eb;
+              --spec-edge-soft: #dbe6fe;
+              --spec-line: #9fb1c9;
+              --spec-source: #0d9488;
+              --spec-amber: #d97706;
+              --spec-amber-soft: #fbe7ca;
+            }
+
+            /* One confident blueprint flourish: a faint grid wash bleeding down
+               from the top of the canvas, the way a modelling tool tints its
+               board. Purely decorative, theme-fixed. */
+            [data-specimen] .spec-grid {
+              background-image:
+                linear-gradient(
+                  to right,
+                  color-mix(in oklch, var(--spec-line), transparent 86%) 1px,
+                  transparent 1px
+                ),
+                linear-gradient(
+                  to bottom,
+                  color-mix(in oklch, var(--spec-line), transparent 86%) 1px,
+                  transparent 1px
+                );
+              background-size: 26px 26px;
+            }
+            /* Brand mark + edge nodes share one blueprint gradient. */
+            [data-specimen] .spec-edge-fill {
+              background-image: linear-gradient(
+                135deg,
+                var(--spec-edge),
+                var(--ui-accent)
+              );
+            }
+            /* Vertical connector rails between layers, drawn with house-neutral
+               blueprint lines so the flow reads without hard arrows. */
+            [data-specimen] .spec-rail {
+              background: linear-gradient(
+                to bottom,
+                transparent,
+                var(--spec-line),
+                transparent
+              );
+            }
+
+            /*
+              Author pins carry fixed percentage coordinates, so they only line
+              up while the diagram holds its wide layout. Below the diagram's
+              reflow breakpoint (its layers stack at sm/640px) the pins would
+              point at the wrong nodes, so hide the pin layer and let the
+              numbered notes below carry the annotations. Reposition per
+              breakpoint instead if a narrow diagram must stay pinned.
+            */
+            @media (max-width: 639.98px) {
+              [data-arch-frame] .discovery-pin-layer {
+                display: none;
+              }
+            }
+          </style>
+
+          <div
+            class="discovery-artifact-frame relative overflow-hidden"
+            data-arch-frame
+            data-presentation-pattern="diagrams"
+          >
+            <div class="discovery-artifact-bar">
+              <span class="discovery-artifact-dots" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <span class="discovery-artifact-url">conflux · architecture v0.4 · draft</span>
+            </div>
+
+            <div
+              data-specimen
+              data-presentation-pattern="specimen-scope"
+              class="relative isolate overflow-hidden bg-canvas text-ink"
+            >
+              <div
+                class="spec-grid pointer-events-none absolute inset-0 -z-10"
+                aria-hidden="true"
+              ></div>
+
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] bg-surface px-5 py-3"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="spec-edge-fill grid h-7 w-7 place-items-center rounded-[var(--radius-control)] text-white shadow-[0_4px_12px_color-mix(in_oklch,var(--spec-edge),transparent_65%)]"
+                    aria-hidden="true"
+                    ><svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+                      <path
+                        d="M5 12 H19 M12 5 V19"
+                        stroke="#fff"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                      />
+                      <circle cx="5" cy="12" r="2.1" fill="#fff" />
+                      <circle cx="19" cy="12" r="2.1" fill="#fff" />
+                      <circle cx="12" cy="5" r="2.1" fill="#fff" />
+                      <circle cx="12" cy="19" r="2.1" fill="#fff" /></svg
+                  ></span>
+                  <strong
+                    class="bg-gradient-to-r from-[var(--spec-edge)] to-[var(--ui-accent)] bg-clip-text text-lg text-transparent"
+                    >Conflux</strong
+                  >
+                  <span
+                    class="hidden rounded-full bg-glass px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wide text-muted ring-1 ring-[var(--ui-border)] sm:inline-block"
+                    >sync service · v0.4</span
+                  >
+                </div>
+                <div
+                  class="hidden items-center gap-3 text-xs text-muted sm:flex"
+                  aria-label="Diagram legend"
+                >
+                  <span class="inline-flex items-center gap-1.5"
+                    ><span
+                      class="h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                      aria-hidden="true"
+                    ></span
+                    >Source of truth</span
+                  >
+                  <span class="inline-flex items-center gap-1.5"
+                    ><span
+                      class="h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                      aria-hidden="true"
+                    ></span
+                    >Open at scale</span
+                  >
+                </div>
+              </div>
+
+              <div class="grid gap-4 p-5">
+                <!-- Layer 1 · Clients -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="clients"
+                >
+                  <p class="discovery-eyebrow">Clients</p>
+                  <div
+                    class="rounded-[var(--radius-card)] bg-surface p-3.5 text-center ring-1 ring-[var(--ui-border)]"
+                    data-arch-module
+                    data-module-id="editor-clients"
+                  >
+                    <strong class="text-ink">Editor clients</strong>
+                    <span class="mt-0.5 block text-xs text-muted"
+                      >Browser editors · optimistic local CRDT replica</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 2 · Edge -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="edge"
+                >
+                  <p class="discovery-eyebrow">Edge</p>
+                  <div
+                    class="spec-edge-fill flex flex-col items-center rounded-[var(--radius-card)] p-3.5 text-center text-white shadow-[0_10px_26px_color-mix(in_oklch,var(--spec-edge),transparent_72%)]"
+                    data-arch-module
+                    data-module-id="realtime-gateway"
+                  >
+                    <strong>Realtime Gateway</strong>
+                    <span class="mt-0.5 block text-xs text-white/85"
+                      >WebSocket · stateless · any node serves any session</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 3 · Domain services -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="domain"
+                >
+                  <p class="discovery-eyebrow">Domain services</p>
+                  <div class="grid gap-3 sm:grid-cols-3">
+                    <div
+                      class="rounded-[var(--radius-card)] bg-glass p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="session-coordinator"
+                      data-presentation-pattern="schema-box"
+                    >
+                      <p class="discovery-eyebrow">Coordinator</p>
+                      <strong class="mt-0.5 block text-ink">Session Coordinator</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Routes ops to the right document actor; owns
+                        membership</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-accent-soft p-3.5 ring-1 ring-[color-mix(in_oklch,var(--ui-accent),transparent_72%)]"
+                      data-arch-module
+                      data-module-id="merge-engine"
+                      data-presentation-pattern="schema-box"
+                    >
+                      <p class="discovery-eyebrow text-accent-ink">Merge</p>
+                      <strong class="mt-0.5 block text-accent-ink"
+                        >CRDT Merge Engine</strong
+                      >
+                      <span class="mt-1 block text-xs text-accent-ink/80"
+                        >Yjs-style convergence · no central merge lock</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-glass p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="presence-service"
+                    >
+                      <p class="discovery-eyebrow">Presence</p>
+                      <strong class="mt-0.5 block text-ink">Presence Service</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Cursors + selections · ephemeral, never persisted</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Data-flow strip: where an edit's work goes today. Illustrative
+                     distribution (no hard counts), so it reads as a plausible
+                     latency budget rather than a measured chart; geometry is
+                     aria-hidden and the stages carry visible labels. -->
+                <div class="flex flex-col gap-2" data-presentation-pattern="flow-strip">
+                  <div class="flex items-center justify-between">
+                    <p class="discovery-eyebrow">Edit path · latency budget</p>
+                    <span class="text-xs text-muted">Receive → Broadcast</span>
+                  </div>
+                  <div
+                    class="flex h-3 gap-1 overflow-hidden rounded-full bg-glass"
+                    aria-hidden="true"
+                  >
+                    <span
+                      class="spec-edge-fill h-full rounded-full"
+                      style="width: 22%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-accent"
+                      style="width: 41%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-source)]"
+                      style="width: 25%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-amber)]"
+                      style="width: 12%"
+                    ></span>
+                  </div>
+                  <div class="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted">
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="spec-edge-fill h-2 w-2 rounded-full"
+                        aria-hidden="true"
+                      ></span
+                      >Receive at gateway</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-accent"
+                        aria-hidden="true"
+                      ></span
+                      >Merge</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                        aria-hidden="true"
+                      ></span
+                      >Append to op log</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span
+                      >Fan-out presence</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 4 · Persistence -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="persistence"
+                >
+                  <p class="discovery-eyebrow">Persistence</p>
+                  <div class="grid gap-3 sm:grid-cols-3">
+                    <div
+                      class="relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[color-mix(in_oklch,var(--spec-source),transparent_66%)]"
+                      data-arch-module
+                      data-module-id="op-log"
+                    >
+                      <span
+                        class="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                        aria-hidden="true"
+                      ></span>
+                      <p class="discovery-eyebrow">Event store</p>
+                      <strong class="mt-0.5 block text-ink">Op Log</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Append-only · single source of truth</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="snapshot-store"
+                    >
+                      <p class="discovery-eyebrow">Derived</p>
+                      <strong class="mt-0.5 block text-ink">Snapshot Store</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Compacted state · rebuildable from the log</span
+                      >
+                    </div>
+                    <div
+                      class="relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[color-mix(in_oklch,var(--spec-amber),transparent_66%)]"
+                      data-arch-module
+                      data-module-id="presence-bus"
+                    >
+                      <span
+                        class="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span>
+                      <p class="discovery-eyebrow">Ephemeral</p>
+                      <strong class="mt-0.5 block text-ink">Presence Bus</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Redis pub/sub · no durability guarantee</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="discovery-pin-layer"
+              data-annotation-pins
+              data-presentation-pattern="annotation-pins"
+            >
+              <button
+                class="discovery-pin"
+                data-annotation-pin="1"
+                style="--pin-x:87.4%;--pin-y:34.8%"
+                aria-describedby="pin-note-1"
+              >
+                1
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="2"
+                style="--pin-x:50%;--pin-y:52.3%"
+                aria-describedby="pin-note-2"
+              >
+                2
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="3"
+                style="--pin-x:5.7%;--pin-y:84.8%"
+                aria-describedby="pin-note-3"
+              >
+                3
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="4"
+                style="--pin-x:94.3%;--pin-y:84.8%"
+                aria-describedby="pin-note-4"
+              >
+                4
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="annotations"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="annotations"
+        data-section-label="Pin notes"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">What each pin defends</p>
+          <h2>Four decisions worth pinning to the diagram.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <ol class="discovery-pin-notes">
+            <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
+              <strong>The gateway is stateless.</strong> The Realtime Gateway
+              holds no document state, so any node can serve any session and the
+              edge scales horizontally behind a plain load balancer
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="2" id="pin-note-2">
+              <strong>CRDT merge over OT.</strong> The Merge Engine uses a
+              Yjs-style CRDT so concurrent edits converge without a central merge
+              lock — trading extra per-edit metadata for a simpler, lock-free
+              server
+              <span class="discovery-provenance" data-provenance="approved"
+                >approved</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="3" id="pin-note-3">
+              <strong>The op log is the source of truth.</strong> Every state is
+              reconstructable by replaying the append-only Op Log; the Snapshot
+              Store is a derived cache, never authoritative
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="4" id="pin-note-4">
+              <strong>Presence is ephemeral.</strong> Cursors and selections
+              fan out over Redis pub/sub and are never persisted; whether one
+              channel holds up at peak concurrency is unproven
+              <span class="discovery-provenance" data-provenance="open"
+                >open question</span
+              >.
+            </li>
+          </ol>
+          <p class="discovery-muted">
+            Focus or hover a pin to highlight its note, and vice versa. The
+            notes remain fully legible with no scripting.
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="provenance"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="provenance"
+        data-section-label="Provenance"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Where each claim comes from</p>
+          <h2>Every architecture claim carries its evidence status.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div
+            class="discovery-callout"
+            data-presentation-pattern="provenance-pill"
+          >
+            <h3>Reading the blueprint honestly</h3>
+            <p>
+              That clients already speak WebSocket to today's edge is measured
+              from current traffic
+              <span class="discovery-provenance" data-provenance="observed"
+                >observed</span
+              >. The event-sourced op log is an architecture intent we chose for
+              this service
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >. Whether presence fan-out survives peak concurrency is still
+              unresolved
+              <span class="discovery-provenance" data-provenance="open"
+                >open question</span
+              >.
+            </p>
+          </div>
+
+          <div
+            class="discovery-table-wrap"
+            data-presentation-pattern="provenance-row"
+          >
+            <table class="discovery-table">
+              <thead>
+                <tr>
+                  <th>Claim about the architecture</th>
+                  <th>Evidence source</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-provenance="observed">
+                  <td>Clients already hold a WebSocket to the current edge</td>
+                  <td>Sampled from live gateway connection logs</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="observed"
+                      >observed</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="inferred">
+                  <td>Merge time, not transport, dominates perceived sync lag</td>
+                  <td>Three recorded editing-session traces</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="inferred"
+                      >inferred</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="assumed">
+                  <td>A typical document holds a few thousand live ops in memory</td>
+                  <td>No sampled distribution yet</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="assumed"
+                      >assumed</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="decided">
+                  <td>The append-only op log is the single source of truth</td>
+                  <td>This board's architecture intent</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="decided"
+                      >decided</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="approved">
+                  <td>A CRDT merge engine is used instead of OT</td>
+                  <td>Architecture review, signed off</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="approved"
+                      >approved</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="open">
+                  <td>Presence fan-out over one Redis channel at peak concurrency</td>
+                  <td>Unresolved — needs a load test</td>
+                  <td>
+                    <span class="discovery-provenance" data-provenance="open"
+                      >open question</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="tradeoffs"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="tradeoffs"
+        data-section-label="Trade-offs"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Self-critique</p>
+          <h2>What this architecture buys, and where it breaks.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <aside
+            class="discovery-tradeoffs"
+            data-tradeoffs-honestly
+            data-presentation-pattern="tradeoffs-honestly"
+          >
+            <h3>Trade-offs, honestly</h3>
+            <div data-tradeoff-group="wins">
+              <h4>Wins</h4>
+              <ul>
+                <li>
+                  A stateless gateway scales horizontally; any node can serve any
+                  session with no sticky routing.
+                </li>
+                <li>
+                  An event-sourced op log makes every document state
+                  reconstructable and auditable by replay.
+                </li>
+                <li>
+                  CRDT convergence removes the central merge lock, so a slow
+                  client never blocks everyone else's edits.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="costs">
+              <h4>Costs</h4>
+              <ul>
+                <li>
+                  CRDT metadata grows per edit, so memory and payload cost more
+                  than compact OT deltas.
+                </li>
+                <li>
+                  Snapshot compaction adds a background job and a window where a
+                  snapshot lags the authoritative log.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="fails-when">
+              <h4>Fails when</h4>
+              <ul>
+                <li>
+                  A single hot document's in-memory CRDT state outgrows one
+                  service instance's memory budget.
+                </li>
+                <li>
+                  Presence fan-out over one Redis channel saturates at very high
+                  concurrent-editor counts.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="data-notes">
+              <h4>Data notes</h4>
+              <p data-fabricated data-presentation-pattern="invented-data-flag">
+                The latency-budget proportions, the
+                <strong>few-thousand</strong> live-ops figure, and any
+                throughput or concurrency numbers implied by the diagram are
+                <span class="discovery-invented-tag" data-invented-tag
+                  >invented</span
+                >
+                illustrative shapes. Treat them as placeholders, not measured
+                Conflux numbers, when building the service.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section
+        id="boards"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="boards"
+        data-section-label="Boards"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">This session's workspace</p>
+          <h2>Jump back to the board hub.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p>
+            This architecture board is one board in the current discovery
+            session. The hub lists every board so you can move between them
+            without leaving the workspace.
+          </p>
+          <p>
+            <a
+              class="discovery-board-link"
+              data-board-link="board-hub"
+              href="./board-hub.html"
+              >Open the board hub</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="architecture-decision"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="architecture-decision"
+        data-section-label="Your input"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your decision</p>
+          <h2>How locked is this architecture before build?</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="architecture-readiness"
+            data-question-label="Architecture readiness for build"
+          >
+            <legend>
+              Choose how much of this architecture the implementer should treat
+              as fixed.
+            </legend>
+            <div class="discovery-options">
+              <label class="discovery-option group">
+                <input
+                  type="radio"
+                  name="architecture-readiness"
+                  value="Build to the approved decisions; leave open items flagged"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy">
+                  <strong>Build the approved parts</strong>
+                  <small
+                    >Implement everything marked decided or approved; leave the
+                    presence fan-out as a load-test TODO.</small
+                  >
+                </span>
+                <span class="discovery-badge">Recommended</span>
+              </label>
+              <label class="discovery-option group">
+                <input
+                  type="radio"
+                  name="architecture-readiness"
+                  value="Resolve every open question before any code is written"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Resolve open items first</strong>
+                  <small
+                    >Block implementation until presence scale and in-memory op
+                    budget are settled.</small
+                  >
+                </span>
+              </label>
+              <label class="discovery-option group">
+                <input
+                  type="radio"
+                  name="architecture-readiness"
+                  value="Treat the whole diagram as an exploratory sketch"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Exploratory only</strong>
+                  <small
+                    >Nothing is binding yet; use the diagram to spark a
+                    conversation, not a build.</small
+                  >
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div
+            class="discovery-field"
+            data-discovery-question
+            data-question-id="architecture-constraint"
+            data-question-label="Constraint that changes the architecture"
+          >
+            <label for="architecture-constraint"
+              >What constraint should change one of these decisions?</label
+            >
+            <textarea
+              id="architecture-constraint"
+              placeholder="For example: the CRDT memory footprint per document exceeds the per-instance budget at our largest tenants."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="generated-brief"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="generated-brief"
+        data-section-label="Generated reply"
+        data-presentation-pattern="prompt"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One live brief</p>
+          <h2>Send your decisions back to the coder.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            This is the only generated prompt on the page. It updates whenever
+            you change an answer or save an annotation in any section.
+          </p>
+          <div class="discovery-prompt-card ring-1 ring-[var(--ui-border)]">
+            <div class="discovery-prompt-toolbar">
+              <span>Generated from this board</span>
+              <button
+                class="discovery-button"
+                type="button"
+                data-copy-generated-prompt
+              >
+                Copy prompt for LLM coder
+              </button>
+            </div>
+            <textarea
+              id="architecture-board-generated-prompt"
+              name="generated-prompt"
+              data-discovery-prompt-host
+              readonly
+              aria-label="Generated prompt for LLM coder"
+            >
+# Feedback for the LLM coder
+
+## Goal
+Implement the Conflux real-time sync backend to the decomposition and data-flow decisions pinned on this board, before adding anything not shown here.
+
+## Architecture at a glance
+Four layers, top to bottom:
+- Clients — browser editors, each holding an optimistic local CRDT replica.
+- Edge — a stateless Realtime Gateway over WebSocket; any node can serve any session.
+- Domain services — Session Coordinator (routes ops to a document actor, owns membership), CRDT Merge Engine (Yjs-style convergence, no central merge lock), Presence Service (ephemeral cursors and selections).
+- Persistence — Op Log (append-only event store, single source of truth), Snapshot Store (derived, rebuildable cache), Presence Bus (Redis pub/sub, no durability).
+
+## Edit data-flow
+An edit is received at the gateway, merged by the CRDT engine, appended to the op log, and then fanned out to presence subscribers. Perceived sync lag is dominated by merge time, not transport.
+
+## Decisions to build to
+- Gateway is stateless — hold no document state at the edge; scale horizontally behind a plain load balancer. (decided)
+- CRDT merge over OT — accept extra per-edit metadata in exchange for a lock-free, convergent server. (approved)
+- Op log is the source of truth — reconstruct any state by replaying the append-only log; treat snapshots as a derived cache only. (decided)
+
+## Open questions — do not silently resolve
+- Presence fan-out over a single Redis channel is unproven at peak concurrency; keep it behind a load test. (open)
+- Per-document in-memory CRDT budget is assumed, not measured; flag if a hot document could exceed one instance's memory.
+
+## Trade-offs to respect
+- Wins: horizontal edge scale, replayable/auditable state, no central merge lock.
+- Costs: CRDT metadata growth (memory and payload), snapshot-compaction lag window.
+- Note: the latency-budget proportions and any throughput or concurrency numbers on the board are invented illustrative shapes, not measured data — do not treat them as real.
+
+## Requested next action
+Build to the confirmed decisions and every annotation above. Preserve the open questions as questions; do not choose a presence-scale or memory-budget default without a user decision. Report what you built and what still needs sign-off.
+            </textarea>
+          </div>
+          <p
+            class="discovery-copy-status"
+            data-copy-status
+            aria-live="polite"
+          ></p>
+          <button
+            class="discovery-button discovery-button-secondary"
+            type="button"
+            data-clear-discovery-state
+          >
+            Clear answers and notes
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

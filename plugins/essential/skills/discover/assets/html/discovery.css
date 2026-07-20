@@ -44,9 +44,11 @@
     --ui-canvas: #faf9f5;
     --ui-surface: #f0eee6;
     --ui-surface-raised: #fff;
-    --ui-glass: rgba(240, 238, 230, 0.76);
-    --ui-glass-strong: rgba(250, 249, 245, 0.86);
-    --ui-glass-highlight: rgba(255, 255, 255, 0.72);
+    /* Flat, opaque surfaces — no translucency or frost. "glass" is a legacy
+       token name kept for the @theme mapping; the value is a solid raised tint. */
+    --ui-glass: #f2f0ea;
+    --ui-glass-strong: #fbfaf6;
+    --ui-glass-highlight: transparent;
     --ui-ink: #141413;
     --ui-muted: #4e4d48;
     --ui-faint: #676660;
@@ -109,9 +111,10 @@
     --ui-focus: oklch(0.77 0.14 52);
     --ui-shadow: 0 18px 48px oklch(0.03 0.01 62 / 0.4);
     --ui-shadow-small: 0 5px 18px oklch(0.03 0.01 62 / 0.32);
-    --ui-glass: oklch(0.3 0.035 255 / 0.5);
-    --ui-glass-strong: oklch(0.34 0.04 255 / 0.68);
-    --ui-glass-highlight: oklch(0.82 0.04 225 / 0.22);
+    /* Flat opaque warm tints (hue 62) replacing the old bluish frosted glass. */
+    --ui-glass: oklch(0.215 0.014 62);
+    --ui-glass-strong: oklch(0.25 0.016 62);
+    --ui-glass-highlight: transparent;
   }
 }
 
@@ -390,7 +393,7 @@
       inset 1px 0 0
         color-mix(in oklch, var(--ui-glass-highlight), transparent 35%),
       var(--ui-shadow-small);
-    backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: none;
   }
 
   .discovery-meta > div {
@@ -508,7 +511,7 @@
       inset 3px 0 0 var(--ui-accent),
       inset 0 1px 0 var(--ui-glass-highlight),
       var(--ui-shadow-small);
-    backdrop-filter: blur(24px) saturate(145%);
+    backdrop-filter: none;
   }
 
   .discovery-callout > * + * {
@@ -577,7 +580,7 @@
       inset 0 1px 0 var(--ui-glass-highlight),
       inset 0 0 0 1px var(--ui-border),
       0 4px 18px transparent;
-    backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: none;
     cursor: pointer;
     transition:
       border-color 160ms ease,
@@ -656,7 +659,7 @@
     box-shadow:
       inset 0 1px 0 var(--ui-glass-highlight),
       inset 0 0 0 1px var(--ui-border-strong);
-    backdrop-filter: blur(20px) saturate(145%);
+    backdrop-filter: none;
     color: var(--ui-ink);
   }
 
@@ -697,11 +700,8 @@
     overflow: hidden;
     border-radius: calc(var(--radius-card) + 0.45rem);
     background: var(--ui-code);
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.18),
-      inset 1px 0 0 oklch(1 0 0 / 0.08),
-      0 28px 70px oklch(0.18 0.08 260 / 0.28);
-    backdrop-filter: blur(32px) saturate(145%);
+    box-shadow: 0 28px 70px oklch(0.18 0.08 260 / 0.28);
+    backdrop-filter: none;
   }
 
   .discovery-prompt-toolbar {
@@ -748,9 +748,7 @@
     color: var(--ui-accent-ink);
     font-size: 0.84rem;
     font-weight: 750;
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.66),
-      0 10px 26px color-mix(in oklch, var(--ui-accent), transparent 58%);
+    box-shadow: 0 10px 26px color-mix(in oklch, var(--ui-accent), transparent 58%);
     transition:
       filter 150ms ease,
       transform 150ms ease,
@@ -771,7 +769,7 @@
     box-shadow:
       inset 0 1px 0 var(--ui-glass-highlight),
       inset 0 0 0 1px var(--ui-border-strong);
-    backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: none;
   }
 
   .discovery-button-secondary:hover {
@@ -793,7 +791,7 @@
       inset 0 1px 0 var(--ui-glass-highlight),
       inset 0 0 0 1px var(--ui-border),
       var(--ui-shadow-small);
-    backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: none;
     color: var(--ui-muted);
     font-family: var(--ui-font-mono);
     font-size: 0.7rem;
@@ -826,7 +824,7 @@
       inset 3px 0 0 var(--ui-accent),
       inset 0 1px 0 var(--ui-glass-highlight),
       var(--ui-shadow-small);
-    backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: none;
     color: var(--ui-accent-ink);
     font-size: 0.9rem;
   }
@@ -855,12 +853,12 @@
       inset 0 1px 0 var(--ui-glass-highlight),
       inset 0 0 0 1px var(--ui-border),
       var(--ui-shadow);
-    backdrop-filter: blur(32px) saturate(160%);
+    backdrop-filter: none;
   }
 
   .discovery-annotation-dialog::backdrop {
     background: oklch(0.15 0.055 260 / 0.38);
-    backdrop-filter: blur(12px) saturate(120%);
+    backdrop-filter: none;
   }
 
   .discovery-annotation-form {
@@ -1025,7 +1023,7 @@ body::before {
   border-bottom: 1px solid var(--ui-border);
   background: var(--ui-glass-strong);
   box-shadow: inset 0 1px 0 var(--ui-glass-highlight);
-  backdrop-filter: blur(22px) saturate(115%);
+  backdrop-filter: none;
 }
 
 .essential-docbrand {
@@ -1041,16 +1039,21 @@ body::before {
   line-height: 1.1;
 }
 
+/* The document's own title is the primary top-left element. */
 .essential-docbrand strong {
-  font-size: 0.88rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
+/* "Essential · Discover" — the subordinate product label under the title. */
 .essential-docbrand small {
-  margin-top: 0.22rem;
+  margin-top: 0.24rem;
   color: var(--ui-faint);
   font-family: var(--ui-font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.05em;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .essential-docmark {
@@ -1062,7 +1065,6 @@ body::before {
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
   font: 800 0.72rem/1 var(--ui-font-mono);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 
 .essential-docbar nav {
@@ -1532,10 +1534,8 @@ h3 {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-control);
   background: var(--ui-glass-strong);
-  box-shadow:
-    0 7px 20px rgba(45, 41, 32, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 7px 20px rgba(45, 41, 32, 0.08);
+  backdrop-filter: none;
 }
 
 .discovery-annotation-trigger:hover,
@@ -1560,9 +1560,7 @@ h3 {
 .discovery-button {
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
-  box-shadow:
-    0 8px 20px rgba(147, 67, 38, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  box-shadow: 0 8px 20px rgba(147, 67, 38, 0.16);
 }
 
 .discovery-button-secondary,
@@ -1570,10 +1568,8 @@ h3 {
   border: 1px solid var(--ui-border);
   background: var(--ui-glass-strong);
   color: var(--ui-muted);
-  box-shadow:
-    0 7px 20px rgba(45, 41, 32, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 7px 20px rgba(45, 41, 32, 0.08);
+  backdrop-filter: none;
 }
 
 .discovery-button-secondary:hover,
@@ -1638,9 +1634,7 @@ h3 {
   padding: 1rem;
   border-radius: 1rem;
   background: var(--ui-code);
-  box-shadow:
-    0 14px 34px rgba(20, 20, 19, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 34px rgba(20, 20, 19, 0.18);
 }
 
 #generated-brief .discovery-prompt-toolbar {
@@ -1672,8 +1666,8 @@ h3 {
   max-height: none;
   padding: 1.05rem;
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: color-mix(in oklch, var(--ui-code), white 5%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--ui-code-ink), transparent 88%);
   font-size: 0.66rem;
   line-height: 1.5;
   overflow: hidden;
@@ -1704,13 +1698,13 @@ h3 {
   border: 1px solid var(--ui-border);
   background: var(--ui-glass-strong);
   box-shadow: var(--ui-shadow);
-  backdrop-filter: blur(24px);
+  backdrop-filter: none;
   transform: translate(-50%, -50%);
 }
 
 .discovery-annotation-dialog::backdrop {
   background: rgba(42, 38, 31, 0.28);
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
 }
 
 /* Pattern-library primitives distributed across the directional examples. */
@@ -2939,20 +2933,33 @@ tr[data-provenance="open"] > :first-child {
   top: var(--pin-y, 50%);
   display: grid;
   place-items: center;
-  width: 2.75rem; /* 44px minimum touch target */
-  height: 2.75rem;
-  min-height: 2.75rem;
+  width: 1.5rem; /* small numbered dot — anchors to the target's corner, doesn't cover it */
+  height: 1.5rem;
+  min-height: 1.5rem;
   padding: 0;
   border: 2px solid var(--ui-surface-raised);
   border-radius: 999px;
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
-  font: 700 0.85rem/1 var(--ui-font-mono);
+  font: 700 0.72rem/1 var(--ui-font-mono);
   box-shadow: var(--ui-shadow-small);
-  translate: -50% -50%; /* centre the pin on its coordinate; composes with :hover scale */
+  translate: -50% -50%; /* centre the dot on its coordinate; composes with :hover scale */
   cursor: pointer;
   pointer-events: auto;
   transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+/* Invisible 44px hit target centred on the 1.5rem dot — preserves the touch/click
+   affordance without the visible marker occluding the annotated content. */
+.discovery-pin::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  translate: -50% -50%;
+  border-radius: 999px;
 }
 
 .discovery-pin:hover,
@@ -2979,49 +2986,88 @@ tr[data-provenance="open"] > :first-child {
 
 .discovery-pin-notes {
   display: grid;
-  gap: 0.55rem;
-  margin: 1.15rem 0 0;
+  gap: 0.7rem;
+  margin: 1.35rem 0 0;
   padding: 0;
   list-style: none;
 }
 
+@media (min-width: 34rem) {
+  /* Two-up below the mockup: callout cards fill the section body without the
+     copy collapsing to one or two words per line. */
+  .discovery-pin-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
 .discovery-pin-note {
-  /* Block flow (not grid) so mixed inline content — a leading <strong>, prose,
-     and an inline provenance pill — stays on one line instead of each run
-     becoming its own grid item. The badge is positioned out of flow. */
+  /* Callout card: an opaque surface (no translucency, to match the de-glassed
+     chrome) carrying the note inline. The numbered badge is an inline chip that
+     leads the prose so mixed inline content — badge, <strong>, prose, and the
+     provenance pill — reads as one block and the full card width stays usable
+     for text even in a narrow gutter rail. */
   position: relative;
-  padding: 0.6rem 0.8rem 0.6rem 3.1rem;
+  padding: 0.72rem 0.85rem 0.78rem;
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-control);
-  background: color-mix(in srgb, var(--ui-surface-raised) 75%, transparent);
+  background: var(--ui-surface-raised);
   color: var(--ui-muted);
-  transition: border-color 150ms ease, background 150ms ease;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  box-shadow: var(--ui-shadow-small);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .discovery-pin-note::before {
-  position: absolute;
-  left: 0.8rem;
-  top: 0.6rem;
-  display: grid;
+  display: inline-grid;
   place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
+  /* Sized to sit within the 1.45 body line box (0.9rem font): a taller inline
+     badge inflates only the first line's leading, so the chip is kept to the
+     text line height and vertically centred on it — the numbered pin DOT on the
+     mockup keeps its own 1.5rem size; this card chip is a separate element. */
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0 0.45rem 0.1rem 0;
+  vertical-align: -0.28rem;
   border-radius: 999px;
   background: var(--ui-accent-soft);
   color: var(--ui-accent-ink);
-  font: 700 0.78rem/1 var(--ui-font-mono);
+  font: 700 0.72rem/1 var(--ui-font-mono);
   content: attr(data-pin-note); /* the numbered badge mirrors its pin */
+}
+
+.discovery-pin-note strong {
+  color: var(--ui-ink);
 }
 
 .discovery-pin-note.is-active {
   border-color: var(--ui-accent);
   background: var(--ui-accent-soft);
   color: var(--ui-ink);
+  box-shadow: var(--ui-shadow);
 }
 
 .discovery-pin-note.is-active::before {
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
+}
+
+/* -- §3b  Annotation callouts ----------------------------------------------
+   Self-illustrating annotations grounded in the DESIGN.html annotated-code
+   idiom (shared number + mutual hover/focus highlight): numbered pins mark
+   WHERE on the mockup, and a matching numbered callout card in the grid below
+   carries the note text inline, so the annotation is visible ON the board and
+   not stranded in a detached list. Pin and card are tied by the number badge
+   and the synchronized `.is-active` highlight (installAnnotationPins in
+   discovery.js) — deliberately no drawn connector: a line to an interior pin
+   cannot reach it without crossing the very mockup it annotates, which would
+   occlude the design. Adjacency + number + mutual highlight carry the tie. */
+.discovery-annotated-specimen {
+  position: relative;
 }
 
 /* -- §4  Multi-board hub ----------------------------------------------------

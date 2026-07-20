@@ -155,10 +155,35 @@ Present in this order:
    is safe to externalize, and the service can render the linked dependencies;
 3. a local browser such as Chrome.
 
-If the cloud viewer cannot load the common assets, skip it. Never externalize
-sensitive discovery content merely to satisfy the preference order. After the
-user's decisions and annotations are captured in the one generated prompt and
-transferred to the ledger, discard the whole session workspace.
+The board sources keep the CDN Tailwind `<script>` plus relative/placeholder
+references to `discovery.css` and `discovery.js`, so a cloud viewer with a
+locked-down CSP (for example a claude.ai Artifact, `default-src 'none'`) cannot
+load them directly. To publish a review surface there, compile a self-contained
+copy with the builder:
+
+```bash
+# self-contained full document (file:// viewing, any host)
+scripts/build_artifact.py <board-source>
+# head-less fragment ready to hand straight to the Artifact tool
+scripts/build_artifact.py <board-source> --artifact
+```
+
+The builder inlines the vendored Tailwind runtime plus `discovery.css` and
+`discovery.js`, and fails the build unless the output is genuinely
+self-contained (no external `src`/`href`, no unfilled placeholder, no raw
+U+FFFD byte — the last being the sentinel the Artifact deploy validator
+rejects). Never hand-edit the compiled output; it is generated and throwaway.
+To change styling or behaviour, edit the small sources under `assets/html/` and
+rebuild. `--artifact` mode omits `<!doctype>/<html>/<head>/<body>` because the
+Artifact tool supplies its own; the fragment restores only the source body's
+`::selection` colours, since `discovery.css` styles the `body` element (and
+`[data-theme="dark"]` on the root) directly.
+
+If the cloud viewer cannot load the common assets and you are not compiling a
+self-contained copy, skip it. Never externalize sensitive discovery content
+merely to satisfy the preference order. After the user's decisions and
+annotations are captured in the one generated prompt and transferred to the
+ledger, discard the whole session workspace and any compiled artifacts.
 
 ## Golden-example confirmation
 
@@ -168,3 +193,12 @@ right-side desktop navigation, bottom narrow navigation, shared button
 language, section annotation dialog, live decision/note lists, and one folded
 generated prompt. The action recipe remains directional: change, remove, or
 add content components whenever that improves the task-specific UX.
+
+Read the golden examples as a ceiling of craft to aspire to, not a floor to
+clear. They deliberately showcase the system at full stretch — a complete
+provenance table, every trade-off group, a richly illustrated specimen — so one
+page can demonstrate the whole catalog at once. A generated page is not obliged
+to match that density: fill only what its own artifact needs, and let the
+showcase set the bar for polish and personality rather than hand you a checklist
+of sections to reproduce. Matching the golden board's delight is the goal;
+copying its inventory is the failure mode.

@@ -31,7 +31,7 @@
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
         <span class="essential-docmark">E_</span>
-        <span><strong>Essential</strong><small>Discover reference</small></span>
+        <span><strong>Brand specimen · Meridian console</strong><small>Essential · Discover</small></span>
       </a>
       <nav aria-label="Document utilities">
         <span>Specimen board</span>
@@ -43,7 +43,6 @@
       <p>Specimen board</p>
       <a class="is-active" href="#overview">Overview</a>
       <a href="#specimen">Brand specimen</a>
-      <a href="#annotations">Pin notes</a>
       <a href="#provenance">Provenance</a>
       <a href="#tradeoffs">Trade-offs</a>
       <a href="#boards">Boards</a>
@@ -102,7 +101,7 @@
           </p>
         </div>
         <aside class="discovery-masthead-aside">
-          <dl class="discovery-meta backdrop-blur-xl">
+          <dl class="discovery-meta">
             <div>
               <dt>Subject</dt>
               <dd>Meridian orders console, first release</dd>
@@ -172,6 +171,39 @@
               --ui-insight: #0e9f6e;
               --ui-insight-soft: #d6f3e6;
               --ui-border: #e2e6f4;
+              /* Brand-shade extensions, scoped to the specimen only. These let
+                 the Meridian palette carry a confident gradient and a warm
+                 at-risk accent without leaking hex into the tool's chrome. */
+              --spec-accent-bright: #6366f1;
+              --spec-accent-deep: #3a32b0;
+              --spec-insight-bright: #34d399;
+              --spec-amber: #e0821b;
+              --spec-amber-soft: #fbead2;
+            }
+
+            /* One confident brand flourish: a soft indigo aurora bleeding down
+               from the top of the console, the way the old boards let a single
+               scene carry the personality. Purely decorative, theme-fixed. */
+            [data-specimen] .spec-aurora {
+              background:
+                radial-gradient(
+                  120% 90% at 12% -20%,
+                  color-mix(in oklch, var(--spec-accent-bright), transparent 78%),
+                  transparent 60%
+                ),
+                radial-gradient(
+                  90% 80% at 100% -30%,
+                  color-mix(in oklch, var(--spec-insight-bright), transparent 84%),
+                  transparent 55%
+                );
+            }
+            /* Brand mark + primary action share one indigo gradient. */
+            [data-specimen] .spec-brand-fill {
+              background-image: linear-gradient(
+                135deg,
+                var(--spec-accent-bright),
+                var(--spec-accent-deep)
+              );
             }
 
             /*
@@ -189,11 +221,21 @@
             }
           </style>
 
-          <div
-            class="discovery-artifact-frame overflow-hidden"
-            data-browser-frame
-            data-presentation-pattern="browser-frame"
-          >
+          <!--
+            Annotation-callout component: numbered pins mark WHERE on the
+            mockup; each matching numbered card in the grid below carries the
+            note inline. Pin and card are tied by the number badge and the
+            synchronized `.is-active` highlight (installAnnotationPins in
+            discovery.js), grounding the DESIGN.html annotated-code idiom. No
+            drawn connector: a line to an interior pin cannot reach it without
+            crossing the mockup it annotates.
+          -->
+          <div class="discovery-annotated-specimen">
+            <div
+              class="discovery-artifact-frame overflow-hidden"
+              data-browser-frame
+              data-presentation-pattern="browser-frame"
+            >
             <div class="discovery-artifact-bar">
               <span class="discovery-artifact-dots" aria-hidden="true"
                 ><i></i><i></i><i></i
@@ -204,24 +246,48 @@
             <div
               data-specimen
               data-presentation-pattern="specimen-scope"
-              class="bg-canvas text-ink"
+              class="relative isolate overflow-hidden bg-canvas text-ink"
             >
+              <div
+                class="spec-aurora pointer-events-none absolute inset-x-0 top-0 -z-10 h-56"
+                aria-hidden="true"
+              ></div>
               <div
                 class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] bg-surface px-5 py-3"
               >
                 <div class="flex items-center gap-6">
                   <strong class="flex items-center gap-2 text-ink"
                     ><span
-                      class="grid h-7 w-7 place-items-center rounded-[var(--radius-control)] bg-accent font-mono text-sm text-accent-soft"
+                      class="spec-brand-fill grid h-7 w-7 place-items-center rounded-[var(--radius-control)] text-white shadow-[0_4px_12px_color-mix(in_oklch,var(--ui-accent),transparent_65%)]"
                       aria-hidden="true"
-                      >◈</span
-                    >Meridian</strong
+                      ><svg
+                        viewBox="0 0 24 24"
+                        width="17"
+                        height="17"
+                        fill="none"
+                      >
+                        <path
+                          d="M4 17 L9 9 L13 13 L20 5"
+                          stroke="#fff"
+                          stroke-width="2.2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <circle cx="20" cy="5" r="2.3" fill="#fff" /></svg
+                    ></span>
+                    <span
+                      class="bg-gradient-to-r from-[var(--spec-accent-deep)] to-[var(--ui-accent)] bg-clip-text text-transparent"
+                      >Meridian</span
+                    ></strong
                   >
                   <nav
                     class="hidden items-center gap-4 text-sm text-muted sm:flex"
                     aria-label="Product navigation"
                   >
-                    <span class="font-semibold text-accent">Orders</span>
+                    <span
+                      class="relative font-semibold text-accent after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-accent after:content-['']"
+                      >Orders</span
+                    >
                     <span>Customers</span>
                     <span>Inventory</span>
                     <span>Payouts</span>
@@ -229,11 +295,31 @@
                 </div>
                 <div class="flex items-center gap-3">
                   <span
-                    class="hidden rounded-full bg-glass px-3 py-1.5 font-mono text-xs text-muted sm:inline"
-                    >⌕ Search orders</span
+                    class="hidden items-center gap-1.5 rounded-full bg-glass px-3 py-1.5 font-mono text-xs text-muted ring-1 ring-[var(--ui-border)] sm:inline-flex"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      width="13"
+                      height="13"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="6.5"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      />
+                      <path
+                        d="M20 20 L16 16"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      /></svg
+                    >Search orders</span
                   >
                   <span
-                    class="grid h-8 w-8 place-items-center rounded-full bg-accent-soft font-mono text-xs text-accent-ink"
+                    class="grid h-8 w-8 place-items-center rounded-full bg-accent-soft font-mono text-xs font-semibold text-accent-ink ring-2 ring-white"
                     aria-hidden="true"
                     >MK</span
                   >
@@ -248,35 +334,185 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <span
-                      class="rounded-[var(--radius-control)] bg-glass px-3 py-2 font-mono text-xs text-muted"
-                      >Last 24h ▾</span
-                    >
+                      class="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] bg-glass px-3 py-2 font-mono text-xs text-muted ring-1 ring-[var(--ui-border)]"
+                      >Last 24h<svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M6 9 L12 15 L18 9"
+                          stroke="currentColor"
+                          stroke-width="2.2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        /></svg
+                    ></span>
                     <button
                       type="button"
-                      class="rounded-[var(--radius-control)] bg-accent px-4 py-2 text-sm font-semibold text-accent-soft shadow-[var(--ui-shadow-small)]"
+                      class="spec-brand-fill inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_color-mix(in_oklch,var(--ui-accent),transparent_65%)]"
                     >
-                      + New order
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="15"
+                        height="15"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12 5 L12 19 M5 12 L19 12"
+                          stroke="#fff"
+                          stroke-width="2.4"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      New order
                     </button>
                   </div>
                 </div>
 
+                <!--
+                  The one illustrative motif: the console's own order-fulfilment
+                  flow, drawn as a branded segmented ribbon in Meridian's real
+                  palette. Purely a distribution shape (no hard counts), so it
+                  reads as a plausible pipeline strip rather than a data card;
+                  the geometry is aria-hidden and the stages carry visible
+                  labels. The proportions are illustrative — covered by the
+                  invented-data note in the trade-offs block below.
+                -->
+                <div class="flex flex-col gap-3">
+                  <div class="flex items-center justify-between">
+                    <p class="discovery-eyebrow">Fulfilment flow · today</p>
+                    <span class="text-xs text-muted">Placed → Shipped</span>
+                  </div>
+                  <div
+                    class="flex h-3 gap-1 overflow-hidden rounded-full bg-glass"
+                    aria-hidden="true"
+                  >
+                    <span
+                      class="spec-brand-fill h-full rounded-full"
+                      style="width: 38%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-accent-bright)]"
+                      style="width: 27%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-insight"
+                      style="width: 23%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-amber)]"
+                      style="width: 12%"
+                    ></span>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted"
+                  >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="spec-brand-fill h-2 w-2 rounded-full"
+                        aria-hidden="true"
+                      ></span
+                      >Placed</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-accent-bright)]"
+                        aria-hidden="true"
+                      ></span
+                      >Paid</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-insight"
+                        aria-hidden="true"
+                      ></span
+                      >Fulfilling</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span
+                      >At risk</span
+                    >
+                  </div>
+                </div>
+
                 <div class="grid gap-3 sm:grid-cols-3">
-                  <article class="rounded-[var(--radius-card)] bg-glass p-4">
+                  <article
+                    class="flex flex-col rounded-[var(--radius-card)] bg-glass p-4 ring-1 ring-[var(--ui-border)]"
+                  >
                     <p class="discovery-eyebrow">Open orders</p>
                     <strong class="mt-1 block text-3xl tabular-nums text-ink"
                       >1,284</strong
                     >
-                    <span class="text-xs text-insight">▲ 6% vs last week</span>
+                    <span
+                      class="inline-flex items-center gap-1 text-xs text-insight"
+                      ><svg
+                        viewBox="0 0 12 12"
+                        width="9"
+                        height="9"
+                        aria-hidden="true"
+                      >
+                        <path d="M6 2 L11 10 L1 10 Z" fill="currentColor" /></svg
+                      >6% vs last week</span
+                    >
+                    <svg
+                      viewBox="0 0 100 30"
+                      height="26"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                      class="mt-3 w-full text-insight"
+                    >
+                      <polyline
+                        points="0,25 16,21 33,23 50,15 67,17 83,8 100,4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
                   </article>
-                  <article class="rounded-[var(--radius-card)] bg-glass p-4">
+                  <article
+                    class="flex flex-col rounded-[var(--radius-card)] bg-glass p-4 ring-1 ring-[var(--ui-border)]"
+                  >
                     <p class="discovery-eyebrow">Awaiting fulfilment</p>
                     <strong class="mt-1 block text-3xl tabular-nums text-ink"
                       >312</strong
                     >
-                    <span class="text-xs text-muted">SLA 4h · 2 at risk</span>
+                    <span
+                      class="inline-flex items-center gap-1 text-xs text-[var(--spec-amber)]"
+                      ><span
+                        class="h-1.5 w-1.5 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span
+                      >SLA 4h · 2 at risk</span
+                    >
+                    <svg
+                      viewBox="0 0 100 30"
+                      height="26"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                      class="mt-3 w-full text-muted"
+                    >
+                      <polyline
+                        points="0,14 16,17 33,12 50,18 67,13 83,16 100,15"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        opacity="0.7"
+                      />
+                    </svg>
                   </article>
                   <article
-                    class="rounded-[var(--radius-card)] bg-accent-soft p-4"
+                    class="relative flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-accent-soft p-4 ring-1 ring-[color-mix(in_oklch,var(--ui-accent),transparent_75%)]"
                   >
                     <p class="discovery-eyebrow text-accent-ink">Revenue today</p>
                     <strong
@@ -286,6 +522,46 @@
                     <span class="text-xs text-accent-ink/80"
                       >Settles nightly</span
                     >
+                    <svg
+                      viewBox="0 0 100 30"
+                      height="26"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                      class="mt-3 w-full text-accent"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="spec-revenue-fill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0"
+                            stop-color="var(--ui-accent)"
+                            stop-opacity="0.35"
+                          />
+                          <stop
+                            offset="1"
+                            stop-color="var(--ui-accent)"
+                            stop-opacity="0"
+                          />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M0,22 20,18 40,20 60,11 80,13 100,5 100,30 0,30 Z"
+                        fill="url(#spec-revenue-fill)"
+                      />
+                      <polyline
+                        points="0,22 20,18 40,20 60,11 80,13 100,5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
                   </article>
                 </div>
 
@@ -307,7 +583,11 @@
                         <td class="hidden px-4 py-3 text-muted sm:table-cell">3</td>
                         <td class="px-4 py-3">
                           <span
-                            class="rounded-full bg-insight-soft px-2.5 py-1 text-xs font-semibold text-insight"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-insight-soft px-2.5 py-1 text-xs font-semibold text-insight"
+                            ><span
+                              class="h-1.5 w-1.5 rounded-full bg-insight"
+                              aria-hidden="true"
+                            ></span
                             >Paid</span
                           >
                         </td>
@@ -319,7 +599,11 @@
                         <td class="hidden px-4 py-3 text-muted sm:table-cell">1</td>
                         <td class="px-4 py-3">
                           <span
-                            class="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-ink"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-ink"
+                            ><span
+                              class="h-1.5 w-1.5 rounded-full bg-accent"
+                              aria-hidden="true"
+                            ></span
                             >Fulfilling</span
                           >
                         </td>
@@ -331,7 +615,11 @@
                         <td class="hidden px-4 py-3 text-muted sm:table-cell">5</td>
                         <td class="px-4 py-3">
                           <span
-                            class="rounded-full bg-[color-mix(in_oklch,var(--ui-accent),transparent_86%)] px-2.5 py-1 text-xs font-semibold text-accent"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklch,var(--ui-accent),transparent_86%)] px-2.5 py-1 text-xs font-semibold text-accent"
+                            ><span
+                              class="h-1.5 w-1.5 rounded-full bg-accent"
+                              aria-hidden="true"
+                            ></span
                             >Review</span
                           >
                         </td>
@@ -351,7 +639,7 @@
               <button
                 class="discovery-pin"
                 data-annotation-pin="1"
-                style="--pin-x:50%;--pin-y:11%"
+                style="--pin-x:20.5%;--pin-y:8.5%"
                 aria-describedby="pin-note-1"
               >
                 1
@@ -359,7 +647,7 @@
               <button
                 class="discovery-pin"
                 data-annotation-pin="2"
-                style="--pin-x:90%;--pin-y:30%"
+                style="--pin-x:95.5%;--pin-y:16.9%"
                 aria-describedby="pin-note-2"
               >
                 2
@@ -367,7 +655,7 @@
               <button
                 class="discovery-pin"
                 data-annotation-pin="3"
-                style="--pin-x:83%;--pin-y:45%"
+                style="--pin-x:96%;--pin-y:40.5%"
                 aria-describedby="pin-note-3"
               >
                 3
@@ -375,65 +663,75 @@
               <button
                 class="discovery-pin"
                 data-annotation-pin="4"
-                style="--pin-x:64%;--pin-y:70%"
+                style="--pin-x:70%;--pin-y:78.6%"
                 aria-describedby="pin-note-4"
               >
                 4
               </button>
             </div>
-          </div>
-        </div>
-      </section>
+            </div>
 
-      <section
-        id="annotations"
-        class="discovery-section"
-        data-discovery-section
-        data-section-id="annotations"
-        data-section-label="Pin notes"
-      >
-        <div class="discovery-section-heading discovery-sticky">
-          <p class="discovery-eyebrow">What each pin defends</p>
-          <h2>Four decisions worth pinning to the specimen.</h2>
-        </div>
-        <div class="discovery-section-body">
-          <ol class="discovery-pin-notes">
-            <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
-              <strong>Navigation stays flat.</strong> Orders, Customers,
-              Inventory, and Payouts sit in one top row; the active section is
-              carried by the brand accent, not a heavier container
-              <span class="discovery-provenance" data-provenance="decided"
-                >decided</span
-              >.
-            </li>
-            <li class="discovery-pin-note" data-pin-note="2" id="pin-note-2">
-              <strong>The primary action is unmissable.</strong> “New order”
-              is the only accent-filled control on the screen and holds a 44px
-              touch target
-              <span class="discovery-provenance" data-provenance="approved"
-                >approved</span
-              >.
-            </li>
-            <li class="discovery-pin-note" data-pin-note="3" id="pin-note-3">
-              <strong>Revenue is the hero metric.</strong> Only the revenue
-              tile uses the accent-soft fill so the eye lands there first
-              <span class="discovery-provenance" data-provenance="inferred"
-                >inferred</span
-              >.
-            </li>
-            <li class="discovery-pin-note" data-pin-note="4" id="pin-note-4">
-              <strong>Status is a four-state colour scale.</strong> Paid,
-              Fulfilling, Review, and a held state (not shown) each map to a
-              fixed token; colour is never the only signal — the label always
-              accompanies it
-              <span class="discovery-provenance" data-provenance="open"
-                >open question</span
-              >.
-            </li>
-          </ol>
+            <!--
+              Callout cards sit in a numbered grid directly below the mockup.
+              Card order matches pin order (1-4); each card leads with its
+              number badge and carries the note text plus a provenance pill.
+              Focus or hover a pin or a card to highlight the pair.
+            -->
+            <ol class="discovery-pin-notes">
+              <li
+                class="discovery-pin-note"
+                data-pin-note="1"
+                id="pin-note-1"
+              >
+                <strong>Navigation stays flat.</strong> Orders, Customers,
+                Inventory, and Payouts sit in one top row; the active section is
+                carried by the brand accent, not a heavier container
+                <span class="discovery-provenance" data-provenance="decided"
+                  >decided</span
+                >.
+              </li>
+              <li
+                class="discovery-pin-note"
+                data-pin-note="2"
+                id="pin-note-2"
+              >
+                <strong>The primary action is unmissable.</strong> “New order”
+                is the only accent-filled control on the screen and holds a 44px
+                touch target
+                <span class="discovery-provenance" data-provenance="approved"
+                  >approved</span
+                >.
+              </li>
+              <li
+                class="discovery-pin-note"
+                data-pin-note="3"
+                id="pin-note-3"
+              >
+                <strong>Revenue is the hero metric.</strong> Only the revenue
+                tile uses the accent-soft fill so the eye lands there first
+                <span class="discovery-provenance" data-provenance="inferred"
+                  >inferred</span
+                >.
+              </li>
+              <li
+                class="discovery-pin-note"
+                data-pin-note="4"
+                id="pin-note-4"
+              >
+                <strong>Status is a four-state colour scale.</strong> Paid,
+                Fulfilling, Review, and a held state (not shown) each map to a
+                fixed token; colour is never the only signal — the label always
+                accompanies it
+                <span class="discovery-provenance" data-provenance="open"
+                  >open question</span
+                >.
+              </li>
+            </ol>
+
           <p class="discovery-muted">
-            Focus or hover a pin to highlight its note, and vice versa. The
-            notes remain fully legible with no scripting.
+            Each numbered pin marks where the decision shows up on the mockup;
+            its matching numbered card below carries the note. Focus or hover a
+            pin or a card to highlight the pair.
           </p>
         </div>
       </section>
@@ -619,8 +917,9 @@
               <h4>Data notes</h4>
               <p data-fabricated data-presentation-pattern="invented-data-flag">
                 The order rows, the
-                <strong>1,284</strong> open orders, and the
-                <strong>$48,190</strong> revenue figure are
+                <strong>1,284</strong> open orders, the
+                <strong>$48,190</strong> revenue figure, the fulfilment-flow
+                ribbon proportions, and the stat-tile sparkline trends are
                 <span class="discovery-invented-tag" data-invented-tag
                   >invented</span
                 >
@@ -683,7 +982,7 @@
               fixed.
             </legend>
             <div class="discovery-options">
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="specimen-readiness"
@@ -700,7 +999,7 @@
                 </span>
                 <span class="discovery-badge">Recommended</span>
               </label>
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="specimen-readiness"
@@ -714,7 +1013,7 @@
                   >
                 </span>
               </label>
-              <label class="discovery-option group backdrop-blur-lg">
+              <label class="discovery-option group">
                 <input
                   type="radio"
                   name="specimen-readiness"
@@ -766,7 +1065,7 @@
             you change an answer or save an annotation in any section.
           </p>
           <div
-            class="discovery-prompt-card backdrop-blur-2xl ring-1 ring-[var(--ui-border)]"
+            class="discovery-prompt-card ring-1 ring-[var(--ui-border)]"
           >
             <div class="discovery-prompt-toolbar">
               <span>Generated from this board</span>

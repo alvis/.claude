@@ -384,46 +384,72 @@ anywhere — tables, stat strips, or a specimen. When any `data-fabricated`
 element exists, the runtime appends a one-line note to the prompt that
 illustrative data is invented.
 
-## Author annotation pins and browser-frame chrome
+## Author annotation callouts (pins + browser-frame chrome)
 
 To teach a specimen in place, number author pins over a browser-framed mockup
-and pair each with a note. These are distinct from the user's own Add-note
-mechanism (`data-annotation-for`, `data-annotation-summary`,
-`data-annotation-trigger`, `data-annotation-dialog`, `data-annotation-input`);
-both coexist, and author pins must not reuse those names. The pin layer is a
-sibling overlay outside `[data-specimen]`, so the specimen's brand re-point does
-not recolour the tool's teaching pins — the layer stays on house `--ui-*`:
+and pair each with a **callout card** that carries the note text inline, so the
+annotation is legible ON the board rather than reduced to a bare number. These
+are distinct from the user's own Add-note mechanism (`data-annotation-for`,
+`data-annotation-summary`, `data-annotation-trigger`, `data-annotation-dialog`,
+`data-annotation-input`); both coexist, and author pins must not reuse those
+names. The pin layer is a sibling overlay outside `[data-specimen]`, so the
+specimen's brand re-point does not recolour the tool's teaching pins — the layer
+stays on house `--ui-*`:
 
 ```html
-<div class="discovery-artifact-frame" data-browser-frame>
-  <div class="discovery-artifact-bar">
-    <span class="discovery-artifact-dots" aria-hidden="true"></span>
-    <span class="discovery-artifact-url">app.example.com/orders</span>
+<div class="discovery-annotated-specimen">
+  <div class="discovery-artifact-frame" data-browser-frame>
+    <div class="discovery-artifact-bar">
+      <span class="discovery-artifact-dots" aria-hidden="true"></span>
+      <span class="discovery-artifact-url">app.example.com/orders</span>
+    </div>
+    <div data-specimen>…the mockup…</div>
+    <div class="discovery-pin-layer" data-annotation-pins>
+      <button
+        class="discovery-pin"
+        data-annotation-pin="1"
+        style="--pin-x:34%;--pin-y:52%"
+        aria-describedby="pin-note-1"
+      >
+        1
+      </button>
+    </div>
   </div>
-  <div data-specimen>…the mockup…</div>
-  <div class="discovery-pin-layer" data-annotation-pins>
-    <button
-      class="discovery-pin"
-      data-annotation-pin="1"
-      style="--pin-x:34%;--pin-y:52%"
-      aria-describedby="pin-note-1"
-    >
-      1
-    </button>
-  </div>
+  <!-- Callout cards: OUTSIDE the frame, so the pin layer (inset:0) maps to the
+       frame and pins never drift onto the cards. -->
+  <ol class="discovery-pin-notes">
+    <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
+      <strong>Inline triage.</strong> Work resolves without leaving the row
+      <span class="discovery-provenance" data-provenance="decided">decided</span>.
+    </li>
+  </ol>
 </div>
-<ol class="discovery-pin-notes">
-  <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
-    Inline triage resolves work without leaving the row.
-  </li>
-</ol>
 ```
 
 Pins are numbered `1..n`, absolutely positioned by the `--pin-x`/`--pin-y`
 percentage custom properties, and are real `<button>` elements with a minimum
-44px touch target. Note index `N` pairs with pin `N`. The runtime highlights the
-paired note on focus or hover and back via `classList`; this author-pin
-behaviour is separate from the user Add-note dialog and must not merge with it.
+44px touch target. Each callout card leads with an inline numbered badge (the
+`::before` on `.discovery-pin-note`, drawn from `data-pin-note`), so card `N`
+reads as the same annotation as pin `N`. Cards lay out in a two-up grid directly
+below the mockup (`.discovery-pin-notes` goes two-column at ≥34rem); they carry
+the note prose and a provenance pill, matching the honesty conventions elsewhere.
+
+**No drawn leader line — by decision.** The pin↔card tie is the shared number
+plus a synchronized highlight: on focus or hover of either, the runtime toggles
+`.is-active` on the whole pair via `classList` (the DESIGN.html annotated-code
+idiom). A drawn connector is deliberately avoided because a line to an *interior*
+pin cannot reach it without crossing the very mockup it annotates, which would
+occlude the design; adjacency + number + mutual highlight carry the relationship
+without that cost. This is the intended, ruled design — not a stopgap for a line
+that could not be drawn — so do not "restore" leader lines later: for any pin set
+with interior pins the line would occlude, and the highlight tie is preferred.
+This author-pin behaviour is separate from the user Add-note dialog and must not
+merge with it.
+
+**Invariants.** Keep `data-annotation-pin` count equal to `data-pin-note` count
+(one card per pin), keep the `<ol class="discovery-pin-notes">` a sibling of —
+not a child of — `[data-browser-frame]`, and reference each card from its pin's
+`aria-describedby`.
 
 ## Multi-board hub
 
@@ -497,9 +523,11 @@ composition legitimately demonstrates several patterns. The allowed IDs and
 their action owners are listed in [coverage](coverage.md).
 
 Markers are test evidence, not styling hooks. Never mark an absent component or
-force every component into a generated user artifact. The complete validator
-checks suite coverage while each executor remains free to choose the smallest
-useful task-specific composition.
+force every component into a generated user artifact. The checked-in boards show
+every marker at once because their job is exhaustive demonstration; a generated
+page reads them as a showcase of what is possible, not a checklist to fill. The
+complete validator checks suite coverage while each executor remains free to
+choose the smallest useful task-specific composition.
 
 ## Action-structure hooks
 

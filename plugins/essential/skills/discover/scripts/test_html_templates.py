@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import json
+import re
 import subprocess
 import sys
 from html.parser import HTMLParser
@@ -17,6 +18,8 @@ EXAMPLES_ROOT = DISCOVER_ROOT / "examples" / "html"
 TEMPLATE = DISCOVER_ROOT / "templates" / "html" / "page.html"
 CSS = DISCOVER_ROOT / "assets" / "html" / "discovery.css"
 JAVASCRIPT = DISCOVER_ROOT / "assets" / "html" / "discovery.js"
+TAILWIND_VENDOR = DISCOVER_ROOT / "assets" / "html" / "vendor" / "tailwind-browser-4.3.3.js"
+BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
 COMPONENTS_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "components.md"
@@ -36,7 +39,7 @@ REPRESENTATIVE_ACTION = "domain-explainer"
 # Additional convention-demonstration boards (provenance/trade-offs/pins/hub best
 # bits). Iterated + validated + pattern-scanned at --stage complete only, separate
 # from the required-8 ACTIONS/REPRESENTATIVE_ACTION contract, which stays unchanged.
-CONVENTION_EXAMPLES = ("specimen-board", "board-hub")
+CONVENTION_EXAMPLES = ("specimen-board", "board-hub", "architecture-board")
 FORBIDDEN_HTML_TEXT = (
     "thariqs.github.io",
     "html-effectiveness",
@@ -127,6 +130,20 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-board-hub", 1, None),
         ("data-board-index", 1, None),
         ("data-board-link", 2, None),
+    ),
+    # Architecture/diagram specimen board: a layered blueprint rather than a
+    # browser-frame mockup, so it demonstrates the pins + provenance + honest
+    # trade-offs conventions over a code-architecture subject WITHOUT requiring
+    # data-browser-frame. Structural hooks prove the layered decomposition IA.
+    "architecture-board": (
+        ("data-arch-layer", 3, None),
+        ("data-arch-module", 5, None),
+        ("data-tradeoffs-honestly", 1, None),
+        ("data-fabricated", 1, None),
+        ("data-invented-tag", 1, None),
+        ("data-annotation-pin", 4, None),
+        ("data-specimen", 1, None),
+        ("data-provenance", 2, None),
     ),
 }
 
@@ -363,6 +380,21 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                     f"({pin_count}) must match data-pin-note count "
                     f"({pin_note_count})"
                 )
+        if action == "architecture-board":
+            for group in ("wins", "costs", "fails-when"):
+                if parser.attribute_value_counts[("data-tradeoff-group", group)] < 1:
+                    errors.append(
+                        f"{path}: architecture-board trade-offs block is missing "
+                        f"the required data-tradeoff-group={group!r} group"
+                    )
+            pin_count = parser.attribute_counts["data-annotation-pin"]
+            pin_note_count = parser.attribute_counts["data-pin-note"]
+            if pin_count != pin_note_count:
+                errors.append(
+                    f"{path}: architecture-board data-annotation-pin count "
+                    f"({pin_count}) must match data-pin-note count "
+                    f"({pin_note_count})"
+                )
         if action == "ranked-options":
             if text.count("discovery-review-frame-code") != 1:
                 errors.append(
@@ -558,6 +590,71 @@ def validate_direction_reference_contract() -> list[str]:
     return errors
 
 
+def validate_artifact_builder() -> list[str]:
+    """Verify build_artifact.py emits genuinely self-contained output.
+
+    Guards the publish pipeline: a compiled board must inline the Tailwind
+    runtime plus discovery.css/js with zero external hosts, zero unfilled
+    template placeholders, and zero raw U+FFFD byte (the sentinel the Artifact
+    deploy validator rejects). Both output modes are checked; the compiled blob
+    is never read into the test's own reporting — only asserted against.
+    """
+
+    errors: list[str] = []
+    for required in (BUILDER, TAILWIND_VENDOR):
+        if not required.is_file():
+            errors.append(f"{required}: required builder artifact is missing")
+    if errors:
+        return errors
+
+    # Vendored runtime must itself carry no raw U+FFFD (patched at vendor time).
+    if TAILWIND_VENDOR.read_bytes().count("\ufffd".encode("utf-8")):
+        errors.append(f"{TAILWIND_VENDOR}: contains raw U+FFFD (deploy would 400)")
+
+    sys.path.insert(0, str(BUILDER.parent))
+    sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
+    try:
+        import build_artifact  # noqa: PLC0415 — local script import by design
+    except Exception as error:  # pragma: no cover - import failure is the finding
+        return errors + [f"build_artifact import failed: {error!r}"]
+
+    source = EXAMPLES_ROOT / "specimen-board.html"
+    if not source.is_file():
+        return errors + [f"{source}: builder test source is missing"]
+
+    # Independently defined (not imported from the builder) so a loosened builder
+    # regex cannot blind this gate: Discover placeholders are {{UPPER_SNAKE}}.
+    placeholder = re.compile(r"\{\{[A-Z_][A-Z0-9_]*\}\}")
+    for mode, artifact in (("full", False), ("fragment", True)):
+        try:
+            output = build_artifact.build(source, artifact=artifact)
+        except Exception as error:  # build's own validation raises on failure
+            errors.append(f"builder {mode} mode failed: {error}")
+            continue
+        raw_bytes = output.encode("utf-8")
+        if b'src="http' in raw_bytes:
+            errors.append(f"builder {mode}: external src=http host present")
+        if b'href="http' in raw_bytes:
+            errors.append(f"builder {mode}: external href=http host present")
+        if raw_bytes.count("\ufffd".encode("utf-8")):
+            errors.append(f"builder {mode}: raw U+FFFD present (deploy would 400)")
+        if placeholder.search(output):
+            errors.append(f"builder {mode}: unfilled template placeholder present")
+        if "@tailwindcss/browser" not in output:
+            errors.append(f"builder {mode}: Tailwind runtime not inlined")
+        if "--ui-canvas" not in output:
+            errors.append(f"builder {mode}: discovery.css not inlined")
+        if "[data-discovery-prompt-host]" not in output:
+            errors.append(f"builder {mode}: discovery.js not inlined")
+        if "data-discovery-prompt-host" not in output:
+            errors.append(f"builder {mode}: board markup missing")
+        if artifact:
+            lowered = output.lower()
+            if "<!doctype" in lowered or "<html" in lowered or "<body" in lowered:
+                errors.append("builder fragment: must omit doctype/html/body")
+    return errors
+
+
 def run(stage: str) -> dict[str, object]:
     errors: list[str] = []
     expected_actions = (
@@ -601,6 +698,7 @@ def run(stage: str) -> dict[str, object]:
 
     if stage == "complete":
         errors.extend(validate_direction_reference_contract())
+        errors.extend(validate_artifact_builder())
         missing_patterns = set(PRESENTATION_PATTERNS).difference(covered_patterns)
         if missing_patterns:
             errors.append(
