@@ -9,11 +9,11 @@
 
 ## When to reach for this
 
-An Agent Team earns its overhead when several roles must retain context through an extended back-and-forth — a
-design review, incident bridge, or multi-role build where `service-implementation-engineer`,
-`testing-evangelist`, and `code-quality-critic` need to see one another's reasoning rather than only final
-artifacts. Independent dispatch-and-score slices belong to parallel `Agent` calls; high-volume scored iteration
-belongs to a Dynamic Workflow.
+An Agent Team earns its overhead when several roles need persistent, high-signal coordination and warm context —
+a design review, incident bridge, or multi-role build where `service-implementation-engineer`,
+`testing-evangelist`, and `code-quality-critic` will exchange decisions over time. Reasoning and evidence belong
+in durable artifacts, not repeated messages. Independent dispatch-and-score slices belong to parallel `Agent`
+calls; high-volume scored iteration belongs to a Dynamic Workflow.
 
 ## Identity at runtime
 
@@ -65,19 +65,23 @@ A teammate loads its base context once and stays warm across tasks. Separate spa
 
 State one topology when forming the team:
 
-- **Hierarchy** — teammates message their domain lead; domain leads message the Project Manager. This is the
-  default for managed delivery.
+- **Hierarchy** — authority and control updates flow through the domain lead to the Project Manager. Producers
+  and reviewers exchange task data directly by known `agent_id`; the lead receives compact verdicts rather than
+  relaying evidence. This is the default for managed delivery.
 - **Star** — every teammate messages the Project Manager's `agent_id`; use for a small team with no domain lead.
 - **Chain** — one known `agent_id` hands directly to another known `agent_id`; use only for stable hand-offs.
 - **Mesh** — known peers message one another directly for a bounded exchange. Use sparingly.
 
-The topology describes allowed paths, but the actual `SendMessage` target is always an `agent_id`.
+The topology describes decision ownership, but the actual `SendMessage` target is always an `agent_id`. Do not
+turn the hierarchy into a payload relay.
 
 ## Hand-offs
 
-A hand-off transfers the complete unit of work — artifact paths, standards, acceptance criteria, constraints,
-and why it matters. Document planned edges by role for readability, then bind each role to its returned
-`agent_id` before the first message:
+A hand-off sends one bounded mission capsule — objective, acceptance criteria, constraints, why it matters, and
+absolute paths to standards and durable artifacts. It never pastes the artifacts into the message. After the
+first hand-off, that edge carries deltas only. Every `Agent`, `Task`, and `SendMessage` body stays at or below
+4,096 characters. Document planned edges by role for readability, then bind each role to its returned `agent_id`
+before the first message:
 
 ```text
 service-implementation-engineer -> code-quality-critic: implementation complete, before commit
@@ -98,8 +102,9 @@ activates proven edges; it does not invent ownership.
 2. Confirm the task needs persistent multi-role exchange rather than independent slices.
 3. Select the advisers and delivery teammates each domain lead is likely to need.
 4. Assign each teammate a collision-free `<short-name>-<role>-<task>` name, spawn it, and record its `agent_id`.
-5. Give every lead its domain goal and teammate IDs. The lead gathers advice, decomposes the work, decides the
-   domain approach, assigns and monitors its pieces, and reports reconciled delivery.
+5. Give every lead its domain goal, teammate IDs, and durable context paths in one bounded dispatch. The lead
+   gathers advice, decomposes the work, decides the domain approach, assigns and monitors its pieces, and reports
+   `ok` or `blocked` plus at most two lines; supporting evidence remains path-addressed.
 6. Broker requests for another continuing collaborator by reusing a matching ID or spawning a named teammate.
 7. Close only when every role converges, every lead reports its domain delivered, and the Project Manager judges
    the user contract complete.

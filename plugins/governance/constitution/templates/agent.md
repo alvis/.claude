@@ -140,8 +140,9 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
 
 <!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets.
      Reference every known agent by its role-only definition name and main task, followed by the reason for
-     collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, handoff,
-     workflow proxy, spawn-budget, and independent-review policy comes from Essential's CLAUDE.md; do not repeat
-     it here. Do not narrate who spawns this agent or restate its tool list. -->
+     collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, the
+     4,096-character ceiling, spawn-once/delta-after hand-offs, artifact references, workflow proxy,
+     spawn-budget, and independent-review policy come from Essential's CLAUDE.md; do not repeat them here. Do
+     not narrate who spawns this agent or restate its tool list. -->
 
 - `[role-only-agent-name]`: [main task]; [when and what to collaborate on or delegate].
