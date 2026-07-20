@@ -356,6 +356,75 @@
     activeSectionId = null;
   }
 
+  function collapseText(value) {
+    return String(value ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Read the surrounding claim while dropping the provenance pill's own label,
+  // so the prompt records the claim text, not the status word twice.
+  function readableClaimText(container) {
+    if (!container) return "";
+    const clone = container.cloneNode(true);
+    clone
+      .querySelectorAll(".discovery-provenance[data-provenance]")
+      .forEach((pill) => pill.remove());
+    return collapseText(clone.textContent);
+  }
+
+  function collectProvenanceClaims() {
+    const claims = [];
+    root
+      .querySelectorAll(".discovery-provenance[data-provenance]")
+      .forEach((pill) => {
+        const status = collapseText(pill.dataset.provenance);
+        if (!status) return;
+        const container =
+          pill.closest("tr") ||
+          pill.closest("li, p, dd, dt, td, th, figure, blockquote, div") ||
+          pill.parentElement ||
+          pill;
+        claims.push({ status, claim: readableClaimText(container) });
+      });
+    root.querySelectorAll("tr[data-provenance]").forEach((row) => {
+      // A row that carries a pill is already collected via that pill above.
+      if (row.querySelector(".discovery-provenance[data-provenance]")) return;
+      const status = collapseText(row.dataset.provenance);
+      if (!status) return;
+      claims.push({ status, claim: readableClaimText(row) });
+    });
+    return claims;
+  }
+
+  function formatTradeoffGroupKey(key) {
+    const cleaned = collapseText((key || "").replace(/[-_]+/g, " "));
+    if (!cleaned) return "Trade-off";
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  function collectTradeOffs() {
+    const block = root.querySelector(
+      ".discovery-tradeoffs[data-tradeoffs-honestly]",
+    );
+    if (!block) return null;
+    const groupLines = [];
+    block.querySelectorAll("[data-tradeoff-group]").forEach((group) => {
+      const label =
+        collapseText(
+          group.querySelector("h2, h3, h4, h5, h6")?.textContent || "",
+        ) || formatTradeoffGroupKey(group.dataset.tradeoffGroup);
+      const items = [...group.querySelectorAll("li")]
+        .map((item) => collapseText(item.textContent))
+        .filter(Boolean);
+      if (items.length) groupLines.push(`- **${label}:** ${items.join("; ")}`);
+    });
+    return {
+      lines: groupLines,
+      hasFabricated: Boolean(root.querySelector("[data-fabricated]")),
+    };
+  }
+
   function buildPrompt() {
     const goal = root.dataset.discoveryGoal || "Review this discovery result";
     const action = root.dataset.discoveryAction || "discovery review";
@@ -417,6 +486,33 @@
       "## Review context",
       `This feedback was collected from the **${action}** discovery page. Treat explicit user responses and annotations as authoritative. Do not treat an untouched suggestion or optional follow-up as approval or a request.`,
     ];
+
+    const boardId = collapseText(root.dataset.boardId || "");
+    if (boardId) lines.push("", `Board: ${boardId}`);
+
+    const provenanceClaims = collectProvenanceClaims();
+    if (provenanceClaims.length) {
+      lines.push("", "## Provenance of claims");
+      provenanceClaims.forEach(({ status, claim }) => {
+        lines.push(
+          claim
+            ? `- ${claim} _(provenance: ${status})_`
+            : `- _(provenance: ${status})_`,
+        );
+      });
+    }
+
+    const tradeOffs = collectTradeOffs();
+    if (tradeOffs && (tradeOffs.lines.length || tradeOffs.hasFabricated)) {
+      lines.push("", "## Trade-offs surfaced");
+      if (tradeOffs.lines.length) lines.push(...tradeOffs.lines);
+      if (tradeOffs.hasFabricated) {
+        lines.push(
+          '- Note: some illustrative data on this page is invented (marked "invented"); treat it as filler, not real data.',
+        );
+      }
+    }
+
     if (hasDecisionQuestions) {
       lines.push("", "## Confirmed decisions");
       lines.push(
@@ -722,6 +818,96 @@
     renderPrompt();
   }
 
+  // AUTHOR-TIME provenance pills are static; give each an accessible name so a
+  // screen reader announces the status without disturbing the visible label.
+  function announceProvenance() {
+    const srOnlyStyle =
+      "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;";
+    root
+      .querySelectorAll(".discovery-provenance[data-provenance]")
+      .forEach((pill) => {
+        if (pill.hasAttribute("aria-label")) return;
+        if (pill.querySelector("[data-provenance-sr]")) return;
+        const status = collapseText(pill.dataset.provenance);
+        if (!status) return;
+        const prefix = makeElement("span", "", "provenance: ");
+        prefix.dataset.provenanceSr = "";
+        prefix.style.cssText = srOnlyStyle;
+        pill.prepend(prefix);
+      });
+    // Pure row-level pills have no inner element to host the prefix text, so
+    // name the row itself instead.
+    root.querySelectorAll("tr[data-provenance]").forEach((row) => {
+      if (row.hasAttribute("aria-label")) return;
+      if (row.querySelector(".discovery-provenance[data-provenance]")) return;
+      const status = collapseText(row.dataset.provenance);
+      if (!status) return;
+      row.setAttribute("aria-label", `provenance: ${status}`);
+    });
+  }
+
+  // AUTHOR annotation pins are distinct from the user "Add note" dialog. Focus or
+  // hover on a pin highlights its paired note and vice versa. Highlight is a
+  // static class toggle (no JS motion), so it is reduced-motion-safe by
+  // construction; any transition on `.is-active` is the stylesheet's to gate.
+  function installAnnotationPins() {
+    const pins = [...root.querySelectorAll(".discovery-pin[data-annotation-pin]")];
+    const notes = [
+      ...root.querySelectorAll(".discovery-pin-note[data-pin-note]"),
+    ];
+    if (pins.length === 0 && notes.length === 0) return;
+
+    const pinsByIndex = new Map();
+    const notesByIndex = new Map();
+    const register = (map, key, element) => {
+      if (!key) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(element);
+    };
+    pins.forEach((pin) => register(pinsByIndex, pin.dataset.annotationPin, pin));
+    notes.forEach((note) => register(notesByIndex, note.dataset.pinNote, note));
+
+    const activeCounts = new Map();
+    const setPairActive = (index, active) => {
+      [
+        ...(pinsByIndex.get(index) || []),
+        ...(notesByIndex.get(index) || []),
+      ].forEach((member) => member.classList.toggle("is-active", active));
+    };
+    // Reference-count engage/disengage so overlapping hover + focus on the same
+    // pair does not drop the highlight early.
+    const engage = (index) => {
+      const next = (activeCounts.get(index) || 0) + 1;
+      activeCounts.set(index, next);
+      if (next === 1) setPairActive(index, true);
+    };
+    const disengage = (index) => {
+      const next = Math.max(0, (activeCounts.get(index) || 0) - 1);
+      activeCounts.set(index, next);
+      if (next === 0) setPairActive(index, false);
+    };
+    const wire = (element, index) => {
+      if (!index) return;
+      element.addEventListener("mouseenter", () => engage(index));
+      element.addEventListener("mouseleave", () => disengage(index));
+      element.addEventListener("focus", () => engage(index));
+      element.addEventListener("blur", () => disengage(index));
+    };
+
+    pins.forEach((pin) => {
+      // Pins are authored as <button> (natively focusable). Guard the case where
+      // a pin is authored as a plain element so keyboard focus wiring still fires;
+      // a native button already reports tabIndex 0, so this leaves it untouched.
+      if (!pin.hasAttribute("tabindex") && pin.tabIndex < 0) pin.tabIndex = 0;
+      wire(pin, pin.dataset.annotationPin);
+    });
+    notes.forEach((note) => {
+      // Notes are <li>; make them focusable so focus wiring is bidirectional.
+      if (!note.hasAttribute("tabindex")) note.tabIndex = 0;
+      wire(note, note.dataset.pinNote);
+    });
+  }
+
   questions.forEach((question) => {
     hydrateQuestion(question);
     notifyQuestionControls(question);
@@ -729,6 +915,8 @@
     question.addEventListener("change", () => updateQuestion(question));
   });
   sections.forEach(installSectionAnnotation);
+  announceProvenance();
+  installAnnotationPins();
   copyPromptButton.addEventListener("click", copyPrompt);
   clearButton?.addEventListener("click", clearState);
   installPresentationShell();

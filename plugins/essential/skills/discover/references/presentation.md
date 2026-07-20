@@ -78,6 +78,18 @@ an action page. Compose page-specific layout and states with utilities, then use
 the shared component classes for behavior-heavy patterns that would be noisy or
 fragile to repeat.
 
+The specimen exception. House `--ui-*` stays the default for page chrome, but
+an embedded specimen or mockup should read as the subject product, not the tool.
+Show its real palette in a scoped `[data-specimen]` container that re-points the
+`--ui-*` tokens locally — the one place a hex literal may appear in an action
+page — or expose parallel `--spec-*` tokens when the specimen must show house
+and brand side by side. Re-point only the tokens the specimen needs; its
+interior reuses the house component classes and renders brand-tinted. A
+page-level re-tint outside `[data-specimen]` is allowed only through token
+indirection (`--ui-accent: var(--ui-insight)`), never a hex literal. The tool's
+annotation pin layer and browser-frame chrome stay on house tokens, outside the
+specimen re-point, because they are the tool's layer rather than the product's.
+
 These pages are temporary development artifacts, so the no-build Tailwind
 browser runtime is appropriate. The shared stylesheet must still provide a
 readable base when that runtime cannot load. Default to the light, daylight
@@ -92,23 +104,49 @@ hierarchy rather than decorating every region; prose sections can remain open
 on the canvas. Preserve readable fallback colors whenever `backdrop-filter` is
 unavailable.
 
+## Guided conventions and extensibility
+
+Four optional conventions raise the honesty and depth of a review surface when
+the content warrants them. Reach for [components](presentation/components.md)
+for the exact hooks:
+
+- provenance pills wire each claim's status from the evidence ledger, so the
+  reader sees what is observed, inferred, assumed, decided, approved, or open;
+- a "Trade-offs, honestly" block states the wins, costs, and failure modes of a
+  direction, with an invented-data flag for illustrative filler;
+- author annotation pins over a browser-frame specimen teach a mockup in place,
+  distinct from the user's own Add-note mechanism;
+- a multi-board hub links sibling boards by session-relative href.
+
+The foundation is fixed: the page shell, annotatable sections, the single-prompt
+contract, the `--ui-*`/`@theme inline` theme, and these provenance, trade-off,
+pin, and board conventions. On top of that fixed floor an executor may propose
+new structural cards, provided each honors the theme, interaction (annotatable
+plus one live prompt), provenance, and accessibility conventions. Guided, not
+rigid.
+
 ## Temporary artifact lifecycle
 
 Always save generated, user-specific HTML before presenting it. Use the
-platform temp root through Python's `tempfile.mkdtemp`, with sanitized slugs and
-a unique suffix:
+platform temp root through Python's `tempfile.mkdtemp` to open one session
+workspace, with sanitized slugs and a unique suffix:
 
 ```python
-preview_dir = tempfile.mkdtemp(
-    prefix=f"essential-discover-{repo_slug}-{action_slug}-"
+workspace_dir = tempfile.mkdtemp(
+    prefix=f"essential-discover-{repo_slug}-session-"
 )
 ```
 
-This resolves through the operating system (`$TMPDIR` on macOS, the configured
-temp root such as `/tmp` on Linux, and `%TEMP%` on Windows) without a shared
-filename collision. Keep `page.html` and optional captures inside that run
-directory. Link the page to the canonical plugin CSS and JavaScript; temporary
-pages are intentionally nonportable and may break after the plugin moves.
+One workspace holds every board HTML file produced during the session, so
+boards can cross-link with session-relative hrefs (`./sibling.html`). This
+resolves through the operating system (`$TMPDIR` on macOS, the configured temp
+root such as `/tmp` on Linux, and `%TEMP%` on Windows) without a shared
+filename collision. Write each board's HTML and optional captures inside that
+workspace directory, and link boards to one another with relative hrefs. Link
+every page to the canonical plugin CSS and JavaScript; temporary pages are
+intentionally nonportable and may break after the plugin moves. Artifacts stay
+ephemeral — durable, bookmarkable, and cross-linked only within the session,
+never a permanent deliverable.
 
 Present in this order:
 
@@ -120,7 +158,7 @@ Present in this order:
 If the cloud viewer cannot load the common assets, skip it. Never externalize
 sensitive discovery content merely to satisfy the preference order. After the
 user's decisions and annotations are captured in the one generated prompt and
-transferred to the ledger, discard the temporary directory.
+transferred to the ledger, discard the whole session workspace.
 
 ## Golden-example confirmation
 

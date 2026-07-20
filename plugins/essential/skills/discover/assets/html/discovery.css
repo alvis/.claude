@@ -61,6 +61,12 @@
     --ui-insight-ink: #455430;
     --ui-positive: #55663f;
     --ui-positive-soft: #edf1e6;
+    /* Provenance palette — the only bespoke hue the ledger needs is "inferred"
+       amber; observed reuses --ui-insight, decided/approved reuse --ui-accent,
+       assumed/open reuse the neutral --ui-muted/--ui-faint/--ui-border ramp. */
+    --ui-provenance-amber: #a8640f;
+    --ui-provenance-amber-soft: #f8ead0;
+    --ui-provenance-amber-ink: #6d4110;
     --ui-code: #1c1c1a;
     --ui-code-ink: #f2efe6;
     --ui-focus: #b85c3e;
@@ -95,6 +101,9 @@
     --ui-insight-ink: oklch(0.9 0.03 215);
     --ui-positive: oklch(0.7 0.1 146);
     --ui-positive-soft: oklch(0.27 0.045 145);
+    --ui-provenance-amber: oklch(0.79 0.11 74);
+    --ui-provenance-amber-soft: oklch(0.31 0.055 70);
+    --ui-provenance-amber-ink: oklch(0.9 0.05 82);
     --ui-code: oklch(0.125 0.012 62);
     --ui-code-ink: oklch(0.9 0.016 78);
     --ui-focus: oklch(0.77 0.14 52);
@@ -2628,5 +2637,482 @@ h3 {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================================
+   Best-bits pattern primitives — provenance ledger, trade-offs, annotation
+   pins, board hub, specimen brand scoping.  Authored unlayered alongside the
+   editorial-theme primitives above (.discovery-artifact-frame, .discovery-table)
+   so they share the same cascade origin and override the @layer base defaults.
+   Every piece of page chrome consumes house --ui-* tokens; §5 is the one place
+   a product palette may re-point them, and it is deliberately kept local.
+   ========================================================================= */
+
+/* -- §1  Provenance ledger --------------------------------------------------
+   Inline pill (.discovery-provenance) + row-level tint (tr[data-provenance]),
+   keyed by the six ledger states: observed → insight/olive, inferred → amber,
+   assumed → dashed neutral, decided → accent outline, approved → solid accent
+   (a clear step above decided), open → dotted border + "?" (distinct from the
+   dashed assumed). */
+
+.discovery-provenance {
+  display: inline-flex;
+  gap: 0.34rem;
+  align-items: center;
+  padding: 0.12rem 0.52rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--ui-surface);
+  color: var(--ui-muted);
+  font: 650 0.66rem/1.4 var(--ui-font-mono);
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  vertical-align: 0.08em;
+}
+
+.discovery-provenance::before {
+  width: 0.44rem;
+  height: 0.44rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+  content: "";
+  flex: none;
+}
+
+.discovery-provenance[data-provenance="observed"] {
+  border-color: color-mix(in srgb, var(--ui-insight), transparent 55%);
+  background: var(--ui-insight-soft);
+  color: var(--ui-insight-ink);
+}
+
+.discovery-provenance[data-provenance="inferred"] {
+  border-color: color-mix(in srgb, var(--ui-provenance-amber), transparent 50%);
+  background: var(--ui-provenance-amber-soft);
+  color: var(--ui-provenance-amber-ink);
+}
+
+.discovery-provenance[data-provenance="assumed"] {
+  border-style: dashed;
+  border-color: var(--ui-border-strong);
+  background: color-mix(in srgb, var(--ui-surface) 70%, transparent);
+  color: var(--ui-muted);
+}
+
+.discovery-provenance[data-provenance="decided"] {
+  border-color: color-mix(in srgb, var(--ui-accent), transparent 45%);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+
+.discovery-provenance[data-provenance="approved"] {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+  color: var(--ui-accent-contrast);
+  font-weight: 700;
+  box-shadow: var(--ui-shadow-small);
+}
+
+.discovery-provenance[data-provenance="open"] {
+  border-style: dotted;
+  border-color: var(--ui-border-strong);
+  background: transparent;
+  color: var(--ui-faint);
+}
+
+.discovery-provenance[data-provenance="open"]::before {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  opacity: 1;
+  font-weight: 800;
+  content: "?";
+}
+
+/* Row-level ledger: a whole table row carries the status.  A shared left-edge
+   marker + wash are driven from two per-status custom props, so each state is a
+   one-line override rather than a repeated block. */
+tr[data-provenance] {
+  --ui-provenance-edge: var(--ui-border-strong);
+  --ui-provenance-tint: transparent;
+  background: var(--ui-provenance-tint);
+}
+
+tr[data-provenance] > :first-child {
+  box-shadow: inset 3px 0 0 var(--ui-provenance-edge);
+}
+
+tr[data-provenance="observed"] {
+  --ui-provenance-edge: var(--ui-insight);
+  --ui-provenance-tint: color-mix(in srgb, var(--ui-insight-soft) 50%, transparent);
+}
+
+tr[data-provenance="inferred"] {
+  --ui-provenance-edge: var(--ui-provenance-amber);
+  --ui-provenance-tint: color-mix(in srgb, var(--ui-provenance-amber-soft) 45%, transparent);
+}
+
+tr[data-provenance="assumed"] {
+  --ui-provenance-edge: var(--ui-border-strong);
+}
+
+tr[data-provenance="assumed"] > :first-child {
+  border-left: 1px dashed var(--ui-border-strong);
+}
+
+tr[data-provenance="decided"] {
+  --ui-provenance-edge: var(--ui-accent);
+  --ui-provenance-tint: color-mix(in srgb, var(--ui-accent-soft) 55%, transparent);
+}
+
+tr[data-provenance="approved"] {
+  --ui-provenance-edge: var(--ui-accent);
+  --ui-provenance-tint: color-mix(in srgb, var(--ui-accent-soft) 80%, transparent);
+}
+
+tr[data-provenance="open"] {
+  --ui-provenance-edge: var(--ui-border-strong);
+}
+
+tr[data-provenance="open"] > :first-child {
+  border-left: 1px dotted var(--ui-border-strong);
+}
+
+/* -- §2  Trade-offs, honestly ----------------------------------------------
+   Bordered self-critique aside: full-width heading/lede, then a responsive
+   grid of labelled groups (wins / costs / fails-when / scale-posture /
+   data-notes).  [data-fabricated] flags invented data anywhere it appears;
+   .discovery-invented-tag is its explicit amber chip. */
+
+.discovery-tradeoffs[data-tradeoffs-honestly] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+  gap: 1.15rem 1.5rem;
+  padding: clamp(1.25rem, 3vw, 1.85rem);
+  border: 1px solid var(--ui-border-strong);
+  border-left: 3px solid var(--ui-accent);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--ui-surface) 55%, var(--ui-surface-raised));
+}
+
+/* Heading and any intro prose span all columns; only the groups form columns. */
+.discovery-tradeoffs[data-tradeoffs-honestly] > :not([data-tradeoff-group]) {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.discovery-tradeoffs[data-tradeoffs-honestly] > h3 {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  color: var(--ui-accent-ink);
+  font: 650 0.82rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.discovery-tradeoffs [data-tradeoff-group] {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.discovery-tradeoffs [data-tradeoff-group] > :first-child {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0;
+  color: var(--ui-faint);
+  font: 650 0.66rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.discovery-tradeoffs [data-tradeoff-group] > :first-child::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--ui-border-strong);
+  content: "";
+  flex: none;
+}
+
+.discovery-tradeoffs [data-tradeoff-group="wins"] > :first-child::before {
+  background: var(--ui-positive);
+}
+
+.discovery-tradeoffs [data-tradeoff-group="costs"] > :first-child::before {
+  background: var(--ui-provenance-amber);
+}
+
+.discovery-tradeoffs [data-tradeoff-group="fails-when"] > :first-child::before {
+  background: var(--ui-accent);
+}
+
+.discovery-tradeoffs [data-tradeoff-group="scale-posture"] > :first-child::before {
+  background: var(--ui-insight);
+}
+
+.discovery-tradeoffs [data-tradeoff-group="data-notes"] > :first-child::before {
+  background: var(--ui-faint);
+}
+
+.discovery-tradeoffs [data-tradeoff-group] ul,
+.discovery-tradeoffs [data-tradeoff-group] ol {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ui-muted);
+  font-size: 0.92rem;
+}
+
+.discovery-invented-tag[data-invented-tag] {
+  display: inline-flex;
+  gap: 0.28rem;
+  align-items: center;
+  padding: 0.05rem 0.42rem;
+  border: 1px dashed var(--ui-provenance-amber);
+  border-radius: 999px;
+  background: var(--ui-provenance-amber-soft);
+  color: var(--ui-provenance-amber-ink);
+  font: 650 0.6rem/1.35 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 0.1em;
+}
+
+.discovery-invented-tag[data-invented-tag]::before {
+  content: "\270E"; /* pencil — marks hand-invented data */
+  font-size: 0.72em;
+}
+
+/* Any element (table cell, stat, specimen node) holding invented data gets a
+   quiet dashed amber outline so a reader can tell it is illustrative.  Drawn as
+   an outline so it never disturbs layout, and subtle enough not to compete. */
+[data-fabricated] {
+  outline: 1px dashed color-mix(in srgb, var(--ui-provenance-amber), transparent 55%);
+  outline-offset: 2px;
+  border-radius: 5px;
+}
+
+/* -- §3  Author annotation pins + browser frame ----------------------------
+   Reuses .discovery-artifact-frame / -bar / -dots above and adds the address
+   field plus a numbered pin overlay.  The overlay is a SIBLING of
+   [data-specimen] and speaks house --ui-* tokens, so a specimen's brand
+   re-point (§5) never bleeds into the pins or the browser chrome. */
+
+.discovery-artifact-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-raised);
+  color: var(--ui-faint);
+  font: 0.62rem/1.6 var(--ui-font-mono);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A frame that hosts pins becomes the positioning context for the overlay. */
+.discovery-artifact-frame[data-browser-frame] {
+  position: relative;
+}
+
+.discovery-pin-layer[data-annotation-pins] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none; /* clicks fall through to the mockup; pins re-enable */
+}
+
+.discovery-pin {
+  position: absolute;
+  left: var(--pin-x, 50%);
+  top: var(--pin-y, 50%);
+  display: grid;
+  place-items: center;
+  width: 2.75rem; /* 44px minimum touch target */
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 2px solid var(--ui-surface-raised);
+  border-radius: 999px;
+  background: var(--ui-accent);
+  color: var(--ui-accent-contrast);
+  font: 700 0.85rem/1 var(--ui-font-mono);
+  box-shadow: var(--ui-shadow-small);
+  translate: -50% -50%; /* centre the pin on its coordinate; composes with :hover scale */
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.discovery-pin:hover,
+.discovery-pin.is-active {
+  transform: scale(1.12);
+  box-shadow: var(--ui-shadow);
+  z-index: 3;
+}
+
+.discovery-pin:focus-visible {
+  outline: none;
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 3px var(--ui-surface-raised),
+    0 0 0 6px var(--ui-focus),
+    var(--ui-shadow);
+  z-index: 3;
+}
+
+.discovery-pin.is-active {
+  background: var(--ui-accent-ink);
+  color: var(--ui-accent-contrast);
+}
+
+.discovery-pin-notes {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.discovery-pin-note {
+  /* Block flow (not grid) so mixed inline content — a leading <strong>, prose,
+     and an inline provenance pill — stays on one line instead of each run
+     becoming its own grid item. The badge is positioned out of flow. */
+  position: relative;
+  padding: 0.6rem 0.8rem 0.6rem 3.1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--ui-surface-raised) 75%, transparent);
+  color: var(--ui-muted);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.discovery-pin-note::before {
+  position: absolute;
+  left: 0.8rem;
+  top: 0.6rem;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+  font: 700 0.78rem/1 var(--ui-font-mono);
+  content: attr(data-pin-note); /* the numbered badge mirrors its pin */
+}
+
+.discovery-pin-note.is-active {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-ink);
+}
+
+.discovery-pin-note.is-active::before {
+  background: var(--ui-accent);
+  color: var(--ui-accent-contrast);
+}
+
+/* -- §4  Multi-board hub ----------------------------------------------------
+   Index of sibling boards; the board you are on is marked with
+   aria-current="page" (accent fill + edge, dot instead of arrow). */
+
+.discovery-board-index[data-board-index] {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.discovery-board-link {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+  color: var(--ui-ink);
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.discovery-board-link::before {
+  color: var(--ui-faint);
+  font: 700 0.8rem/1 var(--ui-font-mono);
+  content: "\2192"; /* → */
+}
+
+.discovery-board-link:hover {
+  border-color: var(--ui-border-strong);
+  background: var(--ui-surface);
+}
+
+.discovery-board-link[aria-current="page"] {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+
+.discovery-board-link[aria-current="page"]::before {
+  color: var(--ui-accent);
+  content: "\25CF"; /* ● */
+}
+
+/* -- §5  Specimen brand scoping --------------------------------------------
+   The ONE place a product's real palette may re-point house tokens.  Authors
+   set --ui-* (or the parallel --spec-* escape hatch) on [data-specimen]; a
+   re-point only cascades to descendants, and isolation:isolate keeps stacking
+   local — so page chrome, annotation pins and the browser bar (all siblings,
+   not descendants) stay on the house palette regardless of what a specimen
+   does inside itself. */
+
+[data-specimen] {
+  position: relative;
+  isolation: isolate;
+  overflow: clip; /* brand backgrounds stay within the specimen box */
+  /* Escape-hatch aliases default to the house palette.  They are the ALTERNATIVE
+     to the full re-point above (not a companion to it): to show house and brand
+     side by side, leave --ui-* on house and set --spec-* to the brand palette —
+     interior elements then read --ui-* for house and --spec-* for brand.  Do not
+     combine with a same-element --ui-* re-point: these aliases resolve --ui-* on
+     this element, so a local re-point would flow through into them too. */
+  --spec-canvas: var(--ui-canvas);
+  --spec-surface: var(--ui-surface);
+  --spec-ink: var(--ui-ink);
+  --spec-accent: var(--ui-accent);
+  --spec-border: var(--ui-border);
+  background: var(--ui-canvas);
+  color: var(--ui-ink);
+}
+
+/* Reduced motion: keep the pins/notes/links static but preserve the pin's
+   translate-based centring (that is placement, not motion). */
+@media (prefers-reduced-motion: reduce) {
+  .discovery-pin,
+  .discovery-pin-note,
+  .discovery-board-link {
+    transition: none;
+  }
+
+  .discovery-pin:hover,
+  .discovery-pin:focus-visible,
+  .discovery-pin.is-active {
+    transform: none;
   }
 }

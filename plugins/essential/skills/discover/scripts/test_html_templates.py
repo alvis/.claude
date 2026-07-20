@@ -33,6 +33,10 @@ ACTIONS = (
     "readiness-check",
 )
 REPRESENTATIVE_ACTION = "domain-explainer"
+# Additional convention-demonstration boards (provenance/trade-offs/pins/hub best
+# bits). Iterated + validated + pattern-scanned at --stage complete only, separate
+# from the required-8 ACTIONS/REPRESENTATIVE_ACTION contract, which stays unchanged.
+CONVENTION_EXAMPLES = ("specimen-board", "board-hub")
 FORBIDDEN_HTML_TEXT = (
     "thariqs.github.io",
     "html-effectiveness",
@@ -58,6 +62,12 @@ PRESENTATION_PATTERNS = (
     "term-rung", "teach-me-explainer", "signoff-block", "pitch-doc",
     "status-checklist", "activity-filter-bar", "quiz-gate", "sticky-reply",
     "live-editor-panel", "entity-card",
+    # "Best bits" fold-in: provenance pills, honest trade-offs/invented-data flag,
+    # author annotation pins + browser-frame chrome, multi-board hub, specimen
+    # brand-palette scoping. Marked on the two new CONVENTION_EXAMPLES boards
+    # and/or woven into ranked-options.html / risk-context-report.html.
+    "provenance-pill", "provenance-row", "tradeoffs-honestly", "invented-data-flag",
+    "annotation-pins", "browser-frame", "board-hub", "board-index", "specimen-scope",
 )
 
 # Structural hooks prove that each example demonstrates its action-specific
@@ -102,6 +112,22 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-readiness-verdict", 1, None),
         ("data-readiness-probe", 1, None),
     ),
+    # Convention-demonstration boards (CONVENTION_EXAMPLES), not part of the
+    # required-8 ACTIONS contract. Minimums per the locked component API.
+    "specimen-board": (
+        ("data-tradeoffs-honestly", 1, None),
+        ("data-fabricated", 1, None),
+        ("data-invented-tag", 1, None),
+        ("data-annotation-pin", 3, None),
+        ("data-browser-frame", 1, None),
+        ("data-specimen", 1, None),
+        ("data-provenance", 2, None),
+    ),
+    "board-hub": (
+        ("data-board-hub", 1, None),
+        ("data-board-index", 1, None),
+        ("data-board-link", 2, None),
+    ),
 }
 
 
@@ -128,6 +154,7 @@ class ContractParser(HTMLParser):
         self.scripts: list[str | None] = []
         self.presentation_patterns: set[str] = set()
         self.attribute_counts: Counter[str] = Counter()
+        self.attribute_value_counts: Counter[tuple[str, str]] = Counter()
         self.ids: Counter[str] = Counter()
         self.option_frames: list[dict[str, object]] = []
         self.final_direction_choices: list[str] = []
@@ -139,6 +166,9 @@ class ContractParser(HTMLParser):
     ) -> None:
         attributes = dict(attrs)
         self.attribute_counts.update(attributes.keys())
+        for attr_name, attr_value in attributes.items():
+            if attr_value is not None:
+                self.attribute_value_counts[(attr_name, attr_value)] += 1
         opened_frame: dict[str, object] | None = None
         if "data-option-frame" in attributes:
             opened_frame = {
@@ -315,6 +345,24 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                         f"{path}: {action} allows at most {maximum} [{attribute}] "
                         f"elements; found {count}"
                     )
+        if action in CONVENTION_EXAMPLES:
+            if not parser.page_roots[0].get("data-board-id"):
+                errors.append(f"{path}: board root is missing data-board-id")
+        if action == "specimen-board":
+            for group in ("wins", "costs", "fails-when"):
+                if parser.attribute_value_counts[("data-tradeoff-group", group)] < 1:
+                    errors.append(
+                        f"{path}: specimen-board trade-offs block is missing the "
+                        f"required data-tradeoff-group={group!r} group"
+                    )
+            pin_count = parser.attribute_counts["data-annotation-pin"]
+            pin_note_count = parser.attribute_counts["data-pin-note"]
+            if pin_count != pin_note_count:
+                errors.append(
+                    f"{path}: specimen-board data-annotation-pin count "
+                    f"({pin_count}) must match data-pin-note count "
+                    f"({pin_note_count})"
+                )
         if action == "ranked-options":
             if text.count("discovery-review-frame-code") != 1:
                 errors.append(
@@ -415,6 +463,15 @@ def validate_runtime() -> list[str]:
         "Requested follow-up actions",
         "item.dataset.summaryState",
         "promptFoldTarget.append(promptSection)",
+        # "Best bits" fold-in: generated-prompt sections for provenance and
+        # trade-offs, plus the pin-linking hook. Only "data-annotation-pin" is
+        # required here (not "data-pin-note"): the pin<->note association is
+        # spec'd via aria-describedby/id lookup, not a dataset scan, so the
+        # note-side literal is not guaranteed to appear in the JS source even
+        # in a correct implementation.
+        "Provenance of claims",
+        "Trade-offs surfaced",
+        "data-annotation-pin",
     )
     for fragment in required_fragments:
         if fragment not in source:
@@ -447,6 +504,18 @@ def validate_stylesheet() -> list[str]:
         "mask-image: linear-gradient",
         ".discovery-review-frame-code",
         "width: 18.6rem",
+        # "Best bits" fold-in: provenance pills, honest trade-offs/invented-data
+        # flag, annotation pins, board-index, specimen brand-palette scoping.
+        ".discovery-provenance",
+        "[data-provenance",
+        ".discovery-tradeoffs",
+        ".discovery-invented-tag",
+        ".discovery-pin",
+        ".discovery-pin-layer",
+        ".discovery-pin-note",
+        ".discovery-board-index",
+        "[data-specimen]",
+        ".discovery-artifact-url",
     )
     for fragment in required_fragments:
         if fragment not in source:
@@ -518,6 +587,18 @@ def run(stage: str) -> dict[str, object]:
         if not reference.is_file():
             errors.append(f"{reference}: required {stage} action reference is missing")
 
+    # Convention-demonstration boards (specimen-board, board-hub) are validated
+    # and pattern-scanned at --stage complete only, separate from the required-8
+    # ACTIONS above, so their coverage does not leak into --stage representative.
+    convention_examples = CONVENTION_EXAMPLES if stage == "complete" else ()
+    for action in convention_examples:
+        example = EXAMPLES_ROOT / f"{action}.html"
+        if not example.is_file():
+            errors.append(f"{example}: required convention example is missing")
+        else:
+            errors.extend(validate_html(example))
+            covered_patterns.update(presentation_patterns(example))
+
     if stage == "complete":
         errors.extend(validate_direction_reference_contract())
         missing_patterns = set(PRESENTATION_PATTERNS).difference(covered_patterns)
@@ -531,7 +612,7 @@ def run(stage: str) -> dict[str, object]:
         "status": "pass" if not errors else "fail",
         "stage": stage,
         "examples_present": present_examples,
-        "examples_required": list(expected_actions),
+        "examples_required": list(expected_actions) + list(convention_examples),
         "presentation_patterns_covered": len(covered_patterns),
         "presentation_patterns_required": len(PRESENTATION_PATTERNS),
         "errors": errors,

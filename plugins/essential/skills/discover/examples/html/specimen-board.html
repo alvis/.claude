@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Brand specimen board — Meridian orders console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>Essential</strong><small>Discover reference</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>Specimen board</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Specimen board</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#specimen">Brand specimen</a>
+      <a href="#annotations">Pin notes</a>
+      <a href="#provenance">Provenance</a>
+      <a href="#tradeoffs">Trade-offs</a>
+      <a href="#boards">Boards</a>
+      <a href="#specimen-decision">Your input</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-presentation-pattern="colors type sidebar-toc annotation-drawer sticky-reply"
+      data-page-id="specimen-board-meridian-orders-v1"
+      data-discovery-action="specimen-board"
+      data-discovery-goal="Pin the brand and interaction decisions for the Meridian orders console before implementation"
+      data-board-id="specimen-board"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">Specimen board · Meridian orders console</p>
+          <h1>Pin the product decisions on a real specimen, not a spec.</h1>
+          <p class="discovery-lede">
+            This board holds one brand-scoped mockup of the Meridian orders
+            console. Author pins mark the decisions worth defending, and every
+            claim carries where it came from — observed, inferred, or still
+            open.
+          </p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta backdrop-blur-xl">
+            <div>
+              <dt>Subject</dt>
+              <dd>Meridian orders console, first release</dd>
+            </div>
+            <div>
+              <dt>Palette source</dt>
+              <dd>Product tokens, scoped to the specimen only</dd>
+            </div>
+            <div>
+              <dt>Decision</dt>
+              <dd>Which brand and interaction choices are load-bearing</dd>
+            </div>
+            <div>
+              <dt>Next owner</dt>
+              <dd>Frontend implementation</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Add a note to any section. Your decisions and annotations are
+            reflected immediately in the single prompt at the end.
+          </p>
+        </aside>
+      </header>
+
+      <section
+        id="specimen"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="specimen"
+        data-section-label="Brand specimen"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One specimen, brand-scoped</p>
+          <h2>The console in its own palette, under the tool's chrome.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            Everything inside the browser frame renders in Meridian's real
+            palette
+            <span class="discovery-provenance" data-provenance="observed"
+              >observed</span
+            >. The frame, the teaching pins, and the rest of this page stay in
+            the house theme so the product's colours never leak into the tool's
+            own surface.
+          </p>
+
+          <!--
+            Specimen brand-palette scope (pattern: specimen-scope).
+            This is the ONE documented exception to "no hex in action pages":
+            hex literals may appear ONLY inside [data-specimen], re-pointing
+            house --ui-* tokens locally. Page chrome, the browser frame, and
+            the pin layer stay OUTSIDE this re-point and keep house tokens.
+            Palette is intentionally theme-fixed: the specimen reads like a
+            captured screenshot of the product in its own light theme.
+          -->
+          <style>
+            [data-specimen] {
+              --ui-canvas: #eef1fb;
+              --ui-surface: #ffffff;
+              --ui-glass: #f3f5fd;
+              --ui-glass-strong: #e9edfb;
+              --ui-ink: #161d33;
+              --ui-muted: #5f6a88;
+              --ui-accent: #4f46e5;
+              --ui-accent-soft: #e7e6fd;
+              --ui-accent-ink: #2a2280;
+              --ui-insight: #0e9f6e;
+              --ui-insight-soft: #d6f3e6;
+              --ui-border: #e2e6f4;
+            }
+
+            /*
+              Author pins carry fixed percentage coordinates, so they only line
+              up while the specimen holds its wide layout. Below the mockup's
+              reflow breakpoint (its tiles stack at sm/640px) the pins would
+              point at the wrong elements, so hide the pin layer and let the
+              numbered notes below carry the annotations. Reposition per
+              breakpoint instead if a narrow specimen must stay pinned.
+            */
+            @media (max-width: 639.98px) {
+              [data-browser-frame] .discovery-pin-layer {
+                display: none;
+              }
+            }
+          </style>
+
+          <div
+            class="discovery-artifact-frame overflow-hidden"
+            data-browser-frame
+            data-presentation-pattern="browser-frame"
+          >
+            <div class="discovery-artifact-bar">
+              <span class="discovery-artifact-dots" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <span class="discovery-artifact-url">app.meridian.co/orders</span>
+            </div>
+
+            <div
+              data-specimen
+              data-presentation-pattern="specimen-scope"
+              class="bg-canvas text-ink"
+            >
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] bg-surface px-5 py-3"
+              >
+                <div class="flex items-center gap-6">
+                  <strong class="flex items-center gap-2 text-ink"
+                    ><span
+                      class="grid h-7 w-7 place-items-center rounded-[var(--radius-control)] bg-accent font-mono text-sm text-accent-soft"
+                      aria-hidden="true"
+                      >◈</span
+                    >Meridian</strong
+                  >
+                  <nav
+                    class="hidden items-center gap-4 text-sm text-muted sm:flex"
+                    aria-label="Product navigation"
+                  >
+                    <span class="font-semibold text-accent">Orders</span>
+                    <span>Customers</span>
+                    <span>Inventory</span>
+                    <span>Payouts</span>
+                  </nav>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span
+                    class="hidden rounded-full bg-glass px-3 py-1.5 font-mono text-xs text-muted sm:inline"
+                    >⌕ Search orders</span
+                  >
+                  <span
+                    class="grid h-8 w-8 place-items-center rounded-full bg-accent-soft font-mono text-xs text-accent-ink"
+                    aria-hidden="true"
+                    >MK</span
+                  >
+                </div>
+              </div>
+
+              <div class="grid gap-5 p-5">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p class="discovery-eyebrow">Orders</p>
+                    <strong class="text-2xl text-ink">Today, all channels</strong>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="rounded-[var(--radius-control)] bg-glass px-3 py-2 font-mono text-xs text-muted"
+                      >Last 24h ▾</span
+                    >
+                    <button
+                      type="button"
+                      class="rounded-[var(--radius-control)] bg-accent px-4 py-2 text-sm font-semibold text-accent-soft shadow-[var(--ui-shadow-small)]"
+                    >
+                      + New order
+                    </button>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <article class="rounded-[var(--radius-card)] bg-glass p-4">
+                    <p class="discovery-eyebrow">Open orders</p>
+                    <strong class="mt-1 block text-3xl tabular-nums text-ink"
+                      >1,284</strong
+                    >
+                    <span class="text-xs text-insight">▲ 6% vs last week</span>
+                  </article>
+                  <article class="rounded-[var(--radius-card)] bg-glass p-4">
+                    <p class="discovery-eyebrow">Awaiting fulfilment</p>
+                    <strong class="mt-1 block text-3xl tabular-nums text-ink"
+                      >312</strong
+                    >
+                    <span class="text-xs text-muted">SLA 4h · 2 at risk</span>
+                  </article>
+                  <article
+                    class="rounded-[var(--radius-card)] bg-accent-soft p-4"
+                  >
+                    <p class="discovery-eyebrow text-accent-ink">Revenue today</p>
+                    <strong
+                      class="mt-1 block text-3xl tabular-nums text-accent-ink"
+                      >$48,190</strong
+                    >
+                    <span class="text-xs text-accent-ink/80"
+                      >Settles nightly</span
+                    >
+                  </article>
+                </div>
+
+                <div class="overflow-hidden rounded-[var(--radius-card)] bg-surface ring-1 ring-[var(--ui-border)]">
+                  <table class="w-full border-collapse text-left text-sm">
+                    <thead>
+                      <tr class="text-muted">
+                        <th class="px-4 py-3 font-mono text-xs font-medium">Order</th>
+                        <th class="px-4 py-3 font-mono text-xs font-medium">Customer</th>
+                        <th class="hidden px-4 py-3 font-mono text-xs font-medium sm:table-cell">Items</th>
+                        <th class="px-4 py-3 font-mono text-xs font-medium">Status</th>
+                        <th class="px-4 py-3 text-right font-mono text-xs font-medium">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-ink">
+                      <tr class="border-t border-[var(--ui-border)]">
+                        <td class="px-4 py-3 font-mono text-xs">#MR-4821</td>
+                        <td class="px-4 py-3">Nadia Okonkwo</td>
+                        <td class="hidden px-4 py-3 text-muted sm:table-cell">3</td>
+                        <td class="px-4 py-3">
+                          <span
+                            class="rounded-full bg-insight-soft px-2.5 py-1 text-xs font-semibold text-insight"
+                            >Paid</span
+                          >
+                        </td>
+                        <td class="px-4 py-3 text-right tabular-nums">$126.40</td>
+                      </tr>
+                      <tr class="border-t border-[var(--ui-border)] bg-glass">
+                        <td class="px-4 py-3 font-mono text-xs">#MR-4820</td>
+                        <td class="px-4 py-3">Theo Marsh</td>
+                        <td class="hidden px-4 py-3 text-muted sm:table-cell">1</td>
+                        <td class="px-4 py-3">
+                          <span
+                            class="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-ink"
+                            >Fulfilling</span
+                          >
+                        </td>
+                        <td class="px-4 py-3 text-right tabular-nums">$54.00</td>
+                      </tr>
+                      <tr class="border-t border-[var(--ui-border)]">
+                        <td class="px-4 py-3 font-mono text-xs">#MR-4819</td>
+                        <td class="px-4 py-3">Priya Anand</td>
+                        <td class="hidden px-4 py-3 text-muted sm:table-cell">5</td>
+                        <td class="px-4 py-3">
+                          <span
+                            class="rounded-full bg-[color-mix(in_oklch,var(--ui-accent),transparent_86%)] px-2.5 py-1 text-xs font-semibold text-accent"
+                            >Review</span
+                          >
+                        </td>
+                        <td class="px-4 py-3 text-right tabular-nums">$318.75</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="discovery-pin-layer"
+              data-annotation-pins
+              data-presentation-pattern="annotation-pins"
+            >
+              <button
+                class="discovery-pin"
+                data-annotation-pin="1"
+                style="--pin-x:50%;--pin-y:11%"
+                aria-describedby="pin-note-1"
+              >
+                1
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="2"
+                style="--pin-x:90%;--pin-y:30%"
+                aria-describedby="pin-note-2"
+              >
+                2
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="3"
+                style="--pin-x:83%;--pin-y:45%"
+                aria-describedby="pin-note-3"
+              >
+                3
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="4"
+                style="--pin-x:64%;--pin-y:70%"
+                aria-describedby="pin-note-4"
+              >
+                4
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="annotations"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="annotations"
+        data-section-label="Pin notes"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">What each pin defends</p>
+          <h2>Four decisions worth pinning to the specimen.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <ol class="discovery-pin-notes">
+            <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
+              <strong>Navigation stays flat.</strong> Orders, Customers,
+              Inventory, and Payouts sit in one top row; the active section is
+              carried by the brand accent, not a heavier container
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="2" id="pin-note-2">
+              <strong>The primary action is unmissable.</strong> “New order”
+              is the only accent-filled control on the screen and holds a 44px
+              touch target
+              <span class="discovery-provenance" data-provenance="approved"
+                >approved</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="3" id="pin-note-3">
+              <strong>Revenue is the hero metric.</strong> Only the revenue
+              tile uses the accent-soft fill so the eye lands there first
+              <span class="discovery-provenance" data-provenance="inferred"
+                >inferred</span
+              >.
+            </li>
+            <li class="discovery-pin-note" data-pin-note="4" id="pin-note-4">
+              <strong>Status is a four-state colour scale.</strong> Paid,
+              Fulfilling, Review, and a held state (not shown) each map to a
+              fixed token; colour is never the only signal — the label always
+              accompanies it
+              <span class="discovery-provenance" data-provenance="open"
+                >open question</span
+              >.
+            </li>
+          </ol>
+          <p class="discovery-muted">
+            Focus or hover a pin to highlight its note, and vice versa. The
+            notes remain fully legible with no scripting.
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="provenance"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="provenance"
+        data-section-label="Provenance"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Where each claim comes from</p>
+          <h2>Every brand claim carries its evidence status.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div
+            class="discovery-callout"
+            data-presentation-pattern="provenance-pill"
+          >
+            <h3>Reading the specimen honestly</h3>
+            <p>
+              The indigo primary and emerald “paid” state are sampled from the
+              shipped marketing site
+              <span class="discovery-provenance" data-provenance="observed"
+                >observed</span
+              >. The four-state status scale is a design intent we chose for
+              this console
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >. The exact “held” colour is still unresolved
+              <span class="discovery-provenance" data-provenance="open"
+                >open question</span
+              >.
+            </p>
+          </div>
+
+          <div
+            class="discovery-table-wrap"
+            data-presentation-pattern="provenance-row"
+          >
+            <table class="discovery-table">
+              <thead>
+                <tr>
+                  <th>Claim about the specimen</th>
+                  <th>Evidence source</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-provenance="observed">
+                  <td>Brand indigo (the <code>--ui-accent</code> token) is the primary accent</td>
+                  <td>Sampled from the live marketing site</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="observed"
+                      >observed</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="inferred">
+                  <td>Revenue is the metric operators check first each morning</td>
+                  <td>Three fulfilment-lead interviews</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="inferred"
+                      >inferred</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="assumed">
+                  <td>Six items per order is a representative table density</td>
+                  <td>No sampled distribution yet</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="assumed"
+                      >assumed</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="decided">
+                  <td>Status uses a fixed four-state colour scale</td>
+                  <td>This board's design intent</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="decided"
+                      >decided</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="approved">
+                  <td>“New order” is the single accent-filled action</td>
+                  <td>Design review, signed off</td>
+                  <td>
+                    <span
+                      class="discovery-provenance"
+                      data-provenance="approved"
+                      >approved</span
+                    >
+                  </td>
+                </tr>
+                <tr data-provenance="open">
+                  <td>The held/blocked status colour</td>
+                  <td>Unresolved — needs a contrast check</td>
+                  <td>
+                    <span class="discovery-provenance" data-provenance="open"
+                      >open question</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="tradeoffs"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="tradeoffs"
+        data-section-label="Trade-offs"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Self-critique</p>
+          <h2>What this specimen buys, and where it breaks.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <aside
+            class="discovery-tradeoffs"
+            data-tradeoffs-honestly
+            data-presentation-pattern="tradeoffs-honestly"
+          >
+            <h3>Trade-offs, honestly</h3>
+            <div data-tradeoff-group="wins">
+              <h4>Wins</h4>
+              <ul>
+                <li>
+                  A single accent-filled control makes the primary path obvious
+                  on first glance.
+                </li>
+                <li>
+                  The brand palette is scoped to the specimen, so the tool's
+                  chrome and teaching pins stay neutral and readable.
+                </li>
+                <li>
+                  Status reads as label plus colour, so the four states survive
+                  a greyscale or colour-blind check.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="costs">
+              <h4>Costs</h4>
+              <ul>
+                <li>
+                  A theme-fixed specimen will not follow the viewer's dark mode;
+                  it reads like a captured screenshot.
+                </li>
+                <li>
+                  Reserving accent-soft for the revenue tile spends the brand's
+                  strongest fill on one metric.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="fails-when">
+              <h4>Fails when</h4>
+              <ul>
+                <li>
+                  A fifth order status appears and the fixed four-colour scale
+                  runs out of distinct, accessible hues.
+                </li>
+                <li>
+                  The table has to show more than a handful of columns on a
+                  phone, where the flat layout has no room to breathe.
+                </li>
+              </ul>
+            </div>
+            <div data-tradeoff-group="data-notes">
+              <h4>Data notes</h4>
+              <p data-fabricated data-presentation-pattern="invented-data-flag">
+                The order rows, the
+                <strong>1,284</strong> open orders, and the
+                <strong>$48,190</strong> revenue figure are
+                <span class="discovery-invented-tag" data-invented-tag
+                  >invented</span
+                >
+                illustrative data. Treat them as placeholder shapes, not real
+                Meridian numbers, when building the screen.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section
+        id="boards"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="boards"
+        data-section-label="Boards"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">This session's workspace</p>
+          <h2>Jump back to the board hub.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p>
+            This specimen is one board in the current discovery session. The
+            hub lists every board so you can move between them without leaving
+            the workspace.
+          </p>
+          <p>
+            <a
+              class="discovery-board-link"
+              data-board-link="board-hub"
+              href="./board-hub.html"
+              >Open the board hub</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="specimen-decision"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="specimen-decision"
+        data-section-label="Your input"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your decision</p>
+          <h2>How locked is this specimen before build?</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="specimen-readiness"
+            data-question-label="Specimen readiness for build"
+          >
+            <legend>
+              Choose how much of this specimen the implementer should treat as
+              fixed.
+            </legend>
+            <div class="discovery-options">
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="specimen-readiness"
+                  value="Build to the approved decisions; leave open items flagged"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy">
+                  <strong>Build the approved parts</strong>
+                  <small
+                    >Implement everything marked decided or approved; leave the
+                    open status colour as a visible TODO.</small
+                  >
+                </span>
+                <span class="discovery-badge">Recommended</span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="specimen-readiness"
+                  value="Resolve every open question before any code is written"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Resolve open items first</strong>
+                  <small
+                    >Block implementation until the held-status colour and item
+                    density are settled.</small
+                  >
+                </span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="specimen-readiness"
+                  value="Treat the whole specimen as an exploratory sketch"
+                />
+                <span class="discovery-option-copy">
+                  <strong>Exploratory only</strong>
+                  <small
+                    >Nothing is binding yet; use the specimen to spark a
+                    conversation, not a build.</small
+                  >
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div
+            class="discovery-field"
+            data-discovery-question
+            data-question-id="specimen-constraint"
+            data-question-label="Constraint that changes the specimen"
+          >
+            <label for="specimen-constraint"
+              >What constraint should change one of these decisions?</label
+            >
+            <textarea
+              id="specimen-constraint"
+              placeholder="For example: the brand indigo fails contrast on the awaiting-fulfilment tile at small sizes."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="generated-brief"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="generated-brief"
+        data-section-label="Generated reply"
+        data-presentation-pattern="prompt"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One live brief</p>
+          <h2>Send your decisions back to the coder.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            This is the only generated prompt on the page. It updates whenever
+            you change an answer or save an annotation in any section.
+          </p>
+          <div
+            class="discovery-prompt-card backdrop-blur-2xl ring-1 ring-[var(--ui-border)]"
+          >
+            <div class="discovery-prompt-toolbar">
+              <span>Generated from this board</span>
+              <button
+                class="discovery-button"
+                type="button"
+                data-copy-generated-prompt
+              >
+                Copy prompt for LLM coder
+              </button>
+            </div>
+            <textarea
+              id="specimen-board-generated-prompt"
+              name="generated-prompt"
+              data-discovery-prompt-host
+              readonly
+              aria-label="Generated prompt for LLM coder"
+            >
+JavaScript will replace this fallback with the current decisions and annotations.
+            </textarea>
+          </div>
+          <p
+            class="discovery-copy-status"
+            data-copy-status
+            aria-live="polite"
+          ></p>
+          <button
+            class="discovery-button discovery-button-secondary"
+            type="button"
+            data-clear-discovery-state
+          >
+            Clear answers and notes
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

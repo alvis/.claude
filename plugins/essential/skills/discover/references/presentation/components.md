@@ -274,6 +274,220 @@ an example. Preserve semantic elements, keyboard reachability, visible focus,
 44px touch targets, reduced-motion behavior, light/dark readability, and the
 mandatory annotation/single-prompt contract.
 
+## Provenance pills
+
+When claims on a page carry different evidentiary weight, mark each one with its
+status so the reader never mistakes an assumption for an observation. Pills are
+author-time static: the skill writes `data-provenance` from the evidence ledger
+while authoring the page. There is no ledger reader in the browser, and the
+visible label is author-provided so the status is legible without JavaScript.
+The runtime only gives each pill an accessible name and collects every claim
+into a generated-prompt section, so a pill renders correctly before scripts run.
+
+Use the inline form for a claim inside prose or a heading. For a table whose
+every row carries one status, either mark the row itself with
+`tr[data-provenance]` or place an inline pill in a cell — both forms are
+allowed:
+
+```html
+<p>
+  Peak queue depth reached 1,240 items
+  <span class="discovery-provenance" data-provenance="observed">observed</span>
+</p>
+
+<!-- row-level form -->
+<tr data-provenance="assumed">
+  <td>Retry storms double write load</td>
+  <td>assumed</td>
+</tr>
+
+<!-- or an inline pill inside a cell -->
+<tr>
+  <td>Retry storms double write load</td>
+  <td>
+    <span class="discovery-provenance" data-provenance="assumed">assumed</span>
+  </td>
+</tr>
+```
+
+The `data-provenance` value derives from the ledger's `Kind` — except
+`approved`, which derives from the separate `Disposition` column (an approved
+decision), so "wired from the ledger" stays honest:
+
+| Ledger source          | data-provenance | Visible label | Colour intent                              |
+| ---------------------- | --------------- | ------------- | ------------------------------------------ |
+| Kind `observed`        | observed        | observed      | olive/insight (`--ui-insight`)             |
+| Kind `inference`       | inferred        | inferred      | amber                                      |
+| Kind `assumption`      | assumed         | assumed       | dashed grey / muted                        |
+| Kind `intent`          | decided         | decided       | terracotta accent (`--ui-accent`)          |
+| Kind `unknown`         | open            | open question | dotted / question, distinct from assumed   |
+| Disposition `approved` | approved        | approved      | strong solid accent, emphasis over decided |
+
+`open` must stay visibly distinct from `assumed` — dotted versus dashed plus a
+question affordance. Style by attribute (`[data-provenance="..."]`) on both
+`.discovery-provenance` and `tr[data-provenance]`; new tokens keep the `--ui-*`
+naming, and no bare hex appears in the action page. The runtime collects each
+claim into a `## Provenance of claims` prompt section placed after
+`## Review context`.
+
+## Trade-offs, honestly
+
+When a page recommends or explains a direction, state its costs alongside its
+wins so the reader can weigh it without reverse-engineering the omissions. The
+block names what the direction earns, what it charges, and where it breaks:
+
+```html
+<aside class="discovery-tradeoffs" data-tradeoffs-honestly>
+  <h3>Trade-offs, honestly</h3>
+  <div data-tradeoff-group="wins">
+    <h4>Wins</h4>
+    <ul>
+      <li>Cuts median triage time roughly in half</li>
+    </ul>
+  </div>
+  <div data-tradeoff-group="costs">
+    <h4>Costs</h4>
+    <ul>
+      <li>Adds a queue service to operate and page on</li>
+    </ul>
+  </div>
+  <div data-tradeoff-group="fails-when">
+    <h4>Fails when</h4>
+    <ul>
+      <li>Bursts exceed worker capacity for minutes at a time</li>
+    </ul>
+  </div>
+  <!-- optional -->
+  <div data-tradeoff-group="scale-posture">…</div>
+  <div data-tradeoff-group="data-notes">…</div>
+</aside>
+```
+
+The `wins`, `costs`, and `fails-when` groups are required when the block is
+present; `scale-posture` and `data-notes` are optional. Group labels are
+visible. The runtime collects the block into a `## Trade-offs surfaced` prompt
+section.
+
+Any element holding fabricated illustrative data carries the invented-data flag,
+so the coder never treats filler as real:
+
+```html
+<td data-fabricated>
+  1,240
+  <span class="discovery-invented-tag" data-invented-tag>invented</span>
+</td>
+```
+
+`data-fabricated` is the semantic hook and `.discovery-invented-tag`
+`[data-invented-tag]` is the visible, author-provided marker; it applies
+anywhere — tables, stat strips, or a specimen. When any `data-fabricated`
+element exists, the runtime appends a one-line note to the prompt that
+illustrative data is invented.
+
+## Author annotation pins and browser-frame chrome
+
+To teach a specimen in place, number author pins over a browser-framed mockup
+and pair each with a note. These are distinct from the user's own Add-note
+mechanism (`data-annotation-for`, `data-annotation-summary`,
+`data-annotation-trigger`, `data-annotation-dialog`, `data-annotation-input`);
+both coexist, and author pins must not reuse those names. The pin layer is a
+sibling overlay outside `[data-specimen]`, so the specimen's brand re-point does
+not recolour the tool's teaching pins — the layer stays on house `--ui-*`:
+
+```html
+<div class="discovery-artifact-frame" data-browser-frame>
+  <div class="discovery-artifact-bar">
+    <span class="discovery-artifact-dots" aria-hidden="true"></span>
+    <span class="discovery-artifact-url">app.example.com/orders</span>
+  </div>
+  <div data-specimen>…the mockup…</div>
+  <div class="discovery-pin-layer" data-annotation-pins>
+    <button
+      class="discovery-pin"
+      data-annotation-pin="1"
+      style="--pin-x:34%;--pin-y:52%"
+      aria-describedby="pin-note-1"
+    >
+      1
+    </button>
+  </div>
+</div>
+<ol class="discovery-pin-notes">
+  <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
+    Inline triage resolves work without leaving the row.
+  </li>
+</ol>
+```
+
+Pins are numbered `1..n`, absolutely positioned by the `--pin-x`/`--pin-y`
+percentage custom properties, and are real `<button>` elements with a minimum
+44px touch target. Note index `N` pairs with pin `N`. The runtime highlights the
+paired note on focus or hover and back via `classList`; this author-pin
+behaviour is separate from the user Add-note dialog and must not merge with it.
+
+## Multi-board hub
+
+When a session produces several boards, give every board root a stable
+`data-board-id` and let one hub board link the siblings by session-relative
+href, so a reader can move between boards that live in the same workspace:
+
+```html
+<main
+  data-discovery-page
+  data-page-id="review-queue-hub-v1"
+  data-discovery-action="board-hub"
+  data-discovery-goal="Navigate the review-queue boards"
+  data-board-id="board-hub"
+>
+  <section data-discovery-section data-section-id="board-index" data-board-hub>
+    <ul class="discovery-board-index" data-board-index>
+      <li>
+        <a
+          class="discovery-board-link"
+          data-board-link="specimen-board"
+          href="./specimen-board.html"
+          >Brand specimen board</a
+        >
+      </li>
+      <li>
+        <a
+          class="discovery-board-link"
+          data-board-link="board-hub"
+          href="./board-hub.html"
+          aria-current="page"
+          >Hub</a
+        >
+      </li>
+    </ul>
+  </section>
+</main>
+```
+
+Every board root carries `data-board-id`; the hub section carries
+`data-board-hub`; the index list is `.discovery-board-index`
+`[data-board-index]`; each link is `.discovery-board-link`
+`[data-board-link="<board-id>"]`. Mark the current board with
+`aria-current="page"`. Hrefs are session-relative (`./sibling.html`) and valid
+only because every board lives in one session workspace. The runtime includes
+the board id in the generated prompt's review context.
+
+## Scoped specimen
+
+An embedded specimen re-points house tokens locally in a `[data-specimen]`
+container so the mockup reads as the subject product rather than the tool. This
+is the one documented place a hex literal may appear in an action page, and only
+inside `[data-specimen]`; page chrome, the pin layer, and the browser-frame
+chrome stay on house `--ui-*` tokens. See the specimen exception in
+[presentation](../presentation.md) for the token rules.
+
+## Extending the catalog
+
+These four conventions and the page shell, annotatable sections, single-prompt
+contract, and `--ui-*`/`@theme inline` theme are a fixed foundation. On top of
+it an executor may add new structural cards, provided each honors the theme,
+the interaction contract (annotatable plus one live prompt), provenance, and
+accessibility. Guided, not rigid — never regress the foundation to add a card.
+
 ## Catalog coverage markers
 
 The checked-in examples also serve as an exhaustive demonstration suite. Mark

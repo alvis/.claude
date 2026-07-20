@@ -20,6 +20,15 @@ steps, source-to-target mappings, prototype variants, risk findings, and
 readiness gates. Rendered review remains the final quality check because a
 count cannot prove that two compositions are materially different.
 
+Two convention examples sit beside the required eight to demonstrate the guided
+conventions — provenance pills, honest trade-offs, author annotation pins, and
+the multi-board hub — and their `specimen-scope` theming. They introduce the
+pattern IDs `provenance-pill`, `provenance-row`, `tradeoffs-honestly`,
+`invented-data-flag`, `annotation-pins`, `browser-frame`, `board-hub`,
+`board-index`, and `specimen-scope`. The validator iterates them through a
+separate `CONVENTION_EXAMPLES` list, distinct from the required-8, so the
+representative stage stays unchanged.
+
 | Action example               | Component and composition coverage                                                                                                                                                                                                              |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `domain-explainer.html`      | `colors`, `type`, `nav-pattern`, `prompt`, `sequence`, `accordion`, `diagrams`, `flow-strip`, `sidebar-toc`, `flow-terminus`, `tweakable-plan`, `callstack-walkthrough`, `annotation-drawer`, `term-rung`, `teach-me-explainer`, `sticky-reply` |
@@ -30,13 +39,19 @@ count cannot prove that two compositions are materially different.
 | `semantics-map.html`         | `annotated`, `schema-box`, `inline-chip`, `unified-diff`, `data-model-card`, `pr-file-review`, `light-code-card`, `semantics-map`                                                                                                               |
 | `interactive-prototype.html` | `artifact`, `codeblock`, `annotated`, `scrubber`, `split-reveal`, `tool-palette`, `toggle-switch`, `preset-live-preview`, `prototype-mock`, `live-editor-panel`                                                                                 |
 | `readiness-check.html`       | `stats`, `timeline-rail`, `pitch-doc`, `signoff-block`, `status-checklist`, `activity-filter-bar`, `entity-card`                                                                                                                                |
+| `specimen-board.html`        | `provenance-pill`, `provenance-row`, `tradeoffs-honestly`, `invented-data-flag`, `annotation-pins`, `browser-frame`, `specimen-scope`                                                                                                           |
+| `board-hub.html`             | `board-hub`, `board-index`                                                                                                                                                                                                                      |
 
 Some patterns intentionally overlap. For example, annotated code appears in
 both the semantics map and interactive prototype because each demonstrates a
 different composition: conformance review versus disposable interaction
-testing. Shared shell behavior such as annotation, sidebar navigation, and the
-single folded prompt appears on every page even though its catalog marker is
-recorded once.
+testing. The provenance and trade-off patterns are likewise woven into
+`ranked-options.html` (its route-health table and option frames) and
+`risk-context-report.html` (its findings), so their coverage is robust
+independent of the two convention boards; the table records each pattern's
+primary owner. Shared shell behavior such as annotation, sidebar navigation,
+and the single folded prompt appears on every page even though its catalog
+marker is recorded once.
 
 ## Coverage rule for future changes
 
