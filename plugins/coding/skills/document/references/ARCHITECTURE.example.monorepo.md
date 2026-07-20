@@ -4,9 +4,9 @@
 
 ARCHITECTURE = how it works. For usage/install, see readme.md.
 
-📌 **First paragraph:** This document is the **INDEX** for the `@theriety/platform` monorepo. The platform hosts three peer subsystems — **core**, **services**, and **sdks**. This file explains the cross-cutting shape, invariants, and onboarding path; the per-subsystem deep dives live under `docs/architecture/platform/` because the complete draft exceeded the final byte gate.
+📌 **First paragraph:** This document is the **INDEX** for the `@theriety/platform` monorepo. The platform hosts three peer subsystems — **core**, **services**, and **sdks**. This file explains the cross-cutting shape, invariants, and onboarding path; independently owned subsystem deep dives live under `docs/architecture/platform/`.
 
-**Second paragraph:** The final Markdown batch found this architecture overview over 16,384 bytes, so coherent subsystem detail moved to lowercase children while this original path remained the cross-subsystem index.
+**Second paragraph:** The split follows ownership and retrieval boundaries, not file size. A reader can enter through this overview and open only the subsystem relevant to the current change.
 
 <br/>
 <div align="center">
@@ -20,7 +20,7 @@ ARCHITECTURE = how it works. For usage/install, see readme.md.
 
 ### Why this split?
 
-**Why 3 detail files?** The complete draft exceeded 16,384 bytes in the PM's final batch. The overview retains cross-cutting concerns; each coherent child goes deep on one subsystem. Multiple subsystems alone never force a split.
+**Why 3 detail files?** Core, services, and SDKs have separate owners and operational concerns. The overview retains cross-cutting invariants while each semantic child goes deep on one subsystem. A smaller or tightly coupled monorepo may remain in one document.
 
 ---
 
@@ -58,9 +58,9 @@ Apps consume SDKs; SDKs talk over the wire to services; services share contracts
 ```plain
 platform
 ├── packages
-│   ├── core      # see platform/10-core.md
-│   ├── services  # see platform/20-services.md
-│   └── sdks      # see platform/30-sdks.md
+│   ├── core      # see platform/core.md
+│   ├── services  # see platform/services.md
+│   └── sdks      # see platform/sdks.md
 ├── apps
 └── tools
 ```
@@ -75,13 +75,13 @@ Subsystems are only expanded to depth 2 here; each part file expands its own sub
 
 | Subsystem | Responsibility | Part File |
 | --- | --- | --- |
-| `core` | Contracts, shared types, error taxonomy — zero runtime deps | [`platform/10-core.md`](./platform/10-core.md) |
-| `services` | Long-running processes that implement contracts | [`platform/20-services.md`](./platform/20-services.md) |
-| `sdks` | Client libraries published to consumers of the platform | [`platform/30-sdks.md`](./platform/30-sdks.md) |
+| `core` | Contracts, shared types, error taxonomy — zero runtime deps | [`platform/core.md`](./platform/core.md) |
+| `services` | Long-running processes that implement contracts | [`platform/services.md`](./platform/services.md) |
+| `sdks` | Client libraries published to consumers of the platform | [`platform/sdks.md`](./platform/sdks.md) |
 
 > **Note**: In this bundled example the subsystem files carry an `.example.md`
 > suffix for discoverability. In real projects the skill emits them as
-> `docs/architecture/platform/<nn>-<subsystem>.md` matching the links shown here.
+> `docs/architecture/platform/<subsystem>.md` matching the links shown here.
 
 ---
 

@@ -21,7 +21,7 @@ parent: 01234567-89ab-cdef-0123-456789abcdef # only for an unsynced child
 - `parent` is present only when needed to create an unsynced page.
 - `last_edited_time` is stamped once after the complete MDC edit batch.
 - Preserve Notion properties and relationship annotations verbatim.
-- MDC is transport state and exempt from the Markdown byte gate.
+- MDC remains transport state and is edited only through its owning workflow.
 
 ## Versioned derived specification
 

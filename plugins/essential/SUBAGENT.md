@@ -10,7 +10,8 @@ notifications.
 - Run the workspace resolver before writing an artifact. On `requires_ignore`,
   stop and report its `ignore_file`; never edit the target `.gitignore`.
 - Return explicit final paths generated or materially rewritten as
-  `generated_files`; the PM reconciles overviews and runs the final size pass.
+  `generated_files`; the PM reconciles overviews and size-checks only eligible
+  work Markdown inside the target `.engineering/`.
 - Give a bounded mission capsule only on a first handoff; later messages are
   deltas and artifact paths. Externalize any message over 4,096 characters.
 - Message the best-known continuing owner directly by `agent_id`. Ask the main

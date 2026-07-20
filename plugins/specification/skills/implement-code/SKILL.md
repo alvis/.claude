@@ -74,8 +74,9 @@ contract materialization, MDC authoring, alignment, and completion sync.
     refreshed default mirror, regenerated versioned spec, derivation receipt,
     and dependent `needs_revalidation` results before `completed`.
 12. Collect every child `generated_files` manifest, deduplicate it, and return
-    it to the PM with state/overview/review reconciliation payloads. Never run
-    `wc -c`; the PM performs the one final batch size pass after all writers.
+it to the PM with state/overview/review reconciliation payloads. Never run file
+sizing; after all writers return, the PM checks only eligible work Markdown
+inside the target `.engineering/`.
 
 ## Verification
 

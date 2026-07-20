@@ -119,7 +119,7 @@ After git rebase completes, jj will see the rewritten objects on next op; run `j
 - Whenever any unmerged bookmark sits at or below a rewritten change, follow
   the [SKILL.md](../SKILL.md) publication handoff with the resolved stack
   metadata after local integrity passes. The
-  [`coding:push-pr` core publication workflow](../../push-pr/references/push-pr/20-publish-bottom-up.md) owns
+  [`coding:push-pr` core publication workflow](../../push-pr/SKILL.md#3-publish-bottom-up) owns
   remote restacking, pushing, and PR-base repair.
 
 - Integrity check ([SKILL.md](../SKILL.md) Verification) — the dual-checksum backup ensures the merged tree at `@` matches pre-state (since logically the same content lands, just redistributed across ancestors).

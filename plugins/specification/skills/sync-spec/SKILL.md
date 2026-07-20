@@ -101,8 +101,9 @@ post-sync integrity. `specification:mdc` owns authored `.mdc` content changes.
      task/PR/Notion anchors and unknown or remote dependents separately. Never
      claim an ignored remote work directory was discovered or updated.
 5. Return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run `wc -c`; the PM performs the one final
-   batch size pass after all artifact writers finish. `.mdc` is size-exempt.
+   `generated_files`. Do not run file sizing; after all artifact writers
+   finish, the PM checks only eligible work Markdown inside the target
+   `.engineering/`. Derived `docs/**` has no mechanical size limit.
 
 <IMPORTANT>
 The default-workspace mirror is ignored local transport state. It must exist

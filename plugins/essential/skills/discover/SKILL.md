@@ -130,5 +130,6 @@ accepted assumptions, decisions and rejected alternatives, persistent workspace
 when any, readiness verdict (`ready`, `more-discovery`, or `blocked`), and the
 single recommended next owner. Return explicit final paths generated or
 materially rewritten as `generated_files`; the PM reconciles overviews and runs
-the final size pass. Runtime trigger behavior is reported as exercised only when
-an executable evaluation actually ran.
+the size pass only for eligible work Markdown inside the target
+`.engineering/`. Runtime trigger behavior is reported as exercised only when an
+executable evaluation actually ran.

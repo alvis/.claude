@@ -82,4 +82,4 @@ planning, and — when executed — each phase's outcome and any open questions
 or deviations from the plan. A blocked execution names the phase, what was
 attempted, and what decision or input is needed to continue. Return explicit
 final paths generated or materially rewritten as `generated_files`; the PM
-runs the final size pass.
+size-checks only eligible work Markdown inside the target `.engineering/`.

@@ -50,8 +50,9 @@ specification and preserving PM-owned coordination state.
    alignment. Do not create a standalone deviations file.
 7. Commit through `coding:commit` after approval or hand over through
    `coding:handover`. Collect/deduplicate child manifests and return explicit
-   final paths generated or materially rewritten as `generated_files`. Do not
-   run `wc -c`; the PM performs the one final batch pass.
+final paths generated or materially rewritten as `generated_files`. Do not run
+file sizing; the PM checks only eligible work Markdown inside the target
+`.engineering/`.
 
 ## Verification
 

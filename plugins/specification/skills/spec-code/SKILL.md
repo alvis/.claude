@@ -75,9 +75,10 @@ section, or copied transport history.
 7. Verify the resulting derived spec reads as one contract, `index.md` points
    to all versioned children, and provenance matches the verification pull.
 8. Return explicit final paths generated or materially rewritten as
-   `generated_files`, including work-local `.md` children and derived docs.
-   Do not run `wc -c`; the PM performs one final batch pass after all writers.
-   `.mdc` remains size-exempt.
+`generated_files`, including work-local `.md` children and derived docs.
+Do not run file sizing; after all writers return, the PM checks only eligible
+work Markdown inside the target `.engineering/`. Derived `docs/**` has no
+mechanical size limit.
 
 ## Verification
 

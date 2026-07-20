@@ -132,10 +132,11 @@ Do not claim completion from source inspection alone.
 Promote only reviewed, reusable knowledge after sign-off:
 
 - system-wide tokens, components, states, accessibility, and motion rules go to
-  `docs/design/system.md`, with `docs/design/system/*.md` only when the final
-  size pass requires splitting;
+  `docs/design/system.md`, with `docs/design/system/*.md` only when logical
+  separation materially improves ownership or navigation;
 - durable feature, interaction, information, or experience design goes to
-  `docs/design/<design-slug>.md`, with same-stem children only when required;
+  `docs/design/<design-slug>.md`, with same-stem semantic children only when
+  useful; durable `docs/**` has no mechanical size limit;
 - task state and implementation evidence remain under the work ID.
 
 Record rendered desktop/mobile evidence; both-mode composited contrast via
@@ -157,4 +158,5 @@ paths, changed source, render evidence, gates, evaluator verdict, promotions,
 and blockers. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run `wc -c` or split while writers are active; the PM
 reconciles `design.md`, combines manifests after all writers finish, and runs
-the single final batch size pass from the Essential contract.
+the single final size pass only for eligible work Markdown inside the target
+`.engineering/`, as defined by the Essential contract.

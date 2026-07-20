@@ -139,10 +139,12 @@ Use the owning product or system capability for
 `docs/specs/<capability>/`, not the current task title. Use a zero-padded
 monotonic sequence plus a stable slug for ADRs and never renumber merged ADRs.
 Ordinary children of work-local `proposals/`, `changes/`, `decisions/`, and
-`design/` use an unnumbered semantic `<slug>.md`. Numbered
-`<nn>-<topic-slug>.md` children in increments of 10 are reserved for content
-created by splitting an oversized file. ADRs alone use four-digit numeric
-prefixes. Never use `part-1`, `misc`, or a task title as a child name.
+`design/` use an unnumbered semantic `<slug>.md`. Within `.engineering/`,
+numbered `<nn>-<topic-slug>.md` children in increments of 10 are reserved for
+content created by mechanically splitting an oversized file. Durable `docs/`
+children use lowercase semantic names and are split only when that improves
+ownership or navigation. ADRs alone use four-digit numeric prefixes. Never use
+`part-1`, `misc`, or a task title as a child name.
 
 ## Work memory
 
@@ -235,8 +237,8 @@ belong to `correctness.md`. Plan deviations belong in `state.md` and also in
 
 `.engineering/notion/` exists only in the default workspace, is ignored, and
 contains exact `.mdc` paths owned by notion-sync. Never derive, rename, or
-publish assumptions about those filenames. MDC files are exempt from the
-Markdown size gate and may be mutated only through the MDC-aware owner.
+publish assumptions about those filenames. They may be mutated only through
+the MDC-aware owner.
 
 `sync-spec` materializes only the required temporary working specification
 under the active work's `spec/`. Record stable Notion page/block IDs, exact
@@ -258,9 +260,8 @@ specification changes. In the default workspace, the MDC-aware writer applies
 them to the mirror. The completion entrypoint delegates outbound push, merge,
 and conflict resolution to `sync-notion`, then re-pulls and verifies stable
 identity, explicit conflict dispositions, and zero unexpected diff. Regenerate
-affected `docs/specs/<capability>/*.md`, record source and derivation hashes,
-and run the ordinary Markdown batch gate. A zero exit code without this receipt
-is not successful synchronization.
+affected `docs/specs/<capability>/*.md` and record source and derivation hashes.
+A zero exit code without this receipt is not successful synchronization.
 
 ## Evidence, continuity, and retirement
 
@@ -299,17 +300,25 @@ generated_files:
 
 Writers finish all files and links before returning the manifest. They do not
 measure or split independently. The coordinator combines and deduplicates the
-manifests, then runs exactly one pass:
+manifests, selects only absolute `.md` paths inside the resolved target
+workspace's `.engineering/`, excludes every file whose basename is
+`working.md`, and then runs exactly one pass when eligible paths remain:
 
 ```bash
 "$ESSENTIAL_ROOT/bin/check-markdown-size" "${generated_md_files[@]}"
 ```
 
-The checker invokes one `wc -c "${generated_md_files[@]}"` process for that
-pass. It excludes `.mdc` and any file whose basename is `working.md`, ignores
-`wc`'s aggregate `total` row, and returns every file greater than 16,384 bytes
-together. A file at or below 16,384 bytes remains intact; 12,288 bytes is
-authoring guidance only and never forces a split.
+The checker independently enforces that same path boundary, invokes one
+`wc -c "${generated_md_files[@]}"` process for that pass, ignores `wc`'s
+aggregate `total` row, and returns every eligible file greater than 16,384
+bytes together. An eligible file at or below 16,384 bytes remains intact;
+12,288 bytes is authoring guidance only and never forces a split.
+
+The gate does not apply outside `.engineering/`. In particular, versioned
+`docs/**`, project READMEs, source or reference Markdown, and plugin control
+files have no mechanical document-size limit. The only separate limit in this
+plugin is the 2,000-byte injection limit for Essential's `CLAUDE.md`,
+`MAINAGENT.md`, and `SUBAGENT.md`.
 
 On `split_required`, send all oversized files through one complete split round.
 Each original path remains a concise overview with purpose, headline summary,

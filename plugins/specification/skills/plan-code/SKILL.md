@@ -69,8 +69,8 @@ contract; `specification:implement-code` and Coding skills execute it.
    rows/status deltas to the PM. Do not directly edit PM-owned `state.md`,
    `working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
 8. Return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run per-file or final `wc -c`; the PM performs one
-   batch pass after every writer finishes.
+`generated_files`. Do not run file sizing; after every writer finishes, the PM
+checks only eligible work Markdown inside the target `.engineering/`.
 
 ## Verification
 

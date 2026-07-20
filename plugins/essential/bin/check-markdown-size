@@ -13,8 +13,8 @@ for path in "$@"; do
   [[ "$path" == /* ]] || invalid "path must be absolute: $path"
   [[ -f "$path" ]] || invalid "path is missing or not a regular file: $path"
   case "$path" in
-    *.md|*.mdc) ;;
-    *) invalid "path is not Markdown or MDC: $path" ;;
+    *.md) ;;
+    *) invalid "path is not Markdown: $path" ;;
   esac
 
   duplicate=0
@@ -30,7 +30,7 @@ done
 eligible=()
 excluded=()
 for path in "${unique[@]}"; do
-  if [[ "$path" == *.mdc || "${path##*/}" == "working.md" ]]; then
+  if [[ "$path" != */.engineering/*.md || "${path##*/}" == "working.md" ]]; then
     excluded+=("$path")
   else
     eligible+=("$path")

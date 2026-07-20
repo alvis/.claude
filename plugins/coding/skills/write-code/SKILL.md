@@ -93,10 +93,13 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    `gh pr create` directly; history shaping belongs to `coding:commit` and
    publication belongs to `coding:push-pr`.</IMPORTANT>
 7. After every artifact writer is finished, deduplicate the combined
-   `generated_files` manifest and invoke the Essential Markdown checker once.
-   Exempt `.mdc` and `working.md`. If it returns `split_required`, coordinate
-   one complete split round for all oversized files, preserving each original
-   as overview, then run one new batch pass. Never size files after each write.
+   `generated_files` manifest. Select only `.md` paths inside the resolved
+   target `.engineering/`, excluding `working.md`, and invoke the Essential
+   checker once when eligible paths remain. If it returns `split_required`,
+   coordinate one complete split round for all oversized files, preserving
+   each original as overview, then run one new batch pass. Never size files
+   after each write; paths outside `.engineering/`, including `docs/**`, are
+   not mechanically size-gated.
 8. Run tests, types, lint, and coverage for the touched scope. Route each
    failure to its owner and repeat until green or concretely blocked.
 
@@ -106,8 +109,8 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
   implementation or pending-test markers remain.
 - `state.md` contains complete current truth and links current-focus-only
   `working.md`; all lazy indexes match their children.
-- Every child returned a verified `generated_files` manifest and the final
-  Markdown gate ran as one batch per pass.
+- Every child returned a verified `generated_files` manifest and the scoped
+  `.engineering` Markdown gate ran as one batch per pass when applicable.
 - Commit/push ownership was preserved and any stack dispatch reported URLs.
 
 ## Completion

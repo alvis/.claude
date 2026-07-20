@@ -4,7 +4,8 @@ This reference supplies per-batch context to `coding:draft-code`,
 `coding:complete-code`, and `coding:complete-test`. Every dispatch includes the
 absolute Essential `engineering-work.md` path, `working.md` then `state.md`
 read order, exact materialized spec/plan pointers, PM-owned-file prohibition,
-and `generated_files` return contract. Children never run Markdown size checks.
+and `generated_files` return contract. Children never run file sizing; the PM
+checks only eligible work Markdown inside the target `.engineering/`.
 
 ## Draft Phase Context (passed to coding:draft-code)
 

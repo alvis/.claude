@@ -88,7 +88,8 @@ engineering state into the plugin repository.
 
 The parent deduplicates `generated_files` from every accepted repair and
 returns them to the owning PM. No poller or fixer runs file sizing; the PM runs
-the single final Markdown batch after all repair artifacts are complete.
+the single final check only for eligible work Markdown inside the target
+`.engineering/` after all repair artifacts are complete.
 
 ## Check after repush
 

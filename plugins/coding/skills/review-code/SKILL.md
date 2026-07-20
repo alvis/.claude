@@ -101,8 +101,9 @@ requires the explicit work ID/root.
    [references/output-formats.md](references/output-formats.md). On malformed
    output, redispatch only the owning area until valid or blocked.
 7. Return all area, summary, and optional explainer paths in `generated_files`.
-   Do not run per-file sizing; the PM runs one final batch after every artifact
-   writer and coordinates a complete split round if required.
+Do not run file sizing; after every artifact writer returns, the PM checks only
+eligible work Markdown inside the target `.engineering/` and coordinates a
+complete split round if required.
 
 ## Verification
 

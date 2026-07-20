@@ -19,8 +19,8 @@ block tree, annotations, refs, closing markers, and YAML frontmatter.
 - `.mdc` is reserved for Notion-backed files. In engineering work, those files
   live in the resolved default workspace's `.engineering/notion/` mirror or an
   active workspace's `.engineering/work/<work-id>/spec/` materialization.
-- Do not derive or rename notion-sync paths, run the ordinary Markdown size
-  gate, sync to Notion, or promote durable `docs/specs/` content here.
+- Do not derive or rename notion-sync paths, sync to Notion, or promote durable
+  `docs/specs/` content here.
 - Refuse a non-`.mdc` target, ambiguous edit location, or operation requiring
   the parser runtime rather than safe text editing.
 
@@ -78,7 +78,7 @@ Full grammar: [references/syntax.md](references/syntax.md). Marker rationale:
      path/to/a.mdc path/to/b.mdc
    ```
 
-   Investigate any non-zero exit. Do not perform `wc -c`; MDC is size-exempt.
+Investigate any non-zero exit.
 7. Return explicit final paths generated or materially rewritten as
    `generated_files`.
 

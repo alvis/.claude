@@ -21,7 +21,8 @@ Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path passed by the orchestrator. If unavailable, stop
 artifact writes and report the missing contract. Read `working.md`, then
 `state.md`, then the assigned spec/plan pointers. Never edit PM-owned work
-files, and leave the final Markdown size pass to the PM.
+files, and leave sizing of eligible work Markdown inside the target
+`.engineering/` to the PM.
 
 **Steps**:
 

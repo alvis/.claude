@@ -95,8 +95,8 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         return len(self.log.read_text().splitlines()) if self.log.exists() else 0
 
     def test_keeps_fifteen_kib_and_boundary_file_in_one_pass(self) -> None:
-        first = self.write_bytes("fifteen kib.md", 15 * 1024)
-        second = self.write_bytes("boundary.md", 16_384)
+        first = self.write_bytes(".engineering/work/eng-421/fifteen kib.md", 15 * 1024)
+        second = self.write_bytes(".engineering/work/eng-421/boundary.md", 16_384)
 
         completed, payload = self.run_checker(first, second)
 
@@ -107,9 +107,11 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         self.assertEqual(1, self.calls())
 
     def test_returns_every_oversized_file_together_after_one_wc(self) -> None:
-        first = self.write_bytes("one.md", 16_385)
-        second = self.write_bytes("dir with spaces/two.md", 20_000)
-        valid = self.write_bytes("valid.md", 12_289)
+        first = self.write_bytes(".engineering/work/eng-421/one.md", 16_385)
+        second = self.write_bytes(
+            ".engineering/work/eng-421/dir with spaces/two.md", 20_000
+        )
+        valid = self.write_bytes(".engineering/work/eng-421/valid.md", 12_289)
 
         completed, payload = self.run_checker(first, second, valid)
 
@@ -121,23 +123,32 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         )
         self.assertEqual(1, self.calls())
 
-    def test_deduplicates_and_excludes_mdc_and_working(self) -> None:
-        measured = self.write_bytes("normal.md", 100)
-        working = self.write_bytes("nested/working.md", 30_000)
-        notion = self.write_bytes("notion/page.mdc", 30_000)
+    def test_deduplicates_and_excludes_working_and_external_markdown(self) -> None:
+        measured = self.write_bytes(".engineering/work/eng-421/normal.md", 100)
+        working = self.write_bytes(
+            ".engineering/work/eng-421/nested/working.md", 30_000
+        )
+        durable = self.write_bytes("docs/specs/payments/index.md", 30_000)
+        plugin_source = self.write_bytes("plugins/example/SKILL.md", 30_000)
 
-        completed, payload = self.run_checker(measured, measured, working, notion)
+        completed, payload = self.run_checker(
+            measured, measured, working, durable, plugin_source
+        )
 
         self.assertEqual(0, completed.returncode, completed.stderr)
         self.assertEqual(1, payload["checked"])
-        self.assertCountEqual([str(working), str(notion)], payload["excluded"])
+        self.assertCountEqual(
+            [str(working), str(durable), str(plugin_source)], payload["excluded"]
+        )
         self.assertEqual(1, self.calls())
 
     def test_all_excluded_is_a_pass_without_wc(self) -> None:
-        working = self.write_bytes("working.md", 30_000)
-        notion = self.write_bytes("page.mdc", 30_000)
+        working = self.write_bytes(
+            ".engineering/work/eng-421/working.md", 30_000
+        )
+        durable = self.write_bytes("docs/architecture/large.md", 30_000)
 
-        completed, payload = self.run_checker(working, notion)
+        completed, payload = self.run_checker(working, durable)
 
         self.assertEqual(0, completed.returncode, completed.stderr)
         self.assertEqual("pass", payload["status"])
@@ -145,7 +156,13 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         self.assertEqual(0, self.calls())
 
     def test_invalid_and_missing_inputs_are_distinct_from_split(self) -> None:
-        cases = ((), ("relative.md",), (self.root / "missing.md",))
+        not_markdown = self.write_bytes(".engineering/work/eng-421/data.mdc", 10)
+        cases = (
+            (),
+            ("relative.md",),
+            (self.root / "missing.md",),
+            (not_markdown,),
+        )
         for paths in cases:
             with self.subTest(paths=paths):
                 completed, payload = self.run_checker(*paths)

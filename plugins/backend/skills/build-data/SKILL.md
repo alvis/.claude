@@ -54,7 +54,8 @@ the work-local specification and PM state as coordination boundaries.
 8. Commit through `coding:commit` after approval or hand over through
    `coding:handover` when incomplete. Collect child manifests, deduplicate, and
    return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run `wc -c`; the PM performs the final batch pass.
+`generated_files`. Do not run file sizing; the PM checks only eligible work
+Markdown inside the target `.engineering/`.
 
 ## Verification
 

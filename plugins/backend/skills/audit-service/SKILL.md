@@ -63,7 +63,8 @@ with Backend/Coding owners.
    return PM reconciliation for `changes.md`/`state.md`; workers do not edit
    those PM-owned files.
 9. Return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run `wc -c`; the PM owns the final batch pass.
+`generated_files`. Do not run file sizing; the PM checks only eligible work
+Markdown inside the target `.engineering/`.
 
 ## Verification
 

@@ -100,13 +100,10 @@ adapters, providers, or runtimes.
   with Essential's `derive-engineering-name` executable and repository capability. Reconcile
   `docs/architecture/overview.md` and `docs/index.md`. Never create a root
   architecture file or derive the slug from a task title.
-- **Split rule**: finish the document first and return it in `generated_files`.
-  Do not measure or split here. The PM's one final batch leaves every file at
-  or below 16,384 bytes intact, even when it has multiple subsystems. If the
-  final batch returns `split_required`, the original architecture path becomes
-  the overview and coherent lowercase `<nn>-<topic-slug>.md` details live under
-  `docs/architecture/<architecture-slug>/`; split all oversized files before
-  the next batch pass.
+- **Split rule**: `docs/**` has no mechanical byte limit. Split a durable
+  architecture document only when distinct ownership or navigation materially
+  improves; keep the original path as the overview and use lowercase semantic
+  child names under `docs/architecture/<architecture-slug>/`.
 - **Separation**: when a durable architecture document exists, the README's Architecture
   section shrinks to ≤8 lines — one-line summary, a file-tree snippet of max
   depth 2, and a link. Diagrams, design patterns, invariants, data flow, and

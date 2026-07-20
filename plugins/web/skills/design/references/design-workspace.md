@@ -93,5 +93,6 @@ Project-root `.design`, `.design-*`, `DESIGN.md`, `CONTEXT.md`, and
 Task detail stays local. After review and sign-off, promote reusable system-wide
 rules to `docs/design/system.md` and durable non-system design to
 `docs/design/<design-slug>.md`. Each original durable path remains its overview;
-same-stem detail directories appear only when the final batch gate requires a
-split. Record work ID, source evidence, review, and supersession provenance.
+use a same-stem detail directory only when logical separation materially
+improves ownership or navigation. Durable `docs/**` has no mechanical size
+limit. Record work ID, source evidence, review, and supersession provenance.

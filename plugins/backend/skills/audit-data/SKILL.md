@@ -60,8 +60,8 @@ evidence to canonical work-local review areas. Approved remediation routes to
    through `specification:mdc` and verified completion through
    `specification:sync-spec`; otherwise do not push review decisions to Notion.
 8. Return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run `wc -c`; the PM performs the one final batch
-   pass after all writers finish.
+`generated_files`. Do not run file sizing; after all writers finish, the PM
+checks only eligible work Markdown inside the target `.engineering/`.
 
 ## Verification
 

@@ -20,8 +20,7 @@ temporary work reasoning, and durable design documentation.
 - Temporary detail belongs under the active work's `design/` with PM-owned
   `design.md`; durable detail belongs under `docs/design/`. Never create a root
   design artifact or edit the canonical template.
-- MDC is notion-sync-owned, authorable only through `specification:mdc`, and
-  exempt from Markdown size checks.
+- MDC is notion-sync-owned and authorable only through `specification:mdc`.
 
 Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f2`,
 `110161382ea64eefa46a4907574d4530`, and
@@ -57,8 +56,8 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
    accessibility, remote identity, and durable derivation. Confirm no
    unselected page changed.
 8. Return explicit final paths generated or materially rewritten as
-   `generated_files`, plus PM reconciliation. Do not run `wc -c`; the PM runs
-   the one final batch pass. MDC and `working.md` are exempt.
+`generated_files`, plus PM reconciliation. Do not run file sizing; the PM
+checks only eligible work Markdown inside the target `.engineering/`.
 
 ## Verification
 
@@ -67,7 +66,7 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
 - Requested/template changes landed without losing mapped approved content.
 - Temporary and durable designs use correct lowercase paths/provenance;
   system-wide rules are single-owned.
-- No MDC was hand-written/size-gated, PM-owned files were not edited, and the
+- No MDC was hand-written, PM-owned files were not edited, and the
   manifest is complete.
 
 ## Completion

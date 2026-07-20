@@ -113,4 +113,5 @@ manual review are complete; `partial` for coverage defects or warnings;
 Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run `wc -c`, split files, or reconcile `review.md`
 while writers are active; the PM combines manifests, reconciles the roll-up,
-and runs the single final batch size pass from the Essential contract.
+and size-checks only eligible work Markdown inside the target `.engineering/`,
+as defined by the Essential contract.

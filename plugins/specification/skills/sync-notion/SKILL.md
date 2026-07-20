@@ -25,7 +25,6 @@ local–Notion pairs. Public modes are `local-to-notion`, `notion-to-local`, and
   never calculate filenames from titles or ids.
 - `notion-sync` may create/replace transport files and update pairing metadata.
   Authored `.mdc` body changes must route through `specification:mdc`.
-- Do not run the ordinary Markdown size gate for `.mdc`.
 
 ## Inputs
 
@@ -71,8 +70,8 @@ local–Notion pairs. Public modes are `local-to-notion`, `notion-to-local`, and
    corrected copy-paste-ready content, then ask whether to re-verify, skip
    (`partial`), or abort. Never silently continue.
 7. Return explicit final paths generated or materially rewritten as
-   `generated_files`. Do not run `wc -c`; the PM owns the one final Markdown
-   batch pass after all writers complete.
+   `generated_files`. Do not run file sizing; after all writers complete, the
+   PM checks only eligible work Markdown inside the target `.engineering/`.
 
 <IMPORTANT>
 Only `sync-spec` may request specification completion across the work copy,

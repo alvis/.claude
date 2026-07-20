@@ -88,5 +88,6 @@ Report project path and archetype, anchors/templates/examples used, evidence-map
 coverage, architecture create/skip decision, commands/examples verified,
 independent-review verdict, stale claims removed, and unresolved gaps. Return
 every created or materially rewritten final path as `generated_files`. Do not
-measure or split per file; the PM includes these paths in the single final
-Markdown batch after all artifact writers finish.
+measure or split `docs/**` or project README files: durable documentation has no
+mechanical size limit. The PM size-checks only eligible work Markdown inside
+the target `.engineering/` after all artifact writers finish.

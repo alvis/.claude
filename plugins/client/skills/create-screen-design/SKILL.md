@@ -71,8 +71,9 @@ The canonical template, parent database, and collection remain:
    durable derivation against the verified source. Stop on uncertain creation
    to avoid duplicates.
 8. Return explicit final paths generated or materially rewritten as
-   `generated_files`, plus PM reconciliation. Do not run `wc -c`; the PM runs
-   the one final batch pass after all writers. MDC and `working.md` are exempt.
+`generated_files`, plus PM reconciliation. Do not run file sizing; after all
+writers finish, the PM checks only eligible work Markdown inside the target
+`.engineering/`.
 
 ## Verification
 

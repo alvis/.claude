@@ -54,5 +54,5 @@ Require passing focused and full suites, coverage at the requested target (or a 
 
 Return a concise test report. Do not claim production implementation, bug fixes, or coverage for code outside the selected scope.
 Return every created or materially rewritten path as `generated_files` to the
-PM. Do not run per-file sizing; the PM performs the single final Markdown batch
-after all artifact writers finish.
+PM. Do not run file sizing; after all artifact writers finish, the PM checks
+only eligible work Markdown inside the target `.engineering/`.

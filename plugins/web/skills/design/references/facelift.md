@@ -102,7 +102,7 @@ The **frontend-evaluator** seat (SKILL.md `<workflow>` Step 1) carries two lense
 
 Deliver the v2 in slices, each independently verified and saved:
 
-**Slice order**: hero → navigation → section-by-section (top to bottom) → footer → motion pass (site-wide micro-interactions + entrances, honoring `prefers-reduced-motion`). Any scroll-scrubbed or 3D work in the motion pass follows the [Motion Libraries](design-reference/30-motion-and-separators.md#motion-libraries-gsap-threejs) teardown + perf rules so the §8 budget and the no-leak bar hold.
+**Slice order**: hero → navigation → section-by-section (top to bottom) → footer → motion pass (site-wide micro-interactions + entrances, honoring `prefers-reduced-motion`). Any scroll-scrubbed or 3D work in the motion pass follows the [Motion Libraries](design-reference.md#motion-libraries-gsap-threejs) teardown + perf rules so the §8 budget and the no-leak bar hold.
 
 Per slice:
 

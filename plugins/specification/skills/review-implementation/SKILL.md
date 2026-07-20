@@ -62,8 +62,9 @@ security coverage through `coding:review-code`.
    `deferred`, `skipped`), and next-action pointers. Never copy full findings
    into the summary.
 8. Run one read-only structural validator, fix once, and revalidate. Return
-   explicit final paths generated or materially rewritten as `generated_files`.
-   Do not run `wc -c`; the PM owns the final one-pass batch gate.
+explicit final paths generated or materially rewritten as `generated_files`.
+Do not run file sizing; the PM checks only eligible work Markdown inside the
+target `.engineering/`.
 
 ## Verification
 

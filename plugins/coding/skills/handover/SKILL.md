@@ -58,8 +58,9 @@ resolve an existing active ID. Handover never mints an empty work item.
 4. Generate one UTC ISO-8601 timestamp. Rewrite `state.md` as the complete
    work context: goal, full plan and lifecycle, success criteria, decisions,
    dependencies, blockers, review dispositions, evidence, durable promotion,
-   Notion sync, revalidation, and a prominent link to `working.md`. Split only
-   under the shared final batch process; keep the original path as overview.
+Notion sync, revalidation, and a prominent link to `working.md`. If eligible
+work Markdown requires splitting under the shared batch process, keep the
+original path as overview.
 5. Rewrite `working.md` to approximately 4,096 bytes through editorial
    discipline: current focus, current status, immediate handback point, and
    fast relative paths only. It is not a plan, history, or complete context.
@@ -71,8 +72,9 @@ resolve an existing active ID. Handover never mints an empty work item.
    identifies authoritative sources needed to rehydrate; it never embeds or
    claims to transfer ignored local memory.
 7. Return every created or materially rewritten path in `generated_files`.
-   Do not run per-file sizing or `wc -c`; the PM runs one final batch after all
-   artifact writers finish and coordinates any complete split round.
+Do not run file sizing; after all artifact writers finish, the PM checks only
+eligible work Markdown inside the target `.engineering/` and coordinates any
+complete split round.
 
 ## Verification
 

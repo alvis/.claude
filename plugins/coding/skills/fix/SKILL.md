@@ -135,5 +135,5 @@ review_rerun: /coding:review-code <scope> --plan=<plan_source> # omit when plan_
 </report>
 
 Return every created or materially rewritten path as `generated_files` to the
-PM. Do not run per-file sizing; the PM performs the single final Markdown batch
-after all artifact writers finish.
+PM. Do not run file sizing; after all artifact writers finish, the PM checks
+only eligible work Markdown inside the target `.engineering/`.

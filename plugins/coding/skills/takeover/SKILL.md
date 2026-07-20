@@ -65,7 +65,8 @@ The receipt supplies the work ID; never mint a replacement identity.
 6. Invoke `coding:write-code --resume` once with the resolved work ID/root,
    receipt verdict, contradictions, decisions, and original user context.
 7. Return every created or materially rewritten path in `generated_files`.
-   Do not run per-file sizing; the PM performs the single final batch gate.
+Do not run file sizing; the PM checks only eligible work Markdown inside the
+target `.engineering/`.
 
 ## Verification
 

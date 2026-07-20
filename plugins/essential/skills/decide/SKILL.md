@@ -107,4 +107,5 @@ Report the recommendation, user decision, deferred decisions, and—after an
 approved handoff—the invoked skill and context passed. When no option survives,
 name the eliminating constraint rather than forcing a recommendation. Return
 explicit final paths generated or materially rewritten as `generated_files`;
-the PM runs the final size pass.
+the PM size-checks only eligible work Markdown inside the target
+`.engineering/`.

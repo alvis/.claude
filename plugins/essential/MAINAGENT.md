@@ -21,8 +21,9 @@ delivery, or review.
 - Before artifacts exist, run the workspace resolver. On `requires_ignore`,
   add `.engineering/` to the target `.gitignore`, include it in
   `generated_files`, and rerun. This is a PM-only edit.
-- Run the single final Markdown batch check, route every oversized file through
-  one split round, and recheck only after the complete round.
+- Run the single final batch check only for eligible work Markdown inside the
+  target `.engineering/`; route every oversized file through one split round
+  and recheck only after the complete round.
 
 Before delegating or recording review, read
 `{{PLUGIN_DIR}}/references/orchestration.md`. Before coordinating engineering
