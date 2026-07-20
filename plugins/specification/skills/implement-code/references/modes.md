@@ -1,116 +1,48 @@
-# Mode Bodies
+# Implementation mode bodies
 
-**When loaded**: After Step 3 mode selection picks one of the seven modes. Read only the section for the resolved mode — sections are mutually exclusive (exactly one runs per invocation).
+Load only the selected mode. All code-writing children receive exact work/spec
+pointers and return `generated_files`.
 
-This file holds the per-mode execution bodies. The mode-selection table itself stays inline in `SKILL.md` (Step 3) so every invocation can decide which mode it's in without loading this file. Only the per-mode bulk lives here.
+## Child chains
 
----
+- **COMMIT_PLAN**: per linked plan slice, `coding:write-code` →
+  `coding:review-code` → `coding:commit`.
+- **PI_ITERATE**: `coding:complete-code` → `coding:complete-test` →
+  `coding:fix` → `coding:review-code` → `coding:commit`. Unmarked missing work
+  routes to `coding:write-code`.
+- **DRAFT_THEN_ASK**: no coding; point to `specification:plan-code`. If the user
+  requests a lightweight draft, route to `coding:draft-code` then hand over.
+- **AUDIT_AND_COMPLETE**: baseline review → complete/write/fix gaps → final
+  review → commit.
+- **VERIFY_ONLY**: review only, no commit.
+- **FLAG_MISMATCH**: report stage/flag mismatch and ask for resolution.
+- **REFUSE**: report the matched stage rule; dispatch nothing.
 
-## Mode Semantics (one-line summaries)
+## Deviation policy block
 
-- **COMMIT_PLAN**: Execute PLAN.md phases via `coding:write-code` → `coding:review-code` → `coding:commit`, one commit per PLAN phase
-- **PI_ITERATE**: Partial implementation exists; dispatch `coding:complete-code` then `coding:complete-test` then `coding:fix` then `coding:review-code` then `coding:commit`
-- **DRAFT_THEN_ASK**: No plan yet; refuse to code, print pointer to run `specification:plan-code` first, ask user whether to proceed with a lightweight draft
-- **AUDIT_AND_COMPLETE**: Dispatch `coding:review-code` first, then `coding:complete-code` + `coding:fix` for gaps, then `coding:commit`
-- **VERIFY_ONLY**: Ticket marked done; dispatch `coding:review-code` only, report any drift, no commits
-- **FLAG_MISMATCH**: Emit a structured report to the user describing the mismatch and ask for resolution via `AskUserQuestion`; do not code
-- **REFUSE**: Decline with a clear message citing stage + matched rule; no dispatch
-
----
-
-## Step 8 — Per-Mode Child Chains
-
-Select the child chain from the mode:
-
-### COMMIT_PLAN
-
-Per PLAN phase:
-
-1. `coding:write-code` — TDD-complete the phase
-2. `coding:review-code` — MUST pass before commit
-3. `coding:commit` — atomic commit for the phase
-
-### PI_ITERATE
-
-1. `coding:complete-code` — Explicit production stubs (accepted `TODO(implementation):` markers)
-2. `coding:complete-test` — Test TODOs, pending markers, and coverage gaps
-3. `coding:fix` — fix broken tests/lint
-4. `coding:review-code`
-5. `coding:commit`
-
-Unmarked, missing, or newly requested functionality routes to `coding:write-code`, never to the completion skills.
-
-### DRAFT_THEN_ASK
-
-1. Print pointer to `specification:plan-code`
-2. If user opts into lightweight draft: `coding:draft-code` only, then `coding:handover`
-
-### AUDIT_AND_COMPLETE
-
-1. `coding:review-code` (baseline)
-2. `coding:complete-code` — explicit production stubs the review surfaces; unmarked gaps route to `coding:write-code`
-3. `coding:fix`
-4. `coding:review-code` (final)
-5. `coding:commit`
-
-### VERIFY_ONLY
-
-1. `coding:review-code` — no commits
-
-### FLAG_MISMATCH / REFUSE
-
-No children dispatched; skip to Step 13.
-
-Update TodoWrite with one todo per dispatched child.
-
----
-
-## Deviation Policy Block (verbatim, embedded in every `coding:*` dispatch)
+Embed this policy in every coding dispatch:
 
 ```markdown
-## Deviation Policy
+## Deviation policy
 
-The Working Draft / AI Coder Prompt / PLAN phase you are implementing is a DRAFT and may contain errors. If you encounter any of the following while implementing, record the repository or runtime evidence and append an entry to `<repo>/DEVIATIONS.md`:
+The work plan may be invalidated by repository/runtime evidence. Report a
+material departure to the orchestrator; do not create a root deviations file
+or edit PM-owned indexes.
 
-- Missing or wrong dependency (package not installed, wrong version, replaced)
-- Wrong integration assumption (API signature, event name, schema field, import path, module layout differs from what the draft assumes)
-- Standard violation (draft conflicts with `plugins/<plugin>/constitution/standards/`)
-- Architectural conflict (draft's structure doesn't fit the repo's existing pattern)
-- Symbol the draft references no longer exists
+Material: missing/wrong dependency, integration or schema mismatch, standard
+violation, architecture conflict, stale symbol, or changed acceptance behavior.
+Trivial formatter/import ordering, inferred types, prose corrections, and
+convention-only casing need no entry.
 
-SKIP logging for trivial differences:
+Return for each material departure: headline, plan slice, plan expectation,
+evidence, chosen/required alternative, reason, impact, severity, disposition,
+invalidated dependent slices, and recheck trigger. The orchestrator writes a
+lowercase `.engineering/work/<work-id>/changes/<slug>.md` child and asks
+the PM to reconcile `changes.md` and `state.md`.
 
-- Auto-added JSDoc the draft omitted
-- Inferred type annotations the draft left implicit
-- Lint / formatter-driven whitespace or import ordering
-- Casing adjustments to match local conventions
-- Obvious prose typos in the draft
-
-**DEVIATIONS.md entry format** (append, never rewrite existing entries):
-
-    ### D-<N>: <short title>
-    - **When**: <step name / commit label>
-    - **Draft said**: <one-line summary>
-    - **Evidence**: <path, symbol, test, runtime observation, or dependency state>
-    - **What I did instead**: <one-line summary>
-    - **Reason**: missing-dep | wrong-integration | standard-violation | arch-conflict | stale-symbol
-    - **Impact on spec**: none | surface-change | behavior-change
-    - **Severity**: minor | major | blocking
-    - **Disposition**: proceeded-reversibly | pending-decision | plan-invalidated
-    - **Invalidated plan steps**: <step ids or none>
-    - **Recheck trigger**: <evidence requiring another pivot or none>
-
-After every material deviation, revalidate the remaining PLAN dependencies and acceptance map before dependent work continues. Proceed only when the departure is low-impact and reversible. When it affects architecture, public API, data model, security/privacy, destructive migration, user-visible semantics, or acceptance criteria, stop the stale branch and return `pending_decision` with evidence, affected scope, options, and a recommendation. Do not ask the user mid-implementation for trivial choices.
+Proceed only when reversible and low impact. For architecture, public API,
+data, security/privacy, destructive migration, user semantics, or acceptance
+changes, stop as `pending_decision` before dependent work.
 ```
 
----
-
-## Trailing DEVIATIONS Commit (Step 8)
-
-After the last code commit, dispatch one extra `coding:commit` scoped to `DEVIATIONS.md` with message `chore(deviations): log draft departures for <ticket.slug>`.
-
-**Skip** this trailing commit when any of the following hold:
-
-- The file ended header-only (no `D-N` entries appended)
-- Mode is `VERIFY_ONLY` or `DRAFT_THEN_ASK` (no commits land)
-- `--dry-run` is set
+No trailing deviations commit exists: `.engineering` is ignored work state.

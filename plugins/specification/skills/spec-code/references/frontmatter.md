@@ -1,80 +1,54 @@
-# Frontmatter Specification
+# Specification metadata
 
-Every file produced by spec-code (DESIGN.md and all child page files) MUST include YAML frontmatter so Notion sync can maintain a 1:1 mapping between local files and Notion pages.
+Use separate schemas for Notion transport and durable derivation. Never copy
+transport-only metadata into versioned docs without purpose.
 
-## Schema
+## Notion-backed MDC
 
-```yaml
----
-notion_url: https://www.notion.so/...      # Notion page URL (empty until synced)
-last_edited_at: 2025-10-25T10:30:00Z       # ISO 8601 timestamp of last local edit
-last_synced_at: 2025-10-25T10:32:00Z       # ISO 8601 timestamp of last Notion sync (empty until synced)
-related_files: [REFERENCE.md, NOTES.md]    # See rules below
----
-```
-
-## Field Rules
-
-- **`notion_url`** — Full Notion page URL. Leave empty (`notion_url:`) until Step 10 (Notion sync) populates it. Verify all files have a non-empty `notion_url` after sync; the count must equal `1 main + N children`.
-- **`last_edited_at`** — ISO 8601 timestamp of the most recent local edit. Always populated.
-- **`last_synced_at`** — ISO 8601 timestamp of the most recent successful Notion sync. Empty until Step 10. Updated by the Edit tool after sync verification passes.
-- **`related_files`** — Cross-reference array:
-  - In **DESIGN.md**: list every child page file (e.g. `[REFERENCE.md, REQUIREMENTS.md, NOTES.md, DATA.md, UI.md, DEPLOYMENT.md]`).
-  - In each **child file**: list only `[DESIGN.md]`.
-
-## Initial vs Post-Sync State
-
-### Initial (Step 9, before Notion sync)
+Paths are returned by notion-sync and never derived. Preserve all existing
+properties; the keys below are the minimum identity/provenance surface:
 
 ```yaml
 ---
-notion_url:
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at:
-related_files: [REFERENCE.md, NOTES.md, DATA.md]
+title: Capability contract
+last_edited_time: 2026-07-20T10:30:00.000Z
+ref: 01234567-89ab-cdef-0123-456789abcdef
+parent: 01234567-89ab-cdef-0123-456789abcdef # only for an unsynced child
 ---
 ```
 
-### After Successful Sync (Step 10.5)
+- `ref` is the stable Notion identity and never derives a local filename.
+- `parent` is present only when needed to create an unsynced page.
+- `last_edited_time` is stamped once after the complete MDC edit batch.
+- Preserve Notion properties and relationship annotations verbatim.
+- MDC is transport state and exempt from the Markdown byte gate.
 
-DESIGN.md:
+## Versioned derived specification
+
+Every `docs/specs/<capability>/*.md` file has lowercase human-owned naming and
+source provenance:
 
 ```yaml
 ---
-notion_url: https://www.notion.so/main-page-id
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at: 2025-10-25T10:32:00Z
-related_files: [REFERENCE.md, NOTES.md, DATA.md]
+notion_ids:
+  - 0123456789abcdef0123456789abcdef
+source_revision: '2026-07-20T10:32:00.000Z'
+source_hash: 'sha256:<digest>'
+derived_at: '2026-07-20T10:33:00Z'
+receipt_anchor: 'notion:0123456789abcdef0123456789abcdef'
 ---
 ```
 
-Each child page file:
-
-```yaml
----
-notion_url: https://www.notion.so/child-page-id
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at: 2025-10-25T10:32:00Z
-related_files: [DESIGN.md]
----
-```
-
-## Update Protocol
-
-- Use the Edit tool to update frontmatter in place; do not rewrite the whole file.
-- After sync verification passes, update both `notion_url` and `last_synced_at` in every file.
-- If sync is skipped (`--skip-notion-sync`), `notion_url` and `last_synced_at` remain empty.
-- Verify that the number of files with non-empty `notion_url` equals `1 main + N children`.
-
-## Filename Mapping (Notion title → local file)
-
-Convert each Notion child-page title to its first main word in UPPERCASE, omitting any `[ Optional ]` prefix:
-
-| Notion title              | Local file       |
-| ------------------------- | ---------------- |
-| Components & APIs         | `REFERENCE.md`   |
-| Requirements              | `REQUIREMENTS.md`|
-| Dev Notes                 | `NOTES.md`       |
-| Persistent Data           | `DATA.md`        |
-| [ Optional ] UI Designs   | `UI.md`          |
-| [ Optional ] Deployment   | `DEPLOYMENT.md`  |
+- `index.md` is the capability overview and links all derived children.
+- `source_hash` covers the normalized authoritative MDC source set recorded by
+  the receipt; normalization and file order must be deterministic.
+- `receipt_anchor` points to the durable owning task, pull request, or Notion
+  work item that records completion. It must remain resolvable after ignored
+  local work state is retired.
+- The local derivation receipt lists every source ref/path/revision/hash and
+  every output path, but its ignored path is recorded only in `state.md`; never
+  embed that expiring path in versioned documentation.
+- Derived filenames use Essential's `derive-engineering-name` executable, never the Notion
+  mirror filename.
+- The PM's final output manifest includes all derived `.md` files for the one
+  end-of-run size check.

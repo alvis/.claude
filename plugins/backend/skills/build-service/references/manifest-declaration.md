@@ -17,6 +17,12 @@ another subagent.
 **Assignment**: create schema and manifest for operation `[OPERATION_NAME]`
 in service `[SERVICE_NAME]`.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path passed by the orchestrator. If unavailable, stop
+artifact writes and report the missing contract. Read `working.md`, then
+`state.md`, then the assigned spec/plan pointers. Never edit PM-owned work
+files, and leave the final Markdown size pass to the PM.
+
 **Steps**:
 
 1. Create the operation directory with camelCase naming under
@@ -75,6 +81,7 @@ export default createOperationManifest({
 status: success|failure|partial
 summary: 'Schema and manifest created for [operation]'
 modifications: ['schema/input.ts', 'schema/output.ts', 'schema/index.ts', 'index.ts']
+generated_files: ['/absolute/path/schema/input.ts', ...]
 outputs:
   input_schema_created: true|false
   output_schema_created: true|false|not_required

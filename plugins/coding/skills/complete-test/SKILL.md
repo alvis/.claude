@@ -22,6 +22,17 @@ Own test authoring and test-suite maintenance. Do not implement production behav
 - Optional: coverage target (default: 100% statements, branches, functions, and lines unless an explicit repository policy sets another target), framework, and existing test paths.
 - Prerequisites: read project test scripts/configuration and the source under test before editing.
 
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work root first.
+When delegated, read `working.md`, then `state.md` and only relevant linked
+specification, review, and evidence paths; never write PM-owned `working.md` or
+reconcile work overview files.
+A direct PM run resolves or mints the work ID by the contract; a delegated run
+requires the explicit work ID/root.
+
 ## Workflow
 
 Load [references/orchestration.md](references/orchestration.md) for the full coordination procedure: batching algorithm, subagent dispatch prompts, the per-test coverage-verification loop, redundancy-removal phases, fixture-restructuring phases, and report shapes.
@@ -42,3 +53,6 @@ Require passing focused and full suites, coverage at the requested target (or a 
 ## Completion
 
 Return a concise test report. Do not claim production implementation, bug fixes, or coverage for code outside the selected scope.
+Return every created or materially rewritten path as `generated_files` to the
+PM. Do not run per-file sizing; the PM performs the single final Markdown batch
+after all artifact writers finish.

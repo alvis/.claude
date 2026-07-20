@@ -1,115 +1,107 @@
-# Audit Report Template
+# Canonical web-audit review template
 
-## Context
+Render audit findings into the shared work review taxonomy. Never create a
+standalone audit Markdown report.
 
-- **Surface**: (web/app) + page type (list/detail/form/dashboard/settings/modal)
-- **Primary user task**:
-- **Primary CTA**:
-- **Component type detected**: (full page / form / modal / navigation / card / dashboard / component)
-- **Audit scope**: Full (12 categories) / Quick (5 categories)
-- **Input type**: URL (live browser) / Screenshot / Code / Figma
-- **Confidence**: High (live browser or code) / Medium (screenshot) / Low (description only)
+## Classification
 
-## Scores
+Classify each finding once by the primary question it answers:
 
-**Overall: XX/100**
+| Review file | Web-audit ownership |
+| --- | --- |
+| `alignment.md` | Active/durable design or approved-scope divergence |
+| `correctness.md` | Broken interaction, navigation, feedback, semantics, or user task |
+| `security.md` | Observed trust, permission, unsafe-content, or abuse issue only |
+| `quality.md` | Hierarchy, typography, color, spacing, responsive layout, imagery, motion, branding, maintainability |
+| `testing.md` | Missing/unreliable page, viewport, state, crop, or manual-review coverage |
+| `docs.md` | Inaccurate or missing durable/user-facing design documentation |
+| `style.md` | Mechanical token, CSS, or repository-style violation |
 
-| Quality Level | Score Range |
-|---|---|
-| Bootstrap Template | 40-50 |
-| Customized Framework | 60-70 |
-| Professional Design | 70-80 |
-| Design Excellence | 80-90 |
-| Award-Worthy | 90-100 |
+Do not duplicate one finding across areas. Design-contract compliance is
+`alignment`; semantic failure is `correctness`; a token-style violation without
+contract drift is `style`. A visual audit does not imply a security review.
 
-### Per-Category Scores (1-10)
+## Detail file header
 
-| Category | Score | Notes |
-|---|---|---|
-| Visual Hierarchy & Layout | X/10 | |
-| Typography | X/10 | |
-| Color & Contrast | X/10 | |
-| Spacing & Grid | X/10 | |
-| Consistency & Tokens | X/10 | |
-| Accessibility | X/10 | |
-| States & Feedback | X/10 | |
-| Navigation & IA | X/10 | |
-| Content & Microcopy | X/10 | |
-| Responsiveness | X/10 | |
-| Imagery, Icons & Motion | X/10 | |
-| Branding & Modern Standards | X/10 | |
+Each applicable `reviews/<area>.md` begins with:
 
-### DESIGN.md Compliance
+```markdown
+# <Area> review
 
-> Only included when a DESIGN.md is detected in the project.
+- Audit target: <URL/project>
+- Audit evidence: <relative evidence/web-audit/... path>
+- Source report: <report-final.json or report.json + hash>
+- Pages/routes: <count/list>
+- Viewports: <exact dimensions>
+- Coverage: complete|partial|blocked
+- Recorded: <ISO-8601>
+```
 
-| Category | Tokens Defined | Tokens Applied | Compliance | Deviations |
-|----------|---------------|----------------|------------|------------|
-| Colors | — | — | —% | — |
-| Typography | — | — | —% | — |
-| Spacing | — | — | —% | — |
-| Radius | — | — | —% | — |
-| Shadows | — | — | —% | — |
-| Components | — | — | —% | — |
-| **Overall** | — | — | **—%** | — |
+## Finding record
 
-#### Token Deviations
+Use one stable heading per CLI rule/finding identity:
 
-| Component | Expected Token | Actual Value | Severity |
-|-----------|---------------|--------------|----------|
-| — | — | — | — |
+```markdown
+## <finding-id> — <headline>
 
-## Findings (Prioritized)
+- Status: open|fixed|acknowledged|deferred|skipped
+- Severity: p0|p1|p2
+- Rule: <rule id + rule reference>
+- Route/area: <URL and page area>
+- Viewport: <label and dimensions>
+- Selector: <selector or none>
+- Evidence: <crop/context/data paths>
+- Confidence: <deterministic or AI score>
+- Owner: <owner or unassigned>
+- Recheck: <condition>
 
-### P0 -- Blocker
+<Problem and user impact.>
 
-- **Problem**:
-  - Evidence:
-  - Diagnosis: execution gulf / evaluation gulf | slip / mistake
-  - Impact: (what breaks for users)
-  - Fix: (specific, implementable -- include file path if code)
-  - Acceptance check: (how to verify the fix)
+Recommendation: <specific action; no claim it was applied>.
 
-### P1 -- Important
+Acceptance check: <observable verification>.
+```
 
-- **Problem**:
-  - Evidence:
-  - Diagnosis: execution gulf / evaluation gulf | slip / mistake
-  - Fix:
-  - Acceptance check:
+New findings begin `open`. Preserve an existing PM/owner disposition when a
+repeat audit finds the same stable identity; append new evidence and explicitly
+record recurrence or resolution. Non-fixed statuses require rationale, owner,
+and recheck condition per the shared contract.
 
-### P2 -- Polish
+## Context and scoring
 
-- **Problem**:
-  - Fix:
+Keep the raw overall/category/page scores in JSON evidence. Markdown contains
+only concise context and findings needed for engineering action. Preserve exact
+scores when they materially prioritize a finding; never convert a score into an
+unsupported quality claim.
 
-## Quick Wins
+When an active or durable design exists, cite its exact path and clause in
+alignment findings. Otherwise omit design-compliance claims. The valid sources
+are the active work design, `docs/design/system.md`, and applicable
+`docs/design/<slug>.md`.
 
-Top 3 small changes that noticeably improve clarity or polish.
+## PM reconciliation payload
 
-## Competitive Comparison (if competitors provided)
+Return, but do not write as a worker:
 
-| Aspect | This Product | Competitor A | Competitor B |
-|---|---|---|---|
-| Visual Polish | X/10 | X/10 | X/10 |
-| Typography | X/10 | X/10 | X/10 |
-| Color Usage | X/10 | X/10 | X/10 |
-| Consistency | X/10 | X/10 | X/10 |
-| Modernity | X/10 | X/10 | X/10 |
+```yaml
+review_reconciliation:
+  source: <relative report path + hash>
+  coverage: complete|partial|blocked
+  counts:
+    alignment: 0
+    correctness: 0
+    security: 0
+    quality: 0
+    testing: 0
+    docs: 0
+    style: 0
+  by_status:
+    open: 0
+    fixed: 0
+    acknowledged: 0
+    deferred: 0
+    skipped: 0
+  detail_files: [<absolute paths>]
+```
 
-## Verification Checklist
-
-- [ ] Task clarity: primary CTA obvious and singular
-- [ ] IA: groups match user mental model
-- [ ] Feedback: loading/empty/error/success states present
-- [ ] Consistency: components and wording stable across screens
-- [ ] Affordance: clickable elements look clickable
-- [ ] Errors: prevention + recovery + actionable messages
-- [ ] Cognitive load: defaults and progressive disclosure
-- [ ] CRAP: hierarchy, alignment, spacing, grouping intentional
-- [ ] Modern minimal: restrained color, spacious layout, minimal copy
-- [ ] Icons: no emoji; consistent set; labels where ambiguous
-- [ ] Accessibility: keyboard nav, focus visible, ARIA labels, contrast AA
-- [ ] Responsive: mobile touch targets, no horizontal scroll, content reflows
-- [ ] DESIGN.md tokens match implementation values
-- [ ] No hardcoded values where design tokens are defined
+The PM validates these counts against details and then reconciles `review.md`.

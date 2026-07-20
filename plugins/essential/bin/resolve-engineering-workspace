@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: resolve-engineering-workspace --work-id <id> [--path <path>]" >&2
+}
+
+invalid() {
+  jq -n --arg message "$1" '{status:"invalid", error:$message}'
+  exit 2
+}
+
+is_effectively_ignored() {
+  local workspace_root="$1"
+  local probe="$2"
+  local git_dir=""
+
+  if git -C "$workspace_root" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$workspace_root" check-ignore --no-index -q -- "$probe"
+    return
+  fi
+
+  if command -v jj >/dev/null 2>&1 &&
+     git_dir="$(cd "$workspace_root" && jj --ignore-working-copy git root 2>/dev/null)" &&
+     [[ -n "$git_dir" ]]; then
+    git --git-dir="$git_dir" --work-tree="$workspace_root" \
+      check-ignore --no-index -q -- "$probe"
+    return
+  fi
+
+  return 1
+}
+
+work_id=""
+start_path="$PWD"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --work-id)
+      [[ $# -ge 2 ]] || { usage; invalid "--work-id requires a value"; }
+      work_id="$2"
+      shift 2
+      ;;
+    --path)
+      [[ $# -ge 2 ]] || { usage; invalid "--path requires a value"; }
+      start_path="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      invalid "unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -n "$work_id" ]] || invalid "a work ID is required"
+[[ "$work_id" =~ ^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$ ]] || \
+  invalid "work ID must be lowercase kebab-case"
+[[ -d "$start_path" ]] || invalid "start path is not a directory: $start_path"
+
+start_path="$(cd "$start_path" && pwd -P)"
+vcs=""
+repo_root=""
+default_workspace=""
+active_workspace=""
+
+if command -v jj >/dev/null 2>&1 && \
+   active_workspace="$(cd "$start_path" && jj --ignore-working-copy root 2>/dev/null)"; then
+  vcs="jj"
+  active_workspace="$(cd "$active_workspace" && pwd -P)"
+  if ! default_workspace="$(cd "$start_path" && \
+      jj --ignore-working-copy workspace root --name default 2>/dev/null)"; then
+    invalid "jj workspace 'default' is not registered; run 'jj workspace rename default' in the intended default workspace"
+  fi
+  [[ -d "$default_workspace" ]] || \
+    invalid "registered jj default workspace is unavailable: $default_workspace"
+  default_workspace="$(cd "$default_workspace" && pwd -P)"
+  repo_root="$active_workspace"
+elif active_workspace="$(cd "$start_path" && git rev-parse --show-toplevel 2>/dev/null)"; then
+  vcs="git"
+  active_workspace="$(cd "$active_workspace" && pwd -P)"
+  default_workspace="$(cd "$start_path" && git worktree list --porcelain | \
+    awk 'NR == 1 && $1 == "worktree" {sub(/^worktree /, ""); print; exit}')"
+  [[ -n "$default_workspace" && -d "$default_workspace" ]] || \
+    invalid "Git did not report an available registered default worktree"
+  default_workspace="$(cd "$default_workspace" && pwd -P)"
+  repo_root="$active_workspace"
+else
+  invalid "path is not inside a Git worktree or jj workspace: $start_path"
+fi
+
+work_dir="$active_workspace/.engineering/work/$work_id"
+notion_dir="$default_workspace/.engineering/notion"
+ignore_file="$repo_root/.gitignore"
+active_probe=".engineering/work/$work_id/state.md"
+notion_probe=".engineering/notion/.ignore-probe.mdc"
+
+if [[ ! -f "$ignore_file" ]] ||
+   ! grep -Eq '^[[:space:]]*\.engineering/[[:space:]]*(#.*)?$' "$ignore_file" ||
+   ! is_effectively_ignored "$active_workspace" "$active_probe" ||
+   ! is_effectively_ignored "$default_workspace" "$notion_probe"; then
+  jq -n \
+    --arg vcs "$vcs" \
+    --arg repo_root "$repo_root" \
+    --arg durable_root "$active_workspace" \
+    --arg default_workspace "$default_workspace" \
+    --arg active_workspace "$active_workspace" \
+    --arg work_id "$work_id" \
+    --arg work_dir "$work_dir" \
+    --arg notion_dir "$notion_dir" \
+    --arg ignore_file "$ignore_file" \
+    --arg error "PM must add .engineering/ to the target repository .gitignore before creating work artifacts" \
+    '{status:"requires_ignore", vcs:$vcs, repo_root:$repo_root,
+      durable_root:$durable_root,
+      default_workspace:$default_workspace, active_workspace:$active_workspace,
+      work_id:$work_id, work_dir:$work_dir, notion_dir:$notion_dir,
+      ignore_file:$ignore_file, error:$error}'
+  exit 3
+fi
+
+jq -n \
+  --arg vcs "$vcs" \
+  --arg repo_root "$repo_root" \
+  --arg durable_root "$active_workspace" \
+  --arg default_workspace "$default_workspace" \
+  --arg active_workspace "$active_workspace" \
+  --arg work_id "$work_id" \
+  --arg work_dir "$work_dir" \
+  --arg notion_dir "$notion_dir" \
+  --arg ignore_file "$ignore_file" \
+  '{status:"resolved", vcs:$vcs, repo_root:$repo_root,
+    durable_root:$durable_root,
+    default_workspace:$default_workspace, active_workspace:$active_workspace,
+    work_id:$work_id, work_dir:$work_dir, notion_dir:$notion_dir,
+    ignore_file:$ignore_file, engineering_ignored:true}'

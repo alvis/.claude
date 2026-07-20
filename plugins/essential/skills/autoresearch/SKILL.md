@@ -9,7 +9,7 @@ argument-hint: "<research-goal-or-brief-path> [--brief=<path>] [--resume=<run-di
 
 # Autoresearch
 
-Turn a fuzzy optimization goal into a user-approved RESEARCH_BRIEF.md, then run
+Turn a fuzzy optimization goal into a user-approved `research-brief.md`, then run
 an automated evolve-score-verify loop until the target is met, the round budget
 is spent, or progress plateaus — delivering the best artifact plus a research
 dossier with a leaderboard and per-round logs. Fact-finding and literature
@@ -41,6 +41,11 @@ research belong to `essential:deep-research`.
   grant — never assumed. The dynamic `Workflow` tool and `coding:commit` are
   both optional; the workflow states the fallback for each.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work directory from
+that contract; a run lives under `evidence/autoresearch/<semantic-slug>/`.
+
 <IMPORTANT>
 - The orchestrator never generates or scores a candidate and never touches the
   eval harness. Every artifact comes from a Generate agent, every score from a
@@ -67,7 +72,7 @@ brief's own bounds (fanout, judge count, refute passes) named below.
    path resolving to a brief file means a pre-filled brief; else the positional
    is goal text. Record the flag overrides and apply them onto
    `budget.max_rounds` / `eval.backend` before any validation.
-   - Resume: verify `<run-dir>/RESEARCH_BRIEF.md` exists and `rounds/` is
+   - Resume: verify `<run-dir>/research-brief.md` exists and `rounds/` is
      non-empty, reconstruct `{round, survivors, best, fanout, leaderboard}`
      from the `rounds/round-NN/` files (schemas in
      [references/dossier.md](references/dossier.md)), and jump to step 5. A run
@@ -88,8 +93,9 @@ brief's own bounds (fanout, judge count, refute passes) named below.
    parseable number fails the criterion and re-enters the battery with the
    captured output shown to the user. Loop until all six exit-criteria pass; if
    the user aborts, report `status: aborted`.
-3. **Write and approve the brief.** Create `autoresearch_<slug>_<YYYYMMDD>/`
-   and render `RESEARCH_BRIEF.md` verbatim from the template in
+3. **Write and approve the brief.** Create the run's
+   `evidence/autoresearch/<semantic-slug>/` directory and render
+   `research-brief.md` verbatim from the template in
    [references/brief-template.md](references/brief-template.md) — frontmatter
    from the collected values, a `## Goal` narrative, one rationale subsection
    per framing direction, an empty `## Amendments`. Auto-append the eval
@@ -104,7 +110,7 @@ brief's own bounds (fanout, judge count, refute passes) named below.
    is ever appended.
    </IMPORTANT>
 4. **Scaffold and calibrate.** Scaffold the run layout once per
-   [references/dossier.md](references/dossier.md) (`LEADERBOARD.md` header with
+   [references/dossier.md](references/dossier.md) (`leaderboard.md` header with
    baseline row, `rounds/`, `best/`, and `worktrees/` in code mode). Then
    smoke-test the harness with one calibration eval of the baseline through
    the chosen backend exactly as a round would score
@@ -115,13 +121,15 @@ brief's own bounds (fanout, judge count, refute passes) named below.
      baseline score to null — round 1's best initializes the trajectory.
    - A user-asserted `baseline.score` still gets the calibration: it is the
      harness smoke test, not just a measurement.
-   - A parseable score becomes the `LEADERBOARD.md` baseline row; the brief's
+   - A parseable score becomes the `leaderboard.md` baseline row; the brief's
      `baseline.score` stays untouched — the leaderboard owns measured values.
    - Harness failure after the backend's retry rules: do not fan out — return
      to step 2 targeting the eval fields with the captured output, re-approve
      via step 3, and repeat this step.
 5. **Execute the research loop** — rounds of Generate, Score, Verify, Evolve
-   per [references/loop-workflow.md](references/loop-workflow.md), with scoring
+   per the ordered manifest in
+   [references/loop-workflow.md](references/loop-workflow.md): load its shared
+   prompt child and exactly one selected mechanism child. Use scoring
    detail in [references/eval-backends.md](references/eval-backends.md) and
    genome breeding, fanout adaptation, and stop checks in
    [references/evolution.md](references/evolution.md). Choose exactly one
@@ -154,10 +162,10 @@ brief's own bounds (fanout, judge count, refute passes) named below.
    bounds explicitly (via `rounds/` reconstruction or `resumeFromRunId`).
 7. **Synthesize and land.** Confirm every round directory carries its
    `scores.yaml`, `verify.yaml`, and `round-log.md`. Dispatch one synthesis
-   agent to write `DOSSIER.md` (seven sections in order per
+   agent to write `dossier.md` (seven sections in order per
    [references/dossier.md](references/dossier.md), synthesized from the
    `rounds/` files only — never from memory of the run), fully rewrite
-   `LEADERBOARD.md` from final state, and copy the winner verbatim into
+   `leaderboard.md` from final state, and copy the winner verbatim into
    `best/`. Then dispatch one read-only provenance reviewer: every leaderboard
    row must trace to a `scores.yaml` entry with matching candidate id, round,
    and consensus value, `best/` must hold the rank-1 artifact, and the dossier
@@ -176,8 +184,8 @@ brief's own bounds (fanout, judge count, refute passes) named below.
 
 ## Verification
 
-- The run directory contains the approved brief, `LEADERBOARD.md`,
-  `DOSSIER.md`, `best/`, and a complete `rounds/round-NN/` set (`candidates/`,
+- The run directory contains the approved brief, `leaderboard.md`,
+  `dossier.md`, `best/`, and a complete `rounds/round-NN/` set (`candidates/`,
   `scores.yaml`, `verify.yaml`, `round-log.md`) for every completed round.
 - The provenance review passed: every leaderboard score traces to a
   `scores.yaml` entry and `best/` holds the rank-1 artifact.
@@ -197,12 +205,14 @@ rounds_completed: <n>
 candidates_evaluated: <n>
 stop_reason: target|budget|plateau|user_abort
 mechanism: A|B
-output_dir: autoresearch_<slug>_<date>/
+output_dir: <work-dir>/evidence/autoresearch/<semantic-slug>/
 best_artifact: <path>
 user_decisions: [<extend/pivot/accept log>]
+generated_files: [<absolute final paths generated or materially rewritten>]
 ```
 
 </report>
 
 A partial or blocked run still reports this block with `status: aborted`, the
 last completed round, and the blocker in place of `best_artifact` commentary.
+The PM uses `generated_files` for the final size pass.

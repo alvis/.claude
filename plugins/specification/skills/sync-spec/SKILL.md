@@ -1,125 +1,154 @@
 ---
 name: sync-spec
-description: Materialize a guaranteed-on-disk Notion specification tree as a flat `.code-spec/` bundle of `{kebab-title}-{32hex-id}.md` files plus `.gitignore`. Use before downstream analysis or code generation, when refreshing a stale bundle, or when a ticket requires local spec evidence; fail unless the root id-suffix file exists and is non-empty.
+description: Materialize a required Notion specification into an active engineering work directory or complete approved specification changes through the default-workspace mirror. Use before specification planning, implementation, or review and when closing a work item. Delegate transport and conflicts to sync-notion.
 model: opus
 context: fork
-allowed-tools: Read, Grep, Glob, Bash, TodoWrite
-argument-hint: "<notion-url-or-id> [--spec-path=<dir>]"
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite, Skill
+argument-hint: "<notion-url-or-id> --work-id=<id> [--mode=materialize|complete]"
 ---
 
 # Sync Spec
 
-Download a Notion specification page tree to disk as a self-contained flat
-Markdown bundle. Every invocation wipes and re-downloads — this skill never
-caches, never merges, and never preserves prior contents.
-`specification:sync-notion` owns bidirectional sync and conflict resolution;
-`specification:spec-code` owns specification authoring.
+Orchestrate specification materialization and completion without owning Notion
+transport. `specification:sync-notion` owns pull, push, pairing, conflicts, and
+post-sync integrity. `specification:mdc` owns authored `.mdc` content changes.
 
 ## Boundaries
 
-- Use for: downloading or refreshing a Notion spec page tree as a
-  guaranteed-on-disk bundle before downstream review, audit, or code
-  generation, or whenever a caller needs hard local spec evidence.
-- Do not use for: pushing local edits to Notion or merging two sides
-  (`specification:sync-notion`), authoring or updating spec content
-  (`specification:spec-code`), or partial per-page pulls.
-- There is no `--use-cache`, `--repo`, `--slug`, or sync-mode argument. The
-  skill always wipes and re-downloads; callers wanting cache semantics (such
-  as `specification:implement-code`) implement them on their side.
+- `materialize` refreshes the authoritative mirror under the explicitly
+  resolved default workspace, then materializes only the requested page tree
+  under the active workspace's `.engineering/work/<work-id>/spec/`.
+- `complete` reconciles approved work-spec changes into the default mirror,
+  delegates outbound sync, performs a verification pull, regenerates versioned
+  `docs/specs/<capability>/*.md`, and reports discoverable dependent work that
+  requires revalidation.
+- Never derive, normalize, or rename an MDC filename. Paths are owned by
+  `notion-sync` and are taken verbatim from the transport report.
+- Never use a legacy root specification bundle, copy the entire default mirror
+  into a worktree, or push/merge by calling `notion-sync` directly.
 
 ## Inputs
 
-- **Required**: `<notion-url-or-id>` — full Notion URL or 32-hex page id;
-  dashes are stripped during normalization.
-- **Optional**: `--spec-path=<dir>` — bundle target directory. Default: walk
-  up from the working directory to the first ancestor containing any of
-  `.git/`, `package.json`, `pyproject.toml`, `Cargo.toml`, or `go.mod` and use
-  `<root>/.code-spec`; when no marker exists up to the filesystem root, fall
-  back to `<cwd>/.code-spec`.
-- **Prerequisites**: `notion-sync` CLI on PATH (verify with
-  `notion-sync --help`), `NOTION_TOKEN` exported in the shell, and write
-  access to the resolved directory.
+- **Required**: Notion URL or page id and `--work-id=<id>`.
+- **Optional**: `--mode=materialize|complete` (default `materialize`),
+  `--capability=<lowercase-slug>` for durable derivation.
+- **Prerequisites**: the absolute Essential engineering-work contract path
+  supplied by injected context; a workspace resolved by that contract;
+  `notion-sync` and `NOTION_TOKEN`.
 
 ## Workflow
 
-1. Normalize the id: take the trailing URL segment, strip all dashes, and
-   require exactly 32 hex characters (`/^[0-9a-f]{32}$/i`). On failure, refuse
-   with `reason: invalid_id` before any disk mutation.
-2. Resolve the absolute `spec_path` per the default above and record the
-   project root. Safety-check that `spec_path` sits inside the resolved
-   project root or under the working directory; on escape, refuse with
-   `reason: spec_bundle_unavailable` without wiping anything.
-3. Confirm `NOTION_TOKEN` is set; when unset, refuse with
-   `reason: notion_unavailable`.
-4. Wipe and recreate the target: `rm -rf <spec-path>` then
-   `mkdir -p <spec-path>`. Unconditional — stale bundles, junk files, and
-   partial downloads are always deleted so the result is a fresh mirror.
-5. Run exactly one pull and capture its exit code:
-
-   ```bash
-   notion-sync pull <notion-id> --follow --out <spec-path>
-   ```
-
-   `--follow` walks children, databases, links, and files in a single pass
-   (default depths: children 3, database 1, link 1 — deepen only when the
-   caller explicitly asks). Optionally add `--bail` to fail fast on the first
-   per-page error and `-c 25` for default concurrency. Never iterate per page
-   across tool calls — recursion happens inside the CLI. The CLI writes flat
-   `{kebab-title}-{32hex-id}.md` files plus `<spec-path>/.gitignore`
-   (single line `*`).
-6. Enumerate `<spec-path>/*.md` (flat — the CLI creates no subdirectories)
-   and parse each filename's trailing `-{32hex}.md` segment as its page id;
-   record any non-matching filename as an advisory issue.
-7. Apply the hard gate below, then run the verification checks. When a check
-   fails, fix the cause (for a transient pull failure, re-run step 5 once) and
-   re-run that check; repeat until every check passes or a concrete blocker
-   remains, then report the refusal instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. Resolve:
+   - `default_workspace_root` explicitly; never infer it from the current
+     worktree when Git or jj reports a different default workspace;
+   - `active_workspace_root` and canonical `work_id`;
+   - `mirror_root = <default>/.engineering/notion`;
+   - `work_spec_root = <active>/.engineering/work/<work-id>/spec`.
+   Verify `.engineering/` is ignored by the repository VCS and neither target
+   is tracked; refuse before writing if that boundary is not true.
+   For an existing work item, read `working.md`, then `state.md`, then only the
+   specification/sync paths they reference.
+2. Normalize the Notion id only for identity comparison. Require a 32-hex id
+   after dash removal. Do not use the id to construct a filename.
+3. In `materialize` mode:
+   - invoke `Skill(sync-notion)` in `notion-to-local` mode with the Notion ref,
+     `mirror_root`, and recursive following;
+   - select the returned root and required descendants by frontmatter `ref:`
+     and returned relationship data, not filename shape;
+   - build an incoming manifest containing every selected relative path,
+     stable `ref:`, source revision, and SHA-256 content hash. If
+     `work_spec_root` already exists, load its last materialization manifest
+     from the work receipt and hash the current tree before staging anything;
+   - refuse with `materialization_conflict` when the prior manifest is absent,
+     a recorded file is missing or changed, an unrecorded file exists, a
+     stable identity moved unexpectedly, or the current aggregate manifest
+     hash differs. Preserve the existing tree byte-for-byte and report the
+     existing/incoming manifest diff for explicit reconciliation. Never treat
+     a dirty work copy as disposable and never route this work-local conflict
+     through Notion transport conflict handling;
+   - when the current tree is absent or exactly matches its recorded manifest,
+     stage only the selected set in a sibling temporary directory, preserving
+     returned relative paths. Verify the staged manifest, move an existing
+     clean tree to a sibling rollback path, atomically rename the staged tree
+     into `work_spec_root`, and restore the rollback tree if promotion fails.
+     Remove the rollback only after the promoted manifest verifies;
+   - record the root ref, paths, source revision, per-file source hashes, and
+     aggregate materialization-manifest hash in the work state/receipt. The PM
+     reconciles `state.md`; this skill returns the required update rather than
+     editing PM-owned indexes itself.
+4. In `complete` mode:
+   - require approved changes and a clean review disposition in the work state;
+   - compare work copies with matching mirror files by `ref:`. Apply authored
+     content changes to mirror MDC only through `Skill(mdc)`; transport metadata
+     remains owned by `sync-notion`/`notion-sync`;
+   - invoke `Skill(sync-notion)` in `local-to-notion` or `two-way-merge` mode as
+     required by the comparison. Never reproduce its conflict protocol;
+   - invoke `Skill(sync-notion)` in `notion-to-local` mode into a verification
+     directory and require matching identity and clean expected diff before
+     replacing the mirror;
+   - regenerate the affected versioned specification under
+     `docs/specs/<capability>/`. Use lowercase human-owned filenames and
+     `index.md`; do not reuse or derive notion-sync paths. Preserve stable
+     Notion ids, source revision, source hash, derivation timestamp, and a
+     durable task/PR/Notion receipt anchor in derived frontmatter. Keep the
+     ignored local receipt path only in `state.md`;
+   - enumerate locally registered Git worktrees and jj workspaces explicitly.
+     For locally readable open work whose recorded source id matches and hash
+     changed, return a `needs_revalidation` notice with workspace/work-id/state
+     paths for its PM; do not edit PM-owned state. Return durable external
+     task/PR/Notion anchors and unknown or remote dependents separately. Never
+     claim an ignored remote work directory was discovered or updated.
+5. Return explicit final paths generated or materially rewritten as
+   `generated_files`. Do not run `wc -c`; the PM performs the one final
+   batch size pass after all artifact writers finish. `.mdc` is size-exempt.
 
 <IMPORTANT>
-Root-spec persistence gate — the filesystem is authoritative, the CLI exit
-code is advisory. The root file is the bundle entry whose 32-hex filename
-suffix equals the input id; confirm it with `test -s <root-file>`.
-
-| CLI exit | Root file present and non-empty | Outcome |
-|----------|---------------------------------|---------|
-| non-zero | any                             | `status: refused`, `reason: spec_bundle_unavailable` |
-| 0        | no                              | `status: refused`, `reason: spec_bundle_unavailable` |
-| 0        | yes                             | `status: completed` (per-page warnings go to `issues`) |
-
-No `completed` status may ever be reported without the non-empty root file on
-disk.
+The default-workspace mirror is ignored local transport state. It must exist
+only under the resolved default workspace and must never be committed, copied
+through Git/jj, or treated as a durable handoff. A linked worktree or secondary
+jj workspace receives only its work-local selected specification.
 </IMPORTANT>
 
 ## Verification
 
-- The root file whose filename suffix matches the input id exists and is
-  non-empty.
-- Every bundle file matches `-{32hex}.md` and `<spec-path>/.gitignore`
-  exists; deviations are listed in `issues`.
-- A refusal left no misleading state: `invalid_id` and the path-escape
-  refusal wrote nothing; a failed pull is reported, never patched over.
+- The root specification is non-empty and its frontmatter `ref:` matches the
+  requested Notion id; filenames play no role in identity.
+- Every materialized path came from the verified transport report and belongs
+  to the requested root tree.
+- An existing work specification was replaced only when its current manifest
+  exactly matched the recorded last-materialized manifest. A missing or
+  diverged manifest produced `materialization_conflict` without changing the
+  existing tree.
+- Mirror and work-spec roots are ignored/untracked in their owning workspaces.
+- Completion has a verified outbound sync, verification pull, refreshed
+  default mirror, durable receipt anchor, explicit locally registered workspace
+  enumeration, and separate unknown/remote revalidation notices.
+- No direct `.mdc` content write bypassed `specification:mdc`, and no transport
+  or conflict operation bypassed `specification:sync-notion`.
 
 ## Completion
-
-Always emit the report below — refusals included — so callers can branch on
-it. On refusal, keep `outputs.notion.id` for correlation and null out the
-bundle fields that never materialized.
 
 <report>
 
 ```yaml
 skill: sync-spec
-status: completed | refused
-# refusal reasons: invalid_id | notion_unavailable | notion_not_found | spec_bundle_unavailable
+status: completed|partial|refused
+mode: materialize|complete
+work_id: '<id>'
 outputs:
-  notion:
-    id: '<32-char hex>'
-    title: '<page title>'
-  spec_bundle:
-    spec_path: '<absolute path>'
-    files:
-      - path: '<path>/<kebab-title>-<32hex-id>.md'
-        notion_id: '<32hex>'
+  default_mirror: '<absolute default-workspace path or null>'
+  work_spec_root: '<absolute active-workspace path>'
+  notion_root: {id: '<32hex>', path: '<notion-sync-owned path>'}
+  materialization: {status: unchanged|replaced|materialization_conflict, manifest_hash: '', existing_preserved: true|false, conflict_diff: []}
+  materialized_files: [{path: '', notion_id: '', source_revision: '', source_hash: ''}]
+  derived_specs: [{path: '', source_ids: [], source_revision: '', source_hash: '', receipt_anchor: ''}]
+  revalidation:
+    local_registered: [{workspace_root: '', work_id: '', state_path: '', status: needs_revalidation, state_updated: false}]
+    external_receipt_anchors: []
+    unknown_or_remote_dependents: []
+generated_files: []
 issues: []
 ```
 

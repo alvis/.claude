@@ -176,7 +176,7 @@ export const uploadBucket = edge.getOutput('originBucketName');
 
 One Pulumi stack per environment composes `ComponentResource` building blocks (`src/resources`) into a single declarative graph; WAF / cache rules (`src/policies`) and Lambda@Edge handlers (`src/lambdas`) sit in reusable modules.
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for network topology, rollout pipeline, and `pulumi up` sequence.
+See [`docs/architecture/edge-cdn-stack.md`](./docs/architecture/edge-cdn-stack.md) for network topology, rollout pipeline, and `pulumi up` sequence.
 
 ---
 

@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -296,10 +297,44 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
-    def test_main_agent_instructions_stay_under_two_kilobytes(self) -> None:
-        instructions = (ROOT / "plugins/essential/MAINAGENT.md").read_bytes()
+    def test_injected_instructions_stay_under_two_kilobytes(self) -> None:
+        for name in ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md"):
+            with self.subTest(name=name):
+                instructions = (ROOT / "plugins/essential" / name).read_bytes()
+                self.assertLess(len(instructions), 2_000)
 
-        self.assertLess(len(instructions), 2_000)
+    def test_role_hooks_expand_the_engineering_work_reference(self) -> None:
+        essential = ROOT / "plugins/essential"
+        manifest = json.loads(
+            (essential / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+        )
+        expected = str(essential / "references/engineering-work.md")
+
+        for event in ("SessionStart", "SubagentStart"):
+            commands = [
+                hook["command"]
+                for group in manifest["hooks"][event]
+                for hook in group["hooks"]
+                if hook["type"] == "command" and ".md\"" in hook["command"]
+            ]
+            self.assertEqual(2, len(commands))
+            for command in commands:
+                with self.subTest(event=event, command=command):
+                    env = os.environ.copy()
+                    env["CLAUDE_PLUGIN_ROOT"] = str(essential)
+                    completed = subprocess.run(
+                        ["bash", "-c", command],
+                        text=True,
+                        capture_output=True,
+                        check=False,
+                        env=env,
+                    )
+                    self.assertEqual(0, completed.returncode, completed.stderr)
+                    context = json.loads(completed.stdout)["hookSpecificOutput"][
+                        "additionalContext"
+                    ]
+                    self.assertNotIn("{{PLUGIN_DIR}}", context)
+                    self.assertIn(expected, context)
 
     def test_session_start_emits_a_valid_session_context_payload(self) -> None:
         essential = ROOT / "plugins/essential"

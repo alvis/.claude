@@ -4,15 +4,15 @@ Loaded by `SKILL.md` Step 3. Fills in AI verdicts for findings the CLI marked `n
 
 **Step Configuration**:
 - **Purpose**: Fill in AI verdicts for findings the CLI marked `needs_ai_review`, and resolve cross-origin expansion questions
-- **Input**: `<out>/report.json` (contract v3; see `cli/audit_cli/types.py`)
-- **Output**: `<out>/report-final.json` with `ai_verdict` populated
+- **Input**: `<audit-dir>/report.json` (contract v3; see `cli/audit_cli/types.py`)
+- **Output**: `<audit-dir>/report-final.json` with `ai_verdict` populated
 - **Parallel Execution**: No
 
 Claude does **not** re-run the crawl, does **not** re-audit code-shaped rules, and does **not** second-guess automated findings. Claude fills in `ai_verdict` only for items the CLI explicitly flagged.
 
 ## 3.1 Read the Report
 
-1. Read `<out>/report.json` (path captured from Phase 2 stdout).
+1. Read `<audit-dir>/report.json` (path captured from the CLI stdout).
 2. Validate the contract version matches v3 (see `cli/audit_cli/types.py`). If not, stop and surface the mismatch.
 
 ## 3.2 Resolve Cross-Origin Candidates
@@ -65,4 +65,4 @@ For each finding where `needs_ai_review` is true **and** the gate above is satis
 
 ## 3.4 Persist Merged Report
 
-Write the merged report to `<out>/report-final.json`. Phase 4 reads exclusively from this file.
+Write the merged report to `<audit-dir>/report-final.json`. Canonical review rendering reads exclusively from this file when it exists.

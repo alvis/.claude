@@ -1,4 +1,4 @@
-# RESEARCH_BRIEF.md — template
+# research-brief.md — template
 
 This is the verbatim template Step 3 renders into the run directory. The brief is the single source of truth for
 the entire run: every generator, scorer, verifier, and evolver machine-reads it and nothing else. The orchestrator
@@ -63,7 +63,7 @@ plateau: { rounds: 3, epsilon: '' }   # MANDATORY — epsilon = min meaningful i
 execution:
   code_execution: false           # MANDATORY in code mode — explicit user grant
   worktree_isolation: true        # forced true when code_execution && fanout > 1
-output_dir: autoresearch_<slug>_<date>/
+output_dir: <work-dir>/evidence/autoresearch/<semantic-slug>/
 ---
 
 ## Goal

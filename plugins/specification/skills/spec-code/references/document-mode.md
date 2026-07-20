@@ -1,10 +1,13 @@
 # DOCUMENT Mode — Codebase-Extraction Workflow
 
-DOCUMENT mode generates a specification by analyzing an existing codebase rather than designing from scratch. It produces a DESIGN.md (and child files) that documents reality, not aspiration.
+DOCUMENT mode derives specification content from an existing codebase. It
+updates the active work specification and ultimately the versioned capability
+docs; it does not create root design files.
 
 ## When DOCUMENT Mode Activates
 
-- A codebase exists but no DESIGN.md is present, OR
+- A codebase exists but no authoritative capability specification is present,
+  OR
 - The instruction explicitly requests documentation of existing code.
 
 ## Step A — Analyze Existing Codebase (Step 1.3 in parent workflow)
@@ -63,30 +66,32 @@ DOCUMENT mode does NOT research; it extracts.
 - Note the actual styling approach used.
 - Document reusable components as they exist.
 
-## Step G — File Generation (Step 9 in parent workflow)
+## Step G — Artifact generation
 
-- Generate the specification based on code analysis.
+- Generate work-local design evidence and the authoritative MDC specification
+  based on code analysis.
 - Document actual implementation under template sections.
 - Fill all template sections with discovered information.
 - Note where the implementation differs from best practices (if relevant).
-- Apply the standard frontmatter (see `references/frontmatter.md`).
+- Apply transport and derivation metadata from `references/frontmatter.md`.
 
-## Notion Sync Considerations (Step 10)
+## Notion sync considerations
 
 When syncing a DOCUMENT-mode spec to Notion:
 
 - Set page property `Status = "Implemented"` (CREATE mode uses `"Drafting"`).
-- Otherwise delegate the standard synchronization flow to `Skill(sync-notion)`; spec-code owns document generation, not Notion transport or conflict mechanics.
+- Delegate completion to `Skill(sync-spec)`, which delegates transport and
+  conflict mechanics to `Skill(sync-notion)`.
 
 ## Examples
 
 ```bash
 /spec-code "Document the existing Express API in this codebase"
-# Auto-detected DOCUMENT (codebase exists, no DESIGN.md).
+# Auto-detected DOCUMENT (codebase exists, no capability specification).
 # Extracts package name from package.json (e.g., "express-api").
 # Analyzes structure, extracts tech stack, documents architecture from code.
 # Identifies components, extracts API endpoints from route files.
-# Generates DESIGN.md + child files with frontmatter.
+# Generates work-local evidence, Notion-backed MDC, and reviewed derived docs.
 # Searches Design Specification database for "express-api".
 #   - If found: updates existing page with Status="Implemented".
 #   - If not found: creates new page with Status="Implemented".
@@ -106,5 +111,5 @@ When syncing a DOCUMENT-mode spec to Notion:
 # Partial-codebase DOCUMENT.
 # Analyzes auth-related files only.
 # Documents auth component architecture and API endpoints.
-# Produces a focused DESIGN.md following template structure.
+# Produces a focused capability specification following the template.
 ```

@@ -1,6 +1,6 @@
 # Complete-Test Orchestration — batches, dispatch prompts, and reports
 
-Referenced from SKILL.md. You are the orchestrator: drive the workflow end-to-end via fire-and-forget `Task` subagents with TodoWrite-based status tracking, dispatching a maximum of **8 parallel subagents** at any time. After each sub-step, aggregate the returned reports before moving on. Every dispatch names the standards to read (`testing/meta.md` + `testing/write.md`, `typescript/write.md`, `documentation/write.md`) and forbids further delegation.
+Referenced from SKILL.md. You are the orchestrator: drive the workflow end-to-end via fire-and-forget `Task` subagents with TodoWrite-based status tracking, dispatching a maximum of **8 parallel subagents** at any time. After each sub-step, aggregate the returned reports before moving on. Every dispatch names the standards to read (`testing/meta.md` + `testing/write.md`, `typescript/write.md`, `documentation/write.md`), the active work root, and the relevant state-linked paths; tells the child to read `working.md` then `state.md`, forbids writing `working.md` or reconciling overview files, and forbids further delegation. Every writer returns explicit `generated_files` to the PM.
 
 ## Sub-step 1 — Initial coverage analysis (single subagent)
 
@@ -97,3 +97,7 @@ PASS → workflow complete. FAIL → return to the sub-step that owns each block
 ## Final report shape
 
 Aggregate into one report covering: baseline coverage → batches executed, tests created/kept/deleted → redundancy candidates, removed, kept-essential → issues fixed → fixtures consolidated, unused files deleted → final verified coverage, all-passing status, efficiency metrics, and per-source statements/branches/functions/lines. Name every justified gap.
+
+Include the deduplicated `generated_files` from all subtasks. No child runs file
+sizing; the PM performs the single final Markdown batch only after every
+artifact writer has returned.

@@ -1,20 +1,31 @@
 # Working as a team
 
-Honor these rules — main agent or sub — before reaching for the full protocol.
+- Keep bounded conversational work inline. Delegate when a live specialist owns
+  the outcome, independent work can run in parallel, noisy output would consume
+  context, or independent review is required. Review and synthesize returns.
+- Inspect the live roster before every spawn. Match the requested action and
+  deliverable before subject nouns; never invent an unavailable role or an
+  unrequested prerequisite stage.
+- Only the main agent assigns configured teammate names. Capture returned
+  `agent_id`s and address every direct message by ID. Nested agents may spawn
+  only certainly one-off helpers and omit configured names.
+- Give full context once: objective, constraints, acceptance criteria, and
+  absolute artifact paths. Later messages contain only changed state, a
+  decision, blocker, or requested result. Keep every dispatch and direct message
+  below 4,096 characters; externalize longer detail to a task-owned artifact.
+- Distinguish user intent, observed facts, inferences, accepted reversible
+  assumptions, and unresolved questions. Stop stale work when evidence changes
+  the plan and escalate consequential decisions.
+- Follow a skill yourself and delegate only its bounded steps. Parallelize only
+  independent work. Own what you spawn and independently review consequential
+  changes. Never invent runtime measurements.
 
-- **Delegate on signal, not reflex.** Keep conversational, trivial, and bounded work inline. Delegate when a teammate owns the outcome, the output would flood your context, work can run in parallel, or independent review is needed — cross that line and you route it, no exceptions. Delegation never transfers accountability: review and synthesize what returns.
-- **Route to the live roster.** Inspect the available agents immediately before every spawn and match by requested action and deliverable first, then tools and independence. Verbs and acceptance criteria outrank shared subject nouns — for example, "implement a React component" belongs to an implementer, not a designer whose description also mentions components. Do not invent an unrequested prerequisite stage. Treat named routing rows as proven defaults, not limits, and never invent an unavailable agent.
-- **Only the main agent names teammates.** The main agent chooses one of the three short names in the selected role's description, combines it with the role and task, and changes the short name when it would collide with a living teammate. Nested agents omit configured names and may spawn only a certainly one-off helper by `subagent_type`.
-- **Delegate continuing work directly when the owner is known.** A nested agent that knows the best teammate and its `agent_id` messages that teammate directly. If it knows the teammate but not the ID, it asks the main agent to resolve the ID. Only when it does not know who should own the work does it ask the main agent to suggest a suitable teammate; the main agent reuses the best warm match by prior folder or feature history, or spawns a new named teammate when none fits.
-- **Address agents by ID.** Every direct `SendMessage` call targets the recipient's `agent_id`, never its role, `subagent_type`, configured name, or label.
-- **Keep every agent message under 4,096 characters.** Before any `Agent`, `Task`, or `SendMessage` call, inspect the body. If it would exceed the limit, move the detail to a durable task-owned file and send its absolute path plus a summary of at most two lines. The recipient decides whether the summary is sufficient. An overlong inline body is a communication defect; leads and reviewers return it for externalization.
-- **Give full context once, then send deltas.** The initial dispatch is a bounded mission capsule: objective, constraints, acceptance criteria, why it matters, and absolute paths to the relevant standards and artifacts. After that, send only changed state, a decision, a blocker, or a requested result — never replay rails, paths, SHAs, or prior evidence.
-- **Keep coordination terse.** Do not answer idle-only notifications. Batch decisions instead of seeking confirmation twice. Gates and leads return `ok` or `blocked` plus at most two lines; detailed evidence stays with the producer or in a referenced artifact.
-- **Expose uncertainty.** Distinguish user-stated intent, observed repository facts, inferences, accepted assumptions, and unresolved questions. Never present a hypothesis as repository or runtime evidence.
-- **Let evidence revise the plan.** When repository or runtime evidence invalidates a plan, stop following the stale portion. Reassess the affected scope and dependencies, then take only a reversible low-impact path and record it or escalate the material decision.
-- **You own your skills.** Follow a skill yourself and delegate only the tasks within its steps; subagents don't run your skills.
-- **Parallel first.** Launch independent tasks together in a single message; serialize only where one truly needs another's output.
-- **Own what you spawn.** Own the quality of every agent's output. Put consequential or changed code through an independent reviewer before calling it done.
-- **Never invent a number.** Report context usage only when the runtime measures it; otherwise report task affinity and whether enough room remains.
+Before delegating, orchestrating, or recording review, read
+`{{PLUGIN_DIR}}/references/orchestration.md`.
 
-Before you delegate, orchestrate, or record a review, read `{{PLUGIN_DIR}}/references/orchestration.md` — it holds the boundary, topology, model and effort, nesting, dispatch, and review recording.
+Before creating or materially rewriting project Markdown, read
+`{{PLUGIN_DIR}}/references/engineering-work.md`; if unavailable, do not write
+artifacts and report the missing contract. Before any work artifact, run its
+workspace resolver. Workers stop on `requires_ignore`; the PM alone adds
+`.engineering/` to the target `.gitignore`, records it in `generated_files`,
+and reruns the resolver.

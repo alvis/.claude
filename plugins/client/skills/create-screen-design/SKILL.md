@@ -1,113 +1,90 @@
 ---
 name: create-screen-design
-description: Create new responsive screen-design documentation in the canonical Notion Screens database for a named product and screen. Use when a product needs a new UX contract, layout alternatives, interaction states, or handoff notes. Preserve the live template and database relations; route existing-page changes to update-screen-design.
+description: Create a new responsive screen-design contract from notion-derived work context, keep temporary exploration in the active work item, sync approved content through MDC/Notion owners, and promote durable design docs. Route existing screens to update-screen-design.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep
-argument-hint: "<product> <screen descriptions...> [--constraints=...] [--platforms=...]"
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion
+argument-hint: "<product> <screen descriptions...> --work-id=<id> [--constraints=...] [--platforms=...]"
 ---
 
 # Create Screen Design
 
-Create new screen-design pages in the canonical Notion Screens database.
-`update-screen-design` owns every change to an existing page.
+Create new screen design without conflating ignored Notion transport,
+task-specific design exploration, and durable versioned design knowledge.
 
 ## Boundaries
 
-- Use for: authoring and pushing new screen-design documentation — UX
-  contract, layout alternatives, interaction states, responsive behavior, and
-  handoff notes — under the Screens database for a resolved product.
-- Do not use for: updating an existing screen (`update-screen-design`),
-  implementation-facing visual design (`web:design`), rendered assessment
-  (`web:audit`), frontend code, clickable prototypes, or modifying the
-  canonical template itself.
+- Use for new UX contracts, layouts, responsive behavior, interaction states,
+  accessibility, and handoff notes. Existing pages route to
+  `update-screen-design`; implementation/rendered review stays with Web owners.
+- Temporary detail lives in
+  `.engineering/work/<work-id>/design/<slug>.md`; `design.md` is the
+  PM-owned overview. Do not create an independent design artifact elsewhere.
+- Notion-backed `.mdc` paths are owned by notion-sync and authored only through
+  `specification:mdc`; do not choose/derive filenames or size-gate MDC.
+- Durable feature/screen design promotes to `docs/design/<slug>.md`; only truly
+  system-wide tokens/components/states/motion/accessibility update
+  `docs/design/system.md` or its children.
 
 ## Inputs
 
-- **Required**: a product that resolves on Notion and at least one screen
-  description. An unresolved product blocks creation.
-- **Optional**: `--constraints` (brand, layout, or design limits; default:
-  follow the template) and `--platforms` (default: web and mobile).
-- **Prerequisites**: the `notion-sync` executable and `NOTION_TOKEN`. If
-  either is missing or auth fails, stop before local authoring and report the
-  prerequisite.
+- **Required**: product, screen descriptions, and `--work-id=<id>`.
+- **Optional**: constraints and platforms (default web + mobile).
+- **Prerequisites**: resolvable product/context, Notion credentials/tooling,
+  and an active engineering work item.
 
-## Canonical Notion contract
+The canonical template, parent database, and collection remain:
 
-- Template: `https://www.notion.so/4555730e74b44592b77dd8a97620d3f2`
-- Screens database parent: `https://www.notion.so/110161382ea64eefa46a4907574d4530`
-- Screens collection: `collection://c7bc479b-71db-41b1-b5ab-a07c641816b5`
-
-<IMPORTANT>
-All Notion operations use `notion-sync` through Bash. Never open Notion URLs
-directly or substitute another API. Recursive pulls are one-shot: a single
-`--follow*` invocation per tree, never a separate pull for each discovered
-link.
-</IMPORTANT>
+- template `4555730e74b44592b77dd8a97620d3f2`
+- parent `110161382ea64eefa46a4907574d4530`
+- collection `c7bc479b-71db-41b1-b5ab-a07c641816b5`
 
 ## Workflow
 
-1. Resolve the product and search for colliding screen names with
-   `notion-sync search "<query>" -j`. A found existing screen routes to
-   `update-screen-design`.
-2. Create a run directory and pull the template once:
-
-   ```bash
-   notion-sync pull https://www.notion.so/4555730e74b44592b77dd8a97620d3f2 \
-     --follow-children --follow-links --out "$RUN_DIR/template"
-   ```
-
-3. Pull the resolved product/context tree once with
-   `--follow-children --follow-links` (or `--follow` when file or database
-   children are required). Preserve the downloaded Markdown files as this
-   run's content snapshot. If any recursive pull is incomplete, mark the
-   affected screens `partial`; do not push from a guessed template or
-   relation.
-4. Read the mirrored template and context completely, then record a mapping
-   from every requested screen to its product relation, source context files,
-   platform constraints, and local destination file.
-5. For each screen, copy the template's frontmatter shape and required
-   headings into `<run-dir>/<screen-slug>.md`, set
-   `parent: https://www.notion.so/110161382ea64eefa46a4907574d4530`, and
-   preserve database property names with the product relation exactly as
-   represented in the pulled context. Do not add a fake `ref:`;
-   `notion-sync push` writes the created page reference back into the source
-   file.
-6. Fill each page with screen purpose, audience and task, content hierarchy,
-   navigation, responsive behavior for the requested platforms, interaction
-   and loading/empty/error states, accessibility, meaningfully distinct
-   alternatives with rationale, accepted and open decisions, implementation
-   notes, and linked product context. Neither five variants nor ASCII
-   rendering is mandatory — structured layout notes or supplied visuals may
-   communicate the contract better.
-7. Before each push, compare the local page with the template snapshot:
-   required headings, frontmatter and property keys, product relation,
-   responsive coverage, and no unresolved placeholders. Save this pre-push
-   snapshot and the screen-to-source mapping.
-8. Run `notion-sync diff <file>` when supported, then `notion-sync push
-   <file>`. Re-read the file and require a persisted `ref:` plus the returned
-   Notion URL. If the push succeeds remotely but `ref:` is not persisted
-   locally, stop and report `partial` rather than retrying creation and
-   risking a duplicate. Do not push later screens after an auth failure,
-   template mismatch, unresolved identity, or uncertain previous create;
-   retain local files and mappings so continuation can determine exactly what
-   exists.
-9. Run the verification below for each created screen; when a check fails,
-   fix the cause and re-run that check. Repeat until every check passes or a
-   concrete blocker remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. Resolve work/default
+   roots; read `working.md`, then `state.md`, then referenced spec/design paths.
+2. Materialize required product/spec context through
+   `specification:sync-spec`. Pull the template/context transport into the
+   default-workspace mirror through `specification:sync-notion`, preserving its
+   returned `.mdc` paths and refs. Search for collisions; existing screens route
+   to update.
+3. Map each requested screen to product relation, source refs, constraints, and
+   platform coverage. Create a lowercase work-local design child with purpose,
+   audience/task, hierarchy/navigation, responsive behavior, loading/empty/
+   error states, accessibility, distinct alternatives/rationale, decisions,
+   implementation notes, and provenance.
+4. Present alternatives and obtain approval. Return the child row/status to the
+   PM for `design.md`/`state.md` reconciliation; do not edit those overview
+   files directly.
+5. For approved screens, ask `specification:sync-notion` to create the page
+   under the canonical parent using the live template/relations. Route authored
+   MDC body content through `specification:mdc`; use the path/ref returned by
+   transport and never hand-write MDC. Verify the persisted ref and remote
+   identity before attempting another screen.
+6. Promote stable non-system design to `docs/design/<screen-slug>.md` with
+   Notion ids, source revision/hash, approved decision links, and supersession
+   metadata. Route any system-wide rules to `docs/design/system.md` without
+   duplicating them in the screen doc. Update `docs/index.md`/design links when
+   needed.
+7. Verify each remote page through `sync-notion` diff/verification pull and the
+   durable derivation against the verified source. Stop on uncertain creation
+   to avoid duplicates.
+8. Return explicit final paths generated or materially rewritten as
+   `generated_files`, plus PM reconciliation. Do not run `wc -c`; the PM runs
+   the one final batch pass after all writers. MDC and `working.md` are exempt.
 
 ## Verification
 
-- Pull each created page once into a verification directory, or run
-  `notion-sync diff <file>` against its new `ref:`.
-- Confirm title, required template sections, parent database, collection
-  relationship, product relation, and responsive/state coverage.
-- Confirm each source file carries exactly one persisted `ref:` matching the
-  created page — one unambiguous remote page per screen.
+- Each screen has one unambiguous remote ref with canonical parent/product
+  relations and complete responsive/state/accessibility coverage.
+- Work design remains temporary and lower-case; durable promotion is approved,
+  versioned, linked, and provenance-backed.
+- No MDC path was invented or hand-edited; no worker edited PM-owned files.
+- `generated_files` includes every work/durable/transport path changed.
 
 ## Completion
 
-Return `success`, `partial`, or `blocked`; the canonical IDs used; template
-and context snapshot paths; per-screen local file, product mapping, persisted
-`ref:`, URL, and verification result; screens not attempted; and any recovery
-action. A successful screen has one unambiguous remote page, a locally
-persisted reference, and verified database/product placement.
+Return status, canonical ids, work/spec sources, per-screen temporary design,
+remote ref/verification, durable promotion/system-rule routing, PM
+reconciliation, unattempted recovery, and `generated_files`.

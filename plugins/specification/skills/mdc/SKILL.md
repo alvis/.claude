@@ -1,171 +1,97 @@
 ---
 name: mdc
-description: Read, edit, and author MDC (Contextual Markdown, @theriety/mdc) files safely with native text tools. Use when asked to "edit this .mdc file", "add a block to <doc>.mdc", "update the annotation for ref <x>", "convert this to MDC", whenever a .mdc file must be read or written, or when mutating any file under .code-spec/.
+description: Read, edit, and author Notion-backed MDC files safely with native text tools while preserving @theriety/mdc grammar and ref identity. Use for any authored .mdc body change. Keep transport, pairing, and conflict orchestration in sync-notion and sync-spec.
 model: sonnet
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(ls:*), Bash(cat:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(ls:*), Bash(cat:*), Bash(*/bin/resolve-engineering-workspace:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/*)
 argument-hint: "[<path-to-.mdc>] [--mode=read|edit|author]"
 ---
 
 # MDC
 
-Safely read, edit, and author MDC documents — the @theriety/mdc dialect of
-Markdown that layers `{{ key: value }}` block annotations,
-`[text]{{ key: value }}` inline annotations, optional `--{ ref: id }--`
-closing markers, and YAML front matter on top of CommonMark — by driving
-native text tools (Read/Edit/Write/Grep) without the `@theriety/mdc` Node
-runtime, while honoring every invariant the parser checks so edits round-trip
-cleanly. Notion transport belongs to `specification:sync-notion` and
-`specification:sync-spec`.
+Safely read or author Notion-backed MDC (`@theriety/mdc`) while preserving its
+block tree, annotations, refs, closing markers, and YAML frontmatter.
 
 ## Boundaries
 
-- Use for: reading an `.mdc` file and explaining its block tree, annotations,
-  and refs; editing an existing `.mdc` (update annotation values, append
-  child blocks, rename refs, replace block content); authoring a new `.mdc`
-  with correct front matter, indentation, annotations, and closing markers.
-  This skill is the only writer for `.code-spec/*.md`.
-- Do not use for: JSON-schema or domain validation (no `validate()`), syncing
-  to Notion (`specification:sync-notion` / `specification:sync-spec`),
-  rendering to HTML, translating arbitrary plain Markdown into MDC as a
-  first-class workflow, or reasoning about `diff()` ref-identity semantics.
-- Refuse when: the file is not `.mdc` (suggest a plain-Markdown workflow);
-  the edit target is ambiguous — no `ref:`, no unique text, no line range —
-  in which case ask for a `ref:` or the exact opening line; or the request
-  needs the `@theriety/mdc` runtime (parser AST, `diff()`, `validate()`,
-  library `stringify()`) — suggest running the npm package directly.
+- This is the only skill that authors `.mdc` body content. `notion-sync` may
+  materialize transport files or update pairing metadata through
+  `specification:sync-notion`, but callers must not hand-edit MDC.
+- `.mdc` is reserved for Notion-backed files. In engineering work, those files
+  live in the resolved default workspace's `.engineering/notion/` mirror or an
+  active workspace's `.engineering/work/<work-id>/spec/` materialization.
+- Do not derive or rename notion-sync paths, run the ordinary Markdown size
+  gate, sync to Notion, or promote durable `docs/specs/` content here.
+- Refuse a non-`.mdc` target, ambiguous edit location, or operation requiring
+  the parser runtime rather than safe text editing.
 
 ## Inputs
 
-- **Required**: the target `.mdc` path, or for authoring, the destination
-  path plus the content to express.
-- **Optional**: `--mode=read|edit|author`. When absent, infer: missing file →
-  `author`; existing file with a read/show/explain verb → `read`; anything
-  else on an existing file → `edit`.
+- **Required**: target `.mdc` path, or destination plus content for authoring.
+- **Optional**: `--mode=read|edit|author`; otherwise infer from existence and
+  request verb.
 
 ## Mandatory invariants
 
 <IMPORTANT>
-Every read, edit, and author operation must respect these — they are exactly
-what the `@theriety/mdc` parser enforces, and violating them is the most
-common LLM-produced corruption:
-
-1. **Indentation**: 2 spaces per nesting level, cumulative (depth 3 =
-   6 spaces). No tabs, ever.
-2. **Annotation adjacency**: a block annotation `{{ … }}` sits on the line
-   immediately before its target block — no blank line between them. A blank
-   line detaches the annotation and silently breaks the binding; this is the
-   single most common edit failure.
-3. **Front matter**: when present, it is the very first content; opening and
-   closing `---` alone on their lines; the body parses as standard YAML.
-4. **Annotation body syntax**: content inside `{{ … }}` is YAML object
-   syntax (`key: value, key2: [a, b]`, quoted strings allowed, end-of-line
-   `#` comments allowed inside the outer braces).
-5. **Inline annotations**: `[content]{{ … }}`, `[text](url){{ … }}`, or
-   `[]{{ type: x }}` for empty-content type markers — the annotation
-   immediately follows the closing `]` or `)`, no whitespace between.
-6. **Closing markers (when present)**: syntax is exactly
-   `--{ ref: <name> }--`; the `ref` must match the opening block's `ref`;
-   the marker's indent must equal the opening block's indent.
-7. **Escapes**: `\{\{`, `\}\}`, `\[`, `\]`, `\\` render those characters
-   literally. Inside fenced code blocks no escaping is required — fences are
-   parser-opaque.
+1. Indent exactly two spaces per nesting level; never introduce tabs.
+2. A block annotation is immediately adjacent to its target block.
+3. Frontmatter, when present, starts at byte zero and is valid YAML.
+4. Annotation bodies are YAML object syntax and close on the same line.
+5. Inline annotations immediately follow `]` or `)`.
+6. Every closing marker is `--{ ref: <name> }--`, matches the opening ref, and
+   has the opening block's indentation.
+7. Preserve required escapes outside parser-opaque fenced code.
 </IMPORTANT>
 
-Post-edit checklist: indent is a multiple of 2 spaces matching surrounding
-depth; no blank line between an annotation and its block; every opened `{{`
-closes with `}}` on the same line; every `--{ ref: X }--` matches an opening
-`{{ … ref: X … }}` at the same indent; YAML inside `{{ }}` and front matter
-parses. Full grammar: [references/syntax.md](references/syntax.md).
-
-## Closing-marker policy
-
-Full rationale in
-[references/closing-markers.md](references/closing-markers.md); the summary
-here is authoritative for the skill:
-
-- **Reading**: markers are optional — never flag a missing marker as a
-  defect.
-- **Editing**: preserve every existing marker; add one for any block that has
-  (or after the edit will have) both a `ref:` and at least one child — this
-  matches the stringifier default and protects against indentation drift.
-- **Authoring**: emit markers by default on every block with a `ref:` and at
-  least one child.
-- **Resilience semantics**: a marker extends the parent's scope beyond what
-  indentation implies — under-indented children inside the marker boundary
-  still parse as descendants, so markers make later edits recoverable.
+Full grammar: [references/syntax.md](references/syntax.md). Marker rationale:
+[references/closing-markers.md](references/closing-markers.md).
 
 ## Workflow
 
-1. Detect the mode (argument or inference above) and confirm the target path
-   ends in `.mdc`; otherwise refuse per Boundaries. Load the mode's
-   references before touching the document: `read` →
-   [references/syntax.md](references/syntax.md); `edit` → syntax plus
-   [references/closing-markers.md](references/closing-markers.md) and
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. This gate applies to
+   `edit` and `author`; read mode remains non-mutating. Run the absolute
+   `bin/resolve-engineering-workspace` path declared by that reference with the
+   work id before writing. If the resolver path is missing, non-executable, or
+   refuses the workspace, stop before mutation and report its reason. Validate
+   that an engineering MDC target belongs to the returned default mirror or
+   active work spec root. For active work, read `working.md`, then `state.md`,
+   then the referenced MDC target.
+2. Load mode references before touching content: `read` → syntax; `edit` →
+   syntax, closing markers, and
    [references/editing-rules.md](references/editing-rules.md); `author` →
-   syntax plus closing-markers and
-   [references/examples.md](references/examples.md).
-2. Locate the target — for edit mode on a non-trivial file, never edit
-   blind:
-
-   ```bash
-   grep -n "ref:\s*${REF_ID}" path/to/doc.mdc     # block by ref
-   grep -nE "^\{\{\s*ref:" path/to/doc.mdc         # top-level annotations
-   grep -nE "^\s*--\{\s*ref:" path/to/doc.mdc      # existing closing markers
-   ```
-
-   Then Read the file or a focused range so surrounding indent and adjacent
-   blocks are in context.
-3. Apply the smallest safe operation; the full catalogue lives in
-   [references/editing-rules.md](references/editing-rules.md). Safe (apply
-   directly): update an annotation key/value, append a child block at the
-   correct indent, replace a block's text content (same type), add a `ref:`
-   to an unref'd block. Risky (confirm with the user first): move a block
-   under a new parent, delete a block with children, change a block's
-   inferred type, rename a `ref:` referenced elsewhere. Edits must land
-   inside the existing block tree — refine the targeted block in place
-   rather than appending a duplicate sibling or trailing a new section after
-   the document's final closing marker. When a `ref:`-bearing block gains
-   its first child, add its closing marker at the parent's indent after the
-   last child; when it loses its last child, remove the orphaned marker.
-   When authoring a `.code-spec`/Notion-bound document, emit `title`,
-   `last_edited_time`, and `ref` in the front matter in that order — a
-   placeholder `last_edited_time` is fine, step 5 refreshes it.
-4. Verify invariants: after every Edit or Write, re-Read the modified region
-   (about 5 lines before and 10 after; for whole-file authoring, the head
-   and tail) and run the post-edit checklist. Fix any failure before
-   yielding.
-5. Stamp `last_edited_time` — edit/author modes only; read mode never writes
-   and never stamps. Run once, as the final action, after every changed file
-   is verified — never mid-batch, or a later edit leaves an earlier file
-   stamped with a stale time. Pass exactly the files whose content changed:
+   syntax, closing markers, and [references/examples.md](references/examples.md).
+3. Locate non-trivial edits by `ref:`, unique text, or exact line range, then
+   read enough surrounding structure to determine parentage and indentation.
+4. Apply the smallest coherent operation. Safe edits include annotation scalar
+   changes, same-type text replacement, and correctly indented child append.
+   Confirm before moving/deleting a subtree, changing inferred type, or
+   renaming a referenced `ref:`. Preserve notion-sync frontmatter and path.
+5. Re-read every modified region and apply the invariant checklist. Preserve
+   existing markers; add the stringifier-default marker to a ref-bearing block
+   when it gains children; remove an orphan only when its last child is removed.
+6. After all changed MDC files pass review, stamp them together once:
 
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/stamp-last-edited.sh" \
      path/to/a.mdc path/to/b.mdc
    ```
 
-   The script writes the current UTC time (`YYYY-MM-DDTHH:MM:SS.000Z`) into
-   each file's front-matter `last_edited_time`, replacing or inserting the
-   key; all files in one invocation share one timestamp. A non-zero exit
-   means a file was skipped (not `.mdc`, missing, or no front matter) —
-   investigate before reporting done.
-6. Run the verification below; when a check fails, fix the cause and re-run
-   that check. Repeat until every check passes or a concrete blocker
-   remains, then report the blocker instead of looping.
+   Investigate any non-zero exit. Do not perform `wc -c`; MDC is size-exempt.
+7. Return explicit final paths generated or materially rewritten as
+   `generated_files`.
 
 ## Verification
 
-- The post-edit checklist passes on a fresh Read of every modified region.
-- Every closing marker matches its opening `ref:` at the opening block's
-  indent, and no `ref:`-bearing parent with children lacks one after an
-  edit.
-- The stamp script exited zero and touched exactly the changed files
-  (edit/author modes).
+- A fresh read passes all syntax, indentation, adjacency, marker, and YAML
+  checks for each changed region.
+- The stamp touched exactly the changed edit/author files once at the end.
+- Path, `ref:`, and unrelated transport metadata remain stable unless the
+  request explicitly and safely changed them.
 
 ## Completion
 
-Report the file path, mode, and each change with its block ref and operation;
-say explicitly whether closing markers were added, removed, or preserved;
-name the invariants re-verified; and give the stamped timestamp and file list
-(or note read mode). A refusal states which boundary rule applied and what
-the user should supply — typically a `ref:` or the exact opening line.
+Report mode, file paths, refs and operations, marker disposition, invariants,
+stamp result, and `generated_files`. Read mode reports an empty manifest. A
+refusal names the boundary and the required ref or exact target.

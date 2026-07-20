@@ -1,105 +1,97 @@
-# Design Task Workspace
+# Design work artifacts
 
-Every design task owns one durable workspace at the project root:
-
-```text
-./.design-<area-noun-phrase>/
-├── CONTEXT.md
-├── DECISIONS.md
-├── boards/        # each board HTML file and its rendered image
-├── previews/            # each preview gets its own directory and screenshot
-│   └── tokens/          # preview.html + screenshot.webp (+ light/dark variants)
-├── captures/            # temporary browser captures and computed-style data
-├── diffs/               # design-vs-implementation comparison boards + renders
-└── inventories/         # facelift/content inventories and comparison data
-```
-
-Create only the subdirectories needed by the task, but every temporary design
-artifact must remain below `./.design-<area-noun-phrase>/`. This includes HTML, CSS,
-JSON, PNG, WebP, screenshots, browser captures, preview exports, and facelift
-inventories. Board images stay beside their board HTML in `boards/`. Preview
-screenshots stay beside their preview HTML under `previews/<preview-slug>/`.
-Visual-diff confirmation boards (design reference beside implementation capture, per
-area and mode) live in `diffs/`, each rendered image beside its HTML.
-Do not use a session scratchpad or `$TMPDIR` fallback. Production implementation
-files remain in their normal source locations.
-
-## Bootstrap and resume gate
-
-1. Derive a short, stable, filesystem-safe noun phrase from the target (for
-   example, `marketing-homepage` or `checkout-dialog`). Use it consistently for
-   the workspace name during the run.
-2. Before creating anything, inspect the project root for `./.design` and every
-   `./.design-*` directory.
-3. If an existing design directory is found, ask the user whether to resume one
-   of the existing tasks or start a new `./.design-<area-noun-phrase>/` task. For a
-   legacy `./.design` directory, explicitly offer to resume/migrate it or start
-   a new named workspace. Never silently reuse, overwrite, or merge workspaces.
-4. On resume, read `CONTEXT.md` and `DECISIONS.md` before generating a board and
-   continue from the recorded current phase and next action.
-5. On a new task, create `CONTEXT.md` and `DECISIONS.md` before asking design
-   questions or writing a board. Keep them current throughout the run.
-
-The workspace is a resume record, not disposable system temp space. Do not
-delete it automatically after sign-off; ask the user before archiving or
-removing it.
-
-## `CONTEXT.md`
-
-Write the current design context and general direction here. It must include:
-
-- task target and requested outcome;
-- audience, primary user task, and usage context;
-- supplied inputs and evidence (URL, screenshot, code, Figma, or description);
-- detected framework and existing design-system constraints;
-- accessibility, responsiveness, performance, brand, and content constraints;
-- the three-line Direction Summary once confirmed;
-- the active workspace path and root `DESIGN.md` path; and
-- current phase, last completed action, and exact next action for a resume.
-
-Update context when the target, constraints, direction, or phase changes. Keep
-candidate-by-candidate decisions in `DECISIONS.md`, not as an unstructured
-appendix here.
-
-## `DECISIONS.md`
-
-Append one decision record immediately after every visual choice. This includes
-the direction pick, every area/component pick, mix-and-match revisions,
-connective-tissue choices, and any visual library or architecture decision.
-
-Each record must identify:
-
-- decision ID, date, phase, and area/component;
-- the user question and the board HTML and screenshot paths;
-- every presented candidate, with its number, name, rank, why-this-rank, and
-  concrete design details: composition, hierarchy, content treatment,
-  typography, palette/surfaces, spacing, imagery, responsive behavior,
-  interaction/motion, states, and separator treatment where applicable;
-- the chosen candidate or merged variant;
-- every rejected candidate and a one-line reason for rejection;
-- the user's confirmation or the `--quick` auto-pick rationale; and
-- the resulting follow-up or next action.
-
-Never record only `#2 chosen`. The record must preserve enough detail for a
-fresh agent to reproduce the selected design without reopening the screenshot.
-The root `DESIGN.md` may summarize these decisions, but this file is the
-authoritative detailed visual decision history.
-
-## Root `DESIGN.md` and the goal handoff
-
-`<root>/DESIGN.md` is the general direction and implementation handoff for the
-overall design: visual thesis, content plan, interaction thesis, design tokens,
-layout principles, and the final assembled system. Create or update it from
-`references/design.template.md` during the task; do not wait until the end to
-establish the general direction.
-
-Put this exact one-line goal statement near the top of the root `DESIGN.md`,
-replacing the placeholder with the active noun phrase:
+Use the active work directory reported by Essential. A design run has one
+Markdown contract and one evidence root:
 
 ```text
-/goal Follow the decisions in ./.design-<area-noun-phrase>/DECISIONS.md for this design task.
+<work-dir>/
+├── design.md                         # lazy PM-owned overview
+├── design/
+│   ├── <design-slug>.md              # task design and visual decisions
+│   └── <design-slug>/*.md            # only after a required split
+└── evidence/design/<design-slug>/
+    ├── boards/                       # board HTML + rendered image
+    ├── previews/<preview-slug>/      # preview HTML + screenshots
+    ├── captures/                     # browser and computed-style evidence
+    ├── diffs/                        # design/build comparisons
+    └── inventories/                  # facelift and content evidence
 ```
 
-`DESIGN.md` §10 must link to both `CONTEXT.md` and `DECISIONS.md` and summarize
-the chosen direction, area picks, rejected candidates, and sign-off state. Do
-not use it as a replacement for the detailed decision records.
+Create only evidence directories the task needs. Application files remain in
+their owning source paths. Do not use a project-root workspace, session
+scratchpad, or `$TMPDIR` fallback for task evidence.
+
+## Bootstrap and resume
+
+1. Read the shared engineering-work contract, then active `working.md` and
+   `state.md`.
+2. Derive `<design-slug>` with Essential's `derive-engineering-name` executable. Inspect
+   `design.md` and `design/` for an existing child with the same stable target.
+3. If one exists, ask whether to resume it or create a distinct child. On
+   resume, read its current focus, decision log, evidence map, implementation
+   state, and next action before generating a board.
+4. On a new run, create `design/<design-slug>.md` with status `draft`, headline,
+   owner, timestamp, work ID, target, authorization mode, and provenance.
+5. A worker returns the child path. Only the PM creates or reconciles the lazy
+   `design.md` overview and links it from `state.md`.
+
+The design child is the complete domain contract. `state.md` remains the owner
+of the whole work goal, plan, dependencies, and cross-domain lifecycle state.
+
+## Required design-child content
+
+Load every child in the ordered [`design.template.md`](design.template.md)
+manifest. At every save point keep these sections current:
+
+- target, audience, inputs, constraints, authorization, and confirmed
+  visual/content/interaction direction;
+- detailed visual decisions: every presented candidate, rank rationale, chosen
+  or merged design, rejected alternatives and reasons, confirmation, and next
+  action;
+- tokens, typography, layout, responsive behavior, component states,
+  accessibility, motion, reduced-motion, and separator choices;
+- component/source inventory and design-to-source mapping;
+- current design phase, implementation status, last good evidence, failed
+  gate, residual divergences, and exact next action;
+- evidence and source file map; and
+- promotion candidates and their accepted/rejected disposition.
+
+Record each visual choice immediately. Never record only “#2 chosen”; preserve
+enough concrete composition, hierarchy, content, type, palette, spacing,
+responsive, state, motion, and boundary detail to reproduce the choice without
+the image.
+
+If the design child exceeds 16,384 bytes in the PM's final batch pass, retain
+it as the overview and move coherent sections to lowercase same-stem children
+such as `design/<design-slug>/20-visual-system.md`. Never split early merely
+because it crossed the 12,288-byte authoring guide.
+
+## Evidence lifecycle
+
+Boards are task evidence. Keep matching HTML and rendered images together.
+Previews, captures, diffs, and inventories stay below the same evidence root.
+Markdown records concise conclusions and relative evidence paths, not embedded
+screenshots, base64 payloads, or full logs.
+
+Keep active evidence through sign-off. Retirement follows the shared work
+retention contract; no design skill deletes it automatically.
+
+## Legacy inputs
+
+Project-root `.design`, `.design-*`, `DESIGN.md`, `CONTEXT.md`, and
+`DECISIONS.md` are legacy inputs, not active locations. When found:
+
+1. report every exact path and its apparent work target;
+2. propose a content map into `state.md`, `design/<design-slug>.md`, and the
+   evidence root;
+3. require approval before copying or moving anything;
+4. preserve provenance and do not overwrite an existing child; and
+5. never delete legacy paths automatically, even after successful migration.
+
+## Durable promotion
+
+Task detail stays local. After review and sign-off, promote reusable system-wide
+rules to `docs/design/system.md` and durable non-system design to
+`docs/design/<design-slug>.md`. Each original durable path remains its overview;
+same-stem detail directories appear only when the final batch gate requires a
+split. Record work ID, source evidence, review, and supersession provenance.

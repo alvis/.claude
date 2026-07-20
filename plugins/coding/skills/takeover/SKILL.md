@@ -1,87 +1,84 @@
 ---
 name: takeover
-description: Resume paused coding work from CONTEXT.md, NOTES.md, and PLAN.md. Use for takeover, continuing yesterday's coding work, resuming a continuation bundle, or --revalidate; trust recorded assumptions for 24 hours, revalidate older state, and invoke coding:write-code --resume. For saving current state, use the session-persistence workflow.
+description: Rehydrate paused coding work from a portable handover receipt, authoritative repository revision, and Notion specification into a workspace-local engineering work root. Use for continuation in a new Git worktree or jj workspace; invoke coding:write-code --resume after validation.
 model: opus
-allowed-tools: Read, Glob, Edit, Bash, AskUserQuestion, Skill
-argument-hint: "[prefix] [--revalidate]"
+allowed-tools: Read, Glob, Edit, Write, Bash, AskUserQuestion, Skill
+argument-hint: "<receipt-or-anchor> [--revalidate]"
 ---
 
 # Takeover
 
-Validate a handover bundle, resolve its pending decisions, and resume the
-interrupted work by invoking `coding:write-code --resume` exactly once.
-`coding:handover` owns creating and updating handover documents;
-`coding:write-code` owns the continuation itself.
+Rehydrate ignored workspace-local work memory from portable authoritative
+sources, resolve pending decisions, and invoke `coding:write-code --resume`
+exactly once.
 
 ## Boundaries
 
-- Use for: resuming interrupted implementation from persisted handover
-  documents, or picking up another developer's paused task from CONTEXT.md,
-  NOTES.md, and PLAN.md.
-- Do not use for: creating or updating handover notes (`coding:handover`),
-  starting fresh work without a handover bundle (`coding:write-code`), or
-  fixing diagnosed failures directly (`coding:fix`).
-- Never repair handover documents or implement code in this skill; recording
-  resolved decisions (workflow step 3) is the only permitted handover edit.
+- Use for continuing a handed-over engineering work item in this or another
+  Git worktree or jj workspace.
+- Do not assume `.engineering/` is versioned, copied, or synchronized between
+  workspaces. Existing local state is evidence to validate, not the transfer
+  mechanism.
+- Do not implement code here. Apart from rehydrated work artifacts and resolved
+  decisions, implementation belongs to `coding:write-code`.
 
 ## Inputs
 
-- **Required**: none — defaults to `CONTEXT.md`, `NOTES.md`, and `PLAN.md` in
-  the working directory.
-- **Optional**: `[prefix]` — resolves the bundle as `<prefix>-CONTEXT.md`,
-  `<prefix>-NOTES.md`, and `<prefix>-PLAN.md`; `--revalidate` forces assumption
-  revalidation regardless of bundle age.
-- **Prerequisites**: all three handover documents exist and are readable.
+- Required: a portable receipt or an external task, issue, PR, or Notion anchor
+  containing it.
+- Optional: `--revalidate` forces revalidation even when receipt sources match.
+- Require repository access and the authoritative Notion specification named
+  by the receipt.
+
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the current workspace and work
+root from that reference before rehydrating anything.
+The receipt supplies the work ID; never mint a replacement identity.
 
 ## Workflow
 
-1. Resolve the optional prefix and require all three handover documents.
-2. Confirm the documents are structurally valid and internally consistent, and
-   identify a concrete unfinished implementation scope. This check always runs;
-   reject missing, malformed, contradictory, or already-complete handovers with
-   a concise explanation.
-3. Apply the freshness gate to the common ISO 8601 timestamp written as
-   CONTEXT.md and NOTES.md `Last Updated` plus PLAN.md `Updated`:
-   Parse those document fields and compare them with the current UTC time; do
-   not substitute filesystem modification time.
-   - When those three timestamps match and are no more than 24 hours old, and
-     `--revalidate` is absent, treat every recorded assumption as still valid and
-     skip repository assumption revalidation.
-   - When the bundle is older than 24 hours, timestamps are missing or
-     inconsistent, or `--revalidate` is present, revalidate only assumptions that
-     may drift: branch or baseline identity, dependency/API versions,
-     configuration and schema state, external references, and explicit recheck
-     triggers. Record contradictions before execution.
-   - A contradiction discovered naturally during resumed work overrides the
-     trust window and follows the normal deviation or pending-decision path.
-4. Scan PLAN.md for unresolved decision markers (`DECISION REQUIRED`, paused
-   or blocked task marks). For each one, present the options recorded in the
-   document via `AskUserQuestion`, then persist the answers before execution
-   so they survive another interruption: append them to PLAN.md's Decision
-   Log, clear the resolved markers, fold the chosen approach into the affected
-   task descriptions, and keep still-open questions in NOTES.md.
-5. Invoke `coding:write-code --resume` once, passing the resolved handover
-   location, freshness verdict, revalidated contradictions if any, recorded
-   decisions, and the original user context.
-6. Run the verification below; when a check fails, fix the cause and re-run
-   that check. Repeat until every check passes or a concrete blocker remains
-   (for example an unreadable or contradictory bundle the user must resolve),
-   then report the blocker instead of looping.
+1. Parse and validate the receipt schema from `coding:handover`: repository
+   identity, revision, work ID, external anchor, goal/status, authoritative spec
+   IDs and revisions, durable-doc refs, unresolved decisions, validation/sync
+   state, and recheck triggers. Reject missing, contradictory, or completed
+   receipts with a precise reason.
+2. Confirm this checkout matches the repository identity and resolve
+   `.engineering/work/<work-id>/`. Never copy `.engineering/notion/` or another
+   workspace's work directory. Use the specification sync owner to materialize
+   only the required spec into this work root; preserve notion-sync-owned names.
+3. Compare repository revision, spec revision/hash, external anchor, durable
+   docs, dependencies, configuration/schema, and explicit recheck triggers.
+   `--revalidate`, any mismatch, or missing evidence yields `revalidated`;
+   exact matching authoritative sources yields `receipt_verified`. Record every
+   contradiction before execution.
+4. Reconstruct or refresh `state.md` from the receipt and authoritative sources,
+   including the full goal, plan/lifecycle, criteria, decisions, dependencies,
+   blockers, reviews, evidence, promotion, sync, and revalidation state. Link
+   `working.md`. Refresh `working.md` with only current focus, handback point,
+   and fast paths; only the main agent/PM may perform this step.
+5. Resolve decisions that block the next action using `AskUserQuestion`. Store
+   detail in `decisions/<slug>.md`, reconcile `decisions.md`, and update the
+   affected state tasks. Leave deferred questions explicit with owner/deadline.
+6. Invoke `coding:write-code --resume` once with the resolved work ID/root,
+   receipt verdict, contradictions, decisions, and original user context.
+7. Return every created or materially rewritten path in `generated_files`.
+   Do not run per-file sizing; the PM performs the single final batch gate.
 
 ## Verification
 
-- All three handover documents were located and validated before delegation.
-- The freshness gate reports `trusted_24h`, `revalidated`, or `forced_revalidation`;
-  `trusted_24h` performed no repository assumption revalidation.
-- Every resolved decision is recorded in PLAN.md's Decision Log and its marker
-  cleared; still-open questions remain in NOTES.md.
-- Exactly one `coding:write-code --resume` invocation ran and returned a
-  report.
+- Rehydration used authoritative sources, not copied ignored state.
+- `state.md` is complete and links the PM-owned, current-focus-only
+  `working.md`; subagents read them in that order.
+- Every resolved decision is durable in the work decision artifacts.
+- Exactly one `coding:write-code --resume` invocation returned a report.
 
 ## Completion
 
-Return the `coding:write-code --resume` report unchanged, prefixed with the
-resolved handover location, freshness verdict, revalidated contradictions, and
-the decisions recorded. For a rejected
-handover, state which document failed validation and why, and suggest
-`coding:handover` to regenerate it.
+Prefix the unchanged `coding:write-code --resume` report with the work root,
+receipt source, `receipt_verified|revalidated` verdict, contradictions,
+decisions, materialized spec paths, and `generated_files`. On rejection, name
+the invalid receipt field or source and recommend `coding:handover` only when a
+fresh receipt can repair it.

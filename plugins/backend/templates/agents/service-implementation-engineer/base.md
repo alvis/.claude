@@ -28,6 +28,13 @@ Typical responses:
 
 ## Base Context
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. For active work read `working.md`, then
+`state.md`, then its exact spec/plan pointers. Never edit PM-owned work files;
+return explicit final paths as `generated_files` and leave the final Markdown
+size pass to the PM.
+
 Preload (stable standards):
 
 - SD-UNIVERSAL -> the `universal` standard at coding:constitution/standards/universal/

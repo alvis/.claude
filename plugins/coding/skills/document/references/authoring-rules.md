@@ -1,4 +1,4 @@
-# Authoring rules — README/ARCHITECTURE drafting, audits, and retry criteria
+# Authoring rules — README and durable architecture drafting
 
 Referenced from SKILL.md Workflow steps 3–7. These are the concrete rules the
 drafts and the independent review are held to.
@@ -69,12 +69,12 @@ adapters, providers, or runtimes.
   required by GitHub's parser and do not count as multi-line).
 - Trailing `/` in folder names — anywhere: TOCs, tree fences, component
   references, prose.
-- Duplicating ARCHITECTURE content in the README (the file tree may appear in
+- Duplicating durable architecture content in the README (the file tree may appear in
   both at different depths).
 - Hardcoded colors in Mermaid blocks (`style` directives, `fill:#…`,
   `stroke:#…`).
 
-## ARCHITECTURE drafting
+## Durable architecture drafting
 
 - **Opening**: one paragraph (≤3 sentences) naming the architectural model
   (layered, pipeline, CLI dispatcher…). The reader has not read the README —
@@ -96,14 +96,21 @@ adapters, providers, or runtimes.
   schemas, `journey` for user-facing flows, `block-beta`/`C4Context` for system
   context and deployment (preferred for IaC and services). `references/
   snippets/` ships reusable starting-point diagrams to customize.
-- **Split rule**: if the projected draft exceeds ~600 lines OR the package has
-  3+ distinct top-level subsystems (e.g. `src/api`, `src/worker`, `src/db`),
-  emit a top-level `ARCHITECTURE.md` (index + cross-cutting concerns) plus one
-  `ARCHITECTURE-<part>.md` per subsystem, linked from the index.
-- **Separation**: when ARCHITECTURE.md exists, the README's Architecture
+- **Path**: write `docs/architecture/<architecture-slug>.md`, deriving the slug
+  with Essential's `derive-engineering-name` executable and repository capability. Reconcile
+  `docs/architecture/overview.md` and `docs/index.md`. Never create a root
+  architecture file or derive the slug from a task title.
+- **Split rule**: finish the document first and return it in `generated_files`.
+  Do not measure or split here. The PM's one final batch leaves every file at
+  or below 16,384 bytes intact, even when it has multiple subsystems. If the
+  final batch returns `split_required`, the original architecture path becomes
+  the overview and coherent lowercase `<nn>-<topic-slug>.md` details live under
+  `docs/architecture/<architecture-slug>/`; split all oversized files before
+  the next batch pass.
+- **Separation**: when a durable architecture document exists, the README's Architecture
   section shrinks to ≤8 lines — one-line summary, a file-tree snippet of max
   depth 2, and a link. Diagrams, design patterns, invariants, data flow, and
-  extension points live in ARCHITECTURE only.
+  extension points live in durable architecture only.
 
 ## Independent review audits
 
@@ -117,7 +124,7 @@ itemized fatals and warnings:
    silent omissions fail like inventions.
 3. **Style consistency** — section order, emojis, TOC style, and code-fence
    languages match the anchor (template or sibling).
-4. **Tree accuracy** — the ARCHITECTURE file tree matches the real structure at
+4. **Tree accuracy** — the architecture file tree matches the real structure at
    depth 2–3.
 5. **Link integrity** — relative links resolve to actual files.
 6. **TOC discipline** — run `toc_width.py` against every drafted file; any
@@ -125,7 +132,7 @@ itemized fatals and warnings:
 7. **Folder notation** — no trailing `/` in any path (regex check).
 8. **Diagram theme** — no `style`/`fill:`/`stroke:`/hex in Mermaid fences; no
    undefined node references.
-9. **README/ARCHITECTURE separation** — when both exist, README's Architecture
+9. **README/architecture separation** — when both exist, README's Architecture
    section is ≤8 lines.
 10. **Support Matrix presence** — present when an adapter-style directory
     exists.

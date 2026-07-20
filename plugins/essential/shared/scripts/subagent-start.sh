@@ -9,6 +9,7 @@
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source shared context library (output_hook_context)
+# shellcheck source=/dev/null
 source "$SCRIPTS_DIR/context.sh"
 
 # Emit the essential plugin environment block. Only essential registers this
@@ -19,6 +20,7 @@ run_subagent_start_hook() {
   local plugin_root
   plugin_root="$(cd "$SCRIPTS_DIR/../.." && pwd)"
   if [[ -f "$plugin_root/scripts/context.sh" ]]; then
+    # shellcheck source=/dev/null
     source "$plugin_root/scripts/context.sh"
     CONTEXT+=$(get_plugin_context)
   fi

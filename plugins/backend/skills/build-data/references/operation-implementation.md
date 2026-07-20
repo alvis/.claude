@@ -21,6 +21,12 @@ standard A references standard B, read B too):
 
 **Assignment**: implement operations `[list]`.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path passed by the orchestrator. If unavailable, stop
+artifact writes and report the missing contract. Read `working.md`, then
+`state.md`, then the assigned spec/plan pointers. Never edit PM-owned work
+files, and do not run a Markdown size check.
+
 **Steps** (per operation):
 
 1. Implement the operation function with types in
@@ -40,6 +46,7 @@ standard A references standard B, read B too):
 ```yaml
 status: success|failure|partial
 modifications: ['operations/op.ts', 'spec/operations/op.spec.int.ts', 'source/index.ts']
+generated_files: ['/absolute/path/operations/op.ts', ...]
 outputs:
   operations_implemented: ['op1', 'op2']
   test_count: N
@@ -52,6 +59,8 @@ issues: []
 
 **Assignment**: update the controller in `source/index.ts`, adding delegating
 methods for ALL new operations in alphabetical order.
+
+Return the absolute controller path in `generated_files`.
 
 **Controller pattern**:
 

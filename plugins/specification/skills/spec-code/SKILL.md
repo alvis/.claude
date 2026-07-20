@@ -1,121 +1,97 @@
 ---
 name: spec-code
-description: "Design or document technical specifications in the canonical template, then delegate Notion synchronization to sync-notion. Use for greenfield specs, updates to an existing DESIGN.md, or documenting an implementation without inventing requirements."
+description: Design, update, or retrospectively document a technical specification through an active engineering work item, Notion-backed MDC, and versioned derived docs. Use for specification authoring; keep transport in sync-notion and implementation planning in plan-code.
 model: opus
 context: fork
 allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
-argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack] [--discovery=<path>]"
+argument-hint: "<instruction> --work-id=<id> --capability=<slug> [--type=api|web-app|mobile|library|fullstack]"
 ---
 
 # Spec Code
 
-Produce `DESIGN.md` and its child documents in the strict Notion template
-structure, in one of three modes: CREATE (greenfield design), UPDATE (modify
-an existing spec), or DOCUMENT (analyze and document existing code).
-`specification:sync-notion` owns all Notion transport and merging;
-`specification:plan-code` owns commit planning; coding skills own
-implementation.
+Author a technical specification as one coherent contract. Notion-backed MDC
+is authoritative for specification content; versioned
+`docs/specs/<capability>/*.md` is a reviewed derivation for engineers.
 
 ## Boundaries
 
-- Use for: designing a new specification, updating an existing `DESIGN.md`
-  or Notion spec, or retrospectively documenting an existing implementation
-  without inventing requirements.
-- Do not use for: generating implementation code, making technology
-  decisions without analysis, adding features or sections outside the
-  template structure, or performing Notion pull/push/merge yourself
-  (`specification:sync-notion`).
-- Refuse when: the instruction is too vague to scope (ask for what the
-  system does), the request is code implementation rather than
-  specification, the spec would require implementation details nobody has
-  decided, or the request adds sections the template does not define.
+- Use for CREATE, UPDATE, and DOCUMENT modes. Do not implement code or own
+  Notion transport/conflicts.
+- Never create independent root specification/design/requirement artifacts.
+  Temporary reasoning belongs in the active work's `design/`, `proposals/`,
+  `changes/`, or `decisions/`; durable specification docs belong under
+  `docs/specs/<capability>/` only after verified completion.
+- All authored `.mdc` changes route through `specification:mdc`; all materialize
+  and completion flows route through `specification:sync-spec`.
+- Preserve notion-sync-owned paths. Never infer a filename from title or id.
 
 ## Inputs
 
-- **Required**: `<instruction>` describing what to specify or document.
-- **Optional**: `--type=api|web-app|mobile|library|fullstack` to select
-  template patterns; `--reference=<doc>` to load supporting documentation;
-  `--discovery=<path>` to load a `DISCOVERY.md` evidence ledger;
-  `--sync-template` to reorganize an existing spec to the latest template
-  while preserving content; `--skip-notion-sync` to write local files only.
-- **Prerequisites**: for the sync step, `notion-sync` CLI and `NOTION_TOKEN`
-  (not needed with `--skip-notion-sync`).
+- **Required**: instruction, `--work-id=<id>`, and lowercase
+  `--capability=<slug>`.
+- **Optional**: project type, `--reference=<doc>`, `--discovery=<path>`,
+  `--sync-template`, `--skip-notion-sync`.
+- **Prerequisites**: active engineering work state and, unless sync is skipped,
+  Notion credentials/tooling.
 
 <IMPORTANT>
-Coherence mandate: every edit must produce one continuous, deliberate
-document. UPDATE and DOCUMENT modes are the high-risk surface — new
-requirements must be folded into the spec's existing sections so a reader
-cannot tell which decisions are original and which were merged later. Never
-attach an "Addendum", "Revisions", or "Also note" trailer beneath the
-template, and never leave parallel duplicate sections or visible patch
-seams.
+Coherence mandate: UPDATE and DOCUMENT edits must be integrated into their
+owning sections. Never append an addendum, revisions trailer, parallel old/new
+section, or copied transport history.
 </IMPORTANT>
 
 ## Workflow
 
-1. Detect the mode: CREATE when there is no `DESIGN.md`, no Notion page, and
-   no codebase; UPDATE when `DESIGN.md` exists or a Notion page is found;
-   DOCUMENT when a codebase exists but no `DESIGN.md`. Then load materials:
-   the existing design (UPDATE), the codebase analysis workflow in
-   [references/document-mode.md](references/document-mode.md) (DOCUMENT),
-   the Notion template, any `--reference` documentation, `--discovery` or a
-   reachable `DISCOVERY.md`, and the `--sync-template` flag. Preserve discovery
-   provenance: intent and observations may ground requirements; inferences and
-   accepted assumptions remain labeled; unresolved material decisions block
-   invented requirements.
-2. When existing Notion pages are found, record the local files and known
-   refs for the final `Skill(sync-notion)` call. That skill owns remote
-   materialization, conflict decisions, merged content, and verification —
-   do not maintain a parallel merge protocol here.
-3. Gather requirements: parse the arguments and discovery ledger, clarify scope
-   per mode with `AskUserQuestion` where the instruction leaves real choices
-   open, and lay out the work as a todo list. Route underexplored choices that
-   could change the contract to `essential:discover`; route grounded competing
-   options to `essential:decide`. Never convert a hypothesis or accepted
-   implementation assumption into a requirement without an explicit decision.
-4. Research the tech stack: CREATE researches an appropriate stack; UPDATE
-   researches only the technologies that change; DOCUMENT extracts the stack
-   from existing code with no research — follow
-   [references/document-mode.md](references/document-mode.md) for the
-   project scan, manifest parsing, and mapping to spec sections.
-5. Design the architecture (CREATE from scratch, UPDATE by modifying the
-   affected aspects, DOCUMENT by extracting from code), then specify the
-   components, API contracts and data models where applicable, and UI
-   structure and components where applicable — always within the template's
-   sections.
-6. Generate or update the files: prepare frontmatter per
-   [references/frontmatter.md](references/frontmatter.md) (the
-   `notion_url`/`last_edited_at`/`last_synced_at`/`related_files` schema,
-   filename mapping, and update rules), compile the document following the
-   template exactly, apply `--sync-template` when provided, then write the
-   main file and every child page file with frontmatter.
-7. Unless `--skip-notion-sync`, invoke `Skill(sync-notion)` with the
-   generated files, the selected sync mode, and any known Notion refs. That
-   skill owns pull/push, merge resolution, verification, retries, and
-   frontmatter sync metadata — do not implement a second synchronization
-   protocol.
-8. Run the verification below; when a check fails, fix the cause and re-run
-   that check. Repeat until every check passes or a concrete blocker
-   remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. Resolve the active
+   work root; read `working.md`, then `state.md`, then only their relevant
+   references.
+2. Select mode: CREATE when no authoritative Notion spec exists; UPDATE when it
+   exists; DOCUMENT when current code must be described without inventing
+   requirements. For UPDATE/DOCUMENT with an existing page, invoke
+   `Skill(sync-spec)` in `materialize` mode and use returned `ref:` identities
+   and paths. Load [references/document-mode.md](references/document-mode.md)
+   only for DOCUMENT.
+3. Gather requirements, discovery evidence, architecture, API/data contracts,
+   UI behavior, security/privacy posture, acceptance criteria, and unresolved
+   decisions. Preserve evidence provenance. Route underexplored material
+   unknowns to `essential:discover` and grounded alternatives to
+   `essential:decide`; do not turn assumptions into requirements.
+4. Create or update the work-local design/proposal/decision children needed to
+   explain the specification change. Use lowercase deterministic child names
+   and the status schema in the Essential contract. Return an index
+   reconciliation request to the PM; do not edit PM-owned overview files.
+5. Prepare Notion MDC metadata and durable derivation metadata according to
+   [references/frontmatter.md](references/frontmatter.md). Create or modify the
+   work specification only through `Skill(mdc)`, preserving existing refs,
+   hierarchy, paths, and unrelated metadata.
+6. Unless `--skip-notion-sync`, invoke `Skill(sync-spec)` in `complete` mode.
+   It delegates outbound/conflicts, verification pull, default-mirror refresh,
+   derived `docs/specs/<capability>/` generation, durable receipt anchoring,
+   locally discoverable revalidation notices, and unknown/remote dependent
+   reporting. With the skip flag, leave content temporary under the work
+   root; do not promote versioned docs or claim completion.
+7. Verify the resulting derived spec reads as one contract, `index.md` points
+   to all versioned children, and provenance matches the verification pull.
+8. Return explicit final paths generated or materially rewritten as
+   `generated_files`, including work-local `.md` children and derived docs.
+   Do not run `wc -c`; the PM performs one final batch pass after all writers.
+   `.mdc` remains size-exempt.
 
 ## Verification
 
-- The document contains only template sections, in template order — nothing
-  invented, nothing appended outside the structure.
-- Every written file carries the frontmatter schema from
-  `references/frontmatter.md`.
-- In UPDATE and DOCUMENT modes, merged content is integrated into owning
-  sections with no addendum trailers or duplicate parallel sections.
-- Discovery provenance is preserved and no unresolved material decision was
-  invented into the contract.
-- The sync step reports verified success, or the skip is explicit
-  (`--skip-notion-sync`) and recorded.
+- The authoritative MDC contract contains no invented or duplicate sections.
+- Every authored MDC body change went through `specification:mdc` and retained
+  Notion identity/path.
+- A completed run has verified Notion sync, verification pull, derivation
+  provenance, `index.md`, and revalidation results; a skipped sync remains
+  explicitly temporary.
+- `generated_files` is complete and overview reconciliation is assigned to the
+  PM.
 
 ## Completion
 
-Report the mode, package name, design document path and child documents,
-project type and tech stack, template adherence, Notion sync outcome
-(created/updated/skipped plus verification state from `sync-notion`), and
-next steps: review the files, share for feedback, then plan implementation
-with `specification:plan-code`. A refusal names what was too vague,
-undecided, or outside the template.
+Report mode, work id, capability, authoritative Notion refs, work artifacts,
+sync/verification result, derived specification paths and provenance receipt,
+revalidation impact, PM index updates requested, and `generated_files`.

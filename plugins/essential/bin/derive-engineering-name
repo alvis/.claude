@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Derive canonical engineering slugs and work IDs using only the stdlib."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import re
+import sys
+import unicodedata
+
+
+MAX_SLUG_BYTES = 48
+ULID_RE = re.compile(r"^[0-9A-HJKMNP-TV-Z]{26}$", re.IGNORECASE)
+
+
+class CanonicalNameError(ValueError):
+    """An input cannot produce a canonical engineering name."""
+
+
+def ascii_tokens(value: str) -> list[str]:
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    return re.findall(r"[a-z0-9]+", ascii_value)
+
+
+def bounded_slug(value: str, max_bytes: int = MAX_SLUG_BYTES) -> str:
+    tokens = ascii_tokens(value)
+    if not tokens:
+        return "item"
+
+    slug = "-".join(tokens)
+    if len(slug.encode("ascii")) <= max_bytes:
+        return slug
+
+    kept: list[str] = []
+    used = 0
+    for token in tokens:
+        added = len(token) + (1 if kept else 0)
+        if used + added > max_bytes:
+            break
+        kept.append(token)
+        used += added
+
+    # A single machine-generated token can exceed the bound. There is no
+    # smaller token boundary to preserve, so retain its first 48 ASCII bytes.
+    return "-".join(kept) if kept else tokens[0][:max_bytes]
+
+
+def collision_slug(value: str, stable_id: str | None, collisions: set[str]) -> str:
+    slug = bounded_slug(value)
+    if slug not in collisions:
+        return slug
+    if not stable_id:
+        raise CanonicalNameError(
+            "--stable-id is required when the derived slug collides"
+        )
+    suffix = hashlib.sha256(stable_id.encode("utf-8")).hexdigest()[:8]
+    collision_base = bounded_slug(value, MAX_SLUG_BYTES - len(suffix) - 2)
+    return f"{collision_base}--{suffix}"
+
+
+def tracker_work_id(value: str) -> str:
+    return bounded_slug(value)
+
+
+def minted_work_id(date: str, kind: str, scope: str, ulid: str) -> str:
+    if not re.fullmatch(r"[0-9]{8}", date):
+        raise CanonicalNameError("--date must be YYYYMMDD")
+    if not ULID_RE.fullmatch(ulid):
+        raise CanonicalNameError(
+            "--ulid must be a 26-character Crockford Base32 ULID"
+        )
+    return f"{date}-{bounded_slug(kind)}-{bounded_slug(scope)}-{ulid[-6:].lower()}"
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(
+        description="derive canonical engineering slugs and work IDs"
+    )
+    commands = root.add_subparsers(dest="command", required=True)
+
+    slug = commands.add_parser("slug")
+    slug.add_argument("value")
+    slug.add_argument("--stable-id")
+    slug.add_argument("--collision-with", action="append", default=[])
+
+    tracker = commands.add_parser("tracker-work-id")
+    tracker.add_argument("tracker_key")
+
+    minted = commands.add_parser("minted-work-id")
+    minted.add_argument("--date", required=True)
+    minted.add_argument("--kind", required=True)
+    minted.add_argument("--scope", required=True)
+    minted.add_argument("--ulid", required=True)
+    return root
+
+
+def main() -> int:
+    args = parser().parse_args()
+    try:
+        if args.command == "slug":
+            result = collision_slug(
+                args.value, args.stable_id, set(args.collision_with)
+            )
+        elif args.command == "tracker-work-id":
+            result = tracker_work_id(args.tracker_key)
+        else:
+            result = minted_work_id(args.date, args.kind, args.scope, args.ulid)
+    except CanonicalNameError as error:
+        print(f"invalid: {error}", file=sys.stderr)
+        return 2
+    print(result)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

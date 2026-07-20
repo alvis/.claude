@@ -2,11 +2,11 @@
 
 <br/>
 
-ARCHITECTURE = how it works. For usage/install, see README.md.
+ARCHITECTURE = how it works. For usage/install, see readme.md.
 
-📌 **First paragraph:** This document is the **INDEX** for the `@theriety/platform` monorepo. The platform hosts three peer subsystems — **core**, **services**, and **sdks** — each large enough to warrant its own architecture document. This file explains the cross-cutting shape, invariants, and onboarding path; the per-subsystem deep dives live in sibling `ARCHITECTURE-*.md` files.
+📌 **First paragraph:** This document is the **INDEX** for the `@theriety/platform` monorepo. The platform hosts three peer subsystems — **core**, **services**, and **sdks**. This file explains the cross-cutting shape, invariants, and onboarding path; the per-subsystem deep dives live under `docs/architecture/platform/` because the complete draft exceeded the final byte gate.
 
-**Second paragraph:** The split exists because a single ARCHITECTURE.md would exceed 600 lines once each subsystem's topology, data flow, and invariants were drawn. Keeping them separate lets a reader go deep on one subsystem without scrolling past the other two, while the index below preserves the cross-subsystem story.
+**Second paragraph:** The final Markdown batch found this architecture overview over 16,384 bytes, so coherent subsystem detail moved to lowercase children while this original path remained the cross-subsystem index.
 
 <br/>
 <div align="center">
@@ -20,7 +20,7 @@ ARCHITECTURE = how it works. For usage/install, see README.md.
 
 ### Why this split?
 
-**Why 3 part files?** The platform crosses 3 distinct subsystems (core, services, sdks) and a single ARCHITECTURE.md would exceed ~600 lines. The document skill recommends splitting ARCHITECTURE.md whenever a project has 3+ top-level subsystems OR the draft exceeds ~600 lines. This INDEX carries cross-cutting concerns; each part goes deep on one subsystem.
+**Why 3 detail files?** The complete draft exceeded 16,384 bytes in the PM's final batch. The overview retains cross-cutting concerns; each coherent child goes deep on one subsystem. Multiple subsystems alone never force a split.
 
 ---
 
@@ -58,16 +58,16 @@ Apps consume SDKs; SDKs talk over the wire to services; services share contracts
 ```plain
 platform
 ├── packages
-│   ├── core      # see ARCHITECTURE-core.md
-│   ├── services  # see ARCHITECTURE-services.md
-│   └── sdks      # see ARCHITECTURE-sdks.md
+│   ├── core      # see platform/10-core.md
+│   ├── services  # see platform/20-services.md
+│   └── sdks      # see platform/30-sdks.md
 ├── apps
 └── tools
 ```
 
 Subsystems are only expanded to depth 2 here; each part file expands its own subsystem fully.
 
-`tools/` is private root infrastructure (linters, codegen drivers, release scripts) — it's not publishable and has no dedicated `ARCHITECTURE-tools.md`.
+`tools/` is private root infrastructure (linters, codegen drivers, release scripts) and has no dedicated architecture child.
 
 ---
 
@@ -75,13 +75,13 @@ Subsystems are only expanded to depth 2 here; each part file expands its own sub
 
 | Subsystem | Responsibility | Part File |
 | --- | --- | --- |
-| `core` | Contracts, shared types, error taxonomy — zero runtime deps | [`ARCHITECTURE-core.md`](./ARCHITECTURE-core.md) |
-| `services` | Long-running processes that implement contracts | [`ARCHITECTURE-services.md`](./ARCHITECTURE-services.md) |
-| `sdks` | Client libraries published to consumers of the platform | [`ARCHITECTURE-sdks.md`](./ARCHITECTURE-sdks.md) |
+| `core` | Contracts, shared types, error taxonomy — zero runtime deps | [`platform/10-core.md`](./platform/10-core.md) |
+| `services` | Long-running processes that implement contracts | [`platform/20-services.md`](./platform/20-services.md) |
+| `sdks` | Client libraries published to consumers of the platform | [`platform/30-sdks.md`](./platform/30-sdks.md) |
 
 > **Note**: In this bundled example the subsystem files carry an `.example.md`
 > suffix for discoverability. In real projects the skill emits them as
-> `ARCHITECTURE-<subsystem>.md` matching the links shown here.
+> `docs/architecture/platform/<nn>-<subsystem>.md` matching the links shown here.
 
 ---
 
@@ -133,7 +133,7 @@ sequenceDiagram
 | 1 | No upward imports across tiers | A leaf tier depending on a root tier creates release cycles | `tools/lint-deps` CI check |
 | 2 | Every public symbol that crosses a package boundary has a Zod contract | Untyped wire formats break silently across SDK languages | `packages/core/contracts` review |
 | 3 | `workspace:*` is rewritten at publish | Consumers must not see workspace-only ranges | `tools/release` `publish` phase |
-| 4 | Every package has a README and either an ARCHITECTURE.md or a link to a subsystem ARCHITECTURE | Discoverability and split enforcement | skill audit step 8.w |
+| 4 | Every package README links to its durable architecture overview or relevant split child | Discoverability and split enforcement | skill audit step 8.w |
 
 ---
 

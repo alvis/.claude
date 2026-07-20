@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+invalid() {
+  jq -n --arg message "$1" '{status:"invalid", error:$message}'
+  exit 2
+}
+
+[[ $# -gt 0 ]] || invalid "at least one explicit final path is required"
+
+unique=()
+for path in "$@"; do
+  [[ "$path" == /* ]] || invalid "path must be absolute: $path"
+  [[ -f "$path" ]] || invalid "path is missing or not a regular file: $path"
+  case "$path" in
+    *.md|*.mdc) ;;
+    *) invalid "path is not Markdown or MDC: $path" ;;
+  esac
+
+  duplicate=0
+  for existing in "${unique[@]}"; do
+    if [[ "$existing" == "$path" ]]; then
+      duplicate=1
+      break
+    fi
+  done
+  [[ $duplicate -eq 1 ]] || unique+=("$path")
+done
+
+eligible=()
+excluded=()
+for path in "${unique[@]}"; do
+  if [[ "$path" == *.mdc || "${path##*/}" == "working.md" ]]; then
+    excluded+=("$path")
+  else
+    eligible+=("$path")
+  fi
+done
+
+excluded_json="$(jq -n '$ARGS.positional' --args "${excluded[@]}")"
+if [[ ${#eligible[@]} -eq 0 ]]; then
+  jq -n --argjson excluded "$excluded_json" \
+    '{status:"pass", checked:0, excluded:$excluded, oversized:[]}'
+  exit 0
+fi
+
+counts_file="$(mktemp "${TMPDIR:-/tmp}/engineering-wc.XXXXXX")"
+trap 'rm -f "$counts_file"' EXIT
+
+# This is deliberately the only wc process in a pass.
+wc -c "${eligible[@]}" >"$counts_file"
+
+oversized='[]'
+parsed=0
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*([0-9]+)[[:space:]](.*)$ ]]; then
+    bytes="${BASH_REMATCH[1]}"
+    measured_path="${BASH_REMATCH[2]}"
+  else
+    invalid "could not parse wc output: $line"
+  fi
+  [[ "$measured_path" == "total" ]] && continue
+  parsed=$((parsed + 1))
+  if (( bytes > 16384 )); then
+    oversized="$(jq -c --arg path "$measured_path" --argjson bytes "$bytes" \
+      '. + [{path:$path, bytes:$bytes}]' <<<"$oversized")"
+  fi
+done <"$counts_file"
+
+[[ $parsed -eq ${#eligible[@]} ]] || \
+  invalid "wc output did not contain every eligible path"
+
+if [[ "$(jq 'length' <<<"$oversized")" -gt 0 ]]; then
+  status="split_required"
+  exit_code=1
+else
+  status="pass"
+  exit_code=0
+fi
+
+jq -n \
+  --arg status "$status" \
+  --argjson checked "${#eligible[@]}" \
+  --argjson excluded "$excluded_json" \
+  --argjson oversized "$oversized" \
+  '{status:$status, checked:$checked, excluded:$excluded, oversized:$oversized}'
+exit "$exit_code"

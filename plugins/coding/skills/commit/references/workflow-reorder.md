@@ -121,7 +121,7 @@ The git log should reflect the new order with the same descriptions.
 - If any unmerged bookmark sits inside the reordered range, follow the
   [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
   after local integrity passes. The
-  [`coding:push-pr` core publication workflow](../../push-pr/SKILL.md#3-publish-bottom-up) owns
+  [`coding:push-pr` core publication workflow](../../push-pr/references/push-pr/20-publish-bottom-up.md) owns
   remote restacking, pushing, and PR-base repair.
 
 - Per-change build: `jj edit <each_change> && npm run build` to confirm each compiles in its new position.

@@ -42,6 +42,17 @@ defensive wrapper retained "just in case" the original path comes back.
   plan contract for post-review fixes; `--from-composite` when invoked from a
   composite workflow.
 
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work root first.
+When delegated, read `working.md`, then `state.md` and only relevant linked
+review/spec/design paths; never write PM-owned `working.md` or reconcile work
+overview files.
+A direct PM run resolves or mints the work ID by the contract; a delegated run
+requires the explicit work ID/root.
+
 ## Standards
 
 For test correction (step 3) apply `testing/scan`, `typescript/scan`, and
@@ -64,13 +75,14 @@ and `testing` write standards.
    [references/plan-context.md](references/plan-context.md) so the follow-up
    review validates against the identical plan.
 2. **Plan.** Read the affected files and their test descriptions; determine
-   expected behavior from tests, DESIGN.md, and specification files; decide
+   expected behavior from tests and state-linked work/durable design and
+   specification files; decide
    whether each issue is source-code logic or test implementation, asking the
    user when expected behavior is ambiguous. List the changes needed, ordered
    by dependency.
 3. **Fix tests.** Fix incorrect test behavior and logic — never modify a test
    just to make it pass — plus standards violations, imports, and references.
-   For unused-code errors, check design and handover docs first: if the code
+   For unused-code errors, check state-linked design and work docs first: if the code
    is planned but unimplemented, use the `throw new Error('IMPLEMENTATION:
    ...')` pattern; remove only genuinely unnecessary code. When more than 25
    files are affected, batch at most 10 test files per subagent and dispatch
@@ -121,3 +133,7 @@ review_rerun: /coding:review-code <scope> --plan=<plan_source> # omit when plan_
 ```
 
 </report>
+
+Return every created or materially rewritten path as `generated_files` to the
+PM. Do not run per-file sizing; the PM performs the single final Markdown batch
+after all artifact writers finish.

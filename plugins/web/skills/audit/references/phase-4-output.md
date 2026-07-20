@@ -1,160 +1,65 @@
-# Phase 4 -- Output Rendering (Detail)
+# Canonical review rendering
 
-Loaded by `SKILL.md` Step 4. Renders the final audit output (markdown + JSON) from `report-final.json`.
+Render actionable Markdown from `<audit-dir>/report-final.json`, or from
+`report.json` with explicit partial coverage when manual adjudication is not
+complete. Raw data remains evidence; canonical work review files are the human
+engineering interface.
 
-**Step Configuration**:
-- **Purpose**: Render the final audit output (markdown + JSON) from `report-final.json`
-- **Input**: `<out>/report-final.json`
-- **Output**: Markdown output in conversation, JSON summary code block
-- **Parallel Execution**: No
+## Source validation
 
-## 4.1 Markdown Output
+Before rendering:
 
-Output to conversation following `references/review-template.md` (rendering language follows `constitution/standards/design/write.md`):
+1. Require contract version `3.0` and retain the source path plus SHA-256.
+2. Preserve audited URLs, exact viewport dimensions, CLI exit status, warnings,
+   capped/unvisited pages, cross-origin exclusions, orphan routes, recurring
+   elements, crop/context paths, and manual-review coverage.
+3. Verify every final AI verdict cites a focused crop or records
+   `missing_section_crop` with null verdict.
+4. Build one stable finding identity from CLI finding ID when present,
+   otherwise `<rule-id>--<route-hash8>--<selector-hash8>`.
 
-**Section 1 -- Context**:
-- URL(s) audited
-- Viewports tested (Desktop 1440x900, Tablet 768x1024, Mobile 390x844)
-- Timestamp
-- Audit scope (full / quick / category-specific)
-- Input mode (URL / source code)
-- Component types detected
+## Classification and writing
 
-**Section 2 -- Overall Score**:
-- Score 0-100 with risk level badge (CRITICAL / HIGH / MEDIUM / LOW)
-- Quality level label (per review-template.md scale)
+Apply `review-template.md` and classify each finding exactly once. Group by
+canonical review area, then severity and stable identity. Write only applicable
+`reviews/<area>.md` files; merge by finding identity so a rerun updates evidence
+without erasing existing dispositions.
 
-**Section 3 -- Per-Category Table**:
+Coverage defects are findings in `testing.md`, including:
 
-| Category | Score | Issues | Top Severity |
-|----------|-------|--------|-------------|
-| ... | ... | ... | ... |
+- zero audited pages or capped/unvisited required pages;
+- missing required viewport/state data;
+- missing focused crop for AI adjudication;
+- driver warnings that invalidate claimed coverage; and
+- incomplete manual review.
 
-**Section 4 -- Findings by Area**:
+Site-level navigation or interaction failures belong to `correctness.md`.
+Recurring visual issues are one `quality.md` finding with all affected routes,
+not duplicate per-page prose. Cross-origin candidates declined by the user are
+recorded as scope evidence, not defects.
 
-Area summary table:
+## PM roll-up handoff
 
-| Area | Score | Issues | Screenshot |
-|------|-------|--------|------------|
-| navbar | 0 | 0 | [screenshot](http://localhost:18977/area-navbar.png) |
-| ... | ... | ... | ... |
+Return the reconciliation payload from `review-template.md`, including zeroes
+for absent areas, plus:
 
-Per-area detail block:
-- **Screenshot link**: `http://localhost:18977/area-{name}.png`
-- **Grounding summary**: AI verdicts from Phase 3 that apply to this area
-- **Findings list**: All findings that belong to this area
-- **Area score**: Read from `report-final.json` (computed by the CLI)
-
-**Section 5 -- Findings by Priority** (P0, then P1, then P2):
-
-Each finding includes:
-- Rule ID and title
-- Severity and classification (gulf type, error type)
-- Description of the issue
-- Evidence: DOM values, computed styles, crop image path, `ai_verdict` (if any)
-- Selector(s) affected
-- Viewport(s) where observed
-- **Recommendation**:
-  - **What to change**: Actionable description of the fix
-  - **Code suggestion**: CSS/HTML inline code snippet
-  - **Rule reference**: Path to rule file + clause
-- Effort x Impact classification
-
-**Section 6 -- Manual Review Entries**:
-- AI verdicts from Phase 3 with rationale and confidence
-
-**Section 7 -- Quick Wins**:
-- Top high-impact, low-effort changes
-
-**Section 8 -- Verification Checklist**:
-- Per review-template.md checklist items
-
-**Section 9 -- Site-Level Findings** (always included, even for single-page audits):
-
-- **Orphan routes** (present in source, not linked): list from `report.orphan_routes`
-- **Recurring elements** (audited once, scope: site-wide): e.g., hamburger menu, modal X, dropdown Y -- from `report.recurring_elements`
-- **Cross-origin excluded (social)**: list from `report.cross_origin_excluded_social`
-- **Cross-origin excluded (user-declined)**: list captured during Phase 3.2
-- **Per-page scores** (sorted worst --> best)
-- **Worst 3 pages** (for triage): top three lowest-scoring pages with their scores and primary issues
-
-**DESIGN.md Compliance** (only when DESIGN.md detected):
-- Token compliance score
-- Deviation table
-
-## 4.2 JSON Summary
-
-Append as a fenced code block:
-
-```json
-{
-  "contractVersion": "3.0",
-  "target": {
-    "urls": ["https://example.com"],
-    "mode": "url|source"
-  },
-  "summary": {
-    "overallScore": 0,
-    "risk": "CRITICAL|HIGH|MEDIUM|LOW",
-    "totalIssues": 0,
-    "bySeverity": { "p0": 0, "p1": 0, "p2": 0 }
-  },
-  "pages": [
-    {
-      "url": "https://example.com",
-      "viewports": [
-        {
-          "label": "Desktop 1440x900",
-          "score": 0,
-          "issues": [
-            {
-              "ruleId": "",
-              "severity": "",
-              "recommendation": {
-                "action": "",
-                "codeSuggestion": "",
-                "ruleRef": ""
-              }
-            }
-          ]
-        },
-        {
-          "label": "Tablet 768x1024",
-          "score": 0,
-          "issues": []
-        },
-        {
-          "label": "Mobile 390x844",
-          "score": 0,
-          "issues": []
-        }
-      ],
-      "areas": [
-        {
-          "name": "navbar",
-          "score": 0,
-          "issueCount": 0,
-          "screenshotUrl": "http://localhost:18977/area-navbar.png",
-          "groundingSummary": "",
-          "findings": []
-        }
-      ]
-    }
-  ],
-  "siteLevel": {
-    "orphanRoutes": [],
-    "recurringElements": [],
-    "crossOriginExcludedSocial": [],
-    "crossOriginExcludedUserDeclined": [],
-    "perPageScores": [],
-    "worstPages": []
-  }
-}
+```yaml
+audit_summary:
+  overall_score: <exact CLI value>
+  risk: critical|high|medium|low
+  pages_audited: <n>
+  viewports: [<label + dimensions>]
+  worst_pages: [<URL + score + primary finding IDs>]
+  warnings: [<exact warnings>]
+  raw_evidence: [<absolute final paths>]
 ```
 
-## 4.3 Batch Mode (Multiple URLs)
+This payload is for PM reconciliation into `review.md`; a worker does not write
+the roll-up. Conversation output is a concise status, top open findings, exact
+review/evidence paths, and coverage limitations rather than a competing report.
 
-When auditing multiple pages (via `--all-pages` or explicit page list):
-- Per-page sections with individual scores
-- Site-level aggregation is already covered by Section 9 (Site-Level Findings)
-- Cross-page consistency findings are surfaced via `recurring_elements` in `report-final.json`
+## Multi-page audits
+
+Keep per-page and per-viewport data in JSON. Canonical findings cite every
+affected page. Sort the concise handoff's worst pages from lowest score upward,
+but retain all details in source evidence and review findings.

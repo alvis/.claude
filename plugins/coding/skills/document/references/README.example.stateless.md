@@ -38,7 +38,7 @@ export default {
 
 > **Pick this over a microservice when** your service is pure compute + routing over peer data (no internal state to persist, no adapters to DBs/brokers) and your operations are idempotent function calls the service framework can invoke. Pick the microservice template when you need the hexagonal adapter + state-machine story.
 
-The deeper rationale — including the adapter contract for flag providers and the auth chain — lives in the sibling [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+The deeper rationale — including the adapter contract for flag providers and the auth chain — lives in [`docs/architecture/automation-service.md`](./docs/architecture/automation-service.md).
 
 ---
 
@@ -155,7 +155,7 @@ src                # key files; see ARCHITECTURE for full layout
 └── index.ts
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the operation lifecycle, auth chain, and flag adapter contract.
+See [`docs/architecture/automation-service.md`](./docs/architecture/automation-service.md) for the operation lifecycle, auth chain, and flag adapter contract.
 
 ---
 

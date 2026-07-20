@@ -32,10 +32,15 @@ production artifacts, and implementing skills own application-source changes.
 - **Optional**: `--mode`; `--persist`; the user's experience, confidence,
   references, hard constraints, and known unanswered questions.
 
-Default to a conversational result. With `--persist`, a requested prototype, or
-a long-lived multi-session task, create `.discovery-<slug>/DISCOVERY.md`; keep
-disposable artifacts below its `prototypes/` and copied or summarized reference
-evidence below `references/`. Never modify application source in this skill.
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work directory from
+that contract; do not invent a root workspace.
+
+Default to a conversational result. With `--persist` or a long-lived task,
+write the ledger to `state/discovery.md`. Keep requested disposable prototypes
+under `evidence/prototypes/<semantic-slug>/` and copied or summarized source
+material under `evidence/discovery/`. Never modify application source.
 
 When structured comparison, explanation, or preference capture would be easier
 to understand interactively, follow [presentation](references/presentation.md).
@@ -109,7 +114,7 @@ owner, or marked blocking.
 - Every consequential claim is labeled and carries evidence or an explicit
   user source; hypotheses are not reported as facts.
 - No application source changed, and every prototype is visibly disposable and
-  contained inside the discovery workspace.
+  contained inside the active work's evidence directory.
 - Every material unknown has a disposition and owner; every accepted assumption
   is low-impact, reversible, and has a recheck trigger.
 - The recommended next owner receives the ledger and all artifact paths.
@@ -123,5 +128,7 @@ owner, or marked blocking.
 Report the selected mode, starting point, material unknowns found or resolved,
 accepted assumptions, decisions and rejected alternatives, persistent workspace
 when any, readiness verdict (`ready`, `more-discovery`, or `blocked`), and the
-single recommended next owner. Runtime trigger behavior is reported as exercised
-only when an executable evaluation actually ran.
+single recommended next owner. Return explicit final paths generated or
+materially rewritten as `generated_files`; the PM reconciles overviews and runs
+the final size pass. Runtime trigger behavior is reported as exercised only when
+an executable evaluation actually ran.

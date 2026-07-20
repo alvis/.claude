@@ -2,7 +2,10 @@
 
 Load this reference during **Step 3 (Execute Sync Operations)** in `SKILL.md`. It contains the mode-specific execution recipes the sync subagent must follow based on the active `sync_mode`. Pick exactly one of the three branches below per pair.
 
-All branches delegate to the `notion-sync` CLI. **Never iterate per-page across tool-call turns** — use the recursive `--follow*` flags so the CLI walks the entire subgraph in a single invocation.
+All branches delegate transport to the `notion-sync` CLI. **Never iterate
+per-page across tool-call turns** — use recursive `--follow*` flags so the CLI
+walks the requested subgraph in one invocation. Preserve every path returned
+by the CLI; never derive a filename from a page title or id.
 
 ## For sync_mode = 'local-to-notion'
 
@@ -10,7 +13,8 @@ All branches delegate to the `notion-sync` CLI. **Never iterate per-page across 
    - `Bash: notion-sync push <file_path>`
      - Uses the file's frontmatter `ref:` to update the existing page.
      - For `CREATE_NEW` pairs, ensure the file has `parent: <database-or-page-id>` in frontmatter; the CLI creates the page and writes the resulting `ref:` back to the source file.
-     - Add `--follow` when the local file references other local files (via `parent:` chains) that also need pushing in one go.
+     - Add `--follow` when the local file references other declared local files
+       that also need pushing in one operation.
 2. **Record Sync Result**:
    - Sync direction: `local→notion`
    - Sync timestamp: current ISO timestamp
@@ -19,10 +23,12 @@ All branches delegate to the `notion-sync` CLI. **Never iterate per-page across 
 ## For sync_mode = 'notion-to-local'
 
 1. **Pull from Notion** (single recursive CLI call):
-   - `Bash: notion-sync pull <ref> --follow-children --follow-links --out <dir>`
+   - `Bash: notion-sync pull <ref> --follow --out <staging-dir>`
      - `<ref>` = the resolved Notion URL or 32-hex id from Step 1.
      - One recursive call walks the page + its direct references; do **not** loop and pull each linked page across separate turns.
-     - Files are written as `{kebab-title}-{32hex-id}.md` under `<dir>`.
+     - Verify the staged root by frontmatter `ref:` and the CLI report, then
+       replace the declared output set. Specification transport files must be
+       `.mdc`; returned relative paths stay unchanged.
 2. **Record Sync Result**:
    - Sync direction: `notion→local`
    - Sync timestamp: current ISO timestamp
@@ -30,7 +36,9 @@ All branches delegate to the `notion-sync` CLI. **Never iterate per-page across 
 ## For sync_mode = 'two-way-merge'
 
 1. **Get Resolved Content**:
-   - The merged content for this pair has already been written to the local file by Step 2 (`references/two-way-merge.md`). The local file now represents the agreed-upon state.
+   - Step 2 produced explicit decisions and a merged content proposal. Apply
+     authored `.mdc` content only through `Skill(mdc)`; do not use direct
+     `Write`/`Edit` on an MDC body.
 2. **Push merged state to Notion** (single CLI call):
    - `Bash: notion-sync push <file_path>`
      - Uses frontmatter `ref:` (existing page) or `parent:` (CREATE_NEW). For CREATE_NEW, the CLI writes back the new `ref:`.

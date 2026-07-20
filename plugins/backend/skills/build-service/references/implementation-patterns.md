@@ -1,6 +1,10 @@
 # Implementation Patterns — Draft, Complete, Test
 
-This reference is consulted by **Step 4 (Draft → Implement → Test)** for the per-batch context passed to the `coding:draft-code`, `coding:complete-code`, and `coding:complete-test` sub-skills. The orchestrator dispatches these sub-skills sequentially; this reference supplies the per-batch instructions and reference file paths.
+This reference supplies per-batch context to `coding:draft-code`,
+`coding:complete-code`, and `coding:complete-test`. Every dispatch includes the
+absolute Essential `engineering-work.md` path, `working.md` then `state.md`
+read order, exact materialized spec/plan pointers, PM-owned-file prohibition,
+and `generated_files` return contract. Children never run Markdown size checks.
 
 ## Draft Phase Context (passed to coding:draft-code)
 

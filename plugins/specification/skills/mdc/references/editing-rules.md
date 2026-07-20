@@ -88,11 +88,19 @@ If a single repair fails twice, **stop and report** rather than escalating edits
 
 ---
 
-## 5. Working in `.code-spec/`
+## 5. Working in engineering specification roots
 
-Files under `.code-spec/` are fair game for editing — they are local materialisations of Notion specs. The skill should **not** refuse edits there. Sync back to Notion is a separate skill (`specification:sync-notion`); leave that to the user or the sibling skill.
+Notion-backed MDC may live under the resolved default workspace's
+`.engineering/notion/` mirror or the active workspace's
+`.engineering/work/<work-id>/spec/`. The former is transport state and the
+latter is temporary work state. Sync and completion remain separate operations
+owned by `specification:sync-notion` and `specification:sync-spec`.
 
-Two things to be especially careful about in `.code-spec/`:
+Two things require special care:
 
-- The root spec file (whose 32-hex suffix matches its top-level page) MUST remain non-empty. If your edit is structural enough to risk an empty file, do it as a series of small additions and removals, not a single full replacement.
+- The root spec file, identified by frontmatter `ref:` and the materialization
+  receipt rather than its filename, MUST remain non-empty.
 - Front-matter `ref:` is the page's Notion ID. Never edit it unless explicitly told to.
+
+Never derive or rename a file from its title or `ref:`. MDC paths are owned by
+notion-sync and are not subject to the ordinary Markdown byte gate.

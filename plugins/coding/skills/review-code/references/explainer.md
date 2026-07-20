@@ -1,28 +1,24 @@
 # Change explainer
 
-Load this reference only when `--explain` is requested. The review remains
-read-only with respect to code; this mode adds one report artifact after the
-independent findings are complete.
+Load only for `--explain`. After independent reviews finish, create a lowercase
+child such as `changes/change-explainer.md` under the active work root. Use the
+canonical slug/collision output from Essential's `derive-engineering-name` executable in the engineering-work
+contract; never overwrite another change child. Sequence prefixes are reserved
+for split output and ADRs. Return the path so the PM can
+reconcile `changes.md`.
 
-Generate `<out>/CHANGE_EXPLAINER.md` with these sections:
+Include:
 
-1. **Outcome and motivation** — the user-visible or system outcome, why the
-   change exists, and the acceptance criteria it serves.
-2. **Before and after** — distinguish behavior added or changed from relevant
-   pre-existing paths the diff relies on. Cite files, symbols, plans, and specs.
-3. **Behavior flow** — trace representative entry points through state, data,
-   dependencies, side effects, and outputs, including error and async paths.
-4. **Decisions and deviations** — summarize implementation notes, accepted
-   assumptions, rejected alternatives, plan pivots, and unresolved review
-   findings without presenting them as settled facts.
-5. **Operational intuition** — invariants, failure modes, security boundaries,
-   performance implications, compatibility, and how tests exercise them.
-6. **Comprehension quiz** — five to ten questions testing behavior, invariants,
-   failure paths, and integration. Avoid trivia recoverable from a filename.
-7. **Answer key** — place answers after a clear separator so the reader can take
-   the quiz first; each answer cites supporting evidence.
+1. Outcome, motivation, and acceptance criteria.
+2. Before/after behavior, distinguishing the change from pre-existing paths.
+3. Representative flows through state, data, dependencies, side effects,
+   errors, and async behavior.
+4. Approved decisions, implementation deviations, and unresolved findings.
+5. Invariants, failure modes, trust/performance/compatibility implications, and
+   how tests exercise them.
+6. Five to ten comprehension questions about behavior and integration.
+7. An answer key after a separator, with evidence paths.
 
-Do not claim the quiz proves correctness or make a perfect score a merge gate.
-Its purpose is ownership transfer and reviewer understanding. If evidence is
-insufficient for an answer, make that uncertainty an explicit question rather
-than inventing certainty.
+Do not claim the quiz proves correctness. Mark insufficient evidence as an
+open question instead of inventing an answer. The child carries `pending` or
+`applied` change status and a one-line headline for `changes.md`.

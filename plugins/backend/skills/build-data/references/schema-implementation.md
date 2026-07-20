@@ -21,18 +21,21 @@ standard A references standard B, read B too):
 **Assignment**: implement the Prisma schema for domain `{domain}` with
 entities `{entity list}`.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path passed by the orchestrator. If unavailable, stop
+artifact writes and report the missing contract. Read `working.md`, then
+`state.md`, then only the exact materialized spec sections assigned. Never
+fetch Notion or edit PM-owned work files.
+
 **Steps**:
 
-1. When a Notion URL is provided: fetch entity definitions from Notion
-   (locate the Data Controllers database, find the controller page, extract
-   the entity specs)
-2. Validate the project structure (`prisma/` folder, `package.json`)
-3. Translate each entity into Prisma schema model syntax
-4. Write individual schema files with JSDoc documentation for every field
-5. Ensure proper relationships, constraints, and indexes
-6. Run `npx prisma generate` to create TypeScript types
-7. Run `npm run build` to verify no breaking changes
-8. Fix any compilation errors
+1. Validate the project structure (`prisma/` folder, `package.json`)
+2. Translate each assigned materialized entity into Prisma schema syntax
+3. Write individual schema files with JSDoc documentation for every field
+4. Ensure proper relationships, constraints, and indexes
+5. Run `npx prisma generate` to create TypeScript types
+6. Run the package build to verify no breaking changes
+7. Fix compilation errors within the assigned slice
 
 **Report** (under 1000 tokens):
 
@@ -42,6 +45,7 @@ entities `{entity list}`.
 status: success|failure|partial
 summary: 'Schema implementation results'
 modifications: ['entity1.prisma', ...]
+generated_files: ['/absolute/path/entity1.prisma', ...]
 outputs:
   entity_count: N
   entity_list: ['Entity1', ...]

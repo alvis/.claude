@@ -7,10 +7,10 @@ schemas below are the only run state, any run is resumable — and auditable —
 ## Run directory layout
 
 ```
-autoresearch_<slug>_<YYYYMMDD>/
-  RESEARCH_BRIEF.md              # Step 3; append-only ## Amendments thereafter
-  LEADERBOARD.md                 # header scaffolded Step 4; rewritten Step 7
-  DOSSIER.md                     # Step 7
+<work-dir>/evidence/autoresearch/<semantic-slug>/
+  research-brief.md              # Step 3; append-only ## Amendments thereafter
+  leaderboard.md                 # header scaffolded Step 4; rewritten Step 7
+  dossier.md                     # Step 7
   best/                          # winning artifact copy
   worktrees/                     # code mode only; ephemeral sandboxes, removed in Step 7
   rounds/round-NN/
@@ -68,7 +68,7 @@ order:
 5. **Evolve Decision** — survivors carried forward, mutations issued, fanout change (with reason), and budget
    spent (`round N of budget.max_rounds`).
 
-## LEADERBOARD.md format
+## leaderboard.md format
 
 Ranked top-N table — the run's at-a-glance state:
 
@@ -79,7 +79,7 @@ Ranked top-N table — the run's at-a-glance state:
 The header is scaffolded once in Step 4 (with the baseline row); the file is fully rewritten in Step 7 from the
 final leaderboard state — never hand-patched mid-run.
 
-## DOSSIER.md format
+## dossier.md format
 
 The Step 7 synthesis, written by a `fable/opus` agent from the round logs (it reads `rounds/`, not the orchestrator's
 memory). Sections, in order:
@@ -94,5 +94,5 @@ memory). Sections, in order:
 7. **Recommendations** — next experiments, directions worth a fresh run, harness improvements.
 
 **Review rule**: before Step 7 completes, a read-only reviewer agent must verify that every score on
-LEADERBOARD.md traces to a `rounds/round-NN/scores.yaml` entry (matching cid, round, and consensus value). A
+`leaderboard.md` traces to a `rounds/round-NN/scores.yaml` entry (matching cid, round, and consensus value). A
 leaderboard row with no scores.yaml provenance fails the run's completion gate.

@@ -139,7 +139,7 @@ The CLI reads a small set of environment variables to support CI pipelines and c
 
 The CLI is a thin argv parser around a three-stage pipeline: **parse** the source with `@theriety/tsx-parser`, **run** each rule as a visitor over the resulting AST, and **report** findings through a pluggable formatter. Rule plugins are loaded once per process and cached on disk by content hash.
 
-A full architectural breakdown — system context, module topology, data flow diagrams, state machine, and invariants — lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+A full architectural breakdown — system context, module topology, data flow diagrams, state machine, and invariants — lives in [`docs/architecture/code-linter.md`](./docs/architecture/code-linter.md).
 
 ---
 

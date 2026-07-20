@@ -25,7 +25,7 @@ A data controller is a **Prisma-first orchestrator**. `@theriety/data-billing` e
 - **Operation per verb**: each file under `src/operations/<verb-noun>.ts` is a single atomic unit — it either succeeds or leaves the database untouched
 - **No business logic**: validation of *domain rules* ("is this customer allowed to pay?") happens upstream; this package validates only referential and transactional invariants
 
-The deeper rationale and the full ER diagram live in the sibling [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+The deeper rationale and full ER diagram live in [`docs/architecture/billing-data.md`](./docs/architecture/billing-data.md).
 
 ---
 
@@ -42,7 +42,7 @@ Configuration comes from the environment and is validated at boot. Invalid or mi
 
 ## 🗄️ Data Objects
 
-The schema contains six models and five relations. The table below is the canonical summary; the full ER diagram is in `ARCHITECTURE.md`.
+The schema contains six models and five relations. The table below is the canonical summary; the full ER diagram is in `docs/architecture/billing-data.md`.
 
 | Model | Purpose | Key fields |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ src
 └── index.ts
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the ER diagram, transaction lifecycle, and extension guidance.
+See [`docs/architecture/billing-data.md`](./docs/architecture/billing-data.md) for the ER diagram, transaction lifecycle, and extension guidance.
 
 ---
 

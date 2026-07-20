@@ -1,126 +1,90 @@
 ---
 name: plan-code
-description: Generate DRAFT.md as a commit blueprint and PLAN.md as an execution roadmap from an approved proposal or specification. Use when planning implementations, defining atomic commits, documenting change proposals, or preparing a coding workflow with explicit verification and ownership boundaries.
+description: Build an implementation-ready plan from an approved specification inside an active engineering work item. Use to resolve the decision surface, define atomic implementation slices, and prepare verification without creating independent root planning or change artifacts.
 model: opus
 context: fork
 allowed-tools: Read, Glob, Grep, Bash, Write, Task, TodoWrite, AskUserQuestion, ExitPlanMode
-argument-hint: "[--design=DESIGN.md] [--change=\"description\"]"
+argument-hint: "--work-id=<id> [--spec=<path>] [--change=<description>]"
 ---
 
 # Plan Code
 
-Turn approved design documents, informed by optional discovery evidence, into
-two artifacts: `DRAFT.md`, a commit
-blueprint with copy-paste-ready code, and `PLAN.md`, a lightweight execution
-roadmap of atomic, testable commits. `specification:spec-code` owns creating
-the specifications this skill plans against; `coding:takeover` and
-`specification:implement-code` own executing the resulting plan.
+Turn an approved work specification into a decision-complete implementation
+blueprint stored with the active work item. `specification:spec-code` owns the
+contract; `specification:implement-code` and Coding skills execute it.
 
 ## Boundaries
 
-- Use for: generating `DRAFT.md` and `PLAN.md` from design documents,
-  processing `*_PROPOSED.md` proposals into `*_CHANGE.md` change records, and
-  refining commit structure interactively before implementation begins.
-- Do not use for: implementing code or touching source files, running git
-  commits/pushes/branches, creating design specifications from scratch
-  (`specification:spec-code`), executing an existing plan
-  (`coding:takeover`), or modifying original design files directly.
-- Refuse when: no design specification exists (run `specification:spec-code`
-  first), the working directory is not a git repository, the request is
-  implementation or commit execution rather than planning, or the design is
-  too vague to plan against — name the missing sections when refusing.
+- Do not create independent root planning, proposal, or change artifacts.
+- The complete work context and plan are summarized in `state.md`; detailed
+  implementation slices live under `state/`. Proposals, changes, decisions,
+  and design reasoning use the corresponding work-local child folders.
+- `working.md` is a temporary current-focus summary, not the plan. Only the PM
+  writes it and reconciles the four overview indexes.
+- Do not implement source code, mutate history, or change authoritative MDC.
 
 ## Inputs
 
-- **Required**: at least one design document reachable from the working
-  directory (`DESIGN.md`, `REQUIREMENTS.md`, `DATA.md`, `UI.md`, `NOTES.md`,
-  or `REFERENCE.md`).
-- **Optional**: `--design=<path>` to point at a specific design file
-  (default: scan the current directory); `--change="description"` to focus
-  planning on a described change; a reachable `DISCOVERY.md` evidence ledger.
-- **Prerequisites**: the working directory is a git repository.
-
-<IMPORTANT>
-Coherence mandate: every plan revision must produce one continuous,
-deliberate document. When a proposal modifies an existing `DRAFT.md` or
-`PLAN.md`, rewrite the affected sections so the result reads as a single
-coherent roadmap — never the prior plan with a "Proposed changes" appendix,
-a parallel second step list, or visible patch seams.
-</IMPORTANT>
+- **Required**: `--work-id=<id>` and an approved specification reachable from
+  `.engineering/work/<work-id>/spec/` or a `sync-spec` materialization report.
+- **Optional**: explicit spec path, focused change, discovery evidence, and
+  current repository standards/architecture.
 
 ## Workflow
 
-1. Validate the environment: confirm the git repository, parse `--design`
-   and `--change`, then scan for and read every design or discovery document
-   present (`DISCOVERY.md`, `DESIGN.md`, `REQUIREMENTS.md`, `DATA.md`, `UI.md`,
-   `NOTES.md`, `REFERENCE.md`). Preserve `DISCOVERY.md` provenance labels;
-   inference and accepted assumptions do not become specification facts.
-2. Scan for `*_PROPOSED.md` proposals. When found, present a summary and ask
-   for approval; on approval, compare each proposal against its original and
-   write the differences to a matching `*_CHANGE.md`. With no proposals,
-   continue directly.
-3. Build and present the decision surface before drafting implementation. Gather
-   current architecture, technology stack, tests and coverage, then lead with
-   the choices most expensive to change: data models and migrations, public
-   interfaces and type contracts, user-visible flows and states, dependencies,
-   security/privacy posture, and integration boundaries. Classify each as
-   resolved, accepted low-impact assumption with a recheck trigger, explicitly
-   deferred with an owner, or blocking. Route an underexplored material choice
-   to `essential:discover`; route grounded competing options to
-   `essential:decide`.
-4. Refine the decision surface interactively via `AskUserQuestion`: each
-   question offers 2-4 alternatives with clear rationales, prioritized by how
-   much the answer changes architecture, scope, or acceptance criteria. Ask one
-   high-coupling question at a time; batch only independent questions. Do not
-   generate copy-paste-ready code while a blocking decision remains.
-5. Generate `DRAFT.md`: cross-reference every source document and decision,
-   plan the atomic commits, then write the draft with the decision surface at
-   the top, a file-structure section showing commit associations, and a commit
-   plan carrying full copy-paste-ready file contents. Put mechanical refactoring
-   after the data, interface, UX, and integration decisions. Every commit must
-   satisfy this checklist:
-   - self-contained and independently testable
-   - 100% test coverage for its scope
-   - clear separation of concerns from other commits
-   - conventional commit format `type(scope): description`
-   - multiple commits per phase allowed
-   - full file contents provided, copy-paste ready
-6. Present a draft summary and request approval of `DRAFT.md`.
-7. On approval, generate `PLAN.md`: group commits into phases and write the
-   implementation phases, execution order, success criteria, accepted
-   assumptions with recheck triggers, deferred decisions with owners, and
-   evidence that requires a plan pivot.
-8. Run the quality gate: spawn one review subagent via `Task` (a single
-   reviewer — the artifacts are few and interdependent, so fan-out buys
-   nothing), passing `DRAFT.md`, `PLAN.md`, and all design documents. It
-   must verify architecture alignment with `DESIGN.md`, that every
-   `REQUIREMENTS.md` item has both implementation and tests, schema accuracy
-   against `DATA.md`, component fidelity to `UI.md`, adherence to `NOTES.md`
-   decisions, and the absence of test-coverage gaps. Reviews are read-only.
-   On findings, update `DRAFT.md`/`PLAN.md` and re-run the checklist.
-9. Finalize proposals: replace each `*_PROPOSED.md` with its final version
-   and preserve the `*_CHANGE.md` records.
-10. Run the verification below; when a check fails, fix the cause and re-run
-   that check. Repeat until every check passes or a concrete blocker
-   remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. Resolve the active
+   work root; read `working.md`, then `state.md`, then the materialization
+   receipt and only the relevant spec sources.
+2. Treat any legacy root design/draft/plan/proposed/change files as read-only
+   migration inputs. Do not overwrite or delete them. Report ambiguous mapping
+   for PM disposition.
+3. Build the decision surface before implementation detail: data/migrations,
+   public interfaces, user-visible flows, dependencies, security/privacy,
+   integration boundaries, and acceptance criteria. Classify each as resolved,
+   accepted reversible assumption with recheck trigger, deferred with owner and
+   deadline, or blocking. Route discovery/decision work to the owning skills.
+4. Ask only material unresolved questions. Once none block execution, write
+   detailed lowercase artifacts as needed:
+   - `decisions/<slug>.md` for a choice and consequences;
+   - `proposals/<slug>.md` for an unapproved change;
+   - `changes/<slug>.md` for an approved implementation/plan change;
+   - `design/<slug>.md` for temporary task-specific technical design;
+   - `state/implementation-plan.md` for ordered slices, dependencies,
+     interfaces, tests, acceptance evidence, assumptions, and pivot signals.
+   Ordinary work children always use an unnumbered semantic slug. Reserve
+   `<nn>-<topic-slug>.md` for split output only; durable ADRs alone use
+   `docs/architecture/decisions/<nnnn>-<decision-slug>.md`.
+5. Make each implementation slice atomic and independently verifiable. Name
+   its source targets, contract/acceptance references, implementation intent,
+   test additions, repository gates, dependency order, and conventional commit
+   intent. Include code only where an exact interface or migration shape is
+   needed to prevent implementer choice; do not duplicate whole source files.
+6. Dispatch one read-only reviewer with the authoritative spec, plan detail,
+   decisions, and repository standards. It verifies complete acceptance/test
+   mapping, architecture consistency, schema/API fidelity, executable order,
+   and absence of hidden decisions. Resolve findings and review once more.
+7. Return the complete `state.md` reconciliation payload and the four overview
+   rows/status deltas to the PM. Do not directly edit PM-owned `state.md`,
+   `working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
+8. Return explicit final paths generated or materially rewritten as
+   `generated_files`. Do not run per-file or final `wc -c`; the PM performs one
+   batch pass after every writer finishes.
 
 ## Verification
 
-- Every commit in `DRAFT.md` satisfies the six-point checklist.
-- The decision surface precedes implementation detail and contains no blocking
-  decision disguised as an assumption.
-- Every `REQUIREMENTS.md` item maps to at least one commit containing both
-  implementation and tests.
-- The review subagent's checklist passed with no open findings.
-- Every `DRAFT.md` commit appears in exactly one `PLAN.md` phase and the
-  execution order respects inter-commit dependencies.
-- `PLAN.md` records accepted assumptions, deferred decisions, and pivot signals.
+- Every acceptance criterion maps to at least one implementation slice and one
+  verification action.
+- Every slice appears once, has dependency-safe order, and introduces no
+  unresolved material decision.
+- Temporary detail is work-local, legacy root files are untouched, and PM-owned
+  indexes have explicit reconciliation data.
+- The read-only quality gate passed and `generated_files` is complete.
 
 ## Completion
 
-Report the design source, proposals processed (and `*_CHANGE.md` files
-written), the number of commits in `DRAFT.md` and phases in `PLAN.md`, the
-quality-gate result, and next steps: review `DRAFT.md` for code accuracy,
-review `PLAN.md` for execution order, then start implementation with
-`coding:takeover` or `specification:implement-code`. A refusal names the
-missing prerequisite — absent specs, vague sections, or a non-git directory.
+Report work id, authoritative spec/receipt, decisions and proposals created,
+slice count and execution order, quality-gate result, legacy migration issues,
+PM reconciliation payload, and `generated_files`. A refusal names the missing
+spec, work state, repository, or blocking decision.

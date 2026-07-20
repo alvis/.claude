@@ -6,7 +6,7 @@ ARCHITECTURE = how it works. For usage/install, see the subsystem READMEs.
 
 📌 **First paragraph:** The `services` subsystem hosts the long-running processes of `@theriety/platform`: `service-api` (REST + GraphQL gateway), `service-worker` (background job runner), and `service-scheduler` (cron and delayed dispatch). Every service depends on `core-contracts` for its wire format and on `core-errors` for its failure vocabulary; no service imports from another service's internals.
 
-**Second paragraph:** See the [INDEX](./ARCHITECTURE.md) for cross-cutting patterns and the sibling `core` and `sdks` architecture files. This document dives into the services topology, inter-service call flow, and job lifecycle invariants.
+**Second paragraph:** See the [index](../platform.md) for cross-cutting patterns and the sibling `core` and `sdks` architecture files. This document dives into the services topology, inter-service call flow, and job lifecycle invariants.
 
 <br/>
 <div align="center">

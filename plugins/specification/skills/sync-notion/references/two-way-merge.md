@@ -109,7 +109,10 @@ Request each subagent to perform the following comparison and conflict resolutio
            ```
            <!-- TODO: Resolve merge conflict manually - Section [name] -->
            ```
-       - Use Edit/Write to persist the resolved sections **back into the local file in place**. The local file becomes the agreed-upon merged state. You MUST NOT push to Notion in this step — Step 3 (`references/sync-mode-execution.md`) owns the push via `notion-sync push <file>`.
+       - For `.mdc`, return the merged content proposal and block refs to the
+         orchestrator, which applies it through `Skill(mdc)`. Never use direct
+         Edit/Write on an MDC body. Plain Markdown pairs may be updated in
+         place. You MUST NOT push in this step — Step 3 owns the push.
        - Preserve original order, frontmatter, and structure.
 
     5. **Generate Conflict Report**:
@@ -137,7 +140,8 @@ Request each subagent to perform the following comparison and conflict resolutio
         keep_remote: [count]
         keep_both: [count]
         skipped: [count]
-      resolved_content: '[complete merged content]'
+      resolved_content: '[complete merged content proposal]'
+      generated_files: []
       skipped_conflicts: ['section1: description', 'section2: description', ...]
     issues: ['issue1', 'issue2', ...]  # only if problems encountered
     ```

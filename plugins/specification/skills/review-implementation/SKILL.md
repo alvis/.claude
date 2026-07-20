@@ -1,78 +1,101 @@
 ---
 name: review-implementation
-description: "Review an implementation against an authoritative local or Notion specification, then run the general coding and security review. Use for specification alignment, delivered-ticket validation, or detecting omissions, drift, and unsanctioned behavior before handoff."
+description: Review implementation against an authoritative work-local or Notion specification, coordinate the seven canonical review areas, and summarize dispositions in the active work item. Use for alignment, ticket validation, omissions, drift, and unsanctioned behavior.
 model: opus
 context: fork
-allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, TodoWrite, Skill
-argument-hint: "[specifier] [--area=alignment|test|documentation|code-quality|security|style|all] [--out=reviews] [--spec-path=./.code-spec]"
+allowed-tools: Task, Read, Write, Edit, Grep, Glob, Bash, WebSearch, AskUserQuestion, TodoWrite, Skill
+argument-hint: "[specifier] --work-id=<id> [--area=alignment|correctness|security|quality|testing|docs|style|all]"
 ---
 
 # Review Implementation
 
-Review delivered code against a concrete specification and the general review contract. `ALIGNMENT.md` owns specification conformance. `coding:review-code` owns semantic correctness, security, tests, documentation, and sibling consistency. This skill coordinates both and does not edit implementation files.
+Coordinate specification alignment and the general Coding review without
+duplicating their detection protocols. Write canonical lower-case work-local
+review artifacts and one disposition summary.
 
 ## Boundaries
 
-- Require an on-disk specification bundle or resolve a Notion source with `Skill(sync-spec)` before alignment.
-- Every alignment finding cites both a specification location and an implementation location.
-- Do not duplicate the base review protocol or mechanical lint checks.
-- Alignment failure changes the report and next-action plan, but never suppresses the general or security review.
+- Require a verified work-local specification or invoke `sync-spec` to
+  materialize one. Identify sources by receipt/frontmatter ref, not filename.
+- `alignment.md` owns contract conformance. `correctness.md` owns semantic bugs
+  that are wrong independently of the specification. The other areas are
+  `security.md`, `quality.md`, `testing.md`, `docs.md`, and `style.md`.
+- Do not create `audit.md`, `deviations.md`, review `readme.md`, root review
+  files, or duplicate a finding across areas. Contract/completeness audit gaps
+  route to alignment; plan departures stay in work state/changes.
+- Review remains read-only with respect to implementation and MDC.
 
 ## Inputs and outputs
 
-`specifier` accepts the same file, directory, package, PR, or range forms as `coding:review-code`. `--spec-path` defaults to `./.code-spec`; `--out` defaults to `reviews/`. `--area=all` is the default. `--area=alignment` narrows the specification-specific artifact, but it still runs the mandatory general semantic and security areas from `coding:review-code`.
-
-Write:
-
-- `ALIGNMENT.md`: requirements mapped to implementation, with `ALIGN-P<n>-<seq>` findings and a verdict;
-- all requested files from `coding:review-code` (`SECURITY.md`, `QUALITY.md`, `TESTING.md`, `DOCS.md`, `STYLE.md`, and `CORRECTNESS.md` as applicable);
-- `README.md`: an index with per-area verdicts, counts, and skipped/refused reasons.
-
-If the spec cannot be materialized, return without partial review files:
-
-```yaml
-status: refused
-reason: spec_not_found
-resolved_spec_path: <absolute path>
-```
+Require `--work-id=<id>`. Resolve output to
+`.engineering/work/<work-id>/reviews/` and summary to sibling `review.md`.
+`--area=all` is default; alignment-only still runs mandatory correctness and
+security coverage through `coding:review-code`.
 
 ## Workflow
 
-1. Resolve the project root and `--spec-path`. For a Notion URL or ID, invoke `Skill(sync-spec)` once to materialize `.code-spec`, then verify the bundle contains a readable root specification.
-2. Resolve the implementation file set with the same semantics as `coding:review-code`.
-3. Run the alignment area first. Enumerate every requirement in the bundle (contracts, schemas, invariants, acceptance criteria, non-functional posture), then trace both directions: spec-to-code for omissions and drift, code-to-spec for unsanctioned additions. The specifier bounds only which code gets drift scrutiny — before flagging a requirement as missing, search the whole repository for an implementing site; a requirement implemented anywhere is satisfied. Treat every detection as a candidate: adversarially try to refute it (covered elsewhere, sanctioned by another spec section or an optional/future marker, drift within tolerance) and record only survivors. When scope warrants delegation, dispatch auditors blind — spec path, file set, template, and standards paths only, never the expected conclusion — and keep the verifier independent of the finder. `ALIGNMENT.md` follows `coding:review-code`'s `references/review.template.md` with prefix `ALIGN`, so finding IDs stay stable across re-runs per the base skill's rules.
-4. Always invoke `Skill(coding:review-code)` for the requested non-alignment areas, including its general semantic review and security review, even when alignment has P0/P1 findings. Pass the target and output directory; tell the base skill that specification conformance belongs only in `ALIGNMENT.md`.
-5. Reconcile each alignment deviation with the user: update the spec, update code, accept with rationale, or defer. Do not silently choose a resolution. Batch the questions, but every deviation must receive a decision.
-6. Regenerate `ALIGNMENT.md` and `README.md`, retaining the base review's findings and recording any refusal or skipped area. Follow [references/deviation-lifecycle.md](references/deviation-lifecycle.md) for the severity ladders, the three-state `open`/`decided`/`resolved` verdict model (only `resolved` clears; `decided` still counts as outstanding), how reconciliation decisions are woven into each issue block, re-run ID stability, and the read-only structural validation pass.
-7. Return a structured summary and the report's `## Next-Action Plan`, then ask the user which branch to take. Approved implementation changes route to `coding:fix` or `specification:implement-code`; spec changes route to `specification:spec-code` plus a sync; continuation notes route to `coding:handover`. Flip each `decided` deviation to `resolved` as its close-the-gap action completes, and offer a re-detection round to confirm closure.
-8. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. Resolve work/review
+   roots and read `working.md`, `state.md`, and the spec receipt.
+2. For a Notion URL/id or stale/missing receipt, invoke `Skill(sync-spec)` in
+   `materialize` mode. Refuse without writing partial reports when no verified
+   authoritative specification can be materialized.
+3. Resolve implementation scope with `coding:review-code` semantics. Enumerate
+   requirements, invariants, schemas, acceptance criteria, and non-functional
+   posture. Trace spec-to-code for omission/drift and code-to-spec for
+   unsanctioned behavior; search the repository before declaring absence.
+4. Adversarially refute each candidate and retain only survivors. Every
+   alignment finding cites both spec and implementation locations and uses
+   stable `ALIGN-P<n>-<seq>` identity across reruns.
+5. Invoke `Skill(coding:review-code)` for requested non-alignment areas,
+   including correctness and security on every run. Pass the work-local reviews
+   directory and state that spec conformance belongs only in `alignment.md`.
+6. Reconcile alignment findings with the user: update spec, update code,
+   acknowledge/waive, defer, or skip with required closure metadata. Apply the lifecycle in
+   [references/deviation-lifecycle.md](references/deviation-lifecycle.md).
+   A decision does not clear a gap until its action lands, except valid
+   acknowledgement/skip risk acceptance. P0/P1 risk acceptance requires
+   explicit authority and durable evidence.
+7. Rewrite `alignment.md` coherently and generate `review.md` with per-area
+   verdict/count, finding disposition (`open`, `fixed`, `acknowledged`,
+   `deferred`, `skipped`), and next-action pointers. Never copy full findings
+   into the summary.
+8. Run one read-only structural validator, fix once, and revalidate. Return
+   explicit final paths generated or materially rewritten as `generated_files`.
+   Do not run `wc -c`; the PM owns the final one-pass batch gate.
 
 ## Verification
 
-- Every alignment finding cites both a specification location and an implementation location, and survived the adversarial refutation pass.
-- `ALIGNMENT.md`, the requested base review files, and the `README.md` index exist with per-area verdicts; the structural validation pass from [references/deviation-lifecycle.md](references/deviation-lifecycle.md) is clean.
-- Every deviation carries a recorded reconciliation decision; only `resolved` deviations are counted as cleared.
-- General and security review evidence is present even when alignment failed.
+- All seven canonical areas are present or have an explicit skipped/refused
+  reason in `review.md`; correctness and security evidence always exist.
+- Findings are single-owned, source-cited, adversarially checked, and their
+  dispositions/counts agree between detail and summary.
+- Stable IDs and prior reconciliation survive reruns; only closed gaps clear.
+- `generated_files` lists `review.md` and every changed area artifact.
 
 ## Alignment contract
 
-For each requirement, record `requirement`, `spec_location`, `implementation_location`, `status` (`satisfied`, `missing`, `drift`, or `unsanctioned`), severity, evidence, and next action. Severity follows impact: a broken acceptance criterion or weakened invariant is P0; contract drift is P0 or P1 by blast radius; an unsanctioned addition is P1 minimum unless trivial (logging, internal helpers consistent with siblings); documentation-only divergence is P2 or P3. Keep spec-conformance findings out of the base review files. Semantic bugs that are wrong regardless of the specification remain in the base review's correctness area.
+For each requirement record requirement, spec location, implementation
+location, `satisfied|missing|drift|unsanctioned`, severity, evidence,
+disposition, and next action. A broken acceptance criterion/weakened invariant
+is P0; contract drift is P0/P1 by blast radius; documentation-only divergence
+is P2/P3. Keep independently wrong behavior in `correctness.md`.
 
-Alignment is a gate for the next action, not a gate for evidence collection: a failed alignment must still have general and security findings so the user can see the complete risk picture.
+## Completion
 
-## Completion report
+<report>
 
 ```yaml
 status: success|partial|refused
-specifier: <target>
-spec_path: <absolute path>
-alignment: pass|fail|refused
-base_review: completed|partial|refused
-general_review: completed|partial|refused
-security_review: completed|partial|refused
-open_findings: 0
-reports: [ALIGNMENT.md, SECURITY.md, ...]
+work_id: '<id>'
+specifier: '<target>'
+spec_root: '<absolute path>'
+areas: {alignment: pass, correctness: pass, security: pass, quality: pass, testing: pass, docs: pass, style: pass}
+dispositions: {open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0}
+closure: {closed: 0, outstanding: 0}
+generated_files: []
 next_action: execute|handover|defer
 ```
 
-`success` requires alignment plus general and security review to complete with no blocking finding. Use `partial` when any required area fails, is unavailable, or retains findings; use `refused` only when no authoritative specification can be materialized. Never label a run complete when general/security evidence is absent.
+</report>

@@ -2,7 +2,7 @@
 name: decide
 description: 'Decides between researched approaches before implementation. Use when asked to choose an approach, challenge a recommendation, make an architecture decision, compare options, define rollback and falsification signals, or obtain approval; routes blindspot passes, brainstorms, interviews, references, and prototypes to essential:discover.'
 model: opus
-allowed-tools: Read, Glob, Grep, Bash, Skill, AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion
 argument-hint: "[problem-or-question]"
 ---
 
@@ -24,8 +24,12 @@ when the evidence or option surface is not ready to converge.
 
 - **Required**: the problem or question (`$ARGUMENTS`); when empty, resolve it
   from conversation context.
-- **Optional**: a `DISCOVERY.md`, specification, decision log, or other evidence
+- **Optional**: a discovery ledger, specification, decision log, or other evidence
   artifact; an implementing skill for the approved handoff.
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. No artifact is written before approval.
 
 <IMPORTANT>
 - Never execute, create, or modify files before approval.
@@ -77,10 +81,13 @@ when the evidence or option surface is not ready to converge.
 
    On rejection, incorporate the new constraint and return to step 3. On
    approval, continue to step 7.
-7. **Hand off.** Discover the one or two most relevant available skills by
-   frontmatter, select the owner of the approved outcome, and invoke it with the
-   decision, observed constraints, accepted assumptions, falsification signal,
-   rollback, and relevant paths.
+7. **Record and hand off.** For project work, write the approved decision to a
+   lowercase `decisions/<decision-slug>.md` child with status `accepted` and the
+   contract's required metadata. Return its path to the PM for reconciliation
+   into `decisions.md`; do not edit the overview as a worker. Discover the one
+   or two most relevant available skills by frontmatter, select the owner of the
+   approved outcome, and invoke it with the decision, observed constraints,
+   accepted assumptions, falsification signal, rollback, and relevant paths.
 8. Run the verification below; fix a failed check and repeat until it passes or
    a concrete blocker remains.
 
@@ -98,4 +105,6 @@ when the evidence or option surface is not ready to converge.
 
 Report the recommendation, user decision, deferred decisions, and—after an
 approved handoff—the invoked skill and context passed. When no option survives,
-name the eliminating constraint rather than forcing a recommendation.
+name the eliminating constraint rather than forcing a recommendation. Return
+explicit final paths generated or materially rewritten as `generated_files`;
+the PM runs the final size pass.

@@ -1,6 +1,6 @@
 # @theriety/service-atc
 
-> ARCHITECTURE = how it works. For usage, see README.md.
+> ARCHITECTURE = how it works. For usage, see readme.md.
 
 <br/>
 
