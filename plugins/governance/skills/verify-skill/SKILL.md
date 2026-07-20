@@ -1,6 +1,6 @@
 ---
 name: verify-skill
-description: "Use when validating a new or changed Claude Code skill, checking structural and repository policy compliance, testing whether descriptions trigger accurately, or grading representative skill outputs before deployment."
+description: "Use when validating a new or changed Claude Code skill, checking structural and repository policy compliance, reasoning through representative trigger and behavior cases, or optionally exercising isolated runtime prompts before deployment."
 model: opus
 context: fork
 ---
@@ -22,7 +22,8 @@ Shared authoring policy lives at
 
 - Required: a `SKILL.md`, skill directory, plugin, marketplace, or plugins path.
 - Optional mode: `structural`, `functional`, or `full` (default `full`).
-- Optional evaluation data: `evals/evals.yaml` and representative prompts.
+- Optional representative prompts supplied inline and `runtime: true|false`
+  (default `false`).
 
 ## Workflow
 
@@ -33,13 +34,16 @@ Shared authoring policy lives at
    fields through a private schema.
 3. Run `${CLAUDE_SKILL_DIR}/scripts/quick_validate.py` on the target. Review body length,
    description budget, unresolved local references, and placeholders.
-4. For functional or full mode, load existing evals or derive a small set from
-   the owned outcome. Follow `references/functional-mode.md` for execution and
-   grading details.
-5. Test positive trigger prompts and nearby negative prompts. A pass requires
-   the intended skill to trigger without stealing work from its neighbors.
-6. Aggregate evidence by skill. When fixes are requested, change only reported
-   causes and rerun the failed checks.
+4. For functional or full mode, derive a transient representative-case matrix
+   from the owned outcome and any caller-supplied prompts. Keep it in context or
+   a temporary Markdown scratch file outside the repository. Follow
+   `references/functional-mode.md` for the case shape, paper-only reasoning, and
+   optional isolated runtime execution.
+5. Include positive trigger prompts, nearby negative prompts, and behavior or
+   failure cases relevant to the change. Separate reasoned outcomes from
+   observed runtime evidence; a pass must not claim execution that did not run.
+6. Aggregate evidence by skill and delete any temporary scratch file. When fixes
+   are requested, change only reported causes and rerun the failed checks.
 
 The validator does not require fixed headings, personas, diagrams, subagent
 prompts, XML report envelopes, or a section literally named “Skill Completion.”
@@ -49,13 +53,15 @@ prompts, XML report envelopes, or a section literally named “Skill Completion.
 ```bash
 claude plugin validate --strict <plugin-path>
 python3 "${CLAUDE_SKILL_DIR}/scripts/quick_validate.py" <skill-or-plugin-path>
-python3 "${CLAUDE_SKILL_DIR}/scripts/run_trigger_eval.py" --help
 ```
 
-Run the first two commands after every fix iteration. Trigger and functional
-results must include the prompt, observed behavior, and pass/fail rationale.
+Run both commands after every fix iteration. Trigger and functional results
+must include the prompt, expectation, reasoned or observed outcome, and
+pass/fail rationale.
 
 ## Completion
 
 Return a concise per-skill verdict with official validation status, policy
-issues, functional/trigger evidence when applicable, and actionable failures.
+issues, transient functional/trigger evidence when applicable, runtime status
+(`exercised`, `not requested`, or `blocked`), scratch cleanup confirmation, and
+actionable failures.

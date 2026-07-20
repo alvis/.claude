@@ -31,7 +31,6 @@ To register a new tool (e.g., `rg`):
    - `macos_only`: `True` only for tools that genuinely don't apply elsewhere (e.g., `brew`).
 3. **Update this file**: Add a row to the table above.
 4. **Update `references/platforms.md`**: Document the per-OS install method for the new tool.
-5. **Update `evals/evals.yaml`**: Adjust trigger queries if the new tool brings new natural-language phrases (e.g., "install ripgrep").
 
 ## Why this is a closed registry
 
