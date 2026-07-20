@@ -22,7 +22,16 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <!-- Replace these placeholders with absolute file:// or canonical plugin asset URLs before writing a temp page. -->
+    <!--
+      Local preview: replace these placeholders with absolute file:// or
+      canonical plugin asset URLs before writing a temp page (see
+      scripts/render_preview.py).
+      Publishing as a self-contained artifact (e.g. a claude.ai Artifact whose
+      CSP blocks external hosts): do NOT hand-fill these — run
+      scripts/build_artifact.py, which inlines the Tailwind runtime plus
+      discovery.css/js and emits a validated self-contained document or
+      --artifact fragment. See references/presentation.md.
+    -->
     <link rel="stylesheet" href="{{DISCOVERY_CSS_URL}}" />
     <script src="{{DISCOVERY_JS_URL}}" defer></script>
   </head>
@@ -32,7 +41,7 @@
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
         <span class="essential-docmark">E_</span>
-        <span><strong>Essential</strong><small>Discover reference</small></span>
+        <span><strong>{{DOCUMENT_TITLE}}</strong><small>Essential · Discover</small></span>
       </a>
       <nav aria-label="Document utilities">
         <span>{{ACTION_LABEL}}</span>
