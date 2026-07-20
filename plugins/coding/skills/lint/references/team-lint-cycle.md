@@ -7,7 +7,7 @@ Referenced from SKILL.md Workflow steps 6–8. Defines how the lead runs batches
 - **DO**: discover files, create batches, spawn teammates, manage lifecycle, aggregate results.
 - **DO NOT**: read standard files, run the scanner, apply standards, lint, review, or fix — teammates do all of it. Never `Read` any path containing `constitution/standards/`; pass the full standard file paths to teammates as strings.
 - **DO NOT** assign new tasks to any agent that reported `context_level` >= 60% — retire it instead.
-- Reviewer lifecycle is managed on pass/fail + `context_level` reports only; detailed findings go directly to linters, never through the lead.
+- Reviewer lifecycle is managed on `ok`/`blocked` + `context_level` reports only. Detailed findings go in a bounded review artifact sent directly to the linter's `agent_id`; they never pass through the lead.
 
 ## Agent pool
 
@@ -15,13 +15,13 @@ Referenced from SKILL.md Workflow steps 6–8. Defines how the lead runs batches
 |-------|-------|------|----------------|-----------|
 | Lead (skill agent) | opus | Orchestration only | 1 | Entire workflow |
 | `linter-N` | haiku | Run the scanner on its batch, apply standards scoped by `--scope`, fix reviewer feedback | 4 | Reused while `context_level` < 60%; waits for reviewer approval when violations were found; requests retirement at >= 60% with fix work remaining |
-| `reviewer-N` | sonnet | Independent compliance review (only when violations were found) | 2 | Sends detailed findings directly to the linter; reports pass/fail + `context_level` to the lead; reused < 60%, retired >= 60% |
+| `reviewer-N` | sonnet | Independent compliance review (only when violations were found) | 2 | Sends a findings-artifact path directly to the linter; reports `ok`/`blocked` + `context_level` to the lead; reused < 60%, retired >= 60% |
 
 The lead maintains a registry per agent: configured name, returned `agent_id`, role, model, last `context_level`, and status (`working` / `idle` / `retired`). Excess batches queue until a slot frees. Every direct message uses the registry's `agent_id`, never the configured name or role.
 
 ## Per-batch lint task contents
 
-Each `TaskCreate` includes: the full absolute standard paths (strings), the batch file list, the `--scope` value and its interpretation (`uncommitted`: `git diff` per file to find changed hunks, lint those ranges plus their enclosing functions/blocks; `all`: whole file; other: a focus hint), the runner command from SKILL.md step 6, and these instructions:
+Each `TaskCreate` stays at or below 4,096 characters and includes: the absolute standard paths (strings), the batch file list, the `--scope` value and its interpretation (`uncommitted`: `git diff` per file to find changed hunks, lint those ranges plus their enclosing functions/blocks; `all`: whole file; other: a focus hint), the runner command from SKILL.md step 6, and these instructions. If that would exceed the ceiling, put the assignment in a task-owned artifact and dispatch its absolute path plus at most two summary lines.
 
 - confirm every advisory scanner candidate against the matching rule file (`./rules/<rule-id>.md`) before flagging, and follow its Fix section;
 - run the project lint/type/test tools after edits — not the scanner again;
@@ -37,10 +37,10 @@ Each `TaskCreate` includes: the full absolute standard paths (strings), the batc
 1. Linter completes and messages the lead its report + `context_level`, then waits.
 2. `violations_found` is `0` and `status: compliant` → **skip review entirely**: mark the batch complete, log it "compliant — review skipped", and return the linter to the pool (or retire at >= 60%).
 3. `violations_found` > 0 → the lead assigns **2 reviewers** (reuse idle < 60%, else spawn). Each review task names the linted files, the standard paths, and the linter's `agent_id`. Reviewers work independently — they never coordinate with each other.
-4. Communication rules: reviewers send **detailed findings directly to the linter's `agent_id`** (full issue descriptions, paths, line numbers, expected fixes) and only **pass/fail + `context_level`** to the lead's `agent_id`.
+4. Communication rules: reviewers write detailed findings (issue descriptions, paths, line numbers, expected fixes) to one bounded, secret-free review artifact and send its absolute path plus at most two lines directly to the linter's `agent_id`. They send only `ok` or `blocked` plus `context_level` and the artifact path to the lead's `agent_id`. No message body may exceed 4,096 characters.
 5. Either reviewer flags issues:
    - linter `context_level` < 60% → the linter (already holding the findings) fixes and reports back; the lead assigns 2 reviewers again; repeat until both approve.
-   - linter `context_level` >= 60% → the lead retires it, spawns a fresh replacement, and forwards the partial work context + reviewer findings.
+   - linter `context_level` >= 60% → the lead retires it, spawns a fresh replacement, and sends the durable partial-work and reviewer-artifact paths rather than relaying their contents.
 6. Both approve → batch complete; linter returns to pool or retires by `context_level`.
 
 ## Aggregate & clean up
