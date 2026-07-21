@@ -63,7 +63,7 @@ Use `references/design-workspace.md` to derive:
 
 - `<work-dir>/design/<design-slug>.md` — the task design contract and detailed
   visual-choice log;
-- `<work-dir>/evidence/design/<design-slug>/` — boards, previews, captures,
+- `<work-dir>/artifacts/design/<design-slug>/` — boards, previews, captures,
   diffs, and inventories;
 - `<work-dir>/design.md` — the lazy PM-owned overview. A worker returns its
   design child path and never reconciles this overview.

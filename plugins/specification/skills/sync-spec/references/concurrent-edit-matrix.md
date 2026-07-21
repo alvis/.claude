@@ -8,7 +8,7 @@ project change independently.
 
 - **B — immutable base**: the exact verified remote bytes from the last
   successful materialization/completion, stored under
-  `evidence/spec-sync/bases/<transport-manifest-key>/` and described by the
+  `artifacts/spec-sync/bases/<transport-manifest-key>/` and described by the
   matching `materializations/<transport-manifest-key>.json` receipt. The key is
   the 64-hex suffix of the full prefixed transport manifest hash.
 - **L — authored local**: the work-local specification under `spec/`. This is

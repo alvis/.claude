@@ -7,7 +7,7 @@ schemas below are the only run state, any run is resumable — and auditable —
 ## Run directory layout
 
 ```
-<work-dir>/evidence/autoresearch/<semantic-slug>/
+<work-dir>/artifacts/autoresearch/<semantic-slug>/
   research-brief.md              # Step 3; append-only ## Amendments thereafter
   leaderboard.md                 # header scaffolded Step 4; rewritten Step 7
   dossier.md                     # Step 7

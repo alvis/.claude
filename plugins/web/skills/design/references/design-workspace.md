@@ -1,7 +1,7 @@
 # Design work artifacts
 
 Use the active work directory reported by Essential. A design run has one
-Markdown contract and one evidence root:
+Markdown contract and one artifacts root:
 
 ```text
 <work-dir>/
@@ -9,7 +9,7 @@ Markdown contract and one evidence root:
 ├── design/
 │   ├── <design-slug>.md              # task design and visual decisions
 │   └── <design-slug>/*.md            # only after a required split
-└── evidence/design/<design-slug>/
+└── artifacts/design/<design-slug>/
     ├── boards/                       # board HTML + rendered image
     ├── previews/<preview-slug>/      # preview HTML + screenshots
     ├── captures/                     # browser and computed-style evidence
@@ -17,7 +17,7 @@ Markdown contract and one evidence root:
     └── inventories/                  # facelift and content evidence
 ```
 
-Create only evidence directories the task needs. Application files remain in
+Create only artifacts directories the task needs. Application files remain in
 their owning source paths. Do not use a project-root workspace, session
 scratchpad, or `$TMPDIR` fallback for task evidence.
 
@@ -69,7 +69,7 @@ because it crossed the 12,288-byte authoring guide.
 ## Evidence lifecycle
 
 Boards are task evidence. Keep matching HTML and rendered images together.
-Previews, captures, diffs, and inventories stay below the same evidence root.
+Previews, captures, diffs, and inventories stay below the same artifacts root.
 Markdown records concise conclusions and relative evidence paths, not embedded
 screenshots, base64 payloads, or full logs.
 
@@ -83,7 +83,7 @@ Project-root `.design`, `.design-*`, `DESIGN.md`, `CONTEXT.md`, and
 
 1. report every exact path and its apparent work target;
 2. propose a content map into `state.md`, `design/<design-slug>.md`, and the
-   evidence root;
+   artifacts root;
 3. require approval before copying or moving anything;
 4. preserve provenance and do not overwrite an existing child; and
 5. never delete legacy paths automatically, even after successful migration.

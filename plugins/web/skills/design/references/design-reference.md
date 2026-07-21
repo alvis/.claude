@@ -214,7 +214,7 @@ context and planning stay in `state.md`.
 For a single component or quick prototype, use a lightweight design child with
 the shared metadata, three-line visual thesis, decisions, evidence paths,
 implementation mapping, and next action. Evidence still belongs under
-`evidence/design/<design-slug>/`.
+`artifacts/design/<design-slug>/`.
 
 ## AI Slop Test
 
