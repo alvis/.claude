@@ -17,10 +17,10 @@ contract; `specification:implement-code` and Coding skills execute it.
 - Do not create independent root planning, proposal, or change artifacts.
 - Root `state.md` is the sole canonical plan definition and contains the
   complete task registry; its `plan_source` is exactly `state.md`.
-  `state/implementation-plan.md` is non-authoritative implementation
+  `state/plan.md` is non-authoritative implementation
   detail keyed by existing task IDs. Proposals, changes, decisions,
   and design reasoning use the corresponding work-local child folders.
-- `working.md` is a temporary current-focus summary, not the plan. Only the PM
+- `state/working.md` is a temporary current-focus summary, not the plan. Only the PM
   writes it and reconciles the four overview indexes.
 - Do not implement source code, mutate history, or change authoritative MDC.
 
@@ -74,7 +74,7 @@ contract; `specification:implement-code` and Coding skills execute it.
    - `proposals/<slug>.md` for an unapproved change;
    - `changes/<slug>.md` for an approved implementation/plan change;
    - `design/<slug>.md` for temporary task-specific technical design;
-   - always after Step 5 assigns stable IDs, `state/implementation-plan.md` for
+   - always after Step 5 assigns stable IDs, `state/plan.md` for
      interfaces, implementation notes, test procedure, repository gates,
      assumptions, and pivot signals keyed by those proposed IDs. It must not
      duplicate or override IDs, dependencies, requiredness, targets, or
@@ -129,7 +129,7 @@ contract; `specification:implement-code` and Coding skills execute it.
 7. Return the complete `state.md` reconciliation payload, including
    `plan_source`, `plan_digest`, `hash_kind`, parent/leaf task rows, and the four overview
    rows/status deltas to the PM. Do not directly edit PM-owned `state.md`,
-   `working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
+   `state/working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; after every writer finishes, the PM
 checks only eligible work Markdown inside the target `.engineering/`.

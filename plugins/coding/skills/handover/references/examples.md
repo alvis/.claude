@@ -2,7 +2,7 @@
 
 ```bash
 /coding:handover auth-refresh
-# Refreshes .engineering/works/auth-refresh/state.md and working.md,
+# Refreshes .engineering/works/auth-refresh/state.md and state/working.md,
 # reconciles existing lazy indexes, and emits a portable receipt.
 ```
 

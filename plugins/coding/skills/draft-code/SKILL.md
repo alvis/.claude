@@ -40,7 +40,7 @@ Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the workspace-local work root
 and artifact paths before drafting. When delegated, start from the mission
-capsule's exact work root and relevant design/spec files. Read `working.md`
+capsule's exact work root and relevant design/spec files. Read `state/working.md`
 only when navigation is missing, and `state.md` only for resume, cross-slice
 dependency, or alignment work. Never write PM-owned pointers or overviews.
 The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
@@ -63,7 +63,7 @@ Apply these constitution standards while drafting:
 1. Parse the instruction into required types, interfaces, functions, and file
    structure. Read only the work-local design/spec children and durable
    architecture/design/spec paths named by the caller or mission capsule. For
-   a direct or resume run, use `working.md` and `state.md` to discover those
+   a direct or resume run, use `state/working.md` and `state.md` to discover those
    paths. Read neighboring modules for established patterns. Do not scan
    unrelated Markdown or fall back to root continuation/design files.
 2. Plan the structure before writing: file organization, type hierarchy, and

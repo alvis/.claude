@@ -29,7 +29,7 @@ Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work directory and
 start from the exact design/source paths in the request or mission capsule. A
-direct/resume run may use `working.md` for navigation and `state.md` for
+direct/resume run may use `state/working.md` for navigation and `state.md` for
 cross-slice decisions. Never invent a root design workspace.
 
 Accept a URL, running app, source path, screenshot, Figma URL, an active work

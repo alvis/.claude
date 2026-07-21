@@ -48,7 +48,7 @@ Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work root first.
 When delegated, start from the mission capsule's exact work root and relevant
-review/spec/design paths. Read `working.md` only when navigation is missing,
+review/spec/design paths. Read `state/working.md` only when navigation is missing,
 and `state.md` only for resume, cross-slice dependency, or alignment work.
 Never write PM-owned work pointers or overview files.
 The caller/PM uses the resolver, asks only on `work_id_required`, and gives a

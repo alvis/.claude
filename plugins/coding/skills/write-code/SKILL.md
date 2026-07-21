@@ -51,7 +51,7 @@ The caller runs Essential's resolver, asks only on `work_id_required`, handles
 lease. Every delegated child receives that exact ID/root.
 
 This composite requires the caller to grant the sole coordinator lease for
-`working.md`, `state.md`, and changed lazy overviews. Refuse to start if another
+`state/working.md`, `state.md`, and changed lazy overviews. Refuse to start if another
 writer retains that lease. Give each child a mission capsule with exact paths;
 children read broad work memory only for resume or cross-slice alignment. They
 never write leased files and return `generated_files` plus state deltas.
@@ -89,16 +89,16 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    unknowns before dependent work. Initialize or refresh the work root and
    `state.md` with the complete goal, plan/lifecycle, criteria, decisions,
    dependencies, blockers, reviews, evidence, promotion, and sync state; link
-   `working.md`. Use stable three-letter parent IDs and `AAA01`-style child IDs,
+   `state/working.md`. Use stable three-letter parent IDs and `AAA01`-style child IDs,
    explicit dependencies, and Essential's canonical marked task table. A
    parent with children is a derived roll-up. Run
    `validate-engineering-state validate --state <state.md>` and continue only
    on `status: valid` with `plan_source: state.md`; retain the canonical
    root-state digest/hash kind and
-   graph report. A delegated identity must match exactly. Refresh PM-owned `working.md` with current focus and fast paths
+   graph report. A delegated identity must match exactly. Refresh PM-owned `state/working.md` with current focus and fast paths
    only, aiming editorially at 4,096 bytes. Capture immutable `base_rev` before
    any child changes source or history.
-2. For `--resume`, read `working.md`, `state.md`, and linked artifacts; rerun
+2. For `--resume`, read `state/working.md`, `state.md`, and linked artifacts; rerun
    Essential validation and schedule only its runnable executable leaf IDs.
    Map the recorded file substate to `draft-code`, `complete-code`, `fix`, or
    `refactor`. Revalidate contradictions reported by takeover before resuming.
@@ -108,7 +108,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    identity, attempt outcome, evidence, requested status delta, and an explicit
    `generated_files` manifest in return.
 4. After each child, verify its identity, manifest, and evidence; reconcile the
-   requested status delta by task ID into `state.md`, refresh `working.md`, and
+   requested status delta by task ID into `state.md`, refresh `state/working.md`, and
    reconcile any lazy overview whose children changed. Rerun Essential
    validation before scheduling newly ready work. A failed leaf records attempt
    evidence and retry/disposition. The coordinator transitions every affected
@@ -146,7 +146,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    review areas before proceeding.
 8. After every artifact writer is finished, deduplicate the combined
    `generated_files` manifest. Select only `.md` paths inside the resolved
-   target `.engineering/`, excluding `working.md`, and invoke the Essential
+   target `.engineering/`, excluding `state/working.md`, and invoke the Essential
    checker once with `--engineering-root <active-workspace>/.engineering` when
    eligible paths remain. If it returns `split_required`,
    coordinate one complete split round for all oversized files, preserving
@@ -203,7 +203,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
 - Tests, types, lint, and the repository coverage target pass; no owned
   implementation or pending-test markers remain.
 - `state.md` passes Essential validation, contains complete current truth, and
-  links current-focus-only `working.md`; all lazy indexes match their children.
+  links current-focus-only `state/working.md`; all lazy indexes match their children.
   Lifecycle `complete` has no unfinished required executable leaf.
 - Every child returned a verified `generated_files` manifest and the scoped
   `.engineering` Markdown gate ran as one batch per pass when applicable.

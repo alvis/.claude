@@ -19,13 +19,13 @@ contract materialization, MDC authoring, alignment, and completion sync.
   semantic gates, Step 11 delegates those mutations to their Coding owners.
 - Consume root `state.md` as the sole canonical plan definition and require its
   `plan_source` to be exactly `state.md`. An explicitly linked
-  `state/implementation-plan.md` supplies non-authoritative ID-keyed execution
+  `state/plan.md` supplies non-authoritative ID-keyed execution
   detail only; never let it define or override task identity or graph fields.
   Do not guess a plan from directory contents or create root draft, plan, or deviations files.
 - Material departures are work-local `changes/<slug>.md` children and PM
   state updates. Contract drift also appears in `reviews/alignment.md`.
 - Subagents may write assigned children/evidence but never PM-owned
-  `working.md`, `state.md`, overview indexes, or `review.md`.
+  `state/working.md`, `state.md`, overview indexes, or `review.md`.
 
 ## Inputs
 

@@ -17,7 +17,7 @@ skills own task definitions and evidence.
   its mutable fields with the root before validation, dispatch, or handover.
 - New v1 root state uses `Plan source: state.md`: the complete root task
   registry is the approved definition source and consumers never guess among
-  planning files. `state/implementation-plan.md` may hold ID-keyed semantic
+  planning files. `state/plan.md` may hold ID-keyed semantic
   detail, but it is non-authoritative and cannot introduce or redefine tasks.
 - Legacy state without `Schema` is `migration_required`. Preserve it
   byte-for-byte until the coordinator performs an explicit migration; neither
@@ -155,7 +155,7 @@ leaf IDs, active/failed IDs, the complete execution ledger, exact next owner
 and next action, invalidated downstream closure, and errors. Root validation
 automatically reconciles every file directly under `state/` that explicitly
 declares `engineering-work-state/v1` or `State role: child`. It leaves unmarked
-semantic narrative such as `state/implementation-plan.md` alone. Directly
+semantic narrative such as `state/plan.md` alone. Directly
 validating an unversioned file still returns `migration_required`. Declared
 mirrors validate against the complete root registry. Exit codes are 0 for
 `valid`, 2 for `invalid`, and 3 for `migration_required`.

@@ -381,7 +381,7 @@ class PortableHandoverContractTest(unittest.TestCase):
         )
         self.assertIn("explicit takeover exception", main_agent)
         self.assertIn("exact work ID and `--bootstrap`", main_agent)
-        self.assertIn("contains exactly regular `working.md` and `state.md`", normalized)
+        self.assertIn("contains exactly regular `state/working.md` and `state.md`", normalized)
         self.assertIn("byte-for-byte the resolver's untouched `initialized` template", normalized)
         self.assertIn("only this verified skeleton may later be replaced", normalized)
 
