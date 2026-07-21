@@ -1,0 +1,63 @@
+      <section
+        id="ack-mapping"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="ack-mapping"
+        data-section-label="Contiguous acknowledgment"
+        data-semantics-mapping="contiguous-ack"
+        data-code-evidence="contiguous-ack"
+        data-presentation-pattern="annotated pr-file-review light-code-card"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Mapping 01</p>
+          <h2>Completed out of order does not mean committed out of order.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-column-list">
+            <article class="discovery-review-frame">
+              <div class="discovery-review-head">
+                <strong>vendor/stream-cursor/cursor.go:84</strong
+                ><span class="discovery-badge">Go source</span>
+              </div>
+              <pre class="discovery-light-code"><code>done[seq] = true
+for done[committed+1] {
+  committed++
+  delete(done, committed)
+}
+store.Commit(partition, committed, epoch)</code></pre>
+            </article>
+            <article class="discovery-review-frame">
+              <div class="discovery-review-head">
+                <strong>src/events/cursor.ts · proposed</strong
+                ><span class="discovery-badge">TypeScript</span>
+              </div>
+              <pre class="discovery-light-code"><code>pending.add(sequence);
+while (pending.has(committed + 1n)) {
+  pending.delete(++committed);
+}
+await cursorStore.commit(key, committed, epoch);</code></pre>
+            </article>
+          </div>
+          <div class="discovery-callout">
+            <h3>Semantic gotcha · number precision</h3>
+            <p>
+              Go sequence values are
+              <code class="discovery-code-chip">uint64</code>. A JavaScript
+              <code class="discovery-code-chip">number</code> loses integer
+              precision beyond 2<sup>53</sup>−1, so the target must use
+              <code class="discovery-code-chip">bigint</code> end to end. The
+              loop shape is similar; the numeric contract is not.
+            </p>
+          </div>
+          <div
+            class="discovery-diff"
+            aria-label="Observable acknowledgment difference"
+          >
+            <div class="is-removed">− cursor = greatest completed sequence</div>
+            <div class="is-added">
+              + cursor = greatest contiguous completed sequence
+            </div>
+          </div>
+        </div>
+      </section>
+

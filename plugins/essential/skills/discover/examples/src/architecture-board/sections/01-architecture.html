@@ -1,0 +1,430 @@
+      <section
+        id="architecture"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="architecture"
+        data-section-label="Architecture"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One diagram, layered</p>
+          <h2>The service in its own blueprint, under the tool's chrome.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            Everything inside the diagram frame renders in Conflux's own
+            blueprint palette
+            <span class="discovery-provenance" data-provenance="decided"
+              >decided</span
+            >. The frame, the teaching pins, and the rest of this page stay in
+            the house theme so the diagram's colours never leak into the tool's
+            own surface.
+          </p>
+
+          <!--
+            Specimen brand-palette scope (pattern: specimen-scope).
+            This is the ONE documented exception to "no hex in action pages":
+            hex literals may appear ONLY inside [data-specimen], re-pointing
+            house --ui-* tokens locally. Page chrome, the diagram frame, and
+            the pin layer stay OUTSIDE this re-point and keep house tokens.
+            Palette is intentionally theme-fixed: the diagram reads like a
+            captured export from a modelling tool in its own light theme.
+          -->
+          <style>
+            [data-specimen] {
+              --ui-canvas: #eef2f8;
+              --ui-surface: #ffffff;
+              --ui-glass: #f1f5fb;
+              --ui-glass-strong: #e4ebf5;
+              --ui-ink: #0f1b2e;
+              --ui-muted: #556377;
+              --ui-accent: #0e7490;
+              --ui-accent-soft: #d2edf3;
+              --ui-accent-ink: #0a4a58;
+              --ui-insight: #0e9f6e;
+              --ui-insight-soft: #d6f3e6;
+              --ui-border: #d3ddec;
+              /* Blueprint extensions, scoped to the diagram only. These let the
+                 layered picture carry a confident edge-blue and a warm open-item
+                 accent without leaking hex into the tool's chrome. */
+              --spec-edge: #2563eb;
+              --spec-edge-soft: #dbe6fe;
+              --spec-line: #9fb1c9;
+              --spec-source: #0d9488;
+              --spec-amber: #d97706;
+              --spec-amber-soft: #fbe7ca;
+            }
+
+            /* One confident blueprint flourish: a faint grid wash bleeding down
+               from the top of the canvas, the way a modelling tool tints its
+               board. Purely decorative, theme-fixed. */
+            [data-specimen] .spec-grid {
+              background-image:
+                linear-gradient(
+                  to right,
+                  color-mix(in oklch, var(--spec-line), transparent 86%) 1px,
+                  transparent 1px
+                ),
+                linear-gradient(
+                  to bottom,
+                  color-mix(in oklch, var(--spec-line), transparent 86%) 1px,
+                  transparent 1px
+                );
+              background-size: 26px 26px;
+            }
+            /* Brand mark + edge nodes share one blueprint gradient. */
+            [data-specimen] .spec-edge-fill {
+              background-image: linear-gradient(
+                135deg,
+                var(--spec-edge),
+                var(--ui-accent)
+              );
+            }
+            /* Vertical connector rails between layers, drawn with house-neutral
+               blueprint lines so the flow reads without hard arrows. */
+            [data-specimen] .spec-rail {
+              background: linear-gradient(
+                to bottom,
+                transparent,
+                var(--spec-line),
+                transparent
+              );
+            }
+
+            /*
+              Author pins carry fixed percentage coordinates, so they only line
+              up while the diagram holds its wide layout. Below the diagram's
+              reflow breakpoint (its layers stack at sm/640px) the pins would
+              point at the wrong nodes, so hide the pin layer and let the
+              numbered notes below carry the annotations. Reposition per
+              breakpoint instead if a narrow diagram must stay pinned.
+            */
+            @media (max-width: 639.98px) {
+              [data-arch-frame] .discovery-pin-layer {
+                display: none;
+              }
+            }
+          </style>
+
+          <div
+            class="discovery-artifact-frame relative overflow-hidden"
+            data-arch-frame
+            data-presentation-pattern="diagrams"
+          >
+            <div class="discovery-artifact-bar">
+              <span class="discovery-artifact-dots" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <span class="discovery-artifact-url">conflux · architecture v0.4 · draft</span>
+            </div>
+
+            <div
+              data-specimen
+              data-presentation-pattern="specimen-scope"
+              class="relative isolate overflow-hidden bg-canvas text-ink"
+            >
+              <div
+                class="spec-grid pointer-events-none absolute inset-0 -z-10"
+                aria-hidden="true"
+              ></div>
+
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] bg-surface px-5 py-3"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="spec-edge-fill grid h-7 w-7 place-items-center rounded-[var(--radius-control)] text-white shadow-[0_4px_12px_color-mix(in_oklch,var(--spec-edge),transparent_65%)]"
+                    aria-hidden="true"
+                    ><svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+                      <path
+                        d="M5 12 H19 M12 5 V19"
+                        stroke="#fff"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                      />
+                      <circle cx="5" cy="12" r="2.1" fill="#fff" />
+                      <circle cx="19" cy="12" r="2.1" fill="#fff" />
+                      <circle cx="12" cy="5" r="2.1" fill="#fff" />
+                      <circle cx="12" cy="19" r="2.1" fill="#fff" /></svg
+                  ></span>
+                  <strong
+                    class="bg-gradient-to-r from-[var(--spec-edge)] to-[var(--ui-accent)] bg-clip-text text-lg text-transparent"
+                    >Conflux</strong
+                  >
+                  <span
+                    class="hidden rounded-full bg-glass px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wide text-muted ring-1 ring-[var(--ui-border)] sm:inline-block"
+                    >sync service · v0.4</span
+                  >
+                </div>
+                <div
+                  class="hidden items-center gap-3 text-xs text-muted sm:flex"
+                  aria-label="Diagram legend"
+                >
+                  <span class="inline-flex items-center gap-1.5"
+                    ><span
+                      class="h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                      aria-hidden="true"
+                    ></span
+                    >Source of truth</span
+                  >
+                  <span class="inline-flex items-center gap-1.5"
+                    ><span
+                      class="h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                      aria-hidden="true"
+                    ></span
+                    >Open at scale</span
+                  >
+                </div>
+              </div>
+
+              <div class="grid gap-4 p-5">
+                <!-- Layer 1 · Clients -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="clients"
+                >
+                  <p class="discovery-eyebrow">Clients</p>
+                  <div
+                    class="rounded-[var(--radius-card)] bg-surface p-3.5 text-center ring-1 ring-[var(--ui-border)]"
+                    data-arch-module
+                    data-module-id="editor-clients"
+                  >
+                    <strong class="text-ink">Editor clients</strong>
+                    <span class="mt-0.5 block text-xs text-muted"
+                      >Browser editors · optimistic local CRDT replica</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 2 · Edge -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="edge"
+                >
+                  <p class="discovery-eyebrow">Edge</p>
+                  <div
+                    class="spec-edge-fill flex flex-col items-center rounded-[var(--radius-card)] p-3.5 text-center text-white shadow-[0_10px_26px_color-mix(in_oklch,var(--spec-edge),transparent_72%)]"
+                    data-arch-module
+                    data-module-id="realtime-gateway"
+                  >
+                    <strong>Realtime Gateway</strong>
+                    <span class="mt-0.5 block text-xs text-white/85"
+                      >WebSocket · stateless · any node serves any session</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 3 · Domain services -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="domain"
+                >
+                  <p class="discovery-eyebrow">Domain services</p>
+                  <div class="grid gap-3 sm:grid-cols-3">
+                    <div
+                      class="rounded-[var(--radius-card)] bg-glass p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="session-coordinator"
+                      data-presentation-pattern="schema-box"
+                    >
+                      <p class="discovery-eyebrow">Coordinator</p>
+                      <strong class="mt-0.5 block text-ink">Session Coordinator</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Routes ops to the right document actor; owns
+                        membership</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-accent-soft p-3.5 ring-1 ring-[color-mix(in_oklch,var(--ui-accent),transparent_72%)]"
+                      data-arch-module
+                      data-module-id="merge-engine"
+                      data-presentation-pattern="schema-box"
+                    >
+                      <p class="discovery-eyebrow text-accent-ink">Merge</p>
+                      <strong class="mt-0.5 block text-accent-ink"
+                        >CRDT Merge Engine</strong
+                      >
+                      <span class="mt-1 block text-xs text-accent-ink/80"
+                        >Yjs-style convergence · no central merge lock</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-glass p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="presence-service"
+                    >
+                      <p class="discovery-eyebrow">Presence</p>
+                      <strong class="mt-0.5 block text-ink">Presence Service</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Cursors + selections · ephemeral, never persisted</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Data-flow strip: where an edit's work goes today. Illustrative
+                     distribution (no hard counts), so it reads as a plausible
+                     latency budget rather than a measured chart; geometry is
+                     aria-hidden and the stages carry visible labels. -->
+                <div class="flex flex-col gap-2" data-presentation-pattern="flow-strip">
+                  <div class="flex items-center justify-between">
+                    <p class="discovery-eyebrow">Edit path · latency budget</p>
+                    <span class="text-xs text-muted">Receive → Broadcast</span>
+                  </div>
+                  <div
+                    class="flex h-3 gap-1 overflow-hidden rounded-full bg-glass"
+                    aria-hidden="true"
+                  >
+                    <span
+                      class="spec-edge-fill h-full rounded-full"
+                      style="width: 22%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-accent"
+                      style="width: 41%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-source)]"
+                      style="width: 25%"
+                    ></span>
+                    <span
+                      class="h-full rounded-full bg-[var(--spec-amber)]"
+                      style="width: 12%"
+                    ></span>
+                  </div>
+                  <div class="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted">
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="spec-edge-fill h-2 w-2 rounded-full"
+                        aria-hidden="true"
+                      ></span
+                      >Receive at gateway</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-accent"
+                        aria-hidden="true"
+                      ></span
+                      >Merge</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                        aria-hidden="true"
+                      ></span
+                      >Append to op log</span
+                    >
+                    <span class="inline-flex items-center gap-1.5"
+                      ><span
+                        class="h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span
+                      >Fan-out presence</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mx-auto h-5 w-px spec-rail" aria-hidden="true"></div>
+
+                <!-- Layer 4 · Persistence -->
+                <div
+                  class="flex flex-col gap-2"
+                  data-arch-layer
+                  data-layer-id="persistence"
+                >
+                  <p class="discovery-eyebrow">Persistence</p>
+                  <div class="grid gap-3 sm:grid-cols-3">
+                    <div
+                      class="relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[color-mix(in_oklch,var(--spec-source),transparent_66%)]"
+                      data-arch-module
+                      data-module-id="op-log"
+                    >
+                      <span
+                        class="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--spec-source)]"
+                        aria-hidden="true"
+                      ></span>
+                      <p class="discovery-eyebrow">Event store</p>
+                      <strong class="mt-0.5 block text-ink">Op Log</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Append-only · single source of truth</span
+                      >
+                    </div>
+                    <div
+                      class="rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[var(--ui-border)]"
+                      data-arch-module
+                      data-module-id="snapshot-store"
+                    >
+                      <p class="discovery-eyebrow">Derived</p>
+                      <strong class="mt-0.5 block text-ink">Snapshot Store</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Compacted state · rebuildable from the log</span
+                      >
+                    </div>
+                    <div
+                      class="relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-3.5 ring-1 ring-[color-mix(in_oklch,var(--spec-amber),transparent_66%)]"
+                      data-arch-module
+                      data-module-id="presence-bus"
+                    >
+                      <span
+                        class="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--spec-amber)]"
+                        aria-hidden="true"
+                      ></span>
+                      <p class="discovery-eyebrow">Ephemeral</p>
+                      <strong class="mt-0.5 block text-ink">Presence Bus</strong>
+                      <span class="mt-1 block text-xs text-muted"
+                        >Redis pub/sub · no durability guarantee</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="discovery-pin-layer"
+              data-annotation-pins
+              data-presentation-pattern="annotation-pins"
+            >
+              <button
+                class="discovery-pin"
+                data-annotation-pin="1"
+                style="--pin-x:87.4%;--pin-y:34.8%"
+                aria-describedby="pin-note-1"
+              >
+                1
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="2"
+                style="--pin-x:50%;--pin-y:52.3%"
+                aria-describedby="pin-note-2"
+              >
+                2
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="3"
+                style="--pin-x:5.7%;--pin-y:84.8%"
+                aria-describedby="pin-note-3"
+              >
+                3
+              </button>
+              <button
+                class="discovery-pin"
+                data-annotation-pin="4"
+                style="--pin-x:94.3%;--pin-y:84.8%"
+                aria-describedby="pin-note-4"
+              >
+                4
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+

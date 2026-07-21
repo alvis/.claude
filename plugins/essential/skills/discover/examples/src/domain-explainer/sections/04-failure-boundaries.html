@@ -1,0 +1,55 @@
+      <section
+        id="failure-boundaries"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="failure-boundaries"
+        data-section-label="Failure boundaries"
+        data-presentation-pattern="accordion callstack-walkthrough"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Where it breaks</p>
+          <h2>Three boundaries deserve explicit proof.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-failure-map">
+            <article>
+              <h3>Mixed application versions</h3>
+              <p>
+                A rolling deploy means old and new binaries overlap. The schema
+                must serve both until the final old instance is gone.
+              </p>
+            </article>
+            <article>
+              <h3>Partial backfill</h3>
+              <p>
+                Readers need a defined fallback when a record has not migrated,
+                rather than assuming the new location is complete.
+              </p>
+            </article>
+            <article>
+              <h3>Silent divergence</h3>
+              <p>
+                Dual writes can disagree. Measure and reconcile the difference
+                before changing which representation is authoritative.
+              </p>
+            </article>
+          </div>
+          <div class="discovery-callout shadow-sm">
+            <h3>The irreversible moment comes last</h3>
+            <p>
+              Dropping the old column or table is the only step that removes an
+              easy rollback. Schedule it after telemetry shows no supported code
+              path reads or writes the legacy shape.
+            </p>
+          </div>
+          <details class="discovery-disclosure">
+            <summary>Walk the failing request path</summary>
+            <div>
+              API write → compatibility adapter → legacy column + new column →
+              mismatch telemetry → rollback threshold. Expand this before
+              implementation to verify every owner and fallback.
+            </div>
+          </details>
+        </div>
+      </section>
+

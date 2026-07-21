@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>{{PAGE_TITLE}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <!--
+      Local preview: replace these placeholders with absolute file:// or
+      canonical plugin asset URLs before writing a temp page (see
+      scripts/render_preview.py).
+      Publishing as a self-contained artifact (e.g. a claude.ai Artifact whose
+      CSP blocks external hosts): do NOT hand-fill these — run
+      scripts/build_artifact.py, which inlines the Tailwind runtime plus
+      discovery.css/js and emits a validated self-contained document or
+      --artifact fragment. See references/presentation.md.
+    -->
+    <link rel="stylesheet" href="{{DISCOVERY_CSS_URL}}" />
+    <script src="{{DISCOVERY_JS_URL}}" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>{{DOCUMENT_TITLE}}</strong><small>Essential · Discover</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>{{ACTION_LABEL}}</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>{{ACTION_LABEL}}</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#primary-content">{{SECTION_LABEL}}</a>
+      <a href="#decision">Your input</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-page-id="{{PAGE_ID}}"
+      data-discovery-action="{{ACTION_ID}}"
+      data-discovery-goal="{{DISCOVERY_GOAL}}"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">{{ACTION_LABEL}}</p>
+          <h1>{{PAGE_TITLE}}</h1>
+          <p class="discovery-lede">{{PAGE_SUMMARY}}</p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <p class="discovery-intro-note">
+            Add a note to any section. Your answers and annotations immediately
+            update the single reply prompt at the end of this page.
+          </p>
+        </aside>
+      </header>
+
+      <!-- {{SECTIONS}} -->
+    </main>
+  </body>
+</html>

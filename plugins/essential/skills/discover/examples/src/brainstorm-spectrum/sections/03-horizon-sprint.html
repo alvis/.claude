@@ -1,0 +1,111 @@
+      <section
+        id="horizon-sprint"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="horizon-sprint"
+        data-section-label="This sprint"
+        data-horizon-lane
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Horizon 02 · days</p>
+          <h2>Make setup observable and safe.</h2>
+          <p class="mt-4 text-muted">
+            New UI and recovery paths that probe confidence, sequencing, and
+            failure visibility.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="ideas-sprint"
+            data-question-label="This-sprint interventions"
+          >
+            <legend>Which sprint-sized probes deserve evidence?</legend>
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="discovery-option" data-idea-card
+                ><input type="checkbox" value="Add a permission dry run" /><span
+                  class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>4 · Permission dry run</strong
+                    ><span class="discovery-checkpoint">M · local</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/api/src/permissions/evaluate.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the evaluator already returns a trace used
+                    by support tooling.</small
+                  ><small
+                    ><b>Tests:</b> whether administrators avoid saving because
+                    consequences are opaque. <b>Signal:</b> dry-run-to-save
+                    conversion.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Turn milestones into a setup checklist"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>5 · Wire milestones into a checklist</strong
+                    ><span class="discovery-checkpoint"
+                      >M · endpoint</span
+                    ></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/api/src/models/adminMilestones.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> four activation milestones are written for
+                    analytics but never read by the product.</small
+                  ><small
+                    ><b>Tests:</b> whether visible sequence and progress reduce
+                    abandonment.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Teach the first policy mapping in context"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>6 · Teach the first mapping in context</strong
+                    ><span class="discovery-checkpoint">M · hint</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/policies/MappingEditor.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a first-run hint remains as a TODO beside
+                    the mapping canvas.</small
+                  ><small
+                    ><b>Tests:</b> whether unfamiliar vocabulary—not product
+                    structure—is the blocker.</small
+                  ></span
+                ></label
+              >
+              <label class="discovery-option" data-idea-card
+                ><input
+                  type="checkbox"
+                  value="Recover silently failed directory syncs"
+                /><span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>7 · Recover failed directory syncs</strong
+                    ><span class="discovery-checkpoint">M · service</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >services/sync/src/jobs/directory.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a failed first sync logs internally while
+                    the UI remains in a permanent loading state.</small
+                  ><small
+                    ><b>Tests:</b> whether hidden operational failure is being
+                    misread as onboarding churn.</small
+                  ></span
+                ></label
+              >
+            </div>
+          </fieldset>
+        </div>
+      </section>
+

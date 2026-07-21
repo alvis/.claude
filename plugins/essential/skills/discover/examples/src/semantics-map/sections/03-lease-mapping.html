@@ -1,0 +1,57 @@
+      <section
+        id="lease-mapping"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="lease-mapping"
+        data-section-label="Lease expiry"
+        data-semantics-mapping="lease-expiry"
+        data-code-evidence="lease-expiry"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Mapping 02</p>
+          <h2>A stale worker must fail closed after its lease expires.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-column-list">
+            <article class="discovery-review-frame">
+              <div class="discovery-review-head">
+                <strong>vendor/stream-cursor/lease.go:51</strong
+                ><span class="discovery-badge">Go source</span>
+              </div>
+              <pre
+                class="discovery-light-code"
+              ><code>if clock.Now().After(lease.ExpiresAt) {
+  return ErrLeaseExpired
+}
+return store.CommitIfEpoch(
+  key, sequence, lease.Epoch,
+)</code></pre>
+            </article>
+            <article class="discovery-review-frame">
+              <div class="discovery-review-head">
+                <strong>src/events/lease.ts · proposed</strong
+                ><span class="discovery-badge">TypeScript</span>
+              </div>
+              <pre
+                class="discovery-light-code"
+              ><code>if (clock.monotonicMs() >= lease.deadlineMs) {
+  throw new LeaseExpiredError(lease.epoch);
+}
+return store.commitIfEpoch(
+  key, sequence, lease.epoch,
+);</code></pre>
+            </article>
+          </div>
+          <div class="discovery-callout">
+            <h3>Semantic gotcha · two clocks, two jobs</h3>
+            <p>
+              The in-process deadline uses a monotonic clock so wall-clock
+              correction cannot extend ownership. Persistence still stores a
+              wall-clock expiry for cross-process takeover. Collapsing both to
+              <code class="discovery-code-chip">Date.now()</code> changes
+              failure behavior during clock adjustment.
+            </p>
+          </div>
+        </div>
+      </section>
+

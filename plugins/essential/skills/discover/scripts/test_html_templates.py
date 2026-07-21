@@ -15,6 +15,10 @@ from pathlib import Path
 
 DISCOVER_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = DISCOVER_ROOT / "examples" / "html"
+EXAMPLES_SRC_ROOT = DISCOVER_ROOT / "examples" / "src"
+TEMPLATES_SRC_ROOT = DISCOVER_ROOT / "templates" / "src"
+# The template's modular source directory (templates/html/page.html <-> src/page/).
+TEMPLATE_SRC = TEMPLATES_SRC_ROOT / "page"
 TEMPLATE = DISCOVER_ROOT / "templates" / "html" / "page.html"
 CSS = DISCOVER_ROOT / "assets" / "html" / "discovery.css"
 JAVASCRIPT = DISCOVER_ROOT / "assets" / "html" / "discovery.js"
@@ -593,6 +597,61 @@ def validate_direction_reference_contract() -> list[str]:
     return errors
 
 
+_BUILD_ARTIFACT = None
+
+
+def _load_builder():
+    """Import build_artifact by path, caching the module.
+
+    The scripts directory is a plain directory (not a package), so the module is
+    loaded via sys.path in the same style validate_artifact_builder already uses.
+    """
+
+    global _BUILD_ARTIFACT
+    if _BUILD_ARTIFACT is not None:
+        return _BUILD_ARTIFACT
+    sys.path.insert(0, str(BUILDER.parent))
+    sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
+    import build_artifact  # noqa: PLC0415 — local script import by design
+
+    _BUILD_ARTIFACT = build_artifact
+    return build_artifact
+
+
+def validate_source_drift(page_path: Path, source_dir: Path) -> list[str]:
+    """Require a committed page to be byte-identical to its composed source.
+
+    Every committed single-file board page must be authored as a modular source
+    directory (examples/src/<name>/ or templates/src/page/) whose composition
+    reproduces the page byte-for-byte. This forbids giant-file-only boards from
+    being added going forward, and catches a committed page that has drifted out
+    of lockstep with its modular sources.
+    """
+
+    if not source_dir.is_dir():
+        return [
+            f"{page_path}: committed page has no modular source directory "
+            f"(expected {source_dir}); every board must be authored as modular "
+            f"sources — add {source_dir}/page.html + sections/*.html and run "
+            f"'build_artifact.py {source_dir} --emit-page'"
+        ]
+    try:
+        build_artifact = _load_builder()
+        composed = build_artifact.compose_directory(source_dir)
+    except Exception as error:  # pragma: no cover - compose/import failure is the finding
+        return [
+            f"{source_dir}: could not compose modular source for {page_path}: "
+            f"{error!r}"
+        ]
+    if composed.encode("utf-8") != page_path.read_bytes():
+        return [
+            f"{page_path}: committed page has drifted from its modular source "
+            f"{source_dir}; edit the sources and run "
+            f"'build_artifact.py {source_dir} --emit-page' to regenerate it"
+        ]
+    return []
+
+
 def validate_artifact_builder() -> list[str]:
     """Verify build_artifact.py emits genuinely self-contained output.
 
@@ -624,10 +683,8 @@ def validate_artifact_builder() -> list[str]:
     if errors:
         return errors
 
-    sys.path.insert(0, str(BUILDER.parent))
-    sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
     try:
-        import build_artifact  # noqa: PLC0415 — local script import by design
+        build_artifact = _load_builder()
     except Exception as error:  # pragma: no cover - import failure is the finding
         return errors + [f"build_artifact import failed: {error!r}"]
 
@@ -681,6 +738,7 @@ def run(stage: str) -> dict[str, object]:
 
     if TEMPLATE.is_file():
         errors.extend(validate_html(TEMPLATE, allow_placeholders=True))
+        errors.extend(validate_source_drift(TEMPLATE, TEMPLATE_SRC))
     if JAVASCRIPT.is_file():
         errors.extend(validate_runtime())
     if CSS.is_file():
@@ -693,6 +751,7 @@ def run(stage: str) -> dict[str, object]:
             errors.append(f"{example}: required {stage} example is missing")
         else:
             errors.extend(validate_html(example))
+            errors.extend(validate_source_drift(example, EXAMPLES_SRC_ROOT / action))
             covered_patterns.update(presentation_patterns(example))
         if not reference.is_file():
             errors.append(f"{reference}: required {stage} action reference is missing")
@@ -707,6 +766,7 @@ def run(stage: str) -> dict[str, object]:
             errors.append(f"{example}: required convention example is missing")
         else:
             errors.extend(validate_html(example))
+            errors.extend(validate_source_drift(example, EXAMPLES_SRC_ROOT / action))
             covered_patterns.update(presentation_patterns(example))
 
     if stage == "complete":

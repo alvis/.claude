@@ -1,0 +1,109 @@
+      <section
+        id="traffic-rehearsal"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="traffic-rehearsal"
+        data-section-label="Traffic rehearsal"
+        data-domain-simulation
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Feel the boundary</p>
+          <h2>Move traffic before you move authority.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            This rehearsal uses fake telemetry to make the safety trade-off
+            tangible. Raise the cohort and watch the same mismatch affect more
+            requests; keep fallback enabled until the new read path is proven.
+          </p>
+          <div
+            class="discovery-artifact-frame overflow-hidden"
+            aria-label="Simulated migration traffic console"
+          >
+            <div class="discovery-artifact-bar">
+              <span class="discovery-artifact-dots" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <span>migration rehearsal · sanitized telemetry</span>
+              <span class="discovery-badge" data-simulator-state>guarded</span>
+            </div>
+            <div class="discovery-artifact-body grid gap-5">
+              <div class="grid gap-3 sm:grid-cols-3" aria-live="polite">
+                <article
+                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">New-read cohort</p>
+                  <strong class="text-3xl tabular-nums" data-simulator-cohort
+                    >10%</strong
+                  >
+                </article>
+                <article
+                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">Affected mismatches</p>
+                  <strong class="text-3xl tabular-nums" data-simulator-mismatch
+                    >3 / min</strong
+                  >
+                </article>
+                <article
+                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
+                >
+                  <p class="discovery-eyebrow">Fallback result</p>
+                  <strong class="text-lg" data-simulator-fallback
+                    >legacy read serves</strong
+                  >
+                </article>
+              </div>
+              <div
+                class="discovery-field"
+                data-discovery-question
+                data-question-id="rehearsal-cohort"
+                data-question-label="Rehearsed new-read cohort"
+                data-prototype-control
+              >
+                <label for="rehearsal-cohort"
+                  >Send <strong data-simulator-label>10%</strong> of reads to
+                  the new representation</label
+                >
+                <input
+                  id="rehearsal-cohort"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="10"
+                  value="10"
+                  data-recommended="true"
+                />
+              </div>
+              <div
+                class="discovery-field"
+                data-discovery-question
+                data-question-id="rehearsal-fallback"
+                data-question-label="Legacy fallback during rehearsal"
+                data-prototype-control
+              >
+                <label class="discovery-switch">
+                  <input
+                    type="checkbox"
+                    value="Keep legacy fallback enabled while mismatches remain"
+                    checked
+                    data-recommended="true"
+                    data-simulator-fallback-control
+                  />
+                  <span aria-hidden="true"></span>
+                  <span>Keep the legacy read path as fallback</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="discovery-callout shadow-sm">
+            <h3>What the simulation teaches</h3>
+            <p>
+              Cohort size changes blast radius, not correctness. The authority
+              switch is safe only when mismatch telemetry is understood and the
+              rollback path has been exercised.
+            </p>
+          </div>
+        </div>
+      </section>
+

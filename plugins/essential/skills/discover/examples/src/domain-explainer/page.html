@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Changing a live database without a hard cutover</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>Essential</strong><small>Discover reference</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>Domain explainer</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Domain explainer</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#mental-model">Mental model</a>
+      <a href="#migration-sequence">Migration sequence</a>
+      <a href="#traffic-rehearsal">Traffic rehearsal</a>
+      <a href="#failure-boundaries">Failure boundaries</a>
+      <a href="#rollout-decision">Rollout decision</a>
+      <a href="#glossary">Working vocabulary</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-presentation-pattern="colors type sidebar-toc annotation-drawer sticky-reply"
+      data-page-id="domain-explainer-schema-migration-v1"
+      data-discovery-action="domain-explainer"
+      data-discovery-goal="Choose a rollout strategy for a live database schema migration without interrupting writes"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">
+            Domain explainer · migration mechanics
+          </p>
+          <h1>Change the track while the train keeps moving.</h1>
+          <p class="discovery-lede">
+            A live schema migration is safest when old and new application
+            versions can coexist. The work is less like a switch and more like a
+            sequence of reversible hand-offs.
+          </p>
+          <nav
+            class="discovery-pill-nav"
+            aria-label="Explainer highlights"
+            data-presentation-pattern="nav-pattern"
+          >
+            <a href="#mental-model">Mental model</a>
+            <a href="#migration-sequence">Migration flow</a>
+            <a href="#glossary">Vocabulary</a>
+          </nav>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta">
+            <div>
+              <dt>Decision</dt>
+              <dd>How traffic should move to the new schema</dd>
+            </div>
+            <div>
+              <dt>Primary risk</dt>
+              <dd>Old code writing data the new code cannot read</dd>
+            </div>
+            <div>
+              <dt>Safe property</dt>
+              <dd>Every stage can pause without losing writes</dd>
+            </div>
+            <div>
+              <dt>Exit signal</dt>
+              <dd>Legacy reads and writes reach zero</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Add a note to any section. Your decisions and annotations are
+            reflected immediately in the single prompt at the end.
+          </p>
+        </aside>
+      </header>
+
+      <!-- {{SECTIONS}} -->
+    </main>
+    <script>
+      (() => {
+        const cohort = document.querySelector("#rehearsal-cohort");
+        const fallback = document.querySelector(
+          "[data-simulator-fallback-control]",
+        );
+        if (
+          !(cohort instanceof HTMLInputElement) ||
+          !(fallback instanceof HTMLInputElement)
+        )
+          return;
+
+        const update = () => {
+          const percent = Number(cohort.value);
+          const mismatch = Math.max(0, Math.round(percent * 0.3));
+          document
+            .querySelectorAll("[data-simulator-cohort]")
+            .forEach((node) => {
+              node.textContent = `${percent}%`;
+            });
+          const label = document.querySelector("[data-simulator-label]");
+          const mismatchNode = document.querySelector(
+            "[data-simulator-mismatch]",
+          );
+          const fallbackNode = document.querySelector(
+            "[data-simulator-fallback]",
+          );
+          const stateNode = document.querySelector("[data-simulator-state]");
+          if (label) label.textContent = `${percent}%`;
+          if (mismatchNode) mismatchNode.textContent = `${mismatch} / min`;
+          if (fallbackNode) {
+            fallbackNode.textContent = fallback.checked
+              ? "legacy read serves"
+              : "request fails";
+          }
+          if (stateNode) {
+            stateNode.textContent = fallback.checked ? "guarded" : "exposed";
+          }
+        };
+
+        cohort.addEventListener("input", update);
+        fallback.addEventListener("change", update);
+        update();
+      })();
+    </script>
+  </body>
+</html>

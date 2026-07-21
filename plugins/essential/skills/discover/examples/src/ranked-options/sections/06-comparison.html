@@ -1,0 +1,60 @@
+      <section
+        id="comparison"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="comparison"
+        data-section-label="Comparison"
+        data-presentation-pattern="table approach-comparison variant-matrix"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Repeated fields</p>
+          <h2>What changes the rank?</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-table-wrap">
+            <table class="discovery-table">
+              <thead>
+                <tr>
+                  <th>Approach</th>
+                  <th>Ownership</th>
+                  <th>Rollback</th>
+                  <th>Pressure case</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="is-emphasized">
+                  <td>Producer adapter</td>
+                  <td>Producer</td>
+                  <td>One switch</td>
+                  <td>Legacy-only field returns</td>
+                </tr>
+                <tr>
+                  <td>Versioned topics</td>
+                  <td>Platform</td>
+                  <td>Route change</td>
+                  <td>Third version multiplies routes</td>
+                </tr>
+                <tr>
+                  <td>Consumer translators</td>
+                  <td>Consumers</td>
+                  <td>Per consumer</td>
+                  <td>One team blocks retirement</td>
+                </tr>
+                <tr>
+                  <td>Schema gateway</td>
+                  <td>Platform</td>
+                  <td>Policy revision</td>
+                  <td>Shared critical-path defect</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="discovery-callout">
+            <h3>Cheap probe</h3>
+            <p>
+              Replay one day of production events through a producer adapter and
+              compare both envelopes before committing to infrastructure.
+            </p>
+          </div>
+        </div>
+      </section>

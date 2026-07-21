@@ -1,0 +1,79 @@
+      <section
+        id="adaptation-ledger"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="adaptation-ledger"
+        data-section-label="Adaptation ledger"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Conformance ledger</p>
+          <h2>
+            Preserve the contract; adapt or drop the machinery deliberately.
+          </h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-card-grid">
+            <article class="discovery-finding-card">
+              <p class="discovery-eyebrow">Preserve exactly</p>
+              <h3>Contiguous commit</h3>
+              <p>
+                Gaps block progress, epochs fence stale owners, and replay
+                cannot jump forward.
+              </p>
+            </article>
+            <article class="discovery-finding-card">
+              <p class="discovery-eyebrow">Adapt deliberately</p>
+              <h3>Error and clock surfaces</h3>
+              <p>
+                Sentinel errors become typed errors; monotonic duration and
+                persisted wall time remain separate.
+              </p>
+            </article>
+            <article class="discovery-finding-card">
+              <p class="discovery-eyebrow">Drop as incidental</p>
+              <h3>Goroutine and SQL shape</h3>
+              <p>
+                Channels, mutexes, and PostgreSQL syntax are implementation
+                choices, not observable promises.
+              </p>
+            </article>
+          </div>
+          <div class="discovery-table-wrap">
+            <table class="discovery-table">
+              <thead>
+                <tr>
+                  <th>Reference mechanism</th>
+                  <th>Target form</th>
+                  <th>Disposition</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="is-emphasized">
+                  <td><code>uint64</code> sequence</td>
+                  <td><code>bigint</code> through API and persistence</td>
+                  <td>Equivalent numeric domain</td>
+                </tr>
+                <tr>
+                  <td>transaction + epoch predicate</td>
+                  <td>conditional update returning affected row count</td>
+                  <td>Preserve atomic fence</td>
+                </tr>
+                <tr>
+                  <td>goroutine-local pending map</td>
+                  <td>
+                    partition actor with in-memory
+                    <code>Set&lt;bigint&gt;</code>
+                  </td>
+                  <td>Adapt concurrency</td>
+                </tr>
+                <tr>
+                  <td>Prometheus collector</td>
+                  <td>existing <code>telemetry.event()</code></td>
+                  <td>Drop source integration</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+

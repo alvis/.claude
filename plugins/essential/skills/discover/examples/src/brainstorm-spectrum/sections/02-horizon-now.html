@@ -1,0 +1,99 @@
+      <section
+        id="horizon-now"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="horizon-now"
+        data-section-label="Ship this afternoon"
+        data-horizon-lane
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Horizon 01 · hours</p>
+          <h2>Wire what already exists.</h2>
+          <p class="mt-4 text-muted">
+            Cheap probes that distinguish a literal dead end from a deeper
+            workflow problem.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="ideas-now"
+            data-question-label="This-afternoon interventions"
+          >
+            <legend>Which immediate interventions resonate?</legend>
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="discovery-option md:col-span-2" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Add a real action to the dead-end empty state"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong
+                      >1 · Add a real action to the dead-end empty state</strong
+                    ><span class="discovery-checkpoint">S · hours</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/onboarding/EmptyState.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the zero-workspace view has explanatory
+                    copy but no primary action; the existing create button is
+                    only available in global navigation.</small
+                  ><small
+                    ><b>Tests:</b> whether the current failure is simply an
+                    invisible next step. <b>Signal:</b> first-project creation
+                    within the same session.</small
+                  ></span
+                >
+                <span class="discovery-badge">Cheapest probe</span>
+              </label>
+              <label class="discovery-option" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Enable the dormant sample workspace"
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>2 · Enable the dormant sample workspace</strong
+                    ><span class="discovery-checkpoint">S · flag</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >packages/samples/src/adminWorkspace.ts</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> a seeded permissions example is complete
+                    behind a disabled flag.</small
+                  ><small
+                    ><b>Tests:</b> whether users need a concrete model before
+                    configuring their own workspace.</small
+                  ></span
+                >
+              </label>
+              <label class="discovery-option" data-idea-card>
+                <input
+                  type="checkbox"
+                  value="Expose pending invitations in the setup screen"
+                />
+                <span class="discovery-option-copy"
+                  ><span class="flex flex-wrap items-center gap-2"
+                    ><strong>3 · Expose pending invitations</strong
+                    ><span class="discovery-checkpoint">S · wiring</span></span
+                  ><code
+                    class="mt-2 break-all font-mono text-xs text-accent-ink"
+                    >apps/web/src/team/InviteStatus.tsx</code
+                  ><small class="mt-2"
+                    ><b>Evidence:</b> the API returns pending invites, but setup
+                    only renders accepted members.</small
+                  ><small
+                    ><b>Tests:</b> whether silent collaborator delay is mistaken
+                    for a broken configuration.</small
+                  ></span
+                >
+              </label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+

@@ -1,0 +1,157 @@
+      <section
+        id="gates"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="gates"
+        data-section-label="Readiness gates"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Five gates</p>
+          <h2>A score is useful only when every gate is inspectable.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-finding-grid">
+            <article class="discovery-finding-card" data-readiness-gate>
+              <div class="discovery-finding-head">
+                <span class="discovery-badge">Passing</span
+                ><code>G1 · behavior</code>
+              </div>
+              <h3>Caller contract</h3>
+              <p>
+                <strong>Criterion.</strong> Inputs, externally visible outcomes,
+                idempotency, and failure propagation are known for every caller.
+              </p>
+              <p>
+                <strong>Evidence.</strong> Five call paths traced; contract
+                table includes synchronous and queued callers.
+              </p>
+              <p>
+                <strong>Gap.</strong> Delivery-latency acceptance remains
+                implicit but does not change architecture.
+              </p>
+              <span class="discovery-checkpoint"
+                >Exit: latency budget added to acceptance</span
+              >
+            </article>
+
+            <article class="discovery-finding-card" data-readiness-gate>
+              <div class="discovery-finding-head">
+                <span class="discovery-badge">Passing</span
+                ><code>G2 · data</code>
+              </div>
+              <h3>Persistence boundary</h3>
+              <p>
+                <strong>Criterion.</strong> Template, attempt, idempotency, and
+                audit ownership are traceable across migration stages.
+              </p>
+              <p>
+                <strong>Evidence.</strong> Tables, writers, readers, retention,
+                and foreign-key dependencies are mapped.
+              </p>
+              <p>
+                <strong>Gap.</strong> Analytics replica is deferred with
+                data-platform ownership.
+              </p>
+              <span class="discovery-checkpoint"
+                >Exit: deferred owner recorded</span
+              >
+            </article>
+
+            <article class="discovery-finding-card" data-readiness-gate>
+              <div class="discovery-finding-head">
+                <span class="discovery-badge">Passing with follow-up</span
+                ><code>G3 · operability</code>
+              </div>
+              <h3>Failure and recovery</h3>
+              <p>
+                <strong>Criterion.</strong> Retry, deduplication, replay,
+                alerting, and rollback behavior are explicit.
+              </p>
+              <p>
+                <strong>Evidence.</strong> Worker claims, provider errors, and
+                operator replay were walked against the runbook.
+              </p>
+              <p>
+                <strong>Gap.</strong> No automated replay UX; manual replay is
+                accepted for the first extraction stage.
+              </p>
+              <span class="discovery-checkpoint"
+                >Exit: rollback drill before cutover</span
+              >
+            </article>
+
+            <article class="discovery-finding-card" data-readiness-gate>
+              <div class="discovery-finding-head">
+                <span class="discovery-badge">Blocking</span
+                ><code>G4 · ownership</code>
+              </div>
+              <h3>Preference enforcement</h3>
+              <p>
+                <strong>Criterion.</strong> One owner controls unsubscribe,
+                legal suppression, channel preference, and audit semantics.
+              </p>
+              <p>
+                <strong>Evidence.</strong> Callers resolve product preferences;
+                the facade applies global suppression.
+              </p>
+              <p>
+                <strong>Gap.</strong> No decision says whether the extracted
+                service owns product-specific policy.
+              </p>
+              <span class="discovery-checkpoint"
+                >Exit: owner and API consequence decided</span
+              >
+            </article>
+
+            <article class="discovery-finding-card" data-readiness-gate>
+              <div class="discovery-finding-head">
+                <span class="discovery-badge">Needs acceptance</span
+                ><code>G5 · rollout</code>
+              </div>
+              <h3>Migration and rollback</h3>
+              <p>
+                <strong>Criterion.</strong> Dual-run comparison, cohort order,
+                mismatch threshold, and rollback owner are agreed.
+              </p>
+              <p>
+                <strong>Evidence.</strong> Shadow-delivery design is feasible
+                without changing callers.
+              </p>
+              <p>
+                <strong>Gap.</strong> Product has not accepted the mismatch
+                threshold or ramp duration.
+              </p>
+              <span class="discovery-checkpoint"
+                >Exit: acceptance owner signs thresholds</span
+              >
+            </article>
+          </div>
+
+          <ul
+            class="discovery-status-list"
+            data-presentation-pattern="status-checklist"
+          >
+            <li>
+              <span>Caller behavior traced</span
+              ><small>Pass · engineering</small>
+            </li>
+            <li>
+              <span>Data lifecycle traced</span
+              ><small>Pass · data platform</small>
+            </li>
+            <li>
+              <span>Failure recovery walked</span
+              ><small>Pass with follow-up · operations</small>
+            </li>
+            <li>
+              <span>Preference ownership decided</span
+              ><small>Blocked · product + legal</small>
+            </li>
+            <li>
+              <span>Rollout thresholds accepted</span
+              ><small>Open · product</small>
+            </li>
+          </ul>
+        </div>
+      </section>
+

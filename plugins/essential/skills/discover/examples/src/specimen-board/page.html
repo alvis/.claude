@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Brand specimen board — Meridian orders console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <link rel="stylesheet" href="../../assets/html/discovery.css" />
+    <script src="../../assets/html/discovery.js" defer></script>
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span><strong>Brand specimen · Meridian console</strong><small>Essential · Discover</small></span>
+      </a>
+      <nav aria-label="Document utilities">
+        <span>Specimen board</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>Specimen board</p>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#specimen">Brand specimen</a>
+      <a href="#provenance">Provenance</a>
+      <a href="#tradeoffs">Trade-offs</a>
+      <a href="#boards">Boards</a>
+      <a href="#specimen-decision">Your input</a>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-presentation-pattern="colors type sidebar-toc annotation-drawer sticky-reply"
+      data-page-id="specimen-board-meridian-orders-v1"
+      data-discovery-action="specimen-board"
+      data-discovery-goal="Pin the brand and interaction decisions for the Meridian orders console before implementation"
+      data-board-id="specimen-board"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">Specimen board · Meridian orders console</p>
+          <h1>Pin the product decisions on a real specimen, not a spec.</h1>
+          <p class="discovery-lede">
+            This board holds one brand-scoped mockup of the Meridian orders
+            console. Author pins mark the decisions worth defending, and every
+            claim carries where it came from — observed, inferred, or still
+            open.
+          </p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <dl class="discovery-meta">
+            <div>
+              <dt>Subject</dt>
+              <dd>Meridian orders console, first release</dd>
+            </div>
+            <div>
+              <dt>Palette source</dt>
+              <dd>Product tokens, scoped to the specimen only</dd>
+            </div>
+            <div>
+              <dt>Decision</dt>
+              <dd>Which brand and interaction choices are load-bearing</dd>
+            </div>
+            <div>
+              <dt>Next owner</dt>
+              <dd>Frontend implementation</dd>
+            </div>
+          </dl>
+          <p class="discovery-intro-note">
+            Add a note to any section. Your decisions and annotations are
+            reflected immediately in the single prompt at the end.
+          </p>
+        </aside>
+      </header>
+
+      <!-- {{SECTIONS}} -->
+    </main>
+  </body>
+</html>

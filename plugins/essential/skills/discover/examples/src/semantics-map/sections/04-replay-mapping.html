@@ -1,0 +1,62 @@
+      <section
+        id="replay-mapping"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="replay-mapping"
+        data-section-label="Replay boundary"
+        data-semantics-mapping="replay-boundary"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Mapping 03</p>
+          <h2>Replay moves backward; it never invents a forward skip.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <div class="discovery-expect-reality">
+            <article>
+              <p class="discovery-eyebrow">Reference contract</p>
+              <h3>Bounded rewind</h3>
+              <p>
+                The requested sequence must be no newer than committed and no
+                older than retained history.
+              </p>
+            </article>
+            <article>
+              <p class="discovery-eyebrow">Target today</p>
+              <h3>Unchecked assignment</h3>
+              <p>
+                The admin endpoint accepts any offset, including a forward jump
+                that permanently skips events.
+              </p>
+            </article>
+          </div>
+          <article
+            class="discovery-review-frame"
+            data-presentation-pattern="unified-diff"
+          >
+            <div class="discovery-review-head">
+              <strong>src/events/admin/replay.ts</strong
+              ><span class="discovery-badge">Required guard</span>
+            </div>
+            <div class="discovery-diff" aria-label="Replay boundary diff">
+              <div class="is-removed">
+                − await cursors.set(partition, requested)
+              </div>
+              <div class="is-added">
+                + assertRetained(requested, oldestAvailable)
+              </div>
+              <div class="is-added">
+                + assertNotForwardSkip(requested, committed)
+              </div>
+              <div class="is-added">
+                + await cursors.rewind(partition, requested, auditActor)
+              </div>
+            </div>
+          </article>
+          <p class="discovery-intro-note">
+            The target may expose a typed HTTP error instead of the source's
+            sentinel error. That is an equivalent surface only if the same
+            invalid transitions remain impossible.
+          </p>
+        </div>
+      </section>
+
