@@ -111,7 +111,7 @@ The manifest contains:
     "complete": true,
     "generated_file_manifests": [
       {
-        "path": ".engineering/work/<work-id>/evidence/children/coding.json",
+        "path": ".engineering/works/<work-id>/evidence/children/coding.json",
         "sha256": "<exact canonical receipt bytes hash>"
       }
     ],
@@ -140,7 +140,7 @@ content reconciliation above. The producer must block rather than attest
 `complete: true` when a
 lifecycle-owned publishable path is omitted, a selected file also contains
 unrelated user-owned edits, or ownership cannot be determined. Paths under the
-active `.engineering/work/` root, `.engineering/working.md`, the scoped-save
+active `.engineering/works/` root, `.engineering/working.md`, the scoped-save
 manifest/receipt, and any other ignored work state are never publication or
 selected paths. A publishable generated path that is unexpectedly ignored is
 a configuration blocker, not a reason to force-add it.

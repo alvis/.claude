@@ -21,7 +21,7 @@ root. Both interactive and non-interactive modes report:
 - Outstanding priorities: `P0:<n> P1:<n> P2:<n> P3:<n>`
 - Dispositions: `open:<n> fixed:<n> acknowledged:<n> deferred:<n> skipped:<n>`
 - Closure: `closed:<n> outstanding:<n>`
-- Summary target: `.engineering/work/<work-id>/review.md` (`written` or
+- Summary target: `.engineering/works/<work-id>/review.md` (`written` or
   `reconciliation_returned`)
 - Generated files: `<explicit paths>`
 ```

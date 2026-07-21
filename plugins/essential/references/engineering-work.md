@@ -42,7 +42,7 @@ multiple candidates, a detached checkout, or a generic `main`, `master`,
   and `.gitignore`; `repo_root` is its compatibility alias.
 - `default_workspace` is nullable discovery metadata for consumers that need a
   registered default; generic work does not require one.
-- `active_workspace` owns its own ignored `.engineering/work/<work-id>/`.
+- `active_workspace` owns its own ignored `.engineering/works/<work-id>/`.
 - `work_dir` is the only temporary root for the selected work.
 - Each Git worktree or jj workspace has isolated work state. Never copy
   `.engineering/` between them or commit it.
@@ -119,7 +119,7 @@ docs/
 .engineering/                       # ignored
 ├── notion/                          # conventional default-workspace mirror
 │   └── [notion-sync-owned .mdc paths]
-└── work/<work-id>/                  # active workspace only
+└── works/<work-id>/                 # active workspace only
     ├── working.md
     ├── state.md
     ├── state/*.md

@@ -18,7 +18,7 @@ To delegate, read `ROUTING.md` in this same `references/` directory and route th
 Settle this before editing:
 
 - **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); if `jj` isn't initialized, use `git` on the current branch as usual.
-- **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `../.worktree/<repo-name>/<work-name>`.
+- **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `~/.workspaces/<project-root-folder-name>/<work-id>` (reuse the engineering work-id; the built-in `EnterWorktree` harness tool uses `.claude/worktrees/` and is not governed by this convention).
 
 ### If you're writing it yourself
 

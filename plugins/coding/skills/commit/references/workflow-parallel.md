@@ -38,7 +38,7 @@ Use `AskUserQuestion`:
 ```text
 Proposed work looks unrelated to current @ (different domain / files).
 Open a parallel jj workspace?
-[Y] Yes (default) — `jj workspace add ../<repo>-<task>` on `main@origin`
+[Y] Yes (default) — `jj workspace add ~/.workspaces/<project-root-folder-name>/<work-id>` on `main@origin`
 [N] No — keep work on current @, accept mixed history
 ```
 
@@ -46,19 +46,19 @@ Default is yes. On no, return to default save flow ([workflow-save-local.md](./w
 
 ### 3. Create the workspace
 
-Pick a short task slug (kebab-case, ≤30 chars). The workspace lives **outside** the current repo dir.
+Reuse the engineering work-id — the same kebab id at `.engineering/works/<work-id>`; no new slug. The workspace lives **outside** the current repo dir under `~/.workspaces/<project-root-folder-name>/`, where `<project-root-folder-name>` is the basename of the git/jj root. If two distinct repos share a root basename (e.g. two checkouts both named `app`), their `~/.workspaces/<basename>/` parents collide — disambiguate by choosing a distinct workspace parent (append a short suffix) for one of them.
 
 ```bash
 # From inside the default workspace:
-jj workspace add ../<repo-name>-<task-slug> --revision main@origin
+jj workspace add ~/.workspaces/<project-root-folder-name>/<work-id> --revision main@origin
 ```
 
-This creates a sibling directory containing a fresh checkout rooted at `main@origin`, with its own working-copy change `@` per workspace. The default workspace remains untouched.
+This creates a workspace directory under `~/.workspaces/<project-root-folder-name>/` containing a fresh checkout rooted at `main@origin`, with its own working-copy change `@` per workspace. The default workspace remains untouched.
 
 ### 4. Work in the new directory
 
 ```bash
-cd ../<repo-name>-<task-slug>
+cd ~/.workspaces/<project-root-folder-name>/<work-id>
 ```
 
 The skill operates **in-place** on the new workspace's `@` — describe, split, save flows are unchanged. Same `/coding:commit` invocations work; jj routes them to this workspace's `@`.
@@ -95,7 +95,7 @@ Once the parallel work is integrated:
 ```bash
 # In the default workspace:
 jj workspace forget <workspace-name>
-rm -rf ../<repo-name>-<task-slug>
+rm -rf ~/.workspaces/<project-root-folder-name>/<work-id>
 ```
 
 `jj workspace forget` removes the workspace's working-copy change from the op log. Failing to forget leaves a phantom `@` that can show as divergent → [scenario-divergent.md](./scenario-divergent.md).
@@ -105,7 +105,8 @@ rm -rf ../<repo-name>-<task-slug>
 - NEVER `git worktree` for parallel jj work. Always `jj workspace add`.
 - Each workspace has its OWN `@`; never reach across with `jj edit <other-workspace-@>`.
 - Workspaces share the jj op log: ops in one are visible in the other.
-- Workspace name = directory basename; keep it short and disposable.
+- Workspace name = directory basename (the `<work-id>`); keep it disposable.
+- The built-in `EnterWorktree` harness tool uses `.claude/worktrees/` (harness-owned) and is NOT governed by this `~/.workspaces/` convention.
 
 ## Mandatory follow-ups
 

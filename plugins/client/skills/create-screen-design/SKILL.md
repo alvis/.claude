@@ -17,7 +17,7 @@ task-specific design exploration, and durable versioned design knowledge.
   accessibility, and handoff notes. Existing pages route to
   `update-screen-design`; implementation/rendered review stays with Web owners.
 - Temporary detail lives in
-  `.engineering/work/<work-id>/design/<slug>.md`; `design.md` is the
+  `.engineering/works/<work-id>/design/<slug>.md`; `design.md` is the
   PM-owned overview. Do not create an independent design artifact elsewhere.
 - Notion-backed `.mdc` paths are owned by the selected transport and authored
   only through the user/project-selected MDC-aware mechanism; do not

@@ -44,7 +44,7 @@ resolve an existing active ID. Handover never mints an empty work item.
 
 ## Workflow
 
-1. Resolve `.engineering/work/<work-id>/` per the Essential contract. Read
+1. Resolve `.engineering/works/<work-id>/` per the Essential contract. Read
    `working.md` first when present, then `state.md`, its linked detail files,
    the four lazy overview files, `review.md`, relevant review areas, evidence,
    and the materialized working specification. Treat repository and runtime

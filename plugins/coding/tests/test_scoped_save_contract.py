@@ -41,7 +41,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "-q", "-m", "chore: initialize target")
         self.base_rev = self.git("rev-parse", "HEAD").stdout.strip()
-        self.work_root = self.repo / ".engineering/work/scoped-save"
+        self.work_root = self.repo / ".engineering/works/scoped-save"
         self.work_root.mkdir(parents=True)
 
     def git(self, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -121,7 +121,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
                     ],
                     "selected_paths": selected,
                     "generated_file_manifests": [
-                        ".engineering/work/scoped-save/evidence/children/coding.json"
+                        ".engineering/works/scoped-save/evidence/children/coding.json"
                     ],
                 }
             ),

@@ -182,7 +182,7 @@ else
 fi
 
 engineering_dir="$active_workspace/.engineering"
-work_root="$engineering_dir/work"
+work_root="$engineering_dir/works"
 require_safe_directory_component "$engineering_dir"
 require_safe_directory_component "$work_root"
 if [[ -d "$engineering_dir" ]] &&
@@ -273,7 +273,7 @@ fi
 
 work_dir="$work_root/$work_id"
 ignore_file="$active_workspace/.gitignore"
-active_probe=".engineering/work/$work_id/state.md"
+active_probe=".engineering/works/$work_id/state.md"
 
 require_safe_directory_component "$work_dir"
 if [[ -d "$work_dir" ]] &&

@@ -2,7 +2,7 @@
 
 ```bash
 /coding:handover auth-refresh
-# Refreshes .engineering/work/auth-refresh/state.md and working.md,
+# Refreshes .engineering/works/auth-refresh/state.md and working.md,
 # reconciles existing lazy indexes, and emits a portable receipt.
 ```
 
@@ -35,7 +35,7 @@ For a response-only patch handover, the receipt itself contains the complete
 encoded patch, complete state snapshot, and any inline specification payload;
 each declares format, encoding, application semantics, and a verified SHA-256.
 For an externally published handover, those same carriers may use stable
-attachment locators. A path such as `.engineering/work/auth-refresh/state.md`
+attachment locators. A path such as `.engineering/works/auth-refresh/state.md`
 or `/tmp/auth.patch` is never a portable locator.
 
 For a Notion-backed specification, a portable receipt records a logical
