@@ -178,7 +178,7 @@ receipt supplies the work ID; never mint a replacement identity.
    branch or a sole existing work ID.
 
    Inspect `bootstrap_created` and `bootstrap_existing`, then accept the target
-   work root only when it now contains exactly regular `working.md` and
+   work root only when it now contains exactly regular `state/working.md` and
    `state.md`, no symlinks or extra state, for the same receipt work ID. Each
    entrypoint must either have been newly created in this invocation or match
    byte-for-byte the resolver's untouched `initialized` template when
@@ -237,7 +237,7 @@ receipt supplies the work ID; never mint a replacement identity.
    authoritative sources, stage inline specifications and the verified no-B/L
    Notion materialization or restored B/L reconciliation state, record the
    destination transport mapping including logical name, destination
-   profile-file digest, and local root, and refresh `working.md` with only current
+   profile-file digest, and local root, and refresh `state/working.md` with only current
    focus, handback point, and fast paths. Only the main agent/PM may render that
    pointer. Verify the prepared tree. Replace only the verified initialized
    skeleton: atomically move it to a private same-filesystem rollback sibling,
@@ -284,7 +284,7 @@ target `.engineering/`.
 - Source changes came from a destination-reachable revision or a checksum-
   verified complete payload; no local-only anchor was accepted.
 - `state.md` is complete and links the PM-owned, current-focus-only
-  `working.md`; the selected lifecycle owner received the coordinator lease
+  `state/working.md`; the selected lifecycle owner received the coordinator lease
   plus exact work, specification, decision, and source paths.
 - Essential's `validate-snapshot` and `render` operations are the sole snapshot
   parser/renderer. Stable task IDs, DAG edges, statuses, plan digest, evidence,

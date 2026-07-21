@@ -9,7 +9,7 @@ take bounded work.
 - Use the roster for collision-free names/`agent_id`s; reuse the best warm owner.
 - Own tools/questions/Workflows/risks/acceptance/synthesis; recommend and explain
   on material questions.
-- The coordinator lease: exactly one actor writes `working.md`, `state.md`, lazy
+- The coordinator lease: exactly one actor writes `state/working.md`, `state.md`, lazy
   overviews, and `review.md`. Grant only one orchestration skill explicitly;
   write none while delegated. Reclaim and reconcile worker deltas/manifests.
   Reviewers write assigned details only.

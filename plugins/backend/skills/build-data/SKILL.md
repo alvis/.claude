@@ -19,7 +19,7 @@ the work-local specification and PM state as coordination boundaries.
   alias), and selector pattern remain supported.
 - Do not build services or audit existing data layers.
 - Workers may edit assigned source/tests and work-local child artifacts only;
-  they never edit `working.md`, `state.md`, or overview indexes.
+  they never edit `state/working.md`, `state.md`, or overview indexes.
 
 ## Workflow
 

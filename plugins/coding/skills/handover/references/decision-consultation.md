@@ -25,5 +25,5 @@ Process outcomes:
 
 If the user is unavailable, defer rather than decide. Batch five or more
 questions by dependency, placing blockers first. Every created or materially
-rewritten child belongs in `generated_files`; never update `working.md` from a
+rewritten child belongs in `generated_files`; never update `state/working.md` from a
 delegated decision/research subtask.

@@ -20,7 +20,7 @@ specification and preserving PM-owned coordination state.
 - Do not build data packages, perform audit-only work, or invent an unresolved
   contract.
 - Workers edit assigned source/tests and child evidence only, never
-  `working.md`, `state.md`, or overview indexes.
+  `state/working.md`, `state.md`, or overview indexes.
 
 ## Workflow
 

@@ -41,7 +41,7 @@ engineering state into the plugin repository.
    active `.engineering/works/<work-id>/decisions/` with canonical metadata,
    PR/evidence, chosen direction, alternatives, affected scope, and date. The
    main agent/PM reconciles `decisions.md` and the affected plan/lifecycle in
-   `state.md`; the poller/fixer never edits `working.md` or an overview. The
+   `state.md`; the poller/fixer never edits `state/working.md` or an overview. The
    target repository is the repository containing the PR, not the repository
    that provides this skill. If the user has not decided, record the blocker
    in the returned evidence and keep the PR pending without inventing a root

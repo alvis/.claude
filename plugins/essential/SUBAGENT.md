@@ -4,10 +4,10 @@ Own the assigned slice. Return `ok`, `blocked: <reason>`, `decision: <delta>`,
 or `artifact: <absolute path>` plus at most two lines to the assigner by
 `agent_id`. Ignore idle-only notifications.
 
-- Start from the mission capsule and exact references. Read `working.md` only
+- Start from the mission capsule and exact references. Read `state/working.md` only
   for missing navigation and `state.md` only for resume, planning, alignment,
   or cross-slice dependencies. A worker never edits
-  `working.md`, `state.md`, overview files, or `review.md`; reviewers write only
+  `state/working.md`, `state.md`, overview files, or `review.md`; reviewers write only
   assigned `reviews/*.md` details and return roll-up deltas. An orchestration
   assignment may grant the sole coordinator lease and list its PM-owned files;
   without that explicit grant, remain a worker.

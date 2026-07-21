@@ -7,7 +7,7 @@ handover: complete
 work_id: <id>
 work_root: <absolute path>
 state: <absolute state.md path>
-working: <absolute working.md path>
+working: <absolute state/working.md path>
 external_anchor: <URL or response_only>
 source_anchor: <remote revision, attachment locator, or inline payload label>
 state_snapshot: <attachment locator or inline payload label>

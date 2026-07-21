@@ -36,7 +36,7 @@ Before creating or materially rewriting a project artifact, read the absolute
 writes and report the missing contract. Resolve the work root before review.
 Run Essential's resolver with `--work-id` only for an explicit override; accept
 its deterministic match and ask only on `work_id_required`. A coordinator run
-may use `working.md` and `state.md` to locate the plan/spec/design/review paths.
+may use `state/working.md` and `state.md` to locate the plan/spec/design/review paths.
 A nested run starts from its mission capsule and reads broad work memory only
 for resume or cross-slice alignment. Never write work pointers or overviews.
 Run `validate-engineering-state validate --state <state.md>` before dispatch.

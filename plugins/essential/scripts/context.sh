@@ -64,7 +64,7 @@ get_repo_root_documents_context() {
   resolver_status="$(jq -r '.status // empty' <<<"$resolver_payload" 2>/dev/null || true)"
   if [[ "$resolver_status" == "resolved" || "$resolver_status" == "requires_ignore" ]]; then
     work_dir="$(jq -r '.work_dir // empty' <<<"$resolver_payload")"
-    for name in working.md state.md; do
+    for name in state/working.md state.md; do
       path="$work_dir/$name"
       if [[ -f "$path" ]]; then
         rel="${path#"$repo_root"/}"

@@ -72,7 +72,8 @@ Identity selection remains separate and interactive: `--bootstrap` never
 derives or mints an ID, and it cannot bypass `work_id_required` or
 `requires_ignore`. The resolver owns the mechanical bootstrap; the PM alone
 may request it while holding the coordinator lease. It creates the work
-directory and whichever of `working.md` and `state.md` is missing. Each file is
+directory, its `state/` subdirectory, and whichever of `state/working.md` and
+`state.md` is missing. Each file is
 created with no-clobber semantics; an existing regular file is reported and
 preserved byte-for-byte. The resolver refuses symlinked/non-directory work-root
 components and symlinked/non-regular entrypoints on every invocation, not only
@@ -80,9 +81,9 @@ during bootstrap, so later writers cannot escape the target workspace. This
 also makes the command safe to rerun when an interrupted first use created only
 one entrypoint.
 
-The initial `working.md` contains the work ID, creation timestamp,
+The initial `state/working.md` contains the work ID, creation timestamp,
 `initialized` status, a confirmation-focused current action and handback
-point, and a relative link to `state.md`. The initial `state.md` contains the
+point, and a relative link to `../state.md`. The initial `state.md` contains the
 same identity/status/navigation plus explicit placeholders for goal and
 success criteria, lifecycle plan, revision, specification provenance, sync,
 review, decisions, dependencies/blockers/risks, and evidence/validation.
@@ -120,9 +121,12 @@ docs/
 ├── notion/                          # conventional default-workspace mirror
 │   └── [notion-sync-owned .mdc paths]
 └── works/<work-id>/                 # active workspace only
-    ├── working.md
     ├── state.md
-    ├── state/*.md
+    ├── state/
+    │   ├── working.md
+    │   ├── unresolved.md
+    │   ├── plan.md
+    │   └── *.md
     ├── spec/
     ├── proposals.md
     ├── proposals/*.md
@@ -209,9 +213,9 @@ ownership or navigation. ADRs alone use four-digit numeric prefixes. Never use
 
 ## Work memory
 
-### `working.md`
+### `state/working.md`
 
-`working.md` is a temporary, narrow lens on what is being worked on now. The
+`state/working.md` is a temporary, narrow lens on what is being worked on now. The
 PM/coordinator is its only writer. It contains a headline current-focus
 summary, current handback point, and fast paths to the relevant specification,
 source, test, review summary, evidence, and current proposal/change/decision or
@@ -219,7 +223,7 @@ design item. It contains no plan, full history, or copied evidence. Aim for
 about 4,096 bytes as an editorial mindset; it has no mechanical size gate.
 
 The assignment capsule and its exact references are a subagent's starting
-context. A subagent reads `working.md` only when it needs current-work
+context. A subagent reads `state/working.md` only when it needs current-work
 navigation. It reads `state.md` for resume, planning, alignment, cross-slice
 dependencies, or when explicitly assigned; unrelated and self-contained work
 reads neither. A subagent reports paths, evidence, and state deltas to the PM;
@@ -228,12 +232,16 @@ it never edits PM-owned work memory.
 ### `state.md`
 
 `state.md` is the complete resumable work context: goal, full plan, lifecycle
-status, acceptance criteria, decisions, dependencies, blockers, review state,
-evidence references, repository revision, specification provenance, and sync
-state. It links prominently to `working.md` and each lazy work overview that
-currently exists. It references details rather than copying them. Semantic
-children such as `state/implementation-plan.md` or `state/discovery.md` hold
-resumable detail. If `state.md` exceeds the final size gate, keep it as the
+status, acceptance criteria, decisions, dependencies, blockers, open questions,
+review state, evidence references, repository revision, specification
+provenance, and sync state. It links prominently to `state/working.md` and each
+lazy work overview that currently exists. It references details rather than
+copying them. Semantic children such as `state/plan.md` or `state/discovery.md`
+hold resumable detail. Record open questions in detail in `state/unresolved.md`,
+each with an owner and a disposition (resolved, deferred, or blocking);
+`state.md` only briefly notes that unresolved questions exist and links to that
+child. When none remain, delete `state/unresolved.md` and remove the mention
+from `state.md`. If `state.md` exceeds the final size gate, keep it as the
 overview and move coherent split detail to `state/<nn>-<topic-slug>.md`.
 
 Every new or explicitly migrated state file follows
@@ -245,7 +253,7 @@ task dispatch, review, portable handover, completion, or retirement. Preserve
 unversioned state on a `migration_required` result; never migrate it by guess.
 
 One actor holds the work item's coordinator lease and is the sole writer of
-`working.md`, `state.md`, the four lazy overview files, and `review.md`. The PM
+`state/working.md`, `state.md`, the four lazy overview files, and `review.md`. The PM
 holds it by default and may explicitly grant it to one orchestration skill,
 naming the files covered. The PM does not write those files until that skill
 returns. Every other subagent is a worker: it writes only assigned children and
@@ -266,7 +274,7 @@ Each overview contains only:
 4. `last_pm_reconciliation` as an ISO-8601 timestamp.
 
 Do not copy child detail into an overview. `state.md` links to the overview,
-not directly to the folder. `working.md` links only to the overview or child
+not directly to the folder. `state/working.md` links only to the overview or child
 needed for the current focus.
 
 | Overview | Child statuses |
@@ -278,8 +286,12 @@ needed for the current focus.
 
 Each child starts with structured metadata containing at least its canonical
 status, one-line headline, owner, created timestamp, and source/provenance
-references. If an overview itself ever requires splitting, reserve
-`00-index-<group>.md` names inside its folder for index shards.
+references. When a `proposals/` or `changes/` child records a deviation from a
+Notion-backed specification, its provenance MUST link to the related
+`.engineering/notion/` mirror file (the exact `.mdc` path in the registered
+default workspace); a spec deviation recorded without that link is incomplete.
+If an overview itself ever requires splitting, reserve `00-index-<group>.md`
+names inside its folder for index shards.
 
 ## Reviews
 

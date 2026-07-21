@@ -280,7 +280,8 @@ if [[ -d "$work_dir" ]] &&
    [[ "$(canonical_directory "$work_dir")" != "$work_dir" ]]; then
   invalid "engineering work directory escaped its canonical workspace path: $work_dir"
 fi
-require_safe_entrypoint "$work_dir/working.md"
+require_safe_directory_component "$work_dir/state"
+require_safe_entrypoint "$work_dir/state/working.md"
 require_safe_entrypoint "$work_dir/state.md"
 
 if [[ ! -f "$ignore_file" ]] ||
@@ -338,6 +339,7 @@ if [[ $bootstrap -eq 1 ]]; then
   ensure_safe_directory_component "$engineering_dir"
   ensure_safe_directory_component "$work_root"
   ensure_safe_directory_component "$work_dir"
+  ensure_safe_directory_component "$work_dir/state"
   bootstrap_timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
   working_contents="# Current focus
 
@@ -349,7 +351,7 @@ if [[ $bootstrap -eq 1 ]]; then
 
 ## Fast paths
 
-- State: [state.md](state.md)
+- State: [state.md](../state.md)
 "
   state_contents="# Engineering work
 
@@ -358,7 +360,7 @@ if [[ $bootstrap -eq 1 ]]; then
 - Work ID: \`$work_id\`
 - Lifecycle status: \`initialized\`
 - Updated: \`$bootstrap_timestamp\`
-- Current focus: [working.md](working.md)
+- Current focus: [working.md](state/working.md)
 - Plan source: \`state.md\`
 - Plan digest: \`d66c594201a4f94faf69e28ffef886bf18c5c9464604d43f3221fa9961896a68\`
 - Hash kind: \`engineering-plan-definition-digest-v1\`
@@ -398,9 +400,9 @@ None known.
 
 None recorded.
 "
-  write_bootstrap_file "$work_dir/working.md" "$working_contents"
+  write_bootstrap_file "$work_dir/state/working.md" "$working_contents"
   write_bootstrap_file "$work_dir/state.md" "$state_contents"
-  require_safe_entrypoint "$work_dir/working.md"
+  require_safe_entrypoint "$work_dir/state/working.md"
   require_safe_entrypoint "$work_dir/state.md"
 fi
 
