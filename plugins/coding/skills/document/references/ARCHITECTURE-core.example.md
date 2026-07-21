@@ -6,7 +6,7 @@ ARCHITECTURE = how it works. For usage/install, see the subsystem READMEs.
 
 📌 **First paragraph:** The `core` subsystem is the contract floor of the `@theriety/platform` monorepo. It ships three packages — `core-types`, `core-errors`, `core-contracts` — that together define every shape that crosses a package boundary anywhere in the workspace. Core has zero runtime dependencies on its own: it is pure types, schemas, and discriminated error classes.
 
-**Second paragraph:** See the [INDEX](./ARCHITECTURE.md) for monorepo-wide invariants and the other subsystem documents. Core is the only subsystem every other subsystem imports; changes here fan out through CI to every downstream package, which is why contract changes require a `minor` bump at minimum.
+**Second paragraph:** See the [index](../platform.md) for monorepo-wide invariants and the other subsystem documents. Core is the only subsystem every other subsystem imports; changes here fan out through CI to every downstream package, which is why contract changes require a `minor` bump at minimum.
 
 <br/>
 <div align="center">

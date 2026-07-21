@@ -1,91 +1,53 @@
-# Deviation lifecycle — reconciliation, three-state verdicts, and finalization
+# Alignment finding lifecycle
 
-Referenced from SKILL.md Workflow steps 5–7. Defines how reconciled decisions
-are recorded so the review gate cannot go green before gaps actually close.
+This reference defines alignment severity, disposition, rerun stability, and
+summary reconciliation.
 
-## Severity ladders for detection
+## Detection severity
 
-- **Drift** (implementation deviates from the spec — wrong shape or contract,
-  weakened invariant, different error semantics, ordering, or side-effect set):
-  P0 if it breaks a documented acceptance criterion or shared interface; P1 for
-  an observable public-surface change; P2 for internal-helper or naming
-  divergence; P3 if purely cosmetic relative to spec wording.
-- **Omission** (a spec requirement with no implementing site anywhere in the
-  repository): P0 if gated by an acceptance criterion or labeled "MUST"; P1
-  otherwise; P2 only if the spec itself marks it optional or future.
-- **Unsanctioned addition**: P1 minimum unless trivial (logging, internal
-  helpers consistent with siblings).
+- Drift is P0 when it breaks an acceptance criterion/shared invariant, P1 for
+  observable contract change, P2 for internal naming/helper divergence, and P3
+  for wording-only mismatch.
+- Omission is P0 for a required acceptance/MUST item, P1 otherwise, and P2 only
+  when the source marks it optional/future.
+- Unsanctioned additions are P1 minimum unless they are trivial internal
+  behavior consistent with repository standards.
 
-## Three-state model
+## Dispositions
 
-Each deviation is `open`, `decided`, or `resolved`:
+- `open`: no decision.
+- `fixed`: the gap no longer exists and verification confirmed it.
+- `acknowledged`: closed non-fixed risk acceptance with durable rationale,
+  accountable owner, and explicit recheck condition.
+- `deferred`: owner and decision/recheck deadline recorded; gap remains.
+- `skipped`: closed non-fixed scope/non-applicability acceptance with durable
+  rationale, accountable owner, and explicit recheck condition.
 
-- **open** — no resolution chosen yet.
-- **decided** — the user chose "update spec to match code", "update code to
-  match spec", or "defer". A resolution exists but the gap is still real; the
-  deviation stays outstanding until the close-the-gap action executes.
-- **resolved** — the gap is gone: either the close-the-gap action completed,
-  or the user chose "accept as-is / waive" (which resolves immediately — the
-  gap is explicitly tolerated).
+`fixed` closes only with verification evidence. `acknowledged` and `skipped`
+close only with the metadata above; P0/P1 additionally require explicit
+risk-acceptance authority and durable acceptance evidence. Malformed closed
+risk dispositions remain outstanding. `open` and `deferred` remain outstanding
+and block review closure. Outstanding P0 yields FAIL; P1 yields
+REQUIRES_CHANGES; only outstanding P2/P3 yields PASS_WITH_SUGGESTIONS.
 
-Only `resolved` deviations drop out of the verdict counts. Both `open` and
-`decided` count as outstanding, so a verdict that counts `decided` deviations
-as outstanding is correct, not a mismatch. When aggregating into the
-`README.md` index, map any `decided` deviation to `REQUIRES_CHANGES` exactly
-like an `open` one.
+## Writing `alignment.md`
 
-Overall status follows the base-skill logic with this counting rule: any P0
-outstanding → FAIL; P1 outstanding with no P0 → REQUIRES_CHANGES; only P2/P3
-outstanding → PASS_WITH_SUGGESTIONS; all deviations `resolved` and all areas
-passing → PASS.
+Rewrite each issue block in place with resolution rationale, concrete action,
+owner/deadline where applicable, and disposition. Maintain one next-action
+section linking exact work-local spec, change, or handoff paths. Never append a
+parallel resolutions/deviations ledger.
 
-## Weaving reconciliation into ALIGNMENT.md
+On rerun, match prior findings by spec location, implementation location, and
+issue meaning; reuse IDs and reconciliation. Confirm closure before dropping an
+unmatched prior finding. New findings take the next sequence.
 
-Rewrite each issue block in place with: the chosen resolution, a rationale
-describing the final gap (what remains different and why that is acceptable or
-must change), the concrete close-the-gap action (the exact edit or delegation
-that would resolve it), and the inline state (`open`/`decided`/`resolved`).
-Dissolve these into the existing issue blocks — never append a parallel
-"Resolutions" appendix.
+## Summary reconciliation
 
-Then append a single `## Next-Action Plan` section with two ready branches:
+`review.md` contains only per-area verdict/counts, all five dispositions,
+derived closed/outstanding counts, and relative paths. Map verified `fixed` and
+valid `acknowledged`/`skipped` to closed; map `open`, `deferred`, and malformed
+risk dispositions to outstanding. Do not copy issue bodies.
 
-- **Branch A — hand off**: spec/implementation paths, the report location, and
-  exactly which delegations (`specification:spec-code`, `coding:fix`,
-  `specification:implement-code`) remain to close each gap. Executed via
-  `coding:handover`, after which the skill stops.
-- **Branch B — execute now**: the same delegations sequenced for immediate
-  execution. Spec changes route to `specification:spec-code` then persist via
-  the sync skill; code changes route to `coding:fix` (targeted) or
-  `specification:implement-code` (ticket-scale). As each `decided` deviation's
-  action completes, flip it to `resolved` and recompute the verdict and index.
-  Offer an optional re-detection round afterward to confirm the gaps closed.
-
-## Re-run stability
-
-When `ALIGNMENT.md` already exists, read it first: match new findings to prior
-unchecked entries by source location plus issue text and reuse their original
-`ALIGN-P<n>-<seq>` IDs; preserve `## Pending Decisions`, any prior
-`## Next-Action Plan`, and reconciliation annotations already woven in; for a
-prior unchecked item with no current match, confirm it no longer applies
-before dropping it; new findings take the next available sequence per
-priority. Rewrite the file in full.
-
-## Structural validation
-
-After writing or finalizing `ALIGNMENT.md`, dispatch one read-only validator
-subagent to confirm:
-
-1. frontmatter carries `area: alignment`, `prefix: ALIGN`, `reviewed_at`, and
-   `files_reviewed_count`;
-2. the verdict line is well-formed and matches the outstanding count under the
-   three-state rule (do not flag `decided`-counted verdicts as mismatches);
-3. issue blocks follow the canonical template format with stable
-   `ALIGN-P<n>-<seq>` IDs across re-runs;
-4. `## Pending Decisions` is present iff any issue has `**Solution**: TBD`;
-5. the alignment-specific additions (`## Next-Action Plan`, per-issue
-   reconciliation annotations) are accepted, not flagged as template
-   violations.
-
-On a validation failure with fixable fatals, re-write the report once with the
-fatals attached as fix instructions, then re-validate (max 1 retry).
+Validate frontmatter area/prefix/review timestamp/file count, verdict/count
+consistency, stable IDs, required decision metadata, and link resolution. Retry
+one fixable structural failure once.

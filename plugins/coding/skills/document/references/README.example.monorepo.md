@@ -62,9 +62,9 @@ pnpm test             # run unit tests across the workspace
 ### Adding a package
 
 1. Decide the subsystem (`core`, `services`, `sdks`) based on what the package depends on: a package that ships types belongs in `core`; one that runs a process belongs in `services`; one consumed by end users belongs in `sdks`.
-2. Create `packages/<subsystem>/<name>` with `package.json`, `tsconfig.json`, `src/index.ts`, and a `README.md` seeded from the monorepo template.
+2. Create `packages/<subsystem>/<name>` with `package.json`, `tsconfig.json`, `src/index.ts`, and a `readme.md` seeded from the monorepo template.
 3. Run `pnpm install` from the root so the new workspace is linked.
-4. Add the package to the relevant ARCHITECTURE subsystem file (`ARCHITECTURE-<subsystem>.md`).
+4. Add the package to the relevant split architecture child (`docs/architecture/platform/<nn>-<subsystem>.md`).
 
 ### Running one service
 
@@ -105,7 +105,7 @@ flowchart LR
     CoreContracts --> SdkPython
 ```
 
-Edges are import direction. Inter-service communication happens via the shared Queue, not imports — see [`ARCHITECTURE-services.md`](./ARCHITECTURE-services.md) for the queue-mediated runtime flow. Every service and SDK pins the same `core-contracts` version, so a contract bump triggers coordinated updates across the dependency graph.
+Edges are import direction. Inter-service communication happens via the shared Queue, not imports — see [`docs/architecture/platform/20-services.md`](./docs/architecture/platform/20-services.md) for the queue-mediated runtime flow. Every service and SDK pins the same `core-contracts` version, so a contract bump triggers coordinated updates across the dependency graph.
 
 ---
 
@@ -113,7 +113,7 @@ Edges are import direction. Inter-service communication happens via the shared Q
 
 Three peer subsystems (`packages/core`, `packages/services`, `packages/sdks`) under one toolchain; the architecture is sharded into an index plus one part file per subsystem.
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the subsystem index and cross-cutting patterns.
+See [`docs/architecture/platform.md`](./docs/architecture/platform.md) for the subsystem index and cross-cutting patterns.
 
 ---
 

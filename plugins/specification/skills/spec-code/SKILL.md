@@ -1,121 +1,238 @@
 ---
 name: spec-code
-description: "Design or document technical specifications in the canonical template, then delegate Notion synchronization to sync-notion. Use for greenfield specs, updates to an existing DESIGN.md, or documenting an implementation without inventing requirements."
+description: Design, update, or retrospectively document a technical specification from a user-selected local, inline, or Notion source through an active engineering work item and versioned derived docs. Use for specification authoring; keep Notion transport in sync-notion and implementation planning in plan-code.
 model: opus
-context: fork
 allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
-argument-hint: "<instruction> [--type=api|web-app|mobile|library|fullstack] [--discovery=<path>]"
+argument-hint: "<instruction> --capability=<slug> [--work-id=<id>] [--source=<path-or-ref>] [--source-direction=<direction>] [--transport-root=<dir>] [--transport-profile=<absolute-file>] [--template=<path-or-ref>] [--local-mdc=<path>] [--parent=<ref>] [--type=api|web-app|mobile|library|fullstack]"
 ---
 
 # Spec Code
 
-Produce `DESIGN.md` and its child documents in the strict Notion template
-structure, in one of three modes: CREATE (greenfield design), UPDATE (modify
-an existing spec), or DOCUMENT (analyze and document existing code).
-`specification:sync-notion` owns all Notion transport and merging;
-`specification:plan-code` owns commit planning; coding skills own
-implementation.
+Author a technical specification as one coherent contract. An explicit local
+path or selected Notion identity can be an authoritative source. Inline prompt
+text is requirements evidence, not by itself a durable final contract: it must
+first become an approved work-local candidate and then a reachable versioned
+carrier. When the selected source is Notion, its MDC pairing remains
+authoritative; versioned `docs/specs/<capability>/*.md` is a reviewed derivation
+for engineers.
 
 ## Boundaries
 
-- Use for: designing a new specification, updating an existing `DESIGN.md`
-  or Notion spec, or retrospectively documenting an existing implementation
-  without inventing requirements.
-- Do not use for: generating implementation code, making technology
-  decisions without analysis, adding features or sections outside the
-  template structure, or performing Notion pull/push/merge yourself
-  (`specification:sync-notion`).
-- Refuse when: the instruction is too vague to scope (ask for what the
-  system does), the request is code implementation rather than
-  specification, the spec would require implementation details nobody has
-  decided, or the request adds sections the template does not define.
+- Use for CREATE, UPDATE, and DOCUMENT modes. Do not implement code or own
+  Notion transport/conflicts.
+- Never create independent root specification/design/requirement artifacts.
+  Temporary reasoning belongs in the active work's `design/`, `proposals/`,
+  `changes/`, or `decisions/`; durable specification docs belong under
+  `docs/specs/<capability>/` only after verified completion.
+- All authored `.mdc` changes route through `specification:mdc`. Use
+  `specification:sync-spec` only for a selected existing Notion specification's
+  work-local materialization or verified completion; local and inline sources
+  do not detour through it. For a Notion source, the work-local materialization
+  is the authored copy; the selected mirror is transport state, not an editing
+  surface. Retain its immutable base receipt, exact transport manifest hash,
+  and semantic contract digest.
+- All sources use the dual-hash contract in
+  [../sync-spec/references/hash-model.md](../sync-spec/references/hash-model.md):
+  exact transport evidence is never an approval hash, and semantic approvals
+  are never transport/CAS evidence.
+- Preserve transport-owned paths. An existing path comes from transport; a new
+  unsynced path must be explicitly supplied. Never infer one from title or id.
+- `--skip-notion-sync` controls Notion transport only. It never suppresses the
+  required local/inline approval and durable-promotion path.
 
 ## Inputs
 
-- **Required**: `<instruction>` describing what to specify or document.
-- **Optional**: `--type=api|web-app|mobile|library|fullstack` to select
-  template patterns; `--reference=<doc>` to load supporting documentation;
-  `--discovery=<path>` to load a `DISCOVERY.md` evidence ledger;
-  `--sync-template` to reorganize an existing spec to the latest template
-  while preserving content; `--skip-notion-sync` to write local files only.
-- **Prerequisites**: for the sync step, `notion-sync` CLI and `NOTION_TOKEN`
-  (not needed with `--skip-notion-sync`).
+- **Required**: instruction and lowercase `--capability=<slug>`.
+- **Optional**: work id, authoritative source/location/direction, explicit
+  transport root, absolute destination-local transport profile file, live
+  template path/ref, explicit local MDC path and parent for CREATE, project
+  type, `--reference=<doc>`, `--discovery=<path>`, `--sync-template`, and
+  `--skip-notion-sync`.
+- **Prerequisites**: active engineering work state. Notion credentials/tooling
+  are required only when the selected direction uses Notion transport.
 
 <IMPORTANT>
-Coherence mandate: every edit must produce one continuous, deliberate
-document. UPDATE and DOCUMENT modes are the high-risk surface — new
-requirements must be folded into the spec's existing sections so a reader
-cannot tell which decisions are original and which were merged later. Never
-attach an "Addendum", "Revisions", or "Also note" trailer beneath the
-template, and never leave parallel duplicate sections or visible patch
-seams.
+Coherence mandate: UPDATE and DOCUMENT edits must be integrated into their
+owning sections. Never append an addendum, revisions trailer, parallel old/new
+section, or copied transport history.
 </IMPORTANT>
 
 ## Workflow
 
-1. Detect the mode: CREATE when there is no `DESIGN.md`, no Notion page, and
-   no codebase; UPDATE when `DESIGN.md` exists or a Notion page is found;
-   DOCUMENT when a codebase exists but no `DESIGN.md`. Then load materials:
-   the existing design (UPDATE), the codebase analysis workflow in
-   [references/document-mode.md](references/document-mode.md) (DOCUMENT),
-   the Notion template, any `--reference` documentation, `--discovery` or a
-   reachable `DISCOVERY.md`, and the `--sync-template` flag. Preserve discovery
-   provenance: intent and observations may ground requirements; inferences and
-   accepted assumptions remain labeled; unresolved material decisions block
-   invented requirements.
-2. When existing Notion pages are found, record the local files and known
-   refs for the final `Skill(sync-notion)` call. That skill owns remote
-   materialization, conflict decisions, merged content, and verification —
-   do not maintain a parallel merge protocol here.
-3. Gather requirements: parse the arguments and discovery ledger, clarify scope
-   per mode with `AskUserQuestion` where the instruction leaves real choices
-   open, and lay out the work as a todo list. Route underexplored choices that
-   could change the contract to `essential:discover`; route grounded competing
-   options to `essential:decide`. Never convert a hypothesis or accepted
-   implementation assumption into a requirement without an explicit decision.
-4. Research the tech stack: CREATE researches an appropriate stack; UPDATE
-   researches only the technologies that change; DOCUMENT extracts the stack
-   from existing code with no research — follow
-   [references/document-mode.md](references/document-mode.md) for the
-   project scan, manifest parsing, and mapping to spec sections.
-5. Design the architecture (CREATE from scratch, UPDATE by modifying the
-   affected aspects, DOCUMENT by extracting from code), then specify the
-   components, API contracts and data models where applicable, and UI
-   structure and components where applicable — always within the template's
-   sections.
-6. Generate or update the files: prepare frontmatter per
-   [references/frontmatter.md](references/frontmatter.md) (the
-   `notion_url`/`last_edited_at`/`last_synced_at`/`related_files` schema,
-   filename mapping, and update rules), compile the document following the
-   template exactly, apply `--sync-template` when provided, then write the
-   main file and every child page file with frontmatter.
-7. Unless `--skip-notion-sync`, invoke `Skill(sync-notion)` with the
-   generated files, the selected sync mode, and any known Notion refs. That
-   skill owns pull/push, merge resolution, verification, retries, and
-   frontmatter sync metadata — do not implement a second synchronization
-   protocol.
-8. Run the verification below; when a check fails, fix the cause and re-run
-   that check. Repeat until every check passes or a concrete blocker
-   remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. For a direct run, run
+   Essential's workspace resolver with `--work-id` only for an explicit user
+   override and accept its deterministic environment, Git-branch/jj-workspace,
+   or sole-existing-work match. Ask only when it returns `work_id_required`,
+   using its returned candidates; any new id follows that user-confirmed choice.
+   A delegated run receives the explicit id/root. Read only the exact
+   work/source pointers required for this specification.
+2. Resolve source kind, location, and direction from the explicit request
+   first, then active work state. A local source requires its exact explicit
+   path; never infer or silently relocate it. Treat inline prompt text only as
+   requirements evidence. Its eventual authoritative source is the durable
+   carrier produced in Step 6, not the prompt or conversation transcript. For
+   an existing Notion source that needs local materialization, invoke
+   `Skill(sync-spec)` with the explicit transport root plus
+   `--transport-profile=<absolute-file>` and preserve its returned `ref:`
+   identities, paths, and receipt. Resolve that file from the explicit option
+   or an active-state mapping containing its destination-local absolute path,
+   logical name, and last verified exact-byte SHA-256. The child revalidates it;
+   never infer a path from the profile name/root or reuse an origin path. Select
+   CREATE when no authoritative
+   specification exists, UPDATE when one exists, and DOCUMENT when current code
+   must be described without inventing requirements. Load
+   [references/document-mode.md](references/document-mode.md) only for DOCUMENT.
+   Load the hash model above and invoke only its bundled
+   `scripts/spec-hashes.py --kind both` helper for every candidate, source, and
+   promoted carrier; refuse when the helper or `python3` is unavailable.
+3. Acquire and read the complete canonical template before drafting. Use an
+   explicit `--template`, then a template recorded in active work/project
+   configuration. A Notion-backed source must use the selected **live** Notion
+   template through its configured transport; if it cannot be resolved, ask or
+   refuse, and never substitute a bundled snapshot. Only for local or inline
+   work with neither an explicit nor project template, use the immutable
+   source-kind-neutral fallback
+   [assets/technical-spec-template.md](assets/technical-spec-template.md).
+   Record that fallback with portable locator
+   `plugin:specification/spec-code/assets/technical-spec-template.md`, the
+   exact installed Specification plugin version, and asset SHA-256; never
+   publish its machine-local install path. Record every selected template's
+   portable locator and exact SHA-256 so retries choose the same bytes. Preserve required section order and properties, and make
+   `--sync-template` an explicit content-preserving migration against this
+   snapshot. Then gather requirements, discovery
+   evidence, architecture, API/data contracts,
+   UI behavior, security/privacy posture, acceptance criteria, and unresolved
+   decisions. Preserve evidence provenance. Route underexplored material
+   unknowns to `essential:discover` and grounded alternatives to
+   `essential:decide`; do not turn assumptions into requirements. For inline
+   evidence, materialize the complete authored contract—not a summary or
+   pointer to the conversation—at the deterministic work-local candidate
+   `<work-root>/design/<capability>-specification-candidate.md`. Compute the
+   candidate's exact byte SHA-256 for its inline identity, then use the bundled
+   helper to compute both `transport_manifest_hash` and `contract_digest`.
+   Require explicit approval naming `contract_digest`; any semantic edit to the
+   candidate invalidates approval, while an exact-byte change still requires a
+   fresh receipt even if its digest remains equal.
+4. Create or update the work-local design/proposal/decision children needed to
+   explain the specification change. Use lowercase deterministic child names
+   and the status schema in the Essential contract. Return an index
+   reconciliation request to the PM; do not edit PM-owned overview files.
+5. Prepare source and durable derivation metadata according to
+   [references/frontmatter.md](references/frontmatter.md). For an existing MDC
+   pair, modify only its exact transport-returned path through `Skill(mdc)`.
+   For CREATE or DOCUMENT with no existing page and Notion sync requested,
+   require explicit `--local-mdc` and `--parent`; first author that local file
+   through `Skill(mdc)` using the live template and parent metadata. Creation
+   injects stable semantic `ref` identity and may remove creation-only `parent`,
+   so a pre-create digest cannot be final specification approval. Run the
+   helper and obtain explicit **creation authorization** bound to candidate
+   digest, parent, and exact diff scope. Only then invoke
+   `Skill(sync-notion)` in local-to-Notion mode with the exact transport root
+   and `--transport-profile=<absolute-file>`. Verification-pull the new stable
+   `ref:`, preserve pre-create bytes, and present every transport-created stable
+   metadata/content difference. Hash verified R and obtain final specification
+   approval naming its post-create `contract_digest`. The creation receipt
+   stores both digests, authorized transition/diff, returned identity/revision,
+   and exact verification evidence. Invoke `Skill(sync-spec)` materialization
+   with that receipt and profile to atomically establish verified R as initial
+   L/B. Never pretend pre/post-create digests match, exclude stable `ref` as
+   volatile, or establish a base without post-create approval.
+   Never ask transport to create a page before the local MDC exists. For an
+   explicit local source, use the helper with a `repo:` identity when reachable
+   and a `local-approved:sha256:` exact-byte identity otherwise; require
+   approval of its semantic `contract_digest` before derivation and retain the
+   explicit path only in ignored work evidence when it is not portable. For
+   inline evidence, use only the approved deterministic candidate from Step 3.
+6. For every approved local or inline contract, regardless of
+   `--skip-notion-sync`, perform a content-preserving promotion into the
+   versioned `docs/specs/<capability>/` tree. The reachable authoritative entry
+   for `plan-code` and `implement-code` is
+   `docs/specs/<capability>/index.md`; write the durable machine-readable
+   provenance receipt at `docs/specs/<capability>/provenance.json`. The receipt
+   records source kind, durable source locator, distinct source and carrier
+   `transport_manifest_hash` values, approved semantic `contract_digest`, every
+   durable **contract** output path/exact hash, logical-unit mapping, template
+   identity, helper identity, and the content-equivalence check. Its embedded
+   output set excludes `provenance.json` itself. Compute the completed
+   provenance file's own exact SHA-256 after writing and store it only in
+   ignored work evidence, an external durable anchor, and this run's report;
+   never insert a self-hash into the file. Record a repository-relative explicit
+   local path only when it is itself reachable/versioned; never embed the
+   expiring ignored inline-candidate path in versioned documentation. Keep that
+   exact candidate path/hash in active work and return it in this run's output.
+   Run the bundled helper over the promoted carrier while retaining source
+   logical-unit ids and lineage. Require its `contract_digest` to equal the
+   approved digest; retain its distinct exact `transport_manifest_hash`. If
+   promotion changes semantic contract content, stop `ready_for_approval` and
+   approve the new digest before retrying. Record the durable entry path,
+   receipt path, and exact approved/carrier digests and hashes in active-work
+   reconciliation so later skills never depend on the
+   prompt transcript or ignored candidate alone. Do not claim a Notion round
+   trip for this path.
+
+   Authority is singular after promotion. A reachable `repo:` local source
+   remains authoritative and `docs/specs/<capability>/` is its checked
+   derivation; later planning/implementation must rehash both and return
+   `ready_for_specification` when the source, provenance, and carrier do not
+   match. For a non-reachable `local-approved:` source, the approved durable
+   carrier becomes authoritative after content-equivalence verification; the
+   original hash is historical provenance, not a second live source. Inline
+   work likewise uses its approved durable carrier after promotion.
+
+   For a selected Notion source, `--skip-notion-sync` leaves authored Notion
+   content temporary and does not claim promotion. Otherwise invoke
+   `Skill(sync-spec)` with the same exact transport profile in
+   `complete --stage=specification` mode only after the PM has persisted the
+   immutable materialization receipt and exact-hash specification approval. If
+   the current semantic `contract_digest` differs from the approved digest, return
+   `ready_for_approval`; never publish it under an earlier approval. If this run
+   cannot establish that precondition,
+   return `ready_for_completion` with the exact reconciliation payload instead
+   of claiming completion. The completion flow uses the selected transport
+   mirror, verification pull, derived `docs/specs/<capability>/`, durable receipt,
+   and dependent revalidation results. Claim completion only for operational
+   `status: success` with `next_action: none`; propagate `remote_only` or
+   `structural_change` plus `next_action: revalidate`, and never treat an
+   unchanged digest alone as permission to ignore structural change.
+7. Verify the resulting derived spec reads as one contract, `index.md` points
+   to all versioned children, and provenance matches the verification pull.
+   Confirm the provenance output set excludes itself and its post-write exact
+   hash exists only in work/external evidence and this run's report.
+8. Return explicit final paths generated or materially rewritten as
+`generated_files`, including work-local `.md` children and derived docs.
+Do not run file sizing; after all writers return, the PM checks only eligible
+work Markdown inside the target `.engineering/`. Derived `docs/**` has no
+mechanical size limit.
 
 ## Verification
 
-- The document contains only template sections, in template order — nothing
-  invented, nothing appended outside the structure.
-- Every written file carries the frontmatter schema from
-  `references/frontmatter.md`.
-- In UPDATE and DOCUMENT modes, merged content is integrated into owning
-  sections with no addendum trailers or duplicate parallel sections.
-- Discovery provenance is preserved and no unresolved material decision was
-  invented into the contract.
-- The sync step reports verified success, or the skip is explicit
-  (`--skip-notion-sync`) and recorded.
+- The authoritative contract follows the verified live template with no
+  invented or duplicate sections.
+- Every authored MDC body change went through `specification:mdc` and retained
+  Notion identity/path.
+- A completed Notion run has verified sync, verification pull, derivation
+  provenance, `index.md`, and revalidation results. A skipped Notion sync
+  remains explicitly temporary. A local/inline run always has a versioned
+  carrier plus durable receipt and never claims a remote round trip.
+- Raw inline prompt text is never reported as the authoritative final contract;
+  its approved candidate `contract_digest` and the reachable durable carrier
+  digest match through the content-equivalence check, with exact hashes retained
+  separately.
+- `generated_files` is complete and overview reconciliation is assigned to the
+  PM.
+- The recorded specification approval names the exact semantic
+  `contract_digest` that was completed; a later semantic edit requires approval
+  again. Exact transport evidence remains paired with it in every receipt.
 
 ## Completion
 
-Report the mode, package name, design document path and child documents,
-project type and tech stack, template adherence, Notion sync outcome
-(created/updated/skipped plus verification state from `sync-notion`), and
-next steps: review the files, share for feedback, then plan implementation
-with `specification:plan-code`. A refusal names what was too vague,
-undecided, or outside the template.
+Report mode, work id, capability, authoritative source/location/direction,
+template snapshot, Notion refs and validated transport profile
+path/exact-byte SHA when applicable, work artifacts,
+`ready_for_completion` or sync/verification result, derived specification paths
+and provenance receipt, the exact `authoritative_spec_path`,
+`approved_contract_digest`, source/carrier `transport_manifest_hash` values,
+external `provenance_file_hash`, and durable carrier/output hashes, revalidation
+impact, PM updates requested, and `generated_files`.

@@ -1,107 +1,65 @@
-<!--
-Resolution lifecycle:
-  1. Mark fixed: flip checkbox `- [ ]` → `- [x]` AND wrap heading in `~~...~~`. Both signals are required.
-  2. Resolve TBD: when a Pending Decision is settled, fill in `**Solution**` on the main issue
-     and DELETE the corresponding entry from `## Pending Decisions`.
-  3. Verdict line is rewritten on every re-run from the current open-issue counts.
--->
 ---
-
-area: <SECURITY|QUALITY|TESTING|DOCS|STYLE|CORRECTNESS>
-prefix: <SEC|QUAL|TEST|DOCS|STYL|CORR>
+area: <alignment|correctness|security|quality|testing|docs|style>
+prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>
 reviewed_at: <ISO-8601 timestamp>
 files_reviewed_count: <N>
+plan_source: state.md
+plan_digest: <64-lowercase-hex>
+plan_hash_kind: engineering-plan-definition-digest-v1
+reviewed_task_ids: [<full task IDs>]
+closed_findings: <N>
+outstanding_findings: <N>
 ---
 
-# <AREA> Review
+# <Area> review
 
-**Verdict**: ❌ FAIL — N issues (P0:a, P1:b, P2:c, P3:d)
-<!-- For zero open issues use exactly: `**Verdict**: ✅ PASS` on a single line. -->
+**Verdict**: <pass|pass_with_suggestions|requires_changes|fail> — outstanding P0:<n> P1:<n> P2:<n> P3:<n>
 
-## General Status
+## Headline
 
-**Files Reviewed**:
+<One or two evidence-backed sentences. Use `_No issues found._` for a clean
+area.>
 
-- `path/to/file-a.ts`
-- `path/to/file-b.ts`
-- `path/to/file-c.ts`
+## Findings
 
-<2–4 sentence prose summary of what was reviewed, the dominant patterns observed, and the headline concern. If the verdict is ✅ PASS, replace this section's body (Files Reviewed list and prose) with the single line: `_No issues found._`>
+### <PREFIX>-P<n>-<seq>: <one-line summary>
 
-## Issues
+- **Status**: <open|fixed|acknowledged|deferred|skipped>
+- **Source**: `<path:line>`
+- **Issue**: <semantic concern and impact>
+- **Evidence**: <representative snippet, command, contract, or runtime result>
+- **Direction**: <actionable correction or disposition direction>
+- **Rationale**: <why this current disposition is justified>
+- **Owner**: <person or durable owning task/team>
+- **Recheck condition**: <specific event, date, revision, or evidence that
+  requires this finding to be reviewed again>
+- **Risk acceptance**: <P0/P1 acknowledged/skipped authority and durable
+  evidence; otherwise `not required`>
 
-### P0 — Blockers
+Status requirements:
 
-- [ ] ### SEC-P0-1: <one-line summary of the blocker>
+- `open` means unresolved action is required. Keep the correction direction,
+  accountable owner, and concrete recheck condition current; rationale states
+  why it remains open.
+- `fixed` is closed only when the correction has been applied and rechecked.
+  Record the closing revision and verification evidence; `Owner` may be
+  `closed` and risk acceptance is not required.
+- `acknowledged` and `skipped` are closed non-fixed risk dispositions only with
+  non-placeholder rationale, accountable owner, and concrete recheck
+  condition. P0/P1 additionally require explicit risk-acceptance authority and
+  durable acceptance evidence. Without these fields they remain outstanding.
+- `deferred` remains outstanding and blocks review closure. Retain its priority,
+  accountable owner, deadline, rationale, and recheck condition.
 
-  **Source**: `path/to/file.ts:42-58`
+## Pending decisions
 
-  ```ts
-  // representative source lines that triggered the finding
-  const token = req.headers.authorization;
-  db.query(`SELECT * FROM users WHERE token='${token}'`);
-  ```
+Include only open or deferred findings whose direction cannot be chosen from the contract.
+For each, repeat its stable ID, options/tradeoffs, recommendation, owner, and
+decision deadline. Remove the entry when decided and update the finding status.
 
-  **Issue**: <what is wrong, which standard / principle is violated, why the current code does not work or is unsafe>
-
-  **Solution**: <directional fix — enough for an agent to act, NOT a full diff>
-
-- [x] ### ~~SEC-P0-2: <fixed issue summary, kept for history>~~
-
-  **Source**: `path/to/file.ts:101-110`
-
-  ```ts
-  // original snippet that triggered the finding
-  ```
-
-  **Issue**: <original description retained verbatim>
-
-  **Solution**: <direction that was applied>
-
-### P1 — High
-
-- [ ] ### SEC-P1-1: <one-line summary>
-
-  **Source**: `path/to/other.ts:12-20`
-
-  ```ts
-  // snippet
-  ```
-
-  **Issue**: <description>
-
-  **Solution**: TBD
-  <!-- Solution is TBD → this issue MUST also appear in `## Pending Decisions` below. -->
-
-### P2 — Medium
-
-<!-- entries follow the same shape as P0/P1 -->
-
-### P3 — Low
-
-<!-- entries follow the same shape as P0/P1 -->
-
-## Pending Decisions
-
-<!--
-  Duplicate every issue whose `**Solution**` is `TBD` here. Once an option is chosen,
-  fill in the `**Solution**` on the main issue above and DELETE the entry from this section.
--->
-
-- [ ] ### SEC-P1-1: <same one-line summary as the main issue>
-
-  **Source**: `path/to/other.ts:12-20`
-
-  ```ts
-  // snippet
-  ```
-
-  **Issue**: <same description as the main issue>
-
-  **Options**:
-  1. <approach A> — Pros: <…>. Cons: <…>.
-  2. <approach B> — Pros: <…>. Cons: <…>.
-
-  **Recommended**: Option <N> — <one-line reason>
-
-  **Solution**: TBC
+On rerun, retain stable IDs for matching findings, update status rather than
+duplicating them, recompute the verdict from all outstanding findings, and
+preserve fixed/acknowledged/skipped entries as concise history. Reject a
+malformed closed risk disposition and redispatch it to the owning reviewer;
+until repaired, count it as outstanding. Deferred findings keep their priority,
+owner, deadline, and recheck condition and remain outstanding in the roll-up.

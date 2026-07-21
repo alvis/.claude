@@ -1,10 +1,12 @@
 # Conditional Stack Split and Restack
 
-After `coding:refactor` lands and before reporting, decide whether the
-resulting change should be sliced into a stack of ordered draft PRs, or
-whether an existing open stack needs restacking. The orchestrator never
-invokes `jj split` or `gh pr create` directly: it delegates local history
-shaping to `coding:commit` and publication to `coding:push-pr`.
+Load this decision only after code review is closed, lint is complete, and the
+final focused/full test, type, coverage, and build gates are green. Do not load
+or execute it for `--defer-publication`; the lifecycle parent owns that run's
+final history QA and publication. The orchestrator never invokes history or
+remote commands directly: local history shaping belongs to `coding:commit`,
+isolated per-commit QA to `coding:finalize-commits`, and publication/restacking
+to `coding:push-pr`.
 
 ## 1. Compute change size
 
@@ -21,13 +23,18 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
 
 - **Large change** — more than 5 changed files, OR more than 300 LOC diff,
   OR multiple loosely-coupled domains (the bounds keep each PR independently
-  reviewable). Dispatch `coding:commit --create-pr`; its auto-detection slices
-  the working copy into reviewable, ordered draft PRs.
+  reviewable). Dispatch plain `coding:commit` with the approved slice plan so
+  it shapes only local history. Then run `coding:finalize-commits`; only after
+  every commit is independently green may `coding:push-pr` publish the ordered
+  draft PRs. Do not use the `--create-pr` compatibility shortcut because it
+  would cross the finalization gate.
 - **Restack on semantic upstream change** — when an open stack is detected
   AND this change semantically modifies code that a lower (earlier-in-order)
-  PR in the stack depends on: the signature, behavior, or contract of a
-  symbol the lower PR establishes or relies on. Dispatch `coding:push-pr` with
-  the affected saved stack so it owns remote restacking and republication.
+  PR in the stack depends on: the signature, behavior, or contract of a symbol
+  the lower PR establishes or relies on. Save any local correction through
+  `coding:commit`, run `coding:finalize-commits`, then dispatch
+  `coding:push-pr` with the affected saved stack so it owns remote restacking
+  and republication.
   Incidental file overlap alone (formatting, unrelated co-edits) does not
   trigger a restack — judge by lower-PR correctness dependence.
 - **Otherwise** (small, single-domain change with no semantic upstream
@@ -35,6 +42,8 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
 
 ## 4. Interactive gate
 
-When a dispatch is triggered, surface the rationale — the size metrics or the
-named lower PRs at risk — and the proposed mode to the user before
-delegating. The child skill drives its own confirmation gates.
+When a dispatch is triggered, surface the rationale—the size metrics or the
+named lower PRs at risk—and the proposed local-history, commit-QA, and
+publication sequence to the user before delegating. Stop before publication
+if any later correction invalidates review or final validation; repair and
+repeat those gates first.

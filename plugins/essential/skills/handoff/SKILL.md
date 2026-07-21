@@ -25,6 +25,11 @@ persists the current coding session in continuation files.
   skills when available — confirm availability before routing to one,
   otherwise name the equivalent action or files without invoking it.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work directory from
+that contract.
+
 ## Workflow
 
 1. **Resolve material uncertainty.** Separate user-stated intent, observed
@@ -40,14 +45,19 @@ persists the current coding session in continuation files.
    are working on can take over without getting lost: concrete file paths,
    constraints, decision criteria, success checks, accepted assumptions with
    recheck triggers, deferred decisions with owners, and plan-pivot signals per
-   phase.
+   phase. When the plan must persist, write it to a lowercase
+   `proposals/<plan-slug>.md` child with status `open`; the PM reconciles the
+   lazy `proposals.md` overview. Update the child to `accepted` only after user
+   approval.
 3. **Execute as orchestrator** (when execution is requested). Run a
    multi-phase plan as a `Workflow` — one phase per stage, fanning out to
    subagents where a phase allows — instead of doing the work inline. Act as
    the orchestrator and decision maker only: route each phase to the right
    agent with complete context, synthesize the results, and make the calls.
    Delegate all execution — reading, writing, running, testing — to
-   subagents; never do the work yourself.
+   subagents; never do the work yourself. On completion, publish the compact
+   transferable receipt to the owning task, PR, or Notion work item so another
+   workspace can rehydrate without copying `.engineering/`.
 4. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
    then report the blocker instead of looping.
@@ -70,4 +80,6 @@ persists the current coding session in continuation files.
 Report the plan's location and its Goal block, the decisions made while
 planning, and — when executed — each phase's outcome and any open questions
 or deviations from the plan. A blocked execution names the phase, what was
-attempted, and what decision or input is needed to continue.
+attempted, and what decision or input is needed to continue. Return explicit
+final paths generated or materially rewritten as `generated_files`; the PM
+size-checks only eligible work Markdown inside the target `.engineering/`.

@@ -1,12 +1,32 @@
 # As a team player
 
-Own your slice. The Project Manager coordinates the whole and alone reaches the user and session-level tools; an appointed domain lead coordinates your team's pieces. Hand results back to whoever assigned the work.
+Own the assigned slice. Return `ok`, `blocked: <reason>`, `decision: <delta>`,
+or `artifact: <absolute path>` plus at most two lines to the assigner by
+`agent_id`. Ignore idle-only notifications.
 
-- **Reply tersely by `agent_id`** Return only new state to the teammate who handed you the task, targeting its `agent_id` in `SendMessage`. Use `ok`, `blocked: <reason>`, `decision: <delta>`, or `artifact: <absolute path>` plus at most two lines. Never address a peer by role, `subagent_type`, configured name, or label, and never answer an idle-only notification.
-- **Keep nested spawning exceptional** Even when your tools include `Agent`, spawn only a certainly one-off helper whose result ends the delegation — for example, a `test-reporter` that runs a sweep and returns one summary. Specify `subagent_type`, omit any configured name, and do not build a nested standing team.
-- **Delegate continuing work to the best-known teammate** If you know the best teammate and its `agent_id`, message it directly. Give a bounded mission capsule only on the first hand-off; after that, send deltas and artifact paths, not repeated context. If you know the teammate but not its ID, ask the main agent to resolve that ID. Only when you do not know who should own the work should you ask the main agent to suggest a teammate; the main agent chooses a warm existing teammate or spawns a new named one and returns its ID.
-- **Escalate what only the main session can do** `Workflow` launches, `AskUserQuestion`, and plan presentation go up to the main agent — you never launch `Workflow` yourself, even when it's in your tools. Send the smallest complete request. If the request would make the `SendMessage` body exceed 4,096 characters, write it to a durable task-owned file and send the absolute path plus at most a two-line summary. Keep independent work moving and treat the reply as the result.
-- **Surface consequential unknowns** Never silently decide product, architecture, public-API, data-model, security, destructive, or user-visible semantics. For a reversible low-impact assumption, take the conservative path and report it. When evidence invalidates the assigned task or plan, stop that stale branch and send `Observed`, `Inferred`, `Unknown`, `Deviation`, and `Recommended disposition` to the assigning teammate; include evidence, affected scope, options, and what can continue independently.
-- **Keep your window for reasoning** Delegate bulk reads and noisy output rather than ingesting them. Report context usage only when the runtime measures it — never invent a number — and flag early when too little room remains.
+- Start from the mission capsule and exact references. Read `working.md` only
+  for missing navigation and `state.md` only for resume, planning, alignment,
+  or cross-slice dependencies. A worker never edits
+  `working.md`, `state.md`, overview files, or `review.md`; reviewers write only
+  assigned `reviews/*.md` details and return roll-up deltas. An orchestration
+  assignment may grant the sole coordinator lease and list its PM-owned files;
+  without that explicit grant, remain a worker.
+- Run the workspace resolver before writing an artifact. On `requires_ignore`,
+  report its `ignore_file`; on `work_id_required`, report candidates to the PM.
+  Never edit the active workspace `.gitignore`.
+- Return explicit final paths generated or materially rewritten as
+  `generated_files`; the PM reconciles overviews and size-checks only eligible
+  work Markdown inside the target `.engineering/`.
+- Give a mission capsule only on first handoff; later messages are deltas and
+  artifact paths. Externalize messages over 4,096 characters.
+- Message the best-known owner by `agent_id`; ask the main agent only when the
+  ID or owner is unknown. Spawn only certainly one-off unnamed helpers.
+- Escalate Workflow launches, user questions, plan presentation, and
+  consequential product, architecture, API, data, security, destructive, or
+  user-visible decisions. Report observed evidence, inference, unknown,
+  deviation, affected scope, and recommended disposition.
 
-If you're about to delegate or escalate, you MUST read `{{PLUGIN_DIR}}/references/orchestration.md` before acting — the delegation boundary, topology, routing, review, and the rest of the shared protocol — and read `{{PLUGIN_DIR}}/references/workflow-tool.md` before you compose a Workflow input.
+Before delegating or escalating, read
+`{{PLUGIN_DIR}}/references/orchestration.md`; before composing Workflow input,
+read `{{PLUGIN_DIR}}/references/workflow-tool.md`. Before writing engineering
+artifacts, read `{{PLUGIN_DIR}}/references/engineering-work.md`.

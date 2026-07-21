@@ -1,80 +1,112 @@
-# Frontmatter Specification
+# Specification metadata
 
-Every file produced by spec-code (DESIGN.md and all child page files) MUST include YAML frontmatter so Notion sync can maintain a 1:1 mapping between local files and Notion pages.
+Use separate schemas for Notion transport and durable derivation. Never copy
+transport-only metadata into versioned docs without purpose.
 
-## Schema
+## Notion-backed MDC
 
-```yaml
----
-notion_url: https://www.notion.so/...      # Notion page URL (empty until synced)
-last_edited_at: 2025-10-25T10:30:00Z       # ISO 8601 timestamp of last local edit
-last_synced_at: 2025-10-25T10:32:00Z       # ISO 8601 timestamp of last Notion sync (empty until synced)
-related_files: [REFERENCE.md, NOTES.md]    # See rules below
----
-```
-
-## Field Rules
-
-- **`notion_url`** — Full Notion page URL. Leave empty (`notion_url:`) until Step 10 (Notion sync) populates it. Verify all files have a non-empty `notion_url` after sync; the count must equal `1 main + N children`.
-- **`last_edited_at`** — ISO 8601 timestamp of the most recent local edit. Always populated.
-- **`last_synced_at`** — ISO 8601 timestamp of the most recent successful Notion sync. Empty until Step 10. Updated by the Edit tool after sync verification passes.
-- **`related_files`** — Cross-reference array:
-  - In **DESIGN.md**: list every child page file (e.g. `[REFERENCE.md, REQUIREMENTS.md, NOTES.md, DATA.md, UI.md, DEPLOYMENT.md]`).
-  - In each **child file**: list only `[DESIGN.md]`.
-
-## Initial vs Post-Sync State
-
-### Initial (Step 9, before Notion sync)
+Paths are returned by notion-sync and never derived. Preserve all existing
+properties; the keys below are the minimum identity/provenance surface:
 
 ```yaml
 ---
-notion_url:
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at:
-related_files: [REFERENCE.md, NOTES.md, DATA.md]
+title: Capability contract
+last_edited_time: 2026-07-20T10:30:00.000Z
+ref: 01234567-89ab-cdef-0123-456789abcdef
+parent: 01234567-89ab-cdef-0123-456789abcdef # only for an unsynced child
 ---
 ```
 
-### After Successful Sync (Step 10.5)
+- `ref` is the stable Notion identity and never derives a local filename.
+- `parent` is present only when needed to create an unsynced page.
+- `last_edited_time` is remote revision metadata returned and updated only by
+  Notion transport. Local MDC authoring preserves it byte-for-byte and never
+  replaces it with a local clock. An unsynced locally authored page omits this
+  key until transport supplies it.
+- Local edit timestamps belong in ignored work evidence or the sync receipt,
+  never in Notion-backed MDC frontmatter.
+- Preserve Notion properties and relationship annotations verbatim.
+- MDC remains transport state and is edited only through its owning workflow.
 
-DESIGN.md:
+## Versioned contract carrier and provenance
 
-```yaml
----
-notion_url: https://www.notion.so/main-page-id
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at: 2025-10-25T10:32:00Z
-related_files: [REFERENCE.md, NOTES.md, DATA.md]
----
+`docs/specs/<capability>/index.md` is the reachable capability entry and links
+all derived children. Promotion preserves the source contract's semantic
+frontmatter and body; it does not inject source, timestamp, receipt, or hash
+fields into contract Markdown. If a selected project/template already requires
+frontmatter, those bytes are semantic and remain covered by `contract_digest`
+(except the uniquely validated Notion `last_edited_time` line defined by the
+dual-hash model). Put derivation metadata in
+`docs/specs/<capability>/provenance.json` instead:
+
+```json
+{
+  "schema": "specification-provenance-v1",
+  "hash_model": "specification-dual-hash-v1",
+  "source_kind": "local",
+  "source_locators": ["repo:requirements/capability.md"],
+  "source_transport_manifest_hash": "sha256:<64-lowercase-hex>",
+  "carrier_transport_manifest_hash": "sha256:<64-lowercase-hex>",
+  "approved_contract_digest": "sha256:<64-lowercase-hex>",
+  "logical_units": [
+    {"id": "contract:root", "source_path": "requirements/capability.md", "output_path": "docs/specs/capability/index.md"}
+  ],
+  "outputs": [
+    {"path": "docs/specs/capability/index.md", "exact_sha256": "sha256:<64-lowercase-hex>"}
+  ],
+  "hash_helper": {"locator": "plugin:specification/sync-spec/scripts/spec-hashes.py", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
+  "template": {"locator": "plugin:specification/spec-code/assets/technical-spec-template.md", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
+  "derived_at": "2026-07-20T10:33:00Z",
+  "receipt_anchor": "github-pr:owner/repository#123"
+}
 ```
 
-Each child page file:
-
-```yaml
----
-notion_url: https://www.notion.so/child-page-id
-last_edited_at: 2025-10-25T10:30:00Z
-last_synced_at: 2025-10-25T10:32:00Z
-related_files: [DESIGN.md]
----
-```
-
-## Update Protocol
-
-- Use the Edit tool to update frontmatter in place; do not rewrite the whole file.
-- After sync verification passes, update both `notion_url` and `last_synced_at` in every file.
-- If sync is skipped (`--skip-notion-sync`), `notion_url` and `last_synced_at` remain empty.
-- Verify that the number of files with non-empty `notion_url` equals `1 main + N children`.
-
-## Filename Mapping (Notion title → local file)
-
-Convert each Notion child-page title to its first main word in UPPERCASE, omitting any `[ Optional ]` prefix:
-
-| Notion title              | Local file       |
-| ------------------------- | ---------------- |
-| Components & APIs         | `REFERENCE.md`   |
-| Requirements              | `REQUIREMENTS.md`|
-| Dev Notes                 | `NOTES.md`       |
-| Persistent Data           | `DATA.md`        |
-| [ Optional ] UI Designs   | `UI.md`          |
-| [ Optional ] Deployment   | `DEPLOYMENT.md`  |
+- `source_kind` is exactly `notion`, `local`, or `inline`.
+- `source_locators` contains only durable, portable identifiers. Use
+  `notion:<page-uuid>` for Notion, `repo:<repository-relative-path>` for a
+  reachable local source, and `inline-approved:sha256:<exact-byte-hash>` for an
+  inline-approved candidate. Never publish an absolute local path, an ignored
+  work path, or a conversation/prompt locator. If an explicit local source is
+  not itself durable, use `local-approved:sha256:<exact-byte-hash>` and treat
+  the promoted carrier as the reachable authority.
+- Authority has one deterministic interpretation. A reachable `repo:` locator
+  remains the live authority and the durable carrier is a checked derivation;
+  plan/implementation rehash both before use. For `local-approved:` and
+  `inline-approved:` locators, the content-equivalent durable carrier becomes
+  the sole reachable authority after promotion, while the locator/hash remains
+  historical origin evidence. Never treat both an unreachable origin and its
+  carrier as independently editable truths.
+- `source_transport_manifest_hash` and `carrier_transport_manifest_hash` are
+  the distinct exact source/carrier transport hashes;
+  `approved_contract_digest` is their shared semantic digest bound to approval,
+  plan, and review. All come from the bundled `spec-hashes.py --kind both`
+  helper.
+- Record that helper with portable locator
+  `plugin:specification/sync-spec/scripts/spec-hashes.py`, exact installed
+  plugin version, and exact helper SHA-256, never its machine-local path.
+- Notion provenance additionally records exact per-unit `source_revision`
+  values and may record transport relationships. Local provenance may record a
+  reachable Git object. Inline provenance omits source revision. Neither local
+  nor inline provenance requires a Notion id, page revision, or Notion receipt.
+- `logical_units` preserves the source logical ids in the output carrier, so a
+  renamed derived path cannot silently remap semantic units.
+- The bundled fallback template uses the stable
+  `plugin:specification/spec-code/assets/technical-spec-template.md` locator,
+  exact installed plugin version, and exact asset SHA-256. Never record the
+  origin machine's plugin cache/install path. Explicit/project templates use a
+  durable `repo:` or selected remote locator instead.
+- `outputs` lists contract Markdown files only and **must exclude
+  `provenance.json` itself**. Compute the provenance file's own exact SHA-256
+  only after its final write; store that self-hash in ignored work evidence, an
+  external durable receipt/anchor, and the run report. Never insert the
+  self-hash into the file it hashes.
+- `receipt_anchor` points to the durable owning task, pull request, repository
+  record, or Notion work item that records completion. It remains resolvable
+  after ignored local work is retired. Only ignored work evidence may contain
+  temporary absolute source or receipt paths.
+- Derived filenames use Essential's `derive-engineering-name` executable,
+  never the Notion mirror filename.
+- The PM's final output manifest includes all derived `.md` files and
+  `provenance.json` in `generated_files`; versioned `docs/**` remains excluded
+  from the final size check, which selects only eligible Markdown inside
+  `.engineering/`.

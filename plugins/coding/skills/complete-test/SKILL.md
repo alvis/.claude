@@ -2,7 +2,6 @@
 name: complete-test
 description: Author and improve tests for pending test cases, coverage gaps, fixtures, and redundancy cleanup. Use for test TODOs, it.todo or describe.todo entries, explicit test-writing requests, or coverage work. Production implementation stubs belong to complete-code; diagnosed failures belong to fix.
 model: opus
-context: fork
 allowed-tools: Bash, Task, Read, Write, Edit, Glob, Grep
 argument-hint: "[scope] [--coverage=<percent>] [--framework=<name>]"
 ---
@@ -21,6 +20,18 @@ Own test authoring and test-suite maintenance. Do not implement production behav
 - Required: scope — files, package, feature, or explicit pending-test marker.
 - Optional: coverage target (default: 100% statements, branches, functions, and lines unless an explicit repository policy sets another target), framework, and existing test paths.
 - Prerequisites: read project test scripts/configuration and the source under test before editing.
+
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work root first.
+When delegated, start from the mission capsule's exact work root and relevant
+specification, review, and evidence paths. Read `working.md` only when the
+capsule lacks current navigation; read `state.md` only for resume, cross-slice
+dependency, or alignment work. Never write PM-owned work pointers or overviews.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
 
 ## Workflow
 
@@ -42,3 +53,6 @@ Require passing focused and full suites, coverage at the requested target (or a 
 ## Completion
 
 Return a concise test report. Do not claim production implementation, bug fixes, or coverage for code outside the selected scope.
+Return every created or materially rewritten path as `generated_files` to the
+PM. Do not run file sizing; after all artifact writers finish, the PM checks
+only eligible work Markdown inside the target `.engineering/`.

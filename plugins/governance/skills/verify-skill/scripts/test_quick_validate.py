@@ -100,7 +100,7 @@ class QuickValidateTests(unittest.TestCase):
 
             self.assertEqual(messages, ["Unresolved local reference: references/missing.md"])
 
-    def test_marketplace_validation_includes_manifest_and_plugins(self) -> None:
+    def test_marketplace_validation_uses_the_marketplace_root_once(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             marketplace = root / ".claude-plugin" / "marketplace.json"
@@ -113,14 +113,10 @@ class QuickValidateTests(unittest.TestCase):
 
             self.assertEqual(
                 quick_validate.claude_targets(root),
-                [
-                    root.resolve(),
-                    (root / "plugins" / "one").resolve(),
-                    (root / "plugins" / "two").resolve(),
-                ],
+                [root.resolve()],
             )
 
-    def test_cli_runs_official_validator_for_every_target_and_propagates_failure(self) -> None:
+    def test_cli_runs_official_validator_once_for_a_marketplace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             marketplace = root / ".claude-plugin" / "marketplace.json"
@@ -138,35 +134,19 @@ class QuickValidateTests(unittest.TestCase):
                     f"# {name.title()}\n\n## Workflow\n\nValidate it.",
                 )
 
-            results = [
-                quick_validate.subprocess.CompletedProcess([], 0, "marketplace ok", ""),
-                quick_validate.subprocess.CompletedProcess([], 1, "", "plugin failed"),
-                quick_validate.subprocess.CompletedProcess([], 0, "plugin ok", ""),
-            ]
+            result = quick_validate.subprocess.CompletedProcess(
+                [], 0, "marketplace ok", ""
+            )
             with patch.object(
-                quick_validate.subprocess, "run", side_effect=results
+                quick_validate.subprocess, "run", return_value=result
             ) as subprocess_run:
                 exit_status = quick_validate.run([str(root)])
 
-            self.assertEqual(exit_status, 1)
+            self.assertEqual(exit_status, 0)
             self.assertEqual(
                 [call.args[0] for call in subprocess_run.call_args_list],
                 [
                     ["claude", "plugin", "validate", "--strict", str(root.resolve())],
-                    [
-                        "claude",
-                        "plugin",
-                        "validate",
-                        "--strict",
-                        str((root / "plugins" / "one").resolve()),
-                    ],
-                    [
-                        "claude",
-                        "plugin",
-                        "validate",
-                        "--strict",
-                        str((root / "plugins" / "two").resolve()),
-                    ],
                 ],
             )
 

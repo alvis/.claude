@@ -9,6 +9,7 @@
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source shared context library (output_hook_context)
+# shellcheck source=/dev/null
 source "$SCRIPTS_DIR/context.sh"
 
 # Get session type header based on the session source.
@@ -18,16 +19,16 @@ get_session_type_header() {
 
   case "$source" in
     startup)
-      header="🚀 **New Session Started**\n\n"
+      header="🚀 **New Session Started**"
       ;;
     resume)
-      header="♻️  **Resuming Session**\n\n"
+      header="♻️  **Resuming Session**"
       ;;
     clear)
-      header="🆕 **Fresh Start** (reloading full context)\n\n"
+      header="🆕 **Fresh Start** (reloading full context)"
       ;;
     compact)
-      header="🗜️  **Compact** (invoked from auto or manual compact)\n\n"
+      header="🗜️  **Compact** (invoked from auto or manual compact)"
       ;;
   esac
 
@@ -44,12 +45,16 @@ run_session_start_hook() {
 
   local CONTEXT=""
   CONTEXT+=$(get_session_type_header "$src")
+  if [[ -n "$CONTEXT" ]]; then
+    CONTEXT+=$'\n\n'
+  fi
 
   local plugin_root
   plugin_root="$(cd "$SCRIPTS_DIR/../.." && pwd)"
   if [[ -f "$plugin_root/scripts/context.sh" ]]; then
+    # shellcheck source=/dev/null
     source "$plugin_root/scripts/context.sh"
-    CONTEXT+=$(get_plugin_context)
+    CONTEXT+=$(get_plugin_context session)
   fi
 
   output_hook_context "SessionStart" "$CONTEXT"

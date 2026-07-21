@@ -57,4 +57,4 @@ Resolve to `<skill_root>/references/ARCHITECTURE.example.<type>.md` (no OSS vari
 
 ## Usage Note
 
-When using bundled templates, read the type-matched example to see the template instantiated, then re-skin emojis/TOC to match any sibling READMEs found in Step 2 (bundled templates carry the `@theriety` flavor).
+When using bundled templates, read the type-matched example to see the template instantiated, then re-skin emojis/TOC to match any sibling READMEs found in Step 2 (bundled templates carry the `@theriety` flavor). An entrypoint that contains an ordered child manifest is an overview, not the complete source: read every linked child in order. Bundled compatibility entrypoints may retain legacy uppercase names, but newly generated project artifacts and split-child paths are lowercase.

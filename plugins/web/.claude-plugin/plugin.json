@@ -1,5 +1,6 @@
 {
   "name": "web",
+  "author": {"name": "Alvis"},
   "dependencies": [
     "coding",
     "essential"

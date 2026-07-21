@@ -2,7 +2,6 @@
 name: finalize-commits
 description: "Run isolated per-commit QA across every unpushed commit, report ordering or message issues, and coordinate approved corrections. Use before publishing a stack; coding:commit owns history mutations and coding:push-pr owns publication."
 model: opus
-context: fork
 allowed-tools: Bash, Read, Grep, Glob, Agent, AskUserQuestion, Skill, TodoWrite
 argument-hint: "[--auto-push]"
 ---

@@ -2,7 +2,7 @@
 
 <!--
 SCOPE BANNER:
-ARCHITECTURE = how it works. For usage/install, see README.md.
+ARCHITECTURE = how it works. For usage/install, see readme.md.
 This document explains internal shape, data flow, and design rationale. The
 reader may not have read the README — re-establish name and one-line purpose,
 then go deep. Never duplicate README usage examples or install steps here.
@@ -10,7 +10,7 @@ then go deep. Never duplicate README usage examples or install steps here.
 
 <!--
 ARCHITECTURE TEMPLATE INSTRUCTIONS:
-This template produces an ARCHITECTURE.md that complements the README.md. Where the
+This template produces `docs/architecture/<architecture-slug>.md` and complements the package README. Where the
 README answers "how do I use this package", this doc answers "how is this package
 built and why". When authoring:
 
@@ -21,7 +21,7 @@ built and why". When authoring:
    empty headings.
 4. Every Mermaid diagram must reference only nodes it defines. Validate by pasting
    into https://mermaid.live before shipping.
-5. Match the sibling README.template.md vibe:
+5. Match the sibling `../README.template.md` vibe:
    - 📌 for the overview
    - emoji-prefixed H2 headings
    - centered TOC with `&emsp;&emsp;` separators and bullets (•)
@@ -46,7 +46,7 @@ host, DI container, …) and state what it optimizes for.
 
 **Second paragraph:** Why this architecture? What forces shaped it (performance,
 isolation, testability, ecosystem fit)? How does it relate to the package's public
-API surface described in the sibling `README.md`?
+API surface described in the package `readme.md`?
 
 <!--
 TABLE OF CONTENTS — DISCIPLINE:
@@ -57,7 +57,7 @@ TABLE OF CONTENTS — DISCIPLINE:
   • Prefer hard-to-spot / high-value anchors.
   • One-word captions where meaning is preserved (Architecture → Topology,
     Component Architecture → Components).
-  • Mirror the sibling README.template.md TOC format: centered <div> with a
+  • Mirror the sibling `../README.template.md` TOC format: centered <div> with a
     blank line on each side of the link row, `&emsp;&emsp;•&emsp;&emsp;` separators,
     leading `•&emsp;&emsp;` + trailing `&emsp;&emsp;•` wrap, one space between emoji and link text.
 
@@ -514,19 +514,19 @@ to "what is it + what is the relationship".
 ---
 
 <!--
-WHEN TO SPLIT — author guidance, not a section consumers read.
-If this ARCHITECTURE grows beyond ~600 lines or spans 3+ distinct subsystems,
-shard it instead of shipping one mega-doc. Pattern below.
+WHEN TO SPLIT — navigation guidance, not a section consumers read.
+Files under docs/ have no mechanical byte limit. Keep the architecture in one
+document unless independent subsystem ownership or navigation is materially
+clearer with separate children.
 -->
 
 ## When to Split
 
-If this ARCHITECTURE exceeds ~600 lines or covers 3+ distinct subsystems
-(e.g. `src/api`, `src/worker`, `src/db`), split into:
-- `ARCHITECTURE.md` — index + cross-cutting concerns + system context diagram
-- `ARCHITECTURE-<subsystem>.md` — one per subsystem, deep on its internals
-
-The top-level ARCHITECTURE.md links to each part file.
+When separate subsystem documents improve ownership or retrieval, retain
+`docs/architecture/<architecture-slug>.md` as the overview and place
+lowercase, semantic children under
+`docs/architecture/<architecture-slug>/<subsystem-slug>.md`. Size alone never
+forces a split under `docs/`.
 
 ---
 

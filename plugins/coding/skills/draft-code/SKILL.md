@@ -30,9 +30,21 @@ production stubs belong to `coding:complete-code`.
 
 - **Required**: `<instruction>` — the feature or module to skeleton, specific
   enough to derive types, interfaces, and function signatures.
-- **Optional**: design and handover documents discovered in step 1 refine the
+- **Optional**: a work ID/root and linked design/specification paths refine the
   skeleton's shape.
 - **Prerequisites**: an existing target directory inside a TypeScript project.
+
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the workspace-local work root
+and artifact paths before drafting. When delegated, start from the mission
+capsule's exact work root and relevant design/spec files. Read `working.md`
+only when navigation is missing, and `state.md` only for resume, cross-slice
+dependency, or alignment work. Never write PM-owned pointers or overviews.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
 
 Apply these constitution standards while drafting:
 
@@ -49,12 +61,11 @@ Apply these constitution standards while drafting:
 ## Workflow
 
 1. Parse the instruction into required types, interfaces, functions, and file
-   structure, then discover context with Glob (never `find` in Bash): design
-   docs (`DESIGN.md`, architecture `**/*.md`) and handover files — extract
-   current state, decisions, gotchas, and established patterns from
-   `CONTEXT.md`; solved problems and insights from `NOTES.md`; goals, success
-   criteria, and current phase from `PLAN.md`. Read neighboring modules for
-   existing patterns and merge design with handover context.
+   structure. Read only the work-local design/spec children and durable
+   architecture/design/spec paths named by the caller or mission capsule. For
+   a direct or resume run, use `working.md` and `state.md` to discover those
+   paths. Read neighboring modules for established patterns. Do not scan
+   unrelated Markdown or fall back to root continuation/design files.
 2. Plan the structure before writing: file organization, type hierarchy, and
    test layout per the standards above.
 3. Draft type definitions (interfaces, type aliases, enums) and function stubs
@@ -90,4 +101,7 @@ Report the parsed instruction; context sources discovered; files created with a
 one-line purpose each; counts of types defined, functions drafted, and markers
 placed; verification commands with results; and next steps — complete
 production stubs with `coding:complete-code`, then route pending test markers
-to `coding:complete-test`.
+to `coding:complete-test`. Return every created or materially rewritten path as
+`generated_files` to the PM. Do not run file sizing; after all artifact writers
+finish, the PM checks only eligible work Markdown inside the target
+`.engineering/`.

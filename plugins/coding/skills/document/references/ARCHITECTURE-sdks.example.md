@@ -6,7 +6,7 @@ ARCHITECTURE = how it works. For usage/install, see the subsystem READMEs.
 
 📌 **First paragraph:** The `sdks` subsystem packages the client-side access to `@theriety/platform` for three runtimes: `sdk-browser` (fetch-based, tree-shakeable), `sdk-node` (pooled HTTPS agent, retries), and `sdk-python` (codegen'd from `core-contracts`). All three SDKs speak the same contracts defined in `core`; only the transport differs.
 
-**Second paragraph:** See the [INDEX](./ARCHITECTURE.md) for the monorepo-wide context and the sibling `core` and `services` architecture files. This document covers the transport abstraction, codegen pipeline, and per-runtime invariants.
+**Second paragraph:** See the [index](../platform.md) for the monorepo-wide context and the sibling `core` and `services` architecture files. This document covers the transport abstraction, codegen pipeline, and per-runtime invariants.
 
 <br/>
 <div align="center">

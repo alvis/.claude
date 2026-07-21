@@ -29,10 +29,10 @@ Filter files by selected scopes (pass file paths to subagents, **not** file cont
 Apply this decision ladder after file discovery:
 
 1. If `--area` parameter provided → Use specified scope(s)
-2. If specifier includes test files (`**/*.spec.ts`, `**/*.test.ts`) → Default to `test` scope
-3. If specifier includes documentation files (`**/*.md`, `**/README*`) → Default to `documentation` scope
+2. If specifier includes test files (`**/*.spec.ts`, `**/*.test.ts`) → Default to `testing` scope
+3. If specifier includes documentation files (`**/*.md`, `**/README*`) → Default to `docs` scope
 4. If working in interactive mode and no clear context → Ask user via AskUserQuestion (multiSelect):
-   - Options: test, documentation, code-quality, security, style, all
+   - Options: alignment, correctness, security, quality, testing, docs, style, all
    - Default: all
 5. If in CI mode and no scope specified → Default to `all`
 
@@ -40,10 +40,17 @@ Apply this decision ladder after file discovery:
 
 When dispatching subagent tasks, filter the discovered file list per scope:
 
-- **test**: test files + source files
-- **documentation**: source + doc files + test files
-- **code-quality**: source files + test files
+- **alignment**: changed files + state-linked contract files
+- **correctness**: source files + tests
+- **testing**: test files + source files
+- **docs**: source + doc files + test files
+- **quality**: source files + test files
 - **security**: source files (especially `auth/`, `api/`, `services/`)
 - **style**: source + test files
+
+For compatibility, normalize the old selectors `test`, `documentation`, and
+`code-quality` to `testing`, `docs`, and `quality,correctness` respectively;
+report the normalization. Path output still follows the canonical work-local
+contract.
 
 Prepare a separate file list per selected scope before dispatch.

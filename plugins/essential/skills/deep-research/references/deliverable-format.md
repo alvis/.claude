@@ -2,7 +2,7 @@
 
 The final deliverable of `deep-research`. Every section below appears in the
 deliverable; write "none" rather than omitting a section, so absence of
-evidence is explicit. All counts come from `source_tracker.md`, never from
+evidence is explicit. All counts come from `source-tracker.md`, never from
 memory.
 
 ## Section order

@@ -1,87 +1,50 @@
-# Core Review Mandates
+# Core review mandates
 
-These mandates apply to every area, every mode, and every file examined. They
-override tone and brevity. Every dispatch prompt names this file so reviewers
-enforce all five.
+These rules apply to all seven areas; area ownership prevents duplicate
+findings.
 
-## 1. Plan adherence
+## Contract alignment belongs to alignment
 
-Treat the approved plan (PLAN.md, DRAFT.md, DESIGN.md, PR description, or
-linked spec) as the contract. For every changed file:
+Root `state.md` (`plan_source: state.md`) plus linked approved
+specification/design/decision artifacts is the implementation contract. Its
+explicit ID-keyed implementation detail may be consulted but cannot duplicate
+or override IDs, edges, requiredness, targets, or acceptance mappings. A
+caller-supplied plan may assert but never override root state. Bind every
+result to the exact `plan_digest`,
+`engineering-plan-definition-digest-v1` hash kind, and relevant full task IDs.
+`alignment.md` alone reports additions, omissions,
+unjustified drift, stale spec derivations, and missing promotion/sync work.
+Other reviewers route pure drift there rather than duplicating it.
 
-- Map each change back to a specific planned item.
-- Flag any deviation, addition, or omission as a **drift** finding.
-- For each drift, require a documented justification (commit message, PR
-  comment, or inline rationale). No solid reason present → severity
-  **critical**. A "good reason" means a constraint discovered during
-  implementation, a correctness fix, or explicit user/reviewer approval — not
-  convenience, scope creep, or "while I was here" cleanup.
-- If no plan exists, state this explicitly and treat the PR description and
-  commit messages as the best-available contract.
+## Semantic errors belong to correctness
 
-## 2. Redundancy is a defect
+Trace behavior rather than trusting code shape. Wrong control flow/operators,
+swapped arguments, silent errors, races, unhandled async work, leaks, and
+boundary validation defects belong in `correctness.md` unless security-specific.
+No “probably fine” findings: provide evidence and a plausible failure path.
 
-Aggressively flag code that does not need to exist — but only the
-human-detectable cases linters cannot see:
+## Redundancy and sibling consistency belong to quality
 
-- Defensive checks for conditions that cannot occur (trust internal
-  invariants).
-- Wrapper functions that add no behavior over what they wrap.
-- Duplicate logic that could reuse an existing helper.
-- Comments that restate what well-named code already says.
-- Backwards-compat shims, feature flags, or fallbacks for hypothetical
-  futures.
-- Over-generalized abstractions with a single caller.
+Search siblings with the same role and compare naming, parameter and return
+shape, error/log/retry/cache behavior, and logic flow. Flag unexplained
+divergence and human-detectable redundancy such as behavior-free wrappers,
+duplicate logic, impossible defensive checks, parallel compatibility paths, or
+single-caller over-generalization. Tool-detectable dead/unused code stays with
+lint.
 
-Every redundant construct is a finding — severity **high** minimum in
-production paths. Do not flag dead branches, unused imports/exports, unused
-parameters, or unreachable code — the linter owns those.
+## Mechanical checks stay mechanical
 
-## 3. Sibling consistency
+Do not spend semantic-review effort on type errors, unused imports/variables,
+formatting, import ordering, or other compiler/linter facts. `style.md` may
+report actual command results; remediation belongs to `coding:lint` or
+`coding:fix` as appropriate.
 
-Before approving any function, class, method (including internal/private
-ones), or module, search the codebase for siblings serving a similar role —
-adapters, mappers, repositories, handlers, clients, formatters, validators.
-For each match, verify:
+## Evidence and dispositions
 
-- **Naming**: same verb/noun convention as siblings (`fetchX` vs `getX`,
-  `toDTO` vs `serialize`).
-- **Parameter shape**: same argument order, positional vs options-object
-  style, optional/required split.
-- **Return shape**: same envelope (raw vs `{ data, error }`, sync vs Promise,
-  throwing vs Result).
-- **Logic flow**: same error-handling discipline, logging posture,
-  retry/cache behavior.
-
-Any divergence without documented justification → severity **high**
-(**critical** when it risks silent behavioral surprise in a shared interface
-such as an adapter set). Consistency reduces cognitive load and bug surface —
-treat new outliers as defects.
-
-## 4. Zero tolerance for semantic error
-
-Treat the code as production-critical. There is no room for:
-
-- Incorrect control flow, off-by-ones, wrong operators, swapped arguments.
-- Silent failure modes (swallowed errors, ignored return values).
-- Race conditions, unhandled async rejections, leaked resources.
-- Missing validation at system boundaries (user input, external APIs).
-- Logic that merely *looks* right — trace it and prove it.
-
-Every plausible failure path must be called out. "Probably fine" is not
-acceptable.
-
-## 5. Delegate mechanical checks to tooling
-
-Spend no effort on anything a linter, compiler, or static analyzer already
-enforces. Assume `npm run lint` and `tsc --noEmit` run in the pipeline. Skip
-entirely:
-
-- Type mismatches, missing annotations, unknown properties, signature
-  violations (→ `tsc`).
-- Unused imports, unused variables/exports, unreachable code, dead branches
-  (→ ESLint).
-- Formatting, quote style, semicolons, import ordering (→ Prettier/ESLint).
-
-Focus human-review bandwidth on semantics, intent, plan fidelity, sibling
-consistency, and non-mechanical redundancy.
+Every finding cites a source/contract/runtime fact and has one status:
+`open`, `fixed`, `acknowledged`, `deferred`, or `skipped`. Verified `fixed` and
+valid `acknowledged`/`skipped` findings are closed. Closed risk dispositions
+require rationale, owner, and recheck condition; P0/P1 also require explicit
+risk-acceptance authority/evidence. `open`, `deferred`, and malformed risk
+dispositions remain outstanding and block closure. Never change status merely
+to produce a passing verdict.

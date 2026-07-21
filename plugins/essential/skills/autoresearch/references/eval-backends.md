@@ -15,7 +15,7 @@ All three backends share one contract:
   immutable path is `disqualified: immutable_path_violation` — its score, if already taken, is voided.
 - **Every score persists.** Each round writes `rounds/round-NN/scores.yaml` containing, per candidate, the raw
   per-scorer entries, the consensus value, the spread, and the disqualification reason if any (see schema at the
-  bottom). The leaderboard and DOSSIER.md are derived from these files; a score that exists only in conversation
+  bottom). The leaderboard and `dossier.md` are derived from these files; a score that exists only in conversation
   context does not exist.
 - **A non-scoreable candidate is `disqualified`, never silently dropped.** Harness crash, timeout, judge refusal,
   constraint violation — whatever the cause, the candidate keeps its row in scores.yaml with `disqualified: <reason>`

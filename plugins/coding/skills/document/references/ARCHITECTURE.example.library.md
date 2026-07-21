@@ -4,7 +4,7 @@
 
 📌 **Architectural shape:** `@theriety/retry` is a **pipeline library** — a tiny orchestrator (`RetryEngine`) drives a fixed 4-phase loop (`Attempt → Classify → Delay → Decide`), with each phase exposed as a replaceable interface. The codebase has zero runtime dependencies and splits into five narrowly-scoped modules that fan out from a barrel entry.
 
-**Why this shape:** retries are deceptively hard because the decision is contextual — an error that is retryable for a background job may be fatal for a user request. By isolating the decision (`Classifier`), the wait (`DelayStrategy`), and the limits (`Policy`) behind thin interfaces, the engine can stay under 150 lines and the test matrix stays tractable. The public API (documented in the sibling [`README.md`](./README.md)) is the `retry()` function plus a `createRetryPolicy()` builder; everything else is an internal collaboration.
+**Why this shape:** retries are deceptively hard because the decision is contextual — an error that is retryable for a background job may be fatal for a user request. By isolating the decision (`Classifier`), the wait (`DelayStrategy`), and the limits (`Policy`) behind thin interfaces, the engine can stay under 150 lines and the test matrix stays tractable. The public API (documented in [`readme.md`](../../readme.md)) is the `retry()` function plus a `createRetryPolicy()` builder; everything else is an internal collaboration.
 
 <br/>
 <div align="center">

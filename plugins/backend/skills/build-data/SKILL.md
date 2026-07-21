@@ -1,114 +1,84 @@
 ---
 name: build-data
-description: "Build complete data orchestrators from spec to commit, including schema setup, operations, controllers, and quality gates. Use when creating new data domains, adding operations to existing orchestrators, or implementing Prisma schemas from Notion."
+description: Build or extend a data orchestrator from an approved work-local specification through schema, operations, controller integration, tests, canonical review, and handoff. Use for new data domains, operations, or Prisma schemas; keep audits in audit-data.
 model: opus
-context: fork
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
-argument-hint: "<domain-name> <operations...> [--extend] [--notion-url=...]"
+allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill, AskUserQuestion
+argument-hint: "<domain-name> <operations...> [--work-id=<id>] [--spec=<path-or-ref>] [--extend] [--notion-url=...]"
 ---
 
 # Build Data
 
-Owns the complete data orchestrator lifecycle for `@theriety/data-{domain}`
-packages — from specification through Prisma schema, operations, controller
-integration, testing, quality gates, review, and commit.
-`backend:build-service` owns service and manifest packages;
-`backend:audit-data` owns reviews of existing data layers.
+Own the implementation lifecycle for `@theriety/data-{domain}` while treating
+the work-local specification and PM state as coordination boundaries.
 
-## Boundaries
+## Boundaries and inputs
 
-- Use for: creating a new data orchestrator package from scratch; adding
-  operations to an existing orchestrator; implementing Prisma schemas from
-  Notion entity definitions; implementing data operations from Notion
-  specifications; integrating operations into data controllers.
-- Do not use for: service or manifest packages (`backend:build-service`), or
-  auditing an existing data layer (`backend:audit-data`).
-
-## Inputs
-
-- **Required**: domain name in kebab-case (maps to `@theriety/data-{domain}`,
-  e.g. `product`, `vault`); operations list where every name starts with a
-  valid verb (`get`, `list`, `set`, `drop`, `resolve`, `attach`, `detach`,
-  `initiate`); entities list (e.g. `offering`, `suite`, `tariff`).
-- **Optional**: `--extend` to force extend mode; `--notion-url` for a Notion
-  page with entity and operation specifications; selector pattern override —
-  `simple` (single `selectors.ts`) or `complex` (co-located `entities/*.ts`).
-- **Prerequisites**: `@theriety/data` and `@theriety/core` packages available
-  in the workspace.
+- Require domain and operations/entities. A work id is optional for direct runs.
+  Validate verb contracts and package prerequisites. Optional extend mode,
+  local/remote specification source (`--notion-url` remains a compatibility
+  alias), and selector pattern remain supported.
+- Do not build services or audit existing data layers.
+- Workers may edit assigned source/tests and work-local child artifacts only;
+  they never edit `working.md`, `state.md`, or overview indexes.
 
 ## Workflow
 
-1. **Discover the spec.** Parse the domain name, operations (validate verb
-   prefixes), entities, and selector pattern. Detect mode with
-   `ls <repository-root>/data/{domain}/` — the directory exists in extend
-   mode, otherwise new mode. Verify `@theriety/data` and `@theriety/core`
-   exist; stop and ask the user when packages are missing or a verb is
-   invalid. Default the selector pattern from entity count: `simple` for up
-   to 3 entities, `complex` above that. In extend mode read the existing
-   factory, operations barrel, and `package.json`. When `--notion-url` is
-   given, fetch entity definitions and operation specifications from Notion.
-   Produce a file manifest of everything to create or modify.
-2. **Implement the Prisma schema.** Dispatch one comprehensive schema
-   subagent with the prompt contract in
-   [references/schema-implementation.md](references/schema-implementation.md);
-   it translates every entity into documented Prisma models and runs
-   `npx prisma generate`. Proceed only when generation and build pass.
-3. **Scaffold the project** (new mode only). Run `coding:setup-project` with
-   the `@theriety/data-{domain}` package structure: `package.json` with
-   imports map (`#prisma`, `#types`, `#operations/*`, `#*`), vitest configs
-   (unit + integration), `prisma/`, `src/` with `operations/`, `types/`, and
-   `entities/` or `selectors.ts`, and `spec/` with `orchestrator.ts`,
-   `fixture.ts`, `operations/`. Model on `<repository-root>/data/product/`
-   (simple) or `<repository-root>/data/vault/` (complex).
-4. **Scaffold the orchestrator surface.** Draft once with
-   `coding:draft-code`: typed operation signatures with canonical
-   implementation markers, selectors, exports, and factory/controller wiring
-   — no operation bodies; step 5 is their sole implementation stage. Draft
-   signatures to the verb contracts (reference implementations per verb live
-   in `<repository-root>/data/`):
-   - **get**: `findUnique` + `MissingDataError`
-   - **list**: `findMany` with filter/cursor/sort
-   - **set**: upsert with `CreateInput | UpdateInput`
-   - **drop**: status-based soft/hard delete
-   - **resolve**: priority-based fallback matching
-   - **attach/detach**: junction record management
-   - **initiate**: idempotent upsert with nested relations
-
-   Record the operation inventory for step 5.
-5. **Implement operations.** Dispatch operation subagents with the prompt
-   contract in
-   [references/operation-implementation.md](references/operation-implementation.md)
-   — up to 3 batches in parallel, execution reports under 1000 tokens, per
-   the bounds in plugins/governance/constitution/references/delegation.md.
-   Each operation gets its implementation plus its completed integration-test
-   markers.
-6. **Integrate the controller.** Dispatch one controller subagent using the
-   controller pattern in
-   [references/operation-implementation.md](references/operation-implementation.md):
-   delegating methods for all new operations in alphabetical order.
-7. **Quality gate.** Run `coding:fix`, then `coding:lint`, then
-   `coding:refactor`, then verify with
-   `pnpm typecheck && pnpm lint && pnpm test`.
-8. **Review.** Run `coding:review-code`. Review issues loop back to step 7.
-9. **Commit or hand over.** When verification passed and review approved, run
-   `coding:commit`; when issues remain or the user prefers manual review, run
-   `coding:handover`.
-10. Run the verification below; when a check fails, fix the cause and re-run
-    that check. Repeat until every check passes or a concrete blocker
-    remains, then report the blocker instead of looping.
+1. Before creating or materially rewriting a project artifact, read the
+   absolute `engineering-work.md` path injected by Essential. If unavailable,
+   stop artifact writes and report the missing contract. For a direct run, run
+   Essential's workspace resolver with `--work-id` only for an explicit user
+   override and accept its deterministic environment, Git-branch/jj-workspace,
+   or sole-existing-work match. Ask only when it returns `work_id_required`,
+   using its returned candidates; any new id follows that user-confirmed choice.
+   A delegated run receives the explicit work id/root. Read only the exact
+   plan/spec pointers required by this build.
+2. Resolve specification context from an explicit user-supplied path, ref, or
+   inline contract first, then the active work-state pointer. Use local or inline
+   sources directly. Only when the selected source is a Notion ref and local
+   materialization is required invoke `specification:sync-spec`, preserving its
+   exact receipt paths and refs. Detect new/extend mode, validate dependencies/
+   verbs, read existing surfaces, choose selector pattern (`simple` up to three
+   entities, otherwise `complex`), and produce an implementation manifest tied
+   to acceptance criteria.
+3. Dispatch one schema owner with
+   [references/schema-implementation.md](references/schema-implementation.md).
+   Proceed only when Prisma generation and package build pass.
+4. In new mode, run `coding:setup-project` for the established data-package
+   structure. Draft typed operation signatures, selectors, exports, and
+   controller wiring once through `coding:draft-code`; bodies belong only to
+   the implementation step.
+5. Dispatch related operation batches (maximum three) using
+   [references/operation-implementation.md](references/operation-implementation.md),
+   then one controller integration owner. Every child receives the Essential
+   contract path, work/spec pointers, acceptance slice, and manifest contract.
+6. Run Coding fix/lint/refactor and the package's exact typecheck/lint/test
+   gates. Run `coding:review-code` for the assigned canonical `reviews/` areas;
+   each reviewer writes only its area file and returns counts/deltas. Return
+   those to the PM/coordinator for sole-writer `review.md` reconciliation, and
+   loop findings through the owning fix step within bounded retries.
+7. For any material implementation departure, create a lowercase
+   `changes/<slug>.md` child with evidence/disposition and return PM
+   reconciliation for `changes.md`/`state.md`. Contract drift also routes to
+   `reviews/alignment.md`; do not create a deviations log.
+8. Commit through `coding:commit` after approval. When incomplete, return a
+   handover request and complete continuity payload to the PM, which alone may
+   invoke `coding:handover`. Collect child manifests, deduplicate, and return
+   explicit final paths generated or materially rewritten as
+`generated_files`. Do not run file sizing; the PM checks only eligible work
+Markdown inside the target `.engineering/`.
 
 ## Verification
 
-- `npx prisma generate` succeeds and every entity has a documented model with
-  its relationships, constraints, and indexes.
-- `pnpm typecheck && pnpm lint && pnpm test` pass in the data package.
-- Every requested operation is implemented, integration-tested, and exposed
-  as a controller method.
-- `coding:review-code` approved the change set.
+- Prisma generation and package typecheck/lint/tests pass; every requested
+  operation is implemented, integration-tested, and exposed by the controller.
+- Canonical area details and returned review reconciliation agree with no
+  unreported blocker.
+- Spec refs/acceptance mappings and material departures are traceable.
+- No worker edited PM-owned files; reconciliation and `generated_files` are
+  complete.
 
 ## Completion
 
-Report the mode (new or extend), package path and name, entities, selector
-pattern, operations implemented, unit and integration test counts,
-typecheck/lint/test results, review outcome, whether the work was committed
-or handed over, and any unresolved issues.
+Report work/spec receipt, mode, package, entities/selectors/operations, gates,
+canonical review result, commit/handover, departures, PM reconciliation, and
+`generated_files`.

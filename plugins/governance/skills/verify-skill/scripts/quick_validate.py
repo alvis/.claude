@@ -133,9 +133,12 @@ def claude_targets(target: Path) -> list[Path]:
     target = target.resolve()
     if (target / ".claude-plugin" / "plugin.json").is_file():
         return [target]
-    marketplace = None
     if (target / ".claude-plugin" / "marketplace.json").is_file():
-        marketplace = target
+        # Marketplace validation already traverses every declared plugin. Running
+        # strict validation again at each plugin root changes Claude's context
+        # assumptions and can turn intentional marketplace-root context files into
+        # duplicate false-positive warnings.
+        return [target]
     if (target / "plugins").is_dir():
         plugins = target / "plugins"
     else:
@@ -145,7 +148,7 @@ def claude_targets(target: Path) -> list[Path]:
             path.parent.parent
             for path in plugins.glob("*/.claude-plugin/plugin.json")
         )
-        return ([marketplace] if marketplace else []) + roots
+        return roots
     for parent in target.parents:
         if (parent / ".claude-plugin" / "plugin.json").is_file():
             return [parent]

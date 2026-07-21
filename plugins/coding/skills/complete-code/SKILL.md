@@ -55,6 +55,18 @@ specified.
   `documentation/write`, `observability/write`, and `testing/write` (when
   touching tests to verify a contract).
 
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work root first.
+When delegated, start from the mission capsule's exact work root and relevant
+specification/design paths. Read `working.md` only when the capsule lacks
+current navigation; read `state.md` only for resume, cross-slice dependency, or
+alignment work. Never write PM-owned work pointers or overview files.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
+
 ## Workflow
 
 1. Validate the scope and reject the removed flag before scanning. If the scope
@@ -84,4 +96,7 @@ specified.
 ## Completion
 
 Report completed markers with file locations, routed findings, blocked ambiguous
-markers, changed files, and exact verification commands and results.
+markers, changed files, and exact verification commands and results. Return
+every created or materially rewritten path as `generated_files` to the PM. Do
+not run file sizing; after all artifact writers finish, the PM checks only
+eligible work Markdown inside the target `.engineering/`.

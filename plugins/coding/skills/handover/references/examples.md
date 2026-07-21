@@ -1,76 +1,67 @@
-# Handover Examples
-
-## Simple Usage
+# Handover examples
 
 ```bash
-/handover
-# Creates 3 files with current project state:
-# - CONTEXT.md: Status, files, decisions
-# - NOTES.md: Implementation issues encountered
-# - PLAN.md: Goals, tasks
+/coding:handover auth-refresh
+# Refreshes .engineering/work/auth-refresh/state.md and working.md,
+# reconciles existing lazy indexes, and emits a portable receipt.
 ```
-
-## Custom File Prefix
 
 ```bash
-/handover sprint1
-# Creates or updates:
-# - sprint1-CONTEXT.md: Current status and decisions
-# - sprint1-NOTES.md: Implementation insights and solutions
-# - sprint1-PLAN.md: Goals and task breakdown
+/coding:handover
+# Uses the active work ID from injected/current PM context; rejects ambiguity.
 ```
-
-## Update Existing
 
 ```bash
-/handover
-# If files exist, updates them with:
-# - New timestamp
-# - Refreshed current state
-# - Updated file classifications
-# - New recent changes appended
+/coding:takeover <task-or-PR-containing-receipt> --revalidate
+# Builds an isolated disposable post-anchor tree, verifies the complete v3
+# engineering-work-state+json/v1 snapshot plus local, inline, or Notion
+# specification carriers there,
+# then restores a clean destination and resumes through the declared owner.
 ```
-
-## Error Case Handling
 
 ```bash
-/handover sprint1/phase
-# Error: Invalid prefix format (contains slashes)
-# Suggestion: Use simple prefix like 'sprint1' or '/handover' for default
-
-/handover
-# Error: Not a git repository
-# Suggestion: Initialize git with 'git init' or navigate to a git repository
+/coding:handover checkout-refunds
+# If relevant changes exist only in the working copy, returns blocked until an
+# approved remote revision or externally attached patch/bundle carries them.
 ```
 
-## Three-File Workflow
+Invalid work IDs, missing Essential contract paths, missing specification
+identity for specification-led work, non-portable source anchors,
+contradictory receipts, or a complete work item are explicit errors. A generic
+coding receipt may omit a specification. There is no prefix-based or root-file
+compatibility fallback.
 
-After running /handover, three complementary files work together:
+For a response-only patch handover, the receipt itself contains the complete
+encoded patch, complete state snapshot, and any inline specification payload;
+each declares format, encoding, application semantics, and a verified SHA-256.
+For an externally published handover, those same carriers may use stable
+attachment locators. A path such as `.engineering/work/auth-refresh/state.md`
+or `/tmp/auth.patch` is never a portable locator.
 
-**1. Read CONTEXT.md first** → Understand current status
+For a Notion-backed specification, a portable receipt records a logical
+profile such as `product-specs`, the stable page ref, captured remote revision
+and paired `transport_manifest_hash`/`contract_digest`, plus at most a contained
+suggestion such as `.engineering/notion`. It never records
+`/Users/alice/project/.engineering/` or another origin-workspace transport root.
+During takeover, `product-specs` is mapped to an exact destination-local ignored
+root (or the user selects one), that mapping is recorded, and only then is the
+page fetched.
 
-- What files are done/in-progress/planned
-- Key decisions made
-- Gotchas to watch out for
+The receipt copies the sync owner's `status`, `classification`, and
+`next_action` without mapping them. A ref-only transfer is sufficient only for
+`status: success`, `classification:
+initial|unchanged|metadata_only|converged`, and `next_action: none`, with no
+authored or pending local work. `local_only`, `remote_only`,
+`structural_change`, `concurrent`, `baseline_required`, and
+`materialization_conflict`, an operational `partial`/`blocked` status, or any
+pending next action require the exact helper-produced, checksum-bound
+`specification-blr-transfer+json/v1` package. It carries the immutable B
+receipt/bytes and authored L tree with their input manifests, observed
+revisions, per-unit hashes, and paired dual hashes. Takeover validates and
+restores those only into destination-owned isolation, fetches fresh R, and
+resumes with a B/L/R classification; it never replaces unsynced L with the
+fresh page. If B does not exist or the package is unavailable, handover blocks.
 
-**2. Read NOTES.md second** → Learn from implementation
-
-- Issues encountered and how they were solved
-- Workarounds for common gotchas
-- Quick tips discovered during implementation
-
-**3. Read PLAN.md third** → Know the path forward
-
-- Overall goals and success criteria
-- Task breakdown by phase
-- Dependencies
-
-This trio provides complete project understanding for seamless continuation.
-
-## Continuation Scenario
-
-The /takeover command automatically reads all three handover files to provide complete project understanding for seamless continuation:
-
-- **CONTEXT.md**: Current status verification, file states, decisions, and gotchas
-- **NOTES.md**: Implementation insights and solutions to avoid re-discovering issues
-- **PLAN.md**: Prioritized task list and clear path forward
+A v2 receipt is an input to migration, not takeover. Re-run `coding:handover`
+from its authoritative workspace or explicitly migrate every carrier and add a
+checksum-bound complete state snapshot before the destination is touched.

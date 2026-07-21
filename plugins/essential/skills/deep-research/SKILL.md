@@ -30,6 +30,11 @@ optimization belongs to `essential:autoresearch`.
   restricted or non-public topics are declined with a suggested public
   reframing.
 
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the active work directory from
+that contract.
+
 ## Workflow
 
 Steps 2 and 3 dispatch subagents per
@@ -42,8 +47,8 @@ bounds are stated at each step.
    archives, temporal progression; current events: recent news and real-time
    updates; theoretical: foundational texts balanced with recent work;
    product/market: industry reports, user feedback, competitive analysis.
-   Create the workspace `research_<topic-slug>_<YYYYMMDD>/` with a
-   `source_tracker.md` listing each source's URL/path, credibility class
+   Create `evidence/research/<topic-slug>/` under the active work directory,
+   with `source-tracker.md` listing each source's URL/path, credibility class
    (Academic/Official/Industry/Community), discovery level, discovered-from
    source, and status (pending/analyzing/analyzed/failed). If the tracker
    already exists, resume instead: keep completed analyses and continue from
@@ -53,7 +58,7 @@ bounds are stated at each step.
    each report under 1000 tokens. Each subagent reports, per source: key
    information relevant to the topic, cross-source patterns and themes,
    contradictions and debates, and new insights naming candidate sources for
-   further research. Update `source_tracker.md` after every returned analysis —
+   further research. Update `source-tracker.md` after every returned analysis —
    the tracker is the checkpoint that makes the run resumable. A subagent that
    times out marks its sources `failed`; continue with the available data.
 3. **Iterate on discoveries.** When an analysis surfaces an unfamiliar concept,
@@ -75,8 +80,8 @@ bounds are stated at each step.
    their context), confidence scoring per the rule in
    [references/deliverable-format.md](references/deliverable-format.md), and
    explicit knowledge gaps wherever evidence is insufficient.
-5. **Write the deliverable** in the workspace, following the section order and
-   confidence rules in
+5. **Write the deliverable** as `report.md` in the research directory, following
+   the section order and confidence rules in
    [references/deliverable-format.md](references/deliverable-format.md), and
    remove temporary scratch files so only the tracker, findings, and
    deliverable remain.
@@ -86,7 +91,7 @@ bounds are stated at each step.
 
 ## Verification
 
-- Every source marked `analyzed` in `source_tracker.md` has a summary, and
+- Every source marked `analyzed` in `source-tracker.md` has a summary, and
   every discovered source is tracked with its level and origin.
 - Discovery chains are valid: each level 2+ source traces back through
   source → insight → new source.
@@ -101,4 +106,6 @@ Deliver the report and state: total sources analyzed (initial vs discovered,
 and depth reached), overall confidence with its basis, the key findings in one
 line each, and the open research gaps. A partial or blocked run still reports
 the tracker state, what was analyzed, and the blocker — the tracker makes the
-run resumable later.
+run resumable later. Return explicit final paths generated or materially
+rewritten as `generated_files`; the PM size-checks only eligible work Markdown
+inside the target `.engineering/`.

@@ -38,10 +38,10 @@ One `AskUserQuestion` call, ≤4 questions, each with a stated safe default:
   promote on the second consumer, never on a guess): ask — "Patch the upstream
   shared library (`packages/ui` — `rps-ws-01`) or keep it local for now?"
   Options: patch upstream (default when a second consumer exists today), local
-  now with a promotion follow-up noted in `DESIGN.md`, or skip the component.
+  now with a promotion follow-up noted in the active work design, or skip the component.
   Batch up to 4 such questions per call when several qualify.
 - Single-consumer components stay at the lowest tier (`rps-layout-01`); record
-  them in the `DESIGN.md` Component Inventory with source `local`.
+  them in the active work design's component inventory with source `local`.
 
 Standards: `plugins/react/constitution/standards/project-structure/rules/`
 (`rps-promo-01`, `rps-layout-01`, `rps-ws-01`, `rps-ws-02`) and

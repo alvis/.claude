@@ -1,115 +1,140 @@
-# Audit Report Template
+# Canonical web-audit review template
 
-## Context
+Render audit findings into the shared Coding review-area schema. Never create a
+standalone audit Markdown report or a Web-specific detail-file format. Web
+fields enrich the canonical finding record; they do not replace its identity,
+disposition, count, or verdict fields.
 
-- **Surface**: (web/app) + page type (list/detail/form/dashboard/settings/modal)
-- **Primary user task**:
-- **Primary CTA**:
-- **Component type detected**: (full page / form / modal / navigation / card / dashboard / component)
-- **Audit scope**: Full (12 categories) / Quick (5 categories)
-- **Input type**: URL (live browser) / Screenshot / Code / Figma
-- **Confidence**: High (live browser or code) / Medium (screenshot) / Low (description only)
+## Classification
 
-## Scores
+Classify each finding once by the primary question it answers:
 
-**Overall: XX/100**
+| Review file | Prefix | Web-audit ownership |
+| --- | --- | --- |
+| `alignment.md` | `ALIGN` | Active/durable design or approved-scope divergence |
+| `correctness.md` | `CORR` | Broken interaction, navigation, feedback, semantics, or user task |
+| `security.md` | `SEC` | Observed trust, permission, unsafe-content, or abuse issue only |
+| `quality.md` | `QUAL` | Hierarchy, typography, color, spacing, responsive layout, imagery, motion, branding, maintainability |
+| `testing.md` | `TEST` | Missing/unreliable page, viewport, state, crop, or manual-review coverage |
+| `docs.md` | `DOCS` | Inaccurate or missing durable/user-facing design documentation |
+| `style.md` | `STYL` | Mechanical token, CSS, or repository-style violation |
 
-| Quality Level | Score Range |
-|---|---|
-| Bootstrap Template | 40-50 |
-| Customized Framework | 60-70 |
-| Professional Design | 70-80 |
-| Design Excellence | 80-90 |
-| Award-Worthy | 90-100 |
+Do not duplicate one finding across areas. Design-contract compliance is
+`alignment`; semantic failure is `correctness`; a token-style violation without
+contract drift is `style`. A visual audit does not imply a security review.
 
-### Per-Category Scores (1-10)
+Map the CLI's `critical|high|medium|low` severity to canonical
+`P0|P1|P2|P3`, respectively. Never collapse `low` into P2 or omit P3.
 
-| Category | Score | Notes |
-|---|---|---|
-| Visual Hierarchy & Layout | X/10 | |
-| Typography | X/10 | |
-| Color & Contrast | X/10 | |
-| Spacing & Grid | X/10 | |
-| Consistency & Tokens | X/10 | |
-| Accessibility | X/10 | |
-| States & Feedback | X/10 | |
-| Navigation & IA | X/10 | |
-| Content & Microcopy | X/10 | |
-| Responsiveness | X/10 | |
-| Imagery, Icons & Motion | X/10 | |
-| Branding & Modern Standards | X/10 | |
+## Stable canonical identity
 
-### DESIGN.md Compliance
+Build a stable Web source key from the CLI finding ID when present, otherwise
+`<rule-id>--<route-hash8>--<selector-hash8>`. On first render, allocate the next
+sequence for its canonical area and priority and persist both values in the
+detail record:
 
-> Only included when a DESIGN.md is detected in the project.
+```text
+<PREFIX>-P<n>-<seq>
+```
 
-| Category | Tokens Defined | Tokens Applied | Compliance | Deviations |
-|----------|---------------|----------------|------------|------------|
-| Colors | — | — | —% | — |
-| Typography | — | — | —% | — |
-| Spacing | — | — | —% | — |
-| Radius | — | — | —% | — |
-| Shadows | — | — | —% | — |
-| Components | — | — | —% | — |
-| **Overall** | — | — | **—%** | — |
+On rerun, match the persisted Web source key before allocating anything and
+reuse its canonical ID. Never use a raw CLI ID as the Markdown heading, recycle
+an old sequence for a different source key, or renumber findings merely because
+another finding closed. If classification or priority evidence changes, retain
+the stable ID and describe the change in evidence instead of creating a
+duplicate.
 
-#### Token Deviations
+## Detail file schema
 
-| Component | Expected Token | Actual Value | Severity |
-|-----------|---------------|--------------|----------|
-| — | — | — | — |
+Each applicable `reviews/<area>.md` uses the canonical Coding header and
+verdict shape:
 
-## Findings (Prioritized)
+```markdown
+---
+area: <alignment|correctness|security|quality|testing|docs|style>
+prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>
+reviewed_at: <ISO-8601 timestamp>
+files_reviewed_count: <N>
+closed_findings: <N>
+outstanding_findings: <N>
+---
 
-### P0 -- Blocker
+# <Area> review
 
-- **Problem**:
-  - Evidence:
-  - Diagnosis: execution gulf / evaluation gulf | slip / mistake
-  - Impact: (what breaks for users)
-  - Fix: (specific, implementable -- include file path if code)
-  - Acceptance check: (how to verify the fix)
+**Verdict**: <pass|pass_with_suggestions|requires_changes|fail> — outstanding P0:<n> P1:<n> P2:<n> P3:<n>
 
-### P1 -- Important
+## Headline
 
-- **Problem**:
-  - Evidence:
-  - Diagnosis: execution gulf / evaluation gulf | slip / mistake
-  - Fix:
-  - Acceptance check:
+<One or two evidence-backed sentences. Use `_No issues found._` for a clean
+area. Include the audit target, source report plus SHA-256, exact viewports, and
+complete|partial|blocked coverage concisely.>
 
-### P2 -- Polish
+## Findings
 
-- **Problem**:
-  - Fix:
+### <PREFIX>-P<n>-<seq>: <one-line summary>
 
-## Quick Wins
+- **Status**: <open|fixed|acknowledged|deferred|skipped>
+- **Source**: `<repository path:line, design clause, or report path + JSON pointer>`
+- **Issue**: <problem, affected user task, and impact>
+- **Evidence**: <rule/source key, route, viewport, selector, crop/context/data paths, and deterministic or AI confidence>
+- **Direction**: <specific correction and observable acceptance check; never claim it was applied>
+- **Rationale**: <why this current disposition is justified>
+- **Owner**: <person or durable owning task/team>
+- **Recheck condition**: <specific event, date, revision, viewport, or evidence that requires review again>
+- **Risk acceptance**: <P0/P1 acknowledged/skipped authority and durable evidence; otherwise `not required`>
+```
 
-Top 3 small changes that noticeably improve clarity or polish.
+New findings begin `open`. Preserve a prior disposition only after matching its
+source key and rechecking the current evidence. Apply the shared disposition
+semantics exactly:
 
-## Competitive Comparison (if competitors provided)
+- `fixed` is closed only when the correction was applied and the affected
+  route/viewports were rechecked with recorded evidence.
+- `acknowledged` and `skipped` are closed non-fixed risk dispositions only with
+  non-placeholder rationale, an accountable owner, and a concrete recheck
+  condition. P0/P1 additionally require explicit risk-acceptance authority and
+  durable acceptance evidence.
+- `open` and `deferred` remain outstanding. A malformed `acknowledged` or
+  `skipped` record is also outstanding until repaired.
 
-| Aspect | This Product | Competitor A | Competitor B |
-|---|---|---|---|
-| Visual Polish | X/10 | X/10 | X/10 |
-| Typography | X/10 | X/10 | X/10 |
-| Color Usage | X/10 | X/10 | X/10 |
-| Consistency | X/10 | X/10 | X/10 |
-| Modernity | X/10 | X/10 | X/10 |
+Derive `closed_findings`, `outstanding_findings`, priority counts, and verdict
+from all findings currently in that area file, including findings not emitted by
+the latest Web run. Outstanding P0 yields `fail`; outstanding P1 yields
+`requires_changes`; only outstanding P2/P3 yields `pass_with_suggestions`; zero
+outstanding yields `pass`.
 
-## Verification Checklist
+## Context and scoring
 
-- [ ] Task clarity: primary CTA obvious and singular
-- [ ] IA: groups match user mental model
-- [ ] Feedback: loading/empty/error/success states present
-- [ ] Consistency: components and wording stable across screens
-- [ ] Affordance: clickable elements look clickable
-- [ ] Errors: prevention + recovery + actionable messages
-- [ ] Cognitive load: defaults and progressive disclosure
-- [ ] CRAP: hierarchy, alignment, spacing, grouping intentional
-- [ ] Modern minimal: restrained color, spacious layout, minimal copy
-- [ ] Icons: no emoji; consistent set; labels where ambiguous
-- [ ] Accessibility: keyboard nav, focus visible, ARIA labels, contrast AA
-- [ ] Responsive: mobile touch targets, no horizontal scroll, content reflows
-- [ ] DESIGN.md tokens match implementation values
-- [ ] No hardcoded values where design tokens are defined
+Keep the raw overall/category/page scores in JSON evidence. Markdown contains
+only concise context and findings needed for engineering action. Preserve exact
+scores when they materially prioritize a finding; never convert a score into an
+unsupported quality claim.
+
+When an active or durable design exists, cite its exact path and clause in
+alignment findings. Otherwise omit design-compliance claims. The valid sources
+are the active work design, `docs/design/system.md`, and applicable
+`docs/design/<slug>.md`.
+
+## PM reconciliation payload
+
+Return, but do not write as a worker:
+
+```yaml
+review_reconciliation:
+  source: <relative report path + SHA-256>
+  coverage: complete|partial|blocked
+  areas:
+    alignment: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    correctness: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    security: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    quality: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    testing: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    docs: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+    style: {path: <absolute path or null>, verdict: <value or not_run>, open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+  totals: {open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0, closed: 0, outstanding: 0, p0: 0, p1: 0, p2: 0, p3: 0}
+  changed_detail_files: [<absolute paths>]
+```
+
+An absent area is `not_run`, not `pass` or `skipped`, unless an existing
+canonical area file supplies current counts. The PM validates the payload
+against every existing detail file and then reconciles `review.md`.

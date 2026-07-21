@@ -52,7 +52,7 @@ One dispatch per genome slot, sibling-blind.
     **Assignment**
     You hold one genome slot. Your ENTIRE inheritance is below — you never see sibling candidates or sibling scores:
 
-    - brief: `<run_dir>/RESEARCH_BRIEF.md` (read it: goal, constraints, metric)
+    - brief: `<run_dir>/research-brief.md` (read it: goal, constraints, metric)
     - slot: `<mutation|recombination|wildcard|direction>` · direction: `<framing direction>`
     - directive: `<what to keep, what to vary, which traits to combine — from scorer feedback; empty for round 1>`
     - parents: `<parent artifact paths + consensus scores + the scorer reasoning they earned; none for wildcards/round 1>`

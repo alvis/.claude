@@ -2,144 +2,230 @@
 name: write-code
 description: 'Write production-ready code end to end through a TDD lifecycle of design, skeleton, implementation, tests, and refactoring. Use for new functions, features, modules, components, CLI or API endpoints, or approved tickets; route diagnosed failures to fix and explicit production stubs to complete-code.'
 model: opus
-context: fork
 allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill
 argument-hint: "<instruction> [--resume]"
 ---
 
 # Write Code
 
-Composite orchestrator for the complete TDD lifecycle: it owns sequencing,
-interactive gates, and state handover, while each phase is owned by the
-atomic child skill it invokes. Each pass updates the same implementation
-cleanly — remove superseded scaffolding; never leave duplicate code paths or
-addendum-style patches.
+Composite orchestrator for the complete TDD lifecycle. It owns phase order,
+interactive gates, state reconciliation under an explicit coordinator lease,
+and final artifact batching; atomic children own implementation phases. Remove
+superseded scaffolding rather than leaving parallel paths or addenda.
 
 ## Boundaries
 
-- Use for: new functions, features, modules, components, CLI or API endpoints
-  built with tests end to end; turning a spec or approved ticket into working
-  code; resuming interrupted lifecycle work with `--resume`.
-- Do not use for: skeleton only (`coding:draft-code`), completing accepted
-  production stubs only (`coding:complete-code`), fixing failing
-  tests/lint/types only (`coding:fix`), refactoring without the full
-  lifecycle (`coding:refactor`), code review (`coding:review-code`), or a
-  stack with no implementation (`coding:commit --create-pr` directly).
-- Reject when: the instruction is too vague to define acceptance criteria
-  (ask for specific requirements), or the target project has no testing
-  framework configured.
+- Use for new functions, features, modules, components, endpoints, or an
+  approved specification implemented and tested end to end; use `--resume` for
+  a rehydrated engineering work item.
+- Route skeleton-only work to `coding:draft-code`, accepted production stubs to
+  `coding:complete-code`, diagnosed failures to `coding:fix`, green structural
+  cleanup to `coding:refactor`, and reviews to `coding:review-code`.
+- Reject vague requirements without acceptance criteria or projects without a
+  configured test framework.
 
 ## Inputs
 
-- **Required**: `<instruction>` — feature requirements with enough detail to
-  derive scope and acceptance criteria.
-- **Optional**: `--resume` — continue from handover documents instead of
-  starting fresh.
-- **Prerequisites**: for `--resume`, CONTEXT.md, NOTES.md, and PLAN.md exist
-  in the working directory; otherwise reject with "No handover files found.
-  Create them first with /coding:handover".
+- Required `<instruction>` with scope, behavior, and acceptance criteria.
+- Optional `--resume`; require a resolved work ID/root whose `state.md` defines
+  unfinished scope. A missing local root must be rehydrated through
+  `coding:takeover`, never recovered from root continuation files.
+- A delegated lifecycle call must include one full executable `task_id`, the
+  root state's `plan_source: state.md`, exact `plan_digest`, and
+  `hash_kind: engineering-plan-definition-digest-v1`. Treat them as assertions
+  against Essential validation, never as replacement plan data.
+- Internal `--defer-publication` is accepted only from a lifecycle parent that
+  passes the exact work ID/root and an explicit history-ownership boundary. It
+  keeps this run responsible for its coding review and validation, while the
+  parent retains lifecycle review, specification sync, final commit QA, and
+  remote publication. Reject this flag on an unowned direct invocation.
+
+## Engineering-work gate
+
+Before creating or materially rewriting a project artifact, read the absolute
+`engineering-work.md` path injected by Essential. If unavailable, stop artifact
+writes and report the missing contract. Resolve the workspace-local work root,
+schemas, lifecycle, and final batch interface before dispatching children.
+The caller runs Essential's resolver, asks only on `work_id_required`, handles
+`requires_ignore`, and passes the resolved work ID/root with the coordinator
+lease. Every delegated child receives that exact ID/root.
+
+This composite requires the caller to grant the sole coordinator lease for
+`working.md`, `state.md`, and changed lazy overviews. Refuse to start if another
+writer retains that lease. Give each child a mission capsule with exact paths;
+children read broad work memory only for resume or cross-slice alignment. They
+never write leased files and return `generated_files` plus state deltas.
 
 ## Composition
 
-Child skills run in `context: fork`, in this order:
+Run child skills in this order:
 
-1. `coding:setup-project` — conditional: only when essential structure is
-   missing.
-2. `coding:draft-code` — design discovery plus skeleton with canonical
-   `TODO(implementation):` markers and describe.todo/it.todo test structure.
-3. `coding:complete-code` — green phase: minimal implementations that make
-   tests pass; then `coding:complete-test` for any pending test markers it
-   reports.
-4. `coding:fix` — diagnosed test/type/lint failures with root-cause analysis
-   (batches file sets over 25 files). Mechanical standards violations route
-   to `coding:lint`; fixture, mock, pending-test, and coverage work routes to
-   `coding:complete-test`.
-5. `coding:refactor` — green behavior-preserving cleanup, naming, JSDoc, and
-   final quality validation.
-6. `coding:commit --create-pr` for a conditional stack split, or
-   `coding:push-pr` for an existing-stack restack; see
-   [references/stack-split.md](references/stack-split.md).
+1. `coding:setup-project`, only if essential structure is missing.
+2. `coding:draft-code`, for types, skeleton, canonical implementation markers,
+   and red/pending test structure.
+3. `coding:complete-code`, then `coding:complete-test` for pending tests.
+4. `coding:fix` for diagnosed test/type/lint failures; mechanical standards
+   route to `coding:lint` and coverage/fixture work to `coding:complete-test`.
+5. `coding:refactor` for green behavior-preserving cleanup, then
+   `coding:document` when the change affects public behavior, configuration,
+   operations, or project documentation promised by the contract.
+6. `coding:review-code`; route outstanding findings to `coding:fix` and repeat
+   the affected review areas until closed or concretely blocked.
+7. `coding:lint`, followed by final focused and full tests, types, coverage,
+   and build gates that apply to the repository.
+8. Only after those gates, shape local history through `coding:commit`, verify
+   it through `coding:finalize-commits`, and publish through `coding:push-pr`
+   when the stack policy in
+   [references/stack-split.md](references/stack-split.md) calls for it.
 
-State handover: children read and update CONTEXT.md, NOTES.md, and PLAN.md. For
-a fresh run, create NOTES.md before the first child and keep it live across the
-lifecycle; `coding:handover` later completes the full three-file bundle when a
-pause or transfer is requested.
-
-Composite convention: pass the internal `--from-composite` flag only to
-children that declare it (`setup-project`, `draft-code`, `fix`, `refactor`)
-to suppress redundant confirmation gates. Never pass it to `complete-code` or
-`complete-test` — give them their normal scope plus a concise parent context
-in the Skill payload. Unknown internal flags are errors, not silently ignored
-compatibility options.
+Pass `--from-composite` only to children that declare it (`setup-project`,
+`draft-code`, `fix`, `refactor`). Never pass it to `complete-code` or
+`complete-test`.
 
 ## Workflow
 
-1. Parse `<instruction>` and flags; identify requirements, scope, and
-   acceptance criteria. Separate user-stated intent, observed repository facts,
-   inferences, accepted assumptions, and unresolved questions. A material
-   unknown affecting architecture, public API, data model, security/privacy,
-   destructive migration, user-visible semantics, or acceptance criteria must
-   be resolved or explicitly deferred before its dependent work starts. A
-   low-impact reversible assumption may proceed conservatively with a recheck
-   trigger recorded in NOTES.md. Initialize or refresh NOTES.md sections for
-   Discoveries, Accepted Assumptions, Deviations, Pending Decisions, and
-   Invalidated Plan Steps. With
-   `--resume`, read the handover documents, map the file substate to the
-   resume point (`need-draft` → draft-code, `need-completion` →
-   complete-code, `need-fixing` → fix, `need-refactoring` → refactor), and
-   extract change direction from PLAN.md next steps or NOTES.md open
-   questions.
-2. Conditional setup: check for essential structure (package.json, source
-   directories, test framework); invoke `coding:setup-project` with the
-   target path and `--from-composite` only when missing.
-3. Invoke `coding:draft-code` with the instruction and `--from-composite`,
-   then hold the interactive gate below.
-4. Invoke `coding:complete-code` with the target area, then
-   `coding:complete-test` for pending test markers; gate.
-5. Invoke `coding:fix` with the target area and `--from-composite`; gate.
-6. Invoke `coding:refactor` with the target area and `--from-composite`;
-   gate.
-
-   After each child, update NOTES.md from repository or runtime evidence. When a material
-   deviation invalidates a plan premise, record the observed evidence and
-   affected steps, stop the stale branch, and revalidate the remaining plan
-   before continuing.
-
-   Interactive gate (after each of steps 3-6): offer the user
-   (1) proceed to the next step, (2) re-run the current child with change
-   direction, (3) resume from a different step, (4) pause and create handover
-   documentation via `coding:handover`.
-7. Stack decision: apply
-   [references/stack-split.md](references/stack-split.md) — compute change
-   size, detect open stacks, and dispatch `coding:commit --create-pr` for a
-   split or `coding:push-pr` for an existing-stack restack when a trigger
-   fires, surfacing the rationale to the user first.
-   <IMPORTANT>Never invoke `jj split` or `gh pr create` directly; local history
-   shaping belongs to `coding:commit` and publication belongs to
-   `coding:push-pr`.</IMPORTANT>
-8. Run the verification below; when a check fails, route the failure to the
-   owning child (`coding:fix` for diagnosed failures, `coding:complete-test`
-   for test/coverage gaps) and re-run that check. Repeat until every check
-   passes or a concrete blocker remains, then report the blocker instead of
-   looping.
+1. Confirm the coordinator lease, then parse the instruction. Separate user intent, observed facts, inferences,
+   accepted reversible assumptions, and unresolved decisions. Resolve material
+   unknowns before dependent work. Initialize or refresh the work root and
+   `state.md` with the complete goal, plan/lifecycle, criteria, decisions,
+   dependencies, blockers, reviews, evidence, promotion, and sync state; link
+   `working.md`. Use stable three-letter parent IDs and `AAA01`-style child IDs,
+   explicit dependencies, and Essential's canonical marked task table. A
+   parent with children is a derived roll-up. Run
+   `validate-engineering-state validate --state <state.md>` and continue only
+   on `status: valid` with `plan_source: state.md`; retain the canonical
+   root-state digest/hash kind and
+   graph report. A delegated identity must match exactly. Refresh PM-owned `working.md` with current focus and fast paths
+   only, aiming editorially at 4,096 bytes. Capture immutable `base_rev` before
+   any child changes source or history.
+2. For `--resume`, read `working.md`, `state.md`, and linked artifacts; rerun
+   Essential validation and schedule only its runnable executable leaf IDs.
+   Map the recorded file substate to `draft-code`, `complete-code`, `fix`, or
+   `refactor`. Revalidate contradictions reported by takeover before resuming.
+3. Conditionally invoke setup, then invoke each required implementation child
+   in composition order. Give it the work ID/root, full `task_id`, canonical
+   plan source/digest/hash kind, and exact relevant paths. Require the same
+   identity, attempt outcome, evidence, requested status delta, and an explicit
+   `generated_files` manifest in return.
+4. After each child, verify its identity, manifest, and evidence; reconcile the
+   requested status delta by task ID into `state.md`, refresh `working.md`, and
+   reconcile any lazy overview whose children changed. Rerun Essential
+   validation before scheduling newly ready work. A failed leaf records attempt
+   evidence and retry/disposition. The coordinator transitions every affected
+   downstream executable leaf to `! blocked` with an `unblock:` action naming
+   that retry/disposition; independent branches keep their current/runnable
+   state. A material deviation is recorded in
+   state and, when it changes task definition, dependency, requiredness,
+   target, acceptance mapping, or an approved contract, recomputes the plan
+   digest by validating the reconciled state with
+   `--previous-state <preserved-old-state>`, invalidates the helper-reported
+   downstream closure and review, and requires renewed approval. Status-only
+   changes retain the plan digest.
+5. After draft, completion/tests, fix, and refactor, invoke
+   `coding:document` when the acceptance map or changed public surface requires
+   project documentation. Collect its `generated_files` before offering:
+   proceed; rerun the current child with change direction; resume elsewhere;
+   or pause through `coding:handover`. Documentation is an artifact writer and
+   must finish before code review, lint, final validation, and scoped-manifest
+   sealing.
+6. Invoke `coding:review-code` against the completed change and pinned work
+   contract without transferring the pointer/overview coordinator lease. Area
+   reviewers write only their assigned files; reconcile their returned roll-up
+   into `review.md` here. Route every outstanding finding to its owner, apply
+   corrections, and rerun the affected review areas. Require review output to
+   match both the contract digest and canonical plan digest/hash kind. Do not proceed while
+   review closure is outstanding; report a concrete blocker instead of treating
+   a displayed verdict as approval.
+7. Invoke
+   `coding:lint <touched-specifier> --scope=uncommitted --skip-unused`, choosing
+   the narrowest project/package specifier containing the touched lifecycle
+   paths. The lifecycle run does not authorize project-wide unused-code
+   deletion; offer a separate direct `coding:find-unused` or unskipped lint run
+   only when the developer explicitly chooses that cleanup. If review
+   remediation or lint changes source, rerun the affected focused tests and
+   review areas before proceeding.
+8. After every artifact writer is finished, deduplicate the combined
+   `generated_files` manifest. Select only `.md` paths inside the resolved
+   target `.engineering/`, excluding `working.md`, and invoke the Essential
+   checker once with `--engineering-root <active-workspace>/.engineering` when
+   eligible paths remain. If it returns `split_required`,
+   coordinate one complete split round for all oversized files, preserving
+   each original as overview, then run one new batch pass. Never size files
+   after each write; paths outside `.engineering/`, including `docs/**`, are
+   not mechanically size-gated.
+9. Run the final verification sequence after review and lint: focused tests for
+   every touched slice, then the repository's applicable full tests, types,
+   coverage, lint check, and build. Route each failure to its owner, rerun any
+   review invalidated by the correction, and repeat the affected gates until
+   green or concretely blocked.
+10. Apply the history/publication decision last. First inspect only the
+   relevant implementation scope against `base_rev` and record `history_state`
+   as `dirty`, `saved`, or `none`, including exact dirty paths and clean saved
+   unpushed change ids. Dirty relevant paths take precedence when saved changes
+   also exist. Reconcile the base diff, acceptance map, and every child
+   `generated_files` list into the full publishable lifecycle scope: source,
+   tests, project documentation, durable specification/provenance files, and
+   deletions. Exclude unrelated user-owned changes and all ignored engineering
+   work state. When relevant publication paths are dirty, create and seal the
+   checksum-bound scoped-save manifest described by
+   `coding:commit`'s
+   [manifest workflow](../commit/references/workflow-save-manifest.md): write
+   its complete ignored scope request, then invoke
+   `coding:commit --prepare-paths-from=<scope-request>` to obtain the immutable
+   manifest path/hash without saving history. If any
+   path mixes lifecycle and user-owned bytes, the scope is incomplete, or the
+   exact dirty subset cannot be isolated, stop `blocked_scope` instead of
+   widening the save. <IMPORTANT>Never invoke
+   `jj split`, `git commit`, a push, or `gh pr create` directly; history shaping
+   belongs to `coding:commit`, isolated commit QA belongs to
+   `coding:finalize-commits`, and publication belongs to
+   `coding:push-pr`.</IMPORTANT> With `--defer-publication`, do not invoke
+   `coding:commit --create-pr`, `coding:finalize-commits`, or `coding:push-pr`,
+   and do not rewrite or restack any published revision. An explicitly assigned
+   implementation slice may be saved locally only through
+   `coding:commit --paths-from=<manifest> --manifest-sha256=<sha256>`; slice
+   commits are optional. Return exactly one deferred terminal to the lifecycle
+   parent: `needs_save` with the exact immutable manifest path/hash, selected
+   paths, and full scoped invocation when relevant worktree changes remain;
+   `ready_for_finalization` only when the relevant tree is clean and saved
+   unpushed changes exist; or `no_change` when neither dirty nor saved relevant
+   changes exist. Never return an unscoped `/coding:commit` next action. Include
+   change ids and exact validation/review evidence when present. The parent
+   owns final review, sync, history QA, and publication. Without the flag, any
+   dirty save also uses that sealed manifest route before loading the stack
+   policy and executing its gated owner handoffs. Any project artifact writer
+   after sealing invalidates the manifest and its review/status snapshot;
+   return through the applicable documentation/review/validation steps and
+   seal a new immutable manifest rather than reusing it.
 
 ## Verification
 
-- Tests pass, types check, and lint is clean for the touched area.
-- Coverage meets the project target; no `TODO(implementation):` or pending
-  it.todo markers remain in scope.
-- When a stack dispatch was triggered, the owning child reported the opened or
-  restacked draft PRs.
-- NOTES.md distinguishes observations, accepted reversible assumptions,
-  deviations, pending decisions, and invalidated plan steps; no material
-  unknown was silently implemented.
+- Tests, types, lint, and the repository coverage target pass; no owned
+  implementation or pending-test markers remain.
+- `state.md` passes Essential validation, contains complete current truth, and
+  links current-focus-only `working.md`; all lazy indexes match their children.
+  Lifecycle `complete` has no unfinished required executable leaf.
+- Every child returned a verified `generated_files` manifest and the scoped
+  `.engineering` Markdown gate ran as one batch per pass when applicable.
+- Code review preceded lint, final tests/types/coverage/build preceded every
+  remote publication, and no correction left an invalidated review unstated.
+- Commit/push ownership was preserved. A deferred run reports its exact
+  `history_state` and `needs_save`, `ready_for_finalization`, or `no_change`
+  terminal without a PR or remote mutation. `needs_save` carries a validated
+  scoped-save manifest path/hash and exact `coding:commit --paths-from`
+  invocation whose publication scope includes every intended lifecycle file
+  and no ignored work state; any non-deferred stack dispatch reports its scoped
+  save receipt, finalization evidence, and URLs.
 
 ## Completion
 
-Report the parsed instruction, steps executed and skipped, files created and
-modified, test/type/lint/coverage results, the stack outcome (skipped, or the
-opened/restacked PRs with bookmark and URL), and next steps (typically
-`/coding:commit` when no stack was dispatched). Include material discoveries,
-accepted assumptions and recheck triggers, deviations, pending decisions, and
-plan pivots from NOTES.md. For a rejection, name the
-matching boundary and the skill to use instead.
+Report requirements, `task_id`, `plan_source: state.md`, plan digest/hash kind,
+requested/applied task-status deltas, phases run/skipped, material discoveries, assumptions and
+recheck triggers, deviations, decisions, blockers, validation, stack outcome,
+work root, and the deduplicated `generated_files` list. For a deferred run,
+name the parent owner and return a `publication_deferred` handoff containing
+`history_state`, its terminal, and exact next action. For `needs_save`, include
+`manifest_path`, `manifest_sha256`, `selected_paths`, and the complete
+`/coding:commit --paths-from=<manifest> --manifest-sha256=<sha256>` invocation.
+Otherwise, recommend only that same scoped invocation when relevant dirty paths
+remain and no stack was dispatched.

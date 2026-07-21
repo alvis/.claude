@@ -1,12 +1,14 @@
-# {{PROJECT_NAME}} Design System
+# {{PROJECT_NAME}} — {{DESIGN_TITLE}}
 
 > {{ONE_SENTENCE_DESIGN_PHILOSOPHY}}
 
-> /goal Follow the decisions in ./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md for this design task.
+> **Status**: {{draft|approved|implemented|promoted|superseded}} · **Headline**: {{ONE_LINE_HEADLINE}} · **Owner**: {{OWNER}}
 
-> **Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/` · **Context**: `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` · **Detailed decisions**: `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md`
+> **Work**: `{{WORK_ID}}` · **State**: `../state.md` · **Evidence**: `../evidence/design/{{DESIGN_SLUG}}/` · **Created**: {{ISO_8601}}
 
-> **Handover contract**: Sections 10–13 (Context & Decision Log, Component Inventory & Sources, Implementation State & Next Steps, File Map) are mandatory in every run — a zero-context agent resumes from them. `CONTEXT.md` documents the active task context and `DECISIONS.md` is the authoritative detailed visual decision history. Keep all of them current at every save point, not just at the end.
+> **Provenance**: {{SOURCE_URLS_PATHS_REVISIONS_AND_PRIOR_DESIGN_REFS}}
+
+> **Handoff contract**: Sections 10–13 are mandatory and current at every save point. Whole-work context and planning remain in `state.md`; this file owns design detail and visual decisions.
 
 ---
 
@@ -26,7 +28,7 @@
 
 Two-tier mode tokens (CSS-MODE-04): components consume **tier-2 `--ui-<role>` only**. Each tier-2 token is fed by a `--theme-light-<role>` / `--theme-dark-<role>` tier-1 pair living inside `@layer theme`, scaffolded by the `web:css` skill — never referenced from component CSS. The Light/Dark columns below are the tier-1 values.
 
-> Migration note (legacy DESIGN.md files): `--color-primary`→`--ui-primary` · `--color-secondary`→`--ui-accent` · `--surface-canvas`→`--ui-bg` · `--surface-primary`→`--ui-surface` · `--surface-secondary`→`--ui-surface-sunken` · `--surface-overlay`→`--ui-overlay` · `--text-primary`→`--ui-fg` · `--text-secondary`→`--ui-fg-muted` · `--text-tertiary`→`--ui-fg-subtle` · `--text-inverse`→`--ui-fg-inverse` · `--border-default`→`--ui-border` · `--border-strong`→`--ui-border-strong` · `--border-focus`→`--ui-focus-ring` · `--color-error*`→`--ui-danger*` · `--shadow-1..4`→`--ui-shadow-card|raised|overlay` · `--radius-sm/md/lg/xl`→`--radius-control|card|modal` · `--space-2xs..3xl`→`--space-1..12`.
+> Legacy token migration: `--color-primary`→`--ui-primary` · `--color-secondary`→`--ui-accent` · `--surface-canvas`→`--ui-bg` · `--surface-primary`→`--ui-surface` · `--surface-secondary`→`--ui-surface-sunken` · `--surface-overlay`→`--ui-overlay` · `--text-primary`→`--ui-fg` · `--text-secondary`→`--ui-fg-muted` · `--text-tertiary`→`--ui-fg-subtle` · `--text-inverse`→`--ui-fg-inverse` · `--border-default`→`--ui-border` · `--border-strong`→`--ui-border-strong` · `--border-focus`→`--ui-focus-ring` · `--color-error*`→`--ui-danger*` · `--shadow-1..4`→`--ui-shadow-card|raised|overlay` · `--radius-sm/md/lg/xl`→`--radius-control|card|modal` · `--space-2xs..3xl`→`--space-1..12`.
 
 ### Primary & Accent
 
@@ -162,7 +164,7 @@ The type scale is documented as a table — no per-level size tokens (`--text-bo
 
 ### Motion, Transitions & Separators
 
-The World-Class Element Checklist spec for this project (values follow design-reference.md Motion Specifics; picks come from the connective-tissue board):
+The World-Class Element Checklist spec for this project (values follow [Motion Specifics](design-reference.md#motion-specifics); picks come from the connective-tissue board):
 
 - **Page transition**: {{STYLE — e.g., "View Transitions API crossfade + 8px upward drift, 240ms cubic-bezier(0.16, 1, 0.3, 1)"}}
 - **Scroll-reveal language**: {{TRIGGER, DISTANCE, STAGGER — e.g., "IntersectionObserver at 20% visibility; opacity 0→1 + translateY(16px)→0; 90ms stagger per chunk; once-only"}}
@@ -236,7 +238,7 @@ Fully-round elements (avatars, pills, toggles) use the `9999px` literal — a sh
 
 ## 6. Depth & Elevation
 
-Shadows are mode-dependent — they go through the two-tier chain like colors. Dark-mode values use light-overlay stepping (semi-transparent white rings/washes), because drop shadows are nearly invisible on dark surfaces (see design-reference.md, Surfaces).
+Shadows are mode-dependent — they go through the two-tier chain like colors. Dark-mode values use light-overlay stepping (semi-transparent white rings/washes), because drop shadows are nearly invisible on dark surfaces (see [Surfaces](design-reference.md#surfaces)).
 
 | Tier-2 Token | Role | Tier-1 Light | Tier-1 Dark |
 |---|---|---|---|
@@ -345,13 +347,15 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 ---
 
-## 10. Context & Decision Log
+## 10. Design Context & Decision Log
 
-**Task workspace**: `./.design-{{AREA_NOUN_PHRASE}}/`
+**Target and audience**: {{TARGET_AUDIENCE_PRIMARY_TASK_AND_USAGE_CONTEXT}}
 
-**Context**: [`CONTEXT.md`](./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md) — task target, audience, inputs, constraints, confirmed general direction, current phase, and next action.
+**Inputs and constraints**: {{URL_SCREENSHOT_CODE_FIGMA_BRAND_ACCESSIBILITY_RESPONSIVE_PERFORMANCE_CONTENT}}
 
-**Detailed visual decisions**: [`DECISIONS.md`](./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md) — every presented candidate's concrete design details, rank rationale, chosen design, rejected designs and reasons, confirmations, and follow-up actions. This file is the detailed source of truth; the tables below are the concise DESIGN.md summary.
+**Authorization**: {{design-only|implementation-authorized|ambiguous}}
+
+**Evidence root**: `../evidence/design/{{DESIGN_SLUG}}/`
 
 **Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
 
@@ -380,14 +384,11 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 **Hard constraints**: {{BRAND_RULES, LEGAL, PLATFORM, PERFORMANCE — anything that binds the design}}
 
-**Decision summary** (every AskUserQuestion outcome, dated; full records live in `DECISIONS.md`):
+**Decision log** (every presented candidate, pick, rejection, confirmation, and follow-up; dated):
 
-| Date | Question | Decision |
-|---|---|---|
-| {{YYYY-MM-DD}} | Component library | {{e.g. shadcn/ui (detected, confirmed)}} |
-| {{YYYY-MM-DD}} | Component architecture | {{e.g. local copies, shadcn-style}} |
-| {{YYYY-MM-DD}} | Styling delivery | {{e.g. Tailwind utilities + @theme}} |
-| {{YYYY-MM-DD}} | Patch upstream vs local ({{component}}) | {{decision + follow-up if any}} |
+| Date | Decision ID | Area/question | Presented and ranked | Chosen | Rejected + reason | Confirmation/next action |
+|---|---|---|---|---|---|---|
+| {{YYYY-MM-DD}} | {{d-001}} | {{Direction}} | {{#1..#N with concrete details}} | {{pick/merge}} | {{alternatives + reason}} | {{user/quick rationale + follow-up}} |
 
 ---
 
@@ -425,6 +426,12 @@ Save point: <jj change id>
 
 **Known issues**: {{ANYTHING_FAILING_OR_DEFERRED}}
 
+**Promotion candidates**:
+
+| Knowledge | Destination | Disposition | Provenance/review |
+|---|---|---|---|
+| {{system-wide or non-system design rule}} | {{docs/design/system.md or docs/design/<slug>.md}} | {{candidate|promoted|rejected}} | {{work/review/evidence refs}} |
+
 **Next actions** (exact, ordered — a fresh agent starts at #1):
 
 1. {{NEXT_ACTION}}
@@ -437,12 +444,11 @@ Save point: <jj change id>
 | Artifact | Path |
 |---|---|
 | Theme stylesheet (`@layer theme`, scaffolded by `web:css`) | {{src/styles/theme.css}} |
-| Preview catalog | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/preview.html` |
-| Preview screenshots | `./.design-{{AREA_NOUN_PHRASE}}/previews/tokens/screenshot*.webp` |
-| This DESIGN.md | {{path}} |
+| Preview catalog | `../evidence/design/{{DESIGN_SLUG}}/previews/tokens/preview.html` |
+| Preview screenshots | `../evidence/design/{{DESIGN_SLUG}}/previews/tokens/screenshot*.webp` |
+| This design contract | `./{{DESIGN_SLUG}}.md` |
 | Key component directories | {{src/components/ui/, packages/ui/…}} |
-| Task workspace | `./.design-{{AREA_NOUN_PHRASE}}/` |
-| Context and detailed decisions | `./.design-{{AREA_NOUN_PHRASE}}/CONTEXT.md` + `./.design-{{AREA_NOUN_PHRASE}}/DECISIONS.md` |
-| Design boards and rendered images | `./.design-{{AREA_NOUN_PHRASE}}/boards/*.html` + `./.design-{{AREA_NOUN_PHRASE}}/boards/*.webp` |
-| Facelift inventories | `./.design-{{AREA_NOUN_PHRASE}}/inventories/facelift-inventory-before.json` / `-after.json` |
+| Whole-work state | `../state.md` |
+| Design boards and rendered images | `../evidence/design/{{DESIGN_SLUG}}/boards/*` |
+| Facelift inventories | `../evidence/design/{{DESIGN_SLUG}}/inventories/facelift-inventory-before.json` / `-after.json` |
 | Save points | {{jj change ids, newest last}} |

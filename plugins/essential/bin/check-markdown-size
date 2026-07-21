@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+invalid() {
+  jq -n --arg message "$1" '{status:"invalid", error:$message}'
+  exit 2
+}
+
+canonical_directory() {
+  (cd "$1" && pwd -P)
+}
+
+canonical_file_path() {
+  local path="$1"
+  local directory
+  directory="$(canonical_directory "$(dirname "$path")")"
+  printf '%s/%s\n' "$directory" "$(basename "$path")"
+}
+
+engineering_root=""
+if [[ "${1:-}" == "--engineering-root" ]]; then
+  [[ $# -ge 2 ]] || invalid "--engineering-root requires a value"
+  engineering_root="$2"
+  shift 2
+fi
+
+[[ -n "$engineering_root" ]] || \
+  invalid "--engineering-root <absolute .engineering directory> is required"
+[[ "$engineering_root" == /* ]] || \
+  invalid "engineering root must be absolute: $engineering_root"
+[[ "${engineering_root%/}" == */.engineering ]] || \
+  invalid "engineering root must name a .engineering directory: $engineering_root"
+[[ -d "$engineering_root" ]] || \
+  invalid "engineering root is missing or not a directory: $engineering_root"
+[[ $# -gt 0 ]] || invalid "at least one explicit final path is required"
+
+canonical_root="$(canonical_directory "$engineering_root")"
+unique=()
+canonical_unique=()
+for path in "$@"; do
+  [[ "$path" == /* ]] || invalid "path must be absolute: $path"
+  [[ -f "$path" ]] || invalid "path is missing or not a regular file: $path"
+  case "$path" in
+    *.md) ;;
+    *) invalid "path is not Markdown: $path" ;;
+  esac
+
+  canonical_path="$(canonical_file_path "$path")"
+  duplicate=0
+  for existing in "${canonical_unique[@]}"; do
+    if [[ "$existing" == "$canonical_path" ]]; then
+      duplicate=1
+      break
+    fi
+  done
+  if [[ $duplicate -eq 0 ]]; then
+    unique+=("$path")
+    canonical_unique+=("$canonical_path")
+  fi
+done
+
+eligible=()
+excluded=()
+index=0
+while [[ $index -lt ${#unique[@]} ]]; do
+  path="${unique[$index]}"
+  canonical_path="${canonical_unique[$index]}"
+  if [[ -L "$path" ]] ||
+     [[ "$canonical_path" != "$canonical_root"/*.md ]] ||
+     [[ "${canonical_path##*/}" == "working.md" ]]; then
+    excluded+=("$path")
+  else
+    eligible+=("$path")
+  fi
+  index=$((index + 1))
+done
+
+excluded_json="$(jq -n '$ARGS.positional' --args "${excluded[@]}")"
+if [[ ${#eligible[@]} -eq 0 ]]; then
+  jq -n --argjson excluded "$excluded_json" \
+    '{status:"pass", checked:0, excluded:$excluded, oversized:[]}'
+  exit 0
+fi
+
+counts_file="$(mktemp "${TMPDIR:-/tmp}/engineering-wc.XXXXXX")"
+trap 'rm -f "$counts_file"' EXIT
+
+# This is deliberately the only wc process in a pass.
+wc -c "${eligible[@]}" >"$counts_file"
+
+oversized='[]'
+parsed=0
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*([0-9]+)[[:space:]](.*)$ ]]; then
+    bytes="${BASH_REMATCH[1]}"
+    measured_path="${BASH_REMATCH[2]}"
+  else
+    invalid "could not parse wc output: $line"
+  fi
+  [[ "$measured_path" == "total" ]] && continue
+  parsed=$((parsed + 1))
+  if (( bytes > 16384 )); then
+    oversized="$(jq -c --arg path "$measured_path" --argjson bytes "$bytes" \
+      '. + [{path:$path, bytes:$bytes}]' <<<"$oversized")"
+  fi
+done <"$counts_file"
+
+[[ $parsed -eq ${#eligible[@]} ]] || \
+  invalid "wc output did not contain every eligible path"
+
+if [[ "$(jq 'length' <<<"$oversized")" -gt 0 ]]; then
+  status="split_required"
+  exit_code=1
+else
+  status="pass"
+  exit_code=0
+fi
+
+jq -n \
+  --arg status "$status" \
+  --argjson checked "${#eligible[@]}" \
+  --argjson excluded "$excluded_json" \
+  --argjson oversized "$oversized" \
+  '{status:$status, checked:$checked, excluded:$excluded, oversized:$oversized}'
+exit "$exit_code"

@@ -19,7 +19,7 @@ The `@theriety/retry` package centers the retry decision around a **pluggable cl
 
 Retry is deceptively easy to get wrong — teams reinvent the same half-correct `try/catch + setTimeout`, each with its own jitter, classification, and cancellation bug. `@theriety/retry` cures that retry fatigue with a single fixed pipeline: every attempt walks through **Attempt → Classify → Delay → Decide**, always in the same order, always with full context.
 
-Because the four phases are isolated behind small interfaces, swapping one — a deterministic `DelayStrategy` in tests, a header-aware `Classifier` in production — never perturbs the rest. See [ARCHITECTURE.md#-core-concepts](./ARCHITECTURE.md#-core-concepts) for per-phase rationale and invariants.
+Because the four phases are isolated behind small interfaces, swapping one — a deterministic `DelayStrategy` in tests, a header-aware `Classifier` in production — never perturbs the rest. See [the architecture guide](./docs/architecture/retry-engine.md#-core-concepts) for per-phase rationale and invariants.
 
 ---
 
@@ -27,7 +27,7 @@ Because the four phases are isolated behind small interfaces, swapping one — a
 
 A 4-phase pipeline (`Attempt → Classify → Delay → Decide`) runs inside `RetryEngine`, with every phase behind a replaceable interface (`src/engine`, `src/policy`, `src/classify`, `src/delay`).
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for component diagrams, data flow, state machine, and invariants.
+See [`docs/architecture/retry-engine.md`](./docs/architecture/retry-engine.md) for component diagrams, data flow, state machine, and invariants.
 
 ---
 

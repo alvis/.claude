@@ -1,9 +1,9 @@
 ---
 name: commit
-description: 'Save code changes cleanly with jj-first, git-compatible routing. Use for commits, split/absorb/edit operations, stacked changes, history reordering, retrospective blame fixes, or the --create-pr compatibility handoff; preserve the repository history policy and keep coding:commit as the sole history-mutation owner.'
+description: 'Save code changes cleanly with jj-first, git-compatible routing. Use for commits, manifest-scoped lifecycle saves, split/absorb/edit operations, stacked changes, history reordering, retrospective blame fixes, or the --create-pr compatibility handoff; preserve the repository history policy and keep coding:commit as the sole history-mutation owner.'
 model: opus
 allowed-tools: Bash(jj:*), Bash(git:*), Bash(gh:*), Bash(npm:*), Bash(pnpm:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/*), Read, Grep, Glob, Agent, Skill
-argument-hint: "[--retrospective] [--reorder [--up-to <rev>]] [--create-pr] [--branch-prefix <name>] [--no-verify] [--dry-run] [--allow-rewrite-merged]"
+argument-hint: "[--prepare-paths-from=<scope-request> | --paths-from=<manifest> --manifest-sha256=<sha256>] [--retrospective] [--reorder [--up-to <rev>]] [--create-pr] [--branch-prefix <name>] [--no-verify] [--dry-run] [--allow-rewrite-merged]"
 hooks:
   PreToolUse:
     - matcher: "Bash"
@@ -25,7 +25,12 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 
 ## Boundaries
 
-- Use for: committing or describing changes, splitting mixed work, editing prior changes, retrospective blame fixups, reordering history, parallel workspaces, direct bookmark sync for the correct-merged and partial-to-branch routes, and preserving the `--create-pr` compatibility entrypoint.
+- Use for: committing or describing changes, saving an exact lifecycle-owned
+  path set while preserving unrelated dirty work, splitting mixed work, editing
+  prior changes, retrospective blame fixups, reordering history, parallel
+  workspaces, direct bookmark sync for the correct-merged and
+  partial-to-branch routes, and preserving the `--create-pr` compatibility
+  entrypoint.
 - Do not use for: general remote publication or opening, updating, and polling PRs (`coding:push-pr`), composing PR titles or bodies (`coding:write-pr`), per-commit QA of an unpushed stack (`coding:finalize-commits`), or diagnosing code failures (`coding:fix`).
 - Tool precedence: `jj` first — every change is a jj change and jj auto-snapshots `@` on every op. `git commit` acts only as the conventional-commit emitter inside the save flow on jj-colocated repos, never hand-run outside this skill. `gh` is retained for history routes that inspect remote PR state; `coding:push-pr` owns PR publication and CI, while this skill may run `jj git push` only in the two named direct-sync routes.
 
@@ -34,6 +39,9 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 - This skill never opens, updates, or polls PRs. Its only pushes are the explicit, single-bookmark sync steps in `workflow-correct-merged.md` Option 2 and `workflow-partial-to-branch.md`; `coding:push-pr` owns PR publication and CI convergence.
 - NEVER rewrite merged-on-origin history without explicit consent. Detected target → `AskUserQuestion`, default = corrective PR per `GIT-PR-STACK-03`. `--allow-rewrite-merged` skips the prompt.
 - Every change MUST be self-contained: compile + lint + tests pass for each change in isolation. Shared files (package.json, tsconfig, lockfiles) evolve incrementally — no forward references.
+- `--paths-from` is a closed-set save, not a path suggestion. Never save,
+  stage, reset, stash, or rewrite a non-selected dirty path, and never continue
+  when exact isolation or the before/after preservation proof is unavailable.
 - The Conventional Commits subject regex MUST match BEFORE any mutation (see [references/conventional-commits.md](references/conventional-commits.md)); no emoji prefixes in commit subjects.
 - `git worktree` ≠ `jj workspace`. If the user accidentally used a git worktree, `AskUserQuestion` to move work back to HEAD before continuing.
 </IMPORTANT>
@@ -45,6 +53,9 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 
 | Flag | Purpose |
 |---|---|
+| `--prepare-paths-from=<scope-request>` | No-history preparation route for a lifecycle parent. Seal its ignored work-evidence scope request into an immutable manifest and return the exact `--paths-from` invocation; do not save, finalize, or publish. |
+| `--paths-from=<manifest>` | Save only the manifest's exact dirty `selected_paths`; validate the ignored work-evidence manifest and use [references/workflow-save-manifest.md](references/workflow-save-manifest.md). Requires `--manifest-sha256`. |
+| `--manifest-sha256=<sha256>` | Expected SHA-256 of the exact manifest bytes. Valid only with `--paths-from`; prevents a path or manifest swap between lifecycle handoff and save. |
 | `--retrospective` | Distribute pending edits on `@` into prior changes (stage 1: `jj absorb`; stage 2: `jj blame` + `jj squash --from @ --into <ancestor>`; stage 3: git fixup fallback). See `references/workflow-retrospective.md`. |
 | `--reorder [--up-to <rev>]` | Reorder history into a clean linear chain up to target rev (default `main@origin`). Content-equivalence guard via `verify.sh`. See `references/workflow-reorder.md`. |
 | `--create-pr` | Compatibility entrypoint: finish the selected save/history route, then invoke `coding:push-pr` with the resolved change or stack. |
@@ -53,7 +64,18 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 | `--dry-run` | Print the plan, don't mutate. |
 | `--allow-rewrite-merged` | Explicit consent to rewrite history already merged on origin (skips the `AskUserQuestion` corrective-PR prompt) per `GIT-PR-STACK-03`. |
 
-- **Prerequisites**: a jj-colocated (or plain git) repository. Publication prerequisites are checked by `coding:push-pr`. Standards `GIT-PR-STACK-01..06` (bookmark naming, fix earliest unmerged, no merged-history rewrites, feature flags, bottom-to-top merge, draft PRs) bind every route; `GIT-PR-SIZE-01..04` are reviewer-enforced and informational here.
+- **Prerequisites**: a jj-colocated (or plain git) repository. The
+  manifest-scoped route additionally requires a checksum-bound manifest under
+  the resolved work root's ignored evidence directory. Producer receipts must
+  use the strict generated-files schema and reconcile exactly to the
+  publication set. The helper capability-probes the installed jj commands,
+  revsets, templates, operation pinning, and structural Git colocation; no jj
+  version string alone authorizes the scoped route. Publication
+  prerequisites are checked by `coding:push-pr`. Standards
+  `GIT-PR-STACK-01..06` (bookmark naming, fix earliest unmerged, no
+  merged-history rewrites, feature flags, bottom-to-top merge, draft PRs) bind
+  every route; `GIT-PR-SIZE-01..04` are reviewer-enforced and informational
+  here.
 
 ## Workflow
 
@@ -61,6 +83,8 @@ The skill self-routes by reading `jj diff --stat`, `jj log -r '@-..@'`, and book
 
 | Trigger | How invoked | Reference |
 |---|---|---|
+| Prepare exact lifecycle scope | `--prepare-paths-from=<scope-request>` | `references/workflow-save-manifest.md` producer contract only |
+| Exact lifecycle-owned save | `--paths-from=<manifest> --manifest-sha256=<sha256>` | `references/workflow-save-manifest.md` |
 | Default save | (no flag) | `references/workflow-save-local.md` |
 | Multiple concerns on `@` | auto-detected | `references/workflow-split.md` |
 | User asks "edit commit X" | auto-detected | `references/workflow-edit.md` |
@@ -79,6 +103,7 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
 
    | Route | Rewrites history? | Backup |
    |---|---|---|
+   | Manifest-scoped save (`jj split` or Git path-limited commit) | No prior history | capture sealed HEAD/jj state plus the route's immutable exact-index backup and rollback handle |
    | Default save (`jj describe` + `git commit`) | No | skip |
    | Split current change (`jj split`) | No | skip |
    | Parallel workspace (`jj new` / `jj workspace add`) | No | skip |
@@ -97,7 +122,12 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
 
    For every route, capture `jj op log -n1 --no-graph -T 'self.id().short()'` as a rollback handle (`jj op restore <id>` undoes any jj operation).
 
-2. **Detect mode.** Read working-copy state and pick exactly one route:
+2. **Detect mode.** `--prepare-paths-from` runs only the producer contract and
+   returns before proposing or mutating history; it cannot combine with another
+   operation flag. A valid `--paths-from`/`--manifest-sha256` pair forces the
+   manifest-scoped route and cannot be combined with `--retrospective`,
+   `--reorder`, a named partial-to-branch target, or `--create-pr`. Otherwise,
+   read working-copy state and pick exactly one route:
 
    ```bash
    jj diff --stat               # file count + LOC
@@ -110,7 +140,7 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
 
 3. **Propose the plan** to the user before any mutation. For multi-change routes (`--retrospective`, `--reorder`, `--create-pr`, auto-split), show the ordered list of operations. With `--dry-run`, skip local mutation but still perform the `coding:push-pr --dry-run` handoff when `--create-pr` is present.
 
-4. **Execute local history.** Complete the matching save/edit/reorder/parallel procedure and resolve the exact change or bottom-to-top stack. Do not reproduce any bookmark, push, PR, restack, or CI workflow here except the bookmark move and direct-sync steps explicitly owned by the correct-merged and partial-to-branch references.
+4. **Execute local history.** Complete the matching save/edit/reorder/parallel procedure and resolve the exact change or bottom-to-top stack. A manifest-scoped save must return its manifest hash, saved change ids, and a PASS preservation receipt before any later owner may continue. If its post-save proof fails, run the manifest reference's plain-Git `recover` command or restore the captured jj operation, prove the pre-save inventory again, and report `blocked_scope`; never leave an unproved saved change as success. Do not reproduce any bookmark, push, PR, restack, or CI workflow here except the bookmark move and direct-sync steps explicitly owned by the correct-merged and partial-to-branch references.
 
 5. Run the verification below; when a check fails, fix the cause (or take the integrity table's prescribed action) and re-run that check. Repeat until every check passes or a concrete blocker remains — an integrity STOP awaiting the user, or a failure outside this skill's scope — then report the blocker instead of looping.
 
@@ -137,4 +167,15 @@ Then run project lint/test/build via `npm run lint`, `npm run test`, `npm run bu
 
 ## Completion
 
-Report the route taken (save, split, edit, parallel, retrospective, reorder, create-pr compatibility handoff, partial-to-branch, empty, divergent, or correct-merged), changes touched (change IDs), any directly synchronized bookmark, the last jj op id as the rollback handle, and verification results — lint/test/build as PASS/SKIP/FAIL plus the integrity outcome. When `--create-pr` ran, preserve the PR URLs and final green state returned by `coding:push-pr`; this skill itself never opens, updates, or polls PRs.
+Report the route taken (save, manifest-scoped save, split, edit, parallel,
+retrospective, reorder, create-pr compatibility handoff, partial-to-branch,
+empty, divergent, or correct-merged), changes touched (change IDs), any
+directly synchronized bookmark, the last jj op id as the rollback handle, and
+verification results — lint/test/build as PASS/SKIP/FAIL plus the integrity
+outcome. A manifest-scoped result also reports the exact manifest path/hash,
+selected paths, saved-tree hash evidence, preservation receipt, and whether all
+non-selected dirty bytes and index/status entries remained identical. When a
+plain-Git scoped save was recovered, report the immutable recovery receipt and
+restored HEAD/index hash instead of a PASS preservation receipt. When
+`--create-pr` ran, preserve the PR URLs and final green state returned by
+`coding:push-pr`; this skill itself never opens, updates, or polls PRs.

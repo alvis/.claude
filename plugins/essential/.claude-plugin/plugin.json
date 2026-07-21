@@ -1,5 +1,6 @@
 {
   "name": "essential",
+  "author": {"name": "Alvis"},
   "description": "Documentation creation, code design, product strategy, and Notion integration for knowledge management",
   "version": "2026-07-19",
   "hooks": {

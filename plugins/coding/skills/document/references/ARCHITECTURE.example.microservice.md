@@ -1,12 +1,12 @@
 # @theriety/queue-worker
 
-> ARCHITECTURE = how it works. For usage, see README.md.
+> ARCHITECTURE = how it works. For usage, see readme.md.
 
 <br/>
 
 📌 **Architectural shape:** `@theriety/queue-worker` is a **hexagonal (ports & adapters) microservice**. A thin domain core owns job lifecycle rules and delegates every I/O concern — durable storage, broker dispatch, admin HTTP — to a port whose implementation is chosen at boot. The core compiles with zero runtime dependencies; all vendor SDKs (`pg`, `mysql2`, `ioredis`, `amqplib`) live behind adapter packages.
 
-**Why this shape:** background workers accrete tribal knowledge fast — one team picks Redis + BullMQ, another picks Postgres-only polling, a third wants SQLite for local development. Treating storage and dispatch as independent ports means the domain rules (idempotency, retry, at-least-once delivery, safe drain) are written once and audited in one place, while the integration-testing surface shrinks to a single contract test per adapter. The public API described in the sibling [`README.md`](./README.md) is the narrowest possible surface that still expresses these rules.
+**Why this shape:** background workers accrete tribal knowledge fast — one team picks Redis + BullMQ, another picks Postgres-only polling, a third wants SQLite for local development. Treating storage and dispatch as independent ports means the domain rules (idempotency, retry, at-least-once delivery, safe drain) are written once and audited in one place, while the integration-testing surface shrinks to a single contract test per adapter. The public API described in [`readme.md`](../../readme.md) is the narrowest possible surface that still expresses these rules.
 
 <br/>
 <div align="center">

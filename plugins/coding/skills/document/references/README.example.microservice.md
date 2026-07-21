@@ -1,6 +1,6 @@
 # @theriety/queue-worker
 
-> README = how to run it. For design rationale, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+> README = how to run it. For design rationale, see [`docs/architecture/durable-job-worker.md`](./docs/architecture/durable-job-worker.md).
 
 <br/>
 
@@ -28,7 +28,7 @@ The worker is a **hexagonal runtime** (`ports & adapters`): the domain core owns
 4. **Acknowledge** (via `JobService.ack`) so that success marks the job `succeeded` and failure records an `Attempt` before the retry policy decides the next state
 5. **Drain** (via `Worker.drain`) so that `SIGTERM` stops new pulls and waits for in-flight handlers to finish within a bounded grace period
 
-Because storage and dispatch are decoupled, you can run a Postgres-backed queue with no broker at all (polling mode), or pair Postgres with RabbitMQ for low-latency dispatch, or run an in-memory adapter for tests — the handler code does not change. The deeper rationale and diagrams live in the sibling [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+Because storage and dispatch are decoupled, you can run a Postgres-backed queue with no broker at all (polling mode), or pair Postgres with RabbitMQ for low-latency dispatch, or run an in-memory adapter for tests — the handler code does not change. The deeper rationale and diagrams live in [`docs/architecture/durable-job-worker.md`](./docs/architecture/durable-job-worker.md).
 
 ---
 
@@ -241,7 +241,7 @@ Legend: ✅ supported &nbsp; ⚠️ partial &nbsp; ❌ unsupported &nbsp; 🔜 p
 
 A hexagonal runtime: a domain core (`src/domain`) drives every job, with storage and dispatch swapped behind `JobAdapter` / `BrokerAdapter` ports (`src/adapters`); `src/worker` owns the pull loop and draining.
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for adapter contracts, deployment topology, and state machine.
+See [`docs/architecture/durable-job-worker.md`](./docs/architecture/durable-job-worker.md) for adapter contracts, deployment topology, and state machine.
 
 ---
 

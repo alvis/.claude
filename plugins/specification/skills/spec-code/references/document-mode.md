@@ -1,10 +1,13 @@
 # DOCUMENT Mode — Codebase-Extraction Workflow
 
-DOCUMENT mode generates a specification by analyzing an existing codebase rather than designing from scratch. It produces a DESIGN.md (and child files) that documents reality, not aspiration.
+DOCUMENT mode derives specification content from an existing codebase. It
+updates the active work specification and ultimately the versioned capability
+docs; it does not create root design files or imply a remote destination.
 
 ## When DOCUMENT Mode Activates
 
-- A codebase exists but no DESIGN.md is present, OR
+- A codebase exists but no authoritative capability specification is present,
+  OR
 - The instruction explicitly requests documentation of existing code.
 
 ## Step A — Analyze Existing Codebase (Step 1.3 in parent workflow)
@@ -63,48 +66,63 @@ DOCUMENT mode does NOT research; it extracts.
 - Note the actual styling approach used.
 - Document reusable components as they exist.
 
-## Step G — File Generation (Step 9 in parent workflow)
+## Step G — Artifact generation
 
-- Generate the specification based on code analysis.
+- Generate work-local design evidence and a specification for the explicitly
+  selected destination based on code analysis.
 - Document actual implementation under template sections.
 - Fill all template sections with discovered information.
 - Note where the implementation differs from best practices (if relevant).
-- Apply the standard frontmatter (see `references/frontmatter.md`).
+- Apply transport and derivation metadata from `references/frontmatter.md`.
+- For a local or inline destination, author the work-local specification and
+  derive reviewed versioned capability docs directly. Do not search a Notion
+  database, create a remote page, author MDC, or claim a 1:1 remote mapping.
+- Only for an explicitly selected Notion destination, author through the
+  selected MDC mechanism and follow the transport flow below.
 
-## Notion Sync Considerations (Step 10)
+## Notion sync considerations
 
-When syncing a DOCUMENT-mode spec to Notion:
+Only when the caller explicitly selects a Notion destination:
 
 - Set page property `Status = "Implemented"` (CREATE mode uses `"Drafting"`).
-- Otherwise delegate the standard synchronization flow to `Skill(sync-notion)`; spec-code owns document generation, not Notion transport or conflict mechanics.
+- For a new page, author the explicit local MDC path with its parent first, then
+  create it through `Skill(sync-notion)`, accept the canonical `ref` only from
+  its conformance-bound create output, and verification-pull that identity.
+- For an existing paired specification, delegate completion to
+  `Skill(sync-spec)`, which delegates transport and conflict mechanics to
+  `Skill(sync-notion)`.
+
+Do not infer a Notion destination from installed tooling, template metadata, a
+project convention, or the absence of a local source.
 
 ## Examples
 
 ```bash
-/spec-code "Document the existing Express API in this codebase"
-# Auto-detected DOCUMENT (codebase exists, no DESIGN.md).
+/spec-code "Document the existing Express API in this codebase" --capability=express-api
+# Auto-detected DOCUMENT (codebase exists, no capability specification).
 # Extracts package name from package.json (e.g., "express-api").
 # Analyzes structure, extracts tech stack, documents architecture from code.
 # Identifies components, extracts API endpoints from route files.
-# Generates DESIGN.md + child files with frontmatter.
-# Searches Design Specification database for "express-api".
-#   - If found: updates existing page with Status="Implemented".
-#   - If not found: creates new page with Status="Implemented".
+# Generates work-local evidence and reviewed versioned capability docs.
+# No Notion database search, page creation, MDC, or remote sync occurs.
 ```
 
 ```bash
-/spec-code "Retrospectively document this Next.js application" --type=web-app
+/spec-code "Retrospectively document this Next.js application" --capability=web-app --type=web-app --source-direction=local-to-notion --transport-root=<dir> --local-mdc=<path> --parent=<notion-parent-ref>
 # Scans Next.js project structure.
 # Documents actual pages, components, API routes.
 # Extracts UI component tree from code.
 # Captures current tech decisions, follows template structure.
-# All files include frontmatter; syncs to Notion with 1:1 mapping.
+# Because the caller explicitly selected Notion, authors the given MDC path,
+# creates the page under the given parent through the validated create route,
+# and verification-pulls the canonical ref returned by transport.
 ```
 
 ```bash
-/spec-code "Document the authentication module only"
+/spec-code "Document the authentication module only" --capability=authentication
 # Partial-codebase DOCUMENT.
 # Analyzes auth-related files only.
 # Documents auth component architecture and API endpoints.
-# Produces a focused DESIGN.md following template structure.
+# Produces a focused local capability specification and durable derivation.
+# Does not search or mutate a remote database.
 ```

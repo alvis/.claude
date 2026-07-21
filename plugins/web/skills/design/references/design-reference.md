@@ -202,11 +202,19 @@ Every boundary between page sections is a design decision. Boards and final page
 | Full-bleed image band | Chaptering long pages; an edge-to-edge visual (with contrast-safe treatment) acts as the divider |
 | Marquee / ticker divider | Playful or fashion-adjacent directions; a single-line scrolling strip (logos, keywords) — honors `prefers-reduced-motion` by pausing |
 
-## DESIGN.md Scaffold
+## Work design scaffold
 
-For multi-page or production UIs, initialize `./.design-<area-noun-phrase>/CONTEXT.md` and `./.design-<area-noun-phrase>/DECISIONS.md`, then emit the root DESIGN.md summary before writing the first component. This forces enumeration of decisions that would otherwise be left implicit. The 13-section structure, two-tier token tables, component specifications, and the "Motion, Transitions & Separators" spec live in `design.template.md` — that file is the single source for the root scaffold. Sections 10–13 plus the task workspace files are the handover contract — mandatory in every run; a zero-context agent resumes from them.
+For multi-page or production UIs, create the active work's
+`design/<design-slug>.md` before the first component. The 13-section structure,
+two-tier token tables, component specifications, decision log, evidence map,
+and “Motion, Transitions & Separators” specification live in
+`design.template.md`. Sections 10–13 are the domain handoff contract; whole-work
+context and planning stay in `state.md`.
 
-For single components or quick prototypes, use a lightweight root DESIGN.md containing the one-line `/goal` handoff and three-line visual thesis (mood, content plan, interaction plan) instead of the full 13-section scaffold. The `.design-<area-noun-phrase>/CONTEXT.md` and `DECISIONS.md` workspace remains required.
+For a single component or quick prototype, use a lightweight design child with
+the shared metadata, three-line visual thesis, decisions, evidence paths,
+implementation mapping, and next action. Evidence still belongs under
+`evidence/design/<design-slug>/`.
 
 ## AI Slop Test
 
@@ -221,4 +229,4 @@ Fix the typography, the color system, or the layout until the answer flips. If m
 
 ---
 
-*Adapted from [Waza](https://github.com/tw93/Waza) design skill references. Font, color, motion, and AI slop rules draw on [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0). DESIGN.md scaffold concept credited to [getdesign.md](https://getdesign.md) (MIT).*
+*Adapted from [Waza](https://github.com/tw93/Waza) design skill references. Font, color, motion, and AI slop rules draw on [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0). Design scaffold concept credited to [getdesign.md](https://getdesign.md) (MIT).*

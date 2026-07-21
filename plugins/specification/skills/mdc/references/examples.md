@@ -1,6 +1,8 @@
 # MDC Idioms — Worked Examples
 
-Six condensed, real-world MDC idioms drawn from `.code-spec/` and the `@theriety/mdc` reference docs. Each example is ≤ ~30 lines. Loaded by the skill in `author` mode (and useful as patterns when editing).
+Six condensed, real-world MDC idioms drawn from Notion-backed documents and
+the `@theriety/mdc` reference docs. Each example is ≤ ~30 lines. Loaded by the
+skill in `author` mode (and useful as patterns when editing).
 
 ---
 

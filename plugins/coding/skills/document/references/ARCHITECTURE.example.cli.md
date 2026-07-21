@@ -1,12 +1,12 @@
 # @theriety/tsx-lint
 
-<!-- ARCHITECTURE = how it works. For usage/install, see README.md. -->
+<!-- ARCHITECTURE = how it works. For usage/install, see readme.md. -->
 
 <br/>
 
 📌 **Architectural shape:** `@theriety/tsx-lint` is a **staged pipeline CLI** — `argv` is routed to one of three subcommand handlers, each of which drives a three-stage core loop (`Parse → RuleRun → Report`) around a content-addressed cache. The codebase splits into eight narrowly-scoped modules that fan out from a single `bin/tsx-lint.ts` entry.
 
-**Why this shape:** linters are dominated by parse cost and rule-visit cost, so the pipeline is the only shape that lets us share a single AST across N rules without re-parsing. Isolating the rule registry, the reporter, and the cache store behind interfaces keeps the hot path under 400 LOC and makes the rule-author story (documented in the sibling `README.md`) independent of transport (CLI today, LSP later).
+**Why this shape:** linters are dominated by parse cost and rule-visit cost, so the pipeline is the only shape that lets us share a single AST across N rules without re-parsing. Isolating the rule registry, the reporter, and the cache store behind interfaces keeps the hot path under 400 LOC and makes the rule-author story (documented in `readme.md`) independent of transport (CLI today, LSP later).
 
 <br/>
 <div align="center">
@@ -182,7 +182,7 @@ Most external work happens as a custom `Rule` or a custom `Reporter`. Both surfa
 | Extension | Steps | Files Touched | Tests |
 | --- | --- | --- | --- |
 | Add a custom rule | 1. call `defineRule({ id, severity, visit })` in `rules/custom/<id>.ts`  2. export from the plugin entry  3. reference the plugin from `tsx-lint.config.ts` | `rules/custom/<id>.ts`, plugin entry | `spec/rules/<id>.spec.ts` |
-| Add a custom reporter | 1. implement `Reporter.format(findings)` in `report/<name>.ts`  2. register it in `report/index.ts`  3. document the flag value in `README.md` | `report/<name>.ts`, `report/index.ts` | `spec/report/<name>.spec.ts` |
+| Add a custom reporter | 1. implement `Reporter.format(findings)` in `report/<name>.ts`  2. register it in `report/index.ts`  3. document the flag value in `readme.md` | `report/<name>.ts`, `report/index.ts` | `spec/report/<name>.spec.ts` |
 
 ---
 

@@ -34,9 +34,9 @@ Purpose: give first-time visitors a one-glance pitch, trust signals (badges), an
 
 <!--
 SCOPE BANNER:
-README = usage, examples, install, API. For how-it-works, see ARCHITECTURE.md.
+README = usage, examples, install, API. For how-it-works, link the durable architecture path.
 Keep this file focused on what the consumer needs to *use* the package. Push
-internal shape, data flow, and design rationale into ARCHITECTURE.md.
+internal shape, data flow, and design rationale into `docs/architecture/<architecture-slug>.md`.
 -->
 
 <!--
@@ -299,12 +299,12 @@ Examples: runtime/service separation, packages that extend or build upon each ot
 OPTIONAL: Include this section for packages with multiple files/modules or
 architectural patterns.
 
-SEPARATION RULE: When ARCHITECTURE.md is also being generated, keep this
+SEPARATION RULE: When durable architecture is also being generated, keep this
 section to ≤8 lines total (one-line summary + depth-2 file-tree snippet +
-link to ARCHITECTURE.md). All diagrams, design patterns, invariants, data
-flow, and extension points belong in ARCHITECTURE.md, not here.
+link to its computed relative path). All diagrams, design patterns, invariants,
+data flow, and extension points belong in durable architecture, not here.
 
-If there is NO ARCHITECTURE.md, you may expand this section to include a
+If there is no durable architecture document, you may expand this section to include a
 "Main Components" bullet list. But never duplicate ARCHITECTURE content.
 
 SNIPPETS: Reusable Mermaid diagram snippets (dependency-graph,
@@ -323,7 +323,7 @@ src
 └── index.ts            # main exports
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for module topology, data flow, design patterns, and invariants.
+See [the architecture guide](<relative-path-to-docs/architecture/<architecture-slug>.md>) for module topology, data flow, design patterns, and invariants.
 
 ---
 
@@ -665,12 +665,12 @@ Purpose: make the project's non-negotiables legible so contributors and users ca
 <!-- OSS-ONLY START: Contributing -->
 <!--
 When to include: any OSS package that accepts external contributions. Skip for monorepo-internal packages (the monorepo root handles this).
-Purpose: point contributors to the canonical CONTRIBUTING.md instead of duplicating it here.
+Purpose: point contributors to the canonical `contributing.md` instead of duplicating it here.
 -->
 
 ## 🤝 Contributing
 
-Contributions are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the dev setup, branching model, and review process.
+Contributions are welcome. See [`contributing.md`](./contributing.md) for the dev setup, branching model, and review process.
 
 ---
 
@@ -684,7 +684,7 @@ Purpose: single link to the canonical change history.
 
 ## 📜 Changelog
 
-See [`CHANGELOG.md`](./CHANGELOG.md) for the full release history.
+See [`changelog.md`](./changelog.md) for the full release history.
 
 ---
 
@@ -698,7 +698,7 @@ Purpose: tell reporters where to disclose privately instead of filing a public i
 
 ## 🛡️ Security
 
-Please report vulnerabilities via the process in [`SECURITY.md`](./SECURITY.md). Do not open public issues for security reports.
+Please report vulnerabilities via the process in [`security.md`](./security.md). Do not open public issues for security reports.
 
 ---
 
@@ -712,7 +712,7 @@ Purpose: state the license plainly at the end of the README, as readers expect.
 
 ## 📄 License
 
-<SPDX identifier, e.g. `MIT`> © <year> <copyright holder>. See [`LICENSE`](./LICENSE) for the full text.
+<SPDX identifier, e.g. `MIT`> © <year> <copyright holder>. See [`license`](./license) for the full text.
 
 <!-- OSS-ONLY END -->
 
