@@ -28,11 +28,28 @@
     answers: {},
     touched: {},
     annotations: {},
+    dragOrders: {},
+    dragTouched: {},
   });
 
   let state = loadState();
   let activeSectionId = null;
   let programmaticControlUpdate = false;
+
+  // Components that depend on the current answer set register a refresh here;
+  // renderPrompt() runs them after every prompt rebuild so their views stay in
+  // step with the one canonical prompt (wizard summary, natural-language reply).
+  const afterRenderHooks = [];
+  // Drag-probe controllers, populated by installDragProbes(); buildPrompt() and
+  // clearState() read them to serialize / restore probe order.
+  const dragProbes = [];
+
+  function prefersReducedMotion() {
+    return (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
 
   function loadState() {
     try {
@@ -43,6 +60,8 @@
         answers: parsed.answers || {},
         touched: parsed.touched || {},
         annotations: parsed.annotations || {},
+        dragOrders: parsed.dragOrders || {},
+        dragTouched: parsed.dragTouched || {},
       };
     } catch (_error) {
       return emptyState();
@@ -209,22 +228,58 @@
     return element;
   }
 
+  // Humanize a slug-style section id into a nav label:
+  // "reality-gap" -> "Reality gap".
+  function humanizeSectionId(id) {
+    const cleaned = collapseText(String(id ?? "").replace(/[-_]+/g, " "));
+    if (!cleaned) return "";
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  // DYNAMIC SECTION NAV. The shell ships an EMPTY [data-section-nav] container in
+  // the sidebar; the runtime fills it with one quick-link per
+  // [data-discovery-section] actually present in the DOM, in document order.
+  // Href comes from the section's element id (falling back to data-section-id);
+  // the label is data-section-label, else the first heading (h1-h3), else the
+  // humanized section id. Links are built with safe DOM APIs (createElement /
+  // textContent — never innerHTML). The singleton generated-brief prompt host is
+  // skipped: it stays reachable through the folded-prompt control wired in
+  // installPresentationShell, so its folded behavior is untouched. This runs
+  // BEFORE installAnchorFlash / installPresentationShell so the links they query
+  // and bind already exist — each gets exactly one flash/active handler, no
+  // double-binding. Recomputed only here at init (static pages). With no JS the
+  // empty container simply collapses (progressive enhancement).
+  function buildSectionNav() {
+    const nav = document.querySelector("[data-section-nav]");
+    if (!nav) return;
+    const promptHostSection = promptHost.closest("[data-discovery-section]");
+    const fragment = document.createDocumentFragment();
+    sections.forEach((section) => {
+      if (section === promptHostSection) return;
+      const anchor = section.id || section.dataset.sectionId;
+      if (!anchor) return;
+      const label =
+        collapseText(section.dataset.sectionLabel) ||
+        collapseText(section.querySelector("h1, h2, h3")?.textContent) ||
+        humanizeSectionId(section.dataset.sectionId) ||
+        anchor;
+      const link = makeElement("a", "", label);
+      link.setAttribute("href", `#${anchor}`);
+      fragment.append(link);
+    });
+    nav.replaceChildren(fragment);
+  }
+
   function installSectionAnnotation(section) {
     const id = section.dataset.sectionId;
     if (!id) return;
 
-    const trigger = makeElement(
-      "button",
-      "discovery-annotation-trigger",
-    );
+    const trigger = makeElement("button", "discovery-annotation-trigger");
     trigger.type = "button";
     trigger.dataset.annotationFor = id;
     trigger.addEventListener("click", () => openAnnotationEditor(id));
 
-    const summary = makeElement(
-      "div",
-      "discovery-annotation-summary",
-    );
+    const summary = makeElement("div", "discovery-annotation-summary");
     summary.dataset.annotationSummary = id;
     summary.setAttribute("role", "note");
 
@@ -255,10 +310,7 @@
   }
 
   function buildAnnotationDialog() {
-    const dialog = makeElement(
-      "dialog",
-      "discovery-annotation-dialog",
-    );
+    const dialog = makeElement("dialog", "discovery-annotation-dialog");
     dialog.dataset.annotationDialog = "";
 
     const form = makeElement("form", "discovery-annotation-form");
@@ -533,6 +585,15 @@
     lines.push(
       ...(annotations.length ? annotations : ["- No section annotations yet."]),
     );
+
+    const dragResults = collectDragResults();
+    if (dragResults.length) {
+      lines.push("", "## Interaction results");
+      dragResults.forEach(({ label, order }) => {
+        lines.push(`- **${label}:** ${order.join(" → ")}`);
+      });
+    }
+
     lines.push("", "## Still unresolved");
     lines.push(
       ...(unresolved.length ? unresolved : ["- No unresolved page questions."]),
@@ -554,6 +615,47 @@
   function renderPrompt() {
     promptHost.value = buildPrompt();
     updatePresentationSummary();
+    afterRenderHooks.forEach((hook) => hook());
+  }
+
+  // Read a drag-probe's human label the same way questionLabel reads a
+  // fieldset's: prefer the data-probe-label attribute, then a descendant
+  // [data-probe-label] element, then the probe id.
+  function probeLabel(probe) {
+    return (
+      collapseText(probe.dataset.probeLabel) ||
+      collapseText(probe.querySelector("[data-probe-label]")?.textContent) ||
+      probeId(probe)
+    );
+  }
+
+  function probeId(probe) {
+    return probe.dataset.dragProbe || probe.dataset.probeLabel || "drag-probe";
+  }
+
+  function dragItemLabel(item) {
+    return (
+      collapseText(item.dataset.dragLabel) ||
+      collapseText(item.textContent) ||
+      item.dataset.dragItem ||
+      "item"
+    );
+  }
+
+  // A probe contributes an Interaction-results entry only once its order has
+  // been changed from the authored default (dragTouched). The final order is
+  // read live from the DOM, which hydration has already reconciled with the
+  // persisted order, so this stays correct after a reload.
+  function collectDragResults() {
+    return dragProbes.flatMap(({ probe }) => {
+      const id = probeId(probe);
+      if (!state.dragTouched[id]) return [];
+      const order = [...probe.querySelectorAll("[data-drag-item]")].map(
+        dragItemLabel,
+      );
+      if (!order.length) return [];
+      return [{ label: probeLabel(probe), order }];
+    });
   }
 
   function presentationResponses() {
@@ -815,6 +917,8 @@
     sections.forEach((section) =>
       updateSectionAnnotation(section.dataset.sectionId),
     );
+    // State was reset above; restore each probe's authored DOM order to match.
+    dragProbes.forEach((controller) => controller.restore());
     renderPrompt();
   }
 
@@ -850,61 +954,722 @@
   // hover on a pin highlights its paired note and vice versa. Highlight is a
   // static class toggle (no JS motion), so it is reduced-motion-safe by
   // construction; any transition on `.is-active` is the stylesheet's to gate.
-  function installAnnotationPins() {
-    const pins = [...root.querySelectorAll(".discovery-pin[data-annotation-pin]")];
-    const notes = [
-      ...root.querySelectorAll(".discovery-pin-note[data-pin-note]"),
-    ];
-    if (pins.length === 0 && notes.length === 0) return;
-
-    const pinsByIndex = new Map();
-    const notesByIndex = new Map();
-    const register = (map, key, element) => {
+  // Generic synchronized-highlight group: the annotation-pin idiom lifted into a
+  // reusable primitive. Members carry a key; hover or focus on any member
+  // toggles `.is-active` on every member sharing that key. Engage/disengage is
+  // reference-counted so overlapping hover + focus on one group never drops the
+  // highlight early. Highlight is a static class toggle (no JS motion), so the
+  // group is reduced-motion-safe by construction; any transition on `.is-active`
+  // is the stylesheet's to gate. `focusable` gives non-interactive members
+  // (list items, spans) a tabindex so keyboard focus wiring is bidirectional.
+  function installSyncGroup(members, options = {}) {
+    const groups = new Map();
+    members.forEach(({ element, key }) => {
       if (!key) return;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(element);
-    };
-    pins.forEach((pin) => register(pinsByIndex, pin.dataset.annotationPin, pin));
-    notes.forEach((note) => register(notesByIndex, note.dataset.pinNote, note));
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(element);
+    });
+    if (groups.size === 0) return;
 
     const activeCounts = new Map();
-    const setPairActive = (index, active) => {
-      [
-        ...(pinsByIndex.get(index) || []),
-        ...(notesByIndex.get(index) || []),
-      ].forEach((member) => member.classList.toggle("is-active", active));
+    const setGroupActive = (key, active) => {
+      (groups.get(key) || []).forEach((member) =>
+        member.classList.toggle("is-active", active),
+      );
     };
-    // Reference-count engage/disengage so overlapping hover + focus on the same
-    // pair does not drop the highlight early.
-    const engage = (index) => {
-      const next = (activeCounts.get(index) || 0) + 1;
-      activeCounts.set(index, next);
-      if (next === 1) setPairActive(index, true);
+    const engage = (key) => {
+      const next = (activeCounts.get(key) || 0) + 1;
+      activeCounts.set(key, next);
+      if (next === 1) setGroupActive(key, true);
     };
-    const disengage = (index) => {
-      const next = Math.max(0, (activeCounts.get(index) || 0) - 1);
-      activeCounts.set(index, next);
-      if (next === 0) setPairActive(index, false);
-    };
-    const wire = (element, index) => {
-      if (!index) return;
-      element.addEventListener("mouseenter", () => engage(index));
-      element.addEventListener("mouseleave", () => disengage(index));
-      element.addEventListener("focus", () => engage(index));
-      element.addEventListener("blur", () => disengage(index));
+    const disengage = (key) => {
+      const next = Math.max(0, (activeCounts.get(key) || 0) - 1);
+      activeCounts.set(key, next);
+      if (next === 0) setGroupActive(key, false);
     };
 
-    pins.forEach((pin) => {
-      // Pins are authored as <button> (natively focusable). Guard the case where
-      // a pin is authored as a plain element so keyboard focus wiring still fires;
-      // a native button already reports tabIndex 0, so this leaves it untouched.
-      if (!pin.hasAttribute("tabindex") && pin.tabIndex < 0) pin.tabIndex = 0;
-      wire(pin, pin.dataset.annotationPin);
+    members.forEach(({ element, key }) => {
+      if (!key) return;
+      if (
+        options.focusable &&
+        !element.hasAttribute("tabindex") &&
+        element.tabIndex < 0
+      ) {
+        element.tabIndex = 0;
+      }
+      element.addEventListener("mouseenter", () => engage(key));
+      element.addEventListener("mouseleave", () => disengage(key));
+      element.addEventListener("focus", () => engage(key));
+      element.addEventListener("blur", () => disengage(key));
     });
-    notes.forEach((note) => {
-      // Notes are <li>; make them focusable so focus wiring is bidirectional.
-      if (!note.hasAttribute("tabindex")) note.tabIndex = 0;
-      wire(note, note.dataset.pinNote);
+  }
+
+  // AUTHOR annotation pins are distinct from the user "Add note" dialog. Focus or
+  // hover on a pin highlights its paired note and vice versa — the generalized
+  // sync-group idiom, with pins (native <button>) and notes (<li>) as the two
+  // keyed member families.
+  function installAnnotationPins() {
+    installSyncGroup(
+      [
+        ...[
+          ...root.querySelectorAll(".discovery-pin[data-annotation-pin]"),
+        ].map((pin) => ({ element: pin, key: pin.dataset.annotationPin })),
+        ...[...root.querySelectorAll(".discovery-pin-note[data-pin-note]")].map(
+          (note) => ({ element: note, key: note.dataset.pinNote }),
+        ),
+      ],
+      { focusable: true },
+    );
+  }
+
+  // Code / term synchronized pairs — matched-region highlighting across
+  // side-by-side code panels ([data-code-pair]), inline term <-> glossary entry
+  // ([data-term] <-> [data-term-def]), and specimen region <-> source snippet
+  // ([data-code-map] <-> [data-code-map-target]). All three are the same
+  // sync-group primitive keyed on the shared id.
+  function installSyncPairs() {
+    installSyncGroup(
+      [...root.querySelectorAll("[data-code-pair]")].map((el) => ({
+        element: el,
+        key: el.dataset.codePair,
+      })),
+      { focusable: true },
+    );
+    installSyncGroup(
+      [
+        ...[...root.querySelectorAll("[data-term]")].map((el) => ({
+          element: el,
+          key: el.dataset.term,
+        })),
+        ...[...root.querySelectorAll("[data-term-def]")].map((el) => ({
+          element: el,
+          key: el.dataset.termDef,
+        })),
+      ],
+      { focusable: true },
+    );
+    installSyncGroup(
+      [
+        ...[...root.querySelectorAll("[data-code-map]")].map((el) => ({
+          element: el,
+          key: el.dataset.codeMap,
+        })),
+        ...[...root.querySelectorAll("[data-code-map-target]")].map((el) => ({
+          element: el,
+          key: el.dataset.codeMapTarget,
+        })),
+      ],
+      { focusable: true },
+    );
+  }
+
+  // Tabbed multi-representation code panels. The runtime owns aria-selected,
+  // panel `hidden`, and a roving tabindex; arrow / Home / End move between tabs.
+  function installCodeTabs() {
+    root.querySelectorAll("[data-code-tabs]").forEach((container) => {
+      const tabs = [...container.querySelectorAll("[data-code-tab]")];
+      const panels = [...container.querySelectorAll("[data-code-panel]")];
+      if (tabs.length === 0 || panels.length === 0) return;
+
+      const select = (id, focus) => {
+        tabs.forEach((tab) => {
+          const active = tab.dataset.codeTab === id;
+          tab.setAttribute("aria-selected", active ? "true" : "false");
+          tab.tabIndex = active ? 0 : -1;
+          if (active && focus) tab.focus();
+        });
+        panels.forEach((panel) => {
+          panel.hidden = panel.dataset.codePanel !== id;
+        });
+      };
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => select(tab.dataset.codeTab));
+        tab.addEventListener("keydown", (event) => {
+          const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
+          if (!keys.includes(event.key)) return;
+          event.preventDefault();
+          let next = index;
+          if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+          else if (event.key === "ArrowLeft")
+            next = (index - 1 + tabs.length) % tabs.length;
+          else if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = tabs.length - 1;
+          select(tabs[next].dataset.codeTab, true);
+        });
+      });
+
+      const initial =
+        tabs.find((tab) => tab.getAttribute("aria-selected") === "true") ||
+        tabs[0];
+      select(initial.dataset.codeTab);
+    });
+  }
+
+  // Clickable diagram nodes populate a sticky detail host from hidden
+  // <template data-diagram-detail="<id>"> blocks (cloned, never innerHTML). The
+  // host is an aria-live polite region; the selected node carries `.is-active`.
+  function installDiagramDetail() {
+    const host = root.querySelector("[data-diagram-detail-host]");
+    const nodes = [...root.querySelectorAll("[data-diagram-node]")];
+    if (!host || nodes.length === 0) return;
+
+    const templates = new Map(
+      [...root.querySelectorAll("template[data-diagram-detail]")].map(
+        (template) => [template.dataset.diagramDetail, template],
+      ),
+    );
+    host.setAttribute("aria-live", "polite");
+
+    const activate = (node) => {
+      nodes.forEach((candidate) =>
+        candidate.classList.toggle("is-active", candidate === node),
+      );
+      const template = templates.get(node.dataset.diagramNode);
+      host.replaceChildren();
+      if (template && "content" in template) {
+        host.append(template.content.cloneNode(true));
+      }
+    };
+
+    nodes.forEach((node) => {
+      // Diagram nodes are often SVG shapes with no native focusability.
+      if (!node.hasAttribute("tabindex")) node.setAttribute("tabindex", "0");
+      node.addEventListener("click", () => activate(node));
+      node.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activate(node);
+      });
+    });
+  }
+
+  // Exclusive accordions: opening one <details> closes its siblings within the
+  // same [data-accordion-exclusive] group (nested groups stay independent).
+  function installExclusiveAccordions() {
+    root.querySelectorAll("[data-accordion-exclusive]").forEach((group) => {
+      const items = [...group.querySelectorAll("details")].filter(
+        (details) => details.closest("[data-accordion-exclusive]") === group,
+      );
+      items.forEach((details) => {
+        details.addEventListener("toggle", () => {
+          if (!details.open) return;
+          items.forEach((other) => {
+            if (other !== details) other.open = false;
+          });
+        });
+      });
+    });
+  }
+
+  // Anchor navigation flashes the destination section with a transient
+  // `.discovery-anchor-flash`. Skipped entirely under reduced motion.
+  function installAnchorFlash() {
+    const flash = (target) => {
+      if (!target || prefersReducedMotion()) return;
+      target.classList.remove("discovery-anchor-flash");
+      // Force reflow so re-adding the class restarts the animation.
+      void target.offsetWidth;
+      target.classList.add("discovery-anchor-flash");
+      const clear = () => target.classList.remove("discovery-anchor-flash");
+      target.addEventListener("animationend", clear, { once: true });
+      window.setTimeout(clear, 1600);
+    };
+
+    document
+      .querySelectorAll(
+        ".essential-docnav a[href^='#'], .essential-toc a[href^='#']",
+      )
+      .forEach((link) => {
+        link.addEventListener("click", () => {
+          const id = decodeURIComponent(
+            (link.getAttribute("href") || "").slice(1),
+          );
+          if (!id) return;
+          const target = document.getElementById(id);
+          requestAnimationFrame(() => flash(target));
+        });
+      });
+
+    window.addEventListener("hashchange", () => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (id) flash(document.getElementById(id));
+    });
+  }
+
+  // Filter chips over an item list. Each chip carries a `data-filter` value and
+  // a live `[data-filter-count]`; each item is `[data-filter-item="<tags>"]`
+  // (space-separated). Selecting a chip DIMS non-matching items (`.is-dimmed`) —
+  // it never hides them — so the full set stays visible and the counts stay
+  // truthful. A chip value of "all" (or empty) matches every item.
+  function installFilterChips() {
+    root.querySelectorAll("[data-filter-chips]").forEach((bar) => {
+      const chips = [...bar.querySelectorAll("[data-filter]")];
+      const scope =
+        bar.closest("[data-discovery-section]") || bar.parentElement || root;
+      const items = [...scope.querySelectorAll("[data-filter-item]")];
+      if (chips.length === 0 || items.length === 0) return;
+
+      const tagsOf = (item) =>
+        (item.dataset.filterItem || "").split(/\s+/).filter(Boolean);
+      const matches = (value, item) =>
+        !value || value === "all" || tagsOf(item).includes(value);
+
+      // Live counts are a property of the data, not the current selection.
+      chips.forEach((chip) => {
+        const value = chip.dataset.filter;
+        const countHost = chip.querySelector("[data-filter-count]");
+        if (countHost) {
+          countHost.textContent = String(
+            items.filter((item) => matches(value, item)).length,
+          );
+        }
+      });
+
+      const apply = (value) => {
+        chips.forEach((chip) => {
+          const active = chip.dataset.filter === value;
+          chip.classList.toggle("is-active", active);
+          if (chip.matches("button, [role='tab'], [aria-pressed]")) {
+            chip.setAttribute("aria-pressed", active ? "true" : "false");
+          }
+        });
+        items.forEach((item) => {
+          item.classList.toggle("is-dimmed", !matches(value, item));
+        });
+      };
+
+      chips.forEach((chip) => {
+        chip.addEventListener("click", () => apply(chip.dataset.filter));
+      });
+
+      const initial =
+        chips.find((chip) => chip.classList.contains("is-active")) || chips[0];
+      apply(initial.dataset.filter);
+    });
+  }
+
+  // Spectrum mini-map: numbered dots along the idea axis. Clicking a dot
+  // smooth-scrolls to its idea card; each dot mirrors the card's reaction state
+  // (a checked input adds `.is-active`, and a checked input's reaction kind adds
+  // `.is-<kind>`), listening to the card's own question inputs for two-way sync.
+  function installSpectrumMinimap() {
+    const dots = [...root.querySelectorAll("[data-minimap-dot]")];
+    if (dots.length === 0) return;
+
+    const cardById = new Map(
+      [...root.querySelectorAll("[data-idea-card][data-idea-id]")].map(
+        (card) => [card.dataset.ideaId, card],
+      ),
+    );
+    const reactionKinds = ["keep", "steal", "skip", "reject"];
+
+    const syncDot = (dot, card) => {
+      const checked = [...card.querySelectorAll("input")].filter(
+        (input) => input.checked,
+      );
+      dot.classList.toggle("is-active", checked.length > 0);
+      const kind =
+        checked.map((input) => input.dataset.reactionKind).find(Boolean) || "";
+      reactionKinds.forEach((name) =>
+        dot.classList.toggle(`is-${name}`, kind === name),
+      );
+    };
+
+    dots.forEach((dot) => {
+      const card = cardById.get(dot.dataset.minimapDot);
+      dot.addEventListener("click", () => {
+        if (!card) return;
+        card.scrollIntoView({
+          block: "center",
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+        });
+      });
+      if (!card) return;
+      syncDot(dot, card);
+      card.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("change", () => syncDot(dot, card));
+      });
+    });
+  }
+
+  // Wizard: focused one-step-at-a-time presentation over the existing stepper.
+  // Progressive enhancement only — without JS every [data-interview-step] stays
+  // visible. The runtime shows one step at a time with prev/next, an
+  // all-questions toggle, and a live summary list that jumps back to any step.
+  function installWizard() {
+    const wizard = root.querySelector("[data-wizard]");
+    if (!wizard) return;
+    const steps = [...wizard.querySelectorAll("[data-interview-step]")].sort(
+      (a, b) =>
+        Number(a.dataset.interviewStep) - Number(b.dataset.interviewStep),
+    );
+    if (steps.length < 2) return;
+
+    const prevButton = wizard.querySelector("[data-wizard-prev]");
+    const nextButton = wizard.querySelector("[data-wizard-next]");
+    const toggle = wizard.querySelector("[data-wizard-toggle]");
+    const summaryHost = wizard.querySelector("[data-wizard-summary]");
+
+    let index = 0;
+    let showAll = false;
+
+    const stepLabel = (step, position) =>
+      step.dataset.sectionLabel ||
+      collapseText(step.querySelector("h1, h2, h3")?.textContent) ||
+      `Step ${position + 1}`;
+
+    const goTo = (target) => {
+      index = Math.max(0, Math.min(steps.length - 1, target));
+      showAll = false;
+      renderStep();
+      steps[index].scrollIntoView({
+        block: "start",
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+      const firstControl = steps[index].querySelector(
+        "input:not([type='hidden']), select, textarea, button",
+      );
+      firstControl?.focus?.({ preventScroll: true });
+    };
+
+    const renderStep = () => {
+      steps.forEach((step, position) => {
+        const visible = showAll || position === index;
+        // Steps are `.discovery-section` (author `display: grid`), and an
+        // author display rule outranks the UA `[hidden]` rule, so pair the
+        // attribute with an inline display toggle that reliably wins. Clearing
+        // the inline value on show reverts to the stylesheet's grid.
+        step.hidden = !visible;
+        step.style.display = visible ? "" : "none";
+      });
+      if (prevButton) prevButton.disabled = showAll || index === 0;
+      if (nextButton)
+        nextButton.disabled = showAll || index === steps.length - 1;
+      if (toggle)
+        toggle.setAttribute("aria-pressed", showAll ? "true" : "false");
+    };
+
+    const renderSummary = () => {
+      if (!summaryHost) return;
+      const fragment = document.createDocumentFragment();
+      steps.forEach((step, position) => {
+        const stepQuestions = questions.filter((question) =>
+          step.contains(question),
+        );
+        const answered = stepQuestions
+          .map((question) => {
+            const id = questionId(question);
+            if (!state.touched[id]) return "";
+            const answer = state.answers[id] ?? readAnswer(question);
+            return hasValue(answer) ? formatAnswer(answer) : "";
+          })
+          .filter(Boolean);
+
+        const entry = makeElement("li", "discovery-wizard-summary-item");
+        const jump = makeElement("button", "discovery-wizard-summary-jump");
+        jump.type = "button";
+        jump.append(
+          makeElement(
+            "span",
+            "discovery-wizard-summary-step",
+            stepLabel(step, position),
+          ),
+          makeElement(
+            "span",
+            "discovery-wizard-summary-answer",
+            answered.length ? answered.join(", ") : "Not answered yet",
+          ),
+        );
+        jump.dataset.summaryState = answered.length ? "answered" : "empty";
+        jump.addEventListener("click", () => goTo(position));
+        entry.append(jump);
+        fragment.append(entry);
+      });
+      summaryHost.replaceChildren(fragment);
+    };
+
+    prevButton?.addEventListener("click", () => goTo(index - 1));
+    nextButton?.addEventListener("click", () => goTo(index + 1));
+    toggle?.addEventListener("click", () => {
+      showAll = !showAll;
+      renderStep();
+    });
+
+    renderStep();
+    renderSummary();
+    // Summary answers track the live answer set through the render cycle.
+    afterRenderHooks.push(renderSummary);
+  }
+
+  // Native HTML5 drag-and-drop feel probe. Items ([data-drag-item]) reorder
+  // within a probe ([data-drag-probe]); the order persists through the state
+  // store and, once changed from the authored default, surfaces in the prompt's
+  // `## Interaction results` section. Keyboard reorder (arrow keys on a focused
+  // item) keeps the probe operable without a pointer.
+  function installDragProbes() {
+    root.querySelectorAll("[data-drag-probe]").forEach((probe) => {
+      const id = probeId(probe);
+      const listOf = () => [...probe.querySelectorAll("[data-drag-item]")];
+      const initialOrder = listOf().map((item) => item.dataset.dragItem);
+
+      const applyOrder = (order) => {
+        const byId = new Map(
+          listOf().map((item) => [item.dataset.dragItem, item]),
+        );
+        order.forEach((itemId) => {
+          const item = byId.get(itemId);
+          if (item) item.parentNode.append(item);
+        });
+      };
+
+      const finalize = () => {
+        const order = listOf().map((item) => item.dataset.dragItem);
+        state.dragOrders[id] = order;
+        state.dragTouched[id] = order.some(
+          (itemId, position) => itemId !== initialOrder[position],
+        );
+        saveState();
+        renderPrompt();
+      };
+
+      const horizontal =
+        probe.dataset.dragAxis === "horizontal" ||
+        (() => {
+          const list = listOf();
+          if (list.length < 2) return false;
+          const a = list[0].getBoundingClientRect();
+          const b = list[1].getBoundingClientRect();
+          return (
+            b.left !== a.left &&
+            Math.abs(b.top - a.top) < Math.max(a.height, b.height) * 0.5
+          );
+        })();
+
+      const moveBefore = (item, reference) => {
+        if (!reference) item.parentNode.append(item);
+        else reference.parentNode.insertBefore(item, reference);
+      };
+
+      // Hydrate persisted order before wiring interaction.
+      const saved = state.dragOrders[id];
+      if (Array.isArray(saved) && saved.length) applyOrder(saved);
+
+      let dragged = null;
+      probe.addEventListener("dragstart", (event) => {
+        const item = event.target.closest("[data-drag-item]");
+        if (!item || !probe.contains(item)) return;
+        dragged = item;
+        item.classList.add("is-dragging");
+        probe.classList.add("is-drag-active");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          try {
+            event.dataTransfer.setData(
+              "text/plain",
+              item.dataset.dragItem || "",
+            );
+          } catch (_error) {
+            // Some browsers reject setData outside a user gesture; harmless.
+          }
+        }
+      });
+      probe.addEventListener("dragover", (event) => {
+        if (!dragged) return;
+        const target = event.target.closest("[data-drag-item]");
+        if (!target || target === dragged || !probe.contains(target)) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+        const rect = target.getBoundingClientRect();
+        const after = horizontal
+          ? event.clientX > rect.left + rect.width / 2
+          : event.clientY > rect.top + rect.height / 2;
+        moveBefore(dragged, after ? target.nextSibling : target);
+      });
+      probe.addEventListener("drop", (event) => {
+        if (!dragged) return;
+        event.preventDefault();
+      });
+      probe.addEventListener("dragend", () => {
+        if (!dragged) return;
+        dragged.classList.remove("is-dragging");
+        probe.classList.remove("is-drag-active");
+        dragged = null;
+        finalize();
+      });
+
+      listOf().forEach((item) => {
+        if (!item.hasAttribute("draggable")) item.draggable = true;
+        if (!item.hasAttribute("tabindex")) item.tabIndex = 0;
+        item.addEventListener("keydown", (event) => {
+          const back = horizontal ? "ArrowLeft" : "ArrowUp";
+          const forward = horizontal ? "ArrowRight" : "ArrowDown";
+          if (event.key !== back && event.key !== forward) return;
+          event.preventDefault();
+          if (event.key === back && item.previousElementSibling) {
+            moveBefore(item, item.previousElementSibling);
+          } else if (event.key === forward && item.nextElementSibling) {
+            moveBefore(item, item.nextElementSibling.nextSibling);
+          } else {
+            return;
+          }
+          item.focus();
+          finalize();
+        });
+      });
+
+      dragProbes.push({
+        probe,
+        restore: () => applyOrder(initialOrder),
+      });
+    });
+  }
+
+  // Natural-language reply: a one-paragraph conversational preview of the reply,
+  // assembled from touched answers, note counts, and changed probes, rendered
+  // into [data-nl-reply] with textContent only. It regenerates with the prompt;
+  // the canonical copy control still copies the full Markdown prompt.
+  function installNlReply() {
+    const host = root.querySelector("[data-nl-reply]");
+    if (!host) return;
+
+    const joinWithAnd = (parts) => {
+      if (parts.length <= 1) return parts.join("");
+      return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+    };
+    const plural = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+
+    const compose = () => {
+      const decided = [];
+      const requested = [];
+      questions.forEach((question) => {
+        const id = questionId(question);
+        if (!state.touched[id]) return;
+        const answer = state.answers[id] ?? readAnswer(question);
+        const kind = responseKind(question);
+        if (kind !== "decision" && !hasValue(answer)) return;
+        (kind === "follow-up" ? requested : decided).push({
+          label: questionLabel(question),
+          answer: formatAnswer(answer),
+        });
+      });
+      const notes = sections.filter((section) =>
+        state.annotations[section.dataset.sectionId]?.trim(),
+      ).length;
+      const probes = collectDragResults().length;
+
+      const parts = [];
+      if (decided.length) {
+        const first = decided[0];
+        const lead = `settled ${first.label.toLowerCase()} as “${first.answer}”`;
+        const more = decided.length - 1;
+        parts.push(
+          more > 0 ? `${lead}, plus ${plural(more, "more decision")}` : lead,
+        );
+      }
+      if (requested.length)
+        parts.push(`asked for ${plural(requested.length, "follow-up")}`);
+      if (notes) parts.push(`left ${plural(notes, "section note")}`);
+      if (probes)
+        parts.push(`re-ordered ${plural(probes, "interaction probe")}`);
+
+      if (parts.length === 0) {
+        return "Nothing is locked in yet — answer a question or add a note and this line will summarize your reply to the coder.";
+      }
+      return `So far I've ${joinWithAnd(parts)}. Copy the prompt to send the coder the full detail.`;
+    };
+
+    const render = () => {
+      host.textContent = compose();
+    };
+    render();
+    afterRenderHooks.push(render);
+  }
+
+  // Deck mode: a keyboard-navigable scroll-snap strip. Progressive enhancement
+  // only — without JS the [data-deck-slide] panels stay a plain, fully readable
+  // horizontally scrollable list, and every slide is reachable by scrolling.
+  // The runtime gives the slides roving focus (current slide tabindex 0, the
+  // rest -1) and moves between them on Arrow / Page / Home / End; optional
+  // [data-deck-prev] / [data-deck-next] buttons step the same way. Key handling
+  // is guarded to the slide element itself, so arrow keys aimed at a control
+  // inside a slide (a radio group, a select) are never hijacked. Scrolling is
+  // instant under reduced motion (behavior "auto"), matching the global reset.
+  function installDeckMode() {
+    root.querySelectorAll("[data-deck]").forEach((deck) => {
+      const slides = [...deck.querySelectorAll("[data-deck-slide]")].filter(
+        (slide) => slide.closest("[data-deck]") === deck,
+      );
+      if (slides.length < 2) return;
+
+      const prevButton = deck.querySelector("[data-deck-prev]");
+      const nextButton = deck.querySelector("[data-deck-next]");
+      const progress = deck.querySelector("[data-deck-progress]");
+      let index = 0;
+
+      const setRoving = () => {
+        slides.forEach((slide, position) => {
+          slide.tabIndex = position === index ? 0 : -1;
+        });
+      };
+
+      const updateControls = () => {
+        if (prevButton) prevButton.disabled = index === 0;
+        if (nextButton) nextButton.disabled = index === slides.length - 1;
+        if (progress) {
+          progress.textContent = `${index + 1} / ${slides.length}`;
+        }
+      };
+
+      const goTo = (target, focus) => {
+        index = Math.max(0, Math.min(slides.length - 1, target));
+        setRoving();
+        updateControls();
+        slides[index].scrollIntoView({
+          inline: "center",
+          block: "nearest",
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+        });
+        if (focus) slides[index].focus({ preventScroll: true });
+      };
+
+      deck.addEventListener("keydown", (event) => {
+        // Roving pattern: only act when a slide itself holds focus, so controls
+        // inside a slide keep their own arrow-key behavior.
+        if (!event.target.matches("[data-deck-slide]")) return;
+        let next = null;
+        if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) {
+          next = index + 1;
+        } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) {
+          next = index - 1;
+        } else if (event.key === "Home") {
+          next = 0;
+        } else if (event.key === "End") {
+          next = slides.length - 1;
+        } else {
+          return;
+        }
+        event.preventDefault();
+        goTo(next, true);
+      });
+
+      // Keep the roving index honest when a slide is focused or clicked
+      // directly (tab, pointer). goTo() already advances index before focusing,
+      // so its own focus never re-enters this branch — no loop.
+      slides.forEach((slide, position) => {
+        slide.addEventListener("focus", () => {
+          if (index === position) return;
+          index = position;
+          setRoving();
+          updateControls();
+        });
+      });
+
+      prevButton?.addEventListener("click", () => goTo(index - 1, true));
+      nextButton?.addEventListener("click", () => goTo(index + 1, true));
+
+      setRoving();
+      updateControls();
     });
   }
 
@@ -917,6 +1682,18 @@
   sections.forEach(installSectionAnnotation);
   announceProvenance();
   installAnnotationPins();
+  installSyncPairs();
+  installCodeTabs();
+  installDiagramDetail();
+  installExclusiveAccordions();
+  buildSectionNav();
+  installAnchorFlash();
+  installFilterChips();
+  installSpectrumMinimap();
+  installDragProbes();
+  installWizard();
+  installNlReply();
+  installDeckMode();
   copyPromptButton.addEventListener("click", copyPrompt);
   clearButton?.addEventListener("click", clearState);
   installPresentationShell();

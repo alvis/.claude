@@ -15,10 +15,17 @@ from pathlib import Path
 
 DISCOVER_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = DISCOVER_ROOT / "examples" / "html"
+EXAMPLES_SRC_ROOT = DISCOVER_ROOT / "examples" / "src"
+TEMPLATES_SRC_ROOT = DISCOVER_ROOT / "templates" / "src"
+# The template's modular source directory (templates/html/page.html <-> src/page/).
+TEMPLATE_SRC = TEMPLATES_SRC_ROOT / "page"
 TEMPLATE = DISCOVER_ROOT / "templates" / "html" / "page.html"
 CSS = DISCOVER_ROOT / "assets" / "html" / "discovery.css"
 JAVASCRIPT = DISCOVER_ROOT / "assets" / "html" / "discovery.js"
-TAILWIND_VENDOR = DISCOVER_ROOT / "assets" / "html" / "vendor" / "tailwind-browser-4.3.3.js"
+VENDOR_DIR = DISCOVER_ROOT / "assets" / "html" / "vendor"
+# The Tailwind runtime is downloaded on demand; the pinned vendor file must no
+# longer be committed, and the gitignored cache below is an optional fallback.
+TAILWIND_CACHE = VENDOR_DIR / "tailwind-browser.cache.js"
 BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
@@ -34,12 +41,25 @@ ACTIONS = (
     "semantics-map",
     "interactive-prototype",
     "readiness-check",
+    # Stage-4 lifecycle actions (plan → implementation → change). They join the
+    # required set at --stage complete, taking the required-action count from
+    # eight to eleven; the representative stage stays domain-explainer only.
+    "plan-review",
+    "build-journal",
+    "change-walkthrough",
 )
 REPRESENTATIVE_ACTION = "domain-explainer"
 # Additional convention-demonstration boards (provenance/trade-offs/pins/hub best
 # bits). Iterated + validated + pattern-scanned at --stage complete only, separate
-# from the required-8 ACTIONS/REPRESENTATIVE_ACTION contract, which stays unchanged.
-CONVENTION_EXAMPLES = ("specimen-board", "board-hub", "architecture-board")
+# from the required-11 ACTIONS/REPRESENTATIVE_ACTION contract, which stays
+# unchanged. triage-board is the fourth convention board: spatial-arrangement-as-
+# decision, a kanban strip whose lane membership serializes into the one prompt.
+CONVENTION_EXAMPLES = (
+    "specimen-board",
+    "board-hub",
+    "architecture-board",
+    "triage-board",
+)
 FORBIDDEN_HTML_TEXT = (
     "thariqs.github.io",
     "html-effectiveness",
@@ -71,10 +91,52 @@ PRESENTATION_PATTERNS = (
     # and/or woven into ranked-options.html / risk-context-report.html.
     "provenance-pill", "provenance-row", "tradeoffs-honestly", "invented-data-flag",
     "annotation-pins", "browser-frame", "board-hub", "board-index", "specimen-scope",
+    # Stage-3 catalog additions, grouped by owning board exactly as coverage.md
+    # records them. IDs are flat here (the coverage map records ownership); the
+    # cross-cutting structural checks below fire per-marker where meaningful.
+    # domain-explainer:
+    "source-ref-chip", "faq-block", "glossary-sync", "live-sim",
+    "accordion-exclusive", "anchor-flash",
+    # risk-context-report:
+    "risk-matrix", "owner-routing", "tldr-block",
+    # ranked-options:
+    "verdict-table", "variant-rationale", "scope-cuts",
+    # brainstorm-spectrum:
+    "spectrum-minimap", "reaction-chips",
+    # guided-interview:
+    "wizard-steps", "nl-reply",
+    # semantics-map:
+    "syntax-tokens", "rich-diff", "code-pair-highlight", "code-tabs",
+    # interactive-prototype:
+    "drag-probe", "motion-specimen", "demo-loop", "specimen-code-map",
+    # readiness-check:
+    "milestone-timeline", "inline-chart", "filter-chips",
+    # specimen-board:
+    "global-rig", "artboard-frame", "theme-direction-gallery", "mock-frame",
+    # architecture-board:
+    "node-edge-diagram", "diagram-detail", "prompt-echo", "source-manifest",
+    # Stage-4 lifecycle-action catalog additions, grouped by owning board exactly
+    # as coverage.md records them.
+    # plan-review:
+    "plan-review", "tweak-rank", "linked-diagram-choice",
+    # build-journal:
+    "build-journal", "deviation-log", "journal-badge", "human-todo",
+    # change-walkthrough:
+    "change-walkthrough", "vcs-header", "diff-comment", "file-tour", "deck-mode",
+    # triage-board (fourth convention board):
+    "kanban-lanes",
 )
 
 # Structural hooks prove that each example demonstrates its action-specific
 # information architecture. Pattern markers alone only prove catalog presence.
+#
+# Counts are (attribute, minimum, maximum). Section-bearing hooks are VARIABLE
+# by design: their entries are MINIMUMS (maximum is None) so any board may carry
+# more sections of that type — e.g. more than the demonstrated number of option
+# frames or decision-question sections. Do NOT reintroduce a fixed maximum on a
+# section-repeatable hook; a board must never fail for having extra sections.
+# Intrinsic equalities (one panel per tab, one note per pin, one dot per card)
+# are enforced elsewhere as count == count pairs, not as caps here.
 ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
     "risk-context-report": (
         ("data-risk-finding", 5, None),
@@ -87,9 +149,13 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-response-kind", 1, None),
     ),
     "ranked-options": (
-        ("data-option-frame", 3, 5),
+        # Direction frames and the final selection are variable: a board may
+        # compare more than the demonstrated number of directions, so these are
+        # minimums (no cap). The one-to-one direction-choice mapping enforced in
+        # the ranked-options block keeps the final selection honest regardless.
+        ("data-option-frame", 3, None),
         ("data-option-reaction", 3, None),
-        ("data-final-selection", 1, 1),
+        ("data-final-selection", 1, None),
     ),
     "brainstorm-spectrum": (
         ("data-horizon-lane", 3, None),
@@ -115,8 +181,31 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-readiness-verdict", 1, None),
         ("data-readiness-probe", 1, None),
     ),
+    # Stage-4 lifecycle actions. Section-bearing hooks (plan steps, deviations,
+    # file cards, kanban cards) are MINIMUMS with no cap; the per-container
+    # richness checks (each step carries a question + rank, each deviation the
+    # four labelled parts, each file card a risk chip) and the singleton verdict
+    # equalities live in the per-action blocks in validate_html.
+    "plan-review": (
+        ("data-plan-step", 4, None),
+        ("data-tweak-rank", 4, None),
+        ("data-plan-verdict", 1, None),
+    ),
+    "build-journal": (
+        ("data-deviation", 3, None),
+        ("data-deviation-field", 12, None),
+        ("data-human-todo", 1, None),
+        ("data-journal-verdict", 1, None),
+    ),
+    "change-walkthrough": (
+        ("data-file-card", 3, None),
+        ("data-diff-comment", 2, None),
+        ("data-deck-slide", 3, None),
+        ("data-quiz-question", 2, None),
+        ("data-change-verdict", 1, None),
+    ),
     # Convention-demonstration boards (CONVENTION_EXAMPLES), not part of the
-    # required-8 ACTIONS contract. Minimums per the locked component API.
+    # required-11 ACTIONS contract. Minimums per the locked component API.
     "specimen-board": (
         ("data-tradeoffs-honestly", 1, None),
         ("data-fabricated", 1, None),
@@ -144,6 +233,14 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-annotation-pin", 4, None),
         ("data-specimen", 1, None),
         ("data-provenance", 2, None),
+    ),
+    # Fourth convention board: spatial-arrangement-as-decision. At least three
+    # lanes holding at least six draggable cards; the per-card lane <select>
+    # keyboard fallback is enforced as selects >= cards in the per-action block.
+    "triage-board": (
+        ("data-kanban-lane", 3, None),
+        ("data-kanban-cards", 3, None),
+        ("data-drag-item", 6, None),
     ),
 }
 
@@ -176,7 +273,17 @@ class ContractParser(HTMLParser):
         self.option_frames: list[dict[str, object]] = []
         self.final_direction_choices: list[str] = []
         self._active_option_frames: list[dict[str, object]] = []
-        self._element_stack: list[tuple[str, dict[str, object] | None]] = []
+        # Stage-4 per-container tallies. Each list holds one record per opened
+        # container instance; children seen while the container is open are
+        # attributed to it (the same idiom as option frames, generalized).
+        self.plan_steps: list[dict[str, object]] = []
+        self.deviations: list[dict[str, object]] = []
+        self.file_cards: list[dict[str, object]] = []
+        self.select_controls = 0
+        self._active_containers: list[tuple[str, dict[str, object]]] = []
+        self._element_stack: list[
+            tuple[str, dict[str, object] | None, list[tuple[str, dict[str, object]]]]
+        ] = []
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
@@ -216,6 +323,40 @@ class ContractParser(HTMLParser):
         direction_choice = attributes.get("data-direction-choice")
         if direction_choice:
             self.final_direction_choices.append(direction_choice)
+        if tag == "select":
+            self.select_controls += 1
+        # Attribute children to every currently-open stage-4 container BEFORE
+        # opening any container this element itself starts, so a container never
+        # counts its own hook as a child of itself.
+        for kind, record in self._active_containers:
+            if kind == "plan-step":
+                if "data-discovery-question" in attributes:
+                    record["questions"] += 1
+                if "data-tweak-rank" in attributes:
+                    record["ranks"] += 1
+            elif kind == "deviation":
+                field = attributes.get("data-deviation-field")
+                if field:
+                    record["fields"].add(field)
+                if "data-discovery-question" in attributes:
+                    record["questions"] += 1
+            elif kind == "file-card":
+                if "data-risk" in attributes:
+                    record["risk_chips"] += 1
+        opened_containers: list[tuple[str, dict[str, object]]] = []
+        if "data-plan-step" in attributes:
+            record = {"questions": 0, "ranks": 0}
+            self.plan_steps.append(record)
+            opened_containers.append(("plan-step", record))
+        if "data-deviation" in attributes:
+            record = {"fields": set(), "questions": 0}
+            self.deviations.append(record)
+            opened_containers.append(("deviation", record))
+        if "data-file-card" in attributes:
+            record = {"risk_chips": 0}
+            self.file_cards.append(record)
+            opened_containers.append(("file-card", record))
+        self._active_containers.extend(opened_containers)
         if attributes.get("id"):
             self.ids[attributes["id"]] += 1
         if "data-discovery-page" in attributes:
@@ -249,13 +390,15 @@ class ContractParser(HTMLParser):
             (attributes.get("data-presentation-pattern") or "").split()
         )
         if tag not in self.VOID_TAGS:
-            self._element_stack.append((tag, opened_frame))
+            self._element_stack.append((tag, opened_frame, opened_containers))
 
     def handle_endtag(self, tag: str) -> None:
         while self._element_stack:
-            opened_tag, opened_frame = self._element_stack.pop()
+            opened_tag, opened_frame, opened_containers = self._element_stack.pop()
             if opened_frame is not None:
                 self._active_option_frames.remove(opened_frame)
+            for container in opened_containers:
+                self._active_containers.remove(container)
             if opened_tag == tag:
                 break
 
@@ -289,6 +432,15 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
     if len(parser.sections) != len(parser.user_regions):
         errors.append(f"{path}: every header/section must be annotatable")
 
+    # Section counts are VARIABLE by design: a page carries any number (>= 1) of
+    # [data-discovery-section] regions, and ANY section type may repeat (several
+    # decision-question sections, several mapping/file/deviation/finding
+    # sections). Section ids are free-form, per-instance ids — unique per page,
+    # not a fixed slot set. The only per-page singleton is the generated-brief
+    # prompt host (enforced separately below via prompt_hosts == 1).
+    if not parser.sections:
+        errors.append(f"{path}: needs at least one [data-discovery-section] region")
+
     section_ids = [section.get("data-section-id") for section in parser.sections]
     if any(not section_id for section_id in section_ids):
         errors.append(f"{path}: every annotatable section needs data-section-id")
@@ -320,14 +472,29 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
         errors.append(f"{path}: expected one multi-note summary host")
     if parser.search_controls:
         errors.append(f"{path}: static single-page artifact must not include search")
-    stylesheet_urls = {"../../assets/html/discovery.css", "{{DISCOVERY_CSS_URL}}"}
-    runtime_urls = {"../../assets/html/discovery.js", "{{DISCOVERY_JS_URL}}"}
-    if not stylesheet_urls.intersection(parser.stylesheets):
-        errors.append(f"{path}: does not link the shared discovery stylesheet")
-    if not runtime_urls.intersection(parser.scripts):
-        errors.append(f"{path}: does not link the shared discovery runtime")
-    if parser.scripts.count("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4") != 1:
-        errors.append(f"{path}: expected exactly one Tailwind browser runtime")
+    # Asset self-containment: a composed page or shell carries NO external or
+    # relatively linked assets. The build step (scripts/build_artifact.py)
+    # injects the Tailwind runtime plus discovery.css/js into the FINAL artifact;
+    # sources and shells reference none. Require their ABSENCE — no
+    # <link rel="stylesheet">, no <script src>, and no {{DISCOVERY_*_URL}}
+    # placeholder (external OR relative refs both caught). The inline
+    # <style type="text/tailwindcss"> @theme block below stays required.
+    if parser.stylesheets:
+        errors.append(
+            f"{path}: must not link any stylesheet (assets are inlined by the "
+            f"build step); found {parser.stylesheets}"
+        )
+    if parser.scripts:
+        errors.append(
+            f"{path}: must not link any external or relative script (assets are "
+            f"inlined by the build step); found {parser.scripts}"
+        )
+    for dead_placeholder in ("{{DISCOVERY_CSS_URL}}", "{{DISCOVERY_JS_URL}}"):
+        if dead_placeholder in text:
+            errors.append(
+                f"{path}: must not contain asset placeholder {dead_placeholder} "
+                f"(the build step injects assets directly)"
+            )
     for theme_fragment in (
         "@theme inline",
         "--color-canvas: var(--ui-canvas)",
@@ -396,9 +563,9 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                     f"({pin_note_count})"
                 )
         if action == "ranked-options":
-            if text.count("discovery-review-frame-code") != 1:
+            if text.count("discovery-review-frame-code") < 1:
                 errors.append(
-                    f"{path}: ranked options need exactly one readable code-surface "
+                    f"{path}: ranked options need at least one readable code-surface "
                     "direction frame"
                 )
             frames = parser.attribute_counts["data-option-frame"]
@@ -467,6 +634,159 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                     f"{path}: option frames must use materially distinct structures, "
                     "not renamed copies"
                 )
+        if action == "plan-review":
+            # Every plan step is answerable and ranked; one final hand-off verdict.
+            for index, step in enumerate(parser.plan_steps, start=1):
+                if step["questions"] < 1:
+                    errors.append(
+                        f"{path}: plan step {index} needs a decision question "
+                        f"(a [data-discovery-question] inside [data-plan-step])"
+                    )
+                if step["ranks"] < 1:
+                    errors.append(
+                        f"{path}: plan step {index} needs a [data-tweak-rank] "
+                        "affordance"
+                    )
+            verdicts = parser.attribute_counts["data-plan-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: plan-review needs exactly one [data-plan-verdict]; "
+                    f"found {verdicts}"
+                )
+        if action == "build-journal":
+            required_fields = {
+                "plan-said",
+                "code-revealed",
+                "choice-taken",
+                "revisit",
+            }
+            for index, deviation in enumerate(parser.deviations, start=1):
+                missing = required_fields.difference(deviation["fields"])
+                if missing:
+                    errors.append(
+                        f"{path}: deviation {index} is missing labelled "
+                        f"[data-deviation-field] part(s) {sorted(missing)}"
+                    )
+                if deviation["questions"] < 1:
+                    errors.append(
+                        f"{path}: deviation {index} needs a revisit question "
+                        "(a [data-discovery-question] inside [data-deviation])"
+                    )
+            verdicts = parser.attribute_counts["data-journal-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: build-journal needs exactly one "
+                    f"[data-journal-verdict]; found {verdicts}"
+                )
+        if action == "change-walkthrough":
+            for index, card in enumerate(parser.file_cards, start=1):
+                if card["risk_chips"] < 1:
+                    errors.append(
+                        f"{path}: file card {index} needs a risk chip "
+                        "([data-risk] inside [data-file-card])"
+                    )
+            verdicts = parser.attribute_counts["data-change-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: change-walkthrough needs exactly one final "
+                    f"[data-change-verdict]; found {verdicts}"
+                )
+        if action == "triage-board":
+            # Keyboard fallback: every draggable card carries a lane <select>, so
+            # the board is operable without a pointer. One select per card is the
+            # cheap proxy for that per-card fallback.
+            cards = parser.attribute_counts["data-drag-item"]
+            if parser.select_controls < cards:
+                errors.append(
+                    f"{path}: triage-board needs a per-card lane <select> keyboard "
+                    f"fallback; found {parser.select_controls} selects for {cards} "
+                    "cards"
+                )
+
+    errors.extend(_validate_stage3_structure(path, parser))
+    return errors
+
+
+def _validate_stage3_structure(path: Path, parser: ContractParser) -> list[str]:
+    """Cheap structural checks for the stage-3 catalog patterns.
+
+    Each check is presence-gated on its own marker, so a board (or the
+    placeholder template) that does not demonstrate the pattern is unaffected.
+    These prove the load-bearing pairing/count invariants of the interactive
+    patterns; they are not a substitute for rendered review.
+    """
+
+    errors: list[str] = []
+    counts = parser.attribute_counts
+
+    # code-tabs: one panel per tab, so every representation is reachable.
+    if counts["data-code-tabs"] or counts["data-code-tab"] or counts["data-code-panel"]:
+        tabs = counts["data-code-tab"]
+        panels = counts["data-code-panel"]
+        if tabs != panels:
+            errors.append(
+                f"{path}: code-tabs must have one [data-code-panel] per "
+                f"[data-code-tab]; found {tabs} tabs, {panels} panels"
+            )
+
+    # spectrum-minimap: one dot per idea card, so the minimap mirrors the axis.
+    if counts["data-minimap-dot"]:
+        dots = counts["data-minimap-dot"]
+        cards = counts["data-idea-card"]
+        if dots != cards:
+            errors.append(
+                f"{path}: spectrum-minimap must have one [data-minimap-dot] per "
+                f"[data-idea-card]; found {dots} dots, {cards} cards"
+            )
+
+    # drag-probe: needs at least three draggable items to feel like an ordering.
+    if counts["data-drag-probe"] or counts["data-drag-item"]:
+        items = counts["data-drag-item"]
+        if items < 3:
+            errors.append(
+                f"{path}: drag-probe needs at least 3 [data-drag-item] elements; "
+                f"found {items}"
+            )
+
+    # Synchronized-highlight idioms: every keyed group needs at least two
+    # members (a source and its counterpart) or there is nothing to sync. Each
+    # idiom's key is carried across its source + target attributes.
+    sync_idioms = {
+        "data-code-pair": ("data-code-pair",),
+        "data-term": ("data-term", "data-term-def"),
+        "data-code-map": ("data-code-map", "data-code-map-target"),
+    }
+    for idiom, attrs in sync_idioms.items():
+        if not any(counts[attr] for attr in attrs):
+            continue
+        members: Counter[str] = Counter()
+        for (attr, value), count in parser.attribute_value_counts.items():
+            if attr in attrs:
+                members[value] += count
+        for value, count in sorted(members.items()):
+            if count < 2:
+                errors.append(
+                    f"{path}: {idiom}={value!r} needs at least 2 members "
+                    f"(source + counterpart); found {count}"
+                )
+
+    # wizard-steps: a wizard must present at least three ordered steps.
+    if counts["data-wizard"]:
+        steps = counts["data-interview-step"]
+        if steps < 3:
+            errors.append(
+                f"{path}: wizard needs at least 3 [data-interview-step] steps; "
+                f"found {steps}"
+            )
+
+    # theme-direction-gallery: at least two competing specimen scopes side by side.
+    if "theme-direction-gallery" in parser.presentation_patterns:
+        specimens = counts["data-specimen"]
+        if specimens < 2:
+            errors.append(
+                f"{path}: theme-direction-gallery needs at least 2 [data-specimen] "
+                f"scopes; found {specimens}"
+            )
 
     return errors
 
@@ -590,6 +910,61 @@ def validate_direction_reference_contract() -> list[str]:
     return errors
 
 
+_BUILD_ARTIFACT = None
+
+
+def _load_builder():
+    """Import build_artifact by path, caching the module.
+
+    The scripts directory is a plain directory (not a package), so the module is
+    loaded via sys.path in the same style validate_artifact_builder already uses.
+    """
+
+    global _BUILD_ARTIFACT
+    if _BUILD_ARTIFACT is not None:
+        return _BUILD_ARTIFACT
+    sys.path.insert(0, str(BUILDER.parent))
+    sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
+    import build_artifact  # noqa: PLC0415 — local script import by design
+
+    _BUILD_ARTIFACT = build_artifact
+    return build_artifact
+
+
+def validate_source_drift(page_path: Path, source_dir: Path) -> list[str]:
+    """Require a committed page to be byte-identical to its composed source.
+
+    Every committed single-file board page must be authored as a modular source
+    directory (examples/src/<name>/ or templates/src/page/) whose composition
+    reproduces the page byte-for-byte. This forbids giant-file-only boards from
+    being added going forward, and catches a committed page that has drifted out
+    of lockstep with its modular sources.
+    """
+
+    if not source_dir.is_dir():
+        return [
+            f"{page_path}: committed page has no modular source directory "
+            f"(expected {source_dir}); every board must be authored as modular "
+            f"sources — add {source_dir}/page.html + sections/*.html and run "
+            f"'build_artifact.py {source_dir} --emit-page'"
+        ]
+    try:
+        build_artifact = _load_builder()
+        composed = build_artifact.compose_directory(source_dir)
+    except Exception as error:  # pragma: no cover - compose/import failure is the finding
+        return [
+            f"{source_dir}: could not compose modular source for {page_path}: "
+            f"{error!r}"
+        ]
+    if composed.encode("utf-8") != page_path.read_bytes():
+        return [
+            f"{page_path}: committed page has drifted from its modular source "
+            f"{source_dir}; edit the sources and run "
+            f"'build_artifact.py {source_dir} --emit-page' to regenerate it"
+        ]
+    return []
+
+
 def validate_artifact_builder() -> list[str]:
     """Verify build_artifact.py emits genuinely self-contained output.
 
@@ -601,20 +976,28 @@ def validate_artifact_builder() -> list[str]:
     """
 
     errors: list[str] = []
-    for required in (BUILDER, TAILWIND_VENDOR):
-        if not required.is_file():
-            errors.append(f"{required}: required builder artifact is missing")
+    if not BUILDER.is_file():
+        errors.append(f"{BUILDER}: required builder artifact is missing")
+
+    # The version-pinned vendor file must no longer be committed \u2014 the runtime is
+    # downloaded on demand now.
+    for pinned in sorted(VENDOR_DIR.glob("tailwind-browser-*.js")):
+        errors.append(
+            f"{pinned}: committed pinned Tailwind vendor file must be removed "
+            "(the runtime is downloaded on demand)"
+        )
+    # The gitignored cache is optional (a missing cache is fine); if present it
+    # must itself carry no raw U+FFFD (patched at download time).
+    if TAILWIND_CACHE.is_file() and TAILWIND_CACHE.read_bytes().count(
+        "\ufffd".encode("utf-8")
+    ):
+        errors.append(f"{TAILWIND_CACHE}: contains raw U+FFFD (deploy would 400)")
+
     if errors:
         return errors
 
-    # Vendored runtime must itself carry no raw U+FFFD (patched at vendor time).
-    if TAILWIND_VENDOR.read_bytes().count("\ufffd".encode("utf-8")):
-        errors.append(f"{TAILWIND_VENDOR}: contains raw U+FFFD (deploy would 400)")
-
-    sys.path.insert(0, str(BUILDER.parent))
-    sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
     try:
-        import build_artifact  # noqa: PLC0415 — local script import by design
+        build_artifact = _load_builder()
     except Exception as error:  # pragma: no cover - import failure is the finding
         return errors + [f"build_artifact import failed: {error!r}"]
 
@@ -668,6 +1051,7 @@ def run(stage: str) -> dict[str, object]:
 
     if TEMPLATE.is_file():
         errors.extend(validate_html(TEMPLATE, allow_placeholders=True))
+        errors.extend(validate_source_drift(TEMPLATE, TEMPLATE_SRC))
     if JAVASCRIPT.is_file():
         errors.extend(validate_runtime())
     if CSS.is_file():
@@ -680,12 +1064,13 @@ def run(stage: str) -> dict[str, object]:
             errors.append(f"{example}: required {stage} example is missing")
         else:
             errors.extend(validate_html(example))
+            errors.extend(validate_source_drift(example, EXAMPLES_SRC_ROOT / action))
             covered_patterns.update(presentation_patterns(example))
         if not reference.is_file():
             errors.append(f"{reference}: required {stage} action reference is missing")
 
     # Convention-demonstration boards (specimen-board, board-hub) are validated
-    # and pattern-scanned at --stage complete only, separate from the required-8
+    # and pattern-scanned at --stage complete only, separate from the required-11
     # ACTIONS above, so their coverage does not leak into --stage representative.
     convention_examples = CONVENTION_EXAMPLES if stage == "complete" else ()
     for action in convention_examples:
@@ -694,6 +1079,7 @@ def run(stage: str) -> dict[str, object]:
             errors.append(f"{example}: required convention example is missing")
         else:
             errors.extend(validate_html(example))
+            errors.extend(validate_source_drift(example, EXAMPLES_SRC_ROOT / action))
             covered_patterns.update(presentation_patterns(example))
 
     if stage == "complete":
@@ -723,7 +1109,7 @@ def main() -> int:
         "--stage",
         choices=("representative", "complete"),
         default="complete",
-        help="Validate the approval-gate artifact or the final eight-action library.",
+        help="Validate the approval-gate artifact or the final eleven-action library.",
     )
     args = parser.parse_args()
     result = run(args.stage)

@@ -93,10 +93,14 @@ owner, or marked blocking.
    the evidence ledger and artifact paths without rewriting them as certainty.
 7. **Present interactive results when useful.** If presentation criteria are
    met, choose the most suitable directional action from the presentation
-   reference. Prefer the LLM environment's built-in local HTML viewer, then a
-   safe cloud artifact viewer when it can render the dependencies, then a local
-   browser such as Chrome. Capture the user's answers and section annotations
-   in the page's single generated prompt and transfer them back to the ledger.
+   reference (including the plan/implementation/change lifecycle actions).
+   Author modular board sources, then compose and compile a self-contained file
+   with `scripts/build_artifact.py`; sources carry no asset links, so the
+   compiled file is what gets opened. Present it in preference order: the LLM
+   environment's built-in local HTML viewer, then a safe cloud artifact viewer,
+   then a local browser such as Chrome. Capture the user's answers and section
+   annotations in the page's single generated prompt and transfer them back to
+   the ledger.
 8. Run the verification below. Fix a failed check and repeat until it passes or
    a concrete blocker remains.
 

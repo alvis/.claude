@@ -28,5 +28,7 @@ and the single next owner.
 
 When stakeholders need to inspect evidence, blockers, and accepted assumptions
 together, consider the **readiness check** direction in
-[presentation](presentation.md). Its generated prompt must preserve the single
-verdict and next owner rather than reopening settled decisions implicitly.
+[presentation](presentation.md). When the evidence under review is a drafted
+plan, prefer the **plan review** direction; when it is a finished change, prefer
+the **change walkthrough** direction. Its generated prompt must preserve the
+single verdict and next owner rather than reopening settled decisions implicitly.

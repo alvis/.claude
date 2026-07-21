@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Architecture interview for invoice finalization</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -42,13 +39,7 @@
     </div>
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Guided interview</p>
-      <a class="is-active" href="#overview">Interview goal</a
-      ><a href="#execution-question">Execution boundary</a
-      ><a href="#identity-question">Effect identity</a
-      ><a href="#recovery-question">Recovery window</a
-      ><a href="#ownership-question">Operational ownership</a
-      ><a href="#failure-question">Incident threshold</a
-      ><a href="#decision-synthesis">Decision synthesis</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span
@@ -129,6 +120,50 @@
           </p>
         </aside>
       </header>
+      <div
+        data-wizard
+        data-presentation-pattern="wizard-steps"
+        aria-label="Guided interview in focused, one-question-at-a-time mode"
+      >
+        <div
+          class="discovery-wizard-controls flex flex-col gap-4 rounded-[var(--radius-card)] border border-[color:var(--ui-border)] bg-glass p-5 backdrop-blur-lg"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="discovery-eyebrow" style="margin: 0">Focused interview</p>
+            <button
+              class="discovery-button discovery-button-secondary"
+              type="button"
+              data-wizard-toggle
+              aria-pressed="false"
+            >
+              Show every question
+            </button>
+          </div>
+          <nav
+            class="discovery-wizard-nav"
+            aria-label="Move between interview steps"
+          >
+            <button
+              class="discovery-button discovery-button-secondary"
+              type="button"
+              data-wizard-prev
+            >
+              ← Previous
+            </button>
+            <span class="discovery-wizard-progress"
+              >One question at a time · ordered by how far the answer reshapes
+              the system</span
+            >
+            <button class="discovery-button" type="button" data-wizard-next>
+              Next question →
+            </button>
+          </nav>
+          <ol
+            class="discovery-wizard-summary"
+            data-wizard-summary
+            aria-label="Answered steps — select one to jump back and edit"
+          ></ol>
+        </div>
       <section
         id="execution-question"
         class="discovery-section"
@@ -605,6 +640,19 @@
             The prompt distinguishes confirmed answers from untouched
             suggestions.
           </p>
+          <div
+            class="discovery-nl-reply flex flex-col gap-2 rounded-[var(--radius-card)] border border-[color:var(--ui-insight)] bg-insight-soft p-4"
+          >
+            <p class="discovery-eyebrow" style="margin: 0">In plain words</p>
+            <p
+              class="discovery-nl-reply-text"
+              data-nl-reply
+              data-presentation-pattern="nl-reply"
+            >
+              Nothing is locked in yet — answer a question or add a note and this
+              line will summarize your reply to the coder in a sentence.
+            </p>
+          </div>
           <div class="discovery-prompt-card">
             <div class="discovery-prompt-toolbar">
               <span>Generated from this page</span
@@ -639,6 +687,46 @@ JavaScript will replace this fallback with the current decisions and annotations
           </button>
         </div>
       </section>
+      </div>
     </main>
+    <script>
+      // Page-inline coherence helper (runs after the shared runtime via
+      // DOMContentLoaded): the sidebar and top-bar anchors list every interview
+      // step, but the wizard keeps all-but-one step hidden. When an anchor
+      // targets a step that is currently hidden, flip the wizard's own
+      // "show every question" toggle so the jump resolves instead of dead-ending.
+      // No wizard internals are touched — only its public toggle button.
+      document.addEventListener("DOMContentLoaded", function () {
+        var wizard = document.querySelector("[data-wizard]");
+        if (!wizard) return;
+        var toggle = wizard.querySelector("[data-wizard-toggle]");
+        if (!toggle) return;
+        function revealForHash(hash) {
+          if (!hash || hash.length < 2) return;
+          var target;
+          try {
+            target = wizard.querySelector(hash);
+          } catch (error) {
+            return;
+          }
+          if (!target || !target.matches("[data-interview-step]")) return;
+          // offsetParent is null when the element (or an ancestor) is
+          // display:none — i.e. the wizard has this step hidden.
+          if (target.offsetParent !== null) return;
+          if (toggle.getAttribute("aria-pressed") !== "true") {
+            toggle.click();
+            target.scrollIntoView({ block: "start" });
+          }
+        }
+        document.addEventListener("click", function (event) {
+          var link = event.target.closest('a[href^="#"]');
+          if (link) revealForHash(link.getAttribute("href"));
+        });
+        window.addEventListener("hashchange", function () {
+          revealForHash(location.hash);
+        });
+        revealForHash(location.hash);
+      });
+    </script>
   </body>
 </html>

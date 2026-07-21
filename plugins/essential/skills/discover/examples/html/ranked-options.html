@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Ranked approaches for outbound event compatibility</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -42,11 +39,7 @@
     </div>
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Ranked options</p>
-      <a class="is-active" href="#overview">Outcome</a
-      ><a href="#option-adapter">Adapter</a><a href="#option-topics">Topics</a
-      ><a href="#option-consumers">Consumer path</a
-      ><a href="#option-gateway">Gateway</a><a href="#comparison">Comparison</a
-      ><a href="#option-decision">Final selection</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span>Rankings are suggestions until you explicitly respond.</span>
@@ -275,6 +268,15 @@ sample replay   → 18,420 / 18,420 equal</pre>
                 </div>
               </div>
             </div>
+            <p
+              class="discovery-variant-rationale"
+              data-presentation-pattern="variant-rationale"
+            >
+              <strong>Best for a reversible baseline.</strong> Keep
+              compatibility private to the producer so a bad mapping is undone
+              by one flag, never by six coordinated consumer deploys — the
+              thesis this whole ranking is built to protect.
+            </p>
             <fieldset
               class="discovery-question mt-5"
               data-discovery-question
@@ -444,6 +446,15 @@ sample replay   → 18,420 / 18,420 equal</pre>
                 </div>
               </div>
             </div>
+            <p
+              class="discovery-variant-rationale"
+              data-presentation-pattern="variant-rationale"
+            >
+              <strong>Best when overlap is long and must be visible.</strong>
+              Trade one runtime switch for two live routes an operator can watch
+              on a dashboard — worth it only if the migration window is measured
+              in weeks, not the 48 hours this scenario allows.
+            </p>
             <fieldset
               class="discovery-question mt-5"
               data-discovery-question
@@ -625,6 +636,15 @@ sample replay   → 18,420 / 18,420 equal</pre>
                 </div>
               </div>
             </div>
+            <p
+              class="discovery-variant-rationale"
+              data-presentation-pattern="variant-rationale"
+            >
+              <strong>Best only when the producer cannot own the mapping.</strong>
+              Maximum team autonomy at the price of a single revert — pick it
+              solely if some consumer genuinely needs its own migration clock,
+              which is the open question this board leaves unresolved.
+            </p>
             <fieldset
               class="discovery-question mt-5"
               data-discovery-question
@@ -779,6 +799,15 @@ drop_policy = "never"</pre>
                 >
               </div>
             </div>
+            <p
+              class="discovery-variant-rationale"
+              data-presentation-pattern="variant-rationale"
+            >
+              <strong>Best when negotiation deserves a platform owner.</strong>
+              The most elegant, most centralized shape — chosen only if you
+              accept a brand-new shared critical path, which is why elegance
+              stays the last tiebreak here and not the first.
+            </p>
             <fieldset
               class="discovery-question mt-5"
               data-discovery-question
@@ -843,8 +872,16 @@ drop_policy = "never"</pre>
           <h2>What changes the rank?</h2>
         </div>
         <div class="discovery-section-body">
+          <p class="discovery-muted">
+            Each cell carries a judgment against the ranking basis — rollback,
+            then ownership, then the failure it invites. The glyph doubles the
+            colour so the verdict survives a greyscale print:
+            <span data-verdict="good">clean</span>,
+            <span data-verdict="mixed">acceptable</span>, and
+            <span data-verdict="bad">costly</span>.
+          </p>
           <div class="discovery-table-wrap">
-            <table class="discovery-table">
+            <table class="discovery-table" data-presentation-pattern="verdict-table">
               <thead>
                 <tr>
                   <th>Approach</th>
@@ -856,27 +893,27 @@ drop_policy = "never"</pre>
               <tbody>
                 <tr class="is-emphasized">
                   <td>Producer adapter</td>
-                  <td>Producer</td>
-                  <td>One switch</td>
-                  <td>Legacy-only field returns</td>
+                  <td data-verdict="good">One producer team</td>
+                  <td data-verdict="good">One switch</td>
+                  <td data-verdict="mixed">Legacy-only field returns</td>
                 </tr>
                 <tr>
                   <td>Versioned topics</td>
-                  <td>Platform</td>
-                  <td>Route change</td>
-                  <td>Third version multiplies routes</td>
+                  <td data-verdict="mixed">Platform</td>
+                  <td data-verdict="good">Repoint a route</td>
+                  <td data-verdict="bad">Third version multiplies routes</td>
                 </tr>
                 <tr>
                   <td>Consumer translators</td>
-                  <td>Consumers</td>
-                  <td>Per consumer</td>
-                  <td>One team blocks retirement</td>
+                  <td data-verdict="bad">Six teams, no single revert</td>
+                  <td data-verdict="bad">Per consumer</td>
+                  <td data-verdict="bad">One team blocks retirement</td>
                 </tr>
                 <tr>
                   <td>Schema gateway</td>
-                  <td>Platform</td>
-                  <td>Policy revision</td>
-                  <td>Shared critical-path defect</td>
+                  <td data-verdict="mixed">Platform</td>
+                  <td data-verdict="mixed">Policy revision</td>
+                  <td data-verdict="bad">Shared critical-path defect</td>
                 </tr>
               </tbody>
             </table>
@@ -887,6 +924,62 @@ drop_policy = "never"</pre>
               Replay one day of production events through a producer adapter and
               compare both envelopes before committing to infrastructure.
             </p>
+          </div>
+        </div>
+      </section>
+      <section
+        id="scope-cuts"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="scope-cuts"
+        data-section-label="Scope cuts"
+        data-presentation-pattern="scope-cuts"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Author's own cuts</p>
+          <h2>What this ranking deliberately left out.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            These are the reviewer's non-goals and soft spots — not the costs of
+            any one direction, which live in each frame's pressure case. Read
+            them before treating the order as settled.
+          </p>
+          <div class="discovery-scope-cuts">
+            <p>Left out on purpose</p>
+            <ul>
+              <li>
+                No big-bang cutover was scored. The independent-deploy
+                constraint rules it out before ranking, so it never appears as a
+                fifth frame.
+              </li>
+              <li>
+                Ranked on rollback, then ownership, then elegance only. Latency
+                and dollar cost were not scored because no option is
+                disqualified on either at six consumers and this volume.
+              </li>
+              <li>
+                One representative pressure case per option, not an exhaustive
+                failure catalogue. Each frame shows the failure most likely to
+                change the rank, not every way it can break.
+              </li>
+            </ul>
+          </div>
+          <div class="discovery-scope-cuts mt-4">
+            <p>Weakest part of this board</p>
+            <ul>
+              <li>
+                The rank 3 versus rank 4 order is the softest call. If any single
+                consumer truly needs an independent rollback, consumer
+                translators should rise — and this board does not resolve that.
+              </li>
+              <li>
+                The replay-equality and lag figures are illustrative shapes for
+                inspecting each mechanism, not measured throughput. They are
+                flagged as such in the generated brief and must not size
+                infrastructure.
+              </li>
+            </ul>
           </div>
         </div>
       </section>

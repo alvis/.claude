@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Changing a live database without a hard cutover</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -39,15 +36,13 @@
       </nav>
     </div>
 
-    <aside class="essential-docnav" aria-label="Document sections">
+    <aside
+      class="essential-docnav"
+      aria-label="Document sections"
+      data-presentation-pattern="anchor-flash"
+    >
       <p>Domain explainer</p>
-      <a class="is-active" href="#overview">Overview</a>
-      <a href="#mental-model">Mental model</a>
-      <a href="#migration-sequence">Migration sequence</a>
-      <a href="#traffic-rehearsal">Traffic rehearsal</a>
-      <a href="#failure-boundaries">Failure boundaries</a>
-      <a href="#rollout-decision">Rollout decision</a>
-      <a href="#glossary">Working vocabulary</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span
@@ -152,7 +147,12 @@
           <p class="discovery-lede">
             Do not ask every server and every record to change at the same
             instant. First make the system tolerate both shapes, then move data
-            and traffic, and only then remove the old path.
+            and traffic, and only then remove the old path. The plan is four
+            moves — <span data-term="expand">expand</span>,
+            <span data-term="dual-write">dual write</span>,
+            <span data-term="backfill">backfill</span>, then
+            <span data-term="contract">contract</span> — each defined in the
+            vocabulary below; hover one to light its entry.
           </p>
           <div class="discovery-callout shadow-sm">
             <h3>The invariant</h3>
@@ -195,6 +195,11 @@
                 <span class="discovery-checkpoint"
                   >Rollback: remove unused addition</span
                 >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >db/migrate/20260714_expand_orders.rb:1-14</span
+                >
               </div>
             </li>
             <li data-mechanism-stage>
@@ -206,6 +211,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Pause: keep old reads authoritative</span
+                >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >app/models/order.rb:88-104</span
                 >
               </div>
             </li>
@@ -220,6 +230,11 @@
                 <span class="discovery-checkpoint"
                   >Pause: resume from last batch</span
                 >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >app/jobs/backfill_orders.rb:1-46</span
+                >
               </div>
             </li>
             <li data-mechanism-stage>
@@ -232,6 +247,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Rollback: restore old reader</span
+                >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >db/migrate/20260901_contract_orders.rb:1-9</span
                 >
               </div>
             </li>
@@ -257,6 +277,7 @@
         data-section-id="traffic-rehearsal"
         data-section-label="Traffic rehearsal"
         data-domain-simulation
+        data-presentation-pattern="live-sim"
       >
         <div class="discovery-section-heading discovery-sticky">
           <p class="discovery-eyebrow">Feel the boundary</p>
@@ -264,9 +285,11 @@
         </div>
         <div class="discovery-section-body">
           <p class="discovery-lede">
-            This rehearsal uses fake telemetry to make the safety trade-off
-            tangible. Raise the cohort and watch the same mismatch affect more
-            requests; keep fallback enabled until the new read path is proven.
+            This rehearsal replays the same one hundred reads on every render, so
+            the picture is reproducible rather than random. Raise the cohort to
+            widen the blast radius; lower backfill completeness to see how many
+            new reads land on rows that have not migrated yet; keep the legacy
+            fallback on until the new read path is proven.
           </p>
           <div
             class="discovery-artifact-frame overflow-hidden"
@@ -276,35 +299,80 @@
               <span class="discovery-artifact-dots" aria-hidden="true"
                 ><i></i><i></i><i></i
               ></span>
-              <span>migration rehearsal · sanitized telemetry</span>
+              <span>migration rehearsal · seeded telemetry</span>
               <span class="discovery-badge" data-simulator-state>guarded</span>
             </div>
             <div class="discovery-artifact-body grid gap-5">
-              <div class="grid gap-3 sm:grid-cols-3" aria-live="polite">
-                <article
-                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
-                >
-                  <p class="discovery-eyebrow">New-read cohort</p>
-                  <strong class="text-3xl tabular-nums" data-simulator-cohort
-                    >10%</strong
+              <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <div class="grid gap-3" aria-live="polite">
+                  <article
+                    class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
                   >
-                </article>
-                <article
-                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
-                >
-                  <p class="discovery-eyebrow">Affected mismatches</p>
-                  <strong class="text-3xl tabular-nums" data-simulator-mismatch
-                    >3 / min</strong
+                    <p class="discovery-eyebrow">New-read cohort</p>
+                    <strong class="text-3xl tabular-nums" data-sim-cohort
+                      >10%</strong
+                    >
+                  </article>
+                  <article
+                    class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
                   >
-                </article>
-                <article
-                  class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
-                >
-                  <p class="discovery-eyebrow">Fallback result</p>
-                  <strong class="text-lg" data-simulator-fallback
-                    >legacy read serves</strong
+                    <p class="discovery-eyebrow">Reads needing the old shape</p>
+                    <strong class="text-3xl tabular-nums" data-sim-mismatch
+                      >0 / 0</strong
+                    >
+                  </article>
+                  <article
+                    class="rounded-[var(--radius-card)] bg-glass p-4 shadow-sm"
                   >
-                </article>
+                    <p class="discovery-eyebrow">Fallback result</p>
+                    <strong class="text-lg" data-sim-fallback
+                      >0 legacy reads serve</strong
+                    >
+                  </article>
+                </div>
+                <figure class="grid content-start gap-2 justify-items-center">
+                  <div data-sim-stage></div>
+                  <figcaption
+                    class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted"
+                  >
+                    <span class="inline-flex items-center gap-1.5">
+                      <svg width="11" height="11" aria-hidden="true"
+                        ><rect
+                          width="11"
+                          height="11"
+                          rx="2"
+                          fill="var(--ui-border-strong)" /></svg
+                      >Legacy path
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <svg width="11" height="11" aria-hidden="true"
+                        ><rect
+                          width="11"
+                          height="11"
+                          rx="2"
+                          fill="var(--ui-insight)" /></svg
+                      >New read matches
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <svg width="11" height="11" aria-hidden="true"
+                        ><rect
+                          width="11"
+                          height="11"
+                          rx="2"
+                          fill="var(--ui-provenance-amber)" /></svg
+                      >Caught by fallback
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <svg width="11" height="11" aria-hidden="true"
+                        ><rect
+                          width="11"
+                          height="11"
+                          rx="2"
+                          fill="var(--ui-sev-critical)" /></svg
+                      >Would fail
+                    </span>
+                  </figcaption>
+                </figure>
               </div>
               <div
                 class="discovery-field"
@@ -314,8 +382,8 @@
                 data-prototype-control
               >
                 <label for="rehearsal-cohort"
-                  >Send <strong data-simulator-label>10%</strong> of reads to
-                  the new representation</label
+                  >Send <strong data-sim-label>10%</strong> of reads to the new
+                  representation</label
                 >
                 <input
                   id="rehearsal-cohort"
@@ -325,6 +393,24 @@
                   step="10"
                   value="10"
                   data-recommended="true"
+                />
+              </div>
+              <div class="discovery-field" data-sim-control>
+                <label for="rehearsal-backfill"
+                  >Backfill completeness
+                  <strong data-sim-backfill-label>60%</strong> of history
+                  migrated
+                  <small class="discovery-muted"
+                    >(rehearsal knob — not a decision)</small
+                  ></label
+                >
+                <input
+                  id="rehearsal-backfill"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="10"
+                  value="60"
                 />
               </div>
               <div
@@ -351,14 +437,16 @@
           <div class="discovery-callout shadow-sm">
             <h3>What the simulation teaches</h3>
             <p>
-              Cohort size changes blast radius, not correctness. The authority
-              switch is safe only when mismatch telemetry is understood and the
-              rollback path has been exercised.
+              Cohort size changes blast radius, not correctness. When
+              <span data-term="backfill">backfill</span> is incomplete, some new
+              reads land on rows that only the old shape can answer — the
+              fallback turns those from failures into quiet legacy reads. The
+              authority switch is safe only when that amber band reaches zero and
+              the rollback path has been exercised.
             </p>
           </div>
         </div>
       </section>
-
       <section
         id="failure-boundaries"
         class="discovery-section"
@@ -372,28 +460,75 @@
           <h2>Three boundaries deserve explicit proof.</h2>
         </div>
         <div class="discovery-section-body">
-          <div class="discovery-failure-map">
-            <article>
-              <h3>Mixed application versions</h3>
-              <p>
-                A rolling deploy means old and new binaries overlap. The schema
-                must serve both until the final old instance is gone.
-              </p>
-            </article>
-            <article>
-              <h3>Partial backfill</h3>
-              <p>
-                Readers need a defined fallback when a record has not migrated,
-                rather than assuming the new location is complete.
-              </p>
-            </article>
-            <article>
-              <h3>Silent divergence</h3>
-              <p>
-                Dual writes can disagree. Measure and reconcile the difference
-                before changing which representation is authoritative.
-              </p>
-            </article>
+          <p class="discovery-muted">
+            Open one boundary at a time — each names the failure, the proof it
+            demands, and where that proof lives.
+          </p>
+          <div
+            class="discovery-failure-map"
+            data-accordion-exclusive
+            data-presentation-pattern="accordion-exclusive"
+          >
+            <details open>
+              <summary>Mixed application versions</summary>
+              <div>
+                <p>
+                  A rolling deploy means old and new binaries overlap. The schema
+                  must serve both until the final old instance is gone.
+                  <span
+                    class="discovery-provenance"
+                    data-provenance="observed"
+                    >observed</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  Proof: the compatibility adapter reads either shape.
+                  <span
+                    class="discovery-source-ref"
+                    data-presentation-pattern="source-ref-chip"
+                    >app/adapters/order_compat.rb:12-40</span
+                  >
+                </p>
+              </div>
+            </details>
+            <details>
+              <summary>Partial backfill</summary>
+              <div>
+                <p>
+                  Readers need a defined fallback when a record has not migrated,
+                  rather than assuming the new location is complete.
+                  <span class="discovery-provenance" data-provenance="assumed"
+                    >assumed</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  This is the amber band in the rehearsal above:
+                  <span data-term="backfill">backfill</span> gaps become quiet
+                  legacy reads only while the fallback stays on.
+                </p>
+              </div>
+            </details>
+            <details>
+              <summary>Silent divergence</summary>
+              <div>
+                <p>
+                  <span data-term="dual-write">Dual writes</span> can disagree.
+                  Measure and reconcile the difference before changing which
+                  representation is authoritative.
+                  <span class="discovery-provenance" data-provenance="inferred"
+                    >inferred</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  Proof: a mismatch counter compares both shapes on every write.
+                  <span
+                    class="discovery-source-ref"
+                    data-presentation-pattern="source-ref-chip"
+                    >app/models/order.rb:96-104</span
+                  >
+                </p>
+              </div>
+            </details>
           </div>
           <div class="discovery-callout shadow-sm">
             <h3>The irreversible moment comes last</h3>
@@ -414,6 +549,72 @@
         </div>
       </section>
 
+      <section
+        id="faq"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="faq"
+        data-section-label="Anticipated questions"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Before you implement</p>
+          <h2>Questions this plan tends to raise.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            The answers below are the ones reviewers ask first. Each carries the
+            weight of its claim, so an assumption is never mistaken for a
+            measurement.
+          </p>
+          <dl class="discovery-faq" data-presentation-pattern="faq-block">
+            <dt>Can three application versions overlap during a rolling deploy?</dt>
+            <dd>
+              Yes. The <span data-term="expand">expand</span> step keeps every
+              deployed build able to read and write both shapes, so a deploy that
+              briefly runs three versions is safe — as long as none has entered
+              the contract step.
+              <span class="discovery-provenance" data-provenance="observed"
+                >observed</span
+              >
+            </dd>
+            <dt>How long should dual write run before the read switch?</dt>
+            <dd>
+              Not a fixed duration. Keep
+              <span data-term="dual-write">dual writing</span> until
+              <span data-term="backfill">backfill</span> is verified complete and
+              the mismatch counter has stayed flat across a full traffic cycle.
+              Residual mismatch is a blocker, not noise.
+              <span class="discovery-provenance" data-provenance="inferred"
+                >inferred</span
+              >
+            </dd>
+            <dt>What single signal should trigger rollback?</dt>
+            <dd>
+              The new-read error budget or the mismatch rate crossing its
+              configured threshold. Wire that trigger before the switch — a
+              rollback you have not rehearsed is not a rollback.
+              <span class="discovery-provenance" data-provenance="decided"
+                >decided</span
+              >
+              <span
+                class="discovery-source-ref"
+                data-presentation-pattern="source-ref-chip"
+                >config/rollout.yml:3-9</span
+              >
+            </dd>
+            <dt>Is dropping the old column reversible?</dt>
+            <dd>
+              No. <span data-term="contract">Contract</span> is the one
+              irreversible step. Schedule it in its own deploy, only after
+              telemetry shows no supported code path reads or writes the legacy
+              shape.
+              <span class="discovery-provenance" data-provenance="observed"
+                >observed</span
+              >
+            </dd>
+          </dl>
+        </div>
+      </section>
       <section
         id="rollout-decision"
         class="discovery-section"
@@ -515,27 +716,51 @@
           <h2>Four terms carry the plan.</h2>
         </div>
         <div class="discovery-section-body">
-          <dl class="discovery-glossary">
-            <div class="discovery-term-rung" data-domain-term>
+          <p class="discovery-muted">
+            Each term is dotted-underlined where it appears in the prose above;
+            hover or focus one there — or an entry here — and both light up
+            together.
+          </p>
+          <dl
+            class="discovery-glossary"
+            data-presentation-pattern="glossary-sync"
+          >
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="expand"
+            >
               <dt>Expand</dt>
               <dd>
                 Add a compatible shape without removing what deployed code
                 expects.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="dual-write"
+            >
               <dt>Dual write</dt>
               <dd>
                 Persist the same logical change to old and new representations.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="backfill"
+            >
               <dt>Backfill</dt>
               <dd>
                 Convert historical records in restartable, observable batches.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="contract"
+            >
               <dt>Contract</dt>
               <dd>
                 Remove the legacy shape only after supported code no longer uses
@@ -674,46 +899,103 @@ Build to the selected rollout mode and the four stages in order, holding the com
       </section>
     </main>
     <script>
+      // Live-sim: a seeded, deterministic rehearsal of the read switch. The same
+      // 100 requests are laid out every render; only the parameters move, so the
+      // picture is reproducible and teaches blast radius rather than luck.
       (() => {
         const cohort = document.querySelector("#rehearsal-cohort");
+        const backfill = document.querySelector("#rehearsal-backfill");
         const fallback = document.querySelector(
           "[data-simulator-fallback-control]",
         );
+        const stage = document.querySelector("[data-sim-stage]");
         if (
           !(cohort instanceof HTMLInputElement) ||
-          !(fallback instanceof HTMLInputElement)
+          !(backfill instanceof HTMLInputElement) ||
+          !(fallback instanceof HTMLInputElement) ||
+          !stage
         )
           return;
 
+        const COLS = 10;
+        const ROWS = 10;
+        const TOTAL = COLS * ROWS;
+        const GAP = 4;
+        const CELL = 16;
+        const SIZE = COLS * CELL + (COLS - 1) * GAP;
+
+        // Deterministic unit-interval stream, seeded per request index. Two
+        // offset streams give independent routing and backfill draws with no
+        // Math.random, so every render of the same inputs is identical.
+        const draw = (n) => {
+          const x = Math.sin(n * 12.9898 + 4.1414) * 43758.5453;
+          return x - Math.floor(x);
+        };
+
+        const setText = (selector, value) => {
+          const node = document.querySelector(selector);
+          if (node) node.textContent = value;
+        };
+
         const update = () => {
-          const percent = Number(cohort.value);
-          const mismatch = Math.max(0, Math.round(percent * 0.3));
-          document
-            .querySelectorAll("[data-simulator-cohort]")
-            .forEach((node) => {
-              node.textContent = `${percent}%`;
-            });
-          const label = document.querySelector("[data-simulator-label]");
-          const mismatchNode = document.querySelector(
-            "[data-simulator-mismatch]",
-          );
-          const fallbackNode = document.querySelector(
-            "[data-simulator-fallback]",
-          );
-          const stateNode = document.querySelector("[data-simulator-state]");
-          if (label) label.textContent = `${percent}%`;
-          if (mismatchNode) mismatchNode.textContent = `${mismatch} / min`;
-          if (fallbackNode) {
-            fallbackNode.textContent = fallback.checked
-              ? "legacy read serves"
-              : "request fails";
+          const cohortPct = Number(cohort.value);
+          const backfillPct = Number(backfill.value);
+          const guarded = fallback.checked;
+
+          const tally = { legacy: 0, newOk: 0, fallback: 0, failed: 0 };
+          const rects = [];
+          for (let i = 0; i < TOTAL; i++) {
+            const routed = draw(i + 1) * 100 < cohortPct;
+            const migrated = draw(i + 101) * 100 < backfillPct;
+            let fill = "var(--ui-border-strong)"; // legacy path, unchanged
+            let kind = "legacy";
+            if (routed && migrated) {
+              fill = "var(--ui-insight)"; // new read matches
+              kind = "newOk";
+            } else if (routed && !migrated && guarded) {
+              fill = "var(--ui-provenance-amber)"; // caught by fallback
+              kind = "fallback";
+            } else if (routed && !migrated) {
+              fill = "var(--ui-sev-critical)"; // no fallback: request fails
+              kind = "failed";
+            }
+            tally[kind] += 1;
+            const cx = (i % COLS) * (CELL + GAP);
+            const cy = Math.floor(i / COLS) * (CELL + GAP);
+            rects.push(
+              `<rect x="${cx}" y="${cy}" width="${CELL}" height="${CELL}" rx="3" fill="${fill}" />`,
+            );
           }
-          if (stateNode) {
-            stateNode.textContent = fallback.checked ? "guarded" : "exposed";
-          }
+
+          const routedTotal = tally.newOk + tally.fallback + tally.failed;
+          const label = guarded ? "guarded" : "exposed";
+
+          stage.innerHTML =
+            `<svg viewBox="0 0 ${SIZE} ${SIZE}" width="100%" ` +
+            `style="max-width:${SIZE * 2}px" role="img" ` +
+            `aria-label="${routedTotal} of ${TOTAL} rehearsed reads on the new path; ` +
+            `${tally.newOk} matched, ${tally.fallback} caught by fallback, ${tally.failed} failed">` +
+            rects.join("") +
+            `</svg>`;
+
+          setText("[data-sim-cohort]", `${cohortPct}%`);
+          setText("[data-sim-label]", `${cohortPct}%`);
+          setText("[data-sim-backfill-label]", `${backfillPct}%`);
+          setText(
+            "[data-sim-mismatch]",
+            `${tally.fallback + tally.failed} / ${routedTotal || 0}`,
+          );
+          setText(
+            "[data-sim-fallback]",
+            guarded
+              ? `${tally.fallback} legacy reads serve`
+              : `${tally.failed} requests fail`,
+          );
+          setText("[data-simulator-state]", label);
         };
 
         cohort.addEventListener("input", update);
+        backfill.addEventListener("input", update);
         fallback.addEventListener("change", update);
         update();
       })();

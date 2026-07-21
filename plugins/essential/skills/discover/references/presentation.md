@@ -17,6 +17,15 @@ source of truth after answers and annotations are transferred back.
 | `reference`    | semantics map         | Terms, relationships, or observable behavior must map into the target   |
 | `prototype`    | interactive prototype | A disposable interaction is the cheapest useful probe                   |
 | `readiness`    | readiness check       | Evidence, assumptions, blockers, and the next owner need one view       |
+| `readiness`    | plan review           | A drafted plan's judgment calls need user confirmation before hand-off  |
+| `readiness`    | change walkthrough    | A finished change needs to be genuinely understood before it merges     |
+
+**Lifecycle actions.** plan-review, build-journal, and change-walkthrough serve
+the plan → implementation → change lifecycle and are also reached by direct
+request ("review this plan", "log the build deviations", "walk me through the
+change"). plan-review is the interview-over-a-plan; guided-interview remains the
+pre-planning interview. build-journal has no mode row because it is authored
+during implementation rather than chosen as a discovery mode.
 
 These actions are directions, not page schemas. Add, remove, reorder, combine,
 or redesign components to deliver the clearest experience for the actual
@@ -38,12 +47,30 @@ shared visual hierarchy, responsive shell, annotation flow, and folded
 single-prompt experience. Every action example follows that contract while
 changing its content density and optional components to fit the action.
 
-Together, the eight examples must cover the complete reusable pattern catalog.
-Use the [presentation coverage map](presentation/coverage.md) to see which
-action owns each demonstration. This is suite-level coverage: generated pages
-still select only the components that improve their task-specific UX.
-The complete validator checks both catalog coverage and minimum semantic
-structure for every action; neither check substitutes for rendered review.
+Together, the eleven action examples and four convention boards (specimen-board,
+board-hub, architecture-board, triage-board) must cover the complete reusable
+pattern catalog. Use the [presentation coverage map](presentation/coverage.md)
+to see which action owns each demonstration. This is suite-level coverage:
+generated pages still select only the components that improve their
+task-specific UX. The complete validator checks both catalog coverage and
+minimum semantic structure for every action; neither check substitutes for
+rendered review.
+
+## Variable length, modular sources
+
+A board has no fixed shape. One single section demonstrating a component mockup
+is a complete, valid page; a ten-plus-section implementation-direction review is
+equally valid. Section count follows the information need, never the examples'
+density. Any section type repeats 1..N — several decision sections, several file
+cards — and the only per-page singleton is the generated-brief prompt host. The
+sidebar quick-links are not hand-authored; the runtime derives them at run time
+from the sections actually present.
+
+Every board — including a generated user artifact — is authored as modular
+sources: a `page.html` shell plus one file per section under `sections/`,
+composed with `scripts/build_artifact.py`. Never author one giant HTML file. An
+executor creating a temporary review surface creates the source directory in the
+session workspace, composes it, then compiles the self-contained file.
 
 ## Shared interaction contract
 
@@ -127,8 +154,8 @@ rigid.
 
 ## Temporary artifact lifecycle
 
-Always save generated, user-specific HTML before presenting it. Use the
-platform temp root through Python's `tempfile.mkdtemp` to open one session
+Always save generated, user-specific board sources before presenting them. Use
+the platform temp root through Python's `tempfile.mkdtemp` to open one session
 workspace, with sanitized slugs and a unique suffix:
 
 ```python
@@ -137,53 +164,52 @@ workspace_dir = tempfile.mkdtemp(
 )
 ```
 
-One workspace holds every board HTML file produced during the session, so
-boards can cross-link with session-relative hrefs (`./sibling.html`). This
-resolves through the operating system (`$TMPDIR` on macOS, the configured temp
-root such as `/tmp` on Linux, and `%TEMP%` on Windows) without a shared
-filename collision. Write each board's HTML and optional captures inside that
-workspace directory, and link boards to one another with relative hrefs. Link
-every page to the canonical plugin CSS and JavaScript; temporary pages are
-intentionally nonportable and may break after the plugin moves. Artifacts stay
-ephemeral — durable, bookmarkable, and cross-linked only within the session,
-never a permanent deliverable.
+One workspace holds every board produced during the session, so boards can
+cross-link with session-relative hrefs (`./sibling.html`). This resolves through
+the operating system (`$TMPDIR` on macOS, the configured temp root such as
+`/tmp` on Linux, and `%TEMP%` on Windows) without a shared filename collision.
+Write each board's source directory and any captures inside that workspace, and
+link boards to one another with relative hrefs. Board sources carry no external
+or linked scripts and stylesheets — no CDN Tailwind tag, no `discovery.css` or
+`discovery.js` link, no `{{DISCOVERY_*_URL}}` placeholder — only inline markup
+and the inline `<style type="text/tailwindcss">` theme block; the builder
+injects every shared asset. Artifacts stay ephemeral — durable, bookmarkable,
+and cross-linked only within the session, never a permanent deliverable.
 
-Present in this order:
-
-1. the LLM coder's built-in local browser or HTML viewer;
-2. a cloud artifact viewer/store only when a suitable tool exists, the content
-   is safe to externalize, and the service can render the linked dependencies;
-3. a local browser such as Chrome.
-
-The board sources keep the CDN Tailwind `<script>` plus relative/placeholder
-references to `discovery.css` and `discovery.js`, so a cloud viewer with a
-locked-down CSP (for example a claude.ai Artifact, `default-src 'none'`) cannot
-load them directly. To publish a review surface there, compile a self-contained
-copy with the builder:
+The presentation flow is always the same: author the modular sources, compose
+them, and compile a self-contained file with the builder before presenting it.
 
 ```bash
 # self-contained full document (file:// viewing, any host)
 scripts/build_artifact.py <board-source>
-# head-less fragment ready to hand straight to the Artifact tool
+# head-less fragment ready to hand straight to the claude.ai Artifact tool
 scripts/build_artifact.py <board-source> --artifact
 ```
 
-The builder inlines the vendored Tailwind runtime plus `discovery.css` and
-`discovery.js`, and fails the build unless the output is genuinely
-self-contained (no external `src`/`href`, no unfilled placeholder, no raw
-U+FFFD byte — the last being the sentinel the Artifact deploy validator
-rejects). Never hand-edit the compiled output; it is generated and throwaway.
-To change styling or behaviour, edit the small sources under `assets/html/` and
-rebuild. `--artifact` mode omits `<!doctype>/<html>/<head>/<body>` because the
-Artifact tool supplies its own; the fragment restores only the source body's
+The builder composes the `page.html` shell with its `sections/` files, then
+inlines the Tailwind runtime plus `discovery.css` and `discovery.js`, and fails
+the build unless the output is genuinely self-contained (no external
+`src`/`href`, no unfilled placeholder, no raw U+FFFD byte — the last being the
+sentinel the claude.ai Artifact deploy validator rejects). The Tailwind runtime
+is downloaded latest-on-request by the builder, with a gitignored cache kept as
+an offline fallback. Never hand-edit the compiled output; it is generated and
+throwaway. To change styling or behaviour, edit the small sources and rebuild.
+`--artifact` mode omits `<!doctype>/<html>/<head>/<body>` because the Artifact
+tool supplies its own; the fragment restores only the source body's
 `::selection` colours, since `discovery.css` styles the `body` element (and
 `[data-theme="dark"]` on the root) directly.
 
-If the cloud viewer cannot load the common assets and you are not compiling a
-self-contained copy, skip it. Never externalize sensitive discovery content
-merely to satisfy the preference order. After the user's decisions and
-annotations are captured in the one generated prompt and transferred to the
-ledger, discard the whole session workspace and any compiled artifacts.
+Present the compiled file in this order:
+
+1. the LLM coder's built-in local browser or HTML viewer;
+2. a cloud artifact viewer/store only when a suitable tool exists and the
+   content is safe to externalize (hand it the `--artifact` fragment);
+3. a local browser such as Chrome.
+
+Never externalize sensitive discovery content merely to satisfy the preference
+order. After the user's decisions and annotations are captured in the one
+generated prompt and transferred to the ledger, discard the whole session
+workspace and any compiled artifacts.
 
 ## Golden-example confirmation
 
@@ -202,3 +228,17 @@ to match that density: fill only what its own artifact needs, and let the
 showcase set the bar for polish and personality rather than hand you a checklist
 of sections to reproduce. Matching the golden board's delight is the goal;
 copying its inventory is the failure mode.
+
+## Non-goals and routing
+
+Some presentation types are deliberately not offered here. Each would break the
+single-prompt or disposable-surface contract, so route it to its proper owner
+instead.
+
+| Not offered                                                    | Why it is out of scope                                                                                                    | Where it belongs                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Recurring status reports, incident postmortems                 | Backward-looking reporting is not discovery, and a disposable surface is the wrong home for a record meant to last.       | reporting / documentation flows |
+| Design-system reference sheets                                 | A production design artifact is durable by definition, which the temporary-surface contract forbids.                      | `web:design`                    |
+| Exportable asset sheets, client-side file downloads            | A file the user keeps is a durable deliverable, contradicting the discard-after-transfer contract.                        | a durable-artifact skill        |
+| Durable config or prompt editors with state-serialized exports | The atoms exist — live previews, toggle rigs — but a board's one output is the single generated prompt, not a saved blob. | the single generated prompt     |
+| Pre-authored per-card prompt fragments                         | A board exposes exactly one live prompt, so per-card prompt snippets are prohibited outright.                             | the single prompt host          |
