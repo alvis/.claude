@@ -139,7 +139,7 @@ docs/
     ├── design/*.md
     ├── review.md
     ├── reviews/*.md
-    └── evidence/
+    └── artifacts/
 ```
 
 All generated project Markdown filenames are lowercase. Plugin control files
@@ -375,7 +375,7 @@ never invoke Notion transport merely to complete.
 Keep logs, screenshots, captures, binaries, and large raw evidence outside
 Markdown. Work artifacts store concise results plus source-bound paths,
 revisions, hashes, and dispositions. Discovery and research belong under
-`state/` when they are resumable context or `evidence/` when they are source
+`state/` when they are resumable context or `artifacts/` when they are source
 material. Findings surfaced during implementation — gotchas, constraints,
 and learned facts about the codebase — are recorded in
 `state/discovery.md`, an ordinary resumable `state/` child governed by the same
