@@ -112,21 +112,21 @@ Proposed work (footer fix in packages/web/src/Footer.tsx) is unrelated
 to current @ (avatar work in packages/user-profile/).
 
 Open a parallel jj workspace?
-[Y] Yes — `jj workspace add ../repo-footer-fix` on main@origin
+[Y] Yes — `jj workspace add ~/.workspaces/repo/footer-fix` on main@origin
 [N] No — keep work on @, accept mixed history
 ```
 
 User: Y. Skill executes per [workflow-parallel.md](./workflow-parallel.md):
 
 ```bash
-jj workspace add ../repo-footer-fix --revision main@origin
-cd ../repo-footer-fix
+jj workspace add ~/.workspaces/repo/footer-fix --revision main@origin
+cd ~/.workspaces/repo/footer-fix
 # (edits Footer.tsx)
 jj describe @ -m "fix(web): repair broken privacy-policy link in footer"
 git commit ...
 ```
 
-Work integrated separately. Later: `jj workspace forget repo-footer-fix` from main workspace.
+Work integrated separately. Later: `jj workspace forget footer-fix` from main workspace.
 
 ---
 

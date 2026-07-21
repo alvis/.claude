@@ -38,7 +38,7 @@ engineering state into the plugin repository.
    rather than a localized defect, stop before dispatching a fixer or editing
    code. Ask the user which architectural direction to take. Once the user
    decides, write a lowercase decision child under the target repository's
-   active `.engineering/work/<work-id>/decisions/` with canonical metadata,
+   active `.engineering/works/<work-id>/decisions/` with canonical metadata,
    PR/evidence, chosen direction, alternatives, affected scope, and date. The
    main agent/PM reconciles `decisions.md` and the affected plan/lifecycle in
    `state.md`; the poller/fixer never edits `working.md` or an overview. The

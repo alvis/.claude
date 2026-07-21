@@ -846,7 +846,7 @@ def normalize_publication_request(
             raise ContractError(f"publication path lacks lifecycle origin: {path}")
         if path in seen or path.casefold() in folded:
             raise ContractError(f"duplicate/case-colliding publication path: {path}")
-        if path == ".engineering/working.md" or path.startswith(".engineering/work/"):
+        if path == ".engineering/working.md" or path.startswith(".engineering/works/"):
             raise ContractError(f"ignored engineering work state cannot be published: {path}")
         if check_ignored(repo, path):
             raise ContractError(f"publishable lifecycle path is ignored: {path}")
@@ -876,7 +876,7 @@ def normalize_publication_request(
 
 def validate_work_evidence(repo: Path, work_root_arg: str, work_id: str, child: Path) -> Path:
     work_root = absolute_cli_path(work_root_arg, "--work-root")
-    expected = repo / ".engineering" / "work" / work_id
+    expected = repo / ".engineering" / "works" / work_id
     if work_root != expected:
         raise ContractError(f"work root must be {expected}")
     ensure_no_symlink_chain(work_root, repo)
@@ -915,7 +915,7 @@ def validate_evidence_pointer(repo: Path, work_root: Path, value: Any) -> tuple[
             candidate = work_root.joinpath(*pure.parts)
         elif tuple(pure.parts[:4]) == (
             ".engineering",
-            "work",
+            "works",
             work_root.name,
             "evidence",
         ):
@@ -923,7 +923,7 @@ def validate_evidence_pointer(repo: Path, work_root: Path, value: Any) -> tuple[
         else:
             raise ContractError(
                 "generated-file evidence pointer must be absolute, work-root-relative evidence/, "
-                "or repo-relative .engineering/work/<id>/evidence/"
+                "or repo-relative .engineering/works/<id>/evidence/"
             )
     try:
         relative = candidate.relative_to(work_root / "evidence")
@@ -974,7 +974,7 @@ def load_producer_receipt(
         path = validate_relative_path(repo, entry.get("path"))
         if path in entries or path.casefold() in folded:
             raise ContractError(f"duplicate/case-colliding generated path: {path}")
-        if path == ".engineering/working.md" or path.startswith(".engineering/work/"):
+        if path == ".engineering/working.md" or path.startswith(".engineering/works/"):
             raise ContractError(f"ignored work state cannot be producer-generated: {path}")
         if check_ignored(repo, path):
             raise ContractError(f"producer-generated publication path is ignored: {path}")
@@ -1167,7 +1167,7 @@ def validate_manifest(repo: Path, manifest_path: Path, expected_sha: str) -> tup
         raise ContractError("manifest work_id must match the resolver lowercase-kebab grammar")
     work_root = validate_work_evidence(
         repo,
-        os.fspath(repo / ".engineering" / "work" / work_id),
+        os.fspath(repo / ".engineering" / "works" / work_id),
         work_id,
         manifest_path,
     )
@@ -1254,7 +1254,7 @@ def validate_manifest_state(
             require_exact_keys(value, expected_fields, f"{label} entry")
             path = validate_relative_path(repo, value.get("path"))
             if label == "publication":
-                if path == ".engineering/working.md" or path.startswith(".engineering/work/"):
+                if path == ".engineering/working.md" or path.startswith(".engineering/works/"):
                     raise ContractError(f"ignored engineering work state cannot be published: {path}")
                 if check_ignored(repo, path):
                     raise ContractError(f"publishable lifecycle path is ignored: {path}")

@@ -9,7 +9,7 @@ argument-hint: "[path] [--exclude-remote]"
 
 Own evidence-first cleanup of no-longer-needed development state: branches,
 registered worktrees/workspaces, jj changes, and ignored
-`.engineering/work/<work-id>/` directories. Inventory first, preserve ambiguity,
+`.engineering/works/<work-id>/` directories. Inventory first, preserve ambiguity,
 and remove only individually approved, recoverably backed-up eligible targets.
 
 ## Boundaries
@@ -17,9 +17,9 @@ and remove only individually approved, recoverably backed-up eligible targets.
 - Audit stale or divergent git/jj state and local engineering-work memory.
 - Do not perform source dead-code removal, linting, PR authoring, or history
   rewriting. History mutations remain owned by `coding:commit`.
-- Never discover workspaces by scanning sibling directories. Engineering-work
-  scope is limited to the current workspace and paths explicitly registered by
-  local Git or jj metadata.
+- Never discover workspaces by scanning sibling or `~/.workspaces/` directories.
+  Engineering-work scope is limited to the current workspace and paths explicitly
+  registered by local Git or jj metadata.
 - Age alone, a merged branch, or a directory named “complete” never authorizes
   engineering-work deletion. Active, interrupted, or ambiguous work is
   preserved.
@@ -36,7 +36,7 @@ and remove only individually approved, recoverably backed-up eligible targets.
 
 Before resolving engineering-work paths, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, do not
-classify or remove `.engineering/work/`; report the missing contract and
+classify or remove `.engineering/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
 receipts but does not create or rewrite project receipts, `working.md`,
 `state.md`, or overview files; its project `generated_files` is therefore
@@ -62,7 +62,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
      whether commits are present on the default branch.
 3. **Inventory workspace-local engineering work.** Deduplicate registered
    workspace paths by canonical filesystem identity. Within each reachable
-   path, enumerate only `.engineering/work/*` and record:
+   path, enumerate only `.engineering/works/*` and record:
    - VCS kind, registered workspace name/path, and local-only scope;
    - work ID/path, `working.md` and `state.md` presence, lifecycle status,
      owner, goal, repository revision, completion timestamp, and blockers;
@@ -148,8 +148,8 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    IDs and restoration commands because operation history preserves them.
 10. **Remove only approved, verified targets.** Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
-    validated `.engineering/work/<work-id>` path after rechecking the gate and
-    backup immediately before deletion; never target `.engineering/work/`,
+    validated `.engineering/works/<work-id>` path after rechecking the gate and
+    backup immediately before deletion; never target `.engineering/works/`,
     `.engineering/`, a workspace root, a glob, or an unresolved variable.
     Forced worktree/branch removal requires a separate explicit approval.
 11. **Verify and report.** Re-run inventories. Prove each approved target is

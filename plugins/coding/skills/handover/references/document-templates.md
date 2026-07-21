@@ -115,7 +115,7 @@ state_snapshot:
     value: <verified digest of decoded payload bytes>
   application:
     mode: reconstruct_work_memory
-    destination_root: .engineering/work/<work-id>/
+    destination_root: .engineering/works/<work-id>/
     render: [state.md]
 work_id: <id>
 external_anchor: <URL or response_only>

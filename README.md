@@ -121,7 +121,7 @@ Thought experiment: a developer edits an error-handling section locally while a 
 
 ### Work state, handover, and recovery
 
-- `.engineering/work/<work-id>/` is ignored, workspace-local coordination memory. It is not a backup and is not shared automatically between Git worktrees or jj workspaces.
+- `.engineering/works/<work-id>/` is ignored, workspace-local coordination memory. It is not a backup and is not shared automatically between Git worktrees or jj workspaces.
 - `working.md` is the short current-focus pointer; `state.md` is the complete lifecycle, plan pointer, task graph, and evidence index. Detailed decisions, reviews, changes, design, and sync receipts live in their owned children.
 - Top-level tasks use stable three-letter uppercase IDs such as `LFE`; one level of subtasks uses `LFE01` through `LFE99`. IDs are never renamed or reused. The authoritative overall graph uses full IDs, for example `LFE → {API,DOC} → VAL`; a local child graph may be shown as `01 → {02,03} → 04`, but stored edges use `LFE01`-style IDs.
 - Every task shows both a mark and word: `- planned`, `⧗ working`, `✓ done`, `X failed`, `! blocked`, or `⊘ cancelled`. Parent status is derived from required child state. Dependency order, not row order, determines what is runnable.

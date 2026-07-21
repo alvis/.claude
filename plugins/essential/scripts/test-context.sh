@@ -12,8 +12,8 @@ git init -q "$fixture"
 git -C "$fixture" symbolic-ref HEAD refs/heads/main
 
 mkdir -p \
-  "$fixture/.engineering/work/eng-42" \
-  "$fixture/.engineering/work/eng-99" \
+  "$fixture/.engineering/works/eng-42" \
+  "$fixture/.engineering/works/eng-99" \
   "$fixture/docs/architecture/decisions" \
   "$fixture/docs/design/system" \
   "$fixture/docs/specs/accounts" \
@@ -26,11 +26,11 @@ touch \
   "$fixture/DESIGN.md" \
   "$fixture/PLAN.md" \
   "$fixture/NOTES.md" \
-  "$fixture/.engineering/work/eng-42/working.md" \
-  "$fixture/.engineering/work/eng-42/state.md" \
-  "$fixture/.engineering/work/eng-42/decisions.md" \
-  "$fixture/.engineering/work/eng-99/working.md" \
-  "$fixture/.engineering/work/eng-99/state.md" \
+  "$fixture/.engineering/works/eng-42/working.md" \
+  "$fixture/.engineering/works/eng-42/state.md" \
+  "$fixture/.engineering/works/eng-42/decisions.md" \
+  "$fixture/.engineering/works/eng-99/working.md" \
+  "$fixture/.engineering/works/eng-99/state.md" \
   "$fixture/docs/index.md" \
   "$fixture/docs/architecture/overview.md" \
   "$fixture/docs/architecture/runtime-boundaries.md" \
@@ -89,10 +89,10 @@ case "$output" in
 esac
 
 assert_contains '- README.md'
-assert_contains '- .engineering/work/eng-42/working.md'
-assert_contains '- .engineering/work/eng-42/state.md'
-assert_absent '.engineering/work/eng-99/working.md'
-assert_absent '.engineering/work/eng-99/state.md'
+assert_contains '- .engineering/works/eng-42/working.md'
+assert_contains '- .engineering/works/eng-42/state.md'
+assert_absent '.engineering/works/eng-99/working.md'
+assert_absent '.engineering/works/eng-99/state.md'
 assert_contains '- docs/index.md'
 assert_contains '- docs/architecture/overview.md'
 assert_contains '- docs/design/system.md'
@@ -103,7 +103,7 @@ assert_absent 'CONTEXT.md'
 assert_absent 'DESIGN.md'
 assert_absent 'PLAN.md'
 assert_absent 'NOTES.md'
-assert_absent '.engineering/work/eng-42/decisions.md'
+assert_absent '.engineering/works/eng-42/decisions.md'
 assert_absent 'docs/architecture/LEGACY.md'
 assert_absent 'docs/architecture/runtime-boundaries.md'
 assert_absent 'docs/architecture/decisions/0001-runtime.md'
@@ -120,14 +120,14 @@ if [[ "$readme_count" -ne 1 ]]; then
   exit 1
 fi
 
-assert_before '.engineering/work/eng-42/working.md' '.engineering/work/eng-42/state.md'
-assert_before '.engineering/work/eng-42/state.md' 'docs/index.md'
+assert_before '.engineering/works/eng-42/working.md' '.engineering/works/eng-42/state.md'
+assert_before '.engineering/works/eng-42/state.md' 'docs/index.md'
 assert_before 'docs/index.md' 'docs/architecture/overview.md'
 assert_before 'docs/architecture/overview.md' 'docs/design/system.md'
 
 ambiguous_output="$(get_repo_root_documents_context "$fixture")"
 case "$ambiguous_output" in
-  *'.engineering/work/eng-42/working.md'*|*'.engineering/work/eng-42/state.md'*|*'.engineering/work/eng-99/working.md'*|*'.engineering/work/eng-99/state.md'*)
+  *'.engineering/works/eng-42/working.md'*|*'.engineering/works/eng-42/state.md'*|*'.engineering/works/eng-99/working.md'*|*'.engineering/works/eng-99/state.md'*)
     printf 'ambiguous work detail must not be injected without an active ID\n' >&2
     exit 1
     ;;

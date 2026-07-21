@@ -50,8 +50,8 @@ canonical pointer from directory contents.
 
 <report>
 
-- Summary: `.engineering/work/<work-id>/review.md`.
-- Areas under `.engineering/work/<work-id>/reviews/`:
+- Summary: `.engineering/works/<work-id>/review.md`.
+- Areas under `.engineering/works/<work-id>/reviews/`:
 
   | Prefix | File | Ownership |
   |---|---|---|

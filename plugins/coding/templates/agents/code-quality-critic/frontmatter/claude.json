@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty')\nif printf '%s\\n' \"$f\" | grep -Eq '(^|/)\\.engineering/work/[^/]+/reviews/(correctness|quality)\\.md$'; then\n  exit 0\nfi\ncase \"$f\" in\n  .claude/agent-memory/code-quality-critic/*|*/.claude/agent-memory/code-quality-critic/*|REVIEW-*|*/REVIEW-*|report-*|*/report-*|*.review.md)\n    exit 0 ;;\n  *)\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Write/Edit is fenced: this critic may only write to its agent-memory directory, an existing safe report pattern (REVIEW-*, report-*, *.review.md), or its assigned .engineering/work/<work-id>/reviews/correctness.md or quality.md artifact. Return other findings without editing.\"}}' ;;\nesac"
+            "command": "f=$(jq -r '.tool_input.file_path // empty')\nif printf '%s\\n' \"$f\" | grep -Eq '(^|/)\\.engineering/works/[^/]+/reviews/(correctness|quality)\\.md$'; then\n  exit 0\nfi\ncase \"$f\" in\n  .claude/agent-memory/code-quality-critic/*|*/.claude/agent-memory/code-quality-critic/*|REVIEW-*|*/REVIEW-*|report-*|*/report-*|*.review.md)\n    exit 0 ;;\n  *)\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Write/Edit is fenced: this critic may only write to its agent-memory directory, an existing safe report pattern (REVIEW-*, report-*, *.review.md), or its assigned .engineering/works/<work-id>/reviews/correctness.md or quality.md artifact. Return other findings without editing.\"}}' ;;\nesac"
           }
         ]
       }

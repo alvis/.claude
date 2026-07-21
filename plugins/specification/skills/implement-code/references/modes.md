@@ -38,7 +38,7 @@ convention-only casing need no entry.
 Return for each material departure: headline, full task ID, plan expectation,
 evidence, chosen/required alternative, reason, impact, severity, disposition,
 invalidated downstream task IDs, and recheck trigger. The orchestrator writes a
-lowercase `.engineering/work/<work-id>/changes/<slug>.md` child and asks
+lowercase `.engineering/works/<work-id>/changes/<slug>.md` child and asks
 the PM to reconcile `changes.md` and `state.md`.
 
 Proceed only when reversible and low impact. For architecture, public API,
