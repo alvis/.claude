@@ -19,3 +19,7 @@ not yet expressible as a complete specification.
 
 Complete with decisions captured, criteria inferred and confirmed, deferred or
 blocking questions, and the recommended next mode or owner.
+
+When several questions benefit from visible context, use the **guided
+interview** direction in [presentation](presentation.md). The page supplements
+the conversation; it does not replace asking the highest-impact question first.

@@ -1,0 +1,50 @@
+      <section
+        id="decision"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="decision"
+        data-section-label="Your input"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your input</p>
+          <h2>{{QUESTION_HEADING}}</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="{{QUESTION_ID}}"
+            data-question-label="{{QUESTION_LABEL}}"
+          >
+            <legend>{{QUESTION_TEXT}}</legend>
+            <div class="discovery-options">
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="{{QUESTION_ID}}"
+                  value="{{RECOMMENDED_VALUE}}"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy">
+                  <strong>{{RECOMMENDED_LABEL}}</strong>
+                  <small>{{RECOMMENDED_DESCRIPTION}}</small>
+                </span>
+                <span class="discovery-badge">Recommended</span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="{{QUESTION_ID}}"
+                  value="{{ALTERNATE_VALUE}}"
+                />
+                <span class="discovery-option-copy">
+                  <strong>{{ALTERNATE_LABEL}}</strong>
+                  <small>{{ALTERNATE_DESCRIPTION}}</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+

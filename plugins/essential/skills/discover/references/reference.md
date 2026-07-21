@@ -18,3 +18,8 @@ precisely than a prose description.
 
 Complete with reference identity, requested aspect, extracted semantics,
 incidental details rejected, target mismatches, and the conformance checklist.
+
+When mappings, vocabulary, or relationships are difficult to scan in prose,
+consider the **semantics map** direction in
+[presentation](presentation.md). Keep provenance in the evidence ledger rather
+than adding source branding or attribution framing to the HTML review surface.

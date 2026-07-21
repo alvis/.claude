@@ -22,3 +22,8 @@ Use this mode to look beyond the questions already present in the prompt.
 
 Complete with the updated evidence ledger, the top blindspot hypotheses that
 survived inspection, disproved hypotheses, and the next cheapest probe.
+
+When the result has several interacting risks or an unfamiliar mechanism,
+consider a **risk/context report** or **domain explainer** from
+[presentation](presentation.md). Use HTML only when interaction or visual
+structure improves comprehension; prose remains the default.

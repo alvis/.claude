@@ -10,8 +10,10 @@ resolve a material unknown.
    interaction, a throwaway script, a diagram, or another isolated artifact.
    Avoid backend wiring, production state, migrations, and dependencies not
    required to answer the question.
-3. Create the artifact only under `.discovery-<slug>/prototypes/`, with a clear
-   `DISPOSABLE` marker and fake or sanitized data. Never edit application source.
+3. Create non-HTML artifacts only under `.discovery-<slug>/prototypes/`, with a
+   clear `DISPOSABLE` marker and fake or sanitized data. Create any generated
+   HTML review surface under a unique OS temporary directory as required by
+   [presentation](presentation.md). Never edit application source.
 4. When the unknown concerns latent preference, produce two to four materially
    different variants and state what each is testing.
 5. Present or render the artifact, collect the user's reaction, and translate it
@@ -21,3 +23,7 @@ resolve a material unknown.
 Complete with the question tested, artifact paths, observations, confirmed
 criteria, rejected variants, and whether the artifact should be retained or
 removed after its decisions are transferred.
+
+For an interactive review surface, use the **interactive prototype** direction
+in [presentation](presentation.md). The presentation shell is disposable and
+must not be mistaken for production UI or application source.

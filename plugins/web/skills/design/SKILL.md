@@ -10,6 +10,8 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, Tea
 
 This skill creates a visual and interaction contract and implements it only when the request authorizes source changes. It owns UI creation, visual direction, design iteration, and reconciling the authorized build against the design; `audit` owns independent assessment, `next` owns runtime diagnosis, `storybook` owns story-state auditing, and `client:create-screen-design` owns Notion screen documentation.
 
+When you present code-design ideas or explainers as an interactive surface, you may reuse `essential:discover`'s presentation conventions — provenance pills, honest trade-offs, author annotation pins, and the multi-board hub — described in its `skills/discover/references/presentation/components.md`.
+
 <IMPORTANT>
 Confirm before you build. Present design options and capture the user's explicit pick before implementing anything unless `--quick` is set. Every direction and every page area passes through its board and its confirmation gate. Even `--quick` (which auto-picks the top-ranked variant per area) surfaces the choices for overturn at the sign-off gate — it speeds up selection, it never ships an unconfirmed design.
 </IMPORTANT>

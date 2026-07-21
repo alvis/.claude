@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>{{PAGE_TITLE}}</title>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-canvas: var(--ui-canvas);
+        --color-surface: var(--ui-surface);
+        --color-glass: var(--ui-glass);
+        --color-glass-strong: var(--ui-glass-strong);
+        --color-ink: var(--ui-ink);
+        --color-muted: var(--ui-muted);
+        --color-accent: var(--ui-accent);
+        --color-accent-soft: var(--ui-accent-soft);
+        --color-accent-ink: var(--ui-accent-ink);
+        --color-insight: var(--ui-insight);
+        --color-insight-soft: var(--ui-insight-soft);
+      }
+    </style>
+    <!--
+      This source carries no asset references: no CDN Tailwind script, no
+      discovery.css link, no discovery.js script (external or relative). Run
+      scripts/build_artifact.py, which injects the Tailwind runtime plus
+      discovery.css/js and emits a validated self-contained document or
+      --artifact fragment. See references/presentation.md.
+    -->
+  </head>
+  <body
+    class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
+  >
+    <div class="essential-docbar" role="banner">
+      <a class="essential-docbrand" href="#overview">
+        <span class="essential-docmark">E_</span>
+        <span
+          ><strong>{{DOCUMENT_TITLE}}</strong
+          ><small>Essential · Discover</small></span
+        >
+      </a>
+      <nav aria-label="Document utilities">
+        <span>{{ACTION_LABEL}}</span>
+        <a href="#generated-brief">Generated reply ↓</a>
+      </nav>
+    </div>
+
+    <aside class="essential-docnav" aria-label="Document sections">
+      <p>{{ACTION_LABEL}}</p>
+      <div data-section-nav></div>
+      <div class="essential-docnav-rule"></div>
+      <p>Interaction</p>
+      <span
+        >Annotate any section. Every saved note and answer is reflected in the
+        single generated reply.</span
+      >
+      <div class="essential-prompt-counts" aria-live="polite">
+        <div class="essential-prompt-count-row">
+          <span data-decision-label>Decisions</span>
+          <strong data-decision-count>0</strong>
+          <ul data-decision-summaries></ul>
+        </div>
+        <div class="essential-prompt-count-row">
+          <span>Notes</span>
+          <strong data-note-count>0</strong>
+          <ul data-note-summaries></ul>
+        </div>
+      </div>
+      <details class="essential-prompt-fold">
+        <summary>
+          <span>Generated reply</span>
+          <small>One live prompt</small>
+        </summary>
+        <div data-prompt-fold-target></div>
+      </details>
+    </aside>
+
+    <main
+      class="discovery-page isolate"
+      data-discovery-page
+      data-page-id="{{PAGE_ID}}"
+      data-discovery-action="{{ACTION_ID}}"
+      data-discovery-goal="{{DISCOVERY_GOAL}}"
+    >
+      <header
+        id="overview"
+        class="discovery-masthead relative"
+        data-discovery-section
+        data-section-id="overview"
+        data-section-label="Overview"
+      >
+        <div class="discovery-masthead-copy">
+          <p class="discovery-eyebrow">{{ACTION_LABEL}}</p>
+          <h1>{{PAGE_TITLE}}</h1>
+          <p class="discovery-lede">{{PAGE_SUMMARY}}</p>
+        </div>
+        <aside class="discovery-masthead-aside">
+          <p class="discovery-intro-note">
+            Add a note to any section. Your answers and annotations immediately
+            update the single reply prompt at the end of this page.
+          </p>
+        </aside>
+      </header>
+
+      <section
+        id="primary-content"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="primary-content"
+        data-section-label="{{SECTION_LABEL}}"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">{{SECTION_LABEL}}</p>
+          <h2>{{SECTION_TITLE}}</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p>{{SECTION_CONTENT}}</p>
+        </div>
+      </section>
+
+      <!--
+        OPTIONAL CONVENTION SLOTS (guided, not required — add only what the
+        discovery job needs; see references/presentation/components.md).
+        Each convention keeps house `--ui-*` theming and the single-prompt
+        contract; none of them adds a second prompt host.
+
+        1. Provenance pills — tag how a claim is known, wired from the ledger
+           `Kind`/`Disposition`. Inline beside a claim, or on a table row:
+           <span class="discovery-provenance" data-provenance="observed">observed</span>
+           <tr data-provenance="inferred"> … </tr>
+           Values: observed | inferred | assumed | decided | approved | open.
+
+        2. "Trade-offs, honestly" — an honest self-critique block; mark any
+           fabricated illustrative data so the coder does not treat it as real:
+           <aside class="discovery-tradeoffs" data-tradeoffs-honestly>
+             <h3>Trade-offs, honestly</h3>
+             <div data-tradeoff-group="wins">…</div>
+             <div data-tradeoff-group="costs">…</div>
+             <div data-tradeoff-group="fails-when">…</div>
+           </aside>
+           <span class="discovery-invented-tag" data-invented-tag>invented</span>
+           on a `data-fabricated` element.
+
+        3. Author annotation pins over a browser-frame specimen (distinct from
+           the reader's Add-note mechanism — never reuse data-annotation-for/
+           -summary/-trigger/-dialog/-input). The pin layer is a SIBLING of
+           [data-specimen] so brand colour never tints the teaching pins:
+           <div class="discovery-artifact-frame" data-browser-frame> …
+             <div data-specimen> …mockup in the product's own palette… </div>
+             <div class="discovery-pin-layer" data-annotation-pins>
+               <button class="discovery-pin" data-annotation-pin="1"
+                       style="--pin-x:50%;--pin-y:11%"
+                       aria-describedby="pin-note-1">1</button>
+             </div>
+           </div>
+           paired to <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">.
+
+        4. Multi-board hub — give each board a stable `data-board-id`; a hub
+           board links siblings by session-relative href inside the session
+           workspace directory:
+           <section data-board-hub>
+             <ul class="discovery-board-index" data-board-index>
+               <li><a class="discovery-board-link" data-board-link="specimen-board"
+                      href="./specimen-board.html">…</a></li>
+             </ul>
+           </section>
+
+        Specimen brand palette is the ONE place a hex may appear in an action
+        page, scoped to [data-specimen] only; see the golden
+        examples/html/specimen-board.html and examples/html/board-hub.html.
+      -->
+
+      <section
+        id="decision"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="decision"
+        data-section-label="Your input"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Your input</p>
+          <h2>{{QUESTION_HEADING}}</h2>
+        </div>
+        <div class="discovery-section-body">
+          <fieldset
+            class="discovery-question"
+            data-discovery-question
+            data-question-id="{{QUESTION_ID}}"
+            data-question-label="{{QUESTION_LABEL}}"
+          >
+            <legend>{{QUESTION_TEXT}}</legend>
+            <div class="discovery-options">
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="{{QUESTION_ID}}"
+                  value="{{RECOMMENDED_VALUE}}"
+                  data-recommended="true"
+                  checked
+                />
+                <span class="discovery-option-copy">
+                  <strong>{{RECOMMENDED_LABEL}}</strong>
+                  <small>{{RECOMMENDED_DESCRIPTION}}</small>
+                </span>
+                <span class="discovery-badge">Recommended</span>
+              </label>
+              <label class="discovery-option group backdrop-blur-lg">
+                <input
+                  type="radio"
+                  name="{{QUESTION_ID}}"
+                  value="{{ALTERNATE_VALUE}}"
+                />
+                <span class="discovery-option-copy">
+                  <strong>{{ALTERNATE_LABEL}}</strong>
+                  <small>{{ALTERNATE_DESCRIPTION}}</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section
+        id="generated-brief"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="generated-brief"
+        data-section-label="Generated reply"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">One live brief</p>
+          <h2>Your reply to the coder</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-muted">
+            This is the only generated prompt on the page. It changes whenever
+            you answer a question or annotate a section.
+          </p>
+          <div
+            class="discovery-prompt-card backdrop-blur-2xl ring-1 ring-[var(--ui-border)]"
+          >
+            <div class="discovery-prompt-toolbar">
+              <span>Generated from this page</span>
+              <button
+                class="discovery-button"
+                type="button"
+                data-copy-generated-prompt
+              >
+                Copy prompt for LLM coder
+              </button>
+            </div>
+            <textarea
+              id="{{PAGE_ID}}-generated-prompt"
+              name="generated-prompt"
+              data-discovery-prompt-host
+              readonly
+              aria-label="Generated prompt for LLM coder"
+            >
+JavaScript will replace this fallback with the current decisions and annotations.
+            </textarea>
+          </div>
+          <p
+            class="discovery-copy-status"
+            data-copy-status
+            aria-live="polite"
+          ></p>
+          <button
+            class="discovery-button discovery-button-secondary"
+            type="button"
+            data-clear-discovery-state
+          >
+            Clear answers and notes
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
