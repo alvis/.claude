@@ -4295,3 +4295,534 @@ tr[data-provenance="open"] > :first-child {
     transition: none;
   }
 }
+
+/* ============================================================================
+   Stage-4 lifecycle-action patterns — plan-review, build-journal,
+   change-walkthrough, and the triage convention board.  Authored unlayered
+   alongside the stage-3 additions above so they share that cascade origin and
+   win over the @layer base defaults.  House --ui-* tokens only (no bare hex),
+   the `.is-active` / `[hidden]` / attribute-keyed state idioms, 44px targets on
+   every control, and reduced-motion-safe by construction (any transition is
+   neutralised by the global reduced-motion reset above).
+   ========================================================================= */
+
+/* -- §16  plan-review — tweak-rank ------------------------------------------
+   A visible "most likely to change → settled" ordering affordance on each
+   [data-plan-step].  The chip is keyed by [data-tweak-rank]; a three-pip scale
+   doubles the ordering as filled position, so the signal is never colour-only. */
+[data-plan-step] {
+  position: relative;
+}
+.discovery-tweak-rank {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-raised);
+  color: var(--ui-muted);
+  font: 650 0.66rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.discovery-tweak-scale {
+  display: inline-flex;
+  gap: 0.2rem;
+  flex: none;
+}
+.discovery-tweak-scale i {
+  width: 0.32rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: var(--ui-border-strong);
+}
+[data-tweak-rank="most-likely"] {
+  border-color: color-mix(in srgb, var(--ui-accent), transparent 45%);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+[data-tweak-rank="most-likely"] .discovery-tweak-scale i {
+  background: var(--ui-accent);
+}
+[data-tweak-rank="likely"] {
+  border-color: color-mix(in srgb, var(--ui-provenance-amber), transparent 50%);
+  background: var(--ui-provenance-amber-soft);
+  color: var(--ui-provenance-amber-ink);
+}
+[data-tweak-rank="likely"] .discovery-tweak-scale i:nth-child(-n + 2) {
+  background: var(--ui-provenance-amber);
+}
+[data-tweak-rank="settled"] {
+  border-color: var(--ui-border);
+}
+[data-tweak-rank="settled"] .discovery-tweak-scale i:first-child {
+  background: var(--ui-insight);
+}
+
+/* -- §17  build-journal — badges, deviation log, human todo -----------------
+   Chronological journal badge taxonomy, the four-part deviation anatomy, and an
+   agent-authored hand-off todo row. */
+.discovery-journal-badge {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.16rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 650 0.66rem/1.4 var(--ui-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.discovery-journal-badge::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  flex: none;
+}
+[data-journal-kind="plan-confirmed"] {
+  border-color: color-mix(in srgb, var(--ui-positive), transparent 55%);
+  background: var(--ui-positive-soft);
+  color: var(--ui-positive);
+}
+[data-journal-kind="deviation"] {
+  border-color: color-mix(in srgb, var(--ui-accent), transparent 45%);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+[data-journal-kind="discovery"] {
+  border-color: color-mix(in srgb, var(--ui-provenance-amber), transparent 50%);
+  background: var(--ui-provenance-amber-soft);
+  color: var(--ui-provenance-amber-ink);
+}
+[data-journal-kind="todo-for-human"] {
+  border-color: color-mix(in srgb, var(--ui-insight), transparent 50%);
+  background: var(--ui-insight-soft);
+  color: var(--ui-insight-ink);
+}
+
+/* Deviation-log four-part anatomy: plan-said / code-revealed / choice-taken /
+   revisit as labelled fields.  [data-deviation] is the card; each part is a
+   .discovery-deviation-field keyed by [data-deviation-field], led by a mono
+   .discovery-deviation-label.  The revisit field hosts the per-deviation radio
+   question (accept / revisit before merge), which reuses the question styling. */
+[data-deviation] {
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--ui-accent);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 55%,
+    var(--ui-surface-raised)
+  );
+}
+.discovery-deviation-anatomy {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.discovery-deviation-field {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+}
+.discovery-deviation-label {
+  color: var(--ui-faint);
+  font: 650 0.62rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-deviation-field="plan-said"] {
+  box-shadow: inset 3px 0 0 var(--ui-border-strong);
+}
+[data-deviation-field="code-revealed"] {
+  box-shadow: inset 3px 0 0 var(--ui-provenance-amber);
+}
+[data-deviation-field="choice-taken"] {
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+[data-deviation-field="revisit"] {
+  box-shadow: inset 3px 0 0 var(--ui-insight);
+}
+@media (max-width: 40rem) {
+  .discovery-deviation-anatomy {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Agent-authored human todo: a hand-off row the coder cannot resolve itself.
+   Pairs with an owner-routing chip inside .discovery-human-todo-body. */
+[data-human-todo] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem 1rem;
+  align-items: start;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-insight-soft) 45%,
+    var(--ui-surface-raised)
+  );
+}
+[data-human-todo]::before {
+  content: "\261B"; /* ☛ hand-off pointer — this one is yours, not the coder's */
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--ui-insight-soft);
+  color: var(--ui-insight-ink);
+  font-size: 0.95rem;
+}
+.discovery-human-todo-body {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* -- §18  change-walkthrough — vcs header, file tour, diff comments, deck ----
+   The change's provenance header, a risk-chip jump map over file cards, review
+   comment bubbles under diff rows, and a keyboard-navigable slide deck. */
+.discovery-vcs-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.85rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+}
+.discovery-vcs-repo,
+.discovery-vcs-branch {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font: 600 0.72rem/1.3 var(--ui-font-mono);
+  white-space: nowrap;
+}
+.discovery-vcs-repo::before {
+  content: "\25C9"; /* ◉ repo marker */
+  color: var(--ui-accent-ink);
+}
+.discovery-vcs-arrow::before {
+  content: "\2192"; /* → branch to target */
+  color: var(--ui-accent-ink);
+}
+.discovery-vcs-stats {
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: center;
+  font: 650 0.75rem/1 var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.discovery-vcs-add {
+  color: var(--ui-positive);
+}
+.discovery-vcs-del {
+  color: var(--ui-accent-ink);
+}
+.discovery-vcs-add::before {
+  content: "+";
+}
+.discovery-vcs-del::before {
+  content: "\2212"; /* − */
+}
+.discovery-vcs-author {
+  color: var(--ui-muted);
+  font-size: 0.85rem;
+}
+.discovery-vcs-header > .discovery-vcs-author,
+.discovery-vcs-header > .discovery-owner-chip {
+  margin-left: auto;
+}
+
+/* File-tour: a risk-chip jump map (plain #-anchors, so it works without JS) over
+   per-file cards in a curated reading order. */
+.discovery-file-tour {
+  display: grid;
+  gap: 1.25rem;
+}
+.discovery-file-tour-map {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface);
+}
+.discovery-file-tour-map a {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-raised);
+  color: var(--ui-ink);
+  font: 600 0.72rem/1.2 var(--ui-font-mono);
+  text-decoration: none;
+}
+.discovery-file-tour-map a:hover {
+  border-color: var(--ui-accent);
+}
+.discovery-risk-chip {
+  display: inline-flex;
+  gap: 0.32rem;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 650 0.62rem/1.4 var(--ui-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.discovery-risk-chip::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  flex: none;
+}
+[data-risk="high"] {
+  border-color: color-mix(in srgb, var(--ui-sev-high), transparent 45%);
+  background: var(--ui-sev-high-soft);
+  color: var(--ui-sev-high-ink);
+}
+[data-risk="medium"] {
+  border-color: color-mix(in srgb, var(--ui-sev-medium), transparent 50%);
+  background: var(--ui-sev-medium-soft);
+  color: var(--ui-sev-medium-ink);
+}
+[data-risk="low"] {
+  border-color: color-mix(in srgb, var(--ui-sev-low), transparent 55%);
+  background: var(--ui-sev-low-soft);
+  color: var(--ui-sev-low-ink);
+}
+[data-file-card] {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+  scroll-margin-top: 6rem;
+}
+.discovery-file-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  align-items: center;
+}
+.discovery-file-card-head > :last-child {
+  margin-left: auto;
+}
+
+/* Severity-labelled reviewer bubble anchored to a specific diff row.  Lives
+   inside a .discovery-diff right below its row (or just after the diff); a top
+   notch points back at the anchored row.  Reuse [data-severity] for the label. */
+[data-diff-comment] {
+  position: relative;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0.8rem 0.7rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+  box-shadow: var(--ui-shadow-small);
+  color: var(--ui-ink);
+  font: 0.85rem/1.5 var(--ui-font-body);
+}
+/* Win over the .discovery-diff div base padding when the bubble nests in a diff. */
+.discovery-diff [data-diff-comment] {
+  padding: 0.75rem 0.9rem;
+}
+[data-diff-comment]::before {
+  position: absolute;
+  top: -0.4rem;
+  left: 1.4rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-top: 1px solid var(--ui-border-strong);
+  border-left: 1px solid var(--ui-border-strong);
+  background: var(--ui-surface-raised);
+  content: "";
+  transform: rotate(45deg);
+}
+.discovery-diff-comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Deck mode: a horizontal scroll-snap strip of slide panels.  Progressive
+   enhancement — with no JS the panels stay a plain, fully readable horizontally
+   scrollable list.  The runtime adds roving focus + key nav; the global
+   reduced-motion reset makes every scroll jump instant. */
+[data-deck] {
+  display: grid;
+  gap: 1rem;
+}
+.discovery-deck-strip {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  scrollbar-width: thin;
+}
+[data-deck-slide] {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+  flex: 0 0 min(100%, 34rem);
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 1.85rem);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+  scroll-snap-align: start;
+}
+[data-deck-slide]:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--ui-canvas),
+    0 0 0 6px var(--ui-focus);
+}
+.discovery-deck-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.discovery-deck-progress {
+  color: var(--ui-faint);
+  font: 650 0.7rem/1 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* -- §19  triage-board — kanban lanes ---------------------------------------
+   Lane columns whose card membership + order IS the user's answer.  Drag reuses
+   the stage-3 .discovery-drag-item / .is-dragging / .is-drop-target classes and
+   the [data-drag-probe] runtime; a per-card lane <select> is the keyboard
+   fallback.  A card composes .discovery-drag-item (drag feel + states) with
+   .discovery-kanban-card (multi-line block layout). */
+.discovery-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+[data-kanban-lane] {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+  min-height: 6rem;
+  padding: 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 60%,
+    var(--ui-surface-raised)
+  );
+}
+[data-kanban-lane].is-drop-target {
+  border-color: var(--ui-accent);
+  box-shadow:
+    inset 0 0 0 2px var(--ui-accent),
+    0 0 0 4px var(--ui-accent-soft);
+}
+.discovery-kanban-lane-head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.discovery-kanban-lane-title {
+  color: var(--ui-ink);
+  font: 700 0.72rem/1.2 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.discovery-kanban-lane-count {
+  color: var(--ui-faint);
+  font: 650 0.68rem/1 var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* Upgrades the compact .discovery-drag-item row to a multi-line card while
+   keeping its grip (::before) and drag states.  Later source than the drag-item
+   base, so display:grid wins. */
+.discovery-kanban-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem 0.7rem;
+  align-items: start;
+  padding: 0.8rem 0.9rem;
+}
+.discovery-kanban-card::before {
+  align-self: start;
+  padding-top: 0.1rem;
+}
+.discovery-kanban-card > * {
+  grid-column: 2;
+}
+.discovery-kanban-card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--ui-canvas),
+    0 0 0 6px var(--ui-focus);
+}
+.discovery-kanban-card-title {
+  font-weight: 700;
+  line-height: 1.3;
+}
+/* Keyboard fallback: a native per-card lane select for pointer-free triage. */
+.discovery-kanban-move {
+  display: grid;
+  gap: 0.3rem;
+}
+.discovery-kanban-move > span {
+  color: var(--ui-faint);
+  font: 650 0.6rem/1.2 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.discovery-kanban-move select {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font: 600 0.75rem/1.2 var(--ui-font-body);
+}

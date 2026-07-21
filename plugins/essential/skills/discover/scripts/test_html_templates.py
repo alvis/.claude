@@ -41,12 +41,25 @@ ACTIONS = (
     "semantics-map",
     "interactive-prototype",
     "readiness-check",
+    # Stage-4 lifecycle actions (plan → implementation → change). They join the
+    # required set at --stage complete, taking the required-action count from
+    # eight to eleven; the representative stage stays domain-explainer only.
+    "plan-review",
+    "build-journal",
+    "change-walkthrough",
 )
 REPRESENTATIVE_ACTION = "domain-explainer"
 # Additional convention-demonstration boards (provenance/trade-offs/pins/hub best
 # bits). Iterated + validated + pattern-scanned at --stage complete only, separate
-# from the required-8 ACTIONS/REPRESENTATIVE_ACTION contract, which stays unchanged.
-CONVENTION_EXAMPLES = ("specimen-board", "board-hub", "architecture-board")
+# from the required-11 ACTIONS/REPRESENTATIVE_ACTION contract, which stays
+# unchanged. triage-board is the fourth convention board: spatial-arrangement-as-
+# decision, a kanban strip whose lane membership serializes into the one prompt.
+CONVENTION_EXAMPLES = (
+    "specimen-board",
+    "board-hub",
+    "architecture-board",
+    "triage-board",
+)
 FORBIDDEN_HTML_TEXT = (
     "thariqs.github.io",
     "html-effectiveness",
@@ -102,6 +115,16 @@ PRESENTATION_PATTERNS = (
     "global-rig", "artboard-frame", "theme-direction-gallery", "mock-frame",
     # architecture-board:
     "node-edge-diagram", "diagram-detail", "prompt-echo", "source-manifest",
+    # Stage-4 lifecycle-action catalog additions, grouped by owning board exactly
+    # as coverage.md records them.
+    # plan-review:
+    "plan-review", "tweak-rank", "linked-diagram-choice",
+    # build-journal:
+    "build-journal", "deviation-log", "journal-badge", "human-todo",
+    # change-walkthrough:
+    "change-walkthrough", "vcs-header", "diff-comment", "file-tour", "deck-mode",
+    # triage-board (fourth convention board):
+    "kanban-lanes",
 )
 
 # Structural hooks prove that each example demonstrates its action-specific
@@ -158,8 +181,31 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-readiness-verdict", 1, None),
         ("data-readiness-probe", 1, None),
     ),
+    # Stage-4 lifecycle actions. Section-bearing hooks (plan steps, deviations,
+    # file cards, kanban cards) are MINIMUMS with no cap; the per-container
+    # richness checks (each step carries a question + rank, each deviation the
+    # four labelled parts, each file card a risk chip) and the singleton verdict
+    # equalities live in the per-action blocks in validate_html.
+    "plan-review": (
+        ("data-plan-step", 4, None),
+        ("data-tweak-rank", 4, None),
+        ("data-plan-verdict", 1, None),
+    ),
+    "build-journal": (
+        ("data-deviation", 3, None),
+        ("data-deviation-field", 12, None),
+        ("data-human-todo", 1, None),
+        ("data-journal-verdict", 1, None),
+    ),
+    "change-walkthrough": (
+        ("data-file-card", 3, None),
+        ("data-diff-comment", 2, None),
+        ("data-deck-slide", 3, None),
+        ("data-quiz-question", 2, None),
+        ("data-change-verdict", 1, None),
+    ),
     # Convention-demonstration boards (CONVENTION_EXAMPLES), not part of the
-    # required-8 ACTIONS contract. Minimums per the locked component API.
+    # required-11 ACTIONS contract. Minimums per the locked component API.
     "specimen-board": (
         ("data-tradeoffs-honestly", 1, None),
         ("data-fabricated", 1, None),
@@ -187,6 +233,14 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-annotation-pin", 4, None),
         ("data-specimen", 1, None),
         ("data-provenance", 2, None),
+    ),
+    # Fourth convention board: spatial-arrangement-as-decision. At least three
+    # lanes holding at least six draggable cards; the per-card lane <select>
+    # keyboard fallback is enforced as selects >= cards in the per-action block.
+    "triage-board": (
+        ("data-kanban-lane", 3, None),
+        ("data-kanban-cards", 3, None),
+        ("data-drag-item", 6, None),
     ),
 }
 
@@ -219,7 +273,17 @@ class ContractParser(HTMLParser):
         self.option_frames: list[dict[str, object]] = []
         self.final_direction_choices: list[str] = []
         self._active_option_frames: list[dict[str, object]] = []
-        self._element_stack: list[tuple[str, dict[str, object] | None]] = []
+        # Stage-4 per-container tallies. Each list holds one record per opened
+        # container instance; children seen while the container is open are
+        # attributed to it (the same idiom as option frames, generalized).
+        self.plan_steps: list[dict[str, object]] = []
+        self.deviations: list[dict[str, object]] = []
+        self.file_cards: list[dict[str, object]] = []
+        self.select_controls = 0
+        self._active_containers: list[tuple[str, dict[str, object]]] = []
+        self._element_stack: list[
+            tuple[str, dict[str, object] | None, list[tuple[str, dict[str, object]]]]
+        ] = []
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
@@ -259,6 +323,40 @@ class ContractParser(HTMLParser):
         direction_choice = attributes.get("data-direction-choice")
         if direction_choice:
             self.final_direction_choices.append(direction_choice)
+        if tag == "select":
+            self.select_controls += 1
+        # Attribute children to every currently-open stage-4 container BEFORE
+        # opening any container this element itself starts, so a container never
+        # counts its own hook as a child of itself.
+        for kind, record in self._active_containers:
+            if kind == "plan-step":
+                if "data-discovery-question" in attributes:
+                    record["questions"] += 1
+                if "data-tweak-rank" in attributes:
+                    record["ranks"] += 1
+            elif kind == "deviation":
+                field = attributes.get("data-deviation-field")
+                if field:
+                    record["fields"].add(field)
+                if "data-discovery-question" in attributes:
+                    record["questions"] += 1
+            elif kind == "file-card":
+                if "data-risk" in attributes:
+                    record["risk_chips"] += 1
+        opened_containers: list[tuple[str, dict[str, object]]] = []
+        if "data-plan-step" in attributes:
+            record = {"questions": 0, "ranks": 0}
+            self.plan_steps.append(record)
+            opened_containers.append(("plan-step", record))
+        if "data-deviation" in attributes:
+            record = {"fields": set(), "questions": 0}
+            self.deviations.append(record)
+            opened_containers.append(("deviation", record))
+        if "data-file-card" in attributes:
+            record = {"risk_chips": 0}
+            self.file_cards.append(record)
+            opened_containers.append(("file-card", record))
+        self._active_containers.extend(opened_containers)
         if attributes.get("id"):
             self.ids[attributes["id"]] += 1
         if "data-discovery-page" in attributes:
@@ -292,13 +390,15 @@ class ContractParser(HTMLParser):
             (attributes.get("data-presentation-pattern") or "").split()
         )
         if tag not in self.VOID_TAGS:
-            self._element_stack.append((tag, opened_frame))
+            self._element_stack.append((tag, opened_frame, opened_containers))
 
     def handle_endtag(self, tag: str) -> None:
         while self._element_stack:
-            opened_tag, opened_frame = self._element_stack.pop()
+            opened_tag, opened_frame, opened_containers = self._element_stack.pop()
             if opened_frame is not None:
                 self._active_option_frames.remove(opened_frame)
+            for container in opened_containers:
+                self._active_containers.remove(container)
             if opened_tag == tag:
                 break
 
@@ -533,6 +633,74 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                 errors.append(
                     f"{path}: option frames must use materially distinct structures, "
                     "not renamed copies"
+                )
+        if action == "plan-review":
+            # Every plan step is answerable and ranked; one final hand-off verdict.
+            for index, step in enumerate(parser.plan_steps, start=1):
+                if step["questions"] < 1:
+                    errors.append(
+                        f"{path}: plan step {index} needs a decision question "
+                        f"(a [data-discovery-question] inside [data-plan-step])"
+                    )
+                if step["ranks"] < 1:
+                    errors.append(
+                        f"{path}: plan step {index} needs a [data-tweak-rank] "
+                        "affordance"
+                    )
+            verdicts = parser.attribute_counts["data-plan-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: plan-review needs exactly one [data-plan-verdict]; "
+                    f"found {verdicts}"
+                )
+        if action == "build-journal":
+            required_fields = {
+                "plan-said",
+                "code-revealed",
+                "choice-taken",
+                "revisit",
+            }
+            for index, deviation in enumerate(parser.deviations, start=1):
+                missing = required_fields.difference(deviation["fields"])
+                if missing:
+                    errors.append(
+                        f"{path}: deviation {index} is missing labelled "
+                        f"[data-deviation-field] part(s) {sorted(missing)}"
+                    )
+                if deviation["questions"] < 1:
+                    errors.append(
+                        f"{path}: deviation {index} needs a revisit question "
+                        "(a [data-discovery-question] inside [data-deviation])"
+                    )
+            verdicts = parser.attribute_counts["data-journal-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: build-journal needs exactly one "
+                    f"[data-journal-verdict]; found {verdicts}"
+                )
+        if action == "change-walkthrough":
+            for index, card in enumerate(parser.file_cards, start=1):
+                if card["risk_chips"] < 1:
+                    errors.append(
+                        f"{path}: file card {index} needs a risk chip "
+                        "([data-risk] inside [data-file-card])"
+                    )
+            verdicts = parser.attribute_counts["data-change-verdict"]
+            if verdicts != 1:
+                errors.append(
+                    f"{path}: change-walkthrough needs exactly one final "
+                    f"[data-change-verdict]; found {verdicts}"
+                )
+        if action == "triage-board":
+            # Keyboard fallback: every draggable card carries a lane <select>, so
+            # the board is operable without a pointer. One select per card is the
+            # cheap proxy for that per-card fallback.
+            cards = parser.attribute_counts["data-drag-item"]
+            if parser.select_controls < cards:
+                errors.append(
+                    f"{path}: triage-board needs a per-card lane <select> keyboard "
+                    f"fallback; found {parser.select_controls} selects for {cards} "
+                    "cards"
                 )
 
     errors.extend(_validate_stage3_structure(path, parser))
@@ -902,7 +1070,7 @@ def run(stage: str) -> dict[str, object]:
             errors.append(f"{reference}: required {stage} action reference is missing")
 
     # Convention-demonstration boards (specimen-board, board-hub) are validated
-    # and pattern-scanned at --stage complete only, separate from the required-8
+    # and pattern-scanned at --stage complete only, separate from the required-11
     # ACTIONS above, so their coverage does not leak into --stage representative.
     convention_examples = CONVENTION_EXAMPLES if stage == "complete" else ()
     for action in convention_examples:
@@ -941,7 +1109,7 @@ def main() -> int:
         "--stage",
         choices=("representative", "complete"),
         default="complete",
-        help="Validate the approval-gate artifact or the final eight-action library.",
+        help="Validate the approval-gate artifact or the final eleven-action library.",
     )
     args = parser.parse_args()
     result = run(args.stage)

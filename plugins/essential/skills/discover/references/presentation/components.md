@@ -1156,6 +1156,339 @@ not a regression of the "one specimen re-point" convention:
 </div>
 ```
 
+## Plan review
+
+**Tweak rank.** A visible "most likely to change → settled" affordance on each
+plan step, so the steps read in the order the user is most likely to want to
+touch. The three-pip `.discovery-tweak-scale` doubles the rank as fill count, so
+the ordering never rests on colour alone. Every `[data-plan-step]` section
+carries one:
+
+```html
+<section
+  data-discovery-section
+  data-section-id="step-merge-model"
+  data-plan-step
+>
+  <span
+    class="discovery-tweak-rank"
+    data-tweak-rank="most-likely"
+    data-presentation-pattern="tweak-rank"
+  >
+    <span class="discovery-tweak-scale" aria-hidden="true"
+      ><i></i><i></i><i></i
+    ></span>
+    Most likely to change
+  </span>
+  <!-- step content + one decision question + honest trade-offs -->
+</section>
+```
+
+**Linked diagram choice.** One schema-affecting step whose choice cards rewrite
+flagged rows of a shared inline schema diagram in lockstep. The decision fieldset
+and the diagram share a key; a deterministic page-inline script toggles the
+`[data-diagram-variant]` rows and updates an aria-live status line (`textContent`
+only, never `innerHTML`). It stays readable with the recommended variant shown
+before scripts run:
+
+```html
+<div
+  data-linked-diagram-choice="merge-model"
+  data-presentation-pattern="linked-diagram-choice"
+>
+  <div data-linked-diagram="merge-model" aria-live="polite">
+    <div data-diagram-variant="a">merged_into_id uuid · null</div>
+    <div data-diagram-variant="b" hidden>… ledger table …</div>
+  </div>
+  <p>
+    <span data-diagram-status
+      >Showing: <strong>redirect tombstone</strong>.</span
+    >
+  </p>
+  <fieldset
+    data-discovery-question
+    data-question-id="merge-representation"
+    data-linked-choice="merge-model"
+  >
+    <legend>How should a completed merge be stored?</legend>
+    <label
+      ><input
+        type="radio"
+        name="merge-representation"
+        data-variant="a"
+        checked
+      />Redirect tombstone</label
+    >
+    <label
+      ><input type="radio" name="merge-representation" data-variant="b" />Merge
+      ledger table</label
+    >
+  </fieldset>
+</div>
+```
+
+Each `[data-plan-step]` contains exactly one decision question — accept the
+recommendation, take the named alternative, or tweak it in text — and the page
+closes with exactly one `[data-plan-verdict]` fieldset (hand off as-is / hand off
+with the marked tweaks / needs another pass).
+
+## Build journal
+
+**Journal badges.** A type-keyed badge taxonomy on a reused `milestone-timeline`
+event chronology, so plan-confirmed steps, discoveries, deviations, and human
+hand-offs read at a glance. The `data-journal-kind` value keys the colour to
+tokens; the visible label is author-provided:
+
+```html
+<span class="discovery-journal-badge" data-journal-kind="deviation"
+  >Deviation 1 of 4</span
+>
+<!-- kinds: plan-confirmed · discovery · deviation · todo-for-human -->
+```
+
+**Deviation anatomy.** Each `[data-deviation]` entry states the same four
+labelled parts so the reader can triage it in place, and the fourth part carries
+a per-deviation revisit question (accept the choice / revisit before merge):
+
+```html
+<article data-deviation data-presentation-pattern="deviation-log">
+  <div class="discovery-deviation-anatomy">
+    <div class="discovery-deviation-field" data-deviation-field="plan-said">
+      …
+    </div>
+    <div class="discovery-deviation-field" data-deviation-field="code-revealed">
+      …
+    </div>
+    <div class="discovery-deviation-field" data-deviation-field="choice-taken">
+      …
+    </div>
+    <div class="discovery-deviation-field" data-deviation-field="revisit">
+      <fieldset
+        data-discovery-question
+        data-question-id="revisit-shapes"
+        data-question-label="Deviation 1"
+      >
+        <legend>How should this settle?</legend>
+        <label
+          ><input
+            type="radio"
+            name="revisit-shapes"
+            data-recommended="true"
+            checked
+          />Accept the choice</label
+        >
+        <label
+          ><input type="radio" name="revisit-shapes" />Revisit before
+          merge</label
+        >
+      </fieldset>
+    </div>
+  </div>
+</article>
+```
+
+All four `data-deviation-field` labels (`plan-said`, `code-revealed`,
+`choice-taken`, `revisit`) are required on every entry, and every entry anchors
+to `file:line` with a reused `source-ref-chip`.
+
+**Human todo.** An agent-authored decision the build declined to guess, routed to
+a person with `owner-routing` rather than resolved silently:
+
+```html
+<div data-human-todo data-presentation-pattern="human-todo">
+  <div class="discovery-human-todo-body">
+    <h3>Pick the geofence-edge alert cap threshold</h3>
+    <p>
+      … why it is a product call …
+      <span class="discovery-source-ref">config/alerts.yaml:12-19</span>
+    </p>
+    <span class="discovery-owner-chip" data-owner-initial="PN"
+      >Priya N. · Fleet Product · due Jul 24</span
+    >
+  </div>
+</div>
+```
+
+The board closes with exactly one `[data-journal-verdict]` question (proceed to
+review / pause for the flagged revisits).
+
+## Change walkthrough
+
+**VCS header.** A repo / branch→target / diff-stat / author strip at the top of a
+change report. Line and commit counts are illustrative, so the stat block carries
+`data-fabricated` + the invented tag:
+
+```html
+<div
+  class="discovery-vcs-header"
+  data-presentation-pattern="change-walkthrough vcs-header"
+>
+  <span class="discovery-vcs-repo">sonar/alerting-core</span>
+  <span class="discovery-vcs-branch"
+    ><span>feat/alert-dedup</span
+    ><span class="discovery-vcs-arrow" aria-hidden="true"></span
+    ><span>main</span></span
+  >
+  <span class="discovery-vcs-stats" data-fabricated>
+    <span class="discovery-vcs-add">324</span
+    ><span class="discovery-vcs-del">96</span>
+    <span class="discovery-invented-tag" data-invented-tag>invented</span>
+  </span>
+  <span class="discovery-owner-chip" data-owner-initial="CA"
+    >Coding agent · 7 commits</span
+  >
+</div>
+```
+
+**File tour.** A risk-ordered reading path: a jump map of `.discovery-risk-chip`
+(`[data-risk="high|medium|low"]`) links over per-file `[data-file-card]`s, each a
+reused `rich-diff` excerpt. Every file card carries at least one risk chip, and
+cards are ordered highest-risk first:
+
+```html
+<div
+  class="discovery-file-tour"
+  data-presentation-pattern="file-tour change-walkthrough"
+>
+  <nav class="discovery-file-tour-map" aria-label="Jump to a file">
+    <a href="#card-dedupe"
+      >dedupe.go
+      <span class="discovery-risk-chip" data-risk="high">high</span></a
+    >
+  </nav>
+  <article id="card-dedupe" data-file-card>
+    <div class="discovery-file-card-head">
+      <span class="discovery-source-ref">services/alerts/dedupe.go</span>
+      <span class="discovery-risk-chip" data-risk="high">high</span>
+    </div>
+    <div class="discovery-diff"><!-- rich-diff rows + a diff-comment --></div>
+  </article>
+</div>
+```
+
+**Diff comment.** A severity-labelled reviewer note anchored to a specific diff
+row, sitting inside the file card's diff so the note reads beside the code it is
+about. At least two anchor the behavior-deciding rows:
+
+```html
+<div data-diff-comment data-presentation-pattern="diff-comment">
+  <div class="discovery-diff-comment-head">
+    <span data-severity="high">high</span>
+    <span class="discovery-source-ref">services/alerts/dedupe.go:34</span>
+  </div>
+  <p>
+    With severity out of the key, an open incident can appear to downgrade …
+  </p>
+</div>
+```
+
+**Deck mode.** The change story as a keyboard-navigable, scroll-snap strip of
+`[data-deck-slide]` panels. The runtime (`installDeckMode`) wires the Prev/Next
+buttons, arrow-key/space navigation on a focused deck, and the
+`[data-deck-progress]` readout; the strip stays a plain readable scrolled list
+without JavaScript and under reduced motion:
+
+```html
+<div
+  class="discovery-deck"
+  data-deck
+  data-presentation-pattern="deck-mode change-walkthrough"
+>
+  <div class="discovery-deck-controls">
+    <button type="button" data-deck-prev>Prev</button>
+    <span class="discovery-deck-progress" data-deck-progress aria-live="polite"
+      >1 / 4</span
+    >
+    <button type="button" data-deck-next>Next</button>
+  </div>
+  <div class="discovery-deck-strip">
+    <article
+      class="discovery-deck-slide"
+      data-deck-slide
+      aria-label="Slide 1 of 4"
+    >
+      …
+    </article>
+    <article
+      class="discovery-deck-slide"
+      data-deck-slide
+      aria-label="Slide 2 of 4"
+    >
+      …
+    </article>
+  </div>
+</div>
+```
+
+The comprehension gate reuses `quiz-gate` (at least two `[data-quiz-question]`
+follow-up questions with a `<details>` reveal each), and the board closes with
+exactly one final `[data-change-verdict]` question (approve / approve with
+follow-ups / request changes) plus a free-text follow-up.
+
+## Triage board
+
+**Kanban lanes.** A Now/Next/Later/Cut kanban strip whose lane membership and
+within-lane order ARE the user's answer. Each lane is a `[data-kanban-lane]`
+holding a `[data-kanban-cards]` list, and each card is a
+`.discovery-drag-item.discovery-kanban-card` — the same `[data-drag-item]` the
+stage-3 `drag-probe` runtime already reorders and serializes. A page-inline
+script adds the two things the single-container probe runtime does not:
+cross-lane pointer drops, and a **per-card lane `<select>` keyboard fallback**
+(an ordinary `data-discovery-question`) that moves the card without a pointer.
+Lane counts stay honest as cards arrive and leave, and on reload the card nodes
+are reconciled to the hydrated select values:
+
+```html
+<div
+  class="discovery-kanban"
+  data-kanban-board
+  data-presentation-pattern="kanban-lanes"
+>
+  <div class="discovery-kanban-lane" data-kanban-lane="now">
+    <div class="discovery-kanban-lane-head">
+      <span class="discovery-kanban-lane-title">Now</span>
+      <span class="discovery-kanban-lane-count" data-kanban-count>3</span>
+    </div>
+    <div
+      data-drag-probe="lane-now"
+      data-probe-label="Now lane — order"
+      data-kanban-cards
+    >
+      <article
+        class="discovery-drag-item discovery-kanban-card"
+        data-drag-item="BEA-412"
+        data-drag-label="…"
+      >
+        <p class="discovery-kanban-card-title">…</p>
+        <div
+          class="discovery-kanban-move"
+          data-discovery-question
+          data-question-id="lane-BEA-412"
+          data-question-label="Lane · BEA-412"
+        >
+          <span aria-hidden="true">Move to lane</span>
+          <select aria-label="Move BEA-412 to a lane">
+            <option value="Now" data-lane="now" selected>Now</option>
+            <option value="Next" data-lane="next">Next</option>
+            <option value="Later" data-lane="later">Later</option>
+            <option value="Cut" data-lane="cut">Cut</option>
+          </select>
+        </div>
+      </article>
+    </div>
+  </div>
+  <!-- next / later / cut lanes -->
+</div>
+```
+
+**Prompt serialization.** No new prompt contract is introduced. Within-lane
+order rides the stage-3 `drag-probe` `## Interaction results` serialization (one
+probe per lane); lane membership rides each card's lane `<select>` — an ordinary
+touched decision — into the prompt's confirmed decisions. An untouched card
+therefore travels back as a suggestion, and a moved card as a decision, so a
+starting placement is never mistaken for the user's answer. Use at least three
+lanes and at least six cards, each card with its lane `<select>`.
+
 ## Extending the catalog
 
 These four conventions and the page shell, annotatable sections, single-prompt

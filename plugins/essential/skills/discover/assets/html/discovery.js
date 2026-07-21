@@ -1586,6 +1586,93 @@
     afterRenderHooks.push(render);
   }
 
+  // Deck mode: a keyboard-navigable scroll-snap strip. Progressive enhancement
+  // only — without JS the [data-deck-slide] panels stay a plain, fully readable
+  // horizontally scrollable list, and every slide is reachable by scrolling.
+  // The runtime gives the slides roving focus (current slide tabindex 0, the
+  // rest -1) and moves between them on Arrow / Page / Home / End; optional
+  // [data-deck-prev] / [data-deck-next] buttons step the same way. Key handling
+  // is guarded to the slide element itself, so arrow keys aimed at a control
+  // inside a slide (a radio group, a select) are never hijacked. Scrolling is
+  // instant under reduced motion (behavior "auto"), matching the global reset.
+  function installDeckMode() {
+    root.querySelectorAll("[data-deck]").forEach((deck) => {
+      const slides = [...deck.querySelectorAll("[data-deck-slide]")].filter(
+        (slide) => slide.closest("[data-deck]") === deck,
+      );
+      if (slides.length < 2) return;
+
+      const prevButton = deck.querySelector("[data-deck-prev]");
+      const nextButton = deck.querySelector("[data-deck-next]");
+      const progress = deck.querySelector("[data-deck-progress]");
+      let index = 0;
+
+      const setRoving = () => {
+        slides.forEach((slide, position) => {
+          slide.tabIndex = position === index ? 0 : -1;
+        });
+      };
+
+      const updateControls = () => {
+        if (prevButton) prevButton.disabled = index === 0;
+        if (nextButton) nextButton.disabled = index === slides.length - 1;
+        if (progress) {
+          progress.textContent = `${index + 1} / ${slides.length}`;
+        }
+      };
+
+      const goTo = (target, focus) => {
+        index = Math.max(0, Math.min(slides.length - 1, target));
+        setRoving();
+        updateControls();
+        slides[index].scrollIntoView({
+          inline: "center",
+          block: "nearest",
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+        });
+        if (focus) slides[index].focus({ preventScroll: true });
+      };
+
+      deck.addEventListener("keydown", (event) => {
+        // Roving pattern: only act when a slide itself holds focus, so controls
+        // inside a slide keep their own arrow-key behavior.
+        if (!event.target.matches("[data-deck-slide]")) return;
+        let next = null;
+        if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) {
+          next = index + 1;
+        } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) {
+          next = index - 1;
+        } else if (event.key === "Home") {
+          next = 0;
+        } else if (event.key === "End") {
+          next = slides.length - 1;
+        } else {
+          return;
+        }
+        event.preventDefault();
+        goTo(next, true);
+      });
+
+      // Keep the roving index honest when a slide is focused or clicked
+      // directly (tab, pointer). goTo() already advances index before focusing,
+      // so its own focus never re-enters this branch — no loop.
+      slides.forEach((slide, position) => {
+        slide.addEventListener("focus", () => {
+          if (index === position) return;
+          index = position;
+          setRoving();
+          updateControls();
+        });
+      });
+
+      prevButton?.addEventListener("click", () => goTo(index - 1, true));
+      nextButton?.addEventListener("click", () => goTo(index + 1, true));
+
+      setRoving();
+      updateControls();
+    });
+  }
+
   questions.forEach((question) => {
     hydrateQuestion(question);
     notifyQuestionControls(question);
@@ -1606,6 +1693,7 @@
   installDragProbes();
   installWizard();
   installNlReply();
+  installDeckMode();
   copyPromptButton.addEventListener("click", copyPrompt);
   clearButton?.addEventListener("click", clearState);
   installPresentationShell();
