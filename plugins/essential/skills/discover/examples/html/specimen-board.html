@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Brand specimen board — Meridian orders console</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -44,13 +41,7 @@
 
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Specimen board</p>
-      <a class="is-active" href="#overview">Overview</a>
-      <a href="#specimen">Brand specimen</a>
-      <a href="#design-review">Design review</a>
-      <a href="#provenance">Provenance</a>
-      <a href="#tradeoffs">Trade-offs</a>
-      <a href="#boards">Boards</a>
-      <a href="#specimen-decision">Your input</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

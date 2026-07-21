@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Disposable review-flow prototype</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,7 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
     <style>
       /* Page-local motion + demo styling for this board's inline scripts. Uses
          only shared --ui-* tokens; motion is CSS transitions so it degrades to a
@@ -83,7 +81,6 @@
         }
       }
     </style>
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -102,14 +99,7 @@
     </div>
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Interactive prototype</p>
-      <a class="is-active" href="#overview">Test question</a
-      ><a href="#prototype-frame">Review surface</a
-      ><a href="#prototype-controls">Prototype controls</a
-      ><a href="#reading-order">Reading order</a
-      ><a href="#motion-feel">Motion feel</a
-      ><a href="#build-map">How it's built</a
-      ><a href="#guided-demo">Guided demo</a
-      ><a href="#prototype-reaction">Your reaction</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span
@@ -261,7 +251,8 @@
             step.classList.toggle("is-active", n === index),
           );
           const pct = Math.round(((index + 1) / steps.length) * 100);
-          if (progress) progress.style.setProperty("--demo-progress", pct + "%");
+          if (progress)
+            progress.style.setProperty("--demo-progress", pct + "%");
           const done = index === steps.length - 1;
           if (toast) {
             toast.hidden = !done;
@@ -298,9 +289,7 @@
         };
 
         if (toggle)
-          toggle.addEventListener("click", () =>
-            playing ? stop() : start(),
-          );
+          toggle.addEventListener("click", () => (playing ? stop() : start()));
         if (restart)
           restart.addEventListener("click", () => {
             stop();

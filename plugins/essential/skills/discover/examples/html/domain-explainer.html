@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Changing a live database without a hard cutover</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -45,14 +42,7 @@
       data-presentation-pattern="anchor-flash"
     >
       <p>Domain explainer</p>
-      <a class="is-active" href="#overview">Overview</a>
-      <a href="#mental-model">Mental model</a>
-      <a href="#migration-sequence">Migration sequence</a>
-      <a href="#traffic-rehearsal">Traffic rehearsal</a>
-      <a href="#failure-boundaries">Failure boundaries</a>
-      <a href="#faq">Anticipated questions</a>
-      <a href="#rollout-decision">Rollout decision</a>
-      <a href="#glossary">Working vocabulary</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

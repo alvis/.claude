@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>{{PAGE_TITLE}}</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -23,17 +22,12 @@
       }
     </style>
     <!--
-      Local preview: replace these placeholders with absolute file:// or
-      canonical plugin asset URLs before writing a temp page (see
-      scripts/render_preview.py).
-      Publishing as a self-contained artifact (e.g. a claude.ai Artifact whose
-      CSP blocks external hosts): do NOT hand-fill these — run
-      scripts/build_artifact.py, which inlines the Tailwind runtime plus
+      This source carries no asset references: no CDN Tailwind script, no
+      discovery.css link, no discovery.js script (external or relative). Run
+      scripts/build_artifact.py, which injects the Tailwind runtime plus
       discovery.css/js and emits a validated self-contained document or
       --artifact fragment. See references/presentation.md.
     -->
-    <link rel="stylesheet" href="{{DISCOVERY_CSS_URL}}" />
-    <script src="{{DISCOVERY_JS_URL}}" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -41,7 +35,10 @@
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
         <span class="essential-docmark">E_</span>
-        <span><strong>{{DOCUMENT_TITLE}}</strong><small>Essential · Discover</small></span>
+        <span
+          ><strong>{{DOCUMENT_TITLE}}</strong
+          ><small>Essential · Discover</small></span
+        >
       </a>
       <nav aria-label="Document utilities">
         <span>{{ACTION_LABEL}}</span>
@@ -51,9 +48,7 @@
 
     <aside class="essential-docnav" aria-label="Document sections">
       <p>{{ACTION_LABEL}}</p>
-      <a class="is-active" href="#overview">Overview</a>
-      <a href="#primary-content">{{SECTION_LABEL}}</a>
-      <a href="#decision">Your input</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

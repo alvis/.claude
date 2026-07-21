@@ -62,6 +62,46 @@ The shared runtime inserts one **Add note** control and an annotation summary in
 each section. It reuses one dialog/editor for the whole page. Do not hand-code
 separate editors, and never insert annotation text with `innerHTML`.
 
+## Variable sections and generated navigation
+
+A board carries **1..N** annotatable sections, and **any section type may
+repeat**. Several decision-question sections, several mapping, file-review, or
+deviation sections, several finding sections — all are legal on any action.
+There is no fixed section set and no fixed count. Section ids are per-instance
+identifiers, not slots: keep each `data-section-id` unique within the page, but
+choose them to describe the instance. The **only** per-page singleton is the
+generated-brief prompt host (see [Prompt host](#prompt-host)); everything else
+is repeatable.
+
+The sidebar quick-links are **not hand-authored**. The shell ships one empty
+container and the runtime fills it from the sections actually present, so the
+navigation always mirrors the page and never drifts:
+
+```html
+<nav class="essential-docnav">
+  <div data-section-nav></div>
+  <!-- runtime writes one #-anchor link per [data-discovery-section] here -->
+</nav>
+```
+
+`buildSectionNav()` walks the sections in document order and writes one link per
+region into `[data-section-nav]` with safe DOM APIs (never `innerHTML`). Each
+link's label is the section's `data-section-label`, falling back to its first
+heading, then a humanized `data-section-id`; the href is the section's element
+id (or `data-section-id`). The generated-brief prompt host is skipped because it
+is reached through the folded-prompt control instead. The nav is built before
+the anchor-flash and active-tracking handlers bind, so every generated link is
+wired exactly once. Do not enumerate section anchors by hand, and do not leave
+stale `#anchor` links in the container.
+
+Sources and shells **never link scripts or stylesheets** — no CDN Tailwind tag,
+no `discovery.css` link, no `discovery.js` script, no `{{DISCOVERY_*_URL}}`
+placeholder, external or relatively linked. Keep only the inline
+`<style type="text/tailwindcss">` theme block. `scripts/build_artifact.py`
+injects the Tailwind runtime plus discovery.css/js into the final files; a
+source that references any asset is rejected by both the builder and the
+validator.
+
 ## Decision question
 
 Questions need stable IDs and human-readable labels. Recommended defaults may

@@ -106,6 +106,14 @@ PRESENTATION_PATTERNS = (
 
 # Structural hooks prove that each example demonstrates its action-specific
 # information architecture. Pattern markers alone only prove catalog presence.
+#
+# Counts are (attribute, minimum, maximum). Section-bearing hooks are VARIABLE
+# by design: their entries are MINIMUMS (maximum is None) so any board may carry
+# more sections of that type — e.g. more than the demonstrated number of option
+# frames or decision-question sections. Do NOT reintroduce a fixed maximum on a
+# section-repeatable hook; a board must never fail for having extra sections.
+# Intrinsic equalities (one panel per tab, one note per pin, one dot per card)
+# are enforced elsewhere as count == count pairs, not as caps here.
 ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
     "risk-context-report": (
         ("data-risk-finding", 5, None),
@@ -118,9 +126,13 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-response-kind", 1, None),
     ),
     "ranked-options": (
-        ("data-option-frame", 3, 5),
+        # Direction frames and the final selection are variable: a board may
+        # compare more than the demonstrated number of directions, so these are
+        # minimums (no cap). The one-to-one direction-choice mapping enforced in
+        # the ranked-options block keeps the final selection honest regardless.
+        ("data-option-frame", 3, None),
         ("data-option-reaction", 3, None),
-        ("data-final-selection", 1, 1),
+        ("data-final-selection", 1, None),
     ),
     "brainstorm-spectrum": (
         ("data-horizon-lane", 3, None),
@@ -320,6 +332,15 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
     if len(parser.sections) != len(parser.user_regions):
         errors.append(f"{path}: every header/section must be annotatable")
 
+    # Section counts are VARIABLE by design: a page carries any number (>= 1) of
+    # [data-discovery-section] regions, and ANY section type may repeat (several
+    # decision-question sections, several mapping/file/deviation/finding
+    # sections). Section ids are free-form, per-instance ids — unique per page,
+    # not a fixed slot set. The only per-page singleton is the generated-brief
+    # prompt host (enforced separately below via prompt_hosts == 1).
+    if not parser.sections:
+        errors.append(f"{path}: needs at least one [data-discovery-section] region")
+
     section_ids = [section.get("data-section-id") for section in parser.sections]
     if any(not section_id for section_id in section_ids):
         errors.append(f"{path}: every annotatable section needs data-section-id")
@@ -351,14 +372,29 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
         errors.append(f"{path}: expected one multi-note summary host")
     if parser.search_controls:
         errors.append(f"{path}: static single-page artifact must not include search")
-    stylesheet_urls = {"../../assets/html/discovery.css", "{{DISCOVERY_CSS_URL}}"}
-    runtime_urls = {"../../assets/html/discovery.js", "{{DISCOVERY_JS_URL}}"}
-    if not stylesheet_urls.intersection(parser.stylesheets):
-        errors.append(f"{path}: does not link the shared discovery stylesheet")
-    if not runtime_urls.intersection(parser.scripts):
-        errors.append(f"{path}: does not link the shared discovery runtime")
-    if parser.scripts.count("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4") != 1:
-        errors.append(f"{path}: expected exactly one Tailwind browser runtime")
+    # Asset self-containment: a composed page or shell carries NO external or
+    # relatively linked assets. The build step (scripts/build_artifact.py)
+    # injects the Tailwind runtime plus discovery.css/js into the FINAL artifact;
+    # sources and shells reference none. Require their ABSENCE — no
+    # <link rel="stylesheet">, no <script src>, and no {{DISCOVERY_*_URL}}
+    # placeholder (external OR relative refs both caught). The inline
+    # <style type="text/tailwindcss"> @theme block below stays required.
+    if parser.stylesheets:
+        errors.append(
+            f"{path}: must not link any stylesheet (assets are inlined by the "
+            f"build step); found {parser.stylesheets}"
+        )
+    if parser.scripts:
+        errors.append(
+            f"{path}: must not link any external or relative script (assets are "
+            f"inlined by the build step); found {parser.scripts}"
+        )
+    for dead_placeholder in ("{{DISCOVERY_CSS_URL}}", "{{DISCOVERY_JS_URL}}"):
+        if dead_placeholder in text:
+            errors.append(
+                f"{path}: must not contain asset placeholder {dead_placeholder} "
+                f"(the build step injects assets directly)"
+            )
     for theme_fragment in (
         "@theme inline",
         "--color-canvas: var(--ui-canvas)",
@@ -427,9 +463,9 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                     f"({pin_note_count})"
                 )
         if action == "ranked-options":
-            if text.count("discovery-review-frame-code") != 1:
+            if text.count("discovery-review-frame-code") < 1:
                 errors.append(
-                    f"{path}: ranked options need exactly one readable code-surface "
+                    f"{path}: ranked options need at least one readable code-surface "
                     "direction frame"
                 )
             frames = parser.attribute_counts["data-option-frame"]

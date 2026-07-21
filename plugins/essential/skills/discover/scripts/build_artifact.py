@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Compile a Discover review-surface board into a self-contained HTML artifact.
 
-The board sources under ``examples/html`` and ``templates/html`` stay small and
-editable: they keep the CDN Tailwind ``<script>`` tag plus relative / placeholder
-references to ``discovery.css`` and ``discovery.js``. That preserves the local
-preview + template-test workflow untouched.
+The board sources under ``examples/`` and ``templates/`` stay small and editable
+and carry NO asset references: no CDN Tailwind ``<script>``, no ``discovery.css``
+``<link>``, and no ``discovery.js`` ``<script>`` — external OR relative. A source
+keeps only its own inline markup, its inline page-behaviour ``<script>`` blocks,
+inline ``<style>`` blocks, and the ``<style type="text/tailwindcss">`` ``@theme``
+block. The builder injects every shared asset into every final file.
 
-This builder inlines everything so the result renders under the claude.ai
+This builder injects everything so the result renders under the claude.ai
 Artifact CSP (``default-src 'none'`` — no external hosts allowed): the latest
 Tailwind v4 browser runtime, ``discovery.css`` and ``discovery.js`` are all
 streamed verbatim into the output. Nobody ever hand-edits the compiled file — to
@@ -103,23 +105,15 @@ SELECTION_STYLE = (
     "    </style>"
 )
 
-# Matches the CDN Tailwind runtime <script> tag in a board source.
-TAILWIND_TAG_RE = re.compile(
-    r'<script\s+src="https://cdn\.jsdelivr\.net/npm/@tailwindcss/browser@[^"]*"\s*>'
-    r"</script>"
+# SOURCE validation: board sources carry no asset references at all. Any
+# <script src=...> or <link rel="stylesheet"> (external OR relative) is forbidden,
+# as is the dead {{DISCOVERY_CSS_URL}}/{{DISCOVERY_JS_URL}} placeholder convention.
+# Inline <script> (page behaviour) and inline <style> blocks stay allowed.
+SCRIPT_SRC_RE = re.compile(r"<script\b[^>]*\bsrc\s*=", re.IGNORECASE)
+STYLESHEET_LINK_RE = re.compile(
+    r"<link\b[^>]*\brel\s*=\s*[\"']?stylesheet", re.IGNORECASE
 )
-# Matches the discovery.css <link>, whether a relative ref or the placeholder.
-CSS_LINK_RE = re.compile(
-    r'<link\s+rel="stylesheet"\s+href="'
-    r"(?:[^\"]*discovery\.css|\{\{DISCOVERY_CSS_URL\}\})"
-    r'"\s*/?>'
-)
-# Matches the discovery.js <script>, whether a relative ref or the placeholder.
-JS_SCRIPT_RE = re.compile(
-    r'<script\s+src="'
-    r"(?:[^\"]*discovery\.js|\{\{DISCOVERY_JS_URL\}\})"
-    r'"\s+defer\s*>\s*</script>'
-)
+DEAD_ASSET_PLACEHOLDER_RE = re.compile(r"\{\{DISCOVERY_(?:CSS|JS)_URL\}\}")
 
 TITLE_RE = re.compile(r"<title>(.*?)</title>", re.DOTALL)
 THEME_STYLE_RE = re.compile(
@@ -287,38 +281,80 @@ def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> s
     """
 
     html, _display = load_source(source_path)
+    _validate_source(html)
     if runtime is None:
         runtime = get_tailwind_runtime()
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
+    css_style = _inline_style(css)
+    runtime_script = _inline_script(runtime)
     # discovery.js loads with `defer` in the source; an inline script cannot
-    # defer, so it is removed from its original position and re-emitted at the
-    # end of <body> to preserve the "runs after DOM is parsed" ordering.
+    # defer, so it is injected at the end of <body> to preserve the "runs after
+    # DOM is parsed" ordering.
     js_block = _inline_script(js)
 
-    if not TAILWIND_TAG_RE.search(html):
-        raise BuildError("Tailwind CDN <script> tag not found in source")
-    if not CSS_LINK_RE.search(html):
-        raise BuildError("discovery.css <link> not found in source")
-    if not JS_SCRIPT_RE.search(html):
-        raise BuildError("discovery.js <script> not found in source")
-
-    html = TAILWIND_TAG_RE.sub(lambda _m: _inline_script(runtime), html, count=1)
-    html = CSS_LINK_RE.sub(lambda _m: _inline_style(css), html, count=1)
-    html = JS_SCRIPT_RE.sub("", html, count=1)
-
     if artifact:
-        output = _build_fragment(html, js_block)
+        output = _build_fragment(html, css_style, runtime_script, js_block)
     else:
-        output = _build_full_doc(html, js_block)
+        output = _build_full_doc(html, css_style, runtime_script, js_block)
 
     _validate(output, artifact=artifact)
     return output
 
 
-def _build_full_doc(html: str, js_block: str) -> str:
-    """Emit a standalone document with discovery.js relocated to end of body."""
+def _validate_source(html: str) -> None:
+    """Fail the build unless the board source carries no asset references.
+
+    A source must contain no ``<script src=...>`` and no ``<link
+    rel="stylesheet">`` — any src/href asset reference, external OR relative, is
+    forbidden — and none of the dead ``{{DISCOVERY_CSS_URL}}`` /
+    ``{{DISCOVERY_JS_URL}}`` placeholders. Inline ``<script>`` (page behaviour),
+    inline ``<style>`` blocks, and non-asset ``<link>`` tags (e.g. a ``data:``
+    favicon) stay allowed. The builder injects every shared asset itself.
+    """
+
+    problems: list[str] = []
+    if SCRIPT_SRC_RE.search(html):
+        problems.append(
+            "<script src=...> asset reference present (sources carry no external "
+            "or relative script refs; the builder injects discovery.js)"
+        )
+    if STYLESHEET_LINK_RE.search(html):
+        problems.append(
+            '<link rel="stylesheet"> asset reference present (sources carry no '
+            "external or relative stylesheet refs; the builder injects discovery.css)"
+        )
+    dead = DEAD_ASSET_PLACEHOLDER_RE.findall(html)
+    if dead:
+        problems.append(
+            f"dead asset-URL placeholder(s) present: {sorted(set(dead))} "
+            "(that convention is gone; the builder injects the assets)"
+        )
+    if problems:
+        raise BuildError(
+            "source validation failed:\n  - " + "\n  - ".join(problems)
+        )
+
+
+def _build_full_doc(
+    html: str, css_style: str, runtime_script: str, js_block: str
+) -> str:
+    """Emit a standalone document with all shared assets injected.
+
+    The inlined discovery.css ``<style>`` then the Tailwind runtime ``<script>``
+    are injected immediately before ``</head>`` (css first, runtime second);
+    discovery.js is injected at the end of ``<body>``.
+    """
+
+    def _inject_head(_match: re.Match[str]) -> str:
+        return f"\n    {css_style}\n    {runtime_script}\n  </head>"
+
+    html, count = re.subn(r"\s*</head>", _inject_head, html, count=1)
+    if count != 1:
+        raise BuildError(
+            "Could not locate </head> to inject discovery.css and the Tailwind runtime"
+        )
 
     def _append_js(_match: re.Match[str]) -> str:
         return f"    {js_block}\n  </body>"
@@ -329,8 +365,13 @@ def _build_full_doc(html: str, js_block: str) -> str:
     return f"<!-- {GENERATED_BANNER} -->\n{html}"
 
 
-def _build_fragment(html: str, js_block: str) -> str:
-    """Emit a head-less fragment for the Artifact tool to wrap in its own body."""
+def _build_fragment(
+    html: str, css_style: str, runtime_script: str, js_block: str
+) -> str:
+    """Emit a head-less fragment for the Artifact tool to wrap in its own body.
+
+    Part ordering: title, theme block, selection style, css, runtime, body, js.
+    """
 
     title_match = TITLE_RE.search(html)
     theme_match = THEME_STYLE_RE.search(html)
@@ -347,11 +388,6 @@ def _build_fragment(html: str, js_block: str) -> str:
         ]
         raise BuildError(f"Fragment source missing: {', '.join(missing)}")
 
-    # The inlined discovery.css <style> and the Tailwind runtime <script> already
-    # live in the head region of `html`; pull them out to lead the fragment.
-    css_style = _find_inlined_css_style(html)
-    runtime_script = _find_inlined_runtime_script(html)
-
     body_inner = body_match.group(1).strip()
 
     parts = [
@@ -365,29 +401,6 @@ def _build_fragment(html: str, js_block: str) -> str:
         js_block,
     ]
     return "\n".join(parts) + "\n"
-
-
-def _find_inlined_css_style(html: str) -> str:
-    """Return the first bare <style> block — the inlined discovery.css.
-
-    The theme block is excluded because it carries a ``type="text/tailwindcss"``
-    attribute, so a bare-``<style>`` match cannot land on it; discovery.js has
-    already been removed before this runs.
-    """
-
-    match = re.search(r"<style>(.*?)</style>", html, re.DOTALL)
-    if not match:
-        raise BuildError("Inlined discovery.css <style> block not found")
-    return match.group(0)
-
-
-def _find_inlined_runtime_script(html: str) -> str:
-    """Return the first bare <script> block — the inlined Tailwind runtime."""
-
-    match = re.search(r"<script>(.*?)</script>", html, re.DOTALL)
-    if not match:
-        raise BuildError("Inlined Tailwind runtime <script> block not found")
-    return match.group(0)
 
 
 def _validate(output: str, *, artifact: bool) -> None:

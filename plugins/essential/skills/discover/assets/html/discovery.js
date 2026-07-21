@@ -228,6 +228,48 @@
     return element;
   }
 
+  // Humanize a slug-style section id into a nav label:
+  // "reality-gap" -> "Reality gap".
+  function humanizeSectionId(id) {
+    const cleaned = collapseText(String(id ?? "").replace(/[-_]+/g, " "));
+    if (!cleaned) return "";
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  // DYNAMIC SECTION NAV. The shell ships an EMPTY [data-section-nav] container in
+  // the sidebar; the runtime fills it with one quick-link per
+  // [data-discovery-section] actually present in the DOM, in document order.
+  // Href comes from the section's element id (falling back to data-section-id);
+  // the label is data-section-label, else the first heading (h1-h3), else the
+  // humanized section id. Links are built with safe DOM APIs (createElement /
+  // textContent — never innerHTML). The singleton generated-brief prompt host is
+  // skipped: it stays reachable through the folded-prompt control wired in
+  // installPresentationShell, so its folded behavior is untouched. This runs
+  // BEFORE installAnchorFlash / installPresentationShell so the links they query
+  // and bind already exist — each gets exactly one flash/active handler, no
+  // double-binding. Recomputed only here at init (static pages). With no JS the
+  // empty container simply collapses (progressive enhancement).
+  function buildSectionNav() {
+    const nav = document.querySelector("[data-section-nav]");
+    if (!nav) return;
+    const promptHostSection = promptHost.closest("[data-discovery-section]");
+    const fragment = document.createDocumentFragment();
+    sections.forEach((section) => {
+      if (section === promptHostSection) return;
+      const anchor = section.id || section.dataset.sectionId;
+      if (!anchor) return;
+      const label =
+        collapseText(section.dataset.sectionLabel) ||
+        collapseText(section.querySelector("h1, h2, h3")?.textContent) ||
+        humanizeSectionId(section.dataset.sectionId) ||
+        anchor;
+      const link = makeElement("a", "", label);
+      link.setAttribute("href", `#${anchor}`);
+      fragment.append(link);
+    });
+    nav.replaceChildren(fragment);
+  }
+
   function installSectionAnnotation(section) {
     const id = section.dataset.sectionId;
     if (!id) return;
@@ -1557,6 +1599,7 @@
   installCodeTabs();
   installDiagramDetail();
   installExclusiveAccordions();
+  buildSectionNav();
   installAnchorFlash();
   installFilterChips();
   installSpectrumMinimap();

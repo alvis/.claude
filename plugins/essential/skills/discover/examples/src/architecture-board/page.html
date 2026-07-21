@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Architecture board — Conflux real-time sync service</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -44,14 +41,7 @@
 
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Architecture board</p>
-      <a class="is-active" href="#overview">Overview</a>
-      <a href="#how-built">How it was made</a>
-      <a href="#architecture">Architecture</a>
-      <a href="#annotations">Pin notes</a>
-      <a href="#provenance">Provenance</a>
-      <a href="#tradeoffs">Trade-offs</a>
-      <a href="#boards">Boards</a>
-      <a href="#architecture-decision">Your input</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

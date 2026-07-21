@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Architecture interview for invoice finalization</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -42,13 +39,7 @@
     </div>
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Guided interview</p>
-      <a class="is-active" href="#overview">Interview goal</a
-      ><a href="#execution-question">Execution boundary</a
-      ><a href="#identity-question">Effect identity</a
-      ><a href="#recovery-question">Recovery window</a
-      ><a href="#ownership-question">Operational ownership</a
-      ><a href="#failure-question">Incident threshold</a
-      ><a href="#decision-synthesis">Decision synthesis</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

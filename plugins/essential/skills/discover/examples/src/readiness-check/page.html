@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Readiness check for extracting a notification service</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -41,12 +38,7 @@
 
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Readiness check</p>
-      <a class="is-active" href="#overview">Readiness bar</a>
-      <a href="#evidence">Evidence dossier</a>
-      <a href="#gates">Readiness gates</a>
-      <a href="#blocker">Blocking boundary</a>
-      <a href="#assumptions">Assumption register</a>
-      <a href="#verdict">Verdict and owner</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span

@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Risk context for customer-facing AI summaries</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme inline {
         --color-canvas: var(--ui-canvas);
@@ -22,8 +21,6 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
-    <link rel="stylesheet" href="../../assets/html/discovery.css" />
-    <script src="../../assets/html/discovery.js" defer></script>
   </head>
   <body
     class="bg-canvas text-ink selection:bg-accent-soft selection:text-accent-ink"
@@ -41,12 +38,7 @@
 
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Risk/context report</p>
-      <a class="is-active" href="#overview">Decision frame</a>
-      <a href="#reality-gap">Reality gap</a>
-      <a href="#evidence-ledger">Evidence ledger</a>
-      <a href="#risk-paths">Failure paths</a>
-      <a href="#response-plan">Response plan</a>
-      <a href="#launch-gate">Launch gate</a>
+      <div data-section-nav></div>
       <div class="essential-docnav-rule"></div>
       <p>Interaction</p>
       <span
