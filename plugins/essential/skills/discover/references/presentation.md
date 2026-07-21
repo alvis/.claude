@@ -68,9 +68,17 @@ from the sections actually present.
 
 Every board — including a generated user artifact — is authored as modular
 sources: a `page.html` shell plus one file per section under `sections/`,
-composed with `scripts/build_artifact.py`. Never author one giant HTML file. An
-executor creating a temporary review surface creates the source directory in the
-session workspace, composes it, then compiles the self-contained file.
+composed with `scripts/build_artifact.py`. Never author one giant HTML file, and
+never reinvent the shell markup from scratch. Always start from the committed
+starter scaffold `templates/src/page/` (its `page.html` shell plus starter
+`sections/`): copy the whole directory into the session workspace, then fill its
+`{{PLACEHOLDER}}` tokens and add, edit, reorder, or remove section files to fit
+the action. The scaffold already carries the mandatory page shell, the
+`@theme inline` block, the annotation hooks, and the single generated-prompt
+host, so copying and editing it — rather than hand-writing equivalents — is what
+keeps every board on the shared contract. An executor creating a temporary
+review surface copies the scaffold into the session workspace, edits its
+sources, composes it, then compiles the self-contained file.
 
 ## Shared interaction contract
 
@@ -176,8 +184,9 @@ and the inline `<style type="text/tailwindcss">` theme block; the builder
 injects every shared asset. Artifacts stay ephemeral — durable, bookmarkable,
 and cross-linked only within the session, never a permanent deliverable.
 
-The presentation flow is always the same: author the modular sources, compose
-them, and compile a self-contained file with the builder before presenting it.
+The presentation flow is always the same: copy the `templates/src/page/` starter
+scaffold into the session workspace, edit its modular sources, compose them, and
+compile a self-contained file with the builder before presenting it.
 
 ```bash
 # self-contained full document (file:// viewing, any host)
