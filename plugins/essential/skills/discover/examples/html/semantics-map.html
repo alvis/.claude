@@ -233,29 +233,42 @@
           <h2>Completed out of order does not mean committed out of order.</h2>
         </div>
         <div class="discovery-section-body">
-          <div class="discovery-column-list">
+          <p class="discovery-muted">
+            Hover or focus a highlighted region to see its matched counterpart
+            light up in the other panel.
+          </p>
+          <div
+            class="discovery-column-list"
+            data-presentation-pattern="code-pair-highlight"
+          >
             <article class="discovery-review-frame">
               <div class="discovery-review-head">
                 <strong>vendor/stream-cursor/cursor.go:84</strong
                 ><span class="discovery-badge">Go source</span>
               </div>
-              <pre class="discovery-light-code"><code>done[seq] = true
-for done[committed+1] {
+              <pre
+                class="discovery-light-code"
+                data-presentation-pattern="syntax-tokens"
+              ><code><span data-code-pair="ack-record">done[seq] = <span class="discovery-tok-kw">true</span></span>
+<span class="discovery-tok-kw">for</span> <span data-code-pair="ack-gap">done[committed+<span class="discovery-tok-num">1</span>]</span> {
   committed++
-  delete(done, committed)
+  <span class="discovery-tok-fn">delete</span>(done, committed)
 }
-store.Commit(partition, committed, epoch)</code></pre>
+<span data-code-pair="ack-commit">store.<span class="discovery-tok-fn">Commit</span>(partition, committed, epoch)</span></code></pre>
             </article>
             <article class="discovery-review-frame">
               <div class="discovery-review-head">
                 <strong>src/events/cursor.ts · proposed</strong
                 ><span class="discovery-badge">TypeScript</span>
               </div>
-              <pre class="discovery-light-code"><code>pending.add(sequence);
-while (pending.has(committed + 1n)) {
-  pending.delete(++committed);
+              <pre
+                class="discovery-light-code"
+                data-presentation-pattern="syntax-tokens"
+              ><code><span data-code-pair="ack-record">pending.<span class="discovery-tok-fn">add</span>(sequence);</span>
+<span class="discovery-tok-kw">while</span> (<span data-code-pair="ack-gap">pending.<span class="discovery-tok-fn">has</span>(committed + <span class="discovery-tok-num">1n</span>)</span>) {
+  pending.<span class="discovery-tok-fn">delete</span>(++committed);
 }
-await cursorStore.commit(key, committed, epoch);</code></pre>
+<span data-code-pair="ack-commit"><span class="discovery-tok-kw">await</span> cursorStore.<span class="discovery-tok-fn">commit</span>(key, committed, epoch);</span></code></pre>
             </article>
           </div>
           <div class="discovery-callout">
@@ -303,10 +316,11 @@ await cursorStore.commit(key, committed, epoch);</code></pre>
               </div>
               <pre
                 class="discovery-light-code"
-              ><code>if clock.Now().After(lease.ExpiresAt) {
-  return ErrLeaseExpired
+                data-presentation-pattern="syntax-tokens"
+              ><code><span class="discovery-tok-kw">if</span> clock.<span class="discovery-tok-fn">Now</span>().<span class="discovery-tok-fn">After</span>(lease.ExpiresAt) {
+  <span class="discovery-tok-kw">return</span> <span class="discovery-tok-type">ErrLeaseExpired</span>
 }
-return store.CommitIfEpoch(
+<span class="discovery-tok-kw">return</span> store.<span class="discovery-tok-fn">CommitIfEpoch</span>(
   key, sequence, lease.Epoch,
 )</code></pre>
             </article>
@@ -317,10 +331,11 @@ return store.CommitIfEpoch(
               </div>
               <pre
                 class="discovery-light-code"
-              ><code>if (clock.monotonicMs() >= lease.deadlineMs) {
-  throw new LeaseExpiredError(lease.epoch);
+                data-presentation-pattern="syntax-tokens"
+              ><code><span class="discovery-tok-kw">if</span> (clock.<span class="discovery-tok-fn">monotonicMs</span>() >= lease.deadlineMs) {
+  <span class="discovery-tok-kw">throw</span> <span class="discovery-tok-kw">new</span> <span class="discovery-tok-type">LeaseExpiredError</span>(lease.epoch);
 }
-return store.commitIfEpoch(
+<span class="discovery-tok-kw">return</span> store.<span class="discovery-tok-fn">commitIfEpoch</span>(
   key, sequence, lease.epoch,
 );</code></pre>
             </article>
@@ -377,18 +392,35 @@ return store.commitIfEpoch(
               <strong>src/events/admin/replay.ts</strong
               ><span class="discovery-badge">Required guard</span>
             </div>
-            <div class="discovery-diff" aria-label="Replay boundary diff">
-              <div class="is-removed">
-                − await cursors.set(partition, requested)
+            <div
+              class="discovery-diff"
+              aria-label="Replay boundary diff"
+              data-presentation-pattern="rich-diff syntax-tokens"
+            >
+              <div class="discovery-diff-hunk">
+                @@ src/events/admin/replay.ts · replayTo() — lines 41–43 @@
               </div>
-              <div class="is-added">
-                + assertRetained(requested, oldestAvailable)
+              <div class="is-removed" data-line="41">
+                <del
+                  >− <span class="discovery-tok-kw">await</span> cursors.<span
+                    class="discovery-tok-fn"
+                    >set</span
+                  >(partition, requested)</del
+                >
               </div>
-              <div class="is-added">
-                + assertNotForwardSkip(requested, committed)
+              <div class="is-added" data-line="41">
+                + <span class="discovery-tok-fn">assertRetained</span>(requested,
+                oldestAvailable)
               </div>
-              <div class="is-added">
-                + await cursors.rewind(partition, requested, auditActor)
+              <div class="is-added" data-line="42">
+                + <span class="discovery-tok-fn">assertNotForwardSkip</span>(requested,
+                committed)
+              </div>
+              <div class="is-added" data-line="43">
+                + <span class="discovery-tok-kw">await</span> cursors.<span
+                  class="discovery-tok-fn"
+                  >rewind</span
+                >(partition, requested, auditActor)
               </div>
             </div>
           </article>
@@ -439,6 +471,120 @@ return store.commitIfEpoch(
                 choices, not observable promises.
               </p>
             </article>
+          </div>
+          <div class="discovery-callout">
+            <h3>One fence, four surfaces</h3>
+            <p>
+              The epoch fence is a single observable promise — a stale owner
+              commits nothing — expressed in each place it must survive the
+              port. Tab through the representations; the storage predicate is
+              where the fence actually lives, and the conformance test is what
+              keeps the other three honest.
+            </p>
+          </div>
+          <div
+            class="discovery-code-tabs"
+            data-code-tabs
+            data-presentation-pattern="code-tabs syntax-tokens"
+          >
+            <div
+              class="discovery-code-tablist"
+              role="tablist"
+              aria-label="The epoch fence across four surfaces"
+            >
+              <button
+                type="button"
+                role="tab"
+                id="fence-tab-go"
+                aria-controls="fence-panel-go"
+                data-code-tab="go"
+                aria-selected="true"
+              >
+                cursor.go
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="fence-tab-ts"
+                aria-controls="fence-panel-ts"
+                data-code-tab="ts"
+              >
+                cursor.ts
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="fence-tab-sql"
+                aria-controls="fence-panel-sql"
+                data-code-tab="sql"
+              >
+                fence.sql
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="fence-tab-test"
+                aria-controls="fence-panel-test"
+                data-code-tab="test"
+              >
+                conformance.test.ts
+              </button>
+            </div>
+            <pre
+              class="discovery-light-code"
+              role="tabpanel"
+              id="fence-panel-go"
+              aria-labelledby="fence-tab-go"
+              data-code-panel="go"
+              tabindex="0"
+            ><code><span class="discovery-tok-cm">// stale owners fail the epoch predicate and commit nothing</span>
+<span class="discovery-tok-kw">if</span> !lease.<span class="discovery-tok-fn">Owns</span>(epoch) {
+  <span class="discovery-tok-kw">return</span> <span class="discovery-tok-type">ErrLeaseExpired</span>
+}
+<span class="discovery-tok-kw">for</span> done[committed+<span class="discovery-tok-num">1</span>] {
+  committed++
+}
+store.<span class="discovery-tok-fn">CommitIfEpoch</span>(partition, committed, epoch)</code></pre>
+            <pre
+              class="discovery-light-code"
+              role="tabpanel"
+              id="fence-panel-ts"
+              aria-labelledby="fence-tab-ts"
+              data-code-panel="ts"
+              tabindex="0"
+            ><code><span class="discovery-tok-cm">// same fence, against the partition actor's in-memory state</span>
+<span class="discovery-tok-kw">if</span> (!lease.<span class="discovery-tok-fn">owns</span>(epoch)) {
+  <span class="discovery-tok-kw">throw</span> <span class="discovery-tok-kw">new</span> <span class="discovery-tok-type">LeaseExpiredError</span>(epoch);
+}
+<span class="discovery-tok-kw">while</span> (pending.<span class="discovery-tok-fn">has</span>(committed + <span class="discovery-tok-num">1n</span>)) {
+  pending.<span class="discovery-tok-fn">delete</span>(++committed);
+}
+<span class="discovery-tok-kw">await</span> store.<span class="discovery-tok-fn">commitIfEpoch</span>(key, committed, epoch);</code></pre>
+            <pre
+              class="discovery-light-code"
+              role="tabpanel"
+              id="fence-panel-sql"
+              aria-labelledby="fence-tab-sql"
+              data-code-panel="sql"
+              tabindex="0"
+            ><code><span class="discovery-tok-cm">-- the fence is one predicate: a stale epoch updates zero rows</span>
+<span class="discovery-tok-kw">UPDATE</span> <span class="discovery-tok-type">partition_cursor</span>
+   <span class="discovery-tok-kw">SET</span> committed_seq = <span class="discovery-tok-num">$2</span>
+ <span class="discovery-tok-kw">WHERE</span> partition_key = <span class="discovery-tok-num">$1</span>
+   <span class="discovery-tok-kw">AND</span> lease_epoch   = <span class="discovery-tok-num">$3</span>
+<span class="discovery-tok-kw">RETURNING</span> committed_seq;</code></pre>
+            <pre
+              class="discovery-light-code"
+              role="tabpanel"
+              id="fence-panel-test"
+              aria-labelledby="fence-tab-test"
+              data-code-panel="test"
+              tabindex="0"
+            ><code><span class="discovery-tok-fn">test</span>(<span class="discovery-tok-str">"epoch-8 commit after epoch-9 begins affects zero rows"</span>, <span class="discovery-tok-kw">async</span> () => {
+  <span class="discovery-tok-kw">const</span> rows = <span class="discovery-tok-kw">await</span> store.<span class="discovery-tok-fn">commitIfEpoch</span>(key, <span class="discovery-tok-num">102n</span>, epoch8);
+  <span class="discovery-tok-fn">expect</span>(rows).<span class="discovery-tok-fn">toBe</span>(<span class="discovery-tok-num">0</span>);
+  <span class="discovery-tok-fn">expect</span>((<span class="discovery-tok-kw">await</span> store.<span class="discovery-tok-fn">read</span>(key)).committedSeq).<span class="discovery-tok-fn">toBe</span>(<span class="discovery-tok-num">100n</span>);
+});</code></pre>
           </div>
           <div class="discovery-table-wrap">
             <table class="discovery-table">

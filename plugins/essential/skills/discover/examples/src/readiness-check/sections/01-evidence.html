@@ -77,6 +77,77 @@
             </table>
           </div>
 
+          <div
+            class="discovery-review-frame"
+            data-presentation-pattern="milestone-timeline"
+          >
+            <p class="discovery-eyebrow">Discovery log</p>
+            <h3>How the boundary was mapped, in order.</h3>
+            <ol class="discovery-milestone-timeline">
+              <li>
+                <span class="discovery-milestone-time">Jul 14<br />09:20</span>
+                <div data-milestone-state="done">
+                  <strong>Inbound call graph traced</strong>
+                  <p>
+                    Five callers of <code>send()</code> confirmed at
+                    <code>c3a71fe</code>; dynamic plugin calls flagged out of
+                    scope.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-time">Jul 15<br />14:05</span>
+                <div data-milestone-state="done">
+                  <strong>Persistence trace mapped</strong>
+                  <p>
+                    Template, attempt, idempotency, and audit tables walked with
+                    their writers and readers; analytics replica deferred.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-time">Jul 16<br />11:30</span>
+                <div data-milestone-state="done">
+                  <strong>Retry runbook walked</strong>
+                  <p>
+                    Worker claim path and provider errors reconciled against the
+                    incident runbook; SMS callback path sampled only.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-time">Jul 18<br />16:40</span>
+                <div data-milestone-state="done">
+                  <strong>Discovery interview recorded</strong>
+                  <p>
+                    Decision D-04 captured: callers expect no externally visible
+                    behavior change from the extraction.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-time">Jul 21<br />10:00</span>
+                <div data-milestone-state="active">
+                  <strong>Preference ownership trace</strong>
+                  <p>
+                    The one open thread: who authorizes a send. Feeds gate G4
+                    and the blocking boundary below.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">In progress</span
+                    ><span class="discovery-badge">G4 · ownership</span>
+                  </div>
+                </div>
+              </li>
+            </ol>
+            <p class="discovery-muted" data-fabricated>
+              Sequence and sources are real; the clock times are illustrative.
+              <span class="discovery-invented-tag" data-invented-tag
+                >times</span
+              >
+            </p>
+          </div>
+
           <fieldset
             class="discovery-question"
             data-discovery-question

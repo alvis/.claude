@@ -31,7 +31,10 @@
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
         <span class="essential-docmark">E_</span>
-        <span><strong>Brand specimen · Meridian console</strong><small>Essential · Discover</small></span>
+        <span
+          ><strong>Brand specimen · Meridian console</strong
+          ><small>Essential · Discover</small></span
+        >
       </a>
       <nav aria-label="Document utilities">
         <span>Specimen board</span>
@@ -43,6 +46,7 @@
       <p>Specimen board</p>
       <a class="is-active" href="#overview">Overview</a>
       <a href="#specimen">Brand specimen</a>
+      <a href="#design-review">Design review</a>
       <a href="#provenance">Provenance</a>
       <a href="#tradeoffs">Trade-offs</a>
       <a href="#boards">Boards</a>
@@ -91,7 +95,9 @@
         data-section-label="Overview"
       >
         <div class="discovery-masthead-copy">
-          <p class="discovery-eyebrow">Specimen board · Meridian orders console</p>
+          <p class="discovery-eyebrow">
+            Specimen board · Meridian orders console
+          </p>
           <h1>Pin the product decisions on a real specimen, not a spec.</h1>
           <p class="discovery-lede">
             This board holds one brand-scoped mockup of the Meridian orders
@@ -128,5 +134,40 @@
 
       <!-- {{SECTIONS}} -->
     </main>
+
+    <!--
+      Global-rig mapping (pattern: global-rig). Page-inline, deterministic, no
+      external deps, safe DOM APIs only; independent of the shared runtime. One
+      toolbar's decision/follow-up radios drive the scoped theme tokens of every
+      governed [data-specimen][data-rig] container at once: surface toggles
+      data-theme, density toggles data-density. The question engine still owns
+      the same radios for touched-tracking and the single generated prompt; this
+      script only adds the live re-theme on top.
+    -->
+    <script>
+      (function () {
+        var rig = document.querySelector("[data-global-rig]");
+        if (!rig) return;
+        function checkedAttr(name, attr) {
+          var input = rig.querySelector('input[name="' + name + '"]:checked');
+          return input ? input.getAttribute(attr) : null;
+        }
+        function applyRig() {
+          var surface = checkedAttr("rig-surface", "data-rig-surface");
+          var density = checkedAttr("rig-density", "data-rig-density");
+          var governed = document.querySelectorAll("[data-specimen][data-rig]");
+          for (var i = 0; i < governed.length; i += 1) {
+            var node = governed[i];
+            if (surface === "dark") node.setAttribute("data-theme", "dark");
+            else node.removeAttribute("data-theme");
+            if (density === "compact")
+              node.setAttribute("data-density", "compact");
+            else node.removeAttribute("data-density");
+          }
+        }
+        rig.addEventListener("change", applyRig);
+        applyRig();
+      })();
+    </script>
   </body>
 </html>

@@ -11,28 +11,75 @@
           <h2>Three boundaries deserve explicit proof.</h2>
         </div>
         <div class="discovery-section-body">
-          <div class="discovery-failure-map">
-            <article>
-              <h3>Mixed application versions</h3>
-              <p>
-                A rolling deploy means old and new binaries overlap. The schema
-                must serve both until the final old instance is gone.
-              </p>
-            </article>
-            <article>
-              <h3>Partial backfill</h3>
-              <p>
-                Readers need a defined fallback when a record has not migrated,
-                rather than assuming the new location is complete.
-              </p>
-            </article>
-            <article>
-              <h3>Silent divergence</h3>
-              <p>
-                Dual writes can disagree. Measure and reconcile the difference
-                before changing which representation is authoritative.
-              </p>
-            </article>
+          <p class="discovery-muted">
+            Open one boundary at a time — each names the failure, the proof it
+            demands, and where that proof lives.
+          </p>
+          <div
+            class="discovery-failure-map"
+            data-accordion-exclusive
+            data-presentation-pattern="accordion-exclusive"
+          >
+            <details open>
+              <summary>Mixed application versions</summary>
+              <div>
+                <p>
+                  A rolling deploy means old and new binaries overlap. The schema
+                  must serve both until the final old instance is gone.
+                  <span
+                    class="discovery-provenance"
+                    data-provenance="observed"
+                    >observed</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  Proof: the compatibility adapter reads either shape.
+                  <span
+                    class="discovery-source-ref"
+                    data-presentation-pattern="source-ref-chip"
+                    >app/adapters/order_compat.rb:12-40</span
+                  >
+                </p>
+              </div>
+            </details>
+            <details>
+              <summary>Partial backfill</summary>
+              <div>
+                <p>
+                  Readers need a defined fallback when a record has not migrated,
+                  rather than assuming the new location is complete.
+                  <span class="discovery-provenance" data-provenance="assumed"
+                    >assumed</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  This is the amber band in the rehearsal above:
+                  <span data-term="backfill">backfill</span> gaps become quiet
+                  legacy reads only while the fallback stays on.
+                </p>
+              </div>
+            </details>
+            <details>
+              <summary>Silent divergence</summary>
+              <div>
+                <p>
+                  <span data-term="dual-write">Dual writes</span> can disagree.
+                  Measure and reconcile the difference before changing which
+                  representation is authoritative.
+                  <span class="discovery-provenance" data-provenance="inferred"
+                    >inferred</span
+                  >
+                </p>
+                <p class="discovery-muted">
+                  Proof: a mismatch counter compares both shapes on every write.
+                  <span
+                    class="discovery-source-ref"
+                    data-presentation-pattern="source-ref-chip"
+                    >app/models/order.rb:96-104</span
+                  >
+                </p>
+              </div>
+            </details>
           </div>
           <div class="discovery-callout shadow-sm">
             <h3>The irreversible moment comes last</h3>

@@ -37,18 +37,35 @@
               <strong>src/events/admin/replay.ts</strong
               ><span class="discovery-badge">Required guard</span>
             </div>
-            <div class="discovery-diff" aria-label="Replay boundary diff">
-              <div class="is-removed">
-                − await cursors.set(partition, requested)
+            <div
+              class="discovery-diff"
+              aria-label="Replay boundary diff"
+              data-presentation-pattern="rich-diff syntax-tokens"
+            >
+              <div class="discovery-diff-hunk">
+                @@ src/events/admin/replay.ts · replayTo() — lines 41–43 @@
               </div>
-              <div class="is-added">
-                + assertRetained(requested, oldestAvailable)
+              <div class="is-removed" data-line="41">
+                <del
+                  >− <span class="discovery-tok-kw">await</span> cursors.<span
+                    class="discovery-tok-fn"
+                    >set</span
+                  >(partition, requested)</del
+                >
               </div>
-              <div class="is-added">
-                + assertNotForwardSkip(requested, committed)
+              <div class="is-added" data-line="41">
+                + <span class="discovery-tok-fn">assertRetained</span>(requested,
+                oldestAvailable)
               </div>
-              <div class="is-added">
-                + await cursors.rewind(partition, requested, auditActor)
+              <div class="is-added" data-line="42">
+                + <span class="discovery-tok-fn">assertNotForwardSkip</span>(requested,
+                committed)
+              </div>
+              <div class="is-added" data-line="43">
+                + <span class="discovery-tok-kw">await</span> cursors.<span
+                  class="discovery-tok-fn"
+                  >rewind</span
+                >(partition, requested, auditActor)
               </div>
             </div>
           </article>

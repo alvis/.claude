@@ -31,7 +31,10 @@
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
         <span class="essential-docmark">E_</span>
-        <span><strong>Architecture board · Conflux sync service</strong><small>Essential · Discover</small></span>
+        <span
+          ><strong>Architecture board · Conflux sync service</strong
+          ><small>Essential · Discover</small></span
+        >
       </a>
       <nav aria-label="Document utilities">
         <span>Architecture board</span>
@@ -42,6 +45,7 @@
     <aside class="essential-docnav" aria-label="Document sections">
       <p>Architecture board</p>
       <a class="is-active" href="#overview">Overview</a>
+      <a href="#how-built">How it was made</a>
       <a href="#architecture">Architecture</a>
       <a href="#annotations">Pin notes</a>
       <a href="#provenance">Provenance</a>
@@ -92,13 +96,15 @@
         data-section-label="Overview"
       >
         <div class="discovery-masthead-copy">
-          <p class="discovery-eyebrow">Architecture board · Conflux sync service</p>
+          <p class="discovery-eyebrow">
+            Architecture board · Conflux sync service
+          </p>
           <h1>Pin the architecture on a real diagram, not a doc.</h1>
           <p class="discovery-lede">
             This board holds one layered picture of the Conflux real-time
             editing backend — how the service is decomposed, how an edit flows
-            through it, and which patterns are load-bearing. Author pins mark the
-            decisions worth defending, and every claim carries where it came
+            through it, and which patterns are load-bearing. Author pins mark
+            the decisions worth defending, and every claim carries where it came
             from — observed, inferred, or still open.
           </p>
         </div>
@@ -127,6 +133,131 @@
           </p>
         </aside>
       </header>
+
+      <section
+        id="how-built"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="how-built"
+        data-section-label="How it was made"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">Where this board came from</p>
+          <h2>One request in, one blueprint out.</h2>
+        </div>
+        <div class="discovery-section-body">
+          <p class="discovery-lede">
+            This board did not appear from nowhere. It answers a specific
+            request, and it was assembled from specific things the coder
+            actually read — both are shown here so you can judge the blueprint
+            against its inputs.
+          </p>
+
+          <!--
+            prompt-echo (pattern: prompt-echo). The verbatim originating request
+            that produced this board, with a labelled divider marking the
+            handoff to what the coder built. Static, near the top of the page.
+          -->
+          <div
+            class="discovery-prompt-echo"
+            data-presentation-pattern="prompt-echo"
+          >
+            <p class="discovery-eyebrow">
+              The request that produced this board
+            </p>
+            <blockquote>
+              “We're standing up Conflux's real-time sync backend — the service
+              behind our collaborative editor. Before anyone writes code, lay
+              out the architecture: how the service decomposes, how a single
+              edit flows through it end to end, and which patterns are
+              load-bearing enough that I shouldn't let an implementer quietly
+              swap them. Be honest about what you actually know versus what
+              you're assuming.”
+            </blockquote>
+            <div class="discovery-prompt-echo-divider">
+              What the coder produced from it
+            </div>
+            <p class="discovery-muted">
+              A four-layer decomposition, the edit's path from keystroke to op
+              log, four decisions pinned to the diagram, and every claim tagged
+              with where it came from — reproduced on this board for you to
+              confirm or override.
+            </p>
+          </div>
+
+          <!--
+            source-manifest (pattern: source-manifest). The files and data the
+            coder read to build the board. Each row leads with a
+            source-ref-chip-style path and carries a provenance pill; the pill
+            floats right via .discovery-source-manifest's last-child rule. One
+            manifest per page.
+          -->
+          <div class="mt-2">
+            <p class="discovery-eyebrow">Generated from these sources</p>
+            <ul
+              class="discovery-source-manifest"
+              data-presentation-pattern="source-manifest"
+            >
+              <li>
+                <span class="discovery-source-ref"
+                  >gateway/ws_server.ts:1‑120</span
+                >
+                <span class="text-sm text-muted"
+                  >Today's stateless WebSocket edge — read to confirm clients
+                  already hold a live socket</span
+                >
+                <span class="discovery-provenance" data-provenance="observed"
+                  >observed</span
+                >
+              </li>
+              <li>
+                <span class="discovery-source-ref"
+                  >ops/gateway-connections.log</span
+                >
+                <span class="text-sm text-muted"
+                  >Sampled connection traffic behind the current gateway</span
+                >
+                <span class="discovery-provenance" data-provenance="observed"
+                  >observed</span
+                >
+              </li>
+              <li>
+                <span class="discovery-source-ref">merge/crdt_merge.ts:44</span>
+                <span class="text-sm text-muted"
+                  >Existing Yjs-style merge prototype — the basis for the CRDT
+                  decision</span
+                >
+                <span class="discovery-provenance" data-provenance="observed"
+                  >observed</span
+                >
+              </li>
+              <li>
+                <span class="discovery-source-ref"
+                  >docs/sync-architecture.md</span
+                >
+                <span class="text-sm text-muted"
+                  >Prior CRDT-over-OT design note, signed off in review</span
+                >
+                <span class="discovery-provenance" data-provenance="approved"
+                  >approved</span
+                >
+              </li>
+              <li>
+                <span class="discovery-source-ref"
+                  >infra/redis-presence.yaml</span
+                >
+                <span class="text-sm text-muted"
+                  >Single presence pub/sub channel — its behaviour at peak
+                  concurrency is untested</span
+                >
+                <span class="discovery-provenance" data-provenance="open"
+                  >open question</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
       <!-- {{SECTIONS}} -->
     </main>

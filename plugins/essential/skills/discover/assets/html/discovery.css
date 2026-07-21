@@ -69,6 +69,32 @@
     --ui-provenance-amber: #a8640f;
     --ui-provenance-amber-soft: #f8ead0;
     --ui-provenance-amber-ink: #6d4110;
+    /* Syntax token palette — authored spans, no highlighter JS.  One set, tuned
+       to read on the always-dark .discovery-code-annotation (dark in both
+       themes); the pale .discovery-light-code surface re-points them per
+       color-scheme with light-dark() in the components section, so the same six
+       classes stay legible on both surfaces. */
+    --ui-tok-kw: oklch(0.74 0.13 300);
+    --ui-tok-str: oklch(0.76 0.12 145);
+    --ui-tok-cm: oklch(0.64 0.02 80);
+    --ui-tok-fn: oklch(0.78 0.12 232);
+    --ui-tok-num: oklch(0.79 0.12 60);
+    --ui-tok-type: oklch(0.79 0.1 190);
+    /* Severity scale — low/medium/high alias the existing olive→amber→terracotta
+       ramp (already theme-aware, so they need no dark override); only "critical"
+       introduces a deeper red hue above the terracotta accent. */
+    --ui-sev-low: var(--ui-insight);
+    --ui-sev-low-soft: var(--ui-insight-soft);
+    --ui-sev-low-ink: var(--ui-insight-ink);
+    --ui-sev-medium: var(--ui-provenance-amber);
+    --ui-sev-medium-soft: var(--ui-provenance-amber-soft);
+    --ui-sev-medium-ink: var(--ui-provenance-amber-ink);
+    --ui-sev-high: var(--ui-accent);
+    --ui-sev-high-soft: var(--ui-accent-soft);
+    --ui-sev-high-ink: var(--ui-accent-ink);
+    --ui-sev-critical: #b0402f;
+    --ui-sev-critical-soft: #f6e2dc;
+    --ui-sev-critical-ink: #7a2a1e;
     --ui-code: #1c1c1a;
     --ui-code-ink: #f2efe6;
     --ui-focus: #b85c3e;
@@ -106,6 +132,19 @@
     --ui-provenance-amber: oklch(0.79 0.11 74);
     --ui-provenance-amber-soft: oklch(0.31 0.055 70);
     --ui-provenance-amber-ink: oklch(0.9 0.05 82);
+    /* Syntax tokens: the code surface is darker still in dark theme, so lift the
+       lightness a touch to keep the highlighting crisp. */
+    --ui-tok-kw: oklch(0.78 0.14 300);
+    --ui-tok-str: oklch(0.8 0.13 145);
+    --ui-tok-cm: oklch(0.66 0.02 80);
+    --ui-tok-fn: oklch(0.8 0.12 232);
+    --ui-tok-num: oklch(0.82 0.12 60);
+    --ui-tok-type: oklch(0.82 0.1 190);
+    /* Only "critical" needs a dark override; low/medium/high alias theme-aware
+       tokens and adapt on their own. */
+    --ui-sev-critical: oklch(0.66 0.15 30);
+    --ui-sev-critical-soft: oklch(0.31 0.07 30);
+    --ui-sev-critical-ink: oklch(0.87 0.06 34);
     --ui-code: oklch(0.125 0.012 62);
     --ui-code-ink: oklch(0.9 0.016 78);
     --ui-focus: oklch(0.77 0.14 52);
@@ -748,7 +787,8 @@
     color: var(--ui-accent-ink);
     font-size: 0.84rem;
     font-weight: 750;
-    box-shadow: 0 10px 26px color-mix(in oklch, var(--ui-accent), transparent 58%);
+    box-shadow: 0 10px 26px
+      color-mix(in oklch, var(--ui-accent), transparent 58%);
     transition:
       filter 150ms ease,
       transform 150ms ease,
@@ -1667,7 +1707,8 @@ h3 {
   padding: 1.05rem;
   border-radius: 0.8rem;
   background: color-mix(in oklch, var(--ui-code), white 5%);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--ui-code-ink), transparent 88%);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklch, var(--ui-code-ink), transparent 88%);
   font-size: 0.66rem;
   line-height: 1.5;
   overflow: hidden;
@@ -2741,12 +2782,20 @@ tr[data-provenance] > :first-child {
 
 tr[data-provenance="observed"] {
   --ui-provenance-edge: var(--ui-insight);
-  --ui-provenance-tint: color-mix(in srgb, var(--ui-insight-soft) 50%, transparent);
+  --ui-provenance-tint: color-mix(
+    in srgb,
+    var(--ui-insight-soft) 50%,
+    transparent
+  );
 }
 
 tr[data-provenance="inferred"] {
   --ui-provenance-edge: var(--ui-provenance-amber);
-  --ui-provenance-tint: color-mix(in srgb, var(--ui-provenance-amber-soft) 45%, transparent);
+  --ui-provenance-tint: color-mix(
+    in srgb,
+    var(--ui-provenance-amber-soft) 45%,
+    transparent
+  );
 }
 
 tr[data-provenance="assumed"] {
@@ -2759,12 +2808,20 @@ tr[data-provenance="assumed"] > :first-child {
 
 tr[data-provenance="decided"] {
   --ui-provenance-edge: var(--ui-accent);
-  --ui-provenance-tint: color-mix(in srgb, var(--ui-accent-soft) 55%, transparent);
+  --ui-provenance-tint: color-mix(
+    in srgb,
+    var(--ui-accent-soft) 55%,
+    transparent
+  );
 }
 
 tr[data-provenance="approved"] {
   --ui-provenance-edge: var(--ui-accent);
-  --ui-provenance-tint: color-mix(in srgb, var(--ui-accent-soft) 80%, transparent);
+  --ui-provenance-tint: color-mix(
+    in srgb,
+    var(--ui-accent-soft) 80%,
+    transparent
+  );
 }
 
 tr[data-provenance="open"] {
@@ -2789,7 +2846,11 @@ tr[data-provenance="open"] > :first-child {
   border: 1px solid var(--ui-border-strong);
   border-left: 3px solid var(--ui-accent);
   border-radius: var(--radius-card);
-  background: color-mix(in srgb, var(--ui-surface) 55%, var(--ui-surface-raised));
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 55%,
+    var(--ui-surface-raised)
+  );
 }
 
 /* Heading and any intro prose span all columns; only the groups form columns. */
@@ -2846,7 +2907,9 @@ tr[data-provenance="open"] > :first-child {
   background: var(--ui-accent);
 }
 
-.discovery-tradeoffs [data-tradeoff-group="scale-posture"] > :first-child::before {
+.discovery-tradeoffs
+  [data-tradeoff-group="scale-posture"]
+  > :first-child::before {
   background: var(--ui-insight);
 }
 
@@ -2888,7 +2951,8 @@ tr[data-provenance="open"] > :first-child {
    quiet dashed amber outline so a reader can tell it is illustrative.  Drawn as
    an outline so it never disturbs layout, and subtle enough not to compete. */
 [data-fabricated] {
-  outline: 1px dashed color-mix(in srgb, var(--ui-provenance-amber), transparent 55%);
+  outline: 1px dashed
+    color-mix(in srgb, var(--ui-provenance-amber), transparent 55%);
   outline-offset: 2px;
   border-radius: 5px;
 }
@@ -2946,7 +3010,9 @@ tr[data-provenance="open"] > :first-child {
   translate: -50% -50%; /* centre the dot on its coordinate; composes with :hover scale */
   cursor: pointer;
   pointer-events: auto;
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
 /* Invisible 44px hit target centred on the 1.5rem dot — preserves the touch/click
@@ -3094,7 +3160,9 @@ tr[data-provenance="open"] > :first-child {
   color: var(--ui-ink);
   font-weight: 600;
   text-decoration: none;
-  transition: border-color 150ms ease, background 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
 }
 
 .discovery-board-link::before {
@@ -3160,5 +3228,1070 @@ tr[data-provenance="open"] > :first-child {
   .discovery-pin:focus-visible,
   .discovery-pin.is-active {
     transform: none;
+  }
+}
+
+/* ============================================================================
+   Stage-3 catalog patterns — code presentation, explainer upgrades, provenance,
+   risk & readiness, options, interview, prototype/motion, and design-review
+   conventions.  Authored unlayered alongside the best-bits primitives above so
+   they share that cascade origin and win over the @layer base defaults.  These
+   classes carry only behavior-heavy / stateful styling; utilities own layout.
+   Every state hook follows the house `.is-active` idiom (a static classList
+   toggle in discovery.js, reduced-motion-safe by construction) and consumes
+   house --ui-* tokens, so a specimen's brand re-point never bleeds in.
+   ========================================================================= */
+
+/* -- §6  Code presentation --------------------------------------------------
+   Author-applied syntax spans (no highlighter JS), rich-diff upgrades, a tabbed
+   multi-representation panel, and cross-panel matched-region highlighting. */
+
+.discovery-tok-kw {
+  color: var(--ui-tok-kw);
+  font-weight: 650;
+}
+.discovery-tok-str {
+  color: var(--ui-tok-str);
+}
+.discovery-tok-cm {
+  color: var(--ui-tok-cm);
+  font-style: italic;
+}
+.discovery-tok-fn {
+  color: var(--ui-tok-fn);
+}
+.discovery-tok-num {
+  color: var(--ui-tok-num);
+}
+.discovery-tok-type {
+  color: var(--ui-tok-type);
+}
+
+/* The pale light-code surface re-points the six tokens to darker variants for
+   its background; light-dark() reads the inherited color-scheme, so in dark
+   theme (where this surface is dark) the tokens revert to the light-on-dark set
+   above.  One rule per token covers both themes. */
+.discovery-light-code {
+  --ui-tok-kw: light-dark(oklch(0.5 0.19 300), oklch(0.78 0.14 300));
+  --ui-tok-str: light-dark(oklch(0.46 0.14 150), oklch(0.8 0.13 145));
+  --ui-tok-cm: light-dark(oklch(0.52 0.02 80), oklch(0.66 0.02 80));
+  --ui-tok-fn: light-dark(oklch(0.5 0.16 245), oklch(0.8 0.12 232));
+  --ui-tok-num: light-dark(oklch(0.5 0.15 55), oklch(0.82 0.12 60));
+  --ui-tok-type: light-dark(oklch(0.48 0.11 195), oklch(0.82 0.1 190));
+}
+
+/* Rich diff: an optional line-number gutter ([data-line]) overlaid so inline
+   syntax spans still flow, a hunk header band, and semantic <del> strikethrough
+   layered on top of the existing .is-added / .is-removed row tints. */
+.discovery-diff [data-line] {
+  position: relative;
+  padding-left: 3.4rem;
+}
+.discovery-diff [data-line]::before {
+  content: attr(data-line);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2.6rem;
+  padding: 0.45rem 0.6rem;
+  border-right: 1px solid var(--ui-border);
+  color: var(--ui-faint);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.discovery-diff-hunk {
+  padding: 0.4rem 0.8rem;
+  border-top: 1px solid var(--ui-border);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+  color: var(--ui-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+.discovery-diff-hunk:first-child {
+  border-top: 0;
+}
+.discovery-diff del {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--ui-accent-ink),
+    transparent 30%
+  );
+  text-decoration-thickness: 0.1em;
+}
+
+/* Tabbed code panel: runtime toggles [aria-selected] and [hidden]; the panel is
+   readable with all tabs shown when JavaScript is absent. */
+[data-code-tabs] {
+  display: grid;
+  gap: 0.75rem;
+}
+.discovery-code-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-control);
+  background: var(--ui-surface);
+}
+[data-code-tab] {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 0.2rem);
+  background: transparent;
+  color: var(--ui-muted);
+  font: 650 0.72rem/1 var(--ui-font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+[data-code-tab][aria-selected="true"] {
+  background: var(--ui-surface-raised);
+  box-shadow: var(--ui-shadow-small);
+  color: var(--ui-ink);
+}
+[data-code-panel][hidden] {
+  display: none;
+}
+
+/* Matched region across two side-by-side panels: a quiet baseline underline
+   signals the tie; hover/focus toggles .is-active on every member of the pair
+   with a translucent accent wash that reads on both dark and light code. */
+[data-code-pair] {
+  border-radius: 0.25rem;
+  box-shadow: inset 0 -0.1em 0 color-mix(in srgb, currentColor, transparent 78%);
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+[data-code-pair].is-active {
+  background: color-mix(in srgb, var(--ui-accent), transparent 62%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-accent), transparent 30%);
+}
+
+/* -- §7  Explainer upgrades -------------------------------------------------
+   Source-ref chip, anticipated-questions block, and a two-way glossary sync. */
+
+.discovery-source-ref {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  padding: 0.08rem 0.42rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 0.5rem;
+  background: var(--ui-surface);
+  color: var(--ui-faint);
+  font: 600 0.7rem/1.45 var(--ui-font-mono);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: 0.05em;
+}
+.discovery-source-ref::before {
+  content: "\2317"; /* viewfinder — anchors the claim to a file:line */
+  color: var(--ui-accent-ink);
+}
+
+.discovery-faq {
+  margin: 0;
+}
+.discovery-faq dt {
+  padding-top: 1rem;
+  border-top: 1px solid var(--ui-border);
+  font-weight: 720;
+}
+.discovery-faq dt:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+.discovery-faq dt::before {
+  content: "Q";
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-right: 0.55rem;
+  border-radius: 0.5rem;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+  font: 700 0.7rem/1 var(--ui-font-mono);
+  vertical-align: -0.28rem;
+}
+.discovery-faq dd {
+  margin: 0.5rem 0 1rem;
+  color: var(--ui-muted);
+}
+
+/* Inline term <-> glossary entry: a dotted baseline marks the term; the runtime
+   toggles .is-active on both the term and its matching entry on hover/focus. */
+[data-term] {
+  border-bottom: 1px dotted var(--ui-border-strong);
+  cursor: help;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+[data-term].is-active {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+.discovery-glossary [data-term-def] {
+  border-radius: 0.4rem;
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+.discovery-glossary [data-term-def].is-active {
+  background: var(--ui-accent-soft);
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+
+/* -- §8  Architecture & provenance ------------------------------------------
+   Originating-prompt echo card and the "generated from" source manifest. */
+
+.discovery-prompt-echo {
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1.25rem, 3vw, 1.85rem);
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--ui-accent);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 60%,
+    var(--ui-surface-raised)
+  );
+}
+.discovery-prompt-echo blockquote {
+  margin: 0;
+  color: var(--ui-ink);
+  font-family: var(--ui-font-display);
+  font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+  line-height: 1.4;
+}
+/* Labelled divider: "what the coder produced from it". */
+.discovery-prompt-echo-divider {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  color: var(--ui-faint);
+  font: 650 0.66rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discovery-prompt-echo-divider::before,
+.discovery-prompt-echo-divider::after {
+  height: 1px;
+  background: var(--ui-border);
+  content: "";
+  flex: 1;
+}
+
+.discovery-source-manifest {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.discovery-source-manifest li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+}
+.discovery-source-manifest li > :last-child {
+  margin-left: auto;
+}
+
+/* -- §9  Risk & readiness ---------------------------------------------------
+   Executive TL;DR lead, owner-routing chip, risk-matrix severity pills, and
+   verdict-table per-cell judgment tints. */
+
+.discovery-tldr {
+  display: grid;
+  gap: 0.6rem;
+  padding: clamp(1.25rem, 3vw, 1.85rem);
+  border: 1px solid var(--ui-border-strong);
+  border-left: 3px solid var(--ui-accent);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-accent-soft),
+    var(--ui-surface-raised) 42%
+  );
+}
+.discovery-tldr > :first-child {
+  color: var(--ui-accent-ink);
+  font: 650 0.72rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discovery-tldr ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.discovery-tldr li {
+  color: var(--ui-ink);
+}
+.discovery-tldr li strong {
+  color: var(--ui-ink);
+}
+
+/* Owner + due-date affordance: an avatar initial (from data-owner-initial), a
+   name, and an optional date.  Static by default; author may wrap in a button. */
+.discovery-owner-chip {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.25rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-raised);
+  color: var(--ui-ink);
+  font-size: 0.8rem;
+}
+.discovery-owner-chip::before {
+  content: attr(data-owner-initial);
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+  font: 700 0.68rem/1 var(--ui-font-mono);
+}
+.discovery-owner-chip time,
+.discovery-owner-chip small {
+  color: var(--ui-faint);
+  font-family: var(--ui-font-mono);
+  font-size: 0.7rem;
+}
+
+/* Severity pills — the amber/terracotta scale plus a deeper critical red, keyed
+   by [data-severity]; a leading dot doubles the colour so it is not the only
+   signal.  Usable in any table cell or inline. */
+[data-severity] {
+  display: inline-flex;
+  gap: 0.32rem;
+  align-items: center;
+  padding: 0.14rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 650 0.66rem/1.4 var(--ui-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+[data-severity]::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  flex: none;
+}
+[data-severity="low"] {
+  border-color: color-mix(in srgb, var(--ui-sev-low), transparent 55%);
+  background: var(--ui-sev-low-soft);
+  color: var(--ui-sev-low-ink);
+}
+[data-severity="medium"] {
+  border-color: color-mix(in srgb, var(--ui-sev-medium), transparent 50%);
+  background: var(--ui-sev-medium-soft);
+  color: var(--ui-sev-medium-ink);
+}
+[data-severity="high"] {
+  border-color: color-mix(in srgb, var(--ui-sev-high), transparent 45%);
+  background: var(--ui-sev-high-soft);
+  color: var(--ui-sev-high-ink);
+}
+[data-severity="critical"] {
+  border-color: color-mix(in srgb, var(--ui-sev-critical), transparent 42%);
+  background: var(--ui-sev-critical-soft);
+  color: var(--ui-sev-critical-ink);
+}
+
+/* Verdict tints — good/mixed/bad map to insight/amber/accent washes; a leading
+   glyph carries the judgment for colour-blind readers.  Author on the cell. */
+[data-verdict="good"] {
+  background: color-mix(in srgb, var(--ui-insight-soft) 60%, transparent);
+  color: var(--ui-insight-ink);
+}
+[data-verdict="mixed"] {
+  background: color-mix(
+    in srgb,
+    var(--ui-provenance-amber-soft) 55%,
+    transparent
+  );
+  color: var(--ui-provenance-amber-ink);
+}
+[data-verdict="bad"] {
+  background: color-mix(in srgb, var(--ui-accent-soft) 65%, transparent);
+  color: var(--ui-accent-ink);
+}
+[data-verdict]::before {
+  margin-right: 0.4rem;
+  font-weight: 700;
+}
+[data-verdict="good"]::before {
+  content: "\2713"; /* ✓ */
+}
+[data-verdict="mixed"]::before {
+  content: "\007E"; /* ~ */
+}
+[data-verdict="bad"]::before {
+  content: "\2715"; /* ✕ */
+}
+
+/* -- §10  Options & brainstorm ----------------------------------------------
+   Per-variant rationale caption, author scope-cuts self-disclosure, and the
+   sticky idea-spectrum minimap. */
+
+.discovery-variant-rationale {
+  display: block;
+  margin-top: 0.6rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--ui-insight);
+  color: var(--ui-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+.discovery-variant-rationale strong {
+  color: var(--ui-ink);
+  font-style: normal;
+}
+
+/* Scope-cuts: the AUTHOR's own non-goals and weak spots.  Dashed border marks
+   it as a candid aside, distinct from the solid trade-offs block. */
+.discovery-scope-cuts {
+  display: grid;
+  gap: 0.7rem;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--ui-surface) 55%, transparent);
+}
+.discovery-scope-cuts > :first-child {
+  color: var(--ui-faint);
+  font: 650 0.72rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discovery-scope-cuts ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ui-muted);
+  font-size: 0.92rem;
+}
+
+/* Spectrum minimap — a sticky strip of numbered dot buttons along a
+   cheap→ambitious rail.  Each button is a full 44px target; .is-active marks the
+   idea in view and [data-reaction-state] mirrors the card's reaction. */
+.discovery-minimap {
+  position: sticky;
+  top: 6.2rem;
+  z-index: 4;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-raised);
+  box-shadow: var(--ui-shadow-small);
+}
+.discovery-minimap-axis {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+}
+.discovery-minimap-axis::before {
+  position: absolute;
+  top: 50%;
+  right: 1.2rem;
+  left: 1.2rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ui-insight), var(--ui-accent));
+  content: "";
+  transform: translateY(-50%);
+}
+[data-minimap-dot] {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 2px solid var(--ui-border-strong);
+  border-radius: 50%;
+  background: var(--ui-surface-raised);
+  color: var(--ui-muted);
+  font: 700 0.72rem/1 var(--ui-font-mono);
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+[data-minimap-dot]:hover {
+  border-color: var(--ui-accent);
+  transform: scale(1.08);
+}
+[data-minimap-dot].is-active {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+[data-minimap-dot][data-reaction-state="keep"],
+[data-minimap-dot][data-reaction-state="steal"] {
+  border-color: var(--ui-insight);
+  background: var(--ui-insight-soft);
+  color: var(--ui-insight-ink);
+}
+[data-minimap-dot][data-reaction-state="reject"],
+[data-minimap-dot][data-reaction-state="skip"] {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+/* -- §11  Interview ---------------------------------------------------------
+   Wizard: one interview step at a time with an editable jump-back summary; the
+   no-JS fallback simply shows every step. */
+[data-wizard] {
+  display: grid;
+  gap: 1.25rem;
+}
+[data-wizard] [data-interview-step][hidden] {
+  display: none;
+}
+.discovery-wizard-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.discovery-wizard-progress {
+  color: var(--ui-faint);
+  font: 650 0.7rem/1 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+}
+.discovery-wizard-summary {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.discovery-wizard-summary button {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+  color: var(--ui-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+.discovery-wizard-summary button:hover,
+.discovery-wizard-summary li.is-active button {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+}
+
+/* -- §12  Prototype & motion ------------------------------------------------
+   Drag probe, motion sandbox, auto-playing demo loop, and specimen<->code map. */
+
+[data-drag-probe] {
+  display: grid;
+  gap: 0.6rem;
+}
+.discovery-drag-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+  cursor: grab;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+.discovery-drag-item::before {
+  content: "\2833"; /* ⠳ braille grip — the draggable affordance */
+  color: var(--ui-faint);
+  font-size: 1rem;
+  cursor: grab;
+}
+.discovery-drag-item:active {
+  cursor: grabbing;
+}
+.discovery-drag-item.is-dragging {
+  border-style: dashed;
+  opacity: 0.5;
+  box-shadow: var(--ui-shadow);
+}
+.discovery-drag-item.is-drop-target,
+[data-drag-probe].is-drop-target {
+  border-color: var(--ui-accent);
+  box-shadow:
+    inset 0 0 0 2px var(--ui-accent),
+    0 0 0 4px var(--ui-accent-soft);
+}
+
+.discovery-motion-specimen {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+}
+.discovery-motion-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 9rem;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 70%,
+    var(--ui-surface-raised)
+  );
+}
+.discovery-motion-timing-rail {
+  position: relative;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+.discovery-motion-timing-rail::before {
+  position: absolute;
+  inset: 0;
+  width: var(--rail-progress, 0%);
+  background: linear-gradient(90deg, var(--ui-insight), var(--ui-accent));
+  content: "";
+}
+.discovery-motion-marks {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ui-faint);
+  font: 600 0.62rem/1 var(--ui-font-mono);
+}
+
+.discovery-demo-loop {
+  display: grid;
+  gap: 0.85rem;
+}
+.discovery-demo-progress {
+  position: relative;
+  height: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+.discovery-demo-progress::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--demo-progress, 0%);
+  border-radius: 999px;
+  background: var(--ui-accent);
+  content: "";
+  transition: width 200ms linear;
+}
+.discovery-demo-toast {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-control);
+  background: var(--ui-positive-soft);
+  color: var(--ui-positive);
+  font-size: 0.85rem;
+  font-weight: 650;
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+.discovery-demo-toast.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.discovery-demo-toast[hidden] {
+  display: none;
+}
+
+/* Specimen<->code map: hovering a specimen region highlights the exact snippet
+   that produces it (and vice versa) via the shared .is-active toggle. */
+[data-code-map] {
+  border-radius: 0.3rem;
+  cursor: help;
+  transition: background 150ms ease;
+}
+[data-code-map].is-active {
+  background: var(--ui-accent-soft);
+  box-shadow: 0 0 0 2px var(--ui-accent);
+}
+[data-code-map-target] {
+  transition: background 150ms ease;
+}
+[data-code-map-target].is-active {
+  background: color-mix(in srgb, var(--ui-accent), transparent 70%);
+  box-shadow: inset 2px 0 0 var(--ui-accent);
+}
+
+/* -- §13  Design-review conventions -----------------------------------------
+   Global rig toolbar, chromeless artboard, labelled mock chrome, and the
+   competing-directions gallery grid. */
+
+.discovery-global-rig {
+  position: sticky;
+  top: 6.2rem;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+  box-shadow: var(--ui-shadow-small);
+}
+.discovery-global-rig > * {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.discovery-artboard {
+  display: grid;
+  gap: 0.9rem;
+}
+.discovery-artboard-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: clamp(18rem, 40vh, 26rem);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: color-mix(
+    in srgb,
+    var(--ui-surface) 60%,
+    var(--ui-surface-raised)
+  );
+}
+.discovery-artboard-tag {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--ui-ink);
+  color: var(--ui-canvas);
+  font: 650 0.6rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.discovery-artboard-caption {
+  color: var(--ui-muted);
+  font-size: 0.9rem;
+}
+
+/* Mock frame: generic device/app chrome with a visible fidelity label so the
+   reader knows nothing is wired behind the pane. */
+.discovery-mock-frame {
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface-raised);
+}
+.discovery-mock-frame-bar {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+  color: var(--ui-faint);
+  font: 0.62rem/1.3 var(--ui-font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.discovery-mock-frame-label {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: 999px;
+  color: var(--ui-faint);
+}
+.discovery-mock-frame-body {
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.discovery-theme-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.25rem;
+}
+
+/* -- §14  Readiness — milestones, inline charts, dim-not-hide filters --------
+   Milestone timeline (done/active/pending rail + date gutter, with a mono
+   event-chronology variant), hand-authored inline charts, and a filter bar that
+   dims filtered items rather than hiding them. */
+
+.discovery-milestone-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.discovery-milestone-timeline > li {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+.discovery-milestone-date,
+.discovery-milestone-time {
+  padding-top: 0.05rem;
+  color: var(--ui-faint);
+  font: 650 0.68rem/1.35 var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+[data-milestone-state] {
+  position: relative;
+  padding: 0 0 1.5rem 1.5rem;
+  border-left: 2px solid var(--ui-border);
+}
+.discovery-milestone-timeline > li:last-child [data-milestone-state] {
+  border-left-color: transparent;
+}
+[data-milestone-state]::before {
+  position: absolute;
+  top: 0.15rem;
+  left: -0.5rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid var(--ui-surface-raised);
+  border-radius: 50%;
+  background: var(--ui-border-strong);
+  box-shadow: 0 0 0 1px var(--ui-border-strong);
+  content: "";
+}
+[data-milestone-state="done"]::before {
+  background: var(--ui-positive);
+  box-shadow: 0 0 0 1px var(--ui-positive);
+}
+[data-milestone-state="active"]::before {
+  background: var(--ui-accent);
+  box-shadow:
+    0 0 0 1px var(--ui-accent),
+    0 0 0 4px var(--ui-accent-soft);
+}
+[data-milestone-state="pending"]::before {
+  background: var(--ui-surface-raised);
+  box-shadow: inset 0 0 0 2px var(--ui-border-strong);
+}
+.discovery-milestone-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+/* Inline charts: a labelled bar list (width from --bar), an SVG sparkline that
+   inherits currentColor, and a KPI delta whose arrow encodes the trend. */
+.discovery-chart {
+  display: grid;
+  gap: 0.5rem;
+}
+.discovery-chart-bar {
+  display: grid;
+  grid-template-columns: minmax(4rem, auto) 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+.discovery-chart-track {
+  position: relative;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+.discovery-chart-fill {
+  display: block;
+  width: var(--bar, 0%);
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ui-accent);
+}
+.discovery-sparkline {
+  display: inline-block;
+  width: 6rem;
+  height: 1.5rem;
+  color: var(--ui-accent);
+  vertical-align: middle;
+}
+.discovery-kpi-delta {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  font: 700 0.8rem/1 var(--ui-font-mono);
+}
+.discovery-kpi-delta[data-trend="up"] {
+  color: var(--ui-positive);
+}
+.discovery-kpi-delta[data-trend="down"] {
+  color: var(--ui-accent-ink);
+}
+.discovery-kpi-delta[data-trend="up"]::before {
+  content: "\25B2"; /* ▲ */
+}
+.discovery-kpi-delta[data-trend="down"]::before {
+  content: "\25BC"; /* ▼ */
+}
+.discovery-kpi-delta[data-trend="flat"]::before {
+  content: "\25AC"; /* ▬ */
+}
+
+/* Filter chips: a live count badge on each chip, and a dim-not-hide state so the
+   overall shape of the data stays visible while a filter is active. */
+.discovery-filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--ui-surface);
+  color: var(--ui-faint);
+  font-size: 0.62rem;
+}
+.discovery-filter-bar button.is-active .discovery-filter-count,
+.discovery-filter-bar button[aria-pressed="true"] .discovery-filter-count {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-ink);
+}
+.is-dimmed {
+  opacity: 0.42;
+  filter: grayscale(0.7);
+  transition:
+    opacity 150ms ease,
+    filter 150ms ease;
+}
+
+/* -- §15  Accordion & anchor flash ------------------------------------------
+   Exclusive accordion affordances (runtime closes siblings) and a nav-triggered
+   destination flash that respects reduced motion. */
+
+[data-accordion-exclusive] {
+  display: grid;
+  gap: 0.6rem;
+}
+[data-accordion-exclusive] > details {
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-control);
+  background: var(--ui-surface-raised);
+}
+[data-accordion-exclusive] > details[open] {
+  border-color: var(--ui-border-strong);
+}
+[data-accordion-exclusive] > details > summary {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+[data-accordion-exclusive] > details > summary::-webkit-details-marker {
+  display: none;
+}
+[data-accordion-exclusive] > details > summary::after {
+  color: var(--ui-accent-ink);
+  content: "+";
+  font: 700 1.1rem/1 var(--ui-font-mono);
+}
+[data-accordion-exclusive] > details[open] > summary::after {
+  content: "\2212"; /* − */
+}
+[data-accordion-exclusive] > details > :not(summary) {
+  padding: 0 1rem 1rem;
+  color: var(--ui-muted);
+}
+
+@keyframes discovery-anchor-flash {
+  from {
+    background: var(--ui-accent-soft);
+    box-shadow: inset 3px 0 0 var(--ui-accent);
+  }
+  to {
+    background: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+.discovery-anchor-flash {
+  border-radius: var(--radius-control);
+  animation: discovery-anchor-flash 1.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discovery-anchor-flash {
+    animation: none;
+  }
+
+  .discovery-drag-item,
+  .discovery-demo-toast,
+  .discovery-demo-progress::before,
+  [data-minimap-dot],
+  [data-code-pair],
+  [data-term],
+  [data-code-map],
+  [data-code-map-target] {
+    transition: none;
   }
 }

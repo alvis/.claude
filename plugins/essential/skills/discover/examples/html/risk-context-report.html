@@ -140,6 +140,34 @@
             A plausible risk is not treated as evidence.
           </p>
         </aside>
+        <div
+          class="discovery-tldr col-span-full mt-8"
+          data-presentation-pattern="tldr-block"
+        >
+          <p>Executive summary</p>
+          <ul>
+            <li>
+              <strong>This is not a model-quality launch.</strong> The blocker
+              is a coupled authorization, evidence-lineage, and containment
+              problem at the customer trust boundary.
+            </li>
+            <li>
+              <strong>One critical race dominates.</strong> Revoked evidence can
+              still render as durable, customer-facing prose while its cache
+              survives (AUTH-07).
+            </li>
+            <li>
+              <strong>Two probes block the first cohort.</strong>
+              Authorization-version binding and reconstructable audit lineage
+              must pass before any customer sees generated text.
+            </li>
+            <li>
+              <strong>The safe fallback is unproven.</strong> Source-only
+              containment has never been exercised under partial failure, so the
+              escape hatch is unverified.
+            </li>
+          </ul>
+        </div>
       </header>
 
       <section
@@ -244,7 +272,12 @@
                 and render, then inspect cache keys and the returned citation
                 set.
               </p>
-              <span class="discovery-checkpoint">Owner: identity platform</span>
+              <span
+                class="discovery-owner-chip"
+                data-owner-initial="IP"
+                data-presentation-pattern="owner-routing"
+                >Identity platform</span
+              >
             </article>
 
             <article class="discovery-finding-card" data-risk-finding>
@@ -270,7 +303,12 @@
                 summaries using audit data alone and record which inputs are
                 missing.
               </p>
-              <span class="discovery-checkpoint">Owner: trust engineering</span>
+              <span
+                class="discovery-owner-chip"
+                data-owner-initial="TE"
+                data-presentation-pattern="owner-routing"
+                >Trust engineering</span
+              >
             </article>
 
             <article class="discovery-finding-card" data-risk-finding>
@@ -296,7 +334,12 @@
                 entailment, uncertainty preservation, and temporal ordering with
                 disagreement review.
               </p>
-              <span class="discovery-checkpoint">Owner: applied quality</span>
+              <span
+                class="discovery-owner-chip"
+                data-owner-initial="AQ"
+                data-presentation-pattern="owner-routing"
+                >Applied quality</span
+              >
             </article>
 
             <article class="discovery-finding-card" data-risk-finding>
@@ -322,8 +365,11 @@
                 generation, citation assembly, and portal render; verify
                 source-only output at every cut.
               </p>
-              <span class="discovery-checkpoint"
-                >Owner: support operations</span
+              <span
+                class="discovery-owner-chip"
+                data-owner-initial="SO"
+                data-presentation-pattern="owner-routing"
+                >Support operations</span
               >
             </article>
 
@@ -347,12 +393,124 @@
                 <strong>Cheapest probe.</strong> Run a one-day shadow queue and
                 measure review demand by severity, latency, and duplicate rate.
               </p>
-              <span class="discovery-checkpoint"
-                >Owner: support enablement</span
+              <span
+                class="discovery-owner-chip"
+                data-owner-initial="SE"
+                data-presentation-pattern="owner-routing"
+                >Support enablement</span
               >
             </article>
           </div>
 
+          <p class="discovery-muted">
+            Prioritized by worst-credible impact. Severity and likelihood are
+            review assessments, not measured rates; each mitigation is routed to
+            a named owner.
+          </p>
+          <div class="discovery-table-wrap">
+            <table
+              class="discovery-table"
+              data-presentation-pattern="risk-matrix"
+            >
+              <caption class="sr-only">
+                Risk matrix: severity, likelihood, and routed mitigation per
+                finding.
+              </caption>
+              <thead>
+                <tr>
+                  <th>Finding</th>
+                  <th>Severity</th>
+                  <th>Likelihood</th>
+                  <th>Mitigation &amp; owner</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>AUTH-07</code> Authorization / cache race</td>
+                  <td><span data-severity="critical">Critical</span></td>
+                  <td>Likely — async revocation vs 15-min cache</td>
+                  <td>
+                    Authorization-version binding + derived-cache invalidation
+                    <span
+                      class="discovery-owner-chip"
+                      data-owner-initial="IP"
+                      data-presentation-pattern="owner-routing"
+                      >Identity platform
+                      <small data-fabricated
+                        >target 2026-08
+                        <span class="discovery-invented-tag" data-invented-tag
+                          >invented</span
+                        ></small
+                      ></span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>TRACE-03</code> Audit event lacks lineage</td>
+                  <td><span data-severity="high">High</span></td>
+                  <td>Certain in any dispute or incident</td>
+                  <td>
+                    Persist evidence IDs + authorization snapshot in the audit
+                    event
+                    <span
+                      class="discovery-owner-chip"
+                      data-owner-initial="TE"
+                      data-presentation-pattern="owner-routing"
+                      >Trust engineering
+                      <small data-fabricated
+                        >target 2026-08
+                        <span class="discovery-invented-tag" data-invented-tag
+                          >invented</span
+                        ></small
+                      ></span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>EVAL-12</code> Citation overstatement</td>
+                  <td><span data-severity="high">High</span></td>
+                  <td>Possible — passes lexical checks today</td>
+                  <td>
+                    Grade entailment, uncertainty, and chronology
+                    <span
+                      class="discovery-owner-chip"
+                      data-owner-initial="AQ"
+                      data-presentation-pattern="owner-routing"
+                      >Applied quality</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>OPS-04</code> Untested safe fallback</td>
+                  <td><span data-severity="high">High</span></td>
+                  <td>Possible — only under partial failure</td>
+                  <td>
+                    Mid-request fault-injection drill of source-only output
+                    <span
+                      class="discovery-owner-chip"
+                      data-owner-initial="SO"
+                      data-presentation-pattern="owner-routing"
+                      >Support operations</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>HYP-02</code> Review throughput limit</td>
+                  <td><span data-severity="medium">Medium</span></td>
+                  <td>Unmeasured — hypothesis, not an observed queue</td>
+                  <td>
+                    One-day shadow queue before promising a review control
+                    <span
+                      class="discovery-owner-chip"
+                      data-owner-initial="SE"
+                      data-presentation-pattern="owner-routing"
+                      >Support enablement</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div class="discovery-table-wrap">
             <table class="discovery-table">
               <thead>
@@ -495,6 +653,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Signal: zero stale-evidence returns</span
+                ><span
+                  class="discovery-owner-chip mt-3"
+                  data-owner-initial="IP"
+                  data-presentation-pattern="owner-routing"
+                  >Identity platform</span
                 >
               </div>
             </li>
@@ -507,6 +670,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Signal: sampled replay succeeds</span
+                ><span
+                  class="discovery-owner-chip mt-3"
+                  data-owner-initial="TE"
+                  data-presentation-pattern="owner-routing"
+                  >Trust engineering</span
                 >
               </div>
             </li>
@@ -519,6 +687,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Rollback: generation flag off</span
+                ><span
+                  class="discovery-owner-chip mt-3"
+                  data-owner-initial="SO"
+                  data-presentation-pattern="owner-routing"
+                  >Support operations</span
                 >
               </div>
             </li>
@@ -531,6 +704,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Signal: severity SLA holds</span
+                ><span
+                  class="discovery-owner-chip mt-3"
+                  data-owner-initial="SE"
+                  data-presentation-pattern="owner-routing"
+                  >Support enablement</span
                 >
               </div>
             </li>

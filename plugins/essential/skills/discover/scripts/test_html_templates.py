@@ -78,6 +78,30 @@ PRESENTATION_PATTERNS = (
     # and/or woven into ranked-options.html / risk-context-report.html.
     "provenance-pill", "provenance-row", "tradeoffs-honestly", "invented-data-flag",
     "annotation-pins", "browser-frame", "board-hub", "board-index", "specimen-scope",
+    # Stage-3 catalog additions, grouped by owning board exactly as coverage.md
+    # records them. IDs are flat here (the coverage map records ownership); the
+    # cross-cutting structural checks below fire per-marker where meaningful.
+    # domain-explainer:
+    "source-ref-chip", "faq-block", "glossary-sync", "live-sim",
+    "accordion-exclusive", "anchor-flash",
+    # risk-context-report:
+    "risk-matrix", "owner-routing", "tldr-block",
+    # ranked-options:
+    "verdict-table", "variant-rationale", "scope-cuts",
+    # brainstorm-spectrum:
+    "spectrum-minimap", "reaction-chips",
+    # guided-interview:
+    "wizard-steps", "nl-reply",
+    # semantics-map:
+    "syntax-tokens", "rich-diff", "code-pair-highlight", "code-tabs",
+    # interactive-prototype:
+    "drag-probe", "motion-specimen", "demo-loop", "specimen-code-map",
+    # readiness-check:
+    "milestone-timeline", "inline-chart", "filter-chips",
+    # specimen-board:
+    "global-rig", "artboard-frame", "theme-direction-gallery", "mock-frame",
+    # architecture-board:
+    "node-edge-diagram", "diagram-detail", "prompt-echo", "source-manifest",
 )
 
 # Structural hooks prove that each example demonstrates its action-specific
@@ -474,6 +498,91 @@ def validate_html(path: Path, *, allow_placeholders: bool = False) -> list[str]:
                     f"{path}: option frames must use materially distinct structures, "
                     "not renamed copies"
                 )
+
+    errors.extend(_validate_stage3_structure(path, parser))
+    return errors
+
+
+def _validate_stage3_structure(path: Path, parser: ContractParser) -> list[str]:
+    """Cheap structural checks for the stage-3 catalog patterns.
+
+    Each check is presence-gated on its own marker, so a board (or the
+    placeholder template) that does not demonstrate the pattern is unaffected.
+    These prove the load-bearing pairing/count invariants of the interactive
+    patterns; they are not a substitute for rendered review.
+    """
+
+    errors: list[str] = []
+    counts = parser.attribute_counts
+
+    # code-tabs: one panel per tab, so every representation is reachable.
+    if counts["data-code-tabs"] or counts["data-code-tab"] or counts["data-code-panel"]:
+        tabs = counts["data-code-tab"]
+        panels = counts["data-code-panel"]
+        if tabs != panels:
+            errors.append(
+                f"{path}: code-tabs must have one [data-code-panel] per "
+                f"[data-code-tab]; found {tabs} tabs, {panels} panels"
+            )
+
+    # spectrum-minimap: one dot per idea card, so the minimap mirrors the axis.
+    if counts["data-minimap-dot"]:
+        dots = counts["data-minimap-dot"]
+        cards = counts["data-idea-card"]
+        if dots != cards:
+            errors.append(
+                f"{path}: spectrum-minimap must have one [data-minimap-dot] per "
+                f"[data-idea-card]; found {dots} dots, {cards} cards"
+            )
+
+    # drag-probe: needs at least three draggable items to feel like an ordering.
+    if counts["data-drag-probe"] or counts["data-drag-item"]:
+        items = counts["data-drag-item"]
+        if items < 3:
+            errors.append(
+                f"{path}: drag-probe needs at least 3 [data-drag-item] elements; "
+                f"found {items}"
+            )
+
+    # Synchronized-highlight idioms: every keyed group needs at least two
+    # members (a source and its counterpart) or there is nothing to sync. Each
+    # idiom's key is carried across its source + target attributes.
+    sync_idioms = {
+        "data-code-pair": ("data-code-pair",),
+        "data-term": ("data-term", "data-term-def"),
+        "data-code-map": ("data-code-map", "data-code-map-target"),
+    }
+    for idiom, attrs in sync_idioms.items():
+        if not any(counts[attr] for attr in attrs):
+            continue
+        members: Counter[str] = Counter()
+        for (attr, value), count in parser.attribute_value_counts.items():
+            if attr in attrs:
+                members[value] += count
+        for value, count in sorted(members.items()):
+            if count < 2:
+                errors.append(
+                    f"{path}: {idiom}={value!r} needs at least 2 members "
+                    f"(source + counterpart); found {count}"
+                )
+
+    # wizard-steps: a wizard must present at least three ordered steps.
+    if counts["data-wizard"]:
+        steps = counts["data-interview-step"]
+        if steps < 3:
+            errors.append(
+                f"{path}: wizard needs at least 3 [data-interview-step] steps; "
+                f"found {steps}"
+            )
+
+    # theme-direction-gallery: at least two competing specimen scopes side by side.
+    if "theme-direction-gallery" in parser.presentation_patterns:
+        specimens = counts["data-specimen"]
+        if specimens < 2:
+            errors.append(
+                f"{path}: theme-direction-gallery needs at least 2 [data-specimen] "
+                f"scopes; found {specimens}"
+            )
 
     return errors
 

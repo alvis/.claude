@@ -20,10 +20,11 @@
               </div>
               <pre
                 class="discovery-light-code"
-              ><code>if clock.Now().After(lease.ExpiresAt) {
-  return ErrLeaseExpired
+                data-presentation-pattern="syntax-tokens"
+              ><code><span class="discovery-tok-kw">if</span> clock.<span class="discovery-tok-fn">Now</span>().<span class="discovery-tok-fn">After</span>(lease.ExpiresAt) {
+  <span class="discovery-tok-kw">return</span> <span class="discovery-tok-type">ErrLeaseExpired</span>
 }
-return store.CommitIfEpoch(
+<span class="discovery-tok-kw">return</span> store.<span class="discovery-tok-fn">CommitIfEpoch</span>(
   key, sequence, lease.Epoch,
 )</code></pre>
             </article>
@@ -34,10 +35,11 @@ return store.CommitIfEpoch(
               </div>
               <pre
                 class="discovery-light-code"
-              ><code>if (clock.monotonicMs() >= lease.deadlineMs) {
-  throw new LeaseExpiredError(lease.epoch);
+                data-presentation-pattern="syntax-tokens"
+              ><code><span class="discovery-tok-kw">if</span> (clock.<span class="discovery-tok-fn">monotonicMs</span>() >= lease.deadlineMs) {
+  <span class="discovery-tok-kw">throw</span> <span class="discovery-tok-kw">new</span> <span class="discovery-tok-type">LeaseExpiredError</span>(lease.epoch);
 }
-return store.commitIfEpoch(
+<span class="discovery-tok-kw">return</span> store.<span class="discovery-tok-fn">commitIfEpoch</span>(
   key, sequence, lease.epoch,
 );</code></pre>
             </article>

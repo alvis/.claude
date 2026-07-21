@@ -11,27 +11,51 @@
           <h2>Four terms carry the plan.</h2>
         </div>
         <div class="discovery-section-body">
-          <dl class="discovery-glossary">
-            <div class="discovery-term-rung" data-domain-term>
+          <p class="discovery-muted">
+            Each term is dotted-underlined where it appears in the prose above;
+            hover or focus one there — or an entry here — and both light up
+            together.
+          </p>
+          <dl
+            class="discovery-glossary"
+            data-presentation-pattern="glossary-sync"
+          >
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="expand"
+            >
               <dt>Expand</dt>
               <dd>
                 Add a compatible shape without removing what deployed code
                 expects.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="dual-write"
+            >
               <dt>Dual write</dt>
               <dd>
                 Persist the same logical change to old and new representations.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="backfill"
+            >
               <dt>Backfill</dt>
               <dd>
                 Convert historical records in restartable, observable batches.
               </dd>
             </div>
-            <div class="discovery-term-rung" data-domain-term>
+            <div
+              class="discovery-term-rung"
+              data-domain-term
+              data-term-def="contract"
+            >
               <dt>Contract</dt>
               <dd>
                 Remove the legacy shape only after supported code no longer uses

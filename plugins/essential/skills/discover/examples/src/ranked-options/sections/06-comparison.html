@@ -11,8 +11,16 @@
           <h2>What changes the rank?</h2>
         </div>
         <div class="discovery-section-body">
+          <p class="discovery-muted">
+            Each cell carries a judgment against the ranking basis — rollback,
+            then ownership, then the failure it invites. The glyph doubles the
+            colour so the verdict survives a greyscale print:
+            <span data-verdict="good">clean</span>,
+            <span data-verdict="mixed">acceptable</span>, and
+            <span data-verdict="bad">costly</span>.
+          </p>
           <div class="discovery-table-wrap">
-            <table class="discovery-table">
+            <table class="discovery-table" data-presentation-pattern="verdict-table">
               <thead>
                 <tr>
                   <th>Approach</th>
@@ -24,27 +32,27 @@
               <tbody>
                 <tr class="is-emphasized">
                   <td>Producer adapter</td>
-                  <td>Producer</td>
-                  <td>One switch</td>
-                  <td>Legacy-only field returns</td>
+                  <td data-verdict="good">One producer team</td>
+                  <td data-verdict="good">One switch</td>
+                  <td data-verdict="mixed">Legacy-only field returns</td>
                 </tr>
                 <tr>
                   <td>Versioned topics</td>
-                  <td>Platform</td>
-                  <td>Route change</td>
-                  <td>Third version multiplies routes</td>
+                  <td data-verdict="mixed">Platform</td>
+                  <td data-verdict="good">Repoint a route</td>
+                  <td data-verdict="bad">Third version multiplies routes</td>
                 </tr>
                 <tr>
                   <td>Consumer translators</td>
-                  <td>Consumers</td>
-                  <td>Per consumer</td>
-                  <td>One team blocks retirement</td>
+                  <td data-verdict="bad">Six teams, no single revert</td>
+                  <td data-verdict="bad">Per consumer</td>
+                  <td data-verdict="bad">One team blocks retirement</td>
                 </tr>
                 <tr>
                   <td>Schema gateway</td>
-                  <td>Platform</td>
-                  <td>Policy revision</td>
-                  <td>Shared critical-path defect</td>
+                  <td data-verdict="mixed">Platform</td>
+                  <td data-verdict="mixed">Policy revision</td>
+                  <td data-verdict="bad">Shared critical-path defect</td>
                 </tr>
               </tbody>
             </table>

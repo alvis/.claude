@@ -131,6 +131,134 @@
               replay, and facade rollback.
             </li>
           </ol>
+
+          <div
+            class="discovery-review-frame"
+            data-presentation-pattern="milestone-timeline"
+          >
+            <p class="discovery-eyebrow">Extraction roadmap</p>
+            <h3>Every milestone hangs on the owner and alarm clock above.</h3>
+            <ol class="discovery-milestone-timeline">
+              <li>
+                <span class="discovery-milestone-date">Wk 0</span>
+                <div data-milestone-state="done">
+                  <strong>Discovery</strong>
+                  <p>
+                    Boundary mapped from caller to operator replay; three of
+                    five gates pass.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">Done</span
+                    ><span class="discovery-badge">evidence</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-date">Wk 1</span>
+                <div data-milestone-state="active">
+                  <strong>Ownership trace</strong>
+                  <p>
+                    Resolve who authorizes a send before any code is planned;
+                    the one architecture-changing unknown.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">In progress</span
+                    ><span class="discovery-badge">blocking · G4</span
+                    ><span class="discovery-badge">product + legal</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-date">Wk 2</span>
+                <div data-milestone-state="pending">
+                  <strong>Implementation planning</strong>
+                  <p>
+                    Plan from the ledger, carrying accepted assumptions with
+                    their owners and recheck triggers.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">Pending</span
+                    ><span class="discovery-badge">after G4</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-date">Wk 4</span>
+                <div data-milestone-state="pending">
+                  <strong>Dual run + shadow delivery</strong>
+                  <p>
+                    Compare shadow deliveries against the facade once the
+                    mismatch threshold and ramp are accepted.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">Pending</span
+                    ><span class="discovery-badge">G5 · thresholds</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span class="discovery-milestone-date">Wk 6</span>
+                <div data-milestone-state="pending">
+                  <strong>Cutover + rollback drill</strong>
+                  <p>
+                    Exercise provider failure, replay, and facade rollback
+                    before traffic moves for good.
+                  </p>
+                  <div class="discovery-milestone-tags">
+                    <span class="discovery-badge">Pending</span
+                    ><span class="discovery-badge">rollback owner</span>
+                  </div>
+                </div>
+              </li>
+            </ol>
+            <p class="discovery-muted" data-fabricated>
+              Sequence is real; the week offsets are illustrative pacing, not
+              committed dates.
+              <span class="discovery-invented-tag" data-invented-tag
+                >weeks</span
+              >
+            </p>
+          </div>
+
+          <div
+            class="discovery-review-frame"
+            data-presentation-pattern="inline-chart"
+          >
+            <p class="discovery-eyebrow">Replay pressure</p>
+            <h3>Manual replay is nearing its own recheck trigger.</h3>
+            <p>
+              Manual replay requests per week
+              <svg
+                class="discovery-sparkline"
+                viewBox="0 0 100 30"
+                fill="none"
+                aria-hidden="true"
+              >
+                <polyline
+                  points="0,18.8 20,14.6 40,17.4 60,10.4 80,7.6 100,3.4"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span
+                class="discovery-kpi-delta"
+                data-trend="down"
+                data-fabricated
+                >1 to trigger</span
+              >
+            </p>
+            <p class="discovery-muted">
+              Weekly manual replays have climbed from 8 to 19 over six weeks,
+              leaving one request of headroom before the 20-per-week trigger
+              that would retire the "manual replay is acceptable" assumption
+              above.
+              <span class="discovery-invented-tag" data-invented-tag
+                >illustrative</span
+              >
+            </p>
+          </div>
         </div>
       </section>
 

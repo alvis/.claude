@@ -420,7 +420,8 @@ stays on house `--ui-*`:
   <ol class="discovery-pin-notes">
     <li class="discovery-pin-note" data-pin-note="1" id="pin-note-1">
       <strong>Inline triage.</strong> Work resolves without leaving the row
-      <span class="discovery-provenance" data-provenance="decided">decided</span>.
+      <span class="discovery-provenance" data-provenance="decided">decided</span
+      >.
     </li>
   </ol>
 </div>
@@ -437,7 +438,7 @@ the note prose and a provenance pill, matching the honesty conventions elsewhere
 **No drawn leader line — by decision.** The pin↔card tie is the shared number
 plus a synchronized highlight: on focus or hover of either, the runtime toggles
 `.is-active` on the whole pair via `classList` (the DESIGN.html annotated-code
-idiom). A drawn connector is deliberately avoided because a line to an *interior*
+idiom). A drawn connector is deliberately avoided because a line to an _interior_
 pin cannot reach it without crossing the very mockup it annotates, which would
 occlude the design; adjacency + number + mutual highlight carry the relationship
 without that cost. This is the intended, ruled design — not a stopgap for a line
@@ -505,6 +506,615 @@ is the one documented place a hex literal may appear in an action page, and only
 inside `[data-specimen]`; page chrome, the pin layer, and the browser-frame
 chrome stay on house `--ui-*` tokens. See the specimen exception in
 [presentation](../presentation.md) for the token rules.
+
+## Synchronized pairs (shared highlight idiom)
+
+Several patterns tie two on-page elements together so that hovering or focusing
+either one lights up the other. They all share one runtime primitive:
+`installSyncGroup(members)` keys elements by a shared id and toggles `.is-active`
+on every member of a key when any member is engaged (the same `classList` idiom
+as the author-pin ↔ callout tie). The author supplies matched `data-*` ids; no
+per-pattern JavaScript is needed. Three catalog patterns use it directly:
+
+```html
+<!-- code-pair-highlight: matched regions across two side-by-side code panels.
+     Every id appears exactly twice — once per panel. -->
+<pre class="discovery-light-code">
+  <span data-code-pair="ack-record">arrival.record(seq)</span>
+</pre>
+<pre class="discovery-light-code">
+  <span data-code-pair="ack-record">recordArrival(seq)</span>
+</pre>
+
+<!-- glossary-sync: inline term <-> glossary entry. -->
+<p>
+  Keep <span data-term="dual-write">dual writing</span> until backfill lands.
+</p>
+<dl class="discovery-glossary">
+  <dt data-term-def="dual-write">Dual write</dt>
+  <dd>Write both shapes until the read switch flips.</dd>
+</dl>
+
+<!-- specimen-code-map: a specimen region <-> the code that produces it. -->
+<div data-code-map="metric-strip">Queue health at a glance</div>
+<pre
+  data-code-map-target="metric-strip"
+><code>&lt;MetricStrip depth={depth} /&gt;</code></pre>
+```
+
+Mark the visible demonstration with `data-presentation-pattern="code-pair-highlight"`,
+`"glossary-sync"`, or `"specimen-code-map"` on the container that carries the
+paired regions. Members become focusable automatically, so keyboard users get
+the same tie.
+
+## Code presentation
+
+**Syntax tokens.** Colour source excerpts with author-applied spans, no
+highlighter runs in the browser. The six token classes
+`discovery-tok-kw|str|cm|fn|num|type` map to new `--ui-tok-*` values legible on
+both the dark `.discovery-code-annotation` surface and the light
+`.discovery-light-code` panel. Mark the token-bearing `<pre>`:
+
+```html
+<pre class="discovery-light-code" data-presentation-pattern="syntax-tokens">
+<span class="discovery-tok-kw">func</span> <span class="discovery-tok-fn">Ack</span>(seq <span class="discovery-tok-type">uint64</span>) {
+  <span class="discovery-tok-cm">// contiguous only</span>
+  cursor.commit(<span class="discovery-tok-num">1</span>, <span class="discovery-tok-str">"ok"</span>)
+}
+</pre>
+```
+
+**Rich diff.** Upgrade `.discovery-diff` with an optional hunk header row
+(`.discovery-diff-hunk`), gutter line numbers (`data-line`), deletion
+strikethrough (`<del>` inside an `.is-removed` row), and `syntax-tokens` inside
+the rows:
+
+```html
+<div class="discovery-diff" data-presentation-pattern="rich-diff">
+  <div class="discovery-diff-hunk">
+    @@ replay.ts · replayTo() — lines 41–43 @@
+  </div>
+  <div class="is-removed" data-line="41">
+    <del>− <span class="discovery-tok-kw">await</span> cursors.seek(x)</del>
+  </div>
+  <div class="is-added" data-line="41">
+    + <span class="discovery-tok-fn">assertRetained</span>(requested)
+  </div>
+</div>
+```
+
+**Code tabs.** A tabbed multi-representation panel. The runtime (`installCodeTabs`)
+owns `aria-selected`, panel `hidden`, and a roving tabindex; arrow / Home / End
+move between tabs. Keep tab count equal to panel count:
+
+```html
+<div
+  class="discovery-code-tabs"
+  data-code-tabs
+  data-presentation-pattern="code-tabs"
+>
+  <div role="tablist">
+    <button role="tab" data-code-tab="go" aria-selected="true">
+      Go source
+    </button>
+    <button role="tab" data-code-tab="ts" aria-selected="false">
+      TS proposal
+    </button>
+  </div>
+  <div role="tabpanel" data-code-panel="go"><pre>…</pre></div>
+  <div role="tabpanel" data-code-panel="ts" hidden><pre>…</pre></div>
+</div>
+```
+
+## Explainer affordances
+
+**Source-ref chip.** A static `file:line-range` chip anchoring a claim to where
+the coder implements it. It nests inside headings, steps, or findings:
+
+```html
+<span class="discovery-source-ref" data-presentation-pattern="source-ref-chip"
+  >db/migrate/20260714_expand_orders.rb:1-14</span
+>
+```
+
+**FAQ block.** Anticipated reviewer questions as a `<dl>`, each answer optionally
+carrying a provenance pill and a source-ref chip:
+
+```html
+<dl class="discovery-faq" data-presentation-pattern="faq-block">
+  <dt>Can three application versions overlap during a rolling deploy?</dt>
+  <dd>
+    Yes — the expand step keeps every build reading both shapes.
+    <span class="discovery-provenance" data-provenance="observed"
+      >observed</span
+    >
+  </dd>
+</dl>
+```
+
+**Live simulation.** A parameter-driven inline readout: controls drive a seeded,
+deterministic SVG or DOM output in `[data-sim-stage]`. Controls that capture a
+preference are ordinary decision or follow-up questions; purely pedagogic
+controls carry `data-sim-control` and stay out of the prompt. Behaviour lives in
+the page's inline script (the domain-explainer simulator convention), not the
+shared runtime:
+
+```html
+<div data-presentation-pattern="live-sim">
+  <label data-sim-control
+    >Cohort <input type="range" data-sim-cohort min="0" max="100"
+  /></label>
+  <div data-sim-stage aria-live="polite"><!-- generated readout --></div>
+</div>
+```
+
+**Exclusive accordion.** A `[data-accordion-exclusive]` group of `<details>`
+where opening one closes its siblings; leave the key item `open` by default.
+Nested groups stay independent. Wired by `installExclusiveAccordions`:
+
+```html
+<div data-accordion-exclusive data-presentation-pattern="accordion-exclusive">
+  <details open>
+    <summary>Read-path failure</summary>
+    …
+  </details>
+  <details>
+    <summary>Write-path failure</summary>
+    …
+  </details>
+</div>
+```
+
+**Anchor flash.** Sidebar / TOC navigation briefly flashes the destination
+section. The runtime (`installAnchorFlash`) adds a transient
+`.discovery-anchor-flash` on nav click and `hashchange`, and skips the animation
+entirely under reduced motion. Mark the navigation that triggers the flash:
+
+```html
+<nav class="essential-docnav" data-presentation-pattern="anchor-flash">
+  <a href="#failure-boundaries">Failure boundaries</a>
+</nav>
+```
+
+## Architecture & provenance
+
+**Node/edge diagram.** A hand-authored inline SVG with a visible legend. Nodes
+and edges carry semantic classes (`discovery-node-*`, `discovery-edge-*`) mapped
+to `--ui-*` tokens, and each node has a `<title>` for assistive tech:
+
+```html
+<svg viewBox="0 0 480 240" data-presentation-pattern="node-edge-diagram">
+  <g class="discovery-node-source">
+    <title>WebSocket ingress</title>
+    …
+  </g>
+  <path class="discovery-edge-flow" d="M120 60 H260" />
+</svg>
+```
+
+**Diagram detail.** Clickable diagram nodes populate a sticky detail host from
+hidden templates (cloned, never `innerHTML`). The host is an aria-live region;
+the selected node gets `.is-active`. Wired by `installDiagramDetail`:
+
+```html
+<g
+  data-diagram-node="merge"
+  tabindex="0"
+  data-presentation-pattern="diagram-detail"
+  >…</g
+>
+<aside data-diagram-detail-host aria-live="polite"></aside>
+<template data-diagram-detail="merge">
+  <h3>CRDT merge</h3>
+  <p>Resolves concurrent edits before fan-out.</p>
+</template>
+```
+
+**Prompt echo.** A static card near the page top quoting the verbatim request
+that produced the board, with a labelled divider separating it from what the
+coder built:
+
+```html
+<section class="discovery-prompt-echo" data-presentation-pattern="prompt-echo">
+  <p class="discovery-eyebrow">The request that produced this board</p>
+  <blockquote>“Lay out the architecture before anyone writes code…”</blockquote>
+  <p class="discovery-prompt-echo-divider">What the coder produced from it</p>
+  <p>A four-node data-flow decomposition with per-node ownership.</p>
+</section>
+```
+
+**Source manifest.** A "generated from" list of the files and data the coder
+actually read — one per page — each row leading with a source-ref-style path and
+an optional provenance pill:
+
+```html
+<ul
+  class="discovery-source-manifest"
+  data-presentation-pattern="source-manifest"
+>
+  <li>
+    <span class="discovery-source-ref">gateway/ws_server.ts:1-120</span>
+    <span class="discovery-provenance" data-provenance="observed"
+      >observed</span
+    >
+  </li>
+</ul>
+```
+
+## Risk & readiness
+
+**Risk matrix.** A severity / likelihood / mitigation table whose severity cells
+carry `[data-severity="low|medium|high|critical"]` pills on the amber→terracotta
+token scale (no new hex). A muted caption states the ratings are review
+assessments, not measured rates:
+
+```html
+<table class="discovery-table" data-presentation-pattern="risk-matrix">
+  <tr>
+    <td>AUTH-07 refresh race</td>
+    <td><span data-severity="critical">critical</span></td>
+    <td>Likely</td>
+    <td>Serialize refresh · owner: auth</td>
+  </tr>
+</table>
+```
+
+**Owner routing.** An owner + due-date affordance on a finding or action item:
+an avatar-initial, a name, and an optional date.
+
+```html
+<span class="discovery-owner-chip" data-presentation-pattern="owner-routing">
+  <span aria-hidden="true">RS</span> Rina S. · due Jul 28
+</span>
+```
+
+**TL;DR block.** A visually distinct executive-summary lead of two to four
+strong-lead bullets, placed before the first section's prose:
+
+```html
+<div class="discovery-tldr" data-presentation-pattern="tldr-block">
+  <h2>Executive summary</h2>
+  <ul>
+    <li>
+      <strong>Not a model-quality launch.</strong> The blocker is one auth race.
+    </li>
+    <li>
+      <strong>Two probes still open.</strong> Both must clear before cutover.
+    </li>
+  </ul>
+</div>
+```
+
+**Milestone timeline.** Two variants of `.discovery-milestone-timeline`. A dated
+roadmap uses a `.discovery-milestone-date` gutter, state dots
+(`[data-milestone-state="done|active|pending"]`), and per-slice
+`.discovery-milestone-tags` chips; an event chronology uses mono
+`.discovery-milestone-time` timestamps instead. Fabricated dates/times carry the
+invented-data flag:
+
+```html
+<ol
+  class="discovery-milestone-timeline"
+  data-presentation-pattern="milestone-timeline"
+>
+  <li data-milestone-state="done">
+    <span class="discovery-milestone-date">Wk0</span> Discovery
+    <span class="discovery-milestone-tags"><span>done</span></span>
+  </li>
+  <li data-milestone-state="active">
+    <span class="discovery-milestone-date">Wk1</span> Ownership trace
+  </li>
+</ol>
+```
+
+**Inline chart.** Hand-authored inline SVG/DOM chart blocks — `.discovery-chart`
+bars, a `.discovery-sparkline`, or a `.discovery-kpi-delta`. Fabricated values
+carry `data-fabricated` plus the invented tag, and each chart has accessible
+fallback text:
+
+```html
+<div
+  class="discovery-chart"
+  data-presentation-pattern="inline-chart"
+  data-fabricated
+>
+  <div class="discovery-chart-bar">
+    <span class="discovery-chart-track"
+      ><span class="discovery-chart-fill" style="--value:62%"></span
+    ></span>
+  </div>
+  <span class="discovery-invented-tag" data-invented-tag>invented</span>
+</div>
+```
+
+**Filter chips.** Upgrade the activity filter bar so chips carry live counts and
+selecting one DIMS non-matching items (`.is-dimmed`, opacity + grayscale) rather
+than hiding them, keeping counts truthful. The runtime (`installFilterChips`)
+computes counts from the data and applies the dimming. A chip value of `all`
+matches everything:
+
+```html
+<div data-filter-chips data-presentation-pattern="filter-chips">
+  <button data-filter="all">All <span data-filter-count></span></button>
+  <button data-filter="blocking">
+    Blocking <span data-filter-count></span>
+  </button>
+</div>
+<ul>
+  <li data-filter-item="blocking g4">Ownership trace</li>
+  <li data-filter-item="done">Call graph traced</li>
+</ul>
+```
+
+## Options & brainstorm
+
+**Verdict table.** A comparison table with per-cell judgment colouring via
+`[data-verdict="good|mixed|bad"]` (insight / amber / accent tints, tokens only).
+Pair it with an inline glyph+colour legend so the key is legible before the
+table:
+
+```html
+<table data-presentation-pattern="verdict-table">
+  <tr>
+    <td>Producer adapter</td>
+    <td data-verdict="good">✓ Owns its write path</td>
+    <td data-verdict="bad">✕ No rollback lever</td>
+  </tr>
+</table>
+```
+
+**Variant rationale.** A one-line "best for…" thesis caption under each
+option/variant artifact, tying the variant to the ranking logic:
+
+```html
+<p
+  class="discovery-variant-rationale"
+  data-presentation-pattern="variant-rationale"
+>
+  <strong>Best for rollback-first teams.</strong> The adapter keeps one
+  reversible seam.
+</p>
+```
+
+**Scope cuts.** The author's own self-disclosure: non-goals, deliberate
+omissions, and weakest-part flags. Distinct from trade-offs-honestly (which is
+about the _direction's_ costs) — this is about the _author's_ cuts:
+
+```html
+<aside class="discovery-scope-cuts" data-presentation-pattern="scope-cuts">
+  <h3>What I cut, deliberately</h3>
+  <ul>
+    <li>No multi-region story — single-region only for this pass.</li>
+    <li>Weakest part: the consumer-translator rank rests on one interview.</li>
+  </ul>
+</aside>
+```
+
+**Spectrum minimap.** A sticky strip of numbered dot `<button>`s along the
+cheap→ambitious axis, one per idea card. Clicking a dot smooth-scrolls to its
+card; each dot mirrors the card's reaction state (two-way sync). The runtime
+(`installSpectrumMinimap`) requires the dot ids to be the same set as the
+`[data-idea-id]` cards (dots == idea cards):
+
+```html
+<nav class="discovery-minimap" data-presentation-pattern="spectrum-minimap">
+  <span>Cheap · hours</span>
+  <div class="discovery-minimap-axis">
+    <button data-minimap-dot="1">1</button>
+    <button data-minimap-dot="2">2</button>
+  </div>
+  <span>Ambitious · quarter</span>
+</nav>
+<article data-idea-card data-idea-id="1">…</article>
+```
+
+**Reaction chips.** Lightweight steal/skip reactions on individual idea traits,
+implemented as checkbox `data-discovery-question` follow-up fieldsets so they
+flow into the prompt as reactions, not decisions:
+
+```html
+<fieldset
+  data-discovery-question
+  data-response-kind="follow-up"
+  data-question-id="idea-1-reaction"
+  data-question-label="Idea 1 reaction"
+  data-presentation-pattern="reaction-chips"
+>
+  <legend>What survives from this idea?</legend>
+  <label
+    ><input
+      type="checkbox"
+      value="Steal the debounce"
+      data-reaction-kind="steal"
+    />Steal</label
+  >
+  <label
+    ><input
+      type="checkbox"
+      value="Skip the rest"
+      data-reaction-kind="skip"
+    />Skip</label
+  >
+</fieldset>
+```
+
+## Guided interview
+
+**Wizard steps.** A focused one-question-at-a-time presentation over the existing
+stepper. The `[data-wizard]` container wraps the `[data-interview-step]`
+sections; a glass control panel holds `[data-wizard-prev]`, `[data-wizard-next]`,
+a `[data-wizard-toggle]` ("show every question"), a `.discovery-wizard-progress`
+hint, and an empty `[data-wizard-summary]` jump-back list. Answers stay ordinary
+decision questions. No-JS fallback: every step stays visible. Wired by
+`installWizard`:
+
+```html
+<div data-wizard data-presentation-pattern="wizard-steps">
+  <div class="discovery-wizard-controls">
+    <button data-wizard-prev>Back</button>
+    <span class="discovery-wizard-progress"></span>
+    <button data-wizard-next>Next</button>
+    <button data-wizard-toggle>Show every question</button>
+  </div>
+  <ol class="discovery-wizard-summary" data-wizard-summary></ol>
+  <section data-interview-step="1">…</section>
+  <section data-interview-step="2">…</section>
+</div>
+```
+
+**Natural-language reply.** A conversational one-paragraph preview of the reply,
+assembled from touched answers, note counts, and changed probes, rendered above
+the raw Markdown host. The runtime (`installNlReply`) fills it with `textContent`
+only and regenerates it with the prompt; the copy control still copies the one
+canonical Markdown prompt:
+
+```html
+<div
+  class="discovery-nl-reply"
+  data-nl-reply
+  data-presentation-pattern="nl-reply"
+></div>
+<textarea data-discovery-prompt-host readonly></textarea>
+```
+
+## Prototype & motion
+
+**Drag probe.** A native HTML5 drag-and-drop feel probe. Items reorder within
+`[data-drag-probe]`; the runtime (`installDragProbes`) records the initial order,
+persists the current one, and — once the order differs from the authored default
+— surfaces it in the generated prompt under a `## Interaction results` section as
+`- **<label>:** a → b → c`. Keyboard reorder (arrow keys on a focused item) keeps
+it operable without a pointer. Keep at least three items:
+
+```html
+<ol
+  data-drag-probe="reading-order"
+  data-drag-label="Reading order"
+  data-presentation-pattern="drag-probe"
+>
+  <li class="discovery-drag-item" data-drag-item="intent">Intent</li>
+  <li class="discovery-drag-item" data-drag-item="diff">Diff</li>
+  <li class="discovery-drag-item" data-drag-item="evidence">Evidence</li>
+</ol>
+```
+
+The serialization is the only new prompt contract in this batch: an untouched
+probe contributes nothing, so a default order is never mistaken for a decision.
+
+**Motion specimen.** A micro-interaction sandbox with a replay button, a keyframe
+timing rail driven by `--rail-progress`, live 0/mid/end time marks, and an
+easing-swap decision question. CSS transitions only; disabled under reduced
+motion:
+
+```html
+<div
+  class="discovery-motion-specimen"
+  data-motion-specimen
+  data-presentation-pattern="motion-specimen"
+>
+  <div class="discovery-motion-stage" data-motion-target>…</div>
+  <div class="discovery-motion-timing-rail" data-motion-rail></div>
+  <div class="discovery-motion-marks">
+    <span data-motion-mid></span><span data-motion-end></span>
+  </div>
+  <button data-motion-replay>Replay</button>
+</div>
+```
+
+**Demo loop.** An auto-playing scripted demo of a flow with a progress bar and a
+success toast, plus pause/replay controls, marked decorative for reduced motion.
+Behaviour lives in the page's inline script:
+
+```html
+<div
+  class="discovery-demo-loop"
+  data-demo-loop
+  data-presentation-pattern="demo-loop"
+>
+  <div data-demo-step="1">…</div>
+  <div class="discovery-demo-progress" data-demo-progress></div>
+  <div class="discovery-demo-toast" data-demo-toast hidden>Sent</div>
+  <button data-demo-toggle>Pause</button>
+  <button data-demo-restart>Replay</button>
+</div>
+```
+
+## Design-review rigs
+
+**Global rig.** One toolbar of controls that re-themes or re-tunes _every_
+specimen on the board at once. The controls are ordinary decision/follow-up
+questions; a deterministic page-inline script maps their values onto every
+governed `[data-specimen][data-rig]` container (e.g. a surface toggle stamps
+`data-theme="dark"`, a density toggle stamps `data-density="compact"`), so the
+values still flow into the single generated prompt:
+
+```html
+<div
+  class="discovery-global-rig"
+  data-global-rig
+  data-presentation-pattern="global-rig"
+>
+  <fieldset
+    data-discovery-question
+    data-question-id="rig-surface"
+    data-question-label="Surface"
+  >
+    <legend>Surface</legend>
+    <label
+      ><input
+        type="radio"
+        name="rig-surface"
+        value="Light"
+        checked
+      />Light</label
+    >
+    <label><input type="radio" name="rig-surface" value="Dark" />Dark</label>
+  </fieldset>
+</div>
+<div data-specimen data-rig>…the governed mockup…</div>
+```
+
+**Artboard & mock frames.** Two chromeless variants of the browser-frame. The
+artboard is a fixed-height centered stage with a corner mono tag and a rationale
+caption; the mock frame is a labelled generic device/app chrome carrying a
+visible fidelity label so no one mistakes it for a live pane:
+
+```html
+<figure class="discovery-artboard" data-presentation-pattern="artboard-frame">
+  <span class="discovery-artboard-tag">order-row</span>
+  <div class="discovery-artboard-stage">…</div>
+  <figcaption class="discovery-artboard-caption">
+    Resting state, one row.
+  </figcaption>
+</figure>
+
+<div class="discovery-mock-frame" data-presentation-pattern="mock-frame">
+  <div class="discovery-mock-frame-bar">
+    <span class="discovery-mock-frame-label"
+      >mock — nothing behind this pane</span
+    >
+  </div>
+  <div class="discovery-mock-frame-body">…</div>
+</div>
+```
+
+**Theme-direction gallery.** Competing complete theme directions side by side.
+Each direction is its own `[data-specimen]` with its own scoped re-point over a
+shared neutral scaffold, comparable content in each card. This is the one place
+the single-specimen exception extends to multiple simultaneous specimen scopes on
+one board — several `[data-specimen]` containers coexisting is deliberate here,
+not a regression of the "one specimen re-point" convention:
+
+```html
+<div
+  class="discovery-theme-gallery"
+  data-presentation-pattern="theme-direction-gallery"
+>
+  <div data-specimen style="--specimen-accent:#4f46e5">…Indigo direction…</div>
+  <div data-specimen style="--specimen-accent:#0d9488">…Teal direction…</div>
+  <div data-specimen style="--specimen-accent:#b45309">…Amber direction…</div>
+</div>
+```
 
 ## Extending the catalog
 

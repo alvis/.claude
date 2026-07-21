@@ -39,13 +39,18 @@
       </nav>
     </div>
 
-    <aside class="essential-docnav" aria-label="Document sections">
+    <aside
+      class="essential-docnav"
+      aria-label="Document sections"
+      data-presentation-pattern="anchor-flash"
+    >
       <p>Domain explainer</p>
       <a class="is-active" href="#overview">Overview</a>
       <a href="#mental-model">Mental model</a>
       <a href="#migration-sequence">Migration sequence</a>
       <a href="#traffic-rehearsal">Traffic rehearsal</a>
       <a href="#failure-boundaries">Failure boundaries</a>
+      <a href="#faq">Anticipated questions</a>
       <a href="#rollout-decision">Rollout decision</a>
       <a href="#glossary">Working vocabulary</a>
       <div class="essential-docnav-rule"></div>
@@ -139,46 +144,103 @@
       <!-- {{SECTIONS}} -->
     </main>
     <script>
+      // Live-sim: a seeded, deterministic rehearsal of the read switch. The same
+      // 100 requests are laid out every render; only the parameters move, so the
+      // picture is reproducible and teaches blast radius rather than luck.
       (() => {
         const cohort = document.querySelector("#rehearsal-cohort");
+        const backfill = document.querySelector("#rehearsal-backfill");
         const fallback = document.querySelector(
           "[data-simulator-fallback-control]",
         );
+        const stage = document.querySelector("[data-sim-stage]");
         if (
           !(cohort instanceof HTMLInputElement) ||
-          !(fallback instanceof HTMLInputElement)
+          !(backfill instanceof HTMLInputElement) ||
+          !(fallback instanceof HTMLInputElement) ||
+          !stage
         )
           return;
 
+        const COLS = 10;
+        const ROWS = 10;
+        const TOTAL = COLS * ROWS;
+        const GAP = 4;
+        const CELL = 16;
+        const SIZE = COLS * CELL + (COLS - 1) * GAP;
+
+        // Deterministic unit-interval stream, seeded per request index. Two
+        // offset streams give independent routing and backfill draws with no
+        // Math.random, so every render of the same inputs is identical.
+        const draw = (n) => {
+          const x = Math.sin(n * 12.9898 + 4.1414) * 43758.5453;
+          return x - Math.floor(x);
+        };
+
+        const setText = (selector, value) => {
+          const node = document.querySelector(selector);
+          if (node) node.textContent = value;
+        };
+
         const update = () => {
-          const percent = Number(cohort.value);
-          const mismatch = Math.max(0, Math.round(percent * 0.3));
-          document
-            .querySelectorAll("[data-simulator-cohort]")
-            .forEach((node) => {
-              node.textContent = `${percent}%`;
-            });
-          const label = document.querySelector("[data-simulator-label]");
-          const mismatchNode = document.querySelector(
-            "[data-simulator-mismatch]",
-          );
-          const fallbackNode = document.querySelector(
-            "[data-simulator-fallback]",
-          );
-          const stateNode = document.querySelector("[data-simulator-state]");
-          if (label) label.textContent = `${percent}%`;
-          if (mismatchNode) mismatchNode.textContent = `${mismatch} / min`;
-          if (fallbackNode) {
-            fallbackNode.textContent = fallback.checked
-              ? "legacy read serves"
-              : "request fails";
+          const cohortPct = Number(cohort.value);
+          const backfillPct = Number(backfill.value);
+          const guarded = fallback.checked;
+
+          const tally = { legacy: 0, newOk: 0, fallback: 0, failed: 0 };
+          const rects = [];
+          for (let i = 0; i < TOTAL; i++) {
+            const routed = draw(i + 1) * 100 < cohortPct;
+            const migrated = draw(i + 101) * 100 < backfillPct;
+            let fill = "var(--ui-border-strong)"; // legacy path, unchanged
+            let kind = "legacy";
+            if (routed && migrated) {
+              fill = "var(--ui-insight)"; // new read matches
+              kind = "newOk";
+            } else if (routed && !migrated && guarded) {
+              fill = "var(--ui-provenance-amber)"; // caught by fallback
+              kind = "fallback";
+            } else if (routed && !migrated) {
+              fill = "var(--ui-sev-critical)"; // no fallback: request fails
+              kind = "failed";
+            }
+            tally[kind] += 1;
+            const cx = (i % COLS) * (CELL + GAP);
+            const cy = Math.floor(i / COLS) * (CELL + GAP);
+            rects.push(
+              `<rect x="${cx}" y="${cy}" width="${CELL}" height="${CELL}" rx="3" fill="${fill}" />`,
+            );
           }
-          if (stateNode) {
-            stateNode.textContent = fallback.checked ? "guarded" : "exposed";
-          }
+
+          const routedTotal = tally.newOk + tally.fallback + tally.failed;
+          const label = guarded ? "guarded" : "exposed";
+
+          stage.innerHTML =
+            `<svg viewBox="0 0 ${SIZE} ${SIZE}" width="100%" ` +
+            `style="max-width:${SIZE * 2}px" role="img" ` +
+            `aria-label="${routedTotal} of ${TOTAL} rehearsed reads on the new path; ` +
+            `${tally.newOk} matched, ${tally.fallback} caught by fallback, ${tally.failed} failed">` +
+            rects.join("") +
+            `</svg>`;
+
+          setText("[data-sim-cohort]", `${cohortPct}%`);
+          setText("[data-sim-label]", `${cohortPct}%`);
+          setText("[data-sim-backfill-label]", `${backfillPct}%`);
+          setText(
+            "[data-sim-mismatch]",
+            `${tally.fallback + tally.failed} / ${routedTotal || 0}`,
+          );
+          setText(
+            "[data-sim-fallback]",
+            guarded
+              ? `${tally.fallback} legacy reads serve`
+              : `${tally.failed} requests fail`,
+          );
+          setText("[data-simulator-state]", label);
         };
 
         cohort.addEventListener("input", update);
+        backfill.addEventListener("input", update);
         fallback.addEventListener("change", update);
         update();
       })();

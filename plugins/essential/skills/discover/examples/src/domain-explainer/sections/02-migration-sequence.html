@@ -23,6 +23,11 @@
                 <span class="discovery-checkpoint"
                   >Rollback: remove unused addition</span
                 >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >db/migrate/20260714_expand_orders.rb:1-14</span
+                >
               </div>
             </li>
             <li data-mechanism-stage>
@@ -34,6 +39,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Pause: keep old reads authoritative</span
+                >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >app/models/order.rb:88-104</span
                 >
               </div>
             </li>
@@ -48,6 +58,11 @@
                 <span class="discovery-checkpoint"
                   >Pause: resume from last batch</span
                 >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >app/jobs/backfill_orders.rb:1-46</span
+                >
               </div>
             </li>
             <li data-mechanism-stage>
@@ -60,6 +75,11 @@
                 </p>
                 <span class="discovery-checkpoint"
                   >Rollback: restore old reader</span
+                >
+                <span
+                  class="discovery-source-ref"
+                  data-presentation-pattern="source-ref-chip"
+                  >db/migrate/20260901_contract_orders.rb:1-9</span
                 >
               </div>
             </li>
