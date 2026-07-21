@@ -228,12 +228,15 @@ it never edits PM-owned work memory.
 ### `state.md`
 
 `state.md` is the complete resumable work context: goal, full plan, lifecycle
-status, acceptance criteria, decisions, dependencies, blockers, review state,
-evidence references, repository revision, specification provenance, and sync
-state. It links prominently to `working.md` and each lazy work overview that
-currently exists. It references details rather than copying them. Semantic
-children such as `state/implementation-plan.md` or `state/discovery.md` hold
-resumable detail. If `state.md` exceeds the final size gate, keep it as the
+status, acceptance criteria, decisions, dependencies, blockers, open questions,
+review state, evidence references, repository revision, specification
+provenance, and sync state. It links prominently to `working.md` and each lazy
+work overview that currently exists. It references details rather than copying
+them. Semantic children such as `state/implementation-plan.md` or
+`state/discovery.md` hold resumable detail. Record every unresolved or open
+question in `state.md`, or in a resumable `state/*.md` child, with an owner and
+a disposition (resolved, deferred, or blocking); never open a separate
+`unresolved.md`. If `state.md` exceeds the final size gate, keep it as the
 overview and move coherent split detail to `state/<nn>-<topic-slug>.md`.
 
 Every new or explicitly migrated state file follows
@@ -278,8 +281,12 @@ needed for the current focus.
 
 Each child starts with structured metadata containing at least its canonical
 status, one-line headline, owner, created timestamp, and source/provenance
-references. If an overview itself ever requires splitting, reserve
-`00-index-<group>.md` names inside its folder for index shards.
+references. When a `proposals/` or `changes/` child records a deviation from a
+Notion-backed specification, its provenance MUST link to the related
+`.engineering/notion/` mirror file (the exact `.mdc` path in the registered
+default workspace); a spec deviation recorded without that link is incomplete.
+If an overview itself ever requires splitting, reserve `00-index-<group>.md`
+names inside its folder for index shards.
 
 ## Reviews
 
