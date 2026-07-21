@@ -24,6 +24,10 @@ persists the current coding session in continuation files.
 - **Optional**: the `Workflow` tool for multi-phase execution; `coding:*`
   skills when available — confirm availability before routing to one,
   otherwise name the equivalent action or files without invoking it.
+- **Required evidence for a persisted plan**: current repository root, active
+  branch, base and HEAD commit SHAs, worktree status, relevant tool versions,
+  exact command lines already run with outcomes, and absolute paths to every
+  source artifact the next executor must use.
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
@@ -38,17 +42,44 @@ that contract.
    criteria, sequencing, or another material decision; give a recommended
    answer and reason. Remaining uncertainty must be low-impact and reversible,
    explicitly deferred with an owner and decision deadline, or marked blocking.
-2. **Write the plan.** Open with a self-contained **Goal** block the user can
-   copy and paste verbatim to initiate the work — it states the intended
-   outcome fully on its own, without relying on your context. Then write the
-   plan with enough detail and context that an agent with no idea what you
-   are working on can take over without getting lost: concrete file paths,
-   constraints, decision criteria, success checks, accepted assumptions with
-   recheck triggers, deferred decisions with owners, and plan-pivot signals per
-   phase. When the plan must persist, write it to a lowercase
-   `proposals/<plan-slug>.md` child with status `open`; the PM reconciles the
-   lazy `proposals.md` overview. Update the child to `accepted` only after user
-   approval.
+2. **Write the plan as a zero-context handoff.** Open with a
+   self-contained **Goal** block the user can copy and paste verbatim to
+   initiate the work — it states the intended outcome fully on its own, without
+   relying on your context. Then write the plan so an execution agent never has
+   to rediscover basics. The persisted plan must include these named sections:
+   - **Baseline** — exact repository root, active branch, base SHA, HEAD SHA,
+     dirty-status summary, environment constraints, and every test, coverage,
+     lint, build, or inspection command already run, with timestamps or run
+     order, exit status, and concise output/result.
+   - **Immutable Inputs** — exact absolute paths and repo-relative paths,
+     filenames, artifact IDs, URLs, issue/PR IDs, data snapshots, and commit
+     SHAs that define the work. Include file checksums when a referenced file
+     lives outside the repository or may change independently.
+   - **Current Decisions and Assumptions** — user-stated intent, observed
+     evidence, accepted assumptions, unresolved questions, owners, deadlines,
+     and the precise evidence that should trigger a plan pivot.
+   - **Execution Environment and Tooling** — concrete shell commands for
+     setup, dependency installation, code generation, tests, coverage, linters,
+     formatters, previews, and verification. Commands must be copy-pasteable,
+     include working directories and required environment variables, and name
+     the expected pass/fail signal.
+   - **Step-by-Step Implementation Plan** — ordered phases with exact files to
+     read or edit, the reason each file matters, acceptance criteria per phase,
+     and rollback/stop conditions.
+   - **Dynamic Workflow Script** — when `Workflow` is appropriate, embed either
+     a complete plain-JavaScript Workflow script or an exact durable script path
+     plus its SHA-256 checksum and invocation arguments. The script must be
+     concrete enough for the next agent to run as-is: no placeholders, no
+     hidden context, deterministic inputs, explicit agent types, and validation
+     against `plugins/essential/references/workflow-tool.md`. If `Workflow` is
+     unavailable or inappropriate, include an equivalent sequential command plan
+     instead.
+   Avoid pronouns like "this", "that", "above", or "the current task" unless
+   the noun is named in the same sentence. Prefer absolute paths plus
+   repo-relative paths for handoff-critical files. When the plan must persist,
+   write it to a lowercase `proposals/<plan-slug>.md` child with status `open`;
+   the PM reconciles the lazy `proposals.md` overview. Update the child to
+   `accepted` only after user approval.
 3. **Execute as orchestrator** (when execution is requested). Run a
    multi-phase plan as a `Workflow` — one phase per stage, fanning out to
    subagents where a phase allows — instead of doing the work inline. Act as
@@ -66,8 +97,14 @@ that contract.
 
 - The Goal block stands alone: pasted into a fresh session, it fully states
   the intended outcome.
+- The plan has a **Baseline** section with exact paths, branch, base/HEAD SHAs,
+  dirty status, commands, outcomes, and relevant output.
 - A reader without this session's context could execute the plan — no step
-  depends on unstated knowledge.
+  depends on unstated knowledge or rediscovery of paths, SHAs, filenames,
+  commands, tools, or source artifacts.
+- The plan embeds a complete dynamic Workflow script, or names the durable
+  script path, checksum, and args; if Workflow is not used, it embeds the
+  concrete sequential execution commands.
 - Every residual unknown is accepted and reversible, explicitly deferred with
   an owner and deadline, or blocking; the plan names evidence that requires a
   pivot.
