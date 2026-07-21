@@ -1,17 +1,23 @@
 # Contract pinning for post-review fixes
 
-When fixing a `coding:review-code` finding, pin the identical contract used by
-the alignment review so the rerun produces comparable drift verdicts.
+When fixing a `coding:review-code` finding, pin the identical task contract so
+the rerun produces comparable alignment verdicts.
 
-Resolve in this order:
+1. Run Essential's `validate-engineering-state validate --state <state.md>`.
+2. Require `status: valid`, `plan_source: state.md`, and read `plan_digest`,
+   `hash_kind: engineering-plan-definition-digest-v1`, and the applicable full
+   task IDs from its JSON report.
+3. Treat an explicit `--plan`, review-returned plan identity, or mission-capsule
+   identity as an assertion. Reject any mismatch; none may override state.
+4. Read root state in full and use the review finding plus linked authoritative
+   spec/design as the behavior contract. Follow an explicit
+   `state/implementation-plan.md` link only for procedure keyed by existing
+   task IDs; reject any duplicate or conflicting ID, edge, requiredness,
+   target, or acceptance mapping.
 
-1. Explicit `--plan=<absolute-path>` supplied to both review and fix.
-2. `plan_source` returned by the preceding review.
-3. The plan/lifecycle section of the active work root's `state.md`.
-4. If none exists, record `plan_source: none_found`; the named review finding
-   and linked authoritative spec are the best available contract.
-
-Never discover or confirm a root-level fallback. Read the resolved source in
-full. Send its absolute path plus one-line digest, work ID/root, finding ID, and
-relevant spec/design paths to every fix subtask. Carry `plan_source` unchanged
-into completion and the rerun invocation.
+Never discover a root-level fallback or guess among `state/` children. Send the
+root-state path, digest/hash kind, work ID/root, full task ID, finding ID, and
+relevant spec/design paths to every fix subtask. Carry them unchanged into the
+attempt result and follow-up review invocation. If the plan definition changed,
+return `needs_revalidation` with the validator's downstream invalidation
+closure rather than applying a stale fix.

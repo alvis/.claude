@@ -17,7 +17,7 @@ Catalogue of safe vs risky operations on MDC files, with the invariant checklist
 | Append a child block            | insert child after parent's last existing child       | child indent = parent indent + 2 spaces; add a closing marker if parent gains its first child  |
 | Add a `ref:` to a block         | inject `{{ ref: <id> }}` above an unannotated block   | no blank line between the new annotation and the block                                         |
 | Add an inline annotation        | wrap a span as `[span]{{ … }}`                        | no whitespace between `]` and `{{`                                                              |
-| Update front-matter scalar      | one key in the YAML head                              | preserves indentation of nested YAML mappings                                                   |
+| Update author-owned front-matter scalar | one non-transport key in the YAML head              | preserve indentation; never edit `ref`, `parent`, `last_edited_time`, or another transport-owned key |
 
 ### Risky Operations (CONFIRM with user before applying)
 
@@ -50,6 +50,9 @@ The skill MUST `Read` the modified region after editing and check each item. Fai
    - every marker's indent matches its opening block's indent.
 7. **Escapes intact**: any `\{\{`, `\}\}`, `\[`, `\]`, `\\` outside fenced code blocks is still escaped.
 8. **No accidental fence change**: a triple-backtick line you didn't intend to touch is still a triple-backtick line.
+9. **Transport metadata unchanged**: compare the pre-edit capture of `ref`,
+   `parent`, and `last_edited_time` with the final frontmatter. Local authoring
+   never synthesizes or updates remote revision metadata.
 
 ---
 
@@ -76,7 +79,8 @@ If a single repair fails twice, **stop and report** rather than escalating edits
 ```
 1. Detect mode (edit) and load syntax.md + closing-markers.md + this file.
 2. Grep -n for `ref:\s*<TARGET>` or for the opening line of the block.
-3. Read the file around the match (≥5 lines before, ≥10 after).
+3. Read the file around the match (≥5 lines before, ≥10 after) and capture
+   transport-owned frontmatter before mutation.
 4. Plan the smallest Edit: which old_string, which new_string.
    - If risky per §1, surface the plan to the user first.
 5. Issue the Edit.
@@ -90,17 +94,22 @@ If a single repair fails twice, **stop and report** rather than escalating edits
 
 ## 5. Working in engineering specification roots
 
-Notion-backed MDC may live under the resolved default workspace's
-`.engineering/notion/` mirror or the active workspace's
-`.engineering/work/<work-id>/spec/`. The former is transport state and the
-latter is temporary work state. Sync and completion remain separate operations
-owned by `specification:sync-notion` and `specification:sync-spec`.
+Notion-backed MDC may live at an exact caller-supplied or transport-returned
+mirror path, or in the active work's selected specification materialization.
+The mirror location is a project/user choice rather than a workspace-resolver
+output. Transport and temporary work state remain distinct, and sync and
+completion stay separate operations owned by `specification:sync-notion` and
+`specification:sync-spec`.
 
 Two things require special care:
 
 - The root spec file, identified by frontmatter `ref:` and the materialization
   receipt rather than its filename, MUST remain non-empty.
 - Front-matter `ref:` is the page's Notion ID. Never edit it unless explicitly told to.
+- Front-matter `last_edited_time` is Notion transport's remote revision
+  evidence. Never stamp it with the local clock, even after a body edit. Omit
+  it for an unsynced locally authored page until transport returns a value, and
+  record local edit timing only in the work evidence or receipt.
 
 Never derive or rename a file from its title or `ref:`. MDC paths are owned by
 notion-sync and are not subject to the ordinary Markdown byte gate.

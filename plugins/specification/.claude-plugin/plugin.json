@@ -1,5 +1,6 @@
 {
   "name": "specification",
+  "author": {"name": "Alvis"},
   "dependencies": [
     "coding",
     "essential"

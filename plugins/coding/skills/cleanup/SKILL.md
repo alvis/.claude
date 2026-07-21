@@ -75,7 +75,12 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    - repository retention policy and timestamps for every closure gate.
 
    Read `working.md` first for navigation, then verify all retirement evidence
-   from `state.md` and its exact links. Filesystem modification time is only a
+   from `state.md` and its exact links. Run Essential's
+   `validate-engineering-state validate --state <state.md>` for every candidate
+   and record schema, lifecycle status, canonical plan source/digest/hash kind,
+   status counts, runnable/blocked task IDs, and errors. Exit/status
+   `migration_required` or `invalid` makes the candidate ambiguous and
+   ineligible; cleanup never migrates it. Filesystem modification time is only a
    clue; it never substitutes for lifecycle or receipt timestamps. The same
    work ID in another workspace is a separate local copy and separate target.
 4. **Classify lifecycle independently of cleanup eligibility.**
@@ -83,13 +88,20 @@ empty. Backup metadata lives only in the OS temporary backup tree.
      implementation, or current branch/PR activity.
    - **Interrupted**: unfinished work is paused/blocked/transferred and has a
      continuation receipt or next action.
-   - **Completed**: state explicitly records acceptance and completion with a
-     coherent repository revision. This label alone is not removable.
+   - **Completed**: validated lifecycle state is `complete`, every required
+     executable leaf is `done`, no required leaf is planned/working/failed/
+     blocked, and acceptance plus repository revision are coherent. A prose
+     label or lifecycle field without validator proof is not completion.
    - **Ambiguous**: state is missing/malformed/contradictory, owner or revision
      is unclear, copied state is suspected, or authoritative evidence cannot
      establish one of the prior classes. Preserve it.
 5. **Apply the engineering-work retirement gate.** A completed local work
    directory is `recommend cleanup` only when every condition is evidenced:
+   - Essential validation passes with
+     `hash_kind: engineering-plan-definition-digest-v1`, stored and computed
+     plan digests equal, and every required executable leaf terminal `done`;
+     `cancelled` required scope is acceptable only when the approved current
+     plan definition removed its requiredness;
    - all seven reviews agree with `review.md`; its disposition counts derive to
      zero outstanding findings, so no `open`, `deferred`, or malformed risk
      disposition remains. Every `fixed` finding has verified closing evidence.
@@ -160,6 +172,8 @@ always preserves the directory.
   workspace scope, external receipt anchor, gate evidence, and retention age.
 - No active, interrupted, ambiguous, under-retention, or incomplete-gate work
   is removable.
+- A lifecycle `complete` label cannot override unfinished required tasks,
+  invalid/migration-required state, or plan-digest drift.
 - Every destructive action has explicit approval and verified recovery; the
   post-audit proves retained targets remain.
 - Validate with strict plugin validation and `quick_validate.py`; record known

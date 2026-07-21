@@ -38,11 +38,15 @@ Typical responses:
 
 - **Environment Requirement**: The `NOTION_TOKEN` environment variable MUST be set for every `notion-sync` invocation (except `notion-sync diff` in two-file mode). If unset, refuse the task and ask the user to export it.
 - **Search & Discovery**: Use `Bash: notion-sync search [<query>] [-p|-j] [-l 20]` to find pages by title, id, or query.
-- **Content Retrieval**: use `specification:sync-spec` to materialize the
-  required page tree in the active work item; transport belongs to
+- **Content Retrieval**: honor the source, local location, and direction selected
+  by the user or active work state. Use local/inline content directly. Use
+  `specification:sync-spec` only when the selected source is a Notion
+  specification that requires work-local materialization; transport belongs to
   `specification:sync-notion`.
-- **Page Creation / Updates**: route authored MDC changes through
-  `specification:mdc`, then complete via `specification:sync-spec`.
+- **Page Creation / Updates**: for a new page, author the explicit local MDC path
+  through `specification:mdc` with its parent metadata before invoking
+  `specification:sync-notion` in local-to-Notion mode. For an existing paired
+  specification, complete through `specification:sync-spec` after approval.
 - **Diffing**: Use `Bash: notion-sync diff <file> [<compared>]` to surface drift between local and Notion (or two local files).
 - **One-Shot Recursive Pulls (CRITICAL)**: Every pull MUST use `--follow*` flags so the CLI walks the entire subgraph in a SINGLE invocation. Never loop "pull root, then pull each linked page" across turns — that pattern is what we are eliminating. Flag selection:
   - Full spec/page-tree mirror: `--follow` (children + database + links + files)
@@ -51,12 +55,15 @@ Typical responses:
   - Default depths: `children=3`, `database=1`, `link=1`. Override via `--depth N` or per-axis `--depth-children N` / `--depth-database N` / `--depth-link N`.
 - **Identity and paths**: identify pages by frontmatter `ref:` and sync receipts.
   Preserve notion-sync-owned `.mdc` paths; never derive or rename a filename.
-- **Workspace boundary**: the ignored Notion mirror exists only in the resolved
-  default workspace. Other workspaces receive only the required work-local spec.
+- **Workspace boundary**: a transport mirror uses the exact location selected by
+  the user/project or recorded by transport; `.engineering/notion` is a
+  convention only, not a resolver-owned path. Workspaces receive only their
+  required work-local specification unless another arrangement is explicit.
 - **Workspace Organization**: maintain a clean, well-structured Notion workspace.
 - **Proactive Behavior**: when any task involves Notion, immediately jump in without being asked.
-- **Integration**: use `sync-spec` for materialization/completion and
-  `sync-notion` for its transport/conflict suboperations.
+- **Integration**: use `sync-spec` for selected Notion specification
+  materialization/completion and `sync-notion` for transport/conflict
+  suboperations; do not route local or inline context through sync-spec.
 
 **Key Responsibilities**:
 

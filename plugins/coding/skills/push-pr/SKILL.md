@@ -15,16 +15,16 @@ Publish one saved change or an ordered stack as draft pull requests, then own th
   PR, or ordered stack and monitoring every GitHub check through repair.
 - Do not use for saving work without publication (`coding:commit`), authoring
   PR text only (`coding:write-pr`), reviewing code, merging PRs, or creating a
-  new stack solely by reshaping local history (`coding:stack-code`).
+  new stack solely by reshaping local history (`coding:commit --reorder`).
 - Delegate noisy commands to one small read-only tester before publication and
   one small read-oriented poller after publication, following the repository
   [delegation contract](../../../governance/constitution/references/delegation.md).
 
 <IMPORTANT>
 - Ownership is singular: `coding:commit` owns direct history mutations;
-  `coding:stack-code` orchestrates reshaping/reparenting when a root cause
-  belongs in a lower PR outside the current PR; the core publication phase
-  below owns push, restack, and PR-base mechanics. The parent alone accepts
+  its `--reorder` workflow owns reshaping/reparenting when a root cause belongs
+  in a lower PR outside the current PR; the core publication phase below owns
+  push, restack, and PR-base mechanics. The parent alone accepts
   fixer edits and performs commit, push, and restack mutations; the poller may
   dispatch exactly one scoped fixer when the red branch requires it.
 - `--skip-local-test` skips only local command execution. It never skips CI
@@ -56,10 +56,10 @@ Publish one saved change or an ordered stack as draft pull requests, then own th
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Publication-only runs may proceed
-without creating work artifacts; before any red-CI repair, resolve or mint the
-work ID/root by that contract, read `working.md` then `state.md`, and give every
-fixer only the relevant linked contract/evidence paths. Fixers never write
-PM-owned `working.md` or reconcile overview files.
+without creating work artifacts; before any red-CI repair, run the resolver,
+ask only on `work_id_required`, and use the resolved work root. Give each fixer
+a mission capsule with only the relevant contract/evidence paths. Fixers never
+write PM-owned pointers or overview files.
 
 ## Workflow
 

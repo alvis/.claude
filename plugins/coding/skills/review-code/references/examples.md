@@ -24,8 +24,9 @@ Load only the example matching the invocation.
 ```
 
 ```bash
-/review-code "HEAD~3..HEAD" --area=alignment --plan=/absolute/approved-plan.md --work-id=auth-refresh
-# Pins an explicit external plan instead of the plan in state.md.
+/review-code "HEAD~3..HEAD" --area=alignment --plan=/repo/.engineering/work/auth-refresh/state.md --work-id=auth-refresh
+# Asserts canonical root state.md; a mismatch is rejected rather than
+# promoting an implementation-detail or root planning file to authority.
 ```
 
 Clean output reports `pass` in the selected area and `review.md`. Findings use

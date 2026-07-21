@@ -39,11 +39,12 @@ production stubs belong to `coding:complete-code`.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the workspace-local work root
-and artifact paths before drafting. When delegated, read `working.md` first,
-then `state.md` and only its relevant linked design/spec files; never write
-PM-owned `working.md` or reconcile overview files.
-A direct PM run resolves or mints the work ID by the contract; a delegated run
-requires the explicit work ID/root.
+and artifact paths before drafting. When delegated, start from the mission
+capsule's exact work root and relevant design/spec files. Read `working.md`
+only when navigation is missing, and `state.md` only for resume, cross-slice
+dependency, or alignment work. Never write PM-owned pointers or overviews.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
 
 Apply these constitution standards while drafting:
 
@@ -60,11 +61,11 @@ Apply these constitution standards while drafting:
 ## Workflow
 
 1. Parse the instruction into required types, interfaces, functions, and file
-   structure. Read work-local `working.md`, `state.md`, relevant children under
-   `design/`, materialized `spec/`, and durable `docs/architecture/`,
-   `docs/design/`, and `docs/specs/` paths linked from state. Read neighboring
-   modules for established patterns. Do not scan unrelated Markdown or fall
-   back to root continuation/design files.
+   structure. Read only the work-local design/spec children and durable
+   architecture/design/spec paths named by the caller or mission capsule. For
+   a direct or resume run, use `working.md` and `state.md` to discover those
+   paths. Read neighboring modules for established patterns. Do not scan
+   unrelated Markdown or fall back to root continuation/design files.
 2. Plan the structure before writing: file organization, type hierarchy, and
    test layout per the standards above.
 3. Draft type definitions (interfaces, type aliases, enums) and function stubs

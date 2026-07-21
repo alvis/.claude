@@ -2,9 +2,8 @@
 name: review-code
 description: Review alignment, semantic correctness, security, test intent, documentation, quality, and style after code changes. Use for explicit post-implementation or pre-merge review; write canonical work-local review artifacts without editing the reviewed code.
 model: opus
-context: fork
 allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, Write, Edit
-argument-hint: "[specifier] [--area=alignment|correctness|security|quality|testing|docs|style|all] [--work-id=<id>] [--explain]"
+argument-hint: "[specifier] [--area=alignment|correctness|security|quality|testing|docs|style|all] [--work-id=<id>] [--plan=<path>] [--explain]"
 ---
 
 # Review Code
@@ -26,7 +25,7 @@ areas beneath the active engineering work root. Remediation belongs to
 
 - Optional specifier: file, directory, glob, package, PR, or git range.
 - Optional `--area` canonical area list (default `all`), `--work-id`,
-  `--plan=<path>` for an explicitly pinned external plan contract, and
+  `--plan=<path>` only as an assertion of the active root `state.md`, and
   `--explain` for a work-local change-comprehension child.
 - Require a repository checkout and an active or explicit work ID.
 
@@ -35,11 +34,17 @@ areas beneath the active engineering work root. Remediation belongs to
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the work root before review.
-Read `working.md` first, then `state.md`, its linked plan/spec/design/review
-paths, and the selected source. Never write PM-owned `working.md` or the four
-work overview files.
-A direct PM run resolves or mints the work ID by the contract; a delegated run
-requires the explicit work ID/root.
+Run Essential's resolver with `--work-id` only for an explicit override; accept
+its deterministic match and ask only on `work_id_required`. A coordinator run
+may use `working.md` and `state.md` to locate the plan/spec/design/review paths.
+A nested run starts from its mission capsule and reads broad work memory only
+for resume or cross-slice alignment. Never write work pointers or overviews.
+Run `validate-engineering-state validate --state <state.md>` before dispatch.
+Require `status: valid`, `plan_source: state.md`, and retain the exact `plan_digest`,
+`hash_kind: engineering-plan-definition-digest-v1`, and applicable full task
+IDs (`task_id`). Reject migration-required or invalid state. An explicit `--plan` or
+delegated plan identity must match the report; never override or guess the
+canonical pointer from directory contents.
 
 ## Output contract
 
@@ -65,7 +70,8 @@ requires the explicit work ID/root.
   accountable owner, and explicit recheck condition; P0/P1 also require
   explicit risk-acceptance authority and durable evidence. `open`, `deferred`,
   and malformed risk dispositions remain outstanding and block review closure.
-- `review.md` is rewritten from area files and contains overall status, all five
+- The coordinator-lease holder rewrites `review.md` from every existing area
+  file after writers finish. It contains overall status, all five
   disposition counts, derived `closed` and `outstanding` counts, priority
   counts for outstanding findings, one-line area headlines, paths, systemic
   patterns, and PM handback—not duplicated findings.
@@ -79,28 +85,37 @@ requires the explicit work ID/root.
 
 1. Resolve the specifier and per-area file lists through
    [references/specifier-resolution.md](references/specifier-resolution.md).
-   Use state as the default plan contract; an explicit `--plan` wins. Never
-   auto-adopt root planning/design files.
+   Use root `state.md` as the only plan definition. An explicit `--plan` must
+   resolve to that file. Follow only its explicit implementation-detail link,
+   which may add ID-keyed procedure but cannot redefine IDs, edges,
+   requiredness, targets, or acceptance mappings. Never auto-adopt another
+   planning/design file.
 2. Run the mandatory mechanical candidate scan described in
    [references/dispatch.md](references/dispatch.md). Candidates are advisory.
 3. Dispatch one read-only reviewer per selected area in one parallel batch,
    following [references/dispatch.md](references/dispatch.md) and
-   [references/mandates.md](references/mandates.md). Each writes only its
+   [references/mandates.md](references/mandates.md). Pass the canonical plan
+   source/digest/hash kind and applicable full task IDs. Each writes only its
    assigned lowercase area file and returns path, counts, context level, and
    `generated_files`.
-4. Validate every expected file, reject malformed disposition metadata, and
-   aggregate current dispositions/priorities.
-   Rewrite `review.md` entirely. Derive outstanding findings as `open`,
+4. Re-run state validation before aggregation and reject plan-definition
+   drift. Validate every expected selected file, then aggregate every existing
+   canonical area so a partial rerun cannot hide unselected findings; reject
+   malformed disposition metadata. Derive outstanding findings as `open`,
    `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as
    verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is
    `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is
    `pass_with_suggestions`; zero outstanding findings is `pass`. Every
    outstanding finding blocks review closure regardless of displayed verdict.
+   If this invocation was explicitly granted the coordinator lease, rewrite
+   `review.md` entirely; otherwise return the complete roll-up delta to its
+   holder without writing the summary.
 5. With `--explain`, generate the evidence-backed change child after review.
 6. Render the final summary through
    [references/output-formats.md](references/output-formats.md). On malformed
    output, redispatch only the owning area until valid or blocked.
-7. Return all area, summary, and optional explainer paths in `generated_files`.
+7. Return all changed area and optional explainer paths in `generated_files`;
+   include `review.md` only when this invocation held the lease and wrote it.
 Do not run file sizing; after every artifact writer returns, the PM checks only
 eligible work Markdown inside the target `.engineering/` and coordinates a
 complete split round if required.
@@ -109,13 +124,18 @@ complete split round if required.
 
 - Every selected area file exists, is lowercase, matches the template, and
   contains only its owned findings.
-- `review.md` matches all area disposition/priority counts and paths.
+- The written `review.md`, or returned roll-up delta, matches every existing
+  area file's disposition/priority counts and paths.
 - Alignment used the identical pinned state/plan/spec contract expected by any
-  follow-up fix; no root fallback was selected.
+  follow-up fix; no root fallback was selected. The result binds the exact
+  `reviewed_plan_digest` and
+  `plan_hash_kind: engineering-plan-definition-digest-v1`.
 - Reviewed code was not modified.
 
 ## Completion
 
 Report area verdicts, aggregate priorities/dispositions, overall status,
-`review.md`, optional explainer child, pinned plan source, and
-`generated_files`. Detailed findings remain in area files.
+`review.md` as `written` or `reconciliation_returned`, optional explainer
+child, `plan_source: state.md`, plan digest/hash kind, reviewed task IDs, and
+`generated_files`. Detailed findings remain in
+area files.

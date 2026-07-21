@@ -1,10 +1,9 @@
 ---
 name: review-implementation
-description: Review implementation against an authoritative work-local or Notion specification, coordinate the seven canonical review areas, and summarize dispositions in the active work item. Use for alignment, ticket validation, omissions, drift, and unsanctioned behavior.
+description: Review implementation against an authoritative local, inline-origin, or Notion specification, coordinate the seven canonical review areas, and summarize dispositions in the active work item. Use for alignment, ticket validation, omissions, drift, and unsanctioned behavior.
 model: opus
-context: fork
 allowed-tools: Task, Read, Write, Edit, Grep, Glob, Bash, WebSearch, AskUserQuestion, TodoWrite, Skill
-argument-hint: "[specifier] --work-id=<id> [--area=alignment|correctness|security|quality|testing|docs|style|all]"
+argument-hint: "[specifier] [--work-id=<id>] [--plan-source=<path>] [--plan-digest=<64-lowercase-hex>] [--transport-root=<dir>] [--transport-profile=<absolute-file>] [--area=alignment|correctness|security|quality|testing|docs|style|all]"
 ---
 
 # Review Implementation
@@ -15,8 +14,11 @@ review artifacts and one disposition summary.
 
 ## Boundaries
 
-- Require a verified work-local specification or invoke `sync-spec` to
-  materialize one. Identify sources by receipt/frontmatter ref, not filename.
+- Require a verified authoritative specification and dual-hash provenance.
+  Local and inline-origin carriers resolve through their durable receipt;
+  invoke `sync-spec` to materialize only a selected Notion source. Identify
+  Notion sources by receipt/frontmatter ref, not filename. A reachable `repo:`
+  source remains authoritative even when the caller passes its derived carrier.
 - `alignment.md` owns contract conformance. `correctness.md` owns semantic bugs
   that are wrong independently of the specification. The other areas are
   `security.md`, `quality.md`, `testing.md`, `docs.md`, and `style.md`.
@@ -24,23 +26,69 @@ review artifacts and one disposition summary.
   files, or duplicate a finding across areas. Contract/completeness audit gaps
   route to alignment; plan departures stay in work state/changes.
 - Review remains read-only with respect to implementation and MDC.
+- Each reviewer writes only its assigned `reviews/<area>.md`. The
+  PM/coordinator alone reconciles `review.md` after all area writers return.
 
 ## Inputs and outputs
 
-Require `--work-id=<id>`. Resolve output to
-`.engineering/work/<work-id>/reviews/` and summary to sibling `review.md`.
-`--area=all` is default; alignment-only still runs mandatory correctness and
+For a direct run, run Essential's workspace resolver with `--work-id` only for
+an explicit user override and accept its deterministic environment,
+Git-branch/jj-workspace, or sole-existing-work match. Ask only when it returns
+`work_id_required`, using its returned candidates. A delegated run receives the
+explicit id/root. Resolve area output under the active work's `reviews/`;
+`--area=all` is default. Alignment-only still runs mandatory correctness and
 security coverage through `coding:review-code`.
+For a Notion source that may require materialization, accept the exact transport
+root plus explicit absolute `--transport-profile` file, or resolve one
+destination-local file from an active-state mapping containing logical name and
+last verified exact-byte SHA-256. Never infer its location from that name/root.
+Root `state.md` is authoritative and must report `plan_source: state.md` with
+its `plan_digest` and hash kind. Optional values passed by a lifecycle parent
+are assertions that must match it, not overrides. An explicit detail link may
+be followed for ID-keyed implementation procedure, never for task definitions.
 
 ## Workflow
 
 1. Before creating or materially rewriting a project artifact, read the
    absolute `engineering-work.md` path injected by Essential. If unavailable,
-   stop artifact writes and report the missing contract. Resolve work/review
-   roots and read `working.md`, `state.md`, and the spec receipt.
-2. For a Notion URL/id or stale/missing receipt, invoke `Skill(sync-spec)` in
-   `materialize` mode. Refuse without writing partial reports when no verified
-   authoritative specification can be materialized.
+   stop artifact writes and report the missing contract. Use the workspace
+   resolver result for work/review roots and read only the exact state/spec
+   pointers needed for alignment. Run Essential's
+   `validate-engineering-state validate --state <state.md>`. Continue only on
+   `status: valid` and `plan_source: state.md`; retain its canonical `plan_source`, `plan_digest`,
+   `hash_kind: engineering-plan-definition-digest-v1`, and task graphs. Reject
+   `migration_required`, an invalid graph, or any caller-supplied plan identity
+   that differs from the report. Follow only root state's explicit
+   implementation-detail link and reject any duplicate/contradictory task IDs,
+   edges, requiredness, targets, or acceptance mappings there. Never guess
+   between directory children or a root planning file.
+2. Resolve the selected source, durable carrier, and provenance before review.
+   Load `sync-spec/references/hash-model.md`, construct its strict ignored input
+   manifest from the preserved logical ids, and run only the bundled
+   `sync-spec/scripts/spec-hashes.py --kind both` helper. For a reachable
+   `repo:` local source, recompute source and carrier dual hashes, require both
+   exact hashes to match provenance and both semantic `contract_digest` values
+   to equal the approved digest, and use the content-derived Git blob oid as
+   optional revision evidence. Missing/moved source, source drift, stale
+   provenance, or carrier drift returns `ready_for_specification`; never review
+   whichever copy happened to be passed. For `local-approved:` or
+   `inline-approved:` provenance, rehash the sole authoritative durable carrier
+   without requiring the ignored origin. For a Notion URL/id whose verified
+   materialization receipt is stale or missing, invoke `Skill(sync-spec)` in
+   `materialize` mode with the selected transport root and explicit
+   `--transport-profile=<absolute-file>`; the child revalidates the selected
+   file. Continue only on `status: success` with `next_action: none`; a
+   `remote_only` or `structural_change` classification with
+   `next_action: revalidate` returns `needs_revalidation` before dispatch.
+   Refuse without partial reports when no authoritative specification can be
+   resolved. Require helper output
+   `hash_model: specification-dual-hash-v1`; set `reviewed_spec_hash` to its
+   semantic `contract_digest`, set
+   `hash_kind: semantic_contract_digest_v1`, and retain the paired exact
+   `transport_manifest_hash`. Pass the digest and hash kind to every reviewer;
+   also pass the canonical plan source/digest/hash kind and applicable full
+   task IDs. Never combine findings produced against different specification
+   or plan-definition digests.
 3. Resolve implementation scope with `coding:review-code` semantics. Enumerate
    requirements, invariants, schemas, acceptance criteria, and non-functional
    posture. Trace spec-to-code for omission/drift and code-to-spec for
@@ -48,32 +96,62 @@ security coverage through `coding:review-code`.
 4. Adversarially refute each candidate and retain only survivors. Every
    alignment finding cites both spec and implementation locations and uses
    stable `ALIGN-P<n>-<seq>` identity across reruns.
-5. Invoke `Skill(coding:review-code)` for requested non-alignment areas,
-   including correctness and security on every run. Pass the work-local reviews
-   directory and state that spec conformance belongs only in `alignment.md`.
+5. Load every existing canonical area artifact into the reconciliation view,
+   preserving its latest evidence and verdict even when that area is not
+   selected on this run. Invoke `Skill(coding:review-code)` for requested
+   non-alignment areas, including correctness and security on every run. Pass
+   the work id, canonical plan identity, applicable full task IDs, and exact
+   assigned area paths—not an output override—and state
+   that spec conformance belongs only in `alignment.md`. Each area writer
+   returns counts/deltas.
 6. Reconcile alignment findings with the user: update spec, update code,
-   acknowledge/waive, defer, or skip with required closure metadata. Apply the lifecycle in
-   [references/deviation-lifecycle.md](references/deviation-lifecycle.md).
+   acknowledge/waive, defer, or skip with required closure metadata. Apply the
+   lifecycle in [references/deviation-lifecycle.md](references/deviation-lifecycle.md).
    A decision does not clear a gap until its action lands, except valid
    acknowledgement/skip risk acceptance. P0/P1 risk acceptance requires
    explicit authority and durable evidence.
-7. Rewrite `alignment.md` coherently and generate `review.md` with per-area
-   verdict/count, finding disposition (`open`, `fixed`, `acknowledged`,
-   `deferred`, `skipped`), and next-action pointers. Never copy full findings
-   into the summary.
-8. Run one read-only structural validator, fix once, and revalidate. Return
-explicit final paths generated or materially rewritten as `generated_files`.
-Do not run file sizing; the PM checks only eligible work Markdown inside the
-target `.engineering/`.
+7. Rewrite only the assigned `alignment.md` coherently. Aggregate preserved
+   existing area results with current-run deltas. Return each executed area's
+   canonical `pass|pass_with_suggestions|requires_changes|fail` verdict, count,
+   finding-disposition (`open`, `fixed`, `acknowledged`, `deferred`, `skipped`)
+   deltas, and next-action pointers to the PM/coordinator. Use `not_run` only
+   when an area has no existing or current execution evidence; it is not a
+   finding disposition. Never write `review.md` or copy full findings into the
+   handoff.
+8. Re-run the complete Step 2 source/carrier authority and bundled dual-hash
+   check, plus the Essential state validation from Step 1, immediately before
+   finalization. Source/provenance/carrier drift returns
+   `ready_for_specification`; a changed semantic digest, plan definition, or
+   plan digest returns `needs_revalidation`. In either case discard the stale roll-up and do not
+   emit a clean verdict. Only a sync-spec `classification: metadata_only` that
+   passed its unit-by-unit restriction may update paired exact evidence without
+   invalidating findings; `structural_change` invalidates them even when
+   `contract_digest` is unchanged. Run one read-only structural validator, fix
+   once, and revalidate.
+   Return explicit final paths generated or materially rewritten as
+   `generated_files`.
+   Do not run file sizing; the PM checks only eligible work Markdown inside the
+   target `.engineering/`.
 
 ## Verification
 
-- All seven canonical areas are present or have an explicit skipped/refused
-  reason in `review.md`; correctness and security evidence always exist.
+- All seven canonical areas appear in the reconciliation payload. An area with
+  no existing or current execution evidence is `not_run`; it is never encoded
+  as skipped/refused. Correctness and security have current-run evidence and
+  therefore can never be `not_run` on a completed review.
 - Findings are single-owned, source-cited, adversarially checked, and their
   dispositions/counts agree between detail and summary.
 - Stable IDs and prior reconciliation survive reruns; only closed gaps clear.
-- `generated_files` lists `review.md` and every changed area artifact.
+- A clean disposition is bound to `reviewed_spec_hash` with
+  `hash_kind: semantic_contract_digest_v1`; it equals the bundled helper's
+  current `contract_digest`. Specification changes invalidate it even when
+  implementation bytes are unchanged, while the paired
+  `transport_manifest_hash` remains exact integrity evidence only.
+- A clean disposition is also bound to `reviewed_plan_digest` with
+  `plan_hash_kind: engineering-plan-definition-digest-v1`. Status, owner, and
+  evidence updates retain it; plan-definition changes invalidate it.
+- `generated_files` lists every changed area artifact; the separate PM
+  reconciliation payload names the roll-up delta without claiming it was written.
 
 ## Alignment contract
 
@@ -88,15 +166,27 @@ is P2/P3. Keep independently wrong behavior in `correctness.md`.
 <report>
 
 ```yaml
-status: success|partial|refused
+status: success|partial|ready_for_specification|needs_revalidation|refused
 work_id: '<id>'
 specifier: '<target>'
 spec_root: '<absolute path>'
-areas: {alignment: pass, correctness: pass, security: pass, quality: pass, testing: pass, docs: pass, style: pass}
+hash_model: specification-dual-hash-v1
+transport_manifest_hash: 'sha256:<64-lowercase-hex>'
+contract_digest: 'sha256:<64-lowercase-hex>'
+reviewed_spec_hash: 'sha256:<same contract_digest>'
+hash_kind: semantic_contract_digest_v1
+plan_source: state.md
+plan_digest: '<64-lowercase-hex>'
+reviewed_plan_digest: '<same bare plan_digest>'
+plan_hash_kind: engineering-plan-definition-digest-v1
+reviewed_task_ids: []
+transport_profile: {profile_file: '<absolute destination-local path or null>', profile_file_sha256: '<sha256 or null>'}
+areas: {alignment: pass, correctness: pass, security: pass, quality: not_run, testing: not_run, docs: not_run, style: not_run}
 dispositions: {open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0}
 closure: {closed: 0, outstanding: 0}
+review_reconciliation: {summary_written: false, owner: pm}
 generated_files: []
-next_action: execute|handover|defer
+next_action: execute|revalidate|handover|defer
 ```
 
 </report>

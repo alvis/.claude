@@ -1,55 +1,82 @@
-# Sync Mode Execution Branches — Step 3
+# Sync mode execution
 
-Load this reference during **Step 3 (Execute Sync Operations)** in `SKILL.md`. It contains the mode-specific execution recipes the sync subagent must follow based on the active `sync_mode`. Pick exactly one of the three branches below per pair.
+Choose exactly one branch per declared pair. Use the pinned `notion-sync`
+version's real help/output; never invent flags. Recursive operations use its
+supported follow flags in one invocation, and every returned relative path is
+preserved.
 
-All branches delegate transport to the `notion-sync` CLI. **Never iterate
-per-page across tool-call turns** — use recursive `--follow*` flags so the CLI
-walks the requested subgraph in one invocation. Preserve every path returned
-by the CLI; never derive a filename from a page title or id.
+## `local-to-notion`
 
-## For sync_mode = 'local-to-notion'
+1. Pull the current remote page into unique staging with the validated
+   recursive-pull vector/output contract and record stable identity,
+   revision/hash, and recursive coverage. For `CREATE_NEW`, use the validated
+   search output to prove no acceptable ref exists and validate explicit
+   `parent:` instead; a failed or ambiguous search is not absence.
+2. Compute and present a structured local-versus-fresh-remote diff. Freeze the
+   reviewed local hash; a changed local file invalidates the review. Do not
+   push merely because the direction says local-to-Notion.
+3. Require the caller's exact-hash approval gate. For an existing page,
+   immediately re-fetch/re-diff remote state and abort/restart if its identity,
+   revision, or hash differs from Step 1. Use only the independently proven
+   `conditional_update` vector.
 
-1. **Push to Notion** (single CLI call):
-   - `Bash: notion-sync push <file_path>`
-     - Uses the file's frontmatter `ref:` to update the existing page.
-     - For `CREATE_NEW` pairs, ensure the file has `parent: <database-or-page-id>` in frontmatter; the CLI creates the page and writes the resulting `ref:` back to the source file.
-     - Add `--follow` when the local file references other declared local files
-       that also need pushing in one operation.
-2. **Record Sync Result**:
-   - Sync direction: `local→notion`
-   - Sync timestamp: current ISO timestamp
-   - Notion URL: read from the (now-updated) file frontmatter `ref:`
+   For `CREATE_NEW`, repeat the validated absence/parent checks. Use only an
+   independently proven `conditional_create` vector with the stable creation
+   key; conditional-update support is irrelevant.
 
-## For sync_mode = 'notion-to-local'
+   If the verified profile declares the operation's conditional capability
+   `unavailable`, return `status: refused`, preserve the already observed B/L/R
+   `classification`, set `next_action: provide_conditional_transport`, and
+   perform no remote or canonical-local mutation. An invalid or mismatched
+   profile instead remains `transport_unverified`. Approval or another read
+   cannot substitute for the missing atomic precondition.
+   For a selected set, complete this capability preflight for every pair before
+   invoking any mutation; one unavailable requirement refuses the whole set
+   without hiding the per-pair classifications.
+4. Invoke the frozen `conditional_update` vector exactly once for a fully
+   approved existing pair (or one separately conformance-proven atomic
+   recursive conditional update for its frozen selected set). Invoke the
+   frozen `conditional_create` vector exactly once for `CREATE_NEW`, using the
+   staged candidate rather than the canonical authored file. Never invoke an
+   unguarded core push/create vector separately. Require the conformance-bound
+   output contract and read the new canonical `ref` only from validated create
+   output; never predict it or assume push performs creation.
+5. Independently pull to verification staging and require exact expected
+   identity/body/relationships. Only then may the caller advance canonical
+   transport/base receipts.
 
-1. **Pull from Notion** (single recursive CLI call):
-   - `Bash: notion-sync pull <ref> --follow --out <staging-dir>`
-     - `<ref>` = the resolved Notion URL or 32-hex id from Step 1.
-     - One recursive call walks the page + its direct references; do **not** loop and pull each linked page across separate turns.
-     - Verify the staged root by frontmatter `ref:` and the CLI report, then
-       replace the declared output set. Specification transport files must be
-       `.mdc`; returned relative paths stay unchanged.
-2. **Record Sync Result**:
-   - Sync direction: `notion→local`
-   - Sync timestamp: current ISO timestamp
+## `notion-to-local`
 
-## For sync_mode = 'two-way-merge'
+1. Pull once into a unique sibling staging directory with the pinned CLI's
+   recursive options.
+2. Verify the requested root by `ref:`, returned relationships, completeness,
+   path containment, metadata, and content manifests. Specification transport
+   must remain `.mdc`.
+3. If the caller requested staging-only, return R and its manifest without
+   changing the declared local root. Otherwise require the caller's base/local
+   decision to permit replacement, retain rollback bytes, atomically promote
+   the complete staged set, verify it, and restore rollback on failure.
 
-1. **Get Resolved Content**:
-   - Step 2 produced explicit decisions and a merged content proposal. Apply
-     authored `.mdc` content only through `Skill(mdc)`; do not use direct
-     `Write`/`Edit` on an MDC body.
-2. **Push merged state to Notion** (single CLI call):
-   - `Bash: notion-sync push <file_path>`
-     - Uses frontmatter `ref:` (existing page) or `parent:` (CREATE_NEW). For CREATE_NEW, the CLI writes back the new `ref:`.
-     - Add `--follow` if other locally-modified files in the merge set also need pushing.
-3. **Record Sync Result**:
-   - Sync direction: `merged→both`
-   - Sync timestamp: current ISO timestamp
-   - Notion URL: read from the file frontmatter `ref:` after push.
+## `two-way-merge`
 
-**Handle Skipped Conflicts** (only for two-way-merge):
-- If the merged local file contains TODO markers for skipped conflicts:
-  - Document these in sync notes
-  - Mark sync as `partial` success
-  - User must manually resolve later
+1. Accept only a fully resolved staged proposal from
+   `two-way-merge.md`, including B/L/R evidence, final hash, and stage-specific
+   approval/review for that exact hash.
+2. If any conflict is skipped, unresolved, failed, or changed after approval,
+   return `partial` and do not edit canonical local/mirror bytes or push. Never
+   insert a TODO as a merge substitute.
+3. Apply an approved `.mdc` proposal only through `Skill(mdc)` in a staged
+   transport copy. Re-hash it and require the approved hash still matches.
+4. Re-fetch/re-diff the remote revision immediately before push. Abort/restart
+   on change and require proven conditional-update support. Merge never creates
+   a page, so conditional-create evidence is not a substitute here. If
+   conditional update is unavailable, return the fail-closed refusal described
+   above without applying the staged proposal to canonical local state.
+5. Push once, verification-pull, and require exact merged identity/body before
+   canonical promotion or a new receipt.
+
+For every branch, retry is allowed only when evidence proves the failed attempt
+made no remote mutation. A possible, unknown, or partial remote write stops
+`partial` with exact recovery evidence and requires a fresh reconciliation;
+never retry from ambiguous remote state. Never label a multi-page operation
+atomic unless the pinned transport actually proves that guarantee.

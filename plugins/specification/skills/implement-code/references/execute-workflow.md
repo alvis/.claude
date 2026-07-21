@@ -7,39 +7,65 @@ history.
 ## Shared dispatch contract
 
 Each child receives absolute repository/work paths, exact specification refs
-and headings, one plan slice, acceptance criteria, deviation policy, and the
-Essential output-manifest rule. Coding agents treat work-spec MDC as read-only.
+and headings, one full executable `task_id`, canonical `plan_source`,
+`plan_digest`, `hash_kind: engineering-plan-definition-digest-v1`, acceptance
+criteria, deviation policy, and the Essential output-manifest rule. Coding
+agents treat work-spec MDC as read-only.
 Architectural uncertainty returns `pending_decision`; only the orchestrator may
-ask and route the answer through `specification:mdc`.
+ask and route the answer through the selected source owner. Use
+`specification:mdc` only for the selected Notion-backed path.
+Every code-producing child receives `--defer-publication`. It may create a
+slice-local commit through `coding:commit`, but must not pass `--create-pr`, run
+`coding:push-pr`, restack, or otherwise publish before the parent review/sync
+gate.
 
 ## Workflow mechanism
 
-1. Slice planned execution by linked implementation-plan slice, iteration by
-   pending-work/test cluster, and audit completion by independently fixable gap.
-2. Fan out independent slices. Each runs its mode-appropriate Coding writer,
-   review/fix loop (maximum three), then `coding:commit` on success.
-3. Give each landed slice to an independent adversarial verifier. Accept only
+1. Run Essential's state validator and use only its
+   `runnable_leaf_task_ids`. Parent tasks are roll-ups. All parent predecessors
+   and sibling dependencies must be done; table order is never scheduling
+   authority.
+2. Fan out ready leaves whose write scopes do not conflict. Each runs its mode-appropriate Coding writer
+   with deferred publication, its bounded slice review/fix loop (maximum three),
+   then local-only `coding:commit` on success.
+3. Give each landed task to an independent adversarial verifier. Accept only
    when no verifier can refute its cited requirement/criterion.
-4. Requeue refuted slices with evidence. Stop on a decision or iteration/token
-   guard; never silently downgrade or continue stale work.
+4. Reconcile child results by exact task ID, never completion order. Require the
+   unchanged plan digest, `pass|fail|partial` attempt outcome, evidence,
+   generated files, and requested status delta. Requeue a refuted task with
+   evidence. For a failed leaf, the coordinator marks every downstream
+   executable leaf `! blocked` with an `unblock:` action tied to that failure's
+   retry/disposition; independent branches retain their current/runnable state.
+   Rerun Essential validation before each dispatch
+   wave. Stop on a decision or iteration/token guard; never silently downgrade
+   or continue stale work.
 
 ```yaml
-verified_slices: []
+plan_source: state.md
+plan_digest: ''
+hash_kind: engineering-plan-definition-digest-v1
+verified_task_ids: []
 pending_decisions:
-  - {slice_id: '', spec_loc: '', question: '', options: [], rationale: ''}
-commits_landed: [{sha: '', message: ''}]
-child_dispatch_log: [{skill: '', status: pass|fail|partial, summary: ''}]
+  - {task_id: '', spec_loc: '', question: '', options: [], rationale: ''}
+local_commits: [{sha: '', message: '', published: false}]
+child_dispatch_log: [{task_id: '', skill: '', attempt: pass|fail|partial, requested_status: planned|working|done|failed|blocked|cancelled, evidence: [], summary: ''}]
+invalidated_downstream_closure: []
 generated_files: []
 departures: []
 unresolved: []
 ```
 
-On a pending decision, record the answer through `mdc`, update the work receipt
-hash, and resume the same run so completed slices remain cached.
+On a pending decision, record the answer through the selected source owner
+(`mdc` only for a Notion-backed path), update the work receipt hash, and resume
+the same run so completed tasks remain cached when both specification and plan
+definition digests are unchanged.
+
+The parent owns the full alignment/general/security review, usage trace,
+Notion completion/revalidation loop, and only then final history/publication.
 
 ## Sequential mechanism
 
 Run the selected chain from `modes.md` in the live session. Apply the same
-decision stop, deviation reporting, three-pass review bound, and manifest
-collection. Do not create root plan/deviation artifacts or write PM-owned
-overview/state files.
+decision stop, deferred-publication rule, deviation reporting, three-pass slice
+review bound, and manifest collection. Do not create root plan/deviation
+artifacts, write PM-owned overview/state files, or invoke a publication path.

@@ -1,9 +1,9 @@
 ---
 name: update-screen-design
-description: Update explicitly selected responsive screen-design contracts from notion-derived work context, preserving identity and approved content while recording temporary work design and promoting durable versioned design. Require a selector or --all; route missing pages to create-screen-design.
+description: Update explicitly selected responsive screen-design contracts from user-selected product and specification context, preserving identity and approved content while recording temporary work design and promoting durable versioned design. Require a selector or --all; route missing pages to create-screen-design.
 model: opus
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion
-argument-hint: "--work-id=<id> [--product=<name>] [--screens=<selector>] [--changes=<request>] [--all]"
+argument-hint: "[--work-id=<id>] [--product=<name>] [--screens=<selector>] [--changes=<request>] [--context=<path-or-ref>] [--context-direction=<direction>] [--transport-root=<dir>] [--all]"
 ---
 
 # Update Screen Design
@@ -13,14 +13,19 @@ temporary work reasoning, and durable design documentation.
 
 ## Boundaries and inputs
 
-- Require `--work-id=<id>` and an explicit bounded selector/product or `--all`;
-  omission never means all. Missing pages route to create.
+- Require an explicit bounded selector/product or `--all`; omission never means
+  all. Missing pages route to create. For a direct run, run Essential's
+  workspace resolver with `--work-id` only for an explicit user override and
+  accept its deterministic environment, Git-branch/jj-workspace, or
+  sole-existing-work match. Ask only on `work_id_required`, using the returned
+  candidates; a delegated run receives the explicit id/root.
 - Preserve approved content, alternatives, relations, attachments, links,
   responsive/accessibility decisions, and stable Notion identity.
 - Temporary detail belongs under the active work's `design/` with PM-owned
   `design.md`; durable detail belongs under `docs/design/`. Never create a root
   design artifact or edit the canonical template.
-- MDC is notion-sync-owned and authorable only through `specification:mdc`.
+- MDC is transport-owned and authorable only through the user/project-selected
+  MDC-aware mechanism.
 
 Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f2`,
 `110161382ea64eefa46a4907574d4530`, and
@@ -30,12 +35,16 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
 
 1. Before creating or materially rewriting a project artifact, read the
    absolute `engineering-work.md` path injected by Essential. If unavailable,
-   stop artifact writes and report the missing contract. Resolve work/default
-   roots; read `working.md`, then `state.md`, then referenced spec/design paths.
-2. Materialize required product/spec context through `specification:sync-spec`.
-   Pull the canonical template and selected screen tree through
-   `specification:sync-notion` into the default-workspace mirror. Preserve
-   returned `.mdc` paths and identify pages by `ref:`, never filenames.
+   stop artifact writes and report the missing contract. Use the workspace
+   resolver result as the active work root. Read only the work pointers and
+   spec/design sources required for the selected screens.
+2. Materialize required product/spec context from the source, location, and
+   direction supplied by the user or active work state. Use local or inline
+   context directly. For a remote source, use the Notion transport/MDC mechanism
+   selected by the user or project. Never assume a synchronization skill, a
+   default mirror, or a fixed transport directory. Pull the canonical template
+   and selected screen tree into the explicitly selected transport root,
+   preserve returned `.mdc` paths, and identify pages by `ref:`, never filename.
 3. Resolve and record the exact selection before mutation. Map each ref to
    product relation, requested change, source revision/hash, and existing
    durable design path. Block missing/duplicate identity or incomplete pulls.
@@ -44,10 +53,10 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
    retaining substantive content; present material alternatives/decisions for
    approval. Return index/status rows to the PM rather than editing
    `design.md`/`state.md`.
-5. Apply approved Notion body edits through `specification:mdc`, then delegate
-   diff, push/conflict handling, and verification pull to
-   `specification:sync-notion`. Stop the batch on auth/conflict/identity or
-   uncertain remote state; never retry blindly.
+5. Apply approved Notion body edits through the selected MDC-aware mechanism,
+   then use the selected transport for diff, push/conflict handling, and a
+   verification pull into an explicit location. Stop the batch on auth,
+   conflict, identity, or uncertain remote state; never retry blindly.
 6. Regenerate the approved durable `docs/design/<slug>.md` derivation with
    stable Notion ids, source revision/hash, decision/supersession links, and
    current behavior. Promote only system-wide rules to `docs/design/system.md`

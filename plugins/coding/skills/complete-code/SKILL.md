@@ -60,11 +60,12 @@ specified.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work root first.
-When delegated, read `working.md`, then `state.md` and its relevant linked
-specification/design paths; never write PM-owned `working.md` or reconcile work
-overview files.
-A direct PM run resolves or mints the work ID by the contract; a delegated run
-requires the explicit work ID/root.
+When delegated, start from the mission capsule's exact work root and relevant
+specification/design paths. Read `working.md` only when the capsule lacks
+current navigation; read `state.md` only for resume, cross-slice dependency, or
+alignment work. Never write PM-owned work pointers or overview files.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
 
 ## Workflow
 

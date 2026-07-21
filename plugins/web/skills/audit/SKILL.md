@@ -21,7 +21,9 @@ runtime debugging, and fixes belong to the owning implementation skill.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work directory and
-read `working.md`, then `state.md`.
+start from the exact target/design/review paths in the request or mission
+capsule. Read `working.md` only when navigation is missing and `state.md` only
+for resume, alignment, or cross-slice dependencies.
 
 Raw audit output lives only under
 `<work-dir>/evidence/web-audit/<audit-slug>/`. Findings live in the canonical

@@ -5,7 +5,8 @@ pointers and return `generated_files`.
 
 ## Child chains
 
-- **COMMIT_PLAN**: per linked plan slice, `coding:write-code` →
+- **COMMIT_PLAN**: per validator-reported runnable leaf task ID,
+  `coding:write-code` →
   `coding:review-code` → `coding:commit`.
 - **PI_ITERATE**: `coding:complete-code` → `coding:complete-test` →
   `coding:fix` → `coding:review-code` → `coding:commit`. Unmarked missing work
@@ -34,9 +35,9 @@ violation, architecture conflict, stale symbol, or changed acceptance behavior.
 Trivial formatter/import ordering, inferred types, prose corrections, and
 convention-only casing need no entry.
 
-Return for each material departure: headline, plan slice, plan expectation,
+Return for each material departure: headline, full task ID, plan expectation,
 evidence, chosen/required alternative, reason, impact, severity, disposition,
-invalidated dependent slices, and recheck trigger. The orchestrator writes a
+invalidated downstream task IDs, and recheck trigger. The orchestrator writes a
 lowercase `.engineering/work/<work-id>/changes/<slug>.md` child and asks
 the PM to reconcile `changes.md` and `state.md`.
 

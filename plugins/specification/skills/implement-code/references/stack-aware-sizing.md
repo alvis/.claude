@@ -1,55 +1,101 @@
-# Step 9 — Stack-Aware Sizing & Restack Trigger
+# Final history, commit QA, and publication
 
-**When loaded**: After Step 8's execution lands `commits_landed`, when the run is NOT in any of the skip conditions below.
+Load only after execution has relevant dirty changes or saved unpushed changes,
+the full review and usage trace pass against the current specification hash,
+durable derivation is current, and any completion-sync/revalidation loop is
+stable. This is the first point at which final history work or publication is
+allowed.
 
-**Skip entirely** (record `stack_dispatch.dispatched=false` with one-line reason) when any of:
+## Skip conditions
 
-- `mode ∈ {VERIFY_ONLY, DRAFT_THEN_ASK, REFUSE, FLAG_MISMATCH}`
-- `--dry-run` is set
-- `commits_landed` is empty
+Return `stack_dispatch.dispatched=false` and the reason without loading a
+history/publication owner when:
 
----
+- mode is `VERIFY_ONLY`, `DRAFT_THEN_ASK`, `REFUSE`, or `FLAG_MISMATCH`;
+- `--dry-run` is set;
+- public `--defer-publication` is set (return finalization/publication as next
+  actions); or
+- both `relevant_dirty_paths` and saved unpushed `local_commits` are empty.
 
-## Step Configuration
+Do not skip merely because `local_commits` is empty when relevant dirty changes
+exist; those bytes still require an owned save before finalization.
 
-- **Purpose**: After `commits_landed` are produced, decide whether oversized changes need the `coding:commit --create-pr` compatibility route or an existing stack needs `coding:push-pr` republication. The orchestrator NEVER runs `jj split` / `jj bookmark set` / `gh pr create` directly: `coding:commit` owns local history structure, while `coding:push-pr` owns bookmarks, remote restacking, PRs, and CI convergence.
-- **Input**: `repo_path`, `commits_landed`, `base_rev` (from Step 7), post-commit diff stats, `ticket.slug`
-- **Output**: `stack_dispatch` = `{ dispatched: true|false, mode: stacked-pr|restack|null, branch_prefix: <slug>|null, prs: [...] }`
-- **Sub-skill**: `coding:commit --create-pr` for a size trigger; `coding:push-pr` for a restack trigger
-- **Parallel Execution**: No
+## Record and normalize history state
 
-## Phase 1: Planning (You)
+Inspect the exact implementation scope against immutable `base_rev` and record
+`history_state` as `dirty`, `saved`, or `none`, including
+`relevant_dirty_paths`, saved change/commit ids, and whether any candidate is
+already published. Exclude unrelated user-owned dirty paths; if the relevant
+set cannot be isolated safely, stop `blocked_scope` with the ambiguity rather
+than capturing unrelated work.
 
-1. **Compute aggregate change size** against `base_rev` (the marker captured in Step 7 Workspace Setup, read-only, via `Bash` `jj diff --from <base_rev> --stat` or `git diff --stat <base_rev>...HEAD`). Diffing against `base_rev` — not the working-copy parent — guarantees the size covers the FULL set of `commits_landed`, not just the last commit:
-   - `changed_files`: total files touched across `commits_landed`
-   - `loc_delta`: total added + removed lines
-   - `domains_touched`: distinct top-level path prefixes / package roots
-2. **Threshold for stacked PRs**: `>5 changed files OR >300 LOC diff OR multiple loosely-coupled domains`. (Mirrored from `coding:commit`'s scenario router; bump in lockstep if upstream thresholds change.)
-3. **Detect open stack**: existing bookmarks matching `<branch-prefix>/NN-<scope>` per `GIT-PR-STACK-01` (via `jj bookmark list` or `git branch --list '*/[0-9][0-9]-*'`).
-4. **Classify the trigger**:
-   - **Size-trigger** → dispatch `coding:commit --create-pr --branch-prefix <ticket.slug>`. The commit skill auto-detects and splits multi-concern `@`, then delegates the saved stack to `coding:push-pr`.
-   - **Restack-trigger** → an open stack exists AND the landed code **semantically modifies a symbol/contract that a lower (earlier-in-order) PR in the stack establishes or relies on**. Apply this judgement per symbol, not per file:
-     - Trigger: signature change of an exported symbol the lower PR consumes; behavior change in a shared helper a lower PR's tests assume; schema/contract change a lower PR's migration depends on.
-     - Do NOT trigger: incidental file overlap (formatting, lint, unrelated co-edit in same file), purely additive code that lower PRs do not reference.
-   - **Both triggers fire** → the `coding:commit --create-pr` compatibility route takes precedence; after local history work it delegates the resulting stack once to `coding:push-pr`, which owns publication and restacking.
-   - **Neither fires** → small, single-domain change; continue with the existing single-commit / single-PR path. Record `stack_dispatch.dispatched=false`.
-5. Update TodoWrite: add `stack-aware-sizing` todo set to `in_progress` when a trigger fires.
+When state is `dirty`, require the parent-provided immutable
+`scoped_save_manifest` path and SHA-256. Its full publication scope includes all
+lifecycle-generated source, test, project-documentation, durable
+specification/provenance, and deletion paths intended for publication; its
+selected set is exactly the currently dirty subset. It excludes ignored work
+state and inventories every unrelated dirty path for before/after preservation.
+A missing, stale, incomplete, or ambiguous manifest is `blocked_scope`, not
+permission to fall back to an unscoped save.
 
-## Phase 2: Execution (Sub-Skill)
+## Recheck the semantic gate
 
-When a trigger fires, dispatch the owning sub-skill exactly once via the `Skill` tool:
+Require the current specification hash to equal `reviewed_spec_hash`, all
+required review/usage results to pass, and completion sync to have no pending
+`needs_revalidation`. A correction or source change invalidates this gate and
+returns to the owning earlier lifecycle step.
 
-1. Load `coding:commit` for a size trigger or `coding:push-pr` for a restack trigger via `Read`.
-2. Invoke with a minimal payload:
-   - `--branch-prefix <ticket.slug>`
-   - For size-trigger: `coding:commit --create-pr` (it auto-routes local split/save work, then delegates publication)
-   - For restack-trigger: `coding:push-pr <resolved-stack>`
-   - Pass `repo_path` so the selected sub-skill operates inside the same working copy
-3. Capture the dispatched skill's report `outputs.route`, `outputs.branch_prefix`, and `outputs.prs[]` into `stack_dispatch`.
-4. Append the dispatch entry to `child_dispatch_log` so Step 13 surfaces it alongside the `coding:*` chain
+## Classify the change
 
-## Phase 3: Decision (You)
+Compute aggregate changed-file count, LOC delta, and domains touched against
+immutable `base_rev`, including relevant worktree bytes as well as saved
+changes. Detect an open stack from explicit saved change/bookmark metadata.
+Classify:
 
-- The dispatched skill reports `status=completed` → record `stack_dispatch` and proceed to Step 10.
-- The dispatched skill reports `status=failed|partial` → mark this skill's final `status=partial`, attach its report to the running context, and still proceed to Step 10 (alignment review + paper-only thought experiment remain valuable).
-- Mark `stack-aware-sizing` todo as `completed`
+- **Large change**: more than 5 changed files, more than 300 changed LOC, or
+  multiple loosely coupled domains. Propose an approved slice plan.
+- **Semantic restack**: an open stack exists and this work changes a symbol,
+  behavior, schema, or contract that an earlier PR establishes or consumes.
+  Incidental file overlap is not enough.
+- **Single change**: neither trigger applies.
+
+Surface the reason, proposed history shape, and publication target before
+mutation. History commands remain with Coding owners.
+
+## Owner handoffs
+
+1. When relevant dirty paths exist, invoke
+   `coding:commit --paths-from=<scoped_save_manifest> --manifest-sha256=<sha256>`
+   first (and supply the approved slice plan for a large change) so it saves
+   only the closed manifest selection. Require its PASS receipt to prove the
+   saved diff equals the selected paths and every non-selected dirty worktree
+   byte plus staged/unstaged status entry is unchanged. Record the saved change
+   ids before continuing. A checksum/path/state mismatch returns to the parent
+   for a fresh post-review manifest; it never broadens the selection. When the
+   relevant tree was already clean, invoke plain `coding:commit` only when a
+   large-change split or semantic-restack reorder/correction is required. Never use
+   the `--create-pr` compatibility shortcut because it would cross the commit
+   finalization gate.
+2. Invoke `coding:finalize-commits` without `--auto-push` for the complete
+   unpushed chain, including a single-change chain. Require every isolated
+   commit install/lint/test-or-coverage/build gate and message/order check to be
+   green. If a correction changes code, history, or the reviewed contract,
+   return through the invalidated implementation/review/sync gates before
+   finalizing again.
+3. Only after finalization is green, invoke `coding:push-pr` once with the exact
+   saved change or ordered stack and optional branch prefix. It owns bookmarks,
+   bottom-up publication/restacking, PR text, and CI convergence.
+
+```yaml
+stack_dispatch:
+  dispatched: true|false
+  classification: large|semantic_restack|single|null
+  reviewed_spec_hash: ''
+  local_history: {owner: coding:commit, state: dirty|saved|none, relevant_dirty_paths: [], scoped_save_manifest: null, manifest_sha256: null, preservation_receipt: null, changes: [], save_status: completed|not_needed|blocked_scope}
+  finalization: {owner: coding:finalize-commits, status: pass|fail|not_run}
+  publication: {owner: coding:push-pr, status: completed|partial|not_run, prs: []}
+next_actions: []
+```
+
+A failed/partial handoff makes the parent result partial and cannot be reported
+as publication convergence.

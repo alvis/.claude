@@ -5,9 +5,14 @@ findings.
 
 ## Contract alignment belongs to alignment
 
-`state.md` and its linked approved specification/design/decision artifacts are
-the default implementation contract. An explicitly pinned plan may override
-the plan portion. `alignment.md` alone reports additions, omissions,
+Root `state.md` (`plan_source: state.md`) plus linked approved
+specification/design/decision artifacts is the implementation contract. Its
+explicit ID-keyed implementation detail may be consulted but cannot duplicate
+or override IDs, edges, requiredness, targets, or acceptance mappings. A
+caller-supplied plan may assert but never override root state. Bind every
+result to the exact `plan_digest`,
+`engineering-plan-definition-digest-v1` hash kind, and relevant full task IDs.
+`alignment.md` alone reports additions, omissions,
 unjustified drift, stale spec derivations, and missing promotion/sync work.
 Other reviewers route pure drift there rather than duplicating it.
 

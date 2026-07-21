@@ -43,5 +43,8 @@ Compare controller exposure/delegation with operation inventory and both data
 standards. Missing/extra contract surface routes to alignment; broken
 delegation routes to correctness or quality based on behavioral impact.
 
-Every dispatch reads `working.md`, then `state.md`, and returns only findings
-plus an empty `generated_files` manifest because audit streams are read-only.
+Every dispatch starts from its mission capsule's exact specification,
+implementation, and output paths. Read `working.md` only when navigation is
+missing, and `state.md` only for alignment, resume, or a cross-stream
+dependency the capsule identifies. Return only findings plus an empty
+`generated_files` manifest because audit streams are read-only.

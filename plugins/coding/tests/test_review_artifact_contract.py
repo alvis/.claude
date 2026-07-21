@@ -8,8 +8,14 @@ PLUGIN = Path(__file__).resolve().parents[1]
 REPOSITORY = PLUGIN.parents[1]
 REVIEW_SKILL = PLUGIN / "skills/review-code/SKILL.md"
 REVIEW_TEMPLATE = PLUGIN / "skills/review-code/references/review.template.md"
+REVIEW_OUTPUT = PLUGIN / "skills/review-code/references/output-formats.md"
 CLEANUP_SKILL = PLUGIN / "skills/cleanup/SKILL.md"
+WRITE_CODE = PLUGIN / "skills/write-code/SKILL.md"
+PUSH_PR_SKILL = PLUGIN / "skills/push-pr/SKILL.md"
+REPAIR_RED_CI = PLUGIN / "skills/push-pr/references/repair-red-ci.md"
 ESSENTIAL_CONTRACT = REPOSITORY / "plugins/essential/references/engineering-work.md"
+ESSENTIAL_MAIN = REPOSITORY / "plugins/essential/MAINAGENT.md"
+ESSENTIAL_SUB = REPOSITORY / "plugins/essential/SUBAGENT.md"
 DEVIATION_LIFECYCLE = REPOSITORY / "plugins/specification/skills/review-implementation/references/deviation-lifecycle.md"
 
 
@@ -36,10 +42,35 @@ class ReviewDispositionContractTest(unittest.TestCase):
         self.assertIn("count it as outstanding", template)
 
     def test_reviewer_validates_non_fixed_dispositions(self) -> None:
-        skill = REVIEW_SKILL.read_text(encoding="utf-8")
+        skill = normalized(REVIEW_SKILL)
 
         self.assertIn("closed non-fixed risk dispositions", skill)
         self.assertIn("reject malformed disposition metadata", skill)
+
+    def test_partial_review_preserves_unselected_area_findings(self) -> None:
+        skill = REVIEW_SKILL.read_text(encoding="utf-8")
+        output = REVIEW_OUTPUT.read_text(encoding="utf-8")
+
+        self.assertIn("aggregate every existing", skill)
+        self.assertIn("partial rerun cannot hide unselected findings", skill)
+        self.assertIn("Report every existing canonical area", output)
+        self.assertIn("not_run", output)
+
+    def test_one_coordinator_lease_prevents_summary_and_state_multiwriters(self) -> None:
+        contracts = {
+            "essential": normalized(ESSENTIAL_CONTRACT),
+            "main": normalized(ESSENTIAL_MAIN),
+            "subagent": normalized(ESSENTIAL_SUB),
+            "write-code": normalized(WRITE_CODE),
+            "review-code": normalized(REVIEW_SKILL),
+        }
+
+        for owner, contract in contracts.items():
+            with self.subTest(owner=owner):
+                self.assertIn("coordinator lease", contract)
+        self.assertIn("exactly one actor", contracts["main"])
+        self.assertIn("without that explicit grant, remain a worker", contracts["subagent"])
+        self.assertIn("otherwise return the complete roll-up delta", contracts["review-code"])
 
     def test_cleanup_refuses_malformed_review_history(self) -> None:
         cleanup = CLEANUP_SKILL.read_text(encoding="utf-8")
@@ -81,6 +112,20 @@ class ReviewDispositionContractTest(unittest.TestCase):
         cleanup = normalized(CLEANUP_SKILL)
         self.assertIn("zero outstanding findings", cleanup)
         self.assertIn("no `open`, `deferred`, or malformed risk", cleanup)
+
+
+class PushPrReferenceContractTest(unittest.TestCase):
+    def test_red_ci_repair_links_back_to_the_existing_publication_phase(self) -> None:
+        repair = REPAIR_RED_CI.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "[core publication phase](../SKILL.md#3-publish-bottom-up)", repair
+        )
+        self.assertTrue(PUSH_PR_SKILL.is_file())
+        self.assertIn(
+            "### 3. Publish bottom-up",
+            PUSH_PR_SKILL.read_text(encoding="utf-8"),
+        )
 
 
 if __name__ == "__main__":

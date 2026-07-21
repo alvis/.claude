@@ -10,6 +10,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+DEVELOPER_WORKFLOW_HEADING = "## Developer workflow"
+PLUGIN_CATALOG_HEADING = "## Plugins and skills"
 AGENT_TEAM_HEADING = "## Agent team"
 
 
@@ -47,11 +49,11 @@ def skill_rows(plugin: Path) -> list[tuple[str, str]]:
     return rows
 
 
-def agent_team_section() -> str:
-    """Preserve the manually maintained cross-plugin team reference."""
+def manual_section(start_heading: str, end_heading: str) -> str:
+    """Preserve a manually maintained section between two generated headings."""
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    start = readme.find(AGENT_TEAM_HEADING)
-    end = readme.find("\n## Validation", start)
+    start = readme.find(start_heading)
+    end = readme.find(f"\n{end_heading}", start)
     return readme[start:end].strip() if start >= 0 and end >= 0 else ""
 
 
@@ -60,19 +62,25 @@ def render() -> str:
     lines = [
         "# Claude Code Plugin Marketplace",
         "",
-        "Eight focused plugins provide composable Claude Code skills. Plugin manifests and each skill's `SKILL.md` are the source of truth; this file is generated.",
+        "Eight focused plugins provide composable Claude Code skills. Plugin manifests and each skill's `SKILL.md` are the source of truth; the inventory in this file is generated while the developer workflow and agent-team guide are preserved.",
         "",
         "## Install",
         "",
         "```bash",
-        "claude plugin install ./plugins/<plugin>",
+        "cd /path/to/target-project",
+        "claude plugin marketplace add alvis/.claude --scope project",
+        "claude plugin install specification@alvis --scope project",
         "```",
         "",
-        "Dependencies are declared in each plugin's `.claude-plugin/plugin.json`; installing a dependent plugin enables its required providers automatically.",
-        "",
-        "## Plugins and skills",
+        "`specification` is the recommended end-to-end bundle; its declared dependencies install `coding` and `essential`. Use `--scope local` for a private trial or `--scope user` across your projects. For a private source-checkout trial, add its absolute path at local scope rather than committing a machine-specific project path.",
         "",
     ]
+    developer_workflow = manual_section(
+        DEVELOPER_WORKFLOW_HEADING, PLUGIN_CATALOG_HEADING
+    )
+    if developer_workflow:
+        lines.extend([developer_workflow, ""])
+    lines.extend([PLUGIN_CATALOG_HEADING, ""])
     for entry in marketplace["plugins"]:
         plugin = ROOT / entry["source"].lstrip("./")
         manifest = json.loads((plugin / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
@@ -83,7 +91,7 @@ def render() -> str:
             summary = description or "No description provided."
             lines.append(f"- `{manifest['name']}:{name}` — {summary}")
         lines.append("")
-    team_reference = agent_team_section()
+    team_reference = manual_section(AGENT_TEAM_HEADING, "## Validation")
     if team_reference:
         lines.extend([team_reference, ""])
     lines.extend([

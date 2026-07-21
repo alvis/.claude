@@ -77,10 +77,10 @@ engineering state into the plugin repository.
    rejects the diff and invokes `coding:commit --retrospective` after every
    accepted repair. When the cause belongs outside the current PR, the parent
    creates a separate earlier repair commit through `coding:commit`, invokes
-   `coding:stack-code` to reshape/reparent the current and every downstream PR
-   above it, and monitors every PR in the resulting stack.
+   `coding:commit --reorder` to reshape/reparent the current and every
+   downstream PR above it, and monitors every PR in the resulting stack.
 5. Rerun affected local checks. On zero exits, the parent resumes the
-   [core publication phase](push-pr/20-publish-bottom-up.md): push the repaired
+   [core publication phase](../SKILL.md#3-publish-bottom-up): push the repaired
    bookmark, synchronize/re-push all restacked descendants, repair PR bases,
    and verify the stack. A nonzero result gets one new evidence-backed fixer
    cycle; unchanged evidence requiring user/external state is a blocker, never

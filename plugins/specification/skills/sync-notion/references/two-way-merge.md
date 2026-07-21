@@ -1,175 +1,126 @@
-# Two-Way Merge — Step 2 (Conditional)
+# Base-aware two-way merge
 
-Load this reference **only when `sync_mode = 'two-way-merge'`**. For `sync_mode = 'local-to-notion'` or `sync_mode = 'notion-to-local'`, skip Step 2 entirely and proceed directly to Step 3 in `SKILL.md`.
+Load only for `two-way-merge`. Although the public mode has a familiar name,
+the safety decision is a three-way comparison of immutable base B, current
+local L, and a fresh remote staging pull R.
 
-This file contains the full body of **Step 2: Compare Content** — the conflict-detection and user-driven resolution step that produces a `resolved_content_map` consumed by Step 3.
+## Preconditions
 
-## Step 2: Compare Content (Conditional)
+For every pair require stable identity, B bytes/hash from an immutable receipt,
+L bytes/hash, R bytes/hash/revision, and a caller-declared staging/evidence
+root. Missing base evidence returns `status: refused`,
+`classification: baseline_required`, and `next_action: establish_baseline`;
+never manufacture a base from L or a cached mirror.
 
-**Step Configuration**:
+When called by `sync-spec`, consume its bundled dual-hash result: exact
+`transport_manifest_hash`/revision protect transport and semantic
+`contract_digest` drives the relationships below. Never compare or approve an
+unnamed generic hash.
 
-- **Purpose**: Compare local and Notion content section-by-section and resolve conflicts with user confirmation
-- **Input**: Receives from Step 1: validated file-page pairs array with both local and Notion content
-- **Output**: Produces for Step 3: resolved_content_map with merged content for each pair, conflict_report
-- **Sub-workflow**: None
-- **Parallel Execution**: Yes - one subagent per file-page pair (conflicts resolved interactively)
+Classify before conflict work:
 
-**CONDITIONAL**: This step only executes if sync_mode = 'two-way-merge'. If sync_mode is 'local-to-notion' or 'notion-to-local', skip directly to Step 3.
+- `L == B && R == B`: unchanged; no write or push.
+- `L != B && R == B`: local-only; no merge needed, but outbound approval and
+  the pre-push revision gate still apply.
+- `L == B && R != B`: remote-only; stage a pull candidate and return
+  operational `status: success`, `classification: remote_only`, and
+  `next_action: revalidate` to a specification caller rather than overwriting
+  local work or pushing it back.
+- `L != B && R != B && L == R`: converged; verify and establish a new base,
+  with no push.
+- `L != B && R != B && L != R`: concurrent; follow the protocol below.
 
-### Phase 1: Planning (You)
+## Phase 1 — conflict packets
 
-**What You Do**:
+Fan out read-only comparison workers by independent pair. Workers never invoke
+`AskUserQuestion`, choose a winner, edit canonical local/mirror files, or push.
+Each worker:
 
-1. **Check sync_mode**:
-   - If sync_mode = 'two-way-merge': Continue with comparison
-   - If sync_mode = 'local-to-notion' or 'notion-to-local': Skip to Step 3 immediately
-2. **Receive validated pairs** from Step 1 output
-3. **Filter pairs** that have both local and Notion content (skip pairs marked 'CREATE_NEW')
-4. **Use TodoWrite** to create comparison task list with one todo per pair requiring comparison (status 'pending')
-5. **Prepare comparison assignments** for parallel execution (one subagent per pair)
-6. **Queue all pairs** for parallel comparison and conflict resolution
+1. Computes deterministic section/block differences from B→L and B→R. It may
+   use structured diff output supported by the pinned CLI, but must not invent a
+   flag; deterministic comparison of staged bytes is the fallback.
+2. Maps transport block ids to the nearest stable heading/path for presentation
+   while retaining ids only as write-back evidence.
+3. Distinguishes non-overlapping changes from overlapping conflicts. It builds
+   candidate Keep Local, Keep Remote, and coherent Keep Both content without
+   applying any candidate.
+4. Stores a bounded conflict packet and candidate content under the declared
+   staging/evidence root, records SHA-256 for every candidate, and returns paths
+   and hashes rather than embedding a complete document in the task response.
 
-**OUTPUT from Planning**: Comparison task assignments queued for pairs with existing Notion pages
+```yaml
+pair:
+  local_path: ''
+  notion_ref: ''
+  base: {transport_manifest_hash: '', contract_digest: ''}
+  local: {transport_manifest_hash: '', contract_digest: ''}
+  remote: {transport_manifest_hash: '', contract_digest: '', remote_revision: ''}
+packet_path: ''
+conflicts:
+  - id: ''
+    section: ''
+    kind: addition|removal|modification
+    evidence: {base: '', local: '', remote: ''}
+    candidates: {keep_local: {path: '', contract_digest: ''}, keep_remote: {path: '', contract_digest: ''}, keep_both: {path: '', contract_digest: ''}}
+issues: []
+```
 
-### Phase 2: Execution (Subagents)
+A worker failure aborts that pair without canonical writes.
 
-**What You Send to Subagents**:
+## Phase 2 — owner decisions
 
-In a single message, you spin up comparison subagents to resolve conflicts in parallel, launching **N subagents** (one per file-page pair that needs comparison).
+The coordinator loads each packet and asks the PM/user for every material
+conflict. Present bounded B/L/R evidence and these choices:
 
-- **[IMPORTANT]** Each subagent handles one pair independently and interacts with user for conflict resolution
-- **[IMPORTANT]** You MUST ask all subagents to ultrathink hard about the task and requirements
-- **[IMPORTANT]** Use TodoWrite to update each pair's status from 'pending' to 'in_progress' when dispatched
+- **Keep Local** — use the local section.
+- **Keep Remote** — use the fresh remote section.
+- **Keep Both** — use the coherent synthesis, after showing it and receiving
+  explicit approval for its candidate hash.
+- **Skip** — leave the pair untouched for later resolution.
 
-Request each subagent to perform the following comparison and conflict resolution:
+Keep Both must integrate facts into the owning section without parallel
+“local”/“Notion” sections or provenance banners. Any revision to the synthesis
+changes its hash and requires approval again. Skip never inserts a TODO or
+feeds a push candidate.
 
-    >>>
-    **ultrathink: adopt the Content Comparison Specialist mindset**
+## Phase 3 — freeze and apply
 
-    - You're a **Content Comparison Specialist** with deep expertise in diff analysis who follows these technical principles:
-      - **Granular Comparison**: Compare content at section-level, not just file-level
-      - **Clear Presentation**: Show both versions side-by-side with highlighted differences
-      - **User Empowerment**: Provide clear options and respect user decisions
-      - **Merge Intelligence**: When user selects "Keep Both", intelligently combine content
+Assemble one complete final proposal for the pair in staging, preserve
+frontmatter/order/identity, and compute both hashes through the caller's bundled
+helper. Require the caller's stage-specific approval/review to name the final
+semantic contract digest. If any conflict is skipped, unresolved,
+or failed, mark the pair `partial` and apply nothing to its canonical local,
+mirror, or remote sides.
 
-    **Assignment**
-    You're assigned to compare and resolve conflicts for a single file-page pair:
+When the caller declares `stage=implementation`, return operational
+`status: success`, `classification: concurrent`, and
+`next_action: specification_reconciliation` with the immutable proposal and
+apply nothing. The owning specification flow must approve and publish it through
+specification stage, verify it, establish/materialize a new base, and invalidate
+plan/code/review before implementation can resume. Never push proposal M from
+this implementation-stage merge.
 
-    - **File Path**: [file_path]
-    - **File Content**: [file_content from Step 1]
-    - **Notion Ref**: [notion_ref from Step 1] (read from frontmatter `ref:`)
-    - **Notion Pulled Path**: [notion_pulled_path from Step 1] (the mirror file pulled by `notion-sync pull --follow-children --follow-links`)
+For a fully resolved `.mdc` pair, the coordinator applies the staged body only
+through `Skill(mdc)` after all decisions and hash gates pass. Plain Markdown may
+be atomically promoted only when the caller permits it. Do not push here; the
+mode execution branch owns the immediate remote recheck, guarded push, and
+verification pull.
 
-    **Steps**
+```yaml
+status: success|partial|failure|refused
+classification: resolved|unchanged|local_only|remote_only|converged|concurrent|baseline_required
+next_action: none|revalidate|establish_baseline|resolve_conflict|specification_reconciliation|provide_conditional_transport
+pair: {local_path: '', notion_ref: ''}
+conflicts: {found: 0, resolved: 0, skipped: 0}
+decisions: {keep_local: 0, keep_remote: 0, keep_both: 0}
+final_proposal: {path: '', transport_manifest_hash: '', contract_digest: '', approved: false}
+canonical_writes: 0
+push_allowed: false
+```
 
-    1. **Compute Block-Level Diff via CLI**:
-       - `Bash: notion-sync diff <file_path> -f json`
-         - The CLI compares the local file (via frontmatter `ref:`) against the remote Notion page and emits a structured JSON list of block-level diff entries.
-         - Empty array = no conflicts; report `conflicts_found: 0` and exit Phase 2 cleanly.
-       - **Presentation-layer mapping**: walk the JSON entries and group adjacent block diffs under their nearest preceding markdown header (or file-relative path). Use the resulting **section name** as the user-facing conflict label — never show raw block ids in AskUserQuestion choices.
-
-    2. **Classify Each Diff Entry**:
-       - For each diff entry produced by `notion-sync diff`, classify as:
-         * **Addition**: present locally, missing remotely
-         * **Removal**: present remotely, missing locally
-         * **Modification**: present in both, content differs
-         * **Identical**: skip (the CLI typically omits these from the JSON, but ignore any that appear)
-       - Record each diff with its mapped section name and original block id(s) for write-back.
-
-    3. **Resolve Each Conflict with User** (for each diff entry found):
-       - Display the difference clearly:
-         ```
-         CONFLICT in [file_path] - Section: [section_name]
-
-         LOCAL VERSION:
-         [local section content]
-
-         NOTION VERSION:
-         [notion section content]
-
-         DIFFERENCE: [specific diff description]
-         ```
-       - Use AskUserQuestion tool with options:
-         * header: "Sync Conflict"
-         * question: "How should this conflict be resolved for section '[section_name]'?"
-         * options:
-           - label: "Keep Local", description: "Use the local version, overwrite Notion"
-           - label: "Keep Remote", description: "Use the Notion version, overwrite local"
-           - label: "Keep Both", description: "Merge both versions intelligently"
-           - label: "Skip", description: "Mark for manual resolution later"
-         * multiSelect: false
-       - Record user's decision for this conflict
-
-    4. **Apply Decisions to Create Merged Content**:
-       - For each conflict resolved:
-         * Keep Local: Use local section content (no write needed)
-         * Keep Remote: Replace local section with Notion section content (use Edit on the local file)
-         * Keep Both: Reconcile both versions into the existing owning section. Preserve all non-conflicting facts, remove duplication, and do not add provenance banners or parallel "local"/"Notion" sections.
-         * Skip: Add TODO marker on the local side:
-           ```
-           <!-- TODO: Resolve merge conflict manually - Section [name] -->
-           ```
-       - For `.mdc`, return the merged content proposal and block refs to the
-         orchestrator, which applies it through `Skill(mdc)`. Never use direct
-         Edit/Write on an MDC body. Plain Markdown pairs may be updated in
-         place. You MUST NOT push in this step — Step 3 owns the push.
-       - Preserve original order, frontmatter, and structure.
-
-    5. **Generate Conflict Report**:
-       - Count total conflicts found
-       - Count decisions by type (keep_local, keep_remote, keep_both, skipped)
-       - List all skipped conflicts for user awareness
-
-    **Report**
-    **[IMPORTANT]** You MUST return the following execution report (<1000 tokens):
-
-    ```yaml
-    status: success|failure|partial
-    summary: 'Brief description of comparison and resolution'
-    modifications: []  # no file modifications yet
-    outputs:
-      file_path: '[path]'
-      notion_ref: '[ref]'
-      conflicts_found: [number]
-      conflicts_by_type:
-        additions: [count]
-        removals: [count]
-        modifications: [count]
-      decisions:
-        keep_local: [count]
-        keep_remote: [count]
-        keep_both: [count]
-        skipped: [count]
-      resolved_content: '[complete merged content proposal]'
-      generated_files: []
-      skipped_conflicts: ['section1: description', 'section2: description', ...]
-    issues: ['issue1', 'issue2', ...]  # only if problems encountered
-    ```
-    <<<
-
-### Phase 3: Review (Subagents)
-
-**SKIPPED** - User already reviewed and confirmed each conflict resolution interactively.
-
-### Phase 4: Decision (You)
-
-**What You Do**:
-
-1. **Collect all comparison reports** from parallel subagents
-2. **Parse resolution status** from each report (success/failure/partial)
-3. **Aggregate conflict statistics**:
-   - Total conflicts across all pairs
-   - Total decisions by type (keep_local, keep_remote, keep_both, skipped)
-   - All skipped conflicts requiring manual resolution
-4. **Apply decision criteria**:
-   - All comparisons successful: PROCEED to Step 3 with resolved content
-   - Some comparisons failed: ABORT with error details
-5. **Select next action**:
-   - **PROCEED**: All conflicts resolved or skipped → Move to Step 3 with resolved_content_map
-   - **ABORT**: Comparison failures → Report errors and stop workflow
-6. **Use TodoWrite** to update task list based on decision:
-   - If PROCEED: Mark all comparison todos as 'completed'
-   - If ABORT: Mark failed todos as 'failed' with abort reason
-7. **Prepare transition**:
-   - If PROCEED: Package resolved_content_map and conflict_report for Step 3
-   - If ABORT: Generate error report with comparison failure details
+Operational execution and relationship classification are separate. A missing
+base is `status: refused`, `classification: baseline_required`, and
+`next_action: establish_baseline`; remote-only is successful read-only
+classification plus `revalidate`; an implementation-stage concurrent proposal
+is successful read-only classification plus `specification_reconciliation`.
+Never encode those relationship outcomes as new top-level status values.

@@ -2,7 +2,6 @@
 name: complete-test
 description: Author and improve tests for pending test cases, coverage gaps, fixtures, and redundancy cleanup. Use for test TODOs, it.todo or describe.todo entries, explicit test-writing requests, or coverage work. Production implementation stubs belong to complete-code; diagnosed failures belong to fix.
 model: opus
-context: fork
 allowed-tools: Bash, Task, Read, Write, Edit, Glob, Grep
 argument-hint: "[scope] [--coverage=<percent>] [--framework=<name>]"
 ---
@@ -27,11 +26,12 @@ Own test authoring and test-suite maintenance. Do not implement production behav
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work root first.
-When delegated, read `working.md`, then `state.md` and only relevant linked
-specification, review, and evidence paths; never write PM-owned `working.md` or
-reconcile work overview files.
-A direct PM run resolves or mints the work ID by the contract; a delegated run
-requires the explicit work ID/root.
+When delegated, start from the mission capsule's exact work root and relevant
+specification, review, and evidence paths. Read `working.md` only when the
+capsule lacks current navigation; read `state.md` only for resume, cross-slice
+dependency, or alignment work. Never write PM-owned work pointers or overviews.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
 
 ## Workflow
 

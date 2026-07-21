@@ -3,6 +3,10 @@ area: <alignment|correctness|security|quality|testing|docs|style>
 prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>
 reviewed_at: <ISO-8601 timestamp>
 files_reviewed_count: <N>
+plan_source: state.md
+plan_digest: <64-lowercase-hex>
+plan_hash_kind: engineering-plan-definition-digest-v1
+reviewed_task_ids: [<full task IDs>]
 closed_findings: <N>
 outstanding_findings: <N>
 ---

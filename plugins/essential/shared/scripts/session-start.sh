@@ -54,7 +54,7 @@ run_session_start_hook() {
   if [[ -f "$plugin_root/scripts/context.sh" ]]; then
     # shellcheck source=/dev/null
     source "$plugin_root/scripts/context.sh"
-    CONTEXT+=$(get_plugin_context)
+    CONTEXT+=$(get_plugin_context session)
   fi
 
   output_hook_context "SessionStart" "$CONTEXT"

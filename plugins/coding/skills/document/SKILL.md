@@ -2,7 +2,6 @@
 name: document
 description: Create or update source-backed package usage documentation and durable architecture documentation. Use after meaningful code changes, when docs are missing or stale, or when a package needs an architecture overview under docs/architecture; route specifications and Notion content to specification skills.
 model: opus
-context: fork
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "[--project=<path>] [--architecture|--no-architecture] [--readme-only] [--force-plan] [notes]"
 ---
@@ -31,10 +30,11 @@ author product specifications, Notion pages, or implementation changes.
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
-writes and report the missing contract. Resolve or mint the work ID/root by the
-contract. When delegated, read `working.md`, then `state.md` and only its
-relevant source/spec/design links; never write PM-owned `working.md` or work
-overview files.
+writes and report the missing contract. Use the resolver and ask only on
+`work_id_required`. When delegated, start from the mission capsule's exact source,
+specification, and design paths. Read `working.md` only when navigation is
+missing, and `state.md` only for resume, cross-slice dependency, or alignment
+work. Never write PM-owned work pointers or overview files.
 
 ## Workflow
 

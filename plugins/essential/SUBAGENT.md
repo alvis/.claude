@@ -1,22 +1,26 @@
 # As a team player
 
-Own the assigned slice and return new state to the assigning teammate by
-`agent_id`. Use `ok`, `blocked: <reason>`, `decision: <delta>`, or
-`artifact: <absolute path>` plus at most two lines. Do not answer idle-only
-notifications.
+Own the assigned slice. Return `ok`, `blocked: <reason>`, `decision: <delta>`,
+or `artifact: <absolute path>` plus at most two lines to the assigner by
+`agent_id`. Ignore idle-only notifications.
 
-- Read the active work's `working.md`, then `state.md`, then only assignment
-  references. Never edit `working.md` or a PM-owned overview.
+- Start from the mission capsule and exact references. Read `working.md` only
+  for missing navigation and `state.md` only for resume, planning, alignment,
+  or cross-slice dependencies. A worker never edits
+  `working.md`, `state.md`, overview files, or `review.md`; reviewers write only
+  assigned `reviews/*.md` details and return roll-up deltas. An orchestration
+  assignment may grant the sole coordinator lease and list its PM-owned files;
+  without that explicit grant, remain a worker.
 - Run the workspace resolver before writing an artifact. On `requires_ignore`,
-  stop and report its `ignore_file`; never edit the target `.gitignore`.
+  report its `ignore_file`; on `work_id_required`, report candidates to the PM.
+  Never edit the active workspace `.gitignore`.
 - Return explicit final paths generated or materially rewritten as
   `generated_files`; the PM reconciles overviews and size-checks only eligible
   work Markdown inside the target `.engineering/`.
-- Give a bounded mission capsule only on a first handoff; later messages are
-  deltas and artifact paths. Externalize any message over 4,096 characters.
-- Message the best-known continuing owner directly by `agent_id`. Ask the main
-  agent to resolve an ID or owner only when unknown. Keep nested spawning to a
-  certainly one-off helper and omit configured names.
+- Give a mission capsule only on first handoff; later messages are deltas and
+  artifact paths. Externalize messages over 4,096 characters.
+- Message the best-known owner by `agent_id`; ask the main agent only when the
+  ID or owner is unknown. Spawn only certainly one-off unnamed helpers.
 - Escalate Workflow launches, user questions, plan presentation, and
   consequential product, architecture, API, data, security, destructive, or
   user-visible decisions. Report observed evidence, inference, unknown,

@@ -2,7 +2,6 @@
 name: fix
 description: Fix diagnosed incorrect behavior, failed tests, type errors, lint failures, or broken CI. Use when a concrete failure can be reproduced or review findings identify a defect; route new functionality to write-code and green structural cleanup to refactor.
 model: opus
-context: fork
 allowed-tools: Edit, MultiEdit, Read, Write, Grep, Glob, Bash, Task, TodoWrite
 argument-hint: "[specifier] [--area=AREA] [--note=...] [--plan=PATH]"
 ---
@@ -39,7 +38,8 @@ defensive wrapper retained "just in case" the original path comes back.
   finding, or a specifier (file, directory, or pattern) to diagnose.
 - **Optional**: `--area=test|lint|type|review|impl|fixtures|refactor` to skip
   auto-detection; `--note=...` for focus guidance; `--plan=PATH` to pin the
-  plan contract for post-review fixes; `--from-composite` when invoked from a
+  active root `state.md` plan contract for post-review fixes;
+  `--from-composite` when invoked from a
   composite workflow.
 
 ## Engineering-work gate
@@ -47,11 +47,17 @@ defensive wrapper retained "just in case" the original path comes back.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work root first.
-When delegated, read `working.md`, then `state.md` and only relevant linked
-review/spec/design paths; never write PM-owned `working.md` or reconcile work
-overview files.
-A direct PM run resolves or mints the work ID by the contract; a delegated run
-requires the explicit work ID/root.
+When delegated, start from the mission capsule's exact work root and relevant
+review/spec/design paths. Read `working.md` only when navigation is missing,
+and `state.md` only for resume, cross-slice dependency, or alignment work.
+Never write PM-owned work pointers or overview files.
+The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
+delegated run the explicit resolved work ID/root.
+Run `validate-engineering-state validate --state <state.md>` before editing.
+Require `status: valid` and `plan_source: state.md`; retain its `plan_digest`,
+`hash_kind: engineering-plan-definition-digest-v1`, and assigned full
+`task_id`. Reject migration-required/invalid state and any explicit or
+delegated plan identity that does not match. Do not guess another plan.
 
 ## Standards
 
@@ -73,13 +79,16 @@ and `testing` write standards.
    [references/context-discovery.md](references/context-discovery.md). When
    this run follows a `/coding:review-code`, pin the plan contract per
    [references/plan-context.md](references/plan-context.md) so the follow-up
-   review validates against the identical plan.
+   review validates against the identical plan digest and task identity.
 2. **Plan.** Read the affected files and their test descriptions; determine
    expected behavior from tests and state-linked work/durable design and
    specification files; decide
    whether each issue is source-code logic or test implementation, asking the
    user when expected behavior is ambiguous. List the changes needed, ordered
-   by dependency.
+   by dependency. If evidence changes an approved task definition, dependency,
+   requiredness, target, or acceptance mapping, stop and return the affected
+   task IDs plus downstream closure for coordinator replan/reapproval; never
+   mutate the plan while fixing.
 3. **Fix tests.** Fix incorrect test behavior and logic — never modify a test
    just to make it pass — plus standards violations, imports, and references.
    For unused-code errors, check state-linked design and work docs first: if the code
@@ -104,7 +113,10 @@ and `testing` write standards.
    repeat until every check passes or a concrete blocker remains, then report
    the blocker instead of looping. For each failure that occurred, record its
    root cause, the systemic cause that allowed it, the assumption that proved
-   wrong, and how to prevent that class of error.
+   wrong, and how to prevent that class of error. Return attempt outcome,
+   evidence, and a requested task-status delta to the coordinator; do not edit
+   task state directly. Rerun Essential validation and require the plan digest
+   to remain unchanged before requesting `done`.
 
 ## Verification
 
@@ -128,8 +140,14 @@ consumes:
 <report>
 
 ```yaml
-plan_source: <absolute path or none_found>
-review_rerun: /coding:review-code <scope> --plan=<plan_source> # omit when plan_source is none_found
+task_id: <full executable task ID>
+plan_source: state.md
+plan_digest: <64-lowercase-hex>
+hash_kind: engineering-plan-definition-digest-v1
+attempt: pass|fail|partial
+requested_status: done|failed|blocked
+evidence: []
+review_rerun: /coding:review-code <scope> --plan=<plan_source>
 ```
 
 </report>

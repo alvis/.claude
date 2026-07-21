@@ -6,6 +6,9 @@ import unittest
 
 DESIGN = Path(__file__).resolve().parents[1]
 AUDIT = DESIGN.parent / "audit"
+CODING_REVIEW_TEMPLATE = (
+    DESIGN.parents[2] / "coding/skills/review-code/references/review.template.md"
+)
 
 
 class DesignEngineeringWorkContractTest(unittest.TestCase):
@@ -104,6 +107,72 @@ class AuditEngineeringWorkContractTest(unittest.TestCase):
         self.assertIn("worker does not write", renderer)
         self.assertIn("reviews/<area>.md", renderer)
         self.assertNotIn("DESIGN.md", renderer)
+
+    def test_web_details_use_the_canonical_coding_area_schema(self) -> None:
+        web = (AUDIT / "references/review-template.md").read_text(
+            encoding="utf-8"
+        )
+        coding = CODING_REVIEW_TEMPLATE.read_text(encoding="utf-8")
+        required = (
+            "area: <alignment|correctness|security|quality|testing|docs|style>",
+            "prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>",
+            "reviewed_at: <ISO-8601 timestamp>",
+            "files_reviewed_count: <N>",
+            "closed_findings: <N>",
+            "outstanding_findings: <N>",
+            "**Verdict**",
+            "**Status**",
+            "**Source**",
+            "**Issue**",
+            "**Evidence**",
+            "**Direction**",
+            "**Rationale**",
+            "**Owner**",
+            "**Recheck condition**",
+            "**Risk acceptance**",
+        )
+
+        for field in required:
+            with self.subTest(field=field):
+                self.assertIn(field, coding)
+                self.assertIn(field, web)
+
+    def test_web_priority_and_identity_mapping_preserves_p3_and_stable_ids(self) -> None:
+        template = (AUDIT / "references/review-template.md").read_text(
+            encoding="utf-8"
+        )
+        renderer = (AUDIT / "references/phase-4-output.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("`critical|high|medium|low`", template)
+        self.assertIn("`P0|P1|P2|P3`", template)
+        self.assertIn("<PREFIX>-P<n>-<seq>", template)
+        self.assertIn("reuse its canonical ID", template)
+        self.assertIn("Never renumber old IDs", renderer)
+        self.assertIn("raw CLI IDs", renderer)
+
+    def test_web_reconciliation_exposes_full_disposition_and_priority_counts(self) -> None:
+        template = (AUDIT / "references/review-template.md").read_text(
+            encoding="utf-8"
+        )
+
+        for field in (
+            "open: 0",
+            "fixed: 0",
+            "acknowledged: 0",
+            "deferred: 0",
+            "skipped: 0",
+            "closed: 0",
+            "outstanding: 0",
+            "p0: 0",
+            "p1: 0",
+            "p2: 0",
+            "p3: 0",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, template)
+        self.assertIn("An absent area is `not_run`, not `pass`", template)
 
 
 if __name__ == "__main__":

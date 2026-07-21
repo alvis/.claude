@@ -8,6 +8,9 @@ source "$SCRIPT_DIR/context.sh"
 fixture="$(mktemp -d)"
 trap 'rm -rf "$fixture"' EXIT
 
+git init -q "$fixture"
+git -C "$fixture" symbolic-ref HEAD refs/heads/main
+
 mkdir -p \
   "$fixture/.engineering/work/eng-42" \
   "$fixture/.engineering/work/eng-99" \
@@ -18,6 +21,7 @@ mkdir -p \
 
 touch \
   "$fixture/README.md" \
+  "$fixture/.gitignore" \
   "$fixture/CONTEXT.md" \
   "$fixture/DESIGN.md" \
   "$fixture/PLAN.md" \
@@ -41,6 +45,8 @@ touch \
   "$fixture/docs/specs/payments/index.md" \
   "$fixture/docs/specs/payments/error-contract.md" \
   "$fixture/docs/specs/payments/UPPER.md"
+
+printf '.engineering/\n' > "$fixture/.gitignore"
 
 # Simulate a case-insensitive alias by giving the second spelling the same
 # filesystem identity. Bootstrap must emit the onboarding file only once.
@@ -90,8 +96,8 @@ assert_absent '.engineering/work/eng-99/state.md'
 assert_contains '- docs/index.md'
 assert_contains '- docs/architecture/overview.md'
 assert_contains '- docs/design/system.md'
-assert_contains '- docs/specs/accounts/index.md'
-assert_contains '- docs/specs/payments/index.md'
+assert_absent 'docs/specs/accounts/index.md'
+assert_absent 'docs/specs/payments/index.md'
 
 assert_absent 'CONTEXT.md'
 assert_absent 'DESIGN.md'
@@ -118,7 +124,6 @@ assert_before '.engineering/work/eng-42/working.md' '.engineering/work/eng-42/st
 assert_before '.engineering/work/eng-42/state.md' 'docs/index.md'
 assert_before 'docs/index.md' 'docs/architecture/overview.md'
 assert_before 'docs/architecture/overview.md' 'docs/design/system.md'
-assert_before 'docs/design/system.md' 'docs/specs/accounts/index.md'
 
 ambiguous_output="$(get_repo_root_documents_context "$fixture")"
 case "$ambiguous_output" in
@@ -128,8 +133,8 @@ case "$ambiguous_output" in
     ;;
 esac
 case "$ambiguous_output" in
-  *'Work selection required; set ENGINEERING_WORK_ID to one of:'*'.engineering/work/eng-42/'*'.engineering/work/eng-99/'*) ;;
-  *) printf 'ambiguous work selection notice or candidate paths missing\n' >&2; exit 1 ;;
+  *'Engineering work selection is unresolved; ask only when artifact work begins.'*) ;;
+  *) printf 'ambiguous work selection notice missing\n' >&2; exit 1 ;;
 esac
 
 printf 'essential context discovery tests passed\n'

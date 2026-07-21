@@ -3,7 +3,7 @@ name: discover
 description: "Discovers material unknowns before planning. Use for a blindspot pass or unknown unknowns, to brainstorm approaches from cheapest to ambitious, interview about architecture, extract reference implementation semantics, make a disposable prototype before touching the real app, or check whether discovery is ready for a decision; researched option selection belongs to essential:decide."
 model: opus
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Task, AskUserQuestion, WebSearch, WebFetch, Skill
-argument-hint: "<problem> [--mode=blindspots|options|interview|reference|prototype|readiness] [--persist]"
+argument-hint: "<problem> [--mode=blindspots|options|interview|reference|prototype|readiness] [--persist] [--work-id=<id>]"
 ---
 
 # Discover
@@ -29,18 +29,45 @@ production artifacts, and implementing skills own application-source changes.
 ## Inputs and output
 
 - **Required**: the problem, goal, or artifact to explore.
-- **Optional**: `--mode`; `--persist`; the user's experience, confidence,
-  references, hard constraints, and known unanswered questions.
+- **Optional**: `--mode`; `--persist`; explicit `--work-id`; the user's
+  experience, confidence, references, hard constraints, and known unanswered
+  questions.
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work directory from
-that contract; do not invent a root workspace.
+that contract; do not invent a root workspace. A direct persistent run passes
+`--work-id` to the resolver only when the user supplied that explicit override;
+otherwise accept automatic existing-work selection and ask only on
+`work_id_required`. The PM performs the contract's ignore gate and no-clobber
+bootstrap before the first persistent artifact.
 
 Default to a conversational result. With `--persist` or a long-lived task,
 write the ledger to `state/discovery.md`. Keep requested disposable prototypes
 under `evidence/prototypes/<semantic-slug>/` and copied or summarized source
 material under `evidence/discovery/`. Never modify application source.
+
+For persistent discovery, follow `engineering-work-state.md` linked by the
+engineering-work contract. Register one `DSC` parent and every discovery leaf
+in root `state.md` before writing the child. Keep the root as the complete task
+registry and make `state/discovery.md` a reconciled child mirror with:
+
+- `Schema: engineering-work-state/v1`, `State role: child`, the resolved work
+  ID, lifecycle status, and `Parent task: DSC`;
+- `## Status` with the derived topology and local graph;
+- `## Tasks` with the canonical marked table and full `DSC01` IDs; and
+- the evidence ledger below as a separate section, never as task status.
+
+Use `DSC01 → {DSC02,DSC03} → DSC04` when the work maps to capture,
+independent intent/system probes, then synthesis. Otherwise encode the smallest
+truthful linear or branching sibling DAG; never force this example onto a
+different dependency shape. Root and child rows use the same immutable
+definition and mutable execution fields byte-for-byte at reconciliation. After
+each status transition, update the child, reconcile the complete root registry,
+recompute only the root plan digest when immutable definition fields changed,
+and run `validate-engineering-state validate --state state/discovery.md`; the
+validator resolves and checks the sibling root automatically. Only the
+coordinator-lease holder edits root state.
 
 When structured comparison, explanation, or preference capture would be easier
 to understand interactively, follow [presentation](references/presentation.md).
@@ -113,8 +140,9 @@ owner, or marked blocking.
 
 - Every consequential claim is labeled and carries evidence or an explicit
   user source; hypotheses are not reported as facts.
-- No application source changed, and every prototype is visibly disposable and
-  contained inside the active work's evidence directory.
+- No application source changed. Every prototype is visibly disposable;
+  non-HTML prototypes are contained inside the active work's evidence directory
+  and generated HTML is contained inside a collision-safe OS temporary directory.
 - Every material unknown has a disposition and owner; every accepted assumption
   is low-impact, reversible, and has a recheck trigger.
 - The recommended next owner receives the ledger and all artifact paths.

@@ -15,15 +15,27 @@ Before rendering:
    elements, crop/context paths, and manual-review coverage.
 3. Verify every final AI verdict cites a focused crop or records
    `missing_section_crop` with null verdict.
-4. Build one stable finding identity from CLI finding ID when present,
-   otherwise `<rule-id>--<route-hash8>--<selector-hash8>`.
+4. Build one stable Web source key from the CLI finding ID when present,
+   otherwise `<rule-id>--<route-hash8>--<selector-hash8>`. This key locates the
+   existing canonical `<PREFIX>-P<n>-<seq>` ID; it is not itself the Markdown
+   finding ID.
 
 ## Classification and writing
 
-Apply `review-template.md` and classify each finding exactly once. Group by
-canonical review area, then severity and stable identity. Write only applicable
-`reviews/<area>.md` files; merge by finding identity so a rerun updates evidence
-without erasing existing dispositions.
+Apply `review-template.md` and classify each finding exactly once. Map
+`critical|high|medium|low` to `P0|P1|P2|P3`, group by canonical review area,
+then priority and stable source key. Before allocating an ID, load the applicable
+existing area file and reuse the canonical ID already paired with that source
+key. Allocate only genuinely new IDs using the area's canonical prefix and its
+next unused sequence. Never renumber old IDs or use raw CLI IDs as headings.
+
+Write only applicable `reviews/<area>.md` files. Each written file must retain
+the canonical frontmatter, verdict line, required finding fields, and existing
+findings not owned by this Web run. Merge by source key so a rerun updates
+evidence without erasing dispositions, owners, recheck conditions, risk
+acceptance, or findings from other reviewers. Recompute the file's five
+disposition counts, derived closed/outstanding counts, outstanding P0-P3 counts,
+and verdict from the entire resulting file.
 
 Coverage defects are findings in `testing.md`, including:
 
@@ -40,8 +52,11 @@ recorded as scope evidence, not defects.
 
 ## PM roll-up handoff
 
-Return the reconciliation payload from `review-template.md`, including zeroes
-for absent areas, plus:
+Validate every written area against `review-template.md`, then return its
+reconciliation payload. For each area, report all five dispositions, derived
+closed/outstanding counts, P0-P3 counts, verdict, and path. An absent area is
+`not_run` with zeroes unless an existing canonical area file supplies current
+counts; it is never silently reported as `pass` or `skipped`. Add:
 
 ```yaml
 audit_summary:

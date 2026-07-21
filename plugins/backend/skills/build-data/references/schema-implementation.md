@@ -23,9 +23,12 @@ entities `{entity list}`.
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path passed by the orchestrator. If unavailable, stop
-artifact writes and report the missing contract. Read `working.md`, then
-`state.md`, then only the exact materialized spec sections assigned. Never
-fetch Notion or edit PM-owned work files.
+artifact writes and report the missing contract. Use the mission capsule's
+explicit work id/root, assigned materialized spec sections, acceptance slice,
+and target paths. Read `working.md` only when the capsule lacks navigation
+required to proceed; read `state.md` only for resume, cross-slice, or alignment
+work, and only the relevant sections. Never fetch Notion or edit PM-owned work
+files.
 
 **Steps**:
 

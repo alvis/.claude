@@ -22,7 +22,7 @@ run_subagent_start_hook() {
   if [[ -f "$plugin_root/scripts/context.sh" ]]; then
     # shellcheck source=/dev/null
     source "$plugin_root/scripts/context.sh"
-    CONTEXT+=$(get_plugin_context)
+    CONTEXT+=$(get_plugin_context subagent)
   fi
 
   output_hook_context "SubagentStart" "$CONTEXT"

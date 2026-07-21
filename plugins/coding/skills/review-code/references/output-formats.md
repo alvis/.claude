@@ -8,7 +8,9 @@ root. Both interactive and non-interactive modes report:
 
 - Work: `<work-id>`
 - Overall: `<pass|pass_with_suggestions|requires_changes|fail>`
-- Contract: `<state.md or explicit plan path>`
+- Plan source: `state.md`
+- Plan digest: `<64-lowercase-hex>` (`engineering-plan-definition-digest-v1`)
+- Reviewed task IDs: `<full IDs>`
 - Alignment: `<verdict/counts>` — `reviews/alignment.md`
 - Correctness: `<verdict/counts>` — `reviews/correctness.md`
 - Security: `<verdict/counts>` — `reviews/security.md`
@@ -19,10 +21,13 @@ root. Both interactive and non-interactive modes report:
 - Outstanding priorities: `P0:<n> P1:<n> P2:<n> P3:<n>`
 - Dispositions: `open:<n> fixed:<n> acknowledged:<n> deferred:<n> skipped:<n>`
 - Closure: `closed:<n> outstanding:<n>`
-- Summary: `.engineering/work/<work-id>/review.md`
+- Summary target: `.engineering/work/<work-id>/review.md` (`written` or
+  `reconciliation_returned`)
 - Generated files: `<explicit paths>`
 ```
 
-Omit unselected areas. CI/non-interactive mode additionally returns nonzero for
-any outstanding finding; it never prompts. Interactive mode may name the next owning skill but
-must not inline the findings.
+Report every existing canonical area even when only selected areas were rerun;
+mark an area `not_run` only when no area file exists yet. CI/non-interactive
+mode additionally returns nonzero for any outstanding finding; it never
+prompts. Interactive mode may name the next owning skill but must not inline
+the findings.

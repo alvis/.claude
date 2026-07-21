@@ -200,6 +200,7 @@ find_project_root() {
     Cargo.toml go.mod
     pom.xml build.gradle build.gradle.kts
     Gemfile composer.json
+    .code-spec
   )
   local stop="${HOME:-/}"
   local marker
@@ -238,90 +239,23 @@ find_monorepo_root() {
   printf '\n'
 }
 
-# returns a stable device/inode identity for path dedupe, using the platform's
-# stat dialect; falls back to the supplied path only when stat is unavailable
-_file_identity() {
-  local path="$1"
-  local identity
-
-  if identity="$(stat -f '%d:%i' "$path" 2>/dev/null)"; then
-    printf '%s\n' "$identity"
-  elif identity="$(stat -c '%d:%i' "$path" 2>/dev/null)"; then
-    printf '%s\n' "$identity"
-  else
-    printf '%s\n' "$path"
-  fi
-}
-
-# lists high-signal project Markdown at $1, ordered as onboarding -> active
-# engineering-work pointers -> durable documentation -> remaining non-legacy
-# root/depth-1 docs; emits "- <rel>"
+# lists markdown files at $1 (root) plus its immediate subdirectories, ordered
+# README -> curated docs -> remaining root *.md -> depth-1 *.md; emits "- <rel>"
 # bullets on stdout AND the absolute paths on FD 3 for caller-side dedupe;
 # $2 is a newline-delimited set of absolute paths to skip
 _collect_markdown() {
   local root="$1"
   local exclude_abs="$2"
 
-  local curated=(AGENTS.md CONTRIBUTING.md contributing.md SECURITY.md security.md)
-  local exclude_dirs=(.git .jj .hg .svn .engineering docs node_modules .venv venv dist build out .next .turbo .cache coverage .code-spec)
+  local curated=(README.md CONTEXT.md DESIGN.md PLAN.md NOTES.md REQUIREMENTS.md DATA.md UI.md REFERENCE.md)
+  local exclude_dirs=(.git .jj .hg .svn node_modules .venv venv dist build out .next .turbo .cache coverage .code-spec)
 
   local ordered=()
   local seen=$'\n'"$exclude_abs"$'\n'
-  local seen_ids=$'\n'
-  local name abs identity
+  local name abs
 
-  # 1. README variants by actual directory entry, deduplicated by filesystem
-  # identity for case-insensitive filesystems and hard links.
-  while IFS= read -r abs; do
-    [[ -z "$abs" ]] && continue
-    identity="$(_file_identity "$abs")"
-    [[ "$seen_ids" == *$'\n'"$identity"$'\n'* ]] && continue
-    ordered+=("$abs")
-    seen+="$abs"$'\n'
-    seen_ids+="$identity"$'\n'
-  done < <(find "$root" -maxdepth 1 -type f -iname 'readme.md' 2>/dev/null | LC_ALL=C sort -f)
-
-  # Curated, root-level onboarding documents after README.
+  # 1. Curated, root-level, in order (README first).
   for name in "${curated[@]}"; do
-    abs="$root/$name"
-    identity="$(_file_identity "$abs")"
-    if [[ -f "$abs" ]] && [[ "$seen" != *$'\n'"$abs"$'\n'* ]] &&
-       [[ "$seen_ids" != *$'\n'"$identity"$'\n'* ]]; then
-      ordered+=("$abs")
-      seen+="$abs"$'\n'
-      seen_ids+="$identity"$'\n'
-    fi
-  done
-
-  # 2. Only the explicitly active work item (or the sole unambiguous item)
-  # exposes its fast pointer and state overview.
-  local work_dir
-  local work_candidates=()
-  if [[ -n "${ENGINEERING_WORK_ID:-}" ]] &&
-     [[ "$ENGINEERING_WORK_ID" != *[!a-z0-9-]* ]] &&
-     [[ -d "$root/.engineering/work/$ENGINEERING_WORK_ID" ]]; then
-    work_candidates+=("$root/.engineering/work/$ENGINEERING_WORK_ID")
-  elif [[ -z "${ENGINEERING_WORK_ID:-}" ]]; then
-    while IFS= read -r work_dir; do
-      [[ -z "$work_dir" ]] && continue
-      work_candidates+=("$work_dir")
-    done < <(find "$root/.engineering/work" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | LC_ALL=C sort)
-  fi
-  if [[ "${#work_candidates[@]}" -eq 1 ]]; then
-    work_dir="${work_candidates[0]}"
-    for name in working.md state.md; do
-      abs="$work_dir/$name"
-      if [[ -f "$abs" ]] && [[ "$seen" != *$'\n'"$abs"$'\n'* ]]; then
-        ordered+=("$abs")
-        seen+="$abs"$'\n'
-      fi
-    done
-  fi
-
-  # 3. Durable documentation entrypoints only; leaf documents are reached
-  # through these indexes.
-  local durable=(docs/index.md docs/architecture/overview.md docs/design/system.md)
-  for name in "${durable[@]}"; do
     abs="$root/$name"
     if [[ -f "$abs" ]] && [[ "$seen" != *$'\n'"$abs"$'\n'* ]]; then
       ordered+=("$abs")
@@ -329,43 +263,25 @@ _collect_markdown() {
     fi
   done
 
+  # 2. Remaining *.md at root.
   while IFS= read -r abs; do
     [[ -z "$abs" ]] && continue
     [[ "$seen" == *$'\n'"$abs"$'\n'* ]] && continue
     ordered+=("$abs")
     seen+="$abs"$'\n'
-  done < <(
-    find "$root/docs/specs" -mindepth 2 -maxdepth 2 -type f -name 'index.md' 2>/dev/null | LC_ALL=C sort
-  )
-
-  # 4. Remaining root Markdown, excluding superseded generated root artifacts.
-  while IFS= read -r abs; do
-    [[ -z "$abs" ]] && continue
-    [[ "$seen" == *$'\n'"$abs"$'\n'* ]] && continue
-    identity="$(_file_identity "$abs")"
-    [[ "$seen_ids" == *$'\n'"$identity"$'\n'* ]] && continue
-    name="$(basename "$abs" | tr '[:lower:]' '[:upper:]')"
-    case "$name" in
-      CONTEXT.MD|NOTES.MD|PLAN.MD|DRAFT.MD|DESIGN.MD|DECISIONS.MD|AUDIT.MD|DEVIATIONS.MD|REQUIREMENTS.MD|DATA.MD|UI.MD|REFERENCE.MD)
-        continue
-        ;;
-    esac
-    ordered+=("$abs")
-    seen+="$abs"$'\n'
-    seen_ids+="$identity"$'\n'
   done < <(find "$root" -maxdepth 1 -type f -iname '*.md' 2>/dev/null | LC_ALL=C sort -f)
 
-  # 5. Other depth-1 Markdown, with generated and durable roots excluded.
-  local exclude_paths=()
+  # 3. *.md one level down, with exclusions.
+  local prune=()
   for name in "${exclude_dirs[@]}"; do
-    exclude_paths+=('!' -path "$root/$name/*")
+    prune+=(-path "$root/$name" -prune -o)
   done
   while IFS= read -r abs; do
     [[ -z "$abs" ]] && continue
     [[ "$seen" == *$'\n'"$abs"$'\n'* ]] && continue
     ordered+=("$abs")
     seen+="$abs"$'\n'
-  done < <(find "$root" -mindepth 2 -maxdepth 2 -type f -iname '*.md' "${exclude_paths[@]}" -print 2>/dev/null | LC_ALL=C sort -f)
+  done < <(find "$root" -mindepth 2 -maxdepth 2 "${prune[@]}" -type f -iname '*.md' -print 2>/dev/null | LC_ALL=C sort -f)
 
   local rel
   for abs in "${ordered[@]}"; do
@@ -396,8 +312,11 @@ get_repo_root_documents_context() {
   if [[ -n "$monorepo_root" ]]; then
     local exclude_abs
     exclude_abs="$(cat "$project_abs")"
+    local mono_abs
+    mono_abs="$(mktemp)"
     local mono_lines
-    mono_lines="$(_collect_markdown "$monorepo_root" "$exclude_abs" 3>/dev/null)"
+    mono_lines="$(_collect_markdown "$monorepo_root" "$exclude_abs" 3>"$mono_abs")"
+    rm -f "$mono_abs"
     if [[ -n "$mono_lines" ]]; then
       context+="## Monorepo Documents\n\n${mono_lines}\n"
     fi

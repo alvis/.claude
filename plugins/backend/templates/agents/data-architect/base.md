@@ -37,10 +37,13 @@ Typical responses:
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
-writes and report the missing contract. For active work read `working.md`, then
-`state.md`, then its exact spec/plan pointers. Never edit PM-owned work files;
-return explicit final paths as `generated_files` and leave sizing of eligible
-work Markdown inside the target `.engineering/` to the PM.
+writes and report the missing contract. For delegated active work, use the
+mission capsule's explicit work id/root, exact spec/plan/acceptance paths, and
+assigned target paths. Read `working.md` only when the capsule lacks navigation
+required to proceed; read `state.md` only for resume, cross-slice, or alignment
+work, and only the relevant sections. Never edit PM-owned work files; return
+explicit final paths as `generated_files` and leave sizing of eligible work
+Markdown inside the target `.engineering/` to the PM.
 
 Preload (stable standards):
 

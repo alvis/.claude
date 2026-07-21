@@ -23,9 +23,9 @@
 Before delegating, orchestrating, or recording review, read
 `{{PLUGIN_DIR}}/references/orchestration.md`.
 
-Before creating or materially rewriting project Markdown, read
-`{{PLUGIN_DIR}}/references/engineering-work.md`; if unavailable, do not write
-artifacts and report the missing contract. Before any work artifact, run its
-workspace resolver. Workers stop on `requires_ignore`; the PM alone adds
-`.engineering/` to the target `.gitignore`, records it in `generated_files`,
-and reruns the resolver.
+Before creating or materially rewriting a lifecycle-managed engineering
+artifact, read `{{PLUGIN_DIR}}/references/engineering-work.md`; if unavailable,
+do not write it. Run its resolver without inventing a work ID. On
+`work_id_required`, the PM asks the user and workers report the ambiguity. On
+`requires_ignore`, workers stop; the PM alone adds `.engineering/` to the
+active workspace `.gitignore`, records it in `generated_files`, and reruns.

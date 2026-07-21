@@ -1,9 +1,9 @@
 ---
 name: create-screen-design
-description: Create a new responsive screen-design contract from notion-derived work context, keep temporary exploration in the active work item, sync approved content through MDC/Notion owners, and promote durable design docs. Route existing screens to update-screen-design.
+description: Create a new responsive screen-design contract from user-selected product and specification context, keep temporary exploration in the active work item, synchronize approved content through the selected MDC/Notion mechanism, and promote durable design docs. Route existing screens to update-screen-design.
 model: opus
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion
-argument-hint: "<product> <screen descriptions...> --work-id=<id> [--constraints=...] [--platforms=...]"
+argument-hint: "<product> <screen descriptions...> [--work-id=<id>] [--context=<path-or-ref>] [--context-direction=<direction>] [--transport-root=<dir>] [--constraints=...] [--platforms=...]"
 ---
 
 # Create Screen Design
@@ -19,18 +19,26 @@ task-specific design exploration, and durable versioned design knowledge.
 - Temporary detail lives in
   `.engineering/work/<work-id>/design/<slug>.md`; `design.md` is the
   PM-owned overview. Do not create an independent design artifact elsewhere.
-- Notion-backed `.mdc` paths are owned by notion-sync and authored only through
-  `specification:mdc`; do not choose/derive filenames or size-gate MDC.
+- Notion-backed `.mdc` paths are owned by the selected transport and authored
+  only through the user/project-selected MDC-aware mechanism; do not
+  choose/derive filenames or size-gate MDC.
 - Durable feature/screen design promotes to `docs/design/<slug>.md`; only truly
   system-wide tokens/components/states/motion/accessibility update
   `docs/design/system.md` or its children.
 
 ## Inputs
 
-- **Required**: product, screen descriptions, and `--work-id=<id>`.
-- **Optional**: constraints and platforms (default web + mobile).
+- **Required**: product and screen descriptions.
+- **Optional**: work id, constraints, platforms (default web + mobile), and an
+  explicit context source, materialization direction, and local transport root.
 - **Prerequisites**: resolvable product/context, Notion credentials/tooling,
   and an active engineering work item.
+
+For a direct run, run Essential's workspace resolver, passing `--work-id` only
+when the user supplied an explicit override. Accept its deterministic
+environment, Git-branch/jj-workspace, or sole-existing-work match. Ask the user
+only when it returns `work_id_required`, using its returned candidates; never
+invent an id. A delegated run receives the explicit work id and root.
 
 The canonical template, parent database, and collection remain:
 
@@ -42,13 +50,16 @@ The canonical template, parent database, and collection remain:
 
 1. Before creating or materially rewriting a project artifact, read the
    absolute `engineering-work.md` path injected by Essential. If unavailable,
-   stop artifact writes and report the missing contract. Resolve work/default
-   roots; read `working.md`, then `state.md`, then referenced spec/design paths.
-2. Materialize required product/spec context through
-   `specification:sync-spec`. Pull the template/context transport into the
-   default-workspace mirror through `specification:sync-notion`, preserving its
-   returned `.mdc` paths and refs. Search for collisions; existing screens route
-   to update.
+   stop artifact writes and report the missing contract. Use the workspace
+   resolver result as the active work root. Read only the work pointers and
+   spec/design sources required for this screen-design assignment.
+2. Materialize required product/spec context from the source, location, and
+   direction supplied by the user or active work state. Use local or inline
+   context directly. For a remote source, use the Notion transport/MDC mechanism
+   selected by the user or project and preserve every returned path and ref.
+   Never assume a synchronization skill, a default mirror, or a fixed transport
+   directory. Pull the live screen template into the explicitly selected
+   transport root. Search for collisions; existing screens route to update.
 3. Map each requested screen to product relation, source refs, constraints, and
    platform coverage. Create a lowercase work-local design child with purpose,
    audience/task, hierarchy/navigation, responsive behavior, loading/empty/
@@ -57,19 +68,22 @@ The canonical template, parent database, and collection remain:
 4. Present alternatives and obtain approval. Return the child row/status to the
    PM for `design.md`/`state.md` reconciliation; do not edit those overview
    files directly.
-5. For approved screens, ask `specification:sync-notion` to create the page
-   under the canonical parent using the live template/relations. Route authored
-   MDC body content through `specification:mdc`; use the path/ref returned by
-   transport and never hand-write MDC. Verify the persisted ref and remote
-   identity before attempting another screen.
+5. For each approved screen, require an explicit local unsynced MDC path from
+   the caller or selected transport; never synthesize it from the title or id.
+   Use the selected MDC-aware authoring mechanism to apply the live template,
+   body, properties, relations, and canonical `parent` metadata at that path.
+   Then run the selected transport in local-to-Notion direction. The transport
+   creates the page and writes its stable `ref:` back to the same file. Verify
+   the persisted ref and remote identity before attempting another screen.
 6. Promote stable non-system design to `docs/design/<screen-slug>.md` with
    Notion ids, source revision/hash, approved decision links, and supersession
    metadata. Route any system-wide rules to `docs/design/system.md` without
    duplicating them in the screen doc. Update `docs/index.md`/design links when
    needed.
-7. Verify each remote page through `sync-notion` diff/verification pull and the
-   durable derivation against the verified source. Stop on uncertain creation
-   to avoid duplicates.
+7. Verify each remote page through the selected transport's diff or verification
+   pull into an explicit verification location, and verify the durable
+   derivation against that source. Stop on uncertain creation to avoid
+   duplicates.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`, plus PM reconciliation. Do not run file sizing; after all
 writers finish, the PM checks only eligible work Markdown inside the target
@@ -81,7 +95,8 @@ writers finish, the PM checks only eligible work Markdown inside the target
   relations and complete responsive/state/accessibility coverage.
 - Work design remains temporary and lower-case; durable promotion is approved,
   versioned, linked, and provenance-backed.
-- No MDC path was invented or hand-edited; no worker edited PM-owned files.
+- No MDC path was invented or edited outside the selected MDC-aware mechanism;
+  no worker edited PM-owned files.
 - `generated_files` includes every work/durable/transport path changed.
 
 ## Completion
