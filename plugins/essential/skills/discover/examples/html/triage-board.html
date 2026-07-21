@@ -775,32 +775,39 @@
             <legend>
               Once the board looks right, what should the coder do?
             </legend>
-            <label>
-              <input
-                type="radio"
-                name="handoff-next"
-                value="Draft a task list for the Now lane only"
-                data-recommended="true"
-                checked
-              />
-              Draft a task list for the Now lane only <span>Recommended</span>
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="handoff-next"
-                value="Draft tasks for both Now and Next"
-              />
-              Draft tasks for both Now and Next
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="handoff-next"
-                value="Just capture the board; planning happens live"
-              />
-              Just capture the board; planning happens live
-            </label>
+            <div class="discovery-options">
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="handoff-next"
+                  value="Draft a task list for the Now lane only"
+                  data-recommended="true"
+                  checked
+                /><span class="discovery-option-copy"
+                  ><strong>Draft a task list for the Now lane only</strong></span
+                ><span class="discovery-badge">Recommended</span></label
+              >
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="handoff-next"
+                  value="Draft tasks for both Now and Next"
+                /><span class="discovery-option-copy"
+                  ><strong>Draft tasks for both Now and Next</strong></span
+                ></label
+              >
+              <label class="discovery-option"
+                ><input
+                  type="radio"
+                  name="handoff-next"
+                  value="Just capture the board; planning happens live"
+                /><span class="discovery-option-copy"
+                  ><strong
+                    >Just capture the board; planning happens live</strong
+                  ></span
+                ></label
+              >
+            </div>
           </fieldset>
 
           <aside class="discovery-scope-cuts">

@@ -466,6 +466,7 @@
     color: var(--ui-ink);
     font-weight: 650;
     line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .discovery-intro-note {
@@ -2661,6 +2662,18 @@ h3 {
 
   .discovery-option-brief {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* At narrow widths the masthead keeps its annotation trigger absolutely pinned
+   top-right (see .discovery-masthead > .discovery-annotation-trigger above), so
+   reserve clearance on the masthead eyebrow to stop the long PLAN REVIEW /
+   GUIDED INTERVIEW eyebrow text sliding under the floating Add-note button.
+   Scoped to the masthead so section eyebrows (whose trigger reflows to static)
+   are untouched, and to <=30rem so the trigger never moves on wide screens. */
+@media (max-width: 30rem) {
+  .discovery-masthead-copy .discovery-eyebrow {
+    padding-right: 6.5rem;
   }
 }
 
