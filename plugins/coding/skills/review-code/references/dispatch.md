@@ -17,7 +17,7 @@ reviewer receives only file paths and these common inputs:
   reviewed full task IDs.
 
 The capsule is sufficient by default. Give `state.md` to alignment reviewers,
-or when resume/cross-slice evidence requires it; give `working.md` only when
+or when resume/cross-slice evidence requires it; give `state/working.md` only when
 navigation is otherwise missing. Do not make every area reread both broad
 entrypoints.
 

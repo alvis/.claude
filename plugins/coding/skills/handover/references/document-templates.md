@@ -15,7 +15,7 @@ handover-specific content; all timestamps are one real UTC ISO-8601 value.
 - Plan digest: `<64-lowercase-hex>`
 - Hash kind: `engineering-plan-definition-digest-v1`
 - Updated: `<timestamp>`
-- Current focus: [working.md](working.md)
+- Current focus: [working.md](state/working.md)
 - External anchor: `<task|issue|PR|Notion URL>`
 
 ## Status
@@ -56,7 +56,7 @@ substate, remaining action, evidence, and blocker. Use semantic `state/*.md`
 children for genuinely resumable execution detail. Numeric split children are
 reserved for a shared file that exceeded its size limit.
 
-## `working.md`
+## `state/working.md`
 
 ```markdown
 # Current focus
@@ -67,7 +67,7 @@ reserved for a shared file that exceeded its size limit.
 - Handback point: `<exact next action or blocker>`
 
 ## Fast paths
-- State: [state.md](state.md)
+- State: [state.md](../state.md)
 - Spec: [<relative path>](<relative path>)
 - Source/test: [<relative path>](<relative path>)
 - Active decision/design/review/evidence: [<relative path>](<relative path>)

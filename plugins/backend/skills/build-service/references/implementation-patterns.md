@@ -5,7 +5,7 @@ This reference supplies per-batch context to `coding:draft-code`,
 absolute Essential `engineering-work.md` path, exact work ID/root and relevant
 materialized spec/plan pointers, the PM-owned-file prohibition, and the
 `generated_files` return contract. The capsule is sufficient by default:
-children read `working.md` only when navigation is missing and `state.md` only
+children read `state/working.md` only when navigation is missing and `state.md` only
 for resume, cross-slice dependency, or alignment. Children never run file
 sizing; the PM checks only eligible work Markdown inside the target
 `.engineering/`.

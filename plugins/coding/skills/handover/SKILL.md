@@ -23,7 +23,7 @@ the receipt identifies whether `specification:implement-code` or
 - Do not claim that a receipt is rehydratable when relevant repository changes
   exist only in this working copy. A local path or change ID with no
   destination-reachable carrier is not a portable source anchor.
-- Only the main agent/PM may run this workflow because it writes `working.md`
+- Only the main agent/PM may run this workflow because it writes `state/working.md`
   and reconciles work indexes.
 
 ## Inputs
@@ -45,7 +45,7 @@ resolve an existing active ID. Handover never mints an empty work item.
 ## Workflow
 
 1. Resolve `.engineering/works/<work-id>/` per the Essential contract. Read
-   `working.md` first when present, then `state.md`, its linked detail files,
+   `state/working.md` first when present, then `state.md`, its linked detail files,
    the four lazy overview files, `review.md`, relevant review areas, evidence,
    and the materialized working specification. Treat repository and runtime
    evidence as authoritative over stale local memory. Run
@@ -116,10 +116,10 @@ resolve an existing active ID. Handover never mints an empty work item.
    kind, full parent/subtask DAG, marked task status and evidence, lifecycle,
    success criteria, decisions,
    dependencies, blockers, review dispositions, evidence, durable promotion,
-   Notion sync, revalidation, and a prominent link to `working.md`. If eligible
+   Notion sync, revalidation, and a prominent link to `state/working.md`. If eligible
    work Markdown requires splitting under the shared batch process, keep the
    original path as overview.
-6. Rewrite `working.md` to approximately 4,096 bytes through editorial
+6. Rewrite `state/working.md` to approximately 4,096 bytes through editorial
    discipline: current focus, current status, immediate handback point, and
    fast relative paths only. It is not a plan, history, or complete context.
    Do not mechanically size-gate it.
@@ -173,7 +173,7 @@ complete split round.
 
 ## Verification
 
-- `state.md` is complete, internally consistent, and links `working.md`; the
+- `state.md` is complete, internally consistent, and links `state/working.md`; the
   latter contains only current-focus summary and fast paths.
 - Every overview matches its children and canonical status vocabulary.
 - Decisions, assumptions, deviations, blockers, review dispositions, evidence,

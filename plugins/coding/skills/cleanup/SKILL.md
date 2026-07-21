@@ -38,7 +38,7 @@ Before resolving engineering-work paths, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, do not
 classify or remove `.engineering/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
-receipts but does not create or rewrite project receipts, `working.md`,
+receipts but does not create or rewrite project receipts, `state/working.md`,
 `state.md`, or overview files; its project `generated_files` is therefore
 empty. Backup metadata lives only in the OS temporary backup tree.
 
@@ -64,7 +64,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    workspace paths by canonical filesystem identity. Within each reachable
    path, enumerate only `.engineering/works/*` and record:
    - VCS kind, registered workspace name/path, and local-only scope;
-   - work ID/path, `working.md` and `state.md` presence, lifecycle status,
+   - work ID/path, `state/working.md` and `state.md` presence, lifecycle status,
      owner, goal, repository revision, completion timestamp, and blockers;
    - `review.md` plus the seven review-area dispositions;
    - durable architecture/design/spec promotion paths and receipts;
@@ -74,7 +74,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
      PR, or Notion anchor;
    - repository retention policy and timestamps for every closure gate.
 
-   Read `working.md` first for navigation, then verify all retirement evidence
+   Read `state/working.md` first for navigation, then verify all retirement evidence
    from `state.md` and its exact links. Run Essential's
    `validate-engineering-state validate --state <state.md>` for every candidate
    and record schema, lifecycle status, canonical plan source/digest/hash kind,

@@ -1042,7 +1042,7 @@ def reconcile_root_children(parsed: ParsedState, report: dict[str, Any]) -> None
             report["errors"].append(issue("invalid_child_state_path", f"State mirror must be a regular non-symlink file: {relative}"))
             continue
         child = parse_state_file(child_path)
-        # state/ also owns semantic narrative such as implementation-plan.md.
+        # state/ also owns semantic narrative such as plan.md.
         # Reconcile only files that explicitly opt into the v1 mirror contract;
         # direct validation still reports unversioned files as migration_required.
         if child.metadata.get("schema") != STATE_SCHEMA and child.metadata.get("state_role") != "child":

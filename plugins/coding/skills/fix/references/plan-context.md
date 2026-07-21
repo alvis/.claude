@@ -11,7 +11,7 @@ the rerun produces comparable alignment verdicts.
    identity as an assertion. Reject any mismatch; none may override state.
 4. Read root state in full and use the review finding plus linked authoritative
    spec/design as the behavior contract. Follow an explicit
-   `state/implementation-plan.md` link only for procedure keyed by existing
+   `state/plan.md` link only for procedure keyed by existing
    task IDs; reject any duplicate or conflicting ID, edge, requiredness,
    target, or acceptance mapping.
 

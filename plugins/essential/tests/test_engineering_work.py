@@ -134,7 +134,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
     def test_deduplicates_and_excludes_working_and_external_markdown(self) -> None:
         measured = self.write_bytes(".engineering/works/eng-421/normal.md", 100)
         working = self.write_bytes(
-            ".engineering/works/eng-421/nested/working.md", 30_000
+            ".engineering/works/eng-421/state/working.md", 30_000
         )
         durable = self.write_bytes("docs/specs/payments/index.md", 30_000)
         plugin_source = self.write_bytes("plugins/example/SKILL.md", 30_000)
@@ -152,7 +152,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
 
     def test_all_excluded_is_a_pass_without_wc(self) -> None:
         working = self.write_bytes(
-            ".engineering/works/eng-421/working.md", 30_000
+            ".engineering/works/eng-421/state/working.md", 30_000
         )
         durable = self.write_bytes("docs/architecture/large.md", 30_000)
 
@@ -436,7 +436,7 @@ class EngineeringWorkStateTest(unittest.TestCase):
             parent_task="DSC",
             topology="dag",
         )
-        narrative_plan = self.root / "state/implementation-plan.md"
+        narrative_plan = self.root / "state/plan.md"
         narrative_plan.write_text(
             "# Implementation plan\n\nThis semantic plan is not a v1 child mirror.\n",
             encoding="utf-8",
@@ -909,7 +909,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 root, work_id, bootstrap=True
             )
 
-            working = work_dir / "working.md"
+            working = work_dir / "state/working.md"
             state = work_dir / "state.md"
             self.assertEqual(0, created.returncode, created.stderr)
             self.assertTrue(created_payload["bootstrap_requested"])
@@ -921,14 +921,14 @@ class WorkspaceResolverTest(unittest.TestCase):
             state_text = state.read_text(encoding="utf-8")
             self.assertIn(f"- Work ID: `{work_id}`", working_text)
             self.assertIn("- Status: `initialized`", working_text)
-            self.assertIn("- State: [state.md](state.md)", working_text)
+            self.assertIn("- State: [state.md](../state.md)", working_text)
             self.assertIn(f"- Work ID: `{work_id}`", state_text)
             self.assertIn("- Schema: `engineering-work-state/v1`", state_text)
             self.assertIn("- Plan source: `state.md`", state_text)
             self.assertIn("| GOL | - | planned |", state_text)
             self.assertIn("| OWN | - | planned |", state_text)
             self.assertIn("## Goal and success criteria", state_text)
-            self.assertIn("- Current focus: [working.md](working.md)", state_text)
+            self.assertIn("- Current focus: [working.md](state/working.md)", state_text)
             self.assertIn("- Specification provenance: Not established.", state_text)
             self.assertIn("- Sync state: Not started.", state_text)
             self.assertIn("- Review state: Not started.", state_text)
@@ -1406,7 +1406,7 @@ class ContextHookContractTest(unittest.TestCase):
         for relative in (
             "README.md",
             "CONTEXT.md",
-            ".engineering/works/eng-42/working.md",
+            ".engineering/works/eng-42/state/working.md",
             ".engineering/works/eng-42/state.md",
             "docs/index.md",
             "docs/architecture/overview.md",
@@ -1443,7 +1443,7 @@ class ContextHookContractTest(unittest.TestCase):
         self.assertNotIn("\\n", context)
         self.assertNotIn("CONTEXT.md", context)
         expected = (
-            ".engineering/works/eng-42/working.md",
+            ".engineering/works/eng-42/state/working.md",
             ".engineering/works/eng-42/state.md",
             "docs/index.md",
             "docs/architecture/overview.md",
@@ -1472,7 +1472,7 @@ class ContextHookContractTest(unittest.TestCase):
         self.assertNotIn("## Target Repo Documents", context)
         for path in (
             "README.md",
-            ".engineering/works/eng-42/working.md",
+            ".engineering/works/eng-42/state/working.md",
             ".engineering/works/eng-42/state.md",
             "docs/index.md",
         ):

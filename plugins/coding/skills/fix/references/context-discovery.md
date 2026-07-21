@@ -3,7 +3,7 @@
 Use this bounded order during diagnosis; do not scan all Markdown by recency:
 
 1. Resolve the active work root from the Essential engineering-work contract.
-2. Read `working.md`, then `state.md`.
+2. Read `state/working.md`, then `state.md`.
 3. Follow only links relevant to the diagnosed scope:
    - `review.md` and the named canonical area file for findings;
    - materialized `spec/` sources and versioned `docs/specs/` derivations;

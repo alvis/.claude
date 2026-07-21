@@ -23,7 +23,7 @@ scratchpad, or `$TMPDIR` fallback for task evidence.
 
 ## Bootstrap and resume
 
-1. Read the shared engineering-work contract, then active `working.md` and
+1. Read the shared engineering-work contract, then active `state/working.md` and
    `state.md`.
 2. Derive `<design-slug>` with Essential's `derive-engineering-name` executable. Inspect
    `design.md` and `design/` for an existing child with the same stable target.

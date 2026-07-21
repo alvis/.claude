@@ -44,7 +44,7 @@ standards. Missing/extra contract surface routes to alignment; broken
 delegation routes to correctness or quality based on behavioral impact.
 
 Every dispatch starts from its mission capsule's exact specification,
-implementation, and output paths. Read `working.md` only when navigation is
+implementation, and output paths. Read `state/working.md` only when navigation is
 missing, and `state.md` only for alignment, resume, or a cross-stream
 dependency the capsule identifies. Return only findings plus an empty
 `generated_files` manifest because audit streams are read-only.
