@@ -584,7 +584,7 @@ def safe_mkdirs(base: Path, *components: str) -> Path:
     try:
         for component in components:
             if component in ("", ".", "..") or "/" in component:
-                raise ContractError(f"unsafe evidence directory component: {component!r}")
+                raise ContractError(f"unsafe artifacts directory component: {component!r}")
             try:
                 os.mkdir(component, 0o700, dir_fd=descriptor)
             except FileExistsError:
@@ -594,7 +594,7 @@ def safe_mkdirs(base: Path, *components: str) -> Path:
             descriptor = next_descriptor
             cursor = cursor / component
     except OSError as exc:
-        raise ContractError(f"cannot create safe evidence directory under {base}: {exc}") from exc
+        raise ContractError(f"cannot create safe artifacts directory under {base}: {exc}") from exc
     finally:
         os.close(descriptor)
     return cursor
@@ -874,7 +874,7 @@ def normalize_publication_request(
     return sorted(publication, key=lambda entry: entry["path"]), sorted(selected)
 
 
-def validate_work_evidence(repo: Path, work_root_arg: str, work_id: str, child: Path) -> Path:
+def validate_work_artifacts(repo: Path, work_root_arg: str, work_id: str, child: Path) -> Path:
     work_root = absolute_cli_path(work_root_arg, "--work-root")
     expected = repo / ".engineering" / "works" / work_id
     if work_root != expected:
@@ -882,27 +882,27 @@ def validate_work_evidence(repo: Path, work_root_arg: str, work_id: str, child: 
     ensure_no_symlink_chain(work_root, repo)
     if not work_root.is_dir():
         raise ContractError(f"work root does not exist: {work_root}")
-    child_abs = absolute_cli_path(os.fspath(child), "evidence path")
+    child_abs = absolute_cli_path(os.fspath(child), "artifacts path")
     try:
-        relative = child_abs.relative_to(work_root / "evidence")
+        relative = child_abs.relative_to(work_root / "artifacts")
     except ValueError as exc:
-        raise ContractError(f"evidence path is outside work evidence: {child_abs}") from exc
+        raise ContractError(f"artifacts path is outside work artifacts: {child_abs}") from exc
     if not relative.parts:
-        raise ContractError("evidence path must name a file")
+        raise ContractError("artifacts path must name a file")
     ensure_no_symlink_chain(child_abs, repo)
     if not child_abs.is_file():
-        raise ContractError(f"evidence path is not a regular file: {child_abs}")
+        raise ContractError(f"artifacts path is not a regular file: {child_abs}")
     repo_relative = child_abs.relative_to(repo).as_posix()
     if not check_ignored(repo, repo_relative):
-        raise ContractError(f"work evidence must be ignored: {child_abs}")
+        raise ContractError(f"work artifacts must be ignored: {child_abs}")
     return work_root
 
 
-def validate_evidence_pointer(repo: Path, work_root: Path, value: Any) -> tuple[Path, str]:
+def validate_artifacts_pointer(repo: Path, work_root: Path, value: Any) -> tuple[Path, str]:
     if not isinstance(value, str) or not value:
-        raise ContractError("generated-file evidence pointer must be a non-empty path")
+        raise ContractError("generated-file artifacts pointer must be a non-empty path")
     if value.startswith("/"):
-        candidate = absolute_cli_path(value, "generated-file evidence pointer")
+        candidate = absolute_cli_path(value, "generated-file artifacts pointer")
     else:
         pure = PurePosixPath(value)
         if (
@@ -910,32 +910,32 @@ def validate_evidence_pointer(repo: Path, work_root: Path, value: Any) -> tuple[
             or value != pure.as_posix()
             or any(component in ("", ".", "..") for component in pure.parts)
         ):
-            raise ContractError("generated-file evidence pointer is not lexically normalized")
-        if pure.parts and pure.parts[0] == "evidence":
+            raise ContractError("generated-file artifacts pointer is not lexically normalized")
+        if pure.parts and pure.parts[0] == "artifacts":
             candidate = work_root.joinpath(*pure.parts)
         elif tuple(pure.parts[:4]) == (
             ".engineering",
             "works",
             work_root.name,
-            "evidence",
+            "artifacts",
         ):
             candidate = repo.joinpath(*pure.parts)
         else:
             raise ContractError(
-                "generated-file evidence pointer must be absolute, work-root-relative evidence/, "
-                "or repo-relative .engineering/works/<id>/evidence/"
+                "generated-file artifacts pointer must be absolute, work-root-relative artifacts/, "
+                "or repo-relative .engineering/works/<id>/artifacts/"
             )
     try:
-        relative = candidate.relative_to(work_root / "evidence")
+        relative = candidate.relative_to(work_root / "artifacts")
     except ValueError as exc:
-        raise ContractError("generated-file evidence pointer escapes work evidence") from exc
+        raise ContractError("generated-file artifacts pointer escapes work artifacts") from exc
     if not relative.parts:
-        raise ContractError("generated-file evidence pointer must name a file")
+        raise ContractError("generated-file artifacts pointer must name a file")
     ensure_no_symlink_chain(candidate, repo)
     if not candidate.is_file():
-        raise ContractError(f"generated-file evidence pointer is not a regular file: {candidate}")
+        raise ContractError(f"generated-file artifacts pointer is not a regular file: {candidate}")
     if not check_ignored(repo, candidate.relative_to(repo).as_posix()):
-        raise ContractError(f"generated-file evidence pointer must be ignored: {candidate}")
+        raise ContractError(f"generated-file artifacts pointer must be ignored: {candidate}")
     return candidate, candidate.relative_to(repo).as_posix()
 
 
@@ -945,7 +945,7 @@ def load_producer_receipt(
     value: Any,
     expected_base_rev: str,
 ) -> tuple[dict[str, str], dict[str, dict[str, Any]]]:
-    candidate, relative = validate_evidence_pointer(repo, work_root, value)
+    candidate, relative = validate_artifacts_pointer(repo, work_root, value)
     receipt, raw = load_json(candidate)
     if raw != canonical_json(receipt):
         raise ContractError(f"generated-files receipt is not canonical JSON: {relative}")
@@ -1050,7 +1050,7 @@ def write_exclusive(path: Path, raw: bytes, mode: int = 0o444) -> None:
 def write_or_verify_immutable(path: Path, raw: bytes, mode: int = 0o444) -> None:
     if path.exists():
         if path.is_symlink() or path.read_bytes() != raw:
-            raise ContractError(f"immutable evidence collision: {path}")
+            raise ContractError(f"immutable artifacts collision: {path}")
         return
     write_exclusive(path, raw, mode)
 
@@ -1062,7 +1062,7 @@ def cmd_build(args: argparse.Namespace) -> dict[str, Any]:
     work_id = request.get("work_id")
     if not isinstance(work_id, str) or not WORK_ID_RE.fullmatch(work_id):
         raise ContractError("scope request work_id must match the resolver lowercase-kebab grammar")
-    work_root = validate_work_evidence(repo, args.work_root, work_id, request_path)
+    work_root = validate_work_artifacts(repo, args.work_root, work_id, request_path)
     base_rev = decode_path(
         run_git(repo, "rev-parse", "--verify", f"{args.base_rev}^{{commit}}").stdout.strip()
     )
@@ -1120,7 +1120,7 @@ def cmd_build(args: argparse.Namespace) -> dict[str, Any]:
     }
     raw = canonical_json(manifest)
     digest = sha256_bytes(raw)
-    directory = safe_mkdirs(work_root, "evidence", "history", "save-manifests")
+    directory = safe_mkdirs(work_root, "artifacts", "history", "save-manifests")
     ensure_no_symlink_chain(directory, repo)
     output = directory / f"{digest}.json"
     write_or_verify_immutable(output, raw)
@@ -1165,7 +1165,7 @@ def validate_manifest(repo: Path, manifest_path: Path, expected_sha: str) -> tup
     work_id = manifest.get("work_id")
     if not isinstance(work_id, str) or not WORK_ID_RE.fullmatch(work_id):
         raise ContractError("manifest work_id must match the resolver lowercase-kebab grammar")
-    work_root = validate_work_evidence(
+    work_root = validate_work_artifacts(
         repo,
         os.fspath(repo / ".engineering" / "works" / work_id),
         work_id,
@@ -1460,7 +1460,7 @@ def load_bound_snapshot(
     try:
         snapshot_path.relative_to(manifest_path.parent)
     except ValueError as exc:
-        raise ContractError("preflight snapshot is outside the manifest evidence directory") from exc
+        raise ContractError("preflight snapshot is outside the manifest artifacts directory") from exc
     snapshot, snapshot_raw = load_json(snapshot_path)
     if snapshot_raw != canonical_json(snapshot):
         raise ContractError("preflight snapshot bytes are not canonical JSON")
@@ -1503,7 +1503,7 @@ def cmd_verify(args: argparse.Namespace) -> dict[str, Any]:
     try:
         index_backup_path.relative_to(manifest_path.parent)
     except ValueError as exc:
-        raise ContractError("index backup is outside the manifest evidence directory") from exc
+        raise ContractError("index backup is outside the manifest artifacts directory") from exc
     ensure_no_symlink_chain(index_backup_path, repo)
     if not index_backup_path.is_file() or index_backup_path.is_symlink():
         raise ContractError("preflight index backup is missing or unsafe")

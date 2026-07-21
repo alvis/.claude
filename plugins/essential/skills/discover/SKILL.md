@@ -44,8 +44,8 @@ bootstrap before the first persistent artifact.
 
 Default to a conversational result. With `--persist` or a long-lived task,
 write the ledger to `state/discovery.md`. Keep requested disposable prototypes
-under `evidence/prototypes/<semantic-slug>/` and copied or summarized source
-material under `evidence/discovery/`. Never modify application source.
+under `artifacts/prototypes/<semantic-slug>/` and copied or summarized source
+material under `artifacts/discovery/`. Never modify application source.
 
 For persistent discovery, follow `engineering-work-state.md` linked by the
 engineering-work contract. Register one `DSC` parent and every discovery leaf
@@ -144,7 +144,7 @@ owner, or marked blocking.
 - Every consequential claim is labeled and carries evidence or an explicit
   user source; hypotheses are not reported as facts.
 - No application source changed. Every prototype is visibly disposable;
-  non-HTML prototypes are contained inside the active work's evidence directory
+  non-HTML prototypes are contained inside the active work's artifacts directory
   and generated HTML is contained inside a collision-safe OS temporary directory.
 - Every material unknown has a disposition and owner; every accepted assumption
   is low-impact, reversible, and has a recheck trigger.

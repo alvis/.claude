@@ -48,7 +48,7 @@ bounds are stated at each step.
    archives, temporal progression; current events: recent news and real-time
    updates; theoretical: foundational texts balanced with recent work;
    product/market: industry reports, user feedback, competitive analysis.
-   Create `evidence/research/<topic-slug>/` under the active work directory,
+   Create `artifacts/research/<topic-slug>/` under the active work directory,
    with `source-tracker.md` listing each source's URL/path, credibility class
    (Academic/Official/Industry/Community), discovery level, discovered-from
    source, and status (pending/analyzing/analyzed/failed). If the tracker

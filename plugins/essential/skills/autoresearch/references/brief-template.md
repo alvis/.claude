@@ -63,7 +63,7 @@ plateau: { rounds: 3, epsilon: '' }   # MANDATORY — epsilon = min meaningful i
 execution:
   code_execution: false           # MANDATORY in code mode — explicit user grant
   worktree_isolation: true        # forced true when code_execution && fanout > 1
-output_dir: <work-dir>/evidence/autoresearch/<semantic-slug>/
+output_dir: <work-dir>/artifacts/autoresearch/<semantic-slug>/
 ---
 
 ## Goal

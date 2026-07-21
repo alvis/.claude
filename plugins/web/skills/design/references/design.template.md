@@ -4,7 +4,7 @@
 
 > **Status**: {{draft|approved|implemented|promoted|superseded}} · **Headline**: {{ONE_LINE_HEADLINE}} · **Owner**: {{OWNER}}
 
-> **Work**: `{{WORK_ID}}` · **State**: `../state.md` · **Evidence**: `../evidence/design/{{DESIGN_SLUG}}/` · **Created**: {{ISO_8601}}
+> **Work**: `{{WORK_ID}}` · **State**: `../state.md` · **Artifacts**: `../artifacts/design/{{DESIGN_SLUG}}/` · **Created**: {{ISO_8601}}
 
 > **Provenance**: {{SOURCE_URLS_PATHS_REVISIONS_AND_PRIOR_DESIGN_REFS}}
 
@@ -355,7 +355,7 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 **Authorization**: {{design-only|implementation-authorized|ambiguous}}
 
-**Evidence root**: `../evidence/design/{{DESIGN_SLUG}}/`
+**Artifacts root**: `../artifacts/design/{{DESIGN_SLUG}}/`
 
 **Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
 
@@ -444,11 +444,11 @@ Save point: <jj change id>
 | Artifact | Path |
 |---|---|
 | Theme stylesheet (`@layer theme`, scaffolded by `web:css`) | {{src/styles/theme.css}} |
-| Preview catalog | `../evidence/design/{{DESIGN_SLUG}}/previews/tokens/preview.html` |
-| Preview screenshots | `../evidence/design/{{DESIGN_SLUG}}/previews/tokens/screenshot*.webp` |
+| Preview catalog | `../artifacts/design/{{DESIGN_SLUG}}/previews/tokens/preview.html` |
+| Preview screenshots | `../artifacts/design/{{DESIGN_SLUG}}/previews/tokens/screenshot*.webp` |
 | This design contract | `./{{DESIGN_SLUG}}.md` |
 | Key component directories | {{src/components/ui/, packages/ui/…}} |
 | Whole-work state | `../state.md` |
-| Design boards and rendered images | `../evidence/design/{{DESIGN_SLUG}}/boards/*` |
-| Facelift inventories | `../evidence/design/{{DESIGN_SLUG}}/inventories/facelift-inventory-before.json` / `-after.json` |
+| Design boards and rendered images | `../artifacts/design/{{DESIGN_SLUG}}/boards/*` |
+| Facelift inventories | `../artifacts/design/{{DESIGN_SLUG}}/inventories/facelift-inventory-before.json` / `-after.json` |
 | Save points | {{jj change ids, newest last}} |

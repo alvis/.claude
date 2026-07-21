@@ -74,9 +74,9 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         return result, json.loads(result.stdout)
 
     def scope(self, publication: list[tuple[str, str]], selected: list[str]) -> Path:
-        scope = self.work_root / "evidence/history/scope-request.json"
+        scope = self.work_root / "artifacts/history/scope-request.json"
         scope.parent.mkdir(parents=True, exist_ok=True)
-        child_manifest = self.work_root / "evidence/children/coding.json"
+        child_manifest = self.work_root / "artifacts/children/coding.json"
         child_manifest.parent.mkdir(parents=True, exist_ok=True)
         generated_files = []
         for relative, _ in publication:
@@ -121,7 +121,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
                     ],
                     "selected_paths": selected,
                     "generated_file_manifests": [
-                        ".engineering/works/scoped-save/evidence/children/coding.json"
+                        ".engineering/works/scoped-save/artifacts/children/coding.json"
                     ],
                 }
             ),
@@ -362,7 +362,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("current HEAD no longer equals", str(output["error"]))
 
-    def test_cli_evidence_paths_reject_lexical_traversal_before_access(self) -> None:
+    def test_cli_artifacts_paths_reject_lexical_traversal_before_access(self) -> None:
         (self.repo / "src.txt").write_text("lifecycle edit\n", encoding="utf-8")
         scope = self.scope([("src.txt", "child-manifest:source")], ["src.txt"])
         escaped_scope = f"{scope.parent}/nested/../{scope.name}"
@@ -420,11 +420,11 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("--snapshot contains lexical traversal", str(output["error"]))
 
-    def test_generated_evidence_pointer_rejects_lexical_traversal(self) -> None:
+    def test_generated_artifacts_pointer_rejects_lexical_traversal(self) -> None:
         (self.repo / "src.txt").write_text("lifecycle edit\n", encoding="utf-8")
         scope = self.scope([("src.txt", "child-manifest:source")], ["src.txt"])
         request = json.loads(scope.read_text(encoding="utf-8"))
-        request["generated_file_manifests"] = ["evidence/children/nested/../coding.json"]
+        request["generated_file_manifests"] = ["artifacts/children/nested/../coding.json"]
         scope.write_text(json.dumps(request), encoding="utf-8")
         result, output = self.helper(
             "build",
@@ -518,7 +518,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         manifest = self.build(
             self.scope([("src.txt", "child-manifest:source")], ["src.txt"])
         )
-        receipt_path = self.work_root / "evidence/children/coding.json"
+        receipt_path = self.work_root / "artifacts/children/coding.json"
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         receipt["producer"] = "coding:mutated-after-seal"
         receipt_path.write_text(
@@ -549,7 +549,7 @@ class ScopedSaveValidatorTest(unittest.TestCase):
             ],
             ["src.txt", "tests.txt"],
         )
-        receipt_path = self.work_root / "evidence/children/coding.json"
+        receipt_path = self.work_root / "artifacts/children/coding.json"
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         receipt["generated_files"] = [
             entry for entry in receipt["generated_files"] if entry["path"] == "src.txt"

@@ -44,7 +44,7 @@ research belong to `essential:deep-research`.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work directory from
-that contract; a run lives under `evidence/autoresearch/<semantic-slug>/`.
+that contract; a run lives under `artifacts/autoresearch/<semantic-slug>/`.
 
 <IMPORTANT>
 - The orchestrator never generates or scores a candidate and never touches the
@@ -94,7 +94,7 @@ brief's own bounds (fanout, judge count, refute passes) named below.
    captured output shown to the user. Loop until all six exit-criteria pass; if
    the user aborts, report `status: aborted`.
 3. **Write and approve the brief.** Create the run's
-   `evidence/autoresearch/<semantic-slug>/` directory and render
+   `artifacts/autoresearch/<semantic-slug>/` directory and render
    `research-brief.md` verbatim from the template in
    [references/brief-template.md](references/brief-template.md) — frontmatter
    from the collected values, a `## Goal` narrative, one rationale subsection
@@ -205,7 +205,7 @@ rounds_completed: <n>
 candidates_evaluated: <n>
 stop_reason: target|budget|plateau|user_abort
 mechanism: A|B
-output_dir: <work-dir>/evidence/autoresearch/<semantic-slug>/
+output_dir: <work-dir>/artifacts/autoresearch/<semantic-slug>/
 best_artifact: <path>
 user_decisions: [<extend/pivot/accept log>]
 generated_files: [<absolute final paths generated or materially rewritten>]

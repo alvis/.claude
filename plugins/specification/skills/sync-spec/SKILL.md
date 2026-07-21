@@ -65,7 +65,7 @@ the distinct hashes defined in
    - `mirror_root` from explicit input, active state, or an immutable receipt;
    - `transport_profile_file` from explicit input or the exact validated
      active-state mapping described above;
-   - `receipt_root = <work-dir>/evidence/spec-sync`;
+   - `receipt_root = <work-dir>/artifacts/spec-sync`;
    - immutable receipts at
      `materializations/<transport-manifest-key>.json` and base snapshots at
      `bases/<transport-manifest-key>/`, where the key is the 64 lowercase hex

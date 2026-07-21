@@ -9,9 +9,9 @@ their normal owners.
 ## Producer contract
 
 The lifecycle parent writes immutable JSON under
-`<work-root>/evidence/history/save-manifests/<manifest-sha256>.json`. The hash is
+`<work-root>/artifacts/history/save-manifests/<manifest-sha256>.json`. The hash is
 SHA-256 of the exact file bytes and is passed separately on invocation; the
-manifest cannot authenticate itself. The evidence directory and manifest must
+manifest cannot authenticate itself. The artifacts directory and manifest must
 be ignored by the target repository, and neither may be reached through a
 symlink.
 
@@ -37,7 +37,7 @@ path/hash plus `/coding:commit --paths-from=... --manifest-sha256=...`
 invocation. Preparation never stages, saves, finalizes, or publishes.
 
 Every path named by `generated_file_manifests` must resolve to an ignored,
-regular evidence file under the active work root and contain canonical JSON
+regular artifacts file under the active work root and contain canonical JSON
 with this exact producer schema:
 
 ```json
@@ -85,7 +85,7 @@ The manifest contains:
       "state": "file|symlink|deleted",
       "sha256": "<content-or-link-text hash, null only for deleted>",
       "mode": "100644|100755|120000|null for deleted",
-      "origin": "<child/generated-files or lifecycle evidence pointer>"
+      "origin": "<child/generated-files or lifecycle artifacts pointer>"
     }
   ],
   "selected_paths": [
@@ -94,7 +94,7 @@ The manifest contains:
       "state": "file|symlink|deleted",
       "sha256": "<content-or-link-text hash, null only for deleted>",
       "mode": "100644|100755|120000|null for deleted",
-      "origin": "<child/generated-files or lifecycle evidence pointer>",
+      "origin": "<child/generated-files or lifecycle artifacts pointer>",
       "status": "<canonical worktree/index status including mode and staged oid>"
     }
   ],
@@ -111,7 +111,7 @@ The manifest contains:
     "complete": true,
     "generated_file_manifests": [
       {
-        "path": ".engineering/works/<work-id>/evidence/children/coding.json",
+        "path": ".engineering/works/<work-id>/artifacts/children/coding.json",
         "sha256": "<exact canonical receipt bytes hash>"
       }
     ],
@@ -162,12 +162,12 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/validate-scoped-save.sh" prefl
    the complete jj operation/working-copy state to equal sealed `build_state`.
    Any history writer between preparation and preflight makes the manifest
    stale even when selected file bytes did not change.
-2. Require the manifest's real path to be inside the resolved work evidence
+2. Require the manifest's real path to be inside the resolved work artifacts
    directory, all existing ancestors to be real directories rather than
    symlinks, and `git check-ignore` to confirm it is ignored. Hash the exact
    bytes and compare the full lowercase 64-hex digest to both the argument and
    filename. Before reading `--scope`, `--manifest`, `--snapshot`, the work
-   root, or a linked generated-file evidence path, reject lexical `.`/`..`,
+   root, or a linked generated-file artifacts path, reject lexical `.`/`..`,
    repeated/trailing separators, relative CLI paths, and any other
    non-normalized component; normalization after access is not validation.
 3. Reject duplicate or case-colliding paths, directories, submodule interiors,

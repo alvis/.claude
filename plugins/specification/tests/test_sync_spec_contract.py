@@ -44,7 +44,7 @@ class SyncSpecMaterializationContractTest(unittest.TestCase):
                 self.assertIn(statement, self.matrix)
 
         self.assertNotIn(
-            "materialization_receipt = <work-dir>/evidence/spec-sync/materialization.json",
+            "materialization_receipt = <work-dir>/artifacts/spec-sync/materialization.json",
             self.contract,
         )
 

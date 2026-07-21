@@ -11,7 +11,7 @@ resolve a material unknown.
    Avoid backend wiring, production state, migrations, and dependencies not
    required to answer the question.
 3. Create non-HTML artifacts only under the active work's
-   `evidence/prototypes/<semantic-slug>/`, with a clear `DISPOSABLE` marker and
+   `artifacts/prototypes/<semantic-slug>/`, with a clear `DISPOSABLE` marker and
    fake or sanitized data. Create any generated HTML review surface under a
    unique OS temporary directory as required by
    [presentation](presentation.md). Never edit application source.

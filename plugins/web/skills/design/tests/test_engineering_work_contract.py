@@ -19,7 +19,7 @@ class DesignEngineeringWorkContractTest(unittest.TestCase):
         self.assertIn("generated_files", text)
         self.assertIn("Do not run `wc -c`", text)
         self.assertIn("<work-dir>/design/<design-slug>.md", text)
-        self.assertIn("<work-dir>/evidence/design/<design-slug>/", text)
+        self.assertIn("<work-dir>/artifacts/design/<design-slug>/", text)
         self.assertIn("PM-owned overview", text)
 
     def test_design_lifecycle_has_task_and_durable_destinations(self) -> None:
@@ -64,11 +64,11 @@ class DesignEngineeringWorkContractTest(unittest.TestCase):
 
 
 class AuditEngineeringWorkContractTest(unittest.TestCase):
-    def test_audit_skill_uses_shared_gate_and_work_evidence(self) -> None:
+    def test_audit_skill_uses_shared_gate_and_work_artifacts(self) -> None:
         text = (AUDIT / "SKILL.md").read_text(encoding="utf-8")
 
         self.assertIn("`engineering-work.md` path injected by Essential", text)
-        self.assertIn("<work-dir>/evidence/web-audit/<audit-slug>/", text)
+        self.assertIn("<work-dir>/artifacts/web-audit/<audit-slug>/", text)
         self.assertIn("generated_files", text)
         self.assertIn("Do not run `wc -c`", text)
         self.assertIn("`review.md` is PM-owned", text)

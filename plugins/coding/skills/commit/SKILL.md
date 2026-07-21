@@ -53,8 +53,8 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 
 | Flag | Purpose |
 |---|---|
-| `--prepare-paths-from=<scope-request>` | No-history preparation route for a lifecycle parent. Seal its ignored work-evidence scope request into an immutable manifest and return the exact `--paths-from` invocation; do not save, finalize, or publish. |
-| `--paths-from=<manifest>` | Save only the manifest's exact dirty `selected_paths`; validate the ignored work-evidence manifest and use [references/workflow-save-manifest.md](references/workflow-save-manifest.md). Requires `--manifest-sha256`. |
+| `--prepare-paths-from=<scope-request>` | No-history preparation route for a lifecycle parent. Seal its ignored work-artifacts scope request into an immutable manifest and return the exact `--paths-from` invocation; do not save, finalize, or publish. |
+| `--paths-from=<manifest>` | Save only the manifest's exact dirty `selected_paths`; validate the ignored work-artifacts manifest and use [references/workflow-save-manifest.md](references/workflow-save-manifest.md). Requires `--manifest-sha256`. |
 | `--manifest-sha256=<sha256>` | Expected SHA-256 of the exact manifest bytes. Valid only with `--paths-from`; prevents a path or manifest swap between lifecycle handoff and save. |
 | `--retrospective` | Distribute pending edits on `@` into prior changes (stage 1: `jj absorb`; stage 2: `jj blame` + `jj squash --from @ --into <ancestor>`; stage 3: git fixup fallback). See `references/workflow-retrospective.md`. |
 | `--reorder [--up-to <rev>]` | Reorder history into a clean linear chain up to target rev (default `main@origin`). Content-equivalence guard via `verify.sh`. See `references/workflow-reorder.md`. |
@@ -66,7 +66,7 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 
 - **Prerequisites**: a jj-colocated (or plain git) repository. The
   manifest-scoped route additionally requires a checksum-bound manifest under
-  the resolved work root's ignored evidence directory. Producer receipts must
+  the resolved work root's ignored artifacts directory. Producer receipts must
   use the strict generated-files schema and reconcile exactly to the
   publication set. The helper capability-probes the installed jj commands,
   revsets, templates, operation pinning, and structural Git colocation; no jj
