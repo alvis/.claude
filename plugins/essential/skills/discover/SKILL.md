@@ -126,9 +126,12 @@ owner, or marked blocking.
 7. **Present interactive results when useful.** If presentation criteria are
    met, choose the most suitable directional action from the presentation
    reference (including the plan/implementation/change lifecycle actions).
-   Author modular board sources, then compose and compile a self-contained file
-   with `scripts/build_artifact.py`; sources carry no asset links, so the
-   compiled file is what gets opened. Present it in preference order: the LLM
+   Never hand-write artifact HTML from scratch: copy the committed starter
+   scaffold `templates/src/page/` into the session workspace, then fill its
+   `{{PLACEHOLDER}}` tokens and add, edit, reorder, or remove `sections/` files
+   to fit the action. Then compose and compile a self-contained file with
+   `scripts/build_artifact.py`; sources carry no asset links, so the compiled
+   file is what gets opened. Present it in preference order: the LLM
    environment's built-in local HTML viewer, then a safe cloud artifact viewer,
    then a local browser such as Chrome. Capture the user's answers and section
    annotations in the page's single generated prompt and transfer them back to

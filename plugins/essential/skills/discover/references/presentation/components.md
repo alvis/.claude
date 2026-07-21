@@ -36,7 +36,9 @@ The runtime uses `essential.discover.v1:<page-id>` for local state. Generated
 temporary previews should include a run-specific page ID so separate previews
 cannot recover one another's answers accidentally.
 
-Start from `templates/html/page.html`, then inspect the approved
+Start by copying the modular starter scaffold `templates/src/page/` (its
+`page.html` shell plus starter `sections/`) into the session workspace — never
+hand-write this shell — then inspect the approved
 `examples/html/domain-explainer.html`. The top bar contains no search control:
 each artifact is one static page. On wide viewports, place navigation on the
 right while keeping the reading column optically centered; move navigation
