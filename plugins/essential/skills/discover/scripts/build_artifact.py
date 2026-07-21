@@ -7,7 +7,7 @@ references to ``discovery.css`` and ``discovery.js``. That preserves the local
 preview + template-test workflow untouched.
 
 This builder inlines everything so the result renders under the claude.ai
-Artifact CSP (``default-src 'none'`` — no external hosts allowed): the vendored
+Artifact CSP (``default-src 'none'`` — no external hosts allowed): the latest
 Tailwind v4 browser runtime, ``discovery.css`` and ``discovery.js`` are all
 streamed verbatim into the output. Nobody ever hand-edits the compiled file — to
 change styling or behaviour, edit the small sources under ``assets/`` and rebuild.
@@ -22,15 +22,29 @@ Two output modes:
   ``<script>`` blocks, the ``<style type="text/tailwindcss">`` theme block, and
   the body's inner markup — ready to hand straight to the Artifact tool.
 
-The build is offline and reproducible: the Tailwind runtime is vendored into the
-repo (``assets/html/vendor/tailwind-browser-4.3.3.js``), pinned and pre-patched.
-``--refresh-tailwind`` re-fetches from the CDN and re-applies the U+FFFD patch.
+The Tailwind runtime is downloaded on request, never committed. Each build fetches
+the latest 4.x runtime from the CDN, patches it (see below) at download time, and
+writes it to a gitignored cache (``assets/html/vendor/tailwind-browser.cache.js``)
+that exists only as an offline fallback. A default build fetches latest and, if the
+network is unavailable, falls back to the cache with a warning. ``--refresh-tailwind``
+force-fetches the latest into the cache and fails loudly on any network error (it is
+an explicit request for the newest runtime). ``--offline`` skips fetching entirely
+and uses the cache, erroring if none exists.
+
+Board sources are authored as small modular sources — one file per section, never
+one giant HTML file. A board source may be a DIRECTORY containing ``page.html`` (the
+shell with the full head/chrome and exactly one ``<!-- {{SECTIONS}} -->`` marker
+line) plus ``sections/NN-<slug>.html`` files, each holding a single section. The
+builder composes the page by replacing the marker line with the section files'
+contents concatenated verbatim in sorted filename order. ``--emit-page`` writes that
+composed page back to the committed single-file location so it stays in lockstep with
+its modular sources.
 
 CRITICAL deploy gotcha the builder guarantees against: the minified Tailwind
 bundle embeds literal U+FFFD replacement chars (its CSS-parser sentinel, inside
 string literals). The Artifact deploy validator rejects any content containing a
 raw U+FFFD byte. The fix is to escape each as the 6-char ASCII ``\\uFFFD`` — byte
-different on disk, identical at JS parse time. The builder patches at vendor time
+different on disk, identical at JS parse time. The builder patches at download time
 and fails the build if any raw U+FFFD survives in the output.
 """
 
@@ -40,6 +54,7 @@ import argparse
 import re
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -49,16 +64,19 @@ ASSETS_ROOT = DISCOVER_ROOT / "assets" / "html"
 VENDOR_ROOT = ASSETS_ROOT / "vendor"
 EXAMPLES_ROOT = DISCOVER_ROOT / "examples" / "html"
 TEMPLATES_ROOT = DISCOVER_ROOT / "templates" / "html"
+EXAMPLES_SRC_ROOT = DISCOVER_ROOT / "examples" / "src"
+TEMPLATES_SRC_ROOT = DISCOVER_ROOT / "templates" / "src"
 
 DISCOVERY_CSS = ASSETS_ROOT / "discovery.css"
 DISCOVERY_JS = ASSETS_ROOT / "discovery.js"
-# Pinned so a --refresh-tailwind never puts 4.x-latest content behind a
-# 4.3.3-named file. Bump both together to move versions deliberately.
-TAILWIND_VERSION = "4.3.3"
-TAILWIND_VENDOR = VENDOR_ROOT / f"tailwind-browser-{TAILWIND_VERSION}.js"
-TAILWIND_CDN_URL = (
-    f"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@{TAILWIND_VERSION}"
-)
+# The Tailwind runtime is downloaded on request (latest 4.x), never committed.
+# The cache is a gitignored offline fallback, primed on each successful fetch.
+TAILWIND_CDN_URL = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
+TAILWIND_CACHE = VENDOR_ROOT / "tailwind-browser.cache.js"
+
+# The single marker line a directory source's page.html carries in place of its
+# composed sections.
+SECTIONS_MARKER = "<!-- {{SECTIONS}} -->"
 
 # Raw U+FFFD REPLACEMENT CHARACTER, spelled as an escape so an encoding mishap in
 # this source cannot be mistaken for an intentional literal, and its safe escape.
@@ -123,19 +141,47 @@ def patch_fffd(text: str) -> str:
     return text.replace(RAW_FFFD, ESCAPED_FFFD)
 
 
-def refresh_tailwind() -> Path:
-    """Re-fetch the CDN runtime, re-apply the U+FFFD patch, vendor it into repo."""
+def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Tailwind browser runtime text, downloading the latest on request.
 
-    with urllib.request.urlopen(TAILWIND_CDN_URL, timeout=60) as response:
-        raw = response.read().decode("utf-8")
+    * ``offline``: read the cache or raise if none exists — never touch the network.
+    * otherwise: fetch the latest 4.x runtime from the CDN, patch the U+FFFD
+      sentinel, fail if any raw U+FFFD survives, write the cache, and return it.
+    * on fetch failure (URLError/OSError/timeout): fall back to the cache with a
+      warning to stderr when one exists — unless ``refresh`` is set, in which case
+      the failure is fatal (the caller explicitly asked for the newest runtime).
+    """
+
+    if offline:
+        if TAILWIND_CACHE.is_file():
+            return TAILWIND_CACHE.read_text(encoding="utf-8")
+        raise BuildError(
+            "no cached Tailwind runtime; run once with network or without --offline"
+        )
+
+    try:
+        with urllib.request.urlopen(TAILWIND_CDN_URL, timeout=60) as response:
+            raw = response.read().decode("utf-8")
+    except (urllib.error.URLError, OSError) as error:
+        if not refresh and TAILWIND_CACHE.is_file():
+            print(
+                f"warning: could not fetch latest Tailwind ({error}); "
+                f"falling back to cached runtime {TAILWIND_CACHE}",
+                file=sys.stderr,
+            )
+            return TAILWIND_CACHE.read_text(encoding="utf-8")
+        raise BuildError(
+            f"could not fetch Tailwind runtime from {TAILWIND_CDN_URL}: {error}"
+        )
+
     patched = patch_fffd(raw)
     if RAW_FFFD in patched:
         raise BuildError(
-            "U+FFFD survived patching the refreshed Tailwind runtime"
+            "U+FFFD survived patching the downloaded Tailwind runtime"
         )
     VENDOR_ROOT.mkdir(parents=True, exist_ok=True)
-    TAILWIND_VENDOR.write_text(patched, encoding="utf-8")
-    return TAILWIND_VENDOR
+    TAILWIND_CACHE.write_text(patched, encoding="utf-8")
+    return patched
 
 
 def _read(path: Path, label: str) -> str:
@@ -158,27 +204,91 @@ def _inline_style(body: str) -> str:
 
 
 def resolve_source(source: str) -> Path:
-    """Resolve a board argument to a source file (path, example, or template)."""
+    """Resolve a board argument to a source (directory, path, example, template).
+
+    A directory source (modular sections) is preferred over a single-file source
+    of the same slug. Search order for a slug: examples/src/<slug>/,
+    templates/src/<slug>/, examples/html/<slug>.html, templates/html/<slug>.html.
+    """
 
     candidate = Path(source)
+    if candidate.is_dir():
+        if not (candidate / "page.html").is_file():
+            raise BuildError(f"directory source missing page.html: {candidate}")
+        return candidate.resolve()
     if candidate.is_file():
         return candidate.resolve()
     stem = source.removesuffix(".html")
-    for root in (EXAMPLES_ROOT, TEMPLATES_ROOT):
-        guess = root / f"{stem}.html"
+    for src_dir in (EXAMPLES_SRC_ROOT / stem, TEMPLATES_SRC_ROOT / stem):
+        if (src_dir / "page.html").is_file():
+            return src_dir.resolve()
+    for guess in (EXAMPLES_ROOT / f"{stem}.html", TEMPLATES_ROOT / f"{stem}.html"):
         if guess.is_file():
             return guess.resolve()
     raise BuildError(
-        f"No board source found for {source!r} "
-        f"(looked in {EXAMPLES_ROOT} and {TEMPLATES_ROOT})"
+        f"No board source found for {source!r} (looked in "
+        f"{EXAMPLES_SRC_ROOT}, {TEMPLATES_SRC_ROOT}, "
+        f"{EXAMPLES_ROOT} and {TEMPLATES_ROOT})"
     )
 
 
-def build(source_path: Path, *, artifact: bool) -> str:
-    """Compile a board source into a self-contained document or fragment."""
+def compose_directory(source_dir: Path) -> str:
+    """Compose a directory source's page.html + sections/ into one HTML string.
 
-    html = _read(source_path, "board source")
-    runtime = _read(TAILWIND_VENDOR, "vendored Tailwind runtime")
+    The single ``<!-- {{SECTIONS}} -->`` marker line (surrounding whitespace
+    allowed) is replaced verbatim — including its newline — by the concatenation
+    of the ``sections/*.html`` files in sorted filename order, with no added
+    separators (byte-exact concatenation).
+    """
+
+    page = source_dir / "page.html"
+    if not page.is_file():
+        raise BuildError(f"directory source missing page.html: {page}")
+    shell = page.read_text(encoding="utf-8")
+
+    sections_dir = source_dir / "sections"
+    section_files = (
+        sorted(sections_dir.glob("*.html")) if sections_dir.is_dir() else []
+    )
+    if not section_files:
+        raise BuildError(
+            f"directory source needs at least one sections/*.html file: "
+            f"{sections_dir}"
+        )
+
+    marker_re = re.compile(
+        r"^[^\S\n]*" + re.escape(SECTIONS_MARKER) + r"[^\S\n]*(?:\n|$)",
+        re.MULTILINE,
+    )
+    matches = marker_re.findall(shell)
+    if len(matches) != 1:
+        raise BuildError(
+            f"page.html must contain exactly one {SECTIONS_MARKER!r} marker "
+            f"line; found {len(matches)}"
+        )
+
+    sections = "".join(f.read_text(encoding="utf-8") for f in section_files)
+    return marker_re.sub(lambda _m: sections, shell, count=1)
+
+
+def load_source(source_path: Path) -> tuple[str, str]:
+    """Return (html_text, display_path) for a file or composed directory source."""
+
+    if source_path.is_dir():
+        return compose_directory(source_path), str(source_path)
+    return _read(source_path, "board source"), str(source_path)
+
+
+def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> str:
+    """Compile a board source into a self-contained document or fragment.
+
+    ``runtime`` is the Tailwind runtime text; when omitted the latest is fetched
+    (with cache fallback) via ``get_tailwind_runtime()``.
+    """
+
+    html, _display = load_source(source_path)
+    if runtime is None:
+        runtime = get_tailwind_runtime()
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
@@ -322,6 +432,21 @@ def _validate(output: str, *, artifact: bool) -> None:
         )
 
 
+def emit_page_default(source_dir: Path) -> Path:
+    """Default --emit-page target: the committed single-file page for a src dir."""
+
+    parent = source_dir.parent.resolve()
+    name = source_dir.name
+    if parent == EXAMPLES_SRC_ROOT.resolve():
+        return EXAMPLES_ROOT / f"{name}.html"
+    if parent == TEMPLATES_SRC_ROOT.resolve():
+        return TEMPLATES_ROOT / f"{name}.html"
+    raise BuildError(
+        "--emit-page needs an explicit PATH for a directory source outside "
+        "examples/src/ or templates/src/"
+    )
+
+
 def default_output(source_path: Path, artifact: bool) -> Path:
     """Choose a throwaway dist path so compiled output never overwrites a source."""
 
@@ -352,14 +477,33 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--refresh-tailwind",
         action="store_true",
-        help="Re-fetch the Tailwind runtime from the CDN, re-patch, and vendor it",
+        help="Force-fetch the latest Tailwind runtime into the cache (fails loudly "
+        "on any network error)",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Skip fetching; use the cached Tailwind runtime only",
+    )
+    parser.add_argument(
+        "--emit-page",
+        nargs="?",
+        const=True,
+        default=None,
+        metavar="PATH",
+        help="Compose a directory source's page and write it (default: the "
+        "committed examples/html or templates/html single-file page), then exit "
+        "without building an artifact",
     )
     args = parser.parse_args(argv)
 
     try:
+        runtime_text: str | None = None
         if args.refresh_tailwind:
-            vendored = refresh_tailwind()
-            print(f"refreshed Tailwind runtime -> {vendored}", file=sys.stderr)
+            runtime_text = get_tailwind_runtime(refresh=True)
+            print(
+                f"refreshed Tailwind runtime -> {TAILWIND_CACHE}", file=sys.stderr
+            )
             if not args.source:
                 return 0
 
@@ -367,7 +511,26 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("a board source is required (or use --refresh-tailwind)")
 
         source_path = resolve_source(args.source)
-        output = build(source_path, artifact=args.artifact)
+
+        if args.emit_page is not None:
+            if not source_path.is_dir():
+                raise BuildError(
+                    "--emit-page is only valid for a directory (modular) source"
+                )
+            composed = compose_directory(source_path)
+            emit_path = (
+                emit_page_default(source_path)
+                if args.emit_page is True
+                else Path(args.emit_page)
+            )
+            emit_path.parent.mkdir(parents=True, exist_ok=True)
+            emit_path.write_text(composed, encoding="utf-8")
+            print(str(emit_path))
+            return 0
+
+        if runtime_text is None:
+            runtime_text = get_tailwind_runtime(offline=args.offline)
+        output = build(source_path, artifact=args.artifact, runtime=runtime_text)
         out_path = args.out or default_output(source_path, args.artifact)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(output, encoding="utf-8")
@@ -375,8 +538,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"build failed: {error}", file=sys.stderr)
         return 1
     except OSError as error:
-        # Network failure in --refresh-tailwind, or a filesystem error writing
-        # the output — report cleanly rather than dumping a traceback.
+        # A filesystem error writing the output — report cleanly rather than
+        # dumping a traceback.
         print(f"build failed: {error}", file=sys.stderr)
         return 1
 

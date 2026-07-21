@@ -18,7 +18,10 @@ EXAMPLES_ROOT = DISCOVER_ROOT / "examples" / "html"
 TEMPLATE = DISCOVER_ROOT / "templates" / "html" / "page.html"
 CSS = DISCOVER_ROOT / "assets" / "html" / "discovery.css"
 JAVASCRIPT = DISCOVER_ROOT / "assets" / "html" / "discovery.js"
-TAILWIND_VENDOR = DISCOVER_ROOT / "assets" / "html" / "vendor" / "tailwind-browser-4.3.3.js"
+VENDOR_DIR = DISCOVER_ROOT / "assets" / "html" / "vendor"
+# The Tailwind runtime is downloaded on demand; the pinned vendor file must no
+# longer be committed, and the gitignored cache below is an optional fallback.
+TAILWIND_CACHE = VENDOR_DIR / "tailwind-browser.cache.js"
 BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
@@ -601,15 +604,25 @@ def validate_artifact_builder() -> list[str]:
     """
 
     errors: list[str] = []
-    for required in (BUILDER, TAILWIND_VENDOR):
-        if not required.is_file():
-            errors.append(f"{required}: required builder artifact is missing")
+    if not BUILDER.is_file():
+        errors.append(f"{BUILDER}: required builder artifact is missing")
+
+    # The version-pinned vendor file must no longer be committed \u2014 the runtime is
+    # downloaded on demand now.
+    for pinned in sorted(VENDOR_DIR.glob("tailwind-browser-*.js")):
+        errors.append(
+            f"{pinned}: committed pinned Tailwind vendor file must be removed "
+            "(the runtime is downloaded on demand)"
+        )
+    # The gitignored cache is optional (a missing cache is fine); if present it
+    # must itself carry no raw U+FFFD (patched at download time).
+    if TAILWIND_CACHE.is_file() and TAILWIND_CACHE.read_bytes().count(
+        "\ufffd".encode("utf-8")
+    ):
+        errors.append(f"{TAILWIND_CACHE}: contains raw U+FFFD (deploy would 400)")
+
     if errors:
         return errors
-
-    # Vendored runtime must itself carry no raw U+FFFD (patched at vendor time).
-    if TAILWIND_VENDOR.read_bytes().count("\ufffd".encode("utf-8")):
-        errors.append(f"{TAILWIND_VENDOR}: contains raw U+FFFD (deploy would 400)")
 
     sys.path.insert(0, str(BUILDER.parent))
     sys.dont_write_bytecode = True  # keep scripts/__pycache__ out of the tree
