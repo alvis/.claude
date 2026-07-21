@@ -126,6 +126,7 @@ docs/
     │   ├── working.md
     │   ├── unresolved.md
     │   ├── plan.md
+    │   ├── discovery.md
     │   └── *.md
     ├── spec/
     ├── proposals.md
@@ -375,7 +376,12 @@ Keep logs, screenshots, captures, binaries, and large raw evidence outside
 Markdown. Work artifacts store concise results plus source-bound paths,
 revisions, hashes, and dispositions. Discovery and research belong under
 `state/` when they are resumable context or `evidence/` when they are source
-material. Only durable conclusions are promoted.
+material. Findings surfaced during implementation — gotchas, constraints,
+and learned facts about the codebase — are recorded in
+`state/discovery.md`, an ordinary resumable `state/` child governed by the same
+ownership and size rules as its siblings. Only durable conclusions are promoted
+to `docs/`; a resumable finding stays in `state/discovery.md` until it becomes
+stable knowledge worth promoting.
 
 Ignored work memory is not a cross-machine transport. A handover emits a
 checksum-bound portable receipt into the owning task, PR, or Notion work item
