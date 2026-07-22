@@ -4,12 +4,17 @@ prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>
 reviewed_at: <ISO-8601 timestamp>
 files_reviewed_count: <N>
 plan_source: state.md
-plan_digest: <64-lowercase-hex>
-plan_hash_kind: engineering-plan-definition-digest-v1
 reviewed_task_ids: [<full task IDs>]
+reviewed_task_defs: {<full task ID>: '<immutable definition this area reviewed: summary [targets] | required=<yes|no> | acceptance=<criterion>>'}
 closed_findings: <N>
 outstanding_findings: <N>
 ---
+
+`reviewed_task_defs` binds each reviewed task ID to the exact immutable
+definition (summary, targets, requiredness, acceptance) this area was reviewed
+against. IDs alone cannot prove the contract held: on a partial rerun the
+aggregator compares this binding against the current `state.md` and treats an
+area whose task kept its ID but changed definition as stale, not clean.
 
 # <Area> review
 

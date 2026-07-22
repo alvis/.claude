@@ -17,8 +17,6 @@ IMPLEMENT_CODE = SKILLS / "implement-code/SKILL.md"
 REVIEW_IMPLEMENTATION = SKILLS / "review-implementation/SKILL.md"
 STACK_AWARE = SKILLS / "implement-code/references/stack-aware-sizing.md"
 SPEC_FRONTMATTER = SKILLS / "spec-code/references/frontmatter.md"
-HASH_MODEL = SKILLS / "sync-spec/references/hash-model.md"
-HASH_HELPER = SKILLS / "sync-spec/scripts/spec-hashes.py"
 NEUTRAL_TEMPLATE = SKILLS / "spec-code/assets/technical-spec-template.md"
 
 
@@ -36,8 +34,8 @@ class SyncSpecMaterializationContractTest(unittest.TestCase):
             "**B — immutable base**",
             "**L — authored local**",
             "**R — fresh remote staging**",
-            "materializations/<transport-manifest-key>.json",
-            "bases/<transport-manifest-key>/",
+            "materializations/<base-id>.json",
+            "bases/<base-id>/",
             "never rewrites an existing receipt or base",
         ):
             with self.subTest(statement=statement):
@@ -84,8 +82,8 @@ class PublicationSafetyContractTest(unittest.TestCase):
 
     def test_stage_gate_is_bound_to_exact_final_hash(self) -> None:
         self.assertIn("--stage=specification|implementation", self.sync_spec)
-        self.assertIn("explicit specification approval naming the exact final semantic", self.sync_spec)
-        self.assertIn("`reviewed_spec_hash` to name that exact final digest", self.sync_spec)
+        self.assertIn("explicit specification approval of the exact final specification content", self.sync_spec)
+        self.assertIn("require the clean implementation review to have been performed against that exact final content", self.sync_spec)
         self.assertIn("Any semantic edit after the gate invalidates it", self.sync_spec)
 
     def test_remote_is_rechecked_immediately_before_push(self) -> None:
@@ -119,7 +117,7 @@ class PublicationSafetyContractTest(unittest.TestCase):
     def test_skip_and_keep_both_cannot_take_unsafe_old_paths(self) -> None:
         self.assertIn("Workers never invoke `AskUserQuestion`", self.two_way)
         self.assertIn("Keep Both", self.two_way)
-        self.assertIn("explicit approval for its candidate hash", self.two_way)
+        self.assertIn("explicit approval of its candidate content", self.two_way)
         self.assertIn("Skip never inserts a TODO", self.two_way)
         self.assertIn("do not edit canonical local/mirror bytes or push", self.sync_mode)
         self.assertNotIn("Add TODO marker on the local side", self.two_way)
@@ -202,7 +200,7 @@ class SpecificationLifecycleOrderingTest(unittest.TestCase):
         self.assertIn("do not reread stale L", contract)
         self.assertIn("B/L/R packet and immutable M proposal", contract)
         self.assertIn("explicit resolution", contract)
-        self.assertIn("approval naming M's exact semantic `contract_digest`", contract)
+        self.assertIn("approval of M's exact content", contract)
 
     def test_deferred_history_status_reflects_dirty_saved_and_empty_states(self) -> None:
         contract = compact(IMPLEMENT_CODE.read_text(encoding="utf-8"))
@@ -221,24 +219,23 @@ class SpecificationLifecycleOrderingTest(unittest.TestCase):
             contract,
         )
 
-    def test_spec_plan_and_review_are_hash_bound(self) -> None:
-        self.assertIn("require approval of its semantic `contract_digest`", compact(SPEC_CODE.read_text(encoding="utf-8")))
+    def test_spec_plan_and_review_are_content_bound(self) -> None:
+        self.assertIn("require approval of its content before derivation", compact(SPEC_CODE.read_text(encoding="utf-8")))
         plan = compact(PLAN_CODE.read_text(encoding="utf-8"))
-        self.assertIn("engineering-plan-definition-digest-v1", plan)
-        self.assertIn("require explicit approval naming that exact digest", plan)
+        self.assertIn("require explicit approval of those task definitions", plan)
+        self.assertIn("plan approval binds to the exact approved task definitions", plan)
         self.assertIn("status-only reconciliation retains approval", plan)
         review = REVIEW_IMPLEMENTATION.read_text(encoding="utf-8")
         normalized_review = compact(review)
-        self.assertIn("reviewed_spec_hash", review)
-        self.assertIn("hash_kind: semantic_contract_digest_v1", review)
-        self.assertIn("hash_model: specification-dual-hash-v1", review)
-        self.assertIn("transport_manifest_hash", review)
-        self.assertIn("contract_digest", review)
-        self.assertIn("scripts/spec-hashes.py --kind both", review)
+        self.assertIn("bound to the exact approved specification content", review)
+        self.assertIn("Bind the review to the exact approved specification content", review)
+        self.assertNotIn("contract_digest", review)
+        self.assertNotIn("transport_manifest_hash", review)
+        self.assertNotIn("spec-hashes.py", review)
         self.assertIn("local, inline-origin, or Notion", review)
         self.assertIn("invoke `sync-spec` to materialize only a selected Notion source", compact(review))
         self.assertIn("reachable `repo:` local source", normalized_review)
-        self.assertIn("source and carrier dual hashes", normalized_review)
+        self.assertIn("compare the source and carrier content directly", normalized_review)
         self.assertIn("returns `ready_for_specification`", normalized_review)
         self.assertIn("Re-run the complete Step 2 source/carrier authority", normalized_review)
 
@@ -255,14 +252,14 @@ class SpecificationLifecycleOrderingTest(unittest.TestCase):
 
 
 class SpecDerivationContractTest(unittest.TestCase):
-    def test_inline_evidence_is_promoted_to_a_hash_bound_durable_contract(self) -> None:
+    def test_inline_evidence_is_promoted_to_a_content_bound_durable_contract(self) -> None:
         contract = compact(SPEC_CODE.read_text(encoding="utf-8"))
 
         evidence = contract.index("Inline prompt text is requirements evidence")
         candidate = contract.index(
             "<work-root>/design/<capability>-specification-candidate.md"
         )
-        approval = contract.index("explicit approval naming `contract_digest`")
+        approval = contract.index("explicit approval of the candidate content")
         promotion = contract.index("content-preserving promotion")
         self.assertLess(evidence, candidate)
         self.assertLess(candidate, approval)
@@ -272,7 +269,7 @@ class SpecDerivationContractTest(unittest.TestCase):
         self.assertIn("reachable authoritative entry for `plan-code` and `implement-code`", contract)
         self.assertIn("never depend on the prompt transcript", contract)
         self.assertIn("exact `authoritative_spec_path`", contract)
-        self.assertIn("`approved_contract_digest`", contract)
+        self.assertIn("approved specification content reference", contract)
 
     def test_skip_notion_does_not_skip_local_or_inline_promotion(self) -> None:
         contract = compact(SPEC_CODE.read_text(encoding="utf-8"))
@@ -294,38 +291,34 @@ class SpecDerivationContractTest(unittest.TestCase):
         self.assertIn("only eligible Markdown inside `.engineering/`", contract)
 
 
-class DualHashAndReconciliationContractTest(unittest.TestCase):
-    def test_hash_model_has_one_bundled_read_only_implementation(self) -> None:
-        contract = compact(HASH_MODEL.read_text(encoding="utf-8"))
-        helper = HASH_HELPER.read_text(encoding="utf-8")
+class DirectComparisonAndReconciliationContractTest(unittest.TestCase):
+    def test_change_detection_uses_direct_content_comparison(self) -> None:
+        sync_spec = compact(SYNC_SPEC.read_text(encoding="utf-8"))
+        matrix = compact(CONCURRENT_MATRIX.read_text(encoding="utf-8"))
 
-        self.assertIn("This helper is the sole implementation", contract)
-        self.assertIn("scripts/spec-hashes.py", contract)
-        self.assertIn("--kind both", contract)
-        self.assertIn("exact full file bytes", contract)
-        self.assertIn("declared and uniquely validated volatile", contract)
-        self.assertIn("transport_manifest_key", contract)
-        self.assertIn("Python's standard library", contract)
-        self.assertNotIn("import yaml", helper)
-        self.assertNotIn("open(\"w", helper)
+        for contract in (sync_spec, matrix):
+            with self.subTest(contract=contract[:50]):
+                self.assertNotIn("contract_digest", contract)
+                self.assertNotIn("transport_manifest_hash", contract)
+                self.assertNotIn("spec-hashes.py", contract)
+        self.assertIn("comparing the specification content", sync_spec)
+        self.assertIn("the specification content directly", matrix)
 
-    def test_metadata_only_refreshes_exact_evidence_without_semantic_invalidation(self) -> None:
+    def test_metadata_only_refreshes_evidence_without_semantic_invalidation(self) -> None:
         sync_spec = compact(SYNC_SPEC.read_text(encoding="utf-8"))
         matrix = compact(CONCURRENT_MATRIX.read_text(encoding="utf-8"))
 
         for contract in (sync_spec, matrix):
             with self.subTest(contract=contract[:50]):
                 self.assertIn("`metadata_only`", contract)
-                self.assertIn("contract_digest", contract)
-                self.assertIn("transport_manifest_hash", contract)
+                self.assertIn("last_edited_time", contract)
         self.assertIn("without invalidating approval, plan, code, or review", sync_spec)
 
     def test_metadata_only_rejects_path_or_unit_structure_change(self) -> None:
         sync_spec = compact(SYNC_SPEC.read_text(encoding="utf-8"))
         matrix = compact(CONCURRENT_MATRIX.read_text(encoding="utf-8"))
-        hash_model = compact(HASH_MODEL.read_text(encoding="utf-8"))
 
-        for contract in (sync_spec, matrix, hash_model):
+        for contract in (sync_spec, matrix):
             with self.subTest(contract=contract[:50]):
                 self.assertIn("structural_change", contract)
                 self.assertIn("path", contract)
@@ -333,15 +326,13 @@ class DualHashAndReconciliationContractTest(unittest.TestCase):
         for caller in (IMPLEMENT_CODE, REVIEW_IMPLEMENTATION, SPEC_CODE):
             with self.subTest(caller=caller):
                 self.assertIn("structural_change", compact(caller.read_text(encoding="utf-8")))
-        self.assertIn("same carrier kind, stable transport identity", hash_model)
-        self.assertIn("path rename is contract-relevant revalidation", hash_model)
 
     def test_implementation_concurrency_returns_to_specification_stage(self) -> None:
         contract = compact(IMPLEMENT_CODE.read_text(encoding="utf-8"))
         concurrent = contract.index("`next_action: specification_reconciliation`")
         spec_stage = contract.index("`complete --stage=specification`")
         verification = contract.index("independent verification pull", concurrent)
-        new_base = contract.index("new immutable dual-hash base/receipt", concurrent)
+        new_base = contract.index("new immutable base/receipt", concurrent)
         materialize = contract.index("in `materialize` mode", concurrent)
         invalidate = contract.index("Invalidate the old plan approval", concurrent)
         restart = contract.index("restart from Step 3", concurrent)
@@ -355,7 +346,7 @@ class DualHashAndReconciliationContractTest(unittest.TestCase):
         self.assertIn("No implementation-stage push of unreviewed M", contract)
 
     def test_provenance_never_hashes_itself(self) -> None:
-        for path in (SPEC_CODE, SPEC_FRONTMATTER, HASH_MODEL):
+        for path in (SPEC_CODE, SPEC_FRONTMATTER):
             contract = compact(path.read_text(encoding="utf-8"))
             with self.subTest(path=path):
                 self.assertTrue(
@@ -384,7 +375,7 @@ class DualHashAndReconciliationContractTest(unittest.TestCase):
         for contract in (plan, implement, review):
             with self.subTest(contract=contract[:50]):
                 self.assertIn("reachable `repo:`", contract)
-                self.assertIn("source and carrier dual hashes", contract)
+                self.assertIn("source and carrier content directly", contract)
                 self.assertIn("ready_for_specification", contract)
                 self.assertIn("Git blob oid", contract)
         self.assertIn("the sole reachable authority", plan)
@@ -397,12 +388,12 @@ class DualHashAndReconciliationContractTest(unittest.TestCase):
 
         authorization = authoring.index("creation authorization")
         verification = authoring.index("Verification-pull the new stable")
-        approval = authoring.index("obtain final specification approval naming")
+        approval = authoring.index("obtain final specification approval of its post-create content")
         base = authoring.index("establish verified R as initial L/B")
         self.assertLess(authorization, verification)
         self.assertLess(verification, approval)
         self.assertLess(approval, base)
-        self.assertIn("Never pretend pre/post-create digests match", authoring)
+        self.assertIn("Never pretend pre/post-create content matches", authoring)
         self.assertIn("post-create approval plus exact verification evidence", materialization)
 
 

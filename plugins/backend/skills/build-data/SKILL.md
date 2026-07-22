@@ -62,7 +62,7 @@ the work-local specification and PM state as coordination boundaries.
    `reviews/alignment.md`; do not create a deviations log.
 8. Commit through `coding:commit` after approval. When incomplete, return a
    handover request and complete continuity payload to the PM, which alone may
-   invoke `coding:handover`. Collect child manifests, deduplicate, and return
+   invoke `essential:handover`. Collect child manifests, deduplicate, and return
    explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; the PM checks only eligible work
 Markdown inside the target `.engineering/`.

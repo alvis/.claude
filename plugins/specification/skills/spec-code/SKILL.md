@@ -29,12 +29,12 @@ for engineers.
   work-local materialization or verified completion; local and inline sources
   do not detour through it. For a Notion source, the work-local materialization
   is the authored copy; the selected mirror is transport state, not an editing
-  surface. Retain its immutable base receipt, exact transport manifest hash,
-  and semantic contract digest.
-- All sources use the dual-hash contract in
-  [../sync-spec/references/hash-model.md](../sync-spec/references/hash-model.md):
-  exact transport evidence is never an approval hash, and semantic approvals
-  are never transport/CAS evidence.
+  surface. Retain its immutable base receipt, exact recorded bytes,
+  and observed revision.
+- Detect specification changes by comparing content directly (byte-for-byte, or
+  via `git diff`), disregarding only the volatile Notion `last_edited_time` line
+  for semantic equality. Approvals bind to the approved specification content;
+  the observed revision is only a lightweight change signal.
 - Preserve transport-owned paths. An existing path comes from transport; a new
   unsynced path must be explicitly supplied. Never infer one from title or id.
 - `--skip-notion-sync` controls Notion transport only. It never suppresses the
@@ -84,9 +84,9 @@ section, or copied transport history.
    specification exists, UPDATE when one exists, and DOCUMENT when current code
    must be described without inventing requirements. Load
    [references/document-mode.md](references/document-mode.md) only for DOCUMENT.
-   Load the hash model above and invoke only its bundled
-   `scripts/spec-hashes.py --kind both` helper for every candidate, source, and
-   promoted carrier; refuse when the helper or `python3` is unavailable.
+   Compare every candidate, source, and promoted carrier by direct content
+   comparison (disregarding only the volatile `last_edited_time` line for
+   semantic equality).
 3. Acquire and read the complete canonical template before drafting. Use an
    explicit `--template`, then a template recorded in active work/project
    configuration. A Notion-backed source must use the selected **live** Notion
@@ -110,11 +110,11 @@ section, or copied transport history.
    evidence, materialize the complete authored contract—not a summary or
    pointer to the conversation—at the deterministic work-local candidate
    `<work-root>/design/<capability>-specification-candidate.md`. Compute the
-   candidate's exact byte SHA-256 for its inline identity, then use the bundled
-   helper to compute both `transport_manifest_hash` and `contract_digest`.
-   Require explicit approval naming `contract_digest`; any semantic edit to the
-   candidate invalidates approval, while an exact-byte change still requires a
-   fresh receipt even if its digest remains equal.
+   candidate's exact byte SHA-256 for its inline identity locator, and record its
+   exact bytes for later direct comparison.
+   Require explicit approval of the candidate content; any semantic edit to the
+   candidate invalidates approval, while a metadata-only byte change still
+   requires a fresh receipt.
 4. Create or update the work-local design/proposal/decision children needed to
    explain the specification change. Use lowercase deterministic child names
    and the status schema in the Essential contract. Return an index
@@ -126,23 +126,24 @@ section, or copied transport history.
    require explicit `--local-mdc` and `--parent`; first author that local file
    through `Skill(mdc)` using the live template and parent metadata. Creation
    injects stable semantic `ref` identity and may remove creation-only `parent`,
-   so a pre-create digest cannot be final specification approval. Run the
-   helper and obtain explicit **creation authorization** bound to candidate
-   digest, parent, and exact diff scope. Only then invoke
+   so pre-create content cannot be final specification approval. Obtain explicit
+   **creation authorization** bound to the candidate
+   content, parent, and exact diff scope. Only then invoke
    `Skill(sync-notion)` in local-to-Notion mode with the exact transport root
    and `--transport-profile=<absolute-file>`. Verification-pull the new stable
    `ref:`, preserve pre-create bytes, and present every transport-created stable
-   metadata/content difference. Hash verified R and obtain final specification
-   approval naming its post-create `contract_digest`. The creation receipt
-   stores both digests, authorized transition/diff, returned identity/revision,
+   metadata/content difference. Record verified R and obtain final specification
+   approval of its post-create content. The creation receipt
+   stores both the pre- and post-create content references, authorized
+   transition/diff, returned identity/revision,
    and exact verification evidence. Invoke `Skill(sync-spec)` materialization
    with that receipt and profile to atomically establish verified R as initial
-   L/B. Never pretend pre/post-create digests match, exclude stable `ref` as
+   L/B. Never pretend pre/post-create content matches, exclude stable `ref` as
    volatile, or establish a base without post-create approval.
    Never ask transport to create a page before the local MDC exists. For an
-   explicit local source, use the helper with a `repo:` identity when reachable
-   and a `local-approved:sha256:` exact-byte identity otherwise; require
-   approval of its semantic `contract_digest` before derivation and retain the
+   explicit local source, use a `repo:` identity when reachable
+   and a `local-approved:sha256:` exact-byte identity locator otherwise; require
+   approval of its content before derivation and retain the
    explicit path only in ignored work evidence when it is not portable. For
    inline evidence, use only the approved deterministic candidate from Step 3.
 6. For every approved local or inline contract, regardless of
@@ -151,23 +152,23 @@ section, or copied transport history.
    for `plan-code` and `implement-code` is
    `docs/specs/<capability>/index.md`; write the durable machine-readable
    provenance receipt at `docs/specs/<capability>/provenance.json`. The receipt
-   records source kind, durable source locator, distinct source and carrier
-   `transport_manifest_hash` values, approved semantic `contract_digest`, every
-   durable **contract** output path/exact hash, logical-unit mapping, template
-   identity, helper identity, and the content-equivalence check. Its embedded
+   records source kind, durable source locator, source and carrier content
+   references, the approved specification content, every
+   durable **contract** output path/exact SHA-256, logical-unit mapping, template
+   identity, and the content-equivalence check. Its embedded
    output set excludes `provenance.json` itself. Compute the completed
    provenance file's own exact SHA-256 after writing and store it only in
    ignored work evidence, an external durable anchor, and this run's report;
    never insert a self-hash into the file. Record a repository-relative explicit
    local path only when it is itself reachable/versioned; never embed the
    expiring ignored inline-candidate path in versioned documentation. Keep that
-   exact candidate path/hash in active work and return it in this run's output.
-   Run the bundled helper over the promoted carrier while retaining source
-   logical-unit ids and lineage. Require its `contract_digest` to equal the
-   approved digest; retain its distinct exact `transport_manifest_hash`. If
+   exact candidate path/identity in active work and return it in this run's output.
+   Compare the promoted carrier against the source directly while retaining source
+   logical-unit ids and lineage. Require its content to equal the
+   approved specification content. If
    promotion changes semantic contract content, stop `ready_for_approval` and
-   approve the new digest before retrying. Record the durable entry path,
-   receipt path, and exact approved/carrier digests and hashes in active-work
+   approve the new content before retrying. Record the durable entry path,
+   receipt path, and the approved/carrier content references in active-work
    reconciliation so later skills never depend on the
    prompt transcript or ignored candidate alone. Do not claim a Notion round
    trip for this path.
@@ -185,8 +186,8 @@ section, or copied transport history.
    content temporary and does not claim promotion. Otherwise invoke
    `Skill(sync-spec)` with the same exact transport profile in
    `complete --stage=specification` mode only after the PM has persisted the
-   immutable materialization receipt and exact-hash specification approval. If
-   the current semantic `contract_digest` differs from the approved digest, return
+   immutable materialization receipt and content-bound specification approval. If
+   the current specification content differs from the approved content, return
    `ready_for_approval`; never publish it under an earlier approval. If this run
    cannot establish that precondition,
    return `ready_for_completion` with the exact reconciliation payload instead
@@ -194,8 +195,8 @@ section, or copied transport history.
    mirror, verification pull, derived `docs/specs/<capability>/`, durable receipt,
    and dependent revalidation results. Claim completion only for operational
    `status: success` with `next_action: none`; propagate `remote_only` or
-   `structural_change` plus `next_action: revalidate`, and never treat an
-   unchanged digest alone as permission to ignore structural change.
+   `structural_change` plus `next_action: revalidate`, and never treat
+   unchanged content alone as permission to ignore structural change.
 7. Verify the resulting derived spec reads as one contract, `index.md` points
    to all versioned children, and provenance matches the verification pull.
    Confirm the provenance output set excludes itself and its post-write exact
@@ -217,14 +218,13 @@ mechanical size limit.
   remains explicitly temporary. A local/inline run always has a versioned
   carrier plus durable receipt and never claims a remote round trip.
 - Raw inline prompt text is never reported as the authoritative final contract;
-  its approved candidate `contract_digest` and the reachable durable carrier
-  digest match through the content-equivalence check, with exact hashes retained
-  separately.
+  its approved candidate content and the reachable durable carrier
+  match through the content-equivalence check, compared directly.
 - `generated_files` is complete and overview reconciliation is assigned to the
   PM.
-- The recorded specification approval names the exact semantic
-  `contract_digest` that was completed; a later semantic edit requires approval
-  again. Exact transport evidence remains paired with it in every receipt.
+- The recorded specification approval is bound to the exact specification
+  content that was completed; a later semantic edit requires approval
+  again. The observed revision remains recorded with it in every receipt.
 
 ## Completion
 
@@ -233,6 +233,6 @@ template snapshot, Notion refs and validated transport profile
 path/exact-byte SHA when applicable, work artifacts,
 `ready_for_completion` or sync/verification result, derived specification paths
 and provenance receipt, the exact `authoritative_spec_path`,
-`approved_contract_digest`, source/carrier `transport_manifest_hash` values,
-external `provenance_file_hash`, and durable carrier/output hashes, revalidation
+the approved specification content reference, source/carrier content references,
+external `provenance_file_hash`, and durable carrier/output SHA-256 values, revalidation
 impact, PM updates requested, and `generated_files`.

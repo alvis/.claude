@@ -39,12 +39,12 @@ its deterministic match and ask only on `work_id_required`. A coordinator run
 may use `state/working.md` and `state.md` to locate the plan/spec/design/review paths.
 A nested run starts from its mission capsule and reads broad work memory only
 for resume or cross-slice alignment. Never write work pointers or overviews.
-Run `validate-engineering-state validate --state <state.md>` before dispatch.
-Require `status: valid`, `plan_source: state.md`, and retain the exact `plan_digest`,
-`hash_kind: engineering-plan-definition-digest-v1`, and applicable full task
-IDs (`task_id`). Reject migration-required or invalid state. An explicit `--plan` or
-delegated plan identity must match the report; never override or guess the
-canonical pointer from directory contents.
+Read the work item's `state.md` (and any `state/*.md` children) directly
+before dispatch. From the task table, determine `plan_source: state.md` and
+the applicable full task IDs (`task_id`); proceed on that reading — there is
+no separate validation step. An explicit `--plan` or delegated plan identity
+must match the report; never override or guess the canonical pointer from
+directory contents.
 
 ## Output contract
 
@@ -95,13 +95,18 @@ canonical pointer from directory contents.
 3. Dispatch one read-only reviewer per selected area in one parallel batch,
    following [references/dispatch.md](references/dispatch.md) and
    [references/mandates.md](references/mandates.md). Pass the canonical plan
-   source/digest/hash kind and applicable full task IDs. Each writes only its
+   source (`state.md`) and applicable full task IDs. Each writes only its
    assigned lowercase area file and returns path, counts, context level, and
    `generated_files`.
-4. Re-run state validation before aggregation and reject plan-definition
+4. Re-read `state.md` before aggregation and reject plan-definition
    drift. Validate every expected selected file, then aggregate every existing
    canonical area so a partial rerun cannot hide unselected findings; reject
-   malformed disposition metadata. Derive outstanding findings as `open`,
+   malformed disposition metadata. For every reused (unselected) area file,
+   compare its `reviewed_task_defs` binding against the current definitions of
+   the same `reviewed_task_ids` in `state.md`; when a task kept its ID but its
+   immutable definition (summary, targets, requiredness, acceptance) changed,
+   treat that area as stale — do not aggregate it as clean, and require its
+   re-review before closure. Derive outstanding findings as `open`,
    `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as
    verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is
    `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is
@@ -128,14 +133,13 @@ complete split round if required.
   area file's disposition/priority counts and paths.
 - Alignment used the identical pinned state/plan/spec contract expected by any
   follow-up fix; no root fallback was selected. The result binds the exact
-  `reviewed_plan_digest` and
-  `plan_hash_kind: engineering-plan-definition-digest-v1`.
+  `plan_source: state.md` and reviewed task IDs.
 - Reviewed code was not modified.
 
 ## Completion
 
 Report area verdicts, aggregate priorities/dispositions, overall status,
 `review.md` as `written` or `reconciliation_returned`, optional explainer
-child, `plan_source: state.md`, plan digest/hash kind, reviewed task IDs, and
+child, `plan_source: state.md`, reviewed task IDs, and
 `generated_files`. Detailed findings remain in
 area files.

@@ -1,7 +1,7 @@
 # Final history, commit QA, and publication
 
 Load only after execution has relevant dirty changes or saved unpushed changes,
-the full review and usage trace pass against the current specification hash,
+the full review and usage trace pass against the current specification content,
 durable derivation is current, and any completion-sync/revalidation loop is
 stable. This is the first point at which final history work or publication is
 allowed.
@@ -40,7 +40,8 @@ permission to fall back to an unscoped save.
 
 ## Recheck the semantic gate
 
-Require the current specification hash to equal `reviewed_spec_hash`, all
+Require the current specification content to match the reviewed specification
+content (confirmed by direct comparison), all
 required review/usage results to pass, and completion sync to have no pending
 `needs_revalidation`. A correction or source change invalidates this gate and
 returns to the owning earlier lifecycle step.
@@ -90,7 +91,7 @@ mutation. History commands remain with Coding owners.
 stack_dispatch:
   dispatched: true|false
   classification: large|semantic_restack|single|null
-  reviewed_spec_hash: ''
+  reviewed_spec_revision: ''
   local_history: {owner: coding:commit, state: dirty|saved|none, relevant_dirty_paths: [], scoped_save_manifest: null, manifest_sha256: null, preservation_receipt: null, changes: [], save_status: completed|not_needed|blocked_scope}
   finalization: {owner: coding:finalize-commits, status: pass|fail|not_run}
   publication: {owner: coding:push-pr, status: completed|partial|not_run, prs: []}

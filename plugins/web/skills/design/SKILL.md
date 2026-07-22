@@ -150,7 +150,7 @@ parity and performance budgets.
 Stop before unapproved mutation or when ownership cannot be resolved. Missing
 browser, failed build, inaccessible inputs, or unresolved choices yield
 `partial` or `blocked`. Record continuation context in `state.md` and design
-detail/evidence in their owned paths; use `coding:handover` for coding-session
+detail/evidence in their owned paths; use `essential:handover` for coding-session
 continuation and `essential:handoff` for a portable cross-domain plan.
 
 ## Completion

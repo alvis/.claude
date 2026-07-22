@@ -9,7 +9,6 @@ root. Both interactive and non-interactive modes report:
 - Work: `<work-id>`
 - Overall: `<pass|pass_with_suggestions|requires_changes|fail>`
 - Plan source: `state.md`
-- Plan digest: `<64-lowercase-hex>` (`engineering-plan-definition-digest-v1`)
 - Reviewed task IDs: `<full IDs>`
 - Alignment: `<verdict/counts>` — `reviews/alignment.md`
 - Correctness: `<verdict/counts>` — `reviews/correctness.md`

@@ -562,9 +562,8 @@ class RemoteRevisionOwnershipContractTest(unittest.TestCase):
         for field in (
             '"source_kind": "local"',
             '"source_locators":',
-            '"source_transport_manifest_hash": "sha256:<64-lowercase-hex>"',
-            '"carrier_transport_manifest_hash": "sha256:<64-lowercase-hex>"',
-            '"approved_contract_digest": "sha256:<64-lowercase-hex>"',
+            '"source_revision":',
+            '"carrier_revision":',
             '"receipt_anchor": "github-pr:owner/repository#123"',
         ):
             with self.subTest(field=field):

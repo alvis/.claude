@@ -52,8 +52,8 @@ engineering-work contract. Register one `DSC` parent and every discovery leaf
 in root `state.md` before writing the child. Keep the root as the complete task
 registry and make `state/discovery.md` a reconciled child mirror with:
 
-- `Schema: engineering-work-state/v1`, `State role: child`, the resolved work
-  ID, lifecycle status, and `Parent task: DSC`;
+- `State role: child`, the resolved work ID, lifecycle status, and
+  `Parent task: DSC`;
 - `## Status` with the derived topology and local graph;
 - `## Tasks` with the canonical marked table and full `DSC01` IDs; and
 - the evidence ledger below as a separate section, never as task status.
@@ -64,10 +64,11 @@ truthful linear or branching sibling DAG; never force this example onto a
 different dependency shape. Root and child rows use the same immutable
 definition and mutable execution fields byte-for-byte at reconciliation. After
 each status transition, update the child, reconcile the complete root registry,
-recompute only the root plan digest when immutable definition fields changed,
-and run `validate-engineering-state validate --state state/discovery.md`; the
-validator resolves and checks the sibling root automatically. Only the
-coordinator-lease holder edits root state.
+re-read the root task definitions when immutable definition fields changed,
+and read `state.md` and `state/discovery.md` directly to determine runnable/
+blocked tasks, owner, and next action from the task table; proceed on that
+reading — there is no separate validation step. Only the coordinator-lease
+holder edits root state.
 
 When structured comparison, explanation, or preference capture would be easier
 to understand interactively, follow [presentation](references/presentation.md).

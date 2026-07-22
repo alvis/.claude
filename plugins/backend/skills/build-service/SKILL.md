@@ -58,7 +58,7 @@ specification and preserving PM-owned coordination state.
    alignment. Do not create a standalone deviations file.
 7. Commit through `coding:commit` after approval. When incomplete, return a
    handover request and complete continuity payload to the PM, which alone may
-   invoke `coding:handover`. Collect/deduplicate child manifests and return
+   invoke `essential:handover`. Collect/deduplicate child manifests and return
    explicit final paths generated or materially rewritten as `generated_files`.
    Do not run file sizing; the PM checks only eligible work Markdown inside the
    target `.engineering/`.

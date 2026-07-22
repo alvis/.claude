@@ -355,15 +355,12 @@ if [[ $bootstrap -eq 1 ]]; then
 "
   state_contents="# Engineering work
 
-- Schema: \`engineering-work-state/v1\`
 - State role: \`root\`
 - Work ID: \`$work_id\`
 - Lifecycle status: \`initialized\`
 - Updated: \`$bootstrap_timestamp\`
 - Current focus: [working.md](state/working.md)
 - Plan source: \`state.md\`
-- Plan digest: \`d66c594201a4f94faf69e28ffef886bf18c5c9464604d43f3221fa9961896a68\`
-- Hash kind: \`engineering-plan-definition-digest-v1\`
 - Next owner: \`PM\`
 - Next action: Confirm the goal, scope, and acceptance criteria.
 - Repository revision: Not captured yet.

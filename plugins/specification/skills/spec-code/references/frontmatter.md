@@ -34,27 +34,24 @@ parent: 01234567-89ab-cdef-0123-456789abcdef # only for an unsynced child
 all derived children. Promotion preserves the source contract's semantic
 frontmatter and body; it does not inject source, timestamp, receipt, or hash
 fields into contract Markdown. If a selected project/template already requires
-frontmatter, those bytes are semantic and remain covered by `contract_digest`
-(except the uniquely validated Notion `last_edited_time` line defined by the
-dual-hash model). Put derivation metadata in
-`docs/specs/<capability>/provenance.json` instead:
+frontmatter, those bytes are semantic and are compared directly as part of the
+contract (disregarding only the volatile Notion `last_edited_time` line). Put
+derivation metadata in `docs/specs/<capability>/provenance.json` instead:
 
 ```json
 {
   "schema": "specification-provenance-v1",
-  "hash_model": "specification-dual-hash-v1",
   "source_kind": "local",
   "source_locators": ["repo:requirements/capability.md"],
-  "source_transport_manifest_hash": "sha256:<64-lowercase-hex>",
-  "carrier_transport_manifest_hash": "sha256:<64-lowercase-hex>",
-  "approved_contract_digest": "sha256:<64-lowercase-hex>",
+  "source_revision": "<git-blob-oid-or-notion-revision-or-empty>",
+  "carrier_revision": "<git-blob-oid-or-empty>",
+  "approved_content_ref": "<durable reachable locator to the exact approved specification content>",
   "logical_units": [
     {"id": "contract:root", "source_path": "requirements/capability.md", "output_path": "docs/specs/capability/index.md"}
   ],
   "outputs": [
     {"path": "docs/specs/capability/index.md", "exact_sha256": "sha256:<64-lowercase-hex>"}
   ],
-  "hash_helper": {"locator": "plugin:specification/sync-spec/scripts/spec-hashes.py", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
   "template": {"locator": "plugin:specification/spec-code/assets/technical-spec-template.md", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
   "derived_at": "2026-07-20T10:33:00Z",
   "receipt_anchor": "github-pr:owner/repository#123"
@@ -71,19 +68,25 @@ dual-hash model). Put derivation metadata in
   the promoted carrier as the reachable authority.
 - Authority has one deterministic interpretation. A reachable `repo:` locator
   remains the live authority and the durable carrier is a checked derivation;
-  plan/implementation rehash both before use. For `local-approved:` and
-  `inline-approved:` locators, the content-equivalent durable carrier becomes
-  the sole reachable authority after promotion, while the locator/hash remains
-  historical origin evidence. Never treat both an unreachable origin and its
-  carrier as independently editable truths.
-- `source_transport_manifest_hash` and `carrier_transport_manifest_hash` are
-  the distinct exact source/carrier transport hashes;
-  `approved_contract_digest` is their shared semantic digest bound to approval,
-  plan, and review. All come from the bundled `spec-hashes.py --kind both`
-  helper.
-- Record that helper with portable locator
-  `plugin:specification/sync-spec/scripts/spec-hashes.py`, exact installed
-  plugin version, and exact helper SHA-256, never its machine-local path.
+  plan/implementation compare both content directly before use. For
+  `local-approved:` and `inline-approved:` locators, the content-equivalent
+  durable carrier becomes the sole reachable authority after promotion, while
+  the locator remains historical origin evidence. Never treat both an
+  unreachable origin and its carrier as independently editable truths.
+- `source_revision` and `carrier_revision` are lightweight change signals (a Git
+  blob oid or Notion revision). Authority is the specification content itself:
+  approval, plan, and review bind to it and are confirmed by direct comparison,
+  not by any recorded hash.
+- `approved_content_ref` is a durable, reachable pointer to the exact approved
+  specification content — not a hash — so `implement-code` and
+  `review-implementation` can confirm a resumed spec still matches by direct
+  content comparison. For a reachable `repo:` source it is that source path; for
+  `local-approved:` and `inline-approved:` origins whose origin is not reachable,
+  it is the promoted durable carrier (`docs/specs/<capability>/index.md`) that
+  retains the approved content, or an external durable receipt/anchor holding it.
+  It is required for local and inline sources and must resolve after ignored
+  local work is retired. A Notion source uses `ref` plus per-unit
+  `source_revision` and omits this field.
 - Notion provenance additionally records exact per-unit `source_revision`
   values and may record transport relationships. Local provenance may record a
   reachable Git object. Inline provenance omits source revision. Neither local

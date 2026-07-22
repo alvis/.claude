@@ -3,10 +3,9 @@
 When fixing a `coding:review-code` finding, pin the identical task contract so
 the rerun produces comparable alignment verdicts.
 
-1. Run Essential's `validate-engineering-state validate --state <state.md>`.
-2. Require `status: valid`, `plan_source: state.md`, and read `plan_digest`,
-   `hash_kind: engineering-plan-definition-digest-v1`, and the applicable full
-   task IDs from its JSON report.
+1. Read the work item's `state.md` (and any `state/*.md` children) directly.
+2. From the task table, determine `plan_source: state.md` and the applicable
+   full task IDs.
 3. Treat an explicit `--plan`, review-returned plan identity, or mission-capsule
    identity as an assertion. Reject any mismatch; none may override state.
 4. Read root state in full and use the review finding plus linked authoritative
@@ -16,8 +15,9 @@ the rerun produces comparable alignment verdicts.
    target, or acceptance mapping.
 
 Never discover a root-level fallback or guess among `state/` children. Send the
-root-state path, digest/hash kind, work ID/root, full task ID, finding ID, and
-relevant spec/design paths to every fix subtask. Carry them unchanged into the
-attempt result and follow-up review invocation. If the plan definition changed,
-return `needs_revalidation` with the validator's downstream invalidation
-closure rather than applying a stale fix.
+root-state path, work ID/root, full task ID, finding ID, and relevant
+spec/design paths to every fix subtask. Carry them unchanged into the attempt
+result and follow-up review invocation. If the plan definition changed (a
+re-read of `state.md` shows a different task definition, dependency,
+requiredness, target, or acceptance mapping), return `needs_revalidation` with
+the affected task IDs and downstream closure rather than applying a stale fix.

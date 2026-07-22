@@ -41,25 +41,24 @@ contract; `specification:implement-code` and Coding skills execute it.
    or sole-existing-work match. Ask only when it returns `work_id_required`,
    using its returned candidates. A delegated run receives the explicit
    id/root. Read only the exact state, receipt, and specification pointers
-   required for this plan. Load the durable provenance and the dual-hash model
-   from `sync-spec/references/hash-model.md`; run only its bundled
-   `scripts/spec-hashes.py --kind both` helper. For a reachable `repo:` local
+   required for this plan. Load the durable provenance recorded by `spec-code`.
+   For a reachable `repo:` local
    source, that source remains authoritative even when the caller names the
-   derived carrier: recompute source and carrier dual hashes with the preserved
-   logical ids, require each exact hash to match provenance, and require both
-   semantic `contract_digest` values to equal the approved digest. Use the
-   content-derived Git blob oid (computed from the exact bytes even before
+   derived carrier: compare source and carrier content directly against
+   provenance, and require both to match the approved specification content. Use
+   the content-derived Git blob oid (computed from the exact bytes even before
    commit), not an unrelated commit oid or index state, as optional revision
    evidence. Missing/moved source, source drift, stale provenance, or carrier
    drift returns `ready_for_specification` and routes through `spec-code`; never
    plan from whichever copy happened to be passed. For `local-approved:` or
    `inline-approved:` provenance, the content-equivalent durable carrier is the
-   sole reachable authority and the original hash is historical evidence, so
-   rehash the carrier without requiring the ignored origin. Notion authority
+   sole reachable authority and the original content is historical evidence, so
+   compare the carrier without requiring the ignored origin. Notion authority
    remains its selected materialized/verified source receipt. Require a
-   specification approval naming the resulting semantic `contract_digest`. A
-   missing approval returns `ready_for_spec_approval`; a mismatched digest
-   returns `ready_for_specification`, without planning from stale intent.
+   specification approval of the resulting specification content. A missing
+   approval returns `ready_for_spec_approval`; content that differs from the
+   approved specification returns `ready_for_specification`, without planning
+   from stale intent.
 2. Treat any legacy root design/draft/plan/proposed/change files as read-only
    migration inputs. Do not overwrite or delete them. Report ambiguous mapping
    for PM disposition.
@@ -101,33 +100,32 @@ contract; `specification:implement-code` and Coding skills execute it.
    `- planned`. The root task table is the complete registry of parents and
    children. A resumable child may mirror a subset but cannot introduce IDs.
    Encode each Task cell as
-   `<summary> [targets: <comma-separated paths>|none]`; targets are digest
-   inputs, not a tenth table column. Include code only where an exact interface or migration shape
+   `<summary> [targets: <comma-separated paths>|none]`; targets ride inside the
+   task cell, not a tenth column. Include code only where an exact interface or migration shape
    is needed to prevent implementer choice; do not duplicate whole files.
 6. Re-run the Step 1 source/carrier authority check immediately before freezing
    the plan. Dispatch one read-only reviewer with the authoritative spec and its
-   approved semantic contract digest, proposed root task registry,
+   approved specification content, proposed root task registry,
    ID-keyed implementation detail, decisions, and repository standards. It verifies complete acceptance/test
    mapping, architecture consistency, schema/API fidelity, executable order,
    and absence of hidden decisions. Resolve findings and review once more.
    Review the proposed complete root task registry together with any
    non-authoritative ID-keyed detail. Set `plan_source: state.md`. Ask the PM to
-   reconcile the complete registry and that exact pointer into root state,
-   then run Essential's
-   `validate-engineering-state validate` operation against the root state.
-   Require its `engineering-work-state/v1` PASS result and capture
-   `plan_digest` with
-   `hash_kind: engineering-plan-definition-digest-v1`. The digest covers task
-   IDs, definitions, dependencies, requiredness, targets, and acceptance
-   mappings; it excludes marks, runtime status, owners, evidence, timestamps,
-   formatting, and derived diagrams. Present the material decisions and DAG,
-   and require explicit approval naming that exact digest and hash kind. Any
-   definition change preserves the prior root state, invokes validation with
-   `--previous-state <old-state.md>` after reconciliation, returns the reported
-   invalidated downstream closure, recomputes the digest, and returns
+   reconcile the complete registry and that exact pointer into root state.
+   Read the reconciled root `state.md` (and any `state/*.md` children)
+   directly; from the task table, determine which tasks are runnable, which
+   are blocked, the current owner, and the next action, and proceed on that
+   reading — there is no separate validation step. The plan is the task
+   definitions and dependency graph themselves — task IDs, definitions,
+   dependencies, requiredness, targets, and acceptance mappings — as written in
+   `state.md`, independent of marks, runtime status, owners, evidence,
+   timestamps, formatting, and derived diagrams. Present the material
+   decisions and DAG, and require explicit approval of those task definitions.
+   Any definition change preserves the prior root state, re-reads the updated
+   state file to identify the invalidated downstream closure, and returns
    `ready_for_plan_approval`; status-only reconciliation retains approval.
 7. Return the complete `state.md` reconciliation payload, including
-   `plan_source`, `plan_digest`, `hash_kind`, parent/leaf task rows, and the four overview
+   `plan_source`, parent/leaf task rows, and the four overview
    rows/status deltas to the PM. Do not directly edit PM-owned `state.md`,
    `state/working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
 8. Return explicit final paths generated or materially rewritten as
@@ -143,17 +141,17 @@ checks only eligible work Markdown inside the target `.engineering/`.
 - Temporary detail is work-local, legacy root files are untouched, and PM-owned
   indexes have explicit reconciliation data.
 - The read-only quality gate passed and `generated_files` is complete.
-- Specification approval names the exact semantic `contract_digest` consumed;
-  plan approval names the exact `engineering-plan-definition-digest-v1`
-  digest. Neither survives its corresponding definition change, but task
-  status/evidence changes do not invalidate plan approval. Reachable `repo:`
-  source drift cannot hide behind an unchanged derived carrier.
+- Specification approval binds to the exact approved specification content;
+  plan approval binds to the exact approved task definitions. Neither survives its
+  corresponding definition change, but task status/evidence changes do not
+  invalidate plan approval. Reachable `repo:` source drift cannot hide behind
+  an unchanged derived carrier.
 
 ## Completion
 
-Report work id, authoritative source/carrier/receipt dual hashes and approved
-`contract_digest`, authority kind (`repo` source or promoted carrier), decisions and
-proposals created, `plan_source`, plan digest/hash kind/approval, parent and
+Report work id, authoritative source/carrier/receipt content references and the
+approved specification content, authority kind (`repo` source or promoted carrier), decisions and
+proposals created, `plan_source`, plan approval, parent and
 executable task counts, overall and per-parent dependency graphs,
 quality-gate result, legacy migration issues, PM reconciliation payload, and
 `generated_files`. A refusal names the missing spec, work state, repository, or

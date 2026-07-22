@@ -61,7 +61,7 @@ inventing a path.
 |---|---|
 | `RP-AREA` | The functional area/module the current task touches (its own conventions, siblings, existing patterns) |
 | `RP-CONFIG` | The target repo's build/lint/test configuration (`package.json` scripts, tsconfig, eslint config, CI) |
-| `RP-HANDOVER` | Any handover/design notes left for the current task (`coding:handover` output, design docs) |
+| `RP-HANDOVER` | Any handover/design notes left for the current task (`essential:handover` output, design docs) |
 | `RP-STANDARDS` | Repo-local standard overrides or additions layered on top of the `SD-*` set, if the target repo defines any |
 
 An agent's base.md names which `RP-*` aliases it consults and states that resolution happens lazily per task — it

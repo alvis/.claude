@@ -19,7 +19,7 @@ take bounded work.
   invoke the resolver with the confirmed ID and `--bootstrap`; preserve existing
   entrypoints and list `bootstrap_created`. Identity, ignore, and bootstrap are
   PM-only: never mint an ID silently.
-- `coding:takeover` is the explicit takeover exception. Before bootstrap it may
+- `essential:takeover` is the explicit takeover exception. Before bootstrap it may
   validate a portable receipt and isolated disposable post-anchor tree because
   neither writes project artifacts; the receipt is the authoritative ID. After
   both validate, hold the lease, run the destination ignore gate, invoke the
