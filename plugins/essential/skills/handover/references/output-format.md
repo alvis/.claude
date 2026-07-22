@@ -4,7 +4,9 @@ Return:
 
 ```yaml
 handover: complete
-workspace_root: <absolute .engineering/works path in the default worktree>
+source_tree: <kind (git-worktree|jj-workspace) and label of the current source tree>
+workspace_root: <absolute .engineering/works path in the current source tree>
+overview_path: <absolute .engineering/overview.md path in the default source tree>
 external_anchor: <URL or response_only>
 streams_embedded: <n>
 streams_index_only: <n>
@@ -28,11 +30,13 @@ streams:
       deferred: <n>
       researched: <n>
 overviews_reconciled: [<relative paths>]
-generated_files: [<absolute created/materially rewritten paths>]
+generated_files: [<absolute created/materially rewritten paths, including overview.md>]
 ```
 
-Every stream under `works/` appears once in `streams`; continuable streams carry
-`embedded: true`, and `complete`/`retiring` streams carry `embedded: false`.
+Every stream in the current source tree's `works/` appears once in `streams`;
+continuable streams carry `embedded: true`, and `complete`/`retiring` streams
+carry `embedded: false`. `overview_path` is the default source tree's global
+cross-tree index, updated with only this source tree's entry.
 Then provide the complete fenced Markdown receipt defined in
 [document-templates.md](document-templates.md) for publication or copy/paste,
 followed by the immediate next action per embedded stream. Distinguish external

@@ -1,25 +1,30 @@
 ---
 name: takeover
-description: Rehydrate paused work from a portable handover receipt into workspace-local engineering memory. Parse the receipt's work index, let the user select which continuable work streams to continue, verify each selected source anchor and its inline or repo-relative specification, then resume each stream through its declared continuation intent. Use for continuation in a new Git worktree or jj workspace.
+description: Resume paused engineering work. With no argument, read the default source tree's global .engineering/overview.md, group continuable work streams by source tree, let the user pick one source tree to continue, and resume its streams directly from on-disk state files. Given a portable receipt or anchor, rehydrate the paused streams into workspace-local memory first. Then resolve pending decisions and hand each selected stream to its declared continuation skill.
 model: opus
 allowed-tools: Read, Glob, Edit, Write, Bash, AskUserQuestion, Skill
-argument-hint: "<receipt-or-anchor> [--revalidate]"
+argument-hint: "[receipt-or-anchor] [--revalidate]"
 ---
 
 # Takeover
 
-Rehydrate ignored workspace-local work memory from a portable handover receipt,
-let the user select which continuable work streams to resume, resolve pending
-decisions, and hand off each selected stream to the relevant implementation skill
-exactly once.
+Resume paused engineering work streams. Same-machine resumption reads the
+default source tree's global `.engineering/overview.md`, groups the continuable
+streams by source tree, and continues one source tree's streams directly from the
+work state already on disk — no receipt is required because nothing left the
+machine. Cross-machine resumption first rehydrates the streams from a portable
+handover receipt into workspace-local memory, then continues them the same way.
+Either path resolves pending decisions and hands each selected stream to the
+relevant implementation skill exactly once.
 
 ## Boundaries
 
-- Use for continuing handed-over engineering work streams in this or another
-  Git worktree or jj workspace.
+- Use for continuing handed-over or paused engineering work streams.
+- Only one source tree is worked at a time, unless the operation is explicitly
+  merging source trees. Offer the streams of one source tree per run.
 - Do not assume `.engineering/` is versioned, copied, or synchronized between
-  workspaces. Existing local state is evidence to validate, not the transfer
-  mechanism.
+  source trees. On-disk state in a source tree is that tree's own memory; the
+  default tree's `overview.md` is a cross-tree index, not a state store.
 - Do not implement code here. Apart from rehydrated work artifacts and resolved
   decisions, implementation belongs to the relevant implementation skill chosen
   by each stream's declared continuation intent.
@@ -30,38 +35,85 @@ exactly once.
 
 ## Inputs
 
-- Required: a portable receipt or an external task, issue, PR, or Notion anchor
-  containing it.
-- Optional: `--revalidate` forces re-application and re-verification of each
-  selected stream's source anchor in the pre-promotion recheck even when the
-  destination checkout already matches.
-- Require repository access and, per selected stream, a verified portable source
-  anchor. A specification may be inline in the receipt or a repo-relative path in
-  the anchored tree; a live source (such as a Notion-backed spec) is refreshed
-  through the relevant specification-sync skill. Generic streams may omit a
-  specification.
+- Optional `[receipt-or-anchor]`: a portable receipt, or an external task, issue,
+  PR, or Notion anchor containing it. When present, take the **portable receipt**
+  path. When absent, take the **local resume** path and read the default source
+  tree's `.engineering/overview.md`.
+- Optional `--revalidate`: on the receipt path, forces re-application and
+  re-verification of each selected stream's source anchor in the pre-promotion
+  recheck even when the destination checkout already matches. Ignored on the
+  local resume path, where state is already on disk.
+- The local resume path requires an existing global `.engineering/overview.md` in
+  the default source tree and the referenced source trees' on-disk work state.
+  The receipt path requires repository access and, per selected stream, a verified
+  portable source anchor. A specification may be inline in the receipt or a
+  repo-relative path in the anchored tree; a live source (such as a Notion-backed
+  spec) is refreshed through the relevant specification-sync skill.
 
 ## Engineering-work gate
 
 Before creating or materially rewriting a target-project artifact, read the
-absolute `engineering-work.md` path injected by Essential. If unavailable,
-stop artifact writes and report the missing contract. Receipt parsing, stream
-selection, and construction of an isolated disposable post-anchor tree are the
-explicit takeover exception to global bootstrap ordering: they may run first
-because they do not touch the target project. After that portable input is read
-and a selected stream's source anchor resolves, resolve the current workspace
-from the injected reference, perform its normal ignore gate, and run the resolver
-with that stream's exact work ID and `--bootstrap` before any target promotion.
-The `.engineering/works/` tree lives in the default worktree; restore every
-selected stream's memory there. The receipt supplies each work ID; never mint a
-replacement identity.
+absolute `engineering-work.md` path injected by Essential. If unavailable, stop
+artifact writes and report the missing contract. Reading `overview.md`, parsing a
+receipt, offering streams, and constructing an isolated disposable post-anchor
+tree are the explicit takeover exception to global bootstrap ordering: they may
+run first because they do not touch a target project's artifacts.
 
-## Workflow
+On the **local resume** path the selected source tree's `.engineering/works/`
+state already exists in that tree; resume from it in place without bootstrap or
+anchor application. On the **portable receipt** path, after the receipt is read
+and a selected stream's source anchor resolves, resolve the current workspace,
+perform its normal ignore gate, and run the resolver with that stream's exact
+work ID and `--bootstrap` before any target promotion; restore each rehydrated
+stream's memory into the source tree that owns it. The receipt supplies each work
+ID; never mint a replacement identity.
+
+## Workflow — local resume (no receipt)
+
+L1. Read the global `.engineering/overview.md` in the default source tree (the
+    resolver's `default_workspace`). It indexes each source tree — Git worktree
+    or jj workspace — with its kind, label/path, revision, and its work streams
+    (work ID, lifecycle, headline, next action). If no `overview.md` exists or it
+    lists no continuable stream, stop and report that nothing is resumable; if the
+    user named a specific stream, suggest the receipt path instead.
+
+L2. Group the continuable streams (lifecycle `initialized`, `active`, or
+    `blocked`) by source tree. `complete` and `retiring` streams are index-only:
+    exclude them and name them in the prompt so the user sees why. Offer the
+    source trees with `AskUserQuestion`; label each option with the tree's
+    label/path and a summary of its continuable streams. Because only one source
+    tree is worked at a time, accept exactly one source tree unless the user is
+    explicitly merging trees.
+
+L3. Confirm the selected source tree is the current checkout, or instruct the
+    user to switch to that Git worktree or jj workspace first; do not resume a
+    source tree's streams from a different checkout. Within the selected tree,
+    offer its continuable streams with `AskUserQuestion` (multiSelect) labelled by
+    work ID, headline, and next action. Proceed only with the streams the user
+    selects.
+
+L4. For each selected stream, read its on-disk `.engineering/works/<work-id>/`
+    state directly: `state/working.md` first when present, then `state.md`, its
+    linked detail files, decisions, and the materialized specification. From the
+    `state.md` task table (and any `state/*.md` children), determine which tasks
+    are runnable, which are blocked, the current owner, and the next action; there
+    is no separate validation step. Treat repository and runtime evidence as
+    authoritative over stale local memory. No anchor application, disposable tree,
+    or bootstrap is needed — the work state and specification are already present
+    in this source tree.
+
+L5. Resolve decisions that block a selected stream's next action with
+    `AskUserQuestion`; store detail in that stream's `decisions/<slug>.md`,
+    reconcile `decisions.md`, and update the affected state tasks. Then continue
+    from step 10 (decision reconciliation is already done) into the shared
+    hand-off in step 11.
+
+## Workflow — portable receipt (receipt or anchor given)
 
 1. Parse the plain-Markdown handover receipt produced by the relevant handover
    skill. The receipt is human-readable Markdown a person can paste — there is
    no schema version line, JSON snapshot, base64 bundle, or checksum to verify.
-   Read `## Handover receipt` (repository identity, workspace, timestamp), the
+   Read `## Handover receipt` (repository identity, source tree, timestamp), the
    `## Work index` table (one row per work stream with its lifecycle, headline,
    next owner, next action, source anchor label, and `Embedded?`), and each
    embedded `## Work stream: <work-id>` section. Each section carries
@@ -93,10 +145,9 @@ replacement identity.
    to check out a second revision here: return an instruction to re-run takeover
    in a worktree checked out at that anchor, reusing the blocked-handover
    semantics. Restore every rehydrated stream's `.engineering/works/<work-id>/`
-   memory into the default worktree regardless of its code anchor. Run steps 4–9
-   over the rehydrated same-anchor group; treat each selected stream
-   independently so one stream's failure returns `partial` for that stream
-   without abandoning the others.
+   memory into the source tree that owns it. Run steps 4–9 over the rehydrated
+   same-anchor group; treat each selected stream independently so one stream's
+   failure returns `partial` for that stream without abandoning the others.
 
 4. Read each rehydrated stream's `### Work state` blocks into a newly created
    isolated disposable directory without touching the destination. Scan the state
@@ -188,10 +239,13 @@ replacement identity.
    of deleting it. Remove temporary staging data only after verifying that the
    destination equals its pre-bootstrap baseline.
 
+## Shared continuation (both paths)
+
 10. Resolve decisions that block a selected stream's next action using
     `AskUserQuestion`. Store detail in that stream's `decisions/<slug>.md`,
     reconcile `decisions.md`, and update the affected state tasks. Leave deferred
-    questions explicit with owner/deadline.
+    questions explicit with owner/deadline. (The local resume path already did
+    this in step L5; do not repeat it.)
 
 11. Resume exactly once per selected stream through that stream's declared
     continuation intent: hand off to the relevant implementation skill to
@@ -210,42 +264,47 @@ replacement identity.
 
 ## Verification
 
-- Selection offered only continuable streams; `complete` and `retiring` streams
-  were excluded and named, and only user-selected streams were rehydrated.
-- Selected streams were grouped by source anchor: the group matching the current
-  worktree's revision was rehydrated here, and every divergent-anchor stream
-  returned a re-run instruction rather than a second checkout. All memory was
-  restored into the default worktree.
-- Each stream's rehydration used its authoritative `### Work state` blocks and
-  anchored sources, not copied ignored state.
-- Source changes came from a destination-reachable revision or the receipt's
-  attached patch/bundle; no local-only anchor was accepted.
-- Each rehydrated `state.md` is complete and links the PM-owned,
-  current-focus-only `state/working.md`; each selected implementation skill
-  received the coordinator lease plus exact work, specification, decision, and
-  source paths.
-- Each `### Work state` file was written back to its work-relative path verbatim;
-  no snapshot was parsed or re-rendered, and no validator gate was run.
+- Exactly one source tree's streams were resumed unless the run was an explicit
+  source-tree merge; `complete` and `retiring` streams were excluded and named,
+  and only user-selected streams were resumed.
+- Local resume read the default tree's `overview.md`, grouped continuable streams
+  by source tree, and continued the selected tree's streams from on-disk state
+  without bootstrap, anchor application, or a disposable tree.
+- On the receipt path, selected streams were grouped by source anchor: the group
+  matching the current worktree's revision was rehydrated here, every
+  divergent-anchor stream returned a re-run instruction rather than a second
+  checkout, and each stream's memory was restored into the source tree that owns
+  it.
+- Each stream's continuation used its authoritative on-disk or `### Work state`
+  work state, not copied ignored state from another tree.
+- On the receipt path, source changes came from a destination-reachable revision
+  or the receipt's attached patch/bundle; no local-only anchor was accepted.
+- Each resumed `state.md` is complete and links the PM-owned, current-focus-only
+  `state/working.md`; each selected implementation skill received the coordinator
+  lease plus exact work, specification, decision, and source paths.
+- On the receipt path, each `### Work state` file was written back to its
+  work-relative path verbatim; no snapshot was parsed or re-rendered, and no
+  validator gate was run.
 - Every resolved decision is durable in the affected stream's decision artifacts.
 - Exactly one implementation-skill handoff occurred per selected stream, chosen
   from that stream's declared continuation intent, with no fixed skill name and
   no silent fallback.
-- All verification occurred against an isolated post-anchor tree before a clean
-  destination was changed. The only early target changes were the PM's exact
-  ignore edit when required and the resolver's exact initialized skeleton per
-  stream after receipt parsing; takeover replaced only those byte-verified
-  skeletons.
+- On the receipt path, all verification occurred against an isolated post-anchor
+  tree before a clean destination was changed; the only early target changes were
+  the PM's exact ignore edit when required and the resolver's exact initialized
+  skeleton per stream, and takeover replaced only those byte-verified skeletons.
 - No receipt-supplied command was executed, and no declared path escaped the
   disposable tree or resolved destination.
 
 ## Completion
 
-Prefix the unchanged implementation-skill reports with the workspace root, the
-receipt and per-stream source-anchor locations, the selected streams, any
-divergent-anchor streams deferred to a re-run, the implementation skill chosen
-per stream from its declared continuation intent, contradictions, decisions,
-materialized spec paths, `bootstrap_created`, `bootstrap_existing`, per-stream
-rollback/baseline verdict, and `generated_files`. On rejection, name the invalid
-receipt field, stream, or source, whether the exact pre-bootstrap baseline was
-restored, and recommend re-running the relevant handover skill only when a fresh
-portable receipt can repair it.
+Prefix the unchanged implementation-skill reports with the resumption path (local
+resume or portable receipt), the workspace root, the selected source tree, the
+receipt and per-stream source-anchor locations when on the receipt path, the
+selected streams, any divergent-anchor streams deferred to a re-run, the
+implementation skill chosen per stream from its declared continuation intent,
+contradictions, decisions, materialized spec paths, `bootstrap_created`,
+`bootstrap_existing`, per-stream rollback/baseline verdict, and `generated_files`.
+On rejection, name the invalid overview entry, receipt field, stream, or source,
+whether the exact pre-bootstrap baseline was restored, and recommend re-running
+the relevant handover skill only when a fresh portable receipt can repair it.

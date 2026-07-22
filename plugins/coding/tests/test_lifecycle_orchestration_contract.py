@@ -155,6 +155,52 @@ class PortableHandoverContractTest(unittest.TestCase):
         self.assertIn("handover: blocked", output)
         self.assertIn("rehydratable: false", output)
 
+    def test_handover_scopes_to_current_source_tree_and_updates_global_overview(self) -> None:
+        handover = " ".join(HANDOVER.read_text(encoding="utf-8").split())
+
+        # scope is the current source tree, not a loop over the default worktree
+        self.assertIn("Handover is scoped to the current source tree only", handover)
+        self.assertIn(
+            "List every `.engineering/works/<work-id>/` stream in the **current source tree**",
+            handover,
+        )
+        self.assertNotIn("stream in the default worktree", handover)
+
+        # the sole cross-tree surface is the default tree's global overview.md
+        self.assertIn(
+            "Update the global `.engineering/overview.md` in the default source tree",
+            handover,
+        )
+        self.assertIn("preserve every other source tree's entry byte-for-byte", handover)
+        self.assertIn("Never write another tree's `works/`", handover)
+
+    def test_takeover_local_resume_reads_overview_and_groups_by_source_tree(self) -> None:
+        raw = TAKEOVER.read_text(encoding="utf-8")
+        takeover = " ".join(raw.split())
+
+        # the receipt/anchor argument is optional; no-argument path is local resume
+        self.assertRegex(raw, r"argument-hint:\s*\"\[receipt-or-anchor\]")
+        self.assertIn("Workflow — local resume (no receipt)", raw)
+
+        local = " ".join(
+            raw.split("Workflow — local resume", 1)[1]
+            .split("Workflow — portable receipt", 1)[0]
+            .split()
+        )
+        self.assertIn(
+            "Read the global `.engineering/overview.md` in the default source tree",
+            local,
+        )
+        self.assertIn("Group the continuable streams", local)
+        self.assertIn("by source tree", local)
+        self.assertIn("resume from it in place without bootstrap or", takeover)
+
+        # only one source tree at a time unless explicitly merging trees
+        self.assertIn(
+            "Only one source tree is worked at a time, unless the operation is explicitly merging",
+            takeover,
+        )
+
     def test_receipt_indexes_all_streams_and_embeds_continuable_sections(self) -> None:
         template = HANDOVER_TEMPLATE.read_text(encoding="utf-8")
 

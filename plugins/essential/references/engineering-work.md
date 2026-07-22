@@ -117,10 +117,11 @@ docs/
     ├── provenance.json
     └── *.md
 
-.engineering/                       # ignored
+.engineering/                       # ignored, isolated per source tree
+├── overview.md                      # default source tree only: global cross-tree status index
 ├── notion/                          # conventional default-workspace mirror
 │   └── [notion-sync-owned .mdc paths]
-└── works/<work-id>/                 # active workspace only
+└── works/<work-id>/                 # in the source tree that owns the stream; not repeated in the default tree
     ├── state.md
     ├── state/
     │   ├── working.md
@@ -213,6 +214,27 @@ ownership or navigation. ADRs alone use four-digit numeric prefixes. Never use
 `part-1`, `misc`, or a task title as a child name.
 
 ## Work memory
+
+### Cross-tree overview (`.engineering/overview.md`)
+
+The default source tree — Git's main worktree or the jj workspace registered as
+`default` — carries a single `.engineering/overview.md`: the only global,
+cross-tree status index. Secondary source trees do not carry it. Because
+`.engineering/` is never shared or copied between trees, each source tree's own
+`.engineering/works/<work-id>/` state folders live only in that tree; they are
+never repeated in the default tree. The default tree holds `works/<work-id>/`
+only when it hosts its own work streams.
+
+`overview.md` records, per source tree: its kind (Git worktree or jj workspace),
+label or path, current revision, and a table of that tree's work streams with
+work ID, lifecycle status, one-line headline, and next action. It is an index,
+not a substitute for each stream's `state.md`; the authoritative resumable
+context for a stream stays in that stream's own source tree. The PM/coordinator
+updates the default tree's `overview.md` whenever a stream's status changes — in
+particular at handover — so a new session can survey every tree from one place
+and resume the right stream in the right source tree. A stream is worked in
+exactly one source tree at a time; only an explicit merge of source trees moves a
+stream between them.
 
 ### `state/working.md`
 
@@ -385,14 +407,21 @@ ownership and size rules as its siblings. Only durable conclusions are promoted
 to `docs/`; a resumable finding stays in `state/discovery.md` until it becomes
 stable knowledge worth promoting.
 
-Ignored work memory is not a cross-machine transport. A handover emits a
-plain-Markdown portable receipt into the owning task, PR, or Notion work item
-or, when necessary, embeds every payload in the response. It carries a
-destination-reachable source anchor, the raw contents of the work's state
-files, authoritative specification carriers, and fixed non-executable
-application semantics. A recipient reads those carriers in an isolated
-post-anchor tree before reconstructing fresh local work state; it never copies
-`.engineering/` or trusts a local-only path.
+Continuity has two paths. On the **same machine**, pausing and resuming works
+from the on-disk state files: a handover completes the current source tree's work
+stream state and updates the default tree's `overview.md`, so a new session reads
+`overview.md`, chooses a source tree and stream, and resumes from that tree's own
+`state.md`/`state/` files — no receipt required. Ignored work memory is not a
+**cross-machine** transport: for that, a handover additionally emits a
+plain-Markdown portable receipt into the owning task, PR, or Notion work item or,
+when necessary, embeds every payload in the response. The receipt carries a
+destination-reachable source anchor, the raw contents of the current tree's work
+stream state files, authoritative specification carriers, and fixed
+non-executable application semantics. A recipient reads those carriers in an
+isolated post-anchor tree before reconstructing fresh local work state; it never
+copies `.engineering/` or trusts a local-only path. Handover scopes to the
+current source tree only; it never indexes or rewrites another tree's work
+streams, and `overview.md` is the sole cross-tree surface.
 
 Retire completed local work only after acceptance, review closure, durable
 promotion, Notion push and verification pull, and final receipts are recorded.

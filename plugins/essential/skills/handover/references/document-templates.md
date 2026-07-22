@@ -82,9 +82,10 @@ table of child headline/status/relative path. Never copy child detail.
 ## Portable receipt
 
 The receipt is plain Markdown a human can paste. It carries no JSON snapshot, no
-base64 bundle, no checksums, and no schema version line. It describes the whole
-`.engineering/works/` workspace of the default worktree: a `## Work index` row
-for **every** work stream, then an embedded `## Work stream: <work-id>` section
+base64 bundle, no checksums, and no schema version line. It describes the
+**current source tree's** `.engineering/works/` streams (this Git worktree or jj
+workspace only — never another tree's works): a `## Work index` row for **every**
+work stream in this tree, then an embedded `## Work stream: <work-id>` section
 only for each **continuable** stream (lifecycle `initialized`, `active`, or
 `blocked`). `complete` and `retiring` streams appear as index rows only; they are
 not an error. The receipt contains, in order:
@@ -93,7 +94,7 @@ not an error. The receipt contains, in order:
 ## Handover receipt
 
 - Repository: <stable remote/name identity>
-- Workspace: default-worktree `.engineering/works/`
+- Source tree: <kind (Git worktree or jj workspace) and label of the current tree>
 - Generated: <one UTC ISO-8601 timestamp>
 - Streams: <N> embedded / <M> index-only
 - External anchor: <URL or response-only>
@@ -151,7 +152,10 @@ path: <work-id>/decisions/<slug>.md
 specification content inline as the authority of record, then record its
 provenance — a repository-relative path in the anchored tree, or a Notion stable
 ref with its captured revision — so takeover can confirm a resumed spec matches
-by direct comparison and refresh a live source. Omit this section for generic
+by direct comparison and refresh a live source. For a Notion-backed spec that a
+resume must be able to re-publish, also record the immutable merge base (the last
+synced revision the local content diverged from) so takeover can three-way merge
+instead of clobbering concurrent remote edits. Omit this section for generic
 coding work with no specification.>
 
 ### Continuation
@@ -167,9 +171,10 @@ coding work with no specification.>
 <... repeated section per continuable stream ...>
 `````
 
-The `## Work index` is the synthesized cross-stream view — the only "global
-state" that exists, since there is no global `state.md`. List every
-`works/<work-id>/` stream once, ordered by lifecycle then work ID, with its
+The `## Work index` is the synthesized view of the current source tree's streams;
+the cross-tree index lives separately in the default tree's
+`.engineering/overview.md`, not in this receipt. List every `works/<work-id>/`
+stream in this source tree once, ordered by lifecycle then work ID, with its
 current lifecycle, one-line headline, next owner, next action, a short
 `Source anchor` label that lets takeover group streams sharing one revision, and
 `Embedded?` (`yes` for continuable streams carried in full below, `no` for
@@ -179,11 +184,14 @@ Emit one `## Work stream: <work-id>` section per continuable stream. Each
 `### Work state` block is the verbatim content of one work file, labelled with
 its `path: <work-id>/…` line so takeover can write it straight back. Include
 every file needed to continue that stream without the origin `.engineering/`
-tree; do not summarize, elide, or replace a file's content with a pathname. Never
-embed the `evidence/` tree — reference it by path. Redact secrets, credentials,
-private keys, and environment values from every embedded block; if redaction
-would leave one stream's required section incomplete, degrade that stream to an
-index-only row and note it, rather than blocking the whole receipt.
+tree; do not summarize, elide, or replace a file's content with a pathname. Do
+not embed the whole `evidence/` tree, but when a stream needs specific evidence
+to continue, carry those exact bytes — inline in a labelled fenced block or by a
+durable external attachment locator — because a bare `evidence/…` path is not
+reachable from the destination. Redact secrets, credentials, private keys, and
+environment values from every embedded block; if redaction would leave one
+stream's required section incomplete, degrade that stream to an index-only row
+and note it, rather than blocking the whole receipt.
 
 Each stream's source anchor must carry that stream's relevant repository changes
 as one of the three plain-git shapes above. A dirty workspace path, a local-only
@@ -194,7 +202,11 @@ escapes.
 Specifications are optional and per stream. Embed the captured specification
 content inline as the authority of record, and record where it came from: a
 repository-relative path present in the anchored tree, or a Notion stable ref
-with its captured revision so takeover can fetch it fresh. If a stream's live
+with its captured revision so takeover can fetch it fresh. For a Notion-backed
+spec, also carry the immutable merge base (last synced revision) so a resumed
+publication can three-way merge against concurrent remote edits rather than
+overwrite them; the local Notion mirror bases are ignored state and never travel,
+so the base revision must be named explicitly in the receipt. If a stream's live
 specification source is unreachable at handover time, keep the captured content
 inline, mark the provenance as stale, and degrade only that stream. Generic
 coding work omits the section.
