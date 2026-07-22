@@ -1503,9 +1503,9 @@ lanes and at least six cards, each card with its lane `<select>`.
 
 ## Decision-first devices (from the free-form lessons)
 
-Recipes distilled from the approved free-form boards (see
-`references/comparisons/v1-vs-v2-notes.md` and the golden examples
-`examples/reference/readiness-verdict-board.html`, `examples/reference/decision-browser.html`).
+Recipes distilled from the approved reference boards
+(`examples/reference/readiness-verdict-board.html`,
+`examples/reference/decision-browser.html`).
 They compose existing floor mechanisms — most need only bespoke, token-styled
 in-page CSS, which the free-form policy welcomes.
 

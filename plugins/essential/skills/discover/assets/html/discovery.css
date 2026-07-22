@@ -116,12 +116,16 @@
     --ui-verdict-done-ink: var(--ui-muted);
     --ui-status-complete: var(--ui-positive);
     --ui-status-complete-soft: var(--ui-positive-soft);
+    --ui-status-complete-ink: var(--ui-insight-ink);
     --ui-status-active: var(--ui-accent);
     --ui-status-active-soft: var(--ui-accent-soft);
+    --ui-status-active-ink: var(--ui-accent-ink);
     --ui-status-planned: var(--ui-insight);
     --ui-status-planned-soft: var(--ui-insight-soft);
+    --ui-status-planned-ink: var(--ui-insight-ink);
     --ui-status-blocked: var(--ui-sev-critical);
     --ui-status-blocked-soft: var(--ui-sev-critical-soft);
+    --ui-status-blocked-ink: var(--ui-sev-critical-ink);
     /* Category ramp: three bespoke muted hues (indigo / teal / plum — dark
        values overridden below); safety/scope/silent alias existing families. */
     --ui-k-governance: #4f5f9e;

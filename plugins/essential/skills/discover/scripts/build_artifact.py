@@ -294,13 +294,28 @@ def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> s
     # DOM is parsed" ordering.
     js_block = _inline_script(js)
 
+    # The board-theme overlay must land AFTER the injected discovery.css so its
+    # token redefinitions win the cascade order-explicitly (and survive fragment
+    # mode, which re-emits only known head parts). Pull it out of the source
+    # here and let each emitter re-place it.
+    html, board_theme = _extract_board_theme(html)
+
     if artifact:
-        output = _build_fragment(html, css_style, runtime_script, js_block)
+        output = _build_fragment(html, css_style, runtime_script, js_block, board_theme)
     else:
-        output = _build_full_doc(html, css_style, runtime_script, js_block)
+        output = _build_full_doc(html, css_style, runtime_script, js_block, board_theme)
 
     _validate(output, artifact=artifact)
     return output
+
+
+def _extract_board_theme(html: str) -> tuple[str, str]:
+    """Remove the first <style data-board-theme> block; return (html, block)."""
+
+    match = BOARD_THEME_BLOCK_RE.search(html)
+    if not match:
+        return html, ""
+    return html[: match.start()] + html[match.end() :], match.group(0).strip()
 
 
 def _validate_source(html: str) -> None:
@@ -347,12 +362,13 @@ SCRIPT_BLOCK_RE = re.compile(r"<script[^>]*>.*?</script>", re.DOTALL | re.IGNORE
 CSS_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 CUSTOM_PROP_RE = re.compile(r"(--[\w-]+)\s*:")
 # The only tokens a board-theme overlay may redefine (references/features.md §B).
+# Ramp names may be hyphenated (--ui-status-in-progress, --ui-k-data-model);
+# the lazy name group lets a trailing -soft/-ink still be recognized as the
+# variant suffix.
 BOARD_THEME_WHITELIST_RE = re.compile(
     r"^--ui-(?:"
     r"accent(?:-contrast|-soft|-ink)?"
-    r"|verdict-[a-z]+(?:-soft|-ink)?"
-    r"|status-[a-z]+(?:-soft|-ink)?"
-    r"|k-[a-z]+(?:-soft|-ink)?"
+    r"|(?:verdict|status|k)-[a-z]+(?:-[a-z]+)*?(?:-soft|-ink)?"
     r")$"
 )
 # `${…}` in rendered text means a template literal escaped its script — the
@@ -405,16 +421,18 @@ def _stray_color_problems(html: str) -> list[str]:
 
     Everything else styles through the ``--ui-*`` tokens, so raw hex /
     rgb / oklch values in ordinary inline <style> blocks are almost always a
-    palette leak. Blocks that scope themselves to ``[data-specimen]`` keep the
-    long-standing specimen exemption.
+    palette leak. Rules scoped to ``[data-specimen]`` keep the long-standing
+    specimen exemption; the rest of the same block is still scanned.
     """
 
     problems: list[str] = []
     without_board_theme = BOARD_THEME_BLOCK_RE.sub("", html)
     for block in STYLE_BLOCK_RE.findall(without_board_theme):
-        if "data-specimen" in block:
-            continue
         css = CSS_COMMENT_RE.sub("", block)
+        # Strip only [data-specimen]-scoped rules (the documented hex
+        # exemption) so ordinary rules sharing the same <style> block still get
+        # scanned — a whole-block skip would let mixed blocks leak palette.
+        css = re.sub(r"[^{}]*data-specimen[^{}]*\{[^{}]*\}", "", css)
         # Only raw hex is flagged: color-mix()/oklch() over --ui-* tokens is a
         # legitimate idiom in bespoke section CSS.
         raw_hex = re.findall(r"#[0-9a-fA-F]{3,8}\b", css)
@@ -443,17 +461,23 @@ def _dollar_literal_problems(output: str) -> list[str]:
 
 
 def _build_full_doc(
-    html: str, css_style: str, runtime_script: str, js_block: str
+    html: str,
+    css_style: str,
+    runtime_script: str,
+    js_block: str,
+    board_theme: str = "",
 ) -> str:
     """Emit a standalone document with all shared assets injected.
 
-    The inlined discovery.css ``<style>`` then the Tailwind runtime ``<script>``
-    are injected immediately before ``</head>`` (css first, runtime second);
+    The inlined discovery.css ``<style>``, then the board-theme overlay (so its
+    token redefinitions follow the shared sheet in cascade order), then the
+    Tailwind runtime ``<script>`` are injected immediately before ``</head>``;
     discovery.js is injected at the end of ``<body>``.
     """
 
     def _inject_head(_match: re.Match[str]) -> str:
-        return f"\n    {css_style}\n    {runtime_script}\n  </head>"
+        overlay = f"\n    {board_theme}" if board_theme else ""
+        return f"\n    {css_style}{overlay}\n    {runtime_script}\n  </head>"
 
     html, count = re.subn(r"\s*</head>", _inject_head, html, count=1)
     if count != 1:
@@ -471,11 +495,17 @@ def _build_full_doc(
 
 
 def _build_fragment(
-    html: str, css_style: str, runtime_script: str, js_block: str
+    html: str,
+    css_style: str,
+    runtime_script: str,
+    js_block: str,
+    board_theme: str = "",
 ) -> str:
     """Emit a head-less fragment for the Artifact tool to wrap in its own body.
 
-    Part ordering: title, theme block, selection style, css, runtime, body, js.
+    Part ordering: title, theme block, selection style, css, board-theme
+    overlay (after the shared css so its token redefinitions win), runtime,
+    body, js.
     """
 
     title_match = TITLE_RE.search(html)
@@ -501,6 +531,7 @@ def _build_fragment(
         theme_match.group(0),
         SELECTION_STYLE,
         css_style,
+        *([board_theme] if board_theme else []),
         runtime_script,
         body_inner,
         js_block,
@@ -539,11 +570,15 @@ def _validate(output: str, *, artifact: bool) -> None:
         problems.append("discovery.js not inlined")
 
     if artifact:
-        if re.search(r"<!doctype", output, re.IGNORECASE):
+        # Scan with script bodies removed: authored data-driven renderers may
+        # legitimately hold markup strings ("<body", "<html") inside <script>,
+        # and those must not fail the structure check.
+        structural = SCRIPT_BLOCK_RE.sub("", output)
+        if re.search(r"<!doctype", structural, re.IGNORECASE):
             problems.append("fragment must not contain <!doctype>")
-        if re.search(r"<html\b", output, re.IGNORECASE):
+        if re.search(r"<html\b", structural, re.IGNORECASE):
             problems.append("fragment must not contain <html>")
-        if re.search(r"<body\b", output, re.IGNORECASE):
+        if re.search(r"<body\b", structural, re.IGNORECASE):
             problems.append("fragment must not contain <body>")
 
     if problems:
