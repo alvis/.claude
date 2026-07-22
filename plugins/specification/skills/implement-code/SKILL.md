@@ -244,10 +244,12 @@ contract materialization, MDC authoring, alignment, and completion sync.
     owner. Any project artifact writer after manifest sealing invalidates that
     manifest, review/status snapshot, and final verification; return through
     the owning Step 8 writer and Steps 9–10, then seal a new immutable manifest.
-12. Re-run Essential state validation. Lifecycle `complete` is valid only when
-    every required executable leaf is `done`; otherwise return `active` when
-    work is runnable or `blocked` when unfinished required work has no runnable
-    leaf. Collect every child `generated_files` manifest, deduplicate it, and
+12. Read root `state.md` (and any `state/*.md` children) directly to derive the
+    terminal lifecycle from the task table; there is no separate validation step.
+    Lifecycle `complete` holds only when every required executable leaf is
+    `done`; otherwise return `active` when work is runnable or `blocked` when
+    unfinished required work has no runnable leaf. Collect every child
+    `generated_files` manifest, deduplicate it, and
     return it to the PM with ID-keyed task deltas and
     state/overview/review reconciliation payloads. Never run
     file sizing; after all writers return, the PM checks only eligible work

@@ -15,6 +15,7 @@ STACK_SPLIT = SKILLS / "write-code/references/stack-split.md"
 HANDOVER = ESSENTIAL_SKILLS / "handover/SKILL.md"
 HANDOVER_TEMPLATE = ESSENTIAL_SKILLS / "handover/references/document-templates.md"
 HANDOVER_OUTPUT = ESSENTIAL_SKILLS / "handover/references/output-format.md"
+HANDOVER_EXAMPLES = ESSENTIAL_SKILLS / "handover/references/examples.md"
 TAKEOVER = ESSENTIAL_SKILLS / "takeover/SKILL.md"
 ESSENTIAL_MAIN = PLUGIN.parent / "essential/MAINAGENT.md"
 CRITIC_FRONTMATTER = (
@@ -154,24 +155,50 @@ class PortableHandoverContractTest(unittest.TestCase):
         self.assertIn("handover: blocked", output)
         self.assertIn("rehydratable: false", output)
 
-    def test_receipt_is_plain_markdown_with_ordered_sections(self) -> None:
+    def test_receipt_indexes_all_streams_and_embeds_continuable_sections(self) -> None:
         template = HANDOVER_TEMPLATE.read_text(encoding="utf-8")
 
         self.assertIn("## Handover receipt", template)
-        self.assertIn("## Source anchor", template)
-        self.assertIn("## Work state", template)
-        self.assertIn("## Continuation", template)
-        self.assertIn("Work ID:", template)
-        self.assertIn("Base commit:", template)
+        self.assertIn("## Work index", template)
+        self.assertIn("## Work stream: <work-id>", template)
+        self.assertIn("### Source anchor", template)
+        self.assertIn("### Work state", template)
+        self.assertIn("### Continuation", template)
+        self.assertIn("| Work ID | Lifecycle |", template)
         self.assertIn("no schema version line", template)
         self.assertNotIn("engineering-work-handover/v3", template)
         self.assertNotIn("engineering-work-state+json", template)
 
+        # the cross-stream index precedes the per-stream embedded sections
+        self.assertLess(
+            template.index("## Work index"), template.index("## Work stream: <work-id>")
+        )
+
+    def test_complete_streams_are_index_only_not_an_error(self) -> None:
+        template = HANDOVER_TEMPLATE.read_text(encoding="utf-8")
+        examples = HANDOVER_EXAMPLES.read_text(encoding="utf-8")
+
+        self.assertIn("index rows only", template)
+        self.assertIn("not an error", template)
+        self.assertIn("**not** an error", examples)
+
+    def test_receipt_embeds_files_with_collision_safe_fences(self) -> None:
+        template = " ".join(HANDOVER_TEMPLATE.read_text(encoding="utf-8").split())
+
+        self.assertIn("at least one longer than the longest backtick run", template)
+        self.assertIn("path: <work-id>/", template)
+
     def test_receipt_transfers_state_by_embedding_raw_file_contents(self) -> None:
         output = " ".join(HANDOVER_OUTPUT.read_text(encoding="utf-8").split())
 
-        self.assertIn("raw contents of every `## Work state` file", output)
-        self.assertIn("embed the verbatim raw contents", output)
+        self.assertIn("raw contents of every `### Work state` file", output)
+        self.assertIn("embedding each work file's raw contents", output)
+
+    def test_response_only_receipt_keeps_bundles_as_external_attachments(self) -> None:
+        output = " ".join(HANDOVER_OUTPUT.read_text(encoding="utf-8").split())
+
+        self.assertIn("response-only receipt permits only text source anchors", output)
+        self.assertIn("never be inlined as base64 or raw bytes", output)
 
     def test_takeover_parses_plain_markdown_not_a_snapshot(self) -> None:
         takeover = TAKEOVER.read_text(encoding="utf-8")
@@ -189,15 +216,41 @@ class PortableHandoverContractTest(unittest.TestCase):
         self.assertIn("reject only a missing or source-contradictory descriptor", takeover)
         self.assertIn("no fixed skill name and no silent fallback", takeover)
 
+    def test_takeover_multiselects_continuable_streams_and_groups_by_anchor(self) -> None:
+        takeover = TAKEOVER.read_text(encoding="utf-8")
+        workflow = takeover.split("## Workflow", 1)[1].split("## Verification", 1)[0]
+        normalized = " ".join(workflow.split())
+
+        parse = normalized.index("1. Parse the plain-Markdown handover receipt")
+        select = normalized.index("2. Offer the continuable streams for selection")
+        group = normalized.index("3. Group the selected streams by source anchor")
+
+        self.assertLess(parse, select)
+        self.assertLess(select, group)
+        self.assertIn("`AskUserQuestion` (multiSelect)", normalized)
+        self.assertIn("Exclude every `complete` and `retiring` stream", normalized)
+        self.assertIn("re-run takeover in a worktree checked out at that anchor", normalized)
+        self.assertIn("Restore every rehydrated stream", normalized)
+
+    def test_takeover_hands_off_once_per_selected_stream(self) -> None:
+        takeover = " ".join(TAKEOVER.read_text(encoding="utf-8").split())
+
+        self.assertIn("Resume exactly once per selected stream", takeover)
+        self.assertIn("Each stream keeps its own coordinator lease", takeover)
+        self.assertIn(
+            "Exactly one implementation-skill handoff occurred per selected stream",
+            takeover,
+        )
+
     def test_takeover_validates_post_anchor_tree_before_clean_destination(self) -> None:
         takeover = TAKEOVER.read_text(encoding="utf-8")
         workflow = takeover.split("## Workflow", 1)[1].split("## Verification", 1)[0]
         normalized = " ".join(workflow.split())
 
-        work_state = normalized.index("2. Read the `## Work state` blocks")
-        anchor = normalized.index("3. Confirm the current checkout")
-        spec = normalized.index("4. Stage the `## Specifications`")
-        destination = normalized.index("6. Require and record a clean compatible")
+        work_state = normalized.index("4. Read each rehydrated stream's `### Work state` blocks")
+        anchor = normalized.index("5. Confirm the current checkout")
+        spec = normalized.index("6. Stage each stream's `### Specifications`")
+        destination = normalized.index("8. Require and record a clean compatible")
 
         self.assertLess(work_state, anchor)
         self.assertLess(anchor, spec)
@@ -213,10 +266,10 @@ class PortableHandoverContractTest(unittest.TestCase):
 
         self.assertLess(
             normalized.index("1. Parse the plain-Markdown handover receipt"),
-            normalized.index("6. Require and record a clean compatible"),
+            normalized.index("8. Require and record a clean compatible"),
         )
         self.assertLess(
-            normalized.index("3. Confirm the current checkout"),
+            normalized.index("5. Confirm the current checkout"),
             normalized.index("with that ID and `--bootstrap`"),
         )
         self.assertIn("explicit takeover exception", main_agent)

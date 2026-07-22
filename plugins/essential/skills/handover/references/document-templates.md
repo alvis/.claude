@@ -82,84 +82,126 @@ table of child headline/status/relative path. Never copy child detail.
 ## Portable receipt
 
 The receipt is plain Markdown a human can paste. It carries no JSON snapshot, no
-base64 bundle, no checksums, and no schema version line. It contains, in order:
+base64 bundle, no checksums, and no schema version line. It describes the whole
+`.engineering/works/` workspace of the default worktree: a `## Work index` row
+for **every** work stream, then an embedded `## Work stream: <work-id>` section
+only for each **continuable** stream (lifecycle `initialized`, `active`, or
+`blocked`). `complete` and `retiring` streams appear as index rows only; they are
+not an error. The receipt contains, in order:
 
-```markdown
+`````markdown
 ## Handover receipt
 
 - Repository: <stable remote/name identity>
-- Work ID: <work-id>
-- Branch: <name or none>
-- Base commit: <commit/change id>
+- Workspace: default-worktree `.engineering/works/`
+- Generated: <one UTC ISO-8601 timestamp>
+- Streams: <N> embedded / <M> index-only
 - External anchor: <URL or response-only>
 
-## Source anchor
+## Work index
 
-<How to obtain the code at the right revision, with plain git and no checksum
-verification — exactly one of:>
+| Work ID | Lifecycle | Headline | Next owner | Next action | Source anchor | Embedded? |
+|---|---|---|---|---|---|---|
+| `<work-id>` | `active` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `yes` |
+| `<work-id>` | `blocked` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `yes` |
+| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `<anchor label or none>` | `no` |
+
+## Work stream: <work-id>
+
+### Source anchor
+
+<How to obtain this stream's code at the right revision, with plain git and no
+checksum verification — exactly one of:>
 - Remote revision to check out: `<remote/ref @ revision>`
 - Attached patch: `git format-patch` output, inline below or at <attachment locator>
 - Bundle ref: `git bundle` at <attachment locator>, ref `<ref>`, base `<base commit>`
 
-## Work state
+### Work state
 
-<The raw contents of state.md, state/working.md, and every continuity-relevant
-detail file — decisions, changes, design, state/*.md children, needed evidence —
-each in its own fenced block labelled with its work-relative path:>
+<The raw contents of this stream's state.md, state/working.md, and every
+continuity-relevant detail file — decisions, changes, design, state/*.md
+children, needed evidence — each in its own fenced block. On the line
+immediately before each opening fence, name the work-relative path as
+`path: <work-id>/<relative path>`. Fence each file with a backtick run at least
+one longer than the longest backtick run inside that file (minimum three); the
+closing fence uses the same length. This lets a state file that itself contains
+a fenced block travel without closing early:>
 
-`state.md`
+path: <work-id>/state.md
+
+````markdown
+<verbatim contents, may itself contain ``` fences>
+````
+
+path: <work-id>/state/working.md
 
 ```markdown
 <verbatim contents>
 ```
 
-`state/working.md`
+path: <work-id>/decisions/<slug>.md
 
 ```markdown
 <verbatim contents>
 ```
 
-`decisions/<slug>.md`
+### Specifications
 
-```markdown
-<verbatim contents>
-```
-
-## Specifications
-
-<Any spec contract needed to continue, inline as raw text or as a
-repository-relative path in the anchored tree. Omit this section for generic
+<Any spec contract needed to continue this stream. Embed the captured
+specification content inline as the authority of record, then record its
+provenance — a repository-relative path in the anchored tree, or a Notion stable
+ref with its captured revision — so takeover can confirm a resumed spec matches
+by direct comparison and refresh a live source. Omit this section for generic
 coding work with no specification.>
 
-## Continuation
+### Continuation
 
 - Current task: <full executable task ID or none>
 - Next owner: <exact continuation owner>
 - Next action: <one sentence>
 - Continuation intent: <capability-level work type — e.g. specification-led implementation or generic coding implementation — never a fixed skill name>
 - Route: hand off to the relevant implementation skill to continue the work.
-```
 
-Each `## Work state` block is the verbatim content of one work file, labelled
-with its work-relative path so takeover can write it straight back. Include
-every file needed to continue without the origin `.engineering/` tree; do not
-summarize, elide, or replace a file's content with a pathname. Redact secrets,
-credentials, private keys, and environment values from every embedded block; if
-redaction would leave a required section incomplete, block and ask for a safe
-carrier.
+## Work stream: <next continuable work-id>
 
-The source anchor must carry all relevant repository changes as one of the three
-plain-git shapes above. A dirty workspace path, a local-only revision, or a
-command string is not an anchor. Normalize and contain every repository and
-destination path; reject absolute paths, `..`, and symlink escapes.
+<... repeated section per continuable stream ...>
+`````
 
-Specifications are optional. Reference a specification by a repository-relative
-path when it is present in the anchored tree, or embed its raw text inline when
-it is not. A Notion-backed specification is named by its stable ref and captured
-revision so takeover can fetch it fresh. Generic coding work omits the section.
+The `## Work index` is the synthesized cross-stream view — the only "global
+state" that exists, since there is no global `state.md`. List every
+`works/<work-id>/` stream once, ordered by lifecycle then work ID, with its
+current lifecycle, one-line headline, next owner, next action, a short
+`Source anchor` label that lets takeover group streams sharing one revision, and
+`Embedded?` (`yes` for continuable streams carried in full below, `no` for
+`complete`/`retiring` index-only rows).
 
-`Continuation intent` is a required capability-level descriptor of the work type
-to continue — for example `specification-led implementation` when a spec governs
-the next action, or `generic coding implementation` when none does. It names the
-kind of work, never a fixed skill name; takeover maps it to the relevant
-implementation skill. Emit it consistently with `Next action` so the two agree.
+Emit one `## Work stream: <work-id>` section per continuable stream. Each
+`### Work state` block is the verbatim content of one work file, labelled with
+its `path: <work-id>/…` line so takeover can write it straight back. Include
+every file needed to continue that stream without the origin `.engineering/`
+tree; do not summarize, elide, or replace a file's content with a pathname. Never
+embed the `evidence/` tree — reference it by path. Redact secrets, credentials,
+private keys, and environment values from every embedded block; if redaction
+would leave one stream's required section incomplete, degrade that stream to an
+index-only row and note it, rather than blocking the whole receipt.
+
+Each stream's source anchor must carry that stream's relevant repository changes
+as one of the three plain-git shapes above. A dirty workspace path, a local-only
+revision, or a command string is not an anchor. Normalize and contain every
+repository and destination path; reject absolute paths, `..`, and symlink
+escapes.
+
+Specifications are optional and per stream. Embed the captured specification
+content inline as the authority of record, and record where it came from: a
+repository-relative path present in the anchored tree, or a Notion stable ref
+with its captured revision so takeover can fetch it fresh. If a stream's live
+specification source is unreachable at handover time, keep the captured content
+inline, mark the provenance as stale, and degrade only that stream. Generic
+coding work omits the section.
+
+`Continuation intent` is a required per-stream capability-level descriptor of the
+work type to continue — for example `specification-led implementation` when a
+spec governs the next action, or `generic coding implementation` when none does.
+It names the kind of work, never a fixed skill name; takeover maps it to the
+relevant implementation skill. Emit it consistently with `Next action` so the
+two agree.

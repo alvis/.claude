@@ -45,6 +45,7 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   "source_locators": ["repo:requirements/capability.md"],
   "source_revision": "<git-blob-oid-or-notion-revision-or-empty>",
   "carrier_revision": "<git-blob-oid-or-empty>",
+  "approved_content_ref": "<durable reachable locator to the exact approved specification content>",
   "logical_units": [
     {"id": "contract:root", "source_path": "requirements/capability.md", "output_path": "docs/specs/capability/index.md"}
   ],
@@ -76,6 +77,16 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   blob oid or Notion revision). Authority is the specification content itself:
   approval, plan, and review bind to it and are confirmed by direct comparison,
   not by any recorded hash.
+- `approved_content_ref` is a durable, reachable pointer to the exact approved
+  specification content — not a hash — so `implement-code` and
+  `review-implementation` can confirm a resumed spec still matches by direct
+  content comparison. For a reachable `repo:` source it is that source path; for
+  `local-approved:` and `inline-approved:` origins whose origin is not reachable,
+  it is the promoted durable carrier (`docs/specs/<capability>/index.md`) that
+  retains the approved content, or an external durable receipt/anchor holding it.
+  It is required for local and inline sources and must resolve after ignored
+  local work is retired. A Notion source uses `ref` plus per-unit
+  `source_revision` and omits this field.
 - Notion provenance additionally records exact per-unit `source_revision`
   values and may record transport relationships. Local provenance may record a
   reachable Git object. Inline provenance omits source revision. Neither local
