@@ -17,10 +17,11 @@
 
 ```bash
 /essential:takeover
-# No argument: same-machine resume. Reads the default source tree's global
-# .engineering/overview.md, groups continuable streams by source tree, lets the
-# user pick ONE source tree, and resumes its selected streams directly from
-# on-disk state files — no receipt, no anchor application.
+# No argument: same-machine resume. Defaults to the CURRENT source tree's own
+# incomplete work streams read from on-disk state files, and also reads the
+# default tree's .engineering/overview.md to offer other source trees' streams.
+# Picking a stream in another tree switches the working directory to that tree
+# first. One source tree at a time; no receipt, no anchor application.
 ```
 
 ```bash
@@ -64,9 +65,10 @@ To pause, `/essential:handover` on the current source tree refreshes its streams
 `state.md` (including the `## Continuation` fields) and `state/working.md` and
 upserts that tree's entry in the default tree's `.engineering/overview.md`. That
 persistence always completes, so the session can then close. In a new session,
-`/essential:takeover` with no argument reads that `overview.md`, lists each source
-tree and its continuable streams, and — after the user picks the source tree —
-resumes the selected streams straight from the on-disk state files. The local
+`/essential:takeover` with no argument defaults to the current source tree's own
+incomplete streams read straight from on-disk state, and reads `overview.md` to
+also offer other source trees' streams — switching the working directory to the
+owning tree if one is chosen. The local
 resume neither needs nor consumes a receipt; handover may still emit a portable
 receipt best-effort, but it is required only for moving work to a different
 machine or checkout, and a stream whose changes are still local simply becomes an

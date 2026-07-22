@@ -277,6 +277,19 @@ completion, or retirement, read `state.md` and its `state/` children directly to
 judge runnable tasks, current owner, and next action. Preserve any existing
 state file byte-for-byte until an explicit rewrite; never rewrite it by guess.
 
+Persist state immediately, never lazily. The moment a task or subtask changes
+status (started, blocked, done, failed, cancelled) or a decision is made, the
+lease holder writes that change into `.engineering/` state before moving on to
+the next action — not batched, and not deferred to handover or session end. State
+in `.engineering/` is the durable memory of record; handover only publishes and
+transports what is already written. This continuous-persistence discipline
+bounds the loss to a single in-flight step if the coding agent crashes mid-task
+or a session ends without an explicit handover, so a later resume reads an
+accurate registry rather than reconstructing lost progress. A worker without the
+lease returns its status change and evidence in its output manifest immediately;
+the lease holder reconciles it into `state.md` at once rather than accumulating
+deltas.
+
 One actor holds the work item's coordinator lease and is the sole writer of
 `state/working.md`, `state.md`, the four lazy overview files, and `review.md`. The PM
 holds it by default and may explicitly grant it to one orchestration skill,

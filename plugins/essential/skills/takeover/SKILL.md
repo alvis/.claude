@@ -1,6 +1,6 @@
 ---
 name: takeover
-description: Resume paused engineering work. With no argument, read the default source tree's global .engineering/overview.md, group continuable work streams by source tree, let the user pick one source tree to continue, and resume its streams directly from on-disk state files. Given a portable receipt or anchor, rehydrate the paused streams into workspace-local memory first. Then resolve pending decisions and hand each selected stream to its declared continuation skill.
+description: Resume paused engineering work. With no argument, default to the current source tree's own incomplete work streams read straight from on-disk state files, and use the default source tree's global .engineering/overview.md to also offer other source trees' streams — switching the working directory to that tree if one is chosen. Given a portable receipt or anchor, rehydrate the paused streams into workspace-local memory first. Then resolve pending decisions and hand each selected stream to its declared continuation skill.
 model: opus
 allowed-tools: Read, Glob, Edit, Write, Bash, AskUserQuestion, Skill
 argument-hint: "[receipt-or-anchor] [--revalidate]"
@@ -61,7 +61,10 @@ run first because they do not touch a target project's artifacts.
 
 On the **local resume** path the selected source tree's `.engineering/works/`
 state already exists in that tree; resume from it in place without bootstrap or
-anchor application. On the **portable receipt** path, after the receipt is read
+anchor application. When the user selects a stream owned by a different source
+tree, first switch the working directory to that tree's root, because only the
+owning tree holds that stream's state and its matching checkout. On the
+**portable receipt** path, after the receipt is read
 and a selected stream's source anchor resolves, resolve the current workspace,
 perform its normal ignore gate, and run the resolver with that stream's exact
 work ID and `--bootstrap` before any target promotion; restore each rehydrated
@@ -70,35 +73,34 @@ ID; never mint a replacement identity.
 
 ## Workflow — local resume (no receipt)
 
-L1. Read the global `.engineering/overview.md` in the default source tree (the
-    resolver's `default_workspace`). It indexes each source tree — Git worktree
-    or jj workspace — with its kind, label/path, revision, and its work streams
-    (work ID, lifecycle, headline, next action). The overview is an index, not
-    the authority: reconcile every offered row against the owning tree's actual
-    `.engineering/works/<work-id>/` on disk and prefer on-disk truth. If no
-    `overview.md` exists (or it lists no continuable stream) but the **current**
-    source tree itself holds continuable `.engineering/works/<work-id>/` streams
-    on disk, offer those directly and note that the overview was missing or stale.
-    Only when neither the overview nor the current tree's `works/` has a
+L1. Default to the **current source tree's own incomplete work streams**.
+    Enumerate this Git worktree or jj workspace's `.engineering/works/<work-id>/`
+    directories directly and read each `state.md`; the continuable ones (lifecycle
+    `initialized`, `active`, or `blocked`) are the default resume candidates. This
+    on-disk state is the authority — no overview is required to resume the current
+    tree.
+
+L2. Additionally read the default source tree's global `.engineering/overview.md`
+    (the resolver's `default_workspace`) to surface **other** source trees'
+    continuable streams as options. The overview indexes each source tree — kind,
+    label/path, revision, and its work streams — but it is only an index: treat a
+    tree's own on-disk `works/` as authoritative and reconcile any overview row
+    against it. If neither the current tree's `works/` nor any overview row lists a
     continuable stream, stop and report that nothing is resumable; if the user
     named a specific stream, suggest the receipt path instead.
 
-L2. Group the continuable streams (lifecycle `initialized`, `active`, or
-    `blocked`) by source tree. `complete` and `retiring` streams are index-only:
-    exclude them and name them in the prompt so the user sees why. Offer the
-    source trees with `AskUserQuestion`; label each option with the tree's
-    label/path and a summary of its continuable streams. Because only one source
-    tree is worked at a time, accept exactly one source tree unless the user is
-    explicitly merging trees.
-
-L3. Confirm the selected source tree is the current checkout, or instruct the
-    user to switch to that Git worktree or jj workspace first; do not resume a
-    source tree's streams from a different checkout. Within the selected tree,
-    verify each offered stream's `.engineering/works/<work-id>/state.md` exists
-    and its on-disk lifecycle matches the overview row, dropping or correcting any
-    row the disk contradicts. Offer the surviving continuable streams with
-    `AskUserQuestion` (multiSelect) labelled by work ID, headline, and next
-    action. Proceed only with the streams the user selects.
+L3. Offer the continuable streams with `AskUserQuestion`, grouped by source tree
+    and defaulting to the current tree's streams; `complete` and `retiring`
+    streams are index-only, so exclude them and name them so the user sees why.
+    Because only one source tree is worked at a time (unless explicitly merging
+    trees), a selection stays within one source tree. If the user picks a stream
+    in a **different** source tree, switch the working directory to that tree's
+    Git worktree or jj workspace root before continuing — resume runs from inside
+    the owning tree, never against a different checkout — then re-enumerate that
+    tree's on-disk `works/` as in L1. Within the resolved tree, verify each
+    selected stream's `.engineering/works/<work-id>/state.md` exists and its
+    on-disk lifecycle is continuable, dropping any stale option, and proceed only
+    with the streams the user selects (multiSelect within the one tree).
 
 L4. For each selected stream, read its on-disk `.engineering/works/<work-id>/`
     state directly: `state/working.md` first when present, then `state.md`
@@ -282,9 +284,10 @@ L5. Resolve decisions that block a selected stream's next action with
 - Exactly one source tree's streams were resumed unless the run was an explicit
   source-tree merge; `complete` and `retiring` streams were excluded and named,
   and only user-selected streams were resumed.
-- Local resume read the default tree's `overview.md`, grouped continuable streams
-  by source tree, and continued the selected tree's streams from on-disk state
-  without bootstrap, anchor application, or a disposable tree.
+- Local resume defaulted to the current source tree's on-disk incomplete streams,
+  used `overview.md` only to surface other trees, switched the working directory
+  to the owning tree when a different tree's stream was chosen, and continued from
+  on-disk state without bootstrap, anchor application, or a disposable tree.
 - On the receipt path, selected streams were grouped by source anchor: the group
   matching the current worktree's revision was rehydrated here, every
   divergent-anchor stream returned a re-run instruction rather than a second
