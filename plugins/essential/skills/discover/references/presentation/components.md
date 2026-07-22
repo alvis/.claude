@@ -5,6 +5,16 @@ The component system is a small declarative contract implemented by
 discovery pages consistent enough to learn quickly without turning the examples
 into rigid templates.
 
+**This catalog is a reference shelf, not a ceiling.** Beyond the mandatory
+floor (`references/features.md`: page shell, annotatable sections, per-card
+response capture, single prompt host, token-only theming, dual theme, a11y,
+self-containment), every pattern here is an option to reach for when the
+content calls for it — never a completeness requirement. Markup that appears
+in no catalog entry is conforming as long as the floor holds. When ledger
+content fits no pattern, present it anyway in a **free-pattern section**: a
+plain annotatable `[data-discovery-section]` with bespoke, token-styled
+markup. Never omit content to satisfy the catalog.
+
 The styling strategy is Tailwind CSS plus shared CSS variables. Load the
 temporary browser runtime, map `--ui-*` values through `@theme inline`, and use
 the resulting utilities for composition. Keep palette, type, shadow, and surface

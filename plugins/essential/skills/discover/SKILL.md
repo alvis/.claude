@@ -129,7 +129,28 @@ owner, or marked blocking.
    Never hand-write artifact HTML from scratch: copy the committed starter
    scaffold `templates/src/page/` into the session workspace, then fill its
    `{{PLACEHOLDER}}` tokens and add, edit, reorder, or remove `sections/` files
-   to fit the action. Then compose and compile a self-contained file with
+   to fit the action. Before composing:
+   - **Check `references/features.md`** — the Floor features are mandatory;
+     the Menu is a shelf of proven devices, never a completeness requirement.
+   - **Build a coverage map**: list every ledger finding, unknown, stream, and
+     decision, and assign each to a section. Content that fits no catalog
+     pattern gets a free-pattern section — never drop ledger content to
+     satisfy the catalog.
+   - **Theme the board**: fill `{{PRODUCT_NAME}}`, pick a per-board accent
+     (companion boards get distinct accents from the shell's own families),
+     and map the board's domain states onto the semantic ramps
+     (`--ui-verdict-*`, `--ui-status-*`, `--ui-k-*`) via the
+     `<style data-board-theme>` overlay — whitelisted tokens only, light and
+     dark values both.
+   - **Design freely above the floor.** Layout, section shapes, devices, and
+     interactions are yours to design for the content at hand — approach it
+     like a design lead, not a form-filler. Bespoke section CSS/JS is welcome
+     as long as it styles through the `--ui-*` tokens and keeps the floor
+     (shell, annotation, per-card capture, single generated prompt, dual
+     theme, a11y, self-containment). Where a card carries a real decision
+     with alternatives, render the option set with reasons and a badged
+     recommendation — never a bare accept.
+   Then compose and compile a self-contained file with
    `scripts/build_artifact.py`; sources carry no asset links, so the compiled
    file is what gets opened. Present it in preference order: the LLM
    environment's built-in local HTML viewer, then a safe cloud artifact viewer,
@@ -152,6 +173,12 @@ owner, or marked blocking.
 - Any HTML result is stored under the OS temporary root, supports annotation of
   every user-facing section, and exposes exactly one live prompt intended for
   replying to the LLM coder.
+- Parity self-check against the ledger: every finding, unknown, stream, and
+  decision appears on the board or in an explicit scope-cuts note — nothing
+  silently dropped. Every recommendation-bearing card captures a response
+  (options with a badged recommendation where alternatives exist; accept
+  otherwise; note everywhere), and each response feeds the generated prompt.
+  Walk the Floor checklist in `references/features.md` before shipping.
 - Validate the Essential plugin and run repository policy plus trigger checks.
 
 ## Completion
