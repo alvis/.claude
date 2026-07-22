@@ -73,9 +73,15 @@ ID; never mint a replacement identity.
 L1. Read the global `.engineering/overview.md` in the default source tree (the
     resolver's `default_workspace`). It indexes each source tree — Git worktree
     or jj workspace — with its kind, label/path, revision, and its work streams
-    (work ID, lifecycle, headline, next action). If no `overview.md` exists or it
-    lists no continuable stream, stop and report that nothing is resumable; if the
-    user named a specific stream, suggest the receipt path instead.
+    (work ID, lifecycle, headline, next action). The overview is an index, not
+    the authority: reconcile every offered row against the owning tree's actual
+    `.engineering/works/<work-id>/` on disk and prefer on-disk truth. If no
+    `overview.md` exists (or it lists no continuable stream) but the **current**
+    source tree itself holds continuable `.engineering/works/<work-id>/` streams
+    on disk, offer those directly and note that the overview was missing or stale.
+    Only when neither the overview nor the current tree's `works/` has a
+    continuable stream, stop and report that nothing is resumable; if the user
+    named a specific stream, suggest the receipt path instead.
 
 L2. Group the continuable streams (lifecycle `initialized`, `active`, or
     `blocked`) by source tree. `complete` and `retiring` streams are index-only:
@@ -88,19 +94,22 @@ L2. Group the continuable streams (lifecycle `initialized`, `active`, or
 L3. Confirm the selected source tree is the current checkout, or instruct the
     user to switch to that Git worktree or jj workspace first; do not resume a
     source tree's streams from a different checkout. Within the selected tree,
-    offer its continuable streams with `AskUserQuestion` (multiSelect) labelled by
-    work ID, headline, and next action. Proceed only with the streams the user
-    selects.
+    verify each offered stream's `.engineering/works/<work-id>/state.md` exists
+    and its on-disk lifecycle matches the overview row, dropping or correcting any
+    row the disk contradicts. Offer the surviving continuable streams with
+    `AskUserQuestion` (multiSelect) labelled by work ID, headline, and next
+    action. Proceed only with the streams the user selects.
 
 L4. For each selected stream, read its on-disk `.engineering/works/<work-id>/`
-    state directly: `state/working.md` first when present, then `state.md`, its
-    linked detail files, decisions, and the materialized specification. From the
-    `state.md` task table (and any `state/*.md` children), determine which tasks
-    are runnable, which are blocked, the current owner, and the next action; there
-    is no separate validation step. Treat repository and runtime evidence as
-    authoritative over stale local memory. No anchor application, disposable tree,
-    or bootstrap is needed — the work state and specification are already present
-    in this source tree.
+    state directly: `state/working.md` first when present, then `state.md`
+    (including its `## Continuation` section: current task, next owner, next
+    action, and continuation intent), its linked detail files, decisions, and the
+    materialized specification. From the `state.md` task table (and any
+    `state/*.md` children), determine which tasks are runnable, which are blocked,
+    the current owner, and the next action; there is no separate validation step.
+    Treat repository and runtime evidence as authoritative over stale local
+    memory. No anchor application, disposable tree, or bootstrap is needed — the
+    work state and specification are already present in this source tree.
 
 L5. Resolve decisions that block a selected stream's next action with
     `AskUserQuestion`; store detail in that stream's `decisions/<slug>.md`,
@@ -253,10 +262,16 @@ L5. Resolve decisions that block a selected stream's next action with
     action, work-state summary, resolved decisions, contradictions, and original
     user context. Each stream keeps its own coordinator lease, so per-stream
     handoffs run sequentially or as per-stream continuation capsules to the PM.
-    Choose each skill by mapping that stream's capability-level
-    `Continuation intent` descriptor to the relevant implementation skill; reject
-    only a missing or source-contradictory descriptor instead of silently falling
-    back to any named skill.
+    Choose each skill by mapping that stream's capability-level continuation-intent
+    descriptor to the relevant implementation skill. On the receipt path the
+    descriptor comes from that stream's `### Continuation`; on the local resume
+    path it comes from the `## Continuation` section of the on-disk `state.md`.
+    When the local descriptor is absent (state written before this field existed),
+    derive the intent from on-disk evidence — specification-led implementation when
+    a materialized specification governs the next action, generic coding
+    implementation otherwise — rather than hard-rejecting. Reject only a
+    source-contradictory descriptor, and never silently fall back to a fixed
+    skill name.
 
 12. Return every created or materially rewritten path in `generated_files`.
    Do not run file sizing; the PM checks only eligible work Markdown inside the

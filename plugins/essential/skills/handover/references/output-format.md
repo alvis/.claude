@@ -65,7 +65,12 @@ When a continuable stream has no verified portable source anchor, mark its entry
 the available safe choices: route a save/publication through its Coding owners,
 or obtain user approval for a patch or external bundle attachment carrier. Also
 degrade a stream whose required work-state file or continuation specification is
-incomplete, ambiguous, or unredactable. When the filtered selection is a single
-stream and that stream is blocked, do not render the completion shape or a
-complete receipt: return `handover: blocked`, `rehydratable: false`, and the
-exact local-only changes for that stream.
+incomplete, ambiguous, or unredactable. Such degradation is per stream and
+never aborts the run: persistence (on-disk state refresh and the default tree's
+`overview.md` upsert) always completes first, so every degraded stream remains
+resumable on the same machine from its state files. `handover: complete`
+therefore reports the successful local pause even when every stream is
+`embedded: false`; the `embedded`/`rehydratable` flags carry the cross-machine
+verdict. Reserve a top-level `handover: blocked` for a failure that prevents
+persistence itself — an unresolvable workspace, an unreadable contract, or an
+unwritable `overview.md` — not for a missing source anchor.

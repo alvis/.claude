@@ -52,6 +52,48 @@ substate, remaining action, evidence, and blocker. Use semantic `state/*.md`
 children for genuinely resumable execution detail. Numeric split children are
 reserved for a shared file that exceeded its size limit.
 
+The `## Continuation` section persists, on disk, everything a resume needs to
+route the next step without a receipt: `Current task` (full executable task ID or
+none), `Next owner` (exact continuation owner), `Next action` (one sentence), and
+`Continuation intent` (a capability-level work-type descriptor — for example
+`specification-led implementation` or `generic coding implementation` — never a
+fixed skill name). A same-machine takeover reads these fields straight from
+`state.md`; the receipt's per-stream `### Continuation` carries the same four
+fields.
+
+## `overview.md`
+
+The default source tree's global cross-tree index. One `## <source-tree label>`
+section per source tree, each with an identity block and a work-stream table.
+Upsert only the current tree's section at handover and preserve the others
+byte-for-byte:
+
+```markdown
+# Engineering overview
+
+- Updated: `<timestamp>`
+
+## <source-tree label or path>
+
+- Kind: `<git-worktree|jj-workspace>`
+- Path: `<repository-relative or absolute source-tree path>`
+- Revision: `<current branch/bookmark @ short revision>`
+
+| Work ID | Lifecycle | Headline | Next action |
+|---|---|---|---|
+| `<work-id>` | `<initialized|active|blocked|complete|retiring>` | `<one line>` | `<one line or ->` |
+
+## <another source tree>
+
+<... one section per source tree; secondary trees are never edited here ...>
+```
+
+Every stream in a tree's own `.engineering/works/` appears in that tree's table,
+continuable and index-only alike. The overview is a status index only; each
+stream's authoritative resumable context stays in that stream's own
+`state.md`/`state/` files. A tree with no active streams may keep an empty table
+or be omitted once retired.
+
 ## `state/working.md`
 
 ```markdown

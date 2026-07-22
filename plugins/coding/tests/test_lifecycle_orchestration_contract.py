@@ -146,13 +146,26 @@ class WriteCodeLifecycleContractTest(unittest.TestCase):
 
 
 class PortableHandoverContractTest(unittest.TestCase):
-    def test_handover_refuses_local_only_source_changes(self) -> None:
-        handover = HANDOVER.read_text(encoding="utf-8")
-        output = HANDOVER_OUTPUT.read_text(encoding="utf-8")
+    def test_local_only_changes_degrade_embedding_but_persistence_completes(self) -> None:
+        handover = " ".join(HANDOVER.read_text(encoding="utf-8").split())
+        output = " ".join(HANDOVER_OUTPUT.read_text(encoding="utf-8").split())
 
+        # a missing portable anchor degrades only the cross-machine embedding
         self.assertIn("destination-reachable carrier", handover)
-        self.assertIn("blocked, non-rehydratable status", handover)
-        self.assertIn("handover: blocked", output)
+        self.assertIn(
+            "the stream still resumes locally from the state written in steps 5–7",
+            handover,
+        )
+        self.assertIn("This never returns `handover: blocked` for the run", handover)
+
+        # persistence + overview upsert always complete first; blocked is reserved
+        self.assertIn("(steps 1–7) always runs and always", handover)
+        self.assertIn("Never terminate the run before the overview upsert", handover)
+        self.assertIn("never aborts the run: persistence", output)
+        self.assertIn(
+            "Reserve a top-level `handover: blocked` for a failure that prevents persistence",
+            output,
+        )
         self.assertIn("rehydratable: false", output)
 
     def test_handover_scopes_to_current_source_tree_and_updates_global_overview(self) -> None:
@@ -259,7 +272,11 @@ class PortableHandoverContractTest(unittest.TestCase):
         takeover = " ".join(TAKEOVER.read_text(encoding="utf-8").split())
 
         self.assertIn("declared continuation intent", takeover)
-        self.assertIn("reject only a missing or source-contradictory descriptor", takeover)
+        # receipt path reads ### Continuation; local path reads on-disk ## Continuation
+        self.assertIn("on the local resume path it comes from the `## Continuation`", takeover)
+        # an absent local descriptor derives intent from evidence, not a hard reject
+        self.assertIn("rather than hard-rejecting", takeover)
+        self.assertIn("Reject only a source-contradictory descriptor", takeover)
         self.assertIn("no fixed skill name and no silent fallback", takeover)
 
     def test_takeover_multiselects_continuable_streams_and_groups_by_anchor(self) -> None:

@@ -38,10 +38,13 @@ implementation skill.
 - Optional `[work-id-filter]`; otherwise handle every work stream under
   `.engineering/works/` in the **current source tree**. A filter narrows the
   streams to embed; it never invents a stream and never reaches another tree.
-- Require a repository checkout, a resolvable current-tree workspace, and, for
-  each continuable stream, an external continuation anchor: task, issue, PR, or
-  Notion work item. If no anchor is writable, emit the receipt in the response
-  for the user to paste there.
+- Persistence requires only a repository checkout and a resolvable current-tree
+  workspace; a same-machine pause needs no external anchor and no writable
+  receipt destination. The portable receipt additionally uses, per continuable
+  stream, an external continuation anchor (task, issue, PR, or Notion work item);
+  if no anchor is writable, emit the receipt in the response for the user to
+  paste there. A stream that has no destination-reachable anchor is still
+  persisted and resumable locally; only its cross-machine embedding degrades.
 
 ## Engineering-work gate
 
@@ -54,7 +57,16 @@ is the current source tree that owns the work streams to refresh, and its
 conventions, naming, and ownership from that reference before reading or writing
 state. Handover never mints an empty work item.
 
-## Workflow
+Handover has two outcomes. **Persistence** (steps 1–7) always runs and always
+completes: it refreshes the current source tree's on-disk work state and the
+default tree's global `overview.md` so a same-machine session can pause, close,
+and later resume from state files with no receipt. The **portable receipt**
+(steps 8–9) is an additional best-effort artifact for cross-machine transfer;
+per-stream it degrades to an index-only row when a source anchor is not
+destination-reachable, but such degradation never blocks persistence, the
+overview upsert, or the run. Never terminate the run before the overview upsert.
+
+### Persistence (always completes)
 
 1. List every `.engineering/works/<work-id>/` stream in the **current source
    tree** (the resolver's `active_workspace`) per the Essential contract. Apply
@@ -77,8 +89,45 @@ state. Handover never mints an empty work item.
    repository-relative path, or a Notion reference with its captured revision.
    Classify changed and planned files with the substates in
    [references/document-templates.md](references/document-templates.md).
-4. Resolve a portable source anchor per continuable stream before claiming that
-   stream is rehydratable. When every relevant repository change is already
+4. For each continuable stream, identify every material unresolved decision.
+   Consult the user using
+   [references/decision-consultation.md](references/decision-consultation.md);
+   route durable decision detail to `decisions/<slug>.md` and let the PM
+   reconcile `decisions.md`. Record low-impact reversible assumptions in
+   `state.md` with evidence and recheck triggers.
+5. Generate one UTC ISO-8601 timestamp for the whole run. For each continuable
+   stream, rewrite `state.md` as the complete work context: goal, full
+   parent/subtask task table with marked status and evidence, lifecycle, success
+   criteria, decisions, dependencies, blockers, review dispositions, evidence,
+   durable promotion, specification location, and a prominent link to
+   `state/working.md`. Include a `## Continuation` section persisting the current
+   task ID, exact next owner, exact next action, and a capability-level
+   continuation intent describing the work type (never a fixed skill name), so a
+   same-machine takeover can route the resume from on-disk state alone. If
+   eligible work Markdown requires splitting under the shared batch process, keep
+   the original path as overview.
+6. For each continuable stream, rewrite `state/working.md` to approximately 4,096
+   bytes through editorial discipline: current focus, current status, immediate
+   handback point, and fast relative paths only. It is not a plan, history, or
+   complete context. Do not mechanically size-gate it. Reconcile that stream's
+   existing lazy `proposals.md`, `changes.md`, `decisions.md`, and `design.md`
+   overview files from child metadata; never copy child details into an overview.
+7. Update the global `.engineering/overview.md` in the default source tree (the
+   resolver's `default_workspace`), following the canonical shape in
+   [references/document-templates.md](references/document-templates.md).
+   Immediately before writing, re-read the current `overview.md` so a concurrent
+   update in another tree is not lost. Upsert exactly one entry for the current
+   source tree — its kind (Git worktree or jj workspace), label/path, current
+   revision, and a table of this tree's work streams (work ID, lifecycle,
+   headline, next action) across every stream from step 1 — and preserve every
+   other source tree's entry byte-for-byte. If the default tree carries no
+   `overview.md` yet, create it. Never write another tree's `works/`. After this
+   write the same-machine pause is complete and resumable from state files.
+
+### Portable receipt (best-effort; degrades per stream, never blocks)
+
+8. For each continuable stream, resolve a portable source anchor before marking
+   that stream `Embedded? yes`. When every relevant repository change is already
    captured by a revision reachable through the receipt's remote repository/ref,
    record it as the remote revision to check out. Otherwise consult the user:
    either pause so `coding:commit` and, when authorized, `coding:push-pr` can
@@ -86,40 +135,14 @@ state. Handover never mints an empty work item.
    `git format-patch` patch or a `git bundle` ref to that stream's external
    anchor. Record the carrier and its compatible base/result revision with plain
    git; there is no checksum verification. A local staging path alone is not an
-   anchor. If a continuable stream has no destination-reachable carrier, return a
-   blocked, non-rehydratable status for that stream: degrade it to an index-only
-   row marked `Embedded? no`, record its exact local-only changes, and continue
-   with the other streams. If the filtered selection is a single stream and it is
-   blocked, return `handover: blocked` for the whole run.
-5. For each continuable stream, identify every material unresolved decision.
-   Consult the user using
-   [references/decision-consultation.md](references/decision-consultation.md);
-   route durable decision detail to `decisions/<slug>.md` and let the PM
-   reconcile `decisions.md`. Record low-impact reversible assumptions in
-   `state.md` with evidence and recheck triggers.
-6. Generate one UTC ISO-8601 timestamp for the whole run. For each continuable
-   stream, rewrite `state.md` as the complete work context: goal, full
-   parent/subtask task table with marked status and evidence, lifecycle, success
-   criteria, decisions, dependencies, blockers, review dispositions, evidence,
-   durable promotion, specification location, and a prominent link to
-   `state/working.md`. If eligible work Markdown requires splitting under the
-   shared batch process, keep the original path as overview.
-7. For each continuable stream, rewrite `state/working.md` to approximately 4,096
-   bytes through editorial discipline: current focus, current status, immediate
-   handback point, and fast relative paths only. It is not a plan, history, or
-   complete context. Do not mechanically size-gate it. Reconcile that stream's
-   existing lazy `proposals.md`, `changes.md`, `decisions.md`, and `design.md`
-   overview files from child metadata; never copy child details into an overview.
-8. Update the global `.engineering/overview.md` in the default source tree (the
-   resolver's `default_workspace`). Upsert exactly one entry for the current
-   source tree — its kind (Git worktree or jj workspace), label/path, current
-   revision, and a table of this tree's work streams (work ID, lifecycle,
-   headline, next action) across every stream from step 1 — and preserve every
-   other source tree's entry byte-for-byte. If the default tree carries no
-   `overview.md` yet, create it. Never write another tree's `works/`.
+   anchor. If a continuable stream has no destination-reachable carrier, mark that
+   stream `Embedded? no`, record its exact local-only changes, and continue — the
+   stream still resumes locally from the state written in steps 5–7; only its
+   cross-machine embedding is deferred. This never returns `handover: blocked` for
+   the run; the local pause already succeeded at step 7.
 9. Build the receipt's `## Work index` across the current tree's streams from
-   step 1, then emit a `## Work stream: <work-id>` section per continuable
-   stream: gather the raw contents of `state.md`, `state/working.md`, and every
+   step 1, then emit a `## Work stream: <work-id>` section per stream anchored in
+   step 8: gather the raw contents of `state.md`, `state/working.md`, and every
    continuity-relevant detail file (decisions, changes, design, `state/*.md`
    children, needed evidence) and embed them verbatim, each in its own fenced
    block whose fence is at least one backtick longer than the longest backtick
@@ -130,11 +153,11 @@ state. Handover never mints an empty work item.
    `evidence/` tree. Include any specification needed to continue as inline
    captured content plus its provenance (repository-relative path in the anchored
    tree, or a Notion stable ref with its captured revision, plus the immutable
-   merge base a Notion-backed resume needs). Determine that stream's current
-   task, next owner, and next action by reading its task table directly. Redact
-   secrets from every embedded payload; if redaction would make one stream's
-   required section incomplete, degrade that stream to an index-only row rather
-   than blocking the whole receipt. Produce the external receipt defined in
+   merge base a Notion-backed resume needs). Carry the `## Continuation` fields
+   from step 5 into each section. Redact secrets from every embedded payload; if
+   redaction would make one stream's required section incomplete, degrade that
+   stream to an index-only row rather than blocking the whole receipt. Produce the
+   external receipt defined in
    [references/output-format.md](references/output-format.md). Each stream's
    receipt section routes continuation to the relevant implementation skill and
    records the current task, exact next owner, exact next action, and a
@@ -148,14 +171,22 @@ state. Handover never mints an empty work item.
 
 ## Verification
 
+- Persistence completed before any receipt work: every continuable stream's
+  `state.md` (with its `## Continuation` fields) and `state/working.md` were
+  refreshed and the default tree's `overview.md` was upserted; the run was never
+  terminated by a missing source anchor.
 - Handover touched only the current source tree's `works/` and the default
   tree's `overview.md`; no other source tree's work streams were indexed or
   rewritten.
 - `overview.md` now carries one up-to-date entry for the current source tree with
   every stream's lifecycle, and every other tree's entry is unchanged.
+- A same-machine takeover could resume every continuable stream from the on-disk
+  state alone — `## Continuation` names the current task, next owner, next action,
+  and continuation intent — with no receipt.
 - Every current-tree stream appears exactly once in the receipt's `## Work index`
-  with its canonical lifecycle; continuable streams are embedded and
-  `complete`/`retiring` streams are index-only.
+  with its canonical lifecycle; a stream with a destination-reachable anchor is
+  embedded, and `complete`/`retiring` streams and anchor-degraded streams are
+  index-only.
 - Each embedded stream's `state.md` is complete, internally consistent, and links
   `state/working.md`; the latter contains only current-focus summary and fast
   paths.
@@ -179,6 +210,9 @@ Use [references/output-format.md](references/output-format.md). Report the
 receipt, the current source tree, the default tree's `overview.md` path, the
 embedded and index-only stream counts, per-stream updated state paths,
 classification and decision counts, external and source-anchor status, per-stream
-rehydratability, and `generated_files`. Never label a stream's handover complete
-when its source anchor is missing. Examples live in
+rehydratability, and `generated_files`. `handover: complete` reports the
+successful local pause once persistence and the `overview.md` upsert land, even
+when a stream is `embedded: false`; mark a stream's cross-machine rehydratability
+`false` when its source anchor is missing, and reserve `handover: blocked` for a
+failure that prevents persistence itself. Examples live in
 [references/examples.md](references/examples.md).

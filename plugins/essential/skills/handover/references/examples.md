@@ -61,13 +61,16 @@ worktree at the other anchor.
 ## Same-machine pause and resume
 
 To pause, `/essential:handover` on the current source tree refreshes its streams'
-`state.md` and `state/working.md` and upserts that tree's entry in the default
-tree's `.engineering/overview.md`. The session can then close. In a new session,
+`state.md` (including the `## Continuation` fields) and `state/working.md` and
+upserts that tree's entry in the default tree's `.engineering/overview.md`. That
+persistence always completes, so the session can then close. In a new session,
 `/essential:takeover` with no argument reads that `overview.md`, lists each source
 tree and its continuable streams, and — after the user picks the source tree —
-resumes the selected streams straight from the on-disk state files. No receipt is
-generated or consumed on this path; the portable receipt is only for moving work
-to a different machine or checkout.
+resumes the selected streams straight from the on-disk state files. The local
+resume neither needs nor consumes a receipt; handover may still emit a portable
+receipt best-effort, but it is required only for moving work to a different
+machine or checkout, and a stream whose changes are still local simply becomes an
+`Embedded? no` index row without blocking the pause.
 
 Each embedded stream's `Continuation intent` names the capability-level work
 type — for example specification-led implementation versus generic coding
