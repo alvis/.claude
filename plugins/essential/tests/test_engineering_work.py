@@ -17,7 +17,6 @@ RESOLVER = ESSENTIAL / "bin/resolve-engineering-workspace"
 NAME_HELPER = ESSENTIAL / "bin/derive-engineering-name"
 SESSION_START = ESSENTIAL / "bin/session-start"
 SUBAGENT_START = ESSENTIAL / "bin/subagent-start"
-STATE_VALIDATOR = ESSENTIAL / "bin/validate-engineering-state"
 
 MIGRATED_ARTIFACT_WRITERS = {
     "backend/skills/audit-data/SKILL.md",
@@ -32,16 +31,16 @@ MIGRATED_ARTIFACT_WRITERS = {
     "coding/skills/document/SKILL.md",
     "coding/skills/draft-code/SKILL.md",
     "coding/skills/fix/SKILL.md",
-    "coding/skills/handover/SKILL.md",
     "coding/skills/push-pr/SKILL.md",
     "coding/skills/review-code/SKILL.md",
-    "coding/skills/takeover/SKILL.md",
     "coding/skills/write-code/SKILL.md",
     "essential/skills/autoresearch/SKILL.md",
     "essential/skills/decide/SKILL.md",
     "essential/skills/deep-research/SKILL.md",
     "essential/skills/discover/SKILL.md",
     "essential/skills/handoff/SKILL.md",
+    "essential/skills/handover/SKILL.md",
+    "essential/skills/takeover/SKILL.md",
     "specification/skills/implement-code/SKILL.md",
     "specification/skills/mdc/SKILL.md",
     "specification/skills/plan-code/SKILL.md",
@@ -302,417 +301,6 @@ class EngineeringNameTest(unittest.TestCase):
         )
 
 
-class EngineeringWorkStateTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
-
-    def tearDown(self) -> None:
-        self.temporary.cleanup()
-
-    @staticmethod
-    def digest(rows: list[dict]) -> str:
-        definitions = [
-            {
-                "acceptance": row["acceptance"],
-                "depends_on": sorted(row.get("depends_on", [])),
-                "id": row["id"],
-                "required": row.get("required", True),
-                "targets": sorted(row.get("targets", [])),
-                "task": row["task"],
-            }
-            for row in sorted(rows, key=lambda value: value["id"])
-        ]
-        encoded = json.dumps(
-            {"hash_kind": "engineering-plan-definition-digest-v1", "tasks": definitions},
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
-
-    def write_state(
-        self,
-        rows: list[dict],
-        *,
-        name: str = "state.md",
-        lifecycle: str = "active",
-        role: str = "root",
-        parent_task: str | None = None,
-        topology: str = "linear",
-    ) -> Path:
-        path = self.root / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        metadata = [
-            "# Engineering work",
-            "",
-            "- Schema: `engineering-work-state/v1`",
-            f"- State role: `{role}`",
-            "- Work ID: `eng-421-state`",
-            f"- Lifecycle status: `{lifecycle}`",
-        ]
-        if role == "root":
-            metadata.extend(
-                [
-                    f"- Plan source: `{name}`",
-                    f"- Plan digest: `{self.digest(rows)}`",
-                    "- Hash kind: `engineering-plan-definition-digest-v1`",
-                    "- Next owner: `PM`",
-                    "- Next action: Continue the ready task.",
-                ]
-            )
-        else:
-            metadata.append(f"- Parent task: `{parent_task}`")
-        metadata.extend(
-            [
-                "",
-                "## Status",
-                "",
-                f"- Lifecycle: `{lifecycle}`",
-                f"- Topology: `{topology}`",
-                "",
-                "## Tasks",
-                "",
-                "| ID | Mark | Status | Task | Depends on | Required | Acceptance | Owner | Evidence / next action |",
-                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-            ]
-        )
-        mark = {
-            "planned": "-", "working": "⧗", "done": "✓",
-            "failed": "X", "blocked": "!", "cancelled": "⊘",
-        }
-        for row in rows:
-            targets = ", ".join(row.get("targets", [])) or "none"
-            dependencies = ", ".join(row.get("depends_on", [])) or "—"
-            metadata.append(
-                "| {id} | {mark} | {status} | {task} [targets: {targets}] | "
-                "{dependencies} | {required} | {acceptance} | {owner} | {evidence} |".format(
-                    id=row["id"],
-                    mark=mark[row["status"]],
-                    status=row["status"],
-                    task=row["task"],
-                    targets=targets,
-                    dependencies=dependencies,
-                    required="yes" if row.get("required", True) else "no",
-                    acceptance=row["acceptance"],
-                    owner=row.get("owner", "PM"),
-                    evidence=row.get("evidence", "Continue when ready."),
-                )
-            )
-        path.write_text("\n".join(metadata) + "\n", encoding="utf-8")
-        return path
-
-    def run_validator(self, *arguments: str | Path) -> tuple[subprocess.CompletedProcess[str], dict]:
-        completed = subprocess.run(
-            [str(STATE_VALIDATOR), *(str(value) for value in arguments)],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        return completed, json.loads(completed.stdout)
-
-    def test_validates_branching_parent_and_child_graphs(self) -> None:
-        child_rows = [
-            {"id": "DSC01", "status": "done", "task": "Frame discovery", "acceptance": "Frame recorded.", "evidence": "evidence: frame.md"},
-            {"id": "DSC02", "status": "planned", "task": "Probe users", "depends_on": ["DSC01"], "acceptance": "User probe recorded."},
-            {"id": "DSC03", "status": "planned", "task": "Probe systems", "depends_on": ["DSC01"], "acceptance": "System probe recorded."},
-            {"id": "DSC04", "status": "planned", "task": "Synthesize", "depends_on": ["DSC02", "DSC03"], "acceptance": "Synthesis recorded."},
-        ]
-        root_rows = [
-            {
-                "id": "DSC",
-                "status": "working",
-                "task": "Complete discovery",
-                "acceptance": "Discovery is decision-ready.",
-                "evidence": "Discovery probes are active.",
-            },
-            *child_rows,
-        ]
-        root = self.write_state(root_rows)
-        child = self.write_state(
-            child_rows,
-            name="state/discovery.md",
-            role="child",
-            parent_task="DSC",
-            topology="dag",
-        )
-        narrative_plan = self.root / "state/plan.md"
-        narrative_plan.write_text(
-            "# Implementation plan\n\nThis semantic plan is not a v1 child mirror.\n",
-            encoding="utf-8",
-        )
-
-        completed, payload = self.run_validator("validate", "--state", child)
-
-        self.assertEqual(0, completed.returncode, completed.stderr)
-        self.assertEqual("valid", payload["status"])
-        self.assertEqual("dag", payload["topology"])
-        self.assertEqual(["DSC02", "DSC03"], payload["runnable_leaf_task_ids"])
-        self.assertEqual([], payload["blocked_task_ids"])
-        self.assertEqual("DSC01 → {DSC02,DSC03} → DSC04", payload["graph_display"])
-        root_valid, root_valid_payload = self.run_validator("validate", "--state", root)
-        self.assertEqual(0, root_valid.returncode, root_valid.stderr)
-        self.assertEqual("valid", root_valid_payload["status"])
-        direct_plan, direct_plan_payload = self.run_validator(
-            "validate", "--state", narrative_plan
-        )
-        self.assertEqual(3, direct_plan.returncode)
-        self.assertEqual("migration_required", direct_plan_payload["status"])
-
-        child.write_text(child.read_text(encoding="utf-8").replace("Probe users", "Probe customers"), encoding="utf-8")
-        drifted, drift_payload = self.run_validator("validate", "--state", child)
-        self.assertEqual(2, drifted.returncode)
-        self.assertTrue(any(error["code"] == "child_task_drift" for error in drift_payload["errors"]))
-        root_result, root_payload = self.run_validator("validate", "--state", root)
-        self.assertEqual(2, root_result.returncode)
-        self.assertTrue(any(error["code"] == "child_task_drift" for error in root_payload["errors"]))
-
-    def test_digest_excludes_runtime_fields_and_includes_targets(self) -> None:
-        rows = [
-            {"id": "GOL", "status": "planned", "task": "Confirm goal", "targets": ["docs/spec.md"], "acceptance": "Goal confirmed."},
-            {"id": "OWN", "status": "planned", "task": "Select owner", "depends_on": ["GOL"], "acceptance": "Owner selected."},
-        ]
-        first = self.write_state(rows, name="first.md")
-        rows[0].update(status="working", owner="Lead", evidence="Work is active.")
-        second = self.write_state(rows, name="second.md")
-        _, first_payload = self.run_validator("validate", "--state", first)
-        _, second_payload = self.run_validator("validate", "--state", second)
-        self.assertEqual(first_payload["computed_plan_digest"], second_payload["computed_plan_digest"])
-
-        rows[0]["targets"] = ["docs/other.md"]
-        third = self.write_state(rows, name="third.md")
-        _, third_payload = self.run_validator("validate", "--state", third)
-        self.assertNotEqual(first_payload["computed_plan_digest"], third_payload["computed_plan_digest"])
-
-        rows[0]["targets"] = ["b", "a"]
-        rows[1]["depends_on"] = ["GOL"]
-        ordered = self.write_state(rows, name="ordered.md")
-        _, ordered_payload = self.run_validator("validate", "--state", ordered)
-        rows[0]["targets"] = ["a", "b"]
-        reordered = self.write_state(rows, name="reordered.md")
-        _, reordered_payload = self.run_validator("validate", "--state", reordered)
-        self.assertEqual(ordered_payload["computed_plan_digest"], reordered_payload["computed_plan_digest"])
-
-    def test_diamond_failure_blocks_only_the_join(self) -> None:
-        rows = [
-            {"id": "DSC", "status": "failed", "task": "Complete discovery", "acceptance": "Discovery complete.", "evidence": "attempt: probe; retry: repair branch"},
-            {"id": "DSC01", "status": "done", "task": "Frame", "acceptance": "Frame complete.", "evidence": "evidence: frame"},
-            {"id": "DSC02", "status": "failed", "task": "Probe A", "depends_on": ["DSC01"], "acceptance": "Probe A complete.", "evidence": "attempt: test; retry: fix"},
-            {"id": "DSC03", "status": "planned", "task": "Probe B", "depends_on": ["DSC01"], "acceptance": "Probe B complete."},
-            {"id": "DSC04", "status": "blocked", "task": "Join", "depends_on": ["DSC02", "DSC03"], "acceptance": "Join complete.", "evidence": "unblock: repair DSC02"},
-        ]
-        state = self.write_state(rows, topology="linear")
-        completed, payload = self.run_validator("validate", "--state", state)
-        self.assertEqual(0, completed.returncode, completed.stderr)
-        self.assertEqual(["DSC03"], payload["runnable_leaf_task_ids"])
-        self.assertEqual(["DSC04"], payload["blocked_task_ids"])
-
-        previous_rows = [dict(row) for row in rows]
-        previous_rows[2] = {**previous_rows[2], "task": "Original probe A"}
-        previous = self.write_state(previous_rows, name="previous.md", topology="linear")
-        _, changed = self.run_validator(
-            "validate", "--state", state, "--previous-state", previous
-        )
-        self.assertIn("DSC02", changed["invalidated_downstream_closure"])
-        self.assertIn("DSC04", changed["invalidated_downstream_closure"])
-        self.assertNotIn("DSC03", changed["invalidated_downstream_closure"])
-
-    def test_optional_terminal_rollup_and_cancelled_dependency(self) -> None:
-        rows = [
-            {"id": "OPT", "status": "done", "required": False, "task": "Optional exploration", "acceptance": "Optional exploration is disposed.", "evidence": "evidence: one useful result"},
-            {"id": "OPT01", "status": "done", "required": False, "task": "Useful probe", "acceptance": "Probe disposed.", "evidence": "evidence: result"},
-            {"id": "OPT02", "status": "cancelled", "required": False, "task": "Unneeded probe", "acceptance": "Probe disposed.", "evidence": "approved-plan-revision: 2"},
-        ]
-        state = self.write_state(rows)
-        completed, payload = self.run_validator("validate", "--state", state)
-        self.assertEqual(0, completed.returncode, completed.stderr)
-        self.assertEqual("valid", payload["status"])
-
-        dependency_rows = [
-            {"id": "OLD", "status": "cancelled", "required": False, "task": "Retired prerequisite", "acceptance": "Prerequisite retired.", "evidence": "approved-plan-revision: 2"},
-            {"id": "NEW", "status": "planned", "task": "Dependent work", "depends_on": ["OLD"], "acceptance": "Dependent work complete."},
-        ]
-        dependency = self.write_state(dependency_rows, name="dependency.md")
-        result, result_payload = self.run_validator("validate", "--state", dependency)
-        self.assertEqual(2, result.returncode)
-        self.assertEqual([], result_payload["runnable_leaf_task_ids"])
-        self.assertEqual(["NEW"], result_payload["blocked_task_ids"])
-        self.assertTrue(any(error["code"] == "unreconciled_blocked_task" for error in result_payload["errors"]))
-
-    def test_execution_cannot_start_before_dependencies(self) -> None:
-        for status in ("working", "done", "failed"):
-            with self.subTest(status=status):
-                rows = [
-                    {"id": "PRE", "status": "planned", "task": "Prerequisite", "acceptance": "Prerequisite complete."},
-                    {
-                        "id": "RUN",
-                        "status": status,
-                        "task": "Dependent",
-                        "depends_on": ["PRE"],
-                        "acceptance": "Dependent complete.",
-                        "evidence": (
-                            "evidence: result" if status == "done"
-                            else "attempt: test; retry: after prerequisite" if status == "failed"
-                            else "Work is active."
-                        ),
-                    },
-                ]
-                state = self.write_state(rows, name=f"{status}.md")
-                result, payload = self.run_validator("validate", "--state", state)
-                self.assertEqual(2, result.returncode)
-                self.assertTrue(any(error["code"] == "task_started_before_dependencies" for error in payload["errors"]))
-
-        blocked_rows = [
-            {"id": "RUN", "status": "working", "task": "Required active work", "acceptance": "Work complete.", "evidence": "Work is active."},
-        ]
-        blocked = self.write_state(blocked_rows, name="blocked.md", lifecycle="blocked")
-        result, payload = self.run_validator("validate", "--state", blocked)
-        self.assertEqual(2, result.returncode)
-        self.assertTrue(any(error["code"] == "contradictory_blocked_lifecycle" for error in payload["errors"]))
-
-    def test_task_table_rejects_extra_columns(self) -> None:
-        rows = [{"id": "GOL", "status": "planned", "task": "Confirm goal", "acceptance": "Goal confirmed."}]
-        state = self.write_state(rows)
-        text = state.read_text(encoding="utf-8")
-        text = text.replace(
-            "| ID | Mark | Status | Task | Depends on | Required | Acceptance | Owner | Evidence / next action |",
-            "| ID | Mark | Status | Task | Depends on | Required | Acceptance | Owner | Evidence / next action | Extra |",
-        ).replace(
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-        ).replace("| GOL | - | planned |", "| GOL | - | planned |", 1)
-        lines = text.splitlines()
-        row_index = next(index for index, line in enumerate(lines) if line.startswith("| GOL |"))
-        lines[row_index] = lines[row_index][:-1] + " Extra |"
-        state.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        result, payload = self.run_validator("validate", "--state", state)
-        self.assertEqual(2, result.returncode)
-        self.assertTrue(any(error["code"] == "invalid_tasks_header" for error in payload["errors"]))
-
-    def test_snapshot_rejects_graph_and_ledger_drift_and_round_trips(self) -> None:
-        rows = [
-            {"id": "GOL", "status": "done", "task": "Confirm goal", "acceptance": "Goal confirmed.", "evidence": "evidence: approved spec"},
-            {"id": "OWN", "status": "planned", "task": "Select owner", "depends_on": ["GOL"], "acceptance": "Owner selected."},
-        ]
-        state = self.write_state(rows)
-        packed = subprocess.run(
-            [str(STATE_VALIDATOR), "pack", "--state", str(state)],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        self.assertEqual(0, packed.returncode, packed.stderr)
-        snapshot = json.loads(packed.stdout)
-        snapshot_path = self.root / "snapshot.json"
-        snapshot_path.write_text(packed.stdout, encoding="utf-8")
-        valid, payload = self.run_validator("validate-snapshot", "--snapshot", snapshot_path)
-        self.assertEqual(0, valid.returncode, valid.stderr)
-        self.assertEqual("valid", payload["status"])
-        self.assertEqual("PM", payload["next_owner"])
-        self.assertEqual("Continue the ready task.", payload["next_action"])
-        self.assertEqual(["OWN"], payload["runnable_leaf_task_ids"])
-        self.assertEqual(2, len(payload["execution_ledger"]))
-
-        rendered = subprocess.run(
-            [str(STATE_VALIDATOR), "render", "--snapshot", str(snapshot_path)],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        self.assertEqual(0, rendered.returncode, rendered.stderr)
-        rendered_path = self.root / "rendered.md"
-        rendered_path.write_text(rendered.stdout, encoding="utf-8")
-        checked, _ = self.run_validator("validate", "--state", rendered_path)
-        self.assertEqual(0, checked.returncode, checked.stderr)
-
-        for key, mutation in (
-            ("graph", lambda value: value["parent_graph"].update({"OWN": []})),
-            ("ledger", lambda value: value["execution_ledger"].pop()),
-            ("topology", lambda value: value.update(topology="dag")),
-        ):
-            with self.subTest(key=key):
-                tampered = json.loads(packed.stdout)
-                mutation(tampered)
-                target = self.root / f"{key}.json"
-                target.write_text(json.dumps(tampered), encoding="utf-8")
-                result, result_payload = self.run_validator("validate-snapshot", "--snapshot", target)
-                self.assertEqual(2, result.returncode)
-                self.assertEqual("invalid", result_payload["status"])
-
-        pretty_path = self.root / "pretty.json"
-        pretty_path.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
-        pretty, pretty_payload = self.run_validator("validate-snapshot", "--snapshot", pretty_path)
-        self.assertEqual(2, pretty.returncode)
-        self.assertTrue(any(error["code"] == "noncanonical_snapshot_bytes" for error in pretty_payload["errors"]))
-
-        control = json.loads(packed.stdout)
-        control["next_action"] = "unsafe\ncontinuation"
-        control_path = self.root / "control.json"
-        control_path.write_text(
-            json.dumps(control, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        control_result, control_payload = self.run_validator("validate-snapshot", "--snapshot", control_path)
-        self.assertEqual(2, control_result.returncode)
-        self.assertTrue(any(error["code"] == "snapshot_control_character" for error in control_payload["errors"]))
-
-        ordered_rows = [
-            {"id": "GOL", "status": "planned", "task": "Confirm goal", "targets": ["a", "b"], "acceptance": "Goal confirmed."},
-        ]
-        ordered_state = self.write_state(ordered_rows, name="ordering.md")
-        ordered_pack = subprocess.run(
-            [str(STATE_VALIDATOR), "pack", "--state", str(ordered_state)],
-            text=True, capture_output=True, check=False,
-        )
-        reordered_snapshot = json.loads(ordered_pack.stdout)
-        reordered_snapshot["tasks"][0]["targets"] = ["b", "a"]
-        reordered_path = self.root / "reordered-snapshot.json"
-        reordered_path.write_text(
-            json.dumps(reordered_snapshot, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        reordered_result, reordered_payload = self.run_validator("validate-snapshot", "--snapshot", reordered_path)
-        self.assertEqual(2, reordered_result.returncode)
-        self.assertTrue(any(error["code"] == "snapshot_roundtrip_drift" for error in reordered_payload["errors"]))
-
-    def test_legacy_and_id_reuse_require_explicit_migration(self) -> None:
-        legacy = self.root / "legacy.md"
-        legacy.write_text("# Engineering work\n\n- Status: `complete`\n", encoding="utf-8")
-        completed, payload = self.run_validator("validate", "--state", legacy)
-        self.assertEqual(3, completed.returncode)
-        self.assertEqual("migration_required", payload["status"])
-
-        old_rows = [{"id": "OLD", "status": "cancelled", "required": False, "task": "Retired task", "acceptance": "Task retired.", "evidence": "approved-plan-revision: 2"}]
-        new_rows = [{**old_rows[0], "status": "planned"}]
-        old = self.write_state(old_rows, name="old.md")
-        new = self.write_state(new_rows, name="new.md")
-        result, result_payload = self.run_validator(
-            "validate", "--state", new, "--previous-state", old
-        )
-        self.assertEqual(2, result.returncode)
-        self.assertTrue(any(error["code"] == "recycled_cancelled_task_id" for error in result_payload["errors"]))
-
-        renamed_rows = [{**old_rows[0], "id": "NEW"}]
-        renamed = self.write_state(renamed_rows, name="renamed.md")
-        renamed_result, renamed_payload = self.run_validator(
-            "validate", "--state", renamed, "--previous-state", old
-        )
-        self.assertEqual(2, renamed_result.returncode)
-        self.assertTrue(any(error["code"] == "renamed_task_id" for error in renamed_payload["errors"]))
-        self.assertTrue(any(error["code"] == "removed_task_tombstone" for error in renamed_payload["errors"]))
-
-    def test_v1_requires_explicit_role_and_work_id(self) -> None:
-        rows = [{"id": "GOL", "status": "planned", "task": "Confirm goal", "acceptance": "Goal confirmed."}]
-        state = self.write_state(rows)
-        text = state.read_text(encoding="utf-8")
-        for label in ("- State role: `root`\n", "- Work ID: `eng-421-state`\n"):
-            with self.subTest(label=label):
-                state.write_text(text.replace(label, ""), encoding="utf-8")
-                result, payload = self.run_validator("validate", "--state", state)
-                self.assertEqual(2, result.returncode)
-                self.assertEqual("invalid", payload["status"])
-        state.write_text(text, encoding="utf-8")
-
 class WorkspaceResolverTest(unittest.TestCase):
     def run_resolver(
         self,
@@ -923,7 +511,6 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Status: `initialized`", working_text)
             self.assertIn("- State: [state.md](../state.md)", working_text)
             self.assertIn(f"- Work ID: `{work_id}`", state_text)
-            self.assertIn("- Schema: `engineering-work-state/v1`", state_text)
             self.assertIn("- Plan source: `state.md`", state_text)
             self.assertIn("| GOL | - | planned |", state_text)
             self.assertIn("| OWN | - | planned |", state_text)
@@ -932,19 +519,6 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Specification provenance: Not established.", state_text)
             self.assertIn("- Sync state: Not started.", state_text)
             self.assertIn("- Review state: Not started.", state_text)
-            validator = subprocess.run(
-                [str(STATE_VALIDATOR), "validate", "--state", str(state)],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            self.assertEqual(0, validator.returncode, validator.stderr)
-            validation = json.loads(validator.stdout)
-            self.assertEqual("valid", validation["status"])
-            self.assertEqual(
-                "d66c594201a4f94faf69e28ffef886bf18c5c9464604d43f3221fa9961896a68",
-                validation["plan_digest"],
-            )
 
             custom_working = "# Preserved owner state\n\nDo not replace me.\n"
             working.write_text(custom_working, encoding="utf-8")
@@ -1349,7 +923,7 @@ class ArtifactSkillContractTest(unittest.TestCase):
         self.assertIn("provenance.json", contract)
         self.assertIn("explicit local path, approved inline candidate", normalized)
         self.assertIn("Neither path claims a Notion round trip", normalized)
-        self.assertIn("checksum-bound portable receipt", normalized)
+        self.assertIn("plain-Markdown portable receipt", normalized)
         self.assertIn("isolated post-anchor tree", normalized)
 
     def test_persistent_discovery_accepts_optional_explicit_work_id(self) -> None:
@@ -1366,7 +940,6 @@ class ArtifactSkillContractTest(unittest.TestCase):
         self.assertIn("Parent task: DSC", normalized)
         self.assertIn("DSC01 → {DSC02,DSC03} → DSC04", normalized)
         self.assertIn("root as the complete task registry", normalized)
-        self.assertIn("validate-engineering-state validate", normalized)
 
 
 class EngineeringIgnoreContractTest(unittest.TestCase):

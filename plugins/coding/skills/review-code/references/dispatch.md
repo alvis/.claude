@@ -5,16 +5,14 @@ reviewer receives only file paths and these common inputs:
 
 - absolute active work root and assigned lowercase output path;
 - exact relevant spec/design/review paths from the mission capsule;
-- canonical `plan_source: state.md`, `plan_digest`,
-  `hash_kind: engineering-plan-definition-digest-v1`, and applicable full
-  `task_id` values from Essential validation;
+- canonical `plan_source: state.md` and applicable full `task_id` values read
+  directly from `state.md`;
 - discovered source/test/doc paths for the area;
 - advisory mechanical-scan slice;
 - [review.template.md](review.template.md) and [mandates.md](mandates.md);
 - instruction to modify no reviewed code, delegate no further, preserve stable
   finding IDs/statuses, and return path, counts, `context_level`, and
-  `generated_files` plus the unchanged plan source/digest/hash kind and
-  reviewed full task IDs.
+  `generated_files` plus the unchanged plan source and reviewed full task IDs.
 
 The capsule is sufficient by default. Give `state.md` to alignment reviewers,
 or when resume/cross-slice evidence requires it; give `state/working.md` only when
@@ -43,7 +41,7 @@ finding until the assigned reviewer validates it.
   materialized specs, approved work decisions/design, and relevant durable
   docs. Identify omissions, additions, unjustified drift, stale derivations,
   and missing promotion/sync work.
-- If no approved work contract exists or its current digest differs from the
+- If no approved work contract exists or its current task definitions differ from the
   review capsule, state that blocker; do not adopt root planning files.
 - Follow an explicit implementation-detail link only for procedure keyed by
   existing IDs; reject it if it restates/changes IDs, edges, requiredness,

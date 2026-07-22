@@ -5,7 +5,7 @@ pointers and return `generated_files`.
 
 ## Child chains
 
-- **COMMIT_PLAN**: per validator-reported runnable leaf task ID,
+- **COMMIT_PLAN**: per runnable leaf task ID read from `state.md`,
   `coding:write-code` →
   `coding:review-code` → `coding:commit`.
 - **PI_ITERATE**: `coding:complete-code` → `coding:complete-test` →

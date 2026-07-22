@@ -18,7 +18,6 @@ class SpecificationTaskGraphContractTest(unittest.TestCase):
         self.assertIn("^[A-Z]{3}$", text)
         self.assertIn("its parent's ID plus `01`-`99`", text)
         self.assertIn("prohibit cross-parent child edges", text.lower())
-        self.assertIn("engineering-plan-definition-digest-v1", text)
         self.assertIn("status-only reconciliation retains approval", text)
         self.assertIn("complete registry of parents and children", text)
         self.assertIn("plan_source: state.md", text)
@@ -33,14 +32,11 @@ class SpecificationTaskGraphContractTest(unittest.TestCase):
         self.assertIn("downstream executable leaf to `! blocked`", text)
         self.assertIn("records an `unblock:` action", text)
         self.assertIn("independent branches keep", text)
-        self.assertIn("reviewed_plan_digest", text)
         self.assertIn("task-status deltas", text)
 
     def test_review_binds_specification_and_plan_digests(self) -> None:
         text = compact("review-implementation/SKILL.md")
-        self.assertIn("reviewed_spec_hash", text)
-        self.assertIn("reviewed_plan_digest", text)
-        self.assertIn("engineering-plan-definition-digest-v1", text)
+        self.assertIn("reviewed_spec_revision", text)
         self.assertIn("root `state.md` is authoritative", text.lower())
         self.assertIn("never guess between directory children", text.lower())
 

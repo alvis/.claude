@@ -245,13 +245,15 @@ child. When none remain, delete `state/unresolved.md` and remove the mention
 from `state.md`. If `state.md` exceeds the final size gate, keep it as the
 overview and move coherent split detail to `state/<nn>-<topic-slug>.md`.
 
-Every new or explicitly migrated state file follows
+Every new or explicitly rewritten state file follows
 [the engineering work-state contract](engineering-work-state.md). Root
-`state.md` carries the complete parent/subtask registry, immutable plan digest,
-and canonical plan-source pointer. Resumable children carry marked task subsets
-without becoming a second plan authority. Run Essential's validator before a
-task dispatch, review, portable handover, completion, or retirement. Preserve
-unversioned state on a `migration_required` result; never migrate it by guess.
+`state.md` carries the complete parent/subtask registry and the canonical
+plan-source pointer. Resumable children carry marked task subsets without
+becoming a second plan authority. State is free-form, LLM-readable Markdown and
+is not machine-validated: before a task dispatch, review, portable handover,
+completion, or retirement, read `state.md` and its `state/` children directly to
+judge runnable tasks, current owner, and next action. Preserve any existing
+state file byte-for-byte until an explicit rewrite; never rewrite it by guess.
 
 One actor holds the work item's coordinator lease and is the sole writer of
 `state/working.md`, `state.md`, the four lazy overview files, and `review.md`. The PM
@@ -384,13 +386,13 @@ to `docs/`; a resumable finding stays in `state/discovery.md` until it becomes
 stable knowledge worth promoting.
 
 Ignored work memory is not a cross-machine transport. A handover emits a
-checksum-bound portable receipt into the owning task, PR, or Notion work item
+plain-Markdown portable receipt into the owning task, PR, or Notion work item
 or, when necessary, embeds every payload in the response. It carries a
-destination-reachable source anchor, a complete state snapshot, authoritative
-specification carriers, and fixed non-executable application semantics. A
-recipient verifies those carriers in an isolated post-anchor tree before
-reconstructing fresh local work state; it never copies `.engineering/` or
-trusts a local-only path.
+destination-reachable source anchor, the raw contents of the work's state
+files, authoritative specification carriers, and fixed non-executable
+application semantics. A recipient reads those carriers in an isolated
+post-anchor tree before reconstructing fresh local work state; it never copies
+`.engineering/` or trusts a local-only path.
 
 Retire completed local work only after acceptance, review closure, durable
 promotion, Notion push and verification pull, and final receipts are recorded.

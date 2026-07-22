@@ -1,12 +1,12 @@
 ---
 name: handoff
-description: 'Create or execute a context-complete cross-domain plan as an orchestrator. Use when another agent must continue without prior context, or when a multi-domain plan needs coordinated execution while this skill retains decision ownership. For coding-session persistence, use coding:handover.'
+description: 'Create or execute a context-complete cross-domain plan as an orchestrator. Use when another agent must continue without prior context, or when a multi-domain plan needs coordinated execution while this skill retains decision ownership. For coding-session persistence, use essential:handover.'
 ---
 
 # Handoff
 
 Create or execute a context-complete cross-domain plan. This skill owns
-portable planning and coordinated execution; `coding:handover` instead
+portable planning and coordinated execution; `essential:handover` instead
 persists the current coding session in continuation files.
 
 ## Boundaries
@@ -15,7 +15,7 @@ persists the current coding session in continuation files.
   session's context, and orchestrating a multi-domain plan's execution while
   retaining decision ownership.
 - Do not use for: persisting a coding session for later continuation
-  (`coding:handover`), or doing the planned work inline — execution is always
+  (`essential:handover`), or doing the planned work inline — execution is always
   delegated.
 
 ## Inputs

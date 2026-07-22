@@ -41,8 +41,8 @@ Settle this before editing:
 | Documenting code | `/coding:document` |
 | Writing PR title/body | `/coding:write-pr` |
 | Publishing or updating PRs and driving CI green | `/coding:push-pr` |
-| Handing over work | `/coding:handover` |
-| Resuming work | `/coding:takeover` |
+| Handing over work | `/essential:handover` |
+| Resuming work | `/essential:takeover` |
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |
 

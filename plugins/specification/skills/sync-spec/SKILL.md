@@ -11,9 +11,10 @@ argument-hint: "<notion-url-or-id> [--work-id=<id>] [--mirror=<path>] [--transpo
 Safely coordinate three copies of a Notion-backed specification: an immutable
 recorded base, the work-local authored copy, and a fresh remote staging pull.
 `specification:sync-notion` owns transport; `specification:mdc` owns authored
-MDC body changes. Exact transport integrity and semantic contract approval use
-the distinct hashes defined in
-[references/hash-model.md](references/hash-model.md).
+MDC body changes. Detect changes by comparing the specification content
+directly (byte-for-byte, or via `git diff`), disregarding only the volatile
+Notion `last_edited_time` line for semantic equality. Approvals bind to the
+approved specification content, not to any hash.
 
 ## Boundaries
 
@@ -29,8 +30,9 @@ the distinct hashes defined in
 - Never call `notion-sync` directly, treat the selected mirror as an authoring
   surface, overwrite a fixed receipt, or infer that cached mirror bytes are the
   latest remote bytes.
-- Never use a semantic digest as remote revision/CAS evidence or bind an
-  approval, plan, or review to an exact transport hash.
+- Never treat a metadata-only edit (only the volatile `last_edited_time` line
+  differs) as a contract change, and never approve, plan, or review against
+  content you have not compared directly against the recorded base.
 
 ## Inputs
 
@@ -45,11 +47,10 @@ the distinct hashes defined in
   revalidates its current bytes/executable on every invocation. Never infer a
   profile path from a logical name, mirror, workspace, or origin receipt.
 - **Completion only**: `--stage=specification|implementation` is required.
-  Specification stage requires explicit specification approval for the final
-  semantic `contract_digest`. Implementation stage requires a clean
-  implementation review whose compatibility field `reviewed_spec_hash` equals
-  that final `contract_digest` and declares
-  `hash_kind: semantic_contract_digest_v1`.
+  Specification stage requires explicit specification approval of the final
+  specification content. Implementation stage requires a clean implementation
+  review that was performed against that exact final content, confirmed by
+  direct comparison.
 - **Prerequisites**: injected Essential engineering-work contract, resolved
   active work, the strict destination/team profile required by `sync-notion`,
   and `NOTION_TOKEN`.
@@ -66,38 +67,35 @@ the distinct hashes defined in
    - `transport_profile_file` from explicit input or the exact validated
      active-state mapping described above;
    - `receipt_root = <work-dir>/artifacts/spec-sync`;
-   - immutable receipts at
-     `materializations/<transport-manifest-key>.json` and base snapshots at
-     `bases/<transport-manifest-key>/`, where the key is the 64 lowercase hex
-     suffix without the `sha256:` prefix.
+   - immutable receipts at `materializations/<base-id>.json` and base snapshots
+     at `bases/<base-id>/`, where `<base-id>` is a stable unique identifier for
+     the recorded base (for example the observed remote revision sanitized for
+     filesystem use).
    State may point to the current receipt, but the PM owns that update. Require
    the real work/mirror targets to be ignored and untracked in their owning VCS
    workspaces; otherwise return `requires_ignore` with the exact ignore file.
    Require the mapped logical name to equal the selected profile's `name` and
    pass the absolute file explicitly to every transport call. A missing,
-   ambiguous, moved, or digest-shifted mapping returns `transport_unverified`;
+   ambiguous, moved, or changed mapping returns `transport_unverified`;
    never fall back to `PATH` or a conventional file location.
 2. Normalize the Notion id only for identity comparison and require 32 hex
    characters after dash removal. Resolve the selected recursive page set by
    returned `ref:`/relationship data, never filename shape. Load
-   [references/hash-model.md](references/hash-model.md) and
    [references/concurrent-edit-matrix.md](references/concurrent-edit-matrix.md).
-   Reject malformed/ambiguous carriers, duplicate identities/paths/logical
-   unit ids, and receipts that do not declare the dual-hash model. Use the
-   three-copy rules for every later decision.
+   Reject malformed/ambiguous carriers and duplicate identities/paths/logical
+   unit ids. Use the three-copy rules for every later decision.
 3. Before either mode decides anything, invoke `Skill(sync-notion)` in
    `notion-to-local` mode with the exact mirror root and
    `--transport-profile=<transport_profile_file>` into a unique remote staging
    directory. Verify full
-   requested coverage, stable identity, revision evidence, and deterministic
-   exact-byte `transport_manifest_hash` plus semantic `contract_digest`. Store
-   per-file hashes and exact pulled bytes as immutable evidence. Do not refresh
-   the selected mirror or work copy yet.
+   requested coverage, stable identity, and revision evidence. Store the exact
+   pulled bytes and observed revision as immutable evidence for later direct
+   comparison. Do not refresh the selected mirror or work copy yet.
 4. In `materialize` mode, compare the current authored tree L and fresh remote
    staging R with immutable base B. Report operational `status` separately from
    `classification` and `next_action`. Before declaring `metadata_only`, compare
-   every helper unit and require identical carrier kind, stable identity,
-   logical id, path, and semantic-projection hash; only `observed_revision` and
+   every unit directly and require identical carrier kind, stable identity,
+   logical id, path, and semantic content; only `observed_revision` and
    the uniquely allowed `last_edited_time` line may differ. A stable-identity,
    logical-id, or carrier-kind shift is invalid evidence and returns
    `status: refused`, `classification: invalid_evidence`, and
@@ -117,19 +115,20 @@ the distinct hashes defined in
      verified R as initial L/B;
    - clean L plus unchanged R returns `status: success`,
      `classification: unchanged`, and `next_action: none`;
-   - semantic B/L/R equality with a remote-only exact transport change that
-     passes the structured-unit restriction above returns `status: success`,
+   - semantic B/L/R equality with a remote-only metadata change that passes the
+     structured-unit restriction above (only the `last_edited_time` line and
+     observed revision differ) returns `status: success`,
      `classification: metadata_only`, and `next_action: none`, atomically
-     refreshes the exact transport bytes and
+     refreshes the exact remote bytes and
      revision, and creates a new immutable base/receipt without invalidating
      approval, plan, code, or review;
    - clean L plus a remote structural change atomically promotes the fully
      staged/verified R tree, creates a new base/receipt, and returns
      `status: success`, `classification: structural_change`, and
      `next_action: revalidate`; it invalidates approval, plan, code, and review
-     even if `contract_digest` happens to remain equal;
+     even when the content is otherwise equal;
    - clean L plus changed R atomically refreshes L/mirror, creates a new
-     hash-addressed base/receipt, and returns `status: success`,
+     base/receipt, and returns `status: success`,
      `classification: remote_only`, and `next_action: revalidate` when plan,
      review, or implementation evidence exists;
    - dirty L plus unchanged R returns `status: success`,
@@ -143,12 +142,12 @@ the distinct hashes defined in
 5. In `complete` mode, require a valid stage and compare B/L/R before canonical
    writes. Missing B is `status: refused`, `classification: baseline_required`,
    and `next_action: establish_baseline`; unchanged and converged content need
-   no push; local-only content may proceed through its exact-hash stage gate;
-   remote-only or structural change is `status: success` with
+   no push; local-only content may proceed through its content-approval stage
+   gate; remote-only or structural change is `status: success` with
    `next_action: revalidate` and no push;
    concurrent content requires an explicit three-way merge. Workers may return
    conflict packets/proposals only. The PM/user owns choices, and `Keep Both`
-   requires explicit approval of the synthesized final contract digest. Any
+   requires explicit approval of the synthesized final content. Any
    `Skip` leaves that pair's local, mirror, and remote bytes untouched and
    forbids a push. A concurrent relationship at `stage=implementation` returns
    `status: success`, `classification: concurrent`, and
@@ -158,19 +157,20 @@ the distinct hashes defined in
    `stage=specification`, verification-pull it, establish a new immutable
    base/receipt, and materialize that base before any plan or implementation
    resumes.
-6. Freeze each selected pair's final proposal and recompute both hashes. For
-   `stage=specification`, require explicit specification approval naming the
-   exact final semantic `contract_digest`. For `stage=implementation`, require
-   the clean implementation review's `reviewed_spec_hash` to name that exact
-   final digest. Any semantic edit after the gate invalidates it; a declared
-   metadata-only transport refresh does not, but must refresh exact evidence.
+6. Freeze each selected pair's final proposal. For
+   `stage=specification`, require explicit specification approval of the exact
+   final specification content. For `stage=implementation`, require the clean
+   implementation review to have been performed against that exact final
+   content. Any semantic edit after the gate invalidates it; a declared
+   metadata-only refresh (only the `last_edited_time` line differs) does not,
+   but must refresh the exact base evidence.
    Apply approved authored changes only to a staged mirror copy through
    `Skill(mdc)`.
 7. Immediately before each outbound operation, use `Skill(sync-notion)` to
-   re-fetch/re-diff the exact remote revision and transport manifest hash,
+   re-fetch/re-diff the exact remote revision and content,
    passing the same exact `--transport-profile` file and mirror root.
-   Abort and restart on any exact change, even when the semantic digest remains
-   equal, so the base/revision evidence can be refreshed. Require the pinned
+   Abort and restart on any content or revision change, so the base/revision
+   evidence can be refreshed. Require the pinned
    transport to prove conditional-update support and record that condition.
    If a valid profile declares it unavailable, propagate `status: refused`,
    preserve the observed B/L/R classification, set
@@ -179,16 +179,16 @@ the distinct hashes defined in
    unproven profile remains `transport_unverified`. Push only a fully resolved
    pair, then perform an independent verification pull.
 8. Only after verified identity/content may canonical L/mirror state advance.
-   Create a new immutable base directory and hash-addressed receipt; never
+   Create a new immutable base directory and receipt keyed by `<base-id>`; never
    rewrite an earlier base or receipt. A partial remote write is `partial` with
    exact recovery evidence, not success. Regenerate affected versioned specs
-   under `docs/specs/<capability>/` with stable source id/revision/hash and a
-   durable task/PR/Notion receipt anchor. The receipt and report store both the
-   exact transport manifest hash and semantic contract digest. The embedded
-   output hash set in `provenance.json` excludes `provenance.json` itself; store
-   its post-write exact hash only in work/external evidence and the report.
+   under `docs/specs/<capability>/` with stable source id/revision and a
+   durable task/PR/Notion receipt anchor. The receipt and report store the
+   observed revision and a reference to the recorded content. The embedded
+   output set in `provenance.json` excludes `provenance.json` itself; store its
+   post-write reference only in work/external evidence and the report.
 9. Enumerate locally registered Git worktrees and jj workspaces. For readable
-   open work on the same source id whose recorded hash changed, keep
+   open work on the same source id whose recorded content changed, keep
    `status: success`, set `next_action: revalidate`, and return workspace/work/
    state paths; list external anchors and unknown/remote dependents separately.
    Never edit another PM's state.
@@ -204,14 +204,14 @@ documentation or a handoff artifact. Preserve its exact user-selected location.
 ## Verification
 
 - B is immutable, L is the authored copy, and R came from a fresh staging pull.
-- Exact transport manifests contain stable identities, revisions, and full
-  accepted bytes; semantic digests used the declared deterministic projection.
+- The recorded base stores stable identities, the observed revision, and the
+  full accepted bytes; comparison was performed directly against those bytes.
 - Existing local bytes changed only in an allowed matrix row; conflict,
   `baseline_required`, remote-only, and skipped outcomes did not push.
-- The approval/review digest equals the final semantic contract digest, and the
-  immediate remote recheck matched the exact comparison revision/manifest.
+- The approval/review was performed against the final specification content, and
+  the immediate remote recheck matched the exact comparison revision and content.
 - Every successful publication has a verification pull and a new
-  hash-addressed base/receipt; no fixed `materialization.json` was overwritten.
+  base/receipt keyed by `<base-id>`; no fixed `materialization.json` was overwritten.
 - MDC content and Notion transport stayed with their owning skills.
 
 ## Completion
@@ -226,21 +226,20 @@ next_action: none|revalidate|establish_baseline|resolve_conflict|specification_r
 mode: materialize|complete
 stage: specification|implementation|null
 work_id: '<id>'
-hash_model: specification-dual-hash-v1
 transport_profile: {logical_name: '', profile_file: '<absolute destination-local path>', profile_file_sha256: '', verification: verified|transport_unverified}
 outputs:
   transport_mirror: '<absolute selected path or null>'
   work_spec_root: '<absolute active-workspace path>'
   base_snapshot: '<absolute immutable path or null>'
-  materialization_receipt: '<absolute hash-addressed path or null>'
+  materialization_receipt: '<absolute base-id-keyed path or null>'
   notion_root: {id: '<32hex>', path: '<notion-sync-owned path>'}
   comparison:
     classification: initial|unchanged|metadata_only|local_only|remote_only|structural_change|converged|concurrent|baseline_required|materialization_conflict|invalid_evidence|not_applicable
-    base: {transport_manifest_hash: '', contract_digest: ''}
-    local: {transport_manifest_hash: '', contract_digest: ''}
-    remote: {transport_manifest_hash: '', contract_digest: '', revision: ''}
-    transport_manifest_key: '<64 lowercase hex or empty>'
-  publication: {approved_contract_digest: '', reviewed_spec_hash: '', reviewed_hash_kind: semantic_contract_digest_v1|null, remote_rechecked: false, required_capability: conditional_update|conditional_create|null, conditional_write: false, pushed: false, verified: false}
+    base: {revision: ''}
+    local: {revision: ''}
+    remote: {revision: ''}
+    base_id: '<stable base identifier or empty>'
+  publication: {approved: false, reviewed_spec_matches_final: false, remote_rechecked: false, required_capability: conditional_update|conditional_create|null, conditional_write: false, pushed: false, verified: false}
   reconciliation: {required: false, reason: null, conflict_packet_paths: [], invalidated: []}
   provenance: {path: '', embedded_output_paths: [], self_hash_external: ''}
   revalidation: {local_registered: [], external_receipt_anchors: [], unknown_or_remote_dependents: []}

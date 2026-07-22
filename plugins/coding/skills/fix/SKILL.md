@@ -53,11 +53,12 @@ and `state.md` only for resume, cross-slice dependency, or alignment work.
 Never write PM-owned work pointers or overview files.
 The caller/PM uses the resolver, asks only on `work_id_required`, and gives a
 delegated run the explicit resolved work ID/root.
-Run `validate-engineering-state validate --state <state.md>` before editing.
-Require `status: valid` and `plan_source: state.md`; retain its `plan_digest`,
-`hash_kind: engineering-plan-definition-digest-v1`, and assigned full
-`task_id`. Reject migration-required/invalid state and any explicit or
-delegated plan identity that does not match. Do not guess another plan.
+Read the work item's `state.md` (and any `state/*.md` children) directly
+before editing. From the task table, determine which tasks are runnable,
+which are blocked, the current owner, and the next action; proceed on that
+reading — there is no separate validation step. Retain `plan_source: state.md`
+and the assigned full `task_id`. Reject any explicit or delegated plan
+identity that does not match. Do not guess another plan.
 
 ## Standards
 
@@ -79,7 +80,7 @@ and `testing` write standards.
    [references/context-discovery.md](references/context-discovery.md). When
    this run follows a `/coding:review-code`, pin the plan contract per
    [references/plan-context.md](references/plan-context.md) so the follow-up
-   review validates against the identical plan digest and task identity.
+   review validates against the identical plan source and task identity.
 2. **Plan.** Read the affected files and their test descriptions; determine
    expected behavior from tests and state-linked work/durable design and
    specification files; decide
@@ -115,7 +116,7 @@ and `testing` write standards.
    root cause, the systemic cause that allowed it, the assumption that proved
    wrong, and how to prevent that class of error. Return attempt outcome,
    evidence, and a requested task-status delta to the coordinator; do not edit
-   task state directly. Rerun Essential validation and require the plan digest
+   task state directly. Re-read `state.md` and require the plan definition
    to remain unchanged before requesting `done`.
 
 ## Verification
@@ -142,8 +143,6 @@ consumes:
 ```yaml
 task_id: <full executable task ID>
 plan_source: state.md
-plan_digest: <64-lowercase-hex>
-hash_kind: engineering-plan-definition-digest-v1
 attempt: pass|fail|partial
 requested_status: done|failed|blocked
 evidence: []

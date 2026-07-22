@@ -45,34 +45,34 @@ contract materialization, MDC authoring, alignment, and completion sync.
    override and accept its deterministic environment, Git-branch/jj-workspace,
    or sole-existing-work match. Ask only when it returns `work_id_required`,
    using its returned candidates. A delegated run receives the explicit work
-   id/root. Resolve the repository and PM-owned state paths. Run Essential's
-   `validate-engineering-state validate --state <state.md>` and continue only
-   when its JSON report has `status: valid` and schema
-   `engineering-work-state/v1` and `plan_source: state.md`. Retain its exact `plan_source`, `plan_digest`,
-   `hash_kind: engineering-plan-definition-digest-v1`, parent graph, subtask
-   graphs, runnable leaf IDs, blocked IDs, and invalidated downstream closure.
-   Exit/status `migration_required`, a malformed graph, or contradictory
-   lifecycle/task roll-up blocks execution; never migrate implicitly.
+   id/root. Resolve the repository and PM-owned state paths. Read root
+   `state.md` (and any `state/*.md` children) directly; from the task table,
+   determine which tasks are runnable, which are blocked, the current owner,
+   and the next action, and proceed on that reading — there is no separate
+   validation step. Confirm `plan_source: state.md` and retain its exact
+   `plan_source`, parent graph, subtask graphs, runnable leaf
+   IDs, blocked IDs, and invalidated downstream closure. A malformed graph or
+   contradictory lifecycle/task roll-up blocks execution; never guess past it.
 2. Resolve the authoritative source/location/direction from the explicit request
    first, then active work state. A raw inline prompt is requirements evidence,
    not an implementation contract. For inline-origin work, require the
    reachable `docs/specs/<capability>/index.md` carrier and durable
-   `provenance.json` receipt produced by `spec-code`; use the bundled
-   `sync-spec/scripts/spec-hashes.py --kind both` helper to verify its current
-   exact transport manifest hash and approved semantic contract digest, and return
-   `ready_for_specification` if either is absent or mismatched. For an explicit
+   `provenance.json` receipt produced by `spec-code`; compare its current content
+   directly against provenance to confirm it matches the approved specification
+   content, and return
+   `ready_for_specification` if it is absent or mismatched. For an explicit
    local source, preserve its exact path and load the corresponding durable
    derivation/receipt recorded by `spec-code`; never infer a path from its title.
-   A reachable `repo:` locator remains authoritative: recompute source and
-   carrier dual hashes with preserved logical ids, require both exact hashes to
-   match provenance and both semantic digests to equal the approved digest, and
+   A reachable `repo:` locator remains authoritative: compare source and
+   carrier content directly against provenance, require both to match the
+   approved specification content, and
    use the content-derived Git blob oid computed from exact bytes even before
    commit, rather than an unrelated commit oid or index state, as optional
    revision evidence. A missing/moved source, source drift, stale
    provenance, or carrier drift returns `ready_for_specification` even when the
    passed carrier itself is unchanged. For a non-reachable `local-approved:`
    locator, the verified durable carrier is the sole reachable authority and
-   the origin hash is historical evidence; do not require the ignored origin.
+   the origin content is historical evidence; do not require the ignored origin.
    Only for
    a selected Notion ref requiring work-local materialization, resolve the
    transport profile from explicit `--transport-profile` or an active-state
@@ -82,11 +82,11 @@ contract materialization, MDC authoring, alignment, and completion sync.
    transport root and pass the profile explicitly; the child revalidates its
    current bytes and executable. `--use-cache` may reuse the
    work spec only when its receipt matches the requested root `ref:`, all files
-   exist, and recorded hashes still match; otherwise refresh. Filename shape is
+   exist, and the recorded content still matches; otherwise refresh. Filename shape is
    never an identity gate. If materialization reports remote change against an
    existing plan/review/implementation, stop with `needs_revalidation` rather
    than continuing from stale intent.
-3. Read root `state.md` as the validator-resolved canonical plan. Follow an
+3. Read root `state.md` as the canonical plan. Follow an
    explicit implementation-detail link from it only for the assigned task IDs;
    reject detail that duplicates or contradicts root IDs, edges, requiredness,
    targets, or acceptance mappings. Then read the materialization
@@ -102,20 +102,19 @@ contract materialization, MDC authoring, alignment, and completion sync.
    decisions. Record an approved contract answer only through the selected
    source owner's authoring path; invoke `Skill(mdc)` only for a Notion-backed
    source whose selected transport owns that MDC. Refresh the source provenance
-   and dual hashes in the work receipt, then re-read the authoritative source
+   and content reference in the work receipt, then re-read the authoritative source
    before coding. Any semantic specification edit invalidates its approval,
-   the plan approval, and implementation review until recomputed against the
-   new semantic digest; metadata-only transport changes refresh exact evidence
-   without invalidating those semantic gates.
-6. Require exact semantic-digest approval of the authoritative specification
-   and approval naming the validator's exact `plan_digest` and
-   `engineering-plan-definition-digest-v1` hash kind. Marks, runtime status,
+   the plan approval, and implementation review until re-confirmed against the
+   new content; metadata-only changes (only the `last_edited_time` line) refresh
+   the revision evidence without invalidating those semantic gates.
+6. Require approval of the exact authoritative specification content
+   and approval of the exact task definitions. Marks, runtime status,
    owner, evidence, timestamp, formatting, and derived-diagram changes do not
-   alter this digest. A task definition, target, acceptance mapping,
+   alter the plan. A task definition, target, acceptance mapping,
    requiredness, ID, or dependency change does. `--skip-approval` may skip only the additional run
    confirmation for mode, scope, evidence map, and soundness decisions; it
-   never bypasses content-hash or publication gates. Record both consumed
-   hashes. A mismatch returns `needs_revalidation`; `--dry-run` stops with the
+   never bypasses content-approval or publication gates. Record both consumed
+   approvals. A mismatch returns `needs_revalidation`; `--dry-run` stops with the
    plan/evidence report and no writes.
 7. Capture immutable `base_rev` before dispatch. Prepare PM reconciliation
    entries keyed by full `task_id`; only the coordinator may apply task-status
@@ -127,16 +126,16 @@ contract materialization, MDC authoring, alignment, and completion sync.
    declared sibling predecessors must be done. Independent ready leaves may
    run concurrently only when their write scopes do not conflict. Every
    dispatch receives repo path, work id, exact spec pointers, full `task_id`,
-   canonical `plan_source`, `plan_digest`, plan hash kind, acceptance map,
+   canonical `plan_source`, acceptance map,
    output-manifest contract, deviation policy, and `--defer-publication` for
    every Coding writer. Task-local commits may be created, but no child may
    push, open/update a PR, restack, or finalize shared history. On
    `pending_decision`, stop, ask, record the answer through the selected source
    owner (`Skill(mdc)` only for the selected Notion-backed path), and resume the
-   same run. Each child returns the same task/digest identity, attempt outcome
+   same run. Each child returns the same task identity, attempt outcome
    (`pass|fail|partial`), evidence, generated files, and a requested status
-   delta; reconcile results by ID rather than arrival order, then rerun the
-   validator before dispatching newly ready work. A failed leaf retains failure
+   delta; reconcile results by ID rather than arrival order, then re-read
+   `state.md` to find newly runnable tasks before dispatching them. A failed leaf retains failure
    evidence and retry/disposition. The coordinator transitions every affected
    downstream executable leaf to `! blocked` and records an `unblock:` action
    naming the failed task's retry or disposition; independent branches keep
@@ -147,19 +146,17 @@ contract materialization, MDC authoring, alignment, and completion sync.
    the exact touched project scope and collect its `generated_files`. It must
    finish before Step 9 review; do not run it after the scoped-save manifest is
    sealed.
-9. Re-run the Step 2 source/carrier authority and dual-hash check after coding;
+9. Re-run the Step 2 source/carrier authority and direct content comparison after coding;
    source drift returns `ready_for_specification` and invalidates the plan/code
    alignment before review. Invoke `Skill(review-implementation)` with the work
-   id, exact current semantic contract digest, canonical `plan_source`,
-   `plan_digest`, and plan hash kind and, for a Notion source, the
+   id, a reference to the exact current specification content, canonical `plan_source`,
+   and, for a Notion source, the
    same exact transport root/profile file. Retry P0/P1 alignment fixes at most three passes;
    general and security review run every pass. Then run the usage trace in
    [references/thought-experiment.md](references/thought-experiment.md). A
-   review is usable only when `reviewed_spec_hash` still equals the current
-   semantic `contract_digest` and its `hash_kind` is
-   `semantic_contract_digest_v1`; its `reviewed_plan_digest` must also equal
-   the current `plan_digest` with
-   `plan_hash_kind: engineering-plan-definition-digest-v1`.
+   review is usable only when it was performed against the current specification
+   content, confirmed by direct comparison, and against the current task
+   definitions; a definition change requires re-review.
 10. Use the selected source's owning completion path. For every Notion-backed
     source, whether or not local specification content changed, invoke
     `Skill(sync-spec)` in `complete --stage=implementation` mode with the same
@@ -169,7 +166,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
     derivation receipt, and dependent revalidation results before
     `completed`. A `status: success`, `classification: metadata_only` result
     refreshes the exact base/receipt but
-    retains semantic approvals only when the recomputed digest is identical.
+    retains semantic approvals only when the content is otherwise identical.
     If completion returns `status: success`, either
     `classification: remote_only` or `classification: structural_change`, and
     `next_action: revalidate`, do not
@@ -184,33 +181,33 @@ contract materialization, MDC authoring, alignment, and completion sync.
     implementation stage. Route the B/L/R packet and immutable M proposal to
     the PM/user source owner. After explicit resolution, the owner may apply M
     only through the specification authoring path (`Skill(mdc)` for Notion),
-    then must run the bundled dual-hash helper and obtain specification
-    approval naming M's exact semantic `contract_digest`. Invoke
+    then must obtain specification
+    approval of M's exact content. Invoke
     `Skill(sync-spec)` with that profile in
     `complete --stage=specification`; require guarded
-    publication, independent verification pull, and a new immutable dual-hash
+    publication, independent verification pull, and a new immutable
     base/receipt. Then invoke `Skill(sync-spec)` with that profile in
     `materialize` mode and
-    require the new exact base/digest in L before continuing. Preserve the old
-    root state and run `validate-engineering-state validate` with
-    `--state <new-state> --previous-state <old-state>` after replanning.
+    require the new exact base content in L before continuing. Preserve the old
+    root state, then read the new root state directly against the preserved
+    old state to determine what changed after replanning.
     Invalidate the old plan
-    approval, the helper-reported affected task results/downstream closure,
-    implementation alignment, review, usage trace, and
-    `reviewed_spec_hash`; restart from Step 3, replan/reapprove, reimplement or
+    approval, the affected task results/downstream closure,
+    implementation alignment, review, usage trace, and the review's content
+    binding; restart from Step 3, replan/reapprove, reimplement or
     remediate, rereview, rerun usage tracing, and rerun implementation
     completion. No implementation-stage push of unreviewed M is allowed. Any
-    final semantic digest that differs from the reviewed digest likewise blocks
+    final content that differs from the reviewed content likewise blocks
     publication and requires contract and plan reapproval followed by review
     and usage tracing. For a
     local/inline-origin source, repeat the Step 2 authority check immediately
     before accepting completion; require the current durable
-    carrier and provenance receipt to map the exact reviewed contract digest back
+    carrier and provenance receipt to map the exact reviewed content back
     to its explicit local path or approved inline candidate. Refresh the
     content-preserving derivation when necessary and do not claim a Notion
     round trip.
 11. Only after review/usage, durable derivation, and applicable completion sync
-    are stable at one exact specification hash may history finalization or
+    are stable at one exact specification content may history finalization or
     publication begin. Inspect relevant repository state against `base_rev` and
     record `history_state` with relevant dirty paths, clean saved unpushed
     changes, and any already-published boundary. Relevant dirty paths take
@@ -258,10 +255,10 @@ contract materialization, MDC authoring, alignment, and completion sync.
 
 ## Verification
 
-- Materialization identity/hashes held before coding and every acceptance item
+- Materialization identity/content held before coding and every acceptance item
   has implementation/test evidence or a named gap.
 - `base_rev` predates all children; history/publication stayed with Coding.
-- No remote publication occurred before exact-hash review, usage tracing, and
+- No remote publication occurred before content-bound review, usage tracing, and
   the applicable completion/revalidation loop finished.
 - A remote-only completion refreshed L atomically from verified R before any
   restart. Concurrent implementation completion returned `status: success`,
@@ -279,8 +276,8 @@ contract materialization, MDC authoring, alignment, and completion sync.
   route before final commit QA.
 - Every material departure has evidence, disposition, and remaining-plan
   revalidation in a work-local change child. A definition-changing departure
-  recomputed `plan_digest`, invalidated the affected downstream closure, and
-  obtained renewed plan approval; a status-only update retained the digest.
+  invalidated the affected downstream closure and
+  obtained renewed plan approval; a status-only update retained approval.
 - Alignment, correctness/general, and security evidence exist. Contract changes
   completed the selected source owner's verification and derivation path;
   Notion-backed sources completed a verified round trip, while local/inline
@@ -293,8 +290,8 @@ Report deterministic operational status plus sync `classification` and
 `next_action` (including `specification_reconciliation` when applicable),
 ticket/stage/mode, work and spec receipt paths,
 validated transport profile path/exact-byte SHA when applicable,
-`transport_manifest_hash`, `contract_digest`, and hash model,
-repo/base rev, `plan_source: state.md`, plan digest/hash kind, parent/per-parent
+the reviewed specification content reference and observed revision,
+repo/base rev, `plan_source: state.md`, parent/per-parent
 graphs, runnable/blocked/invalidated task IDs, acceptance coverage, decisions,
 dispatched task IDs/children/commits, attempt results and task-status deltas, departures,
 review/usage verdicts, completion-sync/derivation/revalidation result, PM

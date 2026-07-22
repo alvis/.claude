@@ -29,11 +29,10 @@ superseded scaffolding rather than leaving parallel paths or addenda.
 - Required `<instruction>` with scope, behavior, and acceptance criteria.
 - Optional `--resume`; require a resolved work ID/root whose `state.md` defines
   unfinished scope. A missing local root must be rehydrated through
-  `coding:takeover`, never recovered from root continuation files.
-- A delegated lifecycle call must include one full executable `task_id`, the
-  root state's `plan_source: state.md`, exact `plan_digest`, and
-  `hash_kind: engineering-plan-definition-digest-v1`. Treat them as assertions
-  against Essential validation, never as replacement plan data.
+  `essential:takeover`, never recovered from root continuation files.
+- A delegated lifecycle call must include one full executable `task_id` and
+  the root state's `plan_source: state.md`. Treat them as assertions against a
+  direct reading of `state.md`, never as replacement plan data.
 - Internal `--defer-publication` is accepted only from a lifecycle parent that
   passes the exact work ID/root and an explicit history-ownership boundary. It
   keeps this run responsible for its coding review and validation, while the
@@ -91,41 +90,41 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    dependencies, blockers, reviews, evidence, promotion, and sync state; link
    `state/working.md`. Use stable three-letter parent IDs and `AAA01`-style child IDs,
    explicit dependencies, and Essential's canonical marked task table. A
-   parent with children is a derived roll-up. Run
-   `validate-engineering-state validate --state <state.md>` and continue only
-   on `status: valid` with `plan_source: state.md`; retain the canonical
-   root-state digest/hash kind and
-   graph report. A delegated identity must match exactly. Refresh PM-owned `state/working.md` with current focus and fast paths
+   parent with children is a derived roll-up. Read `state.md` (and any
+   `state/*.md` children) directly; from the task table determine which
+   tasks are runnable, which are blocked, the current owner, and the next
+   action, and proceed on that reading — there is no separate validation
+   step. A delegated identity must match exactly. Refresh PM-owned `state/working.md` with current focus and fast paths
    only, aiming editorially at 4,096 bytes. Capture immutable `base_rev` before
    any child changes source or history.
-2. For `--resume`, read `state/working.md`, `state.md`, and linked artifacts; rerun
-   Essential validation and schedule only its runnable executable leaf IDs.
-   Map the recorded file substate to `draft-code`, `complete-code`, `fix`, or
-   `refactor`. Revalidate contradictions reported by takeover before resuming.
+2. For `--resume`, read `state/working.md`, `state.md`, and linked artifacts
+   directly, and schedule only the runnable executable leaf IDs the task
+   table shows. Map the recorded file substate to `draft-code`,
+   `complete-code`, `fix`, or `refactor`. Re-read state to resolve any
+   contradictions reported by takeover before resuming.
 3. Conditionally invoke setup, then invoke each required implementation child
    in composition order. Give it the work ID/root, full `task_id`, canonical
-   plan source/digest/hash kind, and exact relevant paths. Require the same
+   plan source (`state.md`), and exact relevant paths. Require the same
    identity, attempt outcome, evidence, requested status delta, and an explicit
    `generated_files` manifest in return.
 4. After each child, verify its identity, manifest, and evidence; reconcile the
    requested status delta by task ID into `state.md`, refresh `state/working.md`, and
-   reconcile any lazy overview whose children changed. Rerun Essential
-   validation before scheduling newly ready work. A failed leaf records attempt
+   reconcile any lazy overview whose children changed. Re-read `state.md`
+   before scheduling newly ready work. A failed leaf records attempt
    evidence and retry/disposition. The coordinator transitions every affected
    downstream executable leaf to `! blocked` with an `unblock:` action naming
    that retry/disposition; independent branches keep their current/runnable
    state. A material deviation is recorded in
    state and, when it changes task definition, dependency, requiredness,
-   target, acceptance mapping, or an approved contract, recomputes the plan
-   digest by validating the reconciled state with
-   `--previous-state <preserved-old-state>`, invalidates the helper-reported
-   downstream closure and review, and requires renewed approval. Status-only
-   changes retain the plan digest.
+   target, acceptance mapping, or an approved contract, invalidates the
+   helper-reported downstream closure and review by re-reading the reconciled
+   state against the prior version, and requires renewed approval. Status-only
+   changes need no re-approval.
 5. After draft, completion/tests, fix, and refactor, invoke
    `coding:document` when the acceptance map or changed public surface requires
    project documentation. Collect its `generated_files` before offering:
    proceed; rerun the current child with change direction; resume elsewhere;
-   or pause through `coding:handover`. Documentation is an artifact writer and
+   or pause through `essential:handover`. Documentation is an artifact writer and
    must finish before code review, lint, final validation, and scoped-manifest
    sealing.
 6. Invoke `coding:review-code` against the completed change and pinned work
@@ -133,7 +132,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    reviewers write only their assigned files; reconcile their returned roll-up
    into `review.md` here. Route every outstanding finding to its owner, apply
    corrections, and rerun the affected review areas. Require review output to
-   match both the contract digest and canonical plan digest/hash kind. Do not proceed while
+   reference the same `state.md` plan contract. Do not proceed while
    review closure is outstanding; report a concrete blocker instead of treating
    a displayed verdict as approval.
 7. Invoke
@@ -202,7 +201,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
 
 - Tests, types, lint, and the repository coverage target pass; no owned
   implementation or pending-test markers remain.
-- `state.md` passes Essential validation, contains complete current truth, and
+- `state.md` is internally consistent, contains complete current truth, and
   links current-focus-only `state/working.md`; all lazy indexes match their children.
   Lifecycle `complete` has no unfinished required executable leaf.
 - Every child returned a verified `generated_files` manifest and the scoped
@@ -219,7 +218,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
 
 ## Completion
 
-Report requirements, `task_id`, `plan_source: state.md`, plan digest/hash kind,
+Report requirements, `task_id`, `plan_source: state.md`,
 requested/applied task-status deltas, phases run/skipped, material discoveries, assumptions and
 recheck triggers, deviations, decisions, blockers, validation, stack outcome,
 work root, and the deduplicated `generated_files` list. For a deferred run,

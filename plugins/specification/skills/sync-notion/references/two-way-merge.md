@@ -12,10 +12,10 @@ root. Missing base evidence returns `status: refused`,
 `classification: baseline_required`, and `next_action: establish_baseline`;
 never manufacture a base from L or a cached mirror.
 
-When called by `sync-spec`, consume its bundled dual-hash result: exact
-`transport_manifest_hash`/revision protect transport and semantic
-`contract_digest` drives the relationships below. Never compare or approve an
-unnamed generic hash.
+When called by `sync-spec`, compare the specification content directly: exact
+bytes and revision protect transport, and semantic content equality
+(disregarding the volatile `last_edited_time` line) drives the relationships
+below. Never approve content you have not compared directly against B.
 
 Classify before conflict work:
 
@@ -45,23 +45,23 @@ Each worker:
    candidate Keep Local, Keep Remote, and coherent Keep Both content without
    applying any candidate.
 4. Stores a bounded conflict packet and candidate content under the declared
-   staging/evidence root, records SHA-256 for every candidate, and returns paths
-   and hashes rather than embedding a complete document in the task response.
+   staging/evidence root, and returns paths rather than embedding a complete
+   document in the task response.
 
 ```yaml
 pair:
   local_path: ''
   notion_ref: ''
-  base: {transport_manifest_hash: '', contract_digest: ''}
-  local: {transport_manifest_hash: '', contract_digest: ''}
-  remote: {transport_manifest_hash: '', contract_digest: '', remote_revision: ''}
+  base: {revision: ''}
+  local: {revision: ''}
+  remote: {revision: ''}
 packet_path: ''
 conflicts:
   - id: ''
     section: ''
     kind: addition|removal|modification
     evidence: {base: '', local: '', remote: ''}
-    candidates: {keep_local: {path: '', contract_digest: ''}, keep_remote: {path: '', contract_digest: ''}, keep_both: {path: '', contract_digest: ''}}
+    candidates: {keep_local: {path: ''}, keep_remote: {path: ''}, keep_both: {path: ''}}
 issues: []
 ```
 
@@ -75,20 +75,20 @@ conflict. Present bounded B/L/R evidence and these choices:
 - **Keep Local** — use the local section.
 - **Keep Remote** — use the fresh remote section.
 - **Keep Both** — use the coherent synthesis, after showing it and receiving
-  explicit approval for its candidate hash.
+  explicit approval of its candidate content.
 - **Skip** — leave the pair untouched for later resolution.
 
 Keep Both must integrate facts into the owning section without parallel
 “local”/“Notion” sections or provenance banners. Any revision to the synthesis
-changes its hash and requires approval again. Skip never inserts a TODO or
+changes its content and requires approval again. Skip never inserts a TODO or
 feeds a push candidate.
 
 ## Phase 3 — freeze and apply
 
 Assemble one complete final proposal for the pair in staging, preserve
-frontmatter/order/identity, and compute both hashes through the caller's bundled
-helper. Require the caller's stage-specific approval/review to name the final
-semantic contract digest. If any conflict is skipped, unresolved,
+frontmatter/order/identity. Require the caller's stage-specific approval/review
+to be bound to the final specification content, confirmed by direct comparison.
+If any conflict is skipped, unresolved,
 or failed, mark the pair `partial` and apply nothing to its canonical local,
 mirror, or remote sides.
 
@@ -101,7 +101,7 @@ plan/code/review before implementation can resume. Never push proposal M from
 this implementation-stage merge.
 
 For a fully resolved `.mdc` pair, the coordinator applies the staged body only
-through `Skill(mdc)` after all decisions and hash gates pass. Plain Markdown may
+through `Skill(mdc)` after all decisions and approval gates pass. Plain Markdown may
 be atomically promoted only when the caller permits it. Do not push here; the
 mode execution branch owns the immediate remote recheck, guarded push, and
 verification pull.
@@ -113,7 +113,7 @@ next_action: none|revalidate|establish_baseline|resolve_conflict|specification_r
 pair: {local_path: '', notion_ref: ''}
 conflicts: {found: 0, resolved: 0, skipped: 0}
 decisions: {keep_local: 0, keep_remote: 0, keep_both: 0}
-final_proposal: {path: '', transport_manifest_hash: '', contract_digest: '', approved: false}
+final_proposal: {path: '', revision: '', approved: false}
 canonical_writes: 0
 push_allowed: false
 ```
