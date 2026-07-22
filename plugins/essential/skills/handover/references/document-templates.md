@@ -63,36 +63,36 @@ fields.
 
 ## `overview.md`
 
-The default source tree's global cross-tree index. One `## <source-tree label>`
-section per source tree, each with an identity block and a work-stream table.
-Upsert only the current tree's section at handover and preserve the others
-byte-for-byte:
+The default source tree's global cross-tree index: one table of every work stream
+across every source tree (Git worktree or jj workspace) on the machine, so a
+single read shows all outstanding work and where it lives. Handover upserts only
+the rows whose `Location` is the current source tree and preserves every other row
+byte-for-byte. Follow this template:
 
 ```markdown
 # Engineering overview
 
 - Updated: `<timestamp>`
 
-## <source-tree label or path>
-
-- Kind: `<git-worktree|jj-workspace>`
-- Path: `<repository-relative or absolute source-tree path>`
-- Revision: `<current branch/bookmark @ short revision>`
-
-| Work ID | Lifecycle | Headline | Next action |
-|---|---|---|---|
-| `<work-id>` | `<initialized|active|blocked|complete|retiring>` | `<one line>` | `<one line or ->` |
-
-## <another source tree>
-
-<... one section per source tree; secondary trees are never edited here ...>
+| Work ID | Lifecycle | Headline | Next action | Location | Documentations |
+|---|---|---|---|---|---|
+| `<work-id>` | `<initialized\|active\|blocked\|complete\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `[<title>](docs/<slug>.md)` or `-` |
+| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `-` |
 ```
 
-Every stream in a tree's own `.engineering/works/` appears in that tree's table,
-continuable and index-only alike. The overview is a status index only; each
-stream's authoritative resumable context stays in that stream's own
-`state.md`/`state/` files. A tree with no active streams may keep an empty table
-or be omitted once retired.
+- `Location` is the source tree that currently holds the stream's
+  `.engineering/works/<work-id>/`: its repository-relative or absolute path plus
+  the tree kind and current revision. Use `-` when that source tree has been
+  removed, so the stream is orphaned and resumable only from a receipt (or no
+  longer resumable at all).
+- `Documentations` links any durable `docs/` material for the stream — an
+  architecture document, ADR index, or capability specification — or `-` when
+  none exists.
+- Every stream in a tree's own `.engineering/works/` appears as exactly one row,
+  continuable and index-only alike. The overview is a status index only; each
+  stream's authoritative resumable context stays in that stream's own
+  `state.md`/`state/` files. A retired stream may be dropped once its row adds no
+  signal.
 
 ## `state/working.md`
 
@@ -127,7 +127,7 @@ The receipt is plain Markdown a human can paste. It carries no JSON snapshot, no
 base64 bundle, no checksums, and no schema version line. It describes the
 **current source tree's** `.engineering/works/` streams (this Git worktree or jj
 workspace only — never another tree's works): a `## Work index` row for **every**
-work stream in this tree, then an embedded `## Work stream: <work-id>` section
+work stream in this tree, then a full `## Work stream: <work-id>` section
 only for each **continuable** stream (lifecycle `initialized`, `active`, or
 `blocked`). `complete` and `retiring` streams appear as index rows only; they are
 not an error. The receipt contains, in order:
@@ -138,16 +138,16 @@ not an error. The receipt contains, in order:
 - Repository: <stable remote/name identity>
 - Source tree: <kind (Git worktree or jj workspace) and label of the current tree>
 - Generated: <one UTC ISO-8601 timestamp>
-- Streams: <N> embedded / <M> index-only
+- Streams: <N> carried / <M> index-only
 - External anchor: <URL or response-only>
 
 ## Work index
 
-| Work ID | Lifecycle | Headline | Next owner | Next action | Source anchor | Embedded? |
+| Work ID | Lifecycle | Headline | Next owner | Next action | Source anchor | Location |
 |---|---|---|---|---|---|---|
-| `<work-id>` | `active` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `yes` |
-| `<work-id>` | `blocked` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `yes` |
-| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `<anchor label or none>` | `no` |
+| `<work-id>` | `active` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `<origin source-tree path>` |
+| `<work-id>` | `blocked` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `<origin source-tree path>` |
+| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `<anchor label or none>` | `-` |
 
 ## Work stream: <work-id>
 
@@ -163,26 +163,28 @@ checksum verification — exactly one of:>
 
 <The raw contents of this stream's state.md, state/working.md, and every
 continuity-relevant detail file — decisions, changes, design, state/*.md
-children, needed evidence — each in its own fenced block. On the line
-immediately before each opening fence, name the work-relative path as
-`path: <work-id>/<relative path>`. Fence each file with a backtick run at least
-one longer than the longest backtick run inside that file (minimum three); the
+children, needed artifacts — each in its own fenced block. On the line
+immediately before each opening fence, name the path relative to the stream root
+as `path: <relative path>` (never prefixed with the work ID), because takeover
+writes each file back into the resolved work root and a `<work-id>/` prefix would
+land it one level too deep. Fence each file with a backtick run at least one
+longer than the longest backtick run inside that file (minimum three); the
 closing fence uses the same length. This lets a state file that itself contains
 a fenced block travel without closing early:>
 
-path: <work-id>/state.md
+path: state.md
 
 ````markdown
 <verbatim contents, may itself contain ``` fences>
 ````
 
-path: <work-id>/state/working.md
+path: state/working.md
 
 ```markdown
 <verbatim contents>
 ```
 
-path: <work-id>/decisions/<slug>.md
+path: decisions/<slug>.md
 
 ```markdown
 <verbatim contents>
@@ -219,21 +221,26 @@ the cross-tree index lives separately in the default tree's
 stream in this source tree once, ordered by lifecycle then work ID, with its
 current lifecycle, one-line headline, next owner, next action, a short
 `Source anchor` label that lets takeover group streams sharing one revision, and
-`Embedded?` (`yes` for continuable streams carried in full below, `no` for
-`complete`/`retiring` index-only rows).
+`Location` (the origin source tree that held this stream, so a same-machine
+takeover can prefer local resume; `-` when that tree is gone and the stream must
+rehydrate from this receipt). Continuable streams (`initialized`/`active`/
+`blocked`) carry a full `## Work stream:` section below; `complete`/`retiring`
+streams are index rows only.
 
 Emit one `## Work stream: <work-id>` section per continuable stream. Each
-`### Work state` block is the verbatim content of one work file, labelled with
-its `path: <work-id>/…` line so takeover can write it straight back. Include
-every file needed to continue that stream without the origin `.engineering/`
-tree; do not summarize, elide, or replace a file's content with a pathname. Do
-not embed the whole `evidence/` tree, but when a stream needs specific evidence
-to continue, carry those exact bytes — inline in a labelled fenced block or by a
-durable external attachment locator — because a bare `evidence/…` path is not
-reachable from the destination. Redact secrets, credentials, private keys, and
-environment values from every embedded block; if redaction would leave one
-stream's required section incomplete, degrade that stream to an index-only row
-and note it, rather than blocking the whole receipt.
+`### Work state` block is the verbatim content of one work file, labelled with its
+stream-root-relative `path:` line (no `<work-id>/` prefix) so takeover can write
+it straight back into the resolved work root. Include every file needed to
+continue that stream without the origin `.engineering/` tree; do not summarize,
+elide, or replace a file's content with a pathname. Do not carry the whole
+`artifacts/` tree, but when a stream needs specific artifacts (child manifests,
+spec-sync receipts, validation logs) to continue, carry those exact bytes —
+inline in a labelled fenced block or by a durable external attachment locator —
+because a bare `artifacts/…` path is not reachable from the destination. Redact
+secrets, credentials, private keys, and environment values from every carried
+block; if redaction would leave one stream's required section incomplete, degrade
+that stream to an index-only row and note it, rather than blocking the whole
+receipt.
 
 Each stream's source anchor must carry that stream's relevant repository changes
 as one of the three plain-git shapes above. A dirty workspace path, a local-only

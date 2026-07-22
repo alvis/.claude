@@ -60,13 +60,15 @@ preserved.
 ## `two-way-merge`
 
 1. Accept only a fully resolved staged proposal from
-   `two-way-merge.md`, including B/L/R evidence, final hash, and stage-specific
-   approval/review for that exact hash.
+   `two-way-merge.md`, including B/L/R evidence, the approved synthesis content
+   bound to its `final_proposal` revision, and stage-specific approval/review for
+   that exact content, confirmed by direct comparison — not a removed digest.
 2. If any conflict is skipped, unresolved, failed, or changed after approval,
    return `partial` and do not edit canonical local/mirror bytes or push. Never
    insert a TODO as a merge substitute.
 3. Apply an approved `.mdc` proposal only through `Skill(mdc)` in a staged
-   transport copy. Re-hash it and require the approved hash still matches.
+   transport copy. Re-verify it against the approved synthesis by direct content
+   comparison and require an exact match before applying.
 4. Re-fetch/re-diff the remote revision immediately before push. Abort/restart
    on change and require proven conditional-update support. Merge never creates
    a page, so conditional-create evidence is not a substitute here. If

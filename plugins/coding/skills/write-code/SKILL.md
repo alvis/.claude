@@ -117,9 +117,10 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    state. A material deviation is recorded in
    state and, when it changes task definition, dependency, requiredness,
    target, acceptance mapping, or an approved contract, invalidates the
-   helper-reported downstream closure and review by re-reading the reconciled
-   state against the prior version, and requires renewed approval. Status-only
-   changes need no re-approval.
+   downstream closure and review derived from the reconciled task DAG — computed
+   by re-reading the reconciled state against the prior version's edges, not from
+   any validator or helper — and requires renewed approval. Status-only changes
+   need no re-approval.
 5. After draft, completion/tests, fix, and refactor, invoke
    `coding:document` when the acceptance map or changed public surface requires
    project documentation. Collect its `generated_files` before offering:

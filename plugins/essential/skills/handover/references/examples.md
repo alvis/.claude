@@ -3,15 +3,15 @@
 ```bash
 /essential:handover
 # Indexes every .engineering/works/<work-id>/ stream in the CURRENT source tree,
-# refreshes and embeds each continuable stream (initialized/active/blocked),
+# refreshes and carries in full each continuable stream (initialized/active/blocked),
 # lists complete/retiring streams as index-only rows, updates the default source
 # tree's global .engineering/overview.md, and emits one portable Markdown receipt.
 ```
 
 ```bash
 /essential:handover auth-refresh
-# Optional filter: index all streams but embed only the matching continuable
-# stream(s). Refreshes .engineering/works/auth-refresh/state.md and
+# Optional filter: index all streams but carry in full only the matching
+# continuable stream(s). Refreshes .engineering/works/auth-refresh/state.md and
 # state/working.md and reconciles its lazy indexes.
 ```
 
@@ -37,22 +37,24 @@
 /essential:handover checkout-refunds
 # If the selected stream's relevant changes exist only in the working copy, that
 # stream degrades to an index-only row until an approved remote revision or
-# externally attached patch/bundle carries them; a single blocked selection
-# returns handover: blocked.
+# externally attached patch/bundle carries them. Persistence and the overview
+# upsert still complete, so the pause succeeds and the stream resumes locally;
+# only its cross-machine section is deferred — never handover: blocked.
 ```
 
 A `complete` or `retiring` stream is **not** an error: it appears as an
-index-only `## Work index` row with `Embedded? no` and is never embedded.
-Invalid work IDs, a missing Essential contract path, a non-portable source
-anchor on the sole selected stream, or a contradictory receipt are explicit
-errors. A generic coding stream may omit a specification. There is no
-prefix-based or root-file compatibility fallback.
+index-only `## Work index` row and is never carried in full. Invalid work IDs, a
+missing Essential contract path, or a contradictory receipt are explicit errors;
+a non-portable source anchor is **not** — it degrades that stream to an
+index-only row while persistence still completes. A generic coding stream may
+omit a specification. There is no prefix-based or root-file compatibility
+fallback.
 
 ## Two-stream receipt
 
 A source tree with `web-auth` (`active`, same branch as the current checkout) and
 `legacy-import` (`complete`) produces one receipt whose `## Work index` lists
-both rows, but only `## Work stream: web-auth` is embedded in full. Takeover
+both rows, but only `## Work stream: web-auth` is carried in full. Takeover
 offers `web-auth` for selection, excludes `legacy-import` by name, rehydrates
 `web-auth` into the resolved workspace, and hands off once. When two continuable
 streams sit on **different** source anchors, takeover rehydrates the group
@@ -72,14 +74,14 @@ owning tree if one is chosen. The local
 resume neither needs nor consumes a receipt; handover may still emit a portable
 receipt best-effort, but it is required only for moving work to a different
 machine or checkout, and a stream whose changes are still local simply becomes an
-`Embedded? no` index row without blocking the pause.
+index-only row without blocking the pause.
 
-Each embedded stream's `Continuation intent` names the capability-level work
+Each carried stream's `Continuation intent` names the capability-level work
 type — for example specification-led implementation versus generic coding
 implementation — never a fixed skill name; takeover maps it to the relevant
 implementation skill and rejects a missing or contradictory intent.
 
-For a response-only handover, each embedded stream's receipt section embeds the
+For a response-only handover, each carried stream's receipt section carries the
 raw contents of every `### Work state` file, the complete patch when that is the
 source anchor, and any inline specification. A `git bundle` is never inlined:
 it is an external attachment referenced by locator. For an externally published

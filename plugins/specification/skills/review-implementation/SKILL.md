@@ -163,8 +163,10 @@ work_id: '<id>'
 specifier: '<target>'
 spec_root: '<absolute path>'
 reviewed_spec_revision: '<observed revision or Git blob oid>'
+reviewed_content_ref: '<durable reachable locator to the exact reviewed spec content; required when reviewed_spec_revision is empty or only a carrier blob (inline/local-approved), so implement-code confirms a match by direct comparison instead of a removed hash>'
 plan_source: state.md
 reviewed_task_ids: []
+reviewed_task_defs: {}  # full task ID -> immutable definition reviewed (summary [targets] | required=<yes|no> | acceptance=<criterion>); unchanged IDs alone do not prove definitions held
 transport_profile: {profile_file: '<absolute destination-local path or null>', profile_file_sha256: '<sha256 or null>'}
 areas: {alignment: pass, correctness: pass, security: pass, quality: not_run, testing: not_run, docs: not_run, style: not_run}
 dispositions: {open: 0, fixed: 0, acknowledged: 0, deferred: 0, skipped: 0}

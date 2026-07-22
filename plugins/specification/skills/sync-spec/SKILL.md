@@ -68,9 +68,12 @@ approved specification content, not to any hash.
      active-state mapping described above;
    - `receipt_root = <work-dir>/artifacts/spec-sync`;
    - immutable receipts at `materializations/<base-id>.json` and base snapshots
-     at `bases/<base-id>/`, where `<base-id>` is a stable unique identifier for
-     the recorded base (for example the observed remote revision sanitized for
-     filesystem use).
+     at `bases/<base-id>/`, where `<base-id>` is a stable identifier derived from
+     the **full** accepted byte set of the base — all per-unit identities and
+     their revisions together (sanitized for filesystem use) — never the root
+     page's observed revision alone, which collides when a child page or layout
+     changes while the root revision is unchanged and would let a later
+     materialization overwrite or compare against a stale base.
    State may point to the current receipt, but the PM owns that update. Require
    the real work/mirror targets to be ignored and untracked in their owning VCS
    workspaces; otherwise return `requires_ignore` with the exact ignore file.

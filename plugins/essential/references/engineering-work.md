@@ -225,11 +225,13 @@ cross-tree status index. Secondary source trees do not carry it. Because
 never repeated in the default tree. The default tree holds `works/<work-id>/`
 only when it hosts its own work streams.
 
-`overview.md` records, per source tree: its kind (Git worktree or jj workspace),
-label or path, current revision, and a table of that tree's work streams with
-work ID, lifecycle status, one-line headline, and next action. It is an index,
-not a substitute for each stream's `state.md`; the authoritative resumable
-context for a stream stays in that stream's own source tree. The PM/coordinator
+`overview.md` is a single table of every work stream across all source trees:
+work ID, lifecycle status, one-line headline, next action, `Location` (the source
+tree that holds the stream — its path, kind, and revision — or `-` when that tree
+has been removed and the stream is orphaned), and `Documentations` (links to any
+related `docs/` material, or `-`). It is an index, not a substitute for each
+stream's `state.md`; the authoritative resumable context for a stream stays in
+that stream's own source tree. The PM/coordinator
 updates the default tree's `overview.md` whenever a stream's status changes — in
 particular at handover — so a new session can survey every tree from one place
 and resume the right stream in the right source tree. A stream is worked in

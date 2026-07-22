@@ -101,7 +101,12 @@ directory contents.
 4. Re-read `state.md` before aggregation and reject plan-definition
    drift. Validate every expected selected file, then aggregate every existing
    canonical area so a partial rerun cannot hide unselected findings; reject
-   malformed disposition metadata. Derive outstanding findings as `open`,
+   malformed disposition metadata. For every reused (unselected) area file,
+   compare its `reviewed_task_defs` binding against the current definitions of
+   the same `reviewed_task_ids` in `state.md`; when a task kept its ID but its
+   immutable definition (summary, targets, requiredness, acceptance) changed,
+   treat that area as stale — do not aggregate it as clean, and require its
+   re-review before closure. Derive outstanding findings as `open`,
    `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as
    verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is
    `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is
