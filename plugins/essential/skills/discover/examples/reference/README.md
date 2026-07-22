@@ -19,12 +19,12 @@ runtime.
   single-recommendation cards, per-card notes, live generated reply.
   (Artifact `367d0714`.)
 
-Suite counterparts exist under `examples/src/readiness-verdict-board/` and
-`examples/src/decision-browser/` (compiled to `examples/html/`): the same two
-boards re-authored through `templates/src/page/` with the shared runtime and
-board-theme overlays, registered as convention examples in
-`scripts/test_html_templates.py`. Use the suite versions as the compositional
-starting point and these captures as the visual/interaction target.
+The devices these boards demonstrate are generalized in the starter template
+itself: `templates/src/page/sections/02-decision.html` carries the
+response-capture and decision-first convention slots (option sets with
+reasons, accept/override pairs, per-card capture, semantic-ramp edges,
+sequence strip, board sign-off) so ANY action can compose them — these two
+boards are illustrations, not the only shapes.
 
 What every generated board must copy from these is the **floor behavior**
 (`references/features.md`): per-card response capture reflected in counters
