@@ -306,6 +306,19 @@ first child in its corresponding folder. Once created, retain it until work
 closes. The PM/coordinator alone reconciles these overviews; subagents may
 create or update assigned children and return them in their output manifest.
 
+`proposals/` and `changes/` both record deviations from the canonical Notion
+specification; they differ only by implementation state. A `proposals/` child is
+a deviation proposed against the canonical Notion spec that is **not yet
+implemented** — the intent to differ, captured before the code reflects it. A
+`changes/` child is a deviation from the canonical Notion spec that **is
+implemented** — the divergence now realized in the source tree. As work
+progresses a deviation shifts from `proposals/` to `changes/`: when the proposed
+deviation lands in the implementation, the coordinator retires the `proposals/`
+child (`accepted`) and records the implemented deviation as a `changes/` child,
+whose provenance links back to the originating proposal. A deviation that is
+never implemented ends in `proposals/` (`rejected` or `withdrawn`) and never
+reaches `changes/`; only an implemented deviation is saved under `changes/`.
+
 Each overview contains only:
 
 1. Purpose and one headline summary.
