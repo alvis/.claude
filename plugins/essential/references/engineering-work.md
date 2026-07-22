@@ -306,18 +306,28 @@ first child in its corresponding folder. Once created, retain it until work
 closes. The PM/coordinator alone reconciles these overviews; subagents may
 create or update assigned children and return them in their output manifest.
 
-`proposals/` and `changes/` both record deviations from the canonical Notion
-specification; they differ only by implementation state. A `proposals/` child is
-a deviation proposed against the canonical Notion spec that is **not yet
-implemented** — the intent to differ, captured before the code reflects it. A
-`changes/` child is a deviation from the canonical Notion spec that **is
-implemented** — the divergence now realized in the source tree. As work
-progresses a deviation shifts from `proposals/` to `changes/`: when the proposed
-deviation lands in the implementation, the coordinator retires the `proposals/`
-child (`accepted`) and records the implemented deviation as a `changes/` child,
-whose provenance links back to the originating proposal. A deviation that is
-never implemented ends in `proposals/` (`rejected` or `withdrawn`) and never
-reaches `changes/`; only an implemented deviation is saved under `changes/`.
+`proposals/` and `changes/` both document a work stream's tasks and
+implementation against the active canonical specification (for a Notion-backed
+contract, the canonical Notion spec; for a local or inline contract, its
+canonical carrier). They differ by lifecycle state, not by being deviations. A
+`proposals/` child is a task or change that is **proposed but not yet
+implemented or approved** — the planned work for the stream, derived from the
+canonical spec. When the work is done, its final implementation documentation
+shifts to a `changes/` child, together with any last-mile changes made during
+implementation. A `changes/` child therefore also holds general implementation
+and explainer records, not only deviations.
+
+The shift tracks two independent transitions. A proposal is marked `accepted`
+when it is **approved**, not when it lands, so downstream planning can tell an
+approved proposal from an undecided one; a proposal never approved ends in
+`proposals/` (`rejected` or `withdrawn`). Separately, the coordinator creates or
+links the corresponding `changes/` child as implementation proceeds — that child
+may be `pending` before it becomes `applied`, and links back to its originating
+proposal.
+
+Each `proposals/` and `changes/` child SHOULD carry a section recording any
+deviations from the canonical specification, if any — deviations are an optional
+subsection, not what defines the folder.
 
 Each overview contains only:
 
@@ -339,10 +349,13 @@ needed for the current focus.
 
 Each child starts with structured metadata containing at least its canonical
 status, one-line headline, owner, created timestamp, and source/provenance
-references. When a `proposals/` or `changes/` child records a deviation from a
-Notion-backed specification, its provenance MUST link to the related
-`.engineering/notion/` mirror file (the exact `.mdc` path in the registered
-default workspace); a spec deviation recorded without that link is incomplete.
+references. When a `proposals/` or `changes/` child's deviation section records a
+deviation from a Notion-backed specification, that deviation's provenance MUST
+link to the related `.engineering/notion/` mirror file (the exact `.mdc` path in
+the registered default workspace); a Notion-backed spec deviation recorded
+without that link is incomplete. A local or inline contract has no Notion mirror,
+so its deviation records provenance against that contract's own canonical carrier
+instead of inventing Notion provenance.
 If an overview itself ever requires splitting, reserve `00-index-<group>.md`
 names inside its folder for index shards.
 

@@ -70,10 +70,13 @@ contract; `specification:implement-code` and Coding skills execute it.
 4. Ask only material unresolved questions. Once none block execution, write
    detailed lowercase artifacts as needed:
    - `decisions/<slug>.md` for a choice and consequences;
-   - `proposals/<slug>.md` for a deviation proposed against the canonical
-     Notion spec that is not yet implemented;
-   - `changes/<slug>.md` for a deviation from the canonical Notion spec that
-     is implemented (a proposal shifts here once it lands in the code);
+   - `proposals/<slug>.md` for a task or change proposed but not yet
+     implemented or approved, derived from the canonical spec for the work
+     stream;
+   - `changes/<slug>.md` for the final implementation documentation once the
+     work is done, plus any last-mile changes made during implementation (a
+     proposal shifts here as it is implemented); record any deviations from the
+     canonical spec in a section within either;
    - `design/<slug>.md` for temporary task-specific technical design;
    - always after Step 5 assigns stable IDs, `state/plan.md` for
      interfaces, implementation notes, test procedure, repository gates,
