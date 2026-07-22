@@ -1501,6 +1501,73 @@ therefore travels back as a suggestion, and a moved card as a decision, so a
 starting placement is never mistaken for the user's answer. Use at least three
 lanes and at least six cards, each card with its lane `<select>`.
 
+## Decision-first devices (from the free-form lessons)
+
+Recipes distilled from the approved free-form boards (see
+`references/comparisons/v1-vs-v2-notes.md` and the golden examples
+`examples/src/readiness-verdict-board/`, `examples/src/decision-browser/`).
+They compose existing floor mechanisms — most need only bespoke, token-styled
+in-page CSS, which the free-form policy welcomes.
+
+- **Editorial masthead position line.** Give the masthead eyebrow a glyph and
+  a position: `<p class="discovery-eyebrow"><span aria-hidden="true">🚦</span>
+  Question 3 of 3 — Readiness · Prospector</p>`. Orients the reader inside a
+  board set at a glance; pair with the multi-board hub.
+
+- **Stat rails.** In a stat strip, give each tile a 3–4px absolutely
+  positioned left rail colored by the semantic ramp it counts
+  (`background: var(--ui-verdict-stop)` for the blocked tile). Counts become
+  scannable by hue before they are read.
+
+- **Decision-first card.** One card per finding/verdict/decision, in this
+  order: tag row (id, category via `--ui-k-*`, blocking, severity) → title →
+  the question → Evidence (with provenance pill) → **the response control** →
+  "Why it bites" → a plain-English translation line → owner chip +
+  `file:line` source chips. The response control is a decision-question
+  fieldset embedded in the card, so the shared runtime captures it into the
+  counters and the generated prompt:
+  - **Real alternatives exist → option set.** Render 2–4 `discovery-option`
+    labels, each with its reason in `<small>`, the recommended one carrying
+    `data-recommended` and a `discovery-badge`. Never a bare accept button in
+    this case — the selection is the decision.
+  - **Single recommendation → accept toggle.** A checkbox/radio pair
+    ("Accept as-is" recommended / "I'll override — see my note") keeps
+    capture uniform through the same runtime.
+  Notes ride the section annotation mechanism; state must be visible on the
+  card and, on card-stage boards, on its pip.
+
+- **Verdict / status semantics.** Color card edges, pills, and rails through
+  the semantic ramps (`--ui-verdict-*`, `--ui-status-*`, `--ui-k-*`), not
+  ad-hoc classes — the board-theme overlay then re-tints the whole board
+  consistently.
+
+- **Readiness meter.** A labeled `n/5` bar: track on `--ui-surface`, fill on
+  the card's ramp color, value in mono with `tabular-nums`.
+
+- **Landing-map row.** One row per disposition bucket (land / landed / rework
+  / park / orphan): a 4px left border and dot on the bucket's ramp color, a
+  bold disposition label with a small qualifier, and the member list as prose
+  with `code` ids.
+
+- **Critical-path strip.** A horizontal flex of small step tiles joined by
+  `→`, each tile an eyebrow-style label plus one sentence; color the terminal
+  blocked tile with `--ui-verdict-stop`. Answers "why is this blocked" in one
+  glance.
+
+- **Filter chips + pip index (card-stage boards).** Chips carry
+  `aria-pressed` and either hide or dim non-matching cards. The pip row shows
+  one small numbered button per card: blocking pips borrow the danger color,
+  answered/decided pips show ✓, filtered-out pips dim. Keyboard: `←`/`→` move
+  between cards, `A` accepts / selects the recommended option; keep every
+  control focusable with a visible focus state.
+
+- **Data-driven card sets.** When many cards share one shape, author the
+  content once as a JS array and render through a small builder that escapes
+  every field (the `esc()` idiom) and assigns ramp colors from data. The
+  builder rejects output containing un-interpolated `${…}` in rendered text —
+  interpolate before emit. Prefer building DOM via `createElement`/
+  `textContent` where practical; never inject unescaped strings.
+
 ## Extending the catalog
 
 These four conventions and the page shell, annotatable sections, single-prompt
