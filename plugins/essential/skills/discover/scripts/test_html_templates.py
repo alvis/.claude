@@ -59,6 +59,12 @@ CONVENTION_EXAMPLES = (
     "board-hub",
     "architecture-board",
     "triage-board",
+    # Marriage boards: the free-form lessons (semantic verdict/status ramps via
+    # the board-theme overlay, decision-first cards, option sets with reasons +
+    # badged recommendation) expressed on the template shell. Suite versions of
+    # the approved reference captures in examples/reference/.
+    "readiness-verdict-board",
+    "decision-browser",
 )
 FORBIDDEN_HTML_TEXT = (
     "thariqs.github.io",
@@ -241,6 +247,16 @@ ACTION_STRUCTURE: dict[str, tuple[tuple[str, int, int | None], ...]] = {
         ("data-kanban-lane", 3, None),
         ("data-kanban-cards", 3, None),
         ("data-drag-item", 6, None),
+    ),
+    # Marriage convention boards: verdict-per-stream and one-unknown-at-a-time
+    # decision browsing, both themed through the board-theme overlay.
+    "readiness-verdict-board": (
+        ("data-verdict-card", 4, None),
+        ("data-verdict-signoff", 1, None),
+    ),
+    "decision-browser": (
+        ("data-decision-card", 5, None),
+        ("data-decision-stage", 1, None),
     ),
 }
 

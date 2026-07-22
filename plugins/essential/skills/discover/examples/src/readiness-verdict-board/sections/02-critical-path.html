@@ -1,0 +1,44 @@
+      <section
+        id="critical-path"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="critical-path"
+        data-section-label="Critical path"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">02 · Sequence</p>
+          <h2>What unblocks the first paper trade</h2>
+          <p class="discovery-muted">
+            One chain runs through the whole program: the four operator
+            decisions gate the scheduler, the scheduler and ingest gate the
+            fill.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <div
+            class="discovery-flow-strip"
+            aria-label="Critical path to the first paper fill"
+          >
+            <span
+              style="box-shadow: inset 0 -2px 0 var(--ui-verdict-probe)"
+              >Four operator decisions</span
+            ><span>Scheduler lands</span><span>Ingest lands</span
+            ><span
+              style="box-shadow: inset 0 -2px 0 var(--ui-verdict-stop)"
+              >First paper fill</span
+            >
+          </div>
+          <p>
+            Nothing on the blocked list has independent work. Every blocked
+            task names either the scheduler's job interfaces or the repaired
+            ingest as its input, so answering the operator decisions above is
+            the only move that shortens the path.
+          </p>
+          <p class="discovery-muted">
+            The two runtime premises — the QuestDB version constraint and the
+            live ingest rate — stay flagged for live query. The board never
+            asserts them; the generated reply asks the coder to verify both
+            before building against them.
+          </p>
+        </div>
+      </section>

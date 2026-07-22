@@ -19,6 +19,13 @@ runtime.
   single-recommendation cards, per-card notes, live generated reply.
   (Artifact `367d0714`.)
 
+Suite counterparts exist under `examples/src/readiness-verdict-board/` and
+`examples/src/decision-browser/` (compiled to `examples/html/`): the same two
+boards re-authored through `templates/src/page/` with the shared runtime and
+board-theme overlays, registered as convention examples in
+`scripts/test_html_templates.py`. Use the suite versions as the compositional
+starting point and these captures as the visual/interaction target.
+
 What every generated board must copy from these is the **floor behavior**
 (`references/features.md`): per-card response capture reflected in counters
 and the single generated prompt, semantic-ramp theming through the board-theme

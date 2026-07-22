@@ -1,0 +1,286 @@
+      <section
+        id="gates"
+        class="discovery-section"
+        data-discovery-section
+        data-section-id="gates"
+        data-section-label="Seven verdicts"
+      >
+        <div class="discovery-section-heading discovery-sticky">
+          <p class="discovery-eyebrow">01 · Verdicts</p>
+          <h2>Seven verdicts</h2>
+          <p class="discovery-muted">
+            Each card carries its gate, the evidence behind it with provenance,
+            and — where a response is needed — the choice itself.
+          </p>
+        </div>
+        <div class="discovery-section-body">
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-probe)"
+          >
+            <h3>
+              Scheduler redesign
+              <span class="discovery-badge">More discovery</span>
+            </h3>
+            <p>
+              <strong>Gating</strong> — the leased-job scheduler is unbuilt;
+              the host model and the do-not-edit fence are undecided.
+            </p>
+            <p class="discovery-muted">
+              <strong>Evidence</strong> — the registry shows design tasks
+              closed and zero build tasks opened; both decisions are absent
+              from the ledger.
+            </p>
+            <fieldset
+              class="discovery-question"
+              data-discovery-question
+              data-question-id="host-model"
+              data-question-label="Scheduler host model"
+            >
+              <legend>Where does the leased-job scheduler run?</legend>
+              <div class="discovery-options">
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="host-model"
+                    value="Always-on VPS"
+                    data-recommended="true"
+                    checked
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Always-on VPS</strong
+                    ><small
+                      >Survives laptop lids and weekends; the lease model
+                      degrades gracefully on a host that never sleeps.</small
+                    ></span
+                  >
+                  <span class="discovery-badge">Recommended</span>
+                </label>
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="host-model"
+                    value="Operator machine"
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Operator's machine</strong
+                    ><small
+                      >Zero new cost and no new credentials — but the first
+                      closed lid breaks the paper trade.</small
+                    ></span
+                  >
+                </label>
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="host-model"
+                    value="Defer to interface freeze"
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Defer to the interface freeze</strong
+                    ><small
+                      >Keeps options open at the price of every scheduler build
+                      task staying parked.</small
+                    ></span
+                  >
+                </label>
+              </div>
+            </fieldset>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-probe)"
+          >
+            <h3>
+              Ingest ticks / LOB fix
+              <span class="discovery-badge">More discovery</span>
+            </h3>
+            <p>
+              <strong>Gating</strong> — the QuestDB 8.1.1 array crash-loop is
+              root-caused but unfixed; the storage encoding is undecided.
+            </p>
+            <p class="discovery-muted">
+              <strong>Evidence</strong> — the crash-loop is reproduced and
+              attributed in the ledger; the version constraint has never been
+              queried against the live instance (flagged: needs live query).
+            </p>
+            <fieldset
+              class="discovery-question"
+              data-discovery-question
+              data-question-id="array-encoding"
+              data-question-label="LOB storage encoding"
+            >
+              <legend>How should LOB levels land in storage?</legend>
+              <div class="discovery-options">
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="array-encoding"
+                    value="Flattened columns"
+                    data-recommended="true"
+                    checked
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Flattened columns (l1_px … l10_px)</strong
+                    ><small
+                      >Query-side SQL stays native and column pruning keeps
+                      reads cheap; the live probe tells you the exact
+                      constraint to design around.</small
+                    ></span
+                  >
+                  <span class="discovery-badge">Recommended</span>
+                </label>
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="array-encoding"
+                    value="JSON blob"
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Single JSON blob per tick</strong
+                    ><small
+                      >Simplest write path — every read pays parse cost and
+                      gives up column pruning entirely.</small
+                    ></span
+                  >
+                </label>
+                <label class="discovery-option">
+                  <input
+                    type="radio"
+                    name="array-encoding"
+                    value="Side table"
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Side table, one row per level</strong
+                    ><small
+                      >Cleanest relational model; doubles write amplification
+                      at exactly the ingest rate that is already fragile.</small
+                    ></span
+                  >
+                </label>
+              </div>
+            </fieldset>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-stop)"
+          >
+            <h3>First paper trade <span class="discovery-badge">Blocked</span></h3>
+            <p>
+              <strong>Gating</strong> — owns no independent work; every task
+              belongs to the scheduler or ingest streams.
+            </p>
+            <p class="discovery-muted">
+              <strong>Evidence</strong> — the registry lists three blocked
+              tasks, all cross-referenced to the two live streams. Exit: the
+              first fill on the paper account.
+            </p>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-partial)"
+          >
+            <h3>
+              Maturity / channel split
+              <span class="discovery-badge">Partially ready</span>
+            </h3>
+            <p>
+              <strong>Gating</strong> — design settled; implementation waits on
+              the scheduler's job interfaces.
+            </p>
+            <p class="discovery-muted">
+              <strong>Evidence</strong> — design tasks landed; the remaining
+              tasks name scheduler interfaces as their input. Exit: interface
+              freeze.
+            </p>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-go)"
+          >
+            <h3>
+              Dashboard signal-symbol + replay
+              <span class="discovery-badge">Ready</span>
+            </h3>
+            <p>
+              <strong>Gating</strong> — none; independent of every blocked
+              stream.
+            </p>
+            <p class="discovery-muted">
+              <strong>Evidence</strong> — all prerequisites landed; the replay
+              view is the last open task and has no external inputs.
+            </p>
+            <fieldset
+              class="discovery-question"
+              data-discovery-question
+              data-question-id="replay-verdict"
+              data-question-label="Replay stream verdict"
+            >
+              <legend>Accept the Ready verdict for this stream?</legend>
+              <div class="discovery-options">
+                <label class="discovery-option discovery-option-brief">
+                  <input
+                    type="radio"
+                    name="replay-verdict"
+                    value="Accept as-is"
+                    data-recommended="true"
+                    checked
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Accept as-is</strong></span
+                  >
+                  <span class="discovery-badge">Recommended</span>
+                </label>
+                <label class="discovery-option discovery-option-brief">
+                  <input
+                    type="radio"
+                    name="replay-verdict"
+                    value="Override with note"
+                  />
+                  <span class="discovery-option-copy"
+                    ><strong>Override — my note explains</strong></span
+                  >
+                </label>
+              </div>
+            </fieldset>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-done)"
+          >
+            <h3>
+              Dashboard honest degradation
+              <span class="discovery-badge">Done</span>
+            </h3>
+            <p class="discovery-muted">
+              All registry tasks closed; degradation states verified in the
+              demo pass.
+            </p>
+          </article>
+
+          <article
+            class="discovery-finding-card"
+            data-verdict-card
+            style="box-shadow: inset 3px 0 0 var(--ui-verdict-done)"
+          >
+            <h3>
+              ImpactParams sqrt-law <span class="discovery-badge">Done</span>
+            </h3>
+            <p class="discovery-muted">
+              Model landed with tests; consumers already read the new
+              parameters.
+            </p>
+          </article>
+        </div>
+      </section>
