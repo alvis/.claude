@@ -1,0 +1,652 @@
+<title>Prospector — What each work plan still hides (marriage demo)</title>
+<style>
+  /* ══ Discover golden shell tokens + board-theme overlay: blind-spots ══
+     The board keeps the shell's terracotta as its accent and extends the
+     palette with a muted category ramp that sits inside the same warm,
+     desaturated editorial world. */
+  :root{
+    --ui-canvas:#faf9f5; --ui-surface:#f0eee6; --ui-surface-raised:#fff;
+    --ui-ink:#141413; --ui-muted:#4e4d48; --ui-faint:#676660;
+    --ui-border:#d1cfc5; --ui-border-strong:#aaa89f;
+    --ui-accent:#d97757; --ui-accent-contrast:#2b1d18; --ui-accent-soft:#fbf1ec; --ui-accent-ink:#934326;
+    --ui-insight:#788c5d; --ui-insight-soft:#edf1e6; --ui-insight-ink:#455430;
+    --ui-positive:#55663f; --ui-positive-soft:#edf1e6;
+    --ui-amber:#a8640f; --ui-amber-soft:#f8ead0; --ui-amber-ink:#6d4110;
+    --ui-critical:#b0402f; --ui-critical-soft:#f6e2dc; --ui-critical-ink:#7a2a1e;
+    --ui-code:#1c1c1a; --ui-code-ink:#f2efe6; --ui-focus:#b85c3e;
+    --ui-shadow-small:0 10px 26px rgba(45,41,32,.11);
+    --radius-control:.85rem; --radius-card:1.25rem;
+    --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --font-body:"Avenir Next",Avenir,"Segoe UI",sans-serif;
+    --font-mono:"SFMono-Regular",Menlo,Consolas,monospace;
+
+    /* board-theme overlay · blind-spots */
+    --board-accent:var(--ui-accent); --board-accent-ink:var(--ui-accent-ink); --board-accent-soft:var(--ui-accent-soft);
+    --k-governance:#4f5f9e; --k-governance-soft:#e9ecf6; --k-governance-ink:#38466f;
+    --k-runtime:#0f6e77;    --k-runtime-soft:#e0eff0;    --k-runtime-ink:#0a4c53;
+    --k-spec:#8a4d84;       --k-spec-soft:#f3e8f2;       --k-spec-ink:#63365f;
+    --k-safety:var(--ui-critical); --k-safety-soft:var(--ui-critical-soft); --k-safety-ink:var(--ui-critical-ink);
+    --k-scope:var(--ui-amber);     --k-scope-soft:var(--ui-amber-soft);     --k-scope-ink:var(--ui-amber-ink);
+    --k-silent:var(--ui-faint);    --k-silent-soft:var(--ui-surface);       --k-silent-ink:var(--ui-muted);
+  }
+  @media (prefers-color-scheme:dark){ :root{
+    --ui-canvas:oklch(.16 .012 62); --ui-surface:oklch(.2 .014 62); --ui-surface-raised:oklch(.235 .016 62);
+    --ui-ink:oklch(.92 .012 80); --ui-muted:oklch(.72 .018 75); --ui-faint:oklch(.6 .018 75);
+    --ui-border:oklch(.33 .018 66); --ui-border-strong:oklch(.46 .03 62);
+    --ui-accent:oklch(.72 .14 48); --ui-accent-contrast:oklch(.18 .018 48); --ui-accent-soft:oklch(.29 .055 43); --ui-accent-ink:oklch(.9 .055 58);
+    --ui-insight:oklch(.72 .09 135); --ui-insight-soft:oklch(.27 .045 135); --ui-insight-ink:oklch(.88 .05 135);
+    --ui-positive:oklch(.7 .1 146); --ui-positive-soft:oklch(.27 .045 145);
+    --ui-amber:oklch(.79 .11 74); --ui-amber-soft:oklch(.31 .055 70); --ui-amber-ink:oklch(.9 .05 82);
+    --ui-critical:oklch(.66 .15 30); --ui-critical-soft:oklch(.31 .07 30); --ui-critical-ink:oklch(.87 .06 34);
+    --ui-code:oklch(.125 .012 62); --ui-code-ink:oklch(.9 .016 78); --ui-focus:oklch(.77 .14 52);
+    --ui-shadow-small:0 5px 18px oklch(.03 .01 62/.32);
+    --board-accent:var(--ui-accent); --board-accent-ink:var(--ui-accent-ink); --board-accent-soft:var(--ui-accent-soft);
+    --k-governance:oklch(.72 .1 275); --k-governance-soft:oklch(.28 .05 275); --k-governance-ink:oklch(.88 .05 275);
+    --k-runtime:oklch(.74 .1 200);    --k-runtime-soft:oklch(.28 .045 200);   --k-runtime-ink:oklch(.88 .05 200);
+    --k-spec:oklch(.72 .1 330);       --k-spec-soft:oklch(.28 .05 330);       --k-spec-ink:oklch(.88 .05 330);
+    --k-safety:var(--ui-critical); --k-safety-soft:var(--ui-critical-soft); --k-safety-ink:var(--ui-critical-ink);
+    --k-scope:var(--ui-amber);     --k-scope-soft:var(--ui-amber-soft);     --k-scope-ink:var(--ui-amber-ink);
+    --k-silent:var(--ui-faint);    --k-silent-soft:var(--ui-surface);       --k-silent-ink:var(--ui-muted);
+  }}
+  :root[data-theme="light"]{
+    --ui-canvas:#faf9f5; --ui-surface:#f0eee6; --ui-surface-raised:#fff;
+    --ui-ink:#141413; --ui-muted:#4e4d48; --ui-faint:#676660;
+    --ui-border:#d1cfc5; --ui-border-strong:#aaa89f;
+    --ui-accent:#d97757; --ui-accent-contrast:#2b1d18; --ui-accent-soft:#fbf1ec; --ui-accent-ink:#934326;
+    --ui-insight:#788c5d; --ui-insight-soft:#edf1e6; --ui-insight-ink:#455430;
+    --ui-positive:#55663f; --ui-positive-soft:#edf1e6;
+    --ui-amber:#a8640f; --ui-amber-soft:#f8ead0; --ui-amber-ink:#6d4110;
+    --ui-critical:#b0402f; --ui-critical-soft:#f6e2dc; --ui-critical-ink:#7a2a1e;
+    --ui-code:#1c1c1a; --ui-code-ink:#f2efe6; --ui-focus:#b85c3e;
+    --ui-shadow-small:0 10px 26px rgba(45,41,32,.11);
+    --board-accent:var(--ui-accent); --board-accent-ink:var(--ui-accent-ink); --board-accent-soft:var(--ui-accent-soft);
+    --k-governance:#4f5f9e; --k-governance-soft:#e9ecf6; --k-governance-ink:#38466f;
+    --k-runtime:#0f6e77;    --k-runtime-soft:#e0eff0;    --k-runtime-ink:#0a4c53;
+    --k-spec:#8a4d84;       --k-spec-soft:#f3e8f2;       --k-spec-ink:#63365f;
+    --k-safety:var(--ui-critical); --k-safety-soft:var(--ui-critical-soft); --k-safety-ink:var(--ui-critical-ink);
+    --k-scope:var(--ui-amber);     --k-scope-soft:var(--ui-amber-soft);     --k-scope-ink:var(--ui-amber-ink);
+    --k-silent:var(--ui-faint);    --k-silent-soft:var(--ui-surface);       --k-silent-ink:var(--ui-muted);
+  }
+  :root[data-theme="dark"]{
+    --ui-canvas:oklch(.16 .012 62); --ui-surface:oklch(.2 .014 62); --ui-surface-raised:oklch(.235 .016 62);
+    --ui-ink:oklch(.92 .012 80); --ui-muted:oklch(.72 .018 75); --ui-faint:oklch(.6 .018 75);
+    --ui-border:oklch(.33 .018 66); --ui-border-strong:oklch(.46 .03 62);
+    --ui-accent:oklch(.72 .14 48); --ui-accent-contrast:oklch(.18 .018 48); --ui-accent-soft:oklch(.29 .055 43); --ui-accent-ink:oklch(.9 .055 58);
+    --ui-insight:oklch(.72 .09 135); --ui-insight-soft:oklch(.27 .045 135); --ui-insight-ink:oklch(.88 .05 135);
+    --ui-positive:oklch(.7 .1 146); --ui-positive-soft:oklch(.27 .045 145);
+    --ui-amber:oklch(.79 .11 74); --ui-amber-soft:oklch(.31 .055 70); --ui-amber-ink:oklch(.9 .05 82);
+    --ui-critical:oklch(.66 .15 30); --ui-critical-soft:oklch(.31 .07 30); --ui-critical-ink:oklch(.87 .06 34);
+    --ui-code:oklch(.125 .012 62); --ui-code-ink:oklch(.9 .016 78); --ui-focus:oklch(.77 .14 52);
+    --ui-shadow-small:0 5px 18px oklch(.03 .01 62/.32);
+    --board-accent:var(--ui-accent); --board-accent-ink:var(--ui-accent-ink); --board-accent-soft:var(--ui-accent-soft);
+    --k-governance:oklch(.72 .1 275); --k-governance-soft:oklch(.28 .05 275); --k-governance-ink:oklch(.88 .05 275);
+    --k-runtime:oklch(.74 .1 200);    --k-runtime-soft:oklch(.28 .045 200);   --k-runtime-ink:oklch(.88 .05 200);
+    --k-spec:oklch(.72 .1 330);       --k-spec-soft:oklch(.28 .05 330);       --k-spec-ink:oklch(.88 .05 330);
+    --k-safety:var(--ui-critical); --k-safety-soft:var(--ui-critical-soft); --k-safety-ink:var(--ui-critical-ink);
+    --k-scope:var(--ui-amber);     --k-scope-soft:var(--ui-amber-soft);     --k-scope-ink:var(--ui-amber-ink);
+    --k-silent:var(--ui-faint);    --k-silent-soft:var(--ui-surface);       --k-silent-ink:var(--ui-muted);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:5.5rem}
+  body{
+    margin:0; min-height:100vh; background:var(--ui-canvas); color:var(--ui-ink);
+    font-family:var(--font-body); font-size:1rem; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:fixed; z-index:-1; inset:4.5rem 0 auto; height:clamp(24rem,45vw,36rem);
+    background:
+      radial-gradient(ellipse at 8% 12%, color-mix(in srgb, var(--board-accent) 13%, transparent), transparent 66%),
+      radial-gradient(ellipse at 88% 8%, color-mix(in srgb, var(--ui-insight) 9%, transparent), transparent 62%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,rgba(0,0,0,.85) 35%,transparent);
+    mask-image:linear-gradient(to bottom,#000,rgba(0,0,0,.85) 35%,transparent);
+    pointer-events:none;
+  }
+  ::selection{background:var(--board-accent-soft); color:var(--ui-ink)}
+  :focus-visible{outline:none; box-shadow:0 0 0 3px var(--ui-canvas),0 0 0 6px var(--ui-focus); border-radius:6px}
+  .mono{font-family:var(--font-mono); font-size:.86em}
+
+  .docbar{
+    position:fixed; z-index:50; inset:0 0 auto; min-height:4.2rem;
+    display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:center;
+    padding:.6rem 1.3rem; border-bottom:1px solid var(--ui-border);
+    background:color-mix(in srgb, var(--ui-canvas) 92%, transparent); backdrop-filter:blur(6px);
+  }
+  .docbrand{display:flex; gap:.7rem; align-items:center}
+  .docmark{display:grid; place-items:center; width:2rem; height:2rem; border-radius:.72rem; background:var(--board-accent); color:var(--ui-accent-contrast); font:800 .7rem/1 var(--font-mono)}
+  .docbrand strong{font-size:1rem; font-weight:700; letter-spacing:-.01em}
+  .docbrand small{display:block; margin-top:.2rem; color:var(--ui-faint); font:600 .58rem/1 var(--font-mono); letter-spacing:.09em; text-transform:uppercase}
+  .docbar nav{display:flex; gap:1.3rem; align-items:center; font:600 .68rem/1.2 var(--font-mono); color:var(--ui-faint)}
+  .docbar nav a{color:var(--board-accent-ink); text-decoration:none; font-weight:700}
+
+  .docnav{
+    position:fixed; z-index:20; top:4.2rem; bottom:0; right:0; width:17.5rem;
+    padding:1.9rem 1.4rem; overflow-y:auto; border-left:1px solid var(--ui-border);
+    background:color-mix(in srgb, var(--ui-surface) 72%, transparent);
+    font-size:.75rem; color:var(--ui-muted);
+  }
+  .docnav p{margin:0 0 .6rem; color:var(--ui-faint); font:700 .6rem/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+  .docnav a{display:block; margin-left:-.6rem; padding:.42rem .6rem; border-radius:.7rem; color:inherit; text-decoration:none}
+  .docnav a:hover{background:var(--ui-surface-raised); color:var(--ui-ink)}
+  .docnav .rule{height:1px; margin:1.2rem 0; background:var(--ui-border)}
+  .counts-row{display:flex; justify-content:space-between; align-items:center; padding:.4rem .1rem; font:600 .64rem/1.2 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ui-faint)}
+  .counts-row strong{display:grid; place-items:center; min-width:1.6rem; min-height:1.6rem; border-radius:.55rem; background:var(--board-accent-soft); color:var(--board-accent-ink); font-size:.7rem}
+  .boardset{display:grid; gap:.35rem; font:500 .7rem/1.4 var(--font-body)}
+  .boardset span{display:flex; gap:.5rem; align-items:center; color:var(--ui-faint)}
+  .boardset .dot{width:.5rem; height:.5rem; border-radius:50%}
+  .boardset .here{color:var(--ui-ink); font-weight:700}
+
+  .page{max-width:56rem; margin-right:19.5rem; margin-left:auto; padding:7.4rem 2.6rem 6rem; display:flex; flex-direction:column; gap:1.2rem}
+  @media (max-width:68rem){
+    .docnav{display:none}
+    .docbar{position:static; grid-template-columns:1fr; gap:.5rem; min-height:0; padding:.9rem 1.3rem}
+    .page{margin-right:auto; padding-top:1.8rem}
+    html{scroll-padding-top:1rem}
+    body::before{inset:0 0 auto}
+  }
+
+  .eyebrow{display:flex; gap:.7rem; align-items:center; margin:0; color:var(--ui-muted); font:650 .72rem/1.3 var(--font-mono); letter-spacing:.13em; text-transform:uppercase}
+  .eyebrow::before{content:""; width:2rem; height:1px; background:var(--board-accent)}
+  .eyebrow .glyph{font-size:.95rem; letter-spacing:0}
+  h1{margin:.9rem 0 .5rem; max-width:18ch; font-family:var(--font-display); font-weight:500; font-size:clamp(2.2rem,4.4vw,3.3rem); line-height:1.02; letter-spacing:-.04em; text-wrap:balance}
+  .lede{margin:0; max-width:44rem; color:var(--ui-muted); font-size:1.04rem; line-height:1.55}
+  .lede .mono{background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:5px; padding:0 .35em}
+  .h-counts{display:flex; gap:.5rem; margin-top:1.1rem}
+  .count{font:600 .68rem/1.2 var(--font-mono); padding:.32rem .7rem; border-radius:9999px; border:1px solid var(--ui-border-strong); color:var(--ui-muted)}
+  .count.blk{color:var(--ui-critical-ink); border-color:var(--ui-critical); background:var(--ui-critical-soft); font-weight:700}
+
+  /* chips + pips */
+  .chips{display:flex; flex-wrap:wrap; gap:.5rem}
+  .chip{
+    font:650 .7rem/1.2 var(--font-mono); letter-spacing:.03em; cursor:pointer; text-transform:capitalize;
+    border:1px solid var(--ui-border); border-radius:9999px; padding:.36rem .75rem;
+    background:color-mix(in srgb, var(--ui-surface-raised) 78%, transparent); color:var(--ui-muted);
+    transition:box-shadow .13s, color .13s, background .13s;
+  }
+  .chip:hover{box-shadow:inset 0 0 0 1px var(--board-accent)}
+  .chip[aria-pressed="true"]{background:var(--board-accent-soft); color:var(--board-accent-ink); box-shadow:inset 0 0 0 1px var(--board-accent); font-weight:700}
+  .chip.blk[aria-pressed="true"]{background:var(--ui-critical-soft); color:var(--ui-critical-ink); box-shadow:inset 0 0 0 1px var(--ui-critical)}
+  .pips{display:flex; gap:.35rem; flex-wrap:wrap}
+  .pip{
+    width:1.55rem; height:1.55rem; padding:0; cursor:pointer; display:grid; place-items:center;
+    border:1px solid var(--ui-border-strong); border-radius:.5rem;
+    background:var(--ui-surface-raised); font:600 .62rem/1 var(--font-mono); color:var(--ui-faint); transition:.1s;
+  }
+  .pip:hover{box-shadow:inset 0 0 0 1px var(--board-accent); color:var(--ui-ink)}
+  .pip.blocking{border-color:var(--ui-critical); color:var(--ui-critical-ink)}
+  .pip.active{background:var(--board-accent); border-color:var(--board-accent); color:var(--ui-accent-contrast); font-weight:700}
+  .pip.active.blocking{background:var(--ui-critical); border-color:var(--ui-critical); color:#fff}
+  .pip.dim{opacity:.25; pointer-events:none}
+
+  /* decision card — template card voice, category edge */
+  .qcard{
+    position:relative; overflow:hidden;
+    border:1px solid var(--ui-border); border-radius:var(--radius-card);
+    background:color-mix(in srgb, var(--ui-surface-raised) 85%, transparent);
+    box-shadow:inset 3px 0 0 var(--kc,var(--board-accent)), var(--ui-shadow-small);
+    padding:1.6rem 1.7rem; display:flex; flex-direction:column; gap:.95rem;
+  }
+  .tags{display:flex; flex-wrap:wrap; gap:.4rem; align-items:center}
+  .tag{font:700 .6rem/1 var(--font-mono); letter-spacing:.05em; text-transform:uppercase; padding:.28rem .55rem; border-radius:9999px}
+  .tag.qid{background:var(--ui-surface); color:var(--ui-ink); border:1px solid var(--ui-border)}
+  .tag.cat{background:var(--ksoft); color:var(--kink)}
+  .tag.blk{background:var(--ui-critical-soft); color:var(--ui-critical-ink); border:1px solid var(--ui-critical)}
+  .tag.sev{background:transparent; color:var(--ui-faint); border:1px solid var(--ui-border-strong); font-weight:600; text-transform:none; letter-spacing:0}
+  .q-title{margin:0; font-family:var(--font-display); font-weight:560; font-size:1.55rem; line-height:1.12; letter-spacing:-.02em; text-wrap:balance}
+  .q-ask{margin:0; font-size:.98rem; line-height:1.55}
+  .sect{display:flex; flex-direction:column; gap:.25rem}
+  .lbl{font:700 .6rem/1.2 var(--font-mono); letter-spacing:.09em; text-transform:uppercase; color:var(--ui-faint)}
+  .lbl.rec{color:var(--board-accent-ink)}
+  .bd{margin:0; font-size:.88rem; line-height:1.6; color:var(--ui-muted)}
+  .bd .mono{background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:5px; padding:0 .3em}
+  .rec-box{background:var(--board-accent-soft); border-radius:var(--radius-control); box-shadow:inset 3px 0 0 var(--board-accent); padding:.85rem 1rem; display:flex; flex-direction:column; gap:.25rem}
+  .rec-box .bd{color:var(--ui-ink)}
+  .opts{display:grid; gap:.55rem}
+  .opt{
+    position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.7rem; align-items:start;
+    border:1px solid var(--ui-border); border-radius:1rem; cursor:pointer;
+    background:color-mix(in srgb, var(--ui-surface-raised) 78%, transparent); padding:.85rem .95rem;
+    transition:box-shadow .13s, background .13s;
+  }
+  .opt:hover{box-shadow:inset 0 0 0 1px var(--board-accent)}
+  .opt:has(input:checked){background:var(--board-accent-soft); box-shadow:inset 0 0 0 1px var(--board-accent)}
+  .opt input{width:1rem; height:1rem; margin-top:.15rem; accent-color:var(--board-accent)}
+  .opt strong{font-size:.9rem; line-height:1.3}
+  .opt small{display:block; margin-top:.15rem; color:var(--ui-muted); font-size:.78rem; line-height:1.45}
+  .opt .badge{font:700 .56rem/1 var(--font-mono); letter-spacing:.05em; text-transform:uppercase; padding:.28rem .5rem; border-radius:9999px; background:var(--board-accent-soft); color:var(--board-accent-ink); white-space:nowrap}
+  .card-actions{display:flex; flex-wrap:wrap; gap:.45rem}
+  .act{
+    font:650 .68rem/1.15 var(--font-mono); cursor:pointer;
+    border:1px solid var(--ui-border); border-radius:9999px; padding:.35rem .7rem;
+    background:var(--ui-surface-raised); color:var(--ui-muted); transition:.12s;
+  }
+  .act:hover{box-shadow:inset 0 0 0 1px var(--board-accent); color:var(--board-accent-ink)}
+  .act.on{background:var(--ui-positive-soft); color:var(--ui-positive); border-color:var(--ui-positive); font-weight:700}
+  .act.noted{background:var(--board-accent-soft); color:var(--board-accent-ink); border-color:var(--board-accent)}
+  dialog.note{
+    border:1px solid var(--ui-border); border-radius:var(--radius-card); padding:1.4rem;
+    background:var(--ui-surface-raised); color:var(--ui-ink); box-shadow:var(--ui-shadow-small); max-width:26rem; width:90%;
+  }
+  dialog.note::backdrop{background:rgba(20,20,19,.35)}
+  dialog.note textarea{width:100%; min-height:6rem; border:1px solid var(--ui-border-strong); border-radius:var(--radius-control); padding:.7rem; font:inherit; background:var(--ui-surface); color:var(--ui-ink); resize:vertical}
+  dialog.note .row{display:flex; justify-content:flex-end; gap:.5rem; margin-top:.8rem}
+  .btn.ghost{background:var(--ui-surface); color:var(--ui-muted); border:1px solid var(--ui-border)}
+  .plain{border-left:2px solid var(--ui-border-strong); padding:.1rem 0 .1rem .8rem}
+  .plain .bd{font-style:italic}
+  .srcs{display:flex; gap:.35rem; flex-wrap:wrap}
+  .src{font:500 .62rem/1.3 var(--font-mono); color:var(--ui-faint); background:var(--ui-surface); border:1px solid var(--ui-border); padding:.12rem .45rem; border-radius:.4rem}
+  .owner{display:inline-flex; gap:.45rem; align-items:center; font:600 .66rem/1 var(--font-mono); color:var(--ui-muted)}
+  .owner .av{display:inline-grid; place-items:center; width:1.35rem; height:1.35rem; border-radius:.45rem; background:var(--board-accent-soft); color:var(--board-accent-ink); font-size:.56rem}
+
+  .navrow{display:flex; align-items:center; justify-content:space-between; gap:.8rem}
+  .navbtn{
+    font:650 .82rem/1.15 var(--font-body); cursor:pointer;
+    display:flex; gap:.4rem; align-items:center;
+    border:1px solid var(--ui-border); border-radius:var(--radius-control); padding:.6rem 1rem;
+    background:var(--ui-surface-raised); color:var(--ui-ink); transition:.12s; box-shadow:var(--ui-shadow-small);
+  }
+  .navbtn:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--board-accent), var(--ui-shadow-small); color:var(--board-accent-ink)}
+  .navbtn:disabled{opacity:.35; cursor:default}
+  .pos{font:600 .74rem/1 var(--font-mono); color:var(--ui-muted); font-variant-numeric:tabular-nums}
+  .pos b{color:var(--ui-ink)}
+  .empty{padding:2.2rem; text-align:center; color:var(--ui-muted); font-size:.9rem; background:var(--ui-surface); border:1px dashed var(--ui-border-strong); border-radius:var(--radius-card)}
+
+  /* generated reply */
+  .brief{margin-top:1.6rem; padding-top:2.2rem; border-top:1px solid var(--ui-border); display:grid; gap:.9rem}
+  .brief h2{margin:0; max-width:20ch; font-family:var(--font-display); font-weight:520; font-size:1.6rem; letter-spacing:-.03em; line-height:1.05}
+  .prompt-card{overflow:hidden; border-radius:calc(var(--radius-card) + .3rem); background:var(--ui-code); box-shadow:var(--ui-shadow-small)}
+  .prompt-bar{display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; justify-content:space-between; padding:.75rem .8rem .75rem 1.1rem; border-bottom:1px solid color-mix(in srgb, var(--ui-code-ink) 16%, transparent); color:var(--ui-code-ink)}
+  .prompt-bar span{font:600 .68rem/1.2 var(--font-mono); letter-spacing:.08em; text-transform:uppercase}
+  .btn{font:750 .78rem/1.15 var(--font-body); cursor:pointer; border:0; border-radius:var(--radius-control); padding:.55rem .9rem; background:var(--ui-accent); color:var(--ui-accent-contrast)}
+  .btn:active{transform:scale(.97)}
+  .prompt-card textarea{display:block; width:100%; min-height:11rem; padding:1.1rem 1.2rem; border:0; resize:vertical; background:transparent; color:var(--ui-code-ink); font:400 .78rem/1.6 var(--font-mono); tab-size:2}
+  .copy-status{min-height:1.2em; margin:0; color:var(--ui-positive); font-size:.78rem}
+
+  .foot{color:var(--ui-faint); font-size:.76rem; line-height:1.7; margin-top:1rem}
+  .kbd{font:600 .62rem/1 var(--font-mono); border:1px solid var(--ui-border-strong); border-radius:4px; padding:.12rem .35rem; color:var(--ui-muted)}
+  .theme-toggle{font:650 .66rem/1 var(--font-mono); cursor:pointer; border:1px solid var(--ui-border); border-radius:9999px; padding:.45rem .8rem; background:var(--ui-surface-raised); color:var(--ui-muted)}
+  @media (max-width:36rem){ .qcard{padding:1.2rem 1.1rem} .q-title{font-size:1.3rem} }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
+</style>
+
+<header class="docbar">
+  <span class="docbrand">
+    <span>
+      <strong>What each work plan still hides</strong>
+      <small>Prospector · Discover</small>
+    </span>
+  </span>
+  <nav>
+    <button class="theme-toggle" id="themeBtn" aria-label="Toggle color theme">◐ theme</button>
+    <a href="#generated-brief">Generated reply ↓</a>
+  </nav>
+</header>
+
+<aside class="docnav" aria-label="Board navigation">
+  <p>On this board</p>
+  <a href="#overview">Blind-spot frame</a>
+  <a href="#browser">Nine unknowns</a>
+  <a href="#generated-brief">Generated reply</a>
+  <div class="rule"></div>
+  <p>Your input</p>
+  <div class="counts-row"><span>Accepted</span><strong id="accCount">0</strong></div>
+  <div class="counts-row"><span>Notes</span><strong id="noteCount">0</strong></div>
+  <div class="rule"></div>
+  <p>Board set</p>
+  <div class="boardset">
+    <span><span class="dot" style="background:var(--ui-amber)"></span>1 · Current state</span>
+    <span class="here"><span class="dot" style="background:var(--board-accent)"></span>2 · Blind spots</span>
+    <span><span class="dot" style="background:var(--ui-positive)"></span>3 · Readiness</span>
+  </div>
+</aside>
+
+<main class="page">
+  <header id="overview">
+    <p class="eyebrow"><span class="glyph">🔦</span> Question 2 of 3 — Blind spots · Prospector</p>
+    <h1>Nine unknowns, one at a time</h1>
+    <p class="lede">Each unknown carries a recommendation you can accept as-is or override. Sources point into the committed <span class="mono">state/discovery.md</span> ledgers; the two runtime premises are flagged, never asserted.</p>
+    <div class="h-counts">
+      <span class="count blk">4 blocking</span>
+      <span class="count">9 total</span>
+    </div>
+  </header>
+
+  <div id="browser" style="display:grid; gap:.9rem">
+    <div class="chips" id="filters" role="group" aria-label="Filter unknowns">
+      <button class="chip" data-f="all" aria-pressed="true">all</button>
+      <button class="chip blk" data-f="blocking" aria-pressed="false">blocking</button>
+      <button class="chip" data-f="governance" aria-pressed="false">governance</button>
+      <button class="chip" data-f="runtime" aria-pressed="false">runtime</button>
+      <button class="chip" data-f="spec" aria-pressed="false">spec</button>
+      <button class="chip" data-f="safety" aria-pressed="false">safety</button>
+      <button class="chip" data-f="scope" aria-pressed="false">scope</button>
+      <button class="chip" data-f="silent" aria-pressed="false">silent</button>
+    </div>
+    <div class="pips" id="pips" role="tablist" aria-label="Jump to unknown"></div>
+    <div id="stage" aria-live="polite"></div>
+    <div class="navrow">
+      <button class="navbtn" id="prev">← Previous</button>
+      <span class="pos" id="pos"></span>
+      <button class="navbtn" id="next">Next →</button>
+    </div>
+    <p class="foot" style="margin:0">Navigate with <span class="kbd">←</span> <span class="kbd">→</span>, the pips, or <span class="kbd">A</span> to accept the recommendation.</p>
+  </div>
+
+  <div class="brief" id="generated-brief">
+    <p class="eyebrow">Reply</p>
+    <h2>Generated reply</h2>
+    <div class="prompt-card">
+      <div class="prompt-bar">
+        <span>Blind-spot position → coder</span>
+        <button class="btn" id="copyBtn">Copy prompt</button>
+      </div>
+      <textarea id="promptHost" readonly aria-label="Generated prompt"></textarea>
+    </div>
+    <p class="copy-status" id="copyStatus" aria-live="polite"></p>
+  </div>
+
+  <p class="foot">
+    Demo — the discover shell (docbar · docnav · serif editorial voice · warm paper · terracotta accent · generated reply) married to the free-form lessons: category ramp extending the shell palette, decision-first cards (Recommend / Why / plain English / sources), per-card accept + notes, pip index, keyboard nav, data-driven rendering.
+  </p>
+</main>
+
+<dialog class="note" id="noteDlg">
+  <p class="eyebrow" style="margin-bottom:.7rem">Card note</p>
+  <textarea id="noteText" placeholder="Your note on this unknown — folded into the generated reply."></textarea>
+  <div class="row">
+    <button class="btn ghost" id="noteCancel">Cancel</button>
+    <button class="btn" id="noteSave">Save note</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = [
+    { id:"U1", cat:"governance", blocking:true, sev:"critical", owner:["OP+TL","Operator + tech-lead"],
+      title:"Host model is undecided",
+      q:"Where does the leased-job scheduler run — the operator's machine, or the always-on VPS?",
+      ev:"The scheduler design assumes an always-on host, but no ledger entry records which host, who pays for it, or who patches it.",
+      rec:"Decide VPS. The lease model only degrades gracefully if the host outlives the operator's laptop lid; record the decision in the scheduler stream's ledger.",
+      opts:[
+        { v:"vps", t:"Always-on VPS", rec:true,
+          r:"Survives laptop lids and weekends; the lease model degrades gracefully on a host that never sleeps." },
+        { v:"laptop", t:"Operator's machine",
+          r:"Zero new cost and no new credentials — but the first closed lid breaks the paper trade." },
+        { v:"defer", t:"Defer to the interface freeze",
+          r:"Keeps options open, at the price of every scheduler build task staying parked." }
+      ],
+      why:"Every scheduler build task is parked behind this one line. An undecided host silently becomes “the laptop”, and the first weekend away breaks the paper trade.",
+      plain:"Nobody has written down which computer the scheduler lives on. Until someone picks one, the whole scheduler build stays frozen.",
+      src:["state/discovery.md:U1","scheduler …kwtt2n"] },
+    { id:"U2", cat:"governance", blocking:true, sev:"critical", owner:["OP","Operator"],
+      title:"No do-not-edit fence",
+      q:"Which files may the coding agent never touch while the scheduler is being built?",
+      ev:"Previous passes edited live config alongside generated code; the ledger flags it but no fence list exists.",
+      rec:"Write the fence as a short allowlist in the stream's ledger before any build task opens — config, credentials, and the live QuestDB schema stay out of bounds.",
+      why:"Without a fence, the first automated build step can rewrite the one file the running ingest depends on. Cheap to write now, expensive to discover later.",
+      plain:"Agree up front which files are off-limits to the robot, so it can't accidentally break the live system while building the new one.",
+      src:["state/discovery.md:U2"] },
+    { id:"U3", cat:"runtime", blocking:true, sev:"critical", owner:["OP+DA","Operator + data"],
+      title:"QuestDB 8.1.1 DOUBLE[] premise is unqueried",
+      q:"Does the live QuestDB 8.1.1 instance actually reject DOUBLE[] columns the way the crash-loop diagnosis assumes?",
+      ev:"The ingest crash-loop is root-caused to the array column in the ledger — but the constraint was inferred from docs, never queried against the running instance.",
+      rec:"Run the one-line probe against the live instance before choosing an encoding. Cheapest probe in the whole set: a single CREATE TABLE attempt.",
+      why:"If the premise is wrong, the chosen fix solves a problem the database doesn't have — and the real crash cause survives the rewrite.",
+      plain:"We think the database can't handle a certain column type, but nobody has actually asked the database. One quick test settles it.",
+      src:["state/discovery.md:U3","ingest …a54yx4"] },
+    { id:"U4", cat:"spec", blocking:true, sev:"high", owner:["DA","Data"],
+      title:"Array encoding is undecided",
+      q:"If DOUBLE[] is out, do LOB levels land as flattened columns, a JSON blob, or a side table?",
+      ev:"Three candidate encodings are sketched in the ledger; none is chosen, and the ingest fix cannot be written against “one of three”.",
+      rec:"Flattened columns (l1_px … l10_px). Query-side code stays SQL-native, and the probe from U3 tells you the exact constraint to design around.",
+      opts:[
+        { v:"flat", t:"Flattened columns (l1_px … l10_px)", rec:true,
+          r:"Query-side SQL stays native, column pruning keeps reads cheap, and the U3 probe tells you the exact constraint to design around." },
+        { v:"json", t:"Single JSON blob per tick",
+          r:"Simplest write path — but every read pays parse cost and gives up column pruning entirely." },
+        { v:"side", t:"Side table, one row per level",
+          r:"Cleanest relational model; doubles write amplification on every tick at exactly the ingest rate that's already fragile." }
+      ],
+      why:"Every day undecided is a day the ingest stream shows “root-caused” and ships nothing. The encoding decision is the last input the fix needs.",
+      plain:"We know roughly what's wrong, but there are three ways to store the data and no one has picked one. Until then the fix can't be coded.",
+      src:["state/discovery.md:U4"] },
+    { id:"U5", cat:"runtime", blocking:false, sev:"high", owner:["DA","Data"],
+      title:"The `active` flag has never been read live",
+      q:"Is the strategy `active` state in the running system what the committed ledger says it is?",
+      ev:"Every board renders `active` from state.md; the live value has never been sampled. Flagged “needs live query” on all three boards.",
+      rec:"Sample it once during the U3 probe session and reconcile the ledger the same day.",
+      why:"A stale `active` flag makes the readiness board lie in the optimistic direction — the worst direction for a go/no-go call.",
+      plain:"The dashboard says which strategies are switched on, but that's copied from notes, not read from the machine. Check the machine once.",
+      src:["state/discovery.md:U5"] },
+    { id:"U6", cat:"spec", blocking:false, sev:"medium", owner:["TL","Tech-lead"],
+      title:"Scheduler premise built on unqueried load profile",
+      q:"Does the leased-job design's tick-volume assumption match what ingest actually produces per session?",
+      ev:"The design doc cites a per-session tick volume with no source; the ingest stream can produce the real number from one day of logs.",
+      rec:"Pull one day of real volume from the ingest logs before the interface freeze; adjust the lease quantum if it's off by more than 2×.",
+      why:"A scheduler sized to a guessed load either thrashes or idles. The real number is one grep away.",
+      plain:"The new scheduler was designed around a guess of how much data flows. Measure the real flow before locking the design.",
+      src:["state/discovery.md:U6","scheduler design.md"] },
+    { id:"U7", cat:"silent", blocking:false, sev:"high", owner:["TL","Tech-lead"],
+      title:"A strategy that never ticks fails silently",
+      q:"What alerts when a subscribed strategy simply stops receiving ticks?",
+      ev:"The failure path exists in the amplification map: subscription survives, data stops, nothing notices until a human looks.",
+      rec:"Add a per-strategy last-tick watchdog to the scheduler's job spec now, while the interface is still unfrozen.",
+      why:"This is the classic silent failure: every component is “up”, the pipeline is dead, and the paper trade quietly trades on stale data.",
+      plain:"If the data feed for one strategy quietly dies, nothing complains. Build the alarm in from the start — it's cheap now, painful later.",
+      src:["state/discovery.md:U7","risk-paths §B"] },
+    { id:"U8", cat:"scope", blocking:false, sev:"medium", owner:["OP","Operator"],
+      title:"Paper-trade stream owns no work",
+      q:"Should “first paper trade” remain a stream when every one of its tasks belongs to scheduler or ingest?",
+      ev:"Its registry lists 3 tasks, all cross-referenced elsewhere; the stream exists as a milestone wearing a stream's clothes.",
+      rec:"Keep it, but relabel it a milestone in the ledger so the board stops counting it as parallel capacity.",
+      why:"A stream with no independent work inflates the “active streams” count and hides that the program is narrower than it looks.",
+      plain:"One of the seven work streams is really just a finish line, not a workstream. Call it what it is so the plan reads honestly.",
+      src:["state.md:…734ty8"] },
+    { id:"U9", cat:"safety", blocking:false, sev:"medium", owner:["OP","Operator"],
+      title:"Ledger-vs-live drift has no recheck clock",
+      q:"When are the committed registries next reconciled against the live system as a whole?",
+      ev:"Two live checks are flagged (U3, U5) but nothing schedules a periodic sweep; drift accumulates between discovery passes.",
+      rec:"Attach a recheck trigger to the deferred-items rail: reconcile after the scheduler lands, and before any go verdict is signed.",
+      why:"Every deferred item on the timeline rail has an alarm clock except the ledger itself. Boards inherit whatever staleness the ledger carries.",
+      plain:"The notes these boards are built from need a scheduled fact-check against reality, or they slowly stop being true.",
+      src:["state/discovery.md:U9","assumptions rail"] }
+  ];
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  var stage = document.getElementById("stage");
+  var pipsEl = document.getElementById("pips");
+  var posEl = document.getElementById("pos");
+  var prevBtn = document.getElementById("prev");
+  var nextBtn = document.getElementById("next");
+  var filter = "all";
+  var idx = 0;
+  var accepted = {};
+  var choices = {};
+  var notes = {};
+
+  function refreshCounts() {
+    var n = Object.keys(accepted).filter(function (k) { return accepted[k]; }).length +
+            Object.keys(choices).length;
+    document.getElementById("accCount").textContent = String(n);
+    document.getElementById("noteCount").textContent = String(Object.keys(notes).length);
+  }
+  function toggleAccept() {
+    var d = DATA[idx];
+    if (d.opts) {
+      var rec = d.opts.filter(function (o) { return o.rec; })[0];
+      if (rec) { if (choices[d.id] === rec.v) delete choices[d.id]; else choices[d.id] = rec.v; }
+    } else {
+      accepted[d.id] = !accepted[d.id];
+    }
+    refreshCounts(); render();
+  }
+  var dlg = document.getElementById("noteDlg"), noteFor = null;
+  function openNote(id) {
+    noteFor = id;
+    document.getElementById("noteText").value = notes[id] || "";
+    dlg.showModal();
+  }
+  document.getElementById("noteCancel").addEventListener("click", function () { dlg.close(); });
+  document.getElementById("noteSave").addEventListener("click", function () {
+    var v = document.getElementById("noteText").value.trim();
+    if (v) notes[noteFor] = v; else delete notes[noteFor];
+    refreshCounts(); dlg.close(); render();
+  });
+
+  function visible() {
+    return DATA.map(function (d, i) { return { d: d, i: i }; }).filter(function (x) {
+      if (filter === "all") return true;
+      if (filter === "blocking") return x.d.blocking;
+      return x.d.cat === filter;
+    });
+  }
+
+  function render() {
+    var vis = visible();
+    pipsEl.innerHTML = "";
+    DATA.forEach(function (d, i) {
+      var b = document.createElement("button");
+      b.className = "pip" + (d.blocking ? " blocking" : "") + (i === idx ? " active" : "");
+      if (!vis.some(function (x) { return x.i === i; })) b.className += " dim";
+      b.textContent = (accepted[d.id] || choices[d.id]) ? "✓" : String(i + 1);
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-label", d.id + " — " + d.title);
+      b.setAttribute("aria-selected", i === idx ? "true" : "false");
+      b.addEventListener("click", function () { idx = i; render(); });
+      pipsEl.appendChild(b);
+    });
+
+    if (!vis.length) {
+      stage.innerHTML = '<div class="empty">No unknowns match this filter.</div>';
+      posEl.textContent = "0 / 0";
+      prevBtn.disabled = nextBtn.disabled = true;
+      return;
+    }
+    if (!vis.some(function (x) { return x.i === idx; })) idx = vis[0].i;
+
+    var d = DATA[idx];
+    var kc = "var(--k-" + d.cat + ")", ks = "var(--k-" + d.cat + "-soft)", ki = "var(--k-" + d.cat + "-ink)";
+    stage.innerHTML =
+      '<article class="qcard" style="--kc:' + kc + ';--ksoft:' + ks + ';--kink:' + ki + '">' +
+        '<div class="tags">' +
+          '<span class="tag qid">' + esc(d.id) + '</span>' +
+          '<span class="tag cat">' + esc(d.cat) + '</span>' +
+          (d.blocking ? '<span class="tag blk">blocking</span>' : '') +
+          '<span class="tag sev">severity: ' + esc(d.sev) + '</span>' +
+          (accepted[d.id] ? '<span class="tag" style="background:var(--ui-positive-soft);color:var(--ui-positive)">accepted ✓</span>' : '') +
+          (choices[d.id] ? '<span class="tag" style="background:var(--ui-positive-soft);color:var(--ui-positive)">decided ✓</span>' : '') +
+        '</div>' +
+        '<h2 class="q-title">' + esc(d.title) + '</h2>' +
+        '<p class="q-ask">' + esc(d.q) + '</p>' +
+        '<div class="sect"><span class="lbl">Evidence</span><p class="bd">' + esc(d.ev) + '</p></div>' +
+        (d.opts
+          ? '<div class="sect"><span class="lbl rec">Choose one — recommendation marked</span><div class="opts">' +
+            d.opts.map(function (o) {
+              return '<label class="opt"><input type="radio" name="opt-' + d.id + '" value="' + esc(o.v) + '"' + (choices[d.id] === o.v ? " checked" : "") + '>' +
+                '<span><strong>' + esc(o.t) + '</strong><small>' + esc(o.r) + '</small></span>' +
+                (o.rec ? '<span class="badge">Recommended</span>' : '') + '</label>';
+            }).join("") + '</div></div>'
+          : '<div class="rec-box"><span class="lbl rec">Recommend — accept as-is or override</span><p class="bd">' + esc(d.rec) + '</p></div>') +
+        '<div class="sect"><span class="lbl">Why it bites</span><p class="bd">' + esc(d.why) + '</p></div>' +
+        '<div class="plain"><p class="bd">' + esc(d.plain) + '</p></div>' +
+        '<div class="card-actions">' +
+          (d.opts ? '' :
+            '<button class="act acc' + (accepted[d.id] ? " on" : "") + '" id="accBtn" type="button">' + (accepted[d.id] ? "Accepted ✓" : "✓ Accept recommendation") + '</button>') +
+          '<button class="act nt' + (notes[d.id] ? " noted" : "") + '" id="noteBtn" type="button">' + (notes[d.id] ? "✎ Note saved" : "✎ Add note") + '</button>' +
+        '</div>' +
+        '<div class="tags" style="justify-content:space-between">' +
+          '<span class="owner"><span class="av">' + esc(d.owner[0]) + '</span>' + esc(d.owner[1]) + '</span>' +
+          '<span class="srcs">' + d.src.map(function (s) { return '<span class="src">' + esc(s) + '</span>'; }).join("") + '</span>' +
+        '</div>' +
+      '</article>';
+
+    var accBtnEl = document.getElementById("accBtn");
+    if (accBtnEl) accBtnEl.addEventListener("click", toggleAccept);
+    document.getElementById("noteBtn").addEventListener("click", function () { openNote(d.id); });
+    Array.prototype.forEach.call(stage.querySelectorAll('input[type="radio"]'), function (r) {
+      r.addEventListener("change", function () {
+        choices[d.id] = r.value;
+        refreshCounts(); render();
+      });
+    });
+
+    var pos = vis.findIndex(function (x) { return x.i === idx; });
+    posEl.innerHTML = "<b>" + (pos + 1) + "</b> / " + vis.length + (filter !== "all" ? " · " + esc(filter) : "");
+    prevBtn.disabled = pos === 0;
+    nextBtn.disabled = pos === vis.length - 1;
+    buildPrompt();
+  }
+
+  function step(dir) {
+    var vis = visible();
+    var pos = vis.findIndex(function (x) { return x.i === idx; });
+    var np = pos + dir;
+    if (np >= 0 && np < vis.length) { idx = vis[np].i; render(); }
+  }
+
+  prevBtn.addEventListener("click", function () { step(-1); });
+  nextBtn.addEventListener("click", function () { step(1); });
+  document.addEventListener("keydown", function (e) {
+    if (e.target && /TEXTAREA|INPUT/.test(e.target.tagName)) return;
+    if (e.key === "ArrowLeft") step(-1);
+    if (e.key === "ArrowRight") step(1);
+    if (e.key === "a" || e.key === "A") toggleAccept();
+  });
+
+  var chips = Array.prototype.slice.call(document.querySelectorAll("#filters .chip"));
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      chips.forEach(function (x) { x.setAttribute("aria-pressed", x === c ? "true" : "false"); });
+      filter = c.getAttribute("data-f");
+      render();
+    });
+  });
+
+  function buildPrompt() {
+    var acc = DATA.filter(function (d) { return accepted[d.id]; });
+    var chosen = DATA.filter(function (d) { return choices[d.id]; });
+    var open = DATA.filter(function (d) { return !accepted[d.id] && !choices[d.id]; });
+    var lines = ["Prospector · blind-spot position (board 2 of 3)", ""];
+    if (acc.length) {
+      lines.push("Accepted recommendations:");
+      acc.forEach(function (d) { lines.push("- " + d.id + " " + d.title + " → " + d.rec); });
+      lines.push("");
+    }
+    if (chosen.length) {
+      lines.push("Decisions made:");
+      chosen.forEach(function (d) {
+        var o = d.opts.filter(function (x) { return x.v === choices[d.id]; })[0];
+        lines.push("- " + d.id + " " + d.title + " → " + (o ? o.t + (o.rec ? " (recommended)" : " (override)") : choices[d.id]));
+      });
+      lines.push("");
+    }
+    lines.push("Still open (" + open.length + "):");
+    open.forEach(function (d) { lines.push("- " + d.id + " [" + d.cat + (d.blocking ? " · BLOCKING" : "") + "] " + d.title); });
+    var nk = Object.keys(notes);
+    if (nk.length) { lines.push("", "Reviewer notes:"); nk.forEach(function (k) { lines.push("- [" + k + "] " + notes[k]); }); }
+    lines.push("", "Runtime premises flagged, not asserted: QuestDB 8.1.1 DOUBLE[]; strategy `active` state.");
+    document.getElementById("promptHost").value = lines.join("\n");
+  }
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var host = document.getElementById("promptHost");
+    host.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(host.value).catch(function () {});
+    document.getElementById("copyStatus").textContent = "Copied to clipboard.";
+  });
+
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.dataset.theme === "dark" ||
+      (root.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+  });
+
+  render();
+})();
+</script>

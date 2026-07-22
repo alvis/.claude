@@ -53,5 +53,5 @@ checklist: any template change should preserve the strengths listed on both side
 ## Where the full captures live
 
 The raw captured HTML (several hundred KB per board) is intentionally **not** committed. The
-approved demos are committed as golden examples (`examples/src/readiness-verdict-board/`,
-`examples/src/decision-browser/`); the artifact ids above locate every capture on claude.ai.
+approved demos are committed as golden examples (`examples/reference/readiness-verdict-board.html`,
+`examples/reference/decision-browser.html`); the artifact ids above locate every capture on claude.ai.

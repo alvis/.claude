@@ -68,4 +68,4 @@ JSON array
 | Token whitelist, dual-theme completeness, stray hex | `scripts/build_artifact.py` `_validate()` |
 | `${…}` literal guard | `scripts/build_artifact.py` `_validate()` |
 | Self-containment | `scripts/build_artifact.py` `_validate()` |
-| Per-card capture + live prompt rebuild | golden examples (`examples/src/readiness-verdict-board/`, `examples/src/decision-browser/`) + this checklist at review |
+| Per-card capture + live prompt rebuild | golden examples (`examples/reference/readiness-verdict-board.html`, `examples/reference/decision-browser.html`) + this checklist at review |

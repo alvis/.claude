@@ -1505,7 +1505,7 @@ lanes and at least six cards, each card with its lane `<select>`.
 
 Recipes distilled from the approved free-form boards (see
 `references/comparisons/v1-vs-v2-notes.md` and the golden examples
-`examples/src/readiness-verdict-board/`, `examples/src/decision-browser/`).
+`examples/reference/readiness-verdict-board.html`, `examples/reference/decision-browser.html`).
 They compose existing floor mechanisms — most need only bespoke, token-styled
 in-page CSS, which the free-form policy welcomes.
 
