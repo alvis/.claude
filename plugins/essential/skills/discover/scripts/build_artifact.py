@@ -331,10 +331,115 @@ def _validate_source(html: str) -> None:
             f"dead asset-URL placeholder(s) present: {sorted(set(dead))} "
             "(that convention is gone; the builder injects the assets)"
         )
+    problems.extend(_board_theme_problems(html))
+    problems.extend(_stray_color_problems(html))
     if problems:
         raise BuildError(
             "source validation failed:\n  - " + "\n  - ".join(problems)
         )
+
+
+BOARD_THEME_BLOCK_RE = re.compile(
+    r"<style[^>]*\bdata-board-theme\b[^>]*>(.*?)</style>", re.DOTALL | re.IGNORECASE
+)
+STYLE_BLOCK_RE = re.compile(r"<style[^>]*>(.*?)</style>", re.DOTALL | re.IGNORECASE)
+SCRIPT_BLOCK_RE = re.compile(r"<script[^>]*>.*?</script>", re.DOTALL | re.IGNORECASE)
+CSS_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+CUSTOM_PROP_RE = re.compile(r"(--[\w-]+)\s*:")
+# The only tokens a board-theme overlay may redefine (references/features.md §B).
+BOARD_THEME_WHITELIST_RE = re.compile(
+    r"^--ui-(?:"
+    r"accent(?:-contrast|-soft|-ink)?"
+    r"|verdict-[a-z]+(?:-soft|-ink)?"
+    r"|status-[a-z]+(?:-soft|-ink)?"
+    r"|k-[a-z]+(?:-soft|-ink)?"
+    r")$"
+)
+# `${…}` in rendered text means a template literal escaped its script — the
+# free-form-generation bug this pipeline exists to prevent. Script/style bodies
+# legitimately contain template literals and are stripped before the check.
+DOLLAR_LITERAL_RE = re.compile(r"\$\{[^}]{1,120}\}")
+
+
+def _board_theme_problems(html: str) -> list[str]:
+    """Validate the optional <style data-board-theme> overlay block."""
+
+    problems: list[str] = []
+    for block in BOARD_THEME_BLOCK_RE.findall(html):
+        css = CSS_COMMENT_RE.sub("", block)
+        tokens = CUSTOM_PROP_RE.findall(css)
+        bad = sorted({t for t in tokens if not BOARD_THEME_WHITELIST_RE.match(t)})
+        if bad:
+            problems.append(
+                f"board-theme overlay redefines non-whitelisted token(s): {bad} "
+                "(allowed: --ui-accent*, --ui-verdict-*, --ui-status-*, --ui-k-*)"
+            )
+        if not tokens:
+            continue
+        light: set[str] = set()
+        dark: set[str] = set()
+        for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+            selector, body = match.group(1).strip(), match.group(2)
+            names = set(CUSTOM_PROP_RE.findall(body))
+            if 'data-theme="dark"' in selector or "data-theme='dark'" in selector:
+                dark |= names
+            else:
+                light |= names
+        missing_dark = sorted(light - dark)
+        missing_light = sorted(dark - light)
+        if missing_dark:
+            problems.append(
+                f"board-theme overlay lacks dark values for: {missing_dark} "
+                "(every redefined token needs :root AND [data-theme=\"dark\"] values)"
+            )
+        if missing_light:
+            problems.append(
+                f"board-theme overlay lacks light values for: {missing_light} "
+                "(every redefined token needs :root AND [data-theme=\"dark\"] values)"
+            )
+    return problems
+
+
+def _stray_color_problems(html: str) -> list[str]:
+    """Color literals belong in the board-theme overlay or [data-specimen] CSS.
+
+    Everything else styles through the ``--ui-*`` tokens, so raw hex /
+    rgb / oklch values in ordinary inline <style> blocks are almost always a
+    palette leak. Blocks that scope themselves to ``[data-specimen]`` keep the
+    long-standing specimen exemption.
+    """
+
+    problems: list[str] = []
+    without_board_theme = BOARD_THEME_BLOCK_RE.sub("", html)
+    for block in STYLE_BLOCK_RE.findall(without_board_theme):
+        if "data-specimen" in block:
+            continue
+        css = CSS_COMMENT_RE.sub("", block)
+        # Only raw hex is flagged: color-mix()/oklch() over --ui-* tokens is a
+        # legitimate idiom in bespoke section CSS.
+        raw_hex = re.findall(r"#[0-9a-fA-F]{3,8}\b", css)
+        if raw_hex:
+            problems.append(
+                f"raw color literal(s) outside the board-theme overlay: "
+                f"{sorted(set(raw_hex))[:6]} (style through --ui-* tokens, or move "
+                "board palette changes into <style data-board-theme>)"
+            )
+    return problems
+
+
+def _dollar_literal_problems(output: str) -> list[str]:
+    """Find `${…}` sequences in rendered text (scripts/styles stripped)."""
+
+    visible = SCRIPT_BLOCK_RE.sub("", output)
+    visible = STYLE_BLOCK_RE.sub("", visible)
+    hits = DOLLAR_LITERAL_RE.findall(visible)
+    if hits:
+        preview = sorted(set(hits))[:5]
+        return [
+            f"un-interpolated template literal(s) in rendered text: {preview} "
+            "(a JS card template escaped its script — interpolate before emit)"
+        ]
+    return []
 
 
 def _build_full_doc(
@@ -421,6 +526,8 @@ def _validate(output: str, *, artifact: bool) -> None:
     raw_fffd = output.encode("utf-8").count(RAW_FFFD.encode("utf-8"))
     if raw_fffd:
         problems.append(f"{raw_fffd} raw U+FFFD byte(s) present (deploy will 400)")
+
+    problems.extend(_dollar_literal_problems(output))
 
     if "@tailwindcss/browser" not in output:
         problems.append("Tailwind runtime not inlined")

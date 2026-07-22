@@ -95,6 +95,53 @@
     --ui-sev-critical: #b0402f;
     --ui-sev-critical-soft: #f6e2dc;
     --ui-sev-critical-ink: #7a2a1e;
+    /* Board-theme semantic ramps — verdict / status / category. Defaults alias
+       the shell's own families so an unthemed board is unchanged. A page's
+       board-theme overlay may re-point ONLY these ramps plus the --ui-accent
+       set (see references/presentation.md, theme contract). */
+    --ui-verdict-go: var(--ui-positive);
+    --ui-verdict-go-soft: var(--ui-positive-soft);
+    --ui-verdict-go-ink: var(--ui-insight-ink);
+    --ui-verdict-partial: var(--ui-insight);
+    --ui-verdict-partial-soft: var(--ui-insight-soft);
+    --ui-verdict-partial-ink: var(--ui-insight-ink);
+    --ui-verdict-probe: var(--ui-provenance-amber);
+    --ui-verdict-probe-soft: var(--ui-provenance-amber-soft);
+    --ui-verdict-probe-ink: var(--ui-provenance-amber-ink);
+    --ui-verdict-stop: var(--ui-sev-critical);
+    --ui-verdict-stop-soft: var(--ui-sev-critical-soft);
+    --ui-verdict-stop-ink: var(--ui-sev-critical-ink);
+    --ui-verdict-done: var(--ui-faint);
+    --ui-verdict-done-soft: var(--ui-surface);
+    --ui-verdict-done-ink: var(--ui-muted);
+    --ui-status-complete: var(--ui-positive);
+    --ui-status-complete-soft: var(--ui-positive-soft);
+    --ui-status-active: var(--ui-accent);
+    --ui-status-active-soft: var(--ui-accent-soft);
+    --ui-status-planned: var(--ui-insight);
+    --ui-status-planned-soft: var(--ui-insight-soft);
+    --ui-status-blocked: var(--ui-sev-critical);
+    --ui-status-blocked-soft: var(--ui-sev-critical-soft);
+    /* Category ramp: three bespoke muted hues (indigo / teal / plum — dark
+       values overridden below); safety/scope/silent alias existing families. */
+    --ui-k-governance: #4f5f9e;
+    --ui-k-governance-soft: #e9ecf6;
+    --ui-k-governance-ink: #38466f;
+    --ui-k-runtime: #0f6e77;
+    --ui-k-runtime-soft: #e0eff0;
+    --ui-k-runtime-ink: #0a4c53;
+    --ui-k-spec: #8a4d84;
+    --ui-k-spec-soft: #f3e8f2;
+    --ui-k-spec-ink: #63365f;
+    --ui-k-safety: var(--ui-sev-critical);
+    --ui-k-safety-soft: var(--ui-sev-critical-soft);
+    --ui-k-safety-ink: var(--ui-sev-critical-ink);
+    --ui-k-scope: var(--ui-provenance-amber);
+    --ui-k-scope-soft: var(--ui-provenance-amber-soft);
+    --ui-k-scope-ink: var(--ui-provenance-amber-ink);
+    --ui-k-silent: var(--ui-faint);
+    --ui-k-silent-soft: var(--ui-surface);
+    --ui-k-silent-ink: var(--ui-muted);
     --ui-code: #1c1c1a;
     --ui-code-ink: #f2efe6;
     --ui-focus: #b85c3e;
@@ -132,6 +179,18 @@
     --ui-provenance-amber: oklch(0.79 0.11 74);
     --ui-provenance-amber-soft: oklch(0.31 0.055 70);
     --ui-provenance-amber-ink: oklch(0.9 0.05 82);
+    /* Category ramp dark values for the three bespoke hues; the aliasing
+       verdict/status tokens and the safety/scope/silent categories adapt via
+       their theme-aware sources and need no override. */
+    --ui-k-governance: oklch(0.72 0.1 275);
+    --ui-k-governance-soft: oklch(0.28 0.05 275);
+    --ui-k-governance-ink: oklch(0.88 0.05 275);
+    --ui-k-runtime: oklch(0.74 0.1 200);
+    --ui-k-runtime-soft: oklch(0.28 0.045 200);
+    --ui-k-runtime-ink: oklch(0.88 0.05 200);
+    --ui-k-spec: oklch(0.72 0.1 330);
+    --ui-k-spec-soft: oklch(0.28 0.05 330);
+    --ui-k-spec-ink: oklch(0.88 0.05 330);
     /* Syntax tokens: the code surface is darker still in dark theme, so lift the
        lightness a touch to keep the highlighting crisp. */
     --ui-tok-kw: oklch(0.78 0.14 300);
@@ -1097,6 +1156,9 @@ body::before {
   text-transform: uppercase;
 }
 
+/* Deprecated: the docbar no longer carries a logo mark — the document title
+   leads. Kept only so older composed examples still render; do not use in new
+   boards. */
 .essential-docmark {
   display: grid;
   width: 2rem;
@@ -2614,8 +2676,17 @@ h3 {
 }
 
 @media (max-width: 54rem) {
+  /* Static docbar on narrow viewports: a fixed bar with a hard clearance
+     collides with the masthead as soon as the document title wraps. Let it
+     scroll with the page instead and drop the clearance padding. */
   .essential-docbar {
+    position: static;
     grid-template-columns: 1fr auto;
+    min-height: 0;
+  }
+
+  html {
+    scroll-padding-top: 1rem;
   }
 
   .essential-docbar nav span {
@@ -2625,7 +2696,7 @@ h3 {
   .discovery-page {
     width: min(calc(100% - 2rem), 46rem);
     margin-inline: auto;
-    padding: 7.4rem 0 5.5rem;
+    padding: 2.2rem 0 5.5rem;
   }
 
   .essential-docnav {

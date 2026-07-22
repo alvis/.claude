@@ -21,6 +21,15 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
+    <style data-board-theme>
+      /* Optional board-theme overlay — the ONLY place a page may redefine
+         color. Whitelisted tokens only: --ui-accent / -contrast / -soft /
+         -ink, --ui-verdict-*, --ui-status-*, --ui-k-*. Every redefined token
+         must be set for BOTH :root and [data-theme="dark"]. Prefer aliasing
+         the shell's own palette families (positive/insight/amber/critical)
+         over inventing new hues. Leave this block empty to keep the default
+         palette. Contract: references/presentation.md (theme contract). */
+    </style>
     <!--
       This source carries no asset references: no CDN Tailwind script, no
       discovery.css link, no discovery.js script (external or relative). Run
@@ -34,10 +43,9 @@
   >
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
-        <span class="essential-docmark">E_</span>
         <span
           ><strong>{{DOCUMENT_TITLE}}</strong
-          ><small>Essential · Discover</small></span
+          ><small>{{PRODUCT_NAME}} · Discover</small></span
         >
       </a>
       <nav aria-label="Document utilities">
