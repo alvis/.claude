@@ -15,8 +15,9 @@ work state already on disk — no receipt is required because nothing left the
 machine. Cross-machine resumption first rehydrates the streams from a portable
 handover receipt into workspace-local memory, then continues them the same way.
 Either path resolves pending decisions and hands each selected stream to the
-relevant implementation skill exactly once. Resumption does not stop at that
-hand-off: it always surfaces the unblocked streams as the recommended next work,
+relevant implementation skill, one hand-off per runnable next action. Resumption
+does not stop at that first hand-off: it always surfaces the unblocked streams as
+the recommended next work,
 delegates each stream's planning to the relevant lead role, drives each selected
 stream toward completion, and on completion persists state to `.engineering/`,
 promotes confirmed implementation and decisions to the repo's `docs/`, and for a
@@ -290,15 +291,20 @@ L5. Resolve decisions that block a selected stream's next action with
     questions explicit with owner/deadline. (The local resume path already did
     this in step L5; do not repeat it.)
 
-11. Plan, then resume, exactly once per selected stream. Do not plan the work
-    inline: first delegate the stream's planning to the relevant lead role,
+11. Plan, then resume the stream's current runnable next action. Do not plan the
+    work inline: first delegate the stream's planning to the relevant lead role,
     giving it a bounded mission capsule — goal, next action, staged
     specification, work ID/root, resolved decisions, contradictions, and original
     user context. The lead returns a proposed **team** (coordinated parallel
     work) **or** a **structured multi-phase workflow**, with the task detail for
     each piece. Then execute that plan through the stream's declared continuation
-    intent, handing off exactly once to the relevant implementation skill and
-    passing the lead's plan alongside the same capsule. Each stream keeps its own
+    intent, handing off to the relevant implementation skill and
+    passing the lead's plan alongside the same capsule. Hand off once per runnable
+    next action — the drive-to-completion loop in step 13 re-enters this step for
+    each subsequent runnable action, and a completed action is never re-handed.
+    Because takeover owns post-completion publication (step 12), instruct the
+    hand-off to **defer its own publication**: it saves work locally but does not
+    open or update pull requests itself. Each stream keeps its own
     coordinator lease, so per-stream handoffs run sequentially or as per-stream
     continuation capsules to the PM. Choose each skill by mapping that stream's
     capability-level continuation-intent descriptor to the relevant
@@ -325,7 +331,11 @@ L5. Resolve decisions that block a selected stream's next action with
       capability specification goes to `docs/specs/<capability>/`, each with
       provenance and supersession links. Do not promote transient task state.
     - **Pull requests (coding streams only).** When the completed stream's
-      continuation intent is code implementation, hand its saved change(s) to the
+      continuation intent is code implementation, first ensure any `docs/`
+      promoted above are **saved into the change** through the relevant
+      save/finalization capability so the working tree is clean — publication
+      requires a clean saved change, and unsaved docs would otherwise block it or
+      be omitted from the pull request. Then hand the saved change(s) to the
       relevant change-publication capability: multiple dependent changes open as
       an ordered **stack** of pull requests, a single small change as a **single
       pull request**. Confirm that capability is available before routing;
@@ -379,9 +389,10 @@ L5. Resolve decisions that block a selected stream's next action with
   was re-rendered fresh as current-focus-only; no snapshot was parsed or
   re-rendered, and no validator gate was run.
 - Every resolved decision is durable in the affected stream's decision artifacts.
-- Exactly one implementation-skill handoff occurred per selected stream, chosen
+- Each implementation-skill handoff advanced one runnable next action, chosen
   from that stream's declared continuation intent, with no fixed skill name and
-  no silent fallback.
+  no silent fallback; no completed action was re-handed, and each handoff
+  deferred its own publication to takeover.
 - Unblocked streams were surfaced first as the recommended next work, and each
   selected stream was driven toward completion or stopped at a named blocker
   rather than left after a single hand-off.
