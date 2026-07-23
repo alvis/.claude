@@ -171,7 +171,10 @@ checksum verification — exactly one of:>
 
 <The raw contents of this stream's state.md, state/working.md, and every
 continuity-relevant detail file — decisions, changes, design, state/*.md
-children, needed artifacts — each in its own fenced block. On the line
+children, needed artifacts, and every outstanding `proposals/` child (any still
+awaiting approval or approved but not yet implemented, so its body travels rather
+than leaving `state.md` pointing at a missing file) — each in its own fenced
+block. On the line
 immediately before each opening fence, name the path relative to the stream root
 as `path: <relative path>` (never prefixed with the work ID), because takeover
 writes each file back into the resolved work root and a `<work-id>/` prefix would

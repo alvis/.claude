@@ -261,9 +261,13 @@ status, acceptance criteria, decisions, dependencies, blockers, open questions,
 review state, evidence references, repository revision, specification
 provenance, and sync state. It also carries the list of `proposals/` still
 awaiting user approval and those approved but not yet implemented, so a resume
-sees the outstanding proposal work without scanning the folder. It links
-prominently to `state/working.md` and each lazy work overview that currently
-exists. It references details rather than
+sees the outstanding proposal work without scanning the folder. This inventory is
+kept current under the same continuous-persistence discipline as task state:
+whenever a proposal child is created or its status changes, the reconciling
+coordinator updates the `state.md` inventory at once — not only during a later
+handover rewrite — and a worker that creates a proposal returns it in its
+reconciliation payload so the coordinator can. It links prominently to
+`state/working.md` and each lazy work overview that currently exists. It references details rather than
 copying them. Semantic children such as `state/plan.md` or `state/discovery.md`
 hold resumable detail. Record open questions in detail in `state/unresolved.md`,
 each with an owner and a disposition (resolved, deferred, or blocking);
@@ -331,9 +335,12 @@ that is not yet implemented stays in `proposals/`; only implementation shifts it
 to `changes/`. A proposal never approved ends in `proposals/` (`rejected` or
 `withdrawn`). Separately, the coordinator creates or links the corresponding
 `changes/` child as implementation proceeds — that child may be `pending` before
-it becomes `applied`, and links back to its originating proposal. `state.md`
-carries the list of proposals still awaiting user approval and those approved but
-pending implementation, so a resume sees the outstanding work at a glance.
+it becomes `applied`. A `changes/` child links back to its originating proposal
+**when one exists**; a direct change record with no proposal (a review explainer,
+an implementation-time material departure) is complete without that back-link.
+`state.md` carries the list of proposals still awaiting user approval and those
+approved but pending implementation, so a resume sees the outstanding work at a
+glance.
 
 Each `proposals/` and `changes/` child SHOULD carry a section recording any
 deviations from the canonical specification, if any — deviations are an optional
