@@ -29,6 +29,7 @@ handover-specific content; all timestamps are one real UTC ISO-8601 value.
 ## Plan graph
 ## Current state and file status
 ## Approved decisions and accepted assumptions
+## Outstanding proposals
 ## Dependencies, blockers, risks, and pivot signals
 ## Reviews and dispositions
 ## Evidence and validation
@@ -45,6 +46,13 @@ Every Task cell is exactly `<summary> [targets: <comma-separated paths>|none]`.
 Marks and status words use `- planned`, `⧗ working`, `✓ done`, `X failed`,
 `! blocked`, or `⊘ cancelled`. Graph notation and diagrams are derived display,
 not authority.
+
+`## Outstanding proposals` preserves the proposal inventory across the state
+rewrite: every `proposals/` child still awaiting user approval and every approved
+proposal not yet implemented, each with its status and child path, so a
+same-machine resume reads the outstanding approval/implementation work from
+`state.md` without scanning the folder. Omit the section only when no such
+proposal exists.
 
 File substates: completed; `need-draft`; `need-completion`; `need-fixing`;
 `need-testing`; `need-linting`; `need-refactoring`; blocked. Record path,

@@ -310,17 +310,19 @@ closes. The PM/coordinator alone reconciles these overviews; subagents may
 create or update assigned children and return them in their output manifest.
 
 `proposals/` and `changes/` both document a work stream's tasks and
-implementation against the active canonical specification (for a Notion-backed
-contract, the canonical Notion spec; for a local or inline contract, its
-canonical carrier). They differ by **implementation state**, not by approval and
-not by being deviations. A `proposals/` child is a task or change that is **not
-yet implemented** — the planned work for the stream, derived from the canonical
-spec; for a Notion-backed contract, the tasks to implement the work stream are
-derived from the canonical Notion spec and recorded here. When the work is done,
-its final implementation documentation shifts to a `changes/` child, together
-with any last-mile changes made during implementation. A `changes/` child
-therefore also holds general implementation and explainer records, not only
-deviations.
+implementation against the active canonical specification — the canonical Notion
+spec for a Notion-backed contract, the source at its exact path for a reachable
+`repo:` local contract (the derived carrier is only content-equivalent, never the
+authority), or the durable carrier for a `local-approved:` or `inline-approved:`
+contract. They differ by **implementation state**, not by approval and not by
+being deviations. A `proposals/` child is anything proposed but **not yet
+implemented**: most often a task to implement the work stream (derived from the
+canonical spec — for a Notion-backed contract, from the canonical Notion spec),
+but also a bounded research finding, a decision proposal, or a
+specification-change proposal awaiting reconciliation. When the work is done, its
+final implementation documentation shifts to a `changes/` child, together with
+any last-mile changes made during implementation. A `changes/` child therefore
+also holds general implementation and explainer records, not only deviations.
 
 Approval is a **status on the proposal, not a folder move**. A proposal is `open`
 until the user approves it and `accepted` once approved, so downstream planning
