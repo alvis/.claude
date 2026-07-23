@@ -1514,10 +1514,10 @@ in-page CSS, which the free-form policy welcomes.
   Question 3 of 3 — Readiness · Prospector</p>`. Orients the reader inside a
   board set at a glance; pair with the multi-board hub.
 
-- **Stat rails.** In a stat strip, give each tile a 3–4px absolutely
-  positioned left rail colored by the semantic ramp it counts
-  (`background: var(--ui-verdict-stop)` for the blocked tile). Counts become
-  scannable by hue before they are read.
+- **Stat rails.** Shell component: inside a `discovery-stat-strip` tile, add
+  `<span class="discovery-stat-rail" style="background: var(--ui-verdict-stop)"></span>`
+  — a 3px left rail colored by the semantic ramp the tile counts. Counts
+  become scannable by hue before they are read.
 
 - **Decision-first card.** One card per finding/verdict/decision, in this
   order: tag row (id, category via `--ui-k-*`, blocking, severity) → title →
@@ -1541,8 +1541,11 @@ in-page CSS, which the free-form policy welcomes.
   ad-hoc classes — the board-theme overlay then re-tints the whole board
   consistently.
 
-- **Readiness meter.** A labeled `n/5` bar: track on `--ui-surface`, fill on
-  the card's ramp color, value in mono with `tabular-nums`.
+- **Readiness meter.** Shell component: a labeled `n/5` bar —
+  `<div class="discovery-meter-row"><span class="discovery-meter-label">ready</span>
+  <span class="discovery-meter"><i style="width: 60%; background: var(--ui-verdict-partial)"></i></span>
+  <span class="discovery-meter-value">3/5</span></div>`. Track on
+  `--ui-surface`, fill on the card's ramp color, value in `tabular-nums`.
 
 - **Landing-map row.** One row per disposition bucket (land / landed / rework
   / park / orphan): a 4px left border and dot on the bucket's ramp color, a

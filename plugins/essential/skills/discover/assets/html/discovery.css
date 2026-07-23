@@ -1605,6 +1605,13 @@ h3 {
   box-shadow: inset 0 0 0 1px var(--ui-accent);
 }
 
+/* Row layout for compact option pairs (accept/override): put on the
+   .discovery-options wrapper to place brief options side by side. */
+.discovery-options-row {
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.5rem;
+}
+
 .discovery-option-brief {
   grid-template-columns: minmax(0, 1fr) auto;
 }
@@ -2086,6 +2093,7 @@ h3 {
 }
 
 .discovery-stat-strip > div {
+  position: relative;
   min-width: 0;
   padding: 1.25rem;
   border-right: 1px solid var(--ui-border);
@@ -2106,6 +2114,53 @@ h3 {
   margin-top: 0.5rem;
   color: var(--ui-ink);
   font: 500 1.75rem/1 var(--ui-font-display);
+}
+
+/* Per-stat color rail — a semantic left edge inside a stat cell. Point the
+   background at a ramp token inline, e.g.
+   <span class="discovery-stat-rail" style="background: var(--ui-verdict-go)"></span> */
+.discovery-stat-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--ui-accent);
+}
+
+/* Readiness meter — a labelled progress bar for N-of-M readiness. Fill width
+   is set inline; fill color defaults to the accent and may point at a ramp
+   token, e.g. <i style="width: 60%; background: var(--ui-verdict-partial)"></i> */
+.discovery-meter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.discovery-meter-label {
+  color: var(--ui-faint);
+  font: 600 0.6rem/1 var(--ui-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.discovery-meter {
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+
+.discovery-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-accent);
+}
+
+.discovery-meter-value {
+  color: var(--ui-muted);
+  font: 600 0.7rem/1 var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .discovery-segmented {
