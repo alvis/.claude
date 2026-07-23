@@ -259,8 +259,11 @@ it never edits PM-owned work memory.
 `state.md` is the complete resumable work context: goal, full plan, lifecycle
 status, acceptance criteria, decisions, dependencies, blockers, open questions,
 review state, evidence references, repository revision, specification
-provenance, and sync state. It links prominently to `state/working.md` and each
-lazy work overview that currently exists. It references details rather than
+provenance, and sync state. It also carries the list of `proposals/` still
+awaiting user approval and those approved but not yet implemented, so a resume
+sees the outstanding proposal work without scanning the folder. It links
+prominently to `state/working.md` and each lazy work overview that currently
+exists. It references details rather than
 copying them. Semantic children such as `state/plan.md` or `state/discovery.md`
 hold resumable detail. Record open questions in detail in `state/unresolved.md`,
 each with an owner and a disposition (resolved, deferred, or blocking);
@@ -309,21 +312,26 @@ create or update assigned children and return them in their output manifest.
 `proposals/` and `changes/` both document a work stream's tasks and
 implementation against the active canonical specification (for a Notion-backed
 contract, the canonical Notion spec; for a local or inline contract, its
-canonical carrier). They differ by lifecycle state, not by being deviations. A
-`proposals/` child is a task or change that is **proposed but not yet
-implemented or approved** — the planned work for the stream, derived from the
-canonical spec. When the work is done, its final implementation documentation
-shifts to a `changes/` child, together with any last-mile changes made during
-implementation. A `changes/` child therefore also holds general implementation
-and explainer records, not only deviations.
+canonical carrier). They differ by **implementation state**, not by approval and
+not by being deviations. A `proposals/` child is a task or change that is **not
+yet implemented** — the planned work for the stream, derived from the canonical
+spec; for a Notion-backed contract, the tasks to implement the work stream are
+derived from the canonical Notion spec and recorded here. When the work is done,
+its final implementation documentation shifts to a `changes/` child, together
+with any last-mile changes made during implementation. A `changes/` child
+therefore also holds general implementation and explainer records, not only
+deviations.
 
-The shift tracks two independent transitions. A proposal is marked `accepted`
-when it is **approved**, not when it lands, so downstream planning can tell an
-approved proposal from an undecided one; a proposal never approved ends in
-`proposals/` (`rejected` or `withdrawn`). Separately, the coordinator creates or
-links the corresponding `changes/` child as implementation proceeds — that child
-may be `pending` before it becomes `applied`, and links back to its originating
-proposal.
+Approval is a **status on the proposal, not a folder move**. A proposal is `open`
+until the user approves it and `accepted` once approved, so downstream planning
+can tell an approved proposal from an undecided one — but an approved proposal
+that is not yet implemented stays in `proposals/`; only implementation shifts it
+to `changes/`. A proposal never approved ends in `proposals/` (`rejected` or
+`withdrawn`). Separately, the coordinator creates or links the corresponding
+`changes/` child as implementation proceeds — that child may be `pending` before
+it becomes `applied`, and links back to its originating proposal. `state.md`
+carries the list of proposals still awaiting user approval and those approved but
+pending implementation, so a resume sees the outstanding work at a glance.
 
 Each `proposals/` and `changes/` child SHOULD carry a section recording any
 deviations from the canonical specification, if any — deviations are an optional
@@ -351,11 +359,16 @@ Each child starts with structured metadata containing at least its canonical
 status, one-line headline, owner, created timestamp, and source/provenance
 references. When a `proposals/` or `changes/` child's deviation section records a
 deviation from a Notion-backed specification, that deviation's provenance MUST
-link to the related `.engineering/notion/` mirror file (the exact `.mdc` path in
-the registered default workspace); a Notion-backed spec deviation recorded
-without that link is incomplete. A local or inline contract has no Notion mirror,
-so its deviation records provenance against that contract's own canonical carrier
-instead of inventing Notion provenance.
+link to the related `.mdc` file under the default source tree's
+`.engineering/notion/` — that folder lives only on the default source tree and is
+never copied into a secondary tree, so the link resolves there; a Notion-backed
+spec deviation recorded without that link is incomplete. A non-Notion contract
+has no such folder and cites its authoritative source instead of inventing Notion
+provenance: a reachable `repo:` local source keeps its exact source path
+authoritative and cites that path (the derived carrier is only
+content-equivalent), while a `local-approved:` or `inline-approved:` source cites
+its durable carrier as the sole authority.
+
 If an overview itself ever requires splitting, reserve `00-index-<group>.md`
 names inside its folder for index shards.
 

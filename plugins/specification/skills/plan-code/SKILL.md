@@ -70,9 +70,9 @@ contract; `specification:implement-code` and Coding skills execute it.
 4. Ask only material unresolved questions. Once none block execution, write
    detailed lowercase artifacts as needed:
    - `decisions/<slug>.md` for a choice and consequences;
-   - `proposals/<slug>.md` for a task or change proposed but not yet
-     implemented or approved, derived from the canonical spec for the work
-     stream;
+   - `proposals/<slug>.md` for a task or change not yet implemented, derived
+     from the canonical spec for the work stream (approval is a status on the
+     child, `open` then `accepted`; it stays here until implemented);
    - `changes/<slug>.md` for the final implementation documentation once the
      work is done, plus any last-mile changes made during implementation (a
      proposal shifts here as it is implemented); record any deviations from the
