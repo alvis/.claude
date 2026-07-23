@@ -85,7 +85,11 @@ be followed for ID-keyed implementation procedure, never for task definitions.
    produced against different specification content or task definitions.
 3. Resolve implementation scope with `coding:review-code` semantics. Enumerate
    requirements, invariants, schemas, acceptance criteria, and non-functional
-   posture. Trace spec-to-code for omission/drift and code-to-spec for
+   posture; when the charter `goal.md` defines `SC-n` success criteria, include
+   each as an alignment obligation and cite the covered `SC-n` IDs in findings
+   and dispositions, so closure is checkable per criterion — every required
+   criterion needs an `applied` change and a closed disposition covering it.
+   Trace spec-to-code for omission/drift and code-to-spec for
    unsanctioned behavior; search the repository before declaring absence.
 4. Adversarially refute each candidate and retain only survivors. Every
    alignment finding cites both spec and implementation locations and uses

@@ -20,6 +20,11 @@ contract; `specification:implement-code` and Coding skills execute it.
   `state/plan.md` is non-authoritative implementation
   detail keyed by existing task IDs. Proposals, changes, decisions,
   and design reasoning use the corresponding work-local child folders.
+- `goal.md` is the PM-owned charter (goal, scope, numbered `SC-n` success
+  criteria, specification provenance). Planning consumes it and proposes
+  charter content as reconciliation payload; it never edits the file, and for
+  a Notion-backed contract the canonical specification remains the sole
+  authority over the charter.
 - `state/working.md` is a temporary current-focus summary, not the plan. Only the PM
   writes it and reconciles the four overview indexes.
 - Do not implement source code, mutate history, or change authoritative MDC.
@@ -97,7 +102,9 @@ contract; `specification:implement-code` and Coding skills execute it.
    DAG such as `LFE -> {API,DOC} -> VAL` only when work is genuinely
    independent. Display order and optional diagrams are non-authoritative.
    Make each executable leaf atomic and independently verifiable. Put its
-   source targets and acceptance mapping in the root reconciliation row. The
+   source targets and acceptance mapping in the root reconciliation row; where
+   the charter defines `SC-n` success criteria, cite the covered IDs in the
+   acceptance mapping so closure is checkable per criterion. The
    detail may expand implementation intent, test procedure,
    repository gates, and conventional commit intent under that existing ID,
    while citing rather than restating the root definition. Use the
@@ -130,9 +137,14 @@ contract; `specification:implement-code` and Coding skills execute it.
    state file to identify the invalidated downstream closure, and returns
    `ready_for_plan_approval`; status-only reconciliation retains approval.
 7. Return the complete `state.md` reconciliation payload, including
-   `plan_source`, parent/leaf task rows, and the four overview
-   rows/status deltas to the PM. Do not directly edit PM-owned `state.md`,
-   `state/working.md`, `proposals.md`, `changes.md`, `decisions.md`, or `design.md`.
+   `plan_source`, the resulting `Plan revision` (initial approval sets `1`; an
+   approved definition change bumps it and carries a `state/revisions.md`
+   entry naming what changed, why, the approver, and any triggering spec
+   base-id), any proposed charter content for `goal.md`, parent/leaf task
+   rows, and the four overview rows/status deltas to the PM. Do not directly
+   edit PM-owned `goal.md`, `state.md`, `state/working.md`,
+   `state/journal.md`, `state/revisions.md`, `proposals.md`, `changes.md`,
+   `decisions.md`, or `design.md`.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; after every writer finishes, the PM
 checks only eligible work Markdown inside the target `.engineering/`.

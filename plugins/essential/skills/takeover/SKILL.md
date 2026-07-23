@@ -212,7 +212,8 @@ L5. Resolve decisions that block a selected stream's next action with
    stream, invoke it with that stream's exact work ID and without creation. From
    each returned active workspace/work path, inspect any existing target root
    before an ignore edit or bootstrap: only an absent/empty directory or a subset
-   of the two regular resolver entrypoints is eligible, and every present
+   of the four regular resolver entrypoints (`goal.md`, `state/working.md`,
+   `state.md`, `state/journal.md`) is eligible, and every present
    entrypoint must already match its untouched `initialized` template for that
    work ID. Reject every other pre-existing root without adding files to it. Then
    handle `requires_ignore` through the PM's normal exact `.engineering/` ignore
@@ -220,9 +221,9 @@ L5. Resolve decisions that block a selected stream's next action with
    `--bootstrap`; never substitute the branch or a sole existing work ID.
 
    Per stream, inspect `bootstrap_created` and `bootstrap_existing`, then accept
-   the target work root only when it now contains exactly regular
-   `state/working.md` and `state.md`, no symlinks or extra state, for the same
-   receipt work ID. Each entrypoint must either have been newly created in this
+   the target work root only when it now contains exactly regular `goal.md`,
+   `state/working.md`, `state.md`, and `state/journal.md`, no symlinks or extra
+   state, for the same receipt work ID. Each entrypoint must either have been newly created in this
    invocation or match byte-for-byte the resolver's untouched `initialized`
    template when parameterized by the valid timestamp already in that file. A
    prior handover, semantic child, edited placeholder, foreign ID, unexplained
@@ -232,7 +233,7 @@ L5. Resolve decisions that block a selected stream's next action with
 
 9. Immediately before promotion, recheck the clean baseline plus only the exact
    recorded ignore/bootstrap delta, each accepted initialized-skeleton bytes and
-   exact two-file listing, ignore mapping, and every destination. Reapply each
+   exact four-file listing, ignore mapping, and every destination. Reapply each
    stream's already verified source anchor using its plain-git mode and verify the
    same result tree; `--revalidate` forces this re-application-and-verify even
    when the destination already matches. In each contained prepared work-root

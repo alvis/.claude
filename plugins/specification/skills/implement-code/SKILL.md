@@ -25,7 +25,13 @@ contract materialization, MDC authoring, alignment, and completion sync.
 - Material departures are work-local `changes/<slug>.md` children and PM
   state updates. Contract drift also appears in `reviews/alignment.md`.
 - Subagents may write assigned children/evidence but never PM-owned
-  `state/working.md`, `state.md`, overview indexes, or `review.md`.
+  `goal.md`, `state/working.md`, `state.md`, `state/journal.md`,
+  `state/revisions.md`, overview indexes, or `review.md`.
+- A mid-execution surprise — a new restriction, a design or specification
+  issue, a failed premise — follows the Essential engineering-work-state
+  change-control procedure: journal it, classify it task-local, plan-level, or
+  spec-level, and route it; a spec-level change flows through the canonical
+  source (`sync-spec`) before any plan revision.
 
 ## Inputs
 
@@ -45,7 +51,9 @@ contract materialization, MDC authoring, alignment, and completion sync.
    override and accept its deterministic environment, Git-branch/jj-workspace,
    or sole-existing-work match. Ask only when it returns `work_id_required`,
    using its returned candidates. A delegated run receives the explicit work
-   id/root. Resolve the repository and PM-owned state paths. Read root
+   id/root. Resolve the repository and PM-owned state paths. Read the charter
+   `goal.md` when present for the goal, `SC-n` success criteria, and
+   specification provenance, then read root
    `state.md` (and any `state/*.md` children) directly; from the task table,
    determine which tasks are runnable, which are blocked, the current owner,
    and the next action, and proceed on that reading — there is no separate
@@ -85,7 +93,11 @@ contract materialization, MDC authoring, alignment, and completion sync.
    exist, and the recorded content still matches; otherwise refresh. Filename shape is
    never an identity gate. If materialization reports remote change against an
    existing plan/review/implementation, stop with `needs_revalidation` rather
-   than continuing from stale intent.
+   than continuing from stale intent, and hand the PM the revalidation sweep:
+   affected task rows become `! blocked` with
+   `unblock: revalidate against <base-id>`, charter `SC-n` criteria are
+   re-checked against the new base, and the sweep is journaled before
+   execution resumes.
 3. Read root `state.md` as the canonical plan. Follow an
    explicit implementation-detail link from it only for the assigned task IDs;
    reject detail that duplicates or contradicts root IDs, edges, requiredness,
@@ -124,8 +136,12 @@ contract materialization, MDC authoring, alignment, and completion sync.
    otherwise use the sequential chain in `references/modes.md`. Schedule only
    leaf IDs returned runnable by Essential: all parent predecessors and all
    declared sibling predecessors must be done. Independent ready leaves may
-   run concurrently only when their write scopes do not conflict. Every
-   dispatch receives repo path, work id, exact spec pointers, full `task_id`,
+   run concurrently only when their write scopes do not conflict. Before each dispatch batch, cheaply confirm spec freshness (an `unchanged`
+   materialization check for a live source); a changed source stops the batch
+   and routes through the revalidation sweep instead of dispatching against
+   stale intent. Every
+   dispatch receives repo path, work id, exact spec pointers, the charter
+   `goal.md` path when present, full `task_id`,
    canonical `plan_source`, acceptance map,
    output-manifest contract, deviation policy, and `--defer-publication` for
    every Coding writer. Task-local commits may be created, but no child may

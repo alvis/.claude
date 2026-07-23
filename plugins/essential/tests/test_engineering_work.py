@@ -497,28 +497,41 @@ class WorkspaceResolverTest(unittest.TestCase):
                 root, work_id, bootstrap=True
             )
 
+            goal = work_dir / "goal.md"
             working = work_dir / "state/working.md"
             state = work_dir / "state.md"
+            journal = work_dir / "state/journal.md"
             self.assertEqual(0, created.returncode, created.stderr)
             self.assertTrue(created_payload["bootstrap_requested"])
             self.assertEqual(
-                [str(working), str(state)], created_payload["bootstrap_created"]
+                [str(goal), str(working), str(state), str(journal)],
+                created_payload["bootstrap_created"],
             )
             self.assertEqual([], created_payload["bootstrap_existing"])
+            goal_text = goal.read_text(encoding="utf-8")
             working_text = working.read_text(encoding="utf-8")
             state_text = state.read_text(encoding="utf-8")
+            journal_text = journal.read_text(encoding="utf-8")
+            self.assertIn(f"- Work ID: `{work_id}`", goal_text)
+            self.assertIn("- Charter revision: `1`", goal_text)
+            self.assertIn("| SC-1 |", goal_text)
+            self.assertIn("## Specification provenance", goal_text)
             self.assertIn(f"- Work ID: `{work_id}`", working_text)
             self.assertIn("- Status: `initialized`", working_text)
+            self.assertIn("- Charter: [goal.md](../goal.md)", working_text)
             self.assertIn("- State: [state.md](../state.md)", working_text)
             self.assertIn(f"- Work ID: `{work_id}`", state_text)
+            self.assertIn("- Charter: [goal.md](goal.md)", state_text)
             self.assertIn("- Plan source: `state.md`", state_text)
+            self.assertIn("- Plan revision: `1`", state_text)
+            self.assertIn("- Journal: [journal.md](state/journal.md)", state_text)
             self.assertIn("| GOL | - | planned |", state_text)
             self.assertIn("| OWN | - | planned |", state_text)
-            self.assertIn("## Goal and success criteria", state_text)
+            self.assertNotIn("## Goal and success criteria", state_text)
             self.assertIn("- Current focus: [working.md](state/working.md)", state_text)
-            self.assertIn("- Specification provenance: Not established.", state_text)
             self.assertIn("- Sync state: Not started.", state_text)
             self.assertIn("- Review state: Not started.", state_text)
+            self.assertIn(f"PM bootstrap: work `{work_id}` initialized", journal_text)
 
             custom_working = "# Preserved owner state\n\nDo not replace me.\n"
             working.write_text(custom_working, encoding="utf-8")
@@ -530,7 +543,10 @@ class WorkspaceResolverTest(unittest.TestCase):
 
             self.assertEqual(0, repaired.returncode, repaired.stderr)
             self.assertEqual([str(state)], repaired_payload["bootstrap_created"])
-            self.assertEqual([str(working)], repaired_payload["bootstrap_existing"])
+            self.assertEqual(
+                [str(goal), str(working), str(journal)],
+                repaired_payload["bootstrap_existing"],
+            )
             self.assertEqual(custom_working, working.read_text(encoding="utf-8"))
             self.assertTrue(state.is_file())
 

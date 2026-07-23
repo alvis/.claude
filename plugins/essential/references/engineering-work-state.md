@@ -28,8 +28,15 @@ Root state metadata contains at least:
 - State role: `root`
 - Work ID: `eng-421-example`
 - Lifecycle status: `active`
+- Charter: [goal.md](goal.md)
 - Plan source: `state.md`
+- Plan revision: `3`
 ```
+
+The charter pointer names the work's `goal.md`, which owns the goal, scope,
+numbered success criteria, and specification provenance; the root state never
+restates them. `Plan revision` counts approved definition changes, starting at
+`1`.
 
 Keep lifecycle status (`initialized|active|blocked|complete|retiring`), task
 status, attempt outcome (`pass|fail|partial`), file state, review state, and
@@ -135,13 +142,54 @@ evidence/next action) do not change the definition. Retain every assigned ID as
 history: mark removed work as an optional cancelled tombstone rather than
 deleting its row.
 
+## Change control during execution
+
+Plans change during execution — a new restriction surfaces, a design or
+specification issue is found, a premise fails. That is the normal path, not an
+exception, and it follows one procedure:
+
+1. **Journal the finding.** Append one line to `state/journal.md` and record
+   the detail in `state/discovery.md` (or `state/unresolved.md` when it is an
+   open question with an owner).
+2. **Classify the impact and route it.**
+   - **Task-local** — the finding changes how one task is executed, not what
+     it is. Record evidence and a retry or disposition on the row. No
+     revision.
+   - **Plan-level** — task definitions, dependencies, requiredness, or
+     acceptance must change. Raise a `proposals/` child (`open`), get user
+     approval, then apply the revision: bump `Plan revision: N+1`, append the
+     entry to `state/revisions.md` (what changed, why, approver, triggering
+     spec base-id when one exists), tombstone removed scope as `cancelled`,
+     and reconcile downstream rows per the DAG and roll-up rules above.
+   - **Spec-level** — the canonical specification itself is wrong or
+     incomplete. Raise a specification-change proposal; the source owner
+     authors the change and completes it through
+     `sync-spec complete --stage=specification`, establishing a new base;
+     materialize that base; run the revalidation sweep (mark dependent rows
+     `! blocked` with `unblock: revalidate against <base-id>`, re-check
+     `goal.md` success criteria, journal the sweep); only then revise the
+     plan. A spec-level change is never applied to the plan first — the
+     canonical specification leads and the plan follows the new base.
+3. **Resume from the registry.** After the route completes, re-read the state
+   files directly and proceed on runnable tasks; stale in-flight work on a
+   disproved premise is stopped, not finished for completeness.
+
+`state/journal.md` is append-only: one line per status transition, decision,
+plan or charter revision, or sync event —
+`- <ISO-8601> <actor> <task-id or event>: <transition or summary> [evidence: <ref>]` —
+newest last, never rewritten or deleted. `state/revisions.md` is the same
+discipline at plan granularity: one entry per approved revision. Neither file
+is ever the plan authority; both make the authoritative tables auditable and
+reconstructible.
+
 ## Portable handover
 
 Ignored work memory is not a cross-machine transport. To move a work item, a
 handover emits a plain-Markdown receipt: a destination-reachable source anchor,
-the raw contents of `state.md`, `working.md`, and every continuity-relevant
-`state/*.md` child and detail file, and any specification carriers needed to
-continue. A takeover reads that receipt, checks out or applies the source
+the raw contents of `goal.md`, `state.md`, `working.md`, and every
+continuity-relevant `state/*.md` child and detail file (including
+`state/journal.md` and `state/revisions.md` when they exist), and any
+specification carriers needed to continue. A takeover reads that receipt, checks out or applies the source
 anchor, and writes each state file back to its work-relative path verbatim.
 There are no snapshot bytes, checksums, or machine render step; the reader
 judges completeness directly.

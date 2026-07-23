@@ -149,9 +149,10 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
 9. Build the receipt's `## Work index` across the current tree's streams from
    step 1 (every stream, each with its `Location`), then emit a
    `## Work stream: <work-id>` section per selected stream anchored in step 8:
-   gather the raw contents of `state.md`, `state/working.md`, and every
+   gather the raw contents of `goal.md`, `state.md`, `state/working.md`, and every
    continuity-relevant detail file (decisions, changes, design, `state/*.md`
-   children, needed artifacts, and every outstanding `proposals/` child still
+   children including `state/journal.md` and `state/revisions.md` when they
+   exist, needed artifacts, and every outstanding `proposals/` child still
    awaiting approval or approved but not yet implemented) and carry them verbatim, each in its own fenced
    block whose fence is at least one backtick longer than the longest backtick run
    inside that file and whose preceding line names the stream-root-relative path
@@ -187,8 +188,8 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
   tree's `overview.md`; no other source tree's work streams were indexed or
   rewritten.
 - `overview.md` now carries one up-to-date row per current-tree stream — each with
-  its lifecycle, `Location`, and `Documentations` — and every other tree's rows
-  are unchanged.
+  its lifecycle, `Location`, `Spec`, and `Documentations` — and every other
+  tree's rows are unchanged.
 - A same-machine takeover could resume every continuable stream from the on-disk
   state alone — `## Continuation` names the current task, next owner, next action,
   and continuation intent — with no receipt.
@@ -203,7 +204,7 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
 - Decisions, assumptions, deviations, blockers, review dispositions, evidence,
   promotion, and specification state are preserved per carried stream.
 - Each `## Work stream:` section carries the raw contents of that stream's
-  `state.md`, `state/working.md`, and every continuity-relevant detail file (with
+  `goal.md`, `state.md`, `state/working.md`, and every continuity-relevant detail file (with
   any required artifacts carried as bytes, not a bare path), each labelled with
   its stream-root-relative `path:` line (no `<work-id>/` prefix) and fenced with a
   collision-safe backtick run.
