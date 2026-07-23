@@ -21,6 +21,15 @@
         --color-insight-soft: var(--ui-insight-soft);
       }
     </style>
+    <style data-board-theme>
+      /* Optional board-theme overlay — the ONLY place a page may redefine
+         color. Whitelisted tokens only: --ui-accent / -contrast / -soft /
+         -ink, --ui-verdict-*, --ui-status-*, --ui-k-*. Every redefined token
+         must be set for BOTH :root and [data-theme="dark"]. Prefer aliasing
+         the shell's own palette families (positive/insight/amber/critical)
+         over inventing new hues. Leave this block empty to keep the default
+         palette. Contract: references/presentation.md (theme contract). */
+    </style>
     <!--
       This source carries no asset references: no CDN Tailwind script, no
       discovery.css link, no discovery.js script (external or relative). Run
@@ -34,10 +43,9 @@
   >
     <div class="essential-docbar" role="banner">
       <a class="essential-docbrand" href="#overview">
-        <span class="essential-docmark">E_</span>
         <span
           ><strong>{{DOCUMENT_TITLE}}</strong
-          ><small>Essential · Discover</small></span
+          ><small>{{PRODUCT_NAME}} · Discover</small></span
         >
       </a>
       <nav aria-label="Document utilities">
@@ -220,6 +228,76 @@
           </fieldset>
         </div>
       </section>
+
+      <!--
+        RESPONSE-CAPTURE + DECISION-FIRST CONVENTION SLOTS (guided, not
+        required — these devices generalize to EVERY action, not to any one
+        board shape; see references/features.md for the floor rule and
+        references/presentation/components.md "Decision-first devices" for
+        the full recipes). All of them feed the single generated prompt;
+        none adds a second prompt host.
+
+        1. Option set with reasons — when real alternatives exist, the choice
+           IS the decision: never offer a bare Accept. The live fieldset above
+           is the shape; add one label per real alternative, each <small>
+           carrying the reason, and exactly one data-recommended="true"
+           checked with the Recommended badge.
+
+        2. Accept/override brief pair — when there is one recommendation and
+           no real alternative, capture assent compactly:
+           <fieldset class="discovery-question" data-discovery-question
+                     data-question-id="…" data-question-label="…">
+             <legend>Accept the recommendation?</legend>
+             <div class="discovery-options">
+               <label class="discovery-option discovery-option-brief">
+                 <input type="radio" name="…" value="Accept as recommended"
+                        data-recommended="true" checked />
+                 <span class="discovery-option-copy"
+                   ><strong>Accept as recommended</strong></span>
+                 <span class="discovery-badge">Recommended</span>
+               </label>
+               <label class="discovery-option discovery-option-brief">
+                 <input type="radio" name="…" value="Override with note" />
+                 <span class="discovery-option-copy"
+                   ><strong>Override — my note explains</strong></span>
+               </label>
+             </div>
+           </fieldset>
+
+        3. Per-card capture — a question fieldset may live INSIDE a finding
+           card so the response sits beside its evidence instead of in a
+           distant form section:
+           <article class="discovery-finding-card"
+                    style="box-shadow: inset 3px 0 0 var(--ui-verdict-probe)">
+             <h3>Card title <span class="discovery-badge">More discovery</span></h3>
+             <p><strong>Gating</strong> — what blocks, and why.</p>
+             <p class="discovery-muted"><strong>Evidence</strong> — with
+               provenance; flag anything that needs a live query.</p>
+             …option set (1) or accept/override pair (2) here…
+           </article>
+           The inset edge and badge colors come from the semantic ramps ONLY:
+           --ui-verdict-{go|partial|probe|stop|done}, --ui-status-* and
+           --ui-k-* (each with -soft/-ink). Map domain states onto the ramps
+           per board in the head's data-board-theme overlay — never raw hex.
+
+        4. Sequence strip — one chain of tiles showing what unblocks what,
+           with semantic edges on the gating and terminal tiles:
+           <div class="discovery-flow-strip" aria-label="…">
+             <span style="box-shadow: inset 0 -2px 0 var(--ui-verdict-probe)"
+               >Open decisions</span><span>Next milestone</span
+             ><span style="box-shadow: inset 0 -2px 0 var(--ui-verdict-stop)"
+               >Blocked outcome</span>
+           </div>
+
+        5. Board sign-off — a closing data-discovery-question fieldset in its
+           own section that captures ONE whole-board verdict (e.g. proceed /
+           more discovery first / pause), landing in the same single prompt
+           beside every per-card answer.
+
+        Reference captures: examples/reference/readiness-verdict-board.html
+        and examples/reference/decision-browser.html compose these devices on
+        two real boards; the shapes apply to any discovery job.
+      -->
 
       <section
         id="generated-brief"

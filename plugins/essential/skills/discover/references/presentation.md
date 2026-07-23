@@ -109,9 +109,21 @@ Use Tailwind CSS utilities together with the shared `--ui-*` CSS variables.
 The variables in `assets/html/discovery.css` are the only theme-value source;
 the page's `@theme inline` block maps them into Tailwind names such as
 `bg-canvas`, `text-ink`, and `bg-accent-soft`. Do not redefine color values in
-an action page. Compose page-specific layout and states with utilities, then use
-the shared component classes for behavior-heavy patterns that would be noisy or
-fragile to repeat.
+an action page **outside the board-theme overlay**. Compose page-specific
+layout and states with utilities, then use the shared component classes for
+behavior-heavy patterns that would be noisy or fragile to repeat.
+
+The board-theme overlay. Each page carries an optional `<style
+data-board-theme>` head block — the one sanctioned place to re-point color for
+the board at hand. Whitelisted tokens only: the `--ui-accent` set and the
+semantic ramps `--ui-verdict-*`, `--ui-status-*`, `--ui-k-*` (the builder
+rejects anything else, and rejects a redefinition that lacks either light or
+dark values). Use it to give each board of a companion set its own accent so
+the set reads as themed siblings, and to map the board's domain states —
+go/stop verdicts, work statuses, finding categories — onto the ramps. Prefer
+aliasing the shell's own families (`--ui-positive`, `--ui-insight`,
+`--ui-provenance-amber`, `--ui-sev-critical`) over inventing hues; keep the
+contrast floor in both themes.
 
 The specimen exception. House `--ui-*` stays the default for page chrome, but
 an embedded specimen or mockup should read as the subject product, not the tool.
@@ -153,12 +165,26 @@ for the exact hooks:
   distinct from the user's own Add-note mechanism;
 - a multi-board hub links sibling boards by session-relative href.
 
-The foundation is fixed: the page shell, annotatable sections, the single-prompt
-contract, the `--ui-*`/`@theme inline` theme, and these provenance, trade-off,
-pin, and board conventions. On top of that fixed floor an executor may propose
-new structural cards, provided each honors the theme, interaction (annotatable
-plus one live prompt), provenance, and accessibility conventions. Guided, not
-rigid.
+The foundation is fixed: the page shell, annotatable sections, **per-card
+response capture** (an option set with reasons and a badged recommendation
+wherever a card carries a real decision with alternatives — never a bare
+accept; an accept toggle for single-recommendation cards; a note affordance
+per card; every response reflected on the card, in the docnav counters, and in
+the live prompt), the single-prompt contract, the `--ui-*`/`@theme inline`
+theme plus board-theme overlay rules, and these provenance, trade-off, pin,
+and board conventions. `references/features.md` enumerates this floor as a
+checklist with its validation mapping.
+
+**Above that floor, design freely.** The component catalog is a reference
+shelf of proven devices, not a completeness requirement, and the action
+recipes are starting points, not prescribed section lists. Layout, section
+shapes, devices, and interactions are the executor's design decisions, made
+for the content at hand — approach each board like a design lead giving this
+product its own treatment, not a form-filler. Bespoke section CSS and JS are
+welcome when they style through the tokens and honor the floor; markup that
+appears in no catalog entry is conforming as long as the floor holds. Guided,
+not rigid — and never omit ledger content because no catalog pattern fits it;
+give it a free-pattern section instead.
 
 ## Temporary artifact lifecycle
 

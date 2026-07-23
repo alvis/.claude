@@ -95,6 +95,57 @@
     --ui-sev-critical: #b0402f;
     --ui-sev-critical-soft: #f6e2dc;
     --ui-sev-critical-ink: #7a2a1e;
+    /* Board-theme semantic ramps — verdict / status / category. Defaults alias
+       the shell's own families so an unthemed board is unchanged. A page's
+       board-theme overlay may re-point ONLY these ramps plus the --ui-accent
+       set (see references/presentation.md, theme contract). */
+    --ui-verdict-go: var(--ui-positive);
+    --ui-verdict-go-soft: var(--ui-positive-soft);
+    --ui-verdict-go-ink: var(--ui-insight-ink);
+    --ui-verdict-partial: var(--ui-insight);
+    --ui-verdict-partial-soft: var(--ui-insight-soft);
+    --ui-verdict-partial-ink: var(--ui-insight-ink);
+    --ui-verdict-probe: var(--ui-provenance-amber);
+    --ui-verdict-probe-soft: var(--ui-provenance-amber-soft);
+    --ui-verdict-probe-ink: var(--ui-provenance-amber-ink);
+    --ui-verdict-stop: var(--ui-sev-critical);
+    --ui-verdict-stop-soft: var(--ui-sev-critical-soft);
+    --ui-verdict-stop-ink: var(--ui-sev-critical-ink);
+    --ui-verdict-done: var(--ui-faint);
+    --ui-verdict-done-soft: var(--ui-surface);
+    --ui-verdict-done-ink: var(--ui-muted);
+    --ui-status-complete: var(--ui-positive);
+    --ui-status-complete-soft: var(--ui-positive-soft);
+    --ui-status-complete-ink: var(--ui-insight-ink);
+    --ui-status-active: var(--ui-accent);
+    --ui-status-active-soft: var(--ui-accent-soft);
+    --ui-status-active-ink: var(--ui-accent-ink);
+    --ui-status-planned: var(--ui-insight);
+    --ui-status-planned-soft: var(--ui-insight-soft);
+    --ui-status-planned-ink: var(--ui-insight-ink);
+    --ui-status-blocked: var(--ui-sev-critical);
+    --ui-status-blocked-soft: var(--ui-sev-critical-soft);
+    --ui-status-blocked-ink: var(--ui-sev-critical-ink);
+    /* Category ramp: three bespoke muted hues (indigo / teal / plum — dark
+       values overridden below); safety/scope/silent alias existing families. */
+    --ui-k-governance: #4f5f9e;
+    --ui-k-governance-soft: #e9ecf6;
+    --ui-k-governance-ink: #38466f;
+    --ui-k-runtime: #0f6e77;
+    --ui-k-runtime-soft: #e0eff0;
+    --ui-k-runtime-ink: #0a4c53;
+    --ui-k-spec: #8a4d84;
+    --ui-k-spec-soft: #f3e8f2;
+    --ui-k-spec-ink: #63365f;
+    --ui-k-safety: var(--ui-sev-critical);
+    --ui-k-safety-soft: var(--ui-sev-critical-soft);
+    --ui-k-safety-ink: var(--ui-sev-critical-ink);
+    --ui-k-scope: var(--ui-provenance-amber);
+    --ui-k-scope-soft: var(--ui-provenance-amber-soft);
+    --ui-k-scope-ink: var(--ui-provenance-amber-ink);
+    --ui-k-silent: var(--ui-faint);
+    --ui-k-silent-soft: var(--ui-surface);
+    --ui-k-silent-ink: var(--ui-muted);
     --ui-code: #1c1c1a;
     --ui-code-ink: #f2efe6;
     --ui-focus: #b85c3e;
@@ -132,6 +183,18 @@
     --ui-provenance-amber: oklch(0.79 0.11 74);
     --ui-provenance-amber-soft: oklch(0.31 0.055 70);
     --ui-provenance-amber-ink: oklch(0.9 0.05 82);
+    /* Category ramp dark values for the three bespoke hues; the aliasing
+       verdict/status tokens and the safety/scope/silent categories adapt via
+       their theme-aware sources and need no override. */
+    --ui-k-governance: oklch(0.72 0.1 275);
+    --ui-k-governance-soft: oklch(0.28 0.05 275);
+    --ui-k-governance-ink: oklch(0.88 0.05 275);
+    --ui-k-runtime: oklch(0.74 0.1 200);
+    --ui-k-runtime-soft: oklch(0.28 0.045 200);
+    --ui-k-runtime-ink: oklch(0.88 0.05 200);
+    --ui-k-spec: oklch(0.72 0.1 330);
+    --ui-k-spec-soft: oklch(0.28 0.05 330);
+    --ui-k-spec-ink: oklch(0.88 0.05 330);
     /* Syntax tokens: the code surface is darker still in dark theme, so lift the
        lightness a touch to keep the highlighting crisp. */
     --ui-tok-kw: oklch(0.78 0.14 300);
@@ -1097,6 +1160,9 @@ body::before {
   text-transform: uppercase;
 }
 
+/* Deprecated: the docbar no longer carries a logo mark — the document title
+   leads. Kept only so older composed examples still render; do not use in new
+   boards. */
 .essential-docmark {
   display: grid;
   width: 2rem;
@@ -1537,6 +1603,13 @@ h3 {
 .discovery-option:has(input:checked) {
   background: var(--ui-accent-soft);
   box-shadow: inset 0 0 0 1px var(--ui-accent);
+}
+
+/* Row layout for compact option pairs (accept/override): put on the
+   .discovery-options wrapper to place brief options side by side. */
+.discovery-options-row {
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.5rem;
 }
 
 .discovery-option-brief {
@@ -2020,6 +2093,7 @@ h3 {
 }
 
 .discovery-stat-strip > div {
+  position: relative;
   min-width: 0;
   padding: 1.25rem;
   border-right: 1px solid var(--ui-border);
@@ -2040,6 +2114,53 @@ h3 {
   margin-top: 0.5rem;
   color: var(--ui-ink);
   font: 500 1.75rem/1 var(--ui-font-display);
+}
+
+/* Per-stat color rail — a semantic left edge inside a stat cell. Point the
+   background at a ramp token inline, e.g.
+   <span class="discovery-stat-rail" style="background: var(--ui-verdict-go)"></span> */
+.discovery-stat-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--ui-accent);
+}
+
+/* Readiness meter — a labelled progress bar for N-of-M readiness. Fill width
+   is set inline; fill color defaults to the accent and may point at a ramp
+   token, e.g. <i style="width: 60%; background: var(--ui-verdict-partial)"></i> */
+.discovery-meter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.discovery-meter-label {
+  color: var(--ui-faint);
+  font: 600 0.6rem/1 var(--ui-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.discovery-meter {
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+
+.discovery-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-accent);
+}
+
+.discovery-meter-value {
+  color: var(--ui-muted);
+  font: 600 0.7rem/1 var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .discovery-segmented {
@@ -2614,8 +2735,17 @@ h3 {
 }
 
 @media (max-width: 54rem) {
+  /* Static docbar on narrow viewports: a fixed bar with a hard clearance
+     collides with the masthead as soon as the document title wraps. Let it
+     scroll with the page instead and drop the clearance padding. */
   .essential-docbar {
+    position: static;
     grid-template-columns: 1fr auto;
+    min-height: 0;
+  }
+
+  html {
+    scroll-padding-top: 1rem;
   }
 
   .essential-docbar nav span {
@@ -2625,7 +2755,7 @@ h3 {
   .discovery-page {
     width: min(calc(100% - 2rem), 46rem);
     margin-inline: auto;
-    padding: 7.4rem 0 5.5rem;
+    padding: 2.2rem 0 5.5rem;
   }
 
   .essential-docnav {

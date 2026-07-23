@@ -1,0 +1,615 @@
+<title>Prospector — Go / no-go per work plan (marriage demo)</title>
+<style>
+  /* ══ Discover golden shell tokens (verbatim families from discovery.css) ══
+     plus a sanctioned board-theme overlay: the readiness board leans the
+     accent toward the palette's own olive/positive family and maps the
+     verdict ramp onto hues the template already owns. */
+  :root{
+    --ui-canvas:#faf9f5; --ui-surface:#f0eee6; --ui-surface-raised:#fff;
+    --ui-ink:#141413; --ui-muted:#4e4d48; --ui-faint:#676660;
+    --ui-border:#d1cfc5; --ui-border-strong:#aaa89f;
+    --ui-accent:#d97757; --ui-accent-contrast:#2b1d18; --ui-accent-soft:#fbf1ec; --ui-accent-ink:#934326;
+    --ui-insight:#788c5d; --ui-insight-soft:#edf1e6; --ui-insight-ink:#455430;
+    --ui-positive:#55663f; --ui-positive-soft:#edf1e6;
+    --ui-amber:#a8640f; --ui-amber-soft:#f8ead0; --ui-amber-ink:#6d4110;
+    --ui-critical:#b0402f; --ui-critical-soft:#f6e2dc; --ui-critical-ink:#7a2a1e;
+    --ui-code:#1c1c1a; --ui-code-ink:#f2efe6; --ui-focus:#b85c3e;
+    --ui-shadow-small:0 10px 26px rgba(45,41,32,.11);
+    --radius-control:.85rem; --radius-card:1.25rem;
+    --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --font-body:"Avenir Next",Avenir,"Segoe UI",sans-serif;
+    --font-mono:"SFMono-Regular",Menlo,Consolas,monospace;
+
+    /* board-theme overlay · readiness */
+    --board-accent:var(--ui-positive); --board-accent-ink:var(--ui-insight-ink); --board-accent-soft:var(--ui-insight-soft);
+    --verdict-go:var(--ui-positive);      --verdict-go-soft:var(--ui-positive-soft);
+    --verdict-partial:var(--ui-insight);  --verdict-partial-soft:var(--ui-insight-soft);
+    --verdict-probe:var(--ui-amber);      --verdict-probe-soft:var(--ui-amber-soft);
+    --verdict-stop:var(--ui-critical);    --verdict-stop-soft:var(--ui-critical-soft);
+    --verdict-done:var(--ui-faint);       --verdict-done-soft:var(--ui-surface);
+  }
+  @media (prefers-color-scheme:dark){ :root{
+    --ui-canvas:oklch(.16 .012 62); --ui-surface:oklch(.2 .014 62); --ui-surface-raised:oklch(.235 .016 62);
+    --ui-ink:oklch(.92 .012 80); --ui-muted:oklch(.72 .018 75); --ui-faint:oklch(.6 .018 75);
+    --ui-border:oklch(.33 .018 66); --ui-border-strong:oklch(.46 .03 62);
+    --ui-accent:oklch(.72 .14 48); --ui-accent-contrast:oklch(.18 .018 48); --ui-accent-soft:oklch(.29 .055 43); --ui-accent-ink:oklch(.9 .055 58);
+    --ui-insight:oklch(.72 .09 135); --ui-insight-soft:oklch(.27 .045 135); --ui-insight-ink:oklch(.88 .05 135);
+    --ui-positive:oklch(.7 .1 146); --ui-positive-soft:oklch(.27 .045 145);
+    --ui-amber:oklch(.79 .11 74); --ui-amber-soft:oklch(.31 .055 70); --ui-amber-ink:oklch(.9 .05 82);
+    --ui-critical:oklch(.66 .15 30); --ui-critical-soft:oklch(.31 .07 30); --ui-critical-ink:oklch(.87 .06 34);
+    --ui-code:oklch(.125 .012 62); --ui-code-ink:oklch(.9 .016 78); --ui-focus:oklch(.77 .14 52);
+    --ui-shadow-small:0 5px 18px oklch(.03 .01 62/.32);
+    --board-accent:var(--ui-positive); --board-accent-ink:oklch(.88 .05 140); --board-accent-soft:var(--ui-positive-soft);
+  }}
+  :root[data-theme="light"]{
+    --ui-canvas:#faf9f5; --ui-surface:#f0eee6; --ui-surface-raised:#fff;
+    --ui-ink:#141413; --ui-muted:#4e4d48; --ui-faint:#676660;
+    --ui-border:#d1cfc5; --ui-border-strong:#aaa89f;
+    --ui-accent:#d97757; --ui-accent-contrast:#2b1d18; --ui-accent-soft:#fbf1ec; --ui-accent-ink:#934326;
+    --ui-insight:#788c5d; --ui-insight-soft:#edf1e6; --ui-insight-ink:#455430;
+    --ui-positive:#55663f; --ui-positive-soft:#edf1e6;
+    --ui-amber:#a8640f; --ui-amber-soft:#f8ead0; --ui-amber-ink:#6d4110;
+    --ui-critical:#b0402f; --ui-critical-soft:#f6e2dc; --ui-critical-ink:#7a2a1e;
+    --ui-code:#1c1c1a; --ui-code-ink:#f2efe6; --ui-focus:#b85c3e;
+    --ui-shadow-small:0 10px 26px rgba(45,41,32,.11);
+    --board-accent:var(--ui-positive); --board-accent-ink:var(--ui-insight-ink); --board-accent-soft:var(--ui-insight-soft);
+  }
+  :root[data-theme="dark"]{
+    --ui-canvas:oklch(.16 .012 62); --ui-surface:oklch(.2 .014 62); --ui-surface-raised:oklch(.235 .016 62);
+    --ui-ink:oklch(.92 .012 80); --ui-muted:oklch(.72 .018 75); --ui-faint:oklch(.6 .018 75);
+    --ui-border:oklch(.33 .018 66); --ui-border-strong:oklch(.46 .03 62);
+    --ui-accent:oklch(.72 .14 48); --ui-accent-contrast:oklch(.18 .018 48); --ui-accent-soft:oklch(.29 .055 43); --ui-accent-ink:oklch(.9 .055 58);
+    --ui-insight:oklch(.72 .09 135); --ui-insight-soft:oklch(.27 .045 135); --ui-insight-ink:oklch(.88 .05 135);
+    --ui-positive:oklch(.7 .1 146); --ui-positive-soft:oklch(.27 .045 145);
+    --ui-amber:oklch(.79 .11 74); --ui-amber-soft:oklch(.31 .055 70); --ui-amber-ink:oklch(.9 .05 82);
+    --ui-critical:oklch(.66 .15 30); --ui-critical-soft:oklch(.31 .07 30); --ui-critical-ink:oklch(.87 .06 34);
+    --ui-code:oklch(.125 .012 62); --ui-code-ink:oklch(.9 .016 78); --ui-focus:oklch(.77 .14 52);
+    --ui-shadow-small:0 5px 18px oklch(.03 .01 62/.32);
+    --board-accent:var(--ui-positive); --board-accent-ink:oklch(.88 .05 140); --board-accent-soft:var(--ui-positive-soft);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:5.5rem}
+  body{
+    margin:0; min-height:100vh; background:var(--ui-canvas); color:var(--ui-ink);
+    font-family:var(--font-body); font-size:1rem; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:fixed; z-index:-1; inset:4.5rem 0 auto; height:clamp(24rem,45vw,36rem);
+    background:
+      radial-gradient(ellipse at 8% 12%, color-mix(in srgb, var(--board-accent) 13%, transparent), transparent 66%),
+      radial-gradient(ellipse at 88% 8%, color-mix(in srgb, var(--ui-accent) 9%, transparent), transparent 62%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,rgba(0,0,0,.85) 35%,transparent);
+    mask-image:linear-gradient(to bottom,#000,rgba(0,0,0,.85) 35%,transparent);
+    pointer-events:none;
+  }
+  ::selection{background:var(--board-accent-soft); color:var(--ui-ink)}
+  a{color:currentColor; text-decoration-color:var(--board-accent); text-underline-offset:.2em}
+  :focus-visible{outline:none; box-shadow:0 0 0 3px var(--ui-canvas),0 0 0 6px var(--ui-focus); border-radius:6px}
+  .mono{font-family:var(--font-mono); font-size:.86em}
+
+  /* ── docbar (template shell) ── */
+  .docbar{
+    position:fixed; z-index:50; inset:0 0 auto; min-height:4.2rem;
+    display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:center;
+    padding:.6rem 1.3rem; border-bottom:1px solid var(--ui-border);
+    background:color-mix(in srgb, var(--ui-canvas) 92%, transparent); backdrop-filter:blur(6px);
+  }
+  .docbrand{display:flex; gap:.7rem; align-items:center}
+  .docmark{
+    display:grid; place-items:center; width:2rem; height:2rem; border-radius:.72rem;
+    background:var(--board-accent); color:var(--ui-canvas); font:800 .7rem/1 var(--font-mono);
+  }
+  .docbrand strong{font-size:1rem; font-weight:700; letter-spacing:-.01em}
+  .docbrand small{
+    display:block; margin-top:.2rem; color:var(--ui-faint);
+    font:600 .58rem/1 var(--font-mono); letter-spacing:.09em; text-transform:uppercase;
+  }
+  .docbar nav{display:flex; gap:1.3rem; font:600 .68rem/1.2 var(--font-mono); color:var(--ui-faint)}
+  .docbar nav a{color:var(--board-accent-ink); text-decoration:none; font-weight:700}
+
+  /* ── docnav (right rail) ── */
+  .docnav{
+    position:fixed; z-index:20; top:4.2rem; bottom:0; right:0; width:17.5rem;
+    padding:1.9rem 1.4rem; overflow-y:auto; border-left:1px solid var(--ui-border);
+    background:color-mix(in srgb, var(--ui-surface) 72%, transparent);
+    font-size:.75rem; color:var(--ui-muted);
+  }
+  .docnav p{margin:0 0 .6rem; color:var(--ui-faint); font:700 .6rem/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+  .docnav a{display:block; margin-left:-.6rem; padding:.42rem .6rem; border-radius:.7rem; color:inherit; text-decoration:none}
+  .docnav a:hover{background:var(--ui-surface-raised); color:var(--ui-ink)}
+  .docnav a.is-active{background:var(--ui-surface-raised); color:var(--ui-ink); font-weight:700; box-shadow:inset 2px 0 0 var(--board-accent)}
+  .docnav .rule{height:1px; margin:1.2rem 0; background:var(--ui-border)}
+  .counts-row{display:flex; justify-content:space-between; align-items:center; padding:.4rem .1rem; font:600 .64rem/1.2 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ui-faint)}
+  .counts-row strong{
+    display:grid; place-items:center; min-width:1.6rem; min-height:1.6rem; border-radius:.55rem;
+    background:var(--board-accent-soft); color:var(--board-accent-ink); font-size:.7rem;
+  }
+  .boardset{display:grid; gap:.35rem; font:500 .7rem/1.4 var(--font-body)}
+  .boardset span{display:flex; gap:.5rem; align-items:center; color:var(--ui-faint)}
+  .boardset .dot{width:.5rem; height:.5rem; border-radius:50%}
+  .boardset .here{color:var(--ui-ink); font-weight:700}
+
+  /* ── page ── */
+  .page{max-width:66rem; margin-right:19.5rem; margin-left:auto; padding:7.4rem 2.6rem 6rem}
+  @media (max-width:68rem){
+    .docnav{display:none}
+    .docbar{position:static; grid-template-columns:1fr; gap:.5rem; min-height:0; padding:.9rem 1.3rem}
+    .page{margin-right:auto; padding-top:1.8rem}
+    html{scroll-padding-top:1rem}
+    body::before{inset:0 0 auto}
+  }
+
+  .eyebrow{
+    display:flex; gap:.7rem; align-items:center; margin:0;
+    color:var(--ui-muted); font:650 .72rem/1.3 var(--font-mono);
+    letter-spacing:.13em; text-transform:uppercase;
+  }
+  .eyebrow::before{content:""; width:2rem; height:1px; background:var(--board-accent)}
+  .eyebrow .glyph{font-size:.95rem; letter-spacing:0}
+  h1{
+    margin:.9rem 0 .6rem; max-width:16ch;
+    font-family:var(--font-display); font-weight:500;
+    font-size:clamp(2.5rem,5vw,3.8rem); line-height:1; letter-spacing:-.045em; text-wrap:balance;
+  }
+  .lede{margin:0; max-width:46rem; color:var(--ui-muted); font-size:1.08rem; line-height:1.55}
+  .lede .mono{background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:5px; padding:0 .35em}
+
+  /* stat strip — template meta-grid voice with lesson's color rails */
+  .stats{display:grid; grid-template-columns:repeat(5,1fr); margin:2.2rem 0 0; border:1px solid var(--ui-border); border-radius:var(--radius-card); overflow:hidden; background:color-mix(in srgb, var(--ui-surface) 88%, transparent)}
+  .stat{position:relative; padding:1.05rem 1.1rem .95rem}
+  .stat + .stat{box-shadow:inset 1px 0 0 var(--ui-border)}
+  .stat .rail{position:absolute; left:0; top:0; bottom:0; width:3px}
+  .stat dt{margin:0; color:var(--ui-faint); font:600 .62rem/1.2 var(--font-mono); letter-spacing:.08em; text-transform:uppercase}
+  .stat dd{margin:.35rem 0 0; font:600 1.55rem/1 var(--font-mono); font-variant-numeric:tabular-nums}
+
+  /* sections — template two-column editorial layout */
+  section{
+    position:relative; display:grid; grid-template-columns:minmax(10rem,12rem) minmax(0,1fr);
+    gap:2.6rem; padding:3.6rem 0; border-bottom:1px solid var(--ui-border);
+  }
+  section:last-of-type{border-bottom:0}
+  .s-head{align-self:start; position:sticky; top:5.6rem}
+  .s-head .eyebrow{margin-bottom:.8rem}
+  .s-head h2{
+    margin:0; max-width:12ch; font-family:var(--font-display); font-weight:520;
+    font-size:clamp(1.55rem,2.2vw,2rem); line-height:1.04; letter-spacing:-.03em; text-wrap:balance;
+  }
+  .s-head .note{margin:.9rem 0 0; color:var(--ui-faint); font-size:.84rem; line-height:1.5}
+  .s-body{min-width:0; display:grid; gap:1.1rem; align-content:start}
+  .annot{
+    justify-self:end; align-self:start; margin:-0.2rem 0 -0.4rem;
+    display:inline-flex; gap:.4rem; align-items:center; cursor:pointer;
+    border:1px solid var(--ui-border); border-radius:var(--radius-control);
+    background:var(--ui-surface-raised); color:var(--ui-muted);
+    font:650 .68rem/1.15 var(--font-mono); padding:.5rem .7rem;
+    box-shadow:var(--ui-shadow-small);
+  }
+  .annot:hover{color:var(--board-accent-ink); box-shadow:inset 0 0 0 1px var(--board-accent), var(--ui-shadow-small)}
+  .annot.noted{color:var(--board-accent-ink); box-shadow:inset 0 0 0 1px var(--board-accent), var(--ui-shadow-small)}
+  .card-actions{display:flex; flex-wrap:wrap; gap:.45rem}
+  .act{
+    font:650 .68rem/1.15 var(--font-mono); cursor:pointer;
+    border:1px solid var(--ui-border); border-radius:9999px; padding:.35rem .7rem;
+    background:var(--ui-surface-raised); color:var(--ui-muted); transition:.12s;
+  }
+  .act:hover{box-shadow:inset 0 0 0 1px var(--board-accent); color:var(--board-accent-ink)}
+  .act.on{background:var(--ui-positive-soft); color:var(--ui-positive); border-color:var(--ui-positive); font-weight:700}
+  .act.noted{background:var(--board-accent-soft); color:var(--board-accent-ink); border-color:var(--board-accent)}
+  @media (max-width:52rem){ section{grid-template-columns:1fr; gap:1.4rem} .s-head{position:static} .stats{grid-template-columns:repeat(2,1fr)} }
+
+  /* filter chips */
+  .chips{display:flex; flex-wrap:wrap; gap:.5rem}
+  .chip{
+    font:650 .72rem/1.2 var(--font-mono); letter-spacing:.03em; cursor:pointer;
+    display:inline-flex; gap:.45rem; align-items:center;
+    border:1px solid var(--ui-border); border-radius:9999px; padding:.38rem .8rem;
+    background:color-mix(in srgb, var(--ui-surface-raised) 78%, transparent); color:var(--ui-muted);
+    transition:box-shadow .13s, color .13s, background .13s;
+  }
+  .chip .dot{width:.5rem; height:.5rem; border-radius:50%}
+  .chip:hover{box-shadow:inset 0 0 0 1px var(--board-accent)}
+  .chip[aria-pressed="true"]{background:var(--board-accent-soft); color:var(--board-accent-ink); box-shadow:inset 0 0 0 1px var(--board-accent); font-weight:700}
+
+  /* verdict cards */
+  .cards{display:grid; grid-template-columns:repeat(2,1fr); gap:.95rem}
+  @media (max-width:52rem){ .cards{grid-template-columns:1fr} }
+  .card{
+    display:flex; flex-direction:column; gap:.7rem;
+    border:1px solid var(--ui-border); border-radius:1rem;
+    background:color-mix(in srgb, var(--ui-surface-raised) 82%, transparent);
+    padding:1.15rem 1.2rem 1rem; box-shadow:inset 3px 0 0 var(--vc,var(--ui-border-strong));
+  }
+  .card.hide{display:none}
+  .card-head{display:flex; justify-content:space-between; align-items:flex-start; gap:.7rem}
+  .card h3{margin:0 0 .15rem; font:720 1.02rem/1.25 var(--font-body); letter-spacing:-.01em}
+  .card .wid{font:500 .68rem/1.2 var(--font-mono); color:var(--ui-faint)}
+  .pill{
+    flex:none; font:700 .62rem/1 var(--font-mono); letter-spacing:.05em; text-transform:uppercase;
+    padding:.3rem .55rem; border-radius:9999px; background:var(--vsoft); color:var(--vc); white-space:nowrap;
+  }
+  .meter-row{display:flex; align-items:center; gap:.55rem}
+  .meter-lbl{font:600 .6rem/1 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; color:var(--ui-faint)}
+  .meter{flex:1; height:5px; border-radius:4px; background:var(--ui-surface); overflow:hidden}
+  .meter i{display:block; height:100%; border-radius:4px; background:var(--vc)}
+  .meter-val{font:600 .7rem/1 var(--font-mono); font-variant-numeric:tabular-nums; color:var(--ui-muted)}
+  .card p{margin:0; font-size:.86rem; color:var(--ui-muted); line-height:1.5}
+  .card p b{color:var(--ui-ink); font-weight:650}
+  .prov{
+    display:inline-flex; gap:.35rem; align-items:center; margin-right:.4rem;
+    font:700 .58rem/1 var(--font-mono); letter-spacing:.05em; text-transform:uppercase;
+    padding:.22rem .5rem; border-radius:9999px;
+  }
+  .prov.obs{background:var(--ui-insight-soft); color:var(--ui-insight-ink)}
+  .prov.live{background:var(--ui-amber-soft); color:var(--ui-amber-ink)}
+  .card-foot{
+    display:flex; justify-content:space-between; align-items:center; gap:.6rem;
+    margin-top:auto; padding-top:.7rem; border-top:1px solid var(--ui-border);
+    font-size:.74rem; color:var(--ui-faint);
+  }
+  .owner{display:inline-flex; gap:.4rem; align-items:center; font:600 .66rem/1 var(--font-mono)}
+  .owner .av{display:inline-grid; place-items:center; width:1.35rem; height:1.35rem; border-radius:.45rem; background:var(--board-accent-soft); color:var(--board-accent-ink); font-size:.56rem}
+
+  /* critical path */
+  .path{display:flex; flex-wrap:wrap; gap:.55rem; align-items:stretch}
+  .step{
+    flex:1 1 10rem; min-width:10rem; padding:.85rem 1rem;
+    border:1px solid var(--ui-border); border-radius:var(--radius-control);
+    background:color-mix(in srgb, var(--ui-surface) 85%, transparent);
+  }
+  .step .k{font:700 .62rem/1.2 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; color:var(--board-accent-ink)}
+  .step p{margin:.3rem 0 0; font-size:.8rem; color:var(--ui-muted); line-height:1.45}
+  .arrow{align-self:center; color:var(--ui-faint); font-family:var(--font-mono)}
+  .step.stop{border-color:var(--verdict-stop); background:var(--verdict-stop-soft)}
+  .step.stop .k{color:var(--ui-critical-ink)}
+
+  /* sign-off — template callout voice */
+  .signoff{
+    border:1px solid var(--ui-border); border-radius:var(--radius-card);
+    background:var(--board-accent-soft); box-shadow:inset 3px 0 0 var(--board-accent);
+    padding:1.4rem 1.5rem;
+  }
+  .signoff p{margin:0; max-width:45rem; font-size:.95rem; color:var(--ui-ink)}
+  .signoff p b{font-family:var(--font-display); font-weight:640; font-size:1.06rem; letter-spacing:-.01em}
+  .signoff small{display:block; margin-top:.5rem; color:var(--ui-muted); font-size:.8rem}
+
+  /* generated reply — template prompt card */
+  .prompt-card{overflow:hidden; border-radius:calc(var(--radius-card) + .3rem); background:var(--ui-code); box-shadow:var(--ui-shadow-small)}
+  .prompt-bar{
+    display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; justify-content:space-between;
+    padding:.75rem .8rem .75rem 1.1rem; border-bottom:1px solid color-mix(in srgb, var(--ui-code-ink) 16%, transparent);
+    color:var(--ui-code-ink);
+  }
+  .prompt-bar span{font:600 .68rem/1.2 var(--font-mono); letter-spacing:.08em; text-transform:uppercase}
+  .btn{
+    font:750 .78rem/1.15 var(--font-body); cursor:pointer; border:0;
+    border-radius:var(--radius-control); padding:.55rem .9rem;
+    background:var(--ui-accent); color:var(--ui-accent-contrast);
+  }
+  .btn:active{transform:scale(.97)}
+  .prompt-card textarea{
+    display:block; width:100%; min-height:12rem; padding:1.1rem 1.2rem; border:0; resize:vertical;
+    background:transparent; color:var(--ui-code-ink);
+    font:400 .78rem/1.6 var(--font-mono); tab-size:2;
+  }
+  .copy-status{min-height:1.2em; margin:.3rem 0 0; color:var(--ui-positive); font-size:.78rem}
+
+  footer{margin-top:3rem; color:var(--ui-faint); font-size:.78rem; line-height:1.7}
+
+  .theme-toggle{
+    font:650 .66rem/1 var(--font-mono); cursor:pointer;
+    border:1px solid var(--ui-border); border-radius:9999px; padding:.45rem .8rem;
+    background:var(--ui-surface-raised); color:var(--ui-muted);
+  }
+  dialog.note{
+    border:1px solid var(--ui-border); border-radius:var(--radius-card); padding:1.4rem;
+    background:var(--ui-surface-raised); color:var(--ui-ink); box-shadow:var(--ui-shadow-small); max-width:26rem; width:90%;
+  }
+  dialog.note::backdrop{background:rgba(20,20,19,.35)}
+  dialog.note textarea{width:100%; min-height:6rem; border:1px solid var(--ui-border-strong); border-radius:var(--radius-control); padding:.7rem; font:inherit; background:var(--ui-surface); color:var(--ui-ink); resize:vertical}
+  dialog.note .row{display:flex; justify-content:flex-end; gap:.5rem; margin-top:.8rem}
+  .btn.ghost{background:var(--ui-surface); color:var(--ui-muted); border:1px solid var(--ui-border)}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
+</style>
+
+<header class="docbar">
+  <span class="docbrand">
+    <span>
+      <strong>Go / no-go per work plan</strong>
+      <small>Prospector · Discover</small>
+    </span>
+  </span>
+  <nav>
+    <button class="theme-toggle" id="themeBtn" aria-label="Toggle color theme">◐ theme</button>
+    <a href="#generated-brief">Generated reply ↓</a>
+  </nav>
+</header>
+
+<aside class="docnav" aria-label="Board navigation">
+  <p>On this board</p>
+  <a href="#overview" class="is-active">Verdict frame</a>
+  <a href="#gates">Seven verdicts</a>
+  <a href="#blocker">Critical path</a>
+  <a href="#verdict">Sign-off</a>
+  <a href="#generated-brief">Generated reply</a>
+  <div class="rule"></div>
+  <p>Your input</p>
+  <div class="counts-row"><span>Decisions</span><strong id="decCount">0</strong></div>
+  <div class="counts-row"><span>Notes</span><strong id="noteCount">0</strong></div>
+  <div class="rule"></div>
+  <p>Board set</p>
+  <div class="boardset">
+    <span><span class="dot" style="background:var(--ui-amber)"></span>1 · Current state</span>
+    <span><span class="dot" style="background:var(--ui-accent)"></span>2 · Blind spots</span>
+    <span class="here"><span class="dot" style="background:var(--board-accent)"></span>3 · Readiness</span>
+  </div>
+</aside>
+
+<main class="page">
+  <header id="overview">
+    <p class="eyebrow"><span class="glyph">🚦</span> Question 3 of 3 — Readiness · Prospector</p>
+    <h1>Go / no-go, per work plan</h1>
+    <p class="lede">Every verdict traces to the committed <span class="mono">state/discovery.md</span> ledgers, not a runtime read. Two premises still need a live query and are marked as such — nothing here asserts what the running system hasn't shown.</p>
+    <dl class="stats">
+      <div class="stat"><span class="rail" style="background:var(--board-accent)"></span><dt>Work plans</dt><dd>7</dd></div>
+      <div class="stat"><span class="rail" style="background:var(--verdict-go)"></span><dt>Ready</dt><dd>1</dd></div>
+      <div class="stat"><span class="rail" style="background:var(--verdict-probe)"></span><dt>More discovery</dt><dd>2</dd></div>
+      <div class="stat"><span class="rail" style="background:var(--verdict-stop)"></span><dt>Blocked</dt><dd>1</dd></div>
+      <div class="stat"><span class="rail" style="background:var(--verdict-partial)"></span><dt>Decisions pending</dt><dd>4</dd></div>
+    </dl>
+  </header>
+
+  <section id="gates">
+    <div class="s-head">
+      <p class="eyebrow">01 · Verdicts</p>
+      <h2>Seven verdicts</h2>
+      <p class="note">Filter by verdict. Each card carries its gate, evidence with provenance, the next owner, and the exit condition that flips it.</p>
+    </div>
+    <div class="s-body">
+      <button class="annot" data-annot="gates">✎ Add note</button>
+      <div class="chips" id="filters" role="group" aria-label="Filter by verdict">
+        <button class="chip" data-f="all" aria-pressed="true">All 7</button>
+        <button class="chip" data-f="go" aria-pressed="false"><span class="dot" style="background:var(--verdict-go)"></span>Ready</button>
+        <button class="chip" data-f="partial" aria-pressed="false"><span class="dot" style="background:var(--verdict-partial)"></span>Partially</button>
+        <button class="chip" data-f="probe" aria-pressed="false"><span class="dot" style="background:var(--verdict-probe)"></span>More discovery</button>
+        <button class="chip" data-f="stop" aria-pressed="false"><span class="dot" style="background:var(--verdict-stop)"></span>Blocked</button>
+        <button class="chip" data-f="done" aria-pressed="false"><span class="dot" style="background:var(--verdict-done)"></span>Done</button>
+      </div>
+      <div class="cards" id="grid"></div>
+    </div>
+  </section>
+
+  <section id="blocker">
+    <div class="s-head">
+      <p class="eyebrow">02 · Critical path</p>
+      <h2>Why blocked stays blocked</h2>
+      <p class="note">Four operator decisions gate the two live streams; the first paper fill sits behind both.</p>
+    </div>
+    <div class="s-body">
+      <button class="annot" data-annot="blocker">✎ Add note</button>
+      <div class="path" aria-label="Critical path">
+        <div class="step"><span class="k">4 decisions</span><p>Host model · do-not-edit fence · live QuestDB constraint · array encoding</p></div>
+        <span class="arrow">→</span>
+        <div class="step"><span class="k">Scheduler lands</span><p>Leased-job scheduler built once host model and fence are fixed</p></div>
+        <span class="arrow">→</span>
+        <div class="step"><span class="k">Ingest lands</span><p>Ticks/LOB fix ships once the 8.1.1 constraint is queried live</p></div>
+        <span class="arrow">→</span>
+        <div class="step stop"><span class="k">First paper fill</span><p>Owns no independent work — unblocks only when both streams land</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="verdict">
+    <div class="s-head">
+      <p class="eyebrow">03 · Sign-off</p>
+      <h2>What moves the program next?</h2>
+      <p class="note">One verdict, one next owner, no hidden blocker.</p>
+    </div>
+    <div class="s-body">
+      <button class="annot" data-annot="verdict">✎ Add note</button>
+      <div class="signoff">
+        <p><b>Recommend: more discovery — resolve the four operator decisions first.</b><br>
+        The two dashboard streams stay shippable in parallel; nothing else moves the program faster. Next owner: Operator.
+        <small>Overriding this verdict means shipping the scheduler on an unqueried premise, or accepting that the paper-trade milestone slips behind the dashboard work.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="generated-brief">
+    <div class="s-head">
+      <p class="eyebrow">04 · Reply</p>
+      <h2>Generated reply</h2>
+      <p class="note">Your verdict, notes, and filters, folded into a prompt for the coding session.</p>
+    </div>
+    <div class="s-body">
+      <div class="prompt-card">
+        <div class="prompt-bar">
+          <span>Readiness position → coder</span>
+          <button class="btn" id="copyBtn">Copy prompt</button>
+        </div>
+        <textarea id="promptHost" readonly aria-label="Generated prompt"></textarea>
+      </div>
+      <p class="copy-status" id="copyStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <footer>
+    Sources: <span class="mono">state/discovery.md</span> readiness leaves (DIS03) · <span class="mono">state.md</span> registries · flagged live checks: QuestDB 8.1.1 <span class="mono">DOUBLE[]</span>, <span class="mono">active</span> state.<br>
+    Demo — the discover shell (docbar · docnav · editorial sections · provenance · generated reply) with a board-theme overlay: verdict ramp drawn from the palette's own olive/amber/terracotta families, filter chips, and data-driven verdict cards.
+  </footer>
+</main>
+
+<dialog class="note" id="noteDlg">
+  <p class="eyebrow" style="margin-bottom:.7rem">Section note</p>
+  <textarea id="noteText" placeholder="What should the coder know about this section?"></textarea>
+  <div class="row">
+    <button class="btn ghost" id="noteCancel">Cancel</button>
+    <button class="btn" id="noteSave">Save note</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  var V = { go:"Ready", partial:"Partially ready", probe:"More discovery", stop:"Blocked", done:"Done" };
+
+  var PLANS = [
+    { t:"Scheduler redesign", id:"…kwtt2n · serves P3", v:"probe", r:2, prov:"obs",
+      gate:"Leased-job scheduler is 0% built; host model and do-not-edit fence are undecided.",
+      ev:"state.md shows design tasks closed, zero build tasks opened; both decisions absent from the ledger.",
+      owner:["OP+TL","Operator + tech-lead"], exit:"Four decisions recorded → build starts" },
+    { t:"Ingest ticks / LOB fix", id:"…a54yx4 · serves P2", v:"probe", r:2, prov:"live",
+      gate:"QuestDB 8.1.1 DOUBLE[] crash-loop root-caused but unfixed; array encoding undecided.",
+      ev:"Crash-loop reproduced and attributed; the 8.1.1 constraint has never been queried live.",
+      owner:["OP+DA","Operator + data"], exit:"Live constraint query + encoding decision" },
+    { t:"First paper trade", id:"…734ty8 · serves P4", v:"stop", r:1, prov:"obs",
+      gate:"Owns no independent work — every task belongs to scheduler or ingest.",
+      ev:"Registry lists 3 blocked tasks, all cross-referenced to the two live streams.",
+      owner:["—","Waits on both streams"], exit:"First fill on the paper account" },
+    { t:"Maturity / channel split", id:"…s14vdf · serves P3", v:"partial", r:3, prov:"obs",
+      gate:"Design settled; implementation waits on the scheduler's job interfaces.",
+      ev:"Design tasks landed; remaining tasks name scheduler interfaces as their input.",
+      owner:["TL","Tech-lead"], exit:"Scheduler interface freeze" },
+    { t:"Dashboard signal-symbol + replay", id:"…a8hh32 · serves P1", v:"go", r:4, prov:"obs",
+      gate:"None — independent of every blocked stream.",
+      ev:"All prerequisites landed; replay view is the last open task with no external inputs.",
+      owner:["TL","Tech-lead"], exit:"Replay view ships" },
+    { t:"Dashboard honest degradation", id:"…3xk3vt · serves P1", v:"done", r:5, prov:"obs",
+      gate:"Complete and demonstrated.",
+      ev:"All registry tasks closed; degradation states verified in the demo pass.",
+      owner:["—","No further owner"], exit:"—" },
+    { t:"ImpactParams sqrt-law", id:"…7qv6hh · infra P2/P4", v:"done", r:5, prov:"obs",
+      gate:"Complete.",
+      ev:"Model landed with tests; consumers already read the new parameters.",
+      owner:["—","No further owner"], exit:"—" }
+  ];
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  var acceptedCards = {};
+  var grid = document.getElementById("grid");
+  PLANS.forEach(function (p) {
+    var el = document.createElement("article");
+    el.className = "card";
+    el.setAttribute("data-v", p.v);
+    el.style.setProperty("--vc", "var(--verdict-" + p.v + ")");
+    el.style.setProperty("--vsoft", "var(--verdict-" + p.v + "-soft)");
+    el.innerHTML =
+      '<div class="card-head"><div><h3>' + esc(p.t) + '</h3><span class="wid">' + esc(p.id) + '</span></div>' +
+      '<span class="pill">' + esc(V[p.v]) + '</span></div>' +
+      '<div class="meter-row"><span class="meter-lbl">ready</span><span class="meter"><i style="width:' + (p.r * 20) + '%"></i></span><span class="meter-val">' + p.r + '/5</span></div>' +
+      '<p><b>Gating</b> — ' + esc(p.gate) + '</p>' +
+      '<p><span class="prov ' + (p.prov === "live" ? "live" : "obs") + '">' + (p.prov === "live" ? "needs live query" : "observed") + '</span>' + esc(p.ev) + '</p>' +
+      '<div class="card-actions">' +
+        '<button class="act acc" type="button">✓ Accept verdict</button>' +
+        '<button class="act nt" type="button">✎ Note</button>' +
+      '</div>' +
+      '<div class="card-foot"><span class="owner"><span class="av">' + esc(p.owner[0]) + '</span>' + esc(p.owner[1]) + '</span><span>Exit: ' + esc(p.exit) + '</span></div>';
+    grid.appendChild(el);
+    var accBtn = el.querySelector(".act.acc"), ntBtn = el.querySelector(".act.nt");
+    accBtn.addEventListener("click", function () {
+      acceptedCards[p.t] = !acceptedCards[p.t];
+      accBtn.classList.toggle("on", !!acceptedCards[p.t]);
+      accBtn.textContent = acceptedCards[p.t] ? "Accepted ✓" : "✓ Accept verdict";
+      refreshCounts(); buildPrompt();
+    });
+    ntBtn.addEventListener("click", function () { openNote("card: " + p.t, ntBtn); });
+  });
+
+  var chips = Array.prototype.slice.call(document.querySelectorAll("#filters .chip"));
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      chips.forEach(function (x) { x.setAttribute("aria-pressed", x === c ? "true" : "false"); });
+      var f = c.getAttribute("data-f");
+      Array.prototype.forEach.call(grid.children, function (card) {
+        card.classList.toggle("hide", f !== "all" && card.getAttribute("data-v") !== f);
+      });
+      buildPrompt();
+    });
+  });
+
+  // notes — sections and cards share one dialog
+  var notes = {};
+  var dlg = document.getElementById("noteDlg");
+  var noteFor = null, noteBtn = null;
+  function openNote(key, btn) {
+    noteFor = key; noteBtn = btn || null;
+    document.getElementById("noteText").value = notes[key] || "";
+    dlg.showModal();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".annot"), function (b) {
+    b.addEventListener("click", function () { openNote(b.getAttribute("data-annot"), b); });
+  });
+  document.getElementById("noteCancel").addEventListener("click", function () { dlg.close(); });
+  document.getElementById("noteSave").addEventListener("click", function () {
+    var v = document.getElementById("noteText").value.trim();
+    if (v) notes[noteFor] = v; else delete notes[noteFor];
+    if (noteBtn) {
+      noteBtn.classList.toggle("noted", !!notes[noteFor]);
+      if (noteBtn.classList.contains("nt")) noteBtn.textContent = notes[noteFor] ? "✎ Note saved" : "✎ Note";
+    }
+    refreshCounts();
+    dlg.close(); buildPrompt();
+  });
+  function refreshCounts() {
+    var acc = Object.keys(acceptedCards).filter(function (k) { return acceptedCards[k]; }).length;
+    document.getElementById("decCount").textContent = String(acc);
+    document.getElementById("noteCount").textContent = String(Object.keys(notes).length);
+  }
+
+  function buildPrompt() {
+    var active = document.querySelector('#filters .chip[aria-pressed="true"]').getAttribute("data-f");
+    var lines = [
+      "Prospector · readiness position (board 3 of 3)",
+      "",
+      "Verdict: MORE DISCOVERY — resolve the four operator decisions first.",
+      "Next owner: Operator.",
+      "",
+      "Per-plan verdicts:"
+    ];
+    PLANS.forEach(function (p) {
+      var mark = acceptedCards[p.t] ? " ✓ ACCEPTED" : "";
+      lines.push("- " + p.t + " [" + V[p.v] + " · " + p.r + "/5]" + mark + " exit: " + p.exit);
+    });
+    if (active !== "all") lines.push("", "Reviewer focus filter: " + active);
+    var keys = Object.keys(notes);
+    if (keys.length) { lines.push("", "Reviewer notes:"); keys.forEach(function (k) { lines.push("- [" + k + "] " + notes[k]); }); }
+    lines.push("", "Live checks still flagged: QuestDB 8.1.1 DOUBLE[] support; strategy `active` state.");
+    document.getElementById("promptHost").value = lines.join("\n");
+  }
+  buildPrompt();
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var host = document.getElementById("promptHost");
+    host.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(host.value).catch(function () {});
+    document.getElementById("copyStatus").textContent = "Copied to clipboard.";
+  });
+
+  // scroll-spy for docnav
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll(".docnav a"));
+  var sections = navLinks.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          navLinks.forEach(function (a) {
+            a.classList.toggle("is-active", a.getAttribute("href") === "#" + en.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    sections.forEach(function (s) { if (s) io.observe(s); });
+  }
+
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.dataset.theme === "dark" ||
+      (root.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+  });
+})();
+</script>
