@@ -151,7 +151,8 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
    `## Work stream: <work-id>` section per selected stream anchored in step 8:
    gather the raw contents of `state.md`, `state/working.md`, and every
    continuity-relevant detail file (decisions, changes, design, `state/*.md`
-   children, needed artifacts) and carry them verbatim, each in its own fenced
+   children, needed artifacts, and every outstanding `proposals/` child still
+   awaiting approval or approved but not yet implemented) and carry them verbatim, each in its own fenced
    block whose fence is at least one backtick longer than the longest backtick run
    inside that file and whose preceding line names the stream-root-relative path
    as `path: <relative path>` with no `<work-id>/` prefix. When a stream depends
