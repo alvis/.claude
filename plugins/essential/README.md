@@ -69,6 +69,7 @@ identity, used by the `production` plugin).
 | `essential:autoresearch` | Metric-driven optimization loops (define metric → evolve candidates → verify → mutate). |
 | `essential:handover` | Pausing or transferring work: persists all stream state, updates the cross-tree overview, emits the portable receipt, releases leases, emits the handover checkpoint. |
 | `essential:takeover` | Resuming paused work, locally or from a receipt: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
+| `essential:doctor` | Health-checking `.engineering/`: runs the structural doctor, diagnoses format drift against the current contracts, and offers user-approved migration to the latest structure — judged by reading the contracts, never a version token. |
 | `essential:handoff` | A zero-context cross-domain orchestration plan another agent can execute verbatim. |
 | `essential:install-agents` | Installing/refreshing the stitched specialist agent roster into `~/.claude/agents/`. |
 | `essential:install-statusline` | Installing the bundled Bullet Train statusline. |
