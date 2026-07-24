@@ -277,7 +277,7 @@ Every PR declares exactly one category in its title prefix or body header (see `
 When a feature spans more than one zone or category, split it into a stack governed by `GIT-PR-STACK-*`:
 
 - Bookmark each PR `<feature-slug>/NN-<type>` (e.g. `auth-rewrite/01-spec`, `auth-rewrite/02-impl`) — see `GIT-PR-STACK-01`.
-- Fix issues in the earliest owning unmerged change using `jj edit` / `jj absorb`, never by patching a later PR (`GIT-PR-STACK-02`).
+- Fix issues in the earliest owning unmerged change — `jj edit` / `jj absorb`, or `git rebase --interactive --autosquash` onto the owning commit — never by patching a later PR (`GIT-PR-STACK-02`).
 - Once a stack PR has merged upstream, never rewrite history — open a corrective PR instead (`GIT-PR-STACK-03`).
 - Land behaviour changes behind a flag unless the change is tiny, isolated, and reversible (`GIT-PR-STACK-04`).
 - Merge bottom-to-top; rebase the next PR onto main after each lower PR lands (`GIT-PR-STACK-05`).
