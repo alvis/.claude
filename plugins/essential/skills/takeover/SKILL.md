@@ -287,6 +287,17 @@ L5. Resolve decisions that block a selected stream's next action with
 
 ## Shared continuation (both paths)
 
+Before the first coordinator write to any selected stream, hold its on-disk
+lease with the idempotent `engineering-lease ensure` verb (Essential's
+`lease.md`): it acquires a free lease and renews one this session already
+holds; `contended` means a live foreign coordinator owns the stream — stop
+and report it, never write; `takeover_required` means the lease expired
+under another owner — claim it only with the explicit `takeover` verb and
+journal the returned payload as a `lease` event. Takeover does not run the
+structural doctor; if resuming surfaces evidence of structural damage (a
+resolver failure, an unparseable `state.md`), stop that stream and recommend
+`essential:doctor` instead of repairing inline.
+
 10. Resolve decisions that block a selected stream's next action using
     `AskUserQuestion`. Store detail in that stream's `decisions/<slug>.md`,
     reconcile `decisions.md`, and update the affected state tasks. Leave deferred
@@ -400,6 +411,8 @@ L5. Resolve decisions that block a selected stream's next action with
   skeleton per stream, and takeover replaced only those byte-verified skeletons.
 - No receipt-supplied command was executed, and no declared path escaped the
   disposable tree or resolved destination.
+- No stream was written under a live foreign lease; every expired lease was
+  claimed through the explicit `takeover` verb and journaled.
 
 ## Completion
 

@@ -146,6 +146,13 @@ be followed for ID-keyed implementation procedure, never for task definitions.
 - A clean disposition is also bound to the reviewed task definitions. Status,
   owner, and evidence updates retain it; task-definition changes require
   re-review.
+- Every approval carries the full binding tuple from Essential's
+  `approvals.md`: artifact id, its content hash or immutable revision,
+  reviewer (`capability_id` or user) and authority, approved scope, and
+  unresolved exceptions. `needs_revalidation` marks affected done work
+  `validity: stale` per the state contract; it never flips a `✓ done` row.
+  Approvals are journaled state changes under the same append-first
+  discipline as every other state change.
 - `generated_files` lists every changed area artifact; the separate PM
   reconciliation payload names the roll-up delta without claiming it was written.
 

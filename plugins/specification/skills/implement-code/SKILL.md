@@ -94,8 +94,10 @@ contract materialization, MDC authoring, alignment, and completion sync.
    never an identity gate. If materialization reports remote change against an
    existing plan/review/implementation, stop with `needs_revalidation` rather
    than continuing from stale intent, and hand the PM the revalidation sweep:
-   affected task rows become `! blocked` with
-   `unblock: revalidate against <base-id>`, charter `SC-n` criteria are
+   affected non-done task rows become `! blocked` with
+   `unblock: revalidate against <base-id>`, affected `✓ done` rows keep their
+   status and gain `validity: stale (revalidate against <base-id>)` plus
+   remediation tasks for invalidated closure, charter `SC-n` criteria are
    re-checked against the new base, and the sweep is journaled before
    execution resumes.
 3. Read root `state.md` as the canonical plan. Follow an
@@ -148,7 +150,8 @@ contract materialization, MDC authoring, alignment, and completion sync.
    push, open/update a PR, restack, or finalize shared history. On
    `pending_decision`, stop, ask, record the answer through the selected source
    owner (`Skill(mdc)` only for the selected Notion-backed path), and resume the
-   same run. Each child returns the same task identity, attempt outcome
+   same run. Each child returns the same task identity, its `capability_id`
+   (Essential's `truth.md`), attempt outcome
    (`pass|fail|partial`), evidence, generated files, and a requested status
    delta; reconcile results by ID rather than arrival order, then re-read
    `state.md` to find newly runnable tasks before dispatching them. A failed leaf retains failure

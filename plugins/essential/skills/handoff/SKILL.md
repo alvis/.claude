@@ -26,8 +26,9 @@ persists the current coding session in continuation files.
   otherwise name the equivalent action or files without invoking it.
 - **Required evidence for a persisted plan**: current repository root, active
   branch, base and HEAD commit SHAs, worktree status, relevant tool versions,
-  exact command lines already run with outcomes, and absolute paths to every
-  source artifact the next executor must use.
+  exact command lines already run with outcomes, the `capability_id` of each
+  actor whose run produced recorded evidence (Essential's `truth.md`), and
+  absolute paths to every source artifact the next executor must use.
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
