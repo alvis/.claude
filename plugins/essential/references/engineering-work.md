@@ -3,6 +3,8 @@
 Read this contract before creating or materially rewriting project engineering
 artifacts. It defines their paths, ownership, promotion, and final size check.
 Domain skills own artifact content; Essential owns this cross-plugin lifecycle.
+Read [truth.md](truth.md) once per work stream: it defines the kinds of truth
+these artifacts carry, the constitutional rules, validity, and `capability_id`.
 
 ## Resolve the workspace first
 
@@ -258,7 +260,9 @@ stream between them.
 
 `goal.md` is the work stream's charter: the goal, scope and non-goals,
 numbered success criteria (`SC-1`, `SC-2`, …) each with its expected
-acceptance evidence, and specification provenance. It carries
+acceptance evidence, specification provenance, and the stream's
+`## Workspace anchors` (the resolved git/jj workspace by default; any other
+anchor kind follows [anchors.md](anchors.md)). It carries
 `Charter revision: N`, bumped only on explicit user approval; every bump is
 recorded in `state/journal.md` and `state/revisions.md`. The charter separates
 what "done" means from where the work currently stands, so continuous status
@@ -337,20 +341,21 @@ Persist state immediately, never lazily — append first, reconcile second. The
 moment a task or subtask changes status (started, blocked, done, failed,
 cancelled), a decision is made, a plan or charter revision is approved, or a
 sync event lands, the lease holder appends one line to `state/journal.md`
-(timestamp, actor, task ID or event, transition, evidence reference) and then
-reconciles the affected tables — not batched, and not deferred to handover or
-session end. The journal is append-only and never rewritten; the tables in
-`state.md`, the lazy overviews, and `overview.md` are views over it, so any
-suspected drift between them is settled by re-reading the journal rather than
-guessed. State in `.engineering/` is the durable memory of record; handover
-only publishes and transports what is already written. This
-continuous-persistence discipline bounds the loss to a single journal line if
-the coding agent crashes mid-task or a session ends without an explicit
-handover, so a later resume reads an accurate registry rather than
-reconstructing lost progress. A worker without the
-lease returns its status change and evidence in its output manifest immediately;
-the lease holder reconciles it into `state.md` at once rather than accumulating
-deltas.
+(grammar in the work-state contract) and then reconciles the affected tables —
+not batched, and not deferred to handover or session end. The journal is
+append-only and never rewritten; the tables in `state.md`, the lazy overviews,
+and `overview.md` are views over it, so any suspected drift between them is
+settled by re-reading the journal rather than guessed. State in
+`.engineering/` is the operational projection of the work, not the record of
+record: deleting it may cost convenience and execution detail, but must never
+erase an accepted decision, approved contract, published artifact identity, or
+unresolved critical risk — those live in versioned docs, external anchors, and
+checkpoints ([checkpoints.md](checkpoints.md)). This continuous-persistence
+discipline bounds the loss to a single journal line if the coding agent
+crashes mid-task or a session ends without an explicit handover. A worker
+without the lease returns its status change and evidence in its output
+manifest immediately; the lease holder reconciles it into `state.md` at once
+rather than accumulating deltas.
 
 One actor holds the work item's coordinator lease and is the sole writer of
 `goal.md`, `state/working.md`, `state.md`, `state/journal.md`,
@@ -359,6 +364,19 @@ holds it by default and may explicitly grant it to one orchestration skill,
 naming the files covered. The PM does not write those files until that skill
 returns. Every other subagent is a worker: it writes only assigned children and
 returns paths plus reconciliation deltas.
+
+The lease is on disk, not just convention. Before its first coordinator write
+in a session, the lease holder runs
+`"$ESSENTIAL_ROOT/bin/engineering-lease" acquire` against the resolved
+`work_dir` (verbs: `acquire`, `heartbeat`, `release`, `status`, `takeover`;
+see `--help`). Each coordinator write then follows one protocol: confirm the
+lease is held, write to a temporary file in the same directory, atomically
+rename it over the target, bump the monotonic `State revision: N` in
+`state.md`, and carry `rev:<N>` on the journal line. A live foreign lease
+means another coordinator owns the stream — stop and report, never write. An
+expired lease is taken over only through the explicit `takeover` verb, which
+is journaled as a `lease` event; it is never silently replaced. Workers never
+acquire the lease. Release it at handover, retirement, or session end.
 
 ## Lazy work overviews
 
@@ -420,7 +438,11 @@ needed for the current focus.
 
 Each child starts with structured metadata containing at least its canonical
 status, one-line headline, owner, created timestamp, and source/provenance
-references. When a `proposals/` or `changes/` child's deviation section records a
+references. A `decisions/` child additionally follows
+[decision-causality.md](decision-causality.md): causal metadata
+(`supersedes`/`affects`/`invalidates`/`preserves`), the blast-radius sweep on
+acceptance, and the completion gate that dispositions every accepted decision
+before retirement. When a `proposals/` or `changes/` child's deviation section records a
 deviation from a Notion-backed specification, that deviation's provenance MUST
 link to the related `.mdc` file under the default source tree's
 `.engineering/notion/` — that folder lives only on the default source tree and is
@@ -495,13 +517,15 @@ before planning, before each dispatch batch (a cheap `unchanged` check),
 before review, and at completion. A stream that was idle past any checkpoint
 re-materializes before proceeding. When materialization or completion returns
 `next_action: revalidate`, the coordinator runs one revalidation sweep against
-the new base-id: mark every task row whose definition, targets, or acceptance
-depend on the changed content `! blocked` with
+the new base-id: mark every non-done task row whose definition, targets, or
+acceptance depend on the changed content `! blocked` with
 `unblock: revalidate against <base-id>` (revalidation is expressed in the
-existing status vocabulary — there is no separate task status for it),
-re-check each `SC-n` in `goal.md` against the new base and escalate charter
-drift to the user, and append the sweep to `state/journal.md`. Implementation
-continues only after the sweep.
+existing status vocabulary — there is no separate task status for it). A
+`✓ done` row stays done — append `validity: stale (revalidate against
+<base-id>)` to its Evidence cell and add remediation tasks with new IDs for
+any invalidated closure that must be redone. Re-check each `SC-n` in `goal.md`
+against the new base and escalate charter drift to the user, and append the
+sweep to `state/journal.md`. Implementation continues only after the sweep.
 
 Revalidation is guaranteed only for locally discoverable, registered
 workspaces. Enumerate each local Git worktree from `git worktree list
@@ -561,13 +585,31 @@ non-executable application semantics. A recipient reads those carriers in an
 isolated post-anchor tree before reconstructing fresh local work state; it never
 copies `.engineering/` or trusts a local-only path. Handover scopes to the
 current source tree only; it never indexes or rewrites another tree's work
-streams, and `overview.md` is the sole cross-tree surface.
+streams, and `overview.md` is the sole cross-tree surface. Every handover also
+emits its checkpoint to the stream's external anchor
+([checkpoints.md](checkpoints.md)) and releases the coordinator lease.
 
 Retire completed local work only after acceptance, review closure, durable
-promotion, Notion push and verification pull, and final receipts are recorded.
-The default retention is 30 days unless repository compliance policy requires
-longer. Existing ambiguous artifacts are reported and preserved, never deleted
-or migrated by guesswork.
+promotion, Notion push and verification pull, final receipts, every accepted
+decision's disposition under the completion gate
+([decision-causality.md](decision-causality.md)), and the retirement
+checkpoint ([checkpoints.md](checkpoints.md)) are recorded — retirement
+deletes the operational projection, so nothing consequential may exist only
+there. The default retention is 30 days unless repository compliance policy
+requires longer. Existing ambiguous artifacts are reported and preserved,
+never deleted or migrated by guesswork.
+
+## Structural doctor
+
+`"$ESSENTIAL_ROOT/bin/engineering-doctor" --work-dir <work_dir>` is a
+read-only structural checker: duplicate or dangling task IDs, dependency
+cycles, impossible roll-ups, contradictory mark/status pairs, missing
+evidence annotations, broken file references, unsuperseded decisions, stale or
+conflicting leases, and overview drift. It never judges prose or blocks by
+default — findings inform the coordinator's own reading of state. Run it
+before takeover, handover, dispatch of a large batch, and retirement; pass
+`--strict` (nonzero exit on error-severity findings) when the work is
+irreversible or release-critical and treat that failure as stop-and-report.
 
 ## Output manifest and final size loop
 
