@@ -1,7 +1,7 @@
 # Transient Functional and Trigger Checks
 
-Loaded by `SKILL.md` for `mode=functional` or `mode=full`. These checks use
-representative prompts as temporary working data.
+Loaded by the `verify` action (from `verify.md`) for `mode=functional` or
+`mode=full`. These checks use representative prompts as temporary working data.
 
 <IMPORTANT>
 - Keep cases in context. If written notes help, use a Markdown table based on

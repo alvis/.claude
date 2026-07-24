@@ -65,7 +65,7 @@ times, then report partial completion with the remaining issues.
 
 Report the action taken, affected skill paths, ownership boundaries or changes,
 thought-experiment and blindspot coverage, validation results, runtime
-evaluation status (`exercised`, `not requested`, `blocked`, or `not
-exercised`), and any intentionally deferred cases or unresolved ambiguity.
+evaluation status (`exercised`, `not requested`, or `blocked`), and any
+intentionally deferred cases or unresolved ambiguity.
 Confirm any temporary Markdown thought-experiment notes were deleted before
 commit. Never claim a bulk update without listing its targets.

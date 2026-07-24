@@ -1,8 +1,8 @@
 # Action: create
 
 Loaded by `SKILL.md` when the first argument is `create`. Add a new reusable
-skill; the shared policy, thought-experiment/blindspot test, verification
-commands, and completion contract live in `SKILL.md`.
+skill; the shared policy, thought-experiment/blindspot test, and verification
+commands live in `SKILL.md`.
 
 ## Boundaries
 
@@ -45,6 +45,6 @@ completion with the remaining issues.
 ## Completion
 
 Report the created path, ownership boundary, thought-experiment and blindspot
-coverage, validation results, runtime evaluation status (including "not
-exercised"), and any intentionally deferred cases. Confirm any temporary
-Markdown thought-experiment notes were deleted before commit.
+coverage, validation results, runtime evaluation status (`exercised`, `not
+requested`, or `blocked`), and any intentionally deferred cases. Confirm any
+temporary Markdown thought-experiment notes were deleted before commit.

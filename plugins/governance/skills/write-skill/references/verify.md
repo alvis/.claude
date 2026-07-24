@@ -1,8 +1,8 @@
 # Action: verify
 
 Loaded by `SKILL.md` when the first argument is `verify`. Validate a new or
-changed skill; the shared policy, verification commands, and completion contract
-live in `SKILL.md`.
+changed skill; the shared policy, thought-experiment/blindspot test, and
+verification commands live in `SKILL.md`.
 
 ## Boundaries
 
@@ -19,6 +19,8 @@ live in `SKILL.md`.
 - **Optional** mode: `structural`, `functional`, or `full` (default `full`).
 - **Optional** representative prompts supplied inline and `runtime: true|false`
   (default `false`).
+- **Optional** `fix: true|false` (default `false`) — apply fixes for reported
+  causes and rerun the failed checks.
 
 ## Workflow
 
@@ -45,14 +47,9 @@ prompts, XML report envelopes, or a section literally named "Skill Completion."
 
 ## Verification
 
-```bash
-claude plugin validate --strict <plugin-path>
-python3 "${CLAUDE_SKILL_DIR}/scripts/quick_validate.py" <skill-or-plugin-path>
-```
-
-Run both commands after every fix iteration. Trigger and functional results must
-include the prompt, expectation, reasoned or observed outcome, and pass/fail
-rationale.
+After every fix iteration, re-run the verification commands in `SKILL.md`.
+Trigger and functional results must include the prompt, expectation, reasoned or
+observed outcome, and pass/fail rationale.
 
 ## Completion
 

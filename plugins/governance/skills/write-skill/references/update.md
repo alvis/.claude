@@ -1,10 +1,10 @@
 # Action: update
 
 Loaded by `SKILL.md` when the first argument is `update`. Revise one or more
-existing skills; the shared policy, thought-experiment/blindspot test,
-verification commands, and completion contract live in `SKILL.md`.
+existing skills; the shared policy, thought-experiment/blindspot test, and
+verification commands live in `SKILL.md`.
 
-Recommended tools for this action: `Bash, Task, Read, Glob, Edit, MultiEdit,
+Recommended tools for this action: `Bash, Agent, Read, Glob, Edit, MultiEdit,
 TodoWrite`.
 
 ## Boundaries
@@ -46,7 +46,7 @@ concise aid, not a migration target whose headings must be copied.
    evaluation actually ran.
 
 Independent targets may be delegated in bounded batches — at most 8 skills per
-batch and 8 parallel `Task` calls per dispatch. Each assignment must name exact
+batch and 8 parallel `Agent` calls per dispatch. Each assignment must name exact
 paths and constraints; review the combined diff afterward.
 
 Use the `verify` action for functional and trigger evaluation with `fix: true`;
@@ -56,7 +56,7 @@ issues, and continue to the next target.
 ## Completion
 
 Report updated skills, ownership changes, validation results, thought-experiment
-and blindspot coverage, runtime evaluation status (including "not exercised"),
-and unresolved ambiguity. Confirm temporary Markdown thought-experiment notes
-were deleted before commit. Never claim a bulk update without listing its
-targets.
+and blindspot coverage, runtime evaluation status (`exercised`, `not
+requested`, or `blocked`), and unresolved ambiguity. Confirm temporary Markdown
+thought-experiment notes were deleted before commit. Never claim a bulk update
+without listing its targets.
