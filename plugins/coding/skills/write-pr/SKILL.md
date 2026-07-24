@@ -68,9 +68,11 @@ skill.
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
 | `--dry-run` | Print the test, publication, and monitoring plan without agents or local/remote mutations. |
 
-- **Prerequisites**: a clean saved change or linear stack, a jj-colocated
-  repository, authenticated `gh`, and remote push access. `jj` on PATH (falls
-  back to `git` for commit-text resolution when `jj` is absent).
+- **Prerequisites**: for publication — a clean saved change or linear stack, a
+  jj-colocated repository, authenticated `gh`, and remote push access.
+  Authoring PR text alone needs only `jj` on PATH (and falls back to `git` for
+  commit-text resolution when `jj` is absent), so the text-only path is never
+  blocked by the publication prerequisites.
 
 ## Engineering-work gate
 
