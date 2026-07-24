@@ -28,8 +28,11 @@ Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential; if unavailable, stop
 artifact writes and report the missing contract. Also read Essential's
 `references/checkpoints.md` (the approval binding tuple and checkpoint
-events). Review records are work-stream review artifacts under the stream's
-`reviews/` per the contract; durable release records promote at completion.
+events) and `references/reviews.md`. Review records land in the
+plugin-namespaced review area `reviews/production-render.md` — sanctioned
+alongside the seven canonical engineering areas, under the same finding and
+disposition lifecycle and the `review.md` roll-up; durable release records
+promote at completion.
 
 ## Workflow
 

@@ -3,27 +3,5 @@
   "author": {"name": "Alvis"},
   "dependencies": ["essential"],
   "description": "Media and creative production lifecycle: asset provenance, render manifests, and revision-bound review for video, audio, and campaign deliverables",
-  "version": "2026-07-24",
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g\" \"${CLAUDE_PLUGIN_ROOT}/CLAUDE.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
-          }
-        ]
-      }
-    ]
-  }
+  "version": "2026-07-24"
 }
