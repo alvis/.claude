@@ -94,8 +94,10 @@ contract materialization, MDC authoring, alignment, and completion sync.
    never an identity gate. If materialization reports remote change against an
    existing plan/review/implementation, stop with `needs_revalidation` rather
    than continuing from stale intent, and hand the PM the revalidation sweep:
-   affected task rows become `! blocked` with
-   `unblock: revalidate against <base-id>`, charter `SC-n` criteria are
+   affected non-done task rows become `! blocked` with
+   `unblock: revalidate against <base-id>`, affected `✓ done` rows keep their
+   status and gain `validity: stale (revalidate against <base-id>)` plus
+   remediation tasks for invalidated closure, charter `SC-n` criteria are
    re-checked against the new base, and the sweep is journaled before
    execution resumes.
 3. Read root `state.md` as the canonical plan. Follow an
@@ -139,7 +141,9 @@ contract materialization, MDC authoring, alignment, and completion sync.
    run concurrently only when their write scopes do not conflict. Before each dispatch batch, cheaply confirm spec freshness (an `unchanged`
    materialization check for a live source); a changed source stops the batch
    and routes through the revalidation sweep instead of dispatching against
-   stale intent. Every
+   stale intent. A parallel dispatch batch is a checkpoint event — the
+   coordinator emits a `dispatch` checkpoint to the stream's external anchor
+   per Essential's `checkpoints.md`. Every
    dispatch receives repo path, work id, exact spec pointers, the charter
    `goal.md` path when present, full `task_id`,
    canonical `plan_source`, acceptance map,
@@ -148,7 +152,8 @@ contract materialization, MDC authoring, alignment, and completion sync.
    push, open/update a PR, restack, or finalize shared history. On
    `pending_decision`, stop, ask, record the answer through the selected source
    owner (`Skill(mdc)` only for the selected Notion-backed path), and resume the
-   same run. Each child returns the same task identity, attempt outcome
+   same run. Each child returns the same task identity, its `capability_id`
+   (Essential's `truth.md`), attempt outcome
    (`pass|fail|partial`), evidence, generated files, and a requested status
    delta; reconcile results by ID rather than arrival order, then re-read
    `state.md` to find newly runnable tasks before dispatching them. A failed leaf retains failure

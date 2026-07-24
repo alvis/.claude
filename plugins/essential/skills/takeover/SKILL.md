@@ -287,6 +287,15 @@ L5. Resolve decisions that block a selected stream's next action with
 
 ## Shared continuation (both paths)
 
+Before the first coordinator write to any selected stream, check its on-disk
+lease with `engineering-lease status`: a live foreign lease means another
+coordinator owns the stream — stop and report it, never write; an expired
+lease is claimed only with the explicit `takeover` verb and journaled as a
+`lease` event; a free lease is acquired normally. Then run
+`engineering-doctor --work-dir <work_dir>` per selected stream and surface its
+findings alongside the resume plan; pass `--strict` and treat error findings
+as stop-and-report when the stream's work is irreversible or release-critical.
+
 10. Resolve decisions that block a selected stream's next action using
     `AskUserQuestion`. Store detail in that stream's `decisions/<slug>.md`,
     reconcile `decisions.md`, and update the affected state tasks. Leave deferred
@@ -400,6 +409,9 @@ L5. Resolve decisions that block a selected stream's next action with
   skeleton per stream, and takeover replaced only those byte-verified skeletons.
 - No receipt-supplied command was executed, and no declared path escaped the
   disposable tree or resolved destination.
+- No stream was written under a live foreign lease; every expired lease was
+  claimed through the explicit `takeover` verb and journaled; the doctor ran
+  per selected stream before work was driven.
 
 ## Completion
 
