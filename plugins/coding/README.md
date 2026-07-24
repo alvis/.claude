@@ -34,6 +34,7 @@ Two mechanisms make saves and publication safe around AI-driven edits:
 | `coding:commit` | All history mutation: scoped saves, split/absorb, stacking, reordering. |
 | `coding:finalize-commits` | Isolated per-commit QA before publishing a stack. |
 | `coding:write-pr` | Conventional-commit PR title/body from a change ref, draft-PR publication, and CI babysitting. |
+| `coding:review-pr` | External first-line review of a remote PR: inline comments on the changed lines plus one overall verdict. |
 | `coding:merge-pr` | Bottom-up merging of a linear PR stack with restacks. |
 | `coding:setup-project` | Project/monorepo scaffolding when structure is missing. |
 | `coding:cleanup` | Evidence-based retirement of stale branches, worktrees, and work dirs. |
