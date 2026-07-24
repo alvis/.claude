@@ -55,7 +55,7 @@ One `AskUserQuestion` call per board (never batch two boards into one call). The
 
 ### A6. Cleanup
 
-Boards are task evidence under `<design-evidence-dir>/`, not system temp files. Keep them through sign-off and retire them only through the shared work-retention lifecycle.
+Boards are task evidence under `<design-evidence-dir>/`. Keep them through sign-off and retire them only through the shared work-retention lifecycle.
 
 ---
 

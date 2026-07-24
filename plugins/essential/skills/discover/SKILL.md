@@ -36,11 +36,11 @@ production artifacts, and implementing skills own application-source changes.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
 writes and report the missing contract. Resolve the active work directory from
-that contract; do not invent a root workspace. A direct persistent run passes
-`--work-id` to the resolver only when the user supplied that explicit override;
-otherwise accept automatic existing-work selection and ask only on
-`work_id_required`. The PM performs the contract's ignore gate and no-clobber
-bootstrap before the first persistent artifact.
+that contract. A direct persistent run passes `--work-id` to the resolver only
+when the user supplied that explicit override; otherwise accept automatic
+existing-work selection and ask only on `work_id_required`. The PM performs the
+contract's ignore gate and no-clobber bootstrap before the first persistent
+artifact.
 
 Default to a conversational result. With `--persist` or a long-lived task,
 write the ledger to `state/discovery.md`; each material finding also earns one

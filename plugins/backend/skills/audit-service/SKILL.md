@@ -20,9 +20,8 @@ with Backend/Coding owners.
 - Route contract omissions/drift to `alignment.md`; semantic defects to
   `correctness.md`; remaining findings to security, quality, testing, docs, or
   style. One finding has one owner.
-- Do not create standalone/root audit or deviations artifacts. Keep detail in
-  assigned `reviews/*.md` files and return counts/deltas so the PM can reconcile
-  the sibling `review.md`.
+- Keep detail in assigned `reviews/*.md` files and return counts/deltas so the
+  PM can reconcile the sibling `review.md`.
 - Do not mutate code, docs, MDC, or Notion merely because a discrepancy exists.
 
 ## Inputs

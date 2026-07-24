@@ -18,8 +18,9 @@ Markdown contract and one artifacts root:
 ```
 
 Create only artifacts directories the task needs. Application files remain in
-their owning source paths. Do not use a project-root workspace, session
-scratchpad, or `$TMPDIR` fallback for task evidence.
+their owning source paths. Task evidence lives only under
+`<work-dir>/artifacts/design/<design-slug>/` — the `<design-evidence-dir>` the
+rest of this skill names.
 
 ## Bootstrap and resume
 

@@ -27,8 +27,7 @@ Embed this policy in every coding dispatch:
 ## Deviation policy
 
 The work plan may be invalidated by repository/runtime evidence. Report a
-material departure to the orchestrator; do not create a root deviations file
-or edit PM-owned indexes.
+material departure to the orchestrator; do not edit PM-owned indexes.
 
 Material: missing/wrong dependency, integration or schema mismatch, standard
 violation, architecture conflict, stale symbol, or changed acceptance behavior.

@@ -4,7 +4,7 @@
 
 ## Intent
 
-Distributable packages MUST live under `src/<package_name>/` with an `__init__.py`, not at the repository root. The `src/` layout forces the test suite and tooling to import the **installed** package instead of the in-tree copy, which immediately catches missing `pip install -e .`, missing `__init__.py` files, and packaging misconfigurations that would otherwise hide until the wheel ships.
+Distributable packages MUST live under `src/<package_name>/` with an `__init__.py`. The `src/` layout forces the test suite and tooling to import the **installed** package instead of the in-tree copy, which immediately catches missing `pip install -e .`, missing `__init__.py` files, and packaging misconfigurations that would otherwise hide until the wheel ships.
 
 ## Fix
 

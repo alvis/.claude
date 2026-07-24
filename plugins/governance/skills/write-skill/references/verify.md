@@ -33,9 +33,10 @@ verification commands live in `SKILL.md`.
    length, description budget, unresolved local references, and placeholders.
 4. For functional or full mode, derive a transient representative-case matrix
    from the owned outcome and any caller-supplied prompts. Keep it in context or
-   a temporary Markdown scratch file outside the repository. Follow
-   [functional-mode.md](functional-mode.md) for the case shape, paper-only
-   reasoning, and optional isolated runtime execution.
+   a temporary Markdown scratch file in the OS temp folder (for example
+   `${TMPDIR:-/tmp}/check.md`). Follow [functional-mode.md](functional-mode.md)
+   for the case shape, paper-only reasoning, and optional isolated runtime
+   execution.
 5. Include positive trigger prompts, nearby negative prompts, and behavior or
    failure cases relevant to the change. Separate reasoned outcomes from
    observed runtime evidence; a pass must not claim execution that did not run.

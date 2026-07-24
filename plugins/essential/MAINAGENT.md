@@ -19,8 +19,8 @@ take bounded work.
   invoke the resolver with the confirmed ID and `--bootstrap`; preserve existing
   entrypoints and list `bootstrap_created`. Identity, ignore, and bootstrap are
   PM-only: never mint an ID silently.
-- Write only under the active `.engineering/`, plus `docs/` at promotion — never
-  `/tmp`, `.local/`, repo root, `$HOME`, or a spill file for large output.
+- Write only under the active `.engineering/`, plus `docs/` at promotion; large
+  output is shortened or pointed into `.engineering/`, never spilled to a file.
 - `essential:takeover` resumes from on-disk `.engineering/works/`; a copied-in
   work dir is valid state with its own ID. It may read a receipt and the
   overview pre-bootstrap; a receipt selects IDs and anchors, never state. Claim
