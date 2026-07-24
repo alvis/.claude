@@ -18,7 +18,7 @@ owns revisions to existing standards.
 - Use for: establishing a missing reusable policy as a new three-tier
   standard with a unique rule-ID prefix.
 - Do not use for: revising an existing standard (`update-standard`), creating
-  skills (`create-skill`), writing to a repository-level shorthand root,
+  skills (`write-skill`), writing to a repository-level shorthand root,
   overwriting an existing directory, or policy that belongs to an existing
   owner.
 
@@ -70,7 +70,7 @@ owns revisions to existing standards.
 - Resolve every local Markdown link from its containing file. Verify
   dependent-standard targets exist and no dependency cycle is introduced.
 - Run `claude plugin validate --strict plugins/<plugin>` and
-  `python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" plugins/<plugin>`
+  `python3 "${CLAUDE_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
   for repository policy checks.
 - Exercise at least one violating and one compliant example per rule group
   against the scan/write guidance.
