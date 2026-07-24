@@ -1,6 +1,6 @@
 # Coding workflow
 
-Read this before you write, modify, or review code, then follow the phase your task is in — Before, While, or After Coding — top to bottom.
+Read this before you write, modify, review, upload, or publish code — committing, pushing, and opening or updating a pull request are covered too — then follow the phase your task is in — Before, While, or After Coding — top to bottom.
 
 ## Before Coding
 
