@@ -24,7 +24,9 @@ never by a version token, and never by guessing from memory.
   explicit user approval, per stream, under that stream's coordinator lease.
 - Never rewrite a state file merely because the convention moved on — older
   formats are valid history and migrate lazily. Migration here is an explicit
-  user-approved coordinator rewrite, the one sanctioned exception.
+  user-approved coordinator rewrite: the only sanctioned
+  *structure-changing* rewrite of work memory, as opposed to the content
+  updates other coordinator skills make under the normal write protocol.
 - Never falsify history: journal lines, tombstones, completed marks, and
   superseded decisions are preserved; migration reshapes structure, not
   truth. Unrecognized files are reported and preserved, never deleted,
@@ -56,19 +58,34 @@ locate the active workspace and `.engineering/`; on `requires_ignore` or
    contracts: files that predate the present format (for example a stream
    without a charter, journal, or revision counters), children in
    unexpected places, oversized files never split, orphaned overview rows,
-   or a layout that matches an older convention. Classify every observation:
+   or a layout that matches an older convention. The `Written under:` stamp
+   in `state.md` is provenance for exactly this judgement — "written under
+   contract X, current is Y" explains drift and orders migration by
+   staleness, but confers no authority: the current contracts always judge.
+   Classify every observation:
    - **defect** — broken structure the doctor flagged (dangling
      dependencies, contradictory statuses, lease conflicts, broken links);
    - **format drift** — valid but older shapes that would migrate at the
      next explicit rewrite;
    - **informational** — unrecognized-but-harmless files, or free-form
      sections the doctor could not parse.
-4. **Propose, per stream.** Present findings grouped by stream with a
-   concrete repair/migration plan derived from the current contracts: what
-   would change, what is preserved byte-for-byte, and what stays untouched.
-   Ask the user with `AskUserQuestion` which streams to repair or migrate;
-   informational items need no action and defects in prose meaning are
-   surfaced as questions, not silently "fixed".
+4. **Propose, per stream.** Present findings grouped by stream — ordered by
+   staleness when `Written under:` stamps allow it — with a concrete
+   repair/migration plan derived from the current contracts: what would
+   change, what is preserved byte-for-byte, and what stays untouched.
+   Migrate stream-by-stream, never as one mass rewrite. For a stream idle
+   long past its last journal entry, propose **parking** into
+   `.engineering/archive/<work-id>/` per Essential's `retirement.md` as the
+   remediation instead of migration. For a stream whose work memory was
+   destroyed (for example by `git clean -fdx`) but whose external anchor
+   carries checkpoints, offer **recovery from checkpoints**: re-bootstrap
+   the skeleton with the resolver, then rebuild the charter, decision, and
+   approval facts from the anchor's checkpoint blocks and receipts —
+   recovered facts cite their checkpoint, and execution detail that only
+   lived in the deleted projection is reported as lost, never invented.
+   Ask the user with `AskUserQuestion` which streams to repair, migrate,
+   park, or recover; informational items need no action and defects in
+   prose meaning are surfaced as questions, not silently "fixed".
 5. **Repair under the lease.** For each approved stream: check
    `lease.json` via `engineering-lease` — a live foreign lease stops that
    stream with a report; an expired lease is claimed with the explicit
