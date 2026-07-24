@@ -49,7 +49,8 @@ under X, current is Y" and order migrations by staleness. All three fields
 apply to new and coordinator-rewritten files only — an older file gains them
 at its next explicit rewrite under the lazy-migration rule, never on read.
 
-Keep lifecycle status (`initialized|active|blocked|complete|retiring`), task
+Keep lifecycle status
+(`initialized|active|blocked|reviewing|completed|retiring`), task
 status, attempt outcome (`pass|fail|partial`), file state, review state, and
 sync state in separately named fields. Never reuse one vocabulary for another.
 
@@ -137,9 +138,13 @@ own dependency and every predecessor of its parent is `done`; a task that
 cannot be attempted is `blocked`, never `failed`. Lifecycle `blocked` is
 invalid while any required executable leaf is still `working`.
 
-Lifecycle `complete` requires every required executable leaf to be `done`.
+Lifecycle `reviewing` requires every required executable leaf to be `done` and
+the stream's pull request(s) recorded; `completed` is terminal and reachable
+only from `reviewing`, only on merge evidence.
+[stream-completion.md](stream-completion.md) states both in full.
+
 Lifecycle `blocked` requires unfinished required work and no runnable required
-leaf. Passing tests alone does not make a lifecycle complete while review,
+leaf. Passing tests alone does not make a lifecycle `completed` while review,
 sync, publication, or history anchoring remains required.
 
 ## Reading state and definition changes

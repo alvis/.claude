@@ -204,7 +204,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
   implementation or pending-test markers remain.
 - `state.md` is internally consistent, contains complete current truth, and
   links current-focus-only `state/working.md`; all lazy indexes match their children.
-  Lifecycle `complete` has no unfinished required executable leaf.
+  Lifecycle `completed` has no unfinished required executable leaf.
 - Every child returned a verified `generated_files` manifest and the scoped
   `.engineering` Markdown gate ran as one batch per pass when applicable.
 - Code review preceded lint, final tests/types/coverage/build preceded every

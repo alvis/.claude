@@ -34,19 +34,24 @@ guesses through candidates, a detached checkout, or a generic `main`,
 every output field; the essentials:
 
 - `durable_root` is the active workspace root for versioned project documents
-  and `.gitignore` (`repo_root` is its alias); `active_workspace` owns its
-  own ignored `.engineering/works/<work-id>/`, and `work_dir` is the only
-  temporary root for the selected work.
-- Each Git worktree or jj workspace owns its work state, and never commits it.
-  Two trees must not run the same stream concurrently — that is what the
-  coordinator lease enforces.
+  and `.gitignore` (`repo_root` is its alias); it follows the tree the caller
+  is working in, and is where `docs/` promotion lands.
+- `state_root` is the **default source tree** — Git's main worktree or the jj
+  workspace registered as `default` — the one tree carrying the ignored
+  `.engineering/`, falling back to `active_workspace` when none is
+  discoverable. `work_dir` is always
+  `state_root/.engineering/works/<work-id>/`, whichever tree the caller is in.
+- Work state is centralized, never per-tree, and never committed: every tree
+  reads and writes the same `.engineering/`. Two trees must not run the same
+  stream concurrently — that is what the coordinator lease enforces.
 
 `resolved` with `engineering_ignored: true` is a hard bootstrap gate before
 any work artifact or probe is written. On `requires_ignore`, every worker
-stops and reports the returned `ignore_file`. The PM alone adds the exact
-`.engineering/` rule to the active workspace `.gitignore`, includes that
-`.gitignore` path in `generated_files`, and reruns the resolver. A sync-only
-or ad hoc `git check-ignore` probe does not replace this bootstrap contract.
+stops and reports the returned `ignore_file` — the **default source tree's**
+`.gitignore`, the tree that carries `.engineering/`. The PM alone adds the
+exact `.engineering/` rule there, includes that path in `generated_files`, and
+reruns the resolver. A sync-only or ad hoc `git check-ignore` probe does not
+replace this bootstrap contract.
 
 ### First-use work-memory bootstrap
 
@@ -62,8 +67,11 @@ and the `bootstrap_created` and `bootstrap_existing` paths the PM adds to
 
 ## Canonical topology
 
+Versioned `docs/` follows the active working tree; ignored `.engineering/`
+lives only in the default source tree (`state_root`).
+
 ```text
-docs/
+docs/                               # versioned; active working tree
 ├── index.md
 ├── architecture/
 │   ├── overview.md
@@ -81,11 +89,11 @@ docs/
 │   └── *.md
 └── <domain>/<slug>/…                # plugin-owned durable documents
 
-.engineering/                       # ignored, isolated per source tree
-├── overview.md                      # default source tree only: global cross-tree status index
-├── notion/                          # conventional default-workspace mirror
+.engineering/                       # ignored; default source tree only
+├── overview.md                      # global status index across every source tree
+├── notion/                          # default source tree only: Notion mirror
 ├── archive/<work-id>/               # parked idle streams; resolver never enumerates
-└── works/<work-id>/                 # in the source tree that owns the stream
+└── works/<work-id>/                 # every stream, whichever tree works it
     ├── goal.md
     ├── state.md
     ├── lease.json
@@ -143,17 +151,26 @@ child name.
 
 ## Work memory
 
-### Cross-tree overview (`.engineering/overview.md`)
+### Global overview (`.engineering/overview.md`)
 
-The default source tree — Git's main worktree or the jj workspace registered
-as `default` — carries the single global `overview.md`: one table of every
-work stream across all source trees (work ID, lifecycle, headline, next
-action, `Location`, `Spec`, `Documentations`). It is an index, not a state
-store: every cell derives from each stream's own files, so a lost or stale
-overview is rebuilt by re-reading them. The PM/coordinator updates it
-whenever a stream's status changes — in particular at handover. A stream is
-worked in exactly one source tree at a time. Before planning against a
-capability, resolve any sibling row marked `pending-publication` first.
+The default source tree carries `.engineering/`, and with it the single global
+`overview.md`: one table of every work stream (work ID, lifecycle, headline,
+next action, `Location`, `Spec`, `Documentations`). Every stream's state
+already sits under the same `works/`, so this is an index over local state,
+not a cross-tree aggregator; its `Location` column records **which checkout
+each stream is worked in**. Every cell derives from each stream's own files,
+so a lost or stale overview is rebuilt by re-reading them. The PM/coordinator
+updates it whenever a stream's status changes — in particular at handover. A
+stream is worked in exactly one source tree at a time. Before planning against
+a capability, resolve any sibling row marked `pending-publication` first.
+
+### One stream at a time
+
+Work **one** stream to completion before starting another. Finished execution
+sets lifecycle `reviewing`, not a terminal state; `completed` needs merge
+evidence, never the author's say-so. Read
+[stream-completion.md](stream-completion.md) when a stream finishes or is
+settled.
 
 ### `goal.md`
 
@@ -260,12 +277,13 @@ revisions, hashes, and dispositions. Resumable findings belong in
 conclusions are promoted to `docs/`.
 
 Continuity has one mechanism: the on-disk work directory. A handover
-completes the current tree's stream state and updates the default tree's
-`overview.md`; a resume reads those files and continues. Nothing else is
-needed — the directory holds state, decisions, specification, and
-`artifacts/` together, and each stream records the source anchor that names
-the revision its work assumes. Handover scopes to the current source tree
-only and releases the coordinator lease.
+completes the stream's state and updates `overview.md`, both under the default
+source tree's `.engineering/`; a resume reads those files and continues from
+whichever tree the reader is in, since every tree resolves to the same state.
+Nothing else is needed — the directory holds state,
+decisions, specification, and `artifacts/` together, and each stream records
+the source anchor that names the revision its work assumes. Handover scopes to
+the stream being paused and releases the coordinator lease.
 
 Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
 deletes every stream on the machine, silently. A copy of `.engineering/`
@@ -278,13 +296,13 @@ projection, so it is gated on promotion and decision dispositions.
 
 ## Write boundary
 
-Work state has exactly two homes: the active workspace's
-`.engineering/` and the repository's versioned `docs/`. Every write a
-lifecycle skill makes lands in the current tree's
-`.engineering/works/<work-id>/**`, the default tree's
-`.engineering/overview.md`, or — at promotion only — `docs/`. Any other
-destination is a contract violation. A skill that believes it needs one has
-misread this contract; stop and report instead.
+Work state has exactly two homes: the **default source tree's**
+`.engineering/` (the resolver's `state_root`) and the **active** tree's
+versioned `docs/`. Every write a lifecycle skill makes lands in
+`state_root/.engineering/works/<work-id>/**`,
+`state_root/.engineering/overview.md`, or — at promotion only — the active
+tree's `docs/`. Any other destination is a contract violation. A skill that
+believes it needs one has misread this contract; stop and report instead.
 
 **Output volume is never a reason to create a file.** A report that would be
 long is shortened editorially or degraded to pointers into
@@ -310,39 +328,8 @@ stop-and-report.
 
 ## Output manifest and final size loop
 
-Every artifact-writing skill returns explicit final paths it generated or
-materially rewrote:
-
-<report>
-
-```yaml
-generated_files:
-  - /absolute/path/to/file.md
-```
-
-</report>
-
-Writers finish all files and links before returning the manifest and never
-measure or split independently. The coordinator combines and deduplicates
-manifests, selects only absolute `.md` paths inside the resolved target
-workspace's `.engineering/` (excluding any `working.md`), and runs exactly
-one pass when eligible paths remain:
-
-```bash
-"$ESSENTIAL_ROOT/bin/check-markdown-size" \
-  --engineering-root "$active_workspace/.engineering" \
-  "${generated_md_files[@]}"
-```
-
-The checker canonicalizes the declared root and every path, excludes
-traversal, symlink, and other-workspace escapes, and returns every eligible
-file greater than 16,384 bytes together (12,288 bytes is authoring guidance
-only). The gate does not apply outside `.engineering/`; the only separate
-limit is the 2,000-byte injection limit for Essential's `CLAUDE.md`,
-`MAINAGENT.md`, and `SUBAGENT.md`.
-
-On `split_required`, send all oversized files through one complete split
-round — each original path remains a concise overview linking its lowercase
-children — then rebuild the final manifest and run one subsequent batch
-pass. The checker reports only `pass`, `split_required`, or `invalid`; it
-never edits or splits files itself.
+Every artifact-writing skill returns the explicit final paths it generated or
+materially rewrote, and the coordinator runs exactly one batch size pass over
+them at the end of a run. Read
+[output-manifest.md](output-manifest.md) for the manifest shape, the checker
+invocation, and the split round it can demand.

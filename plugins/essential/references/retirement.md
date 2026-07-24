@@ -19,7 +19,9 @@ Live streams are not free: the journal grows, `state.md` accumulates rows,
 and every session re-reads them. A stream idle long past its last journal
 entry — abandoned rather than paused — may be **parked**: move its entire
 `works/<work-id>/` directory to `.engineering/archive/<work-id>/`, which the
-resolver never enumerates, and drop or annotate its `overview.md` row. Park
+resolver never enumerates, and drop or annotate its `overview.md` row. Both
+paths are under the default source tree's `.engineering/` — the only tree that
+carries one — so parking is a move within one directory, never across trees. Park
 only with user approval, journal the parking as the final line first, and
 never park a stream holding an unresolved critical risk or an unpublished
 accepted decision — resolve, promote, or hand over those first. Unparking

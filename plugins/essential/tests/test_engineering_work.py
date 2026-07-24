@@ -385,18 +385,25 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual(str(linked.resolve()), payload["durable_root"])
             self.assertEqual(str(root.resolve()), payload["default_workspace"])
             self.assertEqual(str(linked.resolve()), payload["active_workspace"])
+            self.assertEqual(str(root.resolve()), payload["state_root"])
             self.assertEqual("feature/refunds", payload["workspace_label"])
             self.assertEqual("feature-refunds", payload["suggested_work_id"])
             self.assertEqual([], payload["candidate_work_ids"])
             self.assertNotIn("work_dir", payload)
 
+            # candidates come from the default source tree, the only tree that
+            # carries .engineering/, never from the secondary worktree
             for work_id in ("refunds", "other-work"):
-                (linked / ".engineering/works" / work_id).mkdir(parents=True)
+                (root / ".engineering/works" / work_id).mkdir(parents=True)
             completed, payload = self.run_resolver(linked)
 
             self.assertEqual(0, completed.returncode, completed.stderr)
             self.assertEqual("refunds", payload["work_id"])
             self.assertEqual("git_branch", payload["work_id_source"])
+            self.assertEqual(
+                str(root.resolve() / ".engineering/works/refunds"),
+                payload["work_dir"],
+            )
 
     def test_feature_branch_does_not_select_a_mismatched_sole_work_id(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -413,7 +420,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 str(linked),
                 cwd=root,
             )
-            (linked / ".engineering/works/unrelated-work").mkdir(parents=True)
+            (root / ".engineering/works/unrelated-work").mkdir(parents=True)
 
             completed, payload = self.run_resolver(linked)
 
@@ -719,7 +726,9 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("requires_ignore", payload["status"])
             self.assertEqual(str(root.resolve() / ".gitignore"), payload["ignore_file"])
 
-    def test_default_workspace_ignore_does_not_gate_active_work(self) -> None:
+    def test_secondary_worktree_ignore_does_not_satisfy_the_default_tree_gate(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "main"
             linked = Path(temporary) / "linked"
@@ -732,10 +741,36 @@ class WorkspaceResolverTest(unittest.TestCase):
 
             completed, payload = self.run_resolver(linked, "eng-421-test")
 
+            # .engineering/ lives only in the default source tree, so it is that
+            # tree's .gitignore the gate reads, not the active worktree's
+            self.assertEqual(3, completed.returncode, completed.stderr)
+            self.assertEqual("requires_ignore", payload["status"])
+            self.assertEqual(str(root.resolve()), payload["state_root"])
+            self.assertEqual(str(root.resolve() / ".gitignore"), payload["ignore_file"])
+            self.assertNotIn("notion_dir", payload)
+
+    def test_default_tree_ignore_covers_work_from_a_secondary_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "main"
+            linked = Path(temporary) / "linked"
+            self.initialize_git(root)
+            self.commit_initial(root)
+            self.git(
+                "worktree", "add", "-q", "-b", "linked", str(linked), cwd=root
+            )
+
+            completed, payload = self.run_resolver(linked, "eng-421-test")
+
             self.assertEqual(0, completed.returncode, completed.stderr)
             self.assertEqual("resolved", payload["status"])
-            self.assertEqual(str(linked.resolve() / ".gitignore"), payload["ignore_file"])
-            self.assertNotIn("notion_dir", payload)
+            self.assertTrue(payload["engineering_ignored"])
+            self.assertEqual(str(root.resolve()), payload["state_root"])
+            self.assertEqual(str(linked.resolve()), payload["active_workspace"])
+            self.assertEqual(str(linked.resolve()), payload["durable_root"])
+            self.assertEqual(
+                str(root.resolve() / ".engineering/works/eng-421-test"),
+                payload["work_dir"],
+            )
 
     def test_refuses_invalid_work_ids_and_non_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -768,10 +803,10 @@ class WorkspaceResolverTest(unittest.TestCase):
             secondary.mkdir()
             fake_bin.mkdir()
             self.git("init", "--bare", "-q", str(git_dir), cwd=fixture)
-            (secondary / ".gitignore").write_text(
+            (default / ".gitignore").write_text(
                 ".engineering/\n", encoding="utf-8"
             )
-            (secondary / ".engineering/works/secondary").mkdir(parents=True)
+            (default / ".engineering/works/secondary").mkdir(parents=True)
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
@@ -808,8 +843,13 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("jj", payload["vcs"])
             self.assertEqual(str(default.resolve()), payload["default_workspace"])
             self.assertEqual(str(secondary.resolve()), payload["active_workspace"])
+            self.assertEqual(str(default.resolve()), payload["state_root"])
             self.assertEqual("secondary", payload["work_id"])
             self.assertEqual("jj_workspace", payload["work_id_source"])
+            self.assertEqual(
+                str(default.resolve() / ".engineering/works/secondary"),
+                payload["work_dir"],
+            )
 
     @unittest.skipUnless(shutil.which("jj"), "jj is unavailable")
     def test_resolves_default_and_secondary_jj_workspaces(self) -> None:
@@ -830,8 +870,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 capture_output=True,
                 check=True,
             )
-            (secondary / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
-            (secondary / ".engineering/works/secondary").mkdir(parents=True)
+            (root / ".engineering/works/secondary").mkdir(parents=True)
 
             completed, payload = self.run_resolver(secondary)
 
@@ -841,10 +880,15 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual(str(secondary.resolve()), payload["active_workspace"])
             self.assertEqual(str(secondary.resolve()), payload["durable_root"])
             self.assertEqual(str(secondary.resolve()), payload["repo_root"])
+            self.assertEqual(str(root.resolve()), payload["state_root"])
             self.assertEqual("secondary", payload["work_id"])
             self.assertEqual("jj_workspace", payload["work_id_source"])
             self.assertEqual(
-                str(secondary.resolve() / ".gitignore"), payload["ignore_file"]
+                str(root.resolve() / ".engineering/works/secondary"),
+                payload["work_dir"],
+            )
+            self.assertEqual(
+                str(root.resolve() / ".gitignore"), payload["ignore_file"]
             )
             self.assertTrue(payload["engineering_ignored"])
 

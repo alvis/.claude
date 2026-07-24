@@ -12,14 +12,18 @@ Resolves the engineering workspace and selected work identity, enforcing the
 
 Output (JSON) on status:"resolved":
   vcs                 git | jj
-  durable_root        active workspace root for versioned docs and .gitignore
+  durable_root        active workspace root for versioned docs and repo files
   repo_root           compatibility alias of durable_root
   default_workspace   registered default tree (nullable discovery metadata)
-  active_workspace    the tree that owns .engineering/works/<work-id>/
+  active_workspace    the tree the caller is working in
+  state_root          the tree that owns .engineering/ — the default source
+                      tree, falling back to active_workspace when no default
+                      tree can be discovered
   work_id             the selected work identity
   work_id_source      argument | environment | workspace | sole_existing
-  work_dir            the only temporary root for the selected work
-  ignore_file         the .gitignore carrying the .engineering/ rule
+  work_dir            the only temporary root for the selected work, always
+                      under state_root/.engineering/works/
+  ignore_file         the state_root .gitignore carrying the .engineering/ rule
   engineering_ignored true when the ignore gate holds
   bootstrap_requested / bootstrap_created / bootstrap_existing
                       bootstrap mode and its exact created/preserved paths
@@ -205,7 +209,13 @@ else
   invalid "path is not inside a Git worktree or jj workspace: $start_path"
 fi
 
-engineering_dir="$active_workspace/.engineering"
+# Work state is centralized: it lives only in the default source tree, so a
+# secondary worktree or workspace reads and writes the same .engineering/.
+# Falling back to the active tree keeps single-tree and detached checkouts
+# working when no default tree can be discovered.
+state_root="${default_workspace:-$active_workspace}"
+
+engineering_dir="$state_root/.engineering"
 work_root="$engineering_dir/works"
 require_safe_directory_component "$engineering_dir"
 require_safe_directory_component "$work_root"
@@ -281,11 +291,13 @@ if [[ -z "$work_id" ]]; then
       --arg active_workspace "$active_workspace" \
       --arg default_workspace "$default_workspace" \
       --arg workspace_label "$workspace_label" \
+      --arg state_root "$state_root" \
       --arg suggested_work_id "$workspace_work_id" \
       --argjson candidates "$candidates_json" \
       --arg error "work ID cannot be selected safely; the PM must ask the user" \
       '{status:"work_id_required", vcs:$vcs, repo_root:$repo_root,
         durable_root:$active_workspace, active_workspace:$active_workspace,
+        state_root:$state_root,
         default_workspace:(if $default_workspace == "" then null else $default_workspace end),
         workspace_label:(if $workspace_label == "" then null else $workspace_label end),
         suggested_work_id:(if ($suggested_work_id == "" or
@@ -297,7 +309,7 @@ if [[ -z "$work_id" ]]; then
 fi
 
 work_dir="$work_root/$work_id"
-ignore_file="$active_workspace/.gitignore"
+ignore_file="$state_root/.gitignore"
 active_probe=".engineering/works/$work_id/state.md"
 
 require_safe_directory_component "$work_dir"
@@ -313,23 +325,24 @@ require_safe_entrypoint "$work_dir/state/journal.md"
 
 if [[ ! -f "$ignore_file" ]] ||
    ! grep -Eq '^[[:space:]]*\.engineering/[[:space:]]*(#.*)?$' "$ignore_file" ||
-   ! is_effectively_ignored "$active_workspace" "$active_probe"; then
+   ! is_effectively_ignored "$state_root" "$active_probe"; then
   jq -n \
     --arg vcs "$vcs" \
     --arg repo_root "$repo_root" \
     --arg durable_root "$active_workspace" \
     --arg default_workspace "$default_workspace" \
     --arg active_workspace "$active_workspace" \
+    --arg state_root "$state_root" \
     --arg workspace_label "$workspace_label" \
     --arg work_id "$work_id" \
     --arg work_id_source "$work_id_source" \
     --arg work_dir "$work_dir" \
     --arg ignore_file "$ignore_file" \
-    --arg error "PM must add .engineering/ to the active workspace .gitignore before creating work artifacts" \
+    --arg error "PM must add .engineering/ to the default source tree .gitignore before creating work artifacts" \
     '{status:"requires_ignore", vcs:$vcs, repo_root:$repo_root,
       durable_root:$durable_root,
       default_workspace:(if $default_workspace == "" then null else $default_workspace end),
-      active_workspace:$active_workspace,
+      active_workspace:$active_workspace, state_root:$state_root,
       workspace_label:(if $workspace_label == "" then null else $workspace_label end),
       work_id:$work_id, work_id_source:$work_id_source, work_dir:$work_dir,
       ignore_file:$ignore_file, error:$error}'
@@ -494,6 +507,7 @@ jq -n \
   --arg durable_root "$active_workspace" \
   --arg default_workspace "$default_workspace" \
   --arg active_workspace "$active_workspace" \
+  --arg state_root "$state_root" \
   --arg workspace_label "$workspace_label" \
   --arg work_id "$work_id" \
   --arg work_id_source "$work_id_source" \
@@ -505,7 +519,7 @@ jq -n \
   '{status:"resolved", vcs:$vcs, repo_root:$repo_root,
     durable_root:$durable_root,
     default_workspace:(if $default_workspace == "" then null else $default_workspace end),
-    active_workspace:$active_workspace,
+    active_workspace:$active_workspace, state_root:$state_root,
     workspace_label:(if $workspace_label == "" then null else $workspace_label end),
     work_id:$work_id, work_id_source:$work_id_source, work_dir:$work_dir,
     ignore_file:$ignore_file, engineering_ignored:true,

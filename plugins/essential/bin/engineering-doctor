@@ -29,6 +29,14 @@ MARK_STATUS = {
     "!": "blocked",
     "⊘": "cancelled",
 }
+LIFECYCLE_STATUSES = (
+    "initialized",
+    "active",
+    "blocked",
+    "reviewing",
+    "completed",
+    "retiring",
+)
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
 MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
@@ -342,6 +350,19 @@ def check_written_under(report: Report, work: str, state_text: str) -> None:
         )
 
 
+def check_lifecycle(report: Report, work: str, state_text: str) -> None:
+    lifecycle = metadata_value(state_text, "Lifecycle status")
+    if not lifecycle:
+        return
+    if lifecycle not in LIFECYCLE_STATUSES:
+        report.warning(
+            work,
+            "lifecycle",
+            f"lifecycle status {lifecycle!r} is not one of "
+            f"{'|'.join(LIFECYCLE_STATUSES)}",
+        )
+
+
 def check_work_dir(report: Report, work_dir: Path) -> None:
     work = work_dir.name
     state_path = work_dir / "state.md"
@@ -371,6 +392,7 @@ def check_work_dir(report: Report, work_dir: Path) -> None:
     check_lease(report, work, work_dir, state_text)
     check_journal(report, work, work_dir, state_text)
     check_written_under(report, work, state_text)
+    check_lifecycle(report, work, state_text)
 
 
 def check_overview(report: Report, engineering_root: Path) -> None:
@@ -391,7 +413,15 @@ def check_overview(report: Report, engineering_root: Path) -> None:
         lifecycle = cells[1].strip("`")
         state_path = engineering_root / "works" / work_id / "state.md"
         if not state_path.is_file():
-            continue  # stream may live in another source tree
+            # Work state is centralized under the default source tree, so an
+            # overview row with no state.md beside it is a real dangling row,
+            # not a stream that lives elsewhere.
+            report.warning(
+                work_id,
+                "overview",
+                f"overview.md lists {work_id!r} but {state_path} does not exist",
+            )
+            continue
         state_text = state_path.read_text(encoding="utf-8", errors="replace")
         local = metadata_value(state_text, "Lifecycle status")
         if local and lifecycle and local != lifecycle:

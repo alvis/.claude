@@ -265,7 +265,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
     the owning Step 8 writer and Steps 9–10, then seal a new immutable manifest.
 12. Read root `state.md` (and any `state/*.md` children) directly to derive the
     terminal lifecycle from the task table; there is no separate validation step.
-    Lifecycle `complete` holds only when every required executable leaf is
+    Lifecycle `completed` holds only when every required executable leaf is
     `done`; otherwise return `active` when work is runnable or `blocked` when
     unfinished required work has no runnable leaf. Collect every child
     `generated_files` manifest, deduplicate it, and
