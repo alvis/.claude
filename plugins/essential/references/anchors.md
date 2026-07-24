@@ -37,8 +37,10 @@ handover, exactly like a Git stream with no reachable carrier.
 ## Initiative manifest
 
 When one initiative spans multiple streams (product change, landing page,
-launch video…), a versioned manifest at `docs/initiatives/<slug>/index.md` is
-the shared surface — dependencies and milestones only, never detailed state:
+launch video…), a versioned manifest at `docs/initiatives/<slug>/index.md` —
+a plugin-owned durable document under the contract's `docs/<domain>/<slug>/`
+clause — is the shared surface: dependencies and milestones only, never
+detailed state:
 
 - participating streams with their workspace anchors;
 - shared contracts (briefs, voice, naming) by path;
