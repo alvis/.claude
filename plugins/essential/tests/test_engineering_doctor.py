@@ -256,5 +256,48 @@ class EngineeringDoctorTest(unittest.TestCase):
         )
 
 
+    def test_unparseable_rows_surface_as_warning(self) -> None:
+        self.write_state(
+            row("AAA")
+            + "| BBB | - | planned | truncated row |\n"
+            + "| CCC | broken |\n"
+        )
+        _, findings = self.run_doctor()
+        warnings = [
+            finding
+            for finding in findings
+            if finding["severity"] == "warning" and finding["check"] == "layout"
+        ]
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("2 task row(s) unparseable", warnings[0]["message"])
+
+    def test_long_journal_gets_compaction_hint(self) -> None:
+        self.write_state(row("AAA"))
+        journal = self.work_dir / "state" / "journal.md"
+        lines = ["# Journal", ""] + [
+            f"- 2026-07-24T00:00:00Z PM@pm rev:1 status AAA: tick {index}"
+            for index in range(510)
+        ]
+        journal.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        _, findings = self.run_doctor()
+        self.assertTrue(
+            any(
+                finding["check"] == "journal"
+                and "compacting" in finding["message"]
+                for finding in findings
+            )
+        )
+
+    def test_written_under_drift_is_informational(self) -> None:
+        self.write_state(
+            row("AAA"), metadata="- Written under: `00000000`\n"
+        )
+        _, findings = self.run_doctor()
+        drift = [f for f in findings if f["check"] == "written-under"]
+        self.assertEqual(len(drift), 1)
+        self.assertEqual(drift[0]["severity"], "info")
+        self.assertIn("written under contract 00000000", drift[0]["message"])
+
+
 if __name__ == "__main__":
     unittest.main()

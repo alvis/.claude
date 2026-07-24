@@ -14,6 +14,7 @@ or release-critical.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -60,8 +61,12 @@ def split_row(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def parse_tasks(state_text: str) -> list[dict] | None:
-    """Return task rows from the ## Tasks table, or None when unparseable."""
+def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
+    """Return (task rows, unparseable-row count), or None with no table.
+
+    Rows the parser must skip are counted, not silently dropped: a truncated
+    or mangled table must surface as a finding, never as a cleaner report.
+    """
     lines = state_text.splitlines()
     try:
         start = next(
@@ -72,6 +77,7 @@ def parse_tasks(state_text: str) -> list[dict] | None:
     except StopIteration:
         return None
     rows: list[dict] = []
+    skipped = 0
     header_seen = False
     for line in lines[start + 1 :]:
         stripped = line.strip()
@@ -87,6 +93,7 @@ def parse_tasks(state_text: str) -> list[dict] | None:
         if cells and set(cells[0]) <= {"-", " "}:
             continue
         if len(cells) < 9:
+            skipped += 1
             continue
         rows.append(
             {
@@ -101,7 +108,7 @@ def parse_tasks(state_text: str) -> list[dict] | None:
                 "evidence": cells[8],
             }
         )
-    return rows if header_seen else None
+    return (rows, skipped) if header_seen else None
 
 
 def parse_dependencies(cell: str) -> list[str]:
@@ -323,6 +330,34 @@ def check_journal(report: Report, work: str, work_dir: Path, state_text: str) ->
             f"({', '.join(sorted(checkpoint_worthy))}) but no checkpoint event and "
             "state.md records no degraded durability",
         )
+    line_count = len(text.splitlines())
+    if line_count > 500:
+        report.info(
+            work,
+            "journal",
+            f"journal has {line_count} lines; consider compacting via a "
+            "checkpoint line that summarizes and supersedes prior history",
+        )
+
+
+def check_written_under(report: Report, work: str, state_text: str) -> None:
+    stamped = metadata_value(state_text, "Written under")
+    if not stamped:
+        return
+    contract = Path(__file__).resolve().parent.parent / (
+        "references/engineering-work.md"
+    )
+    if not contract.is_file():
+        return
+    current = hashlib.sha256(contract.read_bytes()).hexdigest()[:8]
+    if stamped != current:
+        report.info(
+            work,
+            "written-under",
+            f"written under contract {stamped}, current is {current}: "
+            "format drift is expected, judged only against the current "
+            "contracts; migrate at the next explicit coordinator rewrite",
+        )
 
 
 def check_work_dir(report: Report, work_dir: Path) -> None:
@@ -332,10 +367,18 @@ def check_work_dir(report: Report, work_dir: Path) -> None:
         report.info(work, "layout", "no state.md; nothing to check")
         return
     state_text = state_path.read_text(encoding="utf-8", errors="replace")
-    rows = parse_tasks(state_text)
-    if rows is None:
+    parsed = parse_tasks(state_text)
+    if parsed is None:
         report.info(work, "layout", "no parseable ## Tasks table in state.md")
     else:
+        rows, skipped_rows = parsed
+        if skipped_rows:
+            report.warning(
+                work,
+                "layout",
+                f"{skipped_rows} task row(s) unparseable in state.md — the "
+                "table may be truncated or mangled",
+            )
         check_tasks(report, work, rows)
     check_file_references(
         report,
@@ -345,6 +388,7 @@ def check_work_dir(report: Report, work_dir: Path) -> None:
     check_decisions(report, work, work_dir / "decisions")
     check_lease(report, work, work_dir, state_text)
     check_journal(report, work, work_dir, state_text)
+    check_written_under(report, work, state_text)
 
 
 def check_overview(report: Report, engineering_root: Path) -> None:

@@ -525,6 +525,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Plan source: `state.md`", state_text)
             self.assertIn("- Plan revision: `1`", state_text)
             self.assertIn("- State revision: `1`", state_text)
+            self.assertRegex(state_text, r"- Written under: `[0-9a-f]{8}`")
             self.assertIn("- Journal: [journal.md](state/journal.md)", state_text)
             self.assertIn("| GOL | - | planned |", state_text)
             self.assertIn("| OWN | - | planned |", state_text)

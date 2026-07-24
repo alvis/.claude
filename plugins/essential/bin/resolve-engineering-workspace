@@ -2,7 +2,31 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: resolve-engineering-workspace [--work-id <id>|--work-id=<id>] [--path <path>|--path=<path>] [--bootstrap]" >&2
+  cat >&2 <<'EOF'
+usage: resolve-engineering-workspace [--work-id <id>|--work-id=<id>] \
+         [--path <path>|--path=<path>] [--bootstrap]
+
+Resolves the engineering workspace and selected work identity, enforcing the
+.engineering ignore gate and path safety. A normal invocation is read-only;
+--bootstrap is the PM-only no-clobber creation mode.
+
+Output (JSON) on status:"resolved":
+  vcs                 git | jj
+  durable_root        active workspace root for versioned docs and .gitignore
+  repo_root           compatibility alias of durable_root
+  default_workspace   registered default tree (nullable discovery metadata)
+  active_workspace    the tree that owns .engineering/works/<work-id>/
+  work_id             the selected work identity
+  work_id_source      argument | environment | workspace | sole_existing
+  work_dir            the only temporary root for the selected work
+  ignore_file         the .gitignore carrying the .engineering/ rule
+  engineering_ignored true when the ignore gate holds
+  bootstrap_requested / bootstrap_created / bootstrap_existing
+                      bootstrap mode and its exact created/preserved paths
+
+Other statuses: work_id_required (with candidate_work_ids, workspace_label,
+suggested_work_id), requires_ignore (with ignore_file), invalid (with error).
+EOF
 }
 
 invalid() {
@@ -343,6 +367,14 @@ if [[ $bootstrap -eq 1 ]]; then
   ensure_safe_directory_component "$work_dir"
   ensure_safe_directory_component "$work_dir/state"
   bootstrap_timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+  # Provenance stamp: short hash of the contract this bootstrap follows.
+  # Provenance only, never authority — the current contracts always judge.
+  contract_reference="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/references/engineering-work.md"
+  if command -v sha256sum >/dev/null 2>&1; then
+    written_under="$(sha256sum "$contract_reference" | cut -c1-8)"
+  else
+    written_under="$(shasum -a 256 "$contract_reference" | cut -c1-8)"
+  fi
   working_contents="# Current focus
 
 - Work ID: \`$work_id\`
@@ -368,6 +400,7 @@ if [[ $bootstrap -eq 1 ]]; then
 - Plan source: \`state.md\`
 - Plan revision: \`1\`
 - State revision: \`1\`
+- Written under: \`$written_under\`
 - Next owner: \`PM\`
 - Next action: Confirm the charter in goal.md with the user.
 - Repository revision: Not captured yet.
