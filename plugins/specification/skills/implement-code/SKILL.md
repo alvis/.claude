@@ -141,9 +141,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
    run concurrently only when their write scopes do not conflict. Before each dispatch batch, cheaply confirm spec freshness (an `unchanged`
    materialization check for a live source); a changed source stops the batch
    and routes through the revalidation sweep instead of dispatching against
-   stale intent. A parallel dispatch batch is a checkpoint event — the
-   coordinator emits a `dispatch` checkpoint to the stream's external anchor
-   per Essential's `checkpoints.md`. Every
+   stale intent. Every
    dispatch receives repo path, work id, exact spec pointers, the charter
    `goal.md` path when present, full `task_id`,
    canonical `plan_source`, acceptance map,

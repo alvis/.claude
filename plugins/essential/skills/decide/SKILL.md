@@ -88,10 +88,9 @@ writes and report the missing contract. No artifact is written before approval.
    each named by id and exact revision; omit empty fields). Never edit a
    previously accepted decision into the new one — supersede it. Return the
    path to the PM for reconciliation into `decisions.md`, together with the
-   acceptance's obligations: the blast-radius sweep over `affects`/
-   `invalidates` and a `decision-accepted` checkpoint to the stream's external
-   anchor (Essential's `checkpoints.md`) — the PM runs both under the
-   coordinator lease; do not edit the overview as a worker. Discover the one
+   acceptance's obligation: the blast-radius sweep over `affects`/
+   `invalidates`, which the PM runs and journals under the coordinator
+   lease; do not edit the overview as a worker. Discover the one
    or two most relevant available skills by frontmatter, select the owner of the
    approved outcome, and invoke it with the decision, observed constraints,
    accepted assumptions, falsification signal, rollback, and relevant paths.

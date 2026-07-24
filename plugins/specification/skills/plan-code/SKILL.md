@@ -142,9 +142,7 @@ contract; `specification:implement-code` and Coding skills execute it.
    entry naming what changed, why, the approver, and the exact spec base-id
    approved against when one exists), any proposed charter content for
    `goal.md`, parent/leaf task rows, and the four overview rows/status deltas
-   to the PM. Plan approval is a checkpoint event: the payload reminds the PM
-   to emit a `plan-approved` checkpoint to the stream's external anchor per
-   Essential's `checkpoints.md`. Do not directly
+   to the PM. Do not directly
    edit PM-owned `goal.md`, `state.md`, `state/working.md`,
    `state/journal.md`, `state/revisions.md`, `proposals.md`, `changes.md`,
    `decisions.md`, or `design.md`.

@@ -199,7 +199,6 @@ not an error. The receipt contains, in order:
 
 - State revision: `<n>`
 - Lease: `<released | expired (owner <capability_id>)>`
-- Checkpoints: `<links at the external anchor, or none (durability degraded)>`
 
 ### Source anchor
 

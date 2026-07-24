@@ -177,10 +177,8 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
    receipt section routes continuation to the relevant implementation skill and
    records the current task, exact next owner, exact next action, and a
    capability-level continuation intent describing the work type (never a fixed
-   skill name). State each carried stream's `State revision`, its coordinator
-   lease status at handover (released, or expired with owner), and pointers to
-   checkpoints already published at its external anchor; emit the handover
-   checkpoint to that anchor per Essential's `checkpoints.md`. Inline
+   skill name). State each carried stream's `State revision` and its coordinator
+   lease status at handover (released, or expired with owner). Inline
    source/spec/artifact payloads are explicit portable receipt data, not a
    reference to ignored local memory.
 10. Return every created or materially rewritten path — including the updated
@@ -224,10 +222,8 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
   inline, or named by a durable external locator.
 - No secret, credential, absolute host path, path traversal, or symlink escape
   is present in a carried payload.
-- Every held coordinator lease was released, each carried stream states its
-  `State revision`, and the handover checkpoint was emitted to each carried
-  stream's external anchor (or its absence is recorded as degraded
-  durability).
+- Every held coordinator lease was released and each carried stream states
+  its `State revision`.
 
 ## Completion
 
