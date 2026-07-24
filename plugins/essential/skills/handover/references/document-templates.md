@@ -45,6 +45,7 @@ authored against — the canonical specification stays the sole authority.
 - Journal: [journal.md](state/journal.md)
 - Plan source: `state.md`
 - Plan revision: `<n>`
+- State revision: `<n>`
 - External anchor: `<task|issue|PR|Notion URL>`
 
 ## Status
@@ -195,6 +196,10 @@ not an error. The receipt contains, in order:
 | `<work-id>` | `complete` | `<one line>` | `-` | `-` | `<anchor label or none>` | `-` |
 
 ## Work stream: <work-id>
+
+- State revision: `<n>`
+- Lease: `<released | expired (owner <capability_id>)>`
+- Checkpoints: `<links at the external anchor, or none (durability degraded)>`
 
 ### Source anchor
 

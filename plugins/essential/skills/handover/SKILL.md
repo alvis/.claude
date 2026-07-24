@@ -55,7 +55,13 @@ is the current source tree that owns the work streams to refresh, and its
 `default_workspace` locates the global `.engineering/overview.md` to update
 (which may be a different tree on the same machine). Resolve the work root,
 conventions, naming, and ownership from that reference before reading or writing
-state. Handover never mints an empty work item.
+state. Handover never mints an empty work item. Hold each selected stream's
+on-disk coordinator lease before rewriting its state in steps 5–7 with the
+idempotent `engineering-lease ensure` verb — it renews a lease this session
+already holds and acquires a free one; a live foreign lease (`contended`)
+stops that stream with a report. Perform the rewrites through the
+lease-verified write path in Essential's `lease.md`, bump `State revision`
+on each coordinator rewrite, and release every lease at completion.
 
 Handover has two outcomes. **Persistence** (steps 1–7) always runs and always
 completes: it refreshes the current source tree's on-disk work state and the
@@ -171,8 +177,12 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
    receipt section routes continuation to the relevant implementation skill and
    records the current task, exact next owner, exact next action, and a
    capability-level continuation intent describing the work type (never a fixed
-   skill name). Inline source/spec/artifact payloads are explicit portable
-   receipt data, not a reference to ignored local memory.
+   skill name). State each carried stream's `State revision`, its coordinator
+   lease status at handover (released, or expired with owner), and pointers to
+   checkpoints already published at its external anchor; emit the handover
+   checkpoint to that anchor per Essential's `checkpoints.md`. Inline
+   source/spec/artifact payloads are explicit portable receipt data, not a
+   reference to ignored local memory.
 10. Return every created or materially rewritten path — including the updated
    `overview.md` — in `generated_files`. Do not run file sizing; after all
    artifact writers finish, the PM checks only eligible work Markdown inside the
@@ -214,6 +224,10 @@ overview upsert, or the run. Never terminate the run before the overview upsert.
   inline, or named by a durable external locator.
 - No secret, credential, absolute host path, path traversal, or symlink escape
   is present in a carried payload.
+- Every held coordinator lease was released, each carried stream states its
+  `State revision`, and the handover checkpoint was emitted to each carried
+  stream's external anchor (or its absence is recorded as degraded
+  durability).
 
 ## Completion
 
