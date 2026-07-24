@@ -40,4 +40,4 @@ details and return roll-up deltas; the coordinator-lease holder alone
 reconciles `review.md` after all review writers finish. A nested review
 workflow without that lease returns a summary delta instead of touching the
 roll-up. Every approval recorded in a review carries the binding tuple from
-[checkpoints.md](checkpoints.md).
+[approvals.md](approvals.md).

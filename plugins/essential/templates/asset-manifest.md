@@ -4,7 +4,7 @@ Version this manifest as text; keep the media bytes outside Git. A filesystem
 path is not identity — every asset and render is named by a stable id and an
 immutable content reference, so "reproduce v12" is an operation, not
 archaeology. See `references/anchors.md` for anchor kinds and
-`references/checkpoints.md` for approval binding.
+`references/approvals.md` for approval binding.
 
 ```yaml
 assets:
@@ -30,7 +30,7 @@ renders:
       - reviewer: <capability_id|user>
         scope: <what was approved, incl. timecode range when partial>
         at: <ISO-8601>
-        ref: <review/checkpoint ref>
+        ref: <review/journal ref>
     delivered_to: <destination|null>
 ```
 

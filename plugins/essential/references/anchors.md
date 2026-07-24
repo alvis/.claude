@@ -47,7 +47,7 @@ detailed state:
 - cross-stream dependency edges, each recording the revision it was last
   validated against;
 - milestones with the streams they gate;
-- `last_verified` / `revalidate_on` front matter per `checkpoints.md`.
+- `last_verified` / `revalidate_on` front matter per `approvals.md`.
 
 Each stream stays authoritative in its own tree; the manifest tells a
 coordinator which streams a decision's blast radius crosses. Asset-heavy

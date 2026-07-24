@@ -32,7 +32,7 @@ further dispatch:
 2. Add remediation tasks (new IDs) only for invalidated closure that must be
    redone; `preserves` entries need no action.
 3. Journal one `sweep` line naming the decision, the ids touched, and the
-   evidence invalidated, then emit a checkpoint (see `checkpoints.md`).
+   evidence invalidated.
 
 ## Completion gate
 

@@ -161,10 +161,10 @@ follow the journal → classify (task-local / plan-level / spec-level) →
 resume procedure in Essential's [change-control.md](change-control.md).
 
 `state/journal.md` is append-only: one line per status transition, decision,
-plan or charter revision, sync event, sweep, checkpoint, or lease event —
+plan or charter revision, sync event, sweep, or lease event —
 `- <ISO-8601> <actor>@<capability_id> rev:<N> <event-type> <subject>: <transition or summary> [evidence: <ref>] [invalidates: <ids>]` —
 newest last, never rewritten or deleted. `<event-type>` is one of
-`status|decision|revision|sync|sweep|checkpoint|lease`; `rev:<N>` is the
+`status|decision|revision|sync|sweep|lease`; `rev:<N>` is the
 `State revision` the writer was at; `invalidates:` names outputs or evidence
 the event made stale. Older lines in the pre-grammar form
 (`- <ISO-8601> <actor> <task-id or event>: <summary>`) remain valid history.
@@ -180,5 +180,5 @@ anchor plus the raw contents of every continuity-relevant work file — and a
 takeover writes each file back to its work-relative path verbatim. There
 are no snapshot bytes, checksums, or machine render step; the reader
 judges completeness directly. The receipt shape (including per-stream
-`State revision`, lease status, and checkpoint pointers) is defined in the
-handover skill's document templates.
+`State revision` and lease status) is defined in the handover skill's
+document templates.

@@ -3,8 +3,9 @@
 Read this contract before creating or materially rewriting project engineering
 artifacts. It defines their paths, ownership, promotion, and final size check.
 Domain skills own artifact content; Essential owns this cross-plugin lifecycle.
-Read [truth.md](truth.md) once per work stream: it defines the kinds of truth
-these artifacts carry, the constitutional rules, validity, and `capability_id`.
+All lead-role agents must read [truth.md](truth.md) once before working on
+any project: it defines the kinds of truth these artifacts carry, the
+constitutional rules, validity, and `capability_id`.
 Per-moment detail lives in the references named below; read each when its
 moment arrives, not before.
 
@@ -220,8 +221,10 @@ suspected drift is settled by re-reading the journal. State in
 `.engineering/` is the operational projection of the work, not the record of
 record: deleting it may cost convenience and execution detail, but must
 never erase an accepted decision, approved contract, published artifact
-identity, or unresolved critical risk — those live in versioned docs,
-external anchors, and checkpoints ([checkpoints.md](checkpoints.md)). This
+identity, or unresolved critical risk — those live in versioned docs and
+external anchors (durable promotion and handover receipts); every state
+change, discovery, and decision lands immediately in the journal and its
+owning file. This
 discipline bounds crash loss to one journal line. A worker without the lease
 returns its status change and evidence in its output manifest immediately;
 the lease holder reconciles it at once.
@@ -244,7 +247,7 @@ first child in its folder and reconcile them per
 [overviews.md](overviews.md) — including the proposals-vs-changes
 distinction, canonical child statuses, and deviation provenance. Decisions
 follow [decision-causality.md](decision-causality.md); accepting one
-triggers the blast-radius sweep and a checkpoint. Reviews follow
+triggers the blast-radius sweep. Reviews follow
 [reviews.md](reviews.md): `review.md` rolls up the seven canonical
 engineering areas plus any plugin-namespaced areas, and work closes only
 when the roll-up agrees with every detail.
@@ -255,7 +258,7 @@ An explicit local path, approved inline candidate, or selected Notion
 identity may supply a specification; inline prompt text is evidence only
 until it becomes an approved candidate with a durable carrier. Neither path
 claims a Notion round trip. Spec freshness is checked
-at named checkpoints — materialize before planning, before each dispatch
+at named moments — materialize before planning, before each dispatch
 batch, before review, and at completion — and a changed base triggers the
 revalidation sweep (non-done dependents `! blocked`; done rows keep `✓ done`
 and gain stale validity plus remediation tasks). Mirrors, materialization,
@@ -282,17 +285,16 @@ item (or the response), carrying a destination-reachable source anchor, the
 raw work-state contents, and authoritative specification carriers. A
 recipient reads those carriers in an isolated post-anchor tree before
 reconstructing fresh local work state; it never copies `.engineering/` or
-trusts a local-only path. Handover scopes to the current source tree only,
-emits its checkpoint, and releases the coordinator lease.
+trusts a local-only path. Handover scopes to the current source tree only and releases the
+coordinator lease.
 
 Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
-deletes every stream on the machine, silently. Checkpoints at the external
-anchor are the designed recovery — establish the anchor and first checkpoint
-before a stream carries non-recoverable decisions
-([checkpoints.md](checkpoints.md)). Idle streams are parked and completed
-streams retired per [retirement.md](retirement.md); retirement deletes the
-operational projection, so it is gated on promotion, decision dispositions,
-and the retirement checkpoint.
+deletes every stream on the machine, silently. The portable handover
+receipt at the stream's external anchor is the designed recovery — publish
+one before a stream carries non-recoverable decisions, and promote durable
+knowledge early. Idle streams are parked and completed streams retired per
+[retirement.md](retirement.md); retirement deletes the operational
+projection, so it is gated on promotion and decision dispositions.
 
 ## Structural doctor
 

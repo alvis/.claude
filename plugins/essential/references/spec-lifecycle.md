@@ -26,10 +26,10 @@ in `state.md`.
 
 ## Freshness and the revalidation sweep
 
-Spec freshness is checked at named checkpoints, not left to chance:
+Spec freshness is checked at named moments, not left to chance:
 materialize before planning, before each dispatch batch (a cheap `unchanged`
 check), before review, and at completion. A stream that was idle past any
-checkpoint re-materializes before proceeding. When materialization or
+of those moments re-materializes before proceeding. When materialization or
 completion returns `next_action: revalidate`, the coordinator runs one
 revalidation sweep against the new base-id: mark every non-done task row
 whose definition, targets, or acceptance depend on the changed content
