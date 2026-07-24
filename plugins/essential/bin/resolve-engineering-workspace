@@ -367,6 +367,7 @@ if [[ $bootstrap -eq 1 ]]; then
 - Journal: [journal.md](state/journal.md)
 - Plan source: \`state.md\`
 - Plan revision: \`1\`
+- State revision: \`1\`
 - Next owner: \`PM\`
 - Next action: Confirm the charter in goal.md with the user.
 - Repository revision: Not captured yet.
@@ -425,13 +426,18 @@ Not established. For a Notion-backed contract, record the source kind, page
 id, and the base-id/revision this charter was authored against. The canonical
 specification remains the sole authority; a conflict with it marks this work
 stream for revalidation, never the reverse.
+
+## Workspace anchors
+
+- kind: \`$vcs\` · locator: \`$active_workspace\` · revision semantics: commit/change id
 "
   journal_contents="# Journal
 
-Append-only event log: one line per status transition, decision, plan or
-charter revision, or sync event. Newest last. Never rewrite or delete lines.
+Append-only event log, newest last, never rewritten. Line grammar:
+\`- <ISO-8601> <actor>@<capability_id> rev:<N> <event-type> <subject>: <summary> [evidence: <ref>] [invalidates: <ids>]\`
+with event types \`status|decision|revision|sync|sweep|checkpoint|lease\`.
 
-- $bootstrap_timestamp PM bootstrap: work \`$work_id\` initialized
+- $bootstrap_timestamp PM@pm rev:1 status $work_id: initialized
 "
   write_bootstrap_file "$work_dir/goal.md" "$goal_contents"
   write_bootstrap_file "$work_dir/state/working.md" "$working_contents"

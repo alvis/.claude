@@ -1,0 +1,431 @@
+#!/usr/bin/env python3
+"""Structural doctor for Essential engineering work state.
+
+A doctor, not a judge: this tool reports deterministic structural defects that
+machines detect better than readers — broken IDs, dangling dependencies,
+cycles, contradictory mark/status pairs, missing evidence annotations, broken
+file references, unsuperseded decisions, stale leases, and overview drift. It
+never judges prose, never edits files, and never blocks by default; free-form
+Markdown it cannot parse is at most an `info` finding. `--strict` exits
+nonzero when error-severity findings exist, for use when work is irreversible
+or release-critical.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import time
+from pathlib import Path
+
+MARK_STATUS = {
+    "-": "planned",
+    "⧗": "working",
+    "✓": "done",
+    "X": "failed",
+    "!": "blocked",
+    "⊘": "cancelled",
+}
+PARENT_ID = re.compile(r"^[A-Z]{3}$")
+CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
+MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
+JOURNAL_EVENT = re.compile(
+    r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|checkpoint|lease)\b"
+)
+
+
+class Report:
+    def __init__(self) -> None:
+        self.findings: list[dict] = []
+
+    def add(self, severity: str, work: str, check: str, message: str) -> None:
+        self.findings.append(
+            {"severity": severity, "work": work, "check": check, "message": message}
+        )
+
+    def error(self, work: str, check: str, message: str) -> None:
+        self.add("error", work, check, message)
+
+    def warning(self, work: str, check: str, message: str) -> None:
+        self.add("warning", work, check, message)
+
+    def info(self, work: str, check: str, message: str) -> None:
+        self.add("info", work, check, message)
+
+
+def split_row(line: str) -> list[str]:
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def parse_tasks(state_text: str) -> list[dict] | None:
+    """Return task rows from the ## Tasks table, or None when unparseable."""
+    lines = state_text.splitlines()
+    try:
+        start = next(
+            index
+            for index, line in enumerate(lines)
+            if line.strip().lower().startswith("## tasks")
+        )
+    except StopIteration:
+        return None
+    rows: list[dict] = []
+    header_seen = False
+    for line in lines[start + 1 :]:
+        stripped = line.strip()
+        if stripped.startswith("## "):
+            break
+        if not stripped.startswith("|"):
+            continue
+        cells = split_row(stripped)
+        if not header_seen:
+            if cells and cells[0].lower() == "id":
+                header_seen = True
+            continue
+        if cells and set(cells[0]) <= {"-", " "}:
+            continue
+        if len(cells) < 9:
+            continue
+        rows.append(
+            {
+                "id": cells[0],
+                "mark": cells[1],
+                "status": cells[2],
+                "task": cells[3],
+                "depends_on": cells[4],
+                "required": cells[5],
+                "acceptance": cells[6],
+                "owner": cells[7],
+                "evidence": cells[8],
+            }
+        )
+    return rows if header_seen else None
+
+
+def parse_dependencies(cell: str) -> list[str]:
+    if cell in {"", "—", "-"}:
+        return []
+    return [token for token in re.split(r"[,\s{}→]+", cell) if token]
+
+
+def metadata_value(text: str, key: str) -> str | None:
+    match = re.search(
+        rf"^- {re.escape(key)}:\s*`?([^`\n]*)`?\s*$", text, re.MULTILINE
+    )
+    return match.group(1).strip() if match else None
+
+
+def check_tasks(report: Report, work: str, rows: list[dict]) -> None:
+    seen: dict[str, dict] = {}
+    for row in rows:
+        task_id = row["id"]
+        if not (PARENT_ID.match(task_id) or CHILD_ID.match(task_id)):
+            report.error(work, "task-id", f"malformed task ID {task_id!r}")
+            continue
+        if task_id in seen:
+            report.error(work, "task-id", f"duplicate task ID {task_id}")
+            continue
+        seen[task_id] = row
+
+    for task_id, row in seen.items():
+        expected = MARK_STATUS.get(row["mark"])
+        if expected is None:
+            report.error(
+                work, "mark-status", f"{task_id}: unknown mark {row['mark']!r}"
+            )
+        elif row["status"] != expected:
+            report.error(
+                work,
+                "mark-status",
+                f"{task_id}: mark {row['mark']!r} contradicts status "
+                f"{row['status']!r} (expected {expected!r})",
+            )
+        evidence = row["evidence"]
+        if row["status"] == "done" and not evidence:
+            report.error(work, "evidence", f"{task_id}: done with empty evidence")
+        if row["status"] == "failed" and (
+            "attempt:" not in evidence
+            or ("retry:" not in evidence and "disposition:" not in evidence)
+        ):
+            report.error(
+                work,
+                "evidence",
+                f"{task_id}: failed without attempt: plus retry:/disposition:",
+            )
+        if row["status"] == "blocked" and "unblock:" not in evidence:
+            report.error(work, "evidence", f"{task_id}: blocked without unblock:")
+        if row["status"] == "cancelled" and row["required"] == "yes":
+            report.error(
+                work, "roll-up", f"{task_id}: required work cannot stay cancelled"
+            )
+
+    graph: dict[str, list[str]] = {}
+    for task_id, row in seen.items():
+        dependencies = parse_dependencies(row["depends_on"])
+        graph[task_id] = dependencies
+        for dependency in dependencies:
+            if dependency not in seen:
+                report.error(
+                    work,
+                    "dependency",
+                    f"{task_id}: depends on unknown task {dependency}",
+                )
+
+    state: dict[str, int] = {}
+
+    def visit(node: str, trail: list[str]) -> None:
+        state[node] = 1
+        for neighbor in graph.get(node, []):
+            if neighbor not in graph:
+                continue
+            if state.get(neighbor) == 1:
+                cycle = trail[trail.index(neighbor) :] if neighbor in trail else trail
+                report.error(
+                    work,
+                    "dependency",
+                    "dependency cycle: " + " → ".join([*cycle, neighbor]),
+                )
+            elif state.get(neighbor, 0) == 0:
+                visit(neighbor, [*trail, neighbor])
+        state[node] = 2
+
+    for node in graph:
+        if state.get(node, 0) == 0:
+            visit(node, [node])
+
+    children: dict[str, list[dict]] = {}
+    for task_id, row in seen.items():
+        match = CHILD_ID.match(task_id)
+        if match:
+            children.setdefault(match.group(1), []).append(row)
+    for parent_id, child_rows in children.items():
+        parent = seen.get(parent_id)
+        if parent is None:
+            report.error(
+                work, "task-id", f"children of {parent_id} have no parent row"
+            )
+            continue
+        if parent["status"] == "done":
+            unfinished = [
+                child["id"]
+                for child in child_rows
+                if child["required"] == "yes" and child["status"] != "done"
+            ]
+            if unfinished:
+                report.error(
+                    work,
+                    "roll-up",
+                    f"{parent_id}: done while required children are not: "
+                    + ", ".join(unfinished),
+                )
+
+
+def check_file_references(report: Report, work: str, files: list[Path]) -> None:
+    for file in files:
+        if not file.is_file():
+            continue
+        text = file.read_text(encoding="utf-8", errors="replace")
+        for target in MARKDOWN_LINK.findall(text):
+            if EXTERNAL_LINK.match(target) or target.startswith("#"):
+                continue
+            path_part = target.split("#", 1)[0]
+            if not path_part:
+                continue
+            if path_part.startswith("/"):
+                report.warning(
+                    work,
+                    "portability",
+                    f"{file.name}: absolute path link {path_part!r} is not portable",
+                )
+                continue
+            resolved = (file.parent / path_part).resolve()
+            if not resolved.exists():
+                report.warning(
+                    work,
+                    "file-reference",
+                    f"{file.name}: link target does not exist: {path_part}",
+                )
+
+
+def check_decisions(report: Report, work: str, decisions_dir: Path) -> None:
+    if not decisions_dir.is_dir():
+        return
+    texts: dict[str, str] = {}
+    for child in sorted(decisions_dir.glob("*.md")):
+        texts[child.stem] = child.read_text(encoding="utf-8", errors="replace")
+    superseders: set[str] = set()
+    for text in texts.values():
+        for match in re.finditer(r"supersedes:\s*`?([\w./-]+)`?", text, re.IGNORECASE):
+            superseders.add(Path(match.group(1)).stem)
+    for name, text in texts.items():
+        status = re.search(r"status:\s*`?(\w+)`?", text, re.IGNORECASE)
+        if status and status.group(1).lower() == "superseded":
+            if name not in superseders and "superseded-by" not in text.lower():
+                report.error(
+                    work,
+                    "decision",
+                    f"decisions/{name}.md is superseded but no successor names it "
+                    "via supersedes: and it has no superseded-by link",
+                )
+
+
+def check_lease(report: Report, work: str, work_dir: Path, state_text: str) -> None:
+    lease_path = work_dir / "lease.json"
+    if not lease_path.is_file():
+        return
+    try:
+        lease = json.loads(lease_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        report.error(work, "lease", "lease.json is unreadable or not valid JSON")
+        return
+    expires = lease.get("expires_at_epoch")
+    if isinstance(expires, (int, float)) and time.time() >= expires:
+        report.warning(
+            work,
+            "lease",
+            "lease is expired; resume requires an explicit takeover, never reuse",
+        )
+    lease_revision = lease.get("state_revision")
+    state_revision = metadata_value(state_text, "State revision")
+    if isinstance(lease_revision, int) and state_revision and state_revision.isdigit():
+        if lease_revision > int(state_revision):
+            report.error(
+                work,
+                "lease",
+                f"lease state_revision {lease_revision} is ahead of state.md "
+                f"State revision {state_revision}: a newer write was lost or "
+                "state.md was rewritten by a non-lease holder",
+            )
+
+
+def check_journal(report: Report, work: str, work_dir: Path, state_text: str) -> None:
+    journal = work_dir / "state" / "journal.md"
+    if not journal.is_file():
+        return
+    text = journal.read_text(encoding="utf-8", errors="replace")
+    events = [
+        match.group(1)
+        for match in (JOURNAL_EVENT.match(line) for line in text.splitlines())
+        if match
+    ]
+    checkpoint_worthy = {"decision", "sweep"} & set(events)
+    if (
+        checkpoint_worthy
+        and "checkpoint" not in events
+        and "durability: degraded" not in state_text.lower()
+    ):
+        report.warning(
+            work,
+            "checkpoint",
+            "journal has checkpoint-worthy events "
+            f"({', '.join(sorted(checkpoint_worthy))}) but no checkpoint event and "
+            "state.md records no degraded durability",
+        )
+
+
+def check_work_dir(report: Report, work_dir: Path) -> None:
+    work = work_dir.name
+    state_path = work_dir / "state.md"
+    if not state_path.is_file():
+        report.info(work, "layout", "no state.md; nothing to check")
+        return
+    state_text = state_path.read_text(encoding="utf-8", errors="replace")
+    rows = parse_tasks(state_text)
+    if rows is None:
+        report.info(work, "layout", "no parseable ## Tasks table in state.md")
+    else:
+        check_tasks(report, work, rows)
+    check_file_references(
+        report,
+        work,
+        [state_path, work_dir / "goal.md", work_dir / "state" / "working.md"],
+    )
+    check_decisions(report, work, work_dir / "decisions")
+    check_lease(report, work, work_dir, state_text)
+    check_journal(report, work, work_dir, state_text)
+
+
+def check_overview(report: Report, engineering_root: Path) -> None:
+    overview = engineering_root / "overview.md"
+    if not overview.is_file():
+        return
+    text = overview.read_text(encoding="utf-8", errors="replace")
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = split_row(stripped)
+        if len(cells) < 2 or cells[0].lower() in {"work id", "id"}:
+            continue
+        if set(cells[0]) <= {"-", " "}:
+            continue
+        work_id = cells[0].strip("`")
+        lifecycle = cells[1].strip("`")
+        state_path = engineering_root / "works" / work_id / "state.md"
+        if not state_path.is_file():
+            continue  # stream may live in another source tree
+        state_text = state_path.read_text(encoding="utf-8", errors="replace")
+        local = metadata_value(state_text, "Lifecycle status")
+        if local and lifecycle and local != lifecycle:
+            report.warning(
+                work_id,
+                "overview",
+                f"overview.md says {lifecycle!r} but local state.md says {local!r}",
+            )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="engineering-doctor", description=__doc__
+    )
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--work-dir", type=Path, help="one work stream directory")
+    scope.add_argument(
+        "--engineering-root",
+        type=Path,
+        help="an .engineering/ root: checks every works/* stream plus overview.md",
+    )
+    parser.add_argument("--json", action="store_true", help="emit findings as JSON")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 when error-severity findings exist",
+    )
+    arguments = parser.parse_args()
+
+    report = Report()
+    if arguments.work_dir is not None:
+        if not arguments.work_dir.is_dir():
+            print(f"error: not a directory: {arguments.work_dir}", file=sys.stderr)
+            return 2
+        check_work_dir(report, arguments.work_dir)
+    else:
+        root = arguments.engineering_root
+        if not root.is_dir():
+            print(f"error: not a directory: {root}", file=sys.stderr)
+            return 2
+        works = root / "works"
+        if works.is_dir():
+            for work_dir in sorted(path for path in works.iterdir() if path.is_dir()):
+                check_work_dir(report, work_dir)
+        check_overview(report, root)
+
+    if arguments.json:
+        print(json.dumps({"findings": report.findings}, indent=2))
+    else:
+        if not report.findings:
+            print("ok: no findings")
+        for finding in report.findings:
+            print(
+                f"{finding['severity']}: [{finding['work']}] "
+                f"{finding['check']}: {finding['message']}"
+            )
+
+    has_errors = any(finding["severity"] == "error" for finding in report.findings)
+    return 1 if (arguments.strict and has_errors) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
