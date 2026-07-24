@@ -27,8 +27,8 @@ carries to v8 merely because v8 was derived from it.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential; if unavailable, stop
 artifact writes and report the missing contract. Also read Essential's
-`references/checkpoints.md` (the approval binding tuple and checkpoint
-events) and `references/reviews.md`. Review records land in the
+`references/approvals.md` (the approval binding tuple) and
+`references/reviews.md`. Review records land in the
 plugin-namespaced review area `reviews/production-render.md` — sanctioned
 alongside the seven canonical engineering areas, under the same finding and
 disposition lifecycle and the `review.md` roll-up; durable release records
@@ -46,8 +46,8 @@ promote at completion.
    reviewer and their authority, scope approved (whole cut, or named aspects
    such as pacing or grade — scoped approval is not full approval), timestamp,
    and unresolved exceptions. Ask the user to fill a missing tuple field
-   rather than inferring it. An approval is a checkpoint event: hand the PM an
-   `artifact-approved` checkpoint per Essential's `checkpoints.md`.
+   rather than inferring it. An approval is a journaled state change: return
+   it in the reconciliation payload so the PM records it at once.
 4. On a new render revision, evaluate each prior approval: it does **not**
    carry forward. Report which approvals lapsed and what scope must be
    re-reviewed; a superseding decision's `preserves` list may keep named
@@ -68,4 +68,5 @@ promote at completion.
 ## Completion
 
 Report the render id and revision, findings by classification, approvals
-recorded or lapsed, checkpoint hand-offs to the PM, and `generated_files`.
+recorded or lapsed, reconciliation hand-offs to the PM, and
+`generated_files`.
