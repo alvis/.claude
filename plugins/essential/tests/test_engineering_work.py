@@ -41,6 +41,8 @@ MIGRATED_ARTIFACT_WRITERS = {
     "essential/skills/handoff/SKILL.md",
     "essential/skills/handover/SKILL.md",
     "essential/skills/takeover/SKILL.md",
+    "production/skills/review-render/SKILL.md",
+    "production/skills/track-assets/SKILL.md",
     "specification/skills/implement-code/SKILL.md",
     "specification/skills/mdc/SKILL.md",
     "specification/skills/plan-code/SKILL.md",
