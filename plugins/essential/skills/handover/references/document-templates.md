@@ -3,6 +3,35 @@
 Use the Essential engineering-work contract as authoritative. These shapes add
 handover-specific content; all timestamps are one real UTC ISO-8601 value.
 
+## `goal.md`
+
+```markdown
+# <Work headline> charter
+
+- Work ID: `<work-id>`
+- Charter revision: `<n>`
+- Updated: `<timestamp>`
+- State: [state.md](state.md)
+
+## Goal
+## Scope and non-goals
+
+## Success criteria
+
+| ID | Criterion | Acceptance evidence |
+|---|---|---|
+| `SC-1` | `<criterion>` | `<expected evidence>` |
+
+## Specification provenance
+```
+
+The charter owns goal, scope, success criteria, and specification provenance;
+`state.md` links to it and never restates them. For a Notion-backed contract,
+record the source kind, page id, and the base-id/revision the charter was
+authored against — the canonical specification stays the sole authority.
+`Charter revision` bumps only on explicit user approval, journaled in
+`state/journal.md` and `state/revisions.md`.
+
 ## `state.md`
 
 ```markdown
@@ -11,7 +40,11 @@ handover-specific content; all timestamps are one real UTC ISO-8601 value.
 - Work ID: `<work-id>`
 - Lifecycle status: `<initialized|active|blocked|complete|retiring>`
 - Updated: `<timestamp>`
+- Charter: [goal.md](goal.md)
 - Current focus: [working.md](state/working.md)
+- Journal: [journal.md](state/journal.md)
+- Plan source: `state.md`
+- Plan revision: `<n>`
 - External anchor: `<task|issue|PR|Notion URL>`
 
 ## Status
@@ -25,7 +58,6 @@ handover-specific content; all timestamps are one real UTC ISO-8601 value.
 | `LFE` | `⧗` | `working` | `<summary> [targets: none]` | `-` | `yes` | `<criterion>` | `<owner>` | `<evidence or action>` |
 | `LFE01` | `✓` | `done` | `<summary> [targets: src/example.ts]` | `-` | `yes` | `<criterion>` | `<owner>` | `<evidence>` |
 
-## Goal and success criteria
 ## Plan graph
 ## Current state and file status
 ## Approved decisions and accepted assumptions
@@ -82,10 +114,10 @@ byte-for-byte. Follow this template:
 
 - Updated: `<timestamp>`
 
-| Work ID | Lifecycle | Headline | Next action | Location | Documentations |
-|---|---|---|---|---|---|
-| `<work-id>` | `<initialized\|active\|blocked\|complete\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `[<title>](docs/<slug>.md)` or `-` |
-| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `-` |
+| Work ID | Lifecycle | Headline | Next action | Location | Spec | Documentations |
+|---|---|---|---|---|---|---|
+| `<work-id>` | `<initialized\|active\|blocked\|complete\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](docs/<slug>.md)` or `-` |
+| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `-` | `-` |
 ```
 
 - `Location` is the source tree that currently holds the stream's
@@ -93,6 +125,11 @@ byte-for-byte. Follow this template:
   the tree kind and current revision. Use `-` when that source tree has been
   removed, so the stream is orphaned and resumable only from a receipt (or no
   longer resumable at all).
+- `Spec` names the capability or specification source the stream works against,
+  suffixed `(pending-publication)` while the stream holds accepted spec
+  deviations not yet pushed to the canonical source, or `-` for generic work.
+  Before planning a new stream against a capability, resolve any sibling
+  stream's pending publication on it first.
 - `Documentations` links any durable `docs/` material for the stream — an
   architecture document, ADR index, or capability specification — or `-` when
   none exists.
@@ -169,9 +206,10 @@ checksum verification — exactly one of:>
 
 ### Work state
 
-<The raw contents of this stream's state.md, state/working.md, and every
-continuity-relevant detail file — decisions, changes, design, state/*.md
-children, needed artifacts, and every outstanding `proposals/` child (any still
+<The raw contents of this stream's goal.md, state.md, state/working.md, and
+every continuity-relevant detail file — decisions, changes, design, state/*.md
+children (including state/journal.md and state/revisions.md when they exist),
+needed artifacts, and every outstanding `proposals/` child (any still
 awaiting approval or approved but not yet implemented, so its body travels rather
 than leaving `state.md` pointing at a missing file) — each in its own fenced
 block. On the line
@@ -182,6 +220,12 @@ land it one level too deep. Fence each file with a backtick run at least one
 longer than the longest backtick run inside that file (minimum three); the
 closing fence uses the same length. This lets a state file that itself contains
 a fenced block travel without closing early:>
+
+path: goal.md
+
+```markdown
+<verbatim contents>
+```
 
 path: state.md
 

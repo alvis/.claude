@@ -72,8 +72,8 @@ Identity selection remains separate and interactive: `--bootstrap` never
 derives or mints an ID, and it cannot bypass `work_id_required` or
 `requires_ignore`. The resolver owns the mechanical bootstrap; the PM alone
 may request it while holding the coordinator lease. It creates the work
-directory, its `state/` subdirectory, and whichever of `state/working.md` and
-`state.md` is missing. Each file is
+directory, its `state/` subdirectory, and whichever of `goal.md`,
+`state/working.md`, `state.md`, and `state/journal.md` is missing. Each file is
 created with no-clobber semantics; an existing regular file is reported and
 preserved byte-for-byte. The resolver refuses symlinked/non-directory work-root
 components and symlinked/non-regular entrypoints on every invocation, not only
@@ -81,12 +81,16 @@ during bootstrap, so later writers cannot escape the target workspace. This
 also makes the command safe to rerun when an interrupted first use created only
 one entrypoint.
 
-The initial `state/working.md` contains the work ID, creation timestamp,
-`initialized` status, a confirmation-focused current action and handback
-point, and a relative link to `../state.md`. The initial `state.md` contains the
-same identity/status/navigation plus explicit placeholders for goal and
-success criteria, lifecycle plan, revision, specification provenance, sync,
-review, decisions, dependencies/blockers/risks, and evidence/validation.
+The initial `goal.md` contains the work ID, `Charter revision: 1`, and
+explicit placeholders for goal, scope/non-goals, the numbered success-criteria
+table, and specification provenance. The initial `state/working.md` contains
+the work ID, creation timestamp, `initialized` status, a confirmation-focused
+current action and handback point, and relative links to `../goal.md` and
+`../state.md`. The initial `state.md` contains the same
+identity/status/navigation plus charter/journal links, `Plan revision: 1`, and
+explicit placeholders for the lifecycle plan, revision, sync, review,
+decisions, dependencies/blockers/risks, and evidence/validation. The initial
+`state/journal.md` carries the append-only header and one bootstrap line.
 Downstream owners replace those placeholders with observed truth; they do not
 create competing bootstrap shapes. The resolver returns the exact paths in
 `bootstrap_created` and preserved paths in `bootstrap_existing`; the PM adds
@@ -122,9 +126,12 @@ docs/
 ├── notion/                          # conventional default-workspace mirror
 │   └── [notion-sync-owned .mdc paths]
 └── works/<work-id>/                 # in the source tree that owns the stream; not repeated in the default tree
+    ├── goal.md
     ├── state.md
     ├── state/
     │   ├── working.md
+    │   ├── journal.md
+    │   ├── revisions.md
     │   ├── unresolved.md
     │   ├── plan.md
     │   ├── discovery.md
@@ -228,15 +235,44 @@ only when it hosts its own work streams.
 `overview.md` is a single table of every work stream across all source trees:
 work ID, lifecycle status, one-line headline, next action, `Location` (the source
 tree that holds the stream — its path, kind, and revision — or `-` when that tree
-has been removed and the stream is orphaned), and `Documentations` (links to any
-related `docs/` material, or `-`). It is an index, not a substitute for each
-stream's `state.md`; the authoritative resumable context for a stream stays in
-that stream's own source tree. The PM/coordinator
+has been removed and the stream is orphaned), `Spec` (the capability or
+specification source the stream works against, suffixed `pending-publication`
+while the stream holds accepted spec deviations not yet pushed to the canonical
+source, or `-`), and `Documentations` (links to any related `docs/` material, or
+`-`). Before planning any stream against a capability, check `overview.md` for
+sibling streams whose `Spec` cell marks that capability `pending-publication`
+and resolve the publication order first — otherwise the new stream plans
+against a canonical spec that is already known to change. It is an index, not a
+substitute for each stream's `state.md`; the authoritative resumable context
+for a stream stays in that stream's own source tree. Every cell is derived from
+that stream's `goal.md` headline and `state.md` status header, so a lost or
+stale `overview.md` is rebuilt by enumerating registered source trees and
+re-reading those files — never treat it as unrecoverable state. The PM/coordinator
 updates the default tree's `overview.md` whenever a stream's status changes — in
 particular at handover — so a new session can survey every tree from one place
 and resume the right stream in the right source tree. A stream is worked in
 exactly one source tree at a time; only an explicit merge of source trees moves a
 stream between them.
+
+### `goal.md`
+
+`goal.md` is the work stream's charter: the goal, scope and non-goals,
+numbered success criteria (`SC-1`, `SC-2`, …) each with its expected
+acceptance evidence, and specification provenance. It carries
+`Charter revision: N`, bumped only on explicit user approval; every bump is
+recorded in `state/journal.md` and `state/revisions.md`. The charter separates
+what "done" means from where the work currently stands, so continuous status
+churn in `state.md` can never drift the definition of success.
+
+For a Notion-backed contract, `goal.md` is a work-scoped interpretation, never
+a second authority: it records the source kind, page id, and the exact
+base-id/revision it was authored against, and the canonical specification wins
+every conflict. When a spec change lands (a new base), the coordinator
+re-checks each `SC-n` against the new base; charter drift is a user decision,
+not a silent edit. Task `Acceptance` cells, `changes/` children, and
+`reviews/alignment.md` findings cite `SC-n` IDs so closure is checkable: work
+closes only when every required success criterion is covered by an `applied`
+change and a closed review disposition.
 
 ### `state/working.md`
 
@@ -256,10 +292,15 @@ it never edits PM-owned work memory.
 
 ### `state.md`
 
-`state.md` is the complete resumable work context: goal, full plan, lifecycle
-status, acceptance criteria, decisions, dependencies, blockers, open questions,
-review state, evidence references, repository revision, specification
-provenance, and sync state. It also carries the list of `proposals/` still
+`state.md` is the complete resumable execution context: full plan, lifecycle
+status, decisions, dependencies, blockers, open questions, review state,
+evidence references, repository revision, and sync state. The goal, success
+criteria, and specification provenance live in `goal.md`; `state.md` links to
+that charter rather than restating it. `state.md` carries `Plan revision: N`,
+bumped on every approved change to a task definition, dependency, requiredness,
+or acceptance; each bump appends one entry to `state/revisions.md` recording
+what changed, why, who approved it, and the spec base-id that triggered it when
+one did. It also carries the list of `proposals/` still
 awaiting user approval and those approved but not yet implemented, so a resume
 sees the outstanding proposal work without scanning the folder. This inventory is
 kept current under the same continuous-persistence discipline as task state:
@@ -286,21 +327,34 @@ completion, or retirement, read `state.md` and its `state/` children directly to
 judge runnable tasks, current owner, and next action. Preserve any existing
 state file byte-for-byte until an explicit rewrite; never rewrite it by guess.
 
-Persist state immediately, never lazily. The moment a task or subtask changes
-status (started, blocked, done, failed, cancelled) or a decision is made, the
-lease holder writes that change into `.engineering/` state before moving on to
-the next action — not batched, and not deferred to handover or session end. State
-in `.engineering/` is the durable memory of record; handover only publishes and
-transports what is already written. This continuous-persistence discipline
-bounds the loss to a single in-flight step if the coding agent crashes mid-task
-or a session ends without an explicit handover, so a later resume reads an
-accurate registry rather than reconstructing lost progress. A worker without the
+An existing stream whose `state.md` predates `goal.md` migrates lazily: preserve
+it byte-for-byte until the next explicit coordinator rewrite, then extract the
+charter content into `goal.md`, initialize `Plan revision: 1` and
+`state/journal.md`, and journal the migration. Never migrate on read, and never
+auto-rewrite an old-format file merely because the convention moved on.
+
+Persist state immediately, never lazily — append first, reconcile second. The
+moment a task or subtask changes status (started, blocked, done, failed,
+cancelled), a decision is made, a plan or charter revision is approved, or a
+sync event lands, the lease holder appends one line to `state/journal.md`
+(timestamp, actor, task ID or event, transition, evidence reference) and then
+reconciles the affected tables — not batched, and not deferred to handover or
+session end. The journal is append-only and never rewritten; the tables in
+`state.md`, the lazy overviews, and `overview.md` are views over it, so any
+suspected drift between them is settled by re-reading the journal rather than
+guessed. State in `.engineering/` is the durable memory of record; handover
+only publishes and transports what is already written. This
+continuous-persistence discipline bounds the loss to a single journal line if
+the coding agent crashes mid-task or a session ends without an explicit
+handover, so a later resume reads an accurate registry rather than
+reconstructing lost progress. A worker without the
 lease returns its status change and evidence in its output manifest immediately;
 the lease holder reconciles it into `state.md` at once rather than accumulating
 deltas.
 
 One actor holds the work item's coordinator lease and is the sole writer of
-`state/working.md`, `state.md`, the four lazy overview files, and `review.md`. The PM
+`goal.md`, `state/working.md`, `state.md`, `state/journal.md`,
+`state/revisions.md`, the four lazy overview files, and `review.md`. The PM
 holds it by default and may explicitly grant it to one orchestration skill,
 naming the files covered. The PM does not write those files until that skill
 returns. Every other subagent is a worker: it writes only assigned children and
@@ -434,8 +488,20 @@ mutated only through the MDC-aware owner.
 `sync-spec` materializes only the required temporary working specification
 under the active work's `spec/`. Record stable Notion page/block IDs, exact
 returned paths, source revision/hash, and dependent-work revalidation state in
-`state.md`. A changed source revision marks dependent work
-`needs_revalidation` before implementation continues.
+`state.md`.
+
+Spec freshness is checked at named checkpoints, not left to chance: materialize
+before planning, before each dispatch batch (a cheap `unchanged` check),
+before review, and at completion. A stream that was idle past any checkpoint
+re-materializes before proceeding. When materialization or completion returns
+`next_action: revalidate`, the coordinator runs one revalidation sweep against
+the new base-id: mark every task row whose definition, targets, or acceptance
+depend on the changed content `! blocked` with
+`unblock: revalidate against <base-id>` (revalidation is expressed in the
+existing status vocabulary — there is no separate task status for it),
+re-check each `SC-n` in `goal.md` against the new base and escalate charter
+drift to the user, and append the sweep to `state/journal.md`. Implementation
+continues only after the sweep.
 
 Revalidation is guaranteed only for locally discoverable, registered
 workspaces. Enumerate each local Git worktree from `git worktree list
@@ -469,6 +535,17 @@ and learned facts about the codebase — are recorded in
 ownership and size rules as its siblings. Only durable conclusions are promoted
 to `docs/`; a resumable finding stays in `state/discovery.md` until it becomes
 stable knowledge worth promoting.
+
+Promotion is auditable after retirement deletes the work stream: every
+promoted `docs/` file carries front matter naming its `source-work` (the work
+ID), promotion date, and any superseded document, and work closure requires a
+promotion receipt in the stream's final `changes/` child listing every promoted
+path. Authored documentation is swept when the spec moves: on any
+`next_action: revalidate` outcome, check `docs/index.md` and the
+`docs/architecture/` and `docs/design/` documents that reference the changed
+capability, and journal each file's disposition
+(`unaffected`, `updated`, or `superseded`) — only `docs/specs/` is hash-bound
+to the source, so ADRs and design documents drift silently without this sweep.
 
 Continuity has two paths. On the **same machine**, pausing and resuming works
 from the on-disk state files: a handover completes the current source tree's work

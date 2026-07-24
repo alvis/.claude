@@ -43,7 +43,9 @@ otherwise accept automatic existing-work selection and ask only on
 bootstrap before the first persistent artifact.
 
 Default to a conversational result. With `--persist` or a long-lived task,
-write the ledger to `state/discovery.md`. Keep requested disposable prototypes
+write the ledger to `state/discovery.md`; each material finding also earns one
+appended `state/journal.md` line from the coordinator-lease holder (a worker
+returns the line as a reconciliation delta instead of appending it). Keep requested disposable prototypes
 under `artifacts/prototypes/<semantic-slug>/` and copied or summarized source
 material under `artifacts/discovery/`. Never modify application source.
 
