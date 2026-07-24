@@ -11,7 +11,7 @@
 - Body: wrap at 72 characters, keep short but descriptive
 - Footer: `Closes #<issue-number>, #<issue-number>...` (use commas, not `Fixes`)
 - Branch format: `<type>/(<scope>)/<topic>` in lowercase-kebab-case
-- Always start PRs as drafts; require Summary and Checklist sections
+- Always start PRs as drafts; require Summary and Verification sections
 
 ## Core Rules Summary
 
@@ -33,7 +33,7 @@
 ### Pull Request (GIT-PR)
 
 - **GIT-PR-01**: Always start with a draft PR and update it as the code evolves.
-- **GIT-PR-02**: Require Summary and Checklist sections; other sections are optional.
+- **GIT-PR-02**: Require Summary and Verification sections; other sections are optional.
 - **GIT-PR-03**: PR title follows the same format as commit messages.
 
 ## Patterns
@@ -137,14 +137,16 @@ Always start with a draft PR and update it as the code evolves.
 - Explain non-obvious decisions or technical details
 - Make it easy for reviewers and future maintainers to follow and understand
 - Use paragraphs for longer explanations in general, but use point form if points are short, related and best expressed as a list (e.g., checklist, breaking changes, etc.)
-- Require Summary and Checklist sections; other sections are optional
+- Require Summary and Verification sections; other sections are optional
 
-Use the following structure:
+Use the following structure — a single arc of why, what, what it costs, what to check, and where it stops, with lookup material last:
 
 ```markdown
-📌 In plain language, explain the purpose of the PR and its main changes in less than 3 sentences.
+📌
 
-## 📝 Context
+In plain language, explain the purpose of the PR and its main changes in less than 3 sentences.
+
+## 🧵 Context
 Include any relevant context or background information that helps reviewers understand the change, e.g.
 - Why is this change needed? Any problems or symptoms?
 - Links to the related bug tickets?
@@ -156,31 +158,31 @@ Describe what has been implemented
 - Any features implemented
 - Outline how the solution was achieved
 - Any trade-offs, architectural choices, or design patterns
-
-## ✅ Checklist
-List all items that need to be completed before the PR can be merged, e.g.
-- [ ] Code adheres to style guide
-- [ ] Unit tests added/updated
-- [ ] Documentation updated
-- [ ] Manually tested
+- Evidence and results of what was done — they belong here, not in Verification
 
 ## 💥 Breaking Changes
 List any breaking changes introduced by this PR
 - Note if there are any changes that might break existing functionality
 - Include upgrade or migration instructions if relevant
 
-## 🔗 Related Issues
-Reference related tickets, issues, RFCs, discussions, e.g.
-- `Closes #123, See #456, Spec: [Notion doc](https://...)`
+## 🧪 Verification
+List the checks that must pass before this can be signed off, specific to this change, ticked as each one is confirmed. Every item is a check, never a result — pick from the standard items only where they apply
+- [x] A check already confirmed
+- [ ] A check still outstanding
+- [ ] Reviewer assigned per zone (`GIT-PR-SIZE-01..04`)
 
-## 🧪 Manual Testing
-If applicable, describe how to manually test the changes, including
-- Steps or instructions for a reviewer to manually verify the change
-- Screenshots or screencasts if relevant
+## 🚫 Boundary
+Name the related work that was placed outside this change, so its edges are not read as gaps
+- Adjacent work excluded by the instruction, and where it lives instead
+- Anything a reader would reasonably expect here that this change was not asked to do
 
 ## 📋 Additional Notes
 List any other information useful for reviewers or future maintainers, e.g.
 - Known issues, temporary limitations, future follow-ups
+
+## 🔗 Related Issues
+Reference related tickets, issues, RFCs, discussions, e.g.
+- `Closes #123, See #456, Spec: [Notion doc](https://...)`
 ```
 
 ### PR Review Checklist
@@ -224,8 +226,8 @@ A precise zone policy supersedes the loose Small/Medium/Large bands above when a
 
 | Zone   | Files Changed | Net LOC | Required Sections                          | Reviewer Expectation              |
 |--------|---------------|---------|--------------------------------------------|------------------------------------|
-| Green  | ≤ 15          | ≤ 500   | Summary, Checklist                         | Quick read; default-mergeable      |
-| Yellow | ≤ 30          | ≤ 1200  | Summary, Checklist, Risk, Test plan        | One reviewer; ~30 min budget       |
+| Green  | ≤ 15          | ≤ 500   | Summary, Verification                      | Quick read; default-mergeable      |
+| Yellow | ≤ 30          | ≤ 1200  | Summary, Verification, Risk                | One reviewer; ~30 min budget       |
 | Red    | ≤ 60          | ≤ 2000  | All of yellow + `## Why this size` (isolation justification) + reviewer-time estimate | Two reviewers; explicit time block |
 | Black  | > 60          | > 2000  | Reject by default; flag using template     | Author splits before review        |
 
@@ -356,7 +358,7 @@ For documentation-only changes:
 - Exceeding 72-character hard limit on commit titles.
 - More than 2 comma-separated scopes in a single commit.
 - Creating PRs directly as ready-for-review instead of starting as draft.
-- Omitting Summary or Checklist sections from PR descriptions.
+- Omitting Summary or Verification sections from PR descriptions.
 
 ## Quick Decision Tree
 
@@ -365,4 +367,4 @@ For documentation-only changes:
 3. Title too long? Aim for ≤50 chars; accept up to 72 for clarity; never exceed 72 (`GIT-MSG-03`).
 4. Closing issues? Use `Closes #123, #456` in footer, never `Fixes` (`GIT-MSG-05`).
 5. Creating a branch? Use `<type>/(<scope>)/<topic>`, same scope as commits, lowercase-kebab-case (`GIT-BRN-01`, `GIT-BRN-02`).
-6. Opening a PR? Start as draft, include Summary + Checklist, title = commit format (`GIT-PR-01`, `GIT-PR-02`, `GIT-PR-03`).
+6. Opening a PR? Start as draft, include Summary + Verification, title = commit format (`GIT-PR-01`, `GIT-PR-02`, `GIT-PR-03`).

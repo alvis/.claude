@@ -442,13 +442,24 @@ invokes `gh`.
      absent.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
-   - `{{manual_testing_body}}` — `Testing:` / `Manual-Test:` trailers;
-     "Covered by automated tests." when absent.
+   - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered
+     as a checklist of the checks that must pass before sign-off, specific to
+     this change and ticked as each one is confirmed. Every item is a check;
+     an observation, a result, or evidence of what already happened belongs in
+     Implementation. Pick from the standard items — tests added or updated,
+     docs updated where user-visible, CI green locally, no new lint or type
+     errors, reviewer assigned per zone — only where they apply, and never in
+     place of the change-specific ones.
+   - `{{boundary_body}}` — bullets naming related work the instruction placed
+     outside this change, so its edges are not read as gaps. It records the
+     scope it was given, not the author's own judgment calls. "None." when
+     absent.
    - `{{additional_notes_body}}` — remaining unmapped body content; "None."
      when absent.
 
    Drop any optional section that resolves to "None." rather than leaving a
-   stub — keep Summary and the Checklist only.
+   stub, and strip every author-facing guidance comment from the rendered
+   body — keep Summary and Verification always.
 6. Emit the title line, a single blank line, then the Markdown body to stdout.
    Exit codes: `0` success, `2` unknown ref or non-conventional subject, `3` no
    commit source available, `4` bundled default template missing.
