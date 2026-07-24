@@ -32,7 +32,7 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
   partial-to-branch routes, and preserving the `--create-pr` compatibility
   entrypoint.
 - Do not use for: composing PR titles or bodies, general remote publication, or opening, updating, and polling PRs (`coding:write-pr`), per-commit QA of an unpushed stack (`coding:finalize-commits`), or diagnosing code failures (`coding:fix`).
-- Tool precedence: `jj` first — every change is a jj change and jj auto-snapshots `@` on every op. `git commit` acts only as the conventional-commit emitter inside the save flow on jj-colocated repos, never hand-run outside this skill. `gh` is retained for history routes that inspect remote PR state; `coding:write-pr` owns PR publication and CI, while this skill may run `jj git push` only in the two named direct-sync routes.
+- Tool precedence: `jj` first wherever it is installed and initialized for the repository — every change is then a jj change and jj auto-snapshots `@` on every op. On a jj-colocated repo `git commit` acts only as the conventional-commit emitter inside the save flow; on a git repository it is the save itself, and every route below runs its documented git form. Neither is hand-run outside this skill. `gh` is retained for history routes that inspect remote PR state; `coding:write-pr` owns PR publication and CI, while this skill may run `jj git push` only in the two named direct-sync routes.
 
 <IMPORTANT>
 - Every workflow MUST end with a linear clean chain + working code. No exceptions. If a workflow cannot guarantee this, STOP and surface to the user.
@@ -64,7 +64,7 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 | `--dry-run` | Print the plan, don't mutate. |
 | `--allow-rewrite-merged` | Explicit consent to rewrite history already merged on origin (skips the `AskUserQuestion` corrective-PR prompt) per `GIT-PR-STACK-03`. |
 
-- **Prerequisites**: a jj-colocated (or plain git) repository. The
+- **Prerequisites**: a git repository, jj-colocated or not. The
   manifest-scoped route additionally requires a checksum-bound manifest under
   the resolved work root's ignored artifacts directory. Producer receipts must
   use the strict generated-files schema and reconcile exactly to the
@@ -79,7 +79,7 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 
 ## Workflow
 
-The skill self-routes by reading `jj diff --stat`, `jj log -r '@-..@'`, and bookmark state. Open the matching reference file for the full procedure:
+The skill self-routes by reading the working-copy diff, the changes since the parent, and bookmark or branch state through whichever tool the repository uses. Open the matching reference file for the full procedure:
 
 | Trigger | How invoked | Reference |
 |---|---|---|
@@ -130,9 +130,9 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
    read working-copy state and pick exactly one route:
 
    ```bash
-   jj diff --stat               # file count + LOC
-   jj log -r 'visible_heads()'  # bookmarks, divergence, empty changes
-   jj bookmark list             # existing stack state
+   jj diff --stat               # file count + LOC          (git: git diff --stat HEAD)
+   jj log -r 'visible_heads()'  # bookmarks, divergence     (git: git log --oneline @{upstream}..HEAD)
+   jj bookmark list             # existing stack state      (git: git branch --list)
    ```
 
    Choose by the routing table above. A history-operation flag forces its

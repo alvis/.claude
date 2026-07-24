@@ -19,10 +19,14 @@ gh pr merge auth-rewrite/01-spec --squash
 # 2. rebase the next layer onto main
 jj rebase -d main -s auth-rewrite/02-impl
 # or
+git rebase --onto main auth-rewrite/01-spec auth-rewrite/02-impl
+# or
 gt sync && gt restack
 
 # 3. push the rebased stack
 jj git push --change auth-rewrite/02-impl
+# or
+git push --force-with-lease origin auth-rewrite/02-impl
 # or
 gt submit --stack
 

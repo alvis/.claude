@@ -86,7 +86,8 @@ control.
 
 The core lifecycle expects Claude Code, Bash, `jq`, Git, and Python 3, plus
 the target project's own build and test tools. The publication path
-additionally expects an authenticated `gh` and a jj-colocated Git repository.
+additionally expects an authenticated `gh`; it prefers `jj` where the
+repository is jj-colocated and uses Git directly everywhere else.
 Notion synchronization is optional — see
 [the specification plugin README](plugins/specification/README.md) for its
 transport-profile requirements.
@@ -145,7 +146,7 @@ discipline:
 | 8. Review, lint, and repair | Let implementation run review, fixes, touched-scope lint, and final target-native checks. | All findings block closure. A correction reruns affected tests/reviews. |
 | 9. Reconcile the spec | Let implementation run the applicable Notion completion gate or local source/carrier recheck. | A change in specification content invalidates plan/code/review evidence; done tasks keep their status and gain stale validity with remediation tasks. |
 | 10. Save and finalize | On deferred `needs_save`, run the exact returned `/coding:commit --paths-from=... --manifest-sha256=...`; on `ready_for_finalization`, skip save; on `no_change`, stop. Then `/coding:finalize-commits` once. | The closed-set save preserves unrelated staged and dirty developer work. |
-| 11. Publish | If no PR was already published, run `/coding:write-pr` only when GitHub, `gh`, and jj prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
+| 11. Publish | If no PR was already published, run `/coding:write-pr` only when the GitHub and `gh` prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
 | 12. Close or transfer | Mark the work complete after acceptance and decision dispositions, or run `/essential:handover`. | Every required executable leaf must be done. Transfer moves the `.engineering/works/<work-id>/` directory; the receipt only indexes it. |
 
 When the target is a standalone or non-TypeScript repository, verify each

@@ -6,7 +6,7 @@ error
 
 ## Intent
 
-When review surfaces a bug in a stacked PR, fix it in the **earliest unmerged change that owns the buggy code**, not in a later PR layered on top. In Jujutsu this is `jj edit <change>` then `jj absorb`; in Git-with-Graphite it is `gt absorb` or `gt modify --commit <ref>`.
+When review surfaces a bug in a stacked PR, fix it in the **earliest unmerged change that owns the buggy code**, not in a later PR layered on top. In Jujutsu this is `jj edit <change>` then `jj absorb`; in Git it is a `fixup!` commit replayed with `git rebase --interactive --autosquash`, or `gt absorb` / `gt modify --commit <ref>` when Graphite is in use.
 
 Patching a later PR for a lower PR's bug poisons the stack: the lower PR continues to merge a known-broken state, and the fix becomes invisible to anyone reviewing the lower PR in isolation.
 
@@ -30,11 +30,15 @@ jj absorb              # absorbs into the owning change
 jj rebase -d main      # rebase the rest of the stack
 ```
 
-Or with Graphite:
+Or with Git:
 
 ```bash
-gt checkout auth-rewrite/01-spec
+git switch auth-rewrite/01-spec
 # ... edit the type, save ...
+git commit --fixup <owning-commit>
+git rebase --interactive --autosquash main   # folds the fixup, replays the stack
+# or, with Graphite
+gt checkout auth-rewrite/01-spec
 gt modify --commit
 gt restack             # rebases 02-impl and 03-int onto fixed 01-spec
 ```

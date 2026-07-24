@@ -57,8 +57,9 @@ skill.
 
 ## Inputs
 
-- **Required**: none; default to the current saved jj working-copy change (`@`)
-  and include its ordered unmerged descendants when they form a stack.
+- **Required**: none; default to the current saved change — the jj working-copy
+  change (`@`), or `HEAD` on the git path — and include its ordered unmerged
+  descendants when they form a stack.
 - **Optional**:
 
 | Input | Effect |
@@ -68,11 +69,17 @@ skill.
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
 | `--dry-run` | Print the test, publication, and monitoring plan without agents or local/remote mutations. |
 
-- **Prerequisites**: for publication — a clean saved change or linear stack, a
-  jj-colocated repository, authenticated `gh`, and remote push access.
-  Authoring PR text alone needs only `jj` on PATH (and falls back to `git` for
-  commit-text resolution when `jj` is absent), so the text-only path is never
-  blocked by the publication prerequisites.
+- **Prerequisites**: for publication — a clean saved change or linear stack,
+  authenticated `gh`, and remote push access. `jj` is preferred and drives
+  publication whenever it is both installed on PATH and initialized for this
+  repository; prove that functionally rather than by directory presence, since a
+  `.jj` and a `.git` directory can both exist without sharing a backing
+  repository. Confirm `git rev-parse HEAD` equals
+  `jj log -r @- --no-graph -T 'commit_id'`; anything else — `jj` missing, either
+  command failing, or the two ids differing — selects the git path, which is
+  fully supported and never requires initializing `jj`. Authoring PR text alone
+  needs neither, so the text-only path is never blocked by the publication
+  prerequisites.
 
 ## Engineering-work gate
 
@@ -88,9 +95,10 @@ write PM-owned pointers or overview files.
 
 ### 1. Resolve and plan
 
-Inspect `jj status`, `jj log`, `jj bookmark list`, `git status --short`, and
-open PRs. Resolve `<commit-ref>` or the current saved change and list changes,
-bookmarks, PR heads, and bases bottom-up. If work must be saved, split, or
+Inspect the selected tool's working state — `jj status`, `jj log`, and
+`jj bookmark list`, or `git status --short`, `git log --oneline`, and
+`git branch --list` — plus open PRs. Resolve `<commit-ref>` or the current
+saved change and list changes, bookmarks, PR heads, and bases bottom-up. If work must be saved, split, or
 reordered, invoke `coding:commit`, then restart discovery. Reject an unknown
 ref, nonlinear chain, merged-history rewrite, missing authentication, or remote
 ambiguity with evidence. With `--dry-run`, print the exact plan and stop.
@@ -241,12 +249,22 @@ Only for an unbookmarked new change/stack, index `NN` from `01` and set
 commit scope (kebab-case, at most 30 characters). Record which mode selected
 each bookmark before mutation.
 
+On the jj path, point the bookmark at the change and push it:
+
 ```bash
 jj bookmark set "$BOOKMARK" --revision "$CHANGE_ID"
 jj git push --bookmark "$BOOKMARK" --allow-new
 ```
 
-Never use `git push`; jj updates rewritten bookmarks with force-with-lease.
+On the git path, the bookmark is a branch and the push carries the same lease:
+
+```bash
+git branch --force "$BOOKMARK" "$CHANGE_ID"
+git push --force-with-lease origin "$BOOKMARK"
+```
+
+Either way the push is leased, never bare `--force`, so a remote that advanced
+underneath the rewrite is rejected rather than overwritten.
 Run the [Author the PR text](#author-the-pr-text) sub-procedure for this change
 and capture its exact `title\n\nbody` output as `TITLE` and `BODY`. Set
 `BASE=main` for PR 01 and the previous bookmark for every later PR. When no open
@@ -282,14 +300,21 @@ Supply every selected bookmark explicitly in bottom-up order with the exact
 local git commit SHA expected after the rewrite; never rediscover the set from
 a prefix. The sync script preflights the entire set, pushes each already-shaped
 unmerged bookmark, verifies the remote SHA, and updates open PR bases with
-`gh pr edit --base`; it does not reshape history. Verify the PR base chain and
-each PR `headRefOid` mirror the recorded map.
+`gh pr edit --base`; it does not reshape history. The script drives the jj path;
+on the git path run that same contract by hand — preflight every branch against
+its expected SHA first, then, bottom-up, push each already-shaped unmerged
+branch with `git push --force-with-lease origin <branch>`, confirm the remote
+SHA with `git ls-remote origin <branch>`, and reparent the PR with
+`gh pr edit "$PR" --base <parent-branch>`.
+Either way, abort the whole sync on the first preflight mismatch rather than
+pushing a partially shaped stack, and verify the PR base chain and each PR
+`headRefOid` mirror the recorded map.
 
 | Publication error | Action |
 |---|---|
 | `gh pr create` authentication failure | Run `gh auth status`; report a user/external blocker. |
-| Bookmark conflict | Confirm the intended change, then update the bookmark idempotently. |
-| Push rejected because remote advanced | `jj git fetch`, rebase through `coding:commit`, then retry. |
+| Bookmark or branch conflict | Confirm the intended change, then update the head idempotently. |
+| Push rejected because remote advanced | `jj git fetch` (git: `git fetch origin`), rebase through `coding:commit`, then retry. |
 | Conventional title invalid | Reword through `coding:commit`, then restart that iteration. |
 | Existing PR has wrong base | `gh pr edit "$PR" --base "$BASE"`, then verify. |
 | Restack conflict | Resolve through `coding:commit`, run integrity checks, then republish bottom-up. |
@@ -462,7 +487,8 @@ invokes `gh`.
   byte-identical `title\n\nbody` — no timestamps, random IDs, or diff stats.
 - Local checks passed with every command/result recorded, or command execution
   was explicitly skipped; hosted-only gaps and expected checks are named.
-- Every bookmark was pushed with `jj git push`; every PR is draft, uses the
+- Every head was pushed under a lease — `jj git push` on the jj path,
+  `git push --force-with-lease` on the git path; every PR is draft, uses the
   authored title/body, and has the intended stack base.
 - Report success only after the final poll observes every PR green. Include the
   stack map, resolved commit refs, the template used per change (repo path or
