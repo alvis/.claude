@@ -37,8 +37,12 @@ every output field; the essentials:
   and `.gitignore` (`repo_root` is its alias); `active_workspace` owns its
   own ignored `.engineering/works/<work-id>/`, and `work_dir` is the only
   temporary root for the selected work.
-- Each Git worktree or jj workspace has isolated work state. Never copy
-  `.engineering/` between them or commit it.
+- Each Git worktree or jj workspace owns its work state, and never commits it.
+  Two trees must not run the same stream concurrently — that is what the
+  coordinator lease enforces — but the directory itself is portable: a
+  deliberate copy, rsync, or archive of `.engineering/` (or of a single
+  `works/<work-id>/`) is the sanctioned way to move work between trees and
+  machines. Ignored is not immovable.
 
 `resolved` with `engineering_ignored: true` is a hard bootstrap gate before
 any work artifact or probe is written. On `requires_ignore`, every worker
@@ -274,27 +278,58 @@ revisions, hashes, and dispositions. Resumable findings belong in
 `state/discovery.md`; source material belongs in `artifacts/`; only durable
 conclusions are promoted to `docs/`.
 
-Continuity has two paths. On the **same machine**, pausing and resuming
-works from the on-disk state files: a handover completes the current tree's
-stream state and updates the default tree's `overview.md`; a new session
-reads the overview, picks a tree and stream, and resumes from that tree's
-own files — no receipt required. Ignored work memory is not a
-**cross-machine** transport: for that, a handover additionally emits a
-plain-Markdown portable receipt into the owning task, PR, or Notion work
-item (or the response), carrying a destination-reachable source anchor, the
-raw work-state contents, and authoritative specification carriers. A
-recipient reads those carriers in an isolated post-anchor tree before
-reconstructing fresh local work state; it never copies `.engineering/` or
-trusts a local-only path. Handover scopes to the current source tree only and releases the
-coordinator lease.
+Continuity has one mechanism: the on-disk work directory. A handover
+completes the current tree's stream state and updates the default tree's
+`overview.md`; a resume reads those files and continues. On the **same
+machine** nothing else is needed. **Cross-machine** works the same way,
+because `.engineering/` is itself the portable carrier: copy the stream's
+`works/<work-id>/` (or the whole `.engineering/`) to the destination tree
+and resume there.
+
+The handover receipt is an **index, not a carrier**. It is bounded
+plain Markdown — repository identity, one row per stream with lifecycle,
+headline, next owner, next action, and the work directory that holds the
+state — published to the owning task, PR, or Notion work item, or simply
+returned in the response. It never carries raw work-state contents, and a
+receipt is never required to resume from state already on disk. Handover
+scopes to the current source tree only and releases the coordinator lease.
+
+State travels in the directory; **code travels by git**. A copied work
+directory does not carry repository changes, so each stream still records a
+destination-reachable source anchor that brings the destination checkout to
+the revision the work assumes.
 
 Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
-deletes every stream on the machine, silently. The portable handover
-receipt at the stream's external anchor is the designed recovery — publish
-one before a stream carries non-recoverable decisions, and promote durable
-knowledge early. Idle streams are parked and completed streams retired per
+deletes every stream on the machine, silently. A copy of `.engineering/`
+kept outside the repository is the designed recovery — take one before a
+stream carries non-recoverable decisions, and promote durable knowledge
+early. [essential:doctor](../skills/doctor/SKILL.md) checks a recovered
+tree's structural integrity before it is resumed. Idle streams are parked and completed streams retired per
 [retirement.md](retirement.md); retirement deletes the operational
 projection, so it is gated on promotion and decision dispositions.
+
+## Write boundary
+
+Work state has exactly two homes: the active workspace's
+`.engineering/` and the repository's versioned `docs/`. Every write a
+lifecycle skill makes lands in the current tree's
+`.engineering/works/<work-id>/**`, the default tree's
+`.engineering/overview.md`, or — at promotion only — `docs/`. Any other
+destination is a contract violation: not `/tmp`, not a dotted sibling such
+as `.local/`, not the repository root, not `$HOME`, not a path outside the
+resolved workspace. A skill that believes it needs one has misread this
+contract; stop and report instead.
+
+**Output volume is never a reason to create a file.** A report that would be
+long is shortened editorially or degraded to pointers into
+`.engineering/` — the state is already on disk, so a pointer loses nothing.
+Spilling a response to an ad hoc file is never the answer, whatever its
+size. Where a generated carrier genuinely must exist as a file — a
+`git format-patch` patch, a bundle, a captured log — its only legal home is
+`.engineering/works/<work-id>/artifacts/`, so it travels with the work
+directory. This is also the destination for the general instruction to
+externalize long detail to a task-owned artifact. A worker that has not
+cleared the `requires_ignore` gate writes nothing at all and reports.
 
 ## Structural doctor
 

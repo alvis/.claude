@@ -157,7 +157,9 @@ write_lease_atomically() {
 
 report() {
   # args: status extra-jq-object
-  local status="$1" extra="${2:-{\}}"
+  # bash 3.2 keeps the backslash in a "${2:-{\}}" default, so set it plainly
+  local status="$1" extra="${2:-}"
+  [[ -n "$extra" ]] || extra='{}'
   jq -n --arg status "$status" --arg lease_path "$lease_path" \
     --argjson lease "$( [[ -f "$lease_path" ]] && read_lease || echo null )" \
     --argjson extra "$extra" \

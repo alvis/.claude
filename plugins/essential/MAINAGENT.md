@@ -19,13 +19,13 @@ take bounded work.
   invoke the resolver with the confirmed ID and `--bootstrap`; preserve existing
   entrypoints and list `bootstrap_created`. Identity, ignore, and bootstrap are
   PM-only: never mint an ID silently.
-- `essential:takeover` is the explicit takeover exception. Before bootstrap it may
-  validate a portable receipt and isolated disposable post-anchor tree because
-  neither writes project artifacts; the receipt is the authoritative ID. After
-  both validate, hold the lease, run the destination ignore gate, invoke the
-  resolver with the receipt's exact work ID and `--bootstrap`, and accept only a
-  new or byte-verified untouched initialized skeleton for that ID. Never
-  implement or promote before bootstrap.
+- Write only under the active `.engineering/`, plus `docs/` at promotion — never
+  `/tmp`, `.local/`, repo root, `$HOME`, or a spill file for large output.
+- `essential:takeover` resumes from on-disk `.engineering/works/`; a copied-in
+  work dir is valid state with its own ID. It may read a receipt and the
+  overview pre-bootstrap; a receipt selects IDs and anchors, never state. Claim
+  a copied lease with the `takeover` verb. Bootstrap only to create absent work
+  memory; never promote before bootstrap.
 - Run one final batch check only on eligible work Markdown under target
   `.engineering/`; split all oversized files together, then recheck.
 

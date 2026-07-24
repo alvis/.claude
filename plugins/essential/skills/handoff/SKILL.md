@@ -88,8 +88,8 @@ that contract.
    agent with complete context, synthesize the results, and make the calls.
    Delegate all execution — reading, writing, running, testing — to
    subagents; never do the work yourself. On completion, publish the compact
-   transferable receipt to the owning task, PR, or Notion work item so another
-   workspace can rehydrate without copying `.engineering/`.
+   receipt to the owning task, PR, or Notion work item so another workspace
+   knows which work directory to copy in and which revision it assumes.
 4. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
    then report the blocker instead of looping.
