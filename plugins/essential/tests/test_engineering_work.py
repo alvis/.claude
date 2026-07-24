@@ -524,6 +524,8 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Charter: [goal.md](goal.md)", state_text)
             self.assertIn("- Plan source: `state.md`", state_text)
             self.assertIn("- Plan revision: `1`", state_text)
+            self.assertIn("- State revision: `1`", state_text)
+            self.assertRegex(state_text, r"- Written under: `[0-9a-f]{8}`")
             self.assertIn("- Journal: [journal.md](state/journal.md)", state_text)
             self.assertIn("| GOL | - | planned |", state_text)
             self.assertIn("| OWN | - | planned |", state_text)
@@ -531,7 +533,9 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Current focus: [working.md](state/working.md)", state_text)
             self.assertIn("- Sync state: Not started.", state_text)
             self.assertIn("- Review state: Not started.", state_text)
-            self.assertIn(f"PM bootstrap: work `{work_id}` initialized", journal_text)
+            self.assertIn(f"PM@pm rev:1 status {work_id}: initialized", journal_text)
+            self.assertIn("status|decision|revision|sync|sweep|checkpoint|lease", journal_text)
+            self.assertIn("## Workspace anchors", goal_text)
 
             custom_working = "# Preserved owner state\n\nDo not replace me.\n"
             working.write_text(custom_working, encoding="utf-8")
