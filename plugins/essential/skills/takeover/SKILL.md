@@ -2,7 +2,6 @@
 name: takeover
 description: Resume paused engineering work. With no argument, default to the current source tree's own incomplete work streams read straight from on-disk state files, and use the default source tree's global .engineering/overview.md to also offer other source trees' streams — switching the working directory to that tree if one is chosen. Given a portable receipt or anchor, rehydrate the paused streams into workspace-local memory first. Then resolve pending decisions, always surface the unblocked streams as the recommended next work, delegate each stream's planning to the relevant lead role for a proposed team or workflow, and drive each selected stream toward its charter's success criteria. On completion, promote confirmed implementation and decisions to the repo's docs/ for every work type, and for coding streams delegate pull-request creation and monitoring to an executor agent running the relevant change-publication capability.
 model: opus
-allowed-tools: Read, Glob, Edit, Write, Bash, AskUserQuestion, Skill, Task
 argument-hint: "[receipt-or-anchor] [--revalidate]"
 ---
 
