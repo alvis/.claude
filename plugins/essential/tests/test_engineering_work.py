@@ -38,6 +38,7 @@ MIGRATED_ARTIFACT_WRITERS = {
     "essential/skills/decide/SKILL.md",
     "essential/skills/deep-research/SKILL.md",
     "essential/skills/discover/SKILL.md",
+    "essential/skills/doctor/SKILL.md",
     "essential/skills/handoff/SKILL.md",
     "essential/skills/handover/SKILL.md",
     "essential/skills/takeover/SKILL.md",
