@@ -19,7 +19,7 @@ is read at the moment it matters.
 | `references/engineering-work-state.md` | When writing or migrating a `state.md` | Task table shape, stable IDs, mark/status pairs, DAG and roll-ups, change control, journal grammar, portable handover shape |
 | `references/truth.md` | Once per work stream | Six kinds of truth, the five constitutional rules, validity, `capability_id` |
 | `references/decision-causality.md` | When creating/accepting/superseding a decision | `supersedes`/`affects`/`invalidates`/`preserves`, blast-radius sweep, decision completion gate |
-| `references/checkpoints.md` | At checkpoint moments and when recording approvals | Durable checkpoints at the external anchor, the approval binding tuple, freshness metadata |
+| `references/approvals.md` | When recording approvals or durable claims that age | The approval binding tuple, freshness metadata |
 | `references/anchors.md` | For non-git anchors or cross-stream initiatives | Anchor declarations, adapter contract, initiative manifests |
 | `references/lease.md` | Before coordinator writes | `ensure` choreography, the lease-verified write path, release moments |
 | `references/overviews.md` | When reconciling lazy overviews | Proposals-vs-changes, child statuses, deviation provenance |
@@ -29,9 +29,9 @@ is read at the moment it matters.
 | `references/retirement.md` | When promoting, parking, or retiring | Promotion provenance, idle-stream parking, retirement gates |
 | `references/team-lifecycle.md` | At spawn and wind-down moments | Team forming/retiring, model and effort selection |
 
-Templates: `templates/memory.md` (agent memory), `templates/checkpoint.md`
-(checkpoint block), `templates/asset-manifest.md` (media asset/render
-identity, used by the `production` plugin).
+Templates: `templates/memory.md` (agent memory) and
+`templates/asset-manifest.md` (media asset/render identity, used by the
+`production` plugin).
 
 ## The tools (`bin/`)
 
@@ -67,7 +67,7 @@ identity, used by the `production` plugin).
 | `essential:decide` | Choosing between researched approaches; records the approved decision with causal metadata and hands off to the owner. |
 | `essential:deep-research` | Multi-source fact-finding with adversarial claim verification and citations. |
 | `essential:autoresearch` | Metric-driven optimization loops (define metric → evolve candidates → verify → mutate). |
-| `essential:handover` | Pausing or transferring work: persists all stream state, updates the cross-tree overview, emits the portable receipt, releases leases, emits the handover checkpoint. |
+| `essential:handover` | Pausing or transferring work: persists all stream state, updates the cross-tree overview, emits the portable receipt, releases leases. |
 | `essential:takeover` | Resuming paused work, locally or from a receipt: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
 | `essential:handoff` | A zero-context cross-domain orchestration plan another agent can execute verbatim. |
 | `essential:install-agents` | Installing/refreshing the stitched specialist agent roster into `~/.claude/agents/`. |
@@ -84,5 +84,5 @@ identity, used by the `production` plugin).
 - **Done stays done.** Invalidation marks `validity: stale` and spawns
   remediation tasks; history is never falsified.
 - **Deleting `.engineering/` loses convenience, not truth.** Decisions,
-  approvals, and artifact identities also live in versioned docs and
-  checkpoints at the stream's external anchor.
+  approvals, and artifact identities also live in versioned docs and in
+  handover receipts at the stream's external anchor.

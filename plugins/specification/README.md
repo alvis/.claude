@@ -25,7 +25,7 @@ hashes, and outputs — so a resumed spec is verified, not assumed.
 | Skill | Use when |
 | --- | --- |
 | `specification:spec-code` | Authoring, updating, or retrospectively documenting a technical spec from a local, inline, or Notion source; owns promotion to `docs/specs/` with provenance. |
-| `specification:plan-code` | Turning an approved spec into an implementation-ready plan: stable task IDs, dependency DAG, acceptance mapping. Plan approval names the exact spec base-id and is a checkpoint event. |
+| `specification:plan-code` | Turning an approved spec into an implementation-ready plan: stable task IDs, dependency DAG, acceptance mapping. Plan approval names the exact spec base-id. |
 | `specification:implement-code` | Executing an approved work item end to end: dispatches ready tasks to coding skills, enforces spec freshness before each batch, reconciles worker evidence (with `capability_id`), runs review and completion sync. |
 | `specification:review-implementation` | The seven-area review (alignment, correctness, security, quality, testing, docs, style); approvals carry the full binding tuple; changed specs or task definitions return `needs_revalidation` — marking stale validity, never flipping done rows. |
 | `specification:sync-spec` | Materializing a Notion spec into the work directory and completing approved changes; owns the base/local/remote decision matrix and immutable materialization receipts. |

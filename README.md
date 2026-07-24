@@ -37,9 +37,10 @@ Practical consequences you will see day to day:
 
 - **`.engineering/` is an operational projection, not the record of record.**
   It is ignored, per-worktree working memory — rich, continuously persisted,
-  and reconstructible. Accepted decisions, approvals, and published artifact
-  identities also live in versioned `docs/`, external anchors (issue, PR,
-  Notion), and compact checkpoints published to those anchors.
+  and reconstructible. Every state change, discovery, and decision is stored
+  immediately in the journal and its owning state file; accepted decisions,
+  approvals, and published artifact identities also live in versioned
+  `docs/` and external anchors (issue, PR, Notion) via handover receipts.
 - **Completed work stays completed.** When a decision or spec change
   invalidates a finished task, its row keeps `✓ done` and gains
   `validity: stale (<reason>)`; new remediation tasks carry the rework. The
@@ -109,13 +110,13 @@ discipline:
    expired lease yields only to an explicit, journaled takeover.
 4. **Specify and plan.** Specs carry provenance and approval binds to exact
    content; plans are task tables with stable three-letter IDs, explicit
-   dependency graphs, and per-task acceptance. Plan approval is a checkpoint.
+   dependency graphs, and per-task acceptance.
 5. **Execute.** Every status change is journaled first, then reconciled into
    the tables ("append first, reconcile second"). Workers return evidence
    with their `capability_id`; only the lease holder writes state.
 6. **Decide.** Decisions record what they supersede, affect, invalidate, and
    preserve. Acceptance triggers a blast-radius sweep that marks stale work
-   and spawns remediation — and emits a checkpoint.
+   and spawns remediation, journaled as one sweep.
 7. **Review and approve.** Seven canonical review areas; every approval
    carries the full binding tuple. Spec freshness is re-checked at named
    moments (before planning, each dispatch batch, review, completion).
@@ -126,8 +127,7 @@ discipline:
 9. **Promote and retire.** Stable knowledge promotes to versioned `docs/`
    with provenance; every accepted decision gets an explicit disposition
    (promote to ADR / product / production record, retain in receipt, or
-   archive); a retirement checkpoint lands; only then is the operational
-   projection deleted.
+   archive); only then is the operational projection deleted.
 
 ### Golden development lifecycle
 
@@ -144,7 +144,7 @@ discipline:
 | 9. Reconcile the spec | Let implementation run the applicable Notion completion gate or local source/carrier recheck. | A change in specification content invalidates plan/code/review evidence; done tasks keep their status and gain stale validity with remediation tasks. |
 | 10. Save and finalize | On deferred `needs_save`, run the exact returned `/coding:commit --paths-from=... --manifest-sha256=...`; on `ready_for_finalization`, skip save; on `no_change`, stop. Then `/coding:finalize-commits` once. | The closed-set save preserves unrelated staged and dirty developer work. |
 | 11. Publish | If no PR was already published, run `/coding:write-pr` only when GitHub, `gh`, and jj prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
-| 12. Close or transfer | Mark the work complete after acceptance, decision dispositions, and the retirement checkpoint, or run `/essential:handover`. | Every required executable leaf must be done. `.engineering/` is not the transfer mechanism. |
+| 12. Close or transfer | Mark the work complete after acceptance and decision dispositions, or run `/essential:handover`. | Every required executable leaf must be done. `.engineering/` is not the transfer mechanism. |
 
 When the target is a standalone or non-TypeScript repository, verify each
 selected skill against the repository's native commands before use.
@@ -171,7 +171,7 @@ or PR publication only after the local flow is understood.
 
 | Plugin | What it owns | README |
 |---|---|---|
-| `essential` | The engineering-work lifecycle backbone: truth model, work state, lease, journal, doctor, checkpoints, handover/takeover, research and decision skills, agent installer. Every other plugin depends on it. | [plugins/essential](plugins/essential/README.md) |
+| `essential` | The engineering-work lifecycle backbone: truth model, work state, lease, journal, doctor, handover/takeover, research and decision skills, agent installer. Every other plugin depends on it. | [plugins/essential](plugins/essential/README.md) |
 | `specification` | Specs with provenance: authoring, planning, implementation orchestration, seven-area review, and safe Notion synchronization. | [plugins/specification](plugins/specification/README.md) |
 | `coding` | General code production: TDD write/fix/refactor, scoped saves, stacked PRs, lint, docs, cleanup. | [plugins/coding](plugins/coding/README.md) |
 | `governance` | The meta-layer: creating and verifying agents, skills, and standards. | [plugins/governance](plugins/governance/README.md) |
@@ -325,7 +325,7 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 - Notion reconciliation and verification completed when the specification is
   Notion-backed.
 - Durable docs match delivered behavior; every accepted decision has its
-  completion-gate disposition; checkpoints exist at the external anchor.
+  completion-gate disposition.
 - Acceptance, receipts, and final work-state status are recorded before
   cleanup.
 
