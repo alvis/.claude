@@ -6,7 +6,7 @@ or execute it for `--defer-publication`; the lifecycle parent owns that run's
 final history QA and publication. The orchestrator never invokes history or
 remote commands directly: local history shaping belongs to `coding:commit`,
 isolated per-commit QA to `coding:finalize-commits`, and publication/restacking
-to `coding:push-pr`.
+to `coding:write-pr`.
 
 ## 1. Compute change size
 
@@ -25,7 +25,7 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
   OR multiple loosely-coupled domains (the bounds keep each PR independently
   reviewable). Dispatch plain `coding:commit` with the approved slice plan so
   it shapes only local history. Then run `coding:finalize-commits`; only after
-  every commit is independently green may `coding:push-pr` publish the ordered
+  every commit is independently green may `coding:write-pr` publish the ordered
   draft PRs. Do not use the `--create-pr` compatibility shortcut because it
   would cross the finalization gate.
 - **Restack on semantic upstream change** — when an open stack is detected
@@ -33,7 +33,7 @@ Scan for bookmarks matching `<branch-prefix>/NN-<scope>`, for example via
   PR in the stack depends on: the signature, behavior, or contract of a symbol
   the lower PR establishes or relies on. Save any local correction through
   `coding:commit`, run `coding:finalize-commits`, then dispatch
-  `coding:push-pr` with the affected saved stack so it owns remote restacking
+  `coding:write-pr` with the affected saved stack so it owns remote restacking
   and republication.
   Incidental file overlap alone (formatting, unrelated co-edits) does not
   trigger a restack — judge by lower-PR correctness dependence.

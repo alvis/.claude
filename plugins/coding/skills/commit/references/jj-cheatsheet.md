@@ -57,7 +57,7 @@ One-line reference for every jj primitive this skill uses, with the closest git 
 | `jj git push --bookmark <name> --allow-new` | Create the explicitly chosen new partial-to-branch target on origin | `git push -u origin <name>` |
 
 These two direct bookmark-sync routes are the only remote exception in this
-skill. PR publication, repair, and CI convergence route to `coding:push-pr`.
+skill. PR publication, repair, and CI convergence route to `coding:write-pr`.
 
 ## Logs and revsets
 
@@ -104,6 +104,6 @@ skill. PR publication, repair, and CI convergence route to `coding:push-pr`.
 
 - `jj squash -i` — interactive squash; prefer explicit `--from`/`--into` for determinism.
 - `git rebase -i` — git interactive rebase. jj owns rewrite; git is downstream.
-- Remote publication commands outside the two explicit direct-sync routes — `coding:push-pr` owns them.
+- Remote publication commands outside the two explicit direct-sync routes — `coding:write-pr` owns them.
 - `git commit --amend` — jj `edit` + `describe` is the equivalent.
 - `git checkout` — jj `new` / `jj edit` is the equivalent for changing `@`.

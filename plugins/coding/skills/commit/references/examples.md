@@ -96,7 +96,7 @@ jj edit abc123
 jj new
 ```
 
-Downstream bookmark exists → after local integrity passes, `coding:push-pr`
+Downstream bookmark exists → after local integrity passes, `coding:write-pr`
 owns republishing and reparenting the affected stack. Report.
 
 ---
@@ -189,7 +189,7 @@ jj log -r 'change_id(abc123)' --no-graph
 # (single result — divergence resolved)
 ```
 
-After local integrity passes, `coding:push-pr` re-syncs the affected remote
+After local integrity passes, `coding:write-pr` re-syncs the affected remote
 stack. Report.
 
 ---
@@ -222,7 +222,7 @@ git commit ...
 ```
 
 Subsequently `/coding:commit --create-pr` delegates the saved change to
-`coding:push-pr`, which opens and monitors the single new PR on `main`.
+`coding:write-pr`, which opens and monitors the single new PR on `main`.
 
 ---
 
@@ -256,7 +256,7 @@ jj diff --stat
 ```
 
 Stage 3 not needed (no git-only target). Integrity PASS. Per-change build
-PASS. `coding:push-pr` owns any requested descendant republication. Report.
+PASS. `coding:write-pr` owns any requested descendant republication. Report.
 
 ---
 
@@ -287,7 +287,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 # CONTENT_MATCH:  PASS
 ```
 
-Integrity passes locally, then `coding:push-pr` republishes and reparents the
+Integrity passes locally, then `coding:write-pr` republishes and reparents the
 three open PRs so each base matches the new parent. Report.
 
 ---
@@ -301,11 +301,11 @@ finishes local history work, then delegates publication and hosted-CI
 convergence:
 
 ```text
-coding:push-pr <resolved-stack: ghi789..abc123> --branch-prefix feat-avatar
+coding:write-pr <resolved-stack: ghi789..abc123> --branch-prefix feat-avatar
 ```
 
-`coding:push-pr` owns bookmarks, pushes, `coding:write-pr`, draft PRs, CI
-polling, and repairs. `coding:commit` preserves the returned 3 PR URLs and
+`coding:write-pr` owns bookmarks, pushes, PR title/body authoring, draft PRs,
+CI polling, and repairs. `coding:commit` preserves the returned 3 PR URLs and
 final green state in its report.
 
 ---
@@ -318,7 +318,7 @@ final green state in its report.
 /coding:commit --no-verify
 # Default save runs. git commit --no-verify skips pre-commit hooks.
 # Local `npm run lint/test/build` verification is skipped.
-# With --create-pr, --no-verify maps to coding:push-pr --skip-local-test.
+# With --create-pr, --no-verify maps to coding:write-pr --skip-local-test.
 # PostToolUse integrity hook STILL fires (independent of --no-verify).
 ```
 
@@ -333,7 +333,7 @@ final green state in its report.
 #   02 fix(auth): correct token expiry off-by-one
 #      - packages/auth/src/tokenExpiry.ts ...
 # No jj/git mutation. No bookmarks set. No PRs opened.
-# With --create-pr, coding:push-pr also receives --dry-run and prints its
+# With --create-pr, coding:write-pr also receives --dry-run and prints its
 # publication/monitoring plan without mutation.
 ```
 
@@ -345,5 +345,5 @@ final green state in its report.
 # AskUserQuestion is SKIPPED.
 # Skill proceeds to Option 2 (rewrite) per workflow-correct-merged.md.
 # After local integrity passes, coding:commit lease-pushes only the authorized
-# bookmark. It invokes coding:push-pr only for relevant open downstream PRs.
+# bookmark. It invokes coding:write-pr only for relevant open downstream PRs.
 ```

@@ -1,6 +1,6 @@
 ---
 name: finalize-commits
-description: "Run isolated per-commit QA across every unpushed commit, report ordering or message issues, and coordinate approved corrections. Use before publishing a stack; coding:commit owns history mutations and coding:push-pr owns publication."
+description: "Run isolated per-commit QA across every unpushed commit, report ordering or message issues, and coordinate approved corrections. Use before publishing a stack; coding:commit owns history mutations and coding:write-pr owns publication."
 model: opus
 allowed-tools: Bash, Read, Grep, Glob, Agent, AskUserQuestion, Skill, TodoWrite
 argument-hint: "[--auto-push]"
@@ -21,11 +21,11 @@ owner of history mutations.
   to `coding:fix` before the commit is tested again.
 - Route every fold, squash, amend, reword, reorder, abandon, bookmark, or
   branch move through `coding:commit`, and remote restack/publication through
-  `coding:push-pr`. Never issue a direct `git` or `jj` history-mutating command
+  `coding:write-pr`. Never issue a direct `git` or `jj` history-mutating command
   from this skill or its QA workers.
 - Stop for user approval when a correction changes commit meaning or order.
 - Publish only when `--auto-push` was explicitly supplied and all commits are
-  green; delegate publication to `coding:push-pr`.
+  green; delegate publication to `coding:write-pr`.
 
 ## Workflow
 
@@ -40,7 +40,7 @@ owner of history mutations.
 7. Run the verification below; when a check fails, route the correction (steps
    4-6) and re-run that commit and its dependents. Repeat until every commit is
    green or a concrete blocker or pending decision remains, then report it
-   instead of looping. If requested, invoke `coding:push-pr` only after every
+   instead of looping. If requested, invoke `coding:write-pr` only after every
    commit passes.
 
 ## Verification

@@ -15,7 +15,7 @@ ask and route the answer through the selected source owner. Use
 `specification:mdc` only for the selected Notion-backed path.
 Every code-producing child receives `--defer-publication`. It may create a
 slice-local commit through `coding:commit`, but must not pass `--create-pr`, run
-`coding:push-pr`, restack, or otherwise publish before the parent review/sync
+`coding:write-pr`, restack, or otherwise publish before the parent review/sync
 gate.
 
 ## Workflow mechanism

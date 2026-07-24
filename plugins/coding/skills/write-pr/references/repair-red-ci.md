@@ -100,7 +100,7 @@ scheduler may run the exact core poll prompt once. If only `/loop` supports the
 delay, run:
 
 ```text
-/loop <wall-time-plus-1m> <the exact explicit poll prompt from coding:push-pr SKILL.md>
+/loop <wall-time-plus-1m> <the exact explicit poll prompt from coding:write-pr SKILL.md>
 ```
 
 Capture the returned ID and cancel that exact ID after its first wake. Consume
@@ -108,7 +108,7 @@ the core poll report: green notifies/stops; red repeats this reference. If the
 result is pending, schedule and capture a replacement:
 
 ```text
-/loop 1m <the exact explicit poll prompt from coding:push-pr SKILL.md>
+/loop 1m <the exact explicit poll prompt from coding:write-pr SKILL.md>
 ```
 
 Continue until the core report marks every PR green or supplies a concrete

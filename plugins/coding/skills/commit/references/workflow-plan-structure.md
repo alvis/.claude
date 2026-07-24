@@ -59,7 +59,7 @@ If "many bookmarks":
 
 - Sketch the chain order: `feat-a/01-data` → `feat-a/02-service` → `feat-a/03-ui` (each layer compiles standalone)
 - Confirm the order respects layering (lower layers first)
-- Each saved change will be handed to [`coding:push-pr`](../../push-pr/SKILL.md), which owns bookmark and draft-PR publication.
+- Each saved change will be handed to [`coding:write-pr`](../../write-pr/SKILL.md), which owns bookmark and draft-PR publication.
 
 ## Concrete examples
 
@@ -89,7 +89,7 @@ User asks: "add password reset AND profile picture upload". Plan:
 
 Two commits. Each is independent. `/coding:commit --create-pr` preserves the
 compatibility call and delegates the saved stack to
-[`coding:push-pr`](../../push-pr/SKILL.md).
+[`coding:write-pr`](../../write-pr/SKILL.md).
 
 ### Example C: refactor that enables a feature (TWO commits, layered)
 
@@ -104,7 +104,7 @@ The refactor commit must compile + pass tests with no behaviour change. Verify t
 
 Before invoking [workflow-save-local.md](./workflow-save-local.md),
 [workflow-split.md](./workflow-split.md), or handing publication to
-[`coding:push-pr`](../../push-pr/SKILL.md), produce:
+[`coding:write-pr`](../../write-pr/SKILL.md), produce:
 
 1. Ordered list of intended commits
 2. For each: conventional title (see [conventional-commits.md](./conventional-commits.md)) + file list

@@ -86,7 +86,7 @@ jj new <default_change_id> <parallel_change_id>
 Creates a merge change with both as parents.
 
 **Option C — leave them parallel** (no integration yet; publish each saved
-change through [`coding:push-pr`](../../push-pr/SKILL.md) when requested).
+change through [`coding:write-pr`](../../write-pr/SKILL.md) when requested).
 
 ### 6. Tear down the workspace
 
