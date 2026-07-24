@@ -17,7 +17,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use camelCase or underscores in branch names instead of lowercase-kebab-case [`GIT-BRN-01`]
 - DO NOT use branch scopes that don't follow the commit scope convention [`GIT-BRN-02`]
 - DO NOT create PRs as ready-for-review without starting as draft [`GIT-PR-01`]
-- DO NOT omit the required Summary or Checklist sections from PR descriptions [`GIT-PR-02`]
+- DO NOT omit the required Summary or Verification sections from PR descriptions [`GIT-PR-02`]
 - DO NOT use PR titles that don't follow the commit message format [`GIT-PR-03`]
 - DO NOT submit a PR outside the green zone without a Risk and Test plan section [`GIT-PR-SIZE-02`]
 - DO NOT submit a red-zone PR without an isolation justification and reviewer-time estimate [`GIT-PR-SIZE-03`]
@@ -51,7 +51,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `GIT-BRN-01` | Non-kebab-case branch name | `feat/addFilter`; `fix/user_profile` |
 | `GIT-BRN-02` | Branch scope mismatch | `feat/client-web-talent/add-filter` (uses directory path, not package name) |
 | `GIT-PR-01` | PR not started as draft | Creating PR directly as ready-for-review |
-| `GIT-PR-02` | Missing required PR sections | PR without Summary or Checklist |
+| `GIT-PR-02` | Missing required PR sections | PR without Summary or Verification |
 | `GIT-PR-03` | PR title format incorrect | `Add new feature`; `Fix: bug in auth` |
 | `GIT-PR-SIZE-01` | Green-zone definition not respected | (informational — establishes ≤15 files OR ≤500 LOC baseline) |
 | `GIT-PR-SIZE-02` | Yellow-zone PR missing Risk or Test plan | 22 files / 900 LOC PR with no Risk section |

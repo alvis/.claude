@@ -8,7 +8,7 @@ warning
 
 A red-zone PR changes **≤ 60 files** AND nets **≤ 2000 LOC** while exceeding yellow thresholds. Red PRs are allowed only when splitting would harm review (mechanical refactors, generated files, atomic migrations). They MUST include an isolation justification and a reviewer-time estimate so reviewers can plan.
 
-A red PR carries everything yellow requires (Summary, Checklist, Risk, Test plan) **plus** a `## Why this size` section.
+A red PR carries everything yellow requires (Summary, Verification, Risk) **plus** a `## Why this size` section.
 
 ## Fix
 

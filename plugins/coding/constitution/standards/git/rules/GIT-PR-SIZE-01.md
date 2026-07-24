@@ -32,7 +32,7 @@ zone: green
 ### Why this matters
 
 - Reviewer working memory is the binding constraint, not LOC alone.
-- Green PRs need only the Summary and Checklist sections (`GIT-PR-02`); ceremony scales with size.
+- Green PRs need only the Summary and Verification sections (`GIT-PR-02`); ceremony scales with size.
 - Stacks are healthier when each layer fits in green — splits become natural, not forced.
 
 ## Edge Cases
