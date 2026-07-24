@@ -121,8 +121,8 @@ discipline:
    moments (before planning, each dispatch batch, review, completion).
 8. **Pause and resume.** `essential:handover` persists everything and emits a
    portable receipt; `essential:takeover` resumes locally or rehydrates the
-   receipt on another machine, checks the lease, runs the doctor, and drives
-   streams to their success criteria.
+   receipt on another machine, checks the lease, and drives streams to
+   their success criteria (`essential:doctor` owns structural audits).
 9. **Promote and retire.** Stable knowledge promotes to versioned `docs/`
    with provenance; every accepted decision gets an explicit disposition
    (promote to ADR / product / production record, retain in receipt, or
