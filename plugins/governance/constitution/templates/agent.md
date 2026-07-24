@@ -13,7 +13,7 @@
   "name": "role-only kebab-case name, e.g. frontend-implementer or principal-engineer",
   "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' + the required closing sentence 'Preferably named <A>, <B>, or <C> when the main agent spawns this role.'",
   "color": "red|blue|green|yellow|purple|orange|pink|cyan",
-  "model": "opus|sonnet|haiku|fable — claude-fable-5 only if you have direct evidence the loader rejects the fable alias, noted inline",
+  "model": "opus|haiku — opus for every role that reasons, haiku only for deterministic mechanical roles; set depth with effort, not with the model",
   "effort": "low|medium|high|xhigh|max — model-dependent; a FIXED per-agent choice (cannot vary per task) — set it to the reasoning depth this role's work demands; OMIT this key entirely for haiku (haiku does not support effort)",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
@@ -39,8 +39,8 @@
 
 Per-role default (main-session/spawned-subagent scenarios only — workflow and teammate override above):
 
-- `auto` — opus/fable producers running unattended (the auto classifier allows reversible ops, still catches risky ones, never stalls waiting on a prompt).
-- `acceptEdits` — sonnet/haiku producers (edits flow without a prompt per file; Bash is still checked).
+- `auto` — leads, orchestrators, and unattended deep-reasoning or automation producers (the auto classifier allows reversible ops, still catches risky ones, never stalls waiting on a prompt).
+- `acceptEdits` — producers whose output is scoped file edits (edits flow without a prompt per file; Bash is still checked).
 - `default` — critics (read-mostly work where an interactive prompt is acceptable; edit-prevention rides `disallowedTools`, the hook fence, or worktree isolation, not the permission mode).
 
 ### Runtime tools and leaf posture

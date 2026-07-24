@@ -65,16 +65,14 @@ Only the main agent assigns a configurable teammate `name` or label. Use `<short
 
 ## Model and effort
 
-Match the model to the task's cognitive demand — never default everything to the largest, never starve a hard task with a small one:
+Pick the model by whether the work reasons at all, then match the task's cognitive demand with effort:
 
 | Model | Use for |
 |-------|---------|
 | **haiku** | Simple, routine, deterministic work with a known procedure — tests, lint, command output, mechanical file sweeps. |
-| **sonnet** | Branching work — investigation whose next step depends on findings, triage, moderate edits with a few decision points. |
-| **opus** | General coding — features, non-trivial bugs, refactoring with judgment. |
-| **fable** | Advanced coding, deep reasoning, research, and review — where correctness hinges on subtle judgment or adversarial scrutiny. |
+| **opus** | Everything else, from moderate edits to advanced coding, deep reasoning, research, and review. |
 
-Effort is a second, independent dial (`low|medium|high|xhigh|max`; omit for haiku, which has none). Set it by the task's difficulty, not its model. Pick the cheapest model that clears the quality bar — a stronger model that wouldn't change the output is wasted — then, to make a worker think harder, raise its effort, not its model.
+Effort is the dial that carries cognitive demand (`low|medium|high|xhigh|max`; omit for haiku, which has none). Set it by the task's difficulty: `low` for a known procedure, `medium` for a few genuine decision points, `high` for sustained judgment or orchestration, `xhigh`–`max` for deep adversarial scrutiny and pivotal one-shot gates. To make a worker think harder, raise its effort — the model is not the lever.
 
 ## Nesting
 

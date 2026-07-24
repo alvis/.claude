@@ -3,7 +3,7 @@
   "color": "purple",
   "description": "Design Lead who decomposes design initiatives across screens, flows, and platforms, owns the experience approach informed by teammate advice, and orchestrates each slice across designers, implementers, and evaluators. Use proactively when multi-screen or cross-platform design delivery needs coordination. Design-domain lead under the Project Manager; request team formation, teammate spawning, user decisions, and Workflow launches through the Project Manager. Preferably named Isla, Noor, or Lumi when the main agent spawns this role.",
   "model": "opus",
-  "effort": "high",
+  "effort": "medium",
   "permissionMode": "auto",
   "memory": "project",
   "maxTurns": 40,
