@@ -1,26 +1,40 @@
 # Checkpoints, approval binding, and freshness
 
-Read this when an emission event below occurs, when recording an approval, or
-when authoring durable claims that can age.
+Read this when a checkpoint-worthy event occurs, when recording an approval,
+or when authoring durable claims that can age.
 
 ## Durable checkpoints
 
-A checkpoint is a compact receipt that makes a consequential event survive the
-loss of `.engineering/`. Emit one after each of: an accepted decision, plan
-approval, a parallel dispatch batch, an irreversible action, an artifact
-approval, a handover, and pre-cleanup/retirement.
+A checkpoint is a compact receipt that makes a consequential event survive
+the loss of `.engineering/` — which is ignored working memory, one reflexive
+`git clean -fdx` away from silent deletion. Checkpoint-worthy events: an
+accepted decision, plan approval, a parallel dispatch batch, an irreversible
+action, an artifact approval, a handover, and pre-cleanup/retirement.
 
-Checkpoints publish to the stream's **external anchor** — the owning task, PR,
-or Notion work item — using the same publication path as the portable handover
-receipt. They are not written under `docs/`. A stream's first checkpoint-worthy
-event therefore requires an anchor: if none exists, establish one; if the user
-declines, record `Durability: degraded (no anchor)` in `state.md` and continue
-— the doctor reports it as a warning.
+Checkpoints publish to the stream's **external anchor** — the owning task,
+PR, or Notion work item — using the same publication path as the portable
+handover receipt; they are not written under `docs/`. A stream must
+establish its anchor and first checkpoint **before it carries any
+non-recoverable decision**; if the user declines an anchor, record
+`Durability: degraded (no anchor)` in `state.md` and continue — the doctor
+reports it as a warning.
+
+**Coalesce to stay legible.** A steady drip of receipt comments trains
+humans to mute the anchor, which erodes the durability value. Emit at most
+one checkpoint per anchor per session unless ownership changes hands —
+handover, takeover, and retirement always emit immediately. Between those,
+accumulate checkpoint-worthy events and publish them as one batched
+session-end checkpoint (one block listing each event since the last
+checkpoint). Durability is preserved; anchor noise is not.
 
 Format follows `templates/checkpoint.md`: event type, timestamp, actor
-`capability_id`, `state_revision`, subject ids with exact revisions or hashes,
-and a one-line consequence. Append one `checkpoint` journal line per emission.
-Checkpoints are append-only at the anchor; never rewritten.
+`capability_id`, `state_revision`, subject ids with exact revisions or
+hashes, and a one-line consequence — one block per event, batched blocks
+under one anchor comment. Append one `checkpoint` journal line per emission.
+Checkpoints are append-only at the anchor and never rewritten. In the
+journal, a `checkpoint` line may also **compact history**: it may summarize
+and supersede the journal lines before it, keeping a long-running stream's
+journal readable without losing the record.
 
 ## Approval binding
 
