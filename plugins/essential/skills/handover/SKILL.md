@@ -56,9 +56,12 @@ is the current source tree that owns the work streams to refresh, and its
 (which may be a different tree on the same machine). Resolve the work root,
 conventions, naming, and ownership from that reference before reading or writing
 state. Handover never mints an empty work item. Hold each selected stream's
-on-disk coordinator lease (`engineering-lease acquire`) before rewriting its
-state in steps 5–7, bump `State revision` on each coordinator rewrite per the
-contract, and release every lease at completion.
+on-disk coordinator lease before rewriting its state in steps 5–7 with the
+idempotent `engineering-lease ensure` verb — it renews a lease this session
+already holds and acquires a free one; a live foreign lease (`contended`)
+stops that stream with a report. Perform the rewrites through the
+lease-verified write path in Essential's `lease.md`, bump `State revision`
+on each coordinator rewrite, and release every lease at completion.
 
 Handover has two outcomes. **Persistence** (steps 1–7) always runs and always
 completes: it refreshes the current source tree's on-disk work state and the
