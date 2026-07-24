@@ -3,25 +3,36 @@
 #
 # The lease file <work-dir>/lease.json makes the single-writer coordinator
 # role technical instead of conventional: exactly one live token may write
-# coordinator-owned state files. Acquire is atomic (noclobber); heartbeat and
-# release are token-gated temp-write + atomic rename; a live foreign lease is
-# never replaced; an expired lease yields only to the explicit takeover verb,
-# which the caller must journal as a `lease` event.
+# coordinator-owned state files. The file stores only the token's SHA-256
+# digest — possession of the file never confers the lease; the holder keeps
+# the plaintext token in its own session context. Acquire is atomic
+# (noclobber); heartbeat and release are token-gated temp-write + atomic
+# rename; a live foreign lease is never replaced; an expired foreign lease
+# yields only to the explicit takeover verb, which the caller must journal
+# as a `lease` event.
 set -euo pipefail
 
 usage() {
   cat >&2 <<'EOF'
-usage: engineering-lease <acquire|heartbeat|release|status|takeover> \
+usage: engineering-lease <ensure|acquire|heartbeat|release|status|takeover> \
          --work-dir <dir> [--capability <capability_id>] [--session <id>] \
          [--token <token>] [--state-revision <n>] [--ttl <seconds>]
 
 verbs:
+  ensure     idempotent hold: acquire when free, heartbeat when held by
+             --token, revive an expired lease still owned by --token;
+             contended on a live foreign lease, takeover_required on an
+             expired foreign one
   acquire    create the lease when free; refuses live (contended) and expired
              (takeover_required) leases
   heartbeat  extend an owned lease (requires --token)
   release    remove an owned lease (requires --token)
   status     report free|held|expired|foreign without mutating anything
   takeover   replace an expired lease only; never a live one
+
+session identity: --session overrides; otherwise $CLAUDE_SESSION_ID;
+otherwise pid-<parent pid>. The plaintext token is printed exactly once by
+acquire/ensure/takeover; lease.json stores only its SHA-256 digest.
 EOF
 }
 
@@ -45,11 +56,19 @@ new_token() {
   od -An -N16 -tx1 /dev/urandom | tr -d ' \n'
 }
 
+sha256_hex() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | awk '{print $1}'
+  else
+    printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
+  fi
+}
+
 verb="${1:-}"
 [[ -n "$verb" ]] || { usage; invalid "a verb is required"; }
 case "$verb" in
   -h|--help) usage; exit 0 ;;
-  acquire|heartbeat|release|status|takeover) shift ;;
+  ensure|acquire|heartbeat|release|status|takeover) shift ;;
   *) usage; invalid "unknown verb: $verb" ;;
 esac
 
@@ -85,6 +104,8 @@ done
 if [[ -n "$state_revision" ]]; then
   [[ "$state_revision" =~ ^[0-9]+$ ]] || invalid "--state-revision must be an integer"
 fi
+# Session identity precedence: --session, $CLAUDE_SESSION_ID, pid-<parent>.
+[[ -n "$session" ]] || session="${CLAUDE_SESSION_ID:-pid-$PPID}"
 
 lease_path="$work_dir/lease.json"
 require_safe_lease_path "$lease_path"
@@ -99,8 +120,8 @@ lease_field() {
 }
 
 lease_json() {
-  # args: token acquired_epoch heartbeat_epoch
-  local lease_token="$1" acquired="$2" heartbeat="$3"
+  # args: token_digest acquired_iso acquired_epoch heartbeat_epoch
+  local token_digest="$1" acquired_iso="$2" acquired_epoch="$3" heartbeat="$4"
   local expires=$((heartbeat + ttl))
   jq -n \
     --arg work_id "$work_id" \
@@ -108,18 +129,21 @@ lease_json() {
     --arg owner_capability "$capability" \
     --arg host "$(hostname 2>/dev/null || echo unknown)" \
     --argjson pid "$$" \
-    --arg token "$lease_token" \
-    --arg acquired_at "$(iso_utc "$acquired")" \
+    --arg token_sha256 "$token_digest" \
+    --arg acquired_at "$acquired_iso" \
+    --argjson acquired_epoch "$acquired_epoch" \
     --arg heartbeat_at "$(iso_utc "$heartbeat")" \
+    --argjson heartbeat_epoch "$heartbeat" \
     --arg expires_at "$(iso_utc "$expires")" \
     --argjson expires_at_epoch "$expires" \
     --argjson ttl_seconds "$ttl" \
     --arg state_revision "$state_revision" \
     '{work_id: $work_id, owner_session: $owner_session,
       owner_capability: $owner_capability, host: $host, pid: $pid,
-      token: $token, acquired_at: $acquired_at, heartbeat_at: $heartbeat_at,
-      expires_at: $expires_at, expires_at_epoch: $expires_at_epoch,
-      ttl_seconds: $ttl_seconds}
+      token_sha256: $token_sha256, acquired_at: $acquired_at,
+      acquired_epoch: $acquired_epoch, heartbeat_at: $heartbeat_at,
+      heartbeat_epoch: $heartbeat_epoch, expires_at: $expires_at,
+      expires_at_epoch: $expires_at_epoch, ttl_seconds: $ttl_seconds}
      + (if $state_revision == "" then {} else {state_revision: ($state_revision | tonumber)} end)'
 }
 
@@ -140,23 +164,58 @@ report() {
     '{status: $status, lease_path: $lease_path, lease: $lease} + $extra'
 }
 
+token_matches() {
+  [[ -n "$token" && "$(sha256_hex "$token")" == "$(lease_field token_sha256)" ]]
+}
+
 lease_state() {
-  # prints free|held|expired|foreign; "held" requires a matching --token
+  # prints free|held|expired|foreign|corrupt; "held" requires a matching --token
   if [[ ! -f "$lease_path" ]]; then
     echo free
     return
   fi
   read_lease >/dev/null || { echo corrupt; return; }
-  local expires_epoch current_token
+  local expires_epoch
   expires_epoch="$(lease_field expires_at_epoch)"
-  current_token="$(lease_field token)"
   if [[ -z "$expires_epoch" || "$(now_epoch)" -ge "$expires_epoch" ]]; then
     echo expired
-  elif [[ -n "$token" && "$token" == "$current_token" ]]; then
+  elif token_matches; then
     echo held
   else
     echo foreign
   fi
+}
+
+do_acquire() {
+  fresh_token="$(new_token)"
+  now="$(now_epoch)"
+  content="$(lease_json "$(sha256_hex "$fresh_token")" "$(iso_utc "$now")" "$now" "$now")"
+  if ( set -o noclobber; printf '%s\n' "$content" >"$lease_path" ) 2>/dev/null; then
+    report acquired "$(jq -n --arg token "$fresh_token" '{token: $token}')"
+  else
+    # A competing acquire won the noclobber race; report the winner.
+    require_safe_lease_path "$lease_path"
+    report contended
+    exit 3
+  fi
+}
+
+do_renew() {
+  # Preserve original ownership and acquisition fields; refresh expiry only.
+  # acquired_epoch is read back as a number — no date parsing, portable
+  # across GNU and BSD date.
+  now="$(now_epoch)"
+  acquired_iso="$(lease_field acquired_at)"
+  acquired_epoch="$(lease_field acquired_epoch)"
+  [[ "$acquired_epoch" =~ ^[0-9]+$ ]] || acquired_epoch="$now"
+  [[ -n "$acquired_iso" ]] || acquired_iso="$(iso_utc "$acquired_epoch")"
+  capability="${capability:-$(lease_field owner_capability)}"
+  session_stored="$(lease_field owner_session)"
+  [[ -z "$session_stored" ]] || session="$session_stored"
+  state_revision="${state_revision:-$(lease_field state_revision)}"
+  write_lease_atomically \
+    "$(lease_json "$(lease_field token_sha256)" "$acquired_iso" "$acquired_epoch" "$now")"
+  report renewed
 }
 
 state="$(lease_state)"
@@ -166,26 +225,33 @@ case "$verb" in
     report "$state"
     ;;
 
+  ensure)
+    [[ -n "$capability" ]] || invalid "ensure requires --capability"
+    case "$state" in
+      free) do_acquire ;;
+      held) do_renew ;;
+      expired)
+        if token_matches; then
+          do_renew
+        else
+          report takeover_required
+          exit 4
+        fi
+        ;;
+      corrupt) report corrupt; exit 4 ;;
+      *) report contended; exit 3 ;;
+    esac
+    ;;
+
   acquire)
     [[ -n "$capability" ]] || invalid "acquire requires --capability"
-    [[ -n "$session" ]] || invalid "acquire requires --session"
     case "$state" in
       free) ;;
       corrupt) report corrupt; exit 4 ;;
       expired) report takeover_required; exit 4 ;;
       *) report contended; exit 3 ;;
     esac
-    fresh_token="$(new_token)"
-    now="$(now_epoch)"
-    content="$(lease_json "$fresh_token" "$now" "$now")"
-    if ( set -o noclobber; printf '%s\n' "$content" >"$lease_path" ) 2>/dev/null; then
-      report acquired "$(jq -n --arg token "$fresh_token" '{token: $token}')"
-    else
-      # A competing acquire won the noclobber race; report the winner.
-      require_safe_lease_path "$lease_path"
-      report contended
-      exit 3
-    fi
+    do_acquire
     ;;
 
   heartbeat)
@@ -196,14 +262,7 @@ case "$verb" in
       expired) report expired; exit 4 ;;
       *) report refused; exit 5 ;;
     esac
-    now="$(now_epoch)"
-    acquired_epoch="$(date -u -d "$(lease_field acquired_at)" +%s 2>/dev/null || now_epoch)"
-    # Preserve original ownership fields; refresh heartbeat and expiry.
-    capability="${capability:-$(lease_field owner_capability)}"
-    session="${session:-$(lease_field owner_session)}"
-    state_revision="${state_revision:-$(lease_field state_revision)}"
-    write_lease_atomically "$(lease_json "$token" "$acquired_epoch" "$now")"
-    report renewed
+    do_renew
     ;;
 
   release)
@@ -213,7 +272,7 @@ case "$verb" in
       free) report free; exit 0 ;;
       expired)
         # Only the owner may clean up its own expired lease.
-        [[ "$token" == "$(lease_field token)" ]] || { report refused; exit 5; }
+        token_matches || { report refused; exit 5; }
         ;;
       *) report refused; exit 5 ;;
     esac
@@ -223,7 +282,6 @@ case "$verb" in
 
   takeover)
     [[ -n "$capability" ]] || invalid "takeover requires --capability"
-    [[ -n "$session" ]] || invalid "takeover requires --session"
     case "$state" in
       expired|corrupt) ;;
       free) report free; exit 4 ;;
@@ -244,7 +302,8 @@ case "$verb" in
     fi
     fresh_token="$(new_token)"
     now="$(now_epoch)"
-    write_lease_atomically "$(lease_json "$fresh_token" "$now" "$now")"
+    write_lease_atomically \
+      "$(lease_json "$(sha256_hex "$fresh_token")" "$(iso_utc "$now")" "$now" "$now")"
     rm -f -- "$guard"
     report taken_over "$(jq -n --arg token "$fresh_token" --argjson previous "$previous" \
       '{token: $token, previous_lease: $previous, journal_event: "lease"}')"

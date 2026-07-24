@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -49,8 +50,9 @@ class EngineeringLeaseTest(unittest.TestCase):
             "owner_capability",
             "host",
             "pid",
-            "token",
+            "token_sha256",
             "acquired_at",
+            "acquired_epoch",
             "heartbeat_at",
             "expires_at",
             "expires_at_epoch",
@@ -60,7 +62,9 @@ class EngineeringLeaseTest(unittest.TestCase):
         self.assertEqual(lease["work_id"], "demo")
         self.assertEqual(lease["owner_session"], "s1")
         self.assertEqual(lease["owner_capability"], "pm")
-        self.assertEqual(lease["token"], payload["token"])
+        self.assertNotIn("token", lease)  # digest only; plaintext never stored
+        digest = hashlib.sha256(payload["token"].encode()).hexdigest()
+        self.assertEqual(lease["token_sha256"], digest)
 
     def test_second_acquire_is_contended(self) -> None:
         self.acquire()
@@ -150,6 +154,76 @@ class EngineeringLeaseTest(unittest.TestCase):
         self.run_lease("heartbeat", "--token", token)
         self.run_lease("release", "--token", token)
         self.assertEqual(os.listdir(self.work_dir), [])
+
+
+    def test_session_defaults_when_flag_absent(self) -> None:
+        completed = subprocess.run(
+            [str(LEASE), "acquire", "--work-dir", str(self.work_dir),
+             "--capability", "pm"],
+            capture_output=True,
+            text=True,
+            env={**os.environ, "CLAUDE_SESSION_ID": "env-session"},
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        lease = json.loads(self.lease_path.read_text(encoding="utf-8"))
+        self.assertEqual(lease["owner_session"], "env-session")
+
+    def test_session_falls_back_to_pid_identity(self) -> None:
+        env = {k: v for k, v in os.environ.items() if k != "CLAUDE_SESSION_ID"}
+        completed = subprocess.run(
+            [str(LEASE), "acquire", "--work-dir", str(self.work_dir),
+             "--capability", "pm"],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        lease = json.loads(self.lease_path.read_text(encoding="utf-8"))
+        self.assertTrue(lease["owner_session"].startswith("pid-"))
+
+    def test_heartbeat_preserves_acquired_at_without_date_parsing(self) -> None:
+        token = self.acquire()["token"]
+        before = json.loads(self.lease_path.read_text(encoding="utf-8"))
+        time.sleep(1.1)
+        code, payload = self.run_lease("heartbeat", "--token", token)
+        self.assertEqual(code, 0)
+        after = json.loads(self.lease_path.read_text(encoding="utf-8"))
+        self.assertEqual(after["acquired_at"], before["acquired_at"])
+        self.assertEqual(after["acquired_epoch"], before["acquired_epoch"])
+        self.assertGreaterEqual(
+            after["heartbeat_epoch"], before["heartbeat_epoch"]
+        )
+
+    def test_ensure_acquires_renews_and_refuses(self) -> None:
+        code, payload = self.run_lease(
+            "ensure", "--capability", "pm", "--session", "s1"
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["status"], "acquired")
+        token = payload["token"]
+        code, payload = self.run_lease(
+            "ensure", "--capability", "pm", "--token", token
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["status"], "renewed")
+        code, payload = self.run_lease("ensure", "--capability", "pm")
+        self.assertEqual(code, 3)
+        self.assertEqual(payload["status"], "contended")
+
+    def test_ensure_revives_own_expired_lease_only(self) -> None:
+        code, payload = self.run_lease(
+            "ensure", "--capability", "pm", "--session", "s1", "--ttl", "1"
+        )
+        token = payload["token"]
+        time.sleep(2)
+        code, payload = self.run_lease("ensure", "--capability", "pm")
+        self.assertEqual(code, 4)
+        self.assertEqual(payload["status"], "takeover_required")
+        code, payload = self.run_lease(
+            "ensure", "--capability", "pm", "--token", token
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["status"], "renewed")
 
 
 if __name__ == "__main__":
