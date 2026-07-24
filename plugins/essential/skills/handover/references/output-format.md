@@ -8,18 +8,18 @@ source_tree: <kind (git-worktree|jj-workspace) and label of the current source t
 workspace_root: <absolute .engineering/works path in the current source tree>
 overview_path: <absolute .engineering/overview.md path in the default source tree>
 external_anchor: <URL or response_only>
-streams_carried: <n>
-streams_index_only: <n>
+streams_indexed: <n>
+streams_selected: <n>
 streams:
   - work_id: <id>
     lifecycle: <initialized|active|blocked|complete|retiring>
-    carried: <true|false>
-    source_anchor: <remote revision, attachment locator, inline patch label, or none>
+    transfer_path: <absolute .engineering/works/<work-id> directory holding this stream>
+    source_anchor: <remote revision, artifacts-relative patch/bundle, or none>
     current_task_id: <full executable task ID or none>
     next_owner: <exact continuation owner or ->
     next_action: <exact continuation action or ->
     continuation_intent: <capability-level work type, or none for index-only>
-    rehydratable: <true|false>
+    transferable: <true|false>
     files_classified:
       completed: <n>
       in_progress: <n>
@@ -33,46 +33,38 @@ overviews_reconciled: [<relative paths>]
 generated_files: [<absolute created/materially rewritten paths, including overview.md>]
 ```
 
-Every stream in the current source tree's `works/` appears once in `streams`;
-carried streams (selected continuable streams with a reachable anchor) carry
-`carried: true`, and `complete`/`retiring`, unselected, and anchor-degraded
-streams carry `carried: false`. `overview_path` is the default source tree's
+Every stream in the current source tree's `works/` appears once in `streams`.
+`transfer_path` is the directory that holds that stream — the thing a recipient
+copies — and is present for every stream whose work directory exists, including
+`complete` and `retiring` ones. `overview_path` is the default source tree's
 global cross-tree index, updated with only this source tree's rows.
 Then provide the complete fenced Markdown receipt defined in
 [document-templates.md](document-templates.md) for publication or copy/paste,
-followed by the immediate next action per carried stream. Distinguish external
-publication success from a response-only receipt. Never claim ignored state was
-transferred; the receipt transfers state only by carrying each work file's raw
-contents.
+followed by the immediate next action per selected stream. Distinguish external
+publication success from a response-only receipt.
 
-For `external_anchor: response_only`, the fenced receipt must carry the raw
-contents of every `### Work state` file, the complete patch when the source
-anchor is an inline `git format-patch`, and every inline specification. A payload
-label, a local pathname, an elision, a summary, or "available on request" is not
-content and makes the response non-rehydratable. Redact secrets from every
-carried block; if redaction leaves one stream's required section incomplete,
-degrade that stream to an index-only row instead of blocking the whole receipt.
+The receipt indexes state; it never carries it. Do not inline a work file's
+contents, a specification body, artifact bytes, or a patch — name the work
+directory instead. This holds identically for `external_anchor: response_only`:
+a response-only receipt is the normal case, not a degraded one, because the
+index is bounded by the number of streams rather than the size of the work.
 
-A response-only receipt permits only text source anchors: a destination-reachable
-remote revision, or an inline `git format-patch` patch. A `git bundle` is binary
-and must never be inlined as base64 or raw bytes — publish it to an external
-attachment and record only its locator, ref, and base commit in that stream's
-`### Source anchor`. If a stream's sole carrier is a bundle and the receipt is
-response-only, that stream cannot be carried: relocate the bundle to an external
-attachment and reference it, or degrade the stream to an index-only row.
+**Never write the receipt, or any part of it, to a file.** There is no size at
+which spilling to disk becomes correct — an index that somehow ran long is
+shortened by dropping detail to pointers, never relocated to `/tmp`, a dotted
+sibling such as `.local/`, the repository root, or `$HOME`. The state is already
+persisted under `.engineering/`; a pointer to it loses nothing. The one file a
+handover may generate is an approved `git format-patch` patch or `git bundle`,
+and it belongs in `.engineering/works/<work-id>/artifacts/` so it travels with
+the directory — never inlined into the receipt, whatever its format.
 
-When a continuable stream has no verified portable source anchor, mark its entry
-`carried: false`, `rehydratable: false` with its exact local-only changes and
-the available safe choices: pause to create a reachable revision (commit and,
-when authorized, open a pull request), or obtain user approval for a patch or
-external bundle attachment carrier. Also degrade a stream whose required
-work-state file or continuation specification is incomplete, ambiguous, or
-unredactable. Such degradation is per stream and never aborts the run:
-persistence (on-disk state refresh and the default tree's `overview.md` upsert)
-always completes first, so every degraded stream remains resumable on the same
-machine from its state files. `handover: complete` therefore reports the
-successful local pause even when every stream is `carried: false`; the
-`carried`/`rehydratable` flags carry the cross-machine verdict. Reserve a
-top-level `handover: blocked` for a failure that prevents persistence itself — an
+`transferable` is a statement about **code reachability only**. Mark a stream
+`transferable: false` when it has no destination-reachable source anchor and no
+approved patch/bundle carrier, and record its exact local-only changes plus the
+safe choices: pause to create a reachable revision (commit and, when authorized,
+open a pull request), or approve a patch or bundle under `artifacts/`. Its state
+is transferable either way — copying the work directory always works — so this
+never aborts the run, and persistence has already completed. Reserve a top-level
+`handover: blocked` for a failure that prevents persistence itself — an
 unresolvable workspace, an unreadable contract, or an unwritable `overview.md` —
 not for a missing source anchor.

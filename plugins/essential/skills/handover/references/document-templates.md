@@ -167,157 +167,98 @@ their first child and then retained until work closes. Each contains purpose,
 one headline, canonical status counts, last PM reconciliation timestamp, and a
 table of child headline/status/relative path. Never copy child detail.
 
-## Portable receipt
+## Handover receipt
 
-The receipt is plain Markdown a human can paste. It carries no JSON snapshot, no
-base64 bundle, no checksums, and no schema version line. It describes the
-**current source tree's** `.engineering/works/` streams (this Git worktree or jj
-workspace only — never another tree's works): a `## Work index` row for **every**
-work stream in this tree, then a full `## Work stream: <work-id>` section
-only for each **continuable** stream (lifecycle `initialized`, `active`, or
-`blocked`). `complete` and `retiring` streams appear as index rows only; they are
-not an error. The receipt contains, in order:
+The receipt is plain Markdown a human can paste. It is an **index over the
+persisted work directories, not a carrier of their contents** — no work-file
+bodies, no specification bodies, no artifact bytes, no patches, no JSON
+snapshot, no base64, no checksums, no schema version line. Its size tracks the
+number of streams, never the size of the work, so it always fits a task
+comment, a PR description, or a chat response. It is never written to a file.
 
-`````markdown
+It describes the **current source tree's** `.engineering/works/` streams (this
+Git worktree or jj workspace only — never another tree's works): a
+`## Work index` row for **every** work stream in this tree, then a
+`## Transfer` section covering each **selected continuable** stream (lifecycle
+`initialized`, `active`, or `blocked`). `complete` and `retiring` streams appear
+as index rows only; they are not an error. The receipt contains, in order:
+
+````markdown
 ## Handover receipt
 
 - Repository: <stable remote/name identity>
 - Source tree: <kind (Git worktree or jj workspace) and label of the current tree>
 - Generated: <one UTC ISO-8601 timestamp>
-- Streams: <N> carried / <M> index-only
+- Streams: <N> indexed / <M> selected
 - External anchor: <URL or response-only>
 
 ## Work index
 
-| Work ID | Lifecycle | Headline | Next owner | Next action | Source anchor | Location |
-|---|---|---|---|---|---|---|
-| `<work-id>` | `active` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `<origin source-tree path>` |
-| `<work-id>` | `blocked` | `<one line>` | `<owner>` | `<one line>` | `<anchor label>` | `<origin source-tree path>` |
-| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `<anchor label or none>` | `-` |
+| Work ID | Lifecycle | Headline | Next owner | Next action | Intent | Anchor | Rev |
+|---|---|---|---|---|---|---|---|
+| `<work-id>` | `active` | `<one line>` | `<owner>` | `<one line>` | `<intent>` | `<anchor label>` | `<n>` |
+| `<work-id>` | `blocked` | `<one line>` | `<owner>` | `<one line>` | `<intent>` | `<anchor label>` | `<n>` |
+| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `-` | `-` | `<n>` |
 
-## Work stream: <work-id>
+## Transfer
 
-- State revision: `<n>`
-- Lease: `<released | expired (owner <capability_id>)>`
+To resume any stream below on this machine, run `essential:takeover` in the
+source tree named above — the state is already on disk. To resume elsewhere,
+copy that stream's work directory to the destination tree's `.engineering/works/`,
+bring the destination checkout to the stream's anchor, then run
+`essential:takeover` there.
 
-### Source anchor
+### <work-id>
 
-<How to obtain this stream's code at the right revision, with plain git and no
-checksum verification — exactly one of:>
-- Remote revision to check out: `<remote/ref @ revision>`
-- Attached patch: `git format-patch` output, inline below or at <attachment locator>
-- Bundle ref: `git bundle` at <attachment locator>, ref `<ref>`, base `<base commit>`
+- Work directory: `<absolute path to .engineering/works/<work-id>>`
+- Source anchor: `<remote/ref @ revision>` | patch at `artifacts/<name>.patch`
+  (base `<base commit>`) | bundle at `artifacts/<name>.bundle`, ref `<ref>`,
+  base `<base commit>` | none — local-only changes: `<summary>`
+- Specification: `<repository-relative path>` | Notion `<stable ref>` @
+  `<captured revision>`, merge base `<revision>` | none
+- Lease at handover: `<released | expired (owner <capability_id>)>`
+- Continuation: task `<id or none>` — `<next owner>` to `<next action>`
 
-### Work state
+### <next selected work-id>
 
-<The raw contents of this stream's goal.md, state.md, state/working.md, and
-every continuity-relevant detail file — decisions, changes, design, state/*.md
-children (including state/journal.md and state/revisions.md when they exist),
-needed artifacts, and every outstanding `proposals/` child (any still
-awaiting approval or approved but not yet implemented, so its body travels rather
-than leaving `state.md` pointing at a missing file) — each in its own fenced
-block. On the line
-immediately before each opening fence, name the path relative to the stream root
-as `path: <relative path>` (never prefixed with the work ID), because takeover
-writes each file back into the resolved work root and a `<work-id>/` prefix would
-land it one level too deep. Fence each file with a backtick run at least one
-longer than the longest backtick run inside that file (minimum three); the
-closing fence uses the same length. This lets a state file that itself contains
-a fenced block travel without closing early:>
-
-path: goal.md
-
-```markdown
-<verbatim contents>
-```
-
-path: state.md
-
-````markdown
-<verbatim contents, may itself contain ``` fences>
+<... repeated entry per selected stream ...>
 ````
-
-path: state/working.md
-
-```markdown
-<verbatim contents>
-```
-
-path: decisions/<slug>.md
-
-```markdown
-<verbatim contents>
-```
-
-### Specifications
-
-<Any spec contract needed to continue this stream. Embed the captured
-specification content inline as the authority of record, then record its
-provenance — a repository-relative path in the anchored tree, or a Notion stable
-ref with its captured revision — so takeover can confirm a resumed spec matches
-by direct comparison and refresh a live source. For a Notion-backed spec that a
-resume must be able to re-publish, also record the immutable merge base (the last
-synced revision the local content diverged from) so takeover can three-way merge
-instead of clobbering concurrent remote edits. Omit this section for generic
-coding work with no specification.>
-
-### Continuation
-
-- Current task: <full executable task ID or none>
-- Next owner: <exact continuation owner>
-- Next action: <one sentence>
-- Continuation intent: <capability-level work type — e.g. specification-led implementation or generic coding implementation — never a fixed skill name>
-- Route: hand off to the relevant implementation skill to continue the work.
-
-## Work stream: <next continuable work-id>
-
-<... repeated section per continuable stream ...>
-`````
 
 The `## Work index` is the synthesized view of the current source tree's streams;
 the cross-tree index lives separately in the default tree's
 `.engineering/overview.md`, not in this receipt. List every `works/<work-id>/`
 stream in this source tree once, ordered by lifecycle then work ID, with its
-current lifecycle, one-line headline, next owner, next action, a short
-`Source anchor` label that lets takeover group streams sharing one revision, and
-`Location` (the origin source tree that held this stream, so a same-machine
-takeover can prefer local resume; `-` when that tree is gone and the stream must
-rehydrate from this receipt). Continuable streams (`initialized`/`active`/
-`blocked`) carry a full `## Work stream:` section below; `complete`/`retiring`
-streams are index rows only.
+current lifecycle, one-line headline, next owner, next action, capability-level
+continuation intent, a short anchor label that lets a resume group streams
+sharing one revision, and its `State revision`.
 
-Emit one `## Work stream: <work-id>` section per continuable stream. Each
-`### Work state` block is the verbatim content of one work file, labelled with its
-stream-root-relative `path:` line (no `<work-id>/` prefix) so takeover can write
-it straight back into the resolved work root. Include every file needed to
-continue that stream without the origin `.engineering/` tree; do not summarize,
-elide, or replace a file's content with a pathname. Do not carry the whole
-`artifacts/` tree, but when a stream needs specific artifacts (child manifests,
-spec-sync receipts, validation logs) to continue, carry those exact bytes —
-inline in a labelled fenced block or by a durable external attachment locator —
-because a bare `artifacts/…` path is not reachable from the destination. Redact
-secrets, credentials, private keys, and environment values from every carried
-block; if redaction would leave one stream's required section incomplete, degrade
-that stream to an index-only row and note it, rather than blocking the whole
-receipt.
+`## Transfer` names, per selected stream, the absolute work directory that holds
+its state. That directory is the carrier: copying it moves `goal.md`, `state.md`,
+`state/` children, decisions, changes, design, proposals, the materialized
+specification, and `artifacts/` together, with no reassembly step and nothing to
+write back. Never inline a file's contents here — a pathname is exactly the
+right answer, because the recipient copies the directory rather than
+reconstructing it. Redact secrets from the headline, path, and anchor label; the
+carried files themselves are handled by the destination's own ignore rules.
 
-Each stream's source anchor must carry that stream's relevant repository changes
-as one of the three plain-git shapes above. A dirty workspace path, a local-only
-revision, or a command string is not an anchor. Normalize and contain every
-repository and destination path; reject absolute paths, `..`, and symlink
-escapes.
+Each stream's source anchor tells the destination how to reach that stream's
+*code*, which the work directory does not carry. Use a destination-reachable
+remote revision when one exists; otherwise a user-approved `git format-patch`
+patch or `git bundle` written under that stream's `artifacts/`, so it travels
+with the directory. A dirty workspace path, a local-only revision, or a command
+string is not an anchor — record `none` with a summary of the local-only changes
+instead. Normalize and contain every repository and destination path; reject
+absolute paths, `..`, and symlink escapes.
 
-Specifications are optional and per stream. Embed the captured specification
-content inline as the authority of record, and record where it came from: a
+Specifications are optional and per stream, and appear as **provenance only**:
+the materialized copy already travels inside the work directory. Record a
 repository-relative path present in the anchored tree, or a Notion stable ref
-with its captured revision so takeover can fetch it fresh. For a Notion-backed
-spec, also carry the immutable merge base (last synced revision) so a resumed
+with its captured revision so a resume can fetch it fresh. For a Notion-backed
+spec, also record the immutable merge base (last synced revision) so a resumed
 publication can three-way merge against concurrent remote edits rather than
-overwrite them; the local Notion mirror bases are ignored state and never travel,
-so the base revision must be named explicitly in the receipt. If a stream's live
-specification source is unreachable at handover time, keep the captured content
-inline, mark the provenance as stale, and degrade only that stream. Generic
-coding work omits the section.
+overwrite them. If a stream's live specification source is unreachable at
+handover time, mark the provenance stale and note it. Generic coding work omits
+the line.
 
 `Continuation intent` is a required per-stream capability-level descriptor of the
 work type to continue — for example `specification-led implementation` when a

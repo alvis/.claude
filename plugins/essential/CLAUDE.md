@@ -24,3 +24,8 @@ On `work_id_required`, the PM asks the user and workers report the
 ambiguity. On `requires_ignore`, workers stop; the PM alone adds
 `.engineering/` to the active workspace `.gitignore`, records it in
 `generated_files`, and reruns.
+
+Work state lives only under the active `.engineering/`, plus `docs/` at
+promotion. Never write to `/tmp`, `.local/`, the repo root, or `$HOME`, and
+never create a file merely because output is large — shorten it or point into
+`.engineering/` instead.

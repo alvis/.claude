@@ -249,7 +249,7 @@ if [[ -z "$work_id" ]]; then
     meaningful_workspace_id="$workspace_work_id"
   fi
   if [[ -n "$workspace_work_id" ]]; then
-    for candidate_id in "${work_candidates[@]}"; do
+    for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
       if [[ "$candidate_id" == "$workspace_work_id" ]]; then
         workspace_match_id="$candidate_id"
         break
@@ -258,7 +258,7 @@ if [[ -z "$work_id" ]]; then
   fi
 
   if [[ -z "$workspace_match_id" && -n "$workspace_leaf_work_id" ]]; then
-    for candidate_id in "${work_candidates[@]}"; do
+    for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
       if [[ "$candidate_id" == "$workspace_leaf_work_id" ]]; then
         workspace_match_id="$candidate_id"
         break
@@ -273,7 +273,8 @@ if [[ -z "$work_id" ]]; then
     work_id="${work_candidates[0]}"
     work_id_source="sole_existing"
   else
-    candidates_json="$(jq -n '$ARGS.positional' --args "${work_candidates[@]}")"
+    candidates_json="$(jq -n '$ARGS.positional' \
+      --args ${work_candidates[@]+"${work_candidates[@]}"})"
     jq -n \
       --arg vcs "$vcs" \
       --arg repo_root "$repo_root" \
@@ -482,8 +483,10 @@ with event types \`status|decision|revision|sync|sweep|lease\`.
   require_safe_entrypoint "$work_dir/state/journal.md"
 fi
 
-created_json="$(jq -n '$ARGS.positional' --args "${bootstrap_created[@]}")"
-existing_json="$(jq -n '$ARGS.positional' --args "${bootstrap_existing[@]}")"
+created_json="$(jq -n '$ARGS.positional' \
+  --args ${bootstrap_created[@]+"${bootstrap_created[@]}"})"
+existing_json="$(jq -n '$ARGS.positional' \
+  --args ${bootstrap_existing[@]+"${bootstrap_existing[@]}"})"
 
 jq -n \
   --arg vcs "$vcs" \

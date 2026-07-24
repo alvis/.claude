@@ -28,11 +28,12 @@ adapter answers natively:
    approvals can bind to it.
 4. Isolation gate — the equivalent of the `.gitignore` bootstrap gate: where
    operational files may be written without polluting the record of record.
-5. Receipt reachability — how a portable receipt names it so a takeover on
-   another machine can reach the same state.
+5. Receipt reachability — how a receipt names it so a takeover on another
+   machine, holding a copy of the work directory, can reach the same code.
 
-A stream whose anchor cannot answer these is handled as index-only at
-handover, exactly like a Git stream with no reachable carrier.
+A stream whose anchor cannot answer these is indexed at handover with its code
+marked non-transferable, exactly like a Git stream with no reachable revision;
+its state still travels by copying the work directory.
 
 ## Initiative manifest
 
