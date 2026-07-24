@@ -1,0 +1,7 @@
+{
+  "name": "production",
+  "author": {"name": "Alvis"},
+  "dependencies": ["essential"],
+  "description": "Media and creative production lifecycle: asset provenance, render manifests, and revision-bound review for video, audio, and campaign deliverables",
+  "version": "2026-07-24"
+}
