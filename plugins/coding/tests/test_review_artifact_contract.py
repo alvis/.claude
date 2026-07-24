@@ -11,8 +11,8 @@ REVIEW_TEMPLATE = PLUGIN / "skills/review-code/references/review.template.md"
 REVIEW_OUTPUT = PLUGIN / "skills/review-code/references/output-formats.md"
 CLEANUP_SKILL = PLUGIN / "skills/cleanup/SKILL.md"
 WRITE_CODE = PLUGIN / "skills/write-code/SKILL.md"
-PUSH_PR_SKILL = PLUGIN / "skills/push-pr/SKILL.md"
-REPAIR_RED_CI = PLUGIN / "skills/push-pr/references/repair-red-ci.md"
+WRITE_PR_SKILL = PLUGIN / "skills/write-pr/SKILL.md"
+REPAIR_RED_CI = PLUGIN / "skills/write-pr/references/repair-red-ci.md"
 ESSENTIAL_CONTRACT = REPOSITORY / "plugins/essential/references/engineering-work.md"
 ESSENTIAL_MAIN = REPOSITORY / "plugins/essential/MAINAGENT.md"
 ESSENTIAL_SUB = REPOSITORY / "plugins/essential/SUBAGENT.md"
@@ -114,17 +114,17 @@ class ReviewDispositionContractTest(unittest.TestCase):
         self.assertIn("no `open`, `deferred`, or malformed risk", cleanup)
 
 
-class PushPrReferenceContractTest(unittest.TestCase):
+class WritePrReferenceContractTest(unittest.TestCase):
     def test_red_ci_repair_links_back_to_the_existing_publication_phase(self) -> None:
         repair = REPAIR_RED_CI.read_text(encoding="utf-8")
 
         self.assertIn(
             "[core publication phase](../SKILL.md#3-publish-bottom-up)", repair
         )
-        self.assertTrue(PUSH_PR_SKILL.is_file())
+        self.assertTrue(WRITE_PR_SKILL.is_file())
         self.assertIn(
             "### 3. Publish bottom-up",
-            PUSH_PR_SKILL.read_text(encoding="utf-8"),
+            WRITE_PR_SKILL.read_text(encoding="utf-8"),
         )
 
 

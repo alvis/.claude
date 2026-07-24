@@ -19,7 +19,7 @@ hooks:
 
 # Save Any Code Change — jj-first, git-compatible
 
-This skill is the single entrypoint for saving work: local snapshots, edits to prior changes, splits, reorders, parallel tasks, the two exceptional direct-bookmark sync routes, and the compatibility route from `--create-pr` to `coding:push-pr`. It auto-routes based on working-copy state; flags exist only for explicit operations and behavioural overrides. It is the sole owner of history mutations — `coding:finalize-commits` verifies stacks, `coding:push-pr` owns PR publication and CI convergence, and `coding:write-pr` authors PR text.
+This skill is the single entrypoint for saving work: local snapshots, edits to prior changes, splits, reorders, parallel tasks, the two exceptional direct-bookmark sync routes, and the compatibility route from `--create-pr` to `coding:write-pr`. It auto-routes based on working-copy state; flags exist only for explicit operations and behavioural overrides. It is the sole owner of history mutations — `coding:finalize-commits` verifies stacks, and `coding:write-pr` authors PR text, owns PR publication, and drives CI convergence.
 
 **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike.
 
@@ -31,12 +31,12 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
   workspaces, direct bookmark sync for the correct-merged and
   partial-to-branch routes, and preserving the `--create-pr` compatibility
   entrypoint.
-- Do not use for: general remote publication or opening, updating, and polling PRs (`coding:push-pr`), composing PR titles or bodies (`coding:write-pr`), per-commit QA of an unpushed stack (`coding:finalize-commits`), or diagnosing code failures (`coding:fix`).
-- Tool precedence: `jj` first — every change is a jj change and jj auto-snapshots `@` on every op. `git commit` acts only as the conventional-commit emitter inside the save flow on jj-colocated repos, never hand-run outside this skill. `gh` is retained for history routes that inspect remote PR state; `coding:push-pr` owns PR publication and CI, while this skill may run `jj git push` only in the two named direct-sync routes.
+- Do not use for: composing PR titles or bodies, general remote publication, or opening, updating, and polling PRs (`coding:write-pr`), per-commit QA of an unpushed stack (`coding:finalize-commits`), or diagnosing code failures (`coding:fix`).
+- Tool precedence: `jj` first — every change is a jj change and jj auto-snapshots `@` on every op. `git commit` acts only as the conventional-commit emitter inside the save flow on jj-colocated repos, never hand-run outside this skill. `gh` is retained for history routes that inspect remote PR state; `coding:write-pr` owns PR publication and CI, while this skill may run `jj git push` only in the two named direct-sync routes.
 
 <IMPORTANT>
 - Every workflow MUST end with a linear clean chain + working code. No exceptions. If a workflow cannot guarantee this, STOP and surface to the user.
-- This skill never opens, updates, or polls PRs. Its only pushes are the explicit, single-bookmark sync steps in `workflow-correct-merged.md` Option 2 and `workflow-partial-to-branch.md`; `coding:push-pr` owns PR publication and CI convergence.
+- This skill never opens, updates, or polls PRs. Its only pushes are the explicit, single-bookmark sync steps in `workflow-correct-merged.md` Option 2 and `workflow-partial-to-branch.md`; `coding:write-pr` owns PR publication and CI convergence.
 - NEVER rewrite merged-on-origin history without explicit consent. Detected target → `AskUserQuestion`, default = corrective PR per `GIT-PR-STACK-03`. `--allow-rewrite-merged` skips the prompt.
 - Every change MUST be self-contained: compile + lint + tests pass for each change in isolation. Shared files (package.json, tsconfig, lockfiles) evolve incrementally — no forward references.
 - `--paths-from` is a closed-set save, not a path suggestion. Never save,
@@ -58,9 +58,9 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
 | `--manifest-sha256=<sha256>` | Expected SHA-256 of the exact manifest bytes. Valid only with `--paths-from`; prevents a path or manifest swap between lifecycle handoff and save. |
 | `--retrospective` | Distribute pending edits on `@` into prior changes (stage 1: `jj absorb`; stage 2: `jj blame` + `jj squash --from @ --into <ancestor>`; stage 3: git fixup fallback). See `references/workflow-retrospective.md`. |
 | `--reorder [--up-to <rev>]` | Reorder history into a clean linear chain up to target rev (default `main@origin`). Content-equivalence guard via `verify.sh`. See `references/workflow-reorder.md`. |
-| `--create-pr` | Compatibility entrypoint: finish the selected save/history route, then invoke `coding:push-pr` with the resolved change or stack. |
-| `--branch-prefix <name>` | Forward the branch/bookmark prefix to `coding:push-pr` when `--create-pr` is present. |
-| `--no-verify` | Skip pre-commit + post-commit lint/test/build checks. With `--create-pr`, also map this to `coding:push-pr --skip-local-test`; no new commit flag is introduced. |
+| `--create-pr` | Compatibility entrypoint: finish the selected save/history route, then invoke `coding:write-pr` with the resolved change or stack. |
+| `--branch-prefix <name>` | Forward the branch/bookmark prefix to `coding:write-pr` when `--create-pr` is present. |
+| `--no-verify` | Skip pre-commit + post-commit lint/test/build checks. With `--create-pr`, also map this to `coding:write-pr --skip-local-test`; no new commit flag is introduced. |
 | `--dry-run` | Print the plan, don't mutate. |
 | `--allow-rewrite-merged` | Explicit consent to rewrite history already merged on origin (skips the `AskUserQuestion` corrective-PR prompt) per `GIT-PR-STACK-03`. |
 
@@ -71,7 +71,7 @@ This skill is the single entrypoint for saving work: local snapshots, edits to p
   publication set. The helper capability-probes the installed jj commands,
   revsets, templates, operation pinning, and structural Git colocation; no jj
   version string alone authorizes the scoped route. Publication
-  prerequisites are checked by `coding:push-pr`. Standards
+  prerequisites are checked by `coding:write-pr`. Standards
   `GIT-PR-STACK-01..06` (bookmark naming, fix earliest unmerged, no
   merged-history rewrites, feature flags, bottom-to-top merge, draft PRs) bind
   every route; `GIT-PR-SIZE-01..04` are reviewer-enforced and informational
@@ -95,7 +95,7 @@ The skill self-routes by reading `jj diff --stat`, `jj log -r '@-..@'`, and book
 | Blame-trace fixups into prior changes | `--retrospective` | `references/workflow-retrospective.md` |
 | Reorder existing history | `--reorder [--up-to <rev>]` | `references/workflow-reorder.md` |
 | Partial hunks → existing branch | user names a target branch + asks to save part of `@` | `references/workflow-partial-to-branch.md` |
-| Publish saved change or stack | `--create-pr` | Required handoff to `coding:push-pr` after local history work |
+| Publish saved change or stack | `--create-pr` | Required handoff to `coding:write-pr` after local history work |
 
 Before writing any new code, plan the change structure so commits/PRs end up independent — see `references/workflow-plan-structure.md`. End-to-end transcripts of every flag and auto-detected route: `references/examples.md`.
 
@@ -138,13 +138,13 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
    Choose by the routing table above. A history-operation flag forces its
    route; `--create-pr` adds the post-save publication handoff.
 
-3. **Propose the plan** to the user before any mutation. For multi-change routes (`--retrospective`, `--reorder`, `--create-pr`, auto-split), show the ordered list of operations. With `--dry-run`, skip local mutation but still perform the `coding:push-pr --dry-run` handoff when `--create-pr` is present.
+3. **Propose the plan** to the user before any mutation. For multi-change routes (`--retrospective`, `--reorder`, `--create-pr`, auto-split), show the ordered list of operations. With `--dry-run`, skip local mutation but still perform the `coding:write-pr --dry-run` handoff when `--create-pr` is present.
 
 4. **Execute local history.** Complete the matching save/edit/reorder/parallel procedure and resolve the exact change or bottom-to-top stack. A manifest-scoped save must return its manifest hash, saved change ids, and a PASS preservation receipt before any later owner may continue. If its post-save proof fails, run the manifest reference's plain-Git `recover` command or restore the captured jj operation, prove the pre-save inventory again, and report `blocked_scope`; never leave an unproved saved change as success. Do not reproduce any bookmark, push, PR, restack, or CI workflow here except the bookmark move and direct-sync steps explicitly owned by the correct-merged and partial-to-branch references.
 
 5. Run the verification below; when a check fails, fix the cause (or take the integrity table's prescribed action) and re-run that check. Repeat until every check passes or a concrete blocker remains — an integrity STOP awaiting the user, or a failure outside this skill's scope — then report the blocker instead of looping.
 
-6. **Synchronize or hand off after local work is complete.** The correct-merged Option 2 and partial-to-branch references perform their own direct bookmark sync after verification; they hand off to `coding:push-pr` only for the PR-specific conditions stated there. With `--create-pr` on every other route, invoke `coding:push-pr <resolved-change-or-stack>` and forward `--branch-prefix <name>` and `--dry-run` when present; also map `--no-verify` to `--skip-local-test`. After another local rewrite affects an unmerged PR stack, return its metadata to an existing `coding:push-pr` caller or invoke that skill once for remote restacking. The [`coding:push-pr` core publication workflow](../push-pr/SKILL.md#3-publish-bottom-up) owns PR publication, restacking, base repair, and CI convergence.
+6. **Synchronize or hand off after local work is complete.** The correct-merged Option 2 and partial-to-branch references perform their own direct bookmark sync after verification; they hand off to `coding:write-pr` only for the PR-specific conditions stated there. With `--create-pr` on every other route, invoke `coding:write-pr <resolved-change-or-stack>` and forward `--branch-prefix <name>` and `--dry-run` when present; also map `--no-verify` to `--skip-local-test`. After another local rewrite affects an unmerged PR stack, return its metadata to an existing `coding:write-pr` caller or invoke that skill once for remote restacking. The [`coding:write-pr` core publication workflow](../write-pr/SKILL.md#3-publish-bottom-up) owns PR publication, restacking, base repair, and CI convergence.
 
 ## Verification
 
@@ -178,4 +178,4 @@ non-selected dirty bytes and index/status entries remained identical. When a
 plain-Git scoped save was recovered, report the immutable recovery receipt and
 restored HEAD/index hash instead of a PASS preservation receipt. When
 `--create-pr` ran, preserve the PR URLs and final green state returned by
-`coding:push-pr`; this skill itself never opens, updates, or polls PRs.
+`coding:write-pr`; this skill itself never opens, updates, or polls PRs.

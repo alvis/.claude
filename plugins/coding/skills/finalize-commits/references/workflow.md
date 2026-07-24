@@ -1,6 +1,6 @@
 # Per-Commit Loop as an ultracode Workflow (+ Mechanism B fallback)
 
-Referenced from SKILL.md Step 2. Defines how the atomic per-commit walk runs as a dynamic Workflow when the `Workflow` tool is available, and the inline fallback when it is not. Per-commit procedure: `qa-loop.md`. All history mutations — folds, rewords, order surgery, and the final head move — are applied by `coding:commit`; publication is applied by `coding:push-pr`. This file only orchestrates.
+Referenced from SKILL.md Step 2. Defines how the atomic per-commit walk runs as a dynamic Workflow when the `Workflow` tool is available, and the inline fallback when it is not. Per-commit procedure: `qa-loop.md`. All history mutations — folds, rewords, order surgery, and the final head move — are applied by `coding:commit`; publication is applied by `coding:write-pr`. This file only orchestrates.
 
 ## Shape
 

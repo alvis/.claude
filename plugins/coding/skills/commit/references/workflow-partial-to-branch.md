@@ -12,7 +12,7 @@ for the overall pipeline.
 - One concern in `@` logically belongs to a different existing or new branch.
 - Not for numbered stacked-PR bookmark generation. If the user also requests
   a PR, synchronize the chosen target first, then invoke
-  [`coding:push-pr`](../../push-pr/SKILL.md) separately for that exact bookmark.
+  [`coding:write-pr`](../../write-pr/SKILL.md) separately for that exact bookmark.
 
 If `@` mixes concerns but they all belong on the same new change → [workflow-split.md](./workflow-split.md).
 
@@ -92,15 +92,15 @@ jj git push --bookmark <target>             # existing remote target
 jj git push --bookmark <target> --allow-new # new remote target
 ```
 
-Run exactly one push. Do not derive or generate a numbered `push-pr` bookmark.
+Run exactly one push. Do not derive or generate a numbered `write-pr` bookmark.
 An existing tracked bookmark is updated with jj's force-with-lease protection;
 a new remote bookmark requires the explicit `--allow-new` form.
 
 ### 7. Hand off only when a PR was requested
 
-If the user requested a PR, invoke `coding:push-pr` separately with the exact
+If the user requested a PR, invoke `coding:write-pr` separately with the exact
 `<target>` bookmark after direct sync. Do not pass a branch prefix or ask it to
-generate a numbered bookmark. `coding:push-pr` owns PR creation or update and
+generate a numbered bookmark. `coding:write-pr` owns PR creation or update and
 CI convergence. Without a PR request, do not invoke it.
 
 ### 8. Confirm leftover working copy
@@ -134,7 +134,7 @@ npm run build
 ## Mandatory follow-ups
 
 - Directly synchronize the chosen target after integrity passes.
-- Invoke `coding:push-pr` only if the user requested a PR for that exact target.
+- Invoke `coding:write-pr` only if the user requested a PR for that exact target.
 - Report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases

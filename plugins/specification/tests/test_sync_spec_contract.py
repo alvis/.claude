@@ -243,7 +243,7 @@ class SpecificationLifecycleOrderingTest(unittest.TestCase):
         contract = STACK_AWARE.read_text(encoding="utf-8")
         commit = contract.index("`coding:commit --paths-from=<scoped_save_manifest>")
         finalization = contract.index("Invoke `coding:finalize-commits`")
-        publication = contract.index("invoke `coding:push-pr`")
+        publication = contract.index("invoke `coding:write-pr`")
         self.assertLess(commit, finalization)
         self.assertLess(finalization, publication)
         self.assertIn("Never use\n   the `--create-pr` compatibility shortcut", contract)

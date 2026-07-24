@@ -83,7 +83,7 @@ mutation. History commands remain with Coding owners.
    green. If a correction changes code, history, or the reviewed contract,
    return through the invalidated implementation/review/sync gates before
    finalizing again.
-3. Only after finalization is green, invoke `coding:push-pr` once with the exact
+3. Only after finalization is green, invoke `coding:write-pr` once with the exact
    saved change or ordered stack and optional branch prefix. It owns bookmarks,
    bottom-up publication/restacking, PR text, and CI convergence.
 
@@ -94,7 +94,7 @@ stack_dispatch:
   reviewed_spec_revision: ''
   local_history: {owner: coding:commit, state: dirty|saved|none, relevant_dirty_paths: [], scoped_save_manifest: null, manifest_sha256: null, preservation_receipt: null, changes: [], save_status: completed|not_needed|blocked_scope}
   finalization: {owner: coding:finalize-commits, status: pass|fail|not_run}
-  publication: {owner: coding:push-pr, status: completed|partial|not_run, prs: []}
+  publication: {owner: coding:write-pr, status: completed|partial|not_run, prs: []}
 next_actions: []
 ```
 

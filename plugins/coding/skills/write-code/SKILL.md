@@ -73,7 +73,7 @@ Run child skills in this order:
 7. `coding:lint`, followed by final focused and full tests, types, coverage,
    and build gates that apply to the repository.
 8. Only after those gates, shape local history through `coding:commit`, verify
-   it through `coding:finalize-commits`, and publish through `coding:push-pr`
+   it through `coding:finalize-commits`, and publish through `coding:write-pr`
    when the stack policy in
    [references/stack-split.md](references/stack-split.md) calls for it.
 
@@ -179,8 +179,8 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    `jj split`, `git commit`, a push, or `gh pr create` directly; history shaping
    belongs to `coding:commit`, isolated commit QA belongs to
    `coding:finalize-commits`, and publication belongs to
-   `coding:push-pr`.</IMPORTANT> With `--defer-publication`, do not invoke
-   `coding:commit --create-pr`, `coding:finalize-commits`, or `coding:push-pr`,
+   `coding:write-pr`.</IMPORTANT> With `--defer-publication`, do not invoke
+   `coding:commit --create-pr`, `coding:finalize-commits`, or `coding:write-pr`,
    and do not rewrite or restack any published revision. An explicitly assigned
    implementation slice may be saved locally only through
    `coding:commit --paths-from=<manifest> --manifest-sha256=<sha256>`; slice

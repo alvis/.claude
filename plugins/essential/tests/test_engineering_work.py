@@ -31,7 +31,7 @@ MIGRATED_ARTIFACT_WRITERS = {
     "coding/skills/document/SKILL.md",
     "coding/skills/draft-code/SKILL.md",
     "coding/skills/fix/SKILL.md",
-    "coding/skills/push-pr/SKILL.md",
+    "coding/skills/write-pr/SKILL.md",
     "coding/skills/review-code/SKILL.md",
     "coding/skills/write-code/SKILL.md",
     "essential/skills/autoresearch/SKILL.md",
