@@ -534,7 +534,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertIn("- Sync state: Not started.", state_text)
             self.assertIn("- Review state: Not started.", state_text)
             self.assertIn(f"PM@pm rev:1 status {work_id}: initialized", journal_text)
-            self.assertIn("status|decision|revision|sync|sweep|checkpoint|lease", journal_text)
+            self.assertIn("status|decision|revision|sync|sweep|lease", journal_text)
             self.assertIn("## Workspace anchors", goal_text)
 
             custom_working = "# Preserved owner state\n\nDo not replace me.\n"

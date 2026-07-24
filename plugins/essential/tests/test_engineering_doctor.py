@@ -200,25 +200,6 @@ class EngineeringDoctorTest(unittest.TestCase):
         self.assertIn("warning", severities)  # expired
         self.assertIn("error", severities)  # revision ahead of state.md
 
-    def test_checkpoint_worthy_history_without_checkpoint(self) -> None:
-        self.write_state(row("AAA"))
-        journal = self.work_dir / "state" / "journal.md"
-        journal.write_text(
-            "# Journal\n\n"
-            "- 2026-07-24T00:00:00Z PM@pm rev:2 decision DEC-1: accepted\n",
-            encoding="utf-8",
-        )
-        _, findings = self.run_doctor()
-        self.assertIn("checkpoint", self.checks(findings))
-        journal.write_text(
-            "# Journal\n\n"
-            "- 2026-07-24T00:00:00Z PM@pm rev:2 decision DEC-1: accepted\n"
-            "- 2026-07-24T00:00:01Z PM@pm rev:2 checkpoint DEC-1: published\n",
-            encoding="utf-8",
-        )
-        _, findings = self.run_doctor()
-        self.assertNotIn("checkpoint", self.checks(findings))
-
     def test_unparseable_state_is_only_info(self) -> None:
         (self.work_dir / "state.md").write_text(
             "totally free-form notes\n", encoding="utf-8"
