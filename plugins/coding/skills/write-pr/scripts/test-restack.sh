@@ -28,6 +28,14 @@ if [ "$#" -eq 2 ] && [ "$1" = git ] && [ "$2" = fetch ]; then
   exit 0
 fi
 
+# colocation detection: answer with the real HEAD of the surrounding repository
+# so the script selects the jj path, and keep it out of the call log
+if [ "$#" -eq 6 ] && [ "$1" = log ] && [ "$2" = -r ] && [ "$3" = @- ] &&
+   [ "$4" = --no-graph ] && [ "$5" = -T ] && [ "$6" = commit_id ]; then
+  cat "$DETECT_SHA_FILE"
+  exit 0
+fi
+
 if [ "$#" -eq 6 ] && [ "$1" = log ] && [ "$2" = -r ] &&
    [ "$4" = --no-graph ] && [ "$5" = -T ] &&
    [ "$6" = 'commit_id ++ "\n"' ]; then
@@ -81,7 +89,21 @@ exit 98
 EOF
 
 chmod +x "$FAKE_BIN/jj" "$FAKE_BIN/gh"
-export PATH="$FAKE_BIN:$PATH" FAKE_LOG LOCAL_SHAS REMOTE_SHAS PR_STATES
+
+# the jj cases run inside a real repository whose HEAD the fake jj echoes back,
+# so colocation is detected exactly the way it is in the field
+COLOCATED=$TMP_ROOT/colocated
+DETECT_SHA_FILE=$TMP_ROOT/detect-sha
+git init --quiet --initial-branch=main "$COLOCATED"
+git -C "$COLOCATED" config user.email test@example.com
+git -C "$COLOCATED" config user.name Test
+: >"$COLOCATED/base"
+git -C "$COLOCATED" add base
+git -C "$COLOCATED" commit --quiet --no-gpg-sign -m base
+git -C "$COLOCATED" rev-parse HEAD >"$DETECT_SHA_FILE"
+
+export PATH="$FAKE_BIN:$PATH" FAKE_LOG LOCAL_SHAS REMOTE_SHAS PR_STATES \
+  DETECT_SHA_FILE
 
 SHA_A=1111111111111111111111111111111111111111
 SHA_B=2222222222222222222222222222222222222222
@@ -109,46 +131,46 @@ run_case() {
   GH_FAIL_BOOKMARK=
   args=()
   expected_status=0
-  expected_json='{"restacked":[],"skipped_merged":[],"errors":[]}'
+  expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":[]}'
   expected_log=
 
   case "$name" in
     no-args)
       expected_status=2
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["no-specs"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["no-specs"]}'
       ;;
     unknown-flag)
       args=(--bogus)
       expected_status=2
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["unknown-flag"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["unknown-flag"]}'
       ;;
     malformed-spec)
       args=(stack/01-a)
       expected_status=2
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["invalid-spec"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["invalid-spec"]}'
       ;;
     unsafe-bookmark)
       args=(bad..name="$SHA_A")
       expected_status=2
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["invalid-bookmark"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["invalid-bookmark"]}'
       ;;
     nonhex-sha)
       args=(stack/01-a=not-hex)
       expected_status=2
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["invalid-sha"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["invalid-sha"]}'
       ;;
     fetch-failure)
       args=(stack/01-a="$SHA_A")
       FETCH_FAIL=true
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["fetch"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["fetch"]}'
       expected_log=fetch
       ;;
     local-mismatch)
       args=(stack/01-a="$SHA_A")
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_B"
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["local-sha-mismatch:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["local-sha-mismatch:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a"
       ;;
@@ -157,7 +179,7 @@ log:stack/01-a"
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
       GH_FAIL_BOOKMARK=stack/01-a
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["gh-discovery:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["gh-discovery:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a"
@@ -167,7 +189,7 @@ discover:stack/01-a"
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
       add_ref "$REMOTE_SHAS" stack/01-a@origin "$SHA_A"
       add_ref "$PR_STATES" stack/01-a NONE
-      expected_json='{"restacked":["stack/01-a"],"skipped_merged":[],"errors":[]}'
+      expected_json='{"vcs":"jj","restacked":["stack/01-a"],"skipped_merged":[],"errors":[]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -181,7 +203,7 @@ log:stack/01-a@origin"
       add_ref "$REMOTE_SHAS" stack/02-live@origin "$SHA_B"
       add_ref "$PR_STATES" stack/01-old MERGED
       add_ref "$PR_STATES" stack/02-live OPEN
-      expected_json='{"restacked":["stack/02-live"],"skipped_merged":["stack/01-old"],"errors":[]}'
+      expected_json='{"vcs":"jj","restacked":["stack/02-live"],"skipped_merged":["stack/01-old"],"errors":[]}'
       expected_log="fetch
 log:stack/01-old
 discover:stack/01-old
@@ -199,7 +221,7 @@ edit:stack/02-live:main"
       add_ref "$REMOTE_SHAS" stack/02-b@origin "$SHA_B"
       add_ref "$PR_STATES" stack/01-a OPEN
       add_ref "$PR_STATES" stack/02-b OPEN
-      expected_json='{"restacked":["stack/01-a","stack/02-b"],"skipped_merged":[],"errors":[]}'
+      expected_json='{"vcs":"jj","restacked":["stack/01-a","stack/02-b"],"skipped_merged":[],"errors":[]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -220,7 +242,7 @@ edit:stack/02-b:stack/01-a"
       add_ref "$PR_STATES" stack/02-b OPEN
       PUSH_FAIL_BOOKMARK=stack/01-a
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["push:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["push:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -237,7 +259,7 @@ push:stack/01-a"
       add_ref "$PR_STATES" stack/02-b OPEN
       EDIT_FAIL_BOOKMARK=stack/01-a
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["pr-edit:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["pr-edit:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -253,7 +275,7 @@ edit:stack/01-a:main"
       add_ref "$REMOTE_SHAS" stack/01-a@origin "$SHA_C"
       add_ref "$PR_STATES" stack/01-a OPEN
       expected_status=1
-      expected_json='{"restacked":[],"skipped_merged":[],"errors":["remote-sha-mismatch:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["remote-sha-mismatch:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -276,7 +298,8 @@ discover:stack/02-b"
 
   export FETCH_FAIL PUSH_FAIL_BOOKMARK EDIT_FAIL_BOOKMARK GH_FAIL_BOOKMARK
   set +e
-  output=$(/bin/bash "$RESTACK_SH" ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
+  output=$(cd "$COLOCATED" &&
+    /bin/bash "$RESTACK_SH" ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
   status=$?
   set -e
   actual_log=$(cat "$FAKE_LOG")
@@ -294,5 +317,93 @@ do
   run_case "$test_case"
 done
 
+# the git cases exercise real git against a real bare origin, because the point
+# is that the git commands themselves work, not that a stub was called
+GIT_BIN=$TMP_ROOT/git-bin
+ORIGIN=$TMP_ROOT/origin.git
+PLAIN=$TMP_ROOT/plain
+mkdir -p "$GIT_BIN"
+cp "$FAKE_BIN/gh" "$GIT_BIN/gh"
+
+reset_plain() {
+  rm -rf "$ORIGIN" "$PLAIN"
+  git init --quiet --bare --initial-branch=main "$ORIGIN"
+  git init --quiet --initial-branch=main "$PLAIN"
+  git -C "$PLAIN" config user.email test@example.com
+  git -C "$PLAIN" config user.name Test
+  : >"$PLAIN/base"
+  git -C "$PLAIN" add base
+  git -C "$PLAIN" commit --quiet --no-gpg-sign -m base
+  git -C "$PLAIN" remote add origin "$ORIGIN"
+  git -C "$PLAIN" push --quiet origin main
+  git -C "$PLAIN" checkout --quiet -b stack/01-a
+  : >"$PLAIN/one"
+  git -C "$PLAIN" add one
+  git -C "$PLAIN" commit --quiet --no-gpg-sign -m one
+  HEAD_A=$(git -C "$PLAIN" rev-parse HEAD)
+}
+
+run_git_case() {
+  name=$1
+  reset_plain
+  : >"$FAKE_LOG"
+  : >"$PR_STATES"
+  GH_FAIL_BOOKMARK=
+  EDIT_FAIL_BOOKMARK=
+  args=()
+  expected_status=0
+  expected_remote=
+
+  case "$name" in
+    git-publish)
+      args=(stack/01-a="$HEAD_A")
+      add_ref "$PR_STATES" stack/01-a NONE
+      expected_json='{"vcs":"git","restacked":["stack/01-a"],"skipped_merged":[],"errors":[]}'
+      expected_remote=$HEAD_A
+      ;;
+    git-reparent)
+      args=(stack/01-a="$HEAD_A")
+      add_ref "$PR_STATES" stack/01-a OPEN
+      expected_json='{"vcs":"git","restacked":["stack/01-a"],"skipped_merged":[],"errors":[]}'
+      expected_remote=$HEAD_A
+      ;;
+    git-local-mismatch)
+      args=(stack/01-a="$SHA_A")
+      expected_status=1
+      expected_json='{"vcs":"git","restacked":[],"skipped_merged":[],"errors":["local-sha-mismatch:stack/01-a"]}'
+      ;;
+    git-unknown-branch)
+      args=(stack/09-missing="$HEAD_A")
+      expected_status=1
+      expected_json='{"vcs":"git","restacked":[],"skipped_merged":[],"errors":["local-sha-mismatch:stack/09-missing"]}'
+      ;;
+    git-dry-run)
+      args=(--dry-run stack/01-a="$HEAD_A")
+      add_ref "$PR_STATES" stack/01-a OPEN
+      expected_json='{"vcs":"git","restacked":[],"skipped_merged":[],"errors":[]}'
+      ;;
+  esac
+
+  export GH_FAIL_BOOKMARK EDIT_FAIL_BOOKMARK
+  set +e
+  # a PATH without jj is what a plain git checkout looks like to the script
+  output=$(cd "$PLAIN" && PATH="$GIT_BIN:/usr/bin:/bin" \
+    /bin/bash "$RESTACK_SH" ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
+  status=$?
+  set -e
+  actual_remote=$(git -C "$ORIGIN" rev-parse --verify --quiet \
+    refs/heads/stack/01-a || true)
+
+  [ "$status" -eq "$expected_status" ] || fail "$name" "status $status, expected $expected_status"
+  [ "$output" = "$expected_json" ] || fail "$name" "JSON $output, expected $expected_json"
+  [ "$actual_remote" = "$expected_remote" ] || fail "$name" "remote [$actual_remote], expected [$expected_remote]"
+}
+
+for test_case in \
+  git-publish git-reparent git-local-mismatch git-unknown-branch git-dry-run
+do
+  run_git_case "$test_case"
+done
+
 if [ "$failures" -ne 0 ]; then exit 1; fi
-printf 'PASS: 15 fail-closed ordered stack sync cases\n'
+printf 'PASS: 15 jj and 5 git fail-closed ordered stack sync cases\n'

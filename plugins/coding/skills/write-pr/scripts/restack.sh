@@ -3,7 +3,8 @@ set -euo pipefail
 
 # publish an explicitly ordered pull request stack and repair each live base
 # usage: restack.sh [--dry-run] <bookmark>=<expected-git-sha>...
-# stdout: a json summary with restacked, skipped_merged, and errors arrays
+# stdout: a json summary with the selected vcs plus restacked, skipped_merged,
+#         and errors arrays
 
 dry_run=false
 bookmarks=()
@@ -12,6 +13,59 @@ states=()
 restacked=()
 skipped_merged=()
 errors=()
+
+# jj drives the stack wherever it is installed and initialized for this
+# repository; a matching working-copy-parent commit id is the only proof the two
+# share a backing store, so anything else is an ordinary git repository
+detect_vcs() {
+  command -v jj >/dev/null 2>&1 || return 1
+  jj_head=$(jj log -r @- --no-graph -T 'commit_id' 2>/dev/null) || return 1
+  git_head=$(git rev-parse HEAD 2>/dev/null) || return 1
+  [ "$jj_head" = "$git_head" ]
+}
+
+if detect_vcs; then
+  vcs=jj
+else
+  vcs=git
+fi
+
+vcs_fetch() {
+  if [ "$vcs" = jj ]; then
+    jj git fetch >/dev/null 2>&1
+  else
+    git fetch origin >/dev/null 2>&1
+  fi
+}
+
+vcs_local_sha() {
+  if [ "$vcs" = jj ]; then
+    jj log -r "$1" --no-graph -T 'commit_id ++ "\n"' 2>/dev/null
+  else
+    git rev-parse --verify --quiet "refs/heads/$1"
+  fi
+}
+
+# both pushes carry a lease, so a remote that advanced under a rewrite is
+# rejected rather than overwritten
+vcs_push() {
+  if [ "$vcs" = jj ]; then
+    jj git push --bookmark "$1" >/dev/null 2>&1
+  else
+    git push --force-with-lease origin \
+      "refs/heads/$1:refs/heads/$1" >/dev/null 2>&1
+  fi
+}
+
+vcs_remote_sha() {
+  if [ "$vcs" = jj ]; then
+    jj log -r "$1@origin" --no-graph -T 'commit_id ++ "\n"' 2>/dev/null
+  else
+    remote_ref=$(git ls-remote origin "refs/heads/$1" 2>/dev/null) || return 1
+    [ -n "$remote_ref" ] || return 1
+    printf '%s\n' "${remote_ref%%	*}"
+  fi
+}
 
 json_array() {
   separator=
@@ -24,7 +78,7 @@ json_array() {
 }
 
 emit_json() {
-  printf '{"restacked":'
+  printf '{"vcs":"%s","restacked":' "$vcs"
   json_array ${restacked[@]+"${restacked[@]}"}
   printf ',"skipped_merged":'
   json_array ${skipped_merged[@]+"${skipped_merged[@]}"}
@@ -85,14 +139,14 @@ for spec in "$@"; do
 done
 
 # fetch and preflight every supplied bookmark before changing remote state
-jj git fetch >/dev/null 2>&1 || fail_with 1 fetch
+vcs_fetch || fail_with 1 fetch
 
 index=0
 while [ "$index" -lt "${#bookmarks[@]}" ]; do
   bookmark=${bookmarks[$index]}
   expected_sha=${expected_shas[$index]}
 
-  if ! local_sha=$(jj log -r "$bookmark" --no-graph -T 'commit_id ++ "\n"' 2>/dev/null); then
+  if ! local_sha=$(vcs_local_sha "$bookmark"); then
     fail_with 1 "local-sha-mismatch:$bookmark"
   fi
   [ "$local_sha" = "$expected_sha" ] || fail_with 1 "local-sha-mismatch:$bookmark"
@@ -128,9 +182,8 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
     continue
   fi
 
-  jj git push --bookmark "$bookmark" >/dev/null 2>&1 || fail_with 1 "push:$bookmark"
-  if ! remote_sha=$(jj log -r "$bookmark@origin" --no-graph \
-    -T 'commit_id ++ "\n"' 2>/dev/null); then
+  vcs_push "$bookmark" || fail_with 1 "push:$bookmark"
+  if ! remote_sha=$(vcs_remote_sha "$bookmark"); then
     fail_with 1 "remote-sha-mismatch:$bookmark"
   fi
   [ "$remote_sha" = "$expected_sha" ] || fail_with 1 "remote-sha-mismatch:$bookmark"

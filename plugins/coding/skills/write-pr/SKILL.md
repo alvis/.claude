@@ -300,15 +300,13 @@ Supply every selected bookmark explicitly in bottom-up order with the exact
 local git commit SHA expected after the rewrite; never rediscover the set from
 a prefix. The sync script preflights the entire set, pushes each already-shaped
 unmerged bookmark, verifies the remote SHA, and updates open PR bases with
-`gh pr edit --base`; it does not reshape history. The script drives the jj path;
-on the git path run that same contract by hand — preflight every branch against
-its expected SHA first, then, bottom-up, push each already-shaped unmerged
-branch with `git push --force-with-lease origin <branch>`, confirm the remote
-SHA with `git ls-remote origin <branch>`, and reparent the PR with
-`gh pr edit "$PR" --base <parent-branch>`.
-Either way, abort the whole sync on the first preflight mismatch rather than
-pushing a partially shaped stack, and verify the PR base chain and each PR
-`headRefOid` mirror the recorded map.
+`gh pr edit --base`; it does not reshape history. It drives both paths, running
+the same contract through `jj git fetch`/`jj git push --bookmark` where the
+repository is jj-colocated and through `git fetch`/`git push
+--force-with-lease`/`git ls-remote` where it is not, and it reports which one it
+selected as `vcs` in its JSON summary. It aborts the whole sync on the first
+preflight mismatch rather than pushing a partially shaped stack; verify the PR
+base chain and each PR `headRefOid` mirror the recorded map.
 
 | Publication error | Action |
 |---|---|
