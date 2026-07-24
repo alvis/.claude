@@ -39,10 +39,7 @@ every output field; the essentials:
   temporary root for the selected work.
 - Each Git worktree or jj workspace owns its work state, and never commits it.
   Two trees must not run the same stream concurrently — that is what the
-  coordinator lease enforces — but the directory itself is portable: a
-  deliberate copy, rsync, or archive of `.engineering/` (or of a single
-  `works/<work-id>/`) is the sanctioned way to move work between trees and
-  machines. Ignored is not immovable.
+  coordinator lease enforces.
 
 `resolved` with `engineering_ignored: true` is a hard bootstrap gate before
 any work artifact or probe is written. On `requires_ignore`, every worker
@@ -226,9 +223,8 @@ suspected drift is settled by re-reading the journal. State in
 record: deleting it may cost convenience and execution detail, but must
 never erase an accepted decision, approved contract, published artifact
 identity, or unresolved critical risk — those live in versioned docs and
-external anchors (durable promotion and handover receipts); every state
-change, discovery, and decision lands immediately in the journal and its
-owning file. This
+durable promotion records; every state change, discovery, and decision
+lands immediately in the journal and its owning file. This
 discipline bounds crash loss to one journal line. A worker without the lease
 returns its status change and evidence in its output manifest immediately;
 the lease holder reconciles it at once.
@@ -280,24 +276,11 @@ conclusions are promoted to `docs/`.
 
 Continuity has one mechanism: the on-disk work directory. A handover
 completes the current tree's stream state and updates the default tree's
-`overview.md`; a resume reads those files and continues. On the **same
-machine** nothing else is needed. **Cross-machine** works the same way,
-because `.engineering/` is itself the portable carrier: copy the stream's
-`works/<work-id>/` (or the whole `.engineering/`) to the destination tree
-and resume there.
-
-The handover receipt is an **index, not a carrier**. It is bounded
-plain Markdown — repository identity, one row per stream with lifecycle,
-headline, next owner, next action, and the work directory that holds the
-state — published to the owning task, PR, or Notion work item, or simply
-returned in the response. It never carries raw work-state contents, and a
-receipt is never required to resume from state already on disk. Handover
-scopes to the current source tree only and releases the coordinator lease.
-
-State travels in the directory; **code travels by git**. A copied work
-directory does not carry repository changes, so each stream still records a
-destination-reachable source anchor that brings the destination checkout to
-the revision the work assumes.
+`overview.md`; a resume reads those files and continues. Nothing else is
+needed — the directory holds state, decisions, specification, and
+`artifacts/` together, and each stream records the source anchor that names
+the revision its work assumes. Handover scopes to the current source tree
+only and releases the coordinator lease.
 
 Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
 deletes every stream on the machine, silently. A copy of `.engineering/`

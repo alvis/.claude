@@ -40,7 +40,7 @@ Settle this before editing:
 | Creating tests | `/coding:complete-test` |
 | Documenting code | `/coding:document` |
 | Writing PR title/body, publishing or updating PRs, and driving CI green | `/coding:write-pr` |
-| Handing over work | `/essential:handover` |
+| Pausing work | `/essential:handover` |
 | Resuming work | `/essential:takeover` |
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |

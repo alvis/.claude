@@ -40,7 +40,7 @@ Practical consequences you will see day to day:
   and reconstructible. Every state change, discovery, and decision is stored
   immediately in the journal and its owning state file; accepted decisions,
   approvals, and published artifact identities also live in versioned
-  `docs/` and external anchors (issue, PR, Notion) via handover receipts.
+  `docs/` and external anchors (issue, PR, Notion) via promotion records.
 - **Completed work stays completed.** When a decision or spec change
   invalidates a finished task, its row keeps `✓ done` and gains
   `validity: stale (<reason>)`; new remediation tasks carry the rework. The
@@ -122,9 +122,8 @@ discipline:
    carries the full binding tuple. Spec freshness is re-checked at named
    moments (before planning, each dispatch batch, review, completion).
 8. **Pause and resume.** `essential:handover` persists everything into
-   `.engineering/` and emits a bounded receipt indexing each stream's work
-   directory; `essential:takeover` resumes from those on-disk files —
-   including a directory copied in from another machine — checks the lease,
+   `.engineering/` and refreshes the cross-tree overview;
+   `essential:takeover` resumes from those on-disk files, checks the lease,
    and drives streams to their success criteria (`essential:doctor` owns
    structural audits).
 9. **Promote and retire.** Stable knowledge promotes to versioned `docs/`
@@ -147,7 +146,7 @@ discipline:
 | 9. Reconcile the spec | Let implementation run the applicable Notion completion gate or local source/carrier recheck. | A change in specification content invalidates plan/code/review evidence; done tasks keep their status and gain stale validity with remediation tasks. |
 | 10. Save and finalize | On deferred `needs_save`, run the exact returned `/coding:commit --paths-from=... --manifest-sha256=...`; on `ready_for_finalization`, skip save; on `no_change`, stop. Then `/coding:finalize-commits` once. | The closed-set save preserves unrelated staged and dirty developer work. |
 | 11. Publish | If no PR was already published, run `/coding:write-pr` only when the GitHub and `gh` prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
-| 12. Close or transfer | Mark the work complete after acceptance and decision dispositions, or run `/essential:handover`. | Every required executable leaf must be done. Transfer moves the `.engineering/works/<work-id>/` directory; the receipt only indexes it. |
+| 12. Close or pause | Mark the work complete after acceptance and decision dispositions, or run `/essential:handover`. | Every required executable leaf must be done. A pause leaves the whole stream in `.engineering/works/<work-id>/`, ready for `/essential:takeover`. |
 
 When the target is a standalone or non-TypeScript repository, verify each
 selected skill against the repository's native commands before use.
@@ -174,7 +173,7 @@ or PR publication only after the local flow is understood.
 
 | Plugin | What it owns | README |
 |---|---|---|
-| `essential` | The engineering-work lifecycle backbone: truth model, work state, lease, journal, doctor, handover/takeover, research and decision skills, agent installer. Every other plugin depends on it. | [plugins/essential](plugins/essential/README.md) |
+| `essential` | The engineering-work lifecycle backbone: truth model, work state, lease, journal, doctor, pause/resume, research and decision skills, agent installer. Every other plugin depends on it. | [plugins/essential](plugins/essential/README.md) |
 | `specification` | Specs with provenance: authoring, planning, implementation orchestration, seven-area review, and safe Notion synchronization. | [plugins/specification](plugins/specification/README.md) |
 | `coding` | General code production: TDD write/fix/refactor, scoped saves, stacked PRs, lint, docs, cleanup. | [plugins/coding](plugins/coding/README.md) |
 | `governance` | The meta-layer: creating and verifying agents, skills, and standards. | [plugins/governance](plugins/governance/README.md) |
@@ -184,12 +183,12 @@ or PR publication only after the local flow is understood.
 | `web` | Web UX design, audits, imaging, Next.js diagnosis, Storybook checks. | [plugins/web](plugins/web/README.md) |
 | `production` | Media/creative production: asset provenance, render manifests, revision-bound review. | [plugins/production](plugins/production/README.md) |
 
-## Work state, handover, and recovery
+## Work state and recovery
 
 - `.engineering/works/<work-id>/` is ignored, workspace-local coordination
-  memory — an operational projection rather than a record of record, but it
-  *is* the transfer mechanism: copy the directory to move work between trees
-  or machines. Ignored does not mean immovable.
+  memory — an operational projection rather than a record of record. It is
+  self-contained: state, decisions, specification, and `artifacts/` sit
+  together under that one directory.
 - `working.md` is the short current-focus pointer; `state.md` is the complete
   lifecycle, plan, task graph, and evidence index; `state/journal.md` is the
   append-only causal record the tables are views over.
@@ -197,11 +196,12 @@ or PR publication only after the local flow is understood.
   removed scope becomes a cancelled tombstone. Every task shows a mark and
   word (`- planned`, `⧗ working`, `✓ done`, `X failed`, `! blocked`,
   `⊘ cancelled`); validity is a separate dimension.
-- To pause, run `/essential:handover`; to resume, `/essential:takeover`. To
-  resume elsewhere, copy the work directory there first — the receipt says
-  which one and at which revision, and never carries the files itself. Never
-  claim a stream's *code* is portable while it exists only as an uncommitted
-  working copy; its state is portable regardless.
+- To pause, run `/essential:handover`; to resume, `/essential:takeover`. The
+  pause writes nothing but state, so it always completes — a stream whose code
+  is still an uncommitted working copy is paused and resumed like any other.
+- `.engineering/` is ignored, so one reflexive `git clean -fdx` deletes it.
+  Keep a copy outside the repository; `essential:doctor` checks a restored
+  tree's structural integrity before it is resumed.
 - Handover and takeover write only under `.engineering/` (and `docs/` at
   promotion). A continuation file anywhere else — `/tmp`, `.local/`, the repo
   root — is a bug, including when output is too large for a response.

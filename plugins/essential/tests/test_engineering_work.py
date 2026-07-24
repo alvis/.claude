@@ -937,7 +937,7 @@ class ArtifactSkillContractTest(unittest.TestCase):
         )
         self.assertIn("never mint an ID silently", normalized_main_agent)
 
-    def test_shared_contract_supports_portable_specs_and_handover(self) -> None:
+    def test_shared_contract_supports_specs_and_on_disk_continuity(self) -> None:
         contract = (ESSENTIAL / "references/engineering-work.md").read_text(
             encoding="utf-8"
         )
@@ -946,8 +946,14 @@ class ArtifactSkillContractTest(unittest.TestCase):
         self.assertIn("provenance.json", contract)
         self.assertIn("explicit local path, approved inline candidate", normalized)
         self.assertIn("Neither path claims a Notion round trip", normalized)
-        self.assertIn("plain-Markdown portable receipt", normalized)
-        self.assertIn("isolated post-anchor tree", normalized)
+        self.assertIn(
+            "Continuity has one mechanism: the on-disk work directory", normalized
+        )
+        self.assertIn(
+            "each stream records the source anchor that names the revision "
+            "its work assumes",
+            normalized,
+        )
 
     def test_persistent_discovery_accepts_optional_explicit_work_id(self) -> None:
         discover = (ESSENTIAL / "skills/discover/SKILL.md").read_text(

@@ -21,11 +21,10 @@ take bounded work.
   PM-only: never mint an ID silently.
 - Write only under the active `.engineering/`, plus `docs/` at promotion; large
   output is shortened or pointed into `.engineering/`, never spilled to a file.
-- `essential:takeover` resumes from on-disk `.engineering/works/`; a copied-in
-  work dir is valid state with its own ID. It may read a receipt and the
-  overview pre-bootstrap; a receipt selects IDs and anchors, never state. Claim
-  a copied lease with the `takeover` verb. Bootstrap only to create absent work
-  memory; never promote before bootstrap.
+- `essential:takeover` resumes from on-disk `.engineering/works/`; a work dir it
+  did not create is valid state with its own ID. It may read the overview
+  pre-bootstrap. Claim a foreign lease with the `takeover` verb. Bootstrap only
+  to create absent work memory; never promote before bootstrap.
 - Run one final batch check only on eligible work Markdown under target
   `.engineering/`; split all oversized files together, then recheck.
 
