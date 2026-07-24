@@ -99,7 +99,7 @@ def render() -> str:
         "",
         "```bash",
         "claude plugin validate --strict .",
-        "python3 plugins/governance/skills/verify-skill/scripts/quick_validate.py .",
+        "python3 plugins/governance/skills/write-skill/scripts/quick_validate.py .",
         "```",
         "",
         "Run `python3 scripts/generate_readme.py --check` to confirm this inventory is current.",

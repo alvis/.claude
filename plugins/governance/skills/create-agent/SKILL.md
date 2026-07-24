@@ -19,7 +19,7 @@ anything is written. `update-agent` owns changes to existing definitions.
 - Use for: adding a new specialist subagent, scaffolding an agent definition
   from scratch, or accepting a new-role handoff from `update-agent`.
 - Do not use for: modifying an existing agent (`update-agent`), creating
-  skills (`create-skill`), or a role an existing agent already covers —
+  skills (`write-skill`), or a role an existing agent already covers —
   reject the duplicate and route to `update-agent` instead of authoring a
   competing trigger surface.
 

@@ -172,7 +172,7 @@ Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remai
 
   ```bash
   claude plugin validate --strict plugins/coding
-  python3 plugins/governance/skills/verify-skill/scripts/quick_validate.py plugins/coding/skills/merge-pr
+  python3 plugins/governance/skills/write-skill/scripts/quick_validate.py plugins/coding/skills/merge-pr
   ```
 
 ## Completion
