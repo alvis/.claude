@@ -1,10 +1,10 @@
 # Orchestration & delegation
 
-Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a teammate owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. The Project Manager owns delivery across teams; route every coding change through `tech-lead` (the engineering-domain orchestrator) and the implementing teammate. A domain lead gathers relevant teammate advice, decomposes the assigned goal, owns the implementation decisions for its domain, assigns and monitors the pieces across its team, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current teammate — zero tolerance.
+Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a teammate owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. The Project Manager owns delivery across teams; route every coding change through `tech-lead` and the implementing teammate. A domain lead gathers teammate advice, decomposes the assigned goal, owns its domain's implementation decisions, assigns and monitors the pieces, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current teammate — zero tolerance.
 
 ## Choosing the topology
 
-Classify the task and pick the substrate once, up front, then name the success or convergence criteria before you launch — a run with no stop condition is not ready:
+Classify the task and pick the substrate once, up front, then name the success criteria before launch — a run with no stop condition is not ready:
 
 - **Inline** — don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off.
 - **Parallel slices** — independent, dispatch-and-score work whose siblings needn't talk → parallel `Agent` calls in a SINGLE message, one slice each.
@@ -13,16 +13,17 @@ Classify the task and pick the substrate once, up front, then name the success o
 
 ## Delegating well
 
-- **Route to the best runtime specialist.** Inspect each available agent's description immediately before every spawn. First classify the requested action and deliverable from its verbs and acceptance criteria; only then match subject area, tools, independence, and context. Shared nouns do not establish ownership — for example, a request to implement a React component belongs to the frontend implementer, while a request to design that component belongs to the frontend designer. Do not add an unrequested prerequisite stage merely because a specialist's preferred workflow mentions one. Named routing rows and collaboration edges are proven defaults, not limits; never invent an unavailable agent, and honor the "Must use" and "Use proactively" triggers in each agent's own description.
+- **Route to the best runtime specialist.** Inspect each available agent's description immediately before every spawn. Classify the requested action and deliverable from its verbs and acceptance criteria first; only then match subject area, tools, independence, and context — shared nouns do not establish ownership (implementing a component and designing it have different owners). Do not add an unrequested prerequisite stage merely because a specialist's preferred workflow mentions one. Named routing rows and collaboration edges are proven defaults, not limits; never invent an unavailable agent, and honor the "Must use" and "Use proactively" triggers in each agent's description.
 - **Give full context once.** The first dispatch carries a bounded mission capsule: objective, constraints, acceptance criteria, why it matters, and absolute paths to relevant standards and durable artifacts. Do not paste those artifacts into the prompt. Every later message is a delta.
 - **You own skills.** Follow a skill yourself and delegate only the tasks within its steps — subagents do not run your skills. Know where every standard and skill lives; never ask others to find them.
 - **Parallel first.** Map the task set as a dependency graph, drawing an edge only where one task truly needs another's output; batch the edge-free tasks into a SINGLE message of multiple `Agent` calls, and serialize only along real edges.
 - **One bounded task per subagent.** Give each worker exactly one task; before launching, estimate its context load — base, files, tool output, generated output — and keep the unit bounded. Never hand more work to a worker whose measured remaining context cannot safely hold it.
-- **Only the main agent names teammates.** For a persistent teammate, choose one of the three preferred short names at the end of the selected role's description, combine it with the role and task, and choose a different suggestion when the short name would collide with a living teammate. Nested agents never assign configured names.
-- **Reuse a warm peer by ID.** Route a small task that needs a large base context to the `agent_id` of a live teammate that already carries it rather than cold-starting a fresh agent — separate spawns do not share a cached base.
-- **Delegate continuing work directly when the owner is known.** If a subagent knows the best teammate and its `agent_id`, it messages that teammate directly. If it knows the teammate but not the ID, it asks the main agent to resolve the ID. Only when it does not know who should own the work does it ask the main agent to suggest someone; the main agent prefers a living teammate that has worked on the same folder or feature, otherwise it spawns a new named teammate that meets the requested criteria and returns its `agent_id`.
+- **Only the main agent names teammates** (rules in "Runtime teammate naming" below); nested agents never assign configured names.
+- **Reuse a warm peer by ID.** Route a small task that needs a large base context to the `agent_id` of a live teammate that already carries it — separate spawns do not share a cached base.
+- **Delegate continuing work directly when the owner is known.** A subagent that knows the best teammate's `agent_id` messages it directly; knowing the teammate but not the ID, it asks the main agent to resolve it; only with no known owner does it ask the main agent to suggest one — the main agent prefers a living teammate with matching folder/feature history, else spawns a new named teammate and returns its `agent_id`.
 - **Message only by `agent_id`.** Direct agent-to-agent communication always targets the runtime `agent_id`; a role, `subagent_type`, configured name, or label is never a message address.
 - **Synthesize.** Collect what returns, identify patterns, and consolidate it into actionable results.
+- **Two-stage dispatch.** Use a prompt-generation subagent only when building the worker prompt would itself consume substantial context or noisy output; read small, bounded context inline.
 
 ## Message discipline
 
@@ -42,17 +43,6 @@ Proceed without user input only when the assumption is low-impact and reversible
 
 The main session owns the authoritative uncertainty ledger and user decisions. A subagent that encounters a material unknown returns the observed evidence, inference, unresolved question, deviation from the assigned map, recommended disposition, affected scope, options, and independent work that can continue.
 
-## Team lifecycle
-
-- **Form a team when delegation carries signal** — large or high-output work; stay inline for trivial, conversational, or small tasks.
-- **Keep teammates hot.** Route related work to an idle teammate whose loaded context still fits.
-- **Terminate the unneeded.** Retire a teammate once it is clearly done — task finished with no follow-up, a review passed — or telemetry shows keeping it no longer helps.
-- **Spawn fresh for independent work** when a task is unrelated to a teammate's loaded context, or a follow-up (such as a re-review while a fix is in flight) would block it.
-- **Keep nested spawning one-off.** A nested agent may spawn only when the task is certainly disposable after one returned artifact or summary. It specifies `subagent_type` (for example, `test-reporter`), omits a configured name, and never creates a standing nested teammate. For continuing work, it messages the best-known teammate directly by `agent_id`; only when it cannot identify the owner does it ask the main agent to suggest one.
-- **Bound exceptional fan-out.** Declare a task-wide child-spawn budget before the first one-off nested spawn; default to three. `SendMessage` hand-offs to known `agent_id`s don't spend it, but the same task must not cross the same sibling edge twice.
-- **Hand off by reference.** The first message names the objective, acceptance criteria, and relevant absolute artifact paths within the 4,096-character ceiling. Later messages carry only deltas. If `SendMessage` is unavailable, return the compact hand-off to the caller.
-- **Keep agent definitions role-specific.** An agent's `Collaboration` section lists only outbound collaborators as concise bullets; it never repeats this protocol, narrates who spawns it, or restates its tools.
-
 ## Runtime teammate naming
 
 Only the main agent assigns a configurable teammate `name` or label. Use `<short-name>-<role>-<task>` in lowercase kebab-case:
@@ -65,16 +55,11 @@ Only the main agent assigns a configurable teammate `name` or label. Use `<short
 
 ## Model and effort
 
-Match the model to the task's cognitive demand — never default everything to the largest, never starve a hard task with a small one:
-
-| Model | Use for |
-|-------|---------|
-| **haiku** | Simple, routine, deterministic work with a known procedure — tests, lint, command output, mechanical file sweeps. |
-| **sonnet** | Branching work — investigation whose next step depends on findings, triage, moderate edits with a few decision points. |
-| **opus** | General coding — features, non-trivial bugs, refactoring with judgment. |
-| **fable** | Advanced coding, deep reasoning, research, and review — where correctness hinges on subtle judgment or adversarial scrutiny. |
-
-Effort is a second, independent dial (`low|medium|high|xhigh|max`; omit for haiku, which has none). Set it by the task's difficulty, not its model. Pick the cheapest model that clears the quality bar — a stronger model that wouldn't change the output is wasted — then, to make a worker think harder, raise its effort, not its model.
+Pick each worker's model by cognitive demand and raise effort — not the
+model — to make it think harder; the selection table, effort dial, and
+team-lifecycle rules (forming, keeping hot, retiring, nested-spawn
+budgets) live in [team-lifecycle.md](team-lifecycle.md); read it at
+spawn and wind-down moments.
 
 ## Nesting
 
@@ -82,10 +67,6 @@ Effort is a second, independent dial (`low|medium|high|xhigh|max`; omit for haik
 - The nested call specifies an agent type such as `test-reporter`, never a configured name. The parent supplies a bounded mission capsule and absolute paths to the relevant standards and artifacts; it does not paste durable context into the prompt. The same 4,096-character ceiling applies.
 - For continuing or collaborative work, message the best-known teammate directly by `agent_id`. If that teammate is known but its ID is not, ask the main agent to resolve the ID; only when the owner is unknown should the main agent suggest a warm peer by prior folder/feature history or spawn a new named teammate.
 - Rely on the native nesting ceiling; do not keep a second depth counter, delegate to an ancestor, or reuse a sibling edge.
-
-## Two-stage dispatch
-
-Use a prompt-generation subagent only when building the worker prompt would itself consume substantial context or noisy output. Read small, bounded context inline.
 
 ## Review responsibility
 

@@ -31,12 +31,23 @@ Root state metadata contains at least:
 - Charter: [goal.md](goal.md)
 - Plan source: `state.md`
 - Plan revision: `3`
+- State revision: `41`
+- Written under: `a1b2c3d4`
 ```
 
 The charter pointer names the work's `goal.md`, which owns the goal, scope,
 numbered success criteria, and specification provenance; the root state never
 restates them. `Plan revision` counts approved definition changes, starting at
-`1`.
+`1`. `State revision` is a monotonic counter bumped on every coordinator write
+of `state.md` (progress and definition alike), starting at `1`; it orders
+journal lines and lets the lease and doctor detect a stale writer.
+`Written under` records the short hash of the engineering-work contract this
+file was bootstrapped or last coordinator-rewritten against — provenance
+only, stamped by the resolver and rewrites; it confers no authority (the
+current contracts always judge) but lets the doctor report drift as "written
+under X, current is Y" and order migrations by staleness. All three fields
+apply to new and coordinator-rewritten files only — an older file gains them
+at its next explicit rewrite under the lazy-migration rule, never on read.
 
 Keep lifecycle status (`initialized|active|blocked|complete|retiring`), task
 status, attempt outcome (`pass|fail|partial`), file state, review state, and
@@ -85,6 +96,13 @@ Record `attempt:` plus either `retry:` or `disposition:` for failed work.
 Record `unblock:` for blocked work. Required work cannot remain cancelled;
 revise and reapprove the definition so it is optional or absent.
 
+Validity is orthogonal to status (see Essential's `truth.md`). Mark/status
+pairs are history and are never falsified; `✓ done` is terminal. When later
+truth invalidates a done row's result, append
+`validity: stale (<reason or superseding id>)` — or `validity: unknown (…)`
+when unverified — to its Evidence cell and add remediation tasks with new IDs.
+An unmarked row is `current`.
+
 ## DAG and roll-up semantics
 
 `Depends on` is the authoritative graph. A chain is a linear DAG; use a
@@ -126,70 +144,41 @@ sync, publication, or history anchoring remains required.
 
 ## Reading state and definition changes
 
-There is no separate validation step. Before dispatch, review, handover,
-takeover, cleanup, or retirement, read the work item's `state.md` (and any
-`state/*.md` children) directly. From the task table, determine which tasks are
-runnable, which are blocked, the current owner, and the next action, then
-proceed on that reading.
-
-The plan definition is the root task registry itself: full task IDs, their
-`Task` summaries and targets, `Depends on` edges, requiredness, and acceptance.
-A "definition changed" check is simply re-reading the state file — a change to
-identity, definition, target, dependency, requiredness, or acceptance takes
-effect the moment it is written, and downstream reconciliation follows from the
-DAG and roll-up rules above. Progress updates (mark, runtime status, owner,
-evidence/next action) do not change the definition. Retain every assigned ID as
-history: mark removed work as an optional cancelled tombstone rather than
-deleting its row.
+There is no separate validation step: before dispatch, review, handover,
+takeover, cleanup, or retirement, read `state.md` (and `state/*.md` children)
+directly and proceed on that reading. The plan definition is the root task
+registry itself — IDs, `Task` summaries and targets, `Depends on` edges,
+requiredness, acceptance. A "definition changed" check is simply re-reading
+the file: a definition change takes effect the moment it is written and
+downstream reconciliation follows the DAG rules above, while progress updates
+(mark, runtime status, owner, evidence) never change the definition.
 
 ## Change control during execution
 
-Plans change during execution — a new restriction surfaces, a design or
-specification issue is found, a premise fails. That is the normal path, not an
-exception, and it follows one procedure:
-
-1. **Journal the finding.** Append one line to `state/journal.md` and record
-   the detail in `state/discovery.md` (or `state/unresolved.md` when it is an
-   open question with an owner).
-2. **Classify the impact and route it.**
-   - **Task-local** — the finding changes how one task is executed, not what
-     it is. Record evidence and a retry or disposition on the row. No
-     revision.
-   - **Plan-level** — task definitions, dependencies, requiredness, or
-     acceptance must change. Raise a `proposals/` child (`open`), get user
-     approval, then apply the revision: bump `Plan revision: N+1`, append the
-     entry to `state/revisions.md` (what changed, why, approver, triggering
-     spec base-id when one exists), tombstone removed scope as `cancelled`,
-     and reconcile downstream rows per the DAG and roll-up rules above.
-   - **Spec-level** — the canonical specification itself is wrong or
-     incomplete. Raise a specification-change proposal; the source owner
-     authors the change and completes it through
-     `sync-spec complete --stage=specification`, establishing a new base;
-     materialize that base; run the revalidation sweep (mark dependent rows
-     `! blocked` with `unblock: revalidate against <base-id>`, re-check
-     `goal.md` success criteria, journal the sweep); only then revise the
-     plan. A spec-level change is never applied to the plan first — the
-     canonical specification leads and the plan follows the new base.
-3. **Resume from the registry.** After the route completes, re-read the state
-   files directly and proceed on runnable tasks; stale in-flight work on a
-   disproved premise is stopped, not finished for completeness.
+Plans change during execution; that is the normal path, not an exception.
+When a mid-execution finding may change how, what, or why work is executed,
+follow the journal → classify (task-local / plan-level / spec-level) →
+resume procedure in Essential's [change-control.md](change-control.md).
 
 `state/journal.md` is append-only: one line per status transition, decision,
-plan or charter revision, or sync event —
-`- <ISO-8601> <actor> <task-id or event>: <transition or summary> [evidence: <ref>]` —
-newest last, never rewritten or deleted. `state/revisions.md` is the same
-discipline at plan granularity: one entry per approved revision. Neither file
-is ever the plan authority; both make the authoritative tables auditable and
-reconstructible.
+plan or charter revision, sync event, sweep, checkpoint, or lease event —
+`- <ISO-8601> <actor>@<capability_id> rev:<N> <event-type> <subject>: <transition or summary> [evidence: <ref>] [invalidates: <ids>]` —
+newest last, never rewritten or deleted. `<event-type>` is one of
+`status|decision|revision|sync|sweep|checkpoint|lease`; `rev:<N>` is the
+`State revision` the writer was at; `invalidates:` names outputs or evidence
+the event made stale. Older lines in the pre-grammar form
+(`- <ISO-8601> <actor> <task-id or event>: <summary>`) remain valid history.
+`state/revisions.md` is the same discipline at plan granularity: one entry per
+approved revision. Neither file is ever the plan authority; both make the
+authoritative tables auditable and reconstructible.
 
 ## Portable handover
 
-Ignored work memory is not a cross-machine transport. To move a work item, a
-handover emits a plain-Markdown receipt: a destination-reachable source anchor,
-the raw contents of `goal.md`, `state.md`, `working.md`, and every
-continuity-relevant `state/*.md` child and detail file (including
-`state/journal.md` and `state/revisions.md` when they exist), and any
-specification carriers needed to continue. A takeover reads that receipt, checks out or applies the source
-anchor, and writes each state file back to its work-relative path verbatim.
-There are no snapshot bytes, checksums, or machine render step; the reader
-judges completeness directly.
+Ignored work memory is not a cross-machine transport. To move a work item,
+a handover emits a plain-Markdown receipt — a destination-reachable source
+anchor plus the raw contents of every continuity-relevant work file — and a
+takeover writes each file back to its work-relative path verbatim. There
+are no snapshot bytes, checksums, or machine render step; the reader
+judges completeness directly. The receipt shape (including per-stream
+`State revision`, lease status, and checkpoint pointers) is defined in the
+handover skill's document templates.

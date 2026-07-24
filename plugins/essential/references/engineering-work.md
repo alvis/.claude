@@ -3,6 +3,10 @@
 Read this contract before creating or materially rewriting project engineering
 artifacts. It defines their paths, ownership, promotion, and final size check.
 Domain skills own artifact content; Essential owns this cross-plugin lifecycle.
+Read [truth.md](truth.md) once per work stream: it defines the kinds of truth
+these artifacts carry, the constitutional rules, validity, and `capability_id`.
+Per-moment detail lives in the references named below; read each when its
+moment arrives, not before.
 
 ## Resolve the workspace first
 
@@ -16,45 +20,31 @@ ESSENTIAL_ROOT="$(cd "$(dirname "$ENGINEERING_WORK_REFERENCE")/.." && pwd)"
 "$ESSENTIAL_ROOT/bin/resolve-engineering-workspace"
 ```
 
-The resolver accepts both `--work-id <id>` and `--work-id=<id>`, and both
-`--path <path>` and `--path=<path>`. A normal invocation is read-only;
-`--bootstrap` is the explicit PM-only creation mode described below.
-
-The resolver chooses in this order: explicit `--work-id`,
-`ENGINEERING_WORK_ID`, a work directory matching the Git branch/jj workspace
-label (including a namespaced Git branch's final component), then a sole
-existing workspace-local work directory only when the workspace label is
-generic or unavailable. A meaningful workspace-derived identity that differs
-from the sole existing directory is ambiguous and returns `work_id_required`.
-Branch and
-workspace names may identify existing work but never create a new identity.
-Explicit IDs are for user-confirmed disambiguation, newly derived or minted
-work, and portable takeover—not a required argument on every skill.
-`work_id_source` records the choice.
-
-On `work_id_required`, no work path is selected. The result includes
-`candidate_work_ids`, `workspace_label`, and any `suggested_work_id`; the PM asks
-the user, while a worker reports the ambiguity to the PM. Never guess through
-multiple candidates, a detached checkout, or a generic `main`, `master`,
-`trunk`, or `default` workspace. Use the reported paths once resolved.
+A normal invocation is read-only; `--bootstrap` is the explicit PM-only
+creation mode below. The resolver chooses identity in this order: explicit
+`--work-id`, `ENGINEERING_WORK_ID`, a work directory matching the Git
+branch/jj workspace label, then a sole existing workspace-local work
+directory only when the workspace label is generic or unavailable. Branch and
+workspace names may identify existing work but never create a new identity;
+`work_id_source` records the choice. On `work_id_required`, no work path is
+selected — the PM asks the user, a worker reports the ambiguity, and nobody
+guesses through candidates, a detached checkout, or a generic `main`,
+`master`, `trunk`, or `default` label. The resolver's `--help` enumerates
+every output field; the essentials:
 
 - `durable_root` is the active workspace root for versioned project documents
-  and `.gitignore`; `repo_root` is its compatibility alias.
-- `default_workspace` is nullable discovery metadata for consumers that need a
-  registered default; generic work does not require one.
-- `active_workspace` owns its own ignored `.engineering/works/<work-id>/`.
-- `work_dir` is the only temporary root for the selected work.
+  and `.gitignore` (`repo_root` is its alias); `active_workspace` owns its
+  own ignored `.engineering/works/<work-id>/`, and `work_dir` is the only
+  temporary root for the selected work.
 - Each Git worktree or jj workspace has isolated work state. Never copy
   `.engineering/` between them or commit it.
 
 `resolved` with `engineering_ignored: true` is a hard bootstrap gate before
-any work artifact or probe is written. On `requires_ignore`, every worker stops
-and reports the returned `ignore_file`. The PM alone adds the exact
+any work artifact or probe is written. On `requires_ignore`, every worker
+stops and reports the returned `ignore_file`. The PM alone adds the exact
 `.engineering/` rule to the active workspace `.gitignore`, includes that
-`.gitignore` path in `generated_files`, and reruns the resolver. A sync-only or
-ad hoc `git check-ignore` probe does not replace this bootstrap contract. The
-resolver validates effective ignore semantics for an active work probe, so a
-later negation cannot silently reopen that write root.
+`.gitignore` path in `generated_files`, and reruns the resolver. A sync-only
+or ad hoc `git check-ignore` probe does not replace this bootstrap contract.
 
 ### First-use work-memory bootstrap
 
@@ -72,34 +62,16 @@ Identity selection remains separate and interactive: `--bootstrap` never
 derives or mints an ID, and it cannot bypass `work_id_required` or
 `requires_ignore`. The resolver owns the mechanical bootstrap; the PM alone
 may request it while holding the coordinator lease. It creates the work
-directory, its `state/` subdirectory, and whichever of `goal.md`,
-`state/working.md`, `state.md`, and `state/journal.md` is missing. Each file is
-created with no-clobber semantics; an existing regular file is reported and
-preserved byte-for-byte. The resolver refuses symlinked/non-directory work-root
-components and symlinked/non-regular entrypoints on every invocation, not only
-during bootstrap, so later writers cannot escape the target workspace. This
-also makes the command safe to rerun when an interrupted first use created only
-one entrypoint.
-
-The initial `goal.md` contains the work ID, `Charter revision: 1`, and
-explicit placeholders for goal, scope/non-goals, the numbered success-criteria
-table, and specification provenance. The initial `state/working.md` contains
-the work ID, creation timestamp, `initialized` status, a confirmation-focused
-current action and handback point, and relative links to `../goal.md` and
-`../state.md`. The initial `state.md` contains the same
-identity/status/navigation plus charter/journal links, `Plan revision: 1`, and
-explicit placeholders for the lifecycle plan, revision, sync, review,
-decisions, dependencies/blockers/risks, and evidence/validation. The initial
-`state/journal.md` carries the append-only header and one bootstrap line.
-Downstream owners replace those placeholders with observed truth; they do not
-create competing bootstrap shapes. The resolver returns the exact paths in
-`bootstrap_created` and preserved paths in `bootstrap_existing`; the PM adds
-created paths to the combined `generated_files` manifest.
-
-Git's main worktree is reported as its default when available. A jj workspace
-registered as `default` is reported when available. A Notion operation that
-needs a default workspace resolves and validates that requirement itself;
-ordinary work remains valid without it.
+directory, `state/`, and whichever of `goal.md`, `state/working.md`,
+`state.md`, and `state/journal.md` is missing; each file is created with
+no-clobber semantics, an existing regular file is preserved byte-for-byte,
+and symlinked or non-regular components are refused on every invocation —
+safe to rerun after an interrupted first use. The initial files carry
+identity, revision counters at `1`, explicit placeholders, and the journal's
+append-only header; downstream owners replace placeholders with observed
+truth. The resolver returns exact paths in `bootstrap_created` and preserved
+paths in `bootstrap_existing`; the PM adds created paths to the combined
+`generated_files` manifest.
 
 ## Canonical topology
 
@@ -116,458 +88,222 @@ docs/
 │   ├── system/*.md
 │   ├── <design-slug>.md
 │   └── <design-slug>/*.md
-└── specs/<capability>/
-    ├── index.md
-    ├── provenance.json
-    └── *.md
+├── specs/<capability>/
+│   ├── index.md
+│   ├── provenance.json
+│   └── *.md
+└── <domain>/<slug>/…                # plugin-owned durable documents
 
 .engineering/                       # ignored, isolated per source tree
 ├── overview.md                      # default source tree only: global cross-tree status index
 ├── notion/                          # conventional default-workspace mirror
-│   └── [notion-sync-owned .mdc paths]
-└── works/<work-id>/                 # in the source tree that owns the stream; not repeated in the default tree
+├── archive/<work-id>/               # parked idle streams; resolver never enumerates
+└── works/<work-id>/                 # in the source tree that owns the stream
     ├── goal.md
     ├── state.md
-    ├── state/
-    │   ├── working.md
-    │   ├── journal.md
-    │   ├── revisions.md
-    │   ├── unresolved.md
-    │   ├── plan.md
-    │   ├── discovery.md
-    │   └── *.md
+    ├── lease.json
+    ├── state/{working,journal,revisions,unresolved,plan,discovery}.md
     ├── spec/
-    ├── proposals.md
-    ├── proposals/*.md
-    ├── changes.md
-    ├── changes/*.md
-    ├── decisions.md
-    ├── decisions/*.md
-    ├── design.md
-    ├── design/*.md
-    ├── review.md
-    ├── reviews/*.md
+    ├── proposals.md + proposals/*.md
+    ├── changes.md + changes/*.md
+    ├── decisions.md + decisions/*.md
+    ├── design.md + design/*.md
+    ├── review.md + reviews/*.md
     └── artifacts/
 ```
 
-All generated project Markdown filenames are lowercase. Plugin control files
-whose runtime names are fixed, including `SKILL.md`, `CLAUDE.md`,
-`MAINAGENT.md`, and `SUBAGENT.md`, retain those names.
+All generated project Markdown filenames are lowercase; plugin control files
+with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 
 ### Durable documentation
 
 - `docs/index.md` is the small entrypoint to architecture, design, and
   capability specifications.
-- `docs/architecture/overview.md` indexes durable architecture documents and
-  ADRs. `docs/architecture/<slug>.md` owns structural rules, boundaries,
-  topology, protocols, and flows. A choice with alternatives and consequences
-  is an ADR under `decisions/`, not a second architecture truth.
-- `docs/design/system.md` owns system-wide tokens, components, states, motion,
-  and accessibility. `docs/design/<slug>.md` owns durable feature,
-  interaction, information, or experience design that is not system-wide.
-- `docs/specs/<capability>/` is reviewed, versioned engineering specification
-  content. For an inline source, `index.md` is the durable authoritative
-  carrier; for an explicit local source it is a content-equivalent durable
-  carrier; for Notion it is a verified derivation. `provenance.json` records
-  source kind, source and approval hashes, template identity, and output
-  hashes. The tree is not managed by notion-sync and does not adopt
-  notion-sync filenames.
+- `docs/architecture/` owns structural rules, boundaries, topology,
+  protocols, and flows; a choice with alternatives and consequences is an ADR
+  under `decisions/`, never a second architecture truth.
+- `docs/design/` owns durable system-wide and feature design.
+- `docs/specs/<capability>/` is reviewed, versioned specification content.
+  For an inline source, `index.md` is the durable authoritative carrier; for
+  an explicit local source it is a content-equivalent durable carrier; for
+  Notion it is a verified derivation. `provenance.json` records source kind,
+  source and approval hashes, template identity, and output hashes.
+- Beyond those trees, **durable user-facing documents live under
+  `docs/<domain>/<slug>/`**, owned by the plugin that mints them and
+  referenced from the owning stream's state — for example
+  `docs/initiatives/<slug>/index.md` and
+  `docs/production/<slug>/assets.md`. The minting plugin defines the
+  document's shape; this contract defines only its home and provenance
+  obligations.
 - Task implementation state does not become durable merely because a skill
   wrote it. Promote only stable knowledge, with provenance and supersession
-  links, during completion.
+  links, during completion ([retirement.md](retirement.md)).
 
 ## Deterministic names
 
-Use Essential's executable as the only path-name derivation implementation:
-
-```bash
-"$ESSENTIAL_ROOT/bin/derive-engineering-name" slug '<source text>'
-"$ESSENTIAL_ROOT/bin/derive-engineering-name" slug '<source text>' \
-  --collision-with '<existing-slug>' --stable-id '<stable source identity>'
-"$ESSENTIAL_ROOT/bin/derive-engineering-name" tracker-work-id '<tracker key>'
-"$ESSENTIAL_ROOT/bin/derive-engineering-name" minted-work-id \
-  --date '<yyyymmdd>' --kind '<kind>' --scope '<scope>' --ulid '<new ULID>'
-```
-
-The helper applies Unicode NFKD normalization, ASCII transliteration,
-lowercasing, non-alphanumeric tokenization, and a 48-byte ASCII bound without
-retaining a partial trailing token. An empty transliteration becomes `item`.
-If the complete first token alone exceeds the bound, the helper retains its
-first 48 ASCII bytes because no earlier token boundary exists. On a reported
-collision it reserves ten bytes inside the same 48-byte bound and appends
-`--<stable-id8>`, where `stable-id8` is the first eight lowercase hexadecimal
-characters of the stable source identity's SHA-256 digest. The shortened base
-still ends at a whole-token boundary unless its first token alone exceeds the
-available bound. Callers must pass every occupied sibling slug through
-`--collision-with`; never reimplement the rule or add a random suffix.
-
-Use `tracker-work-id` to normalize an existing tracker key, such as
-`eng-421-checkout-refunds`. Otherwise generate one ULID and call
-`minted-work-id`; its result is
-`<yyyymmdd>-<kind>-<scope-slug>-<ulid6>`. A minted work ID is an identity and is
-never renamed. Derive or mint only when the resolver cannot select safely and
-the PM has resolved the ambiguity; do not require callers to repeat a resolved
-work ID.
-
-Use the owning product or system capability for
-`docs/specs/<capability>/`, not the current task title. Use a zero-padded
-monotonic sequence plus a stable slug for ADRs and never renumber merged ADRs.
-Ordinary children of work-local `state/`, `proposals/`, `changes/`,
-`decisions/`, and `design/` use an unnumbered semantic `<slug>.md`. Within
-`.engineering/`, numbered `<nn>-<topic-slug>.md` children in increments of 10
-are reserved for content created by mechanically splitting an oversized file. Durable `docs/`
-children use lowercase semantic names and are split only when that improves
-ownership or navigation. ADRs alone use four-digit numeric prefixes. Never use
-`part-1`, `misc`, or a task title as a child name.
+`"$ESSENTIAL_ROOT/bin/derive-engineering-name"` is the only path-name
+derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`; see
+`--help`). Never reimplement its rules or add a random suffix; pass every
+occupied sibling slug through `--collision-with`. A minted work ID is an
+identity and is never renamed; derive or mint only when the resolver cannot
+select safely and the PM has resolved the ambiguity. Naming rules: use the
+owning capability (not the task title) for `docs/specs/<capability>/`; ADRs
+alone use a zero-padded monotonic numeric prefix and are never renumbered;
+ordinary work-local children use unnumbered semantic `<slug>.md` names, with
+numbered `<nn>-<topic-slug>.md` (increments of 10) reserved for mechanical
+splits of an oversized file; never use `part-1`, `misc`, or a task title as a
+child name.
 
 ## Work memory
 
 ### Cross-tree overview (`.engineering/overview.md`)
 
-The default source tree — Git's main worktree or the jj workspace registered as
-`default` — carries a single `.engineering/overview.md`: the only global,
-cross-tree status index. Secondary source trees do not carry it. Because
-`.engineering/` is never shared or copied between trees, each source tree's own
-`.engineering/works/<work-id>/` state folders live only in that tree; they are
-never repeated in the default tree. The default tree holds `works/<work-id>/`
-only when it hosts its own work streams.
-
-`overview.md` is a single table of every work stream across all source trees:
-work ID, lifecycle status, one-line headline, next action, `Location` (the source
-tree that holds the stream — its path, kind, and revision — or `-` when that tree
-has been removed and the stream is orphaned), `Spec` (the capability or
-specification source the stream works against, suffixed `pending-publication`
-while the stream holds accepted spec deviations not yet pushed to the canonical
-source, or `-`), and `Documentations` (links to any related `docs/` material, or
-`-`). Before planning any stream against a capability, check `overview.md` for
-sibling streams whose `Spec` cell marks that capability `pending-publication`
-and resolve the publication order first — otherwise the new stream plans
-against a canonical spec that is already known to change. It is an index, not a
-substitute for each stream's `state.md`; the authoritative resumable context
-for a stream stays in that stream's own source tree. Every cell is derived from
-that stream's `goal.md` headline and `state.md` status header, so a lost or
-stale `overview.md` is rebuilt by enumerating registered source trees and
-re-reading those files — never treat it as unrecoverable state. The PM/coordinator
-updates the default tree's `overview.md` whenever a stream's status changes — in
-particular at handover — so a new session can survey every tree from one place
-and resume the right stream in the right source tree. A stream is worked in
-exactly one source tree at a time; only an explicit merge of source trees moves a
-stream between them.
+The default source tree — Git's main worktree or the jj workspace registered
+as `default` — carries the single global `overview.md`: one table of every
+work stream across all source trees (work ID, lifecycle, headline, next
+action, `Location`, `Spec`, `Documentations`). It is an index, not a state
+store: every cell derives from each stream's own files, so a lost or stale
+overview is rebuilt by re-reading them. The PM/coordinator updates it
+whenever a stream's status changes — in particular at handover. A stream is
+worked in exactly one source tree at a time. Before planning against a
+capability, resolve any sibling row marked `pending-publication` first.
 
 ### `goal.md`
 
 `goal.md` is the work stream's charter: the goal, scope and non-goals,
-numbered success criteria (`SC-1`, `SC-2`, …) each with its expected
-acceptance evidence, and specification provenance. It carries
-`Charter revision: N`, bumped only on explicit user approval; every bump is
-recorded in `state/journal.md` and `state/revisions.md`. The charter separates
-what "done" means from where the work currently stands, so continuous status
-churn in `state.md` can never drift the definition of success.
+numbered success criteria (`SC-1`, `SC-2`, …) each with expected acceptance
+evidence, specification provenance, and the stream's `## Workspace anchors`
+(the resolved git/jj workspace by default; other kinds per
+[anchors.md](anchors.md)). It carries `Charter revision: N`, bumped only on
+explicit user approval and journaled — the charter separates what "done"
+means from where the work stands, so status churn can never drift the
+definition of success. For a Notion-backed contract the canonical
+specification wins every conflict, and charter drift after a new base is a
+user decision, never a silent edit. Task `Acceptance` cells, `changes/`
+children, and `reviews/alignment.md` findings cite `SC-n` IDs so closure is
+checkable.
 
-For a Notion-backed contract, `goal.md` is a work-scoped interpretation, never
-a second authority: it records the source kind, page id, and the exact
-base-id/revision it was authored against, and the canonical specification wins
-every conflict. When a spec change lands (a new base), the coordinator
-re-checks each `SC-n` against the new base; charter drift is a user decision,
-not a silent edit. Task `Acceptance` cells, `changes/` children, and
-`reviews/alignment.md` findings cite `SC-n` IDs so closure is checkable: work
-closes only when every required success criterion is covered by an `applied`
-change and a closed review disposition.
+### `state/working.md` and `state.md`
 
-### `state/working.md`
-
-`state/working.md` is a temporary, narrow lens on what is being worked on now. The
-PM/coordinator is its only writer. It contains a headline current-focus
-summary, current handback point, and fast paths to the relevant specification,
-source, test, review summary, evidence, and current proposal/change/decision or
-design item. It contains no plan, full history, or copied evidence. Aim for
-about 4,096 bytes as an editorial mindset; it has no mechanical size gate.
-
-The assignment capsule and its exact references are a subagent's starting
-context. A subagent reads `state/working.md` only when it needs current-work
-navigation. It reads `state.md` for resume, planning, alignment, cross-slice
-dependencies, or when explicitly assigned; unrelated and self-contained work
-reads neither. A subagent reports paths, evidence, and state deltas to the PM;
-it never edits PM-owned work memory.
-
-### `state.md`
+`state/working.md` is a temporary, narrow lens on what is being worked on
+now — current focus, handback point, and fast paths only; the PM/coordinator
+is its only writer; aim for ~4,096 bytes editorially, with no mechanical
+gate. A subagent reads it only for current-work navigation and reads
+`state.md` for resume, planning, alignment, or when explicitly assigned; it
+reports paths, evidence, and state deltas to the PM and never edits PM-owned
+work memory.
 
 `state.md` is the complete resumable execution context: full plan, lifecycle
 status, decisions, dependencies, blockers, open questions, review state,
-evidence references, repository revision, and sync state. The goal, success
-criteria, and specification provenance live in `goal.md`; `state.md` links to
-that charter rather than restating it. `state.md` carries `Plan revision: N`,
-bumped on every approved change to a task definition, dependency, requiredness,
-or acceptance; each bump appends one entry to `state/revisions.md` recording
-what changed, why, who approved it, and the spec base-id that triggered it when
-one did. It also carries the list of `proposals/` still
-awaiting user approval and those approved but not yet implemented, so a resume
-sees the outstanding proposal work without scanning the folder. This inventory is
-kept current under the same continuous-persistence discipline as task state:
-whenever a proposal child is created or its status changes, the reconciling
-coordinator updates the `state.md` inventory at once — not only during a later
-handover rewrite — and a worker that creates a proposal returns it in its
-reconciliation payload so the coordinator can. It links prominently to
-`state/working.md` and each lazy work overview that currently exists. It references details rather than
-copying them. Semantic children such as `state/plan.md` or `state/discovery.md`
-hold resumable detail. Record open questions in detail in `state/unresolved.md`,
-each with an owner and a disposition (resolved, deferred, or blocking);
-`state.md` only briefly notes that unresolved questions exist and links to that
-child. When none remain, delete `state/unresolved.md` and remove the mention
-from `state.md`. If `state.md` exceeds the final size gate, keep it as the
-overview and move coherent split detail to `state/<nn>-<topic-slug>.md`.
+evidence references, repository revision, and sync state. It links to the
+charter rather than restating it, carries `Plan revision: N` (each bump
+appends what/why/approver/spec base-id to `state/revisions.md`), the
+monotonic `State revision: N`, and the inventory of `proposals/` children
+awaiting approval or approved-but-unimplemented, kept current the moment a
+proposal changes. Detail lives in semantic `state/*.md` children;
+`state.md` references rather than copies. Every new or explicitly rewritten
+state file follows [the work-state contract](engineering-work-state.md);
+state is free-form, LLM-readable Markdown with no separate validation step —
+read it directly and judge. Preserve any existing state file byte-for-byte
+until an explicit rewrite; older shapes migrate lazily at the next explicit
+coordinator rewrite, journaled, never on read.
 
-Every new or explicitly rewritten state file follows
-[the engineering work-state contract](engineering-work-state.md). Root
-`state.md` carries the complete parent/subtask registry and the canonical
-plan-source pointer. Resumable children carry marked task subsets without
-becoming a second plan authority. State is free-form, LLM-readable Markdown and
-is not machine-validated: before a task dispatch, review, portable handover,
-completion, or retirement, read `state.md` and its `state/` children directly to
-judge runnable tasks, current owner, and next action. Preserve any existing
-state file byte-for-byte until an explicit rewrite; never rewrite it by guess.
+### Persistence and the coordinator lease
 
-An existing stream whose `state.md` predates `goal.md` migrates lazily: preserve
-it byte-for-byte until the next explicit coordinator rewrite, then extract the
-charter content into `goal.md`, initialize `Plan revision: 1` and
-`state/journal.md`, and journal the migration. Never migrate on read, and never
-auto-rewrite an old-format file merely because the convention moved on.
-
-Persist state immediately, never lazily — append first, reconcile second. The
-moment a task or subtask changes status (started, blocked, done, failed,
-cancelled), a decision is made, a plan or charter revision is approved, or a
-sync event lands, the lease holder appends one line to `state/journal.md`
-(timestamp, actor, task ID or event, transition, evidence reference) and then
-reconciles the affected tables — not batched, and not deferred to handover or
-session end. The journal is append-only and never rewritten; the tables in
-`state.md`, the lazy overviews, and `overview.md` are views over it, so any
-suspected drift between them is settled by re-reading the journal rather than
-guessed. State in `.engineering/` is the durable memory of record; handover
-only publishes and transports what is already written. This
-continuous-persistence discipline bounds the loss to a single journal line if
-the coding agent crashes mid-task or a session ends without an explicit
-handover, so a later resume reads an accurate registry rather than
-reconstructing lost progress. A worker without the
-lease returns its status change and evidence in its output manifest immediately;
-the lease holder reconciles it into `state.md` at once rather than accumulating
-deltas.
+Persist state immediately, never lazily — append first, reconcile second.
+The moment a task changes status, a decision is made, a revision is
+approved, or a sync event lands, the lease holder appends one journal line
+(grammar in the work-state contract and the journal's own header) and then
+reconciles the affected tables. The journal is append-only; the tables in
+`state.md`, the lazy overviews, and `overview.md` are views over it, so
+suspected drift is settled by re-reading the journal. State in
+`.engineering/` is the operational projection of the work, not the record of
+record: deleting it may cost convenience and execution detail, but must
+never erase an accepted decision, approved contract, published artifact
+identity, or unresolved critical risk — those live in versioned docs,
+external anchors, and checkpoints ([checkpoints.md](checkpoints.md)). This
+discipline bounds crash loss to one journal line. A worker without the lease
+returns its status change and evidence in its output manifest immediately;
+the lease holder reconciles it at once.
 
 One actor holds the work item's coordinator lease and is the sole writer of
 `goal.md`, `state/working.md`, `state.md`, `state/journal.md`,
 `state/revisions.md`, the four lazy overview files, and `review.md`. The PM
 holds it by default and may explicitly grant it to one orchestration skill,
-naming the files covered. The PM does not write those files until that skill
-returns. Every other subagent is a worker: it writes only assigned children and
-returns paths plus reconciliation deltas.
+naming the files covered. Every other subagent is a worker: it writes only
+assigned children and returns paths plus reconciliation deltas. The lease is
+on disk, not just convention — never write under a live foreign lease, and
+claim an expired lease only through the explicit takeover verb, journaled as
+a `lease` event. Verbs, the write protocol, and the `State revision` bump
+live in [lease.md](lease.md); read it before any coordinator write.
 
-## Lazy work overviews
+### Overviews, decisions, and reviews
 
 Create `proposals.md`, `changes.md`, `decisions.md`, or `design.md` with the
-first child in its corresponding folder. Once created, retain it until work
-closes. The PM/coordinator alone reconciles these overviews; subagents may
-create or update assigned children and return them in their output manifest.
+first child in its folder and reconcile them per
+[overviews.md](overviews.md) — including the proposals-vs-changes
+distinction, canonical child statuses, and deviation provenance. Decisions
+follow [decision-causality.md](decision-causality.md); accepting one
+triggers the blast-radius sweep and a checkpoint. Reviews follow
+[reviews.md](reviews.md): `review.md` rolls up the seven canonical
+engineering areas plus any plugin-namespaced areas, and work closes only
+when the roll-up agrees with every detail.
 
-`proposals/` and `changes/` both document a work stream's tasks and
-implementation against the active canonical specification — the canonical Notion
-spec for a Notion-backed contract, the source at its exact path for a reachable
-`repo:` local contract (the derived carrier is only content-equivalent, never the
-authority), or the durable carrier for a `local-approved:` or `inline-approved:`
-contract. They differ by **implementation state**, not by approval and not by
-being deviations. A `proposals/` child is anything proposed but **not yet
-implemented**: most often a task to implement the work stream (derived from the
-canonical spec — for a Notion-backed contract, from the canonical Notion spec),
-but also a bounded research finding, a decision proposal, or a
-specification-change proposal awaiting reconciliation. When the work is done, its
-final implementation documentation shifts to a `changes/` child, together with
-any last-mile changes made during implementation. A `changes/` child therefore
-also holds general implementation and explainer records, not only deviations.
+## Specification lifecycle
 
-Approval is a **status on the proposal, not a folder move**. A proposal is `open`
-until the user approves it and `accepted` once approved, so downstream planning
-can tell an approved proposal from an undecided one — but an approved proposal
-that is not yet implemented stays in `proposals/`; only implementation shifts it
-to `changes/`. A proposal never approved ends in `proposals/` (`rejected` or
-`withdrawn`). Separately, the coordinator creates or links the corresponding
-`changes/` child as implementation proceeds — that child may be `pending` before
-it becomes `applied`. A `changes/` child links back to its originating proposal
-**when one exists**; a direct change record with no proposal (a review explainer,
-an implementation-time material departure) is complete without that back-link.
-`state.md` carries the list of proposals still awaiting user approval and those
-approved but pending implementation, so a resume sees the outstanding work at a
-glance.
-
-Each `proposals/` and `changes/` child SHOULD carry a section recording any
-deviations from the canonical specification, if any — deviations are an optional
-subsection, not what defines the folder.
-
-Each overview contains only:
-
-1. Purpose and one headline summary.
-2. Counts by canonical status.
-3. A table with `status`, one-line `headline`, and relative child `path`.
-4. `last_pm_reconciliation` as an ISO-8601 timestamp.
-
-Do not copy child detail into an overview. `state.md` links to the overview,
-not directly to the folder. `state/working.md` links only to the overview or child
-needed for the current focus.
-
-| Overview | Child statuses |
-| --- | --- |
-| `proposals.md` | `open`, `accepted`, `rejected`, `withdrawn` |
-| `changes.md` | `pending`, `applied`, `reverted`, `superseded` |
-| `decisions.md` | `proposed`, `accepted`, `rejected`, `superseded` |
-| `design.md` | `draft`, `approved`, `implemented`, `promoted`, `superseded` |
-
-Each child starts with structured metadata containing at least its canonical
-status, one-line headline, owner, created timestamp, and source/provenance
-references. When a `proposals/` or `changes/` child's deviation section records a
-deviation from a Notion-backed specification, that deviation's provenance MUST
-link to the related `.mdc` file under the default source tree's
-`.engineering/notion/` — that folder lives only on the default source tree and is
-never copied into a secondary tree, so the link resolves there; a Notion-backed
-spec deviation recorded without that link is incomplete. A non-Notion contract
-has no such folder and cites its authoritative source instead of inventing Notion
-provenance: a reachable `repo:` local source keeps its exact source path
-authoritative and cites that path (the derived carrier is only
-content-equivalent), while a `local-approved:` or `inline-approved:` source cites
-its durable carrier as the sole authority.
-
-If an overview itself ever requires splitting, reserve `00-index-<group>.md`
-names inside its folder for index shards.
-
-## Reviews
-
-`review.md` is the current roll-up. Details live in exactly seven canonical
-areas under `reviews/`:
-
-| File | Question |
-| --- | --- |
-| `alignment.md` | Does the implementation match the approved contract and scope? |
-| `correctness.md` | Is behavior semantically correct, including unspecified cases? |
-| `security.md` | Are trust boundaries, data, permissions, and abuse cases safe? |
-| `quality.md` | Is it maintainable, reliable, and appropriately structured? |
-| `testing.md` | Is intended behavior verified sufficiently and reliably? |
-| `docs.md` | Are engineer and user explanations accurate and sufficient? |
-| `style.md` | Does the change follow mechanical and idiomatic conventions? |
-
-A finding is `open`, `fixed`, `acknowledged`, `deferred`, or `skipped`. `fixed`
-is closed only by verified evidence. `acknowledged` and `skipped` are closed
-non-fixed risk dispositions only with non-placeholder rationale, an accountable
-owner, and an explicit recheck condition; P0/P1 additionally require explicit
-risk-acceptance authority and durable acceptance evidence. `open` and
-`deferred` are outstanding and block review closure. A malformed
-`acknowledged` or `skipped` entry remains outstanding.
-`review.md` records both the five disposition counts and derived `closed` and
-`outstanding` counts using exactly this mapping.
-Contract/completeness audit findings belong to `alignment.md`; semantic bugs
-belong to `correctness.md`. Plan deviations belong in `state.md` and also in
-`alignment.md` only when they cause contract drift. Do not create `audit.md` or
-`deviations.md`. Work closes only when `review.md` agrees with every detail.
-Reviewers own only assigned `reviews/*.md` details and return roll-up deltas;
-the coordinator-lease holder alone reconciles `review.md` after all review
-writers finish. A nested review workflow without that lease returns a summary
-delta instead of touching the roll-up.
-
-## Specification and Notion lifecycle
-
-An explicit local path, approved inline candidate, or selected Notion identity
-may supply a specification. Inline prompt text is evidence only: before
-planning or implementation it becomes a complete approved candidate and a
-content-equivalent durable `docs/specs/<capability>/index.md` carrier. A local
-source retains its exact path and gains the same durable carrier/provenance.
-Neither path claims a Notion round trip.
-
-`.engineering/notion/` is the conventional ignored mirror in a registered
-default workspace, not a path fixed by the generic resolver. The Notion owner
-may receive another explicit output root and must resolve the required default
-workspace, validate the actual root's ignore state, and report that root's
-remediation path. A mirror contains exact `.mdc` paths owned by notion-sync.
-Never derive, rename, or publish assumptions about those filenames. They may be
-mutated only through the MDC-aware owner.
-
-`sync-spec` materializes only the required temporary working specification
-under the active work's `spec/`. Record stable Notion page/block IDs, exact
-returned paths, source revision/hash, and dependent-work revalidation state in
-`state.md`.
-
-Spec freshness is checked at named checkpoints, not left to chance: materialize
-before planning, before each dispatch batch (a cheap `unchanged` check),
-before review, and at completion. A stream that was idle past any checkpoint
-re-materializes before proceeding. When materialization or completion returns
-`next_action: revalidate`, the coordinator runs one revalidation sweep against
-the new base-id: mark every task row whose definition, targets, or acceptance
-depend on the changed content `! blocked` with
-`unblock: revalidate against <base-id>` (revalidation is expressed in the
-existing status vocabulary — there is no separate task status for it),
-re-check each `SC-n` in `goal.md` against the new base and escalate charter
-drift to the user, and append the sweep to `state/journal.md`. Implementation
-continues only after the sweep.
-
-Revalidation is guaranteed only for locally discoverable, registered
-workspaces. Enumerate each local Git worktree from `git worktree list
---porcelain`. For jj, enumerate names with `jj workspace list` and resolve every
-registered name with `jj workspace root --name <name>`. Mark affected work
-found under those explicit roots. Never claim that every remote or copied work
-directory was updated. The completion receipt lists affected external task,
-PR, and Notion anchors plus every known or unknown remote dependent that still
-needs revalidation.
-
-For a Notion-backed specification, completion closes review dispositions and
-identifies approved changes against an exact source hash. The MDC-aware writer
-applies them to the selected transport path. The completion entrypoint
-delegates outbound push, merge, and conflict resolution to `sync-notion`, then
-re-pulls and verifies stable identity, explicit conflict dispositions, and
-zero unexpected diff. Regenerate affected
-`docs/specs/<capability>/` content and record source and derivation hashes. A
-zero exit code without this receipt is not successful synchronization. Local
-and inline sources instead re-verify their carrier and provenance hashes and
-never invoke Notion transport merely to complete.
+An explicit local path, approved inline candidate, or selected Notion
+identity may supply a specification; inline prompt text is evidence only
+until it becomes an approved candidate with a durable carrier. Neither path
+claims a Notion round trip. Spec freshness is checked
+at named checkpoints — materialize before planning, before each dispatch
+batch, before review, and at completion — and a changed base triggers the
+revalidation sweep (non-done dependents `! blocked`; done rows keep `✓ done`
+and gain stale validity plus remediation tasks). Mirrors, materialization,
+the sweep procedure, the authored-docs sweep, and completion verification
+live in [spec-lifecycle.md](spec-lifecycle.md); mid-execution change routing
+lives in [change-control.md](change-control.md).
 
 ## Evidence, continuity, and retirement
 
 Keep logs, screenshots, captures, binaries, and large raw evidence outside
-Markdown. Work artifacts store concise results plus source-bound paths,
-revisions, hashes, and dispositions. Discovery and research belong under
-`state/` when they are resumable context or `artifacts/` when they are source
-material. Findings surfaced during implementation — gotchas, constraints,
-and learned facts about the codebase — are recorded in
-`state/discovery.md`, an ordinary resumable `state/` child governed by the same
-ownership and size rules as its siblings. Only durable conclusions are promoted
-to `docs/`; a resumable finding stays in `state/discovery.md` until it becomes
-stable knowledge worth promoting.
+Markdown; work artifacts store concise results plus source-bound paths,
+revisions, hashes, and dispositions. Resumable findings belong in
+`state/discovery.md`; source material belongs in `artifacts/`; only durable
+conclusions are promoted to `docs/`.
 
-Promotion is auditable after retirement deletes the work stream: every
-promoted `docs/` file carries front matter naming its `source-work` (the work
-ID), promotion date, and any superseded document, and work closure requires a
-promotion receipt in the stream's final `changes/` child listing every promoted
-path. Authored documentation is swept when the spec moves: on any
-`next_action: revalidate` outcome, check `docs/index.md` and the
-`docs/architecture/` and `docs/design/` documents that reference the changed
-capability, and journal each file's disposition
-(`unaffected`, `updated`, or `superseded`) — only `docs/specs/` is hash-bound
-to the source, so ADRs and design documents drift silently without this sweep.
-
-Continuity has two paths. On the **same machine**, pausing and resuming works
-from the on-disk state files: a handover completes the current source tree's work
-stream state and updates the default tree's `overview.md`, so a new session reads
-`overview.md`, chooses a source tree and stream, and resumes from that tree's own
-`state.md`/`state/` files — no receipt required. Ignored work memory is not a
+Continuity has two paths. On the **same machine**, pausing and resuming
+works from the on-disk state files: a handover completes the current tree's
+stream state and updates the default tree's `overview.md`; a new session
+reads the overview, picks a tree and stream, and resumes from that tree's
+own files — no receipt required. Ignored work memory is not a
 **cross-machine** transport: for that, a handover additionally emits a
-plain-Markdown portable receipt into the owning task, PR, or Notion work item or,
-when necessary, embeds every payload in the response. The receipt carries a
-destination-reachable source anchor, the raw contents of the current tree's work
-stream state files, authoritative specification carriers, and fixed
-non-executable application semantics. A recipient reads those carriers in an
-isolated post-anchor tree before reconstructing fresh local work state; it never
-copies `.engineering/` or trusts a local-only path. Handover scopes to the
-current source tree only; it never indexes or rewrites another tree's work
-streams, and `overview.md` is the sole cross-tree surface.
+plain-Markdown portable receipt into the owning task, PR, or Notion work
+item (or the response), carrying a destination-reachable source anchor, the
+raw work-state contents, and authoritative specification carriers. A
+recipient reads those carriers in an isolated post-anchor tree before
+reconstructing fresh local work state; it never copies `.engineering/` or
+trusts a local-only path. Handover scopes to the current source tree only,
+emits its checkpoint, and releases the coordinator lease.
 
-Retire completed local work only after acceptance, review closure, durable
-promotion, Notion push and verification pull, and final receipts are recorded.
-The default retention is 30 days unless repository compliance policy requires
-longer. Existing ambiguous artifacts are reported and preserved, never deleted
-or migrated by guesswork.
+Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
+deletes every stream on the machine, silently. Checkpoints at the external
+anchor are the designed recovery — establish the anchor and first checkpoint
+before a stream carries non-recoverable decisions
+([checkpoints.md](checkpoints.md)). Idle streams are parked and completed
+streams retired per [retirement.md](retirement.md); retirement deletes the
+operational projection, so it is gated on promotion, decision dispositions,
+and the retirement checkpoint.
+
+## Structural doctor
+
+`"$ESSENTIAL_ROOT/bin/engineering-doctor" --work-dir <work_dir>` is a
+read-only structural checker (broken IDs, cycles, contradictory statuses,
+missing evidence annotations, dead links, unsuperseded decisions, lease
+conflicts, overview drift). It never judges prose or blocks by default —
+findings inform the coordinator's own reading. Run it before large dispatch
+batches, handover, and retirement; pass `--strict` (nonzero exit on errors)
+when work is irreversible or release-critical and treat failure as
+stop-and-report.
 
 ## Output manifest and final size loop
 
@@ -583,11 +319,11 @@ generated_files:
 
 </report>
 
-Writers finish all files and links before returning the manifest. They do not
-measure or split independently. The coordinator combines and deduplicates the
+Writers finish all files and links before returning the manifest and never
+measure or split independently. The coordinator combines and deduplicates
 manifests, selects only absolute `.md` paths inside the resolved target
-workspace's `.engineering/`, excludes every file whose basename is
-`working.md`, and then runs exactly one pass when eligible paths remain:
+workspace's `.engineering/` (excluding any `working.md`), and runs exactly
+one pass when eligible paths remain:
 
 ```bash
 "$ESSENTIAL_ROOT/bin/check-markdown-size" \
@@ -595,22 +331,15 @@ workspace's `.engineering/`, excludes every file whose basename is
   "${generated_md_files[@]}"
 ```
 
-The checker canonicalizes the declared root and every path, excludes traversal,
-symlink, and other-workspace escapes, invokes one
-`wc -c "${eligible_generated_md_files[@]}"` process for that pass, ignores
-`wc`'s aggregate `total` row, and returns every eligible file greater than
-16,384 bytes together. An eligible file at or below 16,384 bytes remains
-intact; 12,288 bytes is authoring guidance only and never forces a split.
-
-The gate does not apply outside `.engineering/`. In particular, versioned
-`docs/**`, project READMEs, source or reference Markdown, and plugin control
-files have no mechanical document-size limit. The only separate limit in this
-plugin is the 2,000-byte injection limit for Essential's `CLAUDE.md`,
+The checker canonicalizes the declared root and every path, excludes
+traversal, symlink, and other-workspace escapes, and returns every eligible
+file greater than 16,384 bytes together (12,288 bytes is authoring guidance
+only). The gate does not apply outside `.engineering/`; the only separate
+limit is the 2,000-byte injection limit for Essential's `CLAUDE.md`,
 `MAINAGENT.md`, and `SUBAGENT.md`.
 
-On `split_required`, send all oversized files through one complete split round.
-Each original path remains a concise overview with purpose, headline summary,
-status/owner, contents map, and links to lowercase children. Only after every
-split finishes does the coordinator rebuild the complete final manifest and
-run one subsequent batch pass. The checker reports only `pass`,
-`split_required`, or `invalid`; it never edits or splits files itself.
+On `split_required`, send all oversized files through one complete split
+round — each original path remains a concise overview linking its lowercase
+children — then rebuild the final manifest and run one subsequent batch
+pass. The checker reports only `pass`, `split_required`, or `invalid`; it
+never edits or splits files itself.
