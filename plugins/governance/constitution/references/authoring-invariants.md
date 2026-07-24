@@ -1,7 +1,7 @@
 # Skill-Authoring Invariants
 
-These are the shared repository rules for `create-skill`, `update-skill`, and
-`verify-skill`. Claude Code's validator remains authoritative for manifest and
+These are the shared repository rules for the `write-skill` create, update, and
+verify actions. Claude Code's validator remains authoritative for manifest and
 frontmatter syntax.
 
 ## Content

@@ -71,7 +71,7 @@ standards.
   dependencies, invalid exception fields, orphan guides, or unapproved
   breaking renames.
 - Run `claude plugin validate --strict plugins/<plugin>` and
-  `python3 "${CLAUDE_SKILL_DIR}/../verify-skill/scripts/quick_validate.py" plugins/<plugin>`
+  `python3 "${CLAUDE_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
   for repository policy checks.
 - Exercise representative violating and compliant examples for changed rule
   groups.
