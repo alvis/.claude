@@ -78,11 +78,11 @@ locate the active workspace and `.engineering/`; on `requires_ignore` or
    `.engineering/archive/<work-id>/` per Essential's `retirement.md` as the
    remediation instead of migration. For a stream whose work memory was
    destroyed (for example by `git clean -fdx`) but whose external anchor
-   carries checkpoints, offer **recovery from checkpoints**: re-bootstrap
-   the skeleton with the resolver, then rebuild the charter, decision, and
-   approval facts from the anchor's checkpoint blocks and receipts —
-   recovered facts cite their checkpoint, and execution detail that only
-   lived in the deleted projection is reported as lost, never invented.
+   carries a portable handover receipt, offer **recovery from the
+   receipt**: route the rehydration to `essential:takeover` with that
+   receipt, which restores the carried state files verbatim — recovered
+   facts cite the receipt, and execution detail that postdates it is
+   reported as lost, never invented.
    Ask the user with `AskUserQuestion` which streams to repair, migrate,
    park, or recover; informational items need no action and defects in
    prose meaning are surfaced as questions, not silently "fixed".
