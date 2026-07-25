@@ -21,7 +21,7 @@ revision; an accepted decision is history, not necessarily the current
 contract; memory is a hint, never current project truth.
 
 `.engineering/` is the **operational projection** of the work — the richest
-view of it, and the portable one, but not the record of record. Records of
+view of it, but not the record of record. Records of
 record are versioned `docs/` and external anchors (task, PR, Notion).
 Every state change, discovery, and decision is stored immediately in the
 journal and its owning state, decision, or discovery file.

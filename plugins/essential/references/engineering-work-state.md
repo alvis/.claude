@@ -171,17 +171,3 @@ the event made stale. Older lines in the pre-grammar form
 `state/revisions.md` is the same discipline at plan granularity: one entry per
 approved revision. Neither file is ever the plan authority; both make the
 authoritative tables auditable and reconstructible.
-
-## Portable handover
-
-Ignored work memory **is** the transport. To move a work item, copy its
-`.engineering/works/<work-id>/` directory to the destination tree and run a
-takeover there: the directory carries state, decisions, specification, and
-`artifacts/` together, so nothing is written back or reassembled. A handover
-emits a plain-Markdown receipt alongside it — an index naming each stream, its
-work directory, and a destination-reachable source anchor for the code the
-directory does not carry. The receipt never contains work-file contents, and is
-never itself written to a file. There are no snapshot bytes, checksums, or
-machine render step; the reader judges completeness directly. The receipt shape
-(including per-stream `State revision` and lease status) is defined in the
-handover skill's document templates.

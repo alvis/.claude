@@ -38,7 +38,7 @@ Before resolving engineering-work paths, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, do not
 classify or remove `.engineering/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
-receipts but does not create or rewrite project receipts, `state/working.md`,
+promotion records but does not create or rewrite them, `state/working.md`,
 `state.md`, or overview files; its project `generated_files` is therefore
 empty. Backup metadata lives only in the OS temporary backup tree.
 
@@ -70,8 +70,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    - durable architecture/design/spec promotion paths and receipts;
    - Notion source identity and completion receipt: outbound push, conflict
      dispositions, verification pull, and zero unexpected diff;
-   - final portable handover/completion receipt and its external task, issue,
-     PR, or Notion anchor;
+   - promoted `docs/` paths and the work directory's own final state;
    - repository retention policy and timestamps for every closure gate.
 
    Read `state/working.md` first for navigation, then verify all retirement evidence
@@ -81,13 +80,13 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    IDs, and any inconsistency. State that is malformed, contradictory, or
    otherwise unreadable makes the candidate ambiguous and ineligible; cleanup
    never migrates it. Filesystem modification time is only a
-   clue; it never substitutes for lifecycle or receipt timestamps. The same
+   clue; it never substitutes for lifecycle or promotion timestamps. The same
    work ID in another workspace is a separate local copy and separate target.
 4. **Classify lifecycle independently of cleanup eligibility.**
    - **Active**: state says active/in progress, has a live current focus, open
      implementation, or current branch/PR activity.
-   - **Interrupted**: unfinished work is paused/blocked/transferred and has a
-     continuation receipt or next action.
+   - **Interrupted**: unfinished work is paused or blocked and has a recorded
+     next action.
    - **Completed**: the lifecycle state in `state.md` reads `complete`, every
      required executable leaf is `done`, no required leaf is planned/working/failed/
      blocked, and acceptance plus repository revision are coherent. A prose
@@ -111,12 +110,12 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    - durable promotion is complete, or explicitly not required with evidence;
    - Notion-backed work has a verified outbound/merge/re-pull/zero-diff
      completion receipt; non-Notion work is explicitly evidenced as such;
-   - a final portable receipt exists at a stable external anchor and matches
-     work ID/repository revision;
+   - the durable knowledge is promoted to the repository's `docs/` and the work
+     directory's own final state matches it on work ID and repository revision;
    - elapsed retention is at least the repository policy, never less than 30
      days. Measure from `retirement_ready_at`: the latest timestamp among work
      completion, review closure, durable promotion, Notion verification, and
-     final receipt publication.
+     the work directory's final state write.
 
    A missing/inaccessible gate yields `needs review`; active, interrupted, and
    ambiguous work yields `do not cleanup`. Never recommend deletion merely
@@ -129,18 +128,18 @@ empty. Backup metadata lives only in the OS temporary backup tree.
 7. **Run blind-spot checks.** Check untracked/ignored files, dirty indexes,
    stashes, submodules, nested repositories, shallow clones, reused remote
    names, protected branches, git/jj disagreement, unreachable registered
-   workspaces, duplicated work IDs, missing external receipts, conflicting
+   workspaces, duplicated work IDs, missing promotion records, conflicting
    completion timestamps, and repository retention overrides. Downgrade the
    candidate on any unresolved risk.
 8. **Request per-target approval.** Present target type, exact local workspace
    and path, lifecycle class, recommendation, retirement-gate evidence,
-   `retirement_ready_at`, age/policy, external receipt anchor, blind spots,
+   `retirement_ready_at`, age/policy, promotion anchor, blind spots,
    backup/restore plan, and exact removal command. Only gate-passing completed
    engineering work is selectable. Never infer approval from `/cleanup`.
 9. **Back up approved targets.** Use a unique timestamped directory below the
    platform OS temporary root. For an engineering-work target, copy that exact
    work directory including dotfiles, write metadata containing workspace
-   identity, work ID, repository revision, receipt anchor, evidence summary,
+   identity, work ID, repository revision, promotion anchor, evidence summary,
    original path, and restoration command, then verify the backup is nonempty
    and its manifest matches. Preserve existing git bundle/patch backups for
    branches and full-directory backups for worktrees. For jj changes, record
@@ -152,7 +151,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
     `.engineering/`, a workspace root, a glob, or an unresolved variable.
     Forced worktree/branch removal requires a separate explicit approval.
 11. **Verify and report.** Re-run inventories. Prove each approved target is
-    absent, each unapproved target remains, the external receipt anchor remains
+    absent, each unapproved target remains, the promotion anchor remains
     intact, and restoration information is usable.
 
 <IMPORTANT>
@@ -168,7 +167,7 @@ always preserves the directory.
   registered jj workspaces/changes, and work directories within every resolved
   local workspace path.
 - Each work directory has lifecycle and cleanup classifications, local
-  workspace scope, external receipt anchor, gate evidence, and retention age.
+  workspace scope, promotion anchor, gate evidence, and retention age.
 - No active, interrupted, ambiguous, under-retention, or incomplete-gate work
   is removable.
 - A lifecycle `complete` label cannot override unfinished required tasks or a
@@ -183,6 +182,6 @@ always preserves the directory.
 Report tool/remote freshness and counts by VCS target plus work lifecycle
 (`active`, `interrupted`, `completed`, `ambiguous`) and cleanup disposition.
 For every engineering-work candidate report workspace path/name, work ID,
-retirement gates, `retirement_ready_at`, effective retention, receipt anchor,
+retirement gates, `retirement_ready_at`, effective retention, promotion anchor,
 backup path, action, and restoration command. Report `generated_files: []`
 unless a separately authorized project-artifact write actually occurred.

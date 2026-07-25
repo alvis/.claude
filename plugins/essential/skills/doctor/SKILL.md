@@ -78,13 +78,10 @@ locate the active workspace and `.engineering/`; on `requires_ignore` or
    `.engineering/archive/<work-id>/` per Essential's `retirement.md` as the
    remediation instead of migration. For a stream whose work memory was
    destroyed (for example by `git clean -fdx`), offer **recovery from a
-   copy**: the `.engineering/works/<work-id>/` directory is the carrier, so
-   recovery means restoring that directory from a backup, another machine, or
-   another tree that holds it, then running `essential:takeover`. A handover
-   receipt at the stream's external anchor identifies which directory and
-   revision to look for, but contains no state itself — recovered facts cite
-   the restored files, and anything that postdates the copy is reported as
-   lost, never invented.
+   copy**: restore the `.engineering/works/<work-id>/` directory from a backup
+   or another tree that holds it, then run `essential:takeover`. Recovered
+   facts cite the restored files, and anything that postdates the copy is
+   reported as lost, never invented.
    Ask the user with `AskUserQuestion` which streams to repair, migrate,
    park, or recover; informational items need no action and defects in
    prose meaning are surfaced as questions, not silently "fixed".

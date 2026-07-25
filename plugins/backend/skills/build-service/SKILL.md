@@ -57,8 +57,8 @@ specification and preserving PM-owned coordination state.
    PM reconciliation for `changes.md`/`state.md`, and route contract drift to
    alignment. Do not create a standalone deviations file.
 7. Commit through `coding:commit` after approval. When incomplete, return a
-   handover request and complete continuity payload to the PM, which alone may
-   invoke `essential:handover`. Collect/deduplicate child manifests and return
+   pause request with the unfinished scope and next action to the PM, which
+   alone may invoke `essential:handover`. Collect/deduplicate child manifests and return
    explicit final paths generated or materially rewritten as `generated_files`.
    Do not run file sizing; the PM checks only eligible work Markdown inside the
    target `.engineering/`.

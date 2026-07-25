@@ -17,7 +17,7 @@ superseded scaffolding rather than leaving parallel paths or addenda.
 
 - Use for new functions, features, modules, components, endpoints, or an
   approved specification implemented and tested end to end; use `--resume` for
-  a rehydrated engineering work item.
+  a resumed engineering work item.
 - Route skeleton-only work to `coding:draft-code`, accepted production stubs to
   `coding:complete-code`, diagnosed failures to `coding:fix`, green structural
   cleanup to `coding:refactor`, and reviews to `coding:review-code`.
@@ -28,7 +28,7 @@ superseded scaffolding rather than leaving parallel paths or addenda.
 
 - Required `<instruction>` with scope, behavior, and acceptance criteria.
 - Optional `--resume`; require a resolved work ID/root whose `state.md` defines
-  unfinished scope. A missing local root must be rehydrated through
+  unfinished scope. A missing local root must be resumed through
   `essential:takeover`, never recovered from root continuation files.
 - A delegated lifecycle call must include one full executable `task_id` and
   the root state's `plan_source: state.md`. Treat them as assertions against a

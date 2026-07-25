@@ -16,7 +16,7 @@ is read at the moment it matters.
 | Reference | Read when | Owns |
 | --- | --- | --- |
 | `references/engineering-work.md` | Before creating or rewriting any lifecycle-managed artifact | Topology (`docs/` + `.engineering/`), resolver/bootstrap, coordinator lease and write protocol, journal discipline, overviews, reviews, spec freshness, promotion, retirement |
-| `references/engineering-work-state.md` | When writing or migrating a `state.md` | Task table shape, stable IDs, mark/status pairs, DAG and roll-ups, change control, journal grammar, portable handover shape |
+| `references/engineering-work-state.md` | When writing or migrating a `state.md` | Task table shape, stable IDs, mark/status pairs, DAG and roll-ups, change control, journal grammar |
 | `references/truth.md` | Once per work stream | Six kinds of truth, the five constitutional rules, validity, `capability_id` |
 | `references/decision-causality.md` | When creating/accepting/superseding a decision | `supersedes`/`affects`/`invalidates`/`preserves`, blast-radius sweep, decision completion gate |
 | `references/approvals.md` | When recording approvals or durable claims that age | The approval binding tuple, freshness metadata |
@@ -67,8 +67,8 @@ Templates: `templates/memory.md` (agent memory) and
 | `essential:decide` | Choosing between researched approaches; records the approved decision with causal metadata and hands off to the owner. |
 | `essential:deep-research` | Multi-source fact-finding with adversarial claim verification and citations. |
 | `essential:autoresearch` | Metric-driven optimization loops (define metric → evolve candidates → verify → mutate). |
-| `essential:handover` | Pausing or transferring work: persists all stream state, updates the cross-tree overview, emits a bounded receipt indexing each stream's work directory, releases leases. |
-| `essential:takeover` | Resuming paused work from the on-disk work directories, including ones copied in from another machine: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
+| `essential:handover` | Pausing work: persists all stream state, updates the cross-tree overview, releases leases. |
+| `essential:takeover` | Resuming paused work from the on-disk work directories: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
 | `essential:doctor` | Health-checking `.engineering/`: runs the structural doctor, diagnoses format drift against the current contracts, and offers user-approved migration to the latest structure — judged by reading the contracts, never a version token. |
 | `essential:handoff` | A zero-context cross-domain orchestration plan another agent can execute verbatim. |
 | `essential:install-agents` | Installing/refreshing the stitched specialist agent roster into `~/.claude/agents/`. |
@@ -85,5 +85,5 @@ Templates: `templates/memory.md` (agent memory) and
 - **Done stays done.** Invalidation marks `validity: stale` and spawns
   remediation tasks; history is never falsified.
 - **Deleting `.engineering/` loses convenience, not truth.** Decisions,
-  approvals, and artifact identities also live in versioned docs, and the
-  work directory itself is portable — copy it to back it up or move it.
+  approvals, and artifact identities also live in versioned docs; keep a copy
+  of the work directory to guard against `git clean -fdx`.

@@ -87,9 +87,8 @@ that contract.
    the orchestrator and decision maker only: route each phase to the right
    agent with complete context, synthesize the results, and make the calls.
    Delegate all execution — reading, writing, running, testing — to
-   subagents; never do the work yourself. On completion, publish the compact
-   receipt to the owning task, PR, or Notion work item so another workspace
-   knows which work directory to copy in and which revision it assumes.
+   subagents; never do the work yourself. To pause a coding session rather
+   than hand a plan off, use `essential:handover`.
 4. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
    then report the blocker instead of looping.
