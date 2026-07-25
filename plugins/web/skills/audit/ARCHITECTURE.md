@@ -768,7 +768,7 @@ The cleanest way to think about the system is:
 2. `BrowserDriver` decides how to manipulate the live page.
 3. `inject.py` loads the browser-side auditors.
 4. `scripts/*.js` decide what is wrong with the rendered page.
-5. `crawl/page.py` explores state changes the baseline missed.
+5. `cli/audit_cli/crawl/page.py` explores state changes the baseline missed.
 6. `flag_ai.py` marks uncertain or subjective findings.
 7. `aggregate.py` scores the resulting finding set.
 8. `emit.py` writes the contract to disk.

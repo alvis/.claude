@@ -1,0 +1,52 @@
+# repository quality gates — see AGENTS.md "Hard limits" for what each job enforces.
+# every Python call is pinned through uv (never bare python3, per AGENTS.md);
+# the full unittest suite and `claude plugin validate` are deliberately not wired in.
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  size-limits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Contract footprint budgets
+        run: |
+          for f in plugins/*/tests/test_contract_footprint.py; do
+            echo "== $f"
+            uv run --python 3.13 python -m unittest "$f"
+          done
+      - name: Skill policy gate (500-line body, placeholders, local links)
+        run: |
+          uv run --python 3.13 \
+            plugins/governance/skills/write-skill/scripts/quick_validate.py . --policy-only
+
+  agent-templates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Stitch every agent template (validate only, no --output)
+        run: |
+          status=0
+          for d in plugins/*/templates/agents/*/; do
+            echo "== $d"
+            uv run --python 3.13 \
+              plugins/essential/skills/install-agents/scripts/stitch_agent.py "$d" \
+              >/dev/null || { echo "FAIL $d"; status=1; }
+          done
+          exit "$status"
+
+  doc-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Documentation path gate
+        run: uv run --python 3.13 scripts/check_doc_paths.py
+      - name: Path gate behavior tests
+        run: uv run --python 3.13 python -m unittest scripts/test_check_doc_paths.py

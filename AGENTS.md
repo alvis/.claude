@@ -140,11 +140,13 @@ claude plugin validate --strict .   # manifest + frontmatter schema
 uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py .
 ```
 
-Tests are stdlib `unittest`, run by path — there is no CI, no `package.json`, and no
-pytest config:
+Tests are stdlib `unittest`, run by path — there is no `package.json` and no
+pytest config. CI (`.github/workflows/ci.yml`) runs three jobs on every pull
+request and on pushes to `master`: the contract-footprint byte budgets plus the
+skill policy gate, agent-template stitching, and the doc-path gate
+(`scripts/check_doc_paths.py`). It does not run the full test suite:
 
 ```bash
-uv run --python 3.13 python -m unittest discover -s tests -p 'test_*.py'
 uv run --python 3.13 python -m unittest plugins/coding/tests/test_contract_footprint.py
 uv run --python 3.13 python -m unittest plugins/essential/skills/install-agents/scripts/test_install_agents.py
 ```

@@ -22,4 +22,4 @@ patterns).
 `constitution/` holds the authoring templates and invariants (agent, skill,
 command, standard shells; authoring-invariants, delegation, context-catalog
 references). Validation entry point:
-`skills/verify-skill/scripts/quick_validate.py`.
+`skills/write-skill/scripts/quick_validate.py`.

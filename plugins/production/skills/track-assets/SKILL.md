@@ -28,8 +28,8 @@ outside Git; their identity and lineage do not.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential; if unavailable, stop
 artifact writes and report the missing contract. Then read Essential's
-`templates/asset-manifest.md` (the manifest shape) and
-`references/anchors.md` (anchor declarations). The manifest is a durable
+`asset-manifest.md` template (the manifest shape) and its `anchors.md`
+reference (anchor declarations). The manifest is a durable
 versioned document under the contract's plugin-owned `docs/<domain>/<slug>/`
 clause: default location `docs/production/<deliverable-slug>/assets.md`
 unless the work stream's charter names another; work-local exploration stays

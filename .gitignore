@@ -3,3 +3,4 @@ __pycache__
 .pytest_cache
 plugins/essential/skills/discover/assets/html/vendor/
 .state/
+.venv/
