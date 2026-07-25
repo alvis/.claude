@@ -140,16 +140,18 @@ claude plugin validate --strict .   # manifest + frontmatter schema
 uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py .
 ```
 
-Tests are stdlib `unittest`, run by path — there is no `package.json` and no
-pytest config. CI (`.github/workflows/ci.yml`) runs three jobs on every pull
-request and on pushes to `master`: the contract-footprint byte budgets plus the
-skill policy gate, agent-template stitching, and the doc-path gate
-(`scripts/check_doc_paths.py`). It does not run the full test suite:
+Tests are pytest, configured by the root `pytest.ini` — there is no `package.json`.
+Run the whole suite, or any file, with no install step:
 
 ```bash
-uv run --python 3.13 python -m unittest plugins/coding/tests/test_contract_footprint.py
-uv run --python 3.13 python -m unittest plugins/essential/skills/install-agents/scripts/test_install_agents.py
+uvx pytest                                                              # whole suite
+uvx pytest plugins/essential/skills/install-agents/scripts/test_install_agents.py
 ```
+
+CI (`.github/workflows/ci.yml`) runs four jobs on every pull request and on
+pushes to `master`: the full pytest suite, the contract-footprint byte budgets
+plus the skill policy gate, agent-template stitching, and the doc-path gate
+(`scripts/check_doc_paths.py`).
 
 <IMPORTANT>
 Never invoke a bare `python3`. macOS ships it as 3.9, which fails this repo's sources on

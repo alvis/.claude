@@ -39,7 +39,7 @@ In a fresh Claude Code session, the roster appears in the agent list.
 For maintainer verification, run the deterministic contract suite:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest plugins/essential/skills/install-agents/scripts/test_install_agents.py
+uvx pytest plugins/essential/skills/install-agents/scripts/test_install_agents.py
 ```
 
 ### Step 3: Report

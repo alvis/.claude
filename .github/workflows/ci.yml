@@ -1,6 +1,6 @@
 # repository quality gates — see AGENTS.md "Hard limits" for what each job enforces.
 # every Python call is pinned through uv (never bare python3, per AGENTS.md);
-# the full unittest suite and `claude plugin validate` are deliberately not wired in.
+# `claude plugin validate` is deliberately not wired in.
 name: ci
 
 on:
@@ -9,17 +9,23 @@ on:
   pull_request:
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Full pytest suite (same command as local `uvx pytest`)
+        run: uvx --python 3.13 pytest
+
   size-limits:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Contract footprint budgets
-        run: |
-          for f in plugins/*/tests/test_contract_footprint.py; do
-            echo "== $f"
-            uv run --python 3.13 python -m unittest "$f"
-          done
+        # the footprint tests are pytest-style; `python -m unittest` would collect
+        # zero tests and pass vacuously.
+        run: uvx --python 3.13 pytest plugins/*/tests/test_contract_footprint.py
       - name: Skill policy gate (500-line body, placeholders, local links)
         run: |
           uv run --python 3.13 \
@@ -49,4 +55,5 @@ jobs:
       - name: Documentation path gate
         run: uv run --python 3.13 scripts/check_doc_paths.py
       - name: Path gate behavior tests
-        run: uv run --python 3.13 python -m unittest scripts/test_check_doc_paths.py
+        # pytest-style tests; `python -m unittest` would collect zero tests and pass vacuously.
+        run: uvx --python 3.13 pytest scripts/test_check_doc_paths.py

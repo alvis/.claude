@@ -341,6 +341,17 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 - Acceptance, receipts, and final work-state status are recorded before
   cleanup.
 
+## Testing
+
+Run the whole test suite from the repo root with one command — nothing to install:
+
+```bash
+uvx pytest
+```
+
+`uvx` fetches pytest on demand; `pytest.ini` supplies the configuration. Sources
+need Python 3.10+ — if the ambient interpreter is older, run `uvx --python 3.13 pytest`.
+
 ## Validation
 
 ```bash
