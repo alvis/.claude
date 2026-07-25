@@ -297,11 +297,8 @@ class StitchAgentDefinitionTest(unittest.TestCase):
 
 
 class AgentDiscoveryTest(unittest.TestCase):
-    def test_injected_instructions_stay_under_two_kilobytes(self) -> None:
-        for name in ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md"):
-            with self.subTest(name=name):
-                instructions = (ROOT / "plugins/essential" / name).read_bytes()
-                self.assertLess(len(instructions), 2_000)
+    # Payload byte budgets belong to the plugin that ships them; essential
+    # declares its own in plugins/essential/tests/test_contract_footprint.py.
 
     def test_role_hooks_expand_the_engineering_work_reference(self) -> None:
         essential = ROOT / "plugins/essential"

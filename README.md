@@ -345,7 +345,7 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 
 ```bash
 claude plugin validate --strict .
-python3 plugins/governance/skills/verify-skill/scripts/quick_validate.py .
+uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py .
 ```
 
 Useful references: [Claude Code plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces), [plugin installation and scopes](https://code.claude.com/docs/en/discover-plugins), and [plugin reference](https://code.claude.com/docs/en/plugins-reference).

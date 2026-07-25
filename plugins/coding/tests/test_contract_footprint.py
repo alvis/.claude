@@ -13,12 +13,11 @@ from contract_footprint import check_plugin  # noqa: E402
 
 # This plugin owns both lists: what it injects at hook time, and what a session
 # must read before acting in its domain.
-PAYLOADS = ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md")
+PAYLOADS = ("CLAUDE.md", "MAINAGENT.md")
 CHAIN = (
     "CLAUDE.md",
-    "references/orchestration.md",
-    "references/engineering-work.md",
-    "references/engineering-work-state.md",
+    "references/CODING.md",
+    "references/ROUTING.md",
 )
 
 
