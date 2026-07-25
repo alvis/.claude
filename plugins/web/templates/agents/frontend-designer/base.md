@@ -31,15 +31,15 @@ Typical responses:
 
 Preload before design work:
 
-- **SD-DESIGN** → the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
-- **SD-UNIVERSAL** → the `universal` standard at coding:constitution/standards/universal/
-- **SD-TYPESCRIPT** → the `typescript` standard at coding:constitution/standards/typescript/
+- the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `typescript` standard at coding:constitution/standards/typescript/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Resolved lazily per task, never preloaded:
 
-- **RP-AREA** — the repo-derived design area/component context relevant to the current screen and its target platform (web, mobile, or desktop)
+- the repo-derived design area/component context relevant to the current screen and its target platform (web, mobile, or desktop)
 
 ## Memory
 

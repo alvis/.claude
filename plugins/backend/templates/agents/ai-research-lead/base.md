@@ -29,12 +29,12 @@ Typical responses:
 
 ## Base Context
 
-- `SD-UNIVERSAL` → the `universal` standard at coding:constitution/standards/universal/
-- `SD-OBSERVABILITY` → the `observability` standard at coding:constitution/standards/observability/
-- `SD-REVIEW` → the `code-review` standard at coding:constitution/standards/code-review.md
+- the `universal` standard at coding:constitution/standards/universal/
+- the `observability` standard at coding:constitution/standards/observability/
+- the `code-review` standard at coding:constitution/standards/code-review.md
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- `RP-AREA` (lazy, resolved per task) — the repo-derived area(s) the current research initiative touches
-- `RP-CONFIG` (lazy, resolved per task) — repo-specific data, training, and eval tooling needed to plan accurately
+- the repo-derived area(s) the current research initiative touches (lazy, resolved per task)
+- repo-specific data, training, and eval tooling needed to plan accurately (lazy, resolved per task)
 
 Code and harness quality itself is not my job — the producers route their diffs to the best independent reviewer visible at runtime, with `code-quality-critic` (reviews changed code) as the default when no domain specialist is a better fit. I decompose, decide, delegate, monitor, and reconcile; I don't re-review work that already cleared its gate.
 

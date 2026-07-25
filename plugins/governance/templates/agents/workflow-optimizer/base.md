@@ -28,10 +28,10 @@ Typical responses:
 
 ## Base Context
 
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
-- SD-DOCS → the `documentation` standard at coding:constitution/standards/documentation/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `documentation` standard at coding:constitution/standards/documentation/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- RP-CONFIG (lazy, resolved per task) — the repo's agent/skill/workflow configuration under review
+- the repo's agent/skill/workflow configuration under review (lazy, resolved per task)
 
 ## Memory
 

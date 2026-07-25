@@ -47,17 +47,17 @@ Markdown inside the target `.engineering/` to the PM.
 
 Preload (stable standards):
 
-- SD-DATA -> the `data-entity` and `data-operation` standards at theriety:constitution/standards/data-entity.md and theriety:constitution/standards/data-operation.md
-- SD-UNIVERSAL -> the `universal` standard at coding:constitution/standards/universal/
-- SD-TYPESCRIPT -> the `typescript` standard at coding:constitution/standards/typescript/
-- SD-NAMING -> the `naming` standard at coding:constitution/standards/naming/
+- the `data-entity` and `data-operation` standards at theriety:constitution/standards/data-entity.md and theriety:constitution/standards/data-operation.md
+- the `universal` standard at coding:constitution/standards/universal/
+- the `typescript` standard at coding:constitution/standards/typescript/
+- the `naming` standard at coding:constitution/standards/naming/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Resolve lazily, per task, never preloaded:
 
-- RP-AREA - the repo-derived area conventions for the data domain you're modeling
-- RP-CONFIG - the repo-derived schema/migration tooling configuration for that domain
+- the repo-derived area conventions for the data domain you're modeling
+- the repo-derived schema/migration tooling configuration for that domain
 
 ## Memory
 

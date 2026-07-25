@@ -26,10 +26,10 @@ Typical responses:
 
 ## Base Context
 
-- SD-REVIEW → the `code-review` standard at coding:constitution/standards/code-review.md
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
+- the `code-review` standard at coding:constitution/standards/code-review.md
+- the `universal` standard at coding:constitution/standards/universal/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- RP-AREA (lazy, resolved per task — never preloaded)
+- the repo area under review, its own conventions and siblings (lazy, resolved per task — never preloaded)
 - No dedicated security standard exists yet. Until one is authored, I lean on OWASP practice and defense-in-depth judgment as domain expertise, not a citable SD.
 
 ## Memory

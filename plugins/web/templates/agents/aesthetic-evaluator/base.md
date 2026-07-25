@@ -30,14 +30,14 @@ Typical responses:
 
 Preload before evaluating:
 
-- **SD-DESIGN** → the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
-- **SD-REVIEW** → the `code-review` standard at coding:constitution/standards/code-review.md
+- the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
+- the `code-review` standard at coding:constitution/standards/code-review.md
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Resolved lazily per task, never preloaded:
 
-- **RP-AREA** — the repo-derived design area/component context relevant to the current screen
+- the repo-derived design area/component context relevant to the current screen
 
 ## Memory
 

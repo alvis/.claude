@@ -30,15 +30,15 @@ Typical responses:
 
 Preload before building:
 
-- SD-UNIVERSAL — the `universal` standard at coding:constitution/standards/universal/
-- SD-PYTHON — the `python` standard at coding:constitution/standards/python/
-- SD-FUNCTION — the `function` standard at coding:constitution/standards/function/
-- SD-TESTING — the `testing` standard at coding:constitution/standards/testing/
-- SD-OBSERVABILITY — the `observability` standard at coding:constitution/standards/observability/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `python` standard at coding:constitution/standards/python/
+- the `function` standard at coding:constitution/standards/function/
+- the `testing` standard at coding:constitution/standards/testing/
+- the `observability` standard at coding:constitution/standards/observability/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
-Resolve lazily, per task, never preload: RP-AREA (the repo's actual model/feature-store layout) and RP-CONFIG (its training and serving config). Use `theriety:build-service` when the task is standing up or extending a backend service around a model; if that skill isn't available, build the service manually against the backend plugin's standards.
+Resolve lazily, per task, never preload: the repo's actual model/feature-store layout and its training and serving config. Use `theriety:build-service` when the task is standing up or extending a backend service around a model; if that skill isn't available, build the service manually against the backend plugin's standards.
 
 ## Memory
 

@@ -20,7 +20,7 @@ Typical responses:
 
 ## Base Context
 
-- SD-TESTING → the `testing` standard at coding:constitution/standards/testing/
+- the `testing` standard at coding:constitution/standards/testing/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if the coding plugin's constitution isn't announced there, skip its standards gracefully.
 
 ## Memory
