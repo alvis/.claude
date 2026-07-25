@@ -11,7 +11,7 @@ Settle this first, from where the task came:
 - **From the user** — do it yourself when the change is small (low expected token spend); delegate it otherwise.
 - **From another agent** — do it yourself, unless you are a lead (an orchestrator). A lead never implements; it only advises and delegates.
 
-To delegate, read `ROUTING.md` in this same `references/` directory and route the work to the specialist whose role fits; and read `references/orchestration.md` in the essential plugin directory before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
+To delegate, read `ROUTING.md` in this same `references/` directory and route the work to the specialist whose role fits; and read `orchestration.md` in the essential plugin's `references/` directory before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
 
 ### Decide where the work will live
 

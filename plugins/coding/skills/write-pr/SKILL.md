@@ -134,10 +134,8 @@ git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
 ```
 
 The parent uses this worktree to confirm selected-revision commands. If local
-testing is dispatched,
-give the path and cleanup ownership to the tester; it must install the same
-guarded trap in its process before running commands and report cleanup status.
-If testing is skipped or blocked, the parent runs `cleanup` before proceeding.
+testing is dispatched, give the path and cleanup ownership to the tester; if
+testing is skipped or blocked, the parent runs `cleanup` before proceeding.
 
 Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
 confirm the exact commands at the selected SHA, and inspect workflow `env`,
@@ -164,13 +162,11 @@ for the whole command set. It MUST NOT edit, format, commit, or push. It runs
 every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
-Treat repository workflows and scripts as untrusted code. The tester uses the
-discovery worktree and removes it on every exit path. Before running
-commands, it installs the guarded trap shown above in its own process and runs
-the allowlisted commands from `"$TEST_WORKTREE"`.
-
-The cleanup trap is mandatory after pass, failure, cancellation, or blocked
-environment discovery. Limit filesystem writes to that worktree and a
+Treat repository workflows and scripts as untrusted code. The tester installs
+the guarded trap shown above in its own process before running commands, runs
+the allowlisted commands from `"$TEST_WORKTREE"`, removes the worktree on every
+exit path — pass, failure, cancellation, or blocked environment discovery —
+and reports cleanup status. Limit filesystem writes to that worktree and a
 temporary directory, deny network by default, and remove ambient tokens,
 credential helpers, SSH agent sockets, cloud credentials, and unrelated
 environment variables. Pass only the minimal allowlisted toolchain environment.
@@ -438,7 +434,7 @@ invokes `gh`.
 
    On mismatch, exit 2 with the failing token, the regex, and the offending
    subject. This skill is the single source of truth for the regex; it is
-   mirrored in `coding:commit` (`references/conventional-commits.md`).
+   mirrored in `coding:commit` (`../commit/references/conventional-commits.md`).
 4. Resolve the template — first hit wins, paths relative to the repo root:
 
    1. `.github/PULL_REQUEST_TEMPLATE.md`

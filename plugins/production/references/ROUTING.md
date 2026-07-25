@@ -10,6 +10,6 @@ Route by the requested action, not the subject noun.
 Neither skill edits media bytes; both maintain versioned text manifests and
 review records. Work-stream lifecycle (state, decisions, journal,
 handover) stays with Essential — a production work stream declares a
-`media-project` or `asset-store` anchor per Essential's
-`references/anchors.md` and follows the same engineering-work contract as any
-other stream.
+`media-project` or `asset-store` anchor per `anchors.md` in the essential
+plugin's `references/` directory and follows the same engineering-work
+contract as any other stream.

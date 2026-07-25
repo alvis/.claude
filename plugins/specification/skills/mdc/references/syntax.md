@@ -1,6 +1,6 @@
 # MDC Syntax Reference
 
-Authoritative grammar for MDC (Contextual Markdown, `@theriety/mdc` dialect). Mirrors `mdc/SYNTAX.md` and the parser's behaviour. Loaded by the skill in every mode.
+Authoritative grammar for MDC (Contextual Markdown, `@theriety/mdc` dialect). Mirrors `SYNTAX.md` in the `@theriety/mdc` package and the parser's behaviour. Loaded by the skill in every mode.
 
 ---
 

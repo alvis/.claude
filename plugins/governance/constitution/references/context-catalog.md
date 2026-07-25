@@ -47,7 +47,7 @@ under this tree, following cross-references"; single files (`.md`, no trailing s
 
 No `authentication.md` or `data-protection.md` standard has been written anywhere in this repo. Any agent,
 template, or prior agent file that cites `authentication.md`, `data-protection.md`, `communication.md`,
-`checklist.md`, `infrastructure.md`, `monitoring.md`, `deployment.md`, or `naming/README.md` is citing a standard
+`checklist.md`, `infrastructure.md`, `monitoring.md`, `deployment.md`, or `naming/README.md` is citing a standard <!-- doc-path-gate: ignore -->
 that was never written — those are fake and MUST NOT appear in any agent's base context. Security- and
 data-protection-sensitive agents (e.g. `security-champion`) fall back to `code-review` + `universal` until a real
 auth/data-protection standard is authored; do not paper over the gap by inventing a path.

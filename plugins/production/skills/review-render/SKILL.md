@@ -27,8 +27,8 @@ carries to v8 merely because v8 was derived from it.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential; if unavailable, stop
 artifact writes and report the missing contract. Also read Essential's
-`references/approvals.md` (the approval binding tuple) and
-`references/reviews.md`. Review records land in the
+`approvals.md` (the approval binding tuple) and `reviews.md`, both in the
+essential plugin's `references/` directory. Review records land in the
 plugin-namespaced review area `reviews/production-render.md` — sanctioned
 alongside the seven canonical engineering areas, under the same finding and
 disposition lifecycle and the `review.md` roll-up; durable release records

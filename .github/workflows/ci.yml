@@ -1,0 +1,22 @@
+# repository quality gate — see AGENTS.md "Hard limits" for what it enforces.
+# every gate is a pytest test, so CI runs the one command a contributor runs.
+# `claude plugin validate` is deliberately not wired in.
+name: ci
+
+on:
+  push:
+    branches: [master]
+  # the default types omit ready_for_review, so a draft that was never pushed to
+  # after its last run would be marked ready with no run against that state.
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag past v7, so this pins exactly.
+      - uses: astral-sh/setup-uv@v9.0.0
+      - name: uvx pytest
+        run: uvx --python 3.13 pytest

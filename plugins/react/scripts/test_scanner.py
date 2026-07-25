@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fixture-driven and loader smoke tests for the React Props scanner.
 
-Run directly: `python3.13 plugins/react/scripts/test_scanner.py`.
+Run directly: `uvx pytest plugins/react/scripts/test_scanner.py`.
 
 The shared `scanlib` engine lives in the coding plugin; this test adds that
 directory to `sys.path` exactly as the production shim does. Each
@@ -14,20 +14,50 @@ the directory name. Scenario fixtures with zero matches act as true-negatives.
 import io
 import os
 import sys
-import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+
+import pytest
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 CODING_SCRIPTS = SCRIPTS_DIR.parent.parent / "coding" / "scripts"
 sys.path.insert(0, str(CODING_SCRIPTS))
 sys.path.insert(0, str(SCRIPTS_DIR))
 
+# both the coding and react plugins ship a top-level `scanners` package; in a
+# single pytest process whichever loaded first would otherwise be reused from
+# sys.modules, poisoning this file's rule set. purge any cached copy so
+# load_rules() imports the react rules through the path inserted above.
+for _cached in [m for m in sys.modules if m == "scanners" or m.startswith("scanners.")]:
+    del sys.modules[_cached]
+
 from scanlib.core import run
 from scanlib.loader import load_rules
 
 FIXTURES_DIR = SCRIPTS_DIR / "fixtures"
 RULES = tuple(load_rules(package="scanners"))
+
+# a fixture is any `fixtures/<dir>/` carrying an `expected.txt` golden;
+# the scanned category comes from `category.txt` or the directory name.
+FIXTURE_DIRS = sorted(
+    p for p in FIXTURES_DIR.iterdir()
+    if p.is_dir() and (p / "expected.txt").is_file()
+)
+
+
+@pytest.fixture(autouse=True)
+def _own_scanners_package() -> None:
+    # run() re-imports the `scanners` package on every call; purge any copy
+    # cached by the coding plugin's scanner tests and keep this scripts dir at
+    # the front of sys.path so every load resolves to the react rules.
+    for cached in [
+        m for m in sys.modules if m == "scanners" or m.startswith("scanners.")
+    ]:
+        del sys.modules[cached]
+    path = str(SCRIPTS_DIR)
+    if path in sys.path:
+        sys.path.remove(path)
+    sys.path.insert(0, path)
 
 
 def _capture(argv: list[str], /) -> str:
@@ -56,47 +86,40 @@ def _fixture_category(fixture: Path, /) -> str:
     return fixture.name
 
 
-class FixtureScanTests(unittest.TestCase):
-    """Every `fixtures/<dir>/` golden file matches a fresh scan."""
-
-    def test_fixtures_match_expected(self) -> None:
-        # a fixture is any `fixtures/<dir>/` carrying an `expected.txt` golden;
-        # the scanned category comes from `category.txt` or the directory name.
-        fixture_dirs = sorted(
-            p for p in FIXTURES_DIR.iterdir()
-            if p.is_dir() and (p / "expected.txt").is_file()
-        )
-        self.assertTrue(fixture_dirs, "no rule fixture directories discovered")
-        for fixture in fixture_dirs:
-            category = _fixture_category(fixture)
-            expected_path = fixture / "expected.txt"
-            with self.subTest(fixture=fixture.name, category=category):
-                expected = expected_path.read_text(encoding="utf-8")
-                actual = _capture_from(fixture, ["--category", category])
-                self.assertEqual(actual, expected, f"fixture drift for {fixture.name}")
+# every `fixtures/<dir>/` golden file matches a fresh scan
 
 
-class LoaderSmokeTests(unittest.TestCase):
-    """The auto-loader discovers a complete, well-formed React rule set."""
-
-    def test_rule_ids_are_unique(self) -> None:
-        ids = [rule.id for rule in RULES]
-        self.assertEqual(len(ids), len(set(ids)))
-
-    def test_rules_sorted_by_order_then_id(self) -> None:
-        keys = [(rule.order, rule.id) for rule in RULES]
-        self.assertEqual(keys, sorted(keys))
-
-    def test_blocks_helper_is_skipped(self) -> None:
-        # `_blocks.py` exports no Rule and must not surface as a rule
-        self.assertTrue(all(not rule.id.startswith("_") for rule in RULES))
-
-    def test_every_rule_is_a_category_choice(self) -> None:
-        for rule in RULES:
-            with self.subTest(rule=rule.id):
-                output = _capture([str(FIXTURES_DIR), "--category", rule.id])
-                self.assertIn(f"  {rule.id}:", output)
+def test_fixture_directories_are_discovered() -> None:
+    assert FIXTURE_DIRS, "no rule fixture directories discovered"
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+@pytest.mark.parametrize("fixture", FIXTURE_DIRS, ids=lambda p: p.name)
+def test_fixtures_match_expected(fixture: Path) -> None:
+    category = _fixture_category(fixture)
+    expected = (fixture / "expected.txt").read_text(encoding="utf-8")
+    actual = _capture_from(fixture, ["--category", category])
+    assert actual == expected, f"fixture drift for {fixture.name}"
+
+
+# the auto-loader discovers a complete, well-formed React rule set
+
+
+def test_rule_ids_are_unique() -> None:
+    ids = [rule.id for rule in RULES]
+    assert len(ids) == len(set(ids))
+
+
+def test_rules_sorted_by_order_then_id() -> None:
+    keys = [(rule.order, rule.id) for rule in RULES]
+    assert keys == sorted(keys)
+
+
+def test_blocks_helper_is_skipped() -> None:
+    # `_blocks.py` exports no Rule and must not surface as a rule
+    assert all(not rule.id.startswith("_") for rule in RULES)
+
+
+@pytest.mark.parametrize("rule", RULES, ids=lambda r: r.id)
+def test_every_rule_is_a_category_choice(rule) -> None:
+    output = _capture([str(FIXTURES_DIR), "--category", rule.id])
+    assert f"  {rule.id}:" in output
