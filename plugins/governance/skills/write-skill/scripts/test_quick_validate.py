@@ -193,3 +193,23 @@ def test_timed_out_claude_is_structured_and_other_targets_continue(
     assert results[0]["status"] == "fail"
     assert "timed out" in results[0]["output"]
     assert results[1]["status"] == "pass"
+
+
+def test_this_repository_passes_the_skill_policy_gate() -> None:
+    """The gate itself, over the real tree — `uvx pytest` is the only command.
+
+    Warnings (description length) are deliberately not asserted on: they do not
+    fail the gate, so promoting them here would make the suite stricter than
+    the rule it enforces.
+    """
+    root = Path(__file__).resolve().parents[5]
+    failures = {
+        str(report["skill"]): report["errors"]
+        for report in (
+            quick_validate.validate_policy(skill)
+            for skill in quick_validate.discover_skills(root)
+        )
+        if report["errors"]
+    }
+
+    assert failures == {}

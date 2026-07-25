@@ -135,23 +135,23 @@ Run every Python script and test through `uv`, pinning the interpreter with
 `--python`. `uv` fetches the requested version when it is absent, so the same command
 works on any machine.
 
-```bash
-claude plugin validate --strict .   # manifest + frontmatter schema
-uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py .
-```
-
-Tests are pytest, configured by the root `pytest.ini` — there is no `package.json`.
-Run the whole suite, or any file, with no install step:
+One command validates this repository, with no install step:
 
 ```bash
-uvx pytest                                                              # whole suite
+uvx pytest                                                              # everything
 uvx pytest plugins/essential/skills/install-agents/scripts/test_install_agents.py
 ```
 
-CI (`.github/workflows/ci.yml`) runs four jobs on every pull request and on
-pushes to `master`: the full pytest suite, the contract-footprint byte budgets
-plus the skill policy gate, agent-template stitching, and the doc-path gate
-(`scripts/check_doc_paths.py`).
+Every mechanical gate is a pytest test, so the suite and the gates cannot drift
+apart: the byte budgets, the skill policy gate, agent-template stitching, and
+the doc-path gate each fail as a named test beside the script that owns them.
+`.github/workflows/ci.yml` runs that same one command on every pull request and
+on pushes to `master`. Tests are configured by the root `pytest.ini`; there is
+no `package.json`.
+
+`claude plugin validate --strict .` checks the manifest and frontmatter schema
+against the installed CLI. It stays out of both the suite and CI, which is why
+you run it by hand before publishing a manifest change.
 
 <IMPORTANT>
 Never invoke a bare `python3`. macOS ships it as 3.9, which fails this repo's sources on

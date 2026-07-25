@@ -797,3 +797,22 @@ def test_rerun_overwrites_discovered_agents_without_pruning_other_files(
     )
     assert unrelated.read_text(encoding="utf-8") == "personal"
     assert stale.read_text(encoding="utf-8") == "stale"
+
+
+@pytest.mark.parametrize(
+    "template",
+    sorted(
+        path
+        for path in (ROOT / "plugins").glob("*/templates/agents/*")
+        if path.is_dir()
+    ),
+    ids=lambda path: f"{path.parents[2].name}:{path.name}",
+)
+def test_every_distributed_agent_template_stitches(template: Path) -> None:
+    """The stitch gate itself, over the real tree — `uvx pytest` is the only command.
+
+    Stitching validates the whole agent contract: description limit, name
+    regex, model/effort enums, absent tools, project memory, and the single
+    Memory section. A template that cannot stitch cannot be installed.
+    """
+    assert stitch_agent_definition(template).strip()

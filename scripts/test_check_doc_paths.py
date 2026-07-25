@@ -207,3 +207,8 @@ def test_ignores_external_links_and_pure_anchors(root: Path) -> None:
     )
 
     assert check(root) == []
+
+
+def test_this_repository_has_no_unresolved_doc_paths() -> None:
+    """The gate itself, over the real tree — `uvx pytest` is the only command."""
+    assert check(Path(__file__).resolve().parents[1]) == []

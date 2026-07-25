@@ -1,5 +1,5 @@
-# repository quality gates — see AGENTS.md "Hard limits" for what each job enforces.
-# every Python call is pinned through uv (never bare python3, per AGENTS.md);
+# repository quality gate — see AGENTS.md "Hard limits" for what it enforces.
+# every gate is a pytest test, so CI runs the one command a contributor runs.
 # `claude plugin validate` is deliberately not wired in.
 name: ci
 
@@ -9,51 +9,10 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - name: Full pytest suite (same command as local `uvx pytest`)
+      - name: uvx pytest
         run: uvx --python 3.13 pytest
-
-  size-limits:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Contract footprint budgets
-        # the footprint tests are pytest-style; `python -m unittest` would collect
-        # zero tests and pass vacuously.
-        run: uvx --python 3.13 pytest plugins/*/tests/test_contract_footprint.py
-      - name: Skill policy gate (500-line body, placeholders, local links)
-        run: |
-          uv run --python 3.13 \
-            plugins/governance/skills/write-skill/scripts/quick_validate.py . --policy-only
-
-  agent-templates:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Stitch every agent template (validate only, no --output)
-        run: |
-          status=0
-          for d in plugins/*/templates/agents/*/; do
-            echo "== $d"
-            uv run --python 3.13 \
-              plugins/essential/skills/install-agents/scripts/stitch_agent.py "$d" \
-              >/dev/null || { echo "FAIL $d"; status=1; }
-          done
-          exit "$status"
-
-  doc-paths:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Documentation path gate
-        run: uv run --python 3.13 scripts/check_doc_paths.py
-      - name: Path gate behavior tests
-        # pytest-style tests; `python -m unittest` would collect zero tests and pass vacuously.
-        run: uvx --python 3.13 pytest scripts/test_check_doc_paths.py

@@ -31,7 +31,10 @@ def discover_skills(target: Path) -> list[Path]:
     """Return all SKILL.md files represented by a file, skill, or tree.
 
     Files under a ``templates`` directory are seeds that legitimately contain
-    placeholder text, so they are excluded from discovery.
+    placeholder text, so they are excluded from discovery. So is anything under
+    a dotted directory: a git worktree, dependency cache, or installed plugin
+    cache holds a second copy of skills this tree already owns, and reporting
+    those duplicates lets a stale checkout fail a clean tree.
     """
     target = target.resolve()
     if target.is_file():
@@ -41,7 +44,10 @@ def discover_skills(target: Path) -> list[Path]:
     if not target.is_dir():
         return []
     return sorted(
-        path for path in target.glob("**/SKILL.md") if "templates" not in path.parent.parts
+        path
+        for path in target.glob("**/SKILL.md")
+        if "templates" not in path.parent.parts
+        and not any(part.startswith(".") for part in path.relative_to(target).parts)
     )
 
 
