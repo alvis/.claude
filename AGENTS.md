@@ -1,0 +1,177 @@
+# AGENTS.md
+
+Keep every line load-bearing. If deleting a word would not change what someone
+does, delete it — that governs this file and everything shipped from this tree.
+
+## What this repository is
+
+This is the **source** of a Claude Code plugin marketplace: the plugins under
+`plugins/`, distributed to users' machines by `claude plugin install`.
+
+<IMPORTANT>
+Edit plugin sources here. Never edit `~/.claude/plugins/` — that is a downstream cache
+that lags this tree and will mislead you. Refresh it with `claude plugin update`.
+</IMPORTANT>
+
+Runtime prerequisites: Bash, `jq`, Git, and `uv` (which supplies Python 3.13+), plus
+`gh`, and optionally `jj`, for publishing.
+
+## Where things live
+
+| Artifact | Path |
+|---|---|
+| Marketplace manifest | `.claude-plugin/marketplace.json` |
+| Plugin manifest | `plugins/<p>/.claude-plugin/plugin.json` |
+| Skill | `plugins/<p>/skills/<name>/SKILL.md` (+ `references/`, `scripts/`, `assets/`) |
+| Agent | `plugins/<p>/templates/agents/<name>/base.md` + `frontmatter/claude.json` |
+| Standard | `plugins/<p>/constitution/standards/<name>/{meta,scan,write}.md` + `rules/` |
+| Injected payload | `plugins/<p>/{CLAUDE,MAINAGENT,SUBAGENT}.md` |
+| Routing table | `plugins/<p>/references/ROUTING.md` |
+| Shared executables | `plugins/essential/bin/` |
+
+There are **no `agents/` or `commands/` directories**. Agents ship as templates
+(`base.md` body + `frontmatter/claude.json`, JSON not YAML) that `/essential:install-agents`
+stitches and installs. Every plugin depends on `essential`; `web` and `react` also depend
+on `coding`.
+
+## The injection contract
+
+A plugin's `CLAUDE.md`, `MAINAGENT.md`, and `SUBAGENT.md` are **shipped product**, not
+developer docs. Each plugin's `plugin.json` registers hooks that pipe the file through
+`sed` and `jq` into the user's session context:
+
+```bash
+sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g" "${CLAUDE_PLUGIN_ROOT}/CLAUDE.md" \
+  | jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}'
+```
+
+- `CLAUDE.md` — injected at `SessionStart` **and** `SubagentStart`; carries that plugin's
+  own routing only. Do not rebuild a central roster table in it.
+- `MAINAGENT.md` — `SessionStart` only; binds the main agent to a domain lead
+  (`coding`→`tech-lead`, `web`→`design-lead`, `backend`→`ai-research-lead`).
+- `SUBAGENT.md` — `essential` only, `SubagentStart`.
+
+Use `{{PLUGIN_DIR}}` for in-payload paths; the hook substitutes it. Because these files
+are re-read on every session, they are byte-budgeted (see below) — put detail in
+`references/` and link to it at the decision point.
+
+This root `AGENTS.md` is a different mechanism: ordinary memory-file discovery, for work
+done *in this repo*. It is not shipped, not hook-injected, and not byte-budgeted.
+
+## Design invariants
+
+These plugins are built to one model of how knowledge ages:
+`plugins/essential/references/truth.md`. Read it before changing how a skill records,
+reads, or retires anything. The invariants below are what it forbids while you edit
+these sources, and each is the rule a locally sensible change breaks first.
+
+- **One home per fact.** Give every fact exactly one authoritative file. A second mention
+  is derived: it names its source and is rewritten from that source, never patched in
+  place. This is the rule behind "no central roster in a plugin's `CLAUDE.md`" above — a
+  convenience copy is drift with a head start.
+- **Regenerate projections; never trust them.** `.engineering/` state, overviews, and the
+  installed plugin cache are derived views, safe to delete and rebuild. Do not add a
+  cache, index, or generated summary that something else then depends on.
+- **Status is not validity.** `done` is terminal history; whether its result still holds
+  is a separate question with a separate answer. A skill choosing what to recompute reads
+  validity, never status, and never flips a completed row back.
+- **Bind evidence to its exact inputs.** A recorded result names the revision and inputs
+  that produced it. "Passed" alone carries no truth, and must not survive a change to
+  what it was measured against.
+- **Supersede, never edit.** An accepted decision or a shipped contract is replaced by a
+  successor that links back to it — the same discipline `coding:commit` and
+  `coding:write-pr` enforce on prose and code.
+
+## Hard limits
+
+Enforced mechanically — each with the file that enforces it.
+
+| Limit | Enforced by |
+|---|---|
+| `SKILL.md` body < 500 lines | `plugins/governance/skills/write-skill/scripts/quick_validate.py` |
+| Skill `description` 25–60 words (warning) | same |
+| No placeholder text (`[TODO]`, `[Description]`, …) and no unresolved local links | same |
+| Agent `description` ≤ 1024 chars | `plugins/essential/skills/install-agents/scripts/stitch_agent.py` |
+| Agent `name` matches `^[a-z0-9]+(?:-[a-z0-9]+)*$` and equals its directory name | same |
+| `model` ∈ sonnet\|opus\|haiku\|fable\|inherit; `effort` ∈ low\|medium\|high\|xhigh\|max; haiku omits `effort` | same |
+| Agent frontmatter **omits `tools`** (agents inherit runtime capabilities) | same |
+| `memory` is `"project"`; body has exactly one `## Memory` section | same |
+| Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |
+| Every plugin's mandatory read chain ≤ 40,960 bytes | same |
+| `.engineering/` work Markdown flagged over 16,384 bytes | `plugins/essential/bin/check-markdown-size` |
+| `Agent`/`Task`/`SendMessage` body ≤ 4,096 characters | `plugins/essential/references/orchestration.md` |
+| Batch ≤ ~10 resources per subagent; structured reports < 1000 tokens; ~2 retries per batch | `plugins/governance/constitution/references/delegation.md` |
+
+A plugin declares its own payloads and mandatory read chain in its own test; the shared
+script holds the budgets and fails a payload the plugin ships but forgot to declare.
+
+An agent `description` must also end with the exact sentence
+`Preferably named <A>, <B>, or <C> when the main agent spawns this role.` — three
+distinct capitalized names.
+
+## Authoring rules
+
+Read the rule before writing the artifact; these are the sources, not summaries.
+
+- `plugins/governance/constitution/references/authoring-invariants.md` — one coherent
+  document (supersede prose, never append addenda); concision must preserve the
+  executable contract; the Content Boundary Convention (`<IMPORTANT>` for hard
+  guardrails, `<report>` for output contracts, every tag closed); headings are useful
+  defaults, not a contract.
+- `plugins/governance/constitution/references/context-catalog.md` — the standards an
+  agent may cite. Name a standard by its canonical path; never invent one.
+- `plugins/governance/constitution/references/delegation.md` — batching, reports, and
+  the message ceiling for skills that dispatch subagents.
+- `plugins/governance/constitution/templates/` — seed templates for skill, agent,
+  command, and standard. Delete every author-guide comment before shipping.
+
+Give every threshold its reason; the repo bans magic numbers. Skill and standard
+directory names are kebab-case and match their `name`. Agent names are role-only
+lowercase kebab, never personalized.
+
+## Validation
+
+Run every Python script and test through `uv`, pinning the interpreter with
+`--python`. `uv` fetches the requested version when it is absent, so the same command
+works on any machine.
+
+```bash
+claude plugin validate --strict .   # manifest + frontmatter schema
+uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py .
+```
+
+Tests are stdlib `unittest`, run by path — there is no CI, no `package.json`, and no
+pytest config:
+
+```bash
+uv run --python 3.13 python -m unittest discover -s tests -p 'test_*.py'
+uv run --python 3.13 python -m unittest plugins/coding/tests/test_contract_footprint.py
+uv run --python 3.13 python -m unittest plugins/essential/skills/install-agents/scripts/test_install_agents.py
+```
+
+<IMPORTANT>
+Never invoke a bare `python3`. macOS ships it as 3.9, which fails this repo's sources on
+3.10+ syntax such as `dataclass(slots=True)` — a version error that reads like a real
+test failure. Pin the version with `uv run --python 3.13`.
+</IMPORTANT>
+
+Further suites live in `plugins/<p>/tests/` and beside their scripts.
+
+## Git and pull requests
+
+Conventional Commits, validated before any history mutation against
+`plugins/coding/skills/commit/references/conventional-commits.md`:
+
+```
+^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w./-]+\))?!?: .+
+```
+
+Those 11 types only — no aliases, no emoji prefix. Scope is a plugin or `plugin/skill`
+(`feat(essential):`, `docs(coding/write-pr):`), omitted for global changes. Branches are
+`type/kebab-summary`. Work lands through pull requests whose titles are themselves
+conventional commits.
+
+Tooling is jj-first and git-compatible: `coding:commit` is the sole owner of history
+mutation, `coding:write-pr` owns publication and CI, `coding:merge-pr` merges stacks
+bottom-up. Route publication through those skills rather than hand-rolled
+`git commit` + `gh pr create`.
