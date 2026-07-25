@@ -20,7 +20,7 @@ not proof its result is still valid; a passing test is evidence about one
 revision; an accepted decision is history, not necessarily the current
 contract; memory is a hint, never current project truth.
 
-`.engineering/` is the **operational projection** of the work — the richest
+`.state/` is the **operational projection** of the work — the richest
 view of it, but not the record of record. Records of
 record are versioned `docs/` and external anchors (task, PR, Notion).
 Every state change, discovery, and decision is stored immediately in the
@@ -33,7 +33,7 @@ journal and its owning state, decision, or discovery file.
 3. Never treat `done` as synonymous with `current`: status is history,
    validity is now.
 4. Every derived artifact names the exact inputs it was derived from.
-5. Deleting `.engineering/` must never erase an accepted decision, approved
+5. Deleting `.state/` must never erase an accepted decision, approved
    contract, published artifact identity, or unresolved critical risk.
 
 ## Validity

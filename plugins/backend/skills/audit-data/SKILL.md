@@ -72,7 +72,7 @@ evidence to canonical work-local review areas. Approved remediation routes to
    Notion.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; after all writers finish, the PM
-checks only eligible work Markdown inside the target `.engineering/`.
+checks only eligible work Markdown inside the target `.state/`.
 
 ## Verification
 

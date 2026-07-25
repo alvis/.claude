@@ -8,7 +8,7 @@ materialized spec/plan pointers, the PM-owned-file prohibition, and the
 children read `state/working.md` only when navigation is missing and `state.md` only
 for resume, cross-slice dependency, or alignment. Children never run file
 sizing; the PM checks only eligible work Markdown inside the target
-`.engineering/`.
+`.state/`.
 
 ## Draft Phase Context (passed to coding:draft-code)
 

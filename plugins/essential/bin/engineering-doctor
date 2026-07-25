@@ -441,7 +441,7 @@ def main() -> int:
     scope.add_argument(
         "--engineering-root",
         type=Path,
-        help="an .engineering/ root: checks every works/* stream plus overview.md",
+        help="a .state/ root: checks every works/* stream plus overview.md",
     )
     parser.add_argument("--json", action="store_true", help="emit findings as JSON")
     parser.add_argument(

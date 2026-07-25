@@ -9,7 +9,7 @@ argument-hint: "[path] [--exclude-remote]"
 
 Own evidence-first cleanup of no-longer-needed development state: branches,
 registered worktrees/workspaces, jj changes, and ignored
-`.engineering/works/<work-id>/` directories. Inventory first, preserve ambiguity,
+`.state/works/<work-id>/` directories. Inventory first, preserve ambiguity,
 and remove only individually approved, recoverably backed-up eligible targets.
 
 ## Boundaries
@@ -36,7 +36,7 @@ and remove only individually approved, recoverably backed-up eligible targets.
 
 Before resolving engineering-work paths, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, do not
-classify or remove `.engineering/works/`; report the missing contract and
+classify or remove `.state/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
 promotion records but does not create or rewrite them, `state/working.md`,
 `state.md`, or overview files; its project `generated_files` is therefore
@@ -62,7 +62,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
      whether commits are present on the default branch.
 3. **Inventory workspace-local engineering work.** Deduplicate registered
    workspace paths by canonical filesystem identity. Within each reachable
-   path, enumerate only `.engineering/works/*` and record:
+   path, enumerate only `.state/works/*` and record:
    - VCS kind, registered workspace name/path, and local-only scope;
    - work ID/path, `state/working.md` and `state.md` presence, lifecycle status,
      owner, goal, repository revision, completion timestamp, and blockers;
@@ -146,9 +146,9 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    IDs and restoration commands because operation history preserves them.
 10. **Remove only approved, verified targets.** Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
-    validated `.engineering/works/<work-id>` path after rechecking the gate and
-    backup immediately before deletion; never target `.engineering/works/`,
-    `.engineering/`, a workspace root, a glob, or an unresolved variable.
+    validated `.state/works/<work-id>` path after rechecking the gate and
+    backup immediately before deletion; never target `.state/works/`,
+    `.state/`, a workspace root, a glob, or an unresolved variable.
     Forced worktree/branch removal requires a separate explicit approval.
 11. **Verify and report.** Re-run inventories. Prove each approved target is
     absent, each unapproved target remains, the promotion anchor remains

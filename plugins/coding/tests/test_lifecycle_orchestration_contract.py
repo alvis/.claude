@@ -52,16 +52,16 @@ class CodeQualityCriticFenceTest(unittest.TestCase):
 
     def test_canonical_correctness_and_quality_artifacts_are_allowed(self) -> None:
         for path in (
-            ".engineering/works/checkout-refunds/reviews/correctness.md",
-            "/tmp/target/.engineering/works/checkout-refunds/reviews/quality.md",
+            ".state/works/checkout-refunds/reviews/correctness.md",
+            "/tmp/target/.state/works/checkout-refunds/reviews/quality.md",
         ):
             with self.subTest(path=path):
                 self.assertEqual("", self.run_hook(path))
 
     def test_other_engineering_paths_remain_denied(self) -> None:
         for path in (
-            ".engineering/works/checkout-refunds/reviews/security.md",
-            ".engineering/works/checkout-refunds/extra/reviews/quality.md",
+            ".state/works/checkout-refunds/reviews/security.md",
+            ".state/works/checkout-refunds/extra/reviews/quality.md",
             "src/payment.ts",
         ):
             with self.subTest(path=path):

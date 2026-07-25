@@ -161,4 +161,4 @@ and blockers. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run `wc -c` or split while writers are active; the PM
 reconciles `design.md`, combines manifests after all writers finish, and runs
 the single final size pass only for eligible work Markdown inside the target
-`.engineering/`, as defined by the Essential contract.
+`.state/`, as defined by the Essential contract.

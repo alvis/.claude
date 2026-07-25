@@ -43,7 +43,7 @@ assigned target paths. Read `state/working.md` only when the capsule lacks navig
 required to proceed; read `state.md` only for resume, cross-slice, or alignment
 work, and only the relevant sections. Never edit PM-owned work files; return
 explicit final paths as `generated_files` and leave sizing of eligible work
-Markdown inside the target `.engineering/` to the PM.
+Markdown inside the target `.state/` to the PM.
 
 Preload (stable standards):
 

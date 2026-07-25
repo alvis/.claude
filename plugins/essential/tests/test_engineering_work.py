@@ -60,7 +60,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
-        self.engineering_root = self.root / ".engineering"
+        self.engineering_root = self.root / ".state"
         self.engineering_root.mkdir()
         self.log = self.root / "wc.log"
         fake_bin = self.root / "bin"
@@ -105,8 +105,8 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         return len(self.log.read_text().splitlines()) if self.log.exists() else 0
 
     def test_keeps_fifteen_kib_and_boundary_file_in_one_pass(self) -> None:
-        first = self.write_bytes(".engineering/works/eng-421/fifteen kib.md", 15 * 1024)
-        second = self.write_bytes(".engineering/works/eng-421/boundary.md", 16_384)
+        first = self.write_bytes(".state/works/eng-421/fifteen kib.md", 15 * 1024)
+        second = self.write_bytes(".state/works/eng-421/boundary.md", 16_384)
 
         completed, payload = self.run_checker(first, second)
 
@@ -117,11 +117,11 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         self.assertEqual(1, self.calls())
 
     def test_returns_every_oversized_file_together_after_one_wc(self) -> None:
-        first = self.write_bytes(".engineering/works/eng-421/one.md", 16_385)
+        first = self.write_bytes(".state/works/eng-421/one.md", 16_385)
         second = self.write_bytes(
-            ".engineering/works/eng-421/dir with spaces/two.md", 20_000
+            ".state/works/eng-421/dir with spaces/two.md", 20_000
         )
-        valid = self.write_bytes(".engineering/works/eng-421/valid.md", 12_289)
+        valid = self.write_bytes(".state/works/eng-421/valid.md", 12_289)
 
         completed, payload = self.run_checker(first, second, valid)
 
@@ -134,9 +134,9 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         self.assertEqual(1, self.calls())
 
     def test_deduplicates_and_excludes_working_and_external_markdown(self) -> None:
-        measured = self.write_bytes(".engineering/works/eng-421/normal.md", 100)
+        measured = self.write_bytes(".state/works/eng-421/normal.md", 100)
         working = self.write_bytes(
-            ".engineering/works/eng-421/state/working.md", 30_000
+            ".state/works/eng-421/state/working.md", 30_000
         )
         durable = self.write_bytes("docs/specs/payments/index.md", 30_000)
         plugin_source = self.write_bytes("plugins/example/SKILL.md", 30_000)
@@ -154,7 +154,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
 
     def test_all_excluded_is_a_pass_without_wc(self) -> None:
         working = self.write_bytes(
-            ".engineering/works/eng-421/state/working.md", 30_000
+            ".state/works/eng-421/state/working.md", 30_000
         )
         durable = self.write_bytes("docs/architecture/large.md", 30_000)
 
@@ -172,7 +172,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         symlink = self.engineering_root / "works/eng-421/linked.md"
         symlink.parent.mkdir(parents=True)
         symlink.symlink_to(linked_outside)
-        other = self.write_bytes("other/.engineering/works/eng-9/other.md", 20_000)
+        other = self.write_bytes("other/.state/works/eng-9/other.md", 20_000)
 
         completed, payload = self.run_checker(traversal, symlink, other)
 
@@ -185,7 +185,7 @@ class MarkdownSizeCheckerTest(unittest.TestCase):
         self.assertEqual(0, self.calls())
 
     def test_invalid_and_missing_inputs_are_distinct_from_split(self) -> None:
-        not_markdown = self.write_bytes(".engineering/works/eng-421/data.mdc", 10)
+        not_markdown = self.write_bytes(".state/works/eng-421/data.mdc", 10)
         cases = (
             (),
             ("relative.md",),
@@ -350,7 +350,7 @@ class WorkspaceResolverTest(unittest.TestCase):
         self.git("config", "user.email", "test@example.com", cwd=root)
         self.git("config", "user.name", "Test", cwd=root)
         if ignored:
-            (root / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+            (root / ".gitignore").write_text(".state/\n", encoding="utf-8")
 
     def commit_initial(self, root: Path) -> None:
         (root / "readme.md").write_text("test\n", encoding="utf-8")
@@ -392,16 +392,16 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertNotIn("work_dir", payload)
 
             # candidates come from the default source tree, the only tree that
-            # carries .engineering/, never from the secondary worktree
+            # carries .state/, never from the secondary worktree
             for work_id in ("refunds", "other-work"):
-                (root / ".engineering/works" / work_id).mkdir(parents=True)
+                (root / ".state/works" / work_id).mkdir(parents=True)
             completed, payload = self.run_resolver(linked)
 
             self.assertEqual(0, completed.returncode, completed.stderr)
             self.assertEqual("refunds", payload["work_id"])
             self.assertEqual("git_branch", payload["work_id_source"])
             self.assertEqual(
-                str(root.resolve() / ".engineering/works/refunds"),
+                str(root.resolve() / ".state/works/refunds"),
                 payload["work_dir"],
             )
 
@@ -420,7 +420,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 str(linked),
                 cwd=root,
             )
-            (root / ".engineering/works/unrelated-work").mkdir(parents=True)
+            (root / ".state/works/unrelated-work").mkdir(parents=True)
 
             completed, payload = self.run_resolver(linked)
 
@@ -433,7 +433,7 @@ class WorkspaceResolverTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "selection"
             self.initialize_git(root)
-            (root / ".engineering/works/existing").mkdir(parents=True)
+            (root / ".state/works/existing").mkdir(parents=True)
 
             completed, payload = self.run_resolver(
                 root, "explicit", environment_work_id="environment"
@@ -578,14 +578,14 @@ class WorkspaceResolverTest(unittest.TestCase):
             identity_payload = json.loads(identity.stdout)
             self.assertEqual(4, identity.returncode)
             self.assertEqual("work_id_required", identity_payload["status"])
-            self.assertFalse((root / ".engineering").exists())
+            self.assertFalse((root / ".state").exists())
 
             ignored, ignored_payload = self.run_resolver(
                 root, "eng-421-gated", bootstrap=True
             )
             self.assertEqual(3, ignored.returncode)
             self.assertEqual("requires_ignore", ignored_payload["status"])
-            self.assertFalse((root / ".engineering").exists())
+            self.assertFalse((root / ".state").exists())
 
     def test_bootstrap_rejects_symlinked_work_root_without_external_writes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -593,8 +593,8 @@ class WorkspaceResolverTest(unittest.TestCase):
             outside = Path(temporary) / "outside"
             self.initialize_git(root)
             outside.mkdir()
-            (root / ".engineering").mkdir()
-            (root / ".engineering/works").symlink_to(outside, target_is_directory=True)
+            (root / ".state").mkdir()
+            (root / ".state/works").symlink_to(outside, target_is_directory=True)
 
             completed, payload = self.run_resolver(
                 root, "eng-421-symlink", bootstrap=True
@@ -611,8 +611,8 @@ class WorkspaceResolverTest(unittest.TestCase):
             outside = Path(temporary) / "outside"
             self.initialize_git(root)
             (outside / "eng-421-symlink").mkdir(parents=True)
-            (root / ".engineering").mkdir()
-            (root / ".engineering/works").symlink_to(outside, target_is_directory=True)
+            (root / ".state").mkdir()
+            (root / ".state/works").symlink_to(outside, target_is_directory=True)
 
             explicit, explicit_payload = self.run_resolver(
                 root, "eng-421-symlink"
@@ -632,7 +632,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             root = Path(temporary) / "entrypoint symlink"
             outside = Path(temporary) / "outside-state.md"
             self.initialize_git(root)
-            work_dir = root / ".engineering/works/eng-421-symlink"
+            work_dir = root / ".state/works/eng-421-symlink"
             work_dir.mkdir(parents=True)
             outside.write_text("outside must remain unchanged\n", encoding="utf-8")
             (work_dir / "state.md").symlink_to(outside)
@@ -661,7 +661,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.initialize_git(root)
             self.commit_initial(root)
             for work_id in ("eng-42", "eng-99"):
-                (root / ".engineering/works" / work_id).mkdir(parents=True)
+                (root / ".state/works" / work_id).mkdir(parents=True)
 
             completed, payload = self.run_resolver(root)
 
@@ -674,7 +674,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 "worktree", "add", "-q", "-b", "eng-42", str(linked), cwd=root
             )
             for work_id in ("eng-42", "eng-99"):
-                (linked / ".engineering/works" / work_id).mkdir(parents=True)
+                (linked / ".state/works" / work_id).mkdir(parents=True)
             completed, payload = self.run_resolver(linked)
 
             self.assertEqual(0, completed.returncode, completed.stderr)
@@ -703,9 +703,9 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual(3, completed.returncode)
             self.assertEqual("requires_ignore", payload["status"])
             self.assertEqual(str(root.resolve() / ".gitignore"), payload["ignore_file"])
-            self.assertIn("PM must add .engineering/", payload["error"])
+            self.assertIn("PM must add .state/", payload["error"])
 
-            (root / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+            (root / ".gitignore").write_text(".state/\n", encoding="utf-8")
             completed, payload = self.run_resolver(root, "eng-421-test")
 
             self.assertEqual(0, completed.returncode, completed.stderr)
@@ -717,7 +717,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             root = Path(temporary) / "negated ignore"
             self.initialize_git(root, ignored=False)
             (root / ".gitignore").write_text(
-                ".engineering/\n!.engineering/\n", encoding="utf-8"
+                ".state/\n!.state/\n", encoding="utf-8"
             )
 
             completed, payload = self.run_resolver(root, "eng-421-test")
@@ -737,11 +737,11 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.git(
                 "worktree", "add", "-q", "-b", "linked", str(linked), cwd=root
             )
-            (linked / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+            (linked / ".gitignore").write_text(".state/\n", encoding="utf-8")
 
             completed, payload = self.run_resolver(linked, "eng-421-test")
 
-            # .engineering/ lives only in the default source tree, so it is that
+            # .state/ lives only in the default source tree, so it is that
             # tree's .gitignore the gate reads, not the active worktree's
             self.assertEqual(3, completed.returncode, completed.stderr)
             self.assertEqual("requires_ignore", payload["status"])
@@ -768,7 +768,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual(str(linked.resolve()), payload["active_workspace"])
             self.assertEqual(str(linked.resolve()), payload["durable_root"])
             self.assertEqual(
-                str(root.resolve() / ".engineering/works/eng-421-test"),
+                str(root.resolve() / ".state/works/eng-421-test"),
                 payload["work_dir"],
             )
 
@@ -804,9 +804,9 @@ class WorkspaceResolverTest(unittest.TestCase):
             fake_bin.mkdir()
             self.git("init", "--bare", "-q", str(git_dir), cwd=fixture)
             (default / ".gitignore").write_text(
-                ".engineering/\n", encoding="utf-8"
+                ".state/\n", encoding="utf-8"
             )
-            (default / ".engineering/works/secondary").mkdir(parents=True)
+            (default / ".state/works/secondary").mkdir(parents=True)
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
@@ -847,7 +847,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("secondary", payload["work_id"])
             self.assertEqual("jj_workspace", payload["work_id_source"])
             self.assertEqual(
-                str(default.resolve() / ".engineering/works/secondary"),
+                str(default.resolve() / ".state/works/secondary"),
                 payload["work_dir"],
             )
 
@@ -862,7 +862,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 capture_output=True,
                 check=True,
             )
-            (root / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+            (root / ".gitignore").write_text(".state/\n", encoding="utf-8")
             subprocess.run(
                 ["jj", "workspace", "add", "--name", "secondary", str(secondary)],
                 cwd=root,
@@ -870,7 +870,7 @@ class WorkspaceResolverTest(unittest.TestCase):
                 capture_output=True,
                 check=True,
             )
-            (root / ".engineering/works/secondary").mkdir(parents=True)
+            (root / ".state/works/secondary").mkdir(parents=True)
 
             completed, payload = self.run_resolver(secondary)
 
@@ -884,7 +884,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("secondary", payload["work_id"])
             self.assertEqual("jj_workspace", payload["work_id_source"])
             self.assertEqual(
-                str(root.resolve() / ".engineering/works/secondary"),
+                str(root.resolve() / ".state/works/secondary"),
                 payload["work_dir"],
             )
             self.assertEqual(
@@ -909,8 +909,8 @@ class WorkspaceResolverTest(unittest.TestCase):
                 capture_output=True,
                 check=True,
             )
-            (root / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
-            (root / ".engineering/works/primary").mkdir(parents=True)
+            (root / ".gitignore").write_text(".state/\n", encoding="utf-8")
+            (root / ".state/works/primary").mkdir(parents=True)
 
             completed, payload = self.run_resolver(root)
 
@@ -1026,8 +1026,8 @@ class ArtifactSkillContractTest(unittest.TestCase):
 class EngineeringIgnoreContractTest(unittest.TestCase):
     def test_engineering_transport_and_work_state_are_ignored(self) -> None:
         paths = (
-            ".engineering/notion/example.mdc",
-            ".engineering/works/test/state.md",
+            ".state/notion/example.mdc",
+            ".state/works/test/state.md",
         )
         completed = subprocess.run(
             ["git", "check-ignore", "--no-index", *paths],
@@ -1056,12 +1056,12 @@ class ContextHookContractTest(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        (self.root / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        (self.root / ".gitignore").write_text(".state/\n", encoding="utf-8")
         for relative in (
             "README.md",
             "CONTEXT.md",
-            ".engineering/works/eng-42/state/working.md",
-            ".engineering/works/eng-42/state.md",
+            ".state/works/eng-42/state/working.md",
+            ".state/works/eng-42/state.md",
             "docs/index.md",
             "docs/architecture/overview.md",
             "docs/architecture/runtime-boundaries.md",
@@ -1097,8 +1097,8 @@ class ContextHookContractTest(unittest.TestCase):
         self.assertNotIn("\\n", context)
         self.assertNotIn("CONTEXT.md", context)
         expected = (
-            ".engineering/works/eng-42/state/working.md",
-            ".engineering/works/eng-42/state.md",
+            ".state/works/eng-42/state/working.md",
+            ".state/works/eng-42/state.md",
             "docs/index.md",
             "docs/architecture/overview.md",
             "docs/design/system.md",
@@ -1126,8 +1126,8 @@ class ContextHookContractTest(unittest.TestCase):
         self.assertNotIn("## Target Repo Documents", context)
         for path in (
             "README.md",
-            ".engineering/works/eng-42/state/working.md",
-            ".engineering/works/eng-42/state.md",
+            ".state/works/eng-42/state/working.md",
+            ".state/works/eng-42/state.md",
             "docs/index.md",
         ):
             self.assertNotIn(path, context)

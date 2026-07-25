@@ -14,7 +14,7 @@ or `artifact: <absolute path>` plus at most two lines to the assigner by
 - Run the workspace resolver before writing an artifact. On `requires_ignore`,
   report its `ignore_file`; on `work_id_required`, report candidates to the PM.
   Never edit that `.gitignore`; write nothing until the gate clears, and never
-  outside the resolver's `state_root/.engineering/`.
+  outside the resolver's `state_root/.state/`.
 - Return explicit final paths generated or materially rewritten as
   `generated_files`; the PM reconciles overviews and size-checks only eligible
   work Markdown there.

@@ -72,8 +72,8 @@ before retirement.
 
 When a `proposals/` or `changes/` child's deviation section records a
 deviation from a Notion-backed specification, that deviation's provenance
-MUST link to the related `.mdc` file under `.engineering/notion/`. All of
-`.engineering/` lives on the default source tree, so that link resolves from
+MUST link to the related `.mdc` file under `.state/notion/`. All of
+`.state/` lives on the default source tree, so that link resolves from
 whichever checkout the work is done in; a Notion-backed spec deviation
 recorded without that link is incomplete. A
 non-Notion contract has no such folder and cites its authoritative source

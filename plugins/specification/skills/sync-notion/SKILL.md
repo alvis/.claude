@@ -106,7 +106,7 @@ local–Notion pairs. Public modes are `local-to-notion`, `notion-to-local`, and
    [references/database-resolution.md](references/database-resolution.md) only
    for database/search ambiguity. Reject ambiguous identity or any path outside
    the declared root. Never infer a missing root from a title, page id,
-   workspace label, evidence directory, conventional `.engineering/notion/`
+   workspace label, evidence directory, conventional `.state/notion/`
    path, or another machine's receipt.
 
    Before using or creating the declared transport root, locate its deepest

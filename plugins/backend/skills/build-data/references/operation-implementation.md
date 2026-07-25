@@ -29,7 +29,7 @@ slice, and target paths. Read `state/working.md` only when the capsule lacks
 navigation required to proceed; read `state.md` only for resume, cross-slice,
 or alignment work, and only the relevant sections. Never edit PM-owned work
 files, and do not run file sizing; the PM checks only eligible work Markdown
-inside the target `.engineering/`.
+inside the target `.state/`.
 
 **Steps** (per operation):
 

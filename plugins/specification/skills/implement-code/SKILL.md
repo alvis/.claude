@@ -272,7 +272,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
     return it to the PM with ID-keyed task deltas and
     state/overview/review reconciliation payloads. Never run
     file sizing; after all writers return, the PM checks only eligible work
-    Markdown inside the target `.engineering/`.
+    Markdown inside the target `.state/`.
 
 ## Verification
 

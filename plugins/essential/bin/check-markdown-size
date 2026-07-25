@@ -25,11 +25,11 @@ if [[ "${1:-}" == "--engineering-root" ]]; then
 fi
 
 [[ -n "$engineering_root" ]] || \
-  invalid "--engineering-root <absolute .engineering directory> is required"
+  invalid "--engineering-root <absolute .state directory> is required"
 [[ "$engineering_root" == /* ]] || \
   invalid "engineering root must be absolute: $engineering_root"
-[[ "${engineering_root%/}" == */.engineering ]] || \
-  invalid "engineering root must name a .engineering directory: $engineering_root"
+[[ "${engineering_root%/}" == */.state ]] || \
+  invalid "engineering root must name a .state directory: $engineering_root"
 [[ -d "$engineering_root" ]] || \
   invalid "engineering root is missing or not a directory: $engineering_root"
 [[ $# -gt 0 ]] || invalid "at least one explicit final path is required"

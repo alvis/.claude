@@ -18,19 +18,19 @@ generated_files:
 Writers finish all files and links before returning the manifest and never
 measure or split independently. The coordinator combines and deduplicates
 manifests, selects only absolute `.md` paths inside the resolved target
-workspace's `.engineering/` (excluding any `working.md`), and runs exactly
+workspace's `.state/` (excluding any `working.md`), and runs exactly
 one pass when eligible paths remain:
 
 ```bash
 "$ESSENTIAL_ROOT/bin/check-markdown-size" \
-  --engineering-root "$state_root/.engineering" \
+  --engineering-root "$state_root/.state" \
   "${generated_md_files[@]}"
 ```
 
 The checker canonicalizes the declared root and every path, excludes
 traversal, symlink, and other-workspace escapes, and returns every eligible
 file greater than 16,384 bytes together (12,288 bytes is authoring guidance
-only). The gate does not apply outside `.engineering/`; the only separate
+only). The gate does not apply outside `.state/`; the only separate
 limit is the 2,000-byte injection limit for Essential's `CLAUDE.md`,
 `MAINAGENT.md`, and `SUBAGENT.md`.
 

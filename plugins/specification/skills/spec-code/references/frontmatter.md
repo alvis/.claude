@@ -112,4 +112,4 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
 - The PM's final output manifest includes all derived `.md` files and
   `provenance.json` in `generated_files`; versioned `docs/**` remains excluded
   from the final size check, which selects only eligible Markdown inside
-  `.engineering/`.
+  `.state/`.

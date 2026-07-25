@@ -146,12 +146,12 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    review areas before proceeding.
 8. After every artifact writer is finished, deduplicate the combined
    `generated_files` manifest. Select only `.md` paths inside the resolved
-   target `.engineering/`, excluding `state/working.md`, and invoke the Essential
-   checker once with `--engineering-root <active-workspace>/.engineering` when
+   target `.state/`, excluding `state/working.md`, and invoke the Essential
+   checker once with `--engineering-root <active-workspace>/.state` when
    eligible paths remain. If it returns `split_required`,
    coordinate one complete split round for all oversized files, preserving
    each original as overview, then run one new batch pass. Never size files
-   after each write; paths outside `.engineering/`, including `docs/**`, are
+   after each write; paths outside `.state/`, including `docs/**`, are
    not mechanically size-gated.
 9. Run the final verification sequence after review and lint: focused tests for
    every touched slice, then the repository's applicable full tests, types,
@@ -206,7 +206,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
   links current-focus-only `state/working.md`; all lazy indexes match their children.
   Lifecycle `completed` has no unfinished required executable leaf.
 - Every child returned a verified `generated_files` manifest and the scoped
-  `.engineering` Markdown gate ran as one batch per pass when applicable.
+  `.state` Markdown gate ran as one batch per pass when applicable.
 - Code review preceded lint, final tests/types/coverage/build preceded every
   remote publication, and no correction left an invalidated review unstated.
 - Commit/push ownership was preserved. A deferred run reports its exact

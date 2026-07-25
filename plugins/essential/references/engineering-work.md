@@ -38,18 +38,18 @@ every output field; the essentials:
   is working in, and is where `docs/` promotion lands.
 - `state_root` is the **default source tree** — Git's main worktree or the jj
   workspace registered as `default` — the one tree carrying the ignored
-  `.engineering/`, falling back to `active_workspace` when none is
+  `.state/`, falling back to `active_workspace` when none is
   discoverable. `work_dir` is always
-  `state_root/.engineering/works/<work-id>/`, whichever tree the caller is in.
+  `state_root/.state/works/<work-id>/`, whichever tree the caller is in.
 - Work state is centralized, never per-tree, and never committed: every tree
-  reads and writes the same `.engineering/`. Two trees must not run the same
+  reads and writes the same `.state/`. Two trees must not run the same
   stream concurrently — that is what the coordinator lease enforces.
 
 `resolved` with `engineering_ignored: true` is a hard bootstrap gate before
 any work artifact or probe is written. On `requires_ignore`, every worker
 stops and reports the returned `ignore_file` — the **default source tree's**
-`.gitignore`, the tree that carries `.engineering/`. The PM alone adds the
-exact `.engineering/` rule there, includes that path in `generated_files`, and
+`.gitignore`, the tree that carries `.state/`. The PM alone adds the
+exact `.state/` rule there, includes that path in `generated_files`, and
 reruns the resolver. A sync-only or ad hoc `git check-ignore` probe does not
 replace this bootstrap contract.
 
@@ -67,7 +67,7 @@ and the `bootstrap_created` and `bootstrap_existing` paths the PM adds to
 
 ## Canonical topology
 
-Versioned `docs/` follows the active working tree; ignored `.engineering/`
+Versioned `docs/` follows the active working tree; ignored `.state/`
 lives only in the default source tree (`state_root`).
 
 ```text
@@ -89,7 +89,7 @@ docs/                               # versioned; active working tree
 │   └── *.md
 └── <domain>/<slug>/…                # plugin-owned durable documents
 
-.engineering/                       # ignored; default source tree only
+.state/                       # ignored; default source tree only
 ├── overview.md                      # global status index across every source tree
 ├── notion/                          # default source tree only: Notion mirror
 ├── archive/<work-id>/               # parked idle streams; resolver never enumerates
@@ -151,9 +151,9 @@ child name.
 
 ## Work memory
 
-### Global overview (`.engineering/overview.md`)
+### Global overview (`.state/overview.md`)
 
-The default source tree carries `.engineering/`, and with it the single global
+The default source tree carries `.state/`, and with it the single global
 `overview.md`: one table of every work stream (work ID, lifecycle, headline,
 next action, `Location`, `Spec`, `Documentations`). Every stream's state
 already sits under the same `works/`, so this is an index over local state,
@@ -221,7 +221,7 @@ approved, or a sync event lands, the lease holder appends one journal line
 reconciles the affected tables. The journal is append-only; the tables in
 `state.md`, the lazy overviews, and `overview.md` are views over it, so
 suspected drift is settled by re-reading the journal. State in
-`.engineering/` is the operational projection of the work, not the record of
+`.state/` is the operational projection of the work, not the record of
 record: deleting it may cost convenience and execution detail, but must
 never erase an accepted decision, approved contract, published artifact
 identity, or unresolved critical risk — those live in versioned docs and
@@ -278,15 +278,15 @@ conclusions are promoted to `docs/`.
 
 Continuity has one mechanism: the on-disk work directory. A handover
 completes the stream's state and updates `overview.md`, both under the default
-source tree's `.engineering/`; a resume reads those files and continues from
+source tree's `.state/`; a resume reads those files and continues from
 whichever tree the reader is in, since every tree resolves to the same state.
 Nothing else is needed — the directory holds state,
 decisions, specification, and `artifacts/` together, and each stream records
 the source anchor that names the revision its work assumes. Handover scopes to
 the stream being paused and releases the coordinator lease.
 
-Remember that `.engineering/` is ignored: one reflexive `git clean -fdx`
-deletes every stream on the machine, silently. A copy of `.engineering/`
+Remember that `.state/` is ignored: one reflexive `git clean -fdx`
+deletes every stream on the machine, silently. A copy of `.state/`
 kept outside the repository is the designed recovery — take one before a
 stream carries non-recoverable decisions, and promote durable knowledge
 early. [essential:doctor](../skills/doctor/SKILL.md) checks a recovered
@@ -297,20 +297,20 @@ projection, so it is gated on promotion and decision dispositions.
 ## Write boundary
 
 Work state has exactly two homes: the **default source tree's**
-`.engineering/` (the resolver's `state_root`) and the **active** tree's
+`.state/` (the resolver's `state_root`) and the **active** tree's
 versioned `docs/`. Every write a lifecycle skill makes lands in
-`state_root/.engineering/works/<work-id>/**`,
-`state_root/.engineering/overview.md`, or — at promotion only — the active
+`state_root/.state/works/<work-id>/**`,
+`state_root/.state/overview.md`, or — at promotion only — the active
 tree's `docs/`. Any other destination is a contract violation. A skill that
 believes it needs one has misread this contract; stop and report instead.
 
 **Output volume is never a reason to create a file.** A report that would be
 long is shortened editorially or degraded to pointers into
-`.engineering/` — the state is already on disk, so a pointer loses nothing.
+`.state/` — the state is already on disk, so a pointer loses nothing.
 Spilling a response to an ad hoc file is never the answer, whatever its
 size. Where a generated carrier genuinely must exist as a file — a
 `git format-patch` patch, a bundle, a captured log — its only legal home is
-`.engineering/works/<work-id>/artifacts/`, so it travels with the work
+`.state/works/<work-id>/artifacts/`, so it travels with the work
 directory. This is also the destination for the general instruction to
 externalize long detail to a task-owned artifact. A worker that has not
 cleared the `requires_ignore` gate writes nothing at all and reports.

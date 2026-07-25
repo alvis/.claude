@@ -2,17 +2,17 @@
 
 ```bash
 /essential:handover
-# Indexes every state_root/.engineering/works/<work-id>/ stream — the default
+# Indexes every state_root/.state/works/<work-id>/ stream — the default
 # source tree's, whichever checkout you run from — refreshes each continuable
 # stream (initialized/active/blocked), leaves reviewing/completed/retiring
-# streams as index rows, and updates the global .engineering/overview.md beside
-# them. No file is written outside .engineering/.
+# streams as index rows, and updates the global .state/overview.md beside
+# them. No file is written outside .state/.
 ```
 
 ```bash
 /essential:handover auth-refresh
 # Optional filter: index all streams but refresh only the matching continuable
-# stream(s). Refreshes .engineering/works/auth-refresh/state.md and
+# stream(s). Refreshes .state/works/auth-refresh/state.md and
 # state/working.md and reconciles its lazy indexes.
 ```
 
@@ -44,7 +44,7 @@ for the other — the state is shared, so only the checkout changes.
 To pause, `/essential:handover` refreshes each stream's `state.md` (including
 the `## Continuation` fields, which name the next owner, next action,
 continuation intent, and source anchor) and `state/working.md`, and upserts its
-row in the global `.engineering/overview.md`. That persistence always completes,
+row in the global `.state/overview.md`. That persistence always completes,
 so the session can then close. In a new session, `/essential:takeover` with no
 argument offers every incomplete stream read straight from on-disk state, and
 reads `overview.md` for each one's `Location` — switching the working directory
