@@ -31,18 +31,18 @@ Typical responses:
 
 Preload before building:
 
-- `SD-UNIVERSAL` — the `universal` standard at coding:constitution/standards/universal/
-- `SD-FUNCTION` — the `function` standard at coding:constitution/standards/function/
-- `SD-TYPESCRIPT` — the `typescript` standard at coding:constitution/standards/typescript/
-- `SD-TESTING` — the `testing` standard at coding:constitution/standards/testing/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `function` standard at coding:constitution/standards/function/
+- the `typescript` standard at coding:constitution/standards/typescript/
+- the `testing` standard at coding:constitution/standards/testing/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Resolve lazily, per task, never preloaded:
 
-- `RP-AREA` — the repo-derived area conventions for the code you're building and its siblings
-- `RP-CONFIG` — the target repo's build/lint/test configuration
-- `RP-HANDOVER` — any design notes or interface contracts (Data & Analytics Architect's pipeline/schema handoff, a spec) that drive the build
+- the repo-derived area conventions for the code you're building and its siblings
+- the target repo's build/lint/test configuration
+- any design notes or interface contracts (Data & Analytics Architect's pipeline/schema handoff, a spec) that drive the build
 
 ## Memory
 

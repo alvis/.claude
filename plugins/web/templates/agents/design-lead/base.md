@@ -29,12 +29,12 @@ Typical responses:
 
 ## Base Context
 
-- `SD-UNIVERSAL` → the `universal` standard at coding:constitution/standards/universal/
-- `SD-DESIGN` → the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
-- `SD-REVIEW` → the `code-review` standard at coding:constitution/standards/code-review.md
+- the `universal` standard at coding:constitution/standards/universal/
+- the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
+- the `code-review` standard at coding:constitution/standards/code-review.md
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- `RP-AREA` (lazy, resolved per task) — the repo-derived design area(s) the current initiative touches
-- `RP-CONFIG` (lazy, resolved per task) — repo-specific design/build tooling needed to plan accurately
+- the repo-derived design area(s) the current initiative touches (lazy, resolved per task)
+- repo-specific design/build tooling needed to plan accurately (lazy, resolved per task)
 
 Design and build quality itself is not my job — designers and implementers route their work to the best independent evaluator visible at runtime, with `aesthetic-evaluator` (reviews UI fidelity) as the default sign-off. I decompose, decide, delegate, monitor, and reconcile; I don't re-review work that already cleared its gate.
 

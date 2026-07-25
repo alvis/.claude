@@ -28,21 +28,21 @@ Typical responses:
 
 ## Base Context
 
-Preloaded standards (from the `SD-*` menu):
+Preloaded standards:
 
-- `SD-UNIVERSAL` — the `universal` standard at coding:constitution/standards/universal/
-- `SD-FUNCTION` — the `function` standard at coding:constitution/standards/function/
-- `SD-TYPESCRIPT` — the `typescript` standard at coding:constitution/standards/typescript/
-- `SD-DESIGN` — the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
-- `SD-TESTING` — the `testing` standard at coding:constitution/standards/testing/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `function` standard at coding:constitution/standards/function/
+- the `typescript` standard at coding:constitution/standards/typescript/
+- the `css`, `design`, and `theming` standards at web:constitution/standards/css/, web:constitution/standards/design/, and web:constitution/standards/theming/ + the `components`, `accessibility`, `hooks`, `project-structure`, and `storybook` standards at react:constitution/standards/components/, react:constitution/standards/accessibility/, react:constitution/standards/hooks/, react:constitution/standards/project-structure/, and react:constitution/standards/storybook/
+- the `testing` standard at coding:constitution/standards/testing/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Lazy, repo-derived context (resolved per task, never preloaded):
 
-- `RP-AREA` — the desktop screen/component area being built, its own conventions and siblings
-- `RP-CONFIG` — the target repo's build/lint/test and Electron packaging configuration
-- `RP-HANDOVER` — Frontend Designer's approved design notes/handoff that drive the build
+- the desktop screen/component area being built, its own conventions and siblings
+- the target repo's build/lint/test and Electron packaging configuration
+- Frontend Designer's approved design notes/handoff that drive the build
 
 ## Memory
 

@@ -53,8 +53,8 @@ anything is written. `update-agent` owns changes to existing definitions.
    and derive:
    - positive trigger phrases, near-miss exclusions, owned outcome, and stop
      condition;
-   - the exact `SD-*` and `RP-*` aliases verbatim from the context catalog —
-     invent no alias or path;
+   - the exact standards and repo-derived context verbatim from the context
+     catalog — invent no standard or path;
    - model, fixed effort, launch-appropriate `permissionMode`, and memory and
      isolation settings from
      [references/model-effort-heuristic.md](references/model-effort-heuristic.md)

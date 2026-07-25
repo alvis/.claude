@@ -88,21 +88,21 @@ Typical responses:
 
 ## Base Context
 
-<!-- INSTRUCTION: cite entries from constitution/references/context-catalog.md verbatim — alias + real path.
-     Do not invent an alias or re-derive a path here; the catalog is authoritative. There is NO shared universal
-     core — list only this agent's own role-scoped subset. -->
+<!-- INSTRUCTION: cite entries from constitution/references/context-catalog.md verbatim — canonical
+     standard name + real path. Do not rename a standard or re-derive a path here; the catalog is
+     authoritative. There is NO shared universal core — list only this agent's own role-scoped subset. -->
 
-Preloaded standards (from the `SD-*` menu, real paths):
+Preloaded standards:
 
-- `SD-<ALIAS>` — `<real path from context-catalog.md>`
+- the `<canonical name>` standard at `<real path from context-catalog.md>`
 - ...
 
 Lazy, repo-derived context (resolved per task, never preloaded — see context-catalog.md for what each resolves
 to at task time):
 
-- `RP-AREA` — the current task's functional area, its own conventions and siblings
-- `RP-CONFIG` — the target repo's build/lint/test configuration
-- (add `RP-HANDOVER` / `RP-STANDARDS` only if this role actually consults them)
+- the current task's functional area, its own conventions and siblings
+- the target repo's build/lint/test configuration
+- (add the handover notes and repo-local standard overrides only if this role actually consults them)
 
 ## Memory
 

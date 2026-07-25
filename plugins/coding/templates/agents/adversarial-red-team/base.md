@@ -25,10 +25,10 @@ Typical responses:
 
 ## Base Context
 
-- SD-REVIEW → the `code-review` standard at coding:constitution/standards/code-review.md
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
+- the `code-review` standard at coding:constitution/standards/code-review.md
+- the `universal` standard at coding:constitution/standards/universal/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- RP-AREA (lazy, resolved per task — never preloaded)
+- the repo area under attack, its own conventions and siblings (lazy, resolved per task — never preloaded)
 
 ## Memory
 

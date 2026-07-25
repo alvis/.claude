@@ -26,11 +26,11 @@ Typical responses:
 
 ## Base Context
 
-- SD-REVIEW → the `code-review` standard at coding:constitution/standards/code-review.md
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
-- SD-FUNCTION → the `function` standard at coding:constitution/standards/function/
-- SD-TYPESCRIPT → the `typescript` standard at coding:constitution/standards/typescript/
-- RP-AREA (lazy, resolved per task — never preloaded)
+- the `code-review` standard at coding:constitution/standards/code-review.md
+- the `universal` standard at coding:constitution/standards/universal/
+- the `function` standard at coding:constitution/standards/function/
+- the `typescript` standard at coding:constitution/standards/typescript/
+- the repo area under review, its own conventions and siblings (lazy, resolved per task — never preloaded)
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 

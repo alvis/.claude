@@ -30,13 +30,13 @@ Typical responses:
 
 ## Base Context
 
-- SD-TESTING → the `testing` standard at coding:constitution/standards/testing/
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
-- SD-FUNCTION → the `function` standard at coding:constitution/standards/function/
-- SD-OBSERVABILITY → the `observability` standard at coding:constitution/standards/observability/
-- SD-REVIEW → the `code-review` standard at coding:constitution/standards/code-review.md
-- RP-AREA (lazy, resolved per task from the repo under review — never preloaded)
-- RP-CONFIG (lazy, resolved per task — never preloaded)
+- the `testing` standard at coding:constitution/standards/testing/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `function` standard at coding:constitution/standards/function/
+- the `observability` standard at coding:constitution/standards/observability/
+- the `code-review` standard at coding:constitution/standards/code-review.md
+- the repo area the harness covers (lazy, resolved per task from the repo under review — never preloaded)
+- the target repo's build/lint/test configuration (lazy, resolved per task — never preloaded)
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 

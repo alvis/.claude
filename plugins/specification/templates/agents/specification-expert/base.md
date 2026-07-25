@@ -78,11 +78,11 @@ Typical responses:
 
 ## Base Context
 
-- SD-DOCS → the `documentation` standard at coding:constitution/standards/documentation/
-- SD-NAMING → the `naming` standard at coding:constitution/standards/naming/
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
+- the `documentation` standard at coding:constitution/standards/documentation/
+- the `naming` standard at coding:constitution/standards/naming/
+- the `universal` standard at coding:constitution/standards/universal/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- RP-AREA (lazy, resolved per task) — the repo area the specification documents
+- the repo area the specification documents (lazy, resolved per task)
 
 ## Memory
 

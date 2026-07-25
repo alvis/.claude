@@ -18,7 +18,7 @@ or brief it needs before it can begin), and then wait.
   establishes who it is. Open directly with the instruction.
 - **No "no task" announcement.** Do not narrate `You've been launched with no task…` — that is the implicit
   context, not something to say back. Jump straight to the first move.
-- **No preloaded context.** Do not tell it to load `SD-*` standards on start. A greeting shouldn't burn context on
+- **No preloaded context.** Do not tell it to load its base standards on start. A greeting shouldn't burn context on
   work that may not come; the agent loads its base standards only when real work is named. `base.md` still
   documents them.
 

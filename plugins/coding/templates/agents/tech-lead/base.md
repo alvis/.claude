@@ -28,12 +28,12 @@ Typical responses:
 
 ## Base Context
 
-- SD-UNIVERSAL → the `universal` standard at coding:constitution/standards/universal/
-- SD-REVIEW → the `code-review` standard at coding:constitution/standards/code-review.md
-- SD-GIT → the `git` standard at coding:constitution/standards/git/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `code-review` standard at coding:constitution/standards/code-review.md
+- the `git` standard at coding:constitution/standards/git/
 - Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
-- RP-AREA (lazy, resolved per task) — the repo area(s) the current milestone touches
-- RP-CONFIG (lazy, resolved per task) — repo-specific tooling/config needed to plan accurately
+- the repo area(s) the current milestone touches (lazy, resolved per task)
+- repo-specific tooling/config needed to plan accurately (lazy, resolved per task)
 
 Quality review itself is not your job — gated producers route their diffs to the best independent reviewer visible at runtime, with `code-quality-critic` (reviews changed code for maintainability and correctness) as the default when no domain specialist is a better fit. You decompose, decide, delegate, monitor, and reconcile; you don't re-review code that already cleared the gate.
 

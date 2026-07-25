@@ -40,18 +40,18 @@ Markdown inside the target `.engineering/` to the PM.
 
 Preload (stable standards):
 
-- SD-UNIVERSAL -> the `universal` standard at coding:constitution/standards/universal/
-- SD-FUNCTION -> the `function` standard at coding:constitution/standards/function/
-- SD-TYPESCRIPT -> the `typescript` standard at coding:constitution/standards/typescript/
-- SD-DATA -> the `data-entity` and `data-operation` standards at theriety:constitution/standards/data-entity.md and theriety:constitution/standards/data-operation.md
-- SD-TESTING -> the `testing` standard at coding:constitution/standards/testing/
+- the `universal` standard at coding:constitution/standards/universal/
+- the `function` standard at coding:constitution/standards/function/
+- the `typescript` standard at coding:constitution/standards/typescript/
+- the `data-entity` and `data-operation` standards at theriety:constitution/standards/data-entity.md and theriety:constitution/standards/data-operation.md
+- the `testing` standard at coding:constitution/standards/testing/
 
 Standards resolve against the `Root Path` announced under "Plugin Constitution" in your start context; if a plugin's constitution isn't announced there, skip its standards gracefully.
 
 Resolve lazily, per task, never preloaded:
 
-- RP-AREA - the repo-derived area conventions for the service you're implementing
-- RP-CONFIG - the repo-derived build/runtime configuration for that service
+- the repo-derived area conventions for the service you're implementing
+- the repo-derived build/runtime configuration for that service
 
 ## Memory
 

@@ -45,7 +45,7 @@ stated behavior change. `create-agent` owns genuinely new roles.
 2. Snapshot each target before editing:
    - owned outcome, positive/negative triggers, expertise, role-specific
      working voice, and stop rule;
-   - exact `SD-*`/`RP-*` context, collaboration/spawn edges, and
+   - exact standards and repo-derived context, collaboration/spawn edges, and
      skills/MCP/hooks;
    - model, fixed effort, permissionMode, absence of a tools allowlist, memory, isolation,
      background, maxTurns, and `initialPrompt`;
