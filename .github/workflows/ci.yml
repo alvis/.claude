@@ -6,7 +6,10 @@ name: ci
 on:
   push:
     branches: [master]
+  # the default types omit ready_for_review, so a draft that was never pushed to
+  # after its last run would be marked ready with no run against that state.
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   test:
