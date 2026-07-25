@@ -50,30 +50,15 @@ or ad hoc `git check-ignore` probe does not replace this bootstrap contract.
 
 ### First-use work-memory bootstrap
 
-After the user has confirmed any new work identity and the resolver returns
-`resolved` with `engineering_ignored: true`, the PM invokes the resolver once
-more with that confirmed ID and `--bootstrap`, before delegating or creating
-any other work artifact:
-
-```bash
-"$ESSENTIAL_ROOT/bin/resolve-engineering-workspace" \
-  --work-id=<confirmed-work-id> --bootstrap
-```
-
-Identity selection remains separate and interactive: `--bootstrap` never
-derives or mints an ID, and it cannot bypass `work_id_required` or
-`requires_ignore`. The resolver owns the mechanical bootstrap; the PM alone
-may request it while holding the coordinator lease. It creates the work
-directory, `state/`, and whichever of `goal.md`, `state/working.md`,
-`state.md`, and `state/journal.md` is missing; each file is created with
-no-clobber semantics, an existing regular file is preserved byte-for-byte,
-and symlinked or non-regular components are refused on every invocation —
-safe to rerun after an interrupted first use. The initial files carry
-identity, revision counters at `1`, explicit placeholders, and the journal's
-append-only header; downstream owners replace placeholders with observed
-truth. The resolver returns exact paths in `bootstrap_created` and preserved
-paths in `bootstrap_existing`; the PM adds created paths to the combined
-`generated_files` manifest.
+Once the user has confirmed a new work identity and the resolver returns
+`resolved` with `engineering_ignored: true`, the PM alone — while holding
+the coordinator lease — reruns the resolver with that confirmed ID and
+`--bootstrap`, before delegating or creating any other work artifact.
+`--bootstrap` never derives or mints an ID and cannot bypass
+`work_id_required` or `requires_ignore`. [lease.md](lease.md) carries the
+invocation, the no-clobber creation semantics, what the initial files hold,
+and the `bootstrap_created` and `bootstrap_existing` paths the PM adds to
+`generated_files`.
 
 ## Canonical topology
 

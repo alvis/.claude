@@ -21,7 +21,7 @@ is read at the moment it matters.
 | `references/decision-causality.md` | When creating/accepting/superseding a decision | `supersedes`/`affects`/`invalidates`/`preserves`, blast-radius sweep, decision completion gate |
 | `references/approvals.md` | When recording approvals or durable claims that age | The approval binding tuple, freshness metadata |
 | `references/anchors.md` | For non-git anchors or cross-stream initiatives | Anchor declarations, adapter contract, initiative manifests |
-| `references/lease.md` | Before coordinator writes | `ensure` choreography, the lease-verified write path, release moments |
+| `references/lease.md` | Before coordinator writes | `ensure` choreography, the PM-only first-use bootstrap, the lease-verified write path, release moments |
 | `references/overviews.md` | When reconciling lazy overviews | Proposals-vs-changes, child statuses, deviation provenance |
 | `references/reviews.md` | When writing review artifacts | The seven engineering areas plus plugin-namespaced areas, finding lifecycle |
 | `references/spec-lifecycle.md` | When materializing or revalidating specs | Mirrors, freshness sweep, completion verification |
