@@ -315,10 +315,8 @@ Work state has exactly two homes: the active workspace's
 lifecycle skill makes lands in the current tree's
 `.engineering/works/<work-id>/**`, the default tree's
 `.engineering/overview.md`, or — at promotion only — `docs/`. Any other
-destination is a contract violation: not `/tmp`, not a dotted sibling such
-as `.local/`, not the repository root, not `$HOME`, not a path outside the
-resolved workspace. A skill that believes it needs one has misread this
-contract; stop and report instead.
+destination is a contract violation. A skill that believes it needs one has
+misread this contract; stop and report instead.
 
 **Output volume is never a reason to create a file.** A report that would be
 long is shortened editorially or degraded to pointers into

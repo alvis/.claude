@@ -156,7 +156,7 @@ export function formatCurrency() { ... }  // Different domain
 
 When a file exceeds the project's `max-lines` threshold, apply the **two-stage rule** — never split arbitrarily.
 
-**Stage 1 — Relocate code that belongs elsewhere.** Look for logic that genuinely belongs to another module and move it to its **real home** (an existing module, or a proper typed directory). Prefer this when the code is reused by more than one caller, or represents a distinct concern that stands on its own. Do NOT create a `<base>-helpers.ts` / `<base>.helpers.ts` sibling — that is not its real home.
+**Stage 1 — Relocate code that belongs elsewhere.** Look for logic that genuinely belongs to another module and move it to its **real home** (an existing module, or a proper typed directory). Prefer this when the code is reused by more than one caller, or represents a distinct concern that stands on its own.
 
 **Stage 2 — Folder split if still too long.** If the file still exceeds `max-lines` after relocation, split it into a folder using the `<base>.ts` + `<base>/*.ts` pattern:
 

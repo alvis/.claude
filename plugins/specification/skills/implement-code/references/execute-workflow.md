@@ -64,5 +64,5 @@ Notion completion/revalidation loop, and only then final history/publication.
 
 Run the selected chain from `modes.md` in the live session. Apply the same
 decision stop, deferred-publication rule, deviation reporting, three-pass slice
-review bound, and manifest collection. Do not create root plan/deviation
-artifacts, write PM-owned overview/state files, or invoke a publication path.
+review bound, and manifest collection. Do not write PM-owned overview/state
+files or invoke a publication path.

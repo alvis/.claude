@@ -2,7 +2,7 @@
 
 DOCUMENT mode derives specification content from an existing codebase. It
 updates the active work specification and ultimately the versioned capability
-docs; it does not create root design files or imply a remote destination.
+docs; it implies no remote destination.
 
 ## When DOCUMENT Mode Activates
 

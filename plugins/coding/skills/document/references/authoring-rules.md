@@ -98,8 +98,8 @@ adapters, providers, or runtimes.
   snippets/` ships reusable starting-point diagrams to customize.
 - **Path**: write `docs/architecture/<architecture-slug>.md`, deriving the slug
   with Essential's `derive-engineering-name` executable and repository capability. Reconcile
-  `docs/architecture/overview.md` and `docs/index.md`. Never create a root
-  architecture file or derive the slug from a task title.
+  `docs/architecture/overview.md` and `docs/index.md`. Never derive the slug
+  from a task title.
 - **Split rule**: `docs/**` has no mechanical byte limit. Split a durable
   architecture document only when distinct ownership or navigation materially
   improves; keep the original path as the overview and use lowercase semantic

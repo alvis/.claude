@@ -21,7 +21,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
   `plan_source` to be exactly `state.md`. An explicitly linked
   `state/plan.md` supplies non-authoritative ID-keyed execution
   detail only; never let it define or override task identity or graph fields.
-  Do not guess a plan from directory contents or create root draft, plan, or deviations files.
+  Do not guess a plan from directory contents.
 - Material departures are work-local `changes/<slug>.md` children and PM
   state updates. Contract drift also appears in `reviews/alignment.md`.
 - Subagents may write assigned children/evidence but never PM-owned

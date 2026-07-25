@@ -14,7 +14,6 @@ contract; `specification:implement-code` and Coding skills execute it.
 
 ## Boundaries
 
-- Do not create independent root planning, proposal, or change artifacts.
 - Root `state.md` is the sole canonical plan definition and contains the
   complete task registry; its `plan_source` is exactly `state.md`.
   `state/plan.md` is non-authoritative implementation
