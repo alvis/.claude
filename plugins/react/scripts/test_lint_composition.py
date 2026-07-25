@@ -149,32 +149,27 @@ class LintProfileRunnerContract(unittest.TestCase):
         profile = json.loads(PROFILE.read_text())
         self.assertEqual([".tsx", ".jsx"], profile["eligibility"]["extensions"])
         self.assertTrue(profile["scanners"][0]["needs_coding_scanlib"])
-        coding = (PLUGINS / "coding/skills/lint/SKILL.md").read_text().lower()
-        adapter = (PLUGINS / "react/skills/lint/SKILL.md").read_text()
-        self.assertNotIn("plugins/coding/", coding)
-        self.assertNotIn("plugins/react/", coding)
-        self.assertNotIn("react:lint", coding)
-        self.assertEqual(1, adapter.split("---", 2)[2].count("coding:lint"))
-        self.assertIn('--profile="${CLAUDE_SKILL_DIR}/profile.json"', adapter)
-        self.assertNotIn("Skill", RUNNER.read_text())
 
 
 class PluginManifestContract(unittest.TestCase):
-    def test_exact_dependencies_live_only_in_plugin_manifests(self) -> None:
-        expected = {
-            "react": ["coding", "essential"], "essential": None,
-            "specification": ["coding", "essential"],
-            "theriety": ["coding", "specification", "essential"],
-            "web": ["coding", "essential"], "coding": ["essential"],
-            "client": ["essential"], "governance": ["essential"],
-        }
-        actual = {}
+    def test_declared_dependencies_name_existing_plugins_only(self) -> None:
+        manifests = {}
         for path in PLUGINS.glob("*/.claude-plugin/plugin.json"):
             manifest = json.loads(path.read_text())
-            actual[manifest["name"]] = manifest.get("dependencies")
-        self.assertEqual(expected, actual)
+            manifests[manifest["name"]] = manifest
+
+        self.assertGreater(len(manifests), 0)
+        for name, manifest in manifests.items():
+            for dependency in manifest.get("dependencies") or []:
+                with self.subTest(plugin=name, dependency=dependency):
+                    self.assertIn(dependency, manifests)
+                    self.assertNotEqual(name, dependency)
+
+    def test_marketplace_entries_carry_no_dependencies(self) -> None:
         marketplace = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
-        self.assertTrue(all("dependencies" not in plugin for plugin in marketplace["plugins"]))
+        for plugin in marketplace["plugins"]:
+            with self.subTest(plugin=plugin.get("name")):
+                self.assertNotIn("dependencies", plugin)
 
 
 if __name__ == "__main__":

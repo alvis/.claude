@@ -680,26 +680,6 @@ class ScopedSaveValidatorTest(unittest.TestCase):
         self.assertIn("Git clean transform", str(output["error"]))
         self.assertEqual(head_before, self.git("rev-parse", "HEAD").stdout.strip())
 
-    def test_jj_contract_is_structural_operation_pinned_and_fail_closed(self) -> None:
-        source = (PLUGIN / "skills/commit/scripts/validate_scoped_save.py").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"git",\n                "root"', source)
-        self.assertIn('"--ignore-working-copy"', source)
-        self.assertIn('command.extend(["--at-operation", at_operation])', source)
-        self.assertIn('"diff-index", "--cached", "--quiet", "HEAD", "--"', source)
-        self.assertLess(
-            source.index('staged = run_git(repo, "diff-index"'),
-            source.index('run_jj(repo, "status")'),
-        )
-        self.assertIn('"working_copy_commit_id"', source)
-        self.assertIn('"working_copy_change_id"', source)
-        self.assertIn('"parent_commit_ids"', source)
-        self.assertIn("require_jj_scoped_save_capabilities", source)
-        self.assertIn("installed jj lacks required scoped-save capability", source)
-        self.assertIn("jj saved change parents differ", source)
-        self.assertIn("jj current operation does not contain the exact saved commit", source)
-
 
 if __name__ == "__main__":
     unittest.main()

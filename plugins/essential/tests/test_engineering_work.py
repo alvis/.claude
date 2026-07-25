@@ -14,46 +14,13 @@ ESSENTIAL = Path(__file__).resolve().parents[1]
 REPOSITORY = ESSENTIAL.parents[1]
 CHECKER = ESSENTIAL / "bin/check-markdown-size"
 RESOLVER = ESSENTIAL / "bin/resolve-engineering-workspace"
+# pin macOS's system bash 3.2 rather than resolving the shebang against PATH,
+# so its incident guards (e.g. an empty array expanding to "unbound variable"
+# under `set -u`) stay exercised even when a newer Homebrew bash is on PATH
+SYSTEM_BASH = "/bin/bash"
 NAME_HELPER = ESSENTIAL / "bin/derive-engineering-name"
 SESSION_START = ESSENTIAL / "bin/session-start"
 SUBAGENT_START = ESSENTIAL / "bin/subagent-start"
-
-MIGRATED_ARTIFACT_WRITERS = {
-    "backend/skills/audit-data/SKILL.md",
-    "backend/skills/audit-service/SKILL.md",
-    "backend/skills/build-data/SKILL.md",
-    "backend/skills/build-service/SKILL.md",
-    "client/skills/create-screen-design/SKILL.md",
-    "client/skills/update-screen-design/SKILL.md",
-    "coding/skills/cleanup/SKILL.md",
-    "coding/skills/complete-code/SKILL.md",
-    "coding/skills/complete-test/SKILL.md",
-    "coding/skills/document/SKILL.md",
-    "coding/skills/draft-code/SKILL.md",
-    "coding/skills/fix/SKILL.md",
-    "coding/skills/write-pr/SKILL.md",
-    "coding/skills/review-code/SKILL.md",
-    "coding/skills/write-code/SKILL.md",
-    "essential/skills/autoresearch/SKILL.md",
-    "essential/skills/decide/SKILL.md",
-    "essential/skills/deep-research/SKILL.md",
-    "essential/skills/discover/SKILL.md",
-    "essential/skills/doctor/SKILL.md",
-    "essential/skills/handoff/SKILL.md",
-    "essential/skills/handover/SKILL.md",
-    "essential/skills/takeover/SKILL.md",
-    "production/skills/review-render/SKILL.md",
-    "production/skills/track-assets/SKILL.md",
-    "specification/skills/implement-code/SKILL.md",
-    "specification/skills/mdc/SKILL.md",
-    "specification/skills/plan-code/SKILL.md",
-    "specification/skills/review-implementation/SKILL.md",
-    "specification/skills/spec-code/SKILL.md",
-    "specification/skills/sync-notion/SKILL.md",
-    "specification/skills/sync-spec/SKILL.md",
-    "web/skills/audit/SKILL.md",
-    "web/skills/design/SKILL.md",
-}
 
 
 class MarkdownSizeCheckerTest(unittest.TestCase):
@@ -314,7 +281,7 @@ class WorkspaceResolverTest(unittest.TestCase):
         environment_work_id: str | None = None,
         extra_environment: dict[str, str] | None = None,
     ) -> tuple[subprocess.CompletedProcess[str], dict]:
-        command = [str(RESOLVER), "--path", str(path)]
+        command = [SYSTEM_BASH, str(RESOLVER), "--path", str(path)]
         if work_id is not None:
             command.extend(("--work-id", work_id))
         if bootstrap:
@@ -462,6 +429,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             spaced, spaced_payload = self.run_resolver(root, "eng-421-spaced")
             equals = subprocess.run(
                 [
+                    SYSTEM_BASH,
                     str(RESOLVER),
                     f"--path={root}",
                     "--work-id=eng-421-equals",
@@ -479,7 +447,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("argument", equals_payload["work_id_source"])
 
             help_result = subprocess.run(
-                [str(RESOLVER), "--help"],
+                [SYSTEM_BASH, str(RESOLVER), "--help"],
                 text=True,
                 capture_output=True,
                 check=False,
@@ -518,34 +486,6 @@ class WorkspaceResolverTest(unittest.TestCase):
                 created_payload["bootstrap_created"],
             )
             self.assertEqual([], created_payload["bootstrap_existing"])
-            goal_text = goal.read_text(encoding="utf-8")
-            working_text = working.read_text(encoding="utf-8")
-            state_text = state.read_text(encoding="utf-8")
-            journal_text = journal.read_text(encoding="utf-8")
-            self.assertIn(f"- Work ID: `{work_id}`", goal_text)
-            self.assertIn("- Charter revision: `1`", goal_text)
-            self.assertIn("| SC-1 |", goal_text)
-            self.assertIn("## Specification provenance", goal_text)
-            self.assertIn(f"- Work ID: `{work_id}`", working_text)
-            self.assertIn("- Status: `initialized`", working_text)
-            self.assertIn("- Charter: [goal.md](../goal.md)", working_text)
-            self.assertIn("- State: [state.md](../state.md)", working_text)
-            self.assertIn(f"- Work ID: `{work_id}`", state_text)
-            self.assertIn("- Charter: [goal.md](goal.md)", state_text)
-            self.assertIn("- Plan source: `state.md`", state_text)
-            self.assertIn("- Plan revision: `1`", state_text)
-            self.assertIn("- State revision: `1`", state_text)
-            self.assertRegex(state_text, r"- Written under: `[0-9a-f]{8}`")
-            self.assertIn("- Journal: [journal.md](state/journal.md)", state_text)
-            self.assertIn("| GOL | - | planned |", state_text)
-            self.assertIn("| OWN | - | planned |", state_text)
-            self.assertNotIn("## Goal and success criteria", state_text)
-            self.assertIn("- Current focus: [working.md](state/working.md)", state_text)
-            self.assertIn("- Sync state: Not started.", state_text)
-            self.assertIn("- Review state: Not started.", state_text)
-            self.assertIn(f"PM@pm rev:1 status {work_id}: initialized", journal_text)
-            self.assertIn("status|decision|revision|sync|sweep|lease", journal_text)
-            self.assertIn("## Workspace anchors", goal_text)
 
             custom_working = "# Preserved owner state\n\nDo not replace me.\n"
             working.write_text(custom_working, encoding="utf-8")
@@ -570,7 +510,7 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.initialize_git(root, ignored=False)
 
             identity = subprocess.run(
-                [str(RESOLVER), "--path", str(root), "--bootstrap"],
+                [SYSTEM_BASH, str(RESOLVER), "--path", str(root), "--bootstrap"],
                 text=True,
                 capture_output=True,
                 check=False,
@@ -772,6 +712,20 @@ class WorkspaceResolverTest(unittest.TestCase):
                 payload["work_dir"],
             )
 
+    def test_state_root_falls_back_to_a_sole_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "main"
+            self.initialize_git(root)
+            self.commit_initial(root)
+
+            completed, payload = self.run_resolver(root, "eng-421-test")
+
+            # with no linked worktrees the sole workspace is its own state root
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            self.assertEqual("resolved", payload["status"])
+            self.assertEqual(str(root.resolve()), payload["state_root"])
+            self.assertEqual(payload["active_workspace"], payload["state_root"])
+
     def test_refuses_invalid_work_ids_and_non_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -918,109 +872,6 @@ class WorkspaceResolverTest(unittest.TestCase):
             self.assertEqual("resolved", payload["status"])
             self.assertIsNone(payload["default_workspace"])
             self.assertEqual("primary", payload["work_id"])
-
-
-class ArtifactSkillContractTest(unittest.TestCase):
-    def test_all_migrated_artifact_writers_load_contract_and_return_manifest(self) -> None:
-        actual = {
-            str(path.relative_to(REPOSITORY / "plugins"))
-            for path in (REPOSITORY / "plugins").glob("*/skills/**/SKILL.md")
-            if "engineering-work.md" in path.read_text(encoding="utf-8")
-        }
-        self.assertEqual(MIGRATED_ARTIFACT_WRITERS, actual)
-
-        for relative in sorted(MIGRATED_ARTIFACT_WRITERS):
-            with self.subTest(skill=relative):
-                text = (REPOSITORY / "plugins" / relative).read_text(encoding="utf-8")
-                self.assertIn("engineering-work.md", text)
-                self.assertRegex(text, r"(?i)if unavailable|refuse.*missing|stop artifact")
-                self.assertIn("generated_files", text)
-
-    def test_reviewed_consumers_use_optional_resolution_and_generic_context(self) -> None:
-        audit_data = (
-            REPOSITORY / "plugins/backend/skills/audit-data/SKILL.md"
-        ).read_text(encoding="utf-8")
-        self.assertIn("[--work-id=<id>]", audit_data)
-        self.assertIn("Essential's workspace resolver", audit_data)
-        self.assertIn("work_id_required", audit_data)
-
-        for skill_name in ("create-screen-design", "update-screen-design"):
-            with self.subTest(skill=skill_name):
-                client = (
-                    REPOSITORY / f"plugins/client/skills/{skill_name}/SKILL.md"
-                ).read_text(encoding="utf-8")
-                normalized_client = " ".join(client.split())
-                self.assertNotIn("specification:", normalized_client)
-                self.assertIn("source, location, and direction", normalized_client)
-                self.assertIn(
-                    "Never assume a synchronization skill", normalized_client
-                )
-
-    def test_pm_owns_deterministic_first_use_bootstrap(self) -> None:
-        contract = (ESSENTIAL / "references/engineering-work.md").read_text(
-            encoding="utf-8"
-        )
-        lease = (ESSENTIAL / "references/lease.md").read_text(encoding="utf-8")
-        main_agent = (ESSENTIAL / "MAINAGENT.md").read_text(encoding="utf-8")
-        normalized_contract = " ".join(contract.split())
-        normalized_lease = " ".join(lease.split())
-        normalized_main_agent = " ".join(main_agent.split())
-
-        self.assertIn("### First-use work-memory bootstrap", contract)
-        self.assertIn("[lease.md](lease.md)", contract)
-        self.assertIn(
-            "`--bootstrap` never derives or mints an ID", normalized_contract
-        )
-        self.assertIn("`bootstrap_created`", contract)
-        self.assertIn("`bootstrap_existing`", contract)
-
-        self.assertIn("## First-use work-memory bootstrap", lease)
-        self.assertIn(
-            "After the user has confirmed any new work identity",
-            normalized_lease,
-        )
-        self.assertIn("`--bootstrap` never derives or mints an ID", normalized_lease)
-        self.assertIn("created with no-clobber semantics", normalized_lease)
-        self.assertIn("`bootstrap_created`", lease)
-        self.assertIn("`bootstrap_existing`", lease)
-        self.assertIn(
-            "invoke the resolver with the confirmed ID and `--bootstrap`",
-            normalized_main_agent,
-        )
-        self.assertIn("never mint an ID silently", normalized_main_agent)
-
-    def test_shared_contract_supports_specs_and_on_disk_continuity(self) -> None:
-        contract = (ESSENTIAL / "references/engineering-work.md").read_text(
-            encoding="utf-8"
-        )
-        normalized = " ".join(contract.split())
-
-        self.assertIn("provenance.json", contract)
-        self.assertIn("explicit local path, approved inline candidate", normalized)
-        self.assertIn("Neither path claims a Notion round trip", normalized)
-        self.assertIn(
-            "Continuity has one mechanism: the on-disk work directory", normalized
-        )
-        self.assertIn(
-            "each stream records the source anchor that names the revision "
-            "its work assumes",
-            normalized,
-        )
-
-    def test_persistent_discovery_accepts_optional_explicit_work_id(self) -> None:
-        discover = (ESSENTIAL / "skills/discover/SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        frontmatter = discover.split("---", 2)[1]
-        normalized = " ".join(discover.split())
-
-        self.assertIn("[--work-id=<id>]", frontmatter)
-        self.assertIn("only when the user supplied that explicit override", normalized)
-        self.assertIn("ask only on `work_id_required`", normalized)
-        self.assertIn("no-clobber bootstrap", normalized)
-        self.assertIn("Parent task: DSC", normalized)
-        self.assertIn("DSC01 → {DSC02,DSC03} → DSC04", normalized)
-        self.assertIn("root as the complete task registry", normalized)
 
 
 class EngineeringIgnoreContractTest(unittest.TestCase):

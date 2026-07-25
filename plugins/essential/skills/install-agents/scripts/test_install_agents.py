@@ -410,7 +410,15 @@ class AgentDiscoveryTest(unittest.TestCase):
 
     def test_every_distributed_agent_has_project_memory(self) -> None:
         templates = discover_agent_templates(ROOT / "plugins/essential")
-        self.assertEqual(23, len(templates))
+        # parity against the on-disk template directories, not a hardcoded
+        # count that breaks whenever an agent is added or removed
+        on_disk = {
+            path.name
+            for path in (ROOT / "plugins").glob("*/templates/agents/*")
+            if path.is_dir()
+        }
+        self.assertTrue(templates)
+        self.assertEqual(on_disk, {template.name for template in templates})
 
         for template in templates:
             with self.subTest(agent=template.name):

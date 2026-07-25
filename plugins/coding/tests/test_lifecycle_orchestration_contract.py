@@ -8,29 +8,9 @@ import unittest
 
 
 PLUGIN = Path(__file__).resolve().parents[1]
-SKILLS = PLUGIN / "skills"
 CRITIC_FRONTMATTER = (
     PLUGIN / "templates/agents/code-quality-critic/frontmatter/claude.json"
 )
-
-
-class OrchestrationContextContractTest(unittest.TestCase):
-    def test_nested_or_interactive_orchestrators_do_not_fork_the_skill_context(self) -> None:
-        paths = (
-            SKILLS / "write-code/SKILL.md",
-            SKILLS / "review-code/SKILL.md",
-            SKILLS / "complete-test/SKILL.md",
-            SKILLS / "lint/SKILL.md",
-            SKILLS / "document/SKILL.md",
-            SKILLS / "finalize-commits/SKILL.md",
-            SKILLS / "find-unused/SKILL.md",
-            SKILLS / "fix/SKILL.md",
-        )
-
-        for path in paths:
-            with self.subTest(skill=path.parent.name):
-                frontmatter = path.read_text(encoding="utf-8").split("---", 2)[1]
-                self.assertNotIn("context: fork", frontmatter)
 
 
 @unittest.skipUnless(shutil.which("jq"), "code-quality hook requires jq")

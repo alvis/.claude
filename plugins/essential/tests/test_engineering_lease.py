@@ -12,6 +12,10 @@ import unittest
 
 ESSENTIAL = Path(__file__).resolve().parents[1]
 LEASE = ESSENTIAL / "bin/engineering-lease"
+# pin macOS's system bash 3.2 rather than resolving the shebang against PATH,
+# so its incident guards (e.g. `${2:-{\}}` keeping the backslash and feeding jq
+# invalid JSON) stay exercised even when a newer Homebrew bash is on PATH
+SYSTEM_BASH = "/bin/bash"
 
 
 class EngineeringLeaseTest(unittest.TestCase):
@@ -26,7 +30,8 @@ class EngineeringLeaseTest(unittest.TestCase):
 
     def run_lease(self, verb: str, *arguments: str) -> tuple[int, dict]:
         completed = subprocess.run(
-            [str(LEASE), verb, "--work-dir", str(self.work_dir), *arguments],
+            [SYSTEM_BASH, str(LEASE), verb,
+             "--work-dir", str(self.work_dir), *arguments],
             capture_output=True,
             text=True,
         )
@@ -158,7 +163,7 @@ class EngineeringLeaseTest(unittest.TestCase):
 
     def test_session_defaults_when_flag_absent(self) -> None:
         completed = subprocess.run(
-            [str(LEASE), "acquire", "--work-dir", str(self.work_dir),
+            [SYSTEM_BASH, str(LEASE), "acquire", "--work-dir", str(self.work_dir),
              "--capability", "pm"],
             capture_output=True,
             text=True,
@@ -171,7 +176,7 @@ class EngineeringLeaseTest(unittest.TestCase):
     def test_session_falls_back_to_pid_identity(self) -> None:
         env = {k: v for k, v in os.environ.items() if k != "CLAUDE_SESSION_ID"}
         completed = subprocess.run(
-            [str(LEASE), "acquire", "--work-dir", str(self.work_dir),
+            [SYSTEM_BASH, str(LEASE), "acquire", "--work-dir", str(self.work_dir),
              "--capability", "pm"],
             capture_output=True,
             text=True,
