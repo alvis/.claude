@@ -19,7 +19,7 @@ impersonate another (`plugins/essential/references/truth.md`):
 | --- | --- | --- |
 | Contract | What are we trying to make now? | `goal.md` charters, canonical specs |
 | Decision | Why this, and what replaced the old choice? | decision records, ADRs |
-| Execution state | What is happening right now? | `.engineering/` work state |
+| Execution state | What is happening right now? | `.state/` work state |
 | Evidence | What was verified, against which exact inputs? | task evidence, reviews, receipts |
 | Artifact | What was actually produced? | outputs named by revision or hash |
 | Memory | What reusable lesson may help later? | agent memory |
@@ -31,11 +31,11 @@ Five rules are constitutional:
 3. Never treat `done` as synonymous with `current` — status is history,
    validity is now.
 4. Every derived artifact names the inputs it was derived from.
-5. Deleting `.engineering/` must never erase anything consequential.
+5. Deleting `.state/` must never erase anything consequential.
 
 Practical consequences you will see day to day:
 
-- **`.engineering/` is an operational projection, not the record of record.**
+- **`.state/` is an operational projection, not the record of record.**
   It is ignored working memory — rich, continuously persisted, and
   reconstructible — held centrally in the default source tree, so every
   worktree and workspace shares one view of the work. Every state change, discovery, and decision is stored
@@ -99,7 +99,7 @@ A work stream is born, executes, and retires through one continuous
 discipline:
 
 1. **Bootstrap.** The PM confirms a stable work ID, the resolver enforces the
-   `.engineering/` ignore gate, and a no-clobber bootstrap creates the
+   `.state/` ignore gate, and a no-clobber bootstrap creates the
    charter (`goal.md`), state (`state.md`), focus pointer
    (`state/working.md`), and journal.
 2. **Charter.** `goal.md` owns the goal, scope, and numbered success criteria
@@ -123,7 +123,7 @@ discipline:
    carries the full binding tuple. Spec freshness is re-checked at named
    moments (before planning, each dispatch batch, review, completion).
 8. **Pause and resume.** `essential:handover` persists everything into
-   `.engineering/` and refreshes the cross-tree overview;
+   `.state/` and refreshes the cross-tree overview;
    `essential:takeover` resumes from those on-disk files, checks the lease,
    and drives streams to their success criteria (`essential:doctor` owns
    structural audits).
@@ -147,7 +147,7 @@ discipline:
 | 9. Reconcile the spec | Let implementation run the applicable Notion completion gate or local source/carrier recheck. | A change in specification content invalidates plan/code/review evidence; done tasks keep their status and gain stale validity with remediation tasks. |
 | 10. Save and finalize | On deferred `needs_save`, run the exact returned `/coding:commit --paths-from=... --manifest-sha256=...`; on `ready_for_finalization`, skip save; on `no_change`, stop. Then `/coding:finalize-commits` once. | The closed-set save preserves unrelated staged and dirty developer work. |
 | 11. Publish | If no PR was already published, run `/coding:write-pr` only when the GitHub and `gh` prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
-| 12. Close or pause | After acceptance and decision dispositions, propose the pull request(s) and set the work `reviewing`; it becomes `completed` only on merge evidence, which `/essential:takeover` checks on a later run. Or run `/essential:handover`. | Every required executable leaf must be done. A pause leaves the whole stream in `.engineering/works/<work-id>/`, ready for `/essential:takeover`. |
+| 12. Close or pause | After acceptance and decision dispositions, propose the pull request(s) and set the work `reviewing`; it becomes `completed` only on merge evidence, which `/essential:takeover` checks on a later run. Or run `/essential:handover`. | Every required executable leaf must be done. A pause leaves the whole stream in `.state/works/<work-id>/`, ready for `/essential:takeover`. |
 
 When the target is a standalone or non-TypeScript repository, verify each
 selected skill against the repository's native commands before use.
@@ -186,7 +186,7 @@ or PR publication only after the local flow is understood.
 
 ## Work state and recovery
 
-- `.engineering/works/<work-id>/` is ignored coordination memory — an
+- `.state/works/<work-id>/` is ignored coordination memory — an
   operational projection rather than a record of record. It lives in the
   default source tree only, so every worktree resolves to the same streams,
   and it is self-contained: state, decisions, specification, and `artifacts/`
@@ -201,11 +201,11 @@ or PR publication only after the local flow is understood.
 - To pause, run `/essential:handover`; to resume, `/essential:takeover`. The
   pause writes nothing but state, so it always completes — a stream whose code
   is still an uncommitted working copy is paused and resumed like any other.
-- `.engineering/` is ignored, so one reflexive `git clean -fdx` deletes it.
+- `.state/` is ignored, so one reflexive `git clean -fdx` deletes it.
   Keep a copy outside the repository; `essential:doctor` checks a restored
   tree's structural integrity before it is resumed.
 - Handover and takeover write only under the default source tree's
-  `.engineering/` (and the active tree's `docs/` at promotion). A continuation file anywhere else — `/tmp`, `.local/`, the repo
+  `.state/` (and the active tree's `docs/` at promotion). A continuation file anywhere else — `/tmp`, `.local/`, the repo
   root — is a bug, including when output is too large for a response.
 - Full detail, including the lease and doctor tools:
   [plugins/essential/README.md](plugins/essential/README.md).

@@ -147,7 +147,7 @@ contract; `specification:implement-code` and Coding skills execute it.
    `decisions.md`, or `design.md`.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; after every writer finishes, the PM
-checks only eligible work Markdown inside the target `.engineering/`.
+checks only eligible work Markdown inside the target `.state/`.
 
 ## Verification
 

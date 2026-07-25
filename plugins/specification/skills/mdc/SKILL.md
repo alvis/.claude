@@ -19,7 +19,7 @@ block tree, annotations, refs, closing markers, and YAML frontmatter.
 - `.mdc` is reserved for Notion-backed files. In engineering work, author only
   an exact path explicitly supplied by the caller, returned by transport, or
   recorded in the active work pairing. A project may conventionally keep a
-  mirror beneath `.engineering/`, but this skill does not require or derive it.
+  mirror beneath `.state/`, but this skill does not require or derive it.
 - `last_edited_time` is remote revision metadata owned by Notion transport.
   Local read, edit, and author flows never add, stamp, or rewrite it. Record a
   local edit time in work evidence or a receipt, not in MDC frontmatter.

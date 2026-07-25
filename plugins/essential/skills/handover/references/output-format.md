@@ -5,15 +5,15 @@ Return:
 ```yaml
 handover: complete
 source_tree: <kind (git-worktree|jj-workspace) and label of the checkout this session ran in>
-state_root: <absolute default source tree root that carries .engineering/>
-workspace_root: <absolute state_root/.engineering/works path>
-overview_path: <absolute state_root/.engineering/overview.md path>
+state_root: <absolute default source tree root that carries .state/>
+workspace_root: <absolute state_root/.state/works path>
+overview_path: <absolute state_root/.state/overview.md path>
 streams_indexed: <n>
 streams_selected: <n>
 streams:
   - work_id: <id>
     lifecycle: <initialized|active|blocked|reviewing|completed|retiring>
-    work_dir: <absolute .engineering/works/<work-id> directory holding this stream>
+    work_dir: <absolute .state/works/<work-id> directory holding this stream>
     current_task_id: <full executable task ID or none>
     next_owner: <exact continuation owner or ->
     next_action: <exact continuation action or ->
@@ -31,7 +31,7 @@ overviews_reconciled: [<relative paths>]
 generated_files: [<absolute created/materially rewritten paths, including overview.md>]
 ```
 
-Every stream in `state_root/.engineering/works/` appears once in `streams`.
+Every stream in `state_root/.state/works/` appears once in `streams`.
 `work_dir` is present for every stream whose work directory exists, including
 `reviewing`, `completed`, and `retiring` ones. `overview_path` is the global
 index beside them, updated with only the refreshed streams' rows.

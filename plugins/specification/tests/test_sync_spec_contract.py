@@ -288,7 +288,7 @@ class SpecDerivationContractTest(unittest.TestCase):
         self.assertIn("all derived `.md` files and", contract)
         self.assertIn("`generated_files`", contract)
         self.assertIn("versioned `docs/**` remains excluded", contract)
-        self.assertIn("only eligible Markdown inside `.engineering/`", contract)
+        self.assertIn("only eligible Markdown inside `.state/`", contract)
 
 
 class DirectComparisonAndReconciliationContractTest(unittest.TestCase):

@@ -19,7 +19,7 @@ approved specification content, not to any hash.
 ## Boundaries
 
 - `materialize` obtains a fresh remote view, then creates or refreshes only the
-  requested page tree under `.engineering/works/<work-id>/spec/` when the
+  requested page tree under `.state/works/<work-id>/spec/` when the
   base/local/remote decision permits it.
 - `complete` is a publication gate. It reconciles the authored copy with a
   fresh remote view, verifies stage-specific approval, delegates guarded
@@ -62,7 +62,7 @@ approved specification content, not to any hash.
    contract. For a direct run, invoke Essential's workspace
    resolver with `--work-id` only for an explicit user override; ask only on
    `work_id_required`. A delegated run receives the explicit id/root. Resolve:
-   - `work_spec_root = <active>/.engineering/works/<work-id>/spec`;
+   - `work_spec_root = <active>/.state/works/<work-id>/spec`;
    - `mirror_root` from explicit input, active state, or an immutable receipt;
    - `transport_profile_file` from explicit input or the exact validated
      active-state mapping described above;

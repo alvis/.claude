@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Check the integrity of the engineering work memory with the structural doctor, diagnose folder-structure and format drift against the current contracts, and offer user-approved migration to the latest structure. Use for health checks of .engineering/, before resuming old work, after suspected corruption or drift, or when a stream predates the current state format; this skill repairs and migrates work memory, never the work itself.
+description: Check the integrity of the engineering work memory with the structural doctor, diagnose folder-structure and format drift against the current contracts, and offer user-approved migration to the latest structure. Use for health checks of .state/, before resuming old work, after suspected corruption or drift, or when a stream predates the current state format; this skill repairs and migrates work memory, never the work itself.
 model: opus
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 argument-hint: "[work-id] [--strict]"
@@ -8,7 +8,7 @@ argument-hint: "[work-id] [--strict]"
 
 # Doctor
 
-Diagnose the `.engineering/` work memory — centralized in the default source
+Diagnose the `.state/` work memory — centralized in the default source
 tree, so every checkout diagnoses the same one — and, with
 approval, bring it to the latest structure. Diagnosis is mechanical
 (`engineering-doctor`); judgement is not: what "latest" means is whatever the
@@ -40,18 +40,18 @@ Before creating or materially rewriting a project artifact, read the absolute
 artifact writes and report the missing contract. Read its work-state contract
 sibling and `truth.md` as well — together they define the current canonical
 topology and file shapes that "latest" means. Run the resolver read-only to
-locate the active workspace and `.engineering/`; on `requires_ignore` or
+locate the active workspace and `.state/`; on `requires_ignore` or
 `work_id_required`, report per the contract rather than proceeding.
 
 ## Workflow
 
 1. **Scope.** With `[work-id]`, check that one stream
    (`--work-dir <work_dir>`); otherwise check everything
-   (`--engineering-root <state_root>/.engineering`, covering every
+   (`--engineering-root <state_root>/.state`, covering every
    stream plus `overview.md`). `state_root` comes from the resolver: it is
    the default source tree, so the doctor sees every stream whichever
    checkout it is run from, and never silently skips streams as a per-tree
-   scope would. A missing `.engineering/` is a clean report,
+   scope would. A missing `.state/` is a clean report,
    not an error.
 2. **Run the doctor.** Invoke
    `"$ESSENTIAL_ROOT/bin/engineering-doctor" --json` with the scope from
@@ -79,10 +79,10 @@ locate the active workspace and `.engineering/`; on `requires_ignore` or
    change, what is preserved byte-for-byte, and what stays untouched.
    Migrate stream-by-stream, never as one mass rewrite. For a stream idle
    long past its last journal entry, propose **parking** into
-   `.engineering/archive/<work-id>/` per Essential's `retirement.md` as the
+   `.state/archive/<work-id>/` per Essential's `retirement.md` as the
    remediation instead of migration. For a stream whose work memory was
    destroyed (for example by `git clean -fdx`), offer **recovery from a
-   copy**: restore the `.engineering/works/<work-id>/` directory from a backup
+   copy**: restore the `.state/works/<work-id>/` directory from a backup
    or another tree that holds it, then run `essential:takeover`. Recovered
    facts cite the restored files, and anything that postdates the copy is
    reported as lost, never invented.

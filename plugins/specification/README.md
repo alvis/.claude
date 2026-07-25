@@ -45,7 +45,7 @@ Treat a synchronized specification as three copies:
 Materialize before planning or implementation:
 
 ```text
-/specification:sync-spec <notion-page-ref> --work-id=<id> --mirror=.engineering/notion --transport-profile=/absolute/path/to/notion-sync-transport.json --mode=materialize
+/specification:sync-spec <notion-page-ref> --work-id=<id> --mirror=.state/notion --transport-profile=/absolute/path/to/notion-sync-transport.json --mode=materialize
 ```
 
 Completion normally runs through `spec-code`/`implement-code`; for advanced

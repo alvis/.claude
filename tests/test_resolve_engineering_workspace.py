@@ -68,7 +68,7 @@ class ResolveEngineeringWorkspaceTests(unittest.TestCase):
 
     def test_bootstrap_reports_created_and_empty_existing_entrypoints(self) -> None:
         """`bootstrap_existing` is empty on a first bootstrap — the original crash."""
-        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        (self.repo / ".gitignore").write_text(".state/\n", encoding="utf-8")
 
         payload = self.resolve("--work-id", "sample-stream", "--bootstrap")
 
@@ -106,8 +106,8 @@ class ResolveEngineeringWorkspaceTests(unittest.TestCase):
         return linked
 
     def test_secondary_worktree_roots_state_in_the_default_tree(self) -> None:
-        """`.engineering/` belongs to the main worktree, whichever tree calls."""
-        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        """`.state/` belongs to the main worktree, whichever tree calls."""
+        (self.repo / ".gitignore").write_text(".state/\n", encoding="utf-8")
         linked = self.add_worktree("secondary")
 
         payload = self.resolve(
@@ -121,20 +121,20 @@ class ResolveEngineeringWorkspaceTests(unittest.TestCase):
         self.assertEqual(payload["durable_root"], str(linked.resolve()))
         self.assertEqual(
             payload["work_dir"],
-            str(self.repo.resolve() / ".engineering/works/sample-stream"),
+            str(self.repo.resolve() / ".state/works/sample-stream"),
         )
 
     def test_state_root_falls_back_to_a_sole_workspace(self) -> None:
-        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        (self.repo / ".gitignore").write_text(".state/\n", encoding="utf-8")
 
         payload = self.resolve("--work-id", "sample-stream")
 
         self.assertEqual(payload["state_root"], payload["active_workspace"])
 
     def test_requires_ignore_names_the_default_tree_gitignore(self) -> None:
-        """Ignoring `.engineering/` in a secondary tree never clears the gate."""
+        """Ignoring `.state/` in a secondary tree never clears the gate."""
         linked = self.add_worktree("secondary")
-        (linked / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        (linked / ".gitignore").write_text(".state/\n", encoding="utf-8")
 
         payload = self.resolve(
             "--path", str(linked), "--work-id", "sample-stream"
@@ -146,7 +146,7 @@ class ResolveEngineeringWorkspaceTests(unittest.TestCase):
         )
 
     def test_second_bootstrap_reports_existing_entrypoints(self) -> None:
-        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        (self.repo / ".gitignore").write_text(".state/\n", encoding="utf-8")
         self.resolve("--work-id", "sample-stream", "--bootstrap")
 
         payload = self.resolve("--work-id", "sample-stream", "--bootstrap")

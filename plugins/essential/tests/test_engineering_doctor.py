@@ -37,7 +37,7 @@ class EngineeringDoctorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
-        self.work_dir = self.root / ".engineering" / "works" / "demo"
+        self.work_dir = self.root / ".state" / "works" / "demo"
         (self.work_dir / "state").mkdir(parents=True)
 
     def tearDown(self) -> None:
@@ -102,7 +102,7 @@ class EngineeringDoctorTest(unittest.TestCase):
             subprocess.run(
                 ["git", "init", "-q", str(repo)], check=True, capture_output=True
             )
-            (repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+            (repo / ".gitignore").write_text(".state/\n", encoding="utf-8")
             resolved = subprocess.run(
                 [str(RESOLVER), "--work-id=demo", "--bootstrap"],
                 cwd=repo,
@@ -239,7 +239,7 @@ class EngineeringDoctorTest(unittest.TestCase):
 
     def test_overview_drift(self) -> None:
         self.write_state(row("AAA"))
-        engineering_root = self.root / ".engineering"
+        engineering_root = self.root / ".state"
         (engineering_root / "overview.md").write_text(
             "# Overview\n\n"
             "| Work ID | Lifecycle | Headline |\n| --- | --- | --- |\n"

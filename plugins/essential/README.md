@@ -15,7 +15,7 @@ is read at the moment it matters.
 
 | Reference | Read when | Owns |
 | --- | --- | --- |
-| `references/engineering-work.md` | Before creating or rewriting any lifecycle-managed artifact | Topology (`docs/` + `.engineering/`), resolver/bootstrap, coordinator lease and write protocol, journal discipline, overviews, reviews, spec freshness, promotion, retirement |
+| `references/engineering-work.md` | Before creating or rewriting any lifecycle-managed artifact | Topology (`docs/` + `.state/`), resolver/bootstrap, coordinator lease and write protocol, journal discipline, overviews, reviews, spec freshness, promotion, retirement |
 | `references/engineering-work-state.md` | When writing or migrating a `state.md` | Task table shape, stable IDs, mark/status pairs, DAG and roll-ups, change control, journal grammar |
 | `references/truth.md` | Once per work stream | Six kinds of truth, the five constitutional rules, validity, `capability_id` |
 | `references/decision-causality.md` | When creating/accepting/superseding a decision | `supersedes`/`affects`/`invalidates`/`preserves`, blast-radius sweep, decision completion gate |
@@ -36,7 +36,7 @@ Templates: `templates/memory.md` (agent memory) and
 ## The tools (`bin/`)
 
 - **`resolve-engineering-workspace`** — resolves the work identity and paths,
-  enforces the `.engineering/` ignore gate and symlink/traversal safety, and
+  enforces the `.state/` ignore gate and symlink/traversal safety, and
   performs the PM-only no-clobber bootstrap of `goal.md`, `state.md`,
   `state/working.md`, and `state/journal.md`.
 - **`engineering-lease`** — the on-disk coordinator lease
@@ -69,7 +69,7 @@ Templates: `templates/memory.md` (agent memory) and
 | `essential:autoresearch` | Metric-driven optimization loops (define metric → evolve candidates → verify → mutate). |
 | `essential:handover` | Pausing work: persists all stream state, updates the global overview, releases leases. |
 | `essential:takeover` | Resuming paused work from the on-disk work directories: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
-| `essential:doctor` | Health-checking `.engineering/`: runs the structural doctor, diagnoses format drift against the current contracts, and offers user-approved migration to the latest structure — judged by reading the contracts, never a version token. |
+| `essential:doctor` | Health-checking `.state/`: runs the structural doctor, diagnoses format drift against the current contracts, and offers user-approved migration to the latest structure — judged by reading the contracts, never a version token. |
 | `essential:handoff` | A zero-context cross-domain orchestration plan another agent can execute verbatim. |
 | `essential:install-agents` | Installing/refreshing the stitched specialist agent roster into `~/.claude/agents/`. |
 | `essential:install-statusline` | Installing the bundled Bullet Train statusline. |
@@ -84,6 +84,6 @@ Templates: `templates/memory.md` (agent memory) and
   `state/*.md`, overviews, and `review.md`; workers return deltas.
 - **Done stays done.** Invalidation marks `validity: stale` and spawns
   remediation tasks; history is never falsified.
-- **Deleting `.engineering/` loses convenience, not truth.** Decisions,
+- **Deleting `.state/` loses convenience, not truth.** Decisions,
   approvals, and artifact identities also live in versioned docs; keep a copy
   of the work directory to guard against `git clean -fdx`.

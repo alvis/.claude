@@ -66,7 +66,7 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
    unselected page changed.
 8. Return explicit final paths generated or materially rewritten as
 `generated_files`, plus PM reconciliation. Do not run file sizing; the PM
-checks only eligible work Markdown inside the target `.engineering/`.
+checks only eligible work Markdown inside the target `.state/`.
 
 ## Verification
 

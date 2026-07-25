@@ -74,7 +74,7 @@ with Backend/Coding owners.
    those PM-owned files.
 9. Return explicit final paths generated or materially rewritten as
 `generated_files`. Do not run file sizing; the PM checks only eligible work
-Markdown inside the target `.engineering/`.
+Markdown inside the target `.state/`.
 
 ## Verification
 

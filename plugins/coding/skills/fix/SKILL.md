@@ -153,4 +153,4 @@ review_rerun: /coding:review-code <scope> --plan=<plan_source>
 
 Return every created or materially rewritten path as `generated_files` to the
 PM. Do not run file sizing; after all artifact writers finish, the PM checks
-only eligible work Markdown inside the target `.engineering/`.
+only eligible work Markdown inside the target `.state/`.

@@ -136,4 +136,4 @@ infrastructure failure and advise a retry rather than "nothing found." A partial
 or blocked run still reports the tracker state, what was analyzed, and the
 blocker — the tracker makes the run resumable later. Return explicit final paths generated or materially
 rewritten as `generated_files`; the PM size-checks only eligible work Markdown
-inside the target `.engineering/`.
+inside the target `.state/`.

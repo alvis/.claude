@@ -100,4 +100,4 @@ Aggregate into one report covering: baseline coverage → batches executed, test
 
 Include the deduplicated `generated_files` from all subtasks. No child runs file
 sizing; after every artifact writer returns, the PM checks only eligible work
-Markdown inside the target `.engineering/`.
+Markdown inside the target `.state/`.

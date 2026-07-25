@@ -104,4 +104,4 @@ production stubs with `coding:complete-code`, then route pending test markers
 to `coding:complete-test`. Return every created or materially rewritten path as
 `generated_files` to the PM. Do not run file sizing; after all artifact writers
 finish, the PM checks only eligible work Markdown inside the target
-`.engineering/`.
+`.state/`.

@@ -56,7 +56,7 @@ Typical responses:
 - **Identity and paths**: identify pages by frontmatter `ref:` and sync receipts.
   Preserve notion-sync-owned `.mdc` paths; never derive or rename a filename.
 - **Workspace boundary**: a transport mirror uses the exact location selected by
-  the user/project or recorded by transport; `.engineering/notion` is a
+  the user/project or recorded by transport; `.state/notion` is a
   convention only, not a resolver-owned path. Workspaces receive only their
   required work-local specification unless another arrangement is explicit.
 - **Workspace Organization**: maintain a clean, well-structured Notion workspace.

@@ -22,10 +22,10 @@ artifact, read `{{PLUGIN_DIR}}/references/engineering-work.md`; if
 unavailable, do not write it. Run its resolver without inventing a work ID.
 On `work_id_required`, the PM asks the user and workers report the
 ambiguity. On `requires_ignore`, workers stop; the PM alone adds
-`.engineering/` to the default tree's `.gitignore`, records it in
+`.state/` to the default tree's `.gitignore`, records it in
 `generated_files`, and reruns.
 
-Work state lives only under the default source tree's `.engineering/` — the
+Work state lives only under the default source tree's `.state/` — the
 resolver's `state_root`, shared by every checkout — plus the active tree's
 `docs/` at promotion. Never create a file merely because output is large;
-shorten it or point into `.engineering/`.
+shorten it or point into `.state/`.

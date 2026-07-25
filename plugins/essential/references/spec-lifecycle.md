@@ -11,7 +11,7 @@ and a content-equivalent durable `docs/specs/<capability>/index.md` carrier.
 A local source retains its exact path and gains the same durable
 carrier/provenance. Neither path claims a Notion round trip.
 
-`.engineering/notion/` is the conventional ignored mirror in a registered
+`.state/notion/` is the conventional ignored mirror in a registered
 default workspace, not a path fixed by the generic resolver. The Notion owner
 may receive another explicit output root and must resolve the required
 default workspace, validate the actual root's ignore state, and report that

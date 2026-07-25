@@ -102,7 +102,7 @@ fixed skill name). A takeover reads these fields straight from `state.md`.
 
 ## `overview.md`
 
-The global index beside the centralized `.engineering/works/`: one table of
+The global index beside the centralized `.state/works/`: one table of
 every work stream on the machine, so a single read shows all outstanding work
 and which checkout each is worked in. Handover upserts only the rows for the
 streams it refreshed and preserves every other row byte-for-byte. Follow this template:
@@ -131,7 +131,7 @@ streams it refreshed and preserves every other row byte-for-byte. Follow this te
 - `Documentations` links any durable `docs/` material for the stream — an
   architecture document, ADR index, or capability specification — or `-` when
   none exists.
-- Every stream in `.engineering/works/` appears as exactly one row, continuable
+- Every stream in `.state/works/` appears as exactly one row, continuable
   and index-only alike. The overview is a status index only; each
   stream's authoritative resumable context stays in that stream's own
   `state.md`/`state/` files. A retired stream may be dropped once its row adds no

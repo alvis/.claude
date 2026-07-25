@@ -7,7 +7,7 @@ usage: resolve-engineering-workspace [--work-id <id>|--work-id=<id>] \
          [--path <path>|--path=<path>] [--bootstrap]
 
 Resolves the engineering workspace and selected work identity, enforcing the
-.engineering ignore gate and path safety. A normal invocation is read-only;
+.state ignore gate and path safety. A normal invocation is read-only;
 --bootstrap is the PM-only no-clobber creation mode.
 
 Output (JSON) on status:"resolved":
@@ -16,14 +16,14 @@ Output (JSON) on status:"resolved":
   repo_root           compatibility alias of durable_root
   default_workspace   registered default tree (nullable discovery metadata)
   active_workspace    the tree the caller is working in
-  state_root          the tree that owns .engineering/ — the default source
+  state_root          the tree that owns .state/ — the default source
                       tree, falling back to active_workspace when no default
                       tree can be discovered
   work_id             the selected work identity
   work_id_source      argument | environment | workspace | sole_existing
   work_dir            the only temporary root for the selected work, always
-                      under state_root/.engineering/works/
-  ignore_file         the state_root .gitignore carrying the .engineering/ rule
+                      under state_root/.state/works/
+  ignore_file         the state_root .gitignore carrying the .state/ rule
   engineering_ignored true when the ignore gate holds
   bootstrap_requested / bootstrap_created / bootstrap_existing
                       bootstrap mode and its exact created/preserved paths
@@ -210,12 +210,12 @@ else
 fi
 
 # Work state is centralized: it lives only in the default source tree, so a
-# secondary worktree or workspace reads and writes the same .engineering/.
+# secondary worktree or workspace reads and writes the same .state/.
 # Falling back to the active tree keeps single-tree and detached checkouts
 # working when no default tree can be discovered.
 state_root="${default_workspace:-$active_workspace}"
 
-engineering_dir="$state_root/.engineering"
+engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
 require_safe_directory_component "$engineering_dir"
 require_safe_directory_component "$work_root"
@@ -310,7 +310,7 @@ fi
 
 work_dir="$work_root/$work_id"
 ignore_file="$state_root/.gitignore"
-active_probe=".engineering/works/$work_id/state.md"
+active_probe=".state/works/$work_id/state.md"
 
 require_safe_directory_component "$work_dir"
 if [[ -d "$work_dir" ]] &&
@@ -324,7 +324,7 @@ require_safe_entrypoint "$work_dir/goal.md"
 require_safe_entrypoint "$work_dir/state/journal.md"
 
 if [[ ! -f "$ignore_file" ]] ||
-   ! grep -Eq '^[[:space:]]*\.engineering/[[:space:]]*(#.*)?$' "$ignore_file" ||
+   ! grep -Eq '^[[:space:]]*\.state/[[:space:]]*(#.*)?$' "$ignore_file" ||
    ! is_effectively_ignored "$state_root" "$active_probe"; then
   jq -n \
     --arg vcs "$vcs" \
@@ -338,7 +338,7 @@ if [[ ! -f "$ignore_file" ]] ||
     --arg work_id_source "$work_id_source" \
     --arg work_dir "$work_dir" \
     --arg ignore_file "$ignore_file" \
-    --arg error "PM must add .engineering/ to the default source tree .gitignore before creating work artifacts" \
+    --arg error "PM must add .state/ to the default source tree .gitignore before creating work artifacts" \
     '{status:"requires_ignore", vcs:$vcs, repo_root:$repo_root,
       durable_root:$durable_root,
       default_workspace:(if $default_workspace == "" then null else $default_workspace end),

@@ -505,4 +505,4 @@ invokes `gh`.
   per-PR check states, CI wall times, and any blocker (with its authoring exit
   code where relevant). Return every local project path created or materially
   rewritten during repair as `generated_files`. The PM applies the shared size
-  pass only to eligible `.engineering` work Markdown.
+  pass only to eligible `.state` work Markdown.

@@ -50,8 +50,8 @@ directory contents.
 
 <report>
 
-- Summary: `.engineering/works/<work-id>/review.md`.
-- Areas under `.engineering/works/<work-id>/reviews/`:
+- Summary: `.state/works/<work-id>/review.md`.
+- Areas under `.state/works/<work-id>/reviews/`:
 
   | Prefix | File | Ownership |
   |---|---|---|
@@ -122,7 +122,7 @@ directory contents.
 7. Return all changed area and optional explainer paths in `generated_files`;
    include `review.md` only when this invocation held the lease and wrote it.
 Do not run file sizing; after every artifact writer returns, the PM checks only
-eligible work Markdown inside the target `.engineering/` and coordinates a
+eligible work Markdown inside the target `.state/` and coordinates a
 complete split round if required.
 
 ## Verification

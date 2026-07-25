@@ -33,7 +33,7 @@ artifact writes and report the missing contract. Then read Essential's
 versioned document under the contract's plugin-owned `docs/<domain>/<slug>/`
 clause: default location `docs/production/<deliverable-slug>/assets.md`
 unless the work stream's charter names another; work-local exploration stays
-under the stream's `.engineering/` per the contract.
+under the stream's `.state/` per the contract.
 
 ## Workflow
 

@@ -38,7 +38,7 @@ engineering state into the plugin repository.
    rather than a localized defect, stop before dispatching a fixer or editing
    code. Ask the user which architectural direction to take. Once the user
    decides, write a lowercase decision child under the target repository's
-   active `.engineering/works/<work-id>/decisions/` with canonical metadata,
+   active `.state/works/<work-id>/decisions/` with canonical metadata,
    PR/evidence, chosen direction, alternatives, affected scope, and date. The
    main agent/PM reconciles `decisions.md` and the affected plan/lifecycle in
    `state.md`; the poller/fixer never edits `state/working.md` or an overview. The
@@ -89,7 +89,7 @@ engineering state into the plugin repository.
 The parent deduplicates `generated_files` from every accepted repair and
 returns them to the owning PM. No poller or fixer runs file sizing; the PM runs
 the single final check only for eligible work Markdown inside the target
-`.engineering/` after all repair artifacts are complete.
+`.state/` after all repair artifacts are complete.
 
 ## Check after repush
 

@@ -61,7 +61,7 @@ specification and preserving PM-owned coordination state.
    alone may invoke `essential:handover`. Collect/deduplicate child manifests and return
    explicit final paths generated or materially rewritten as `generated_files`.
    Do not run file sizing; the PM checks only eligible work Markdown inside the
-   target `.engineering/`.
+   target `.state/`.
 
 ## Verification
 

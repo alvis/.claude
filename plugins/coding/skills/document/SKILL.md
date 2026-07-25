@@ -90,4 +90,4 @@ independent-review verdict, stale claims removed, and unresolved gaps. Return
 every created or materially rewritten final path as `generated_files`. Do not
 measure or split `docs/**` or project README files: durable documentation has no
 mechanical size limit. The PM size-checks only eligible work Markdown inside
-the target `.engineering/` after all artifact writers finish.
+the target `.state/` after all artifact writers finish.

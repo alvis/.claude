@@ -129,7 +129,7 @@ be followed for ID-keyed implementation procedure, never for task definitions.
    Return explicit final paths generated or materially rewritten as
    `generated_files`.
    Do not run file sizing; the PM checks only eligible work Markdown inside the
-   target `.engineering/`.
+   target `.state/`.
 
 ## Verification
 

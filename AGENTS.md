@@ -69,7 +69,7 @@ these sources, and each is the rule a locally sensible change breaks first.
   is derived: it names its source and is rewritten from that source, never patched in
   place. This is the rule behind "no central roster in a plugin's `CLAUDE.md`" above — a
   convenience copy is drift with a head start.
-- **Regenerate projections; never trust them.** `.engineering/` state, overviews, and the
+- **Regenerate projections; never trust them.** `.state/` state, overviews, and the
   installed plugin cache are derived views, safe to delete and rebuild. Do not add a
   cache, index, or generated summary that something else then depends on.
 - **Status is not validity.** `done` is terminal history; whether its result still holds
@@ -98,7 +98,7 @@ Enforced mechanically — each with the file that enforces it.
 | `memory` is `"project"`; body has exactly one `## Memory` section | same |
 | Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |
 | Every plugin's mandatory read chain ≤ 40,960 bytes | same |
-| `.engineering/` work Markdown flagged over 16,384 bytes | `plugins/essential/bin/check-markdown-size` |
+| `.state/` work Markdown flagged over 16,384 bytes | `plugins/essential/bin/check-markdown-size` |
 | `Agent`/`Task`/`SendMessage` body ≤ 4,096 characters | `plugins/essential/references/orchestration.md` |
 | Batch ≤ ~10 resources per subagent; structured reports < 1000 tokens; ~2 retries per batch | `plugins/governance/constitution/references/delegation.md` |
 
