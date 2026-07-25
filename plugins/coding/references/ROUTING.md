@@ -2,6 +2,7 @@
 
 | Tasks | Route to |
 | --- | --- |
+| Break a project into milestones, decide the approach, and delegate them | `tech-lead` |
 | Bootstrap and scaffold a new project | `project-initializer` |
 | Author tests via TDD | `testing-evangelist` |
 | Implement a general library, data pipeline, CLI, or glue code | `generalist-engineer` |

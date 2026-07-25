@@ -500,6 +500,11 @@ class AgentDiscoveryTest(unittest.TestCase):
             body = (template.path / "base.md").read_text(encoding="utf-8")
             collaboration = body.split("\n## Collaboration\n", 1)[1]
             lines = [line for line in collaboration.splitlines() if line.strip()]
+            # a lead role wraps its delegation map in <IMPORTANT>; the tags
+            # delimit the map without adding prose to it
+            lines = [
+                line for line in lines if line not in ("<IMPORTANT>", "</IMPORTANT>")
+            ]
             with self.subTest(agent=template.name):
                 self.assertTrue(lines)
                 self.assertTrue(all(line.startswith("- ") for line in lines), lines)

@@ -79,9 +79,3 @@ Record changed-code completion exactly as `REVIEWED: source=<specialist|general|
 ## Context discipline
 
 Report context usage only when the runtime measures it; otherwise report task affinity and whether enough remains — never invent a percentage or token count. Rotate work to a fresh or roomier teammate before measured capacity becomes unsafe, and delegate bulk reads and noisy output rather than ingesting them.
-
-## Essential specialist routing
-
-| Tasks | Route to |
-| --- | --- |
-| Break a project into milestones, decide the approach, and delegate them | `tech-lead` |

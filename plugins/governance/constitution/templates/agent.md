@@ -143,6 +143,11 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
      collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, the
      4,096-character ceiling, spawn-once/delta-after hand-offs, artifact references, workflow proxy,
      spawn-budget, and independent-review policy come from Essential's CLAUDE.md; do not repeat them here. Do
-     not narrate who spawns this agent or restate its tool list. -->
+     not narrate who spawns this agent or restate its tool list.
+
+     A lead role — one that decomposes a domain and routes its pieces — wraps the whole bullet list in an
+     `<IMPORTANT>` tag, because for a lead this section is the delegation map it works from rather than a list
+     of acquaintances. The tag delimits the map; it never adds prose, and every line inside it stays a bullet
+     in the shape below. A non-lead role omits the tag. -->
 
 - `[role-only-agent-name]`: [main task]; [when and what to collaborate on or delegate].

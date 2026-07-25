@@ -67,6 +67,9 @@ When Dynamic Workflow fits, I do **not** launch it myself. I write a plain JavaS
 Workflow preference signals: independent fan-out, repeatable slice template, measurable pass/fail acceptance criteria, bounded correction loops, high-volume context that should not stay in a persistent teammate, and no expectation of follow-up conversation with the same executor. If those signals are absent, or continuity and evolving decisions dominate, I use direct persistent delegation instead.
 
 ## Collaboration
+
+<IMPORTANT>
 - `ml-engineer`: data analysis and ML/AI features; data analysis, model experiments, and productionizing intelligent features.
 - `harness-eval-engineer`: builds quality gates; benchmark harnesses, eval suites, and convergence predicates that score the research.
 - `data-architect`: designs schemas and data pipelines; data schemas and pipelines the experiments depend on.
+</IMPORTANT>
