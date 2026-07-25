@@ -43,12 +43,14 @@ class EngineeringDoctorTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def write_state(self, task_rows: str, metadata: str = "") -> None:
+    def write_state(
+        self, task_rows: str, metadata: str = "", lifecycle: str = "active"
+    ) -> None:
         (self.work_dir / "state.md").write_text(
             "# Engineering work\n\n"
             "- State role: `root`\n"
             "- Work ID: `demo`\n"
-            "- Lifecycle status: `active`\n"
+            f"- Lifecycle status: `{lifecycle}`\n"
             "- State revision: `3`\n"
             f"{metadata}"
             "\n## Tasks\n\n" + HEADER + task_rows,
@@ -75,6 +77,24 @@ class EngineeringDoctorTest(unittest.TestCase):
         code, findings = self.run_doctor()
         self.assertEqual(code, 0)
         self.assertEqual(findings, [])
+
+    def test_reviewing_is_part_of_the_lifecycle_vocabulary(self) -> None:
+        self.write_state(
+            row("AAA", "✓", "done", evidence="Merged in abc123."),
+            lifecycle="reviewing",
+        )
+        code, findings = self.run_doctor()
+        self.assertEqual(code, 0)
+        self.assertEqual(findings, [])
+
+    def test_retired_lifecycle_value_is_flagged(self) -> None:
+        # `complete` was renamed to `completed`; the old value is not vocabulary
+        self.write_state(
+            row("AAA", "✓", "done", evidence="Merged in abc123."),
+            lifecycle="complete",
+        )
+        _, findings = self.run_doctor()
+        self.assertIn("lifecycle", self.checks(findings))
 
     def test_bootstrap_output_has_zero_findings(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -223,7 +243,7 @@ class EngineeringDoctorTest(unittest.TestCase):
         (engineering_root / "overview.md").write_text(
             "# Overview\n\n"
             "| Work ID | Lifecycle | Headline |\n| --- | --- | --- |\n"
-            "| demo | complete | Demo. |\n",
+            "| demo | completed | Demo. |\n",
             encoding="utf-8",
         )
         completed = subprocess.run(

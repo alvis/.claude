@@ -8,7 +8,8 @@ argument-hint: "[work-id] [--strict]"
 
 # Doctor
 
-Diagnose the current source tree's `.engineering/` work memory and, with
+Diagnose the `.engineering/` work memory — centralized in the default source
+tree, so every checkout diagnoses the same one — and, with
 approval, bring it to the latest structure. Diagnosis is mechanical
 (`engineering-doctor`); judgement is not: what "latest" means is whatever the
 current Essential contracts say, so migration is decided by reading them —
@@ -46,8 +47,11 @@ locate the active workspace and `.engineering/`; on `requires_ignore` or
 
 1. **Scope.** With `[work-id]`, check that one stream
    (`--work-dir <work_dir>`); otherwise check everything
-   (`--engineering-root <active_workspace>/.engineering`, covering every
-   stream plus `overview.md`). A missing `.engineering/` is a clean report,
+   (`--engineering-root <state_root>/.engineering`, covering every
+   stream plus `overview.md`). `state_root` comes from the resolver: it is
+   the default source tree, so the doctor sees every stream whichever
+   checkout it is run from, and never silently skips streams as a per-tree
+   scope would. A missing `.engineering/` is a clean report,
    not an error.
 2. **Run the doctor.** Invoke
    `"$ESSENTIAL_ROOT/bin/engineering-doctor" --json` with the scope from

@@ -14,10 +14,10 @@ or `artifact: <absolute path>` plus at most two lines to the assigner by
 - Run the workspace resolver before writing an artifact. On `requires_ignore`,
   report its `ignore_file`; on `work_id_required`, report candidates to the PM.
   Never edit that `.gitignore`; write nothing until the gate clears, and never
-  outside `.engineering/`.
+  outside the resolver's `state_root/.engineering/`.
 - Return explicit final paths generated or materially rewritten as
   `generated_files`; the PM reconciles overviews and size-checks only eligible
-  work Markdown in the target `.engineering/`.
+  work Markdown there.
 - Give a mission capsule only on first handoff; later are deltas and paths.
   Externalize messages over 4,096 characters to the work's `artifacts/`.
 - Message the best-known owner by `agent_id`; ask the main agent only when the

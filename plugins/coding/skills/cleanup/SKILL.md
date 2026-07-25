@@ -87,7 +87,7 @@ empty. Backup metadata lives only in the OS temporary backup tree.
      implementation, or current branch/PR activity.
    - **Interrupted**: unfinished work is paused or blocked and has a recorded
      next action.
-   - **Completed**: the lifecycle state in `state.md` reads `complete`, every
+   - **Completed**: the lifecycle state in `state.md` reads `completed`, every
      required executable leaf is `done`, no required leaf is planned/working/failed/
      blocked, and acceptance plus repository revision are coherent. A prose
      label or lifecycle field the task table does not bear out is not completion.
@@ -170,7 +170,7 @@ always preserves the directory.
   workspace scope, promotion anchor, gate evidence, and retention age.
 - No active, interrupted, ambiguous, under-retention, or incomplete-gate work
   is removable.
-- A lifecycle `complete` label cannot override unfinished required tasks or a
+- A lifecycle `completed` label cannot override unfinished required tasks or a
   `state.md` reading that contradicts it.
 - Every destructive action has explicit approval and verified recovery; the
   post-audit proves retained targets remain.

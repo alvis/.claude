@@ -78,6 +78,73 @@ class ResolveEngineeringWorkspaceTests(unittest.TestCase):
         created = {Path(path).name for path in payload["bootstrap_created"]}
         self.assertEqual(created, {"goal.md", "working.md", "state.md", "journal.md"})
 
+    def add_worktree(self, name: str) -> Path:
+        """Commit once and add a linked worktree, returning its path."""
+        subprocess.run(
+            ["git", "commit", "--quiet", "--allow-empty", "-m", "base"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+            env={
+                **os.environ,
+                "GIT_CONFIG_GLOBAL": os.devnull,
+                "GIT_AUTHOR_NAME": "Test",
+                "GIT_AUTHOR_EMAIL": "test@example.com",
+                "GIT_COMMITTER_NAME": "Test",
+                "GIT_COMMITTER_EMAIL": "test@example.com",
+            },
+        )
+        linked = self.repo.parent / f"{self.repo.name}-{name}"
+        self.addCleanup(shutil.rmtree, linked, ignore_errors=True)
+        subprocess.run(
+            ["git", "worktree", "add", "--quiet", "-b", name, str(linked)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+            env={**os.environ, "GIT_CONFIG_GLOBAL": os.devnull},
+        )
+        return linked
+
+    def test_secondary_worktree_roots_state_in_the_default_tree(self) -> None:
+        """`.engineering/` belongs to the main worktree, whichever tree calls."""
+        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+        linked = self.add_worktree("secondary")
+
+        payload = self.resolve(
+            "--path", str(linked), "--work-id", "sample-stream"
+        )
+
+        self.assertEqual(payload["status"], "resolved")
+        self.assertEqual(payload["state_root"], str(self.repo.resolve()))
+        self.assertEqual(payload["default_workspace"], str(self.repo.resolve()))
+        self.assertEqual(payload["active_workspace"], str(linked.resolve()))
+        self.assertEqual(payload["durable_root"], str(linked.resolve()))
+        self.assertEqual(
+            payload["work_dir"],
+            str(self.repo.resolve() / ".engineering/works/sample-stream"),
+        )
+
+    def test_state_root_falls_back_to_a_sole_workspace(self) -> None:
+        (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+
+        payload = self.resolve("--work-id", "sample-stream")
+
+        self.assertEqual(payload["state_root"], payload["active_workspace"])
+
+    def test_requires_ignore_names_the_default_tree_gitignore(self) -> None:
+        """Ignoring `.engineering/` in a secondary tree never clears the gate."""
+        linked = self.add_worktree("secondary")
+        (linked / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
+
+        payload = self.resolve(
+            "--path", str(linked), "--work-id", "sample-stream"
+        )
+
+        self.assertEqual(payload["status"], "requires_ignore")
+        self.assertEqual(
+            payload["ignore_file"], str(self.repo.resolve() / ".gitignore")
+        )
+
     def test_second_bootstrap_reports_existing_entrypoints(self) -> None:
         (self.repo / ".gitignore").write_text(".engineering/\n", encoding="utf-8")
         self.resolve("--work-id", "sample-stream", "--bootstrap")

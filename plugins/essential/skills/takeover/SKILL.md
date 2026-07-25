@@ -1,6 +1,6 @@
 ---
 name: takeover
-description: Resume paused engineering work from the on-disk state under .engineering/works/. With no argument, default to the current source tree's own incomplete work streams, and use the default source tree's global .engineering/overview.md to also offer other source trees' streams — switching the working directory to that tree if one is chosen. Then resolve pending decisions, always surface the unblocked streams as the recommended next work, delegate each stream's planning to the relevant lead role for a proposed team or workflow, and drive each selected stream toward its charter's success criteria. On completion, promote confirmed implementation and decisions to the repo's docs/ for every work type, and for coding streams delegate pull-request creation and monitoring to an executor agent running the relevant change-publication capability.
+description: Resume paused engineering work from the on-disk state under the default source tree's centralized .engineering/works/. With no argument, offer every incomplete work stream there, switching the working directory to the checkout a chosen stream is worked in. Settle every stream awaiting merge before offering the next task, then resolve pending decisions, always surface the unblocked streams as the recommended next work, delegate each stream's planning to the relevant lead role for a proposed team or workflow, and drive each selected stream toward its charter's success criteria. On completion, promote confirmed implementation and decisions to the repo's docs/ for every work type, and for coding streams delegate pull-request creation and monitoring to an executor agent running the relevant change-publication capability.
 model: opus
 argument-hint: "[--revalidate]"
 ---
@@ -26,12 +26,12 @@ continuously by the engineering-work contract.
 ## Boundaries
 
 - Use for continuing paused engineering work streams.
-- Only one source tree is worked at a time, unless the operation is explicitly
-  merging source trees. Offer the streams of one source tree per run.
-- Do not assume `.engineering/` is versioned or automatically synchronized
-  between source trees. On-disk state in a source tree is that tree's own
-  memory; the default tree's `overview.md` is a cross-tree index, not a state
-  store.
+- Only one work stream is worked at a time. Finish the current stream — to
+  `reviewing` or `completed` — or leave it explicitly `blocked` before starting
+  another.
+- Do not assume `.engineering/` is versioned. It is not per-tree either: every
+  worktree and workspace resolves to the same centralized state under the
+  default source tree, so there is nothing to synchronize between trees.
 - Do not implement code here. Apart from resolved decisions, implementation
   belongs to the relevant implementation skill chosen by each stream's declared
   continuation intent.
@@ -45,19 +45,19 @@ continuously by the engineering-work contract.
   produces no pull request.
 - Promotion of durable knowledge to the repo's versioned `docs/` happens at
   completion for every work type, following the engineering-work promotion
-  contract; `.engineering/` stays this tree's ignored, per-tree work memory,
-  persisted continuously by that same contract.
+  contract; `.engineering/` stays ignored work memory in the default source
+  tree, persisted continuously by that same contract.
 ## Inputs
 
 - Optional `--revalidate`: forces re-verification of each selected stream's
   recorded source anchor against the current checkout even when it already
   appears to match.
-- Resumption requires only the current source tree's on-disk work state under
-  `.engineering/works/`; it resumes this tree's streams with no overview at
-  all. It additionally reads the default source tree's global
-  `.engineering/overview.md` to offer other source trees' streams **when that
-  file exists**, but a missing overview never blocks a resume of the current
-  tree. A specification is read from the work directory that carries it; a live
+- Resumption requires only the on-disk work state under
+  `state_root/.engineering/works/`, which every checkout resolves to; it
+  resumes with no overview at all. It additionally reads the global
+  `state_root/.engineering/overview.md` for each stream's `Location` **when that
+  file exists**, but a missing overview never blocks a resume. A specification
+  is read from the work directory that carries it; a live
   source (such as a Notion-backed spec) is refreshed through the relevant
   specification-sync skill.
 
@@ -85,39 +85,50 @@ because it already carries its own initialized state.
 
 ## Workflow
 
-L1. Default to the **current source tree's own incomplete work streams**.
-    Enumerate this Git worktree or jj workspace's `.engineering/works/<work-id>/`
-    directories directly and read each `state.md`; the continuable ones (lifecycle
-    `initialized`, `active`, or `blocked`) are the default resume candidates. This
-    on-disk state is the authority — no overview is required to resume the current
-    tree.
+L1. Enumerate **every** incomplete work stream. Resolve `state_root` and read
+    each `state_root/.engineering/works/<work-id>/state.md` directly; the
+    continuable ones (lifecycle `initialized`, `active`, or `blocked`) are the
+    resume candidates. This on-disk state is the authority, and it is the same
+    set whichever worktree or workspace this session started in — no overview is
+    required to resume.
 
-L2. Additionally read the default source tree's global `.engineering/overview.md`
-    (the resolver's `default_workspace`) to surface **other** source trees'
-    continuable streams as options. The overview indexes each source tree — kind,
-    label/path, revision, and its work streams — but it is only an index: treat a
-    tree's own on-disk `works/` as authoritative and reconcile any overview row
-    against it. If neither the current tree's `works/` nor any overview row lists a
-    continuable stream, stop and report that nothing is resumable; if the user
-    named a specific stream, say which work directory would have to be present
-    (`.engineering/works/<work-id>/`).
+L2. Additionally read the global `state_root/.engineering/overview.md` for each
+    stream's `Location` — the checkout its code is worked in, with kind,
+    label/path, and revision. It is only an index: treat `works/` as
+    authoritative and reconcile any overview row against it. If `works/` lists
+    no continuable and no `reviewing` stream, stop and report that nothing is
+    resumable; if the user named a specific stream, say which work directory
+    would have to be present (`state_root/.engineering/works/<work-id>/`).
 
-L3. Offer the continuable streams with `AskUserQuestion`, grouped by source tree
-    and defaulting to the current tree's streams; `complete` and `retiring`
-    streams are index-only, so exclude them and name them so the user sees why.
+L2b. **Settle every `reviewing` stream before offering the next task.** A
+    `reviewing` stream has finished executing and proposed its pull request(s);
+    it is waiting only on merge evidence. For each one, check the recorded PR(s)
+    with `gh pr view <n> --json state,mergedAt`; with no PR recorded, fall back
+    to whether its branch is merged into the default branch, or to patch
+    equivalence. On merge evidence, set its lifecycle to `completed`, reconcile
+    its `overview.md` row, then ask with `AskUserQuestion` whether to remove that
+    stream's source tree from disk — routing any removal to
+    [coding:cleanup](../../../coding/skills/cleanup/SKILL.md), which owns
+    worktree inventory and per-target approval. Never run `git worktree remove`
+    here, and never treat a merged branch alone as authorization to delete.
+    A stream with no merge evidence yet stays `reviewing` and is reported as
+    such. Only then continue to L3.
+
+L3. Offer the continuable streams with `AskUserQuestion`, grouped by the
+    checkout each is worked in and defaulting to this one's streams; `reviewing`
+    streams that L2b could not settle, plus `completed` and `retiring` streams,
+    are not resumable, so exclude them and name them so the user sees why.
     Within each group, surface the **unblocked** streams first — those with a
     runnable next action and no decision still blocking it — as the recommended
     next work, and annotate a `blocked` stream with the decision it is waiting on
     so the user sees why it is not yet runnable.
-    Because only one source tree is worked at a time (unless explicitly merging
-    trees), a selection stays within one source tree. If the user picks a stream
-    in a **different** source tree, switch the working directory to that tree's
-    Git worktree or jj workspace root before continuing — resume runs from inside
-    the owning tree, never against a different checkout — then re-enumerate that
-    tree's on-disk `works/` as in L1. Within the resolved tree, verify each
-    selected stream's `.engineering/works/<work-id>/state.md` exists and its
-    on-disk lifecycle is continuable, dropping any stale option, and proceed only
-    with the streams the user selects (multiSelect within the one tree).
+    Because only one stream is worked at a time, take a single selection. If the
+    chosen stream's `Location` is a **different** checkout, switch the working
+    directory to that Git worktree or jj workspace root before continuing — the
+    code is resumed from inside the checkout that owns it, even though the state
+    is shared. Verify the selected stream's
+    `state_root/.engineering/works/<work-id>/state.md` exists and its on-disk
+    lifecycle is continuable, dropping any stale option.
 
 L4. For each selected stream, read its on-disk `.engineering/works/<work-id>/`
     state directly: `state/working.md` first when present, then `state.md`
@@ -202,10 +213,10 @@ resolver failure, an unparseable `state.md`), stop that stream and recommend
     otherwise — rather than hard-rejecting. Reject only a source-contradictory
     descriptor, and never silently fall back to a fixed skill name.
 
-12. When a selected stream reaches completion (`state.md` lifecycle `complete`),
-    meet the completion obligations before moving on. State is already durable —
-    the engineering-work contract persists it continuously — so this step only
-    promotes and publishes:
+12. When a selected stream finishes executing — every required executable leaf
+    `done` — meet the completion obligations before moving on. State is already
+    durable, the engineering-work contract persists it continuously, so this
+    step only promotes, publishes, and parks the stream for review:
     - **Durable docs (every work type).** Promote confirmed implementation and
       decisions to the repo's versioned `docs/` per the engineering-work
       promotion contract — its provenance front matter and closure promotion
@@ -222,19 +233,24 @@ resolver failure, an unparseable `state.md`), stop that stream and recommend
       is unavailable, report the equivalent action and the exact saved change to
       publish. Record the resulting PRs. A non-coding stream produces no pull
       request and is named as skipped.
+    - **Park at `reviewing`.** Set the stream's lifecycle to `reviewing`, record
+      the PR reference(s) in `state.md`, and reconcile its `overview.md` row.
+      Finishing the work is not the same as the work having landed: only merge
+      evidence makes a stream `completed`, and L2b is where a later run collects
+      it. A non-coding stream with nothing to merge goes straight to `completed`.
 
 13. Drive each selected stream toward completion. After a stream's hand-off
-    returns, re-read its on-disk `state.md`: if it is now `complete`, run step 12
-    for it; if runnable work remains, continue it. When a stream's own work is
-    done, re-surface the next **unblocked** stream among the selected set — the
+    returns, re-read its on-disk `state.md`: if its required executable leaves
+    are done, run step 12 for it; if runnable work remains, continue it. Once the
+    stream reaches `reviewing`, re-surface the next **unblocked** stream — the
     one with a runnable next action and no blocking decision — as the recommended
     next work and continue from step 10 for it. Repeat until every selected
-    continuable stream reaches `complete`/`retiring` or hits a genuine blocker the
+    stream reaches `reviewing`/`completed`/`retiring` or hits a genuine blocker the
     user must resolve. The loop stays user-gated — selection and consequential
     decisions remain the user's — and bounded: stop and report when no selected
     stream makes progress or an escalation is unresolved, rather than looping
-    without advance. Do not start a stream in a different source tree here; offer
-    it as a fresh run instead.
+    without advance. Do not start another stream here; offer it as a fresh run
+    instead.
 
 14. Return every created or materially rewritten path in `generated_files`,
    including promoted `docs/` paths. Do not run file sizing; the PM checks only
@@ -242,13 +258,16 @@ resolver failure, an unparseable `state.md`), stop that stream and recommend
 
 ## Verification
 
-- Exactly one source tree's streams were resumed unless the run was an explicit
-  source-tree merge; `complete` and `retiring` streams were excluded and named,
-  and only user-selected streams were resumed.
-- Resumption defaulted to the current source tree's on-disk incomplete streams,
-  used `overview.md` only to surface other trees, switched the working directory
-  to the owning tree when a different tree's stream was chosen, and continued from
-  on-disk state without bootstrap, anchor application, or a disposable tree.
+- Exactly one stream was resumed; `completed` and `retiring` streams were
+  excluded and named, and only the user-selected stream was resumed.
+- Every `reviewing` stream was settled before the next task was offered: its
+  PR(s) were checked for merge evidence, a merged stream became `completed` with
+  its `overview.md` row reconciled, and any source-tree removal was offered to
+  the user and routed to `coding:cleanup` rather than run here.
+- Resumption enumerated the centralized `state_root/.engineering/works/`, used
+  `overview.md` only for each stream's `Location`, switched the working directory
+  to the checkout owning the chosen stream, and continued from on-disk state
+  without bootstrap, anchor application, or a disposable tree.
 - Each stream's continuation used its authoritative on-disk work state.
 - Each selected stream's recorded source anchor was compared with the current
   checkout, and every divergent-anchor stream returned a re-run or

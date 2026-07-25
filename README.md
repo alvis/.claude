@@ -36,8 +36,9 @@ Five rules are constitutional:
 Practical consequences you will see day to day:
 
 - **`.engineering/` is an operational projection, not the record of record.**
-  It is ignored, per-worktree working memory — rich, continuously persisted,
-  and reconstructible. Every state change, discovery, and decision is stored
+  It is ignored working memory — rich, continuously persisted, and
+  reconstructible — held centrally in the default source tree, so every
+  worktree and workspace shares one view of the work. Every state change, discovery, and decision is stored
   immediately in the journal and its owning state file; accepted decisions,
   approvals, and published artifact identities also live in versioned
   `docs/` and external anchors (issue, PR, Notion) via promotion records.
@@ -146,7 +147,7 @@ discipline:
 | 9. Reconcile the spec | Let implementation run the applicable Notion completion gate or local source/carrier recheck. | A change in specification content invalidates plan/code/review evidence; done tasks keep their status and gain stale validity with remediation tasks. |
 | 10. Save and finalize | On deferred `needs_save`, run the exact returned `/coding:commit --paths-from=... --manifest-sha256=...`; on `ready_for_finalization`, skip save; on `no_change`, stop. Then `/coding:finalize-commits` once. | The closed-set save preserves unrelated staged and dirty developer work. |
 | 11. Publish | If no PR was already published, run `/coding:write-pr` only when the GitHub and `gh` prerequisites are satisfied. | It creates or updates draft PRs and monitors CI. A human decides when a green draft becomes ready. |
-| 12. Close or pause | Mark the work complete after acceptance and decision dispositions, or run `/essential:handover`. | Every required executable leaf must be done. A pause leaves the whole stream in `.engineering/works/<work-id>/`, ready for `/essential:takeover`. |
+| 12. Close or pause | After acceptance and decision dispositions, propose the pull request(s) and set the work `reviewing`; it becomes `completed` only on merge evidence, which `/essential:takeover` checks on a later run. Or run `/essential:handover`. | Every required executable leaf must be done. A pause leaves the whole stream in `.engineering/works/<work-id>/`, ready for `/essential:takeover`. |
 
 When the target is a standalone or non-TypeScript repository, verify each
 selected skill against the repository's native commands before use.
@@ -185,10 +186,11 @@ or PR publication only after the local flow is understood.
 
 ## Work state and recovery
 
-- `.engineering/works/<work-id>/` is ignored, workspace-local coordination
-  memory — an operational projection rather than a record of record. It is
-  self-contained: state, decisions, specification, and `artifacts/` sit
-  together under that one directory.
+- `.engineering/works/<work-id>/` is ignored coordination memory — an
+  operational projection rather than a record of record. It lives in the
+  default source tree only, so every worktree resolves to the same streams,
+  and it is self-contained: state, decisions, specification, and `artifacts/`
+  sit together under that one directory.
 - `working.md` is the short current-focus pointer; `state.md` is the complete
   lifecycle, plan, task graph, and evidence index; `state/journal.md` is the
   append-only causal record the tables are views over.
@@ -202,8 +204,8 @@ or PR publication only after the local flow is understood.
 - `.engineering/` is ignored, so one reflexive `git clean -fdx` deletes it.
   Keep a copy outside the repository; `essential:doctor` checks a restored
   tree's structural integrity before it is resumed.
-- Handover and takeover write only under `.engineering/` (and `docs/` at
-  promotion). A continuation file anywhere else — `/tmp`, `.local/`, the repo
+- Handover and takeover write only under the default source tree's
+  `.engineering/` (and the active tree's `docs/` at promotion). A continuation file anywhere else — `/tmp`, `.local/`, the repo
   root — is a bug, including when output is too large for a response.
 - Full detail, including the lease and doctor tools:
   [plugins/essential/README.md](plugins/essential/README.md).

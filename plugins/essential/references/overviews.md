@@ -72,10 +72,10 @@ before retirement.
 
 When a `proposals/` or `changes/` child's deviation section records a
 deviation from a Notion-backed specification, that deviation's provenance
-MUST link to the related `.mdc` file under the default source tree's
-`.engineering/notion/` — that folder lives only on the default source tree
-and is never copied into a secondary tree, so the link resolves there; a
-Notion-backed spec deviation recorded without that link is incomplete. A
+MUST link to the related `.mdc` file under `.engineering/notion/`. All of
+`.engineering/` lives on the default source tree, so that link resolves from
+whichever checkout the work is done in; a Notion-backed spec deviation
+recorded without that link is incomplete. A
 non-Notion contract has no such folder and cites its authoritative source
 instead of inventing Notion provenance: a reachable `repo:` local source
 keeps its exact source path authoritative and cites that path (the derived

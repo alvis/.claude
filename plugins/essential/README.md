@@ -67,7 +67,7 @@ Templates: `templates/memory.md` (agent memory) and
 | `essential:decide` | Choosing between researched approaches; records the approved decision with causal metadata and hands off to the owner. |
 | `essential:deep-research` | Multi-source fact-finding with adversarial claim verification and citations. |
 | `essential:autoresearch` | Metric-driven optimization loops (define metric → evolve candidates → verify → mutate). |
-| `essential:handover` | Pausing work: persists all stream state, updates the cross-tree overview, releases leases. |
+| `essential:handover` | Pausing work: persists all stream state, updates the global overview, releases leases. |
 | `essential:takeover` | Resuming paused work from the on-disk work directories: checks leases, resolves blocking decisions, and drives streams to their success criteria. |
 | `essential:doctor` | Health-checking `.engineering/`: runs the structural doctor, diagnoses format drift against the current contracts, and offers user-approved migration to the latest structure — judged by reading the contracts, never a version token. |
 | `essential:handoff` | A zero-context cross-domain orchestration plan another agent can execute verbatim. |

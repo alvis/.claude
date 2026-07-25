@@ -1,6 +1,6 @@
 ---
 name: handover
-description: Persist the current source tree's engineering work stream state and update the default source tree's global cross-tree overview, so the session can pause and any later session resume from the files on disk. Use when pausing coding work; this skill records continuity and does not execute the work.
+description: Persist engineering work stream state and update the global overview, both in the default source tree's centralized .engineering/, so the session can pause and any later session resume from the files on disk. Use when pausing coding work; this skill records continuity and does not execute the work.
 model: opus
 allowed-tools: Read, Write, Edit, Glob, Grep, Task, Bash, TodoRead, AskUserQuestion
 argument-hint: "[work-id-filter]"
@@ -8,24 +8,26 @@ argument-hint: "[work-id-filter]"
 
 # Work Handover
 
-Refresh the local memory of the work streams in the **current source tree**
-(this Git worktree or jj workspace) and update the default source tree's global
-`.engineering/overview.md`, so the session can stop here and a later one pick
-the work up exactly where it stands. `essential:takeover` owns resumption; it
+Refresh the work-stream memory under the **default source tree's**
+`.engineering/` — the resolver's `state_root`, the one tree that carries work
+state whichever worktree or workspace you are in — and update the global
+`.engineering/overview.md` beside it, so the session can stop here and a later
+one pick the work up exactly where it stands. `essential:takeover` owns resumption; it
 always resumes from the state files on disk.
 
 ## Boundaries
 
-- Use for pausing the engineering work streams in the current source tree.
-- Handover is scoped to the current source tree only. Never index, refresh, or
-  rewrite another source tree's `.engineering/works/`; the default tree's
-  `overview.md` is the only cross-tree surface, and this skill only upserts the
-  current tree's row in it.
+- Use for pausing engineering work streams.
+- Handover is scoped to the streams it is pausing. All state already lives in
+  one place — `state_root/.engineering/works/` — so there is no other tree's
+  state to reach into and no cross-tree merge to perform. Refresh the selected
+  streams and upsert their `overview.md` rows; leave every other stream's files
+  and rows byte-for-byte alone.
 - Do not perform git history, push, PR, build, test, deployment, review, or
   implementation work.
-- Write to exactly two destinations: the current tree's
-  `.engineering/works/<work-id>/**` and the default tree's
-  `.engineering/overview.md`. Handover does not promote to `docs/` — promotion
+- Write to exactly two destinations:
+  `state_root/.engineering/works/<work-id>/**` and
+  `state_root/.engineering/overview.md`. Handover does not promote to `docs/` — promotion
   belongs to completion, not to a pause — and it creates no continuation file
   of its own: the state files *are* the continuation.
 - Never write a file because the report would be large. A long report is
@@ -38,20 +40,18 @@ always resumes from the state files on disk.
 ## Inputs
 
 - Optional `[work-id-filter]`; otherwise handle every work stream under
-  `.engineering/works/` in the **current source tree**. A filter narrows the
-  streams to refresh in full; it never invents a stream and never reaches
-  another tree.
-- Persistence requires only a repository checkout and a resolvable current-tree
-  workspace. A pause needs nothing external.
+  `state_root/.engineering/works/`. A filter narrows the streams to refresh in
+  full; it never invents a stream.
+- Persistence requires only a repository checkout and a resolvable workspace.
+  A pause needs nothing external.
 
 ## Engineering-work gate
 
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential. If unavailable, stop artifact
-writes and report the missing contract. Run the resolver: its `active_workspace`
-is the current source tree that owns the work streams to refresh, and its
-`default_workspace` locates the global `.engineering/overview.md` to update
-(which may be a different tree on the same machine). Resolve the work root,
+writes and report the missing contract. Run the resolver: its `state_root` is
+the default source tree that carries every work stream and the global
+`.engineering/overview.md`, whichever tree this session is working in. Resolve the work root,
 conventions, naming, and ownership from that reference before reading or writing
 state. Handover never mints an empty work item. Hold each selected stream's
 on-disk coordinator lease before rewriting its state in steps 5–7 with the
@@ -68,13 +68,16 @@ files. Never terminate the run before the overview upsert.
 
 ## Workflow
 
-1. List every `.engineering/works/<work-id>/` stream in the **current source
-   tree** (the resolver's `active_workspace`) per the Essential contract — always
-   the complete set, never narrowed by `[work-id-filter]`, because the overview
-   upsert (step 7) must show every stream in this tree. For each stream, read
-   `state.md` to record its lifecycle status and one-line headline. Partition the
-   streams: `initialized`, `active`, and `blocked` are **continuable**;
-   `complete` and `retiring` become **index-only** rows and are never an error.
+1. List every `state_root/.engineering/works/<work-id>/` stream per the
+   Essential contract — always the complete set, never narrowed by
+   `[work-id-filter]`, because the overview upsert (step 7) must show every
+   stream. For each stream, read `state.md` to record its lifecycle status and
+   one-line headline. Partition the streams three ways: `initialized`, `active`,
+   and `blocked` are **continuable**; `reviewing` is **awaiting merge** — its
+   execution is finished and its pull request(s) are proposed, so it is not
+   continuable, but neither is it settled, and `essential:takeover` checks it for
+   merge evidence; `completed` and `retiring` become **index-only** rows. None of
+   these is an error.
    Then apply the optional `[work-id-filter]` to the continuable streams to
    derive the **selected** streams (all continuable streams when no filter is
    given); only the selected streams get a full refresh (steps 2–6). The filter
@@ -117,17 +120,16 @@ files. Never terminate the run before the overview upsert.
    complete context. Do not mechanically size-gate it. Reconcile that stream's
    existing lazy `proposals.md`, `changes.md`, `decisions.md`, and `design.md`
    overview files from child metadata; never copy child details into an overview.
-7. Update the global `.engineering/overview.md` in the default source tree (the
-   resolver's `default_workspace`), following the canonical shape in
+7. Update the global `state_root/.engineering/overview.md`, following the
+   canonical shape in
    [references/document-templates.md](references/document-templates.md).
    Immediately before writing, re-read the current `overview.md` so a concurrent
-   update in another tree is not lost. Upsert one row per stream from step 1 whose
-   `Location` is the current source tree — work ID, lifecycle, headline, next
-   action, the current tree's `Location` (path plus kind and revision), and any
-   `docs/` link in `Documentations` — and preserve every other row (streams that
-   live in other source trees) byte-for-byte. If the default tree carries no
-   `overview.md` yet, create it. Never write another tree's `works/`. After this
-   write the pause is complete and resumable from state files.
+   update from another session is not lost. Upsert one row per stream from
+   step 1 — work ID, lifecycle, headline, next action, `Location` (the checkout
+   the stream is worked in: path plus kind and revision), and any `docs/` link
+   in `Documentations` — and preserve every other row byte-for-byte. If no
+   `overview.md` exists yet, create it. After this write the pause is complete
+   and resumable from state files.
 8. Return every created or materially rewritten path — including the updated
    `overview.md` — in `generated_files`. Do not run file sizing; after all
    artifact writers finish, the PM checks only eligible work Markdown inside the
@@ -136,21 +138,19 @@ files. Never terminate the run before the overview upsert.
 ## Verification
 
 - Every selected stream's `state.md` (with its `## Continuation` fields) and
-  `state/working.md` were refreshed and the default tree's `overview.md` was
-  upserted.
-- Handover touched only the current source tree's `works/` and the default
-  tree's `overview.md`; no other source tree's work streams were indexed or
+  `state/working.md` were refreshed and the global `overview.md` was upserted.
+- Handover touched only `state_root/.engineering/works/` and
+  `state_root/.engineering/overview.md`; no unselected stream's files were
   rewritten.
-- `overview.md` now carries one up-to-date row per current-tree stream — each with
-  its lifecycle, `Location`, `Spec`, and `Documentations` — and every other
-  tree's rows are unchanged.
+- `overview.md` now carries one up-to-date row per stream — each with its
+  lifecycle, `Location`, `Spec`, and `Documentations` — and every row it did not
+  own is unchanged.
 - A takeover could resume every continuable stream from the on-disk state alone —
   `## Continuation` names the current task, next owner, next action, and
   continuation intent.
 - No path outside the closed write set was created or rewritten: every entry in
-  `generated_files` is under the current tree's
-  `.engineering/works/<work-id>/`, or is the default tree's
-  `.engineering/overview.md`. No continuation file was written anywhere else,
+  `generated_files` is under `state_root/.engineering/works/<work-id>/`, or is
+  `state_root/.engineering/overview.md`. No continuation file was written anywhere else,
   and nothing was written because output was large.
 - Each selected stream's `state.md` is complete, internally consistent, and links
   `state/working.md`; the latter contains only current-focus summary and fast
@@ -166,7 +166,7 @@ files. Never terminate the run before the overview upsert.
 ## Completion
 
 Use [references/output-format.md](references/output-format.md). Report the
-current source tree, the default tree's `overview.md` path, the stream count,
+working tree each stream is worked in, the `overview.md` path, the stream count,
 per-stream updated state paths and work directory, classification and decision
 counts, and `generated_files`. `handover: complete` reports the successful pause
 once persistence and the `overview.md` upsert land; reserve `handover: blocked`

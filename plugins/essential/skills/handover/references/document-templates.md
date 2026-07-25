@@ -38,7 +38,7 @@ authored against — the canonical specification stays the sole authority.
 # <Work headline>
 
 - Work ID: `<work-id>`
-- Lifecycle status: `<initialized|active|blocked|complete|retiring>`
+- Lifecycle status: `<initialized|active|blocked|reviewing|completed|retiring>`
 - Updated: `<timestamp>`
 - Charter: [goal.md](goal.md)
 - Current focus: [working.md](state/working.md)
@@ -102,11 +102,10 @@ fixed skill name). A takeover reads these fields straight from `state.md`.
 
 ## `overview.md`
 
-The default source tree's global cross-tree index: one table of every work stream
-across every source tree (Git worktree or jj workspace) on the machine, so a
-single read shows all outstanding work and where it lives. Handover upserts only
-the rows whose `Location` is the current source tree and preserves every other row
-byte-for-byte. Follow this template:
+The global index beside the centralized `.engineering/works/`: one table of
+every work stream on the machine, so a single read shows all outstanding work
+and which checkout each is worked in. Handover upserts only the rows for the
+streams it refreshed and preserves every other row byte-for-byte. Follow this template:
 
 ```markdown
 # Engineering overview
@@ -115,14 +114,15 @@ byte-for-byte. Follow this template:
 
 | Work ID | Lifecycle | Headline | Next action | Location | Spec | Documentations |
 |---|---|---|---|---|---|---|
-| `<work-id>` | `<initialized\|active\|blocked\|complete\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](docs/<slug>.md)` or `-` |
-| `<work-id>` | `complete` | `<one line>` | `-` | `-` | `-` | `-` |
+| `<work-id>` | `<initialized\|active\|blocked\|reviewing\|completed\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](docs/<slug>.md)` or `-` |
+| `<work-id>` | `completed` | `<one line>` | `-` | `-` | `-` | `-` |
 ```
 
-- `Location` is the source tree that currently holds the stream's
-  `.engineering/works/<work-id>/`: its repository-relative or absolute path plus
-  the tree kind and current revision. Use `-` when that source tree has been
-  removed, so the stream is orphaned and no longer resumable.
+- `Location` is the checkout the stream's **code** is worked in: its
+  repository-relative or absolute path plus the tree kind and current revision.
+  The stream's state is not there — it is centralized under the default source
+  tree — so a removed checkout leaves `-` here and costs the stream only its
+  working copy, never its state.
 - `Spec` names the capability or specification source the stream works against,
   suffixed `(pending-publication)` while the stream holds accepted spec
   deviations not yet pushed to the canonical source, or `-` for generic work.
@@ -131,8 +131,8 @@ byte-for-byte. Follow this template:
 - `Documentations` links any durable `docs/` material for the stream — an
   architecture document, ADR index, or capability specification — or `-` when
   none exists.
-- Every stream in a tree's own `.engineering/works/` appears as exactly one row,
-  continuable and index-only alike. The overview is a status index only; each
+- Every stream in `.engineering/works/` appears as exactly one row, continuable
+  and index-only alike. The overview is a status index only; each
   stream's authoritative resumable context stays in that stream's own
   `state.md`/`state/` files. A retired stream may be dropped once its row adds no
   signal.
