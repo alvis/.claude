@@ -916,21 +916,29 @@ class ArtifactSkillContractTest(unittest.TestCase):
         contract = (ESSENTIAL / "references/engineering-work.md").read_text(
             encoding="utf-8"
         )
+        lease = (ESSENTIAL / "references/lease.md").read_text(encoding="utf-8")
         main_agent = (ESSENTIAL / "MAINAGENT.md").read_text(encoding="utf-8")
         normalized_contract = " ".join(contract.split())
+        normalized_lease = " ".join(lease.split())
         normalized_main_agent = " ".join(main_agent.split())
 
         self.assertIn("### First-use work-memory bootstrap", contract)
-        self.assertIn(
-            "After the user has confirmed any new work identity",
-            normalized_contract,
-        )
+        self.assertIn("[lease.md](lease.md)", contract)
         self.assertIn(
             "`--bootstrap` never derives or mints an ID", normalized_contract
         )
-        self.assertIn("created with no-clobber semantics", normalized_contract)
         self.assertIn("`bootstrap_created`", contract)
         self.assertIn("`bootstrap_existing`", contract)
+
+        self.assertIn("## First-use work-memory bootstrap", lease)
+        self.assertIn(
+            "After the user has confirmed any new work identity",
+            normalized_lease,
+        )
+        self.assertIn("`--bootstrap` never derives or mints an ID", normalized_lease)
+        self.assertIn("created with no-clobber semantics", normalized_lease)
+        self.assertIn("`bootstrap_created`", lease)
+        self.assertIn("`bootstrap_existing`", lease)
         self.assertIn(
             "invoke the resolver with the confirmed ID and `--bootstrap`",
             normalized_main_agent,
