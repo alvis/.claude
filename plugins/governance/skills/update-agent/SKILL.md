@@ -33,6 +33,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
 - **Prerequisites**: `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`,
   `role-prompt.md` beside it, and
   `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`.
+  Follow the content rules in
+  `${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md`.
 
 ## Workflow
 

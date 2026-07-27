@@ -1,11 +1,15 @@
 # Skill-Authoring Invariants
 
-These are the shared repository rules for the `write-skill` create, update, and
-verify actions. Claude Code's validator remains authoritative for manifest and
+These are the shared repository rules for authoring skills and agents — the
+`write-skill` create, update, and verify actions, plus `create-agent` and
+`update-agent`. Claude Code's validator remains authoritative for manifest and
 frontmatter syntax.
 
 ## Content
 
+- Before adding content, check it changes what someone does, and that what is
+  missing isn't something else. Drop anything whose removal changes nothing —
+  naming an example set of negations is unbounded and says nothing.
 - Write one coherent document. Integrate changes where readers expect them;
   remove superseded prose instead of appending corrections or addenda.
 - Keep the always-used workflow in `SKILL.md` and move bulky conditional detail
