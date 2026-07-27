@@ -64,7 +64,7 @@ Zone enforcement (GIT-PR-SIZE-01..04) belongs to the reviewer, not this skill.
 | Input | Effect |
 |---|---|
 | `<commit-ref>` | Publish a resolvable jj change ID/revset/bookmark or git branch/SHA and its selected stack. Any jj revset (`@`, `@-`, a change id) or git ref (`HEAD`, `HEAD~1`, a SHA) also selects the commit to author from; behavior is deterministic given the ref. |
-| `--branch-prefix <name>` | Override the derived stack bookmark prefix. For a resolved engineering stream it must still be that stream's `<type>/<work-id>`, or the published branch stops resolving to its work state. |
+| `--branch-prefix <name>` | Override the derived stack bookmark prefix. A prefix other than a resolved stream's `<type>/<work-id>` publishes a branch that will not resolve back to its work state — expected for a branch predating that convention, deliberate otherwise. |
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
 | `--dry-run` | Print the test, publication, and monitoring plan without agents or local/remote mutations. |
 
