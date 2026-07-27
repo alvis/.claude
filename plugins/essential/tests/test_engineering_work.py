@@ -344,6 +344,42 @@ def test_minted_work_id_rejects_unusable_input(
     assert expected_error in completed.stderr
 
 
+@pytest.mark.parametrize(
+    ("label", "candidates", "expected"),
+    (
+        ("feat/work-id-naming", ("feat-work-id-naming",), "feat-work-id-naming"),
+        ("stacks/refunds", ("refunds",), "refunds"),
+        # GIT-PR-STACK-01 stack bookmarks and sub-work branches both belong to
+        # the stream their ordinal hangs off.
+        (
+            "feat-work-id-naming/01-spec",
+            ("feat-work-id-naming",),
+            "feat-work-id-naming",
+        ),
+        (
+            "feat-work-id-naming-resolver-03",
+            ("feat-work-id-naming",),
+            "feat-work-id-naming",
+        ),
+        # an ordinal-suffixed identity of its own outranks the stream it
+        # collided with, so chore-lint-2 never resolves to chore-lint
+        ("chore/lint-2", ("chore-lint", "chore-lint-2"), "chore-lint-2"),
+        ("feat-auth-refresh-01", ("feat-auth", "feat-auth-refresh"), "feat-auth-refresh"),
+        # without an ordinal the remainder is a different topic, not a slice
+        ("feat/checkout-refunds", ("feat-checkout",), ""),
+        ("feat/work-id-naming", (), ""),
+    ),
+)
+def test_workspace_work_id_matches_stacked_and_sub_work_branches(
+    label: str, candidates: tuple[str, ...], expected: str
+) -> None:
+    arguments = [argument for candidate in candidates for argument in ("--candidate", candidate)]
+    completed = run_name("workspace-work-id", label, *arguments)
+
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == expected
+
+
 # workspace resolver
 
 
@@ -439,6 +475,38 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["work_id"] == "refunds"
     assert payload["work_id_source"] == "git_branch"
     assert payload["work_dir"] == str(root.resolve() / ".state/works/refunds")
+
+
+def test_stacked_and_sub_work_branches_resolve_to_their_stream(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "stacked"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/feat-work-id-naming").mkdir(parents=True)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+
+    # every branch a stream is developed on selects it without asking: the
+    # minted identity, a GIT-PR-STACK-01 stack bookmark, and a sub-work branch
+    for branch in (
+        "feat/work-id-naming",
+        "feat-work-id-naming/02-impl",
+        "feat-work-id-naming-resolver-03",
+    ):
+        git("checkout", "-q", "-b", branch, cwd=root)
+        completed, payload = run_resolver(root)
+
+        assert completed.returncode == 0, completed.stderr
+        assert payload["work_id"] == "feat-work-id-naming", branch
+        assert payload["work_id_source"] == "git_branch", branch
+
+    # a branch whose remainder carries no ordinal is a different topic, and
+    # two candidates leave nothing to fall back to
+    git("checkout", "-q", "-b", "feat/work-id-naming-rewrite", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
 
 
 def test_feature_branch_does_not_select_a_mismatched_sole_work_id(

@@ -240,40 +240,25 @@ done < <(find "$work_root" -mindepth 1 -maxdepth 1 \
   -type d 2>/dev/null | LC_ALL=C sort)
 
 workspace_work_id=""
-workspace_leaf_work_id=""
+workspace_match_id=""
 if [[ -n "$workspace_label" ]]; then
   helper_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   workspace_work_id="$("$helper_dir/derive-engineering-name" \
     tracker-work-id "$workspace_label")"
-  if [[ "$workspace_label" == */* ]]; then
-    workspace_leaf_work_id="$("$helper_dir/derive-engineering-name" \
-      tracker-work-id "${workspace_label##*/}")"
-  fi
+  candidate_args=()
+  for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
+    candidate_args+=(--candidate "$candidate_id")
+  done
+  workspace_match_id="$("$helper_dir/derive-engineering-name" \
+    workspace-work-id "$workspace_label" \
+    ${candidate_args[@]+"${candidate_args[@]}"})"
 fi
 
 if [[ -z "$work_id" ]]; then
-  workspace_match_id=""
   meaningful_workspace_id=""
   if [[ -n "$workspace_work_id" ]] &&
      [[ ! "$workspace_work_id" =~ ^(default|main|master|trunk|item)$ ]]; then
     meaningful_workspace_id="$workspace_work_id"
-  fi
-  if [[ -n "$workspace_work_id" ]]; then
-    for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
-      if [[ "$candidate_id" == "$workspace_work_id" ]]; then
-        workspace_match_id="$candidate_id"
-        break
-      fi
-    done
-  fi
-
-  if [[ -z "$workspace_match_id" && -n "$workspace_leaf_work_id" ]]; then
-    for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
-      if [[ "$candidate_id" == "$workspace_leaf_work_id" ]]; then
-        workspace_match_id="$candidate_id"
-        break
-      fi
-    done
   fi
 
   if [[ -n "$workspace_match_id" ]]; then

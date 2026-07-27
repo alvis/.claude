@@ -137,15 +137,15 @@ with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 ## Deterministic names
 
 `"$ESSENTIAL_ROOT/bin/derive-engineering-name"` is the only path-name
-derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`; see
-`--help`). Never reimplement its rules or add a random suffix; pass every
-occupied sibling slug through `--collision-with`. A minted work ID is an
-identity and is never renamed; derive or mint only when the resolver cannot
-select safely and the PM has resolved the ambiguity. A minted
-`<kind>-<scope-slug>` is one name for the stream, its branch
-`<kind>/<scope-slug>`, and its source tree directory, so the resolver
-identifies the stream from the branch alone; its occupied siblings are every
-ID under `works/` and `archive/`. Naming rules: use the
+derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`,
+`workspace-work-id`; see `--help`). Never reimplement its rules; pass every
+occupied sibling to `--collision-with` (for a work ID: every ID under `works/`
+and `archive/`). A work ID is an identity, never renamed; derive or mint only
+when the resolver cannot select safely and the PM resolved the ambiguity. A
+minted `<kind>-<scope-slug>` names the stream, its branch
+`<kind>/<scope-slug>`, and its source tree; stack and sub-work branches keep
+the ID as their prefix (`<work-id>/NN-<type>`, `<work-id>-<sub-work>-NN`), so
+any of them resolves it. Naming rules: use the
 owning capability (not the task title) for `docs/specs/<capability>/`; ADRs
 alone use a zero-padded monotonic numeric prefix and are never renumbered;
 ordinary work-local children use unnumbered semantic `<slug>.md` names, with

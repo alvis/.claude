@@ -82,6 +82,31 @@ def tracker_work_id(value: str) -> str:
     return bounded_slug(value)
 
 
+def workspace_work_id(label: str, candidates: set[str]) -> str:
+    """Return the work ID a branch or workspace label belongs to, if any."""
+    labels = [label]
+    if "/" in label:
+        labels.append(label.rsplit("/", 1)[1])
+
+    for value in labels:
+        derived = bounded_slug(value)
+        if derived in candidates:
+            return derived
+
+    # One stream is developed across a stack (`<work-id>/NN-<type>`) and its
+    # sub-work branches (`<work-id>-<sub-work>-NN`), so the owning ID is a
+    # prefix of the label. The ordinal is what makes the rest droppable:
+    # without a numeric token the remainder is a different topic, not a slice
+    # of the same stream, and dropping it would resolve the wrong stream.
+    for value in labels:
+        tokens = ascii_tokens(value)
+        for size in range(len(tokens) - 1, 0, -1):
+            prefix = "-".join(tokens[:size])
+            if prefix in candidates and any(t.isdigit() for t in tokens[size:]):
+                return prefix
+    return ""
+
+
 def minted_work_id(kind: str, scope: str, occupied: set[str]) -> str:
     kind_slug = "-".join(ascii_tokens(kind))
     if kind_slug not in WORK_KINDS:
@@ -120,6 +145,30 @@ def parser() -> argparse.ArgumentParser:
 
     tracker = commands.add_parser("tracker-work-id")
     tracker.add_argument("tracker_key")
+
+    workspace = commands.add_parser(
+        "workspace-work-id",
+        help="match a branch or workspace label to an existing work ID",
+        description=(
+            "Print which of the candidate work IDs a Git branch or jj "
+            "workspace label belongs to, or nothing when the label identifies "
+            "no existing stream. An exact derivation wins first, on the whole "
+            "label and then its last `/` segment. Failing that, one stream is "
+            "developed across a stack of branches (`<work-id>/NN-<type>`) and "
+            "sub-work branches (`<work-id>-<sub-work>-NN`), so the longest "
+            "candidate prefix wins when what follows it carries the stack "
+            "ordinal. A label that identifies nothing never creates an "
+            "identity — the caller reports the ambiguity."
+        ),
+    )
+    workspace.add_argument("label", help="the Git branch or jj workspace label")
+    workspace.add_argument(
+        "--candidate",
+        action="append",
+        default=[],
+        metavar="WORK_ID",
+        help="an existing work ID this label may belong to. Repeatable.",
+    )
 
     minted = commands.add_parser(
         "minted-work-id",
@@ -167,6 +216,8 @@ def main() -> int:
             )
         elif args.command == "tracker-work-id":
             result = tracker_work_id(args.tracker_key)
+        elif args.command == "workspace-work-id":
+            result = workspace_work_id(args.label, set(args.candidate))
         else:
             result = minted_work_id(
                 args.kind, args.scope, set(args.collision_with)

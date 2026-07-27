@@ -19,7 +19,7 @@ Settle this before editing:
 
 - **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); on a git repository, work on the current branch as usual.
 - **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `~/.workspaces/<project-root-folder-name>/<work-id>` (reuse the engineering work-id; the built-in `EnterWorktree` harness tool uses `.claude/worktrees/` and is not governed by this convention).
-  - The work-id, the branch, and that directory are one name: a work-id of `feat-work-id-naming` means branch `feat/work-id-naming` (first `-` becomes `/`) and directory `~/.workspaces/<project-root-folder-name>/feat-work-id-naming`. Name the branch anything else and the engineering resolver can no longer identify the stream from it.
+  - The work-id, the branch, and that directory are one name: a work-id of `feat-work-id-naming` means directory `~/.workspaces/<project-root-folder-name>/feat-work-id-naming` and branch `feat/work-id-naming` (first `-` becomes `/`). A stream worked as a stack or split into sub-tasks keeps the work-id as the branch prefix and hangs the ordinal off it — `feat-work-id-naming/02-impl` per `GIT-PR-STACK-01`, or `feat-work-id-naming-<sub-work>-03` — so the engineering resolver still identifies the stream from any branch it is developed on. A branch shaped like neither loses that, and every resolve falls back to asking the user.
 
 ### If you're writing it yourself
 

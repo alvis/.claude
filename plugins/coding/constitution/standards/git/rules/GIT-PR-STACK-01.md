@@ -10,6 +10,8 @@ Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) fol
 
 Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and lets reviewers infer category before opening the PR.
 
+When the stack belongs to an engineering work stream, `<feature-slug>` is that stream's work ID (`feat-work-id-naming/02-impl`), so `resolve-engineering-workspace` selects the stream from any bookmark in the stack instead of asking at every transition.
+
 ## Fix
 
 ```text
