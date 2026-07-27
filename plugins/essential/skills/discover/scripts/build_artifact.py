@@ -112,11 +112,20 @@ MERMAID_FIGURE_CHILDREN = (MERMAID_SOURCE_ATTR, MERMAID_HOST_ATTR)
 # Self-containment applies to what Mermaid emits, not only to the markup the
 # author wrote. An image shape (`A@{ img: "…" }`) becomes an <image href> in the
 # browser, long after the compiled file was checked for literal src=/href=, so
-# the definition is where it has to be caught. Any absolute URL is refused for
-# the same reason the rest of the board refuses one; a relative img: cannot
-# resolve from a single file either, so the directive is rejected outright.
-MERMAID_EXTERNAL_RE = re.compile(
-    r"\bimg\s*:|\bhttps?://|(?<![\w:])//(?=[\w.-]+\.[a-z]{2,})", re.IGNORECASE
+# the definition is where it has to be caught.
+#
+# Only the constructs that actually name a resource are matched, never the text
+# of a definition: a node label may legitimately display a URL or the characters
+# `img:`, and Mermaid fetches nothing for either. `img:` therefore counts solely
+# inside a shape-config block, and `click … href` solely as a statement. A
+# relative img: is refused with the absolute ones, because it cannot resolve
+# from a single file either.
+MERMAID_EXTERNAL_PATTERNS = (
+    ("image shape", re.compile(r"@\{[^}]*\bimg\s*:", re.IGNORECASE | re.DOTALL)),
+    (
+        "click href",
+        re.compile(r"^[^\S\n]*click\s+\S+\s+href\b", re.IGNORECASE | re.MULTILINE),
+    ),
 )
 # Elements that never open a scope, so a tag stack must not wait for their close.
 VOID_TAGS = frozenset(
@@ -658,17 +667,20 @@ def build(
             f"[{MERMAID_SOURCE_ATTR}]; the runtime renders that text, so a blank "
             "one draws nothing while the board still carries the diagram runtime"
         )
-    external = [
-        f"{match.group(0)!r}"
-        for figure in figures
-        for match in MERMAID_EXTERNAL_RE.finditer(figure.definition)
-    ]
+    external = sorted(
+        {
+            label
+            for figure in figures
+            for label, pattern in MERMAID_EXTERNAL_PATTERNS
+            if pattern.search(figure.definition)
+        }
+    )
     if external:
         raise BuildError(
             "a [data-mermaid] definition names an external resource, which no "
             "self-contained board can load — the Artifact CSP is default-src "
             "'none', and a file:// board would fetch it off-box: "
-            + "; ".join(sorted(set(external)))
+            + ", ".join(external)
         )
     if needs_mermaid:
         if mermaid is None:

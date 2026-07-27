@@ -347,9 +347,27 @@
     return Array.isArray(list) ? list : [];
   }
 
+  // String indices are UTF-16 code units, so cutting on one can land between the
+  // surrogates of an emoji or any astral character and store half of it — the
+  // excerpt then shows a replacement character in the summary and in the
+  // generated prompt. Cut on user-perceived characters instead: graphemes where
+  // the browser can segment them, which also keeps a flag or a skin-tone
+  // sequence whole, and code points everywhere else, which is already enough to
+  // make a lone surrogate impossible.
+  function quoteCharacters(text) {
+    if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+      const segmenter = new Intl.Segmenter(undefined, {
+        granularity: "grapheme",
+      });
+      return [...segmenter.segment(text)].map((entry) => entry.segment);
+    }
+    return Array.from(text);
+  }
+
   function truncateQuote(text) {
-    return text.length > MAX_QUOTE_LENGTH
-      ? `${text.slice(0, MAX_QUOTE_LENGTH - 1).trimEnd()}…`
+    const characters = quoteCharacters(text);
+    return characters.length > MAX_QUOTE_LENGTH
+      ? `${characters.slice(0, MAX_QUOTE_LENGTH - 1).join("").trimEnd()}…`
       : text;
   }
 

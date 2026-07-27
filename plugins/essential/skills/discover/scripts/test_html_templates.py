@@ -1017,23 +1017,63 @@ def _load_builder():
 
 
 class _BoardLinkFinder(HTMLParser):
-    """Collect every ``data-board-link`` value, whatever the attribute's quoting."""
+    """Collect every board link: its id, its href, and whether a hub index holds it.
+
+    The quoting is left to the parser because a quote style is a formatting
+    choice, and this feeds a gate whose own coverage would otherwise depend on
+    it. The hub's index is tracked by nesting so its list can be compared against
+    the roster on its own — the shared sidebar partial names every board too, so
+    a check that merely looked for the ids somewhere in the composed page would
+    agree with itself no matter what the hub said.
+    """
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.links: list[str] = []
+        self._stack: list[str] = []
+        self._index_depths: list[int] = []
+        self.links: list[dict[str, object]] = []
+
+    def _record(self, attrs: list[tuple[str, str | None]]) -> None:
+        values = {name: (value or "").strip() for name, value in attrs}
+        if not values.get("data-board-link"):
+            return
+        self.links.append(
+            {
+                "id": values["data-board-link"],
+                "href": values.get("href", ""),
+                "in_index": bool(self._index_depths),
+            }
+        )
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
-        for name, value in attrs:
-            if name == "data-board-link" and value:
-                self.links.append(value.strip())
+        names = {name for name, _ in attrs}
+        # The builder owns the void-element list; reading it here keeps the two
+        # parsers agreeing about what opens a scope.
+        if tag not in _load_builder().VOID_TAGS:
+            self._stack.append(tag)
+            if "data-board-index" in names:
+                self._index_depths.append(len(self._stack))
+        self._record(attrs)
 
-    handle_startendtag = handle_starttag
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        self._record(attrs)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag not in self._stack:
+            return
+        while self._stack:
+            closed = self._stack.pop()
+            while self._index_depths and self._index_depths[-1] > len(self._stack):
+                self._index_depths.pop()
+            if closed == tag:
+                return
 
 
-def _board_links(html: str) -> list[str]:
+def _board_links(html: str) -> list[dict[str, object]]:
     finder = _BoardLinkFinder()
     finder.feed(html)
     finder.close()
@@ -1061,15 +1101,16 @@ def validate_board_set_single_home() -> list[str]:
 
     errors: list[str] = []
     include_line = "<!-- {{INCLUDE: _shared/board-set.html}} -->"
-    entries = _board_links(shared.read_text(encoding="utf-8"))
-    if not entries:
+    roster = _board_links(shared.read_text(encoding="utf-8"))
+    if not roster:
         errors.append(f"{shared}: shared board-set partial names no boards")
+    hrefs = {str(entry["id"]): str(entry["href"]) for entry in roster}
 
     # The invariant is the identical index on EVERY board of the run, so the
     # partial's own entries decide which pages are checked. Keying off the pages
     # that happen to still carry the block would let a board drop the index
     # entirely and stay green.
-    for board in entries:
+    for board in hrefs:
         page = EXAMPLES_SRC_ROOT / board / "page.html"
         if not page.is_file():
             errors.append(
@@ -1088,6 +1129,43 @@ def validate_board_set_single_home() -> list[str]:
                 f"{page}: board-set entries are authored into the page; they "
                 f"belong once in {shared} — replace them with "
                 f"'{include_line}'"
+            )
+
+    # A page.html read alone cannot see a second roster: sections/ compose into
+    # the page, and the hub's own board index lives there, repeating every id and
+    # href. So every board's COMPOSED source is inspected, and each link it
+    # carries is checked against the partial. The partial stays the one home for
+    # which boards exist and where each one lives; a hub index that names an
+    # unknown board, points somewhere else, or misses one now fails here.
+    builder = _load_builder()
+    for source_dir in sorted(EXAMPLES_SRC_ROOT.glob("*/")):
+        if source_dir.name.startswith("_"):
+            continue
+        try:
+            composed = builder.compose_directory(source_dir)
+        except builder.BuildError as error:
+            errors.append(f"{source_dir}: cannot compose to check board links: {error}")
+            continue
+        links = _board_links(composed)
+        for link in links:
+            board_id = str(link["id"])
+            if board_id not in hrefs:
+                errors.append(
+                    f"{source_dir}: links to board {board_id!r}, which {shared} "
+                    "does not name; the shared partial is the only roster"
+                )
+            elif link["href"] and link["href"] != hrefs[board_id]:
+                errors.append(
+                    f"{source_dir}: links to board {board_id!r} at "
+                    f"{link['href']!r}, but {shared} places it at "
+                    f"{hrefs[board_id]!r}"
+                )
+        indexed = {str(link["id"]) for link in links if link["in_index"]}
+        if indexed and indexed != set(hrefs):
+            missing = sorted(set(hrefs) - indexed)
+            errors.append(
+                f"{source_dir}: its [data-board-index] is a projection of "
+                f"{shared} and must list every board; missing {missing}"
             )
     return errors
 
@@ -1333,18 +1411,28 @@ def validate_artifact_builder() -> list[str]:
                 "(figures, malformed, blank)"
             )
 
-    # Self-containment survives only if it is judged on what Mermaid will emit.
+    # Self-containment survives only if it is judged on what Mermaid will emit —
+    # and only on that. A label is text the browser draws, not a resource it
+    # fetches, so a URL or the characters "img:" inside one must still compile.
     external_cases = (
         ("plain flowchart", "graph LR; A-->B", False),
         ("sequence with a colon", "sequenceDiagram; A->>B: hello", False),
         ("comment mentioning a shape", "%% shapes: rounded\ngraph LR; A-->B", False),
-        ('image shape', 'A@{ img: "https://example.com/x.png" }', True),
+        ("url shown in a label", 'A["POST https://api.example/v1"]', False),
+        ("img: written in a label", 'A["img: field absent"]', False),
+        ("word click in a label", 'A["click href to open"]', False),
+        ("image shape", 'A@{ img: "https://example.com/x.png" }', True),
         ("relative image shape", 'A@{ img: "./x.png" }', True),
+        ("multiline shape block", 'A@{\n  shape: rect\n  img: "x.png"\n}', True),
         ("click href", 'click A href "https://example.com"', True),
-        ("protocol-relative url", 'click A href "//cdn.example.com/x"', True),
+        ("indented click href", '  click A href "//cdn.example.com/x"', True),
     )
     for label, definition, expected in external_cases:
-        if bool(build_artifact.MERMAID_EXTERNAL_RE.search(definition)) is not expected:
+        refused = any(
+            pattern.search(definition)
+            for _name, pattern in build_artifact.MERMAID_EXTERNAL_PATTERNS
+        )
+        if refused is not expected:
             errors.append(
                 f"builder mermaid externals: {label} should "
                 f"{'be refused' if expected else 'be accepted'}"
@@ -1353,14 +1441,27 @@ def validate_artifact_builder() -> list[str]:
     # The one-home gate decides its own coverage from these values, so a quote
     # style that the reader cannot see must not remove a board from it.
     link_markup = (
-        '<a data-board-link="alpha"></a>'
-        "<a data-board-link='beta'></a>"
-        "<a data-board-link=gamma></a>"
+        '<a data-board-link="alpha" href="./a.html"></a>'
+        "<a data-board-link='beta' href='./b.html'></a>"
+        "<ul data-board-index><li><a data-board-link=gamma href=./c.html>g</a></li></ul>"
+        '<a data-board-link="delta" href="./d.html"></a>'
     )
-    if _board_links(link_markup) != ["alpha", "beta", "gamma"]:
+    parsed = [
+        (link["id"], link["href"], link["in_index"])
+        for link in _board_links(link_markup)
+    ]
+    expected_links = [
+        ("alpha", "./a.html", False),
+        ("beta", "./b.html", False),
+        # Inside the index, and only until the list closes — the sidebar links
+        # that follow must not inherit its scope.
+        ("gamma", "./c.html", True),
+        ("delta", "./d.html", False),
+    ]
+    if parsed != expected_links:
         errors.append(
-            "board-set link parsing: every quote style must yield the same "
-            f"entries, got {_board_links(link_markup)}"
+            "board-set link parsing: quote style and index nesting must not "
+            f"change what is seen, got {parsed}"
         )
     return errors
 
