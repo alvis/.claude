@@ -5,13 +5,31 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import re
 import sys
 import unicodedata
 
 
 MAX_SLUG_BYTES = 48
-ULID_RE = re.compile(r"^[0-9A-HJKMNP-TV-Z]{26}$", re.IGNORECASE)
+# A work ID is also a branch leaf and a source tree directory name, so it is
+# held well below the document slug bound.
+MAX_WORK_ID_BYTES = 32
+# The leading token of a minted work ID is a conventional-commit type, which
+# is what makes `<kind>-<scope>` reversible to the branch `<kind>/<scope>`.
+WORK_KINDS = (
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "refactor",
+    "revert",
+    "style",
+    "test",
+)
 
 
 class CanonicalNameError(ValueError):
@@ -64,14 +82,29 @@ def tracker_work_id(value: str) -> str:
     return bounded_slug(value)
 
 
-def minted_work_id(date: str, kind: str, scope: str, ulid: str) -> str:
-    if not re.fullmatch(r"[0-9]{8}", date):
-        raise CanonicalNameError("--date must be YYYYMMDD")
-    if not ULID_RE.fullmatch(ulid):
+def minted_work_id(kind: str, scope: str, occupied: set[str]) -> str:
+    kind_slug = "-".join(ascii_tokens(kind))
+    if kind_slug not in WORK_KINDS:
         raise CanonicalNameError(
-            "--ulid must be a 26-character Crockford Base32 ULID"
+            "--kind must be a conventional-commit type: " + ", ".join(WORK_KINDS)
         )
-    return f"{date}-{bounded_slug(kind)}-{bounded_slug(scope)}-{ulid[-6:].lower()}"
+    if not ascii_tokens(scope):
+        raise CanonicalNameError("--scope must contain at least one ASCII token")
+
+    def candidate(suffix: str) -> str:
+        budget = MAX_WORK_ID_BYTES - len(kind_slug) - 1 - len(suffix)
+        return f"{kind_slug}-{bounded_slug(scope, budget)}{suffix}"
+
+    base = candidate("")
+    if base not in occupied:
+        return base
+
+    # An identity is never renamed, so a repeated scope takes the next free
+    # ordinal rather than displacing the stream that already owns the name.
+    for ordinal in itertools.count(2):
+        repeated = candidate(f"-{ordinal}")
+        if repeated not in occupied:
+            return repeated
 
 
 def parser() -> argparse.ArgumentParser:
@@ -88,11 +121,40 @@ def parser() -> argparse.ArgumentParser:
     tracker = commands.add_parser("tracker-work-id")
     tracker.add_argument("tracker_key")
 
-    minted = commands.add_parser("minted-work-id")
-    minted.add_argument("--date", required=True)
-    minted.add_argument("--kind", required=True)
-    minted.add_argument("--scope", required=True)
-    minted.add_argument("--ulid", required=True)
+    minted = commands.add_parser(
+        "minted-work-id",
+        help="mint a work identity that doubles as its branch and source tree",
+        description=(
+            "Mint `<kind>-<scope-slug>` (at most %d bytes) as the identity of a "
+            "work stream. The same name carries three things: the work ID "
+            "(`feat-work-id-naming`), the branch or bookmark that stream is "
+            "developed on (`feat/work-id-naming` — the ID with its first `-` as "
+            "`/`), and its source tree directory "
+            "(`~/.workspaces/<project>/feat-work-id-naming`). Create the branch "
+            "from the ID and the workspace resolver selects the stream unaided, "
+            "reporting `work_id_source: git_branch`; a branch that does not "
+            "derive back to its ID leaves every later resolve on the "
+            "ask-the-user path. The date a stream began belongs to its goal.md "
+            "and journal, never to the identity." % MAX_WORK_ID_BYTES
+        ),
+    )
+    minted.add_argument(
+        "--kind",
+        required=True,
+        help="conventional-commit type: " + ", ".join(WORK_KINDS),
+    )
+    minted.add_argument("--scope", required=True, help="what the stream is about")
+    minted.add_argument(
+        "--collision-with",
+        action="append",
+        default=[],
+        metavar="WORK_ID",
+        help=(
+            "an already-occupied work ID; pass every ID under works/ and "
+            "archive/, and a repeated scope takes the next free ordinal "
+            "(chore-lint-2). Repeatable."
+        ),
+    )
     return root
 
 
@@ -106,7 +168,9 @@ def main() -> int:
         elif args.command == "tracker-work-id":
             result = tracker_work_id(args.tracker_key)
         else:
-            result = minted_work_id(args.date, args.kind, args.scope, args.ulid)
+            result = minted_work_id(
+                args.kind, args.scope, set(args.collision_with)
+            )
     except CanonicalNameError as error:
         print(f"invalid: {error}", file=sys.stderr)
         return 2

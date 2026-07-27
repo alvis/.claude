@@ -19,6 +19,7 @@ Settle this before editing:
 
 - **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); on a git repository, work on the current branch as usual.
 - **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `~/.workspaces/<project-root-folder-name>/<work-id>` (reuse the engineering work-id; the built-in `EnterWorktree` harness tool uses `.claude/worktrees/` and is not governed by this convention).
+  - The work-id, the branch, and that directory are one name: a work-id of `feat-work-id-naming` means branch `feat/work-id-naming` (first `-` becomes `/`) and directory `~/.workspaces/<project-root-folder-name>/feat-work-id-naming`. Name the branch anything else and the engineering resolver can no longer identify the stream from it.
 
 ### If you're writing it yourself
 

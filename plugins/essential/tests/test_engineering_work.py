@@ -274,22 +274,74 @@ def test_collision_without_stable_identity_is_invalid() -> None:
 
 def test_work_id_conformance() -> None:
     tracker = run_name("tracker-work-id", "ENG 421 / Checkout Refunds")
-    minted = run_name(
-        "minted-work-id",
-        "--date",
-        "20260720",
-        "--kind",
-        "Feature Request",
-        "--scope",
-        "Checkout Refunds",
-        "--ulid",
-        "01J2Z3Y4X5W6V7T8S9R0Q1P2N3",
-    )
+    minted = run_name("minted-work-id", "--kind", "Feat", "--scope", "Checkout Refunds")
 
     assert tracker.returncode == 0, tracker.stderr
     assert minted.returncode == 0, minted.stderr
     assert tracker.stdout.strip() == "eng-421-checkout-refunds"
-    assert minted.stdout.strip() == "20260720-feature-request-checkout-refunds-q1p2n3"
+    assert minted.stdout.strip() == "feat-checkout-refunds"
+
+
+def test_minted_work_id_round_trips_through_its_branch() -> None:
+    minted = run_name("minted-work-id", "--kind", "feat", "--scope", "work id naming")
+    assert minted.returncode == 0, minted.stderr
+    work_id = minted.stdout.strip()
+    assert work_id == "feat-work-id-naming"
+
+    # The branch the PM creates for this identity must derive back to it, so
+    # the resolver reports work_id_source: git_branch instead of asking.
+    derived = run_name("tracker-work-id", work_id.replace("-", "/", 1))
+
+    assert derived.returncode == 0, derived.stderr
+    assert derived.stdout.strip() == work_id
+
+
+def test_minted_work_id_is_bounded_and_keeps_whole_tokens() -> None:
+    completed = run_name(
+        "minted-work-id",
+        "--kind",
+        "refactor",
+        "--scope",
+        "one two three four five six seven eight",
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    result = completed.stdout.strip()
+    assert len(result.encode("ascii")) <= 32
+    assert result == "refactor-one-two-three-four-five"
+
+
+def test_minted_work_id_takes_next_free_ordinal_on_collision() -> None:
+    completed = run_name(
+        "minted-work-id",
+        "--kind",
+        "chore",
+        "--scope",
+        "lint",
+        "--collision-with",
+        "chore-lint",
+        "--collision-with",
+        "chore-lint-2",
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "chore-lint-3"
+
+
+@pytest.mark.parametrize(
+    ("kind", "scope", "expected_error"),
+    (
+        ("Feature Request", "Refunds", "conventional-commit type"),
+        ("feat", "///", "--scope"),
+    ),
+)
+def test_minted_work_id_rejects_unusable_input(
+    kind: str, scope: str, expected_error: str
+) -> None:
+    completed = run_name("minted-work-id", "--kind", kind, "--scope", scope)
+
+    assert completed.returncode == 2
+    assert expected_error in completed.stderr
 
 
 # workspace resolver
