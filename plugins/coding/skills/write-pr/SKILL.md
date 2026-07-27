@@ -236,15 +236,15 @@ selected change merged on origin, and a derived or supplied branch prefix. If
 needed, invoke `coding:commit --reorder`; for merged history follow
 [workflow-correct-merged.md](../commit/references/workflow-correct-merged.md).
 
-For each change bottom-up, preserve its existing bookmark when the caller
-selected an existing branch, it is already the head of an open PR, or the
-ordered stack already has explicit bookmarks. This is existing-bookmark mode:
-push and update that exact head; never replace it with a generated bookmark.
-Only for an unbookmarked new change/stack: a lone change takes
-`BOOKMARK=<branch-prefix>`, a stack indexes `NN` from `01` into
-`BOOKMARK=<branch-prefix>/NN-<scope>` with a free-form kebab-case scope (≤30
-characters). `<branch-prefix>` is `--branch-prefix`, else the resolved stream's
-branch `<type>/<work-id>`, else as derived. Record the mode before mutation.
+Bottom-up, preserve a change's existing bookmark when the caller selected that
+branch, it heads an open PR, or the stack already has explicit bookmarks: push
+and update that exact head. A bare `<branch-prefix>` head blocks its own `NN-`
+children, so a stream growing into a stack renames it to the first numbered
+bookmark before pushing the rest, per Essential's naming contract. Only for an
+unbookmarked new change/stack: a lone change takes `BOOKMARK=<branch-prefix>`,
+a stack indexes `NN` from `01` into `BOOKMARK=<branch-prefix>/NN-<scope>`,
+kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
+the resolved stream's branch, else as derived; record the mode first.
 
 On the jj path, point the bookmark at the change and push it:
 

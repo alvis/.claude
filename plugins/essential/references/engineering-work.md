@@ -296,8 +296,10 @@ Work state has exactly two homes: the **default source tree's**
 `.state/` (the resolver's `state_root`) and the **active** tree's
 versioned `docs/`. Every write a lifecycle skill makes lands in
 `state_root/.state/works/<work-id>/**`,
-`state_root/.state/overview.md`, or — at promotion only — the active
-tree's `docs/`. Any other destination is a contract violation. A skill that
+`state_root/.state/overview.md`, or the active tree's `docs/` at promotion
+and for the retirement ledger ([retirement.md](retirement.md)), which records
+a name as spent at the moment its state is deleted. Any other destination is
+a contract violation. A skill that
 believes it needs one has misread this contract; stop and report instead.
 
 **Output volume is never a reason to create a file.** A report that would be
