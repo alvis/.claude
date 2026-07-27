@@ -1,6 +1,6 @@
 # Overall review body template
 
-Fill this and submit it as the review `body` in step 9, in the voice from
+Fill this and submit it as the review `body`, in the voice from
 `tone.md`. Drop any section that would be empty rather than writing "None" under a
 heading. Detail lives in the inline comments; this is the map, and it should be
 actionable in under a minute.

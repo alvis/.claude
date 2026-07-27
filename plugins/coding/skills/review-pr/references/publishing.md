@@ -1,6 +1,6 @@
 # Publishing the review to GitHub
 
-Load this at step 9 of `coding:review-pr`.
+Load this from the *Publish the review* step of `coding:review-pr`.
 
 Submit body, verdict, and every inline comment in one `POST`. The create-pending /
 add-comments / submit sequence leaves a half-populated pending review on the PR when
@@ -15,7 +15,7 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 
 ```json
 {
-  "commit_id": "<HEAD_OID resolved in step 1>",
+  "commit_id": "<the pinned HEAD_OID>",
   "body": "<overall review, from templates/overall-review.md>",
   "event": "REQUEST_CHANGES | APPROVE | COMMENT",
   "comments": [
@@ -31,16 +31,10 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 - `line` is the line number in the file at `commit_id`, not a diff offset.
 - `start_line` must be below `line` on the same `side`.
 
-Build the file with `jq` and shell redirection — comment bodies carry newlines,
-backticks, and code fences, so hand-assembled JSON breaks on the first one, and a
-file-writing tool is denied by this agent's `Write`/`Edit` fence:
-
-```bash
-jq -n --arg commit "$HEAD_OID" --arg body "$OVERALL" --arg event "$EVENT" \
-  --slurpfile comments comments.json \
-  '{commit_id: $commit, body: $body, event: $event, comments: $comments[0]}' \
-  > "$REVIEW_DIR/payload.json"
-```
+Assemble the file with `jq` and shell redirection into the review tree. Comment
+bodies carry newlines, backticks, and code fences, so string-concatenated JSON breaks
+on the first one — and a file-writing tool is denied by this agent's `Write`/`Edit`
+fence.
 
 ## Failure recovery
 

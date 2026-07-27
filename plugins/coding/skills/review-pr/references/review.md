@@ -1,12 +1,12 @@
 # Review checklist and finding schema
 
-Load this at step 7 of `coding:review-pr`. Evidence rules come from
+Load this from the *Review* step of `coding:review-pr`. Evidence rules come from
 [the shared review mandates](../../review-code/references/mandates.md); this file
 adds what is specific to reviewing a PR diff.
 
 ## Depth
 
-Scale depth to the size zone from step 4: green reviews line by line, yellow leads
+Scale depth to the size zone: green reviews line by line, yellow leads
 with the key areas then goes line by line, red leads with architecture and goes
 line-level only where it matters, black says split it before reviewing further. A
 2,000-line review that comments on everything teaches nothing.
@@ -80,7 +80,7 @@ not_reviewed:
 
 </report>
 
-- `path` and `line` must come from the step-4 changed-line map. A finding rooted in
+- `path` and `line` must come from the changed-line map. A finding rooted in
   unchanged code anchors to the changed line that causes it.
 - `side` is `RIGHT` for added lines and `LEFT` for removed ones; most findings are
   `RIGHT`. `start_line` opens a multi-line range and must be below `line` on the
