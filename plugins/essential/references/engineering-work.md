@@ -136,19 +136,13 @@ with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 
 ## Deterministic names
 
-`"$ESSENTIAL_ROOT/bin/derive-engineering-name"` (see `--help`) is the only
-path-name derivation implementation. Never reimplement its rules; pass every
-occupied sibling to `--collision-with` — for a work ID, every ID under
-`works/` and `archive/`. A work ID is an identity, never renamed; derive or
-mint only when the resolver cannot select safely and the PM resolved the
-ambiguity. A minted `<kind>-<scope-slug>` names the stream, its source tree,
-and its branch namespace `<kind>/<scope-slug>/NN-<slice>`, one branch per
-slice, each resolving to the stream. Naming rules: use the owning capability
-(not the task title) for `docs/specs/<capability>/`; ADRs alone use a
-zero-padded monotonic numeric prefix and are never renumbered; ordinary
-work-local children use unnumbered semantic `<slug>.md` names, with numbered
-`<nn>-<topic-slug>.md` (increments of 10) reserved for mechanical splits of an
-oversized file.
+Names are decided by rule, never derived by a program and never random. A work
+ID is `<kind>-<scope>` (`feat-work-id-naming`), naming the stream, its source
+tree, and its branch at once; it is an identity and is never renamed, so name
+one only when the resolver cannot select safely and the PM resolved the
+ambiguity. [naming.md](naming.md) carries every shape — slugs, the work ID and
+its collision ordinal, the branch a stack hangs under, and what generated
+documents are called. Read it before naming anything.
 
 ## Work memory
 

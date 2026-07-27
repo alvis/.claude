@@ -55,8 +55,6 @@ Templates: `templates/memory.md` (agent memory) and
   references, unsuperseded decisions, stale leases, overview drift. Advisory
   by default; `--strict` for irreversible or release-critical moments. It
   never judges prose and never edits files.
-- **`derive-engineering-name`** — the only slug/work-id derivation
-  implementation.
 - **`check-markdown-size`** — the 16,384-byte gate for work Markdown.
 
 ## Skills

@@ -241,11 +241,10 @@ selected an existing branch, it is already the head of an open PR, or the
 ordered stack already has explicit bookmarks. This is existing-bookmark mode:
 push and update that exact head; never replace it with a generated bookmark.
 Only for an unbookmarked new change/stack, index `NN` from `01` and set
-`BOOKMARK=<branch-prefix>/NN-<scope>`, scope matching the conventional commit
-scope (kebab-case, ≤30 characters). `<branch-prefix>` is `--branch-prefix`
-when supplied, else a resolved stream's work ID with its first `-` as `/`,
-else derived as before; it is never bookmarked alone, since git refs are
-files. Record which mode selected each bookmark before mutation.
+`BOOKMARK=<branch-prefix>/NN-<scope>`, scope being a free-form kebab-case
+summary (≤30 characters). `<branch-prefix>` is `--branch-prefix`, else the
+resolved stream's work ID with its first `-` as `/`, else derived as before;
+only a stack numbers beneath it. Record the selecting mode before mutation.
 
 On the jj path, point the bookmark at the change and push it:
 

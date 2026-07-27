@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -18,7 +17,6 @@ RESOLVER = ESSENTIAL / "bin/resolve-engineering-workspace"
 # so its incident guards (e.g. an empty array expanding to "unbound variable"
 # under `set -u`) stay exercised even when a newer Homebrew bash is on PATH
 SYSTEM_BASH = "/bin/bash"
-NAME_HELPER = ESSENTIAL / "bin/derive-engineering-name"
 SESSION_START = ESSENTIAL / "bin/session-start"
 SUBAGENT_START = ESSENTIAL / "bin/subagent-start"
 
@@ -195,202 +193,6 @@ def test_invalid_and_missing_inputs_are_distinct_from_split(
     assert json.loads(completed.stdout)["status"] == "invalid"
 
 
-# engineering name helper
-
-
-def run_name(*arguments: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [str(NAME_HELPER), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    (
-        ("Crème brûlée déjà vu", "creme-brulee-deja-vu"),
-        ("Payments / refunds?! v2.0", "payments-refunds-v2-0"),
-        ("影師嗎", "item"),
-        (
-            "one two three four five six seven eight nine ten eleven",
-            "one-two-three-four-five-six-seven-eight-nine-ten",
-        ),
-        (
-            "one two three four five six seven eight nine twelve",
-            "one-two-three-four-five-six-seven-eight-nine",
-        ),
-    ),
-)
-def test_slug_conformance_fixtures(value: str, expected: str) -> None:
-    completed = run_name("slug", value)
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == expected
-    assert len(completed.stdout.strip().encode("ascii")) <= 48
-
-
-def test_collision_suffix_is_stable_source_hash() -> None:
-    identity = "notion:abc"
-    expected = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:8]
-    completed = run_name(
-        "slug",
-        "API Gateway",
-        "--collision-with",
-        "api-gateway",
-        "--stable-id",
-        identity,
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == f"api-gateway--{expected}"
-    assert len(completed.stdout.strip().encode("ascii")) <= 48
-
-
-def test_collision_reserves_suffix_without_partial_trailing_token() -> None:
-    value = "one two three four five six seven eight nine ten eleven"
-    occupied = "one-two-three-four-five-six-seven-eight-nine-ten"
-    completed = run_name(
-        "slug",
-        value,
-        "--collision-with",
-        occupied,
-        "--stable-id",
-        "architecture:checkout",
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    result = completed.stdout.strip()
-    assert len(result.encode("ascii")) <= 48
-    assert result.split("--", 1)[0] == "one-two-three-four-five-six-seven"
-
-
-def test_collision_without_stable_identity_is_invalid() -> None:
-    completed = run_name("slug", "API Gateway", "--collision-with", "api-gateway")
-
-    assert completed.returncode == 2
-    assert "--stable-id is required" in completed.stderr
-
-
-def test_work_id_conformance() -> None:
-    tracker = run_name("tracker-work-id", "ENG 421 / Checkout Refunds")
-    minted = run_name("minted-work-id", "--kind", "Feat", "--scope", "Checkout Refunds")
-
-    assert tracker.returncode == 0, tracker.stderr
-    assert minted.returncode == 0, minted.stderr
-    assert tracker.stdout.strip() == "eng-421-checkout-refunds"
-    assert minted.stdout.strip() == "feat-checkout-refunds"
-
-
-def test_minted_work_id_round_trips_through_its_branch() -> None:
-    minted = run_name("minted-work-id", "--kind", "feat", "--scope", "work id naming")
-    assert minted.returncode == 0, minted.stderr
-    work_id = minted.stdout.strip()
-    assert work_id == "feat-work-id-naming"
-
-    # The branch the PM creates for this identity must derive back to it, so
-    # the resolver reports work_id_source: git_branch instead of asking.
-    derived = run_name("tracker-work-id", work_id.replace("-", "/", 1))
-
-    assert derived.returncode == 0, derived.stderr
-    assert derived.stdout.strip() == work_id
-
-
-def test_minted_work_id_is_bounded_and_keeps_whole_tokens() -> None:
-    completed = run_name(
-        "minted-work-id",
-        "--kind",
-        "refactor",
-        "--scope",
-        "one two three four five six seven eight",
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    result = completed.stdout.strip()
-    assert len(result.encode("ascii")) <= 32
-    assert result == "refactor-one-two-three-four-five"
-
-
-def test_minted_work_id_takes_next_free_ordinal_on_collision() -> None:
-    completed = run_name(
-        "minted-work-id",
-        "--kind",
-        "chore",
-        "--scope",
-        "lint",
-        "--collision-with",
-        "chore-lint",
-        "--collision-with",
-        "chore-lint-2",
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == "chore-lint-3"
-
-
-@pytest.mark.parametrize(
-    ("kind", "scope", "expected_error"),
-    (
-        ("Feature Request", "Refunds", "conventional-commit type"),
-        ("feat", "///", "--scope"),
-    ),
-)
-def test_minted_work_id_rejects_unusable_input(
-    kind: str, scope: str, expected_error: str
-) -> None:
-    completed = run_name("minted-work-id", "--kind", kind, "--scope", scope)
-
-    assert completed.returncode == 2
-    assert expected_error in completed.stderr
-
-
-@pytest.mark.parametrize(
-    ("label", "candidates", "expected"),
-    (
-        ("feat/work-id-naming", ("feat-work-id-naming",), "feat-work-id-naming"),
-        ("stacks/refunds", ("refunds",), "refunds"),
-        # every branch in the stream's namespace belongs to it, whether the
-        # slice is a GIT-PR-STACK-01 stack PR or a sub-task
-        (
-            "feat/work-id-naming/01-code-spec",
-            ("feat-work-id-naming",),
-            "feat-work-id-naming",
-        ),
-        (
-            "feat/work-id-naming/03-resolver-matching",
-            ("feat-work-id-naming",),
-            "feat-work-id-naming",
-        ),
-        # an ordinal-suffixed identity of its own outranks the stream it
-        # collided with, so chore-lint-2 never resolves to chore-lint
-        ("chore/lint-2", ("chore-lint", "chore-lint-2"), "chore-lint-2"),
-        (
-            "feat/auth-refresh/01-code-spec",
-            ("feat-auth", "feat-auth-refresh"),
-            "feat-auth-refresh",
-        ),
-        # only the namespace grammar resolves: the ordinal opens the segment
-        # after a real `/`, so a name that merely reads like one is its own
-        # topic and gets asked about rather than opening the wrong stream
-        ("feat/checkout-refunds", ("feat-checkout",), ""),
-        ("feat/work-id-naming-rewrite/01-code-spec", ("feat-work-id-naming",), ""),
-        ("feat/payments-2026-migration", ("feat-payments",), ""),
-        # a collision-ordinal identity resolves to itself once bootstrapped,
-        # and to nothing before that — never to the stream it collided with
-        ("chore/lint-2", ("chore-lint",), ""),
-        ("feat/work-id-naming", (), ""),
-    ),
-)
-def test_workspace_work_id_matches_stacked_and_sub_work_branches(
-    label: str, candidates: tuple[str, ...], expected: str
-) -> None:
-    arguments = [argument for candidate in candidates for argument in ("--candidate", candidate)]
-    completed = run_name("workspace-work-id", label, *arguments)
-
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == expected
-
-
 # workspace resolver
 
 
@@ -488,7 +290,7 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["work_dir"] == str(root.resolve() / ".state/works/refunds")
 
 
-def test_every_branch_in_the_namespace_resolves_to_its_stream(
+def test_single_pr_and_stacked_branches_resolve_to_their_stream(
     tmp_path: Path,
 ) -> None:
     root = tmp_path / "stacked"
@@ -497,28 +299,29 @@ def test_every_branch_in_the_namespace_resolves_to_its_stream(
     (root / ".state/works/feat-work-id-naming").mkdir(parents=True)
     (root / ".state/works/unrelated-work").mkdir(parents=True)
 
-    # every slice and sub-task of the stream selects it without asking; the
-    # bare feat/work-id-naming branch is never created, because git stores
-    # refs as files and it could not coexist with the numbered branches
+    # a stream that is one PR is the branch alone; a stream split into a stack
+    # or sub-tasks is numbered beneath it. Both select it without asking.
     for branch in (
-        "feat/work-id-naming/01-code-spec",
-        "feat/work-id-naming/02-implementation",
-        "feat/work-id-naming/03-resolver-matching",
+        "feat/work-id-naming",
+        "feat/work-id-naming/01-resolver",
+        "feat/work-id-naming/02-contract",
     ):
-        git("checkout", "-q", "-b", branch, cwd=root)
+        git("checkout", "-q", "--orphan", branch, cwd=root)
         completed, payload = run_resolver(root)
 
         assert completed.returncode == 0, completed.stderr
         assert payload["work_id"] == "feat-work-id-naming", branch
         assert payload["work_id_source"] == "git_branch", branch
 
-    # a branch whose remainder carries no ordinal is a different topic, and
-    # two candidates leave nothing to fall back to
-    git("checkout", "-q", "-b", "feat/work-id-naming-rewrite", cwd=root)
-    completed, payload = run_resolver(root)
+    # a longer name that merely begins like the stream is its own topic, and
+    # a single-digit ordinal is not the documented shape; neither resolves,
+    # and two candidates leave nothing to fall back to
+    for branch in ("feat/work-id-naming-rewrite", "feat/work-id-naming/3-late"):
+        git("checkout", "-q", "--orphan", branch, cwd=root)
+        completed, payload = run_resolver(root)
 
-    assert completed.returncode == 4, completed.stderr
-    assert payload["status"] == "work_id_required"
+        assert completed.returncode == 4, completed.stderr
+        assert payload["status"] == "work_id_required", branch
 
 
 def test_feature_branch_does_not_select_a_mismatched_sole_work_id(

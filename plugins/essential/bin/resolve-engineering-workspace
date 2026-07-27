@@ -239,19 +239,51 @@ while IFS= read -r candidate_dir; do
 done < <(find "$work_root" -mindepth 1 -maxdepth 1 \
   -type d 2>/dev/null | LC_ALL=C sort)
 
+slugify() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
+    sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
+
+is_work_candidate() {
+  local wanted="$1" candidate_id
+  [[ -n "$wanted" ]] || return 1
+  for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
+    if [[ "$candidate_id" == "$wanted" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 workspace_work_id=""
 workspace_match_id=""
 if [[ -n "$workspace_label" ]]; then
-  helper_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  workspace_work_id="$("$helper_dir/derive-engineering-name" \
-    tracker-work-id "$workspace_label")"
-  candidate_args=()
-  for candidate_id in ${work_candidates[@]+"${work_candidates[@]}"}; do
-    candidate_args+=(--candidate "$candidate_id")
-  done
-  workspace_match_id="$("$helper_dir/derive-engineering-name" \
-    workspace-work-id "$workspace_label" \
-    ${candidate_args[@]+"${candidate_args[@]}"})"
+  workspace_work_id="$(slugify "$workspace_label")"
+
+  # A stacked stream is `<work-id-as-branch>/NN-<scope>`, so a final segment
+  # opening with a zero-padded ordinal means the stream is the namespace
+  # before it. Decided first: that branch belongs to its namespace even where
+  # some separate stream is named for the whole label.
+  if [[ "$workspace_label" == */* && "${workspace_label##*/}" =~ ^[0-9]{2,}- ]]; then
+    namespace_id="$(slugify "${workspace_label%/*}")"
+    if is_work_candidate "$namespace_id"; then
+      workspace_match_id="$namespace_id"
+    fi
+  fi
+
+  # Otherwise the label names a stream outright — a single-PR stream is its
+  # work ID exactly, and a label that merely files one under a prefix matches
+  # on its final segment. Nothing looser: a partial prefix would read
+  # `feat/payments-2026-migration` as a slice of `feat-payments`, opening the
+  # wrong work, which is worse than asking.
+  if [[ -z "$workspace_match_id" ]]; then
+    for probe_id in "$workspace_work_id" "$(slugify "${workspace_label##*/}")"; do
+      if is_work_candidate "$probe_id"; then
+        workspace_match_id="$probe_id"
+        break
+      fi
+    done
+  fi
 fi
 
 if [[ -z "$work_id" ]]; then
