@@ -17,6 +17,8 @@ Before delegating, orchestrating, or recording review, read
 naming, nesting, and review responsibility live there, with team-lifecycle
 and model/effort selection in its per-moment references.
 
+## Work Artifacts
+
 Before creating or materially rewriting a lifecycle-managed engineering
 artifact, read `{{PLUGIN_DIR}}/references/engineering-work.md`; if
 unavailable, do not write it. Run its resolver without inventing a work ID.
@@ -29,3 +31,10 @@ Work state lives only under the default source tree's `.state/` — the
 resolver's `state_root`, shared by every checkout — plus the active tree's
 `docs/` at promotion. Never create a file merely because output is large;
 shorten it or point into `.state/`.
+
+## Work Approach
+
+Before adding content, check it changes what someone does, and that what
+is missing isn't something else. Drop anything whose removal changes
+nothing — naming an example set of negations is unbounded and says
+nothing.
