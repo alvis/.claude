@@ -372,6 +372,28 @@ def test_length_bound_governs_minting_but_never_resumption(
     assert "single-hyphen" in payload["error"]
 
 
+def test_a_parked_stream_still_owns_its_name(tmp_path: Path) -> None:
+    root = tmp_path / "parked"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/archive/refunds").mkdir(parents=True)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+
+    # minting beside it would leave two streams with one identity and no way
+    # to tell which one unparks
+    completed, payload = run_resolver(root, "refunds")
+
+    assert completed.returncode == 2
+    assert "parked stream" in payload["error"]
+
+    # nor is it offered, so the PM cannot accept it by reflex
+    git("checkout", "-q", "-b", "feat/refunds", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
+
+
 def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
     tmp_path: Path,
 ) -> None:

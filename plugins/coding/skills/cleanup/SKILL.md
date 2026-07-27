@@ -39,8 +39,8 @@ Before resolving engineering-work paths, read the absolute
 classify or remove `.state/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
 promotion records but does not create or rewrite them, `state/working.md`,
-`state.md`, or overview files; its project `generated_files` is therefore
-empty. Backup metadata lives only in the OS temporary backup tree.
+`state.md`, or overview files. Its one durable write is the retirement
+ledger below, which is therefore its only project `generated_files` entry. Backup metadata lives only in the OS temporary backup tree.
 
 ## Workflow
 
@@ -144,7 +144,14 @@ empty. Backup metadata lives only in the OS temporary backup tree.
    and its manifest matches. Preserve existing git bundle/patch backups for
    branches and full-directory backups for worktrees. For jj changes, record
    IDs and restoration commands because operation history preserves them.
-10. **Remove only approved, verified targets.** Use the existing safe git/jj
+10. **Record the retirement, then remove only approved, verified targets.**
+    Before deleting an engineering-work directory, append its work ID and the
+    retirement date to the versioned retirement ledger under `docs/`, and
+    include that ledger in `generated_files`. A work ID is never reused, and
+    deletion removes the last `.state/` trace of it, so the ledger entry is
+    what keeps the name spent — this applies equally to a stream that promoted
+    nothing else. A stream whose entry cannot be written is not removable.
+    Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
     validated `.state/works/<work-id>` path after rechecking the gate and
     backup immediately before deletion; never target `.state/works/`,

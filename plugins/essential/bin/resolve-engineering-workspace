@@ -227,6 +227,13 @@ state_root="${default_workspace:-$active_workspace}"
 
 engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
+archive_root="$engineering_dir/archive"
+
+# A parked stream still owns its name. Minting a second one beside it would
+# leave two streams with one identity and no way to tell which unparks.
+if [[ -n "$work_id" && ! -d "$work_root/$work_id" && -d "$archive_root/$work_id" ]]; then
+  invalid "work ID from $work_id_source names a parked stream under archive/; unpark that one instead of minting a second"
+fi
 
 # The canonical shape governs minting, never resumption: a stream created
 # before these rules keeps its name, and the workflows that resume it forward
@@ -328,7 +335,8 @@ if [[ -n "$workspace_label" ]]; then
     # A suggestion is a new identity, so it must be one this contract would
     # actually mint; recommending anything else sends the PM to a bootstrap
     # that then refuses it.
-    if canonical_work_id "$candidate_from_label"; then
+    if canonical_work_id "$candidate_from_label" &&
+       [[ ! -d "$archive_root/$candidate_from_label" ]]; then
       workspace_work_id="$candidate_from_label"
     fi
   fi
