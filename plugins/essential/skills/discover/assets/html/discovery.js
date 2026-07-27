@@ -2043,8 +2043,14 @@
     return converted;
   }
 
-  function readMermaidTheme() {
-    const computed = window.getComputedStyle(document.documentElement);
+  // Read the tokens from the element the diagram actually lives in, not from
+  // the document element. The dark theme is keyed on [data-theme="dark"], which
+  // a board may carry on the document body — the placement the theme observer
+  // below explicitly watches for. Custom properties redefined there inherit down
+  // to the figure but never up to the document element, so reading that would
+  // theme a dark board's diagram with the light palette.
+  function readMermaidTheme(element) {
+    const computed = window.getComputedStyle(element || root);
     const variables = {};
     Object.entries(MERMAID_THEME_TOKENS).forEach(([key, token]) => {
       const value = toMermaidColor(collapseText(computed.getPropertyValue(token)));
@@ -2104,7 +2110,7 @@
         startOnLoad: false,
         securityLevel: "strict",
         theme: "base",
-        themeVariables: readMermaidTheme(),
+        themeVariables: readMermaidTheme(figures[0]),
         flowchart: { curve: "basis", useMaxWidth: true },
       });
       figures.forEach(renderFigure);

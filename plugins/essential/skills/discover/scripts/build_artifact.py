@@ -65,6 +65,7 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -112,6 +113,17 @@ DYNAMIC_IMPORT_RE = re.compile(r"\bimport\s*\(")
 # always-inlined discovery runtime both contain it, so an empty or truncated
 # cache would validate as a diagram board whose figures silently never render.
 MERMAID_BUNDLE_SIGNATURE = "flowchart-v2"
+# One interior token is not evidence of a whole bundle either: a body truncated
+# after it still contains it. The UMD build's last statement publishes the global
+# the board reaches for, so requiring it near the end proves the download ran to
+# completion. A release that changes how the global is published fails the build
+# loudly, which is the right direction — a board that inlines an incomplete
+# runtime fails silently, with empty figures.
+MERMAID_BUNDLE_TAIL = 'globalThis["mermaid"] ='
+MERMAID_BUNDLE_TAIL_WINDOW = 4096
+# Floor for a plausible bundle; the real one is ~3.5 MB, so this only catches a
+# body that is obviously not the runtime at all.
+MERMAID_BUNDLE_MIN_BYTES = 1_000_000
 
 # The single marker line a directory source's page.html carries in place of its
 # composed sections.
@@ -220,7 +232,7 @@ def _get_vendor_runtime(
     url: str,
     cache: Path,
     *,
-    signature: str | None = None,
+    accept: Callable[[str, str], None] | None = None,
     refresh: bool = False,
     offline: bool = False,
 ) -> str:
@@ -236,19 +248,17 @@ def _get_vendor_runtime(
       warning to stderr when one exists — unless ``refresh`` is set, in which case
       the failure is fatal (the caller explicitly asked for the newest runtime).
 
-    ``signature`` is a substring only the real bundle carries. It is checked on
-    every path a caller can receive text from — fetch, cache write, cache read —
-    so an empty, truncated, or wrong-body response is a named build failure
-    rather than a runtime that is inlined and then does nothing.
+    ``accept`` raises ``BuildError`` on a body that is not a usable runtime. It
+    runs on every path a caller can receive text from — the fetched body, and a
+    cache read on both the offline and the fetch-failure route — and, crucially,
+    it runs on the fetched body *before* the cache is written. A rejected
+    download therefore leaves the last working cache in place, so the offline
+    fallback survives the release that breaks the build.
     """
 
     def checked(text: str, origin: str) -> str:
-        if signature is not None and signature not in text:
-            raise BuildError(
-                f"the {origin} {label} runtime does not contain {signature!r}, "
-                f"so it is not the expected bundle ({len(text)} bytes); "
-                f"re-fetch it with --refresh-{label.lower()}"
-            )
+        if accept is not None:
+            accept(text, origin)
         return text
 
     if offline:
@@ -293,29 +303,55 @@ def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str
     )
 
 
-def get_mermaid_runtime(*, refresh: bool = False, offline: bool = False) -> str:
-    """Return the Mermaid diagram runtime text (latest 11.x UMD build).
+def accept_mermaid_runtime(text: str, origin: str = "downloaded") -> None:
+    """Raise unless ``text`` is a complete, self-contained Mermaid UMD bundle.
 
-    Rejects a build whose bundle would resolve a diagram grammar at runtime: that
-    fetch cannot succeed from a ``file://`` board and its failure mode is an empty
-    figure, not an error.
+    Every Mermaid-specific acceptance rule lives here so all of them run before
+    the cache is replaced. Each rejected shape fails the build silently
+    otherwise: a wrong body inlines something that is not Mermaid, a truncated
+    one inlines a bundle that never publishes ``window.mermaid``, and a build
+    with a dynamic ``import()`` resolves grammars over the network, which a
+    ``file://`` board cannot do — all three render an empty figure, not an error.
     """
 
-    runtime = _get_vendor_runtime(
+    detail = f"the {origin} Mermaid runtime ({len(text)} bytes)"
+    if len(text) < MERMAID_BUNDLE_MIN_BYTES:
+        raise BuildError(
+            f"{detail} is far below the {MERMAID_BUNDLE_MIN_BYTES} byte floor, "
+            f"so it is not the bundle; re-fetch it with --refresh-mermaid"
+        )
+    if MERMAID_BUNDLE_SIGNATURE not in text:
+        raise BuildError(
+            f"{detail} does not contain {MERMAID_BUNDLE_SIGNATURE!r}, so it is "
+            f"not the expected bundle; re-fetch it with --refresh-mermaid"
+        )
+    if MERMAID_BUNDLE_TAIL not in text[-MERMAID_BUNDLE_TAIL_WINDOW:]:
+        raise BuildError(
+            f"{detail} does not end by publishing the global "
+            f"({MERMAID_BUNDLE_TAIL!r} is absent from its last "
+            f"{MERMAID_BUNDLE_TAIL_WINDOW} bytes), so the body is truncated or "
+            f"the release changed how it exports; re-fetch it with "
+            f"--refresh-mermaid"
+        )
+    if DYNAMIC_IMPORT_RE.search(text):
+        raise BuildError(
+            f"{detail} contains a dynamic import(), so some diagram types would "
+            f"load over the network and silently render empty in a "
+            f"self-contained board; pin a UMD build that bundles every grammar"
+        )
+
+
+def get_mermaid_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Mermaid diagram runtime text (latest 11.x UMD build)."""
+
+    return _get_vendor_runtime(
         "Mermaid",
         MERMAID_CDN_URL,
         MERMAID_CACHE,
-        signature=MERMAID_BUNDLE_SIGNATURE,
+        accept=accept_mermaid_runtime,
         refresh=refresh,
         offline=offline,
     )
-    if DYNAMIC_IMPORT_RE.search(runtime):
-        raise BuildError(
-            "the Mermaid runtime contains a dynamic import(), so some diagram "
-            "types would load over the network and silently render empty in a "
-            "self-contained board; pin a UMD build that bundles every grammar"
-        )
-    return runtime
 
 
 def _read(path: Path, label: str) -> str:

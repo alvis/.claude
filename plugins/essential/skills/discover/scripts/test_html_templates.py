@@ -807,7 +807,7 @@ def presentation_patterns(path: Path) -> set[str]:
     return parser.presentation_patterns
 
 
-def validate_runtime() -> list[str]:
+def validate_runtime(skipped: list[str]) -> list[str]:
     errors: list[str] = []
     source = JAVASCRIPT.read_text(encoding="utf-8")
     required_fragments = (
@@ -859,14 +859,24 @@ def validate_runtime() -> list[str]:
     if ".innerHTML" in source:
         errors.append(f"{JAVASCRIPT}: user-facing runtime must not use innerHTML")
 
-    result = subprocess.run(
-        ["node", "--check", str(JAVASCRIPT)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        errors.append(f"{JAVASCRIPT}: JavaScript syntax check failed: {result.stderr.strip()}")
+    # Node is not one of the repository's declared prerequisites (Bash, jq, Git,
+    # uv, gh), and this validator now runs inside `uvx pytest`, so an absent
+    # `node` must not make the one-command validation unrunnable. The skip is
+    # reported rather than swallowed: CI has Node, so the check still gates.
+    try:
+        result = subprocess.run(
+            ["node", "--check", str(JAVASCRIPT)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        skipped.append(f"{JAVASCRIPT}: JavaScript syntax check (node not installed)")
+    else:
+        if result.returncode != 0:
+            errors.append(
+                f"{JAVASCRIPT}: JavaScript syntax check failed: {result.stderr.strip()}"
+            )
     return errors
 
 
@@ -1197,6 +1207,9 @@ def validate_artifact_builder() -> list[str]:
 
 def run(stage: str, include_builder: bool = True) -> dict[str, object]:
     errors: list[str] = []
+    # Checks that could not run for want of an undeclared optional tool. They are
+    # never silently dropped: the report names each one.
+    skipped: list[str] = []
     expected_actions = (
         (REPRESENTATIVE_ACTION,) if stage == "representative" else ACTIONS
     )
@@ -1212,7 +1225,7 @@ def run(stage: str, include_builder: bool = True) -> dict[str, object]:
         errors.extend(validate_scaffold())
     errors.extend(validate_board_set_single_home())
     if JAVASCRIPT.is_file():
-        errors.extend(validate_runtime())
+        errors.extend(validate_runtime(skipped))
     if CSS.is_file():
         errors.extend(validate_stylesheet())
 
@@ -1263,6 +1276,7 @@ def run(stage: str, include_builder: bool = True) -> dict[str, object]:
         "presentation_patterns_covered": len(covered_patterns),
         "presentation_patterns_required": len(PRESENTATION_PATTERNS),
         "errors": errors,
+        "skipped_checks": skipped,
     }
 
 
