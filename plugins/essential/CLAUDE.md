@@ -28,9 +28,9 @@ ambiguity. On `requires_ignore`, workers stop; the PM alone adds
 `generated_files`, and reruns.
 
 Work state lives only under the default source tree's `.state/` — the
-resolver's `state_root`, shared by every checkout — plus the active tree's
-`docs/` at promotion. Never create a file merely because output is large;
-shorten it or point into `.state/`.
+resolver's `state_root`, shared by every tree — plus the active tree's
+`docs/` at promotion and retirement. Never create a file because output is
+large; shorten it or point into `.state/`.
 
 ## Work Approach
 

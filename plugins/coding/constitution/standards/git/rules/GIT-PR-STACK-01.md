@@ -6,9 +6,13 @@ error
 
 ## Intent
 
-Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) follows the format `<feature-slug>/NN-<type>` where `<feature-slug>` is the shared kebab-case feature identifier, `NN` is a zero-padded ordinal, and `<type>` is one of the 12 PR categories from `GIT-PR-TYPE-01`.
+Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) follows the format `<feature-slug>/NN-<scope>` where `<feature-slug>` is the shared kebab-case feature identifier, `NN` is a zero-padded ordinal, and `<scope>` is a short kebab-case summary of what that PR does.
 
-Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and lets reviewers infer category before opening the PR.
+`<scope>` is free-form. It is not drawn from the `GIT-PR-TYPE-01` categories, and it need not match the conventional-commit scope either — a PR declares its category in the PR itself, so encoding one in the bookmark would only duplicate it less reliably. Write whatever names the slice: `02-impl`, `03-token-refresh`, `04-rollback-path`.
+
+Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and tells a reviewer what each PR covers before they open it.
+
+When the stack belongs to an engineering work stream, `<feature-slug>` is that stream's branch, whose shape is defined by `naming.md` in the essential plugin's `references/` directory — the one authority on it. This rule adds only the `NN-<scope>` suffix beneath it. Naming the stack that way is what lets the stream be identified from any bookmark in it, instead of being asked for at every transition.
 
 ## Fix
 
@@ -20,7 +24,7 @@ auth-rewrite/04-feature-flag
 auth-rewrite/05-cleanup
 ```
 
-Cross-references the conventional-commit type — they are usually the same word, but the bookmark uses the **PR category** (e.g. `mechanical-refactor`), not the commit type (`refactor`):
+Any short kebab-case summary works; these read as categories only because that is often the clearest way to say what a slice does:
 
 ```text
 order-archive/01-migration
@@ -29,12 +33,12 @@ order-archive/03-impl
 order-archive/04-ui
 ```
 
-For single-PR work that is not part of a stack, the existing branch convention from `GIT-BRN-01` and `GIT-BRN-02` applies — `<type>/(<scope>)/<topic>`. The stack format kicks in only when a stack exists.
+For single-PR work that is not part of a stack, the existing branch convention from `GIT-BRN-01` and `GIT-BRN-02` applies — `<type>/(<scope>)/<topic>`. The stack format kicks in only when a stack exists. An engineering work stream splits the same way, but by its own contract: `naming.md` owns its single-PR shape, its stacked shape, and the transition between them, which is a rename rather than an addition because the two cannot coexist as refs.
 
 ### Why this matters
 
 - Lexicographic sort matches review order, so `jj log` or `git branch --list` shows the stack top-to-bottom correctly.
-- The ordinal makes "land the next one" unambiguous; the category makes the diff's expected shape predictable.
+- The ordinal makes "land the next one" unambiguous; the scope says what the diff covers.
 - The shared slug groups the stack across `gh pr list`, dashboards, and CI artefacts.
 
 ## Edge Cases

@@ -136,18 +136,14 @@ with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 
 ## Deterministic names
 
-`"$ESSENTIAL_ROOT/bin/derive-engineering-name"` is the only path-name
-derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`; see
-`--help`). Never reimplement its rules or add a random suffix; pass every
-occupied sibling slug through `--collision-with`. A minted work ID is an
-identity and is never renamed; derive or mint only when the resolver cannot
-select safely and the PM has resolved the ambiguity. Naming rules: use the
-owning capability (not the task title) for `docs/specs/<capability>/`; ADRs
-alone use a zero-padded monotonic numeric prefix and are never renumbered;
-ordinary work-local children use unnumbered semantic `<slug>.md` names, with
-numbered `<nn>-<topic-slug>.md` (increments of 10) reserved for mechanical
-splits of an oversized file; never use `part-1`, `misc`, or a task title as a
-child name.
+Names are decided by rule, never derived by a program and never random. A work
+ID is a slug of what the work is about (`work-id-naming`), carrying no type
+prefix: it names the stream's `works/<work-id>/` and its source tree, while
+the type belongs to the branch (`feat/<work-id>`). It is an identity and is
+never renamed or reused, so name one only when resolution cannot select safely
+and the PM resolved the ambiguity. [naming.md](naming.md) carries every shape
+— slugs, the collision ordinal, the branch a stack hangs under, and what
+generated documents are called. Read it before naming anything.
 
 ## Work memory
 
@@ -301,15 +297,16 @@ Work state has exactly two homes: the **default source tree's**
 `.state/` (the resolver's `state_root`) and the **active** tree's
 versioned `docs/`. Every write a lifecycle skill makes lands in
 `state_root/.state/works/<work-id>/**`,
-`state_root/.state/overview.md`, or — at promotion only — the active
-tree's `docs/`. Any other destination is a contract violation. A skill that
+`state_root/.state/overview.md`, or the active tree's `docs/` at promotion
+and for the retirement ledger ([retirement.md](retirement.md)), which records
+a name as spent at the moment its state is deleted. Any other destination is
+a contract violation. A skill that
 believes it needs one has misread this contract; stop and report instead.
 
 **Output volume is never a reason to create a file.** A report that would be
 long is shortened editorially or degraded to pointers into
 `.state/` — the state is already on disk, so a pointer loses nothing.
-Spilling a response to an ad hoc file is never the answer, whatever its
-size. Where a generated carrier genuinely must exist as a file — a
+Where a generated carrier genuinely must exist as a file — a
 `git format-patch` patch, a bundle, a captured log — its only legal home is
 `.state/works/<work-id>/artifacts/`, so it travels with the work
 directory. This is also the destination for the general instruction to

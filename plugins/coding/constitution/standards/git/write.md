@@ -104,6 +104,8 @@ Format: `<type>/(<scope>)/<topic>`
 
 Use the same scope convention as commit messages (short package name, concern, or catalog).
 
+An engineering work stream is the one exception, and its branch shape is owned by `naming.md` in the essential plugin's `references/` directory rather than defined here. What this rule adds is how to read it: the middle segment is the stream's identity, not a package scope, so it never has to match the commit scope — `feat/work-id-naming/01-resolver` is correct for commits scoped `essential`. See also `GIT-PR-STACK-01`.
+
 | Scenario | Example |
 |---|---|
 | Single package | `feat/ai/add-extraction-pipeline` |
@@ -276,7 +278,7 @@ Every PR declares exactly one category in its title prefix or body header (see `
 
 When a feature spans more than one zone or category, split it into a stack governed by `GIT-PR-STACK-*`:
 
-- Bookmark each PR `<feature-slug>/NN-<type>` (e.g. `auth-rewrite/01-spec`, `auth-rewrite/02-impl`) — see `GIT-PR-STACK-01`.
+- Bookmark each PR `<feature-slug>/NN-<scope>` (e.g. `auth-rewrite/01-spec`, `auth-rewrite/02-impl`), `<scope>` being any short kebab-case summary of the slice rather than a PR category — see `GIT-PR-STACK-01`.
 - Fix issues in the earliest owning unmerged change — `jj edit` / `jj absorb`, or `git rebase --interactive --autosquash` onto the owning commit — never by patching a later PR (`GIT-PR-STACK-02`).
 - Once a stack PR has merged upstream, never rewrite history — open a corrective PR instead (`GIT-PR-STACK-03`).
 - Land behaviour changes behind a flag unless the change is tiny, isolated, and reversible (`GIT-PR-STACK-04`).

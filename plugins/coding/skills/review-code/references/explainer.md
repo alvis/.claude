@@ -2,8 +2,8 @@
 
 Load only for `--explain`. After independent reviews finish, create a lowercase
 child such as `changes/change-explainer.md` under the active work root. Use the
-canonical slug/collision output from Essential's `derive-engineering-name` executable in the engineering-work
-contract; never overwrite another change child. Sequence prefixes are reserved
+slug and collision rules in `naming.md` in the essential plugin's
+`references/` directory; never overwrite another change child. Sequence prefixes are reserved
 for split output and ADRs. Return the path so the PM can
 reconcile `changes.md`.
 

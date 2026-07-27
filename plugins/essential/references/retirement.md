@@ -40,3 +40,12 @@ deletes the operational projection, so nothing consequential may exist only
 there. The default retention is 30 days unless repository compliance policy
 requires longer. Existing ambiguous artifacts are reported and preserved,
 never deleted or migrated by guesswork.
+
+Retirement always records the retired work ID, and the date it was retired,
+in `docs/retired-work-ids.md`, one record per line as `<work-id> <date>`. This happens even where the stream had
+nothing else worth promoting — code-only work leaves no durable document to
+carry its name, and without the ledger entry the ID vanishes from `works/`,
+`archive/`, and `docs/` alike, so a later stream can reclaim an identity that
+old pull requests and `source-work` references still point at. The entry is
+committed before the deletion it stands in for: a record still loose in the
+working tree does not outlive the state it replaced.

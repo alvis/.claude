@@ -96,8 +96,9 @@ adapters, providers, or runtimes.
   schemas, `journey` for user-facing flows, `block-beta`/`C4Context` for system
   context and deployment (preferred for IaC and services). `references/
   snippets/` ships reusable starting-point diagrams to customize.
-- **Path**: write `docs/architecture/<architecture-slug>.md`, deriving the slug
-  with Essential's `derive-engineering-name` executable and repository capability. Reconcile
+- **Path**: write `docs/architecture/<architecture-slug>.md`, naming the slug
+  per `naming.md` in the essential plugin's `references/` directory and
+  repository capability. Reconcile
   `docs/architecture/overview.md` and `docs/index.md`. Never derive the slug
   from a task title.
 - **Split rule**: `docs/**` has no mechanical byte limit. Split a durable

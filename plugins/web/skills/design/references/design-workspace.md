@@ -26,7 +26,8 @@ rest of this skill names.
 
 1. Read the shared engineering-work contract, then active `state/working.md` and
    `state.md`.
-2. Derive `<design-slug>` with Essential's `derive-engineering-name` executable. Inspect
+2. Name `<design-slug>` per `naming.md` in the essential plugin's
+   `references/` directory. Inspect
    `design.md` and `design/` for an existing child with the same stable target.
 3. If one exists, ask whether to resume it or create a distinct child. On
    resume, read its current focus, decision log, evidence map, implementation

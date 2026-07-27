@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -18,7 +17,6 @@ RESOLVER = ESSENTIAL / "bin/resolve-engineering-workspace"
 # so its incident guards (e.g. an empty array expanding to "unbound variable"
 # under `set -u`) stay exercised even when a newer Homebrew bash is on PATH
 SYSTEM_BASH = "/bin/bash"
-NAME_HELPER = ESSENTIAL / "bin/derive-engineering-name"
 SESSION_START = ESSENTIAL / "bin/session-start"
 SUBAGENT_START = ESSENTIAL / "bin/subagent-start"
 
@@ -195,103 +193,6 @@ def test_invalid_and_missing_inputs_are_distinct_from_split(
     assert json.loads(completed.stdout)["status"] == "invalid"
 
 
-# engineering name helper
-
-
-def run_name(*arguments: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [str(NAME_HELPER), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    (
-        ("Crème brûlée déjà vu", "creme-brulee-deja-vu"),
-        ("Payments / refunds?! v2.0", "payments-refunds-v2-0"),
-        ("影師嗎", "item"),
-        (
-            "one two three four five six seven eight nine ten eleven",
-            "one-two-three-four-five-six-seven-eight-nine-ten",
-        ),
-        (
-            "one two three four five six seven eight nine twelve",
-            "one-two-three-four-five-six-seven-eight-nine",
-        ),
-    ),
-)
-def test_slug_conformance_fixtures(value: str, expected: str) -> None:
-    completed = run_name("slug", value)
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == expected
-    assert len(completed.stdout.strip().encode("ascii")) <= 48
-
-
-def test_collision_suffix_is_stable_source_hash() -> None:
-    identity = "notion:abc"
-    expected = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:8]
-    completed = run_name(
-        "slug",
-        "API Gateway",
-        "--collision-with",
-        "api-gateway",
-        "--stable-id",
-        identity,
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == f"api-gateway--{expected}"
-    assert len(completed.stdout.strip().encode("ascii")) <= 48
-
-
-def test_collision_reserves_suffix_without_partial_trailing_token() -> None:
-    value = "one two three four five six seven eight nine ten eleven"
-    occupied = "one-two-three-four-five-six-seven-eight-nine-ten"
-    completed = run_name(
-        "slug",
-        value,
-        "--collision-with",
-        occupied,
-        "--stable-id",
-        "architecture:checkout",
-    )
-
-    assert completed.returncode == 0, completed.stderr
-    result = completed.stdout.strip()
-    assert len(result.encode("ascii")) <= 48
-    assert result.split("--", 1)[0] == "one-two-three-four-five-six-seven"
-
-
-def test_collision_without_stable_identity_is_invalid() -> None:
-    completed = run_name("slug", "API Gateway", "--collision-with", "api-gateway")
-
-    assert completed.returncode == 2
-    assert "--stable-id is required" in completed.stderr
-
-
-def test_work_id_conformance() -> None:
-    tracker = run_name("tracker-work-id", "ENG 421 / Checkout Refunds")
-    minted = run_name(
-        "minted-work-id",
-        "--date",
-        "20260720",
-        "--kind",
-        "Feature Request",
-        "--scope",
-        "Checkout Refunds",
-        "--ulid",
-        "01J2Z3Y4X5W6V7T8S9R0Q1P2N3",
-    )
-
-    assert tracker.returncode == 0, tracker.stderr
-    assert minted.returncode == 0, minted.stderr
-    assert tracker.stdout.strip() == "eng-421-checkout-refunds"
-    assert minted.stdout.strip() == "20260720-feature-request-checkout-refunds-q1p2n3"
-
-
 # workspace resolver
 
 
@@ -360,7 +261,7 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     linked = tmp_path / "linked workspace"
     initialize_git(root)
     commit_initial(root)
-    git("worktree", "add", "-q", "-b", "feature/refunds", str(linked), cwd=root)
+    git("worktree", "add", "-q", "-b", "feat/refunds", str(linked), cwd=root)
 
     completed, payload = run_resolver(linked)
 
@@ -372,8 +273,10 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["default_workspace"] == str(root.resolve())
     assert payload["active_workspace"] == str(linked.resolve())
     assert payload["state_root"] == str(root.resolve())
-    assert payload["workspace_label"] == "feature/refunds"
-    assert payload["suggested_work_id"] == "feature-refunds"
+    assert payload["workspace_label"] == "feat/refunds"
+    # the suggestion is what the branch names, not the whole label slugged,
+    # so bootstrapping it produces an ID this same branch resolves to
+    assert payload["suggested_work_id"] == "refunds"
     assert payload["candidate_work_ids"] == []
     assert "work_dir" not in payload
 
@@ -387,6 +290,187 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["work_id"] == "refunds"
     assert payload["work_id_source"] == "git_branch"
     assert payload["work_dir"] == str(root.resolve() / ".state/works/refunds")
+
+
+def test_single_pr_and_stacked_branches_resolve_to_their_stream(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "stacked"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/work-id-naming").mkdir(parents=True)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+
+    # a stream that is one PR is the branch alone; a stream split into a stack
+    # or sub-tasks is numbered beneath it. Both select it without asking.
+    for branch in (
+        "feat/work-id-naming",
+        "feat/work-id-naming/01-resolver",
+        "feat/work-id-naming/02-contract",
+        "fix/work-id-naming",  # the type describes the branch, not the identity
+    ):
+        git("checkout", "-q", "--orphan", branch, cwd=root)
+        completed, payload = run_resolver(root)
+
+        assert completed.returncode == 0, completed.stderr
+        assert payload["work_id"] == "work-id-naming", branch
+        assert payload["work_id_source"] == "git_branch", branch
+
+    # a longer name that merely begins like the stream is its own topic, and
+    # a single-digit ordinal is not the documented shape; neither resolves,
+    # and two candidates leave nothing to fall back to
+    for branch in (
+        "feat/work-id-naming-rewrite",   # its own topic, not this stream
+        "feat/work-id-naming/3-late",    # ordinals are exactly two digits
+        "feat/work-id-naming/00-prep",   # and run 01-99, so 00 is not a slice
+        "feat/work-id-naming/123-late",  # three digits is not the shape either
+        "feature/work-id-naming",        # `feature` is not a conventional type
+        "work-id-naming",                # a bare branch is not a branch shape
+        "feat/work_id_naming",           # matched as written, never slugged
+    ):
+        git("checkout", "-q", "--orphan", branch, cwd=root)
+        completed, payload = run_resolver(root)
+
+        assert completed.returncode == 4, completed.stderr
+        assert payload["status"] == "work_id_required", branch
+
+
+def test_length_is_a_convention_while_shape_is_a_requirement(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "bounded"
+    initialize_git(root)
+    commit_initial(root)
+    legacy = "legacy-" + "x" * 34
+    (root / ".state/works" / legacy).mkdir(parents=True)
+
+    # a stream created before the bound existed keeps its name, and the
+    # workflows that resume it forward that exact ID back
+    completed, payload = run_resolver(root, legacy)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == legacy
+
+    # its conforming branch resumes it too — matching an existing stream
+    # never applies a minting rule
+    git("checkout", "-q", "-b", f"feat/{legacy}", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == legacy
+    assert payload["work_id_source"] == "git_branch"
+
+    # the bound is a convention, so naming a longer stream deliberately is
+    # honoured even when nothing of that name exists yet
+    minted = "brand-new-" + "y" * 31
+    completed, payload = run_resolver(root, minted)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == minted
+
+    # the shape is not a convention: a name outside the grammar does not
+    # survive the trip through a path and a branch, so minting one is refused
+    completed, payload = run_resolver(root, "foo--bar")
+
+    assert completed.returncode == 2
+    assert "single-hyphen" in payload["error"]
+
+    # nor is the path-component limit: resolving a name the bootstrap that
+    # must follow cannot create would only move the failure one step later
+    completed, payload = run_resolver(root, "a" * 256)
+
+    assert completed.returncode == 2
+    assert "path component" in payload["error"]
+
+
+def test_a_parked_stream_still_owns_its_name(tmp_path: Path) -> None:
+    root = tmp_path / "parked"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/archive/refunds").mkdir(parents=True)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+
+    # minting beside it would leave two streams with one identity and no way
+    # to tell which one unparks
+    completed, payload = run_resolver(root, "refunds")
+
+    assert completed.returncode == 2
+    assert "parked stream" in payload["error"]
+
+    # nor is it offered, so the PM cannot accept it by reflex
+    git("checkout", "-q", "-b", "feat/refunds", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
+
+
+def test_a_retired_id_is_spent_after_its_directories_are_gone(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "retired"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    # nothing under works/ or archive/ any more: the ledger is the only record,
+    # which is exactly why it is versioned while .state/ is not
+    ledger = root / "docs/retired-work-ids.md"
+    ledger.parent.mkdir(parents=True)
+    # the record cleanup actually writes is `<work-id> <date>`, so a
+    # whole-line comparison would miss every entry the ledger holds
+    ledger.write_text(
+        "payments-rewrite 2026-06-01\nrefunds 2026-07-27\n", encoding="utf-8"
+    )
+
+    completed, payload = run_resolver(root, "refunds")
+
+    assert completed.returncode == 2
+    assert "retired" in payload["error"]
+
+    git("checkout", "-q", "-b", "feat/refunds", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
+
+    # a name merely containing a retired one is untouched
+    completed, payload = run_resolver(root, "refunds-v2", bootstrap=False)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == "refunds-v2"
+
+
+def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "unfoldable"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    git("checkout", "-q", "-b", "\u5f71\u5e2b\u55ce", cwd=root)
+
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
+
+
+@pytest.mark.parametrize("segment", ("z" * 33, "foo--bar"))
+def test_a_segment_outside_the_naming_contract_is_never_suggested(
+    segment: str, tmp_path: Path
+) -> None:
+    root = tmp_path / f"uncanonical-{len(segment)}"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    git("checkout", "-q", "-b", f"feat/{segment}", cwd=root)
+
+    completed, payload = run_resolver(root)
+
+    # a proposal is this contract speaking, so it stays inside the contract:
+    # over the byte convention, or outside the grammar bootstrap refuses
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
 
 
 def test_feature_branch_does_not_select_a_mismatched_sole_work_id(
@@ -403,7 +487,9 @@ def test_feature_branch_does_not_select_a_mismatched_sole_work_id(
 
     assert completed.returncode == 4, completed.stderr
     assert payload["status"] == "work_id_required"
-    assert payload["suggested_work_id"] == "feature-refunds"
+    # the label is meaningful enough to block the sole-existing fallback, but
+    # not a shape this contract defines, so it suggests nothing to accept
+    assert payload["suggested_work_id"] is None
     assert payload["candidate_work_ids"] == ["unrelated-work"]
 
 
@@ -618,9 +704,17 @@ def test_returns_structured_ambiguity_and_uses_workspace_match(
     assert payload["candidate_work_ids"] == ["eng-42", "eng-99"]
     assert payload["workspace_label"] == "main"
 
+    # a bare one-segment Git branch is not a documented branch shape, so it
+    # names nothing even when a stream happens to share its name
     git("worktree", "add", "-q", "-b", "eng-42", str(linked), cwd=root)
     for work_id in ("eng-42", "eng-99"):
         (linked / ".state/works" / work_id).mkdir(parents=True)
+    completed, payload = run_resolver(linked)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
+
+    git("checkout", "-q", "-b", "feat/eng-42", cwd=linked)
     completed, payload = run_resolver(linked)
 
     assert completed.returncode == 0, completed.stderr

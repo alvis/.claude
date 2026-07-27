@@ -107,8 +107,8 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   record, or Notion work item that records completion. It remains resolvable
   after ignored local work is retired. Only ignored work evidence may contain
   temporary absolute source or receipt paths.
-- Derived filenames use Essential's `derive-engineering-name` executable,
-  never the Notion mirror filename.
+- Derived filenames follow `naming.md` in the essential plugin's
+  `references/` directory, never the Notion mirror filename.
 - The PM's final output manifest includes all derived `.md` files and
   `provenance.json` in `generated_files`; versioned `docs/**` remains excluded
   from the final size check, which selects only eligible Markdown inside
