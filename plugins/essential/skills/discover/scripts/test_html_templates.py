@@ -1170,6 +1170,28 @@ def validate_artifact_builder() -> list[str]:
                 errors.append(f"builder mermaid {mode}: external src=http host")
             if output.encode("utf-8").count("\ufffd".encode("utf-8")):
                 errors.append(f"builder mermaid {mode}: raw U+FFFD present")
+
+    # Whether a board pays 3.4 MB is decided by whether it carries the attribute
+    # on an element \u2014 not by whether the page mentions it. Prose describing the
+    # device, an escaped markup sample, a selector string in an inline script,
+    # an authoring comment, and the sibling attributes that hold the definition
+    # and the render host are all text; only a real start tag counts.
+    marker_cases = (
+        ("prose", "<p>the figure carries data-mermaid (the marker)</p>", False),
+        ("escaped sample", "<pre>&lt;figure data-mermaid&gt;</pre>", False),
+        ("script selector", '<script>q("[data-mermaid]");</script>', False),
+        ("comment", "<!-- add data-mermaid to the figure -->", False),
+        ("sibling attributes", "<pre data-mermaid-source>graph LR</pre>", False),
+        ("figure", "<figure data-mermaid></figure>", True),
+        ("uppercase figure", "<FIGURE DATA-MERMAID></FIGURE>", True),
+        ("self-closing figure", "<figure data-mermaid />", True),
+    )
+    for label, fragment, expected in marker_cases:
+        if build_artifact.has_mermaid_figure(fragment) is not expected:
+            errors.append(
+                f"builder mermaid detection: {label} should "
+                f"{'require' if expected else 'not require'} the runtime"
+            )
     return errors
 
 

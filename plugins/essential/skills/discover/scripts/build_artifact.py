@@ -65,6 +65,7 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from html.parser import HTMLParser
 from pathlib import Path
 
 
@@ -92,12 +93,14 @@ MERMAID_CACHE = VENDOR_ROOT / "mermaid.cache.js"
 # Mermaid is ~3.4 MB — roughly seven times the rest of a compiled board — so it
 # is inlined ONLY into a board that actually carries a diagram. Everything else
 # is byte-for-byte what it was before diagrams existed.
-# `\b` ends the match at the hyphen in data-mermaid-source, so the marker text
-# alone — in a comment, an authoring note, or a sibling attribute — was enough to
-# inline 3.4 MB into a board carrying no figure. Match the bare attribute only,
-# and strip comments first so documentation about diagrams never costs a runtime.
-HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
-MERMAID_MARKER_RE = re.compile(r"data-mermaid(?=[\s=>/\"'])", re.IGNORECASE)
+# No text scan can answer this: the attribute name is also ordinary prose on any
+# board that documents the device — architecture-board's own copy reads "the
+# figure carries data-mermaid (also the marker...)" — and it appears in escaped
+# markup samples and in discovery.js's selector strings. Every one of those would
+# buy a 3.4 MB runtime for a board with no figure. Parse instead, and count only
+# a start tag that really carries the bare attribute; sibling attributes
+# (data-mermaid-source, data-mermaid-host) are different names and do not count.
+MERMAID_MARKER_ATTR = "data-mermaid"
 # The self-containment invariant for any vendored runtime: a bundle that reaches
 # for a chunk at runtime cannot resolve it from a file:// board, and the failure
 # is silent — an empty figure. Mermaid's UMD build has no dynamic import today;
@@ -173,6 +176,37 @@ PLACEHOLDER_RE = re.compile(r"\{\{[A-Z_][A-Z0-9_]*\}\}")
 
 class BuildError(RuntimeError):
     """Raised when a board source cannot be compiled into a valid artifact."""
+
+
+class _MermaidMarkerFinder(HTMLParser):
+    """Record whether any start tag carries the bare ``data-mermaid`` attribute."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.found = False
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        if any(name == MERMAID_MARKER_ATTR for name, _ in attrs):
+            self.found = True
+
+    handle_startendtag = handle_starttag
+
+
+def has_mermaid_figure(html: str) -> bool:
+    """Return whether a board source really carries a diagram figure.
+
+    The parser answers the question a substring search cannot: prose naming the
+    attribute, an escaped markup sample in a code block, a selector string
+    inside an inline script, and an HTML comment are all text, not elements, and
+    none of them buys the board a 3.4 MB runtime.
+    """
+
+    finder = _MermaidMarkerFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.found
 
 
 def patch_fffd(text: str) -> str:
@@ -439,7 +473,7 @@ def build(
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
-    needs_mermaid = bool(MERMAID_MARKER_RE.search(HTML_COMMENT_RE.sub("", html)))
+    needs_mermaid = has_mermaid_figure(html)
     if needs_mermaid and mermaid is None:
         mermaid = get_mermaid_runtime(offline=offline)
 
