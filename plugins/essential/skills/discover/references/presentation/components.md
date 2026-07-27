@@ -74,6 +74,16 @@ The shared runtime inserts one **Add note** control and an annotation summary in
 each section. It reuses one dialog/editor for the whole page. Do not hand-code
 separate editors, and never insert annotation text with `innerHTML`.
 
+Annotation is scoped two ways from that one dialog. A note taken with nothing
+selected belongs to the whole section. Selecting text inside a section arms the
+passage instead: a floating **Annotate** pill appears at the end of the
+selection, the section's own trigger re-labels to **Note on selection**, and
+<kbd>n</kbd> opens the dialog with the passage quoted above the note field.
+Selection notes are stored separately from the section note and reach the single
+generated prompt nested under it, so the reply says which words each comment was
+about. This is shell behavior; sections get it for free and must not
+re-implement it.
+
 ## Variable sections and generated navigation
 
 A board carries **1..N** annotatable sections, and **any section type may
@@ -549,6 +559,120 @@ Every board root carries `data-board-id`; the hub section carries
 `aria-current="page"`. Hrefs are session-relative (`./sibling.html`) and valid
 only because every board lives in one session workspace. The runtime includes
 the board id in the generated prompt's review context.
+
+## Board set (docnav index)
+
+A hub board is optional; the sidebar board set is not. Whenever a run produces
+more than one board, **every** board carries the same list in its docnav, so a
+reader can leave any board without first finding the hub. The starter scaffold
+ships the block; authoring it means writing one `<li>` per board produced, in
+reading order, including the board being authored — **once for the whole run**,
+in `<run-root>/_shared/board-set.html`:
+
+```html
+<li>
+  <a
+    class="essential-board-link"
+    data-board-link="signature-board"
+    href="./signature-board.html"
+    >Signature workstream</a
+  >
+</li>
+```
+
+Every board's `page.html` then names that file rather than carrying its own
+copy, and `build_artifact.py` rewrites the line from the partial at compose
+time:
+
+```html
+<div class="essential-docnav-rule" data-board-set-rule hidden></div>
+<p data-board-set-heading hidden>Board set</p>
+<ul class="essential-board-set" data-board-set hidden>
+  <!-- {{INCLUDE: _shared/board-set.html}} -->
+</ul>
+```
+
+The include path is relative to the run root — the directory holding every
+board source — so a path that escapes it is refused, as is an include inside the
+partial itself. Pasting the entries into a page instead is the one thing this
+forbids: the same labels, ids, and hrefs would then have to be patched
+independently on every board, and the copies drift the first time a board is
+added or renamed.
+
+The runtime marks the entry matching this page's `data-board-id` (falling back
+to `data-page-id`) with `aria-current="page"` and reveals the heading, rule, and
+list only at **two or more** entries. So never hand-set `aria-current` — an
+author copying a board between runs gets it wrong, and the runtime cannot — and
+leave the list empty on a single-artifact run, which then shows nothing at all.
+The `[data-board-hub]` section above is a different device: a content section
+that indexes the boards with descriptions. The docnav block is the standard; the
+hub section is for a run that wants a landing page as well.
+
+## Column density by content kind
+
+Card grids size their columns by the **kind of content** in them, not by a
+number the author picks. `.discovery-card-grid`, `.discovery-finding-grid`,
+`.discovery-variant-gallery`, and `.discovery-avatar-options` all resolve
+`--grid-col` from one scale:
+
+| Density   | Column floor | Content it is for                                |
+| --------- | ------------ | ------------------------------------------------ |
+| `tile`    | 8rem         | a number and a label: counters, stat tiles        |
+| `compact` | 14rem        | a short label and one line — the default          |
+| `prose`   | 22rem        | a heading and a sentence or two: findings, claims |
+| `wide`    | 30rem        | code, tables, multi-paragraph bodies              |
+
+`prose` is 22rem because ~352px less card padding is roughly 55ch at the
+board's body size, inside the readable 45–75ch measure; the 14rem default is
+~28ch, which is what collapses a finding card into four-word lines.
+`.discovery-finding-grid` therefore defaults to `prose` — a finding always
+carries a claim. Override per block on the grid element itself:
+
+```html
+<div class="discovery-card-grid" data-grid-density="prose">
+  <article class="discovery-finding-card">…</article>
+</div>
+```
+
+Choose the density from what the card holds. A grid of counters set to `prose`
+wastes the row as badly as a grid of claims set to `tile` cramps it.
+
+## Mermaid diagram
+
+A section that explains a flow, a pipeline, or a state machine says it in a
+diagram; prose is the fallback, not the default. Hand-author inline SVG
+(`node-edge-diagram`) when the drawing itself carries the claim — layered
+architecture, an annotated blueprint. Write Mermaid when the diagram merely
+records order or structure:
+
+```html
+<figure class="discovery-mermaid" data-mermaid>
+  <pre data-mermaid-source>
+sequenceDiagram
+    participant C as Client
+    participant S as Service
+    C->>S: submit op
+    S-->>C: ack
+  </pre
+  >
+  <div data-mermaid-host></div>
+  <figcaption>Order of one write through the service.</figcaption>
+</figure>
+```
+
+The figure carries `data-mermaid`, the definition lives in
+`[data-mermaid-source]`, and `[data-mermaid-host]` is empty. Never name a color:
+the runtime initializes Mermaid's `base` theme from the live `--ui-*` tokens, so
+a diagram inherits this board's accent and re-renders on a theme flip. A
+definition that fails to render stays visible with the error beside it rather
+than vanishing with the section's explanation.
+
+`data-mermaid` is also the build marker: `build_artifact.py` inlines the Mermaid
+runtime only into a board that carries one, because that runtime is several
+megabytes. A diagram-free board is byte-identical to what it was before Mermaid
+existed. Mermaid v11 resolves its diagram types statically, so a `file://` board
+is self-contained; the builder rejects a runtime containing a dynamic `import()`
+rather than shipping a board that fails only once opened.
 
 ## Scoped specimen
 

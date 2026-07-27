@@ -33,6 +33,13 @@ force-fetches the latest into the cache and fails loudly on any network error (i
 an explicit request for the newest runtime). ``--offline`` skips fetching entirely
 and uses the cache, erroring if none exists.
 
+The Mermaid diagram runtime is vendored on exactly those terms
+(``--refresh-mermaid``, ``assets/html/vendor/mermaid.cache.js``) with ONE
+difference: it is inlined only into a board that actually carries a
+``data-mermaid`` figure. It is roughly seven times the weight of everything else
+in a compiled board, so a board without a diagram must not pay for it, and one
+without a diagram compiles byte-for-byte to what it did before diagrams existed.
+
 Board sources are authored as small modular sources — one file per section, never
 one giant HTML file. A board source may be a DIRECTORY containing ``page.html`` (the
 shell with the full head/chrome and exactly one ``<!-- {{SECTIONS}} -->`` marker
@@ -58,6 +65,8 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from collections.abc import Callable
+from html.parser import HTMLParser
 from pathlib import Path
 
 
@@ -75,10 +84,94 @@ DISCOVERY_JS = ASSETS_ROOT / "discovery.js"
 # The cache is a gitignored offline fallback, primed on each successful fetch.
 TAILWIND_CDN_URL = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
 TAILWIND_CACHE = VENDOR_ROOT / "tailwind-browser.cache.js"
+# The Mermaid diagram runtime, vendored the same way and on the same terms. Its
+# UMD single-file build is the only distribution that can be inlined: the ESM
+# build resolves its diagram grammars as separate chunks, which a file:// board
+# cannot fetch.
+MERMAID_CDN_URL = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
+MERMAID_CACHE = VENDOR_ROOT / "mermaid.cache.js"
+
+# Mermaid is ~3.4 MB — roughly seven times the rest of a compiled board — so it
+# is inlined ONLY into a board that actually carries a diagram. Everything else
+# is byte-for-byte what it was before diagrams existed.
+# No text scan can answer this: the attribute name is also ordinary prose on any
+# board that documents the device — architecture-board's own copy reads "the
+# figure carries data-mermaid (also the marker...)" — and it appears in escaped
+# markup samples and in discovery.js's selector strings. Every one of those would
+# buy a 3.4 MB runtime for a board with no figure. Parse instead, and count only
+# a start tag that really carries the bare attribute; sibling attributes
+# (data-mermaid-source, data-mermaid-host) are different names and do not count.
+MERMAID_MARKER_ATTR = "data-mermaid"
+# The runtime needs both children: the definition to render, and the element to
+# render into. Missing either, discovery.js returns early and the board ships a
+# 3.4 MB runtime and an empty figure — a silent failure, so the build refuses it.
+# A present but blank source fails the same way, so the source is also read.
+MERMAID_SOURCE_ATTR = "data-mermaid-source"
+MERMAID_HOST_ATTR = "data-mermaid-host"
+MERMAID_FIGURE_CHILDREN = (MERMAID_SOURCE_ATTR, MERMAID_HOST_ATTR)
+# Self-containment applies to what Mermaid emits, not only to the markup the
+# author wrote. An image shape (`A@{ img: "…" }`) becomes an <image href> in the
+# browser, long after the compiled file was checked for literal src=/href=, so
+# the definition is where it has to be caught.
+#
+# Only the constructs that actually name a resource are matched, never the text
+# of a definition: a node label may legitimately display a URL or the characters
+# `img:`, and Mermaid fetches nothing for either. `img:` therefore counts solely
+# inside a shape-config block, and `click … href` solely as a statement. A
+# relative img: is refused with the absolute ones, because it cannot resolve
+# from a single file either.
+MERMAID_EXTERNAL_PATTERNS = (
+    ("image shape", re.compile(r"@\{[^}]*\bimg\s*:", re.IGNORECASE | re.DOTALL)),
+    (
+        "click href",
+        re.compile(r"^[^\S\n]*click\s+\S+\s+href\b", re.IGNORECASE | re.MULTILINE),
+    ),
+)
+# Elements that never open a scope, so a tag stack must not wait for their close.
+VOID_TAGS = frozenset(
+    {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    }
+)
+# The self-containment invariant for any vendored runtime: a bundle that reaches
+# for a chunk at runtime cannot resolve it from a file:// board, and the failure
+# is silent — an empty figure. Mermaid's UMD build has no dynamic import today;
+# this fails the build on the release that grows one, instead of shipping a board
+# whose diagrams quietly do not appear.
+DYNAMIC_IMPORT_RE = re.compile(r"\bimport\s*\(")
+# A diagram grammar id that only the Mermaid bundle itself carries. The word
+# "mermaid" is useless as evidence — the authored `data-mermaid` markup and the
+# always-inlined discovery runtime both contain it, so an empty or truncated
+# cache would validate as a diagram board whose figures silently never render.
+MERMAID_BUNDLE_SIGNATURE = "flowchart-v2"
+# One interior token is not evidence of a whole bundle either: a body truncated
+# after it still contains it. The UMD build's last statement publishes the global
+# the board reaches for, so requiring it near the end proves the download ran to
+# completion. A release that changes how the global is published fails the build
+# loudly, which is the right direction — a board that inlines an incomplete
+# runtime fails silently, with empty figures.
+MERMAID_BUNDLE_TAIL = 'globalThis["mermaid"] ='
+MERMAID_BUNDLE_TAIL_WINDOW = 4096
+# Floor for a plausible bundle; the real one is ~3.5 MB, so this only catches a
+# body that is obviously not the runtime at all.
+MERMAID_BUNDLE_MIN_BYTES = 1_000_000
 
 # The single marker line a directory source's page.html carries in place of its
 # composed sections.
 SECTIONS_MARKER = "<!-- {{SECTIONS}} -->"
+
+# An include line pulls a partial shared by every board of one run — the board
+# set above all, whose labels, ids and hrefs are the same fact on every sibling
+# page. The path is relative to the run root (the source directory's parent), so
+# `_shared/board-set.html` is one home that each page names and the composer
+# rewrites from, rather than a list hand-patched into N pages. Traversal out of
+# the run root is refused, and a partial may not itself include.
+INCLUDE_RE = re.compile(
+    r"^[^\S\n]*<!-- \{\{INCLUDE:[^\S\n]*(?P<path>[^\s{}]+)[^\S\n]*\}\} -->"
+    r"[^\S\n]*(?:\n|$)",
+    re.MULTILINE,
+)
 
 # Raw U+FFFD REPLACEMENT CHARACTER, spelled as an escape so an encoding mishap in
 # this source cannot be mistaken for an intentional literal, and its safe escape.
@@ -129,53 +222,276 @@ class BuildError(RuntimeError):
     """Raised when a board source cannot be compiled into a valid artifact."""
 
 
+class _MermaidFigure:
+    """One ``[data-mermaid]`` element: its required children and its definition.
+
+    Children are counted, not merely noted. The runtime resolves each child with
+    ``querySelector``, which takes the first match and ignores the rest, so a
+    second source or host is markup whose meaning differs between the build and
+    the browser — the definition here would be the concatenation while the board
+    renders only the first. Requiring exactly one of each removes the divergence
+    instead of teaching the build to reproduce it.
+    """
+
+    def __init__(self) -> None:
+        self.children: dict[str, int] = dict.fromkeys(MERMAID_FIGURE_CHILDREN, 0)
+        # Text of the FIRST source child only — the one querySelector returns.
+        self.definition = ""
+
+    @property
+    def missing(self) -> list[str]:
+        return [name for name, count in self.children.items() if count == 0]
+
+    @property
+    def duplicated(self) -> list[str]:
+        return [name for name, count in self.children.items() if count > 1]
+
+    @property
+    def malformed(self) -> list[str]:
+        return self.missing + self.duplicated
+
+    @property
+    def blank(self) -> bool:
+        return not self.malformed and not self.definition.strip()
+
+
+class _MermaidFigureFinder(HTMLParser):
+    """Collect each ``[data-mermaid]`` element, its required children, and its text.
+
+    Nesting is tracked with a tag stack so a child counts only when it is
+    actually inside the figure. Void elements never open a scope, and an end tag
+    unwinds to its matching start, which keeps unclosed markup from swallowing
+    the rest of the document. The text inside the source child is accumulated as
+    well: the runtime renders that text, so a source holding only whitespace is a
+    figure that draws nothing, which presence alone cannot detect.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._stack: list[str] = []
+        # (depth at which the element opened, figure) for open figures, and the
+        # same shape for the source children whose text is being collected.
+        self._open: list[tuple[int, _MermaidFigure]] = []
+        self._sources: list[tuple[int, _MermaidFigure]] = []
+        self.figures: list[_MermaidFigure] = []
+
+    def _note_children(self, names: set[str]) -> None:
+        for _depth, figure in self._open:
+            for required in MERMAID_FIGURE_CHILDREN:
+                if required in names:
+                    figure.children[required] += 1
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        names = {name for name, _ in attrs}
+        self._note_children(names)
+        # A source nested inside several open figures is a source for each of
+        # them, exactly as querySelector would resolve it — and for each, only
+        # its first one carries the definition the browser will render.
+        #
+        # A void element is skipped here even though it still counts as the
+        # source child. It holds no text, so the browser reads an empty
+        # textContent from it; opening a scope for one would instead sweep up
+        # every sibling that follows and call the figure well-defined. Left
+        # closed, the definition stays empty and the blank gate refuses it —
+        # which is exactly what the runtime would have done with it.
+        opening_source = (
+            [
+                figure
+                for _depth, figure in self._open
+                if figure.children[MERMAID_SOURCE_ATTR] == 1
+            ]
+            if MERMAID_SOURCE_ATTR in names and tag not in VOID_TAGS
+            else []
+        )
+        if tag not in VOID_TAGS:
+            self._stack.append(tag)
+        for figure in opening_source:
+            self._sources.append((len(self._stack), figure))
+        if MERMAID_MARKER_ATTR in names:
+            figure = _MermaidFigure()
+            self.figures.append(figure)
+            if tag not in VOID_TAGS:
+                self._open.append((len(self._stack), figure))
+
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        # A self-closing tag opens no scope, so it holds neither the required
+        # children nor any text.
+        names = {name for name, _ in attrs}
+        self._note_children(names)
+        if MERMAID_MARKER_ATTR in names:
+            self.figures.append(_MermaidFigure())
+
+    def handle_data(self, data: str) -> None:
+        for _depth, figure in self._sources:
+            figure.definition += data
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag not in self._stack:
+            return
+        while self._stack:
+            closed = self._stack.pop()
+            while self._open and self._open[-1][0] > len(self._stack):
+                self._open.pop()
+            while self._sources and self._sources[-1][0] > len(self._stack):
+                self._sources.pop()
+            if closed == tag:
+                return
+
+
+def _mermaid_figures(html: str) -> list[_MermaidFigure]:
+    finder = _MermaidFigureFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.figures
+
+
+def has_mermaid_figure(html: str) -> bool:
+    """Return whether a board source really carries a diagram figure.
+
+    The parser answers the question a substring search cannot: prose naming the
+    attribute, an escaped markup sample in a code block, a selector string
+    inside an inline script, and an HTML comment are all text, not elements, and
+    none of them buys the board a 3.4 MB runtime.
+    """
+
+    return bool(_mermaid_figures(html))
+
+
 def patch_fffd(text: str) -> str:
     """Escape every raw U+FFFD so the Artifact deploy validator accepts it."""
 
     return text.replace(RAW_FFFD, ESCAPED_FFFD)
 
 
-def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str:
-    """Return the Tailwind browser runtime text, downloading the latest on request.
+def _get_vendor_runtime(
+    label: str,
+    url: str,
+    cache: Path,
+    *,
+    accept: Callable[[str, str], None] | None = None,
+    refresh: bool = False,
+    offline: bool = False,
+) -> str:
+    """Return a vendored browser runtime's text, downloading the latest on request.
+
+    One home for every vendored runtime's fetch policy, so Tailwind and Mermaid
+    cannot drift apart on caching, patching or failure handling:
 
     * ``offline``: read the cache or raise if none exists — never touch the network.
-    * otherwise: fetch the latest 4.x runtime from the CDN, patch the U+FFFD
-      sentinel, fail if any raw U+FFFD survives, write the cache, and return it.
+    * otherwise: fetch the latest from the CDN, patch the U+FFFD sentinel, fail if
+      any raw U+FFFD survives, write the cache, and return it.
     * on fetch failure (URLError/OSError/timeout): fall back to the cache with a
       warning to stderr when one exists — unless ``refresh`` is set, in which case
       the failure is fatal (the caller explicitly asked for the newest runtime).
+
+    ``accept`` raises ``BuildError`` on a body that is not a usable runtime. It
+    runs on every path a caller can receive text from — the fetched body, and a
+    cache read on both the offline and the fetch-failure route — and, crucially,
+    it runs on the fetched body *before* the cache is written. A rejected
+    download therefore leaves the last working cache in place, so the offline
+    fallback survives the release that breaks the build.
     """
 
+    def checked(text: str, origin: str) -> str:
+        if accept is not None:
+            accept(text, origin)
+        return text
+
     if offline:
-        if TAILWIND_CACHE.is_file():
-            return TAILWIND_CACHE.read_text(encoding="utf-8")
+        if cache.is_file():
+            return checked(cache.read_text(encoding="utf-8"), "cached")
         raise BuildError(
-            "no cached Tailwind runtime; run once with network or without --offline"
+            f"no cached {label} runtime; run once with network or without --offline"
         )
 
     try:
-        with urllib.request.urlopen(TAILWIND_CDN_URL, timeout=60) as response:
+        with urllib.request.urlopen(url, timeout=60) as response:
             raw = response.read().decode("utf-8")
     except (urllib.error.URLError, OSError) as error:
-        if not refresh and TAILWIND_CACHE.is_file():
+        if not refresh and cache.is_file():
             print(
-                f"warning: could not fetch latest Tailwind ({error}); "
-                f"falling back to cached runtime {TAILWIND_CACHE}",
+                f"warning: could not fetch latest {label} ({error}); "
+                f"falling back to cached runtime {cache}",
                 file=sys.stderr,
             )
-            return TAILWIND_CACHE.read_text(encoding="utf-8")
-        raise BuildError(
-            f"could not fetch Tailwind runtime from {TAILWIND_CDN_URL}: {error}"
-        )
+            return checked(cache.read_text(encoding="utf-8"), "cached")
+        raise BuildError(f"could not fetch {label} runtime from {url}: {error}")
 
-    patched = patch_fffd(raw)
+    patched = checked(patch_fffd(raw), "downloaded")
     if RAW_FFFD in patched:
         raise BuildError(
-            "U+FFFD survived patching the downloaded Tailwind runtime"
+            f"U+FFFD survived patching the downloaded {label} runtime"
         )
     VENDOR_ROOT.mkdir(parents=True, exist_ok=True)
-    TAILWIND_CACHE.write_text(patched, encoding="utf-8")
+    cache.write_text(patched, encoding="utf-8")
     return patched
+
+
+def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Tailwind browser runtime text (latest 4.x)."""
+
+    return _get_vendor_runtime(
+        "Tailwind",
+        TAILWIND_CDN_URL,
+        TAILWIND_CACHE,
+        refresh=refresh,
+        offline=offline,
+    )
+
+
+def accept_mermaid_runtime(text: str, origin: str = "downloaded") -> None:
+    """Raise unless ``text`` is a complete, self-contained Mermaid UMD bundle.
+
+    Every Mermaid-specific acceptance rule lives here so all of them run before
+    the cache is replaced. Each rejected shape fails the build silently
+    otherwise: a wrong body inlines something that is not Mermaid, a truncated
+    one inlines a bundle that never publishes ``window.mermaid``, and a build
+    with a dynamic ``import()`` resolves grammars over the network, which a
+    ``file://`` board cannot do — all three render an empty figure, not an error.
+    """
+
+    detail = f"the {origin} Mermaid runtime ({len(text)} bytes)"
+    if len(text) < MERMAID_BUNDLE_MIN_BYTES:
+        raise BuildError(
+            f"{detail} is far below the {MERMAID_BUNDLE_MIN_BYTES} byte floor, "
+            f"so it is not the bundle; re-fetch it with --refresh-mermaid"
+        )
+    if MERMAID_BUNDLE_SIGNATURE not in text:
+        raise BuildError(
+            f"{detail} does not contain {MERMAID_BUNDLE_SIGNATURE!r}, so it is "
+            f"not the expected bundle; re-fetch it with --refresh-mermaid"
+        )
+    if MERMAID_BUNDLE_TAIL not in text[-MERMAID_BUNDLE_TAIL_WINDOW:]:
+        raise BuildError(
+            f"{detail} does not end by publishing the global "
+            f"({MERMAID_BUNDLE_TAIL!r} is absent from its last "
+            f"{MERMAID_BUNDLE_TAIL_WINDOW} bytes), so the body is truncated or "
+            f"the release changed how it exports; re-fetch it with "
+            f"--refresh-mermaid"
+        )
+    if DYNAMIC_IMPORT_RE.search(text):
+        raise BuildError(
+            f"{detail} contains a dynamic import(), so some diagram types would "
+            f"load over the network and silently render empty in a "
+            f"self-contained board; pin a UMD build that bundles every grammar"
+        )
+
+
+def get_mermaid_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Mermaid diagram runtime text (latest 11.x UMD build)."""
+
+    return _get_vendor_runtime(
+        "Mermaid",
+        MERMAID_CDN_URL,
+        MERMAID_CACHE,
+        accept=accept_mermaid_runtime,
+        refresh=refresh,
+        offline=offline,
+    )
 
 
 def _read(path: Path, label: str) -> str:
@@ -226,13 +542,49 @@ def resolve_source(source: str) -> Path:
     )
 
 
+def _resolve_includes(text: str, source_dir: Path) -> str:
+    """Replace every ``<!-- {{INCLUDE: <path>}} -->`` line with its partial.
+
+    The path is relative to the run root — ``source_dir.parent``, the directory
+    holding every board of one run — so siblings share one file rather than one
+    copy each. Substitution is byte-exact, like the sections marker: the partial
+    carries its own indentation.
+    """
+
+    run_root = source_dir.parent.resolve()
+
+    def substitute(match: re.Match[str]) -> str:
+        relative = match.group("path")
+        target = (run_root / relative).resolve()
+        if not target.is_relative_to(run_root):
+            raise BuildError(
+                f"include path {relative!r} in {source_dir / 'page.html'} "
+                f"escapes the run root {run_root}"
+            )
+        if not target.is_file():
+            raise BuildError(
+                f"missing include {relative!r} for {source_dir}: {target}"
+            )
+        partial = target.read_text(encoding="utf-8")
+        if INCLUDE_RE.search(partial):
+            raise BuildError(
+                f"include {target} itself includes another partial; keep "
+                f"shared sources one level deep"
+            )
+        return partial
+
+    return INCLUDE_RE.sub(substitute, text)
+
+
 def compose_directory(source_dir: Path) -> str:
     """Compose a directory source's page.html + sections/ into one HTML string.
 
     The single ``<!-- {{SECTIONS}} -->`` marker line (surrounding whitespace
     allowed) is replaced verbatim — including its newline — by the concatenation
     of the ``sections/*.html`` files in sorted filename order, with no added
-    separators (byte-exact concatenation).
+    separators (byte-exact concatenation). Any ``<!-- {{INCLUDE: <path>}} -->``
+    line in the shell or in a section is replaced the same way by the shared
+    partial it names.
     """
 
     page = source_dir / "page.html"
@@ -262,7 +614,8 @@ def compose_directory(source_dir: Path) -> str:
         )
 
     sections = "".join(f.read_text(encoding="utf-8") for f in section_files)
-    return marker_re.sub(lambda _m: sections, shell, count=1)
+    composed = marker_re.sub(lambda _m: sections, shell, count=1)
+    return _resolve_includes(composed, source_dir)
 
 
 def load_source(source_path: Path) -> tuple[str, str]:
@@ -273,22 +626,83 @@ def load_source(source_path: Path) -> tuple[str, str]:
     return _read(source_path, "board source"), str(source_path)
 
 
-def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> str:
+def build(
+    source_path: Path,
+    *,
+    artifact: bool,
+    runtime: str | None = None,
+    mermaid: str | None = None,
+    offline: bool = False,
+) -> str:
     """Compile a board source into a self-contained document or fragment.
 
     ``runtime`` is the Tailwind runtime text; when omitted the latest is fetched
-    (with cache fallback) via ``get_tailwind_runtime()``.
+    (with cache fallback) via ``get_tailwind_runtime()``. ``mermaid`` is the
+    diagram runtime, fetched the same way but ONLY when the source carries a
+    ``data-mermaid`` figure.
     """
 
     html, _display = load_source(source_path)
     _validate_source(html)
     if runtime is None:
-        runtime = get_tailwind_runtime()
+        runtime = get_tailwind_runtime(offline=offline)
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
+    figures = _mermaid_figures(html)
+    needs_mermaid = bool(figures)
+    incomplete = [", ".join(figure.missing) for figure in figures if figure.missing]
+    if incomplete:
+        raise BuildError(
+            "every [data-mermaid] figure needs a "
+            f"{' and a '.join(MERMAID_FIGURE_CHILDREN)} child; "
+            f"{len(incomplete)} of {len(figures)} are missing: "
+            + "; ".join(incomplete)
+        )
+    repeated = [", ".join(figure.duplicated) for figure in figures if figure.duplicated]
+    if repeated:
+        raise BuildError(
+            "every [data-mermaid] figure needs exactly one of each child; the "
+            "runtime resolves them with querySelector and silently ignores the "
+            f"rest, so {len(repeated)} of {len(figures)} figures are ambiguous: "
+            + "; ".join(repeated)
+        )
+    blank = sum(1 for figure in figures if figure.blank)
+    if blank:
+        raise BuildError(
+            f"{blank} of {len(figures)} [data-mermaid] figures have an empty "
+            f"[{MERMAID_SOURCE_ATTR}]; the runtime renders that text, so a blank "
+            "one draws nothing while the board still carries the diagram runtime"
+        )
+    external = sorted(
+        {
+            label
+            for figure in figures
+            for label, pattern in MERMAID_EXTERNAL_PATTERNS
+            if pattern.search(figure.definition)
+        }
+    )
+    if external:
+        raise BuildError(
+            "a [data-mermaid] definition names an external resource, which no "
+            "self-contained board can load — the Artifact CSP is default-src "
+            "'none', and a file:// board would fetch it off-box: "
+            + ", ".join(external)
+        )
+    if needs_mermaid:
+        if mermaid is None:
+            mermaid = get_mermaid_runtime(offline=offline)
+        else:
+            # A caller-supplied bundle is inlined into the board exactly like a
+            # downloaded one, so it earns exactly the same acceptance checks.
+            accept_mermaid_runtime(mermaid, "supplied")
+
     css_style = _inline_style(css)
     runtime_script = _inline_script(runtime)
+    # Mermaid must be parsed before discovery.js runs, which is what installs
+    # and renders the diagrams; an empty string keeps a diagram-free board
+    # byte-identical to what it compiled to before.
+    mermaid_script = _inline_script(mermaid) if needs_mermaid else ""
     # discovery.js loads with `defer` in the source; an inline script cannot
     # defer, so it is injected at the end of <body> to preserve the "runs after
     # DOM is parsed" ordering.
@@ -301,11 +715,15 @@ def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> s
     html, board_theme = _extract_board_theme(html)
 
     if artifact:
-        output = _build_fragment(html, css_style, runtime_script, js_block, board_theme)
+        output = _build_fragment(
+            html, css_style, runtime_script, js_block, board_theme, mermaid_script
+        )
     else:
-        output = _build_full_doc(html, css_style, runtime_script, js_block, board_theme)
+        output = _build_full_doc(
+            html, css_style, runtime_script, js_block, board_theme, mermaid_script
+        )
 
-    _validate(output, artifact=artifact)
+    _validate(output, artifact=artifact, needs_mermaid=needs_mermaid)
     return output
 
 
@@ -466,13 +884,15 @@ def _build_full_doc(
     runtime_script: str,
     js_block: str,
     board_theme: str = "",
+    mermaid_script: str = "",
 ) -> str:
     """Emit a standalone document with all shared assets injected.
 
     The inlined discovery.css ``<style>``, then the board-theme overlay (so its
     token redefinitions follow the shared sheet in cascade order), then the
     Tailwind runtime ``<script>`` are injected immediately before ``</head>``;
-    discovery.js is injected at the end of ``<body>``.
+    the Mermaid runtime (when the board carries a diagram) and then discovery.js
+    are injected at the end of ``<body>``, in that order.
     """
 
     def _inject_head(_match: re.Match[str]) -> str:
@@ -486,7 +906,8 @@ def _build_full_doc(
         )
 
     def _append_js(_match: re.Match[str]) -> str:
-        return f"    {js_block}\n  </body>"
+        diagrams = f"    {mermaid_script}\n" if mermaid_script else ""
+        return f"{diagrams}    {js_block}\n  </body>"
 
     html, count = re.subn(r"\s*</body>", _append_js, html, count=1)
     if count != 1:
@@ -500,12 +921,13 @@ def _build_fragment(
     runtime_script: str,
     js_block: str,
     board_theme: str = "",
+    mermaid_script: str = "",
 ) -> str:
     """Emit a head-less fragment for the Artifact tool to wrap in its own body.
 
     Part ordering: title, theme block, selection style, css, board-theme
     overlay (after the shared css so its token redefinitions win), runtime,
-    body, js.
+    body, the diagram runtime when the board carries one, js.
     """
 
     title_match = TITLE_RE.search(html)
@@ -534,12 +956,13 @@ def _build_fragment(
         *([board_theme] if board_theme else []),
         runtime_script,
         body_inner,
+        *([mermaid_script] if mermaid_script else []),
         js_block,
     ]
     return "\n".join(parts) + "\n"
 
 
-def _validate(output: str, *, artifact: bool) -> None:
+def _validate(output: str, *, artifact: bool, needs_mermaid: bool = False) -> None:
     """Fail the build unless the output is genuinely self-contained."""
 
     problems: list[str] = []
@@ -568,6 +991,11 @@ def _validate(output: str, *, artifact: bool) -> None:
         problems.append("board markup missing")
     if "[data-discovery-prompt-host]" not in output:
         problems.append("discovery.js not inlined")
+    if needs_mermaid and MERMAID_BUNDLE_SIGNATURE not in output:
+        problems.append(
+            "board carries a data-mermaid figure but the diagram runtime is not "
+            "inlined"
+        )
 
     if artifact:
         # Scan with script bodies removed: authored data-driven renderers may
@@ -636,9 +1064,15 @@ def main(argv: list[str] | None = None) -> int:
         "on any network error)",
     )
     parser.add_argument(
+        "--refresh-mermaid",
+        action="store_true",
+        help="Force-fetch the latest Mermaid diagram runtime into the cache "
+        "(fails loudly on any network error)",
+    )
+    parser.add_argument(
         "--offline",
         action="store_true",
-        help="Skip fetching; use the cached Tailwind runtime only",
+        help="Skip fetching; use the cached Tailwind and Mermaid runtimes only",
     )
     parser.add_argument(
         "--emit-page",
@@ -654,16 +1088,23 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         runtime_text: str | None = None
+        mermaid_text: str | None = None
         if args.refresh_tailwind:
             runtime_text = get_tailwind_runtime(refresh=True)
             print(
                 f"refreshed Tailwind runtime -> {TAILWIND_CACHE}", file=sys.stderr
             )
-            if not args.source:
-                return 0
+        if args.refresh_mermaid:
+            mermaid_text = get_mermaid_runtime(refresh=True)
+            print(f"refreshed Mermaid runtime -> {MERMAID_CACHE}", file=sys.stderr)
+        if (args.refresh_tailwind or args.refresh_mermaid) and not args.source:
+            return 0
 
         if not args.source:
-            parser.error("a board source is required (or use --refresh-tailwind)")
+            parser.error(
+                "a board source is required (or use --refresh-tailwind / "
+                "--refresh-mermaid)"
+            )
 
         source_path = resolve_source(args.source)
 
@@ -685,7 +1126,16 @@ def main(argv: list[str] | None = None) -> int:
 
         if runtime_text is None:
             runtime_text = get_tailwind_runtime(offline=args.offline)
-        output = build(source_path, artifact=args.artifact, runtime=runtime_text)
+        # Mermaid stays unfetched here: build() pulls it only if the source
+        # actually carries a diagram, so a diagram-free board never touches the
+        # network for it.
+        output = build(
+            source_path,
+            artifact=args.artifact,
+            runtime=runtime_text,
+            mermaid=mermaid_text,
+            offline=args.offline,
+        )
         out_path = args.out or default_output(source_path, args.artifact)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(output, encoding="utf-8")

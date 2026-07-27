@@ -380,6 +380,44 @@
     padding-bottom: 0.3rem;
   }
 
+  /* The headline spans the full measure and the lede keeps a narrow column
+     below it. Sharing one 1fr column with a 15rem aside left the h1 — capped
+     at 11ch for its poster weight — wrapping to two or three words a line,
+     which is what made the hero hard to read. A masthead authored without the
+     head wrapper keeps the original two-column shape, so boards written before
+     this render unchanged; :has() is what makes that fallback automatic rather
+     than a second class every author has to remember. */
+  .discovery-masthead-head {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 1rem;
+  }
+
+  .discovery-masthead-head h1 {
+    /* 11ch is tuned for the narrow column; across the full row it would break a
+       one-sentence headline into six lines. */
+    max-width: min(100%, 20ch);
+  }
+
+  .discovery-masthead:has(> .discovery-masthead-head) {
+    align-items: start;
+  }
+
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-copy {
+    grid-column: 1;
+  }
+
+  /* Column 2 top to bottom: the aside, then the annotation summary the runtime
+     injects as a masthead sibling — without this it auto-places back under the
+     lede. */
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-aside,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-annotation-summary {
+    grid-column: 2;
+  }
+
   .discovery-section {
     position: relative;
     display: grid;
@@ -1263,6 +1301,51 @@ body::before {
   font: 0.72rem/1.55 var(--ui-font-body);
 }
 
+/* BOARD SET — the standard docnav index of the boards one run produced. The
+   runtime reveals it only at two or more entries, so a single-artifact run
+   shows nothing at all. Sidebar-scaled sibling of .discovery-board-link: same
+   arrow/accent-dot grammar marking "you are here", without the card fill. */
+.essential-board-set {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An authored `display` beats the user agent's `[hidden]` rule, so the
+   hide-below-two contract has to be restated here. Without it a one-entry board
+   set stays visible whenever the runtime does not run — scripting off, or the
+   Tailwind runtime failing — which is exactly when the fallback must read
+   correctly. */
+.essential-board-set[hidden] {
+  display: none;
+}
+
+.essential-docnav .essential-board-link {
+  display: flex;
+  gap: 0.55rem;
+  align-items: baseline;
+}
+
+.essential-docnav .essential-board-link::before {
+  color: var(--ui-faint);
+  font: 700 0.68rem/1.6 var(--ui-font-mono);
+  content: "\2192"; /* → */
+}
+
+.essential-docnav .essential-board-link[aria-current="page"] {
+  background: var(--ui-surface-raised);
+  box-shadow: inset 2px 0 0 var(--ui-accent);
+  color: var(--ui-ink);
+  font-weight: 700;
+}
+
+.essential-docnav .essential-board-link[aria-current="page"]::before {
+  color: var(--ui-accent);
+  content: "\25CF"; /* ● */
+}
+
 .essential-prompt-counts {
   display: grid;
   gap: 0.15rem;
@@ -1458,6 +1541,13 @@ h1 {
   font-weight: 500;
   line-height: 0.95;
   letter-spacing: -0.052em;
+}
+
+/* Unlayered, so it has to restate the widened measure the layout layer sets for
+   a full-row headline — the 11ch above would otherwise win on layer order
+   alone, whatever the selector. */
+.discovery-masthead-head h1 {
+  max-width: min(100%, 20ch);
 }
 
 h2 {
@@ -1710,6 +1800,147 @@ h3 {
   backdrop-filter: none;
 }
 
+/* SELECTION-SCOPED ANNOTATION ------------------------------------------------
+   The pill follows a pointer selection; the section's own note trigger carries
+   the armed state for the keyboard and touch path. Both open the one dialog,
+   which grows a quote block in selection mode. */
+
+.discovery-selection-pill {
+  position: absolute;
+  z-index: 30;
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--ui-accent);
+  border-radius: var(--radius-control);
+  background: var(--ui-accent);
+  color: var(--ui-accent-contrast);
+  font: 650 0.78rem/1.15 var(--ui-font-body);
+  cursor: pointer;
+  box-shadow: var(--ui-shadow-small);
+}
+
+.discovery-selection-pill[hidden] {
+  display: none;
+}
+
+.discovery-selection-pill::before {
+  font: 700 0.72rem/1 var(--ui-font-mono);
+  content: "\201C"; /* “ */
+}
+
+/* Armed: a selection is live inside this section, so the trigger notes THAT
+   passage rather than the whole section. */
+.discovery-annotation-trigger[data-selection-armed="true"] {
+  border-color: var(--ui-accent);
+  color: var(--ui-accent-ink);
+}
+
+.discovery-annotation-quote {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-control);
+  background: var(--ui-accent-soft);
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+  color: var(--ui-accent-ink);
+  font-family: var(--ui-font-body);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.discovery-annotation-quote[hidden] {
+  display: none;
+}
+
+.discovery-excerpt-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.discovery-excerpt {
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--ui-accent);
+}
+
+.discovery-excerpt-quote {
+  font-size: 0.82rem;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.discovery-excerpt-note {
+  font-size: 0.9rem;
+}
+
+.discovery-excerpt-edit {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: 700 0.68rem/1.4 var(--ui-font-mono);
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* MERMAID DIAGRAMS -----------------------------------------------------------
+   A flow, a pipeline or a state machine is drawn, not described. The runtime
+   feeds mermaid the live --ui-* tokens, so nothing here names a colour; these
+   rules own the frame, the no-JS fallback and the visible failure state. */
+
+.discovery-mermaid {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 1.1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-card);
+  background: var(--ui-surface);
+}
+
+.discovery-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* The definition IS the fallback: with no JS, or after a render failure, the
+   reader still gets the diagram's content as text rather than a blank frame. */
+.discovery-mermaid pre {
+  margin: 0;
+  padding: 0.8rem;
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  background: var(--ui-code);
+  color: var(--ui-code-ink);
+  font: 0.76rem/1.5 var(--ui-font-mono);
+}
+
+.discovery-mermaid figcaption {
+  color: var(--ui-muted);
+  font-size: 0.8rem;
+}
+
+.discovery-mermaid[data-mermaid-state="failed"] {
+  border-color: var(--ui-sev-critical);
+}
+
+.discovery-mermaid-error {
+  margin: 0;
+  color: var(--ui-sev-critical);
+  font-family: var(--ui-font-mono);
+  font-size: 0.74rem;
+}
+
 .discovery-section#generated-brief {
   position: relative;
   inset: auto;
@@ -1893,13 +2124,51 @@ h3 {
   padding: clamp(1.25rem, 3vw, 2rem);
 }
 
+/* Grid column density, by the KIND OF CONTENT a cell carries.
+   One auto-fit floor cannot serve a two-word counter and a paragraph: at the
+   board's 0.9rem body size a 14rem column leaves ~28ch of text after padding,
+   well under the 45-75ch readable measure, so prose cards collapse to a few
+   words per line. Each rung names the content it is sized for; a block picks a
+   rung with data-grid-density, and these are the only place the numbers live. */
+:root {
+  --grid-col-tile: 8rem; /* a number and a label: counters, stat tiles */
+  --grid-col-compact: 14rem; /* a short label and one line of value */
+  --grid-col-prose: 22rem; /* heading + a sentence or two: ~55ch, readable */
+  --grid-col-wide: 30rem; /* code, tables, multi-paragraph bodies */
+}
+
 .discovery-card-grid,
 .discovery-finding-grid,
 .discovery-variant-gallery,
 .discovery-avatar-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--grid-col, var(--grid-col-compact))), 1fr)
+  );
   gap: 1rem;
+}
+
+/* Finding cards always carry a claim in prose, never a bare value. */
+.discovery-finding-grid {
+  --grid-col: var(--grid-col-prose);
+}
+
+/* Per-block override; set on the grid element itself. */
+[data-grid-density="tile"] {
+  --grid-col: var(--grid-col-tile);
+}
+
+[data-grid-density="compact"] {
+  --grid-col: var(--grid-col-compact);
+}
+
+[data-grid-density="prose"] {
+  --grid-col: var(--grid-col-prose);
+}
+
+[data-grid-density="wide"] {
+  --grid-col: var(--grid-col-wide);
 }
 
 .discovery-finding-card,
@@ -1955,7 +2224,10 @@ h3 {
 
 .discovery-direction-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--grid-col-tile)), 1fr)
+  );
 }
 
 .discovery-direction-columns,
@@ -2086,7 +2358,7 @@ h3 {
 
 .discovery-stat-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-tile), 1fr));
   overflow: hidden;
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-card);
@@ -2703,6 +2975,17 @@ h3 {
     grid-template-columns: 1fr;
     gap: 3.25rem;
   }
+
+  /* Once the masthead is one column, a child still asking for column 2 would
+     open an implicit second track and put itself back beside the lede. Covers
+     every narrower breakpoint too, since they only collapse further. */
+  .discovery-masthead:has(> .discovery-masthead-head) > .discovery-masthead-copy,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-aside,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-annotation-summary {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 82rem) {
@@ -2802,7 +3085,8 @@ h3 {
    Scoped to the masthead so section eyebrows (whose trigger reflows to static)
    are untouched, and to <=30rem so the trigger never moves on wide screens. */
 @media (max-width: 30rem) {
-  .discovery-masthead-copy .discovery-eyebrow {
+  .discovery-masthead-copy .discovery-eyebrow,
+  .discovery-masthead-head .discovery-eyebrow {
     padding-right: 6.5rem;
   }
 }

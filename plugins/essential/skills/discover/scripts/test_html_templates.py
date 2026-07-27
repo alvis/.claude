@@ -26,6 +26,12 @@ VENDOR_DIR = DISCOVER_ROOT / "assets" / "html" / "vendor"
 # The Tailwind runtime is downloaded on demand; the pinned vendor file must no
 # longer be committed, and the gitignored cache below is an optional fallback.
 TAILWIND_CACHE = VENDOR_DIR / "tailwind-browser.cache.js"
+# The grammar name from inside the Mermaid bundle that the builder validates a
+# fetched runtime against — absent from discovery.js, so presence of the
+# vendored bundle is distinguishable from the board's own always-inlined Mermaid
+# wiring. It is read from the builder at use rather than restated here, so the
+# two can never come to mean different bundles. (The obvious-looking "Mermaid
+# version" string does not exist anywhere in the UMD build.)
 BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
@@ -85,6 +91,10 @@ PRESENTATION_PATTERNS = (
     "term-rung", "teach-me-explainer", "signoff-block", "pitch-doc",
     "status-checklist", "activity-filter-bar", "quiz-gate", "sticky-reply",
     "live-editor-panel", "entity-card",
+    # Shell-level devices every board can reach for: the docnav board-set index
+    # (board-hub), content-kind column density (semantics-map), and a runtime-
+    # rendered Mermaid figure (architecture-board).
+    "board-set", "grid-density", "mermaid-diagram",
     # "Best bits" fold-in: provenance pills, honest trade-offs/invented-data flag,
     # author annotation pins + browser-frame chrome, multi-board hub, specimen
     # brand-palette scoping. Marked on the two new CONVENTION_EXAMPLES boards
@@ -797,7 +807,7 @@ def presentation_patterns(path: Path) -> set[str]:
     return parser.presentation_patterns
 
 
-def validate_runtime() -> list[str]:
+def validate_runtime(skipped: list[str]) -> list[str]:
     errors: list[str] = []
     source = JAVASCRIPT.read_text(encoding="utf-8")
     required_fragments = (
@@ -824,6 +834,24 @@ def validate_runtime() -> list[str]:
         "Provenance of claims",
         "Trade-offs surfaced",
         "data-annotation-pin",
+        # Board set: the docnav index is built by the runtime, which owns
+        # aria-current and the hide-below-two-entries rule, so an author never
+        # hand-marks "you are here".
+        "data-board-set",
+        "data-board-link",
+        'setAttribute("aria-current", "page")',
+        # Selection-scoped annotation: a second, quote-carrying note store
+        # beside the per-section one, armed from a live selection.
+        "excerpts",
+        "getSelection",
+        "selectionArmed",
+        "data-annotation-quote",
+        # Mermaid: rendered through DOMParser (never innerHTML) and themed from
+        # the live --ui-* tokens rather than any named color.
+        "data-mermaid-source",
+        "data-mermaid-host",
+        "DOMParser",
+        "MERMAID_THEME_TOKENS",
     )
     for fragment in required_fragments:
         if fragment not in source:
@@ -831,14 +859,24 @@ def validate_runtime() -> list[str]:
     if ".innerHTML" in source:
         errors.append(f"{JAVASCRIPT}: user-facing runtime must not use innerHTML")
 
-    result = subprocess.run(
-        ["node", "--check", str(JAVASCRIPT)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        errors.append(f"{JAVASCRIPT}: JavaScript syntax check failed: {result.stderr.strip()}")
+    # Node is not one of the repository's declared prerequisites (Bash, jq, Git,
+    # uv, gh), and this validator now runs inside `uvx pytest`, so an absent
+    # `node` must not make the one-command validation unrunnable. The skip is
+    # reported rather than swallowed: CI has Node, so the check still gates.
+    try:
+        result = subprocess.run(
+            ["node", "--check", str(JAVASCRIPT)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        skipped.append(f"{JAVASCRIPT}: JavaScript syntax check (node not installed)")
+    else:
+        if result.returncode != 0:
+            errors.append(
+                f"{JAVASCRIPT}: JavaScript syntax check failed: {result.stderr.strip()}"
+            )
     return errors
 
 
@@ -868,10 +906,57 @@ def validate_stylesheet() -> list[str]:
         ".discovery-board-index",
         "[data-specimen]",
         ".discovery-artifact-url",
+        # Docnav board set, selection annotation, content-kind column density,
+        # and the Mermaid figure — the density scale is asserted by name so no
+        # board re-introduces a bare column number.
+        ".essential-board-set",
+        # The board set authors its own `display`, which beats the user agent's
+        # rule for [hidden]; without this restatement the hide-below-two
+        # contract holds only while the runtime runs.
+        ".essential-board-set[hidden]",
+        ".essential-board-link",
+        ".discovery-selection-pill",
+        ".discovery-annotation-quote",
+        ".discovery-excerpt",
+        "--grid-col-tile",
+        "--grid-col-compact",
+        "--grid-col-prose",
+        "--grid-col-wide",
+        '[data-grid-density="prose"]',
+        ".discovery-mermaid",
     )
     for fragment in required_fragments:
         if fragment not in source:
             errors.append(f"{CSS}: missing responsive direction layout {fragment!r}")
+    return errors
+
+
+def validate_scaffold() -> list[str]:
+    """The starter scaffold must ship the shell blocks, not describe them.
+
+    A Floor feature an author has to remember to add is not a floor. The docnav
+    board-set block and the selection-note hint therefore live in the scaffold
+    itself; the runtime hides the block below two entries, so shipping it costs
+    a single-artifact board nothing.
+    """
+    errors: list[str] = []
+    source = TEMPLATE.read_text(encoding="utf-8")
+    required_fragments = (
+        "data-board-set-rule",
+        "data-board-set-heading",
+        "data-board-set",
+        "essential-board-set",
+        "essential-board-link",
+        "select text inside one",
+    )
+    for fragment in required_fragments:
+        if fragment not in source:
+            errors.append(f"{TEMPLATE}: starter scaffold is missing {fragment!r}")
+    if "aria-current=" in source:
+        errors.append(
+            f"{TEMPLATE}: scaffold must not hand-set aria-current — the runtime "
+            "marks the entry matching this board's id"
+        )
     return errors
 
 
@@ -929,6 +1014,178 @@ def _load_builder():
 
     _BUILD_ARTIFACT = build_artifact
     return build_artifact
+
+
+class _BoardLinkFinder(HTMLParser):
+    """Collect every board link: its id, its href, and whether a hub index holds it.
+
+    The quoting is left to the parser because a quote style is a formatting
+    choice, and this feeds a gate whose own coverage would otherwise depend on
+    it. The hub's index is tracked by nesting so its list can be compared against
+    the roster on its own — the shared sidebar partial names every board too, so
+    a check that merely looked for the ids somewhere in the composed page would
+    agree with itself no matter what the hub said.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._stack: list[str] = []
+        self._index_depths: list[int] = []
+        self.links: list[dict[str, object]] = []
+        # Recorded on sight and never unset: an index that closes empty still
+        # existed, and that is the case the comparison must not skip.
+        self.saw_index = False
+
+    def _record(self, attrs: list[tuple[str, str | None]]) -> None:
+        values = {name: (value or "").strip() for name, value in attrs}
+        if not values.get("data-board-link"):
+            return
+        self.links.append(
+            {
+                "id": values["data-board-link"],
+                "href": values.get("href", ""),
+                "in_index": bool(self._index_depths),
+            }
+        )
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        names = {name for name, _ in attrs}
+        if "data-board-index" in names:
+            self.saw_index = True
+        # The builder owns the void-element list; reading it here keeps the two
+        # parsers agreeing about what opens a scope.
+        if tag not in _load_builder().VOID_TAGS:
+            self._stack.append(tag)
+            if "data-board-index" in names:
+                self._index_depths.append(len(self._stack))
+        self._record(attrs)
+
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        self._record(attrs)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag not in self._stack:
+            return
+        while self._stack:
+            closed = self._stack.pop()
+            while self._index_depths and self._index_depths[-1] > len(self._stack):
+                self._index_depths.pop()
+            if closed == tag:
+                return
+
+
+def _board_links(html: str) -> list[dict[str, object]]:
+    finder = _BoardLinkFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.links
+
+
+def _has_board_index(html: str) -> bool:
+    finder = _BoardLinkFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.saw_index
+
+
+def validate_board_set_single_home() -> list[str]:
+    """The example run's board set must exist once, not once per sibling board.
+
+    Every board of one run carries the same list of boards, so hand-authoring it
+    into each page.html makes N sources of truth for one fact and the copies
+    drift the moment a board is added or renamed. Each page names the shared
+    partial through an include and the composer rewrites the list from it; a
+    board entry authored directly into a page is the regression this catches.
+    """
+
+    shared = EXAMPLES_SRC_ROOT / "_shared" / "board-set.html"
+    if not shared.is_file():
+        return [f"{shared}: shared board-set partial is missing"]
+
+    # This gate decides which pages get checked, so anything it fails to see is a
+    # board that silently leaves the invariant. A quote style is a formatting
+    # choice no author would expect to change coverage, so the attribute is read
+    # by the HTML parser rather than matched on one spelling of it.
+
+    errors: list[str] = []
+    include_line = "<!-- {{INCLUDE: _shared/board-set.html}} -->"
+    roster = _board_links(shared.read_text(encoding="utf-8"))
+    if not roster:
+        errors.append(f"{shared}: shared board-set partial names no boards")
+    hrefs = {str(entry["id"]): str(entry["href"]) for entry in roster}
+
+    # The invariant is the identical index on EVERY board of the run, so the
+    # partial's own entries decide which pages are checked. Keying off the pages
+    # that happen to still carry the block would let a board drop the index
+    # entirely and stay green.
+    for board in hrefs:
+        page = EXAMPLES_SRC_ROOT / board / "page.html"
+        if not page.is_file():
+            errors.append(
+                f"{shared}: names board {board!r}, which has no source at {page}"
+            )
+            continue
+        text = page.read_text(encoding="utf-8")
+        if include_line not in text:
+            errors.append(
+                f"{page}: board is named in {shared} but does not include it; "
+                f"every board of a run carries the same index — add "
+                f"'{include_line}'"
+            )
+        if "data-board-link" in text:
+            errors.append(
+                f"{page}: board-set entries are authored into the page; they "
+                f"belong once in {shared} — replace them with "
+                f"'{include_line}'"
+            )
+
+    # A page.html read alone cannot see a second roster: sections/ compose into
+    # the page, and the hub's own board index lives there, repeating every id and
+    # href. So every board's COMPOSED source is inspected, and each link it
+    # carries is checked against the partial. The partial stays the one home for
+    # which boards exist and where each one lives; a hub index that names an
+    # unknown board, points somewhere else, or misses one now fails here.
+    builder = _load_builder()
+    for source_dir in sorted(EXAMPLES_SRC_ROOT.glob("*/")):
+        if source_dir.name.startswith("_"):
+            continue
+        try:
+            composed = builder.compose_directory(source_dir)
+        except builder.BuildError as error:
+            errors.append(f"{source_dir}: cannot compose to check board links: {error}")
+            continue
+        links = _board_links(composed)
+        for link in links:
+            board_id = str(link["id"])
+            if board_id not in hrefs:
+                errors.append(
+                    f"{source_dir}: links to board {board_id!r}, which {shared} "
+                    "does not name; the shared partial is the only roster"
+                )
+            elif link["href"] and link["href"] != hrefs[board_id]:
+                errors.append(
+                    f"{source_dir}: links to board {board_id!r} at "
+                    f"{link['href']!r}, but {shared} places it at "
+                    f"{hrefs[board_id]!r}"
+                )
+        # Whether the board HAS an index is asked separately from what that index
+        # holds. Deriving the first from the second excuses the emptiest
+        # projection of all: a hub whose index lost every entry has none left to
+        # compare, while the shared sidebar in the same composed page keeps the
+        # rest of this gate satisfied.
+        if _has_board_index(composed):
+            indexed = {str(link["id"]) for link in links if link["in_index"]}
+            if indexed != set(hrefs):
+                missing = sorted(set(hrefs) - indexed)
+                errors.append(
+                    f"{source_dir}: its [data-board-index] is a projection of "
+                    f"{shared} and must list every board; missing {missing}"
+                )
+    return errors
 
 
 def validate_source_drift(page_path: Path, source_dir: Path) -> list[str]:
@@ -1005,6 +1262,16 @@ def validate_artifact_builder() -> list[str]:
     if not source.is_file():
         return errors + [f"{source}: builder test source is missing"]
 
+    # The conditional-inlining contract needs both halves compiled to mean
+    # anything: a diagram-bearing board that really carries the runtime, and a
+    # diagram-free one that really does not. Asserting only the second is how a
+    # broken fetch, a failed bundle check, or an over-broad marker regex stays
+    # green while every diagram on every board silently fails to draw.
+    diagram_source = EXAMPLES_ROOT / "architecture-board.html"
+    if not diagram_source.is_file():
+        errors.append(f"{diagram_source}: Mermaid builder test source is missing")
+    bundle_marker = build_artifact.MERMAID_BUNDLE_SIGNATURE
+
     # Independently defined (not imported from the builder) so a loosened builder
     # regex cannot blind this gate: Discover placeholders are {{UPPER_SNAKE}}.
     placeholder = re.compile(r"\{\{[A-Z_][A-Z0-9_]*\}\}")
@@ -1035,11 +1302,215 @@ def validate_artifact_builder() -> list[str]:
             lowered = output.lower()
             if "<!doctype" in lowered or "<html" in lowered or "<body" in lowered:
                 errors.append("builder fragment: must omit doctype/html/body")
+        if bundle_marker in output:
+            errors.append(
+                f"builder {mode}: Mermaid runtime inlined into a board with no "
+                "diagram (3.4 MB the board never uses)"
+            )
+
+    if diagram_source.is_file():
+        for mode, artifact in (("full", False), ("fragment", True)):
+            try:
+                output = build_artifact.build(diagram_source, artifact=artifact)
+            except Exception as error:
+                errors.append(f"builder mermaid {mode} mode failed: {error}")
+                continue
+            if bundle_marker not in output:
+                errors.append(
+                    f"builder mermaid {mode}: board carries a [data-mermaid] "
+                    "figure but no Mermaid runtime was inlined"
+                )
+            if b'src="http' in output.encode("utf-8"):
+                errors.append(f"builder mermaid {mode}: external src=http host")
+            if output.encode("utf-8").count("\ufffd".encode("utf-8")):
+                errors.append(f"builder mermaid {mode}: raw U+FFFD present")
+
+    # Whether a board pays 3.4 MB is decided by whether it carries the attribute
+    # on an element \u2014 not by whether the page mentions it. Prose describing the
+    # device, an escaped markup sample, a selector string in an inline script,
+    # an authoring comment, and the sibling attributes that hold the definition
+    # and the render host are all text; only a real start tag counts.
+    marker_cases = (
+        ("prose", "<p>the figure carries data-mermaid (the marker)</p>", False),
+        ("escaped sample", "<pre>&lt;figure data-mermaid&gt;</pre>", False),
+        ("script selector", '<script>q("[data-mermaid]");</script>', False),
+        ("comment", "<!-- add data-mermaid to the figure -->", False),
+        ("sibling attributes", "<pre data-mermaid-source>graph LR</pre>", False),
+        ("figure", "<figure data-mermaid></figure>", True),
+        ("uppercase figure", "<FIGURE DATA-MERMAID></FIGURE>", True),
+        ("self-closing figure", "<figure data-mermaid />", True),
+    )
+    for label, fragment, expected in marker_cases:
+        if build_artifact.has_mermaid_figure(fragment) is not expected:
+            errors.append(
+                f"builder mermaid detection: {label} should "
+                f"{'require' if expected else 'not require'} the runtime"
+            )
+
+    # Detecting the figure is only half of it. A figure the runtime cannot draw
+    # — missing either child, or holding a source with no definition in it —
+    # ships the whole 3.4 MB runtime for an empty frame, so the parser has to
+    # report completeness per figure, counting only what is really nested inside.
+    source = f"<pre {build_artifact.MERMAID_SOURCE_ATTR}>graph LR</pre>"
+    host = f"<div {build_artifact.MERMAID_HOST_ATTR}></div>"
+    figure_cases = (
+        ("complete", f"<figure data-mermaid>{source}{host}</figure>", 1, 0, 0),
+        ("missing host", f"<figure data-mermaid>{source}</figure>", 1, 1, 0),
+        ("missing source", f"<figure data-mermaid>{host}</figure>", 1, 1, 0),
+        (
+            "children outside the figure",
+            f"<figure data-mermaid></figure>{source}{host}",
+            1,
+            1,
+            0,
+        ),
+        (
+            "void element inside",
+            f"<figure data-mermaid><img src=x>{source}{host}</figure>",
+            1,
+            0,
+            0,
+        ),
+        ("self-closing figure", "<figure data-mermaid />", 1, 1, 0),
+        (
+            "two complete figures",
+            f"<figure data-mermaid>{source}{host}</figure>"
+            f"<figure data-mermaid>{source}{host}</figure>",
+            2,
+            0,
+            0,
+        ),
+        ("prose only", "<p>data-mermaid</p>", 0, 0, 0),
+        (
+            "blank source",
+            f'<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}>'
+            f"  \n </pre>{host}</figure>",
+            1,
+            0,
+            1,
+        ),
+        (
+            "source text outside the figure",
+            f"<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}>"
+            f"</pre>{host}</figure>graph LR",
+            1,
+            0,
+            1,
+        ),
+        # querySelector takes the first source and ignores the rest, so a second
+        # one makes the built definition and the rendered one different texts.
+        (
+            "two sources, first blank",
+            f'<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}> '
+            f"</pre>{source}{host}</figure>",
+            1,
+            1,
+            0,
+        ),
+        (
+            "two hosts",
+            f"<figure data-mermaid>{source}{host}{host}</figure>",
+            1,
+            1,
+            0,
+        ),
+        # A void source holds no text, so the browser reads nothing from it. The
+        # sibling text after it must not be mistaken for the definition.
+        (
+            "void source element",
+            f"<figure data-mermaid><img {build_artifact.MERMAID_SOURCE_ATTR}>"
+            f"graph LR; A--&gt;B{host}</figure>",
+            1,
+            0,
+            1,
+        ),
+    )
+    for label, fragment, total, malformed, blank in figure_cases:
+        found = build_artifact._mermaid_figures(fragment)
+        counted = (
+            len(found),
+            sum(1 for figure in found if figure.malformed),
+            sum(1 for figure in found if figure.blank),
+        )
+        if counted != (total, malformed, blank):
+            errors.append(
+                f"builder mermaid figures: {label} parsed as "
+                f"{counted}, expected {(total, malformed, blank)} "
+                "(figures, malformed, blank)"
+            )
+
+    # Self-containment survives only if it is judged on what Mermaid will emit —
+    # and only on that. A label is text the browser draws, not a resource it
+    # fetches, so a URL or the characters "img:" inside one must still compile.
+    external_cases = (
+        ("plain flowchart", "graph LR; A-->B", False),
+        ("sequence with a colon", "sequenceDiagram; A->>B: hello", False),
+        ("comment mentioning a shape", "%% shapes: rounded\ngraph LR; A-->B", False),
+        ("url shown in a label", 'A["POST https://api.example/v1"]', False),
+        ("img: written in a label", 'A["img: field absent"]', False),
+        ("word click in a label", 'A["click href to open"]', False),
+        ("image shape", 'A@{ img: "https://example.com/x.png" }', True),
+        ("relative image shape", 'A@{ img: "./x.png" }', True),
+        ("multiline shape block", 'A@{\n  shape: rect\n  img: "x.png"\n}', True),
+        ("click href", 'click A href "https://example.com"', True),
+        ("indented click href", '  click A href "//cdn.example.com/x"', True),
+    )
+    for label, definition, expected in external_cases:
+        refused = any(
+            pattern.search(definition)
+            for _name, pattern in build_artifact.MERMAID_EXTERNAL_PATTERNS
+        )
+        if refused is not expected:
+            errors.append(
+                f"builder mermaid externals: {label} should "
+                f"{'be refused' if expected else 'be accepted'}"
+            )
+
+    # The one-home gate decides its own coverage from these values, so a quote
+    # style that the reader cannot see must not remove a board from it.
+    link_markup = (
+        '<a data-board-link="alpha" href="./a.html"></a>'
+        "<a data-board-link='beta' href='./b.html'></a>"
+        "<ul data-board-index><li><a data-board-link=gamma href=./c.html>g</a></li></ul>"
+        '<a data-board-link="delta" href="./d.html"></a>'
+    )
+    parsed = [
+        (link["id"], link["href"], link["in_index"])
+        for link in _board_links(link_markup)
+    ]
+    expected_links = [
+        ("alpha", "./a.html", False),
+        ("beta", "./b.html", False),
+        # Inside the index, and only until the list closes — the sidebar links
+        # that follow must not inherit its scope.
+        ("gamma", "./c.html", True),
+        ("delta", "./d.html", False),
+    ]
+    if parsed != expected_links:
+        errors.append(
+            "board-set link parsing: quote style and index nesting must not "
+            f"change what is seen, got {parsed}"
+        )
+    # An index that closed empty is the case the projection comparison must not
+    # skip, so its presence is detected apart from its contents.
+    for label, markup, expected in (
+        ("populated index", link_markup, True),
+        ("empty index", "<ul data-board-index></ul>", True),
+        ("no index at all", '<a data-board-link="alpha"></a>', False),
+    ):
+        if _has_board_index(markup) is not expected:
+            errors.append(
+                f"board-index detection: {label} should read as "
+                f"{'present' if expected else 'absent'}"
+            )
     return errors
 
 
-def run(stage: str) -> dict[str, object]:
+def run(stage: str, include_builder: bool = True) -> dict[str, object]:
     errors: list[str] = []
+    # Checks that could not run for want of an undeclared optional tool. They are
+    # never silently dropped: the report names each one.
+    skipped: list[str] = []
     expected_actions = (
         (REPRESENTATIVE_ACTION,) if stage == "representative" else ACTIONS
     )
@@ -1052,8 +1523,10 @@ def run(stage: str) -> dict[str, object]:
     if TEMPLATE.is_file():
         errors.extend(validate_html(TEMPLATE, allow_placeholders=True))
         errors.extend(validate_source_drift(TEMPLATE, TEMPLATE_SRC))
+        errors.extend(validate_scaffold())
+    errors.extend(validate_board_set_single_home())
     if JAVASCRIPT.is_file():
-        errors.extend(validate_runtime())
+        errors.extend(validate_runtime(skipped))
     if CSS.is_file():
         errors.extend(validate_stylesheet())
 
@@ -1084,7 +1557,11 @@ def run(stage: str) -> dict[str, object]:
 
     if stage == "complete":
         errors.extend(validate_direction_reference_contract())
-        errors.extend(validate_artifact_builder())
+        # The only check here that needs a network: it compiles boards, and
+        # compiling downloads the runtimes. Every other check reads the tree, so
+        # an offline caller drops this one alone rather than the whole gate.
+        if include_builder:
+            errors.extend(validate_artifact_builder())
         missing_patterns = set(PRESENTATION_PATTERNS).difference(covered_patterns)
         if missing_patterns:
             errors.append(
@@ -1100,6 +1577,7 @@ def run(stage: str) -> dict[str, object]:
         "presentation_patterns_covered": len(covered_patterns),
         "presentation_patterns_required": len(PRESENTATION_PATTERNS),
         "errors": errors,
+        "skipped_checks": skipped,
     }
 
 

@@ -12,7 +12,20 @@
           </h2>
         </div>
         <div class="discovery-section-body">
-          <div class="discovery-card-grid">
+          <!--
+            grid-density. Every card here is a heading plus a sentence, so the
+            grid asks for the prose column (~55ch) rather than the compact
+            default (~28ch), which would break these into four-word lines.
+            Set the density from the KIND of content, not the card count:
+            tile for a number and a label, compact for a short label and one
+            line, prose for a claim, wide for code, tables, or several
+            paragraphs.
+          -->
+          <div
+            class="discovery-card-grid"
+            data-grid-density="prose"
+            data-presentation-pattern="grid-density"
+          >
             <article class="discovery-finding-card">
               <p class="discovery-eyebrow">Preserve exactly</p>
               <h3>Contiguous commit</h3>
