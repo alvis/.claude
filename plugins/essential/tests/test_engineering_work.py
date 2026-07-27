@@ -369,10 +369,15 @@ def test_minted_work_id_rejects_unusable_input(
             ("feat-auth", "feat-auth-refresh"),
             "feat-auth-refresh",
         ),
-        # what follows the stream must start with the ordinal: a longer name
-        # that merely begins like one is its own topic, not a slice of it
+        # only the namespace grammar resolves: the ordinal opens the segment
+        # after a real `/`, so a name that merely reads like one is its own
+        # topic and gets asked about rather than opening the wrong stream
         ("feat/checkout-refunds", ("feat-checkout",), ""),
         ("feat/work-id-naming-rewrite/01-spec", ("feat-work-id-naming",), ""),
+        ("feat/payments-2026-migration", ("feat-payments",), ""),
+        # a collision-ordinal identity resolves to itself once bootstrapped,
+        # and to nothing before that — never to the stream it collided with
+        ("chore/lint-2", ("chore-lint",), ""),
         ("feat/work-id-naming", (), ""),
     ),
 )

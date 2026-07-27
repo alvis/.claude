@@ -84,27 +84,26 @@ def tracker_work_id(value: str) -> str:
 
 def workspace_work_id(label: str, candidates: set[str]) -> str:
     """Return the work ID a branch or workspace label belongs to, if any."""
-    labels = [label]
-    if "/" in label:
-        labels.append(label.rsplit("/", 1)[1])
+    namespace, _, final_segment = label.rpartition("/")
 
-    for value in labels:
+    for value in (label, final_segment):
         derived = bounded_slug(value)
         if derived in candidates:
             return derived
 
-    # A stream owns a branch namespace, one branch per slice or sub-task
-    # (`<kind>/<scope-slug>/NN-<slice>`), so the owning ID is a prefix of the
-    # label. What follows must start with the ordinal, which is what separates
-    # a slice of this stream from a longer name that merely begins like it:
-    # `feat/work-id-naming-rewrite/01-x` is its own topic, not slice 1 of
-    # `feat-work-id-naming`, and resolving it there would open the wrong work.
-    for value in labels:
-        tokens = ascii_tokens(value)
-        for size in range(len(tokens) - 1, 0, -1):
-            prefix = "-".join(tokens[:size])
-            if prefix in candidates and tokens[size].isdigit():
-                return prefix
+    # Beyond an exact name, a stream owns a branch namespace holding one
+    # numbered branch per slice or sub-task (`<kind>/<scope-slug>/NN-<slice>`).
+    # Only that grammar resolves, anchored on the real `/` boundary and an
+    # ordinal opening the final segment. Matching a bare token prefix instead
+    # would read `feat/payments-2026-migration` as slice 2026 of a
+    # `feat-payments` stream, and `chore/lint-2` as a slice of `chore-lint`
+    # rather than the distinct identity it is — each one opening the wrong
+    # work, which is worse than asking.
+    tokens = ascii_tokens(final_segment)
+    if namespace and tokens and tokens[0].isdigit():
+        derived = bounded_slug(namespace)
+        if derived in candidates:
+            return derived
     return ""
 
 
