@@ -46,4 +46,6 @@ in `docs/retired-work-ids.md`, one record per line as `<work-id> <date>`. This h
 nothing else worth promoting — code-only work leaves no durable document to
 carry its name, and without the ledger entry the ID vanishes from `works/`,
 `archive/`, and `docs/` alike, so a later stream can reclaim an identity that
-old pull requests and `source-work` references still point at.
+old pull requests and `source-work` references still point at. The entry is
+committed before the deletion it stands in for: a record still loose in the
+working tree does not outlive the state it replaced.

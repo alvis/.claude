@@ -118,4 +118,5 @@ outcome, not a failure.
   for the mechanical split of an oversized file.
 - Two documents whose names would collide in the same directory: the later one
   takes the next free ordinal, as a work ID does (`change-explainer.md`, then
-  `change-explainer-2.md`). Never overwrite a sibling to claim its name.
+  `change-explainer-2.md`) — shortening the base first where the ordinal would
+  not otherwise fit in 48 bytes. Never overwrite a sibling to claim its name.

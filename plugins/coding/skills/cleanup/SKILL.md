@@ -150,7 +150,10 @@ ledger below, which is therefore its only project `generated_files` entry. Backu
     `<work-id> <date>`, and include that file in `generated_files`. A work ID is never reused, and
     deletion removes the last `.state/` trace of it, so the ledger entry is
     what keeps the name spent — this applies equally to a stream that promoted
-    nothing else. A stream whose entry cannot be written is not removable.
+    nothing else. Save that entry through `coding:commit` before deleting
+    anything: an uncommitted edit is discarded by the next `git reset --hard`,
+    which would erase the record after the state it replaced is already gone.
+    A stream whose entry cannot be committed is not removable.
     Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
     validated `.state/works/<work-id>` path after rechecking the gate and
