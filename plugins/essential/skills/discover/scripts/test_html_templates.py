@@ -1016,6 +1016,30 @@ def _load_builder():
     return build_artifact
 
 
+class _BoardLinkFinder(HTMLParser):
+    """Collect every ``data-board-link`` value, whatever the attribute's quoting."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.links: list[str] = []
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        for name, value in attrs:
+            if name == "data-board-link" and value:
+                self.links.append(value.strip())
+
+    handle_startendtag = handle_starttag
+
+
+def _board_links(html: str) -> list[str]:
+    finder = _BoardLinkFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.links
+
+
 def validate_board_set_single_home() -> list[str]:
     """The example run's board set must exist once, not once per sibling board.
 
@@ -1030,9 +1054,14 @@ def validate_board_set_single_home() -> list[str]:
     if not shared.is_file():
         return [f"{shared}: shared board-set partial is missing"]
 
+    # This gate decides which pages get checked, so anything it fails to see is a
+    # board that silently leaves the invariant. A quote style is a formatting
+    # choice no author would expect to change coverage, so the attribute is read
+    # by the HTML parser rather than matched on one spelling of it.
+
     errors: list[str] = []
     include_line = "<!-- {{INCLUDE: _shared/board-set.html}} -->"
-    entries = re.findall(r'data-board-link="([^"]+)"', shared.read_text(encoding="utf-8"))
+    entries = _board_links(shared.read_text(encoding="utf-8"))
     if not entries:
         errors.append(f"{shared}: shared board-set partial names no boards")
 
@@ -1272,20 +1301,67 @@ def validate_artifact_builder() -> list[str]:
             0,
             1,
         ),
+        # querySelector takes the first source and ignores the rest, so a second
+        # one makes the built definition and the rendered one different texts.
+        (
+            "two sources, first blank",
+            f'<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}> '
+            f"</pre>{source}{host}</figure>",
+            1,
+            1,
+            0,
+        ),
+        (
+            "two hosts",
+            f"<figure data-mermaid>{source}{host}{host}</figure>",
+            1,
+            1,
+            0,
+        ),
     )
-    for label, fragment, total, missing, blank in figure_cases:
+    for label, fragment, total, malformed, blank in figure_cases:
         found = build_artifact._mermaid_figures(fragment)
         counted = (
             len(found),
-            sum(1 for figure in found if figure.missing),
+            sum(1 for figure in found if figure.malformed),
             sum(1 for figure in found if figure.blank),
         )
-        if counted != (total, missing, blank):
+        if counted != (total, malformed, blank):
             errors.append(
                 f"builder mermaid figures: {label} parsed as "
-                f"{counted}, expected {(total, missing, blank)} "
-                "(figures, incomplete, blank)"
+                f"{counted}, expected {(total, malformed, blank)} "
+                "(figures, malformed, blank)"
             )
+
+    # Self-containment survives only if it is judged on what Mermaid will emit.
+    external_cases = (
+        ("plain flowchart", "graph LR; A-->B", False),
+        ("sequence with a colon", "sequenceDiagram; A->>B: hello", False),
+        ("comment mentioning a shape", "%% shapes: rounded\ngraph LR; A-->B", False),
+        ('image shape', 'A@{ img: "https://example.com/x.png" }', True),
+        ("relative image shape", 'A@{ img: "./x.png" }', True),
+        ("click href", 'click A href "https://example.com"', True),
+        ("protocol-relative url", 'click A href "//cdn.example.com/x"', True),
+    )
+    for label, definition, expected in external_cases:
+        if bool(build_artifact.MERMAID_EXTERNAL_RE.search(definition)) is not expected:
+            errors.append(
+                f"builder mermaid externals: {label} should "
+                f"{'be refused' if expected else 'be accepted'}"
+            )
+
+    # The one-home gate decides its own coverage from these values, so a quote
+    # style that the reader cannot see must not remove a board from it.
+    link_markup = (
+        '<a data-board-link="alpha"></a>'
+        "<a data-board-link='beta'></a>"
+        "<a data-board-link=gamma></a>"
+    )
+    if _board_links(link_markup) != ["alpha", "beta", "gamma"]:
+        errors.append(
+            "board-set link parsing: every quote style must yield the same "
+            f"entries, got {_board_links(link_markup)}"
+        )
     return errors
 
 

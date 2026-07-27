@@ -2136,11 +2136,25 @@
         });
     };
 
-    const renderEach = (list) =>
-      list.reduce(
-        (chain, figure) => chain.then(() => renderFigure(figure)),
-        Promise.resolve(),
+    // One queue for every render request, ever. mermaid.initialize installs a
+    // single global config, so two chains running at once would interleave their
+    // initialize calls and could finish out of order, letting a render from an
+    // older theme land in the host after the current one. Serializing removes
+    // both races, and because each figure reads its own tokens at its turn in
+    // the queue rather than when the request was made, whatever renders last
+    // renders with the theme in force at that moment.
+    let queue = Promise.resolve();
+    const renderEach = (list) => {
+      queue = list.reduce(
+        // renderFigure ends in a catch that reports the failure in the figure,
+        // but mermaid.initialize can throw before that promise exists. Absorb it
+        // here too: a rejected queue would never run another render, so one bad
+        // diagram would freeze every other one on the next theme flip.
+        (chain, figure) => chain.then(() => renderFigure(figure)).catch(() => {}),
+        queue,
       );
+      return queue;
+    };
     const renderAll = () => renderEach(figures);
 
     renderAll();

@@ -109,6 +109,15 @@ MERMAID_MARKER_ATTR = "data-mermaid"
 MERMAID_SOURCE_ATTR = "data-mermaid-source"
 MERMAID_HOST_ATTR = "data-mermaid-host"
 MERMAID_FIGURE_CHILDREN = (MERMAID_SOURCE_ATTR, MERMAID_HOST_ATTR)
+# Self-containment applies to what Mermaid emits, not only to the markup the
+# author wrote. An image shape (`A@{ img: "…" }`) becomes an <image href> in the
+# browser, long after the compiled file was checked for literal src=/href=, so
+# the definition is where it has to be caught. Any absolute URL is refused for
+# the same reason the rest of the board refuses one; a relative img: cannot
+# resolve from a single file either, so the directive is rejected outright.
+MERMAID_EXTERNAL_RE = re.compile(
+    r"\bimg\s*:|\bhttps?://|(?<![\w:])//(?=[\w.-]+\.[a-z]{2,})", re.IGNORECASE
+)
 # Elements that never open a scope, so a tag stack must not wait for their close.
 VOID_TAGS = frozenset(
     {
@@ -205,21 +214,36 @@ class BuildError(RuntimeError):
 
 
 class _MermaidFigure:
-    """One ``[data-mermaid]`` element: its required children and its definition."""
+    """One ``[data-mermaid]`` element: its required children and its definition.
+
+    Children are counted, not merely noted. The runtime resolves each child with
+    ``querySelector``, which takes the first match and ignores the rest, so a
+    second source or host is markup whose meaning differs between the build and
+    the browser — the definition here would be the concatenation while the board
+    renders only the first. Requiring exactly one of each removes the divergence
+    instead of teaching the build to reproduce it.
+    """
 
     def __init__(self) -> None:
-        self.children: dict[str, bool] = dict.fromkeys(
-            MERMAID_FIGURE_CHILDREN, False
-        )
+        self.children: dict[str, int] = dict.fromkeys(MERMAID_FIGURE_CHILDREN, 0)
+        # Text of the FIRST source child only — the one querySelector returns.
         self.definition = ""
 
     @property
     def missing(self) -> list[str]:
-        return [name for name, seen in self.children.items() if not seen]
+        return [name for name, count in self.children.items() if count == 0]
+
+    @property
+    def duplicated(self) -> list[str]:
+        return [name for name, count in self.children.items() if count > 1]
+
+    @property
+    def malformed(self) -> list[str]:
+        return self.missing + self.duplicated
 
     @property
     def blank(self) -> bool:
-        return not self.missing and not self.definition.strip()
+        return not self.malformed and not self.definition.strip()
 
 
 class _MermaidFigureFinder(HTMLParser):
@@ -246,17 +270,22 @@ class _MermaidFigureFinder(HTMLParser):
         for _depth, figure in self._open:
             for required in MERMAID_FIGURE_CHILDREN:
                 if required in names:
-                    figure.children[required] = True
+                    figure.children[required] += 1
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
         names = {name for name, _ in attrs}
         self._note_children(names)
-        # A source nested inside several open figures is a definition for each of
-        # them, exactly as querySelector would resolve it.
+        # A source nested inside several open figures is a source for each of
+        # them, exactly as querySelector would resolve it — and for each, only
+        # its first one carries the definition the browser will render.
         opening_source = (
-            [figure for _depth, figure in self._open]
+            [
+                figure
+                for _depth, figure in self._open
+                if figure.children[MERMAID_SOURCE_ATTR] == 1
+            ]
             if MERMAID_SOURCE_ATTR in names
             else []
         )
@@ -614,12 +643,32 @@ def build(
             f"{len(incomplete)} of {len(figures)} are missing: "
             + "; ".join(incomplete)
         )
+    repeated = [", ".join(figure.duplicated) for figure in figures if figure.duplicated]
+    if repeated:
+        raise BuildError(
+            "every [data-mermaid] figure needs exactly one of each child; the "
+            "runtime resolves them with querySelector and silently ignores the "
+            f"rest, so {len(repeated)} of {len(figures)} figures are ambiguous: "
+            + "; ".join(repeated)
+        )
     blank = sum(1 for figure in figures if figure.blank)
     if blank:
         raise BuildError(
             f"{blank} of {len(figures)} [data-mermaid] figures have an empty "
             f"[{MERMAID_SOURCE_ATTR}]; the runtime renders that text, so a blank "
             "one draws nothing while the board still carries the diagram runtime"
+        )
+    external = [
+        f"{match.group(0)!r}"
+        for figure in figures
+        for match in MERMAID_EXTERNAL_RE.finditer(figure.definition)
+    ]
+    if external:
+        raise BuildError(
+            "a [data-mermaid] definition names an external resource, which no "
+            "self-contained board can load — the Artifact CSP is default-src "
+            "'none', and a file:// board would fetch it off-box: "
+            + "; ".join(sorted(set(external)))
         )
     if needs_mermaid:
         if mermaid is None:
