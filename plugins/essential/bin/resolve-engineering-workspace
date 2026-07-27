@@ -270,7 +270,11 @@ if [[ -n "$workspace_label" ]]; then
   candidate_from_label=""
   case "${#label_segments[@]}" in
     1)
-      candidate_from_label="${label_segments[0]}"
+      # a jj workspace is named for the stream it works; a one-segment Git
+      # branch is not a documented branch shape and so names nothing
+      if [[ "$workspace_source" == "jj_workspace" ]]; then
+        candidate_from_label="${label_segments[0]}"
+      fi
       ;;
     2 | 3)
       if [[ "${label_segments[0]}" =~ ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)$ ]] &&
@@ -282,12 +286,15 @@ if [[ -n "$workspace_label" ]]; then
   esac
 
   if [[ -n "$candidate_from_label" ]]; then
-    probe_id="$(slugify "$candidate_from_label")"
-    # Suggest what the branch actually names, so a PM who accepts the
-    # suggestion bootstraps an ID this same branch resolves to next time.
-    workspace_work_id="$probe_id"
-    if is_work_candidate "$probe_id"; then
-      workspace_match_id="$probe_id"
+    # Suggest what the branch names, so a PM who accepts the suggestion
+    # bootstraps an ID this same branch resolves to next time.
+    workspace_work_id="$(slugify "$candidate_from_label")"
+    # Match on the segment as written, never on its slug: `feat/foo_bar` is
+    # not the branch of a `foo-bar` stream, and silently treating it as one
+    # opens work the branch never named.
+    if valid_work_id "$candidate_from_label" &&
+       is_work_candidate "$candidate_from_label"; then
+      workspace_match_id="$candidate_from_label"
     fi
   fi
 fi

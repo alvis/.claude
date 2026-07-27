@@ -12,6 +12,10 @@ letter, drop everything else, and collapse runs of separators to one hyphen:
 is `payments-refunds-v2-0`. Shorten by dropping whole trailing words, never
 part of a word.
 
+Keep a slug at or under 48 bytes, which is the widest a generated filename
+gets before it stops fitting a listing. Where one word is longer than that on
+its own, cut the word — there is no smaller boundary left to keep.
+
 A name with nothing to fold — `影師嗎` — leaves an empty slug, which is not a
 name. Write an English slug for what the thing is instead; the source string
 was never the identity, only the usual shortest route to one.
@@ -60,15 +64,19 @@ feat/<work-id>/03-docs
 ```
 
 So a work ID of `work-id-naming` gives `feat/work-id-naming`, and its stack
-slices are `feat/work-id-naming/01-resolver` and so on. The type is chosen for
-the work, and never becomes part of the ID or of the state path.
+slices are `feat/work-id-naming/01-resolver` and so on. The type describes the
+branch, never the identity: it is not part of the ID or the state path, and
+`fix/work-id-naming` resolves to the same stream as `feat/work-id-naming`.
 
 Git stores refs as files, so `feat/<work-id>` and `feat/<work-id>/01-resolver`
 cannot both exist — creating the second while the first is present fails with
-`cannot lock ref`. A stream that grows past one pull request moves into the
-namespace: push the numbered branches first, repoint any open pull request at
-the branch that now carries its commits, and delete the bare branch last, so
-no published pull request is ever left without a head.
+`cannot lock ref`, locally and on the remote alike. A stream that grows past
+one pull request therefore cannot add a numbered branch beside the bare one;
+it **renames** the bare branch into the first slice, which frees the namespace
+in the same operation that vacates it. Rename it through the forge's own
+branch rename, which retargets the open pull request as it goes, rather than
+deleting the remote ref — deleting the head of an open pull request closes it.
+Only once the rename has landed do the later slices push.
 
 The segment after the ordinal is free-form: name the slice, not its
 `GIT-PR-TYPE-01` category.

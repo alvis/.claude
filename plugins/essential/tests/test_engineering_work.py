@@ -307,6 +307,7 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
         "feat/work-id-naming",
         "feat/work-id-naming/01-resolver",
         "feat/work-id-naming/02-contract",
+        "fix/work-id-naming",  # the type describes the branch, not the identity
     ):
         git("checkout", "-q", "--orphan", branch, cwd=root)
         completed, payload = run_resolver(root)
@@ -320,9 +321,11 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
     # and two candidates leave nothing to fall back to
     for branch in (
         "feat/work-id-naming-rewrite",   # its own topic, not this stream
-        "feat/work-id-naming/3-late",   # ordinals are exactly two digits
-        "feat/work-id-naming/123-late", # three digits is not the shape either
-        "feature/work-id-naming",       # `feature` is not a conventional type
+        "feat/work-id-naming/3-late",    # ordinals are exactly two digits
+        "feat/work-id-naming/123-late",  # three digits is not the shape either
+        "feature/work-id-naming",        # `feature` is not a conventional type
+        "work-id-naming",                # a bare branch is not a branch shape
+        "feat/work_id_naming",           # matched as written, never slugged
     ):
         git("checkout", "-q", "--orphan", branch, cwd=root)
         completed, payload = run_resolver(root)
@@ -560,9 +563,17 @@ def test_returns_structured_ambiguity_and_uses_workspace_match(
     assert payload["candidate_work_ids"] == ["eng-42", "eng-99"]
     assert payload["workspace_label"] == "main"
 
+    # a bare one-segment Git branch is not a documented branch shape, so it
+    # names nothing even when a stream happens to share its name
     git("worktree", "add", "-q", "-b", "eng-42", str(linked), cwd=root)
     for work_id in ("eng-42", "eng-99"):
         (linked / ".state/works" / work_id).mkdir(parents=True)
+    completed, payload = run_resolver(linked)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
+
+    git("checkout", "-q", "-b", "feat/eng-42", cwd=linked)
     completed, payload = run_resolver(linked)
 
     assert completed.returncode == 0, completed.stderr
