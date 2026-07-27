@@ -380,6 +380,44 @@
     padding-bottom: 0.3rem;
   }
 
+  /* The headline spans the full measure and the lede keeps a narrow column
+     below it. Sharing one 1fr column with a 15rem aside left the h1 — capped
+     at 11ch for its poster weight — wrapping to two or three words a line,
+     which is what made the hero hard to read. A masthead authored without the
+     head wrapper keeps the original two-column shape, so boards written before
+     this render unchanged; :has() is what makes that fallback automatic rather
+     than a second class every author has to remember. */
+  .discovery-masthead-head {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 1rem;
+  }
+
+  .discovery-masthead-head h1 {
+    /* 11ch is tuned for the narrow column; across the full row it would break a
+       one-sentence headline into six lines. */
+    max-width: min(100%, 20ch);
+  }
+
+  .discovery-masthead:has(> .discovery-masthead-head) {
+    align-items: start;
+  }
+
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-copy {
+    grid-column: 1;
+  }
+
+  /* Column 2 top to bottom: the aside, then the annotation summary the runtime
+     injects as a masthead sibling — without this it auto-places back under the
+     lede. */
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-aside,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-annotation-summary {
+    grid-column: 2;
+  }
+
   .discovery-section {
     position: relative;
     display: grid;
@@ -1494,6 +1532,13 @@ h1 {
   font-weight: 500;
   line-height: 0.95;
   letter-spacing: -0.052em;
+}
+
+/* Unlayered, so it has to restate the widened measure the layout layer sets for
+   a full-row headline — the 11ch above would otherwise win on layer order
+   alone, whatever the selector. */
+.discovery-masthead-head h1 {
+  max-width: min(100%, 20ch);
 }
 
 h2 {
@@ -2921,6 +2966,17 @@ h3 {
     grid-template-columns: 1fr;
     gap: 3.25rem;
   }
+
+  /* Once the masthead is one column, a child still asking for column 2 would
+     open an implicit second track and put itself back beside the lede. Covers
+     every narrower breakpoint too, since they only collapse further. */
+  .discovery-masthead:has(> .discovery-masthead-head) > .discovery-masthead-copy,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-masthead-aside,
+  .discovery-masthead:has(> .discovery-masthead-head)
+    > .discovery-annotation-summary {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 82rem) {
@@ -3020,7 +3076,8 @@ h3 {
    Scoped to the masthead so section eyebrows (whose trigger reflows to static)
    are untouched, and to <=30rem so the trigger never moves on wide screens. */
 @media (max-width: 30rem) {
-  .discovery-masthead-copy .discovery-eyebrow {
+  .discovery-masthead-copy .discovery-eyebrow,
+  .discovery-masthead-head .discovery-eyebrow {
     padding-right: 6.5rem;
   }
 }
