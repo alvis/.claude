@@ -47,6 +47,11 @@ Notes for the sections where the guidance is not self-evident:
   *skipped — goal/spec unknown* when neither could be resolved; never grade the diff
   against a goal inferred from the diff. Then answer the test question: would these
   tests fail if the implementation broke? "Coverage is fine" is not a verdict.
+- **Relocations** — a change that belongs elsewhere goes in whichever section its
+  priority earns, with the destination path in the bullet: "Move the null guard into
+  `src/orders/order.service.ts:88` — every other caller needs it too." When the right
+  home is a lower PR in the stack, say that instead and name `coding:commit
+  --reorder`.
 - **Not anchored to a line** — findings about deleted files, missing files,
   architecture, or anything GitHub cannot attach to a diff line. Unanchorable is not
   unimportant; never drop these.

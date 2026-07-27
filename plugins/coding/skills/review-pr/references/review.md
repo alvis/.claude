@@ -25,6 +25,16 @@ most valuable ones in the review:
   accepting a new helper, type, or constant: a hand-rolled thing that
   `@theriety/core` or the codebase already provides is a finding, and so is an
   abstraction with one caller.
+- **Is this the right place?** A correct change in the wrong location is still a
+  finding. Watch for a guard repeated at every call site that belongs in the callee,
+  validation in a controller that belongs in the domain layer, a constant copied
+  locally that belongs in shared constants, and a symptom patched downstream of the
+  function that actually produced the bad value. Propose the destination by exact
+  path in `alternative`, and explain what moving it buys — usually that the other
+  callers get the fix too. Root-cause-versus-symptom placement is P1, because the bug
+  stays live everywhere else; ordinary layering misplacement is P2. When the right
+  home is a lower PR in the stack, say so and point at `coding:commit --reorder`,
+  which owns reparenting; never reshape history from here.
 - **Callers of what changed.** Follow a changed signature, return shape, or thrown
   error into its actual call sites. A caller that now receives `undefined`, ignores
   a new error, or breaks on a renamed field is a verified finding — anchor it to the
@@ -61,6 +71,7 @@ findings:
     prefix: issue | suggestion | nit | question | praise
     body: <the comment text, written per tone.md>
     evidence: <the rule, failure path, or repository precedent it rests on>
+    alternative: <exact path this change belongs in instead, or null>
 goal_spec_alignment: matches | diverges | skipped_unknown
 not_reviewed:
   - path: <path>
@@ -82,6 +93,9 @@ not_reviewed:
   `praise` where the work is genuinely good.
 - `evidence` is mandatory. A finding that cannot name the rule it applies or the
   failure it predicts is an opinion, and opinions are not posted.
+- `alternative` carries a real path, not a direction. "Move this to the service
+  layer" is not actionable; `src/orders/order.service.ts` is. Leave it `null` unless
+  a better location was actually found.
 - `goal_spec_alignment` is `skipped_unknown` when no goal or spec can be resolved.
   Never infer a goal from the diff and then grade the diff against it.
 

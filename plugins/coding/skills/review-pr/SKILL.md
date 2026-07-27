@@ -164,6 +164,10 @@ The diff is the subject of the review, not the limit of the reading.
   the lean ladder in [CODING.md](../../references/CODING.md) — need, `@theriety/core`,
   existing codebase, platform, installed dependency, then minimum new code. A
   hand-rolled helper duplicating what the repository already provides is a finding.
+- **Say so when the change belongs somewhere else.** A guard repeated at each call
+  site that belongs in the callee, validation in a controller that belongs in the
+  domain, a symptom patched downstream of the function that produced the bad value —
+  propose the better location and name the exact path. Never relocate it yourself.
 
 Cover the concerns in consequence order — correctness and security, then alignment,
 testing, quality, docs, style — in one pass.
