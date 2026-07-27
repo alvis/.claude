@@ -394,6 +394,37 @@ def test_a_parked_stream_still_owns_its_name(tmp_path: Path) -> None:
     assert payload["suggested_work_id"] is None
 
 
+def test_a_retired_id_is_spent_after_its_directories_are_gone(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "retired"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    # nothing under works/ or archive/ any more: the ledger is the only record,
+    # which is exactly why it is versioned while .state/ is not
+    ledger = root / "docs/retired-work-ids.md"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text("payments-rewrite\nrefunds\n", encoding="utf-8")
+
+    completed, payload = run_resolver(root, "refunds")
+
+    assert completed.returncode == 2
+    assert "retired" in payload["error"]
+
+    git("checkout", "-q", "-b", "feat/refunds", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
+
+    # a name merely containing a retired one is untouched
+    completed, payload = run_resolver(root, "refunds-v2", bootstrap=False)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == "refunds-v2"
+
+
 def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
     tmp_path: Path,
 ) -> None:

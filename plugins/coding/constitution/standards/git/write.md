@@ -104,6 +104,8 @@ Format: `<type>/(<scope>)/<topic>`
 
 Use the same scope convention as commit messages (short package name, concern, or catalog).
 
+An engineering work stream is the one exception: its branch is `<type>/<work-id>`, and a stack numbers slices beneath it as `<type>/<work-id>/NN-<scope>`. The middle segment is the stream's identity, not a package scope, so it is read as such and never has to match the commit scope — `feat/work-id-naming/01-resolver` is correct for commits scoped `essential`. See `GIT-PR-STACK-01`.
+
 | Scenario | Example |
 |---|---|
 | Single package | `feat/ai/add-extraction-pipeline` |

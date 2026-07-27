@@ -146,8 +146,8 @@ ledger below, which is therefore its only project `generated_files` entry. Backu
    IDs and restoration commands because operation history preserves them.
 10. **Record the retirement, then remove only approved, verified targets.**
     Before deleting an engineering-work directory, append its work ID and the
-    retirement date to the versioned retirement ledger under `docs/`, and
-    include that ledger in `generated_files`. A work ID is never reused, and
+    retirement date to `docs/retired-work-ids.md`, one ID per line, and
+    include that file in `generated_files`. A work ID is never reused, and
     deletion removes the last `.state/` trace of it, so the ledger entry is
     what keeps the name spent — this applies equally to a stream that promoted
     nothing else. A stream whose entry cannot be written is not removable.

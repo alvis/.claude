@@ -228,11 +228,24 @@ state_root="${default_workspace:-$active_workspace}"
 engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
 archive_root="$engineering_dir/archive"
+# versioned, so it lives with the active tree's docs, not with .state/
+retired_ledger="$active_workspace/docs/retired-work-ids.md"
+
+# A retired ID is spent even after its directories are gone, which is the
+# whole reason the ledger is versioned while `.state/` is not.
+is_retired_work_id() {
+  [[ -f "$retired_ledger" ]] &&
+    grep -qxF -- "$1" "$retired_ledger"
+}
 
 # A parked stream still owns its name. Minting a second one beside it would
 # leave two streams with one identity and no way to tell which unparks.
 if [[ -n "$work_id" && ! -d "$work_root/$work_id" && -d "$archive_root/$work_id" ]]; then
   invalid "work ID from $work_id_source names a parked stream under archive/; unpark that one instead of minting a second"
+fi
+
+if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] && is_retired_work_id "$work_id"; then
+  invalid "work ID from $work_id_source was retired and is recorded in docs/retired-work-ids.md; an identity is never reused"
 fi
 
 # The canonical shape governs minting, never resumption: a stream created
@@ -336,7 +349,8 @@ if [[ -n "$workspace_label" ]]; then
     # actually mint; recommending anything else sends the PM to a bootstrap
     # that then refuses it.
     if canonical_work_id "$candidate_from_label" &&
-       [[ ! -d "$archive_root/$candidate_from_label" ]]; then
+       [[ ! -d "$archive_root/$candidate_from_label" ]] &&
+       ! is_retired_work_id "$candidate_from_label"; then
       workspace_work_id="$candidate_from_label"
     fi
   fi
