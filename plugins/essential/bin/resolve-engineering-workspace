@@ -59,6 +59,14 @@ within_id_bound() {
   [[ ${#1} -le 32 ]]
 }
 
+# 32 bytes is a preference; this is not. The ID is a single path component,
+# which every filesystem this runs on caps at 255 bytes, so a longer new name
+# resolves here and then fails in the bootstrap the contract requires next.
+# Existing streams are exempt — one already on disk has proved it fits.
+usable_as_path_component() {
+  [[ ${#1} -le 255 ]]
+}
+
 canonical_directory() {
   (cd "$1" && pwd -P)
 }
@@ -264,6 +272,10 @@ fi
 if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] &&
    ! canonical_work_id "$work_id"; then
   invalid "a new work ID from $work_id_source must be single-hyphen kebab-case"
+fi
+if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] &&
+   ! usable_as_path_component "$work_id"; then
+  invalid "a new work ID from $work_id_source must fit a path component, at most 255 bytes"
 fi
 
 require_safe_directory_component "$engineering_dir"

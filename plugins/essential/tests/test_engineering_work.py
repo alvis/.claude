@@ -375,6 +375,13 @@ def test_length_is_a_convention_while_shape_is_a_requirement(
     assert completed.returncode == 2
     assert "single-hyphen" in payload["error"]
 
+    # nor is the path-component limit: resolving a name the bootstrap that
+    # must follow cannot create would only move the failure one step later
+    completed, payload = run_resolver(root, "a" * 256)
+
+    assert completed.returncode == 2
+    assert "path component" in payload["error"]
+
 
 def test_a_parked_stream_still_owns_its_name(tmp_path: Path) -> None:
     root = tmp_path / "parked"
