@@ -43,6 +43,11 @@ append the next free ordinal — shortening the scope first so the ordinal still
 fits in 32 bytes, since `<31-byte-name>-2` would not. That ordinal makes a
 distinct stream, not a slice of the one it collided with.
 
+Those directories are where a name is looked up, not what makes it spent: a
+name is taken while **any** trace of it survives, including a branch or a
+source tree left behind by a stream whose `works/` entry is already gone. Take
+a colliding name only after establishing that nothing is still using it.
+
 Retirement deletes a stream's `works/` and `archive/` directories after its
 retention window, so those two directories cannot be the only record of which
 IDs are spoken for. A retired ID is still spent, and a stream with nothing to
