@@ -22,11 +22,14 @@ was never the identity, only the usual shortest route to one.
 
 ## Work ID
 
-A slug naming what the work is about, at most 32 bytes — the ID is repeated
-in every state path, in the source tree path, and in a branch that itself
-nests under a type and over a slice, so 32 keeps the longest of those
-(`feat/<work-id>/01-<scope>`) inside a terminal column and a PR title. It
-carries no type prefix — the type belongs to the branch, not to the identity:
+A slug naming what the work is about, kept at or under 32 bytes — the ID is
+repeated in every state path, in the source tree path, and in a branch that
+itself nests under a type and over a slice, so 32 keeps the longest of those
+(`feat/<work-id>/01-<scope>`) inside a terminal column and a PR title. That
+bound is the convention, not a gate: a longer name chosen deliberately is
+honoured, and only the shape is enforced, since a name outside the grammar
+does not survive the trip through a path and a branch. The ID carries no type
+prefix — the type belongs to the branch, not to the identity:
 
 ```text
 work-id-naming

@@ -335,7 +335,7 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
         assert payload["status"] == "work_id_required", branch
 
 
-def test_length_bound_governs_minting_but_never_resumption(
+def test_length_is_a_convention_while_shape_is_a_requirement(
     tmp_path: Path,
 ) -> None:
     root = tmp_path / "bounded"
@@ -360,13 +360,16 @@ def test_length_bound_governs_minting_but_never_resumption(
     assert payload["work_id"] == legacy
     assert payload["work_id_source"] == "git_branch"
 
-    # the same length names nothing yet, so it would be minted, and is refused
-    completed, payload = run_resolver(root, "brand-new-" + "y" * 31)
+    # the bound is a convention, so naming a longer stream deliberately is
+    # honoured even when nothing of that name exists yet
+    minted = "brand-new-" + "y" * 31
+    completed, payload = run_resolver(root, minted)
 
-    assert completed.returncode == 2
-    assert "at most 32 bytes" in payload["error"]
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == minted
 
-    # so is a name outside the single-hyphen grammar
+    # the shape is not a convention: a name outside the grammar does not
+    # survive the trip through a path and a branch, so minting one is refused
     completed, payload = run_resolver(root, "foo--bar")
 
     assert completed.returncode == 2
@@ -446,7 +449,7 @@ def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
 
 
 @pytest.mark.parametrize("segment", ("z" * 33, "foo--bar"))
-def test_a_segment_the_minting_path_would_refuse_is_never_suggested(
+def test_a_segment_outside_the_naming_contract_is_never_suggested(
     segment: str, tmp_path: Path
 ) -> None:
     root = tmp_path / f"uncanonical-{len(segment)}"
@@ -457,7 +460,8 @@ def test_a_segment_the_minting_path_would_refuse_is_never_suggested(
 
     completed, payload = run_resolver(root)
 
-    # suggesting it would recommend an identity bootstrap then rejects
+    # a proposal is this contract speaking, so it stays inside the contract:
+    # over the byte convention, or outside the grammar bootstrap refuses
     assert completed.returncode == 4, completed.stderr
     assert payload["suggested_work_id"] is None
 

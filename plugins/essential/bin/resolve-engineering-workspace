@@ -45,11 +45,18 @@ valid_work_id() {
   [[ "$1" =~ ^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$ ]]
 }
 
-# What a *new* identity may look like: single hyphens only, within the bound.
-# Minting and suggesting use this, so nothing outside the naming contract is
-# ever created or recommended.
+# What a *new* identity may look like. Shape only: a name outside this grammar
+# does not survive the round trip through a path and a branch, so minting one
+# is a defect rather than a style choice.
 canonical_work_id() {
-  [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] && [[ ${#1} -le 32 ]]
+  [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
+}
+
+# The 32-byte bound is a convention with a cost behind it, not a requirement,
+# so it governs only what this resolver proposes; a PM who names a longer
+# stream deliberately gets it.
+within_id_bound() {
+  [[ ${#1} -le 32 ]]
 }
 
 canonical_directory() {
@@ -256,7 +263,7 @@ fi
 # that exact ID back.
 if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] &&
    ! canonical_work_id "$work_id"; then
-  invalid "a new work ID from $work_id_source must be single-hyphen kebab-case, at most 32 bytes"
+  invalid "a new work ID from $work_id_source must be single-hyphen kebab-case"
 fi
 
 require_safe_directory_component "$engineering_dir"
@@ -353,6 +360,7 @@ if [[ -n "$workspace_label" ]]; then
     # actually mint; recommending anything else sends the PM to a bootstrap
     # that then refuses it.
     if canonical_work_id "$candidate_from_label" &&
+       within_id_bound "$candidate_from_label" &&
        [[ ! -d "$archive_root/$candidate_from_label" ]] &&
        ! is_retired_work_id "$candidate_from_label"; then
       workspace_work_id="$candidate_from_label"
