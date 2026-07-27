@@ -112,12 +112,27 @@ streams it refreshed and preserves every other row byte-for-byte. Follow this te
 
 - Updated: `<timestamp>`
 
+## Goal
+
+`<the project's goal, one short paragraph>`
+
+## Requirements
+
+- `<overall requirement the end result must satisfy>`
+
+## Streams
+
 | Work ID | Lifecycle | Headline | Next action | Location | Spec | Documentations |
 |---|---|---|---|---|---|---|
 | `<work-id>` | `<initialized\|active\|blocked\|reviewing\|completed\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](docs/<slug>.md)` or `-` |
 | `<work-id>` | `completed` | `<one line>` | `-` | `-` | `-` | `-` |
 ```
 
+- `Goal` and `Requirements` sections are authored, not derived — semantics live
+  in the Global overview section of `engineering-work.md`. Upserts and
+  rebuilds preserve them byte-for-byte, exactly like unrefreshed rows; when
+  creating a brand-new overview, fill them from user intent or leave an
+  explicit `-` for the PM to resolve, never invent them from stream files.
 - `Location` is the checkout the stream's **code** is worked in: its
   repository-relative or absolute path plus the tree kind and current revision.
   The stream's state is not there — it is centralized under the default source

@@ -154,15 +154,16 @@ child name.
 ### Global overview (`.state/overview.md`)
 
 The default source tree carries `.state/`, and with it the single global
-`overview.md`: one table of every work stream (work ID, lifecycle, headline,
-next action, `Location`, `Spec`, `Documentations`). Every stream's state
-already sits under the same `works/`, so this is an index over local state,
-not a cross-tree aggregator; its `Location` column records **which checkout
-each stream is worked in**. Every cell derives from each stream's own files,
-so a lost or stale overview is rebuilt by re-reading them. The PM/coordinator
-updates it whenever a stream's status changes — in particular at handover. A
-stream is worked in exactly one source tree at a time. Before planning against
-a capability, resolve any sibling row marked `pending-publication` first.
+`overview.md`: an authored `Goal` and `Requirements` preamble, then one table
+of every work stream (work ID, lifecycle, headline, next action, `Location`,
+`Spec`, `Documentations`). Every stream's state sits under the same `works/`,
+so this is an index over local state, not a cross-tree aggregator; its
+`Location` column records **which checkout each stream is worked in**, one
+tree per stream. Every table cell derives from each stream's own files, so a
+stale table is rebuilt by re-reading them; the preamble is not.
+The PM/coordinator updates it whenever a stream's status changes — in
+particular at handover. Before planning against a capability, resolve any
+sibling row marked `pending-publication` first.
 
 ### One stream at a time
 

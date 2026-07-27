@@ -127,7 +127,8 @@ files. Never terminate the run before the overview upsert.
    update from another session is not lost. Upsert one row per stream from
    step 1 — work ID, lifecycle, headline, next action, `Location` (the checkout
    the stream is worked in: path plus kind and revision), and any `docs/` link
-   in `Documentations` — and preserve every other row byte-for-byte. If no
+   in `Documentations` — and preserve every other row, and the authored
+   `Goal` and `Requirements` sections, byte-for-byte. If no
    `overview.md` exists yet, create it. After this write the pause is complete
    and resumable from state files.
 8. Return every created or materially rewritten path — including the updated
