@@ -1221,6 +1221,71 @@ def validate_artifact_builder() -> list[str]:
                 f"builder mermaid detection: {label} should "
                 f"{'require' if expected else 'not require'} the runtime"
             )
+
+    # Detecting the figure is only half of it. A figure the runtime cannot draw
+    # — missing either child, or holding a source with no definition in it —
+    # ships the whole 3.4 MB runtime for an empty frame, so the parser has to
+    # report completeness per figure, counting only what is really nested inside.
+    source = f"<pre {build_artifact.MERMAID_SOURCE_ATTR}>graph LR</pre>"
+    host = f"<div {build_artifact.MERMAID_HOST_ATTR}></div>"
+    figure_cases = (
+        ("complete", f"<figure data-mermaid>{source}{host}</figure>", 1, 0, 0),
+        ("missing host", f"<figure data-mermaid>{source}</figure>", 1, 1, 0),
+        ("missing source", f"<figure data-mermaid>{host}</figure>", 1, 1, 0),
+        (
+            "children outside the figure",
+            f"<figure data-mermaid></figure>{source}{host}",
+            1,
+            1,
+            0,
+        ),
+        (
+            "void element inside",
+            f"<figure data-mermaid><img src=x>{source}{host}</figure>",
+            1,
+            0,
+            0,
+        ),
+        ("self-closing figure", "<figure data-mermaid />", 1, 1, 0),
+        (
+            "two complete figures",
+            f"<figure data-mermaid>{source}{host}</figure>"
+            f"<figure data-mermaid>{source}{host}</figure>",
+            2,
+            0,
+            0,
+        ),
+        ("prose only", "<p>data-mermaid</p>", 0, 0, 0),
+        (
+            "blank source",
+            f'<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}>'
+            f"  \n </pre>{host}</figure>",
+            1,
+            0,
+            1,
+        ),
+        (
+            "source text outside the figure",
+            f"<figure data-mermaid><pre {build_artifact.MERMAID_SOURCE_ATTR}>"
+            f"</pre>{host}</figure>graph LR",
+            1,
+            0,
+            1,
+        ),
+    )
+    for label, fragment, total, missing, blank in figure_cases:
+        found = build_artifact._mermaid_figures(fragment)
+        counted = (
+            len(found),
+            sum(1 for figure in found if figure.missing),
+            sum(1 for figure in found if figure.blank),
+        )
+        if counted != (total, missing, blank):
+            errors.append(
+                f"builder mermaid figures: {label} parsed as "
+                f"{counted}, expected {(total, missing, blank)} "
+                "(figures, incomplete, blank)"
+            )
     return errors
 
 

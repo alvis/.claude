@@ -2136,19 +2136,32 @@
         });
     };
 
-    const renderAll = () =>
-      figures.reduce(
+    const renderEach = (list) =>
+      list.reduce(
         (chain, figure) => chain.then(() => renderFigure(figure)),
         Promise.resolve(),
       );
+    const renderAll = () => renderEach(figures);
 
     renderAll();
 
     // Re-render on a theme flip, whichever way it arrives: an explicit
     // data-theme attribute (the board's own contract) or the OS preference.
-    const observer = new MutationObserver(renderAll);
-    [document.documentElement, document.body].forEach((target) => {
-      if (target) observer.observe(target, { attributeFilter: ["data-theme"] });
+    // data-theme is not only a document-level attribute — a board may put it on
+    // any container to rescope the palette for one specimen, and a diagram inside
+    // that container keeps its old colours in an already-rendered SVG. So watch
+    // the whole subtree, and re-render only the figures the mutated element
+    // actually contains: a scoped toggle repaints its own diagram, a document
+    // toggle repaints every one.
+    const observer = new MutationObserver((records) => {
+      const affected = figures.filter((figure) =>
+        records.some((record) => record.target.contains(figure)),
+      );
+      if (affected.length > 0) renderEach(affected);
+    });
+    observer.observe(document.documentElement, {
+      attributeFilter: ["data-theme"],
+      subtree: true,
     });
     if (typeof window.matchMedia === "function") {
       window

@@ -105,7 +105,10 @@ MERMAID_MARKER_ATTR = "data-mermaid"
 # The runtime needs both children: the definition to render, and the element to
 # render into. Missing either, discovery.js returns early and the board ships a
 # 3.4 MB runtime and an empty figure — a silent failure, so the build refuses it.
-MERMAID_FIGURE_CHILDREN = ("data-mermaid-source", "data-mermaid-host")
+# A present but blank source fails the same way, so the source is also read.
+MERMAID_SOURCE_ATTR = "data-mermaid-source"
+MERMAID_HOST_ATTR = "data-mermaid-host"
+MERMAID_FIGURE_CHILDREN = (MERMAID_SOURCE_ATTR, MERMAID_HOST_ATTR)
 # Elements that never open a scope, so a tag stack must not wait for their close.
 VOID_TAGS = frozenset(
     {
@@ -201,49 +204,85 @@ class BuildError(RuntimeError):
     """Raised when a board source cannot be compiled into a valid artifact."""
 
 
+class _MermaidFigure:
+    """One ``[data-mermaid]`` element: its required children and its definition."""
+
+    def __init__(self) -> None:
+        self.children: dict[str, bool] = dict.fromkeys(
+            MERMAID_FIGURE_CHILDREN, False
+        )
+        self.definition = ""
+
+    @property
+    def missing(self) -> list[str]:
+        return [name for name, seen in self.children.items() if not seen]
+
+    @property
+    def blank(self) -> bool:
+        return not self.missing and not self.definition.strip()
+
+
 class _MermaidFigureFinder(HTMLParser):
-    """Collect each ``[data-mermaid]`` element and which required children it has.
+    """Collect each ``[data-mermaid]`` element, its required children, and its text.
 
     Nesting is tracked with a tag stack so a child counts only when it is
     actually inside the figure. Void elements never open a scope, and an end tag
     unwinds to its matching start, which keeps unclosed markup from swallowing
-    the rest of the document.
+    the rest of the document. The text inside the source child is accumulated as
+    well: the runtime renders that text, so a source holding only whitespace is a
+    figure that draws nothing, which presence alone cannot detect.
     """
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self._stack: list[str] = []
-        # (depth at which the figure opened, {attribute: seen}) for open figures.
-        self._open: list[tuple[int, dict[str, bool]]] = []
-        self.figures: list[dict[str, bool]] = []
+        # (depth at which the element opened, figure) for open figures, and the
+        # same shape for the source children whose text is being collected.
+        self._open: list[tuple[int, _MermaidFigure]] = []
+        self._sources: list[tuple[int, _MermaidFigure]] = []
+        self.figures: list[_MermaidFigure] = []
+
+    def _note_children(self, names: set[str]) -> None:
+        for _depth, figure in self._open:
+            for required in MERMAID_FIGURE_CHILDREN:
+                if required in names:
+                    figure.children[required] = True
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
         names = {name for name, _ in attrs}
-        for _depth, parts in self._open:
-            for required in MERMAID_FIGURE_CHILDREN:
-                if required in names:
-                    parts[required] = True
+        self._note_children(names)
+        # A source nested inside several open figures is a definition for each of
+        # them, exactly as querySelector would resolve it.
+        opening_source = (
+            [figure for _depth, figure in self._open]
+            if MERMAID_SOURCE_ATTR in names
+            else []
+        )
         if tag not in VOID_TAGS:
             self._stack.append(tag)
+        for figure in opening_source:
+            self._sources.append((len(self._stack), figure))
         if MERMAID_MARKER_ATTR in names:
-            parts = dict.fromkeys(MERMAID_FIGURE_CHILDREN, False)
-            self.figures.append(parts)
+            figure = _MermaidFigure()
+            self.figures.append(figure)
             if tag not in VOID_TAGS:
-                self._open.append((len(self._stack), parts))
+                self._open.append((len(self._stack), figure))
 
     def handle_startendtag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
-        # A self-closing tag opens no scope, so it can never hold the children.
+        # A self-closing tag opens no scope, so it holds neither the required
+        # children nor any text.
         names = {name for name, _ in attrs}
-        for _depth, parts in self._open:
-            for required in MERMAID_FIGURE_CHILDREN:
-                if required in names:
-                    parts[required] = True
+        self._note_children(names)
         if MERMAID_MARKER_ATTR in names:
-            self.figures.append(dict.fromkeys(MERMAID_FIGURE_CHILDREN, False))
+            self.figures.append(_MermaidFigure())
+
+    def handle_data(self, data: str) -> None:
+        for _depth, figure in self._sources:
+            figure.definition += data
 
     def handle_endtag(self, tag: str) -> None:
         if tag not in self._stack:
@@ -252,11 +291,13 @@ class _MermaidFigureFinder(HTMLParser):
             closed = self._stack.pop()
             while self._open and self._open[-1][0] > len(self._stack):
                 self._open.pop()
+            while self._sources and self._sources[-1][0] > len(self._stack):
+                self._sources.pop()
             if closed == tag:
                 return
 
 
-def _mermaid_figures(html: str) -> list[dict[str, bool]]:
+def _mermaid_figures(html: str) -> list[_MermaidFigure]:
     finder = _MermaidFigureFinder()
     finder.feed(html)
     finder.close()
@@ -565,17 +606,20 @@ def build(
 
     figures = _mermaid_figures(html)
     needs_mermaid = bool(figures)
-    incomplete = [
-        ", ".join(name for name, seen in parts.items() if not seen)
-        for parts in figures
-        if not all(parts.values())
-    ]
+    incomplete = [", ".join(figure.missing) for figure in figures if figure.missing]
     if incomplete:
         raise BuildError(
             "every [data-mermaid] figure needs a "
             f"{' and a '.join(MERMAID_FIGURE_CHILDREN)} child; "
             f"{len(incomplete)} of {len(figures)} are missing: "
             + "; ".join(incomplete)
+        )
+    blank = sum(1 for figure in figures if figure.blank)
+    if blank:
+        raise BuildError(
+            f"{blank} of {len(figures)} [data-mermaid] figures have an empty "
+            f"[{MERMAID_SOURCE_ATTR}]; the runtime renders that text, so a blank "
+            "one draws nothing while the board still carries the diagram runtime"
         )
     if needs_mermaid:
         if mermaid is None:
