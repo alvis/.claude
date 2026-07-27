@@ -1144,6 +1144,63 @@
         </p>
       </template>
     </div>
+
+    <!--
+            mermaid-diagram. The two SVG figures above are hand-authored
+            because the picture IS the argument there. Ordering over time is a
+            different job: a sequence is tedious to draw by hand and trivial to
+            state, so it is written as Mermaid and rendered by the runtime.
+            Rule of thumb — hand-author when the drawing carries the claim,
+            write Mermaid when it merely records a sequence, a state machine,
+            or a pipeline that prose would obscure.
+
+            Contract: the figure carries data-mermaid (also the marker
+            build_artifact.py greps for when deciding whether to inline the
+            Mermaid runtime), holds the definition in [data-mermaid-source],
+            and offers an empty [data-mermaid-host]. Colours are never named
+            here; the runtime feeds Mermaid the live --ui-* tokens, so the
+            diagram follows this board's accent in both themes. If it fails to
+            render, the definition stays on the page with the reason beside it.
+          -->
+    <div class="mt-8">
+      <p class="discovery-eyebrow">One edit, in order</p>
+      <h3>What happens between a keystroke and a durable op.</h3>
+      <p class="discovery-muted mt-1">
+        The graph above says what talks to what. This says in what order, and
+        where the client stops waiting.
+      </p>
+
+      <figure
+        class="discovery-mermaid mt-4"
+        data-mermaid
+        data-presentation-pattern="mermaid-diagram"
+      >
+        <pre data-mermaid-source>
+sequenceDiagram
+    autonumber
+    participant C as Editor client
+    participant G as Realtime Gateway
+    participant S as Session Coordinator
+    participant M as CRDT Merge Engine
+    participant L as Op Log
+    C->>C: apply edit to local replica
+    C->>G: send op
+    G->>S: route by document id
+    S->>M: merge op
+    M->>L: append (source of truth)
+    L-->>M: sequence number
+    M-->>S: merged state vector
+    S-->>G: ack and rebroadcast
+    G-->>C: ack
+    Note over C,M: the client never blocks on the ack
+        </pre>
+        <div data-mermaid-host></div>
+        <figcaption>
+          Order of one edit through the write path. Presence is deliberately
+          absent: it never reaches the op log.
+        </figcaption>
+      </figure>
+    </div>
   </div>
 </section>
       <section

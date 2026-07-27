@@ -83,7 +83,11 @@ sources, composes it, then compiles the self-contained file.
 ## Shared interaction contract
 
 Follow [components](presentation/components.md) for the declarative HTML hooks.
-Every user-facing section must be annotatable. Answers, decisions, optional
+Every user-facing section must be annotatable, at two scopes from one dialog:
+the whole section, and a passage the reader selects inside it. A selection note
+carries its quote into the generated prompt, so a comment on one sentence
+arrives attached to that sentence; both come from the shared runtime, and a
+section neither re-implements nor opts out of them. Answers, decisions, optional
 follow-up requests, overrides, and annotations regenerate one Markdown prompt
 immediately. The page displays that prompt in one host and provides exactly one
 control labelled **Copy prompt for LLM coder**. Do not add per-section prompt
@@ -165,6 +169,15 @@ for the exact hooks:
   distinct from the user's own Add-note mechanism;
 - a multi-board hub links sibling boards by session-relative href.
 
+Two things are standard rather than optional, because a reader needs them
+whether or not the content warrants a convention. A run that produces more than
+one board puts the **board set** in every board's docnav, not only on a hub —
+the runtime hides the block below two entries, so a single-artifact run shows
+nothing and the author does nothing differently. And a section explaining a
+flow, pipeline, or state machine **draws it**: hand-authored SVG where the
+drawing carries the claim, otherwise a Mermaid figure, with prose supporting the
+diagram rather than replacing it.
+
 The foundation is fixed: the page shell, annotatable sections, **per-card
 response capture** (an option set with reasons and a badged recommendation
 wherever a card carries a real decision with alternatives — never a bare
@@ -227,7 +240,11 @@ the build unless the output is genuinely self-contained (no external
 `src`/`href`, no unfilled placeholder, no raw U+FFFD byte — the last being the
 sentinel the claude.ai Artifact deploy validator rejects). The Tailwind runtime
 is downloaded latest-on-request by the builder, with a gitignored cache kept as
-an offline fallback. Never hand-edit the compiled output; it is generated and
+an offline fallback. The Mermaid runtime follows the same policy with one
+difference: it is inlined **only** into a board that carries a `[data-mermaid]`
+figure, because it is several megabytes. A board without a diagram weighs
+exactly what it weighed before Mermaid existed; a board with one is knowingly
+much heavier, and that is the trade the figure buys. Never hand-edit the compiled output; it is generated and
 throwaway. To change styling or behaviour, edit the small sources and rebuild.
 `--artifact` mode omits `<!doctype>/<html>/<head>/<body>` because the Artifact
 tool supplies its own; the fragment restores only the source body's

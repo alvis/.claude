@@ -85,6 +85,10 @@ PRESENTATION_PATTERNS = (
     "term-rung", "teach-me-explainer", "signoff-block", "pitch-doc",
     "status-checklist", "activity-filter-bar", "quiz-gate", "sticky-reply",
     "live-editor-panel", "entity-card",
+    # Shell-level devices every board can reach for: the docnav board-set index
+    # (board-hub), content-kind column density (semantics-map), and a runtime-
+    # rendered Mermaid figure (architecture-board).
+    "board-set", "grid-density", "mermaid-diagram",
     # "Best bits" fold-in: provenance pills, honest trade-offs/invented-data flag,
     # author annotation pins + browser-frame chrome, multi-board hub, specimen
     # brand-palette scoping. Marked on the two new CONVENTION_EXAMPLES boards
@@ -824,6 +828,24 @@ def validate_runtime() -> list[str]:
         "Provenance of claims",
         "Trade-offs surfaced",
         "data-annotation-pin",
+        # Board set: the docnav index is built by the runtime, which owns
+        # aria-current and the hide-below-two-entries rule, so an author never
+        # hand-marks "you are here".
+        "data-board-set",
+        "data-board-link",
+        'setAttribute("aria-current", "page")',
+        # Selection-scoped annotation: a second, quote-carrying note store
+        # beside the per-section one, armed from a live selection.
+        "excerpts",
+        "getSelection",
+        "selectionArmed",
+        "data-annotation-quote",
+        # Mermaid: rendered through DOMParser (never innerHTML) and themed from
+        # the live --ui-* tokens rather than any named color.
+        "data-mermaid-source",
+        "data-mermaid-host",
+        "DOMParser",
+        "MERMAID_THEME_TOKENS",
     )
     for fragment in required_fragments:
         if fragment not in source:
@@ -868,10 +890,53 @@ def validate_stylesheet() -> list[str]:
         ".discovery-board-index",
         "[data-specimen]",
         ".discovery-artifact-url",
+        # Docnav board set, selection annotation, content-kind column density,
+        # and the Mermaid figure — the density scale is asserted by name so no
+        # board re-introduces a bare column number.
+        ".essential-board-set",
+        ".essential-board-link",
+        ".discovery-selection-pill",
+        ".discovery-annotation-quote",
+        ".discovery-excerpt",
+        "--grid-col-tile",
+        "--grid-col-compact",
+        "--grid-col-prose",
+        "--grid-col-wide",
+        '[data-grid-density="prose"]',
+        ".discovery-mermaid",
     )
     for fragment in required_fragments:
         if fragment not in source:
             errors.append(f"{CSS}: missing responsive direction layout {fragment!r}")
+    return errors
+
+
+def validate_scaffold() -> list[str]:
+    """The starter scaffold must ship the shell blocks, not describe them.
+
+    A Floor feature an author has to remember to add is not a floor. The docnav
+    board-set block and the selection-note hint therefore live in the scaffold
+    itself; the runtime hides the block below two entries, so shipping it costs
+    a single-artifact board nothing.
+    """
+    errors: list[str] = []
+    source = TEMPLATE.read_text(encoding="utf-8")
+    required_fragments = (
+        "data-board-set-rule",
+        "data-board-set-heading",
+        "data-board-set",
+        "essential-board-set",
+        "essential-board-link",
+        "select text inside one",
+    )
+    for fragment in required_fragments:
+        if fragment not in source:
+            errors.append(f"{TEMPLATE}: starter scaffold is missing {fragment!r}")
+    if "aria-current=" in source:
+        errors.append(
+            f"{TEMPLATE}: scaffold must not hand-set aria-current — the runtime "
+            "marks the entry matching this board's id"
+        )
     return errors
 
 
@@ -1052,6 +1117,7 @@ def run(stage: str) -> dict[str, object]:
     if TEMPLATE.is_file():
         errors.extend(validate_html(TEMPLATE, allow_placeholders=True))
         errors.extend(validate_source_drift(TEMPLATE, TEMPLATE_SRC))
+        errors.extend(validate_scaffold())
     if JAVASCRIPT.is_file():
         errors.extend(validate_runtime())
     if CSS.is_file():

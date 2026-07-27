@@ -33,6 +33,13 @@ force-fetches the latest into the cache and fails loudly on any network error (i
 an explicit request for the newest runtime). ``--offline`` skips fetching entirely
 and uses the cache, erroring if none exists.
 
+The Mermaid diagram runtime is vendored on exactly those terms
+(``--refresh-mermaid``, ``assets/html/vendor/mermaid.cache.js``) with ONE
+difference: it is inlined only into a board that actually carries a
+``data-mermaid`` figure. It is roughly seven times the weight of everything else
+in a compiled board, so a board without a diagram must not pay for it, and one
+without a diagram compiles byte-for-byte to what it did before diagrams existed.
+
 Board sources are authored as small modular sources — one file per section, never
 one giant HTML file. A board source may be a DIRECTORY containing ``page.html`` (the
 shell with the full head/chrome and exactly one ``<!-- {{SECTIONS}} -->`` marker
@@ -75,6 +82,23 @@ DISCOVERY_JS = ASSETS_ROOT / "discovery.js"
 # The cache is a gitignored offline fallback, primed on each successful fetch.
 TAILWIND_CDN_URL = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
 TAILWIND_CACHE = VENDOR_ROOT / "tailwind-browser.cache.js"
+# The Mermaid diagram runtime, vendored the same way and on the same terms. Its
+# UMD single-file build is the only distribution that can be inlined: the ESM
+# build resolves its diagram grammars as separate chunks, which a file:// board
+# cannot fetch.
+MERMAID_CDN_URL = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
+MERMAID_CACHE = VENDOR_ROOT / "mermaid.cache.js"
+
+# Mermaid is ~3.4 MB — roughly seven times the rest of a compiled board — so it
+# is inlined ONLY into a board that actually carries a diagram. Everything else
+# is byte-for-byte what it was before diagrams existed.
+MERMAID_MARKER_RE = re.compile(r"\bdata-mermaid\b", re.IGNORECASE)
+# The self-containment invariant for any vendored runtime: a bundle that reaches
+# for a chunk at runtime cannot resolve it from a file:// board, and the failure
+# is silent — an empty figure. Mermaid's UMD build has no dynamic import today;
+# this fails the build on the release that grows one, instead of shipping a board
+# whose diagrams quietly do not appear.
+DYNAMIC_IMPORT_RE = re.compile(r"\bimport\s*\(")
 
 # The single marker line a directory source's page.html carries in place of its
 # composed sections.
@@ -135,47 +159,91 @@ def patch_fffd(text: str) -> str:
     return text.replace(RAW_FFFD, ESCAPED_FFFD)
 
 
-def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str:
-    """Return the Tailwind browser runtime text, downloading the latest on request.
+def _get_vendor_runtime(
+    label: str,
+    url: str,
+    cache: Path,
+    *,
+    refresh: bool = False,
+    offline: bool = False,
+) -> str:
+    """Return a vendored browser runtime's text, downloading the latest on request.
+
+    One home for every vendored runtime's fetch policy, so Tailwind and Mermaid
+    cannot drift apart on caching, patching or failure handling:
 
     * ``offline``: read the cache or raise if none exists — never touch the network.
-    * otherwise: fetch the latest 4.x runtime from the CDN, patch the U+FFFD
-      sentinel, fail if any raw U+FFFD survives, write the cache, and return it.
+    * otherwise: fetch the latest from the CDN, patch the U+FFFD sentinel, fail if
+      any raw U+FFFD survives, write the cache, and return it.
     * on fetch failure (URLError/OSError/timeout): fall back to the cache with a
       warning to stderr when one exists — unless ``refresh`` is set, in which case
       the failure is fatal (the caller explicitly asked for the newest runtime).
     """
 
     if offline:
-        if TAILWIND_CACHE.is_file():
-            return TAILWIND_CACHE.read_text(encoding="utf-8")
+        if cache.is_file():
+            return cache.read_text(encoding="utf-8")
         raise BuildError(
-            "no cached Tailwind runtime; run once with network or without --offline"
+            f"no cached {label} runtime; run once with network or without --offline"
         )
 
     try:
-        with urllib.request.urlopen(TAILWIND_CDN_URL, timeout=60) as response:
+        with urllib.request.urlopen(url, timeout=60) as response:
             raw = response.read().decode("utf-8")
     except (urllib.error.URLError, OSError) as error:
-        if not refresh and TAILWIND_CACHE.is_file():
+        if not refresh and cache.is_file():
             print(
-                f"warning: could not fetch latest Tailwind ({error}); "
-                f"falling back to cached runtime {TAILWIND_CACHE}",
+                f"warning: could not fetch latest {label} ({error}); "
+                f"falling back to cached runtime {cache}",
                 file=sys.stderr,
             )
-            return TAILWIND_CACHE.read_text(encoding="utf-8")
-        raise BuildError(
-            f"could not fetch Tailwind runtime from {TAILWIND_CDN_URL}: {error}"
-        )
+            return cache.read_text(encoding="utf-8")
+        raise BuildError(f"could not fetch {label} runtime from {url}: {error}")
 
     patched = patch_fffd(raw)
     if RAW_FFFD in patched:
         raise BuildError(
-            "U+FFFD survived patching the downloaded Tailwind runtime"
+            f"U+FFFD survived patching the downloaded {label} runtime"
         )
     VENDOR_ROOT.mkdir(parents=True, exist_ok=True)
-    TAILWIND_CACHE.write_text(patched, encoding="utf-8")
+    cache.write_text(patched, encoding="utf-8")
     return patched
+
+
+def get_tailwind_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Tailwind browser runtime text (latest 4.x)."""
+
+    return _get_vendor_runtime(
+        "Tailwind",
+        TAILWIND_CDN_URL,
+        TAILWIND_CACHE,
+        refresh=refresh,
+        offline=offline,
+    )
+
+
+def get_mermaid_runtime(*, refresh: bool = False, offline: bool = False) -> str:
+    """Return the Mermaid diagram runtime text (latest 11.x UMD build).
+
+    Rejects a build whose bundle would resolve a diagram grammar at runtime: that
+    fetch cannot succeed from a ``file://`` board and its failure mode is an empty
+    figure, not an error.
+    """
+
+    runtime = _get_vendor_runtime(
+        "Mermaid",
+        MERMAID_CDN_URL,
+        MERMAID_CACHE,
+        refresh=refresh,
+        offline=offline,
+    )
+    if DYNAMIC_IMPORT_RE.search(runtime):
+        raise BuildError(
+            "the Mermaid runtime contains a dynamic import(), so some diagram "
+            "types would load over the network and silently render empty in a "
+            "self-contained board; pin a UMD build that bundles every grammar"
+        )
+    return runtime
 
 
 def _read(path: Path, label: str) -> str:
@@ -273,22 +341,39 @@ def load_source(source_path: Path) -> tuple[str, str]:
     return _read(source_path, "board source"), str(source_path)
 
 
-def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> str:
+def build(
+    source_path: Path,
+    *,
+    artifact: bool,
+    runtime: str | None = None,
+    mermaid: str | None = None,
+    offline: bool = False,
+) -> str:
     """Compile a board source into a self-contained document or fragment.
 
     ``runtime`` is the Tailwind runtime text; when omitted the latest is fetched
-    (with cache fallback) via ``get_tailwind_runtime()``.
+    (with cache fallback) via ``get_tailwind_runtime()``. ``mermaid`` is the
+    diagram runtime, fetched the same way but ONLY when the source carries a
+    ``data-mermaid`` figure.
     """
 
     html, _display = load_source(source_path)
     _validate_source(html)
     if runtime is None:
-        runtime = get_tailwind_runtime()
+        runtime = get_tailwind_runtime(offline=offline)
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
+    needs_mermaid = bool(MERMAID_MARKER_RE.search(html))
+    if needs_mermaid and mermaid is None:
+        mermaid = get_mermaid_runtime(offline=offline)
+
     css_style = _inline_style(css)
     runtime_script = _inline_script(runtime)
+    # Mermaid must be parsed before discovery.js runs, which is what installs
+    # and renders the diagrams; an empty string keeps a diagram-free board
+    # byte-identical to what it compiled to before.
+    mermaid_script = _inline_script(mermaid) if needs_mermaid else ""
     # discovery.js loads with `defer` in the source; an inline script cannot
     # defer, so it is injected at the end of <body> to preserve the "runs after
     # DOM is parsed" ordering.
@@ -301,11 +386,15 @@ def build(source_path: Path, *, artifact: bool, runtime: str | None = None) -> s
     html, board_theme = _extract_board_theme(html)
 
     if artifact:
-        output = _build_fragment(html, css_style, runtime_script, js_block, board_theme)
+        output = _build_fragment(
+            html, css_style, runtime_script, js_block, board_theme, mermaid_script
+        )
     else:
-        output = _build_full_doc(html, css_style, runtime_script, js_block, board_theme)
+        output = _build_full_doc(
+            html, css_style, runtime_script, js_block, board_theme, mermaid_script
+        )
 
-    _validate(output, artifact=artifact)
+    _validate(output, artifact=artifact, needs_mermaid=needs_mermaid)
     return output
 
 
@@ -466,13 +555,15 @@ def _build_full_doc(
     runtime_script: str,
     js_block: str,
     board_theme: str = "",
+    mermaid_script: str = "",
 ) -> str:
     """Emit a standalone document with all shared assets injected.
 
     The inlined discovery.css ``<style>``, then the board-theme overlay (so its
     token redefinitions follow the shared sheet in cascade order), then the
     Tailwind runtime ``<script>`` are injected immediately before ``</head>``;
-    discovery.js is injected at the end of ``<body>``.
+    the Mermaid runtime (when the board carries a diagram) and then discovery.js
+    are injected at the end of ``<body>``, in that order.
     """
 
     def _inject_head(_match: re.Match[str]) -> str:
@@ -486,7 +577,8 @@ def _build_full_doc(
         )
 
     def _append_js(_match: re.Match[str]) -> str:
-        return f"    {js_block}\n  </body>"
+        diagrams = f"    {mermaid_script}\n" if mermaid_script else ""
+        return f"{diagrams}    {js_block}\n  </body>"
 
     html, count = re.subn(r"\s*</body>", _append_js, html, count=1)
     if count != 1:
@@ -500,12 +592,13 @@ def _build_fragment(
     runtime_script: str,
     js_block: str,
     board_theme: str = "",
+    mermaid_script: str = "",
 ) -> str:
     """Emit a head-less fragment for the Artifact tool to wrap in its own body.
 
     Part ordering: title, theme block, selection style, css, board-theme
     overlay (after the shared css so its token redefinitions win), runtime,
-    body, js.
+    body, the diagram runtime when the board carries one, js.
     """
 
     title_match = TITLE_RE.search(html)
@@ -534,12 +627,13 @@ def _build_fragment(
         *([board_theme] if board_theme else []),
         runtime_script,
         body_inner,
+        *([mermaid_script] if mermaid_script else []),
         js_block,
     ]
     return "\n".join(parts) + "\n"
 
 
-def _validate(output: str, *, artifact: bool) -> None:
+def _validate(output: str, *, artifact: bool, needs_mermaid: bool = False) -> None:
     """Fail the build unless the output is genuinely self-contained."""
 
     problems: list[str] = []
@@ -568,6 +662,11 @@ def _validate(output: str, *, artifact: bool) -> None:
         problems.append("board markup missing")
     if "[data-discovery-prompt-host]" not in output:
         problems.append("discovery.js not inlined")
+    if needs_mermaid and "mermaid" not in output.lower():
+        problems.append(
+            "board carries a data-mermaid figure but the diagram runtime is not "
+            "inlined"
+        )
 
     if artifact:
         # Scan with script bodies removed: authored data-driven renderers may
@@ -636,9 +735,15 @@ def main(argv: list[str] | None = None) -> int:
         "on any network error)",
     )
     parser.add_argument(
+        "--refresh-mermaid",
+        action="store_true",
+        help="Force-fetch the latest Mermaid diagram runtime into the cache "
+        "(fails loudly on any network error)",
+    )
+    parser.add_argument(
         "--offline",
         action="store_true",
-        help="Skip fetching; use the cached Tailwind runtime only",
+        help="Skip fetching; use the cached Tailwind and Mermaid runtimes only",
     )
     parser.add_argument(
         "--emit-page",
@@ -654,16 +759,23 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         runtime_text: str | None = None
+        mermaid_text: str | None = None
         if args.refresh_tailwind:
             runtime_text = get_tailwind_runtime(refresh=True)
             print(
                 f"refreshed Tailwind runtime -> {TAILWIND_CACHE}", file=sys.stderr
             )
-            if not args.source:
-                return 0
+        if args.refresh_mermaid:
+            mermaid_text = get_mermaid_runtime(refresh=True)
+            print(f"refreshed Mermaid runtime -> {MERMAID_CACHE}", file=sys.stderr)
+        if (args.refresh_tailwind or args.refresh_mermaid) and not args.source:
+            return 0
 
         if not args.source:
-            parser.error("a board source is required (or use --refresh-tailwind)")
+            parser.error(
+                "a board source is required (or use --refresh-tailwind / "
+                "--refresh-mermaid)"
+            )
 
         source_path = resolve_source(args.source)
 
@@ -685,7 +797,16 @@ def main(argv: list[str] | None = None) -> int:
 
         if runtime_text is None:
             runtime_text = get_tailwind_runtime(offline=args.offline)
-        output = build(source_path, artifact=args.artifact, runtime=runtime_text)
+        # Mermaid stays unfetched here: build() pulls it only if the source
+        # actually carries a diagram, so a diagram-free board never touches the
+        # network for it.
+        output = build(
+            source_path,
+            artifact=args.artifact,
+            runtime=runtime_text,
+            mermaid=mermaid_text,
+            offline=args.offline,
+        )
         out_path = args.out or default_output(source_path, args.artifact)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(output, encoding="utf-8")

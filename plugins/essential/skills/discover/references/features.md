@@ -8,7 +8,7 @@ at verification (step 8) — no generation may silently drop a Floor feature.
 ## A. Shell (floor)
 
 - [ ] **Docbar**: document title (primary), product label (`<Product> · Discover`), `Generated reply ↓` quick link. No logo/docmark — the document title leads. `position: static` below the narrow-viewport breakpoint so a wrapped title never collides with content.
-- [ ] **Docnav** (right rail, hidden on narrow viewports): section nav with scroll-spy active state; **live input counters** (decisions/accepted, notes); board-set list with per-board accent dots marking "you are here" when the board belongs to a set
+- [ ] **Docnav** (right rail, hidden on narrow viewports): section nav with scroll-spy active state; **live input counters** (decisions/accepted, notes); **board set** — one `<li>` per board the run produced, on *every* board of a multi-board run, `aria-current` set by the runtime, whole block hidden below two entries so a single-artifact run shows nothing
 - [ ] **Masthead**: eyebrow (glyph + `Question N of M — Topic · Product` position line), display `h1`, dek/lede with `.mono` inline refs, stat strip with color rails when the content carries counts
 - [ ] **Footer**: sources with provenance, flagged live checks
 
@@ -28,6 +28,7 @@ Per **card** (any card carrying a recommendation, verdict, or decision):
 
 Per **section**:
 - [ ] Annotation trigger (`✎ Add note`) with the same dialog
+- [ ] **Selection-scoped note**: selecting text inside a section offers an `Annotate` pill at the selection (plus keyboard `n`); the dialog quotes the passage, and the note reaches the generated prompt nested under that section's note
 
 Board level:
 - [ ] Live counters in the docnav update on every accept/choice/note
@@ -52,15 +53,21 @@ note · sign-off card · tl;dr block · glossary · entity card · flow strip ·
 plain-English translation line · `file:line` source chips · data-driven card sets rendered from a
 JSON array
 
-## F. Engineering (floor)
+## F. Legibility (floor)
+
+- [ ] **A flow is drawn, not narrated**: a section explaining a flow, pipeline, sequence, or state machine carries a diagram — hand-authored SVG where the drawing carries the claim, otherwise a Mermaid figure — with prose as its support, not its substitute
+- [ ] **Column width follows content kind**, never a picked number: `tile` (8rem) for a number and a label, `compact` (14rem) for a short label and one line, `prose` (22rem) for a claim, `wide` (30rem) for code, tables, or several paragraphs. Findings default to `prose`; override per block with `data-grid-density`
+- [ ] Body text sits inside a readable measure (~45–75ch) at every breakpoint
+
+## G. Engineering (floor)
 
 - [ ] Fully self-contained: no external scripts/styles/fonts/images
 - [ ] Data-driven rendering uses the `esc()` idiom; **no un-interpolated `${…}` literals** in emitted text
 - [ ] A11y: `:focus-visible` states, `aria-pressed`/`aria-live`/roles, dialog semantics, `prefers-reduced-motion`
 - [ ] Responsive: no horizontal body scroll; wide content scrolls in its own container; `tabular-nums` for aligned digits
-- [ ] Weight discipline: target tens of KB, not hundreds
+- [ ] Weight discipline: carry nothing the board does not use. A board without a Mermaid figure stays in the hundreds of KB the vendored Tailwind runtime already costs; one Mermaid figure inlines the Mermaid runtime and takes the board into megabytes. That is a deliberate, per-board trade — never inline a runtime "in case"
 
-## G. Validation mapping
+## H. Validation mapping
 
 | Feature | Enforced by |
 |---|---|
@@ -68,4 +75,6 @@ JSON array
 | Token whitelist, dual-theme completeness, stray hex | `scripts/build_artifact.py` `_validate()` |
 | `${…}` literal guard | `scripts/build_artifact.py` `_validate()` |
 | Self-containment | `scripts/build_artifact.py` `_validate()` |
+| Board-set block, selection annotation, density scale, Mermaid figure wiring | `scripts/test_html_templates.py` (runtime/stylesheet/scaffold assertions) |
+| Mermaid runtime present when a board carries a diagram; no dynamic `import()` | `scripts/build_artifact.py` `_validate()` and `get_mermaid_runtime()` |
 | Per-card capture + live prompt rebuild | golden examples (`examples/reference/readiness-verdict-board.html`, `examples/reference/decision-browser.html`) + this checklist at review |

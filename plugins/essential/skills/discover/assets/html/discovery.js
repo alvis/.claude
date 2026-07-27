@@ -24,16 +24,32 @@
   const decisionSummaries = document.querySelector("[data-decision-summaries]");
   const noteSummaries = document.querySelector("[data-note-summaries]");
 
+  // `annotations` holds ONE note per section; `excerpts` holds the
+  // selection-scoped notes, keyed by the same section id and additive to it, so
+  // a board saved before excerpts existed still loads (loadState defaults it to
+  // {}) and neither map has to migrate the other.
   const emptyState = () => ({
     answers: {},
     touched: {},
     annotations: {},
+    excerpts: {},
     dragOrders: {},
     dragTouched: {},
   });
 
+  // A quote identifies the passage a note is about; it is not a copy of the
+  // section. Anything past this is stored truncated so localStorage cannot be
+  // filled by one careless select-all.
+  const MAX_QUOTE_LENGTH = 240;
+
   let state = loadState();
   let activeSectionId = null;
+  // Set while the dialog is editing a selection note rather than the section
+  // note: { quote, excerptId } — excerptId null means "not saved yet".
+  let activeExcerpt = null;
+  // The most recent usable selection inside a section, captured before any
+  // click can collapse it: { sectionId, quote }.
+  let pendingSelection = null;
   let programmaticControlUpdate = false;
 
   // Components that depend on the current answer set register a refresh here;
@@ -60,6 +76,7 @@
         answers: parsed.answers || {},
         touched: parsed.touched || {},
         annotations: parsed.annotations || {},
+        excerpts: parsed.excerpts || {},
         dragOrders: parsed.dragOrders || {},
         dragTouched: parsed.dragTouched || {},
       };
@@ -270,6 +287,34 @@
     nav.replaceChildren(fragment);
   }
 
+  // BOARD SET. The docnav ships an authored [data-board-set] list holding one
+  // [data-board-link] per board the run produced. The runtime does the two
+  // things an author reliably gets wrong: it marks THIS board (matching
+  // data-board-link against data-board-id, else data-page-id) rather than
+  // trusting a hand-set aria-current, and it reveals heading, rule and list
+  // only at two or more entries — a single-artifact run has no set to index, so
+  // the block is absent rather than a one-item list of itself. Attribute work
+  // only: the author's labels and hrefs are never rewritten.
+  function buildBoardSet() {
+    const list = document.querySelector("[data-board-set]");
+    if (!list) return;
+    const links = [...list.querySelectorAll("[data-board-link]")];
+    const here = collapseText(root.dataset.boardId || root.dataset.pageId || "");
+    links.forEach((link) => {
+      if (here && collapseText(link.dataset.boardLink) === here)
+        link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    const reveal = links.length >= 2;
+    [
+      list,
+      document.querySelector("[data-board-set-heading]"),
+      document.querySelector("[data-board-set-rule]"),
+    ].forEach((element) => {
+      if (element) element.hidden = !reveal;
+    });
+  }
+
   function installSectionAnnotation(section) {
     const id = section.dataset.sectionId;
     if (!id) return;
@@ -277,7 +322,16 @@
     const trigger = makeElement("button", "discovery-annotation-trigger");
     trigger.type = "button";
     trigger.dataset.annotationFor = id;
-    trigger.addEventListener("click", () => openAnnotationEditor(id));
+    trigger.addEventListener("click", () => {
+      // KEYBOARD/TOUCH PATH for selection notes: with a live selection inside
+      // this section, the section's own note control notes THAT selection. No
+      // floating layer and no pointer are required to reach the feature.
+      if (pendingSelection && pendingSelection.sectionId === id) {
+        openExcerptEditor(id, pendingSelection.quote, null);
+        return;
+      }
+      openAnnotationEditor(id);
+    });
 
     const summary = makeElement("div", "discovery-annotation-summary");
     summary.dataset.annotationSummary = id;
@@ -288,25 +342,96 @@
     updateSectionAnnotation(id);
   }
 
-  function updateSectionAnnotation(id) {
+  function sectionExcerpts(id) {
+    const list = state.excerpts[id];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function truncateQuote(text) {
+    return text.length > MAX_QUOTE_LENGTH
+      ? `${text.slice(0, MAX_QUOTE_LENGTH - 1).trimEnd()}…`
+      : text;
+  }
+
+  // Label-only update. Kept separate from updateSectionAnnotation because it
+  // runs on every selectionchange: rebuilding the summary there would destroy a
+  // selection made inside the summary itself and re-fire the event.
+  function updateAnnotationTrigger(id) {
     const trigger = document.querySelector(
       `[data-annotation-for="${CSS.escape(id)}"]`,
     );
+    if (!trigger) return;
+    const annotation = state.annotations[id]?.trim() || "";
+    const excerpts = sectionExcerpts(id);
+    const armed = Boolean(pendingSelection && pendingSelection.sectionId === id);
+    trigger.textContent = armed
+      ? "Note on selection"
+      : annotation
+        ? "Edit note"
+        : "Add note";
+    trigger.dataset.hasAnnotation =
+      annotation || excerpts.length ? "true" : "false";
+    trigger.dataset.selectionArmed = armed ? "true" : "false";
+  }
+
+  function updateSectionAnnotation(id) {
+    updateAnnotationTrigger(id);
     const summary = document.querySelector(
       `[data-annotation-summary="${CSS.escape(id)}"]`,
     );
+    if (!summary) return;
     const annotation = state.annotations[id]?.trim() || "";
-    if (!trigger || !summary) return;
+    const excerpts = sectionExcerpts(id);
 
-    trigger.textContent = annotation ? "Edit note" : "Add note";
-    trigger.dataset.hasAnnotation = annotation ? "true" : "false";
     summary.replaceChildren();
-    summary.hidden = !annotation;
+    summary.hidden = !annotation && excerpts.length === 0;
 
     if (annotation) {
       summary.append(makeElement("strong", "", "Your annotation"));
       summary.append(document.createTextNode(annotation));
     }
+
+    if (excerpts.length === 0) return;
+    summary.append(makeElement("strong", "", "Notes on selections"));
+    const list = makeElement("ul", "discovery-excerpt-list");
+    excerpts.forEach((excerpt) => {
+      const item = makeElement("li", "discovery-excerpt");
+      item.append(makeElement("q", "discovery-excerpt-quote", excerpt.quote));
+      item.append(makeElement("span", "discovery-excerpt-note", excerpt.note));
+      const edit = makeElement("button", "discovery-excerpt-edit", "Edit");
+      edit.type = "button";
+      edit.addEventListener("click", () =>
+        openExcerptEditor(id, excerpt.quote, excerpt.id),
+      );
+      item.append(edit);
+      list.append(item);
+    });
+    summary.append(list);
+  }
+
+  function excerptKey() {
+    return `x${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function saveExcerpt(sectionId, note) {
+    const list = sectionExcerpts(sectionId);
+    const existing = list.find((item) => item.id === activeExcerpt.excerptId);
+    if (existing) existing.note = note;
+    else
+      list.push({
+        id: activeExcerpt.excerptId || excerptKey(),
+        quote: activeExcerpt.quote,
+        note,
+      });
+    state.excerpts[sectionId] = list;
+  }
+
+  function removeExcerpt(sectionId, excerptId) {
+    const list = sectionExcerpts(sectionId).filter(
+      (item) => item.id !== excerptId,
+    );
+    if (list.length) state.excerpts[sectionId] = list;
+    else delete state.excerpts[sectionId];
   }
 
   function buildAnnotationDialog() {
@@ -317,8 +442,15 @@
     form.method = "dialog";
 
     const eyebrow = makeElement("p", "discovery-eyebrow", "Section note");
+    eyebrow.dataset.annotationDialogEyebrow = "";
     const title = makeElement("h2", "", "Annotate this section");
     title.dataset.annotationDialogTitle = "";
+
+    // Shown only in selection mode: the passage the note is about, so the saved
+    // note and its quote are visible together while it is being written.
+    const quote = makeElement("blockquote", "discovery-annotation-quote");
+    quote.dataset.annotationQuote = "";
+    quote.hidden = true;
 
     const label = makeElement("label", "", "What should the coder know?");
     label.htmlFor = `${pageId}-annotation-text`;
@@ -347,7 +479,7 @@
     save.type = "submit";
 
     actions.append(remove, cancel, save);
-    form.append(eyebrow, title, label, textarea, actions);
+    form.append(eyebrow, title, quote, label, textarea, actions);
     dialog.append(form);
     root.append(dialog);
 
@@ -355,8 +487,16 @@
       event.preventDefault();
       if (!activeSectionId) return;
       const value = textarea.value.trim();
-      if (value) state.annotations[activeSectionId] = value;
-      else delete state.annotations[activeSectionId];
+      if (activeExcerpt) {
+        // An emptied selection note is a removal, matching the section note's
+        // own "save nothing, keep nothing" behaviour.
+        if (value) saveExcerpt(activeSectionId, value);
+        else removeExcerpt(activeSectionId, activeExcerpt.excerptId);
+      } else if (value) {
+        state.annotations[activeSectionId] = value;
+      } else {
+        delete state.annotations[activeSectionId];
+      }
       saveState();
       updateSectionAnnotation(activeSectionId);
       renderPrompt();
@@ -365,7 +505,9 @@
 
     remove.addEventListener("click", () => {
       if (!activeSectionId) return;
-      delete state.annotations[activeSectionId];
+      if (activeExcerpt)
+        removeExcerpt(activeSectionId, activeExcerpt.excerptId);
+      else delete state.annotations[activeSectionId];
       saveState();
       updateSectionAnnotation(activeSectionId);
       renderPrompt();
@@ -383,18 +525,40 @@
   const annotationDialog = buildAnnotationDialog();
 
   function openAnnotationEditor(id) {
+    openEditor(id, null);
+  }
+
+  function openExcerptEditor(id, quote, excerptId) {
+    openEditor(id, { quote, excerptId });
+  }
+
+  // ONE dialog serves both note scopes. `excerpt` null means the whole-section
+  // note; otherwise it carries the quoted passage and, when editing a saved
+  // note, its id.
+  function openEditor(id, excerpt) {
     activeSectionId = id;
+    activeExcerpt = excerpt;
     const section = sections.find(
       (candidate) => candidate.dataset.sectionId === id,
+    );
+    const eyebrow = annotationDialog.querySelector(
+      "[data-annotation-dialog-eyebrow]",
     );
     const title = annotationDialog.querySelector(
       "[data-annotation-dialog-title]",
     );
+    const quoteHost = annotationDialog.querySelector("[data-annotation-quote]");
     const textarea = annotationDialog.querySelector("[data-annotation-input]");
     title.textContent = section
       ? sectionTitle(section)
       : "Annotate this section";
-    textarea.value = state.annotations[id] || "";
+    eyebrow.textContent = excerpt ? "Selection note" : "Section note";
+    quoteHost.hidden = !excerpt;
+    quoteHost.textContent = excerpt ? excerpt.quote : "";
+    textarea.value = excerpt
+      ? sectionExcerpts(id).find((item) => item.id === excerpt.excerptId)
+          ?.note || ""
+      : state.annotations[id] || "";
 
     if (typeof annotationDialog.showModal === "function")
       annotationDialog.showModal();
@@ -405,7 +569,116 @@
   function closeAnnotationDialog() {
     if (typeof annotationDialog.close === "function") annotationDialog.close();
     else annotationDialog.removeAttribute("open");
+    const closedSection = activeSectionId;
     activeSectionId = null;
+    activeExcerpt = null;
+    // The selection is gone once the dialog took focus; disarm the section
+    // trigger so its label stops promising a selection that no longer exists.
+    clearPendingSelection();
+    if (closedSection) updateAnnotationTrigger(closedSection);
+  }
+
+  // SELECTION-SCOPED ANNOTATION. Two affordances over one data model:
+  //   * a pill that follows a pointer selection — the Docs/Medium grammar most
+  //     readers already know, and the discoverable half;
+  //   * the section's own note trigger, which re-labels itself to "Note on
+  //     selection" while a selection is live in that section, plus an "n"
+  //     shortcut — the keyboard and touch half, which needs no floating layer.
+  // Both write the same state.excerpts entry through the same dialog, so the
+  // single generated prompt stays the only place a note can end up.
+  let selectionPill = null;
+
+  function clearPendingSelection() {
+    const previous = pendingSelection?.sectionId;
+    pendingSelection = null;
+    if (selectionPill) selectionPill.hidden = true;
+    if (previous) updateAnnotationTrigger(previous);
+  }
+
+  function readSelectionContext() {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0)
+      return null;
+    const quote = collapseText(selection.toString());
+    if (!quote) return null;
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const element =
+      container.nodeType === Node.ELEMENT_NODE
+        ? container
+        : container.parentElement;
+    if (!element) return null;
+    // Selecting inside the dialog or a form control is editing, not annotating.
+    if (element.closest("[data-annotation-dialog], input, textarea, select"))
+      return null;
+    const section = element.closest("[data-discovery-section]");
+    const sectionId = section?.dataset.sectionId;
+    if (!sectionId) return null;
+    return { sectionId, quote: truncateQuote(quote), range };
+  }
+
+  function installSelectionAnnotation() {
+    const pill = makeElement(
+      "button",
+      "discovery-selection-pill",
+      "Annotate selection",
+    );
+    pill.type = "button";
+    pill.dataset.selectionPill = "";
+    pill.hidden = true;
+    // mousedown on a button collapses the selection before click fires, which
+    // would take the quote with it.
+    pill.addEventListener("mousedown", (event) => event.preventDefault());
+    pill.addEventListener("click", () => {
+      if (!pendingSelection) return;
+      openExcerptEditor(pendingSelection.sectionId, pendingSelection.quote, null);
+    });
+    // Appended to the document body, not to the page root, so its document
+    // coordinates are not re-based by a positioned ancestor.
+    document.body.append(pill);
+    selectionPill = pill;
+
+    const refresh = () => {
+      if (annotationDialog.open) return;
+      const previous = pendingSelection?.sectionId;
+      const found = readSelectionContext();
+      if (!found) {
+        clearPendingSelection();
+        return;
+      }
+      pendingSelection = { sectionId: found.sectionId, quote: found.quote };
+      const rect = found.range.getBoundingClientRect();
+      pill.hidden = false;
+      pill.style.top = `${rect.bottom + window.scrollY + 8}px`;
+      pill.style.left = `${rect.left + window.scrollX}px`;
+      if (previous && previous !== found.sectionId)
+        updateAnnotationTrigger(previous);
+      updateAnnotationTrigger(found.sectionId);
+    };
+
+    document.addEventListener("selectionchange", () => {
+      window.requestAnimationFrame(refresh);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "n" && event.key !== "N") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (!pendingSelection) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      )
+        return;
+      event.preventDefault();
+      openExcerptEditor(
+        pendingSelection.sectionId,
+        pendingSelection.quote,
+        null,
+      );
+    });
   }
 
   function collapseText(value) {
@@ -522,11 +795,23 @@
       }
     });
 
+    // Selection notes nest under their own section's line rather than opening a
+    // second heading: one prompt, one place a note about this section can be.
     const annotations = [];
     sections.forEach((section) => {
       const id = section.dataset.sectionId;
       const value = state.annotations[id]?.trim();
-      if (value) annotations.push(`- **${sectionTitle(section)}:** ${value}`);
+      const excerpts = sectionExcerpts(id);
+      if (!value && excerpts.length === 0) return;
+      annotations.push(
+        value
+          ? `- **${sectionTitle(section)}:** ${value}`
+          : `- **${sectionTitle(section)}:**`,
+      );
+      excerpts.forEach((excerpt) => {
+        annotations.push(`  - > "${excerpt.quote}"`);
+        annotations.push(`    ${excerpt.note}`);
+      });
     });
 
     const lines = [
@@ -692,18 +977,31 @@
     });
   }
 
+  // The sidebar note count is every saved note, section-scoped and
+  // selection-scoped alike — the two kinds go to the same coder in the same
+  // prompt, so counting only one of them would understate the reply.
   function presentationNotes() {
     return sections.flatMap((section) => {
-      const value = state.annotations[section.dataset.sectionId]?.trim();
-      return value
+      const id = section.dataset.sectionId;
+      const title = sectionTitle(section);
+      const value = state.annotations[id]?.trim();
+      const items = value
         ? [
             {
-              content: `${sectionTitle(section)}: ${value}`,
-              full: `${sectionTitle(section)}: ${value}`,
+              content: `${title}: ${value}`,
+              full: `${title}: ${value}`,
               state: "noted",
             },
           ]
         : [];
+      sectionExcerpts(id).forEach((excerpt) => {
+        items.push({
+          content: `${title}: ${excerpt.note}`,
+          full: `${title} · “${excerpt.quote}”: ${excerpt.note}`,
+          state: "noted",
+        });
+      });
+      return items;
     });
   }
 
@@ -1673,6 +1971,125 @@
     });
   }
 
+  // MERMAID DIAGRAMS. A section that explains a flow, a pipeline or a state
+  // machine says it in a diagram; prose is the fallback, not the default. The
+  // builder inlines the Mermaid runtime only into a board that carries a
+  // [data-mermaid] figure, so this is a no-op — and costs nothing — everywhere
+  // else.
+  //
+  // Two rules this implementation exists to keep:
+  //   * COLOR COMES FROM THE BOARD. Nothing here names a color. Mermaid's
+  //     "base" theme is fed themeVariables read from the live --ui-* tokens, so
+  //     a diagram inherits the board's own accent and both themes, and a theme
+  //     flip re-renders rather than leaving a light diagram on a dark page.
+  //   * NO innerHTML. mermaid.render returns SVG as a STRING; it is parsed with
+  //     DOMParser and imported as a node.
+  const MERMAID_THEME_TOKENS = {
+    background: "--ui-surface",
+    mainBkg: "--ui-surface-raised",
+    primaryColor: "--ui-accent-soft",
+    primaryTextColor: "--ui-accent-ink",
+    primaryBorderColor: "--ui-accent",
+    secondaryColor: "--ui-insight-soft",
+    secondaryTextColor: "--ui-ink",
+    secondaryBorderColor: "--ui-insight",
+    tertiaryColor: "--ui-glass",
+    tertiaryTextColor: "--ui-ink",
+    tertiaryBorderColor: "--ui-border",
+    lineColor: "--ui-border-strong",
+    textColor: "--ui-ink",
+    nodeBorder: "--ui-border-strong",
+    clusterBkg: "--ui-glass",
+    clusterBorder: "--ui-border",
+    edgeLabelBackground: "--ui-surface",
+    titleColor: "--ui-ink",
+    noteBkgColor: "--ui-accent-soft",
+    noteTextColor: "--ui-accent-ink",
+    noteBorderColor: "--ui-accent",
+  };
+
+  function readMermaidTheme() {
+    const computed = window.getComputedStyle(document.documentElement);
+    const variables = {};
+    Object.entries(MERMAID_THEME_TOKENS).forEach(([key, token]) => {
+      const value = collapseText(computed.getPropertyValue(token));
+      if (value) variables[key] = value;
+    });
+    const font = collapseText(computed.getPropertyValue("--ui-font-body"));
+    if (font) variables.fontFamily = font;
+    return variables;
+  }
+
+  function installMermaidDiagrams() {
+    const figures = [...root.querySelectorAll("[data-mermaid]")];
+    if (figures.length === 0) return;
+    const mermaid = window.mermaid;
+    if (!mermaid || typeof mermaid.render !== "function") return;
+
+    const parser = new DOMParser();
+    let sequence = 0;
+
+    const renderFigure = (figure) => {
+      const source = figure.querySelector("[data-mermaid-source]");
+      const host = figure.querySelector("[data-mermaid-host]");
+      if (!source || !host) return;
+      const definition = source.textContent.trim();
+      if (!definition) return;
+      sequence += 1;
+      // A fresh id every pass: mermaid.render stages the diagram under this id,
+      // and reusing one across a re-render collides with its own leftovers.
+      Promise.resolve(mermaid.render(`${pageId}-mermaid-${sequence}`, definition))
+        .then(({ svg }) => {
+          const parsed = parser.parseFromString(svg, "image/svg+xml");
+          const node = parsed.documentElement;
+          if (!node || node.nodeName === "parsererror")
+            throw new Error("the diagram rendered to unparseable SVG");
+          host.replaceChildren(document.importNode(node, true));
+          source.hidden = true;
+          figure.dataset.mermaidState = "rendered";
+        })
+        .catch((error) => {
+          // FAIL VISIBLY. A diagram that will not render leaves its definition
+          // on the page with the reason beside it; a silently missing figure
+          // would take the section's explanation with it.
+          source.hidden = false;
+          figure.dataset.mermaidState = "failed";
+          host.replaceChildren(
+            makeElement(
+              "p",
+              "discovery-mermaid-error",
+              `Diagram did not render: ${error?.message || error}`,
+            ),
+          );
+        });
+    };
+
+    const renderAll = () => {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: readMermaidTheme(),
+        flowchart: { curve: "basis", useMaxWidth: true },
+      });
+      figures.forEach(renderFigure);
+    };
+
+    renderAll();
+
+    // Re-render on a theme flip, whichever way it arrives: an explicit
+    // data-theme attribute (the board's own contract) or the OS preference.
+    const observer = new MutationObserver(renderAll);
+    [document.documentElement, document.body].forEach((target) => {
+      if (target) observer.observe(target, { attributeFilter: ["data-theme"] });
+    });
+    if (typeof window.matchMedia === "function") {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", renderAll);
+    }
+  }
+
   questions.forEach((question) => {
     hydrateQuestion(question);
     notifyQuestionControls(question);
@@ -1680,13 +2097,16 @@
     question.addEventListener("change", () => updateQuestion(question));
   });
   sections.forEach(installSectionAnnotation);
+  installSelectionAnnotation();
   announceProvenance();
   installAnnotationPins();
   installSyncPairs();
   installCodeTabs();
   installDiagramDetail();
+  installMermaidDiagrams();
   installExclusiveAccordions();
   buildSectionNav();
+  buildBoardSet();
   installAnchorFlash();
   installFilterChips();
   installSpectrumMinimap();
