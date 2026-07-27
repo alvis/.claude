@@ -242,7 +242,7 @@ children, so a stream growing into a stack renames it — local ref and forge
 alike, since either blocks the child — before pushing the rest, per Essential's
 naming contract. Only for an unbookmarked new change/stack: a lone change
 takes `BOOKMARK=<branch-prefix>`,
-a stack indexes `NN` from `01` into `BOOKMARK=<branch-prefix>/NN-<scope>`,
+a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 

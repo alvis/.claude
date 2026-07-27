@@ -81,7 +81,14 @@ in the same operation that vacates it. Both refs need it: `git branch -m`
 (or `jj bookmark rename`) clears the local namespace, and the forge's own
 branch rename clears the remote one while retargeting the open pull request —
 never delete the remote ref instead, since that closes the pull request on it.
-Only once both renames have landed do the later slices push.
+
+Renaming leaves this checkout pointing at a ref that is gone. Run
+`git fetch --prune` and reset the renamed branch's upstream before pushing
+anything: a stale `origin/<type>/<work-id>` fails the next
+`--force-with-lease` with `stale info`, because the lease is a claim about a
+remote value that no longer exists, and the same stale flat ref blocks
+fetching the numbered child that has taken its name. Only once both renames
+and that prune have landed do the later slices push.
 
 The segment after the ordinal is free-form: name the slice, not its
 `GIT-PR-TYPE-01` category.
