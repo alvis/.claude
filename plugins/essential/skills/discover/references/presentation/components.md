@@ -565,23 +565,39 @@ the board id in the generated prompt's review context.
 A hub board is optional; the sidebar board set is not. Whenever a run produces
 more than one board, **every** board carries the same list in its docnav, so a
 reader can leave any board without first finding the hub. The starter scaffold
-ships the block; authoring it means filling in one `<li>` per board produced,
-in reading order, including the board being authored:
+ships the block; authoring it means writing one `<li>` per board produced, in
+reading order, including the board being authored — **once for the whole run**,
+in `<run-root>/_shared/board-set.html`:
+
+```html
+<li>
+  <a
+    class="essential-board-link"
+    data-board-link="signature-board"
+    href="./signature-board.html"
+    >Signature workstream</a
+  >
+</li>
+```
+
+Every board's `page.html` then names that file rather than carrying its own
+copy, and `build_artifact.py` rewrites the line from the partial at compose
+time:
 
 ```html
 <div class="essential-docnav-rule" data-board-set-rule hidden></div>
 <p data-board-set-heading hidden>Board set</p>
 <ul class="essential-board-set" data-board-set hidden>
-  <li>
-    <a
-      class="essential-board-link"
-      data-board-link="signature-board"
-      href="./signature-board.html"
-      >Signature workstream</a
-    >
-  </li>
+  <!-- {{INCLUDE: _shared/board-set.html}} -->
 </ul>
 ```
+
+The include path is relative to the run root — the directory holding every
+board source — so a path that escapes it is refused, as is an include inside the
+partial itself. Pasting the entries into a page instead is the one thing this
+forbids: the same labels, ids, and hrefs would then have to be patched
+independently on every board, and the copies drift the first time a board is
+added or renamed.
 
 The runtime marks the entry matching this page's `data-board-id` (falling back
 to `data-page-id`) with `aria-current="page"` and reveals the heading, rule, and

@@ -6,10 +6,10 @@ so ``pytest.ini`` ignores it and this wrapper imports it by path instead. Until
 this file existed, the repository's own rule — every mechanical gate is a pytest
 test — was false for the largest generator in the tree.
 
-``run("complete")`` compiles a board through ``build_artifact.build``, which
-downloads the Tailwind runtime unless the gitignored vendor cache holds it. CI
-has a network, so the gate runs there. An offline developer gets a skip rather
-than a failure that says nothing about their change.
+``run("complete")`` compiles boards through ``build_artifact.build``, which
+downloads the Tailwind and Mermaid runtimes unless the gitignored vendor cache
+holds them. CI has a network, so the gate runs there. An offline developer gets
+a skip rather than a failure that says nothing about their change.
 """
 
 from __future__ import annotations
@@ -48,14 +48,18 @@ def test_discover_presentation_contract_holds() -> None:
     # outage — the failure mode that makes a gate worse than no gate.
     builder = validator._load_builder()
     include_builder = True
-    try:
-        builder.get_tailwind_runtime()
-    except builder.BuildError as error:
-        # An unreachable CDN with no cache is an offline developer; every other
-        # BuildError is a real finding and must still fail.
-        if "could not fetch" not in str(error):
-            raise
-        include_builder = False
+    # Probe every runtime the compile step needs, not just the long-standing
+    # one: a checkout that cached Tailwind before diagrams existed would
+    # otherwise pass this probe and then hard-fail compiling the diagram board.
+    for fetch in (builder.get_tailwind_runtime, builder.get_mermaid_runtime):
+        try:
+            fetch()
+        except builder.BuildError as error:
+            # An unreachable CDN with no cache is an offline developer; every
+            # other BuildError is a real finding and must still fail.
+            if "could not fetch" not in str(error):
+                raise
+            include_builder = False
 
     result = validator.run("complete", include_builder=include_builder)
     assert result["errors"] == []
@@ -65,4 +69,4 @@ def test_discover_presentation_contract_holds() -> None:
         == result["presentation_patterns_required"]
     )
     if not include_builder:
-        pytest.skip("compile checks skipped: runtime CDN unreachable and uncached")
+        pytest.skip("compile checks skipped: a runtime CDN is unreachable and uncached")

@@ -1313,6 +1313,15 @@ body::before {
   list-style: none;
 }
 
+/* An authored `display` beats the user agent's `[hidden]` rule, so the
+   hide-below-two contract has to be restated here. Without it a one-entry board
+   set stays visible whenever the runtime does not run — scripting off, or the
+   Tailwind runtime failing — which is exactly when the fallback must read
+   correctly. */
+.essential-board-set[hidden] {
+  display: none;
+}
+
 .essential-docnav .essential-board-link {
   display: flex;
   gap: 0.55rem;

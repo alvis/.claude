@@ -104,10 +104,27 @@ MERMAID_MARKER_RE = re.compile(r"data-mermaid(?=[\s=>/\"'])", re.IGNORECASE)
 # this fails the build on the release that grows one, instead of shipping a board
 # whose diagrams quietly do not appear.
 DYNAMIC_IMPORT_RE = re.compile(r"\bimport\s*\(")
+# A diagram grammar id that only the Mermaid bundle itself carries. The word
+# "mermaid" is useless as evidence — the authored `data-mermaid` markup and the
+# always-inlined discovery runtime both contain it, so an empty or truncated
+# cache would validate as a diagram board whose figures silently never render.
+MERMAID_BUNDLE_SIGNATURE = "flowchart-v2"
 
 # The single marker line a directory source's page.html carries in place of its
 # composed sections.
 SECTIONS_MARKER = "<!-- {{SECTIONS}} -->"
+
+# An include line pulls a partial shared by every board of one run — the board
+# set above all, whose labels, ids and hrefs are the same fact on every sibling
+# page. The path is relative to the run root (the source directory's parent), so
+# `_shared/board-set.html` is one home that each page names and the composer
+# rewrites from, rather than a list hand-patched into N pages. Traversal out of
+# the run root is refused, and a partial may not itself include.
+INCLUDE_RE = re.compile(
+    r"^[^\S\n]*<!-- \{\{INCLUDE:[^\S\n]*(?P<path>[^\s{}]+)[^\S\n]*\}\} -->"
+    r"[^\S\n]*(?:\n|$)",
+    re.MULTILINE,
+)
 
 # Raw U+FFFD REPLACEMENT CHARACTER, spelled as an escape so an encoding mishap in
 # this source cannot be mistaken for an intentional literal, and its safe escape.
@@ -169,6 +186,7 @@ def _get_vendor_runtime(
     url: str,
     cache: Path,
     *,
+    signature: str | None = None,
     refresh: bool = False,
     offline: bool = False,
 ) -> str:
@@ -183,11 +201,25 @@ def _get_vendor_runtime(
     * on fetch failure (URLError/OSError/timeout): fall back to the cache with a
       warning to stderr when one exists — unless ``refresh`` is set, in which case
       the failure is fatal (the caller explicitly asked for the newest runtime).
+
+    ``signature`` is a substring only the real bundle carries. It is checked on
+    every path a caller can receive text from — fetch, cache write, cache read —
+    so an empty, truncated, or wrong-body response is a named build failure
+    rather than a runtime that is inlined and then does nothing.
     """
+
+    def checked(text: str, origin: str) -> str:
+        if signature is not None and signature not in text:
+            raise BuildError(
+                f"the {origin} {label} runtime does not contain {signature!r}, "
+                f"so it is not the expected bundle ({len(text)} bytes); "
+                f"re-fetch it with --refresh-{label.lower()}"
+            )
+        return text
 
     if offline:
         if cache.is_file():
-            return cache.read_text(encoding="utf-8")
+            return checked(cache.read_text(encoding="utf-8"), "cached")
         raise BuildError(
             f"no cached {label} runtime; run once with network or without --offline"
         )
@@ -202,10 +234,10 @@ def _get_vendor_runtime(
                 f"falling back to cached runtime {cache}",
                 file=sys.stderr,
             )
-            return cache.read_text(encoding="utf-8")
+            return checked(cache.read_text(encoding="utf-8"), "cached")
         raise BuildError(f"could not fetch {label} runtime from {url}: {error}")
 
-    patched = patch_fffd(raw)
+    patched = checked(patch_fffd(raw), "downloaded")
     if RAW_FFFD in patched:
         raise BuildError(
             f"U+FFFD survived patching the downloaded {label} runtime"
@@ -239,6 +271,7 @@ def get_mermaid_runtime(*, refresh: bool = False, offline: bool = False) -> str:
         "Mermaid",
         MERMAID_CDN_URL,
         MERMAID_CACHE,
+        signature=MERMAID_BUNDLE_SIGNATURE,
         refresh=refresh,
         offline=offline,
     )
@@ -299,13 +332,49 @@ def resolve_source(source: str) -> Path:
     )
 
 
+def _resolve_includes(text: str, source_dir: Path) -> str:
+    """Replace every ``<!-- {{INCLUDE: <path>}} -->`` line with its partial.
+
+    The path is relative to the run root — ``source_dir.parent``, the directory
+    holding every board of one run — so siblings share one file rather than one
+    copy each. Substitution is byte-exact, like the sections marker: the partial
+    carries its own indentation.
+    """
+
+    run_root = source_dir.parent.resolve()
+
+    def substitute(match: re.Match[str]) -> str:
+        relative = match.group("path")
+        target = (run_root / relative).resolve()
+        if not target.is_relative_to(run_root):
+            raise BuildError(
+                f"include path {relative!r} in {source_dir / 'page.html'} "
+                f"escapes the run root {run_root}"
+            )
+        if not target.is_file():
+            raise BuildError(
+                f"missing include {relative!r} for {source_dir}: {target}"
+            )
+        partial = target.read_text(encoding="utf-8")
+        if INCLUDE_RE.search(partial):
+            raise BuildError(
+                f"include {target} itself includes another partial; keep "
+                f"shared sources one level deep"
+            )
+        return partial
+
+    return INCLUDE_RE.sub(substitute, text)
+
+
 def compose_directory(source_dir: Path) -> str:
     """Compose a directory source's page.html + sections/ into one HTML string.
 
     The single ``<!-- {{SECTIONS}} -->`` marker line (surrounding whitespace
     allowed) is replaced verbatim — including its newline — by the concatenation
     of the ``sections/*.html`` files in sorted filename order, with no added
-    separators (byte-exact concatenation).
+    separators (byte-exact concatenation). Any ``<!-- {{INCLUDE: <path>}} -->``
+    line in the shell or in a section is replaced the same way by the shared
+    partial it names.
     """
 
     page = source_dir / "page.html"
@@ -335,7 +404,8 @@ def compose_directory(source_dir: Path) -> str:
         )
 
     sections = "".join(f.read_text(encoding="utf-8") for f in section_files)
-    return marker_re.sub(lambda _m: sections, shell, count=1)
+    composed = marker_re.sub(lambda _m: sections, shell, count=1)
+    return _resolve_includes(composed, source_dir)
 
 
 def load_source(source_path: Path) -> tuple[str, str]:
@@ -667,7 +737,7 @@ def _validate(output: str, *, artifact: bool, needs_mermaid: bool = False) -> No
         problems.append("board markup missing")
     if "[data-discovery-prompt-host]" not in output:
         problems.append("discovery.js not inlined")
-    if needs_mermaid and "mermaid" not in output.lower():
+    if needs_mermaid and MERMAID_BUNDLE_SIGNATURE not in output:
         problems.append(
             "board carries a data-mermaid figure but the diagram runtime is not "
             "inlined"

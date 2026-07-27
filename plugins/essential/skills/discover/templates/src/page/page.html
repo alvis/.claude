@@ -69,6 +69,15 @@
             <a class="essential-board-link" data-board-link="signature-board"
                href="signature-board.html">Signature workstream</a>
           </li>
+        The list is the SAME fact on every board of the run, so a multi-board
+        run authors it once as <run-root>/_shared/board-set.html and each page
+        names that file instead of carrying its own copy: put an HTML comment
+        holding only "{{INCLUDE: _shared/board-set.html}}" on its own line
+        between the ul tags below (spelled here without the comment delimiters,
+        which would end this one). The composer rewrites that line from the
+        partial; the path is relative to the run root — the directory holding
+        every board source of the run — and escaping it, or nesting a further
+        include inside the partial, is refused.
       -->
       <div class="essential-docnav-rule" data-board-set-rule hidden></div>
       <p data-board-set-heading hidden>Board set</p>

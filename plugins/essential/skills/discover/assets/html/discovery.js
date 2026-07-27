@@ -1858,9 +1858,10 @@
           answer: formatAnswer(answer),
         });
       });
-      const notes = sections.filter((section) =>
-        state.annotations[section.dataset.sectionId]?.trim(),
-      ).length;
+      // presentationNotes() is the one home for "every saved note"; counting
+      // state.annotations here instead would make a reply that carries only a
+      // selection-scoped note read back as "nothing is locked in yet".
+      const notes = presentationNotes().length;
       const probes = collectDragResults().length;
 
       const parts = [];
@@ -1874,7 +1875,7 @@
       }
       if (requested.length)
         parts.push(`asked for ${plural(requested.length, "follow-up")}`);
-      if (notes) parts.push(`left ${plural(notes, "section note")}`);
+      if (notes) parts.push(`left ${plural(notes, "note")}`);
       if (probes)
         parts.push(`re-ordered ${plural(probes, "interaction probe")}`);
 

@@ -26,11 +26,12 @@ VENDOR_DIR = DISCOVER_ROOT / "assets" / "html" / "vendor"
 # The Tailwind runtime is downloaded on demand; the pinned vendor file must no
 # longer be committed, and the gitignored cache below is an optional fallback.
 TAILWIND_CACHE = VENDOR_DIR / "tailwind-browser.cache.js"
-# A grammar name from inside the Mermaid bundle, absent from discovery.js, so
-# presence of the vendored runtime is distinguishable from the board's own
-# always-inlined Mermaid wiring. The obvious-looking "Mermaid version" string
-# does not exist anywhere in the UMD build and would assert nothing.
-MERMAID_BUNDLE_MARKER = "flowchart-v2"
+# The grammar name from inside the Mermaid bundle that the builder validates a
+# fetched runtime against — absent from discovery.js, so presence of the
+# vendored bundle is distinguishable from the board's own always-inlined Mermaid
+# wiring. It is read from the builder at use rather than restated here, so the
+# two can never come to mean different bundles. (The obvious-looking "Mermaid
+# version" string does not exist anywhere in the UMD build.)
 BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
@@ -899,6 +900,10 @@ def validate_stylesheet() -> list[str]:
         # and the Mermaid figure — the density scale is asserted by name so no
         # board re-introduces a bare column number.
         ".essential-board-set",
+        # The board set authors its own `display`, which beats the user agent's
+        # rule for [hidden]; without this restatement the hide-below-two
+        # contract holds only while the runtime runs.
+        ".essential-board-set[hidden]",
         ".essential-board-link",
         ".discovery-selection-pill",
         ".discovery-annotation-quote",
@@ -1001,6 +1006,34 @@ def _load_builder():
     return build_artifact
 
 
+def validate_board_set_single_home() -> list[str]:
+    """The example run's board set must exist once, not once per sibling board.
+
+    Every board of one run carries the same list of boards, so hand-authoring it
+    into each page.html makes N sources of truth for one fact and the copies
+    drift the moment a board is added or renamed. Each page names the shared
+    partial through an include and the composer rewrites the list from it; a
+    board entry authored directly into a page is the regression this catches.
+    """
+
+    shared = EXAMPLES_SRC_ROOT / "_shared" / "board-set.html"
+    if not shared.is_file():
+        return [f"{shared}: shared board-set partial is missing"]
+
+    errors: list[str] = []
+    for page in sorted(EXAMPLES_SRC_ROOT.glob("*/page.html")):
+        text = page.read_text(encoding="utf-8")
+        if "data-board-set" not in text:
+            continue
+        if "data-board-link" in text:
+            errors.append(
+                f"{page}: board-set entries are authored into the page; they "
+                f"belong once in {shared} — replace them with "
+                f"'<!-- {{{{INCLUDE: _shared/board-set.html}}}} -->'"
+            )
+    return errors
+
+
 def validate_source_drift(page_path: Path, source_dir: Path) -> list[str]:
     """Require a committed page to be byte-identical to its composed source.
 
@@ -1083,6 +1116,7 @@ def validate_artifact_builder() -> list[str]:
     diagram_source = EXAMPLES_ROOT / "architecture-board.html"
     if not diagram_source.is_file():
         errors.append(f"{diagram_source}: Mermaid builder test source is missing")
+    bundle_marker = build_artifact.MERMAID_BUNDLE_SIGNATURE
 
     # Independently defined (not imported from the builder) so a loosened builder
     # regex cannot blind this gate: Discover placeholders are {{UPPER_SNAKE}}.
@@ -1114,7 +1148,7 @@ def validate_artifact_builder() -> list[str]:
             lowered = output.lower()
             if "<!doctype" in lowered or "<html" in lowered or "<body" in lowered:
                 errors.append("builder fragment: must omit doctype/html/body")
-        if MERMAID_BUNDLE_MARKER in output:
+        if bundle_marker in output:
             errors.append(
                 f"builder {mode}: Mermaid runtime inlined into a board with no "
                 "diagram (3.4 MB the board never uses)"
@@ -1127,7 +1161,7 @@ def validate_artifact_builder() -> list[str]:
             except Exception as error:
                 errors.append(f"builder mermaid {mode} mode failed: {error}")
                 continue
-            if MERMAID_BUNDLE_MARKER not in output:
+            if bundle_marker not in output:
                 errors.append(
                     f"builder mermaid {mode}: board carries a [data-mermaid] "
                     "figure but no Mermaid runtime was inlined"
@@ -1154,6 +1188,7 @@ def run(stage: str, include_builder: bool = True) -> dict[str, object]:
         errors.extend(validate_html(TEMPLATE, allow_placeholders=True))
         errors.extend(validate_source_drift(TEMPLATE, TEMPLATE_SRC))
         errors.extend(validate_scaffold())
+    errors.extend(validate_board_set_single_home())
     if JAVASCRIPT.is_file():
         errors.extend(validate_runtime())
     if CSS.is_file():
