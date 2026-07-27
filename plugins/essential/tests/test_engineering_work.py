@@ -322,6 +322,7 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
     for branch in (
         "feat/work-id-naming-rewrite",   # its own topic, not this stream
         "feat/work-id-naming/3-late",    # ordinals are exactly two digits
+        "feat/work-id-naming/00-prep",   # and run 01-99, so 00 is not a slice
         "feat/work-id-naming/123-late",  # three digits is not the shape either
         "feature/work-id-naming",        # `feature` is not a conventional type
         "work-id-naming",                # a bare branch is not a branch shape

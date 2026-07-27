@@ -332,7 +332,7 @@ if [[ -n "$workspace_label" ]]; then
     2 | 3)
       if [[ "${label_segments[0]}" =~ ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)$ ]] &&
          { [[ "${#label_segments[@]}" -eq 2 ]] ||
-           [[ "${label_segments[2]}" =~ ^[0-9][0-9]-[a-z0-9]+(-[a-z0-9]+)*$ ]]; }; then
+           [[ "${label_segments[2]}" =~ ^(0[1-9]|[1-9][0-9])-[a-z0-9]+(-[a-z0-9]+)*$ ]]; }; then
         candidate_from_label="${label_segments[1]}"
       fi
       ;;
