@@ -136,21 +136,19 @@ with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 
 ## Deterministic names
 
-`"$ESSENTIAL_ROOT/bin/derive-engineering-name"` is the only path-name
-derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`,
-`workspace-work-id`; see `--help`). Never reimplement its rules; pass every
-occupied sibling to `--collision-with` (for a work ID: every ID under `works/`
-and `archive/`). A work ID is an identity, never renamed; derive or mint only
-when the resolver cannot select safely and the PM resolved the ambiguity. A
-minted `<kind>-<scope-slug>` names the stream, its source tree, and its branch
-namespace `<kind>/<scope-slug>/NN-<slice>` — one branch per slice or sub-task,
-each resolving to the stream. Naming rules: use the
-owning capability (not the task title) for `docs/specs/<capability>/`; ADRs
-alone use a zero-padded monotonic numeric prefix and are never renumbered;
-ordinary work-local children use unnumbered semantic `<slug>.md` names, with
-numbered `<nn>-<topic-slug>.md` (increments of 10) reserved for mechanical
-splits of an oversized file; never use `part-1`, `misc`, or a task title as a
-child name.
+`"$ESSENTIAL_ROOT/bin/derive-engineering-name"` (see `--help`) is the only
+path-name derivation implementation. Never reimplement its rules; pass every
+occupied sibling to `--collision-with` — for a work ID, every ID under
+`works/` and `archive/`. A work ID is an identity, never renamed; derive or
+mint only when the resolver cannot select safely and the PM resolved the
+ambiguity. A minted `<kind>-<scope-slug>` names the stream, its source tree,
+and its branch namespace `<kind>/<scope-slug>/NN-<slice>`, one branch per
+slice, each resolving to the stream. Naming rules: use the owning capability
+(not the task title) for `docs/specs/<capability>/`; ADRs alone use a
+zero-padded monotonic numeric prefix and are never renumbered; ordinary
+work-local children use unnumbered semantic `<slug>.md` names, with numbered
+`<nn>-<topic-slug>.md` (increments of 10) reserved for mechanical splits of an
+oversized file.
 
 ## Work memory
 
@@ -310,8 +308,7 @@ believes it needs one has misread this contract; stop and report instead.
 **Output volume is never a reason to create a file.** A report that would be
 long is shortened editorially or degraded to pointers into
 `.state/` — the state is already on disk, so a pointer loses nothing.
-Spilling a response to an ad hoc file is never the answer, whatever its
-size. Where a generated carrier genuinely must exist as a file — a
+Where a generated carrier genuinely must exist as a file — a
 `git format-patch` patch, a bundle, a captured log — its only legal home is
 `.state/works/<work-id>/artifacts/`, so it travels with the work
 directory. This is also the destination for the general instruction to

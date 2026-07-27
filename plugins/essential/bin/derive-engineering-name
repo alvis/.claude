@@ -86,25 +86,28 @@ def workspace_work_id(label: str, candidates: set[str]) -> str:
     """Return the work ID a branch or workspace label belongs to, if any."""
     namespace, _, final_segment = label.rpartition("/")
 
-    for value in (label, final_segment):
-        derived = bounded_slug(value)
-        if derived in candidates:
-            return derived
+    derived = bounded_slug(label)
+    if derived in candidates:
+        return derived
 
-    # Beyond an exact name, a stream owns a branch namespace holding one
-    # numbered branch per slice or sub-task (`<kind>/<scope-slug>/NN-<slice>`).
-    # Only that grammar resolves, anchored on the real `/` boundary and an
-    # ordinal opening the final segment. Matching a bare token prefix instead
-    # would read `feat/payments-2026-migration` as slice 2026 of a
-    # `feat-payments` stream, and `chore/lint-2` as a slice of `chore-lint`
-    # rather than the distinct identity it is — each one opening the wrong
-    # work, which is worse than asking.
+    # A stream owns a branch namespace holding one numbered branch per slice
+    # or sub-task (`<kind>/<scope-slug>/NN-<slice>`). That grammar is anchored
+    # on the real `/` boundary and an ordinal opening the final segment, and
+    # it outranks the segment read as a name of its own: in
+    # `feat/work-id-naming/01-docs` the owning stream is the namespace, even
+    # where some unrelated stream is itself called `01-docs`.
     tokens = ascii_tokens(final_segment)
     if namespace and tokens and tokens[0].isdigit():
         derived = bounded_slug(namespace)
         if derived in candidates:
             return derived
-    return ""
+
+    # Matching any looser prefix would read `feat/payments-2026-migration` as
+    # slice 2026 of a `feat-payments` stream, and `chore/lint-2` as a slice of
+    # `chore-lint` rather than the distinct identity it is — each one opening
+    # the wrong work, which is worse than asking.
+    derived = bounded_slug(final_segment)
+    return derived if derived in candidates else ""
 
 
 def minted_work_id(kind: str, scope: str, occupied: set[str]) -> str:

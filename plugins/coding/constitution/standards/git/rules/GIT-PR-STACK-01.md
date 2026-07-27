@@ -10,13 +10,13 @@ Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) fol
 
 Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and lets reviewers infer category before opening the PR.
 
-When the stack belongs to an engineering work stream, `<feature-slug>` is that stream's branch namespace — its work ID with the first `-` as `/`, so `feat-work-id-naming` gives `feat/work-id-naming/02-impl`. `resolve-engineering-workspace` then selects the stream from any bookmark in the stack instead of asking at every transition. The bare `feat/work-id-naming` bookmark is never created: git stores refs as files, so it and `feat/work-id-naming/01-spec` cannot coexist.
+When the stack belongs to an engineering work stream, `<feature-slug>` is that stream's branch namespace — its work ID with the first `-` as `/`, so `feat-work-id-naming` gives `feat/work-id-naming/02-implementation`. `resolve-engineering-workspace` then selects the stream from any bookmark in the stack instead of asking at every transition. The bare `feat/work-id-naming` bookmark is never created: git stores refs as files, so it and `feat/work-id-naming/01-code-spec` cannot coexist.
 
 ## Fix
 
 ```text
-auth-rewrite/01-spec
-auth-rewrite/02-impl
+auth-rewrite/01-code-spec
+auth-rewrite/02-implementation
 auth-rewrite/03-integration
 auth-rewrite/04-feature-flag
 auth-rewrite/05-cleanup
@@ -27,7 +27,7 @@ Cross-references the conventional-commit type — they are usually the same word
 ```text
 order-archive/01-migration
 order-archive/02-feature-flag
-order-archive/03-impl
+order-archive/03-implementation
 order-archive/04-ui
 ```
 
@@ -42,7 +42,7 @@ For single-PR work that is not part of a stack, the existing branch convention f
 ## Edge Cases
 
 - Reordering a stack mid-flight: re-number from the changed point downward and force-update bookmarks for any stack PR not yet merged. Once a PR has merged, its number is frozen (`GIT-PR-STACK-03`).
-- If two stacks share a slug (e.g. two phases of `auth-rewrite`), suffix the slug: `auth-rewrite-phase2/01-spec`.
+- If two stacks share a slug (e.g. two phases of `auth-rewrite`), suffix the slug: `auth-rewrite-phase2/01-code-spec`.
 - Tooling (Graphite, Sapling, jj) sometimes injects its own naming. Configure it to follow this format; do not let tooling defaults override the standard.
 
 ## Related

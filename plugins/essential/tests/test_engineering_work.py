@@ -352,7 +352,7 @@ def test_minted_work_id_rejects_unusable_input(
         # every branch in the stream's namespace belongs to it, whether the
         # slice is a GIT-PR-STACK-01 stack PR or a sub-task
         (
-            "feat/work-id-naming/01-spec",
+            "feat/work-id-naming/01-code-spec",
             ("feat-work-id-naming",),
             "feat-work-id-naming",
         ),
@@ -365,7 +365,7 @@ def test_minted_work_id_rejects_unusable_input(
         # collided with, so chore-lint-2 never resolves to chore-lint
         ("chore/lint-2", ("chore-lint", "chore-lint-2"), "chore-lint-2"),
         (
-            "feat/auth-refresh/01-spec",
+            "feat/auth-refresh/01-code-spec",
             ("feat-auth", "feat-auth-refresh"),
             "feat-auth-refresh",
         ),
@@ -373,7 +373,7 @@ def test_minted_work_id_rejects_unusable_input(
         # after a real `/`, so a name that merely reads like one is its own
         # topic and gets asked about rather than opening the wrong stream
         ("feat/checkout-refunds", ("feat-checkout",), ""),
-        ("feat/work-id-naming-rewrite/01-spec", ("feat-work-id-naming",), ""),
+        ("feat/work-id-naming-rewrite/01-code-spec", ("feat-work-id-naming",), ""),
         ("feat/payments-2026-migration", ("feat-payments",), ""),
         # a collision-ordinal identity resolves to itself once bootstrapped,
         # and to nothing before that — never to the stream it collided with
@@ -501,8 +501,8 @@ def test_every_branch_in_the_namespace_resolves_to_its_stream(
     # bare feat/work-id-naming branch is never created, because git stores
     # refs as files and it could not coexist with the numbered branches
     for branch in (
-        "feat/work-id-naming/01-spec",
-        "feat/work-id-naming/02-impl",
+        "feat/work-id-naming/01-code-spec",
+        "feat/work-id-naming/02-implementation",
         "feat/work-id-naming/03-resolver-matching",
     ):
         git("checkout", "-q", "-b", branch, cwd=root)
