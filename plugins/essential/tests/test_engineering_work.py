@@ -348,7 +348,9 @@ def test_feature_branch_does_not_select_a_mismatched_sole_work_id(
 
     assert completed.returncode == 4, completed.stderr
     assert payload["status"] == "work_id_required"
-    assert payload["suggested_work_id"] == "feature-refunds"
+    # the label is meaningful enough to block the sole-existing fallback, but
+    # not a shape this contract defines, so it suggests nothing to accept
+    assert payload["suggested_work_id"] is None
     assert payload["candidate_work_ids"] == ["unrelated-work"]
 
 

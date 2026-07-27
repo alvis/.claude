@@ -154,6 +154,11 @@ fi
 if [[ -n "$work_id" ]] && ! valid_work_id "$work_id"; then
   invalid "work ID from $work_id_source must be lowercase kebab-case"
 fi
+# Bound only what this run would mint. Enumeration stays permissive so a
+# stream created before the bound existed still resolves.
+if [[ -n "$work_id" && ${#work_id} -gt 32 ]]; then
+  invalid "work ID from $work_id_source must be at most 32 bytes"
+fi
 [[ -d "$start_path" ]] || invalid "start path is not a directory: $start_path"
 
 start_path="$(canonical_directory "$start_path")"
@@ -257,8 +262,17 @@ is_work_candidate() {
 
 workspace_work_id=""
 workspace_match_id=""
+workspace_is_meaningful=0
 if [[ -n "$workspace_label" ]]; then
-  workspace_work_id="$(slugify "$workspace_label")"
+  # Whether the label says anything about which stream is in play is a
+  # separate question from whether it yields a usable suggestion: a label
+  # this parser cannot read is still not a generic trunk, so it must not
+  # re-open the sole-existing fallback below.
+  label_slug="$(slugify "$workspace_label")"
+  if [[ -n "$label_slug" ]] &&
+     [[ ! "$label_slug" =~ ^(default|main|master|trunk)$ ]]; then
+    workspace_is_meaningful=1
+  fi
 
   # Only two label shapes carry a work ID, and both put it in a whole segment:
   # a jj workspace named for the stream, and the branch `<type>/<work-id>`
@@ -279,20 +293,24 @@ if [[ -n "$workspace_label" ]]; then
     2 | 3)
       if [[ "${label_segments[0]}" =~ ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)$ ]] &&
          { [[ "${#label_segments[@]}" -eq 2 ]] ||
-           [[ "${label_segments[2]}" =~ ^[0-9][0-9]- ]]; }; then
+           [[ "${label_segments[2]}" =~ ^[0-9][0-9]-[a-z0-9]+(-[a-z0-9]+)*$ ]]; }; then
         candidate_from_label="${label_segments[1]}"
       fi
       ;;
   esac
 
   if [[ -n "$candidate_from_label" ]]; then
-    # Suggest what the branch names, so a PM who accepts the suggestion
-    # bootstraps an ID this same branch resolves to next time.
-    workspace_work_id="$(slugify "$candidate_from_label")"
+    # Suggest only a segment that is already a work ID. Slugging one here
+    # would fold differently from the naming contract (`Crème` becomes
+    # `cr-me`, not `creme`) and a PM accepting it would mint an identity
+    # neither the branch nor the contract names.
+    if valid_work_id "$candidate_from_label"; then
+      workspace_work_id="$candidate_from_label"
+    fi
     # Match on the segment as written, never on its slug: `feat/foo_bar` is
     # not the branch of a `foo-bar` stream, and silently treating it as one
     # opens work the branch never named.
-    if valid_work_id "$candidate_from_label" &&
+    if [[ -n "$workspace_work_id" ]] &&
        is_work_candidate "$candidate_from_label"; then
       workspace_match_id="$candidate_from_label"
     fi
@@ -300,16 +318,10 @@ if [[ -n "$workspace_label" ]]; then
 fi
 
 if [[ -z "$work_id" ]]; then
-  meaningful_workspace_id=""
-  if [[ -n "$workspace_work_id" ]] &&
-     [[ ! "$workspace_work_id" =~ ^(default|main|master|trunk|item)$ ]]; then
-    meaningful_workspace_id="$workspace_work_id"
-  fi
-
   if [[ -n "$workspace_match_id" ]]; then
     work_id="$workspace_match_id"
     work_id_source="$workspace_source"
-  elif [[ ${#work_candidates[@]} -eq 1 && -z "$meaningful_workspace_id" ]]; then
+  elif [[ ${#work_candidates[@]} -eq 1 && $workspace_is_meaningful -eq 0 ]]; then
     work_id="${work_candidates[0]}"
     work_id_source="sole_existing"
   else

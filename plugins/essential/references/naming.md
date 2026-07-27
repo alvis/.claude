@@ -45,9 +45,12 @@ distinct stream, not a slice of the one it collided with.
 
 Retirement deletes a stream's `works/` and `archive/` directories after its
 retention window, so those two directories cannot be the only record of which
-IDs are spoken for. A retired ID is still spent: the durable promotion record
-retirement leaves under `docs/` names it, and that record is what a later
-stream checks before reclaiming a familiar-looking name.
+IDs are spoken for. A retired ID is still spent, and a stream with nothing to
+promote is the case that proves it — code-only work leaves no durable document
+to carry its name. Retirement therefore records every ID it retires in a
+versioned ledger under `docs/`, whether or not anything else was promoted
+([retirement.md](retirement.md)), and that ledger is what a later stream reads
+before reclaiming a familiar-looking name.
 
 ## Branch
 

@@ -241,11 +241,10 @@ selected an existing branch, it is already the head of an open PR, or the
 ordered stack already has explicit bookmarks. This is existing-bookmark mode:
 push and update that exact head; never replace it with a generated bookmark.
 Only for an unbookmarked new change/stack: a lone change takes
-`BOOKMARK=<branch-prefix>`, and a stack indexes `NN` from `01` into
-`BOOKMARK=<branch-prefix>/NN-<scope>`, scope being a free-form kebab-case
-summary (≤30 characters). `<branch-prefix>` is `--branch-prefix`, else the
-resolved stream's branch `<type>/<work-id>`, else derived as before. Record
-which mode selected each bookmark before mutation.
+`BOOKMARK=<branch-prefix>`, a stack indexes `NN` from `01` into
+`BOOKMARK=<branch-prefix>/NN-<scope>` with a free-form kebab-case scope (≤30
+characters). `<branch-prefix>` is `--branch-prefix`, else the resolved stream's
+branch `<type>/<work-id>`, else as derived. Record the mode before mutation.
 
 On the jj path, point the bookmark at the change and push it:
 
