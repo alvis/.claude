@@ -1031,15 +1031,34 @@ def validate_board_set_single_home() -> list[str]:
         return [f"{shared}: shared board-set partial is missing"]
 
     errors: list[str] = []
-    for page in sorted(EXAMPLES_SRC_ROOT.glob("*/page.html")):
-        text = page.read_text(encoding="utf-8")
-        if "data-board-set" not in text:
+    include_line = "<!-- {{INCLUDE: _shared/board-set.html}} -->"
+    entries = re.findall(r'data-board-link="([^"]+)"', shared.read_text(encoding="utf-8"))
+    if not entries:
+        errors.append(f"{shared}: shared board-set partial names no boards")
+
+    # The invariant is the identical index on EVERY board of the run, so the
+    # partial's own entries decide which pages are checked. Keying off the pages
+    # that happen to still carry the block would let a board drop the index
+    # entirely and stay green.
+    for board in entries:
+        page = EXAMPLES_SRC_ROOT / board / "page.html"
+        if not page.is_file():
+            errors.append(
+                f"{shared}: names board {board!r}, which has no source at {page}"
+            )
             continue
+        text = page.read_text(encoding="utf-8")
+        if include_line not in text:
+            errors.append(
+                f"{page}: board is named in {shared} but does not include it; "
+                f"every board of a run carries the same index — add "
+                f"'{include_line}'"
+            )
         if "data-board-link" in text:
             errors.append(
                 f"{page}: board-set entries are authored into the page; they "
                 f"belong once in {shared} — replace them with "
-                f"'<!-- {{{{INCLUDE: _shared/board-set.html}}}} -->'"
+                f"'{include_line}'"
             )
     return errors
 

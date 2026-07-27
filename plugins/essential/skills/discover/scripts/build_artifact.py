@@ -102,6 +102,17 @@ MERMAID_CACHE = VENDOR_ROOT / "mermaid.cache.js"
 # a start tag that really carries the bare attribute; sibling attributes
 # (data-mermaid-source, data-mermaid-host) are different names and do not count.
 MERMAID_MARKER_ATTR = "data-mermaid"
+# The runtime needs both children: the definition to render, and the element to
+# render into. Missing either, discovery.js returns early and the board ships a
+# 3.4 MB runtime and an empty figure — a silent failure, so the build refuses it.
+MERMAID_FIGURE_CHILDREN = ("data-mermaid-source", "data-mermaid-host")
+# Elements that never open a scope, so a tag stack must not wait for their close.
+VOID_TAGS = frozenset(
+    {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    }
+)
 # The self-containment invariant for any vendored runtime: a bundle that reaches
 # for a chunk at runtime cannot resolve it from a file:// board, and the failure
 # is silent — an empty figure. Mermaid's UMD build has no dynamic import today;
@@ -190,20 +201,66 @@ class BuildError(RuntimeError):
     """Raised when a board source cannot be compiled into a valid artifact."""
 
 
-class _MermaidMarkerFinder(HTMLParser):
-    """Record whether any start tag carries the bare ``data-mermaid`` attribute."""
+class _MermaidFigureFinder(HTMLParser):
+    """Collect each ``[data-mermaid]`` element and which required children it has.
+
+    Nesting is tracked with a tag stack so a child counts only when it is
+    actually inside the figure. Void elements never open a scope, and an end tag
+    unwinds to its matching start, which keeps unclosed markup from swallowing
+    the rest of the document.
+    """
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.found = False
+        self._stack: list[str] = []
+        # (depth at which the figure opened, {attribute: seen}) for open figures.
+        self._open: list[tuple[int, dict[str, bool]]] = []
+        self.figures: list[dict[str, bool]] = []
 
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
-        if any(name == MERMAID_MARKER_ATTR for name, _ in attrs):
-            self.found = True
+        names = {name for name, _ in attrs}
+        for _depth, parts in self._open:
+            for required in MERMAID_FIGURE_CHILDREN:
+                if required in names:
+                    parts[required] = True
+        if tag not in VOID_TAGS:
+            self._stack.append(tag)
+        if MERMAID_MARKER_ATTR in names:
+            parts = dict.fromkeys(MERMAID_FIGURE_CHILDREN, False)
+            self.figures.append(parts)
+            if tag not in VOID_TAGS:
+                self._open.append((len(self._stack), parts))
 
-    handle_startendtag = handle_starttag
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        # A self-closing tag opens no scope, so it can never hold the children.
+        names = {name for name, _ in attrs}
+        for _depth, parts in self._open:
+            for required in MERMAID_FIGURE_CHILDREN:
+                if required in names:
+                    parts[required] = True
+        if MERMAID_MARKER_ATTR in names:
+            self.figures.append(dict.fromkeys(MERMAID_FIGURE_CHILDREN, False))
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag not in self._stack:
+            return
+        while self._stack:
+            closed = self._stack.pop()
+            while self._open and self._open[-1][0] > len(self._stack):
+                self._open.pop()
+            if closed == tag:
+                return
+
+
+def _mermaid_figures(html: str) -> list[dict[str, bool]]:
+    finder = _MermaidFigureFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.figures
 
 
 def has_mermaid_figure(html: str) -> bool:
@@ -215,10 +272,7 @@ def has_mermaid_figure(html: str) -> bool:
     none of them buys the board a 3.4 MB runtime.
     """
 
-    finder = _MermaidMarkerFinder()
-    finder.feed(html)
-    finder.close()
-    return finder.found
+    return bool(_mermaid_figures(html))
 
 
 def patch_fffd(text: str) -> str:
@@ -509,9 +563,27 @@ def build(
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
-    needs_mermaid = has_mermaid_figure(html)
-    if needs_mermaid and mermaid is None:
-        mermaid = get_mermaid_runtime(offline=offline)
+    figures = _mermaid_figures(html)
+    needs_mermaid = bool(figures)
+    incomplete = [
+        ", ".join(name for name, seen in parts.items() if not seen)
+        for parts in figures
+        if not all(parts.values())
+    ]
+    if incomplete:
+        raise BuildError(
+            "every [data-mermaid] figure needs a "
+            f"{' and a '.join(MERMAID_FIGURE_CHILDREN)} child; "
+            f"{len(incomplete)} of {len(figures)} are missing: "
+            + "; ".join(incomplete)
+        )
+    if needs_mermaid:
+        if mermaid is None:
+            mermaid = get_mermaid_runtime(offline=offline)
+        else:
+            # A caller-supplied bundle is inlined into the board exactly like a
+            # downloaded one, so it earns exactly the same acceptance checks.
+            accept_mermaid_runtime(mermaid, "supplied")
 
     css_style = _inline_style(css)
     runtime_script = _inline_script(runtime)

@@ -2061,6 +2061,15 @@
     return variables;
   }
 
+  // Everything about the diagram config that is the same for every figure. Only
+  // themeVariables varies, and it is read per figure.
+  const MERMAID_BASE_CONFIG = {
+    startOnLoad: false,
+    securityLevel: "strict",
+    theme: "base",
+    flowchart: { curve: "basis", useMaxWidth: true },
+  };
+
   function installMermaidDiagrams() {
     const figures = [...root.querySelectorAll("[data-mermaid]")];
     if (figures.length === 0) return;
@@ -2073,13 +2082,35 @@
     const renderFigure = (figure) => {
       const source = figure.querySelector("[data-mermaid-source]");
       const host = figure.querySelector("[data-mermaid-host]");
-      if (!source || !host) return;
+      // The builder refuses a figure missing either child, so this is only
+      // reachable by hand-editing a compiled board. Mark it rather than return
+      // silently: there is no host to write an error into.
+      if (!source || !host) {
+        figure.dataset.mermaidState = "invalid";
+        return Promise.resolve();
+      }
       const definition = source.textContent.trim();
-      if (!definition) return;
+      if (!definition) {
+        figure.dataset.mermaidState = "invalid";
+        return Promise.resolve();
+      }
       sequence += 1;
+      // Theme from THIS figure's own tokens, immediately before rendering it: a
+      // board may rescope the --ui-* palette per section (a [data-specimen]
+      // frame, say), so one read of the first figure would paint every later
+      // diagram in the first one's colours. mermaid.initialize sets a single
+      // global config, which is why the figures are rendered in a chain below
+      // rather than all at once — two concurrent renders would both see
+      // whichever config was installed last.
+      mermaid.initialize({
+        ...MERMAID_BASE_CONFIG,
+        themeVariables: readMermaidTheme(figure),
+      });
       // A fresh id every pass: mermaid.render stages the diagram under this id,
       // and reusing one across a re-render collides with its own leftovers.
-      Promise.resolve(mermaid.render(`${pageId}-mermaid-${sequence}`, definition))
+      return Promise.resolve(
+        mermaid.render(`${pageId}-mermaid-${sequence}`, definition),
+      )
         .then(({ svg }) => {
           const parsed = parser.parseFromString(svg, "image/svg+xml");
           const node = parsed.documentElement;
@@ -2105,16 +2136,11 @@
         });
     };
 
-    const renderAll = () => {
-      mermaid.initialize({
-        startOnLoad: false,
-        securityLevel: "strict",
-        theme: "base",
-        themeVariables: readMermaidTheme(figures[0]),
-        flowchart: { curve: "basis", useMaxWidth: true },
-      });
-      figures.forEach(renderFigure);
-    };
+    const renderAll = () =>
+      figures.reduce(
+        (chain, figure) => chain.then(() => renderFigure(figure)),
+        Promise.resolve(),
+      );
 
     renderAll();
 
