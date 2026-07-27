@@ -49,8 +49,9 @@ IDs are spoken for. A retired ID is still spent, and a stream with nothing to
 promote is the case that proves it — code-only work leaves no durable document
 to carry its name. Retirement therefore records every ID it retires in
 `docs/retired-work-ids.md`, whether or not anything else was promoted
-([retirement.md](retirement.md)). One ID per line, and that file is the third
-place a new name is checked against.
+([retirement.md](retirement.md)). One record per line, the ID first and the
+retirement date after it (`refunds 2026-07-27`), so the ID is readable as the
+first field. That file is the third place a new name is checked against.
 
 ## Branch
 

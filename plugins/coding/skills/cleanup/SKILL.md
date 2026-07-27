@@ -146,8 +146,8 @@ ledger below, which is therefore its only project `generated_files` entry. Backu
    IDs and restoration commands because operation history preserves them.
 10. **Record the retirement, then remove only approved, verified targets.**
     Before deleting an engineering-work directory, append its work ID and the
-    retirement date to `docs/retired-work-ids.md`, one ID per line, and
-    include that file in `generated_files`. A work ID is never reused, and
+    retirement date to `docs/retired-work-ids.md`, one record per line as
+    `<work-id> <date>`, and include that file in `generated_files`. A work ID is never reused, and
     deletion removes the last `.state/` trace of it, so the ledger entry is
     what keeps the name spent — this applies equally to a stream that promoted
     nothing else. A stream whose entry cannot be written is not removable.
@@ -190,5 +190,5 @@ Report tool/remote freshness and counts by VCS target plus work lifecycle
 (`active`, `interrupted`, `completed`, `ambiguous`) and cleanup disposition.
 For every engineering-work candidate report workspace path/name, work ID,
 retirement gates, `retirement_ready_at`, effective retention, promotion anchor,
-backup path, action, and restoration command. Report `generated_files: []`
+backup path, action, and restoration command. Report `generated_files` carrying `docs/retired-work-ids.md` whenever step 10 retired an engineering-work directory, and otherwise `[]`
 unless a separately authorized project-artifact write actually occurred.

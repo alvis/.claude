@@ -405,7 +405,11 @@ def test_a_retired_id_is_spent_after_its_directories_are_gone(
     # which is exactly why it is versioned while .state/ is not
     ledger = root / "docs/retired-work-ids.md"
     ledger.parent.mkdir(parents=True)
-    ledger.write_text("payments-rewrite\nrefunds\n", encoding="utf-8")
+    # the record cleanup actually writes is `<work-id> <date>`, so a
+    # whole-line comparison would miss every entry the ledger holds
+    ledger.write_text(
+        "payments-rewrite 2026-06-01\nrefunds 2026-07-27\n", encoding="utf-8"
+    )
 
     completed, payload = run_resolver(root, "refunds")
 

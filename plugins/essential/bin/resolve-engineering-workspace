@@ -234,8 +234,11 @@ retired_ledger="$active_workspace/docs/retired-work-ids.md"
 # A retired ID is spent even after its directories are gone, which is the
 # whole reason the ledger is versioned while `.state/` is not.
 is_retired_work_id() {
-  [[ -f "$retired_ledger" ]] &&
-    grep -qxF -- "$1" "$retired_ledger"
+  [[ -f "$retired_ledger" ]] || return 1
+  # the ID is the first field of `<work-id> <date>`; comparing whole lines
+  # would silently miss every dated record the ledger actually holds
+  awk -v id="$1" '$1 == id { found = 1 } END { exit found ? 0 : 1 }' \
+    "$retired_ledger"
 }
 
 # A parked stream still owns its name. Minting a second one beside it would
