@@ -261,7 +261,7 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     linked = tmp_path / "linked workspace"
     initialize_git(root)
     commit_initial(root)
-    git("worktree", "add", "-q", "-b", "feature/refunds", str(linked), cwd=root)
+    git("worktree", "add", "-q", "-b", "feat/refunds", str(linked), cwd=root)
 
     completed, payload = run_resolver(linked)
 
@@ -273,8 +273,8 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["default_workspace"] == str(root.resolve())
     assert payload["active_workspace"] == str(linked.resolve())
     assert payload["state_root"] == str(root.resolve())
-    assert payload["workspace_label"] == "feature/refunds"
-    assert payload["suggested_work_id"] == "feature-refunds"
+    assert payload["workspace_label"] == "feat/refunds"
+    assert payload["suggested_work_id"] == "feat-refunds"
     assert payload["candidate_work_ids"] == []
     assert "work_dir" not in payload
 
@@ -296,7 +296,7 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
     root = tmp_path / "stacked"
     initialize_git(root)
     commit_initial(root)
-    (root / ".state/works/feat-work-id-naming").mkdir(parents=True)
+    (root / ".state/works/work-id-naming").mkdir(parents=True)
     (root / ".state/works/unrelated-work").mkdir(parents=True)
 
     # a stream that is one PR is the branch alone; a stream split into a stack
@@ -310,13 +310,18 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
         completed, payload = run_resolver(root)
 
         assert completed.returncode == 0, completed.stderr
-        assert payload["work_id"] == "feat-work-id-naming", branch
+        assert payload["work_id"] == "work-id-naming", branch
         assert payload["work_id_source"] == "git_branch", branch
 
     # a longer name that merely begins like the stream is its own topic, and
     # a single-digit ordinal is not the documented shape; neither resolves,
     # and two candidates leave nothing to fall back to
-    for branch in ("feat/work-id-naming-rewrite", "feat/work-id-naming/3-late"):
+    for branch in (
+        "feat/work-id-naming-rewrite",   # its own topic, not this stream
+        "feat/work-id-naming/3-late",   # ordinals are exactly two digits
+        "feat/work-id-naming/123-late", # three digits is not the shape either
+        "feature/work-id-naming",       # `feature` is not a conventional type
+    ):
         git("checkout", "-q", "--orphan", branch, cwd=root)
         completed, payload = run_resolver(root)
 

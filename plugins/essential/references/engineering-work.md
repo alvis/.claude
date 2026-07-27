@@ -137,12 +137,13 @@ with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
 ## Deterministic names
 
 Names are decided by rule, never derived by a program and never random. A work
-ID is `<kind>-<scope>` (`feat-work-id-naming`), naming the stream, its source
-tree, and its branch at once; it is an identity and is never renamed, so name
-one only when the resolver cannot select safely and the PM resolved the
-ambiguity. [naming.md](naming.md) carries every shape — slugs, the work ID and
-its collision ordinal, the branch a stack hangs under, and what generated
-documents are called. Read it before naming anything.
+ID is a slug of what the work is about (`work-id-naming`), carrying no type
+prefix: it names the stream's `works/<work-id>/` and its source tree, while
+the type belongs to the branch (`feat/<work-id>`). It is an identity and is
+never renamed or reused, so name one only when resolution cannot select safely
+and the PM resolved the ambiguity. [naming.md](naming.md) carries every shape
+— slugs, the collision ordinal, the branch a stack hangs under, and what
+generated documents are called. Read it before naming anything.
 
 ## Work memory
 

@@ -14,50 +14,61 @@ part of a word.
 
 ## Work ID
 
-`<kind>-<scope>`, under 32 bytes, where `<kind>` is a conventional-commit type
-(`build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`,
-`style`, `test`) and `<scope>` is what the stream is about:
+A slug naming what the work is about, at most 32 bytes. It carries no type
+prefix — the type belongs to the branch, not to the identity:
 
 ```text
-feat-work-id-naming
-chore-contract-footprint-budget
+work-id-naming
+contract-footprint-budget
+eng-421-checkout-refunds      # a stream that came from a tracker keeps its key
 ```
 
-That one name is also the stream's source tree directory
-(`~/.workspaces/<project>/feat-work-id-naming`) and the root of its branch.
+That one name is the stream's state directory (`.state/works/<work-id>/`) and
+its source tree directory (`~/.workspaces/<project>/<work-id>`).
 
-A work ID is an identity and is never renamed. Before taking one, read every
-ID under `works/` **and** `archive/`; if the name is occupied, append the next
-free ordinal (`chore-lint`, then `chore-lint-2`). That ordinal makes a
+A work ID is an identity and is never renamed or reused. Before taking one,
+read every ID under `works/` **and** `archive/`; if the name is occupied,
+append the next free ordinal — shortening the scope first so the ordinal still
+fits in 32 bytes, since `<31-byte-name>-2` would not. That ordinal makes a
 distinct stream, not a slice of the one it collided with.
 
-Streams that come from a tracker keep the tracker's identifier instead
-(`eng-421-checkout-refunds`); the `<kind>-<scope>` shape applies to a stream
-the team names itself.
+Retirement deletes a stream's `works/` and `archive/` directories after its
+retention window, so those two directories cannot be the only record of which
+IDs are spoken for. A retired ID is still spent: the durable promotion record
+retirement leaves under `docs/` names it, and that record is what a later
+stream checks before reclaiming a familiar-looking name.
 
 ## Branch
 
-The branch is the work ID with its first `-` as `/`. A stream that is one pull
-request is that branch alone; a stream split into a stack or into sub-tasks is
-a set of numbered branches beneath it, ordinals always two digits:
+The branch is the work ID under a conventional-commit type: `<type>/<work-id>`.
+A stream that is one pull request is that branch alone; a stream split into a
+stack or into sub-tasks is a set of numbered branches beneath it, ordinals
+always exactly two digits:
 
 ```text
-feat/work-id-naming                    # the whole stream, one PR
-feat/work-id-naming/01-resolver        # a stack or sub-task split
-feat/work-id-naming/02-contract
-feat/work-id-naming/03-docs
+feat/<work-id>                    # the whole stream, one PR
+feat/<work-id>/01-resolver        # a stack or sub-task split
+feat/<work-id>/02-contract
+feat/<work-id>/03-docs
 ```
 
-Git stores refs as files, so `feat/work-id-naming` and
-`feat/work-id-naming/01-resolver` cannot both exist — creating the second
-while the first is present fails with `cannot lock ref`. A stream that grows
-past one pull request renames its branch into the namespace before adding the
-second. The segment after the ordinal is free-form: name the slice, not its
+So a work ID of `work-id-naming` gives `feat/work-id-naming`, and its stack
+slices are `feat/work-id-naming/01-resolver` and so on. The type is chosen for
+the work, and never becomes part of the ID or of the state path.
+
+Git stores refs as files, so `feat/<work-id>` and `feat/<work-id>/01-resolver`
+cannot both exist — creating the second while the first is present fails with
+`cannot lock ref`. A stream that grows past one pull request moves into the
+namespace: push the numbered branches first, repoint any open pull request at
+the branch that now carries its commits, and delete the bare branch last, so
+no published pull request is ever left without a head.
+
+The segment after the ordinal is free-form: name the slice, not its
 `GIT-PR-TYPE-01` category.
 
-Naming the branch this way is what lets `resolve-engineering-workspace` select
-the stream from whichever branch is checked out. A branch shaped otherwise
-resolves to nothing, and the PM is asked instead — which is the intended
+Naming the branch this way is what lets the workspace resolution step select
+the stream from whichever branch is checked out. Only these two shapes
+resolve; anything else means the PM is asked instead — which is the intended
 outcome, not a failure.
 
 ## Documents

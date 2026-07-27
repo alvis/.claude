@@ -12,7 +12,7 @@ Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) fol
 
 Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and tells a reviewer what each PR covers before they open it.
 
-When the stack belongs to an engineering work stream, `<feature-slug>` is that stream's branch namespace — its work ID with the first `-` as `/`, so `feat-work-id-naming` gives `feat/work-id-naming/02-impl`. `resolve-engineering-workspace` then selects the stream from any bookmark in the stack instead of asking at every transition.
+When the stack belongs to an engineering work stream, `<feature-slug>` is `<type>/<work-id>` — the stream's branch — so a work ID of `work-id-naming` gives `feat/work-id-naming/02-impl`. The stream is then identified from any bookmark in the stack instead of being asked for at every transition.
 
 ## Fix
 
@@ -33,7 +33,7 @@ order-archive/03-impl
 order-archive/04-ui
 ```
 
-For single-PR work that is not part of a stack, the existing branch convention from `GIT-BRN-01` and `GIT-BRN-02` applies — `<type>/(<scope>)/<topic>`. The stack format kicks in only when a stack exists. An engineering work stream follows the same split: one PR is the bare `feat/work-id-naming`, and a stack is numbered beneath it. The two cannot coexist, since git stores refs as files, so a stream that grows past one PR renames its branch into the namespace first.
+For single-PR work that is not part of a stack, the existing branch convention from `GIT-BRN-01` and `GIT-BRN-02` applies — `<type>/(<scope>)/<topic>`. The stack format kicks in only when a stack exists. An engineering work stream follows the same split: one PR is the bare `<type>/<work-id>`, and a stack is numbered beneath it. The two cannot coexist, since git stores refs as files, so a stream that grows past one PR renames its branch into the namespace first.
 
 ### Why this matters
 

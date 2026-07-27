@@ -260,29 +260,32 @@ workspace_match_id=""
 if [[ -n "$workspace_label" ]]; then
   workspace_work_id="$(slugify "$workspace_label")"
 
-  # A stacked stream is `<work-id-as-branch>/NN-<scope>`, so a final segment
-  # opening with a zero-padded ordinal means the stream is the namespace
-  # before it. Decided first: that branch belongs to its namespace even where
-  # some separate stream is named for the whole label.
-  if [[ "$workspace_label" == */* && "${workspace_label##*/}" =~ ^[0-9]{2,}- ]]; then
-    namespace_id="$(slugify "${workspace_label%/*}")"
-    if is_work_candidate "$namespace_id"; then
-      workspace_match_id="$namespace_id"
-    fi
-  fi
-
-  # Otherwise the label names a stream outright — a single-PR stream is its
-  # work ID exactly, and a label that merely files one under a prefix matches
-  # on its final segment. Nothing looser: a partial prefix would read
-  # `feat/payments-2026-migration` as a slice of `feat-payments`, opening the
-  # wrong work, which is worse than asking.
-  if [[ -z "$workspace_match_id" ]]; then
-    for probe_id in "$workspace_work_id" "$(slugify "${workspace_label##*/}")"; do
-      if is_work_candidate "$probe_id"; then
-        workspace_match_id="$probe_id"
-        break
+  # Only two label shapes carry a work ID, and both put it in a whole segment:
+  # a jj workspace named for the stream, and the branch `<type>/<work-id>`
+  # with an optional two-digit stack slice under it. Reading anything looser —
+  # a trailing segment that merely happens to match, a longer ordinal, a
+  # leading word that is not a conventional-commit type — opens the wrong
+  # `.state/works/<id>/`, which is worse than asking.
+  IFS='/' read -r -a label_segments <<<"$workspace_label"
+  candidate_from_label=""
+  case "${#label_segments[@]}" in
+    1)
+      candidate_from_label="${label_segments[0]}"
+      ;;
+    2 | 3)
+      if [[ "${label_segments[0]}" =~ ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)$ ]] &&
+         { [[ "${#label_segments[@]}" -eq 2 ]] ||
+           [[ "${label_segments[2]}" =~ ^[0-9][0-9]- ]]; }; then
+        candidate_from_label="${label_segments[1]}"
       fi
-    done
+      ;;
+  esac
+
+  if [[ -n "$candidate_from_label" ]]; then
+    probe_id="$(slugify "$candidate_from_label")"
+    if is_work_candidate "$probe_id"; then
+      workspace_match_id="$probe_id"
+    fi
   fi
 fi
 
