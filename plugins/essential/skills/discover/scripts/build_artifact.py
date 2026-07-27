@@ -92,7 +92,12 @@ MERMAID_CACHE = VENDOR_ROOT / "mermaid.cache.js"
 # Mermaid is ~3.4 MB — roughly seven times the rest of a compiled board — so it
 # is inlined ONLY into a board that actually carries a diagram. Everything else
 # is byte-for-byte what it was before diagrams existed.
-MERMAID_MARKER_RE = re.compile(r"\bdata-mermaid\b", re.IGNORECASE)
+# `\b` ends the match at the hyphen in data-mermaid-source, so the marker text
+# alone — in a comment, an authoring note, or a sibling attribute — was enough to
+# inline 3.4 MB into a board carrying no figure. Match the bare attribute only,
+# and strip comments first so documentation about diagrams never costs a runtime.
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+MERMAID_MARKER_RE = re.compile(r"data-mermaid(?=[\s=>/\"'])", re.IGNORECASE)
 # The self-containment invariant for any vendored runtime: a bundle that reaches
 # for a chunk at runtime cannot resolve it from a file:// board, and the failure
 # is silent — an empty figure. Mermaid's UMD build has no dynamic import today;
@@ -364,7 +369,7 @@ def build(
     css = _read(DISCOVERY_CSS, "discovery.css")
     js = _read(DISCOVERY_JS, "discovery.js")
 
-    needs_mermaid = bool(MERMAID_MARKER_RE.search(html))
+    needs_mermaid = bool(MERMAID_MARKER_RE.search(HTML_COMMENT_RE.sub("", html)))
     if needs_mermaid and mermaid is None:
         mermaid = get_mermaid_runtime(offline=offline)
 

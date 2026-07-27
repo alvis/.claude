@@ -42,20 +42,27 @@ def test_discover_presentation_contract_holds() -> None:
     assert VALIDATOR.is_file(), f"{VALIDATOR}: Discover validator is missing"
     validator = _load_validator()
 
+    # Only the compile step needs a network. Skipping the whole gate on an
+    # unreachable CDN would turn source drift, scaffold, stylesheet, runtime and
+    # pattern-coverage regressions into a green skip during any transient
+    # outage — the failure mode that makes a gate worse than no gate.
     builder = validator._load_builder()
+    include_builder = True
     try:
         builder.get_tailwind_runtime()
     except builder.BuildError as error:
-        # An unreachable CDN with no cache is an offline developer, not a
-        # contract failure; every other BuildError is a real finding.
+        # An unreachable CDN with no cache is an offline developer; every other
+        # BuildError is a real finding and must still fail.
         if "could not fetch" not in str(error):
             raise
-        pytest.skip(f"Tailwind runtime unavailable offline: {error}")
+        include_builder = False
 
-    result = validator.run("complete")
+    result = validator.run("complete", include_builder=include_builder)
     assert result["errors"] == []
     assert result["status"] == "pass"
     assert (
         result["presentation_patterns_covered"]
         == result["presentation_patterns_required"]
     )
+    if not include_builder:
+        pytest.skip("compile checks skipped: runtime CDN unreachable and uncached")

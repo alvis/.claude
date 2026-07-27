@@ -650,7 +650,14 @@
       const rect = found.range.getBoundingClientRect();
       pill.hidden = false;
       pill.style.top = `${rect.bottom + window.scrollY + 8}px`;
-      pill.style.left = `${rect.left + window.scrollX}px`;
+      // Unhidden first so offsetWidth is real: a selection ending near the right
+      // edge would otherwise push the pill past the viewport, which both hides
+      // half the control and makes the whole document scroll sideways.
+      const margin = 8;
+      const viewport = document.documentElement.clientWidth;
+      const rightLimit = Math.max(margin, viewport - pill.offsetWidth - margin);
+      const left = Math.min(Math.max(rect.left, margin), rightLimit);
+      pill.style.left = `${left + window.scrollX}px`;
       if (previous && previous !== found.sectionId)
         updateAnnotationTrigger(previous);
       updateAnnotationTrigger(found.sectionId);
@@ -2008,11 +2015,38 @@
     noteBorderColor: "--ui-accent",
   };
 
+  // Mermaid does colour maths (darken, lighten, contrast) on every theme
+  // variable it is handed, through a parser that predates CSS Color 4. The dark
+  // palette is authored in oklch(), which that parser cannot read, so passing a
+  // token's raw computed value renders every dark-theme diagram as the error
+  // fallback. A canvas 2D context is the smallest converter that already lives
+  // in the browser: assigning to fillStyle parses any colour the page can name
+  // and reads back as #rrggbb or rgba(), both of which Mermaid does understand.
+  let colorProbe = null;
+
+  function toMermaidColor(value) {
+    if (!value) return value;
+    if (!colorProbe) {
+      const canvas = document.createElement("canvas");
+      colorProbe = canvas.getContext && canvas.getContext("2d");
+    }
+    if (!colorProbe) return value;
+    // fillStyle silently keeps its previous value when handed something it
+    // cannot parse, so a known sentinel is what distinguishes "converted" from
+    // "rejected" — without it an unparsed colour would inherit its predecessor.
+    colorProbe.fillStyle = "#000000";
+    colorProbe.fillStyle = value;
+    const converted = colorProbe.fillStyle;
+    if (converted === "#000000" && !/^\s*(#000000|black|rgb\(0,\s*0,\s*0\))/i.test(value))
+      return value;
+    return converted;
+  }
+
   function readMermaidTheme() {
     const computed = window.getComputedStyle(document.documentElement);
     const variables = {};
     Object.entries(MERMAID_THEME_TOKENS).forEach(([key, token]) => {
-      const value = collapseText(computed.getPropertyValue(token));
+      const value = toMermaidColor(collapseText(computed.getPropertyValue(token)));
       if (value) variables[key] = value;
     });
     const font = collapseText(computed.getPropertyValue("--ui-font-body"));

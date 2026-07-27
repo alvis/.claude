@@ -26,6 +26,11 @@ VENDOR_DIR = DISCOVER_ROOT / "assets" / "html" / "vendor"
 # The Tailwind runtime is downloaded on demand; the pinned vendor file must no
 # longer be committed, and the gitignored cache below is an optional fallback.
 TAILWIND_CACHE = VENDOR_DIR / "tailwind-browser.cache.js"
+# A grammar name from inside the Mermaid bundle, absent from discovery.js, so
+# presence of the vendored runtime is distinguishable from the board's own
+# always-inlined Mermaid wiring. The obvious-looking "Mermaid version" string
+# does not exist anywhere in the UMD build and would assert nothing.
+MERMAID_BUNDLE_MARKER = "flowchart-v2"
 BUILDER = DISCOVER_ROOT / "scripts" / "build_artifact.py"
 ACTION_ROOT = DISCOVER_ROOT / "references" / "presentation" / "actions"
 COVERAGE_REFERENCE = DISCOVER_ROOT / "references" / "presentation" / "coverage.md"
@@ -1070,6 +1075,15 @@ def validate_artifact_builder() -> list[str]:
     if not source.is_file():
         return errors + [f"{source}: builder test source is missing"]
 
+    # The conditional-inlining contract needs both halves compiled to mean
+    # anything: a diagram-bearing board that really carries the runtime, and a
+    # diagram-free one that really does not. Asserting only the second is how a
+    # broken fetch, a failed bundle check, or an over-broad marker regex stays
+    # green while every diagram on every board silently fails to draw.
+    diagram_source = EXAMPLES_ROOT / "architecture-board.html"
+    if not diagram_source.is_file():
+        errors.append(f"{diagram_source}: Mermaid builder test source is missing")
+
     # Independently defined (not imported from the builder) so a loosened builder
     # regex cannot blind this gate: Discover placeholders are {{UPPER_SNAKE}}.
     placeholder = re.compile(r"\{\{[A-Z_][A-Z0-9_]*\}\}")
@@ -1100,10 +1114,32 @@ def validate_artifact_builder() -> list[str]:
             lowered = output.lower()
             if "<!doctype" in lowered or "<html" in lowered or "<body" in lowered:
                 errors.append("builder fragment: must omit doctype/html/body")
+        if MERMAID_BUNDLE_MARKER in output:
+            errors.append(
+                f"builder {mode}: Mermaid runtime inlined into a board with no "
+                "diagram (3.4 MB the board never uses)"
+            )
+
+    if diagram_source.is_file():
+        for mode, artifact in (("full", False), ("fragment", True)):
+            try:
+                output = build_artifact.build(diagram_source, artifact=artifact)
+            except Exception as error:
+                errors.append(f"builder mermaid {mode} mode failed: {error}")
+                continue
+            if MERMAID_BUNDLE_MARKER not in output:
+                errors.append(
+                    f"builder mermaid {mode}: board carries a [data-mermaid] "
+                    "figure but no Mermaid runtime was inlined"
+                )
+            if b'src="http' in output.encode("utf-8"):
+                errors.append(f"builder mermaid {mode}: external src=http host")
+            if output.encode("utf-8").count("\ufffd".encode("utf-8")):
+                errors.append(f"builder mermaid {mode}: raw U+FFFD present")
     return errors
 
 
-def run(stage: str) -> dict[str, object]:
+def run(stage: str, include_builder: bool = True) -> dict[str, object]:
     errors: list[str] = []
     expected_actions = (
         (REPRESENTATIVE_ACTION,) if stage == "representative" else ACTIONS
@@ -1150,7 +1186,11 @@ def run(stage: str) -> dict[str, object]:
 
     if stage == "complete":
         errors.extend(validate_direction_reference_contract())
-        errors.extend(validate_artifact_builder())
+        # The only check here that needs a network: it compiles boards, and
+        # compiling downloads the runtimes. Every other check reads the tree, so
+        # an offline caller drops this one alone rather than the whole gate.
+        if include_builder:
+            errors.extend(validate_artifact_builder())
         missing_patterns = set(PRESENTATION_PATTERNS).difference(covered_patterns)
         if missing_patterns:
             errors.append(
