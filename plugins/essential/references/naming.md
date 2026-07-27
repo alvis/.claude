@@ -77,10 +77,11 @@ cannot both exist — creating the second while the first is present fails with
 `cannot lock ref`, locally and on the remote alike. A stream that grows past
 one pull request therefore cannot add a numbered branch beside the bare one;
 it **renames** the bare branch into the first slice, which frees the namespace
-in the same operation that vacates it. Rename it through the forge's own
-branch rename, which retargets the open pull request as it goes, rather than
-deleting the remote ref — deleting the head of an open pull request closes it.
-Only once the rename has landed do the later slices push.
+in the same operation that vacates it. Both refs need it: `git branch -m`
+(or `jj bookmark rename`) clears the local namespace, and the forge's own
+branch rename clears the remote one while retargeting the open pull request —
+never delete the remote ref instead, since that closes the pull request on it.
+Only once both renames have landed do the later slices push.
 
 The segment after the ordinal is free-form: name the slice, not its
 `GIT-PR-TYPE-01` category.

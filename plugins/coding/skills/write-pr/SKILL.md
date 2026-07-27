@@ -20,8 +20,7 @@ which are original. Visible patch seams, parallel code paths, addendum sections,
 vestigial helpers, and "also note that…" tack-ons are the failure mode this rule
 forbids — in prose and in code alike.
 
-Zone enforcement (GIT-PR-SIZE-01..04) belongs to the reviewer, not to this
-skill.
+Zone enforcement (GIT-PR-SIZE-01..04) belongs to the reviewer, not this skill.
 
 ## Boundaries
 
@@ -65,7 +64,7 @@ skill.
 | Input | Effect |
 |---|---|
 | `<commit-ref>` | Publish a resolvable jj change ID/revset/bookmark or git branch/SHA and its selected stack. Any jj revset (`@`, `@-`, a change id) or git ref (`HEAD`, `HEAD~1`, a SHA) also selects the commit to author from; behavior is deterministic given the ref. |
-| `--branch-prefix <name>` | Override the derived stack bookmark prefix. |
+| `--branch-prefix <name>` | Override the derived stack bookmark prefix. For a resolved engineering stream it must still be that stream's `<type>/<work-id>`, or the published branch stops resolving to its work state. |
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
 | `--dry-run` | Print the test, publication, and monitoring plan without agents or local/remote mutations. |
 
@@ -239,9 +238,10 @@ needed, invoke `coding:commit --reorder`; for merged history follow
 Bottom-up, preserve a change's existing bookmark when the caller selected that
 branch, it heads an open PR, or the stack already has explicit bookmarks: push
 and update that exact head. A bare `<branch-prefix>` head blocks its own `NN-`
-children, so a stream growing into a stack renames it to the first numbered
-bookmark before pushing the rest, per Essential's naming contract. Only for an
-unbookmarked new change/stack: a lone change takes `BOOKMARK=<branch-prefix>`,
+children, so a stream growing into a stack renames it — local ref and forge
+alike, since either blocks the child — before pushing the rest, per Essential's
+naming contract. Only for an unbookmarked new change/stack: a lone change
+takes `BOOKMARK=<branch-prefix>`,
 a stack indexes `NN` from `01` into `BOOKMARK=<branch-prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.

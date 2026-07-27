@@ -325,7 +325,8 @@ if [[ -n "$workspace_label" ]]; then
     1)
       # a jj workspace is named for the stream it works; a one-segment Git
       # branch is not a documented branch shape and so names nothing
-      if [[ "$workspace_source" == "jj_workspace" ]]; then
+      if [[ "$workspace_source" == "jj_workspace" ]] &&
+         [[ ! "${label_segments[0]}" =~ ^(default|main|master|trunk)$ ]]; then
         candidate_from_label="${label_segments[0]}"
       fi
       ;;
@@ -384,9 +385,8 @@ if [[ -z "$work_id" ]]; then
         state_root:$state_root,
         default_workspace:(if $default_workspace == "" then null else $default_workspace end),
         workspace_label:(if $workspace_label == "" then null else $workspace_label end),
-        suggested_work_id:(if ($suggested_work_id == "" or
-          ($suggested_work_id | test("^(default|main|master|trunk|item)$")))
-          then null else $suggested_work_id end),
+        suggested_work_id:(if $suggested_work_id == "" then null
+          else $suggested_work_id end),
         candidate_work_ids:$candidates, error:$error}'
     exit 4
   fi
