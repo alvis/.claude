@@ -274,7 +274,9 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["active_workspace"] == str(linked.resolve())
     assert payload["state_root"] == str(root.resolve())
     assert payload["workspace_label"] == "feat/refunds"
-    assert payload["suggested_work_id"] == "feat-refunds"
+    # the suggestion is what the branch names, not the whole label slugged,
+    # so bootstrapping it produces an ID this same branch resolves to
+    assert payload["suggested_work_id"] == "refunds"
     assert payload["candidate_work_ids"] == []
     assert "work_dir" not in payload
 

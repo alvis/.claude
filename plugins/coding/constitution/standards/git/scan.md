@@ -30,7 +30,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT submit a migration PR without a rollback section [`GIT-PR-TYPE-03`]
 - DO NOT submit a feature-flag PR without naming the flag and stating its default state [`GIT-PR-STACK-04`]
 - DO NOT submit a UI PR without before/after screenshots in the description [`GIT-PR-TYPE-01`]
-- DO NOT use stack bookmarks that don't follow `<feature-slug>/NN-<type>` [`GIT-PR-STACK-01`]
+- DO NOT use stack bookmarks that don't follow `<feature-slug>/NN-<scope>`, `<scope>` being any short kebab-case summary [`GIT-PR-STACK-01`]
 - DO NOT fix issues by patching a later PR when the bug originates in an earlier unmerged change [`GIT-PR-STACK-02`]
 - DO NOT rewrite public history after a stacked PR merges; use a corrective PR instead [`GIT-PR-STACK-03`]
 - DO NOT land behaviour changes outside a feature flag unless the change is tiny, isolated, and reversible [`GIT-PR-STACK-04`]

@@ -12,10 +12,17 @@ letter, drop everything else, and collapse runs of separators to one hyphen:
 is `payments-refunds-v2-0`. Shorten by dropping whole trailing words, never
 part of a word.
 
+A name with nothing to fold — `影師嗎` — leaves an empty slug, which is not a
+name. Write an English slug for what the thing is instead; the source string
+was never the identity, only the usual shortest route to one.
+
 ## Work ID
 
-A slug naming what the work is about, at most 32 bytes. It carries no type
-prefix — the type belongs to the branch, not to the identity:
+A slug naming what the work is about, at most 32 bytes — the ID is repeated
+in every state path, in the source tree path, and in a branch that itself
+nests under a type and over a slice, so 32 keeps the longest of those
+(`feat/<work-id>/01-<scope>`) inside a terminal column and a PR title. It
+carries no type prefix — the type belongs to the branch, not to the identity:
 
 ```text
 work-id-naming
@@ -81,3 +88,6 @@ outcome, not a failure.
   never `part-1`, `misc`, or the task title.
 - Numbered `<nn>-<topic-slug>.md` children, in increments of 10, are reserved
   for the mechanical split of an oversized file.
+- Two documents whose names would collide in the same directory: the later one
+  takes the next free ordinal, as a work ID does (`change-explainer.md`, then
+  `change-explainer-2.md`). Never overwrite a sibling to claim its name.
