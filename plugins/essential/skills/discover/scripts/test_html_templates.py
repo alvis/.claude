@@ -1032,6 +1032,9 @@ class _BoardLinkFinder(HTMLParser):
         self._stack: list[str] = []
         self._index_depths: list[int] = []
         self.links: list[dict[str, object]] = []
+        # Recorded on sight and never unset: an index that closes empty still
+        # existed, and that is the case the comparison must not skip.
+        self.saw_index = False
 
     def _record(self, attrs: list[tuple[str, str | None]]) -> None:
         values = {name: (value or "").strip() for name, value in attrs}
@@ -1049,6 +1052,8 @@ class _BoardLinkFinder(HTMLParser):
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
         names = {name for name, _ in attrs}
+        if "data-board-index" in names:
+            self.saw_index = True
         # The builder owns the void-element list; reading it here keeps the two
         # parsers agreeing about what opens a scope.
         if tag not in _load_builder().VOID_TAGS:
@@ -1078,6 +1083,13 @@ def _board_links(html: str) -> list[dict[str, object]]:
     finder.feed(html)
     finder.close()
     return finder.links
+
+
+def _has_board_index(html: str) -> bool:
+    finder = _BoardLinkFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.saw_index
 
 
 def validate_board_set_single_home() -> list[str]:
@@ -1160,13 +1172,19 @@ def validate_board_set_single_home() -> list[str]:
                     f"{link['href']!r}, but {shared} places it at "
                     f"{hrefs[board_id]!r}"
                 )
-        indexed = {str(link["id"]) for link in links if link["in_index"]}
-        if indexed and indexed != set(hrefs):
-            missing = sorted(set(hrefs) - indexed)
-            errors.append(
-                f"{source_dir}: its [data-board-index] is a projection of "
-                f"{shared} and must list every board; missing {missing}"
-            )
+        # Whether the board HAS an index is asked separately from what that index
+        # holds. Deriving the first from the second excuses the emptiest
+        # projection of all: a hub whose index lost every entry has none left to
+        # compare, while the shared sidebar in the same composed page keeps the
+        # rest of this gate satisfied.
+        if _has_board_index(composed):
+            indexed = {str(link["id"]) for link in links if link["in_index"]}
+            if indexed != set(hrefs):
+                missing = sorted(set(hrefs) - indexed)
+                errors.append(
+                    f"{source_dir}: its [data-board-index] is a projection of "
+                    f"{shared} and must list every board; missing {missing}"
+                )
     return errors
 
 
@@ -1396,6 +1414,16 @@ def validate_artifact_builder() -> list[str]:
             1,
             0,
         ),
+        # A void source holds no text, so the browser reads nothing from it. The
+        # sibling text after it must not be mistaken for the definition.
+        (
+            "void source element",
+            f"<figure data-mermaid><img {build_artifact.MERMAID_SOURCE_ATTR}>"
+            f"graph LR; A--&gt;B{host}</figure>",
+            1,
+            0,
+            1,
+        ),
     )
     for label, fragment, total, malformed, blank in figure_cases:
         found = build_artifact._mermaid_figures(fragment)
@@ -1463,6 +1491,18 @@ def validate_artifact_builder() -> list[str]:
             "board-set link parsing: quote style and index nesting must not "
             f"change what is seen, got {parsed}"
         )
+    # An index that closed empty is the case the projection comparison must not
+    # skip, so its presence is detected apart from its contents.
+    for label, markup, expected in (
+        ("populated index", link_markup, True),
+        ("empty index", "<ul data-board-index></ul>", True),
+        ("no index at all", '<a data-board-link="alpha"></a>', False),
+    ):
+        if _has_board_index(markup) is not expected:
+            errors.append(
+                f"board-index detection: {label} should read as "
+                f"{'present' if expected else 'absent'}"
+            )
     return errors
 
 

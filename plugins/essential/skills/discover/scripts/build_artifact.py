@@ -289,13 +289,20 @@ class _MermaidFigureFinder(HTMLParser):
         # A source nested inside several open figures is a source for each of
         # them, exactly as querySelector would resolve it — and for each, only
         # its first one carries the definition the browser will render.
+        #
+        # A void element is skipped here even though it still counts as the
+        # source child. It holds no text, so the browser reads an empty
+        # textContent from it; opening a scope for one would instead sweep up
+        # every sibling that follows and call the figure well-defined. Left
+        # closed, the definition stays empty and the blank gate refuses it —
+        # which is exactly what the runtime would have done with it.
         opening_source = (
             [
                 figure
                 for _depth, figure in self._open
                 if figure.children[MERMAID_SOURCE_ATTR] == 1
             ]
-            if MERMAID_SOURCE_ATTR in names
+            if MERMAID_SOURCE_ATTR in names and tag not in VOID_TAGS
             else []
         )
         if tag not in VOID_TAGS:

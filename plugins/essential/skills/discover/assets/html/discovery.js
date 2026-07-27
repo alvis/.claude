@@ -322,12 +322,38 @@
     const trigger = makeElement("button", "discovery-annotation-trigger");
     trigger.type = "button";
     trigger.dataset.annotationFor = id;
+    // Pressing a button collapses the selection, and the selectionchange that
+    // follows clears the pending quote — so the control armed to note a
+    // selection would open a whole-section note instead. The floating pill
+    // solves this with preventDefault on mousedown; this control needs the same,
+    // plus the quote read at pointerdown, because on a touch pointer the
+    // collapse can already have happened by the time the press is delivered.
+    let armedQuote = null;
+    trigger.addEventListener("pointerdown", () => {
+      armedQuote =
+        pendingSelection && pendingSelection.sectionId === id
+          ? pendingSelection.quote
+          : null;
+    });
+    // A press that leaves the button never becomes a click, so the quote it
+    // armed must not survive to be used by a later keyboard press.
+    ["pointerleave", "pointercancel"].forEach((name) =>
+      trigger.addEventListener(name, () => {
+        armedQuote = null;
+      }),
+    );
+    trigger.addEventListener("mousedown", (event) => event.preventDefault());
     trigger.addEventListener("click", () => {
       // KEYBOARD/TOUCH PATH for selection notes: with a live selection inside
       // this section, the section's own note control notes THAT selection. No
       // floating layer and no pointer are required to reach the feature.
-      if (pendingSelection && pendingSelection.sectionId === id) {
-        openExcerptEditor(id, pendingSelection.quote, null);
+      const quote =
+        pendingSelection && pendingSelection.sectionId === id
+          ? pendingSelection.quote
+          : armedQuote;
+      armedQuote = null;
+      if (quote) {
+        openExcerptEditor(id, quote, null);
         return;
       }
       openAnnotationEditor(id);
@@ -2120,15 +2146,22 @@
       // global config, which is why the figures are rendered in a chain below
       // rather than all at once — two concurrent renders would both see
       // whichever config was installed last.
-      mermaid.initialize({
-        ...MERMAID_BASE_CONFIG,
-        themeVariables: readMermaidTheme(figure),
-      });
-      // A fresh id every pass: mermaid.render stages the diagram under this id,
-      // and reusing one across a re-render collides with its own leftovers.
-      return Promise.resolve(
-        mermaid.render(`${pageId}-mermaid-${sequence}`, definition),
-      )
+      //
+      // Both calls are made INSIDE the chain. initialize and render can throw
+      // synchronously — a release that rejects a theme value, say — and a throw
+      // out here would escape this function before its catch below exists,
+      // leaving the figure with no state and no message while something further
+      // out swallowed the error.
+      return Promise.resolve()
+        .then(() => {
+          mermaid.initialize({
+            ...MERMAID_BASE_CONFIG,
+            themeVariables: readMermaidTheme(figure),
+          });
+          // A fresh id every pass: mermaid.render stages the diagram under this
+          // id, and reusing one across a re-render collides with its leftovers.
+          return mermaid.render(`${pageId}-mermaid-${sequence}`, definition);
+        })
         .then(({ svg }) => {
           const parsed = parser.parseFromString(svg, "image/svg+xml");
           const node = parsed.documentElement;
@@ -2164,11 +2197,27 @@
     let queue = Promise.resolve();
     const renderEach = (list) => {
       queue = list.reduce(
-        // renderFigure ends in a catch that reports the failure in the figure,
-        // but mermaid.initialize can throw before that promise exists. Absorb it
-        // here too: a rejected queue would never run another render, so one bad
-        // diagram would freeze every other one on the next theme flip.
-        (chain, figure) => chain.then(() => renderFigure(figure)).catch(() => {}),
+        // renderFigure reports every failure in the figure itself and settles,
+        // so this net should never catch anything. It stays because a rejected
+        // queue would never run another render — one unforeseen throw would
+        // freeze every other diagram on the next theme flip — and it reports
+        // rather than discards, because a silent absorb here is what hid a
+        // synchronous initialize failure before.
+        (chain, figure) =>
+          chain
+            .then(() => renderFigure(figure))
+            .catch((error) => {
+              figure.dataset.mermaidState = "failed";
+              const host = figure.querySelector("[data-mermaid-host]");
+              if (host)
+                host.replaceChildren(
+                  makeElement(
+                    "p",
+                    "discovery-mermaid-error",
+                    `Diagram did not render: ${error?.message || error}`,
+                  ),
+                );
+            }),
         queue,
       );
       return queue;
