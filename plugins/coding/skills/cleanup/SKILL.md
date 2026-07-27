@@ -1,7 +1,7 @@
 ---
 name: cleanup
 description: Audit and safely retire stale development state across git branches, registered Git worktrees, jj workspaces, and workspace-local engineering work directories. Use for /cleanup or abandoned-work audits; require evidence, retention, recoverable backup, and per-target approval before removal.
-allowed-tools: Bash, Read, Glob, Grep, Task
+allowed-tools: Bash, Read, Glob, Grep, Task, Skill
 argument-hint: "[path] [--exclude-remote]"
 ---
 
@@ -150,10 +150,19 @@ ledger below, which is therefore its only project `generated_files` entry. Backu
     `<work-id> <date>`, and include that file in `generated_files`. A work ID is never reused, and
     deletion removes the last `.state/` trace of it, so the ledger entry is
     what keeps the name spent — this applies equally to a stream that promoted
-    nothing else. Save that entry through `coding:commit` before deleting
-    anything: an uncommitted edit is discarded by the next `git reset --hard`,
-    which would erase the record after the state it replaced is already gone.
-    A stream whose entry cannot be committed is not removable.
+    nothing else. Resolve `docs/` and that leaf without following symlinks and
+    require the leaf to be a regular in-tree file — an append through a symlink
+    writes past the lifecycle boundary, to a file outside this tree. Then save
+    it before deleting anything, through `coding:commit`'s checksum-bound
+    scoped route: write a scope request selecting only
+    `docs/retired-work-ids.md`, invoke
+    `Skill(coding:commit --prepare-paths-from=<scope-request>)`, and save with
+    the `--paths-from`/`--manifest-sha256` pair it returns. The inventory
+    permits a checkout dirty with unrelated work, and approval covered the
+    retirement rather than those edits, so every excluded path must remain
+    byte-identical. An uncommitted entry is discarded by the next
+    `git reset --hard`, after the state it replaced is already gone; a stream
+    whose entry cannot be committed is not removable.
     Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
     validated `.state/works/<work-id>` path after rechecking the gate and
