@@ -109,6 +109,24 @@ adapters, providers, or runtimes.
   depth 2, and a link. Diagrams, design patterns, invariants, data flow, and
   extension points live in durable architecture only.
 
+### `docs/architecture/overview.md`
+
+The single durable index every architecture document is reached from — one per
+repository, holding only what is true across all of them. Required, in order:
+
+- **Goal**: one paragraph — what the project is for and whom it serves.
+- **Requirements**: the overall functional and non-functional requirements the
+  architecture must satisfy, each traceable to code, configuration, or a stated
+  product constraint.
+- **Constraints**: repo-wide invariants the component documents inherit —
+  supported runtimes, deployment targets, boundaries that may not be crossed.
+- **Documents**: one line per `docs/architecture/<architecture-slug>.md` —
+  relative link plus what that document owns.
+
+Reconciling it means: add, update, or remove the Documents line for the document
+just written or renamed, and revise Goal, Requirements, or Constraints only when
+the change alters them. Never restate a component document's internals here.
+
 ## Independent review audits
 
 The read-only reviewer checks each item and returns pass/fail per audit with
