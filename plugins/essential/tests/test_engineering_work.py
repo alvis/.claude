@@ -334,6 +334,58 @@ def test_single_pr_and_stacked_branches_resolve_to_their_stream(
         assert payload["status"] == "work_id_required", branch
 
 
+def test_length_bound_governs_minting_but_never_resumption(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "bounded"
+    initialize_git(root)
+    commit_initial(root)
+    legacy = "legacy-" + "x" * 34
+    (root / ".state/works" / legacy).mkdir(parents=True)
+
+    # a stream created before the bound existed keeps its name, and the
+    # workflows that resume it forward that exact ID back
+    completed, payload = run_resolver(root, legacy)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == legacy
+
+    # the same length names nothing yet, so it would be minted, and is refused
+    completed, payload = run_resolver(root, "brand-new-" + "y" * 31)
+
+    assert completed.returncode == 2
+    assert "at most 32 bytes" in payload["error"]
+
+
+def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "unfoldable"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    git("checkout", "-q", "-b", "\u5f71\u5e2b\u55ce", cwd=root)
+
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
+
+
+def test_an_oversized_branch_segment_is_never_suggested(tmp_path: Path) -> None:
+    root = tmp_path / "oversized"
+    initialize_git(root)
+    commit_initial(root)
+    (root / ".state/works/unrelated-work").mkdir(parents=True)
+    git("checkout", "-q", "-b", "feat/" + "z" * 33, cwd=root)
+
+    completed, payload = run_resolver(root)
+
+    # suggesting it would recommend an identity the minting path then rejects
+    assert completed.returncode == 4, completed.stderr
+    assert payload["suggested_work_id"] is None
+
+
 def test_feature_branch_does_not_select_a_mismatched_sole_work_id(
     tmp_path: Path,
 ) -> None:

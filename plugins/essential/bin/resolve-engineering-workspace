@@ -154,11 +154,6 @@ fi
 if [[ -n "$work_id" ]] && ! valid_work_id "$work_id"; then
   invalid "work ID from $work_id_source must be lowercase kebab-case"
 fi
-# Bound only what this run would mint. Enumeration stays permissive so a
-# stream created before the bound existed still resolves.
-if [[ -n "$work_id" && ${#work_id} -gt 32 ]]; then
-  invalid "work ID from $work_id_source must be at most 32 bytes"
-fi
 [[ -d "$start_path" ]] || invalid "start path is not a directory: $start_path"
 
 start_path="$(canonical_directory "$start_path")"
@@ -222,6 +217,14 @@ state_root="${default_workspace:-$active_workspace}"
 
 engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
+
+# The 32-byte bound governs minting, never resumption: a stream created before
+# the bound existed keeps its name, and the workflows that resume it forward
+# that exact ID back.
+if [[ -n "$work_id" && ${#work_id} -gt 32 && ! -d "$work_root/$work_id" ]]; then
+  invalid "a new work ID from $work_id_source must be at most 32 bytes"
+fi
+
 require_safe_directory_component "$engineering_dir"
 require_safe_directory_component "$work_root"
 if [[ -d "$engineering_dir" ]] &&
@@ -268,9 +271,11 @@ if [[ -n "$workspace_label" ]]; then
   # separate question from whether it yields a usable suggestion: a label
   # this parser cannot read is still not a generic trunk, so it must not
   # re-open the sole-existing fallback below.
+  # Normalization only recognizes the generic trunk names; a label that folds
+  # to nothing (`影師嗎`) is still a label the caller chose, so it must not
+  # read as absent and re-open the sole-existing fallback.
   label_slug="$(slugify "$workspace_label")"
-  if [[ -n "$label_slug" ]] &&
-     [[ ! "$label_slug" =~ ^(default|main|master|trunk)$ ]]; then
+  if [[ ! "$label_slug" =~ ^(default|main|master|trunk)$ ]]; then
     workspace_is_meaningful=1
   fi
 
@@ -304,7 +309,8 @@ if [[ -n "$workspace_label" ]]; then
     # would fold differently from the naming contract (`Crème` becomes
     # `cr-me`, not `creme`) and a PM accepting it would mint an identity
     # neither the branch nor the contract names.
-    if valid_work_id "$candidate_from_label"; then
+    if valid_work_id "$candidate_from_label" &&
+       [[ ${#candidate_from_label} -le 32 ]]; then
       workspace_work_id="$candidate_from_label"
     fi
     # Match on the segment as written, never on its slug: `feat/foo_bar` is
