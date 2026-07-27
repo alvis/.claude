@@ -349,24 +349,30 @@ def test_minted_work_id_rejects_unusable_input(
     (
         ("feat/work-id-naming", ("feat-work-id-naming",), "feat-work-id-naming"),
         ("stacks/refunds", ("refunds",), "refunds"),
-        # GIT-PR-STACK-01 stack bookmarks and sub-work branches both belong to
-        # the stream their ordinal hangs off.
+        # every branch in the stream's namespace belongs to it, whether the
+        # slice is a GIT-PR-STACK-01 stack PR or a sub-task
         (
-            "feat-work-id-naming/01-spec",
+            "feat/work-id-naming/01-spec",
             ("feat-work-id-naming",),
             "feat-work-id-naming",
         ),
         (
-            "feat-work-id-naming-resolver-03",
+            "feat/work-id-naming/03-resolver-matching",
             ("feat-work-id-naming",),
             "feat-work-id-naming",
         ),
         # an ordinal-suffixed identity of its own outranks the stream it
         # collided with, so chore-lint-2 never resolves to chore-lint
         ("chore/lint-2", ("chore-lint", "chore-lint-2"), "chore-lint-2"),
-        ("feat-auth-refresh-01", ("feat-auth", "feat-auth-refresh"), "feat-auth-refresh"),
-        # without an ordinal the remainder is a different topic, not a slice
+        (
+            "feat/auth-refresh/01-spec",
+            ("feat-auth", "feat-auth-refresh"),
+            "feat-auth-refresh",
+        ),
+        # what follows the stream must start with the ordinal: a longer name
+        # that merely begins like one is its own topic, not a slice of it
         ("feat/checkout-refunds", ("feat-checkout",), ""),
+        ("feat/work-id-naming-rewrite/01-spec", ("feat-work-id-naming",), ""),
         ("feat/work-id-naming", (), ""),
     ),
 )
@@ -477,7 +483,7 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     assert payload["work_dir"] == str(root.resolve() / ".state/works/refunds")
 
 
-def test_stacked_and_sub_work_branches_resolve_to_their_stream(
+def test_every_branch_in_the_namespace_resolves_to_its_stream(
     tmp_path: Path,
 ) -> None:
     root = tmp_path / "stacked"
@@ -486,12 +492,13 @@ def test_stacked_and_sub_work_branches_resolve_to_their_stream(
     (root / ".state/works/feat-work-id-naming").mkdir(parents=True)
     (root / ".state/works/unrelated-work").mkdir(parents=True)
 
-    # every branch a stream is developed on selects it without asking: the
-    # minted identity, a GIT-PR-STACK-01 stack bookmark, and a sub-work branch
+    # every slice and sub-task of the stream selects it without asking; the
+    # bare feat/work-id-naming branch is never created, because git stores
+    # refs as files and it could not coexist with the numbered branches
     for branch in (
-        "feat/work-id-naming",
-        "feat-work-id-naming/02-impl",
-        "feat-work-id-naming-resolver-03",
+        "feat/work-id-naming/01-spec",
+        "feat/work-id-naming/02-impl",
+        "feat/work-id-naming/03-resolver-matching",
     ):
         git("checkout", "-q", "-b", branch, cwd=root)
         completed, payload = run_resolver(root)

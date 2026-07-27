@@ -142,10 +142,9 @@ derivation implementation (`slug`, `tracker-work-id`, `minted-work-id`,
 occupied sibling to `--collision-with` (for a work ID: every ID under `works/`
 and `archive/`). A work ID is an identity, never renamed; derive or mint only
 when the resolver cannot select safely and the PM resolved the ambiguity. A
-minted `<kind>-<scope-slug>` names the stream, its branch
-`<kind>/<scope-slug>`, and its source tree; stack and sub-work branches keep
-the ID as their prefix (`<work-id>/NN-<type>`, `<work-id>-<sub-work>-NN`), so
-any of them resolves it. Naming rules: use the
+minted `<kind>-<scope-slug>` names the stream, its source tree, and its branch
+namespace `<kind>/<scope-slug>/NN-<slice>` — one branch per slice or sub-task,
+each resolving to the stream. Naming rules: use the
 owning capability (not the task title) for `docs/specs/<capability>/`; ADRs
 alone use a zero-padded monotonic numeric prefix and are never renumbered;
 ordinary work-local children use unnumbered semantic `<slug>.md` names, with

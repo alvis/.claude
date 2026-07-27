@@ -93,16 +93,17 @@ def workspace_work_id(label: str, candidates: set[str]) -> str:
         if derived in candidates:
             return derived
 
-    # One stream is developed across a stack (`<work-id>/NN-<type>`) and its
-    # sub-work branches (`<work-id>-<sub-work>-NN`), so the owning ID is a
-    # prefix of the label. The ordinal is what makes the rest droppable:
-    # without a numeric token the remainder is a different topic, not a slice
-    # of the same stream, and dropping it would resolve the wrong stream.
+    # A stream owns a branch namespace, one branch per slice or sub-task
+    # (`<kind>/<scope-slug>/NN-<slice>`), so the owning ID is a prefix of the
+    # label. What follows must start with the ordinal, which is what separates
+    # a slice of this stream from a longer name that merely begins like it:
+    # `feat/work-id-naming-rewrite/01-x` is its own topic, not slice 1 of
+    # `feat-work-id-naming`, and resolving it there would open the wrong work.
     for value in labels:
         tokens = ascii_tokens(value)
         for size in range(len(tokens) - 1, 0, -1):
             prefix = "-".join(tokens[:size])
-            if prefix in candidates and any(t.isdigit() for t in tokens[size:]):
+            if prefix in candidates and tokens[size].isdigit():
                 return prefix
     return ""
 
@@ -153,12 +154,12 @@ def parser() -> argparse.ArgumentParser:
             "Print which of the candidate work IDs a Git branch or jj "
             "workspace label belongs to, or nothing when the label identifies "
             "no existing stream. An exact derivation wins first, on the whole "
-            "label and then its last `/` segment. Failing that, one stream is "
-            "developed across a stack of branches (`<work-id>/NN-<type>`) and "
-            "sub-work branches (`<work-id>-<sub-work>-NN`), so the longest "
-            "candidate prefix wins when what follows it carries the stack "
-            "ordinal. A label that identifies nothing never creates an "
-            "identity — the caller reports the ambiguity."
+            "label and then its last `/` segment. Failing that, a stream owns "
+            "a branch namespace with one branch per slice or sub-task "
+            "(`<kind>/<scope-slug>/NN-<slice>`), so the longest candidate "
+            "prefix wins when what follows it starts with the ordinal. A "
+            "label that identifies nothing never creates an identity — the "
+            "caller reports the ambiguity."
         ),
     )
     workspace.add_argument("label", help="the Git branch or jj workspace label")
