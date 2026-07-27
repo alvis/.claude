@@ -350,11 +350,26 @@ def test_length_bound_governs_minting_but_never_resumption(
     assert completed.returncode == 0, completed.stderr
     assert payload["work_id"] == legacy
 
+    # its conforming branch resumes it too — matching an existing stream
+    # never applies a minting rule
+    git("checkout", "-q", "-b", f"feat/{legacy}", cwd=root)
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 0, completed.stderr
+    assert payload["work_id"] == legacy
+    assert payload["work_id_source"] == "git_branch"
+
     # the same length names nothing yet, so it would be minted, and is refused
     completed, payload = run_resolver(root, "brand-new-" + "y" * 31)
 
     assert completed.returncode == 2
     assert "at most 32 bytes" in payload["error"]
+
+    # so is a name outside the single-hyphen grammar
+    completed, payload = run_resolver(root, "foo--bar")
+
+    assert completed.returncode == 2
+    assert "single-hyphen" in payload["error"]
 
 
 def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
@@ -372,16 +387,19 @@ def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
     assert payload["status"] == "work_id_required"
 
 
-def test_an_oversized_branch_segment_is_never_suggested(tmp_path: Path) -> None:
-    root = tmp_path / "oversized"
+@pytest.mark.parametrize("segment", ("z" * 33, "foo--bar"))
+def test_a_segment_the_minting_path_would_refuse_is_never_suggested(
+    segment: str, tmp_path: Path
+) -> None:
+    root = tmp_path / f"uncanonical-{len(segment)}"
     initialize_git(root)
     commit_initial(root)
     (root / ".state/works/unrelated-work").mkdir(parents=True)
-    git("checkout", "-q", "-b", "feat/" + "z" * 33, cwd=root)
+    git("checkout", "-q", "-b", f"feat/{segment}", cwd=root)
 
     completed, payload = run_resolver(root)
 
-    # suggesting it would recommend an identity the minting path then rejects
+    # suggesting it would recommend an identity bootstrap then rejects
     assert completed.returncode == 4, completed.stderr
     assert payload["suggested_work_id"] is None
 

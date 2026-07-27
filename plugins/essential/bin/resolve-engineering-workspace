@@ -38,8 +38,18 @@ invalid() {
   exit 2
 }
 
+# What any work ID may look like, including one minted under older rules.
+# Reading an existing stream uses this, so a directory already on disk always
+# resolves by its own name.
 valid_work_id() {
   [[ "$1" =~ ^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$ ]]
+}
+
+# What a *new* identity may look like: single hyphens only, within the bound.
+# Minting and suggesting use this, so nothing outside the naming contract is
+# ever created or recommended.
+canonical_work_id() {
+  [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] && [[ ${#1} -le 32 ]]
 }
 
 canonical_directory() {
@@ -218,11 +228,12 @@ state_root="${default_workspace:-$active_workspace}"
 engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
 
-# The 32-byte bound governs minting, never resumption: a stream created before
-# the bound existed keeps its name, and the workflows that resume it forward
+# The canonical shape governs minting, never resumption: a stream created
+# before these rules keeps its name, and the workflows that resume it forward
 # that exact ID back.
-if [[ -n "$work_id" && ${#work_id} -gt 32 && ! -d "$work_root/$work_id" ]]; then
-  invalid "a new work ID from $work_id_source must be at most 32 bytes"
+if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] &&
+   ! canonical_work_id "$work_id"; then
+  invalid "a new work ID from $work_id_source must be single-hyphen kebab-case, at most 32 bytes"
 fi
 
 require_safe_directory_component "$engineering_dir"
@@ -305,20 +316,20 @@ if [[ -n "$workspace_label" ]]; then
   esac
 
   if [[ -n "$candidate_from_label" ]]; then
-    # Suggest only a segment that is already a work ID. Slugging one here
-    # would fold differently from the naming contract (`Crème` becomes
-    # `cr-me`, not `creme`) and a PM accepting it would mint an identity
-    # neither the branch nor the contract names.
+    # Matching an existing stream and proposing a new one are separate
+    # questions. Match on the segment as written — never on its slug, since
+    # `feat/foo_bar` is not the branch of a `foo-bar` stream — and put no
+    # minting rule in the way, so a stream named under older rules still
+    # resolves from its own branch.
     if valid_work_id "$candidate_from_label" &&
-       [[ ${#candidate_from_label} -le 32 ]]; then
-      workspace_work_id="$candidate_from_label"
-    fi
-    # Match on the segment as written, never on its slug: `feat/foo_bar` is
-    # not the branch of a `foo-bar` stream, and silently treating it as one
-    # opens work the branch never named.
-    if [[ -n "$workspace_work_id" ]] &&
        is_work_candidate "$candidate_from_label"; then
       workspace_match_id="$candidate_from_label"
+    fi
+    # A suggestion is a new identity, so it must be one this contract would
+    # actually mint; recommending anything else sends the PM to a bootstrap
+    # that then refuses it.
+    if canonical_work_id "$candidate_from_label"; then
+      workspace_work_id="$candidate_from_label"
     fi
   fi
 fi
