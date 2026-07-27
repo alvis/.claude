@@ -15,7 +15,7 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT exceed the 72-character wrap limit for commit body lines [`GIT-MSG-06`]
 - DO NOT use more than 2 comma-separated scopes [`GIT-MSG-07`]
 - DO NOT use camelCase or underscores in branch names instead of lowercase-kebab-case [`GIT-BRN-01`]
-- DO NOT use branch scopes that don't follow the commit scope convention, except an engineering stream's `<type>/<work-id>` where the middle segment is the work ID [`GIT-BRN-02`]
+- DO NOT use branch scopes that don't follow the commit scope convention, except an engineering stream's branch — shape owned by `naming.md` in the essential plugin's `references/` — whose middle segment is the work ID, not a package scope [`GIT-BRN-02`]
 - DO NOT create PRs as ready-for-review without starting as draft [`GIT-PR-01`]
 - DO NOT omit the required Summary or Verification sections from PR descriptions [`GIT-PR-02`]
 - DO NOT use PR titles that don't follow the commit message format [`GIT-PR-03`]
