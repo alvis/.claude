@@ -8,13 +8,17 @@ next month.
 
 ## Rewrites
 
+The *Write* column is body text — what to say, not how it is marked. Every one of
+these still opens with a marker when posted, per *Markers* below; copying a cell
+verbatim would ship an unmarked comment.
+
 | Instead of | Write |
 |---|---|
 | "It might be worth considering adding a guard here." | "Guard the empty case — `items[0]` throws when the upstream filter matches nothing." |
 | "This is not ideal." | "This runs a query per row. Batch the lookup into one `IN` query — the N+1 shows up the first time a customer has 500 rows." |
 | "Consider adding tests." | "Add a test for the 404 branch. The retry path has no coverage, so a regression there ships silently." |
 | "This code is confusing." | "Split this into `parseHeader` and `validateHeader`. Two responsibilities in one function is why the error handling below has to guess which one failed." |
-| "Great job!" | "**💯 Abort signal threaded all the way through** — that's the part everyone forgets." |
+| "Great job!" | "Abort signal threaded all the way through — that's the part everyone forgets." |
 | "You should probably not use `any` here." | "Replace `any` with the real shape. `any` disables the checks that would have caught the field rename on line 61 — see the TypeScript standard." |
 
 One hedge is judgement; three is noise. If you are uncertain, open with ❓ and ask
@@ -36,15 +40,18 @@ renders at text height:
 **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub> Guard the empty case** — `items[0]` throws when the upstream filter matches nothing.
 ```
 
-Substitute the level and its color:
+Substitute the level and its color. What each level *means* is the consequence ladder
+in [review.md](review.md), which owns it and is where a grading question gets settled;
+this table adds only the color that renders it, so the two can never disagree about
+what a badge claims:
 
-| Level | Color | Consequence |
-|---|---|---|
-| P0 | `red` | Breaks correctness, security, or data integrity |
-| P1 | `orange` | Violates a standard or will cause a real defect |
-| P2 | `yellow` | Maintainability or design |
-| P3 | `blue` | Optional polish |
-| P4 | `lightgrey` | Trivia |
+| Level | Color |
+|---|---|
+| P0 | `red` |
+| P1 | `orange` |
+| P2 | `yellow` |
+| P3 | `blue` |
+| P4 | `lightgrey` |
 
 A process step the author owes before merge carries no priority level, because it is
 not a claim about the code. It still demands action, so it opens with a tag rather
@@ -81,7 +88,7 @@ section, and only where it changes what the author does next:
 
 | Alert | Used for |
 |---|---|
-| `> [!CAUTION]` | Merge is blocked — everything behind a substantive `REQUEST_CHANGES`, chores included, not P0/P1 alone |
+| `> [!CAUTION]` | Merge is blocked — everything behind an *uncapped* substantive `REQUEST_CHANGES`, chores included, not P0/P1 alone. A capped review takes `WARNING` instead: it cannot declare merge blocked on evidence it has just said it does not trust |
 | `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — whatever capped the event in `SKILL.md`, which owns that list |
 | `> [!IMPORTANT]` | A boundary: paths not reviewed, findings that could not anchor to a line |
 | `> [!NOTE]` | Verdict context needing no action |

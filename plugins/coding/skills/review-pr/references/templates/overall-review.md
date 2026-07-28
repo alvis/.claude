@@ -82,21 +82,21 @@ Notes for the sections where the guidance is not self-evident:
   --reorder`.
 - **Not anchored to a line** — findings about deleted files, missing files,
   architecture, or anything GitHub cannot attach to a diff line. Unanchorable is not
-  unimportant; never drop these. `{{subject}}` is the file the finding is about, or
-  `This PR` where the finding carries no `path` at all — a chore owed before merge
-  has no file to name, and a blank or `null` label reads as a rendering fault rather
-  than as the deliberate scope it is.
+  unimportant; never drop these. `{{subject}}` renders the finding's `subject` field:
+  the path where it names a file, and `This PR` only where that field is null — a
+  chore owed before merge has no file to name, and a blank or `null` label reads as a
+  rendering fault rather than as the deliberate scope it is.
 - **Not reviewed** — excluded paths and any concern that could not run. The author is
   entitled to know the boundary of what was actually looked at.
 
 *Verdict* is the one section that is never dropped, and it carries its own heading so
 the closing alert is never read as part of the exclusion list above it. Close it with
-the verdict in one sentence. `{{verdict_alert}}` is not a free choice: resolve it from
-the submitted `event` and the reason the verdict was held, so a review that cannot be
-trusted never closes as if it needed no action.
+the verdict in one sentence.
 
-Resolve it from the **substantive verdict** — step 1 of the `event` derivation in
-`SKILL.md` — and never from the submitted `event`. The two diverge whenever a cap or a
+`{{verdict_alert}}` is not a free choice. Resolve it from the **substantive verdict** —
+step 1 of the `event` derivation in `SKILL.md` — and never from the submitted `event`,
+so a review that cannot be trusted never closes as if it needed no action. The two
+diverge whenever a cap or a
 self-review downgrade rewrote the event, and keying the alert to the submitted value is
 exactly what would let a blocked PR close as though it needed no action. First matching
 row wins:

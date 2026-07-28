@@ -72,10 +72,11 @@ Record each finding as:
 
 ```yaml
 findings:
-  - path: <repo-relative path as it appears in the diff, or null when the finding is about the PR rather than any line>
+  - path: <repo-relative path as it appears in the diff, or null when the finding anchors to no line>
     line: <line number in the head revision, or null wherever path is null>
     side: RIGHT | LEFT, or null wherever path is null
     start_line: <first line of a multi-line range, or null>
+    subject: <what the finding is about, for an unanchored finding: a repo-relative path, or null for the PR as a whole>
     concern: alignment | correctness | security | quality | testing | docs | style | process
     priority: P0 | P1 | P2 | P3 | P4 | null
     kind: question | thought | note | chore | praise | null
@@ -92,13 +93,18 @@ not_reviewed:
 
 - `path` and `line` must come from the changed-line map. A finding rooted in
   unchanged code anchors to the changed line that causes it.
-- A finding about the PR itself rather than about any line — the rebase `chore` in
-  `tone.md` is the standard case — is posted in the body's *Not anchored to a line*
+- A finding that anchors to no line is posted in the body's *Not anchored to a line*
   section, and every anchoring field goes null together: `path`, `line`, `side`, and
   `start_line`. They describe one anchor between them, so a surviving non-null `side`
   would assert a diff position the finding does not have. Null is the only
   alternative to a real anchor: inventing a plausible line to satisfy the schema is
   how a merge blocker ends up attached to code that has nothing to do with it.
+- `subject` carries identity where `path` carried anchor, and only the anchored case
+  lets one field do both jobs. A deleted or missing file has a real path and no line
+  to point at; a rebase `chore` has neither. Set `subject` to that path where the
+  finding is about a file, and leave it null only where the finding is genuinely
+  about the PR as a whole — the body renders a null `subject` as `This PR`, which is
+  a lie about a finding that actually names a file.
 - `side` is `RIGHT` for added lines and `LEFT` for removed ones; most findings are
   `RIGHT`. `start_line` opens a multi-line range and must be below `line` on the
   same side — use it when the problem is a block, not a line.
