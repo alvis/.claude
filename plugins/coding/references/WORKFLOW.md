@@ -121,12 +121,14 @@ Confirm every requirement was actually delivered — if a plan was executed, ope
 
 Who verifies is sized on the same test as "Decide who does the work" above:
 
-- **Small change, with no review requested** — verify it yourself against the standards `coding:review-code` applies, then continue. Do not spawn a subagent to re-read a small edit you just made.
+- **Small, non-consequential change with no review requested** — verify it yourself against the standards `coding:review-code` applies, then continue. Do not spawn a subagent to re-read a small edit you just made. Size alone never qualifies a change here: a one-line authorization, migration, or data-loss fix is consequential and takes the branch below.
 - **Consequential change, an explicit request for review, or PR finalization** — dispatch an independent review **subagent**; publishing a pull request is such a gate. For large changes, dispatch a **review coordinator** that fans out sub-review agents per area and consolidates their findings. Have the reviewer invoke the `coding:review-code` skill with the Skill tool — **skills and agent types are separate namespaces; never pass a skill name as a `subagent_type`.**
 
-### 2. Then lint
+### 2. Then the mechanical gates
 
-Lint runs on every completed change: invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. Invoke it yourself for a small change; hand the invocation to a lint subagent (or a lint sub-team for large changes) when the scope is large or its output would be noisy. Either way `coding:lint` runs its own scan-and-aggregate cycle internally — never lint by hand in its place. If lint reports any violation, return to implementation, fix it, then re-run verification and lint. Proceed only once both are clean.
+Lint runs on every completed change: invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. Invoke it yourself for a small change; hand the invocation to a lint subagent (or a lint sub-team for large changes) when the scope is large or its output would be noisy. Either way `coding:lint` runs its own scan-and-aggregate cycle internally — never lint by hand in its place. If lint reports any violation, return to implementation, fix it, then re-run verification and lint.
+
+Type diagnostics and focused tests are separate gates that `coding:lint` does not stand in for — a clean lint pass reports nothing about either, and a change needing no lint repair would otherwise reach the commit decision unchecked. Run both under the changed project's root: the `lsp_get_diagnostics` or `ide__getDiagnostics` MCP tool (else `npm run build`, else `npx tsc --noEmit`) for types, and `npm run test -- <changed paths>` for the tests covering the change. Proceed only once verification, lint, types, and those tests are all clean.
 
 ### 3. Then commit
 

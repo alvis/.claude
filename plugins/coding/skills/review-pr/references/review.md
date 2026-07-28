@@ -15,11 +15,12 @@ line-level pass; it still reports the structural findings that justify the
 split, rather than withholding what it already saw.
 
 Selectivity belongs to publication, not detection, and it caps only optional
-polish. Every substantive finding gets published; ranking decides the order it
-is read in, never whether it appears. Optional nits are the one exception —
-[tone.md](tone.md) caps those at five and summarizes the rest in the overall
-body — so a 2,000-line review of nits teaches nothing, while a long list of real
-defects is the review doing its job.
+polish. Publish every `issue:` and `suggestion:` you found, however many that
+is; ranking decides the order they are read in, never whether they appear.
+`nit:` is the sole capped prefix — [tone.md](tone.md) publishes the five
+highest-ranked and counts the rest in the overall body — so a 2,000-line review
+of nits teaches nothing, while a long list of real defects is the review doing
+its job.
 
 One finding per problem, at the highest priority that applies. The same mistake in
 eight places is one finding on the clearest instance, noting that it applies

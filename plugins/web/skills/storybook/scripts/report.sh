@@ -4,8 +4,10 @@
 # Severity bucketing (locked by plan):
 #   P0: render crash / 404 (smoke.json), a11y impact serious|critical,
 #       interactions run status=failed.
-#   P1: a11y impact moderate, smoke console error, grounding severity=high.
-#   P2: a11y impact minor, grounding severity in {low,medium},
+#   P1: a11y impact moderate, smoke console error, confirmed grounding
+#       severity=high.
+#   P2: a11y impact minor, grounding severity in {low,medium}, any grounding
+#       finding whose confidence is not confirmed,
 #       focus_visible_detected=false from states.json.
 #
 # Inputs (per story under $RUN_DIR/stories/<id>/):
@@ -195,12 +197,16 @@ for story_dir in "$RUN_DIR"/stories/*/; do
       while IFS= read -r issue; do
         [[ -z "$issue" ]] && continue
         gsev="$(printf '%s' "$issue" | jq -r '.severity // "medium"')"
+        gconf="$(printf '%s' "$issue" | jq -r '.confidence // "confirmed"')"
         gdesc="$(printf '%s' "$issue" | jq -r '.description // ""')"
         case "$gsev" in
           high)         sev="P1" ;;
           medium|low)   sev="P2" ;;
           *)            sev="P2" ;;
         esac
+        # An unconfirmed observation is a candidate, not a release blocker: the
+        # grounding model judges impact, and only a confirmed sighting earns P1.
+        [[ "$gconf" == "confirmed" ]] || sev="P2"
         # locate evidence PNG for this state.
         ev_png="$story_dir/${state}.png"
         [[ -f "$ev_png" ]] || ev_png="$gfile"
