@@ -24,7 +24,7 @@ Settle this before editing:
 
 ### If you're writing it yourself
 
-**Understand what you're changing first.** Before writing or fixing any code, build an understanding of the current implementation and its issues — run this once, by whichever is available: the `get_project_overview` MCP tool, the `ide__getDiagnostics` MCP tool, `npm run build`, or `npx tsc --noEmit`.
+**Understand what you're changing first.** Before writing or fixing any code, build an understanding of the current implementation and its issues — run this once, by whichever is available: the `get_project_overview` MCP tool, the `ide__getDiagnostics` MCP tool, or the project's own build/type-check command — `npm run build` or `npx tsc --noEmit` for TypeScript, `ty` for Python, `cargo check` for Rust.
 
 **Carry out each action with the skill that matches it.** A skill is a tool you invoke with the Skill tool — it is not an agent. You never delegate work "to" a skill and never pass a skill name as a `subagent_type`; you *use* a skill to do the work yourself or inside a subagent. Each skill documents its own applicable standards internally.
 
@@ -113,7 +113,7 @@ Every mechanical gate — lint, type diagnostics, focused tests, and the cross-p
 
 ### Gate before the loop
 
-**[IMPORTANT]** After modifying any publicly exported function or class, find every consumer project in the monorepo and run `npm run build` in each one's project root. Cross-project breakage is invisible from the changed project alone; the loop's own lint and type stages cover the rest.
+**[IMPORTANT]** After modifying any publicly exported function or class, find every consumer project in the monorepo and run its own build command in that project's root — `npm run build`, `cargo build`, or whatever that project configures. Cross-project breakage is invisible from the changed project alone; the loop's own lint and type stages cover the rest.
 
 ### 1. Verify delivery first
 

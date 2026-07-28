@@ -163,7 +163,7 @@ If the hook didn't fire, run manually:
 bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
 ```
 
-Then run project lint/test/build via `npm run lint`, `npm run test`, `npm run build` (skip if `--no-verify`), and confirm the final chain is linear with each change self-contained.
+Then run the project's own lint, test, and build commands (skip if `--no-verify`) — `npm run lint`/`test`/`build` where `package.json` defines them, otherwise the equivalents its language standard mandates — and confirm the final chain is linear with each change self-contained.
 
 ## Completion
 
