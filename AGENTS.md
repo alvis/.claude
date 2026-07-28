@@ -37,17 +37,17 @@ plugin depends on `essential`; `web` and `react` also depend on `coding`.
 
 ## The injection contract
 
-A plugin's `CLAUDE.md`, `MAINAGENT.md`, and `SUBAGENT.md` are **shipped product**, not
+A plugin's `AGENTS.md`, `MAINAGENT.md`, and `SUBAGENT.md` are **shipped product**, not
 developer docs. Each context-owning plugin's
 `plugins/<p>/hooks/hooks.json` registers hooks that pipe the file through `sed`
 and `jq` into the user's session context:
 
 ```bash
-sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g" "${CLAUDE_PLUGIN_ROOT}/CLAUDE.md" \
+sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g" "${CLAUDE_PLUGIN_ROOT}/AGENTS.md" \
   | jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}'
 ```
 
-- `CLAUDE.md` — injected at `SessionStart` **and** `SubagentStart`; carries that plugin's
+- `AGENTS.md` — injected at `SessionStart` **and** `SubagentStart`; carries that plugin's
   own routing only. Do not rebuild a central roster table in it.
 - `MAINAGENT.md` — `SessionStart` only; binds the main agent to a domain lead
   (`coding`→`tech-lead`, `web`→`design-lead`, `backend`→`ai-research-lead`).
@@ -69,7 +69,7 @@ these sources, and each is the rule a locally sensible change breaks first.
 
 - **One home per fact.** Give every fact exactly one authoritative file. A second mention
   is derived: it names its source and is rewritten from that source, never patched in
-  place. This is the rule behind "no central roster in a plugin's `CLAUDE.md`" above — a
+  place. This is the rule behind "no central roster in a plugin's `AGENTS.md`" above — a
   convenience copy is drift with a head start.
 - **Regenerate projections; never trust them.** `.state/` state, overviews, and the
   installed plugin cache are derived views, safe to delete and rebuild. Do not add a
