@@ -84,7 +84,7 @@ Never leave old and new fixture systems in parallel. Report created/deleted file
 
 ## Sub-step 6 — Closing gates
 
-Run these mechanical gates in place; do not dispatch an agent to re-confirm them. They do not stand in for the independent final test review in step 8 of `SKILL.md`, which asks the different, behavioral question of what the suite fails to cover.
+Run these mechanical gates once — in place, or through `test-runner` when the sweep's raw output would swamp this session; either way that single run is authoritative and no agent is dispatched to re-confirm it. They do not stand in for the independent final test review in step 8 of `SKILL.md`, which asks the different, behavioral question of what the suite fails to cover.
 
 1. **Coverage**: full coverage command; line/branch/statement/function all meet the target.
 2. **Execution**: full test run passes; note flaky tests.

@@ -9,7 +9,7 @@ Read this before you write, modify, review, upload, or publish code — committi
 Settle this first, from where the task came:
 
 - **From the user** — do it yourself when the change is small (low expected token spend); delegate it otherwise.
-- **From another agent** — do it yourself, unless you are a lead (an orchestrator). A lead never implements; it only advises and delegates.
+- **From another agent** — do it yourself, unless you are a lead (an orchestrator). A lead advises and delegates rather than implementing; the only work it takes inline is a step it would finish in a handful of tool calls, where dispatching costs more than it isolates.
 
 Before work delegation, read `coding:references/ROUTING.md` and route the work to the specialist whose role fits; read `essential:references/orchestration.md` before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
 
@@ -109,7 +109,7 @@ Completed code goes through a **fix loop** before it is saved — any failing ga
 edit code → verify delivery → (fail ⇒ back to code) → lint → (fail ⇒ back to code) → commit
 ```
 
-Every mechanical gate — lint, type diagnostics, focused tests, and the cross-project consumer build below — runs on every completed change, whatever its size. What the change's size decides is only whether the work is *dispatched to another agent* or done in place.
+Every applicable mechanical gate — lint, type diagnostics, focused tests, and the cross-project consumer build below — runs on every completed change, whatever its size; applicable means the gate's own trigger fired, so the consumer build runs only for a change to a public export. What the change's size decides is only whether the work is *dispatched to another agent* or done in place.
 
 ### Gate before the loop
 
