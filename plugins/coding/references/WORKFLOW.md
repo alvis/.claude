@@ -109,12 +109,9 @@ Completed code goes through a **fix loop** before it is saved — any failing ga
 edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to code) → commit
 ```
 
-### Self-check before the loop
+### Gate before the loop
 
-Verify your own work before dispatching review:
-
-- **Complete check** — **[IMPORTANT]** after finishing your coding or test-writing task, run all of these under the project root (not the monorepo root): the `lsp_get_diagnostics` MCP tool, `npx tsc --noEmit`, and `npm run lint`.
-- **Dependency check** — **[IMPORTANT]** after modifying any publicly exported function or class, find every consumer project in the monorepo and run `npm run build` in each one's project root.
+**[IMPORTANT]** After modifying any publicly exported function or class, find every consumer project in the monorepo and run `npm run build` in each one's project root. Cross-project breakage is invisible from the changed project alone; the loop's own lint and type stages cover the rest.
 
 ### 1. Verify delivery (review) first
 

@@ -1,12 +1,12 @@
 # Orchestration & delegation
 
-Delegate on signal, not reflex. Keep conversational, trivial, and bounded work inline; delegate when a teammate owns the outcome, the output would materially consume your context, independent work can run in parallel, or a separate reviewer is required. The Project Manager owns delivery across teams; route every coding change through `tech-lead` and the implementing teammate. A domain lead gathers teammate advice, decomposes the assigned goal, owns its domain's implementation decisions, assigns and monitors the pieces, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current teammate — zero tolerance.
+Delegate on signal, not reflex. The Project Manager owns delivery across teams; route every coding change through `tech-lead` and the implementing teammate. A domain lead gathers teammate advice, decomposes the assigned goal, owns its domain's implementation decisions, assigns and monitors the pieces, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current teammate — zero tolerance.
 
 ## Choosing the topology
 
 Classify the task and pick the substrate once, up front, then name the success criteria before launch — a run with no stop condition is not ready:
 
-- **Inline** — don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off.
+- **Inline** — don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off. Work you can finish in a handful of tool calls is inline; prefer one subagent over several.
 - **Parallel slices** — independent, dispatch-and-score work whose siblings needn't talk → parallel `Agent` calls in a SINGLE message, one slice each.
 - **Agent Team** — ongoing, high-signal multi-role coordination where warm context avoids repeated setup → persistent teammates around a warm core. A need to relay reasoning or evidence is not sufficient; put durable detail in artifacts.
 - **Dynamic Workflow** — high-volume structured iteration toward a measurable target: fan-out plus adversarial verify plus a bounded, resumable correction loop, e.g. linting 100 projects with a fix → lint → re-fix-or-pass loop. A subagent never launches `Workflow` itself — it composes the input and asks the main agent to run it.
@@ -24,6 +24,10 @@ Classify the task and pick the substrate once, up front, then name the success c
 - **Message only by `agent_id`.** Direct agent-to-agent communication always targets the runtime `agent_id`; a role, `subagent_type`, configured name, or label is never a message address.
 - **Synthesize.** Collect what returns, identify patterns, and consolidate it into actionable results.
 - **Two-stage dispatch.** Use a prompt-generation subagent only when building the worker prompt would itself consume substantial context or noisy output; read small, bounded context inline.
+
+## Scope and deliverable
+
+Explore the approach freely; ship narrowly. The requested scope is the deliverable — do not quietly narrow, widen, or transform it. Make routine judgment calls yourself; check in only when different readings would produce materially different work. If the request seems mistaken, say so and continue as asked. Stop short of actions clearly beyond it, finish the whole task, and name what you left out and why.
 
 ## Message discipline
 
@@ -65,10 +69,12 @@ moments.
 
 - Nesting is exceptional and one-off: an agent may consider it only when `Agent` is available at runtime and the helper's single returned artifact or summary ends the delegation. A leaf-by-charter does not spawn even when the runtime exposes `Agent`.
 - The nested call specifies an agent type such as `test-reporter`, never a configured name. The parent supplies a bounded mission capsule and absolute paths to the relevant standards and artifacts; it does not paste durable context into the prompt. The same 4,096-character ceiling applies.
-- For continuing or collaborative work, message the best-known teammate directly by `agent_id`. If that teammate is known but its ID is not, ask the main agent to resolve the ID; only when the owner is unknown should the main agent suggest a warm peer by prior folder/feature history or spawn a new named teammate.
+- Continuing or collaborative work is not nesting: route it by `agent_id` under "Delegating well" above.
 - Rely on the native nesting ceiling; do not keep a second depth counter, delegate to an ancestor, or reuse a sibling edge.
 
 ## Review responsibility
+
+Never spawn a subagent to check your own output — you already did that as you wrote it.
 
 Whoever spawns an agent owns the quality of its output. For consequential output or changed code, inspect the roster and choose the best independent domain critic; give it only the artifact, constraints, and acceptance criteria — never the producer's reasoning. The reviewer returns `ok` or `blocked` plus at most two lines. Detailed findings go directly to the producer in a bounded review artifact; the lead receives only the verdict and artifact path.
 

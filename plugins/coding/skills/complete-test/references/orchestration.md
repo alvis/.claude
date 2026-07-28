@@ -82,17 +82,15 @@ List all test files with Glob. ≤25 files → one subagent; >25 files → batch
 
 Never leave old and new fixture systems in parallel. Report created/deleted files, consolidation counts, and verification results.
 
-## Sub-step 6 — Final verification (single subagent)
+## Sub-step 6 — Closing gates
 
-Dispatch one independent validator to verify every claim:
+Run the gates in place; do not dispatch an agent to re-confirm work this workflow already did.
 
-1. **Coverage**: run the full coverage command; line/branch/statement/function must all meet the target; no uncovered code remains.
-2. **Execution**: full test run passes; count tests; note execution time; check for flaky tests.
-3. **Standards**: lint clean, type-check clean, structure review (AAA, naming, docs, no `any`).
-4. **Efficiency metrics**: source files, test files, total tests, tests per source file, coverage-per-test ratio, suite execution time; assess minimality and fixture organization.
-5. **Verdict**: pass/fail with blockers and recommendations.
+1. **Coverage**: full coverage command; line/branch/statement/function all meet the target.
+2. **Execution**: full test run passes; note flaky tests.
+3. **Standards**: lint clean, type-check clean.
 
-PASS → workflow complete. FAIL → return to the sub-step that owns each blocker; report failure with details only when a blocker is not fixable here.
+All green → workflow complete. Any failure → return to the sub-step that owns the blocker; report with details only when a blocker is not fixable here.
 
 ## Final report shape
 

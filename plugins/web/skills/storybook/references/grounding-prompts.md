@@ -16,7 +16,7 @@ You are auditing the default rendered state of a Storybook story. Inspect the su
 - Missing or placeholder content where real content is expected.
 - Obvious render glitches (font fallback flashes, broken icons, missing images).
 
-Be conservative: only report problems clearly visible in the image. Do not speculate about behaviour, hover, or focus — those are separate states.
+Report every problem you see, including ones you are unsure about — the severity tag carries your confidence, so a low-confidence finding marked `low` costs nothing. Judge only what this screenshot shows: behaviour, hover, and focus are audited from their own screenshots.
 
 Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] <description>".
 

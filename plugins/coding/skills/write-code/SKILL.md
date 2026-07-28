@@ -153,7 +153,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    each original as overview, then run one new batch pass. Never size files
    after each write; paths outside `.state/`, including `docs/**`, are
    not mechanically size-gated.
-9. Run the final verification sequence after review and lint: focused tests for
+9. Run the closing gates after review and lint: focused tests for
    every touched slice, then the repository's applicable full tests, types,
    coverage, lint check, and build. Route each failure to its owner, rerun any
    review invalidated by the correction, and repeat the affected gates until
