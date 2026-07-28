@@ -128,6 +128,9 @@ CODEX_DERIVED_FIELDS = {
     "developer_instructions",
 }
 TOML_BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
+WORKTREE_SENTENCE = re.compile(
+    r"(?m)^[^\n.!?]*\bworktree\b[^\n.!?]*[.!?][ \t]*"
+)
 
 
 @dataclass(frozen=True)
@@ -412,6 +415,15 @@ def _remove_markdown_section(body: str, heading: str) -> str:
     return before or after
 
 
+def _codex_harness_neutral_text(text: str) -> str:
+    projected = text.replace(
+        "run it inside my isolated worktree",
+        "run it within the active harness boundaries",
+    )
+    projected = re.sub(r",? and Workflow launches", "", projected)
+    return WORKTREE_SENTENCE.sub("", projected)
+
+
 def _codex_developer_instructions(body: str) -> str:
     """Project shared instructions onto behavior available in Codex."""
     projected = _remove_markdown_section(body, "Memory")
@@ -437,11 +449,17 @@ def _codex_developer_instructions(body: str) -> str:
             + replacement
             + projected[match.end() :]
         )
+    projected = _codex_harness_neutral_text(projected)
     projected = projected.rstrip() + "\n"
     unsupported = next(
         (
             marker
-            for marker in (".claude/agent-memory/", "Dynamic Workflow")
+            for marker in (
+                ".claude/agent-memory/",
+                "Dynamic Workflow",
+                "Workflow launches",
+                "worktree",
+            )
             if marker in projected
         ),
         None,
@@ -463,7 +481,10 @@ def stitch_codex_agent_definition(
     validate_agent_contract(sources, body)
     fields = [
         ("name", sources.metadata["name"]),
-        ("description", sources.metadata["description"]),
+        (
+            "description",
+            _codex_harness_neutral_text(sources.metadata["description"]),
+        ),
         (
             "nickname_candidates",
             list(_preferred_name_candidates(sources.metadata["description"])),

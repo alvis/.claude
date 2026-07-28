@@ -22,6 +22,9 @@ from stitch_agent import (
 )
 
 CACHE_COMPONENT = re.compile(r"^[A-Za-z0-9._-]+$")
+# NOTE: Versions additionally admit "+" because SemVer build metadata is
+# path-safe and part of the repository's accepted plugin-version contract.
+CACHE_VERSION_COMPONENT = re.compile(r"^[A-Za-z0-9._+-]+$")
 
 
 @dataclass(frozen=True)
@@ -115,9 +118,14 @@ def _codex_cache_plugin_root(
     if not isinstance(plugin_id, str) or plugin_id.count("@") != 1:
         raise AgentTemplateError(f"invalid installed Codex plugin id: {plugin_id!r}")
     plugin_name, marketplace = plugin_id.split("@", 1)
-    if not all(
-        isinstance(component, str) and CACHE_COMPONENT.fullmatch(component)
-        for component in (plugin_name, marketplace, version)
+    if (
+        not isinstance(version, str)
+        or plugin_name in {".", ".."}
+        or marketplace in {".", ".."}
+        or version in {".", ".."}
+        or not CACHE_COMPONENT.fullmatch(plugin_name)
+        or not CACHE_COMPONENT.fullmatch(marketplace)
+        or not CACHE_VERSION_COMPONENT.fullmatch(version)
     ):
         raise AgentTemplateError(
             f"invalid installed Codex plugin cache coordinates: {plugin_id!r} "

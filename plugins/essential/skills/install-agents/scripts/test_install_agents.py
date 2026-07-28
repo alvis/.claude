@@ -217,6 +217,8 @@ def test_codex_projection_removes_claude_only_agent_behavior(
 ) -> None:
     body = (
         "# Test agent\n\nShared behavior.\n\n"
+        "I work in my own worktree. I escalate user decisions, and Workflow "
+        "launches to the Project Manager. Harness-neutral behavior remains.\n\n"
         "## Memory\n\n"
         "I use `.claude/agent-memory/test-agent/MEMORY.md` and follow "
         "`plugins/essential/templates/memory.md` with durable evidence, a "
@@ -256,6 +258,10 @@ def test_codex_projection_removes_claude_only_agent_behavior(
     assert "reuse the warm agent" in instructions
     assert "Dynamic Workflow" not in instructions
     assert "Workflow-only follow-up" not in instructions
+    assert "worktree" not in instructions
+    assert "Workflow launches" not in instructions
+    assert "I escalate user decisions to the Project Manager." in instructions
+    assert "Harness-neutral behavior remains." in instructions
     assert startup not in instructions
     assert "## Collaboration" in instructions
 
@@ -939,8 +945,9 @@ def test_codex_installed_mode_resolves_versioned_cache_not_marketplace_source(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    essential = tmp_path / "cache/alvis/essential/1.0.0"
-    coding = tmp_path / "cache/alvis/coding/1.0.0"
+    version = "10.20.30+build.7"
+    essential = tmp_path / f"cache/alvis/essential/{version}"
+    coding = tmp_path / f"cache/alvis/coding/{version}"
     essential_source = tmp_path / "marketplace/plugins/essential"
     coding_source = tmp_path / "marketplace/plugins/coding"
     for path in (essential, coding, essential_source, coding_source):
@@ -966,13 +973,13 @@ def test_codex_installed_mode_resolves_versioned_cache_not_marketplace_source(
             {
                 "pluginId": "essential@alvis",
                 "enabled": True,
-                "version": "1.0.0",
+                "version": version,
                 "source": {"source": "local", "path": str(essential_source)},
             },
             {
                 "pluginId": "coding@alvis",
                 "enabled": True,
-                "version": "1.0.0",
+                "version": version,
                 "source": {"source": "local", "path": str(coding_source)},
             },
         ],
@@ -991,6 +998,25 @@ def test_codex_installed_mode_resolves_versioned_cache_not_marketplace_source(
     assert {
         f"{template.owner}:{template.name}" for template in templates
     } == {"essential:essential-agent", "coding:coding-agent"}
+
+
+@pytest.mark.parametrize("version", ("..", "../outside"))
+def test_codex_installed_mode_rejects_cache_path_components(
+    tmp_path: Path,
+    version: str,
+) -> None:
+    essential = tmp_path / "cache/alvis/essential/1.0.0"
+    essential.mkdir(parents=True)
+    records = [
+        {
+            "id": "essential@alvis",
+            "enabled": True,
+            "version": version,
+        }
+    ]
+
+    with pytest.raises(AgentTemplateError, match="cache coordinates"):
+        discover_agent_templates(essential, records, harness="codex")
 
 
 def test_installed_mode_keeps_only_latest_record_per_plugin_id(
@@ -1206,6 +1232,11 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
         preferred_names = PREFERRED_NAMES.search(metadata["description"])
         assert preferred_names is not None
         assert agent["nickname_candidates"] == list(preferred_names.groups())
+        codex_contract = (
+            agent["description"] + "\n" + agent["developer_instructions"]
+        )
+        assert "worktree" not in codex_contract
+        assert "Workflow launches" not in codex_contract
         for field in ("model", "model_reasoning_effort"):
             if field in expected_projection:
                 assert agent[field] == expected_projection[field]

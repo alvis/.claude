@@ -18,7 +18,7 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 4. Copies staged files into the selected harness's agent directory, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
 
-Codex has no safe equivalent for Claude's color, permission mode, project-memory mode, worktree isolation, turn limit, startup prompt, or per-agent hooks, so the projection omits them. Shared descriptions and instructions therefore make no guarantees based on those fields. The projection also removes the Claude-managed `Memory` section and only the Dynamic Workflow portion of `Delegation Modes`, retaining direct persistent delegation; model tools, sandboxing, approvals, and local memories remain Codex-owned. Codex overlay fields must use scalar TOML-compatible values.
+Codex has no safe equivalent for Claude's color, permission mode, project-memory mode, worktree isolation, turn limit, startup prompt, or per-agent hooks, so the projection omits them. The Codex projection removes Claude-managed `Memory`, the Dynamic Workflow portion of `Delegation Modes`, and residual worktree or Workflow-launch promises elsewhere while retaining direct persistent delegation. Model tools, sandboxing, approvals, and local memories remain Codex-owned. Codex overlay fields must use scalar TOML-compatible values.
 
 ## Workflow
 
