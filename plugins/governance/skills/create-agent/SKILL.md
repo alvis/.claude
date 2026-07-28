@@ -65,9 +65,9 @@ anything is written. `update-agent` owns changes to existing definitions.
    - no `tools` field, so both leaf-by-charter and coordinating roles inherit
      the complete runtime tool surface;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
-     when the role needs them. A review-routing Stop hook names the producer's
-     concrete default reviewers with each role and main task, states the review
-     action, and still allows a better runtime specialist.
+     when the role needs them. A producer's independent-review posture is
+     carried by its charter, its convergence predicate, and Essential's shared
+     orchestration policy — never by a per-agent hook.
 4. Confirm before writing: compose one `AskUserQuestion` battery of at most
    four questions covering model, effort, and — only when they deviate from
    the archetype default — permissionMode and leaf-vs-spawn posture. List the

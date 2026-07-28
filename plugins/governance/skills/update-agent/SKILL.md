@@ -62,9 +62,9 @@ stated behavior change. `create-agent` owns genuinely new roles.
    Remove obsolete keys only with evidence. Always omit `tools` so runtime-provided capabilities remain visible;
    encode leaf and delegation posture in the role charter and shared orchestration rules. Use
    `disallowedTools` only for narrow durable restrictions on read-mostly roles, never as a general allowlist.
-   For every review-routing Stop hook, keep concrete default reviewers aligned
-   with Collaboration; include each reviewer's role and main task, the explicit
-   independent-review action, and the better-runtime-specialist override.
+   Drop any leftover review-routing Stop hook: independent review is carried by
+   the role's charter and convergence predicate plus Essential's shared
+   orchestration policy, so no agent re-enforces it per task.
 5. Reconcile `base.md` with the required functional sections while preserving
    expertise and voice: integrate approved changes into the existing prose
    and remove superseded instructions — never append an update log or second

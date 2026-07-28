@@ -17,7 +17,6 @@ import install_agents as install_agents_module
 from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
     DESCRIPTION_LIMIT,
-    REVIEWER_DEFAULT,
     AgentTemplateError,
     stitch_agent_definition,
     validate_agent_contract,
@@ -72,16 +71,7 @@ def test_stitches_nested_json_lists_and_multiline_strings_deterministically(
             "name": "test-agent",
             "description": "first line\nsecond line. Preferably named Ava, Kit, or June when the main agent spawns this role.",
             "emptyObject": {},
-            "emptyList": [],
-            "hooks": {
-                "Stop": [
-                    {
-                        "hooks": [
-                            {"type": "prompt", "prompt": "review: yes\nthen stop"}
-                        ]
-                    }
-                ]
-            },
+            "emptyList": []
         },
         body="\n\n# Test agent\n",
     )
@@ -274,32 +264,6 @@ def test_requires_project_memory_path_section_and_maintenance_contract(
 ) -> None:
     with pytest.raises(AgentTemplateError, match=message):
         validate_agent_contract(frontmatter, body)
-
-
-def test_review_hook_requires_concrete_defaults_and_review_action() -> None:
-    def build_frontmatter(prompt: str) -> dict[str, object]:
-        return {
-            "name": "test-agent",
-            "hooks": {"Stop": [{"hooks": [{"prompt": prompt}]}]},
-        }
-
-    with pytest.raises(AgentTemplateError, match="concrete reviewer defaults"):
-        validate_agent_contract(
-            build_frontmatter(
-                "You are the review-routing gate. Use named defaults."
-            ),
-            "A role-specific body.",
-        )
-
-    with pytest.raises(AgentTemplateError, match="independent review action"):
-        validate_agent_contract(
-            build_frontmatter(
-                "You are the review-routing gate. Use `code-quality-critic` "
-                "(reviews changed code) as proven defaults, "
-                "but choose a better runtime specialist when available."
-            ),
-            "A role-specific body.",
-        )
 
 
 # agent discovery
@@ -526,35 +490,6 @@ def test_distributed_collaboration_sections_are_point_form_only() -> None:
         for line in (line for line in lines if line.startswith("- `")):
             assert "`: " in line, (template.name, line)
             assert "; " in line, (template.name, line)
-
-
-def test_every_reviewer_a_review_gate_names_is_a_declared_collaborator() -> None:
-    templates = discover_agent_templates(ROOT / "plugins/essential")
-    gated_agents = set()
-
-    for template in templates:
-        frontmatter = json.loads(
-            (template.path / "frontmatter/claude.json").read_text(encoding="utf-8")
-        )
-        for matcher in frontmatter.get("hooks", {}).get("Stop", []):
-            for hook in matcher.get("hooks", []):
-                prompt = hook.get("prompt", "")
-                if "review-routing gate" not in prompt:
-                    continue
-                gated_agents.add(template.name)
-                collaboration = (template.path / "base.md").read_text(
-                    encoding="utf-8"
-                ).split("\n## Collaboration\n", 1)[1]
-                reviewers = REVIEWER_DEFAULT.findall(prompt)
-                assert reviewers, template.name
-                for reviewer in reviewers:
-                    role, task = reviewer[:-1].split(" (", 1)
-                    assert f"{role}: {task};" in collaboration, (
-                        template.name,
-                        reviewer,
-                    )
-
-    assert gated_agents
 
 
 def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(
