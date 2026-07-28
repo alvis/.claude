@@ -27,6 +27,15 @@ PROMPT_JSON_FIELDS = ("initialPrompt", "description")
 # a finding an agent talks itself out of making is one nothing downstream can
 # recover. Each pattern pairs a hedging directive with a reporting verb, so
 # "report only" in the sense of "report, don't edit" stays legal.
+# Words that qualify a finding by how sure or how visible it is, rather than by
+# what domain it belongs to. Shared by the adjective slot and the trailing
+# clause so both readings of a sentence are covered by one list.
+_CONFIDENCE = (
+    r"(?:(?:definite|certain|provable|proven|unambiguous|indisputable"
+    r"|unmistakable|obvious)\w*"
+    r"|(?:clearly|plainly|readily|obviously) (?:visible|evident|identifiable"
+    r"|apparent|verifiable))"
+)
 SUPPRESSED_REPORTING = (
     re.compile(
         r"be conservative[^.!?\n]*?\b(?:report|flag|raise|surface|mention)\w*",
@@ -50,11 +59,15 @@ SUPPRESSED_REPORTING = (
         # fixed cap would allow. `;` bounds the scan alongside sentence
         # punctuation so a following independent clause cannot supply the
         # confidence words.
+        # Visibility is a confidence word too: "only report problems clearly
+        # visible in the image" is the grounding prompt's original suppressive
+        # clause, and it must fail on its own rather than only when a "be
+        # conservative" lead-in happens to precede it.
         r"(?:only report|report only)[^.!?;\n]*?"
-        r"(?:(?:definite|certain|provable|proven|unambiguous|indisputable"
-        r"|unmistakable|obvious)\w* (?:problems|issues|findings|violations)"
+        r"(?:" + _CONFIDENCE + r" (?:problems|issues|findings|violations)"
         r"|(?:problems|issues|findings|violations)[^.!?;\n]*? "
-        r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)))",
+        r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)|"
+        + _CONFIDENCE + r"))",
         re.IGNORECASE,
     ),
     re.compile(
@@ -243,8 +256,8 @@ def test_no_shipped_prompt_suppresses_reporting() -> None:
 def test_shipped_prompts_cover_agent_frontmatter_json() -> None:
     labels = [label for label, _ in shipped_prompts()]
 
-    assert any(label.endswith(":initialPrompt") for label in labels)
-    assert any(label.endswith("frontmatter/claude.json:description") for label in labels)
+    assert any(label.endswith("frontmatter/claude.json:initialPrompt") for label in labels)
+    assert any(label.endswith("frontmatter/meta.json:description") for label in labels)
 
 
 def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
@@ -259,6 +272,9 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         # Padding between the directive and its noun must not buy an escape.
         "Only report the most clearly visible definite issues.",
         "Report, after weighing all the available evidence, only if you are certain.",
+        # The grounding prompt's original clause, standing on its own.
+        "Only report problems clearly visible in the image.",
+        "Only report clearly visible problems.",
     )
     legitimate = (
         "Do not use for: deleting or modifying code (report only).",
