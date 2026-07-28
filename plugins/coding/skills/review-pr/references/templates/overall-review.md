@@ -64,9 +64,11 @@ Notes for the sections where the guidance is not self-evident:
   comment must not disagree about a finding's level.
 - **Alerts** — at most one per section, and only where it changes what the author
   does next; `tone.md` owns which alert means what. `> [!CAUTION]` opens *Must
-  change* only under `REQUEST_CHANGES`. `> [!TIP]` opens *Worth considering* only
-  under `APPROVE`, and carries the single highest-value optional improvement. An
-  alert whose section is dropped is dropped with it.
+  change* under a substantive `REQUEST_CHANGES` — a self-review downgrade does not
+  clear it, because the blockers are still there. `> [!TIP]` opens *Worth
+  considering* only under a substantive `APPROVE`, and carries the single
+  highest-value optional improvement. An alert whose section is dropped is dropped
+  with it.
 - **Goal and tests** — state whether the change matches its goal and spec, or say
   *skipped — goal/spec unknown* when neither could be resolved; never grade the diff
   against a goal inferred from the diff. Then answer the test question: would these
@@ -88,9 +90,14 @@ the verdict in one sentence. `{{verdict_alert}}` is not a free choice: resolve i
 the submitted `event` and the reason the verdict was held, so a review that cannot be
 trusted never closes as if it needed no action.
 
-| `event`, and why it was held | `{{verdict_alert}}` |
+Resolve it from the **substantive verdict** — step 1 of the `event` derivation in
+`SKILL.md` — and never from the submitted `event`. The two diverge whenever a cap or a
+self-review downgrade rewrote the event, and keying the alert to the submitted value is
+exactly what would let a blocked PR close as though it needed no action. First matching
+row wins:
+
+| Substantive verdict, and what happened to it | `{{verdict_alert}}` |
 |---|---|
-| `APPROVE` | `NOTE` — say so plainly and name anything to watch after merge |
-| `COMMENT` held on context alone — a self-review GitHub will not let you approve | `NOTE` |
-| `COMMENT` held because the review itself is incomplete or untrustworthy — anything on the blocker row of the `event` table in `SKILL.md`, which owns that list | `WARNING` |
-| `REQUEST_CHANGES` | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them |
+| `REQUEST_CHANGES`, whatever the submitted `event` ended up being | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them; where the event was downgraded, say that GitHub weakened the event and not the finding |
+| Capped at `COMMENT` because the review is incomplete or untrustworthy | `WARNING` — name which part could not be trusted |
+| `APPROVE`, whether submitted as-is or downgraded on your own PR | `NOTE` — say so plainly and name anything to watch after merge |

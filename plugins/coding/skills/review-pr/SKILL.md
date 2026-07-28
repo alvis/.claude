@@ -239,15 +239,29 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 `comments[]` of `{path, line, side, body}`. Payload construction and 422 recovery
 are in [references/publishing.md](references/publishing.md).
 
-Derive `event`; never choose it freely:
+Re-read `headRefOid` and compare it to the pinned `HEAD_OID` *before* building the
+payload. The verdict depends on the answer, so a head check that runs after the review
+is submitted came too late to change anything.
 
-| Outstanding findings | `event` |
+Derive `event` in three ordered steps; never choose it freely.
+
+**1. Grade the findings.** This is the *substantive verdict* — what the review
+concluded about the code. It is the value the body's alerts key off, so it is recorded
+even when a later step rewrites what gets submitted:
+
+| Outstanding findings | Substantive verdict |
 |---|---|
 | Any P0/P1 finding, or any `chore` | `REQUEST_CHANGES` |
 | Only P2/P3/P4, only kinds other than `chore`, or nothing at all — and the tests genuinely cover the change | `APPROVE` |
-| Tests unconvincing, red CI, black zone, a head SHA that moved mid-review, or a blocker prevented a full review | `COMMENT` |
 
-`chore` is the only kind that reaches this table; `question`, `thought`, `note`, and
+**2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI,
+black zone, `headRefOid` no longer equal to `HEAD_OID`, or a blocker prevented a full
+review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
+with it. A P0 raised against a revision that is no longer the head is not a blocker you
+can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a
+certainty the review does not have.
+
+`chore` is the only kind that reaches step 1; `question`, `thought`, `note`, and
 `praise` never hold a verdict on their own. A review carrying nothing but those is an
 `APPROVE` when the tests hold up.
 
@@ -255,16 +269,22 @@ Derive `event`; never choose it freely:
 no goal or spec to resolve is the ordinary case, not a concern that failed to run, so
 disclose it in the body and derive `event` from the findings and the tests as usual.
 What does hold the verdict is a concern that could not run when there was something to
-check — that is the blocker row above.
+check — that is the cap in step 2.
 
-GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your own PR. Compare the author
-against `gh api user --jq .login` first; on a self-review, downgrade to `COMMENT`
-and say so in the body. With `--dry-run`, print the payload and post nothing.
+**3. Downgrade a self-review.** GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your
+own PR. Compare the author against `gh api user --jq .login` first; on a self-review,
+submit `COMMENT` and say so in the body. This step rewrites only what is submitted —
+the substantive verdict from step 1 survives it and still drives the body's alerts, so
+a blocker found on your own PR is still presented as one rather than as an observation
+GitHub happened to accept.
+
+With `--dry-run`, print the payload and post nothing.
 
 ## Verification
 
-- Re-read `headRefOid`. If it moved during the review, say so plainly — the published
-  review describes the SHA it read, not the current head.
+- Confirm the `headRefOid` comparison ran before the payload was built, and that a head
+  which moved capped the event and is stated plainly in the body — the published review
+  describes the SHA it read, not the current head.
 - A created review tree is gone and leaves no entry in `jj workspace list` or
   `git worktree list`; a reused tree is untouched, still clean, still at `HEAD_OID`.
 - Every posted comment resolves to a line in the changed-line map and duplicates

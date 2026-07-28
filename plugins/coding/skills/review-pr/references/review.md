@@ -72,8 +72,8 @@ Record each finding as:
 
 ```yaml
 findings:
-  - path: <repo-relative path as it appears in the diff>
-    line: <line number in the head revision>
+  - path: <repo-relative path as it appears in the diff, or null when the finding is about the PR rather than any line>
+    line: <line number in the head revision, or null wherever path is null>
     side: RIGHT | LEFT
     start_line: <first line of a multi-line range, or null>
     concern: alignment | correctness | security | quality | testing | docs | style | process
@@ -92,6 +92,11 @@ not_reviewed:
 
 - `path` and `line` must come from the changed-line map. A finding rooted in
   unchanged code anchors to the changed line that causes it.
+- A finding about the PR itself rather than about any line — the rebase `chore` in
+  `tone.md` is the standard case — sets both to null and is posted in the body's
+  *Not anchored to a line* section. Null is the only alternative to a real anchor:
+  inventing a plausible line to satisfy the schema is how a merge blocker ends up
+  attached to code that has nothing to do with it.
 - `side` is `RIGHT` for added lines and `LEFT` for removed ones; most findings are
   `RIGHT`. `start_line` opens a multi-line range and must be below `line` on the
   same side — use it when the problem is a block, not a line.

@@ -81,10 +81,10 @@ section, and only where it changes what the author does next:
 
 | Alert | Used for |
 |---|---|
-| `> [!CAUTION]` | `REQUEST_CHANGES`: the P0/P1 findings that block merge |
-| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — red CI, black zone, a blocker, or a head SHA that moved mid-review |
+| `> [!CAUTION]` | Merge is blocked — everything behind a substantive `REQUEST_CHANGES`, chores included, not P0/P1 alone |
+| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — whatever capped the event in `SKILL.md`, which owns that list |
 | `> [!IMPORTANT]` | A boundary: paths not reviewed, findings that could not anchor to a line |
-| `> [!NOTE]` | Verdict context needing no action — a self-review downgrade, `goal_spec_alignment: skipped_unknown` |
+| `> [!NOTE]` | Verdict context needing no action |
 | `> [!TIP]` | One line on the highest-value optional improvement, when the verdict is `APPROVE` |
 
 A malformed alert degrades silently into an ordinary blockquote, so the marker line
