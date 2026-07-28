@@ -241,8 +241,8 @@ Derive `event`; never choose it freely:
 
 | Outstanding findings | `event` |
 |---|---|
-| Any P0/P1 `issue:` finding | `REQUEST_CHANGES` |
-| Only P2/P3 or none, and the tests genuinely cover the change | `APPROVE` |
+| Any P0/P1 finding | `REQUEST_CHANGES` |
+| Only P2/P3/P4 or none, and the tests genuinely cover the change | `APPROVE` |
 | Tests unconvincing, red CI, black zone, or a blocker prevented a full review | `COMMENT` |
 
 GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your own PR. Compare the author

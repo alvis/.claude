@@ -15,12 +15,11 @@ line-level pass; it still reports the structural findings that justify the
 split, rather than withholding what it already saw.
 
 Selectivity belongs to publication, not detection, and it caps only optional
-polish. Publish every `issue:` and `suggestion:` you found, however many that
-is; ranking decides the order they are read in, never whether they appear.
-`nit:` is the sole capped prefix — [tone.md](tone.md) publishes the five
-highest-ranked and counts the rest in the overall body — so a 2,000-line review
-of nits teaches nothing, while a long list of real defects is the review doing
-its job.
+polish. Publish every P0 through P3 finding you found, however many that is;
+ranking decides the order they are read in, never whether they appear. P4 is the
+sole capped level — [tone.md](tone.md) publishes the five highest-ranked and
+counts the rest in the overall body — so a 2,000-line review of trivia teaches
+nothing, while a long list of real defects is the review doing its job.
 
 One finding per problem, at the highest priority that applies. The same mistake in
 eight places is one finding on the clearest instance, noting that it applies
@@ -78,8 +77,8 @@ findings:
     side: RIGHT | LEFT
     start_line: <first line of a multi-line range, or null>
     concern: alignment | correctness | security | quality | testing | docs | style
-    priority: P0 | P1 | P2 | P3
-    prefix: issue | suggestion | nit | question | praise
+    priority: P0 | P1 | P2 | P3 | P4 | null
+    kind: question | thought | note | chore | praise | null
     body: <the comment text, written per tone.md>
     evidence: <the rule, failure path, or repository precedent it rests on>
     alternative: <exact path this change belongs in instead, or null>
@@ -98,10 +97,16 @@ not_reviewed:
   same side — use it when the problem is a block, not a line.
 - `priority` is about consequence, not effort: **P0** breaks correctness, security,
   or data integrity; **P1** violates a standard or will cause a real defect; **P2**
-  is maintainability or design; **P3** is optional polish. It drives the verdict.
-- `prefix` follows `constitution/standards/code-review.md`: `issue` for P0/P1,
-  `suggestion` for P2, `nit` for P3, `question` where intent is genuinely unclear,
-  `praise` where the work is genuinely good.
+  is maintainability or design; **P3** is optional polish; **P4** is trivia. It
+  drives the verdict.
+- `kind` classifies a comment that demands nothing: `question` where intent is
+  genuinely unclear, `thought` for a non-blocking idea that is explicitly not a
+  request, `note` for a fact the author should know, `chore` for a process step
+  needed before merge, `praise` where the work is genuinely good.
+- Exactly one of `priority` and `kind` is non-null. A comment that claims a
+  consequence carries a priority; one that does not carries a kind. `tone.md` renders
+  the first as a badge and the second as an emoji, so this field decides the marker
+  and no judgement is left at render time.
 - `evidence` is mandatory. A finding that cannot name the rule it applies or the
   failure it predicts is an opinion, and opinions are not posted.
 - `alternative` carries a real path, not a direction. "Move this to the service

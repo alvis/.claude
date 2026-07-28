@@ -14,34 +14,76 @@ next month.
 | "This is not ideal." | "This runs a query per row. Batch the lookup into one `IN` query — the N+1 shows up the first time a customer has 500 rows." |
 | "Consider adding tests." | "Add a test for the 404 branch. The retry path has no coverage, so a regression there ships silently." |
 | "This code is confusing." | "Split this into `parseHeader` and `validateHeader`. Two responsibilities in one function is why the error handling below has to guess which one failed." |
-| "Great job!" | "praise: Nice call threading the abort signal all the way through — that's the part everyone forgets." |
+| "Great job!" | "**💯 Abort signal threaded all the way through** — that's the part everyone forgets." |
 | "You should probably not use `any` here." | "Replace `any` with the real shape. `any` disables the checks that would have caught the field rename on line 61 — see the TypeScript standard." |
 
-One hedge is judgement; three is noise. If you are uncertain, use `question:` and
-ask the actual question.
+One hedge is judgement; three is noise. If you are uncertain, open with ❓ and ask
+the actual question.
 
-## Prefixes
+## Markers
 
-Every inline comment opens with one prefix, per
-`constitution/standards/code-review.md`. It tells the author what is expected of
-them before they read a word:
+Every inline comment opens with exactly one marker, and the marker *is* the label:
+never a literal word, never a colon. `issue:`, `suggestion:`, `todo:`, and `nit:`
+appear nowhere in posted text. After the marker comes a bolded one-line imperative
+title, then the body.
 
-| Prefix | Means | Voice |
+A comment that claims a consequence opens with a priority badge, wrapped so it
+renders at text height:
+
+```markdown
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub> Guard the empty case** — `items[0]` throws when the upstream filter matches nothing.
+```
+
+Substitute the level and its color:
+
+| Level | Color | Consequence |
 |---|---|---|
-| `issue:` | Must fix before merge | Imperative. State the failure, then the fix. |
-| `suggestion:` | Should improve | Directive but open. Name the benefit. |
-| `nit:` | Optional | One line. No justification, no insistence. |
-| `question:` | Genuinely unclear | One real question, not a point made sideways. |
-| `praise:` | Good work worth naming | One line, specific about what was good. |
+| P0 | `red` | Breaks correctness, security, or data integrity |
+| P1 | `orange` | Violates a standard or will cause a real defect |
+| P2 | `yellow` | Maintainability or design |
+| P3 | `blue` | Optional polish |
+| P4 | `lightgrey` | Trivia |
 
-Do not soften an `issue:` into a `suggestion:` to seem agreeable, or inflate a `nit:`
-into an `issue:` to seem thorough. The prefix is a promise about consequence, and an
-author who learns it is unreliable stops reading them.
+A comment that demands nothing opens with an emoji instead:
+
+| Marker | Means | Voice |
+|---|---|---|
+| ❓ | Intent is genuinely unclear | One real question, not a point made sideways. |
+| 💭 | A non-blocking idea | Say outright that it is not a request. |
+| 📝 | A fact the author should know | Neutral. No ask attached. |
+| 🧹 | A process step needed before merge | Name the step, not the failure. |
+| 💯 | Good work worth naming | One line, specific about what was good. |
+
+```markdown
+**💯 Abort signal threaded all the way through** — that's the part everyone forgets.
+```
+
+A badge or an emoji, never both and never two of either. Do not soften a P0 into a
+P2 to seem agreeable, or inflate a P3 into a P1 to seem thorough. The badge is a
+promise about consequence, and an author who learns it is unreliable stops reading
+them.
+
+## Alerts
+
+Alerts belong in the overall body, never in an inline comment. At most one per
+section, and only where it changes what the author does next:
+
+| Alert | Used for |
+|---|---|
+| `> [!CAUTION]` | `REQUEST_CHANGES`: the P0/P1 findings that block merge |
+| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — red CI, black zone, a blocker, or a head SHA that moved mid-review |
+| `> [!IMPORTANT]` | A boundary: paths not reviewed, findings that could not anchor to a line |
+| `> [!NOTE]` | Verdict context needing no action — a self-review downgrade, `goal_spec_alignment: skipped_unknown` |
+| `> [!TIP]` | One line on the highest-value optional improvement, when the verdict is `APPROVE` |
+
+A malformed alert degrades silently into an ordinary blockquote, so the marker line
+carries no trailing text and the body sits on the following `>` line.
 
 ## Volume
 
-Find every `nit:`; publish at most five. A forty-comment review gets skimmed and
-resented, so rank what you found, publish the five that most repay the author's
-attention, and say in the overall body how many similar nits remain. Structural
-findings belong in the overall body where they can be seen whole, not scattered
-across eight lines that each show one symptom.
+Find every P4; publish at most five. A forty-comment review gets skimmed and
+resented, and a badge on every line is the same noise this cap exists to prevent —
+so rank what you found, publish the five that most repay the author's attention, and
+say in the overall body how many remain. Structural findings belong in the overall
+body where they can be seen whole, not scattered across eight lines that each show
+one symptom.
