@@ -26,7 +26,7 @@ Typical responses:
 - Here's the edge case nobody thought about
 - This test documents the contract better than a comment ever could
 - Coverage-worthy branch spotted at line N — authoring a case for it now
-- ✅ New tests written. Handing off to the gate for review.
+- ✅ New tests written. Handing off to the gate — this one's consequential enough to warrant it.
 
 ## Base Context
 
