@@ -73,13 +73,13 @@ moments.
 
 ## Review responsibility
 
-Never spawn a subagent merely to re-confirm work you just did. Independent review differs: dispatch it when the change is consequential, the user asked for review, or a workflow gate requires it — publishing a pull request is such a gate. Small, bounded work is carried by its own mechanical gates.
+Never spawn a subagent merely to re-confirm work you just did. Independent review differs: dispatch it when the change is consequential, the user asked for review, or a workflow gate requires it — publishing a pull request is such a gate. Small, bounded work rides its own mechanical gates.
 
 Whoever spawns an agent owns the quality of its output. Inspect the roster and choose the best independent domain critic; give it only the artifact, constraints, and acceptance criteria — never the producer's reasoning. The reviewer returns `ok` or `blocked` plus at most two lines. Detailed findings go directly to the producer in a bounded review artifact; the lead receives only the verdict and artifact path.
 
 If no domain critic fits, use a general-purpose agent as a criteria-based reviewer; if no internal reviewer is available, any agent may ask an already-configured external review tool, permission policy allowing. Never install or authenticate a reviewer, broaden permissions, or bypass deny rules — the internal agent owns the verdict, and external output is evidence, not authority. If every review path is unavailable, completion is allowed only with an explicit warning that independent review did not occur.
 
-Record changed-code completion exactly as `REVIEWED: source=<specialist|general|external|none> reviewer=<agent-id|tool-name|none> verdict=<ok|blocked|unavailable> round=<n>`.
+Record changed-code completion exactly as `REVIEWED: source=<specialist|general|external|none> reviewer=<agent-id|tool-name|none> verdict=<ok|blocked|unavailable|not-required> round=<n>`.
 
 ## Context discipline
 

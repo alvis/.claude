@@ -84,14 +84,14 @@ Never leave old and new fixture systems in parallel. Report created/deleted file
 
 ## Sub-step 6 — Closing gates
 
-Run the gates in place; do not dispatch an agent to re-confirm work this workflow already did.
+Run these mechanical gates in place; do not dispatch an agent to re-confirm them. They do not stand in for the independent final test review in step 8 of `SKILL.md`, which asks the different, behavioral question of what the suite fails to cover.
 
 1. **Coverage**: full coverage command; line/branch/statement/function all meet the target.
 2. **Execution**: full test run passes; note flaky tests.
 3. **Standards**: lint clean, type-check clean.
 4. **Efficiency metrics**: count source files, test files, and total tests; record suite execution time; compute tests per source file and the coverage-per-test ratio. The final report requires these, and deletion and fixture restructuring make them unreconstructable from the baseline and per-batch deltas.
 
-All green → workflow complete. Any failure → return to the sub-step that owns the blocker; report with details only when a blocker is not fixable here.
+All green → hand off to the independent final test review; its result completes the workflow. Any failure → return to the sub-step that owns the blocker; report with details only when a blocker is not fixable here.
 
 ## Final report shape
 

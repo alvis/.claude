@@ -30,7 +30,12 @@ SUPPRESSED_REPORTING = (
         r"be conservative[^.!?\n]*?\b(?:report|flag|raise|surface|mention)\w*",
         re.IGNORECASE,
     ),
-    re.compile(r"err on the side of (?:caution|silence|not reporting)", re.IGNORECASE),
+    re.compile(
+        r"err on the side of (?:silence|not reporting|caution[^.!?\n]*?"
+        r"(?:\b(?:report|flag|raise|surface|mention|omit|skip)\w*"
+        r"|leave (?:it|them|the \w+) out))",
+        re.IGNORECASE,
+    ),
     re.compile(
         r"only report (?:\w+ ){0,3}(?:problems|issues|findings|violations)",
         re.IGNORECASE,
@@ -211,6 +216,7 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Report context usage only when the runtime measures it.",
         "Cap published nits at five; rank what you found.",
         "Be conservative with resource consumption and migration blast radius.",
+        "Err on the side of caution with a destructive migration.",
     )
 
     for text in suppressing:

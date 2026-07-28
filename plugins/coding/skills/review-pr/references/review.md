@@ -14,11 +14,12 @@ recover a finding you chose not to make. A black-zone review defers the
 line-level pass; it still reports the structural findings that justify the
 split, rather than withholding what it already saw.
 
-Selectivity belongs to publication, not detection. Collect every finding, then
-rank that set by consequence and publish the top of it: a 2,000-line review that
-comments on everything teaches nothing, so the cut is a deliberate ranking of
-what you found, and what you hold back is summarized in the overall body rather
-than lost.
+Selectivity belongs to publication, not detection, and it caps only optional
+polish. Every substantive finding gets published; ranking decides the order it
+is read in, never whether it appears. Optional nits are the one exception —
+[tone.md](tone.md) caps those at five and summarizes the rest in the overall
+body — so a 2,000-line review of nits teaches nothing, while a long list of real
+defects is the review doing its job.
 
 One finding per problem, at the highest priority that applies. The same mistake in
 eight places is one finding on the clearest instance, noting that it applies

@@ -25,7 +25,7 @@ Acceptance criteria for a slice are the diagnosed symptom it must clear, the fil
 
 Implementers stream completed files; the reviewer audits each batch; the lead orchestrates and aggregates only (never reads file bodies).
 
-The cycle converges when every slice's acceptance criteria hold and the reviewer returns `ok` with no unresolved findings; the lead then runs `TeamDelete` on the team. Budget 3 implement–review rounds per slice — a slice still failing after the third round is escalated to the caller with the outstanding findings, not looped again.
+The cycle converges when every slice's acceptance criteria hold and the reviewer returns `ok` with no unresolved findings; the lead then runs `TeamDelete` on the team. Budget each slice one implement pass plus two bounded retries — a slice still failing after that third round is mis-scoped or blocked on something the implementer cannot see, so escalate it to the caller with the outstanding findings rather than looping again.
 
 ## Context rotation
 
