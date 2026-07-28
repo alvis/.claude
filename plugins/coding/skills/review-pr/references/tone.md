@@ -8,40 +8,100 @@ next month.
 
 ## Rewrites
 
+The *Write* column is body text — what to say, not how it is marked. Every one of
+these still opens with a marker when posted, per *Markers* below; copying a cell
+verbatim would ship an unmarked comment.
+
 | Instead of | Write |
 |---|---|
 | "It might be worth considering adding a guard here." | "Guard the empty case — `items[0]` throws when the upstream filter matches nothing." |
 | "This is not ideal." | "This runs a query per row. Batch the lookup into one `IN` query — the N+1 shows up the first time a customer has 500 rows." |
 | "Consider adding tests." | "Add a test for the 404 branch. The retry path has no coverage, so a regression there ships silently." |
 | "This code is confusing." | "Split this into `parseHeader` and `validateHeader`. Two responsibilities in one function is why the error handling below has to guess which one failed." |
-| "Great job!" | "praise: Nice call threading the abort signal all the way through — that's the part everyone forgets." |
+| "Great job!" | "Abort signal threaded all the way through — that's the part everyone forgets." |
 | "You should probably not use `any` here." | "Replace `any` with the real shape. `any` disables the checks that would have caught the field rename on line 61 — see the TypeScript standard." |
 
-One hedge is judgement; three is noise. If you are uncertain, use `question:` and
-ask the actual question.
+One hedge is judgement; three is noise. If you are uncertain, open with ❓ and ask
+the actual question.
 
-## Prefixes
+## Markers
 
-Every inline comment opens with one prefix, per
-`constitution/standards/code-review.md`. It tells the author what is expected of
-them before they read a word:
+Every inline comment opens with exactly one marker, and the marker *is* the label:
+never a literal word, never a colon. `issue:`, `suggestion:`, `todo:`, and `nit:`
+appear nowhere in posted text. After the marker comes a bolded one-line title, then
+the body. Write that title as an imperative where the comment asks for something —
+a badge or a tag — and as a plain statement where it does not, so a question reads
+as a question and praise is not phrased as an order.
 
-| Prefix | Means | Voice |
+A comment that claims a consequence opens with a priority badge, wrapped so it
+renders at text height:
+
+```markdown
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub> Guard the empty case** — `items[0]` throws when the upstream filter matches nothing.
+```
+
+Substitute the level and its color. What each level *means* is the consequence ladder
+in [review.md](review.md), which owns it and is where a grading question gets settled;
+this table adds only the color that renders it, so the two can never disagree about
+what a badge claims:
+
+| Level | Color |
+|---|---|
+| P0 | `red` |
+| P1 | `orange` |
+| P2 | `yellow` |
+| P3 | `blue` |
+| P4 | `lightgrey` |
+
+A process step the author owes before merge carries no priority level, because it is
+not a claim about the code. It still demands action, so it opens with a tag rather
+than an emoji:
+
+```markdown
+**<sub><sub>![WARNING Badge](https://img.shields.io/badge/WARNING-yellow?style=flat)</sub></sub> Rebase onto `master` before merging** — the base has moved twice since this branch forked.
+```
+
+An outstanding tag blocks merge exactly as a P0 or P1 does. Name the step, not the
+failure.
+
+A comment that demands nothing opens with an emoji instead:
+
+| Marker | Means | Voice |
 |---|---|---|
-| `issue:` | Must fix before merge | Imperative. State the failure, then the fix. |
-| `suggestion:` | Should improve | Directive but open. Name the benefit. |
-| `nit:` | Optional | One line. No justification, no insistence. |
-| `question:` | Genuinely unclear | One real question, not a point made sideways. |
-| `praise:` | Good work worth naming | One line, specific about what was good. |
+| ❓ | Intent is genuinely unclear | One real question, not a point made sideways. |
+| 💭 | A non-blocking idea | Say outright that it is not a request. |
+| 📝 | A fact the author should know | Neutral. No ask attached. |
+| 💯 | Good work worth naming | One line, specific about what was good. |
 
-Do not soften an `issue:` into a `suggestion:` to seem agreeable, or inflate a `nit:`
-into an `issue:` to seem thorough. The prefix is a promise about consequence, and an
-author who learns it is unreliable stops reading them.
+```markdown
+**💯 Abort signal threaded all the way through** — that's the part everyone forgets.
+```
+
+A badge, a tag, or an emoji — exactly one, never two. Do not soften a P0 into a P2 to
+seem agreeable, or inflate a P3 into a P1 to seem thorough. The marker is a promise
+about consequence, and an author who learns it is unreliable stops reading them.
+
+## Alerts
+
+Alerts belong in the overall body, never in an inline comment. At most one per
+section, and only where it changes what the author does next:
+
+| Alert | Used for |
+|---|---|
+| `> [!CAUTION]` | Merge is blocked — everything behind an *uncapped* substantive `REQUEST_CHANGES`, chores included, not P0/P1 alone. A capped review takes `WARNING` instead: it cannot declare merge blocked on evidence it has just said it does not trust |
+| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — whatever capped the event in `SKILL.md`, which owns that list |
+| `> [!IMPORTANT]` | A boundary: paths not reviewed, findings that could not anchor to a line |
+| `> [!NOTE]` | Verdict context needing no action |
+| `> [!TIP]` | One line on the highest-value optional improvement, when the verdict is `APPROVE` |
+
+A malformed alert degrades silently into an ordinary blockquote, so the marker line
+carries no trailing text and the body sits on the following `>` line.
 
 ## Volume
 
-Find every `nit:`; publish at most five. A forty-comment review gets skimmed and
-resented, so rank what you found, publish the five that most repay the author's
-attention, and say in the overall body how many similar nits remain. Structural
-findings belong in the overall body where they can be seen whole, not scattered
-across eight lines that each show one symptom.
+Find every P4; publish at most five. A forty-comment review gets skimmed and
+resented, and a badge on every line is the same noise this cap exists to prevent —
+so rank what you found, publish the five that most repay the author's attention, and
+say in the overall body how many remain. Structural findings belong in the overall
+body where they can be seen whole, not scattered across eight lines that each show
+one symptom.

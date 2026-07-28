@@ -19,12 +19,16 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
   "body": "<overall review, from templates/overall-review.md>",
   "event": "REQUEST_CHANGES | APPROVE | COMMENT",
   "comments": [
-    { "path": "src/auth/session.ts", "line": 42, "side": "RIGHT", "body": "issue: …" },
-    { "path": "src/auth/session.ts", "start_line": 51, "line": 58, "side": "RIGHT", "body": "suggestion: …" }
+    { "path": "src/auth/session.ts", "line": 42, "side": "RIGHT", "body": "**{{marker}} Guard the empty case** — …" },
+    { "path": "src/auth/session.ts", "start_line": 51, "line": 58, "side": "RIGHT", "body": "**{{marker}} Batch these lookups** — …" }
   ]
 }
 ```
 
+- `{{marker}}` is the badge, tag, or emoji that opens every comment. `tone.md` owns
+  that markup and is the only place it is written out; render from there rather than
+  copying a literal badge URL into this file, which would drift the moment a colour
+  or a wrapper changes.
 - `commit_id` is mandatory here even though the API treats it as optional. Without
   it GitHub anchors against the current head, so a push mid-review silently
   relocates every comment.
@@ -40,8 +44,13 @@ fence.
 
 | Response | Cause | Action |
 |---|---|---|
-| 422 naming a comment path or line | The line is not in the diff | Drop that comment, move its text into the overall body as an unanchored finding, resubmit once. |
+| 422 naming a comment path or line | The line is not in the diff | Drop that comment, null its anchoring fields, set `subject` to its path, and re-render it from the finding into the overall body. Resubmit once. |
 | 422 on `APPROVE`/`REQUEST_CHANGES` | Self-review | Resubmit with `COMMENT`; state the downgrade in the body. |
+
+Recovery moves the *finding*, never the rendered comment. The inline body already
+opens with its marker, and the body's bullet prepends one of its own, so relocating
+the posted text verbatim would ship two markers on one finding and break the
+exactly-one rule in `tone.md`.
 
 Never answer a 422 by re-anchoring the comment to a nearby line that happens to be
 in the diff. A comment on the wrong line costs more author time than no comment.

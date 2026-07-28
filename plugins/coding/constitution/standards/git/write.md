@@ -301,12 +301,9 @@ When a feature spans more than one zone or category, split it into a stack gover
 - Suggest improvements, not just problems
 - Acknowledge good code
 - Focus on important issues first
-- Use conventional comment prefixes:
-  - `nit:` - Minor issue (optional fix)
-  - `question:` - Seeking clarification
-  - `suggestion:` - Recommended improvement
-  - `issue:` - Must be addressed
-  - `praise:` - Highlighting good code
+- Mark every comment per
+  [review-pr/references/tone.md](../../../skills/review-pr/references/tone.md),
+  which owns the marker set and how each one is rendered — never a literal prefix
 
 ### Merge Requirements
 

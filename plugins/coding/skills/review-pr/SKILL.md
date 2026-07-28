@@ -55,7 +55,9 @@ PR, the repository, and the standards.
 - **Optional**: `--repo <owner/name>` to target another repository; `--area=<list>`
   to restrict the review to a subset of `alignment`, `correctness`, `security`,
   `quality`, `testing`, `docs`, `style` (default all); `--dry-run` to print the
-  payload and post nothing.
+  payload and post nothing. The `process` concern is not selectable and is never
+  filtered out — a `chore` blocks merge whichever areas were asked for, and a flag
+  that could drop one would report a blocked PR as clean.
 - **Prerequisites**: authenticated `gh` with write access, and network access to
   reach the PR.
 
@@ -185,8 +187,10 @@ The diff is the subject of the review, not the limit of the reading.
 - **Read whatever it takes.** Follow callers of a changed function, open the
   siblings a new file should resemble, read the module the change plugs into, the
   goal, and the spec. Understanding the change is the job; explore the checkout.
-- **Judge only the diff.** Every finding is about a changed line and anchors to
-  one. Read unchanged code to understand the change, not to grade it.
+- **Judge only the diff.** Every finding is about something this PR changed. Read
+  unchanged code to understand the change, not to grade it. Being about the diff and
+  hanging off a line in it are different things: a deleted file and a chore the PR
+  owes are squarely about the diff and anchor to nothing.
 - **Ask whether the diff is the best solution**, not only whether it works: walk
   the lean ladder in [WORKFLOW.md](../../references/WORKFLOW.md) — need, `@theriety/core`,
   existing codebase, platform, installed dependency, then minimum new code. A
@@ -211,8 +215,12 @@ no test at all are findings. Say what to test and why it matters, never a bare
 ### Anchor and de-duplicate
 
 Keep a finding when its file and line appear in the changed-line map, setting `side`
-to `RIGHT` for added lines or `LEFT` for removed ones; move anything unanchorable to
-the overall body with its file and line named in the text. Then skip whatever has
+to `RIGHT` for added lines or `LEFT` for removed ones. A finding that anchors to no
+line moves to the overall body under the null-anchor rule in
+[references/review.md](references/review.md), which owns what `subject` carries in
+place of the anchor. Never invent a plausible line to keep a finding inline — an
+unanchorable merge blocker is the one this step most has to survive. Then skip
+whatever has
 already been said at the same path and line:
 
 ```bash
@@ -237,22 +245,59 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 `comments[]` of `{path, line, side, body}`. Payload construction and 422 recovery
 are in [references/publishing.md](references/publishing.md).
 
-Derive `event`; never choose it freely:
+Re-read `headRefOid` and compare it to the pinned `HEAD_OID` *before* building the
+payload. The verdict depends on the answer, so a head check that runs after the review
+is submitted came too late to change anything.
 
-| Outstanding findings | `event` |
+Derive `event` in three ordered steps; never choose it freely.
+
+**1. Grade the findings.** This is the *substantive verdict* — what the review
+concluded about the code. It is the value the body's alerts key off, so it is recorded
+even when a later step rewrites what gets submitted:
+
+| Outstanding findings | Substantive verdict |
 |---|---|
-| Any P0/P1 `issue:` finding | `REQUEST_CHANGES` |
-| Only P2/P3 or none, and the tests genuinely cover the change | `APPROVE` |
-| Tests unconvincing, red CI, black zone, or a blocker prevented a full review | `COMMENT` |
+| Any P0/P1 finding, or any `chore` | `REQUEST_CHANGES` |
+| Only P2/P3/P4, only kinds other than `chore`, or nothing at all | `APPROVE` |
 
-GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your own PR. Compare the author
-against `gh api user --jq .login` first; on a self-review, downgrade to `COMMENT`
-and say so in the body. With `--dry-run`, print the payload and post nothing.
+These two rows are exhaustive — every review lands on exactly one, and nothing else
+qualifies the grade. Whether the tests convince belongs to step 2, not here: it caps
+what may be submitted without changing what the findings concluded, and folding it in
+as a third condition would leave a review with weak tests and only P3 findings
+matching no row at all while the body still needs a substantive verdict to key off.
+
+**2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI,
+black zone, `headRefOid` no longer equal to `HEAD_OID`, or a blocker prevented a full
+review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
+with it. A P0 raised against a revision that is no longer the head is not a blocker you
+can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a
+certainty the review does not have.
+
+`chore` is the only kind that reaches step 1; `question`, `thought`, `note`, and
+`praise` never hold a verdict on their own. A review carrying nothing but those is a
+substantive `APPROVE`; unconvincing tests then cap the event in step 2 rather than
+unsettling what step 1 concluded.
+
+`goal_spec_alignment: skipped_unknown` does not hold the verdict either. A change with
+no goal or spec to resolve is the ordinary case, not a concern that failed to run, so
+disclose it in the body and derive `event` from the findings and the tests as usual.
+What does hold the verdict is a concern that could not run when there was something to
+check — that is the cap in step 2.
+
+**3. Downgrade a self-review.** GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your
+own PR. Compare the author against `gh api user --jq .login` first; on a self-review,
+submit `COMMENT` and say so in the body. This step rewrites only what is submitted —
+the substantive verdict from step 1 survives it and still drives the body's alerts, so
+a blocker found on your own PR is still presented as one rather than as an observation
+GitHub happened to accept.
+
+With `--dry-run`, print the payload and post nothing.
 
 ## Verification
 
-- Re-read `headRefOid`. If it moved during the review, say so plainly — the published
-  review describes the SHA it read, not the current head.
+- Confirm the `headRefOid` comparison ran before the payload was built, and that a head
+  which moved capped the event and is stated plainly in the body — the published review
+  describes the SHA it read, not the current head.
 - A created review tree is gone and leaves no entry in `jj workspace list` or
   `git worktree list`; a reused tree is untouched, still clean, still at `HEAD_OID`.
 - Every posted comment resolves to a line in the changed-line map and duplicates
@@ -264,7 +309,8 @@ and say so in the body. With `--dry-run`, print the payload and post nothing.
 
 Report per PR reviewed: review URL, reviewed SHA, the review tree used and whether
 it was reused or created, change-tracking path, PR zone, goal/spec alignment
-(including *skipped — unknown*), finding counts by priority, submitted `event`,
-unanchored findings, and paths not reviewed. For a stack, report each PR in the same
+(including *skipped — unknown*), finding counts by priority **and by kind** — an
+outstanding `chore` is a merge blocker and must never be summarised as zero findings
+— submitted `event`, unanchored findings, and paths not reviewed. For a stack, report each PR in the same
 bottom-up order it was reviewed. On a blocked run, name the blocker and which
 concerns never ran — a partial review is never reported as complete.
