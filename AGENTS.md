@@ -95,7 +95,7 @@ Enforced mechanically — each with the file that enforces it.
 | No placeholder text (`[TODO]`, `[Description]`, …) and no unresolved local links | same |
 | Agent `description` ≤ 1024 chars | `plugins/essential/skills/install-agents/scripts/stitch_agent.py` |
 | Agent `name` matches `^[a-z0-9]+(?:-[a-z0-9]+)*$` and equals its directory name | same |
-| `model` ∈ sonnet\|opus\|haiku\|fable\|inherit; `effort` ∈ low\|medium\|high\|xhigh\|max; haiku omits `effort` | same |
+| Agent source `intelligenceLevel` exists in `plugins/essential/skills/install-agents/references/intelligence-levels.json`; raw `model`/`effort` are derived | same |
 | Agent frontmatter **omits `tools`** (agents inherit runtime capabilities) | same |
 | `memory` is `"project"`; body has exactly one `## Memory` section | same |
 | Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |

@@ -6,15 +6,14 @@
      Before editing any agent, re-check the live Claude Code docs for the current valid frontmatter key surface —
      this template mirrors it at time of writing, but the docs win on conflict. Log any conflict you find. -->
 
-## frontmatter/claude.json (valid keys only — invent none)
+## frontmatter/claude.json
 
 ```json
 {
   "name": "role-only kebab-case name, e.g. frontend-implementer or principal-engineer",
   "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' + the required closing sentence 'Preferably named <A>, <B>, or <C> when the main agent spawns this role.'",
   "color": "red|blue|green|yellow|purple|orange|pink|cyan",
-  "model": "opus|haiku — opus for every role that reasons, haiku only for deterministic mechanical roles; set depth with effort, not with the model",
-  "effort": "low|medium|high|xhigh|max — model-dependent; a FIXED per-agent choice (cannot vary per task) — set it to the reasoning depth this role's work demands; OMIT this key entirely for haiku (haiku does not support effort)",
+  "intelligenceLevel": "mechanical|low|medium|high|xhigh|max|inherit — repository source metadata projected to harness-native model and effort fields by Essential's authoritative intelligence-level matrix",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],

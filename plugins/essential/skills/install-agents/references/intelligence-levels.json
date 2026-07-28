@@ -1,0 +1,67 @@
+{
+  "mechanical": {
+    "claude": {
+      "model": "haiku"
+    },
+    "codex": {
+      "model": "gpt-5.6-luna",
+      "model_reasoning_effort": "low"
+    }
+  },
+  "low": {
+    "claude": {
+      "model": "opus",
+      "effort": "low"
+    },
+    "codex": {
+      "model": "gpt-5.6-sol",
+      "model_reasoning_effort": "low"
+    }
+  },
+  "medium": {
+    "claude": {
+      "model": "opus",
+      "effort": "medium"
+    },
+    "codex": {
+      "model": "gpt-5.6-sol",
+      "model_reasoning_effort": "medium"
+    }
+  },
+  "high": {
+    "claude": {
+      "model": "opus",
+      "effort": "high"
+    },
+    "codex": {
+      "model": "gpt-5.6-sol",
+      "model_reasoning_effort": "high"
+    }
+  },
+  "xhigh": {
+    "claude": {
+      "model": "opus",
+      "effort": "xhigh"
+    },
+    "codex": {
+      "model": "gpt-5.6-sol",
+      "model_reasoning_effort": "xhigh"
+    }
+  },
+  "max": {
+    "claude": {
+      "model": "opus",
+      "effort": "max"
+    },
+    "codex": {
+      "model": "gpt-5.6-sol",
+      "model_reasoning_effort": "max"
+    }
+  },
+  "inherit": {
+    "claude": {
+      "model": "inherit"
+    },
+    "codex": {}
+  }
+}

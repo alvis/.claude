@@ -17,8 +17,8 @@ sys.path.insert(0, str(SCRIPTS))
 import install_agents as install_agents_module
 from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
-    CODEX_MODEL_BY_CLAUDE_MODEL,
     DESCRIPTION_LIMIT,
+    INTELLIGENCE_LEVELS,
     AgentTemplateError,
     stitch_agent_definition,
     stitch_codex_agent_definition,
@@ -51,6 +51,7 @@ def write_template(
         "description",
         "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
     )
+    frontmatter.setdefault("intelligenceLevel", "inherit")
     frontmatter.setdefault("memory", "project")
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
@@ -82,9 +83,12 @@ def test_stitches_nested_json_lists_and_multiline_strings_deterministically(
     stitched = stitch_agent_definition(template)
 
     frontmatter_text = stitched.split("---\n", 2)[1]
-    assert json.loads(
-        (template / "frontmatter/claude.json").read_text()
-    ) == json.loads(frontmatter_text)
+    source = json.loads((template / "frontmatter/claude.json").read_text())
+    rendered = json.loads(frontmatter_text)
+    assert "intelligenceLevel" not in rendered
+    assert rendered["model"] == "inherit"
+    assert rendered["emptyObject"] == source["emptyObject"]
+    assert rendered["emptyList"] == source["emptyList"]
     assert "---\n\n# Test agent\n" in stitched
     assert stitched == stitch_agent_definition(template)
 
@@ -113,39 +117,30 @@ def test_stitches_native_codex_agent_toml_from_the_same_template(
     assert definition == stitch_codex_agent_definition(template)
 
 
-@pytest.mark.parametrize(
-    ("claude_model", "effort", "codex_model", "codex_effort"),
-    (
-        ("opus", "high", "gpt-5.6-sol", "high"),
-        ("sonnet", "medium", "gpt-5.6-sol", "medium"),
-        ("fable", "xhigh", "gpt-5.6-sol", "xhigh"),
-        ("haiku", None, "gpt-5.6-luna", "low"),
-        ("inherit", "low", None, "low"),
-    ),
-)
-def test_maps_claude_models_and_effort_to_codex(
+@pytest.mark.parametrize("intelligence_level", INTELLIGENCE_LEVELS)
+def test_projects_intelligence_level_to_both_harnesses(
     tmp_path: Path,
-    claude_model: str,
-    effort: str | None,
-    codex_model: str | None,
-    codex_effort: str,
+    intelligence_level: str,
 ) -> None:
-    frontmatter: dict[str, object] = {
-        "name": "test-agent",
-        "model": claude_model,
-    }
-    if effort is not None:
-        frontmatter["effort"] = effort
     template = write_template(
         tmp_path,
         "test-agent",
-        frontmatter=frontmatter,
+        frontmatter={
+            "name": "test-agent",
+            "intelligenceLevel": intelligence_level,
+        },
     )
 
-    parsed = tomllib.loads(stitch_codex_agent_definition(template))
+    claude = json.loads(stitch_agent_definition(template).split("---\n", 2)[1])
+    codex = tomllib.loads(stitch_codex_agent_definition(template))
 
-    assert parsed.get("model") == codex_model
-    assert parsed["model_reasoning_effort"] == codex_effort
+    for field, value in INTELLIGENCE_LEVELS[intelligence_level]["claude"].items():
+        assert claude[field] == value
+    for field, value in INTELLIGENCE_LEVELS[intelligence_level]["codex"].items():
+        assert codex[field] == value
+    if not INTELLIGENCE_LEVELS[intelligence_level]["codex"]:
+        assert "model" not in codex
+        assert "model_reasoning_effort" not in codex
 
 
 def test_codex_projection_removes_claude_only_agent_behavior(
@@ -159,7 +154,11 @@ def test_codex_projection_removes_claude_only_agent_behavior(
         "last-verified date, an archive before 150 lines or 20KB, and "
         "`topics/<stable-area>/<specific-subject>.md`.\n\n"
         "## Delegation Modes\n\n"
-        "I use Dynamic Workflow for bounded work.\n\n"
+        "- **Direct persistent delegation** — I delegate bounded work to a "
+        "known teammate and reuse the warm agent.\n"
+        "- **Dynamic Workflow delegation** — I use Dynamic Workflow for "
+        "bounded work.\n\n"
+        "Workflow-only follow-up.\n\n"
         "## Collaboration\n\n"
         "I collaborate with the runtime roster.\n"
     )
@@ -169,8 +168,7 @@ def test_codex_projection_removes_claude_only_agent_behavior(
         "test-agent",
         frontmatter={
             "name": "test-agent",
-            "model": "opus",
-            "effort": "medium",
+            "intelligenceLevel": "medium",
             "initialPrompt": startup,
         },
         body=body,
@@ -184,8 +182,11 @@ def test_codex_projection_removes_claude_only_agent_behavior(
     assert startup in claude
     assert "## Memory" not in instructions
     assert ".claude/agent-memory/" not in instructions
-    assert "## Delegation Modes" not in instructions
+    assert "## Delegation Modes" in instructions
+    assert "Direct persistent delegation" in instructions
+    assert "reuse the warm agent" in instructions
     assert "Dynamic Workflow" not in instructions
+    assert "Workflow-only follow-up" not in instructions
     assert startup not in instructions
     assert "## Collaboration" in instructions
 
@@ -256,7 +257,7 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
         (
             {"name": "test-agent", "model": "haiku", "effort": "medium"},
             "A role-specific body.",
-            "haiku agents must omit effort",
+            "must use intelligenceLevel",
         ),
         (
             {
@@ -267,33 +268,37 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
             f"description exceeds {DESCRIPTION_LIMIT} characters",
         ),
         (
-            {"name": "test-agent", "model": "claude-opus-4-8"},
+            {"name": "test-agent", "intelligenceLevel": "impossible"},
             "A role-specific body.",
-            "invalid model 'claude-opus-4-8'",
+            "invalid intelligenceLevel 'impossible'",
         ),
         (
-            {"name": "test-agent", "model": "opus", "effort": "extreme"},
-            "A role-specific body.",
-            "invalid effort 'extreme'",
-        ),
-        (
-            {"name": "test-agent", "permissionMode": "yolo"},
+            {
+                "name": "test-agent",
+                "intelligenceLevel": "inherit",
+                "permissionMode": "yolo",
+            },
             "A role-specific body.",
             "invalid permissionMode 'yolo'",
         ),
         (
-            {"name": "test-agent", "tools": ["Read"]},
+            {
+                "name": "test-agent",
+                "intelligenceLevel": "inherit",
+                "tools": ["Read"],
+            },
             "A role-specific body.",
             "must omit tools",
         ),
         (
-            {"name": "test-agent"},
+            {"name": "test-agent", "intelligenceLevel": "inherit"},
             "I only spawn fixed-reviewer.",
             "fixed routing language conflicts with runtime discovery",
         ),
         (
             {
                 "name": "test-agent",
+                "intelligenceLevel": "inherit",
                 "description": "Always route reviews to fixed-reviewer",
                 "initialPrompt": "Only spawn fixed-reviewer for review",
             },
@@ -325,17 +330,31 @@ def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
 )
 def test_rejects_shared_delegation_policy_in_agent_body(phrase: str) -> None:
     with pytest.raises(AgentTemplateError, match="repeats shared delegation policy"):
-        validate_agent_contract({"name": "test-agent"}, phrase)
+        validate_agent_contract(
+            {"name": "test-agent", "intelligenceLevel": "inherit"}, phrase
+        )
 
 
 VALID_MEMORY_BODY = memory_section("test-agent")
-VALID_MEMORY_FRONTMATTER = {"name": "test-agent", "memory": "project"}
+VALID_MEMORY_FRONTMATTER = {
+    "name": "test-agent",
+    "intelligenceLevel": "inherit",
+    "memory": "project",
+}
 
 
 @pytest.mark.parametrize(
     ("frontmatter", "body", "message"),
     (
-        ({"name": "test-agent", "memory": "local"}, VALID_MEMORY_BODY, "project-scoped"),
+        (
+            {
+                "name": "test-agent",
+                "intelligenceLevel": "inherit",
+                "memory": "local",
+            },
+            VALID_MEMORY_BODY,
+            "project-scoped",
+        ),
         (VALID_MEMORY_FRONTMATTER, "# No memory\n", "exactly one ## Memory"),
         (
             VALID_MEMORY_FRONTMATTER,
@@ -843,16 +862,16 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     )
     assert tech_lead["name"] == "tech-lead"
     assert tech_lead["description"]
-    assert tech_lead["model"] == "gpt-5.6-sol"
-    assert tech_lead["model_reasoning_effort"] == "high"
+    for field, value in INTELLIGENCE_LEVELS["high"]["codex"].items():
+        assert tech_lead[field] == value
     assert tech_lead["developer_instructions"].startswith("# Tech Lead")
     assert ".claude/agent-memory/" not in tech_lead["developer_instructions"]
     assert "Dynamic Workflow" not in tech_lead["developer_instructions"]
     test_runner = tomllib.loads(
         (destination / "test-runner.toml").read_text(encoding="utf-8")
     )
-    assert test_runner["model"] == "gpt-5.6-luna"
-    assert test_runner["model_reasoning_effort"] == "low"
+    for field, value in INTELLIGENCE_LEVELS["mechanical"]["codex"].items():
+        assert test_runner[field] == value
 
     templates_by_file = {
         f"{template.name}.toml": template
@@ -866,11 +885,14 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
                 encoding="utf-8"
             )
         )
-        source_model = frontmatter.get("model")
-        if source_model in (None, "inherit"):
-            assert "model" not in agent
-        else:
-            assert agent["model"] == CODEX_MODEL_BY_CLAUDE_MODEL[source_model]
+        expected_projection = INTELLIGENCE_LEVELS[
+            frontmatter["intelligenceLevel"]
+        ]["codex"]
+        for field in ("model", "model_reasoning_effort"):
+            if field in expected_projection:
+                assert agent[field] == expected_projection[field]
+            else:
+                assert field not in agent
         assert "color" not in agent
         assert "permissionMode" not in agent
         assert "memory" not in agent
@@ -952,7 +974,7 @@ def test_every_distributed_agent_template_stitches(template: Path) -> None:
     """The stitch gate itself, over the real tree — `uvx pytest` is the only command.
 
     Stitching validates the whole agent contract: description limit, name
-    regex, model/effort enums, absent tools, project memory, and the single
+    regex, intelligence-level mapping, absent tools, project memory, and the single
     Memory section. A template that cannot stitch cannot be installed.
     """
     assert stitch_agent_definition(template).strip()

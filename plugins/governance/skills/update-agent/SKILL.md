@@ -49,13 +49,13 @@ stated behavior change. `create-agent` owns genuinely new roles.
      working voice, and stop rule;
    - exact standards and repo-derived context, collaboration/spawn edges, and
      skills/MCP/hooks;
-   - model, fixed effort, permissionMode, absence of a tools allowlist, memory, isolation,
+   - fixed intelligence level, permissionMode, absence of a tools allowlist, memory, isolation,
      background, maxTurns, and `initialPrompt`;
    - the explicit requested changes and the protected fields not authorized
      to change.
 3. Re-evaluate the role classification and launch scenario against
-   [../create-agent/references/model-effort-heuristic.md](../create-agent/references/model-effort-heuristic.md)
-   (model, effort, permissionMode, runtime tool inheritance, memory, and isolation criteria).
+   [../create-agent/references/intelligence-level-heuristic.md](../create-agent/references/intelligence-level-heuristic.md)
+   (intelligence level, permissionMode, runtime tool inheritance, memory, and isolation criteria).
    Change those fields only when the requested migration or template requires
    it; report every such change.
 4. Reconcile `frontmatter/claude.json` with the live template key surface.
@@ -106,7 +106,7 @@ stated behavior change. `create-agent` owns genuinely new roles.
   writing only temporary output, and inspect the generated definitions:
   `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
 - Always parse each JSON file with `python3 -m json.tool`, check for
-  placeholders, and validate the key surface, model/effort compatibility,
+  placeholders, and validate the key surface, intelligence level,
   permission values, tool/spawn posture, context paths, namespaced skills,
   MCP/hooks, initialPrompt/base consistency, trigger separation, and the owning
   plugin routing row. Do not claim official runtime validation unless the

@@ -1,10 +1,10 @@
 ---
 name: create-agent
-description: "Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing model, effort, and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
+description: "Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing intelligence level and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
 model: opus
 context: fork
 allowed-tools: Agent, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
-argument-hint: "<role description> [--plugin=<owner>] [--model=...] [--effort=...] [--permission=...] [--yes]"
+argument-hint: "<role description> [--plugin=<owner>] [--intelligence=...] [--permission=...] [--yes]"
 ---
 
 # Create Agent
@@ -28,7 +28,7 @@ anything is written. `update-agent` owns changes to existing definitions.
 - **Required**: a role name or description clear enough to classify into an
   archetype and to write trigger-bearing frontmatter.
 - **Optional**: `--plugin=<owner>` pins the plugin that owns the role;
-  `--model=...`, `--effort=...`, `--permission=...` pin that
+  `--intelligence=...`, `--permission=...` pin that
   setting and skip its confirmation prompt; `--yes` accepts every
   recommendation without prompting.
 - **Owner token**: use the plugin's source-directory name under `plugins/`
@@ -57,11 +57,10 @@ anything is written. `update-agent` owns changes to existing definitions.
      condition;
    - the exact standards and repo-derived context verbatim from the context
      catalog — invent no standard or path;
-   - model, fixed effort, launch-appropriate `permissionMode`, and memory and
+   - fixed intelligence level, launch-appropriate `permissionMode`, and memory and
      isolation settings from
-     [references/model-effort-heuristic.md](references/model-effort-heuristic.md)
-     — pick the cheapest model that clears the role's bar and raise effort
-     within a tier before upgrading the model;
+     [references/intelligence-level-heuristic.md](references/intelligence-level-heuristic.md)
+     — pick the least expensive level that clears the role's bar;
    - no `tools` field, so both leaf-by-charter and coordinating roles inherit
      the complete runtime tool surface;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
@@ -69,7 +68,7 @@ anything is written. `update-agent` owns changes to existing definitions.
      carried by its charter, its convergence predicate, and Essential's shared
      orchestration policy — never by a per-agent hook.
 4. Confirm before writing: compose one `AskUserQuestion` battery of at most
-   four questions covering model, effort, and — only when they deviate from
+   four questions covering intelligence level and — only when they deviate from
    the archetype default — permissionMode and leaf-vs-spawn posture. List the
    recommended value first marked "(Recommended)" with a free-text override
    as the last option. Flags override their named fields and skip their
@@ -106,8 +105,8 @@ anything is written. `update-agent` owns changes to existing definitions.
    committed.
 10. Check runtime-tool behavior: every definition omits `tools`; a leaf does not claim it will spawn, and a
    coordinating role follows the shared nested-spawn policy. Use `disallowedTools` only for narrow durable
-   restrictions; workflow-spawned and teammate permissions must follow template rules. Also check model/effort
-   compatibility, allowed permission values, valid color/model values,
+   restrictions; workflow-spawned and teammate permissions must follow template rules. Also check the
+   intelligence level, allowed permission values, valid color values,
    context aliases and paths, namespaced skills, MCP references, hooks,
    memory semantics, initialPrompt/base consistency, explicit triggers, and
    non-overlap with neighbors.
