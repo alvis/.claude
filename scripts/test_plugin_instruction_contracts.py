@@ -39,7 +39,8 @@ SUPPRESSED_REPORTING = (
         re.IGNORECASE,
     ),
     re.compile(
-        r"only report (?:\w+ ){0,3}(?:problems|issues|findings|violations)",
+        r"(?:only report|report only) (?:\w+ ){0,3}"
+        r"(?:problems|issues|findings|violations)",
         re.IGNORECASE,
     ),
     re.compile(
@@ -238,6 +239,7 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Err on the side of caution and leave it out.",
         "When in doubt, omit the finding.",
         "Report a violation only if you are certain it is one.",
+        "Report only issues you can prove.",
     )
     legitimate = (
         "Do not use for: deleting or modifying code (report only).",
