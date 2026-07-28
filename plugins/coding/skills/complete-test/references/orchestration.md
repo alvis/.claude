@@ -84,14 +84,14 @@ Never leave old and new fixture systems in parallel. Report created/deleted file
 
 ## Sub-step 6 — Closing gates
 
-Run these mechanical gates once — in place, or through `test-runner` when the sweep's raw output would swamp this session; either way that single run is authoritative and no agent is dispatched to re-confirm it. They do not stand in for the independent final test review in step 8 of `SKILL.md`, which asks the different, behavioral question of what the suite fails to cover.
+Run these mechanical gates once per state of the tree — in place, or through `test-runner` when the sweep's raw output would swamp this session; either way that run is authoritative for the files it measured, and no agent is dispatched to re-confirm a result whose inputs have not changed. They do not stand in for the independent final test review in step 8 of `SKILL.md`, which asks the different, behavioral question of what the suite fails to cover.
 
 1. **Coverage**: full coverage command; line/branch/statement/function all meet the target.
 2. **Execution**: full test run passes; note flaky tests.
 3. **Standards**: lint clean, type-check clean.
 4. **Efficiency metrics**: count source files, test files, and total tests; record suite execution time; compute tests per source file and the coverage-per-test ratio. The final report requires these, and deletion and fixture restructuring make them unreconstructable from the baseline and per-batch deltas.
 
-All green → hand off to the independent final test review; its result completes the workflow. Any failure → return to the sub-step that owns the blocker; report with details only when a blocker is not fixable here.
+All green → hand off to the independent final test review. Every test-only correction that review justifies invalidates the sweep above, which measured the pre-correction files: rerun the affected gates and the full sweep after the last accepted edit, and let that result complete the workflow. Re-running gates over changed files is not re-confirmation — the earlier result is stale, not doubted. Any failure → return to the sub-step that owns the blocker; report with details only when a blocker is not fixable here.
 
 ## Final report shape
 

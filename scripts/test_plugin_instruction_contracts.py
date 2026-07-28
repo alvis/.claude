@@ -36,15 +36,50 @@ _CONFIDENCE = (
     r"|(?:clearly|plainly|readily|obviously) (?:visible|evident|identifiable"
     r"|apparent|verifiable))"
 )
+# What a suppressive directive suppresses. Named once so every pattern agrees
+# on what counts as a finding instead of drifting noun by noun.
+_FINDING = (
+    r"(?:problems?|issues?|findings?|violations?|observations?"
+    r"|concerns?|bugs?|defects?)"
+)
+# Doubt stated as a property of the finding. A negative imperative suppresses
+# only when it names doubt: "do not report context usage" sets scope, while
+# "do not report uncertain findings" discards evidence.
+_UNCERTAIN = (
+    r"(?:uncertain|unsure|unverified|unconfirmed|unproven|speculative"
+    r"|suspected|tentative|doubtful|ambiguous|possible|potential"
+    r"|low[- ]confidence)"
+)
 SUPPRESSED_REPORTING = (
     re.compile(
-        r"be conservative[^.!?\n]*?\b(?:report|flag|raise|surface|mention)\w*",
+        # Caution about *how you work* is ordinary engineering advice; caution
+        # about *what you report* is suppression. Only a findings noun separates
+        # them, so "be conservative when reporting estimated token usage" stays
+        # legal while "be conservative about reporting issues" does not.
+        r"be conservative[^.!?;\n]*?\b(?:report|flag|raise|surface|mention)\w*"
+        r"[^.!?;\n]*?" + _FINDING,
         re.IGNORECASE,
     ),
     re.compile(
-        r"err on the side of (?:silence|not reporting|caution[^.!?\n]*?"
+        # Same split for caution: it must land on a finding to suppress one.
+        # "Silence" and "not reporting" name the suppression outright and need
+        # no noun.
+        r"err on the side of (?:silence|not reporting|caution[^.!?;\n]*?"
         r"(?:\b(?:report|flag|raise|surface|mention|omit|skip)\w*"
-        r"|leave (?:it|them|the \w+) out))",
+        r"[^.!?;\n]*?" + _FINDING + r"|leave (?:it|them|the \w+) out))",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        # Suppression stated outright rather than as a hedge: "do not report
+        # uncertain findings" discards the same evidence without needing an
+        # "only" or a "be conservative" to carry it. Doubt and the finding it
+        # qualifies appear in either order, so both readings are matched.
+        r"(?:(?:do ?n[o']t|never|avoid)\s+"
+        r"(?:report|mention|flag|raise|surface|list|includ)\w*"
+        r"|omit|suppress|withhold|exclude)"
+        r"[^.!?;\n]*?"
+        r"(?:" + _UNCERTAIN + r"[^.!?;\n]*?" + _FINDING
+        + r"|" + _FINDING + r"[^.!?;\n]*?" + _UNCERTAIN + r")",
         re.IGNORECASE,
     ),
     re.compile(
@@ -64,8 +99,8 @@ SUPPRESSED_REPORTING = (
         # clause, and it must fail on its own rather than only when a "be
         # conservative" lead-in happens to precede it.
         r"(?:only report|report only)[^.!?;\n]*?"
-        r"(?:" + _CONFIDENCE + r" (?:problems|issues|findings|violations)"
-        r"|(?:problems|issues|findings|violations)[^.!?;\n]*? "
+        r"(?:" + _CONFIDENCE + r" " + _FINDING
+        + r"|" + _FINDING + r"[^.!?;\n]*? "
         r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)|"
         + _CONFIDENCE + r"))",
         re.IGNORECASE,
@@ -275,6 +310,12 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         # The grounding prompt's original clause, standing on its own.
         "Only report problems clearly visible in the image.",
         "Only report clearly visible problems.",
+        # Suppression needs no hedge to carry it.
+        "Do not report uncertain findings.",
+        "Don't mention low-confidence issues.",
+        "Omit speculative problems from the report.",
+        # Doubt may follow the noun it qualifies rather than precede it.
+        "Never surface findings you are unsure about.",
     )
     legitimate = (
         "Do not use for: deleting or modifying code (report only).",
@@ -288,6 +329,12 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Only report findings that block release.",
         # A separate clause supplies the confidence words but not the meaning.
         "Report only security violations; you are certain to find some.",
+        # Caution aimed at the work, not at the finding, stays legal even when
+        # the sentence goes on to mention reporting.
+        "Be conservative when reporting estimated token usage.",
+        "Err on the side of caution when reporting a destructive migration.",
+        # A scope rule phrased as a negative imperative names no doubt.
+        "Do not report context usage the runtime does not measure.",
     )
 
     for text in suppressing:

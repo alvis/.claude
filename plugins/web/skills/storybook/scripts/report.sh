@@ -200,7 +200,7 @@ for story_dir in "$RUN_DIR"/stories/*/; do
       while IFS= read -r issue; do
         [[ -z "$issue" ]] && continue
         gsev="$(printf '%s' "$issue" | jq -r '.severity // "medium"')"
-        gconf="$(printf '%s' "$issue" | jq -r '.confidence // "confirmed"')"
+        gconf="$(printf '%s' "$issue" | jq -r '.confidence // "possible"')"
         gdesc="$(printf '%s' "$issue" | jq -r '.description // ""')"
         case "$gsev" in
           high)         sev="P1" ;;
