@@ -2,4 +2,4 @@
 set -euo pipefail
 
 SCRIPT_DIRECTORY="$(cd "$(dirname "$0")" && pwd)"
-exec python3 "$SCRIPT_DIRECTORY/install_agents.py" "$@"
+exec uv run --python 3.13 "$SCRIPT_DIRECTORY/install_agents.py" "$@"

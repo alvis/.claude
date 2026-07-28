@@ -107,12 +107,14 @@ def test_marketplace_plugins_ship_action_instruction_contracts() -> None:
         domain = plugin / "references" / INSTRUCTION_FILE
         claude = plugin / "CLAUDE.md"
         manifest = load_json(plugin / ".claude-plugin" / "plugin.json")
+        hooks = load_json(plugin / "hooks" / "hooks.json")
 
         assert domain.is_file(), name
         assert claude.is_file(), name
+        assert "hooks" not in manifest, name
         assert f"{{{{PLUGIN_DIR}}}}/references/{INSTRUCTION_FILE}" in claude.read_text()
         for event in ("SessionStart", "SubagentStart"):
-            assert any("/CLAUDE.md" in command for command in hook_commands(manifest, event))
+            assert any("/CLAUDE.md" in command for command in hook_commands(hooks, event))
 
 
 def test_marketplace_and_plugin_versions_use_semver_from_one() -> None:

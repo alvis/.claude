@@ -18,7 +18,7 @@ Debug and inspect Next.js applications by combining Chrome DevTools MCP and the 
 
 - **Required**: a debug instruction or a target URL.
 - **Optional**: scope hints — routes, components, or files implicated by the issue.
-- **Prerequisites**: a Next.js project whose dev server is running or startable with `npm run dev`; Chrome DevTools MCP (configured via the plugin's `mcp.json`, available automatically); the `next-browser` CLI installed globally or via `npx`.
+- **Prerequisites**: a Next.js project whose dev server is running or startable with `npm run dev`; Chrome DevTools MCP (configured via the plugin's `.mcp.json`, available automatically); the `next-browser` CLI installed globally or via `npx`.
 
 ## Workflow
 

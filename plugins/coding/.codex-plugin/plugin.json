@@ -1,0 +1,19 @@
+{
+  "name": "coding",
+  "version": "1.0.0",
+  "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
+  "author": {
+    "name": "Alvis"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Coding",
+    "shortDescription": "Code delivery, testing, architecture, and quality workflows.",
+    "longDescription": "Plan, implement, review, test, document, and publish production code with repository-aware quality gates.",
+    "developerName": "Alvis",
+    "category": "development",
+    "capabilities": ["Skills", "Hooks", "MCP"],
+    "defaultPrompt": "Help me deliver this coding change."
+  }
+}

@@ -5,8 +5,8 @@ does, delete it — that governs this file and everything shipped from this tree
 
 ## What this repository is
 
-This is the **source** of a Claude Code plugin marketplace: the plugins under
-`plugins/`, distributed to users' machines by `claude plugin install`.
+This is the **source** of one plugin marketplace for Claude Code and Codex: the
+plugins under `plugins/` are projected into each harness's manifest format.
 
 <IMPORTANT>
 Edit plugin sources here. Never edit `~/.claude/plugins/` — that is a downstream cache
@@ -20,8 +20,9 @@ Runtime prerequisites: Bash, `jq`, Git, and `uv` (which supplies Python 3.13+), 
 
 | Artifact | Path |
 |---|---|
-| Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Plugin manifest | `plugins/<p>/.claude-plugin/plugin.json` |
+| Claude marketplace manifest | `.claude-plugin/marketplace.json` |
+| Codex marketplace projection | `.agents/plugins/marketplace.json` |
+| Plugin manifests | `plugins/<p>/.{claude,codex}-plugin/plugin.json` |
 | Skill | `plugins/<p>/skills/<name>/SKILL.md` (+ `references/`, `scripts/`, `assets/`) |
 | Agent | `plugins/<p>/templates/agents/<name>/base.md` + `frontmatter/claude.json` |
 | Standard | `plugins/<p>/constitution/standards/<name>/{meta,scan,write}.md` + `rules/` |
@@ -29,16 +30,17 @@ Runtime prerequisites: Bash, `jq`, Git, and `uv` (which supplies Python 3.13+), 
 | Routing table | `plugins/<p>/references/ROUTING.md` |
 | Shared executables | `plugins/essential/bin/` |
 
-There are **no `agents/` or `commands/` directories**. Agents ship as templates
-(`base.md` body + `frontmatter/claude.json`, JSON not YAML) that `/essential:install-agents`
-stitches and installs. Every plugin depends on `essential`; `web` and `react` also depend
-on `coding`.
+There are **no source `agents/` or `commands/` directories**. Agents ship as
+templates (`base.md` body + `frontmatter/claude.json`, JSON not YAML) that
+`/essential:install-agents` installs as Claude Markdown or Codex TOML. Every
+plugin depends on `essential`; `web` and `react` also depend on `coding`.
 
 ## The injection contract
 
 A plugin's `CLAUDE.md`, `MAINAGENT.md`, and `SUBAGENT.md` are **shipped product**, not
-developer docs. Each plugin's `plugin.json` registers hooks that pipe the file through
-`sed` and `jq` into the user's session context:
+developer docs. Each context-owning plugin's
+`plugins/<p>/hooks/hooks.json` registers hooks that pipe the file through `sed`
+and `jq` into the user's session context:
 
 ```bash
 sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT}|g" "${CLAUDE_PLUGIN_ROOT}/CLAUDE.md" \

@@ -1,0 +1,18 @@
+{
+  "name": "production",
+  "version": "1.0.0",
+  "description": "Media and creative production lifecycle: asset provenance, render manifests, and revision-bound review",
+  "author": {
+    "name": "Alvis"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Production",
+    "shortDescription": "Media asset provenance, rendering, and review workflows.",
+    "longDescription": "Manage creative-production assets, render manifests, provenance, and revision-bound review.",
+    "developerName": "Alvis",
+    "category": "productivity",
+    "capabilities": ["Skills", "Hooks"],
+    "defaultPrompt": "Help me manage this production deliverable."
+  }
+}

@@ -1,11 +1,12 @@
-# Claude Code Plugin Marketplace
+# Claude Code and Codex Plugin Marketplace
 
-Nine composable plugins that turn Claude Code into a disciplined engineering
-(and production) team: specifications with real provenance, plans with stable
-task identity, execution state that survives crashes and machine moves, and
-decisions that never silently rewrite history. This README explains how the
-system thinks and how to get the most out of it; each plugin's own
-`README.md` documents its skills in depth.
+Nine composable plugins for Claude Code and Codex: specifications with real
+provenance, plans with stable task identity, execution state that survives
+crashes and machine moves, and decisions that never silently rewrite history.
+Both harnesses install the same plugins and load the same Agent Skills;
+harness-specific manifests are thin adapters. This README explains how the
+system thinks and how to get the most out of it; each plugin's own `README.md`
+documents its skills in depth.
 
 ## How the system thinks
 
@@ -63,6 +64,8 @@ Practical consequences you will see day to day:
 
 ## Install
 
+### Claude Code
+
 ```bash
 cd /path/to/target-project
 claude plugin marketplace add alvis/.claude --scope project
@@ -85,8 +88,26 @@ target's `.claude/settings.json`; review before committing. Keep
 `NOTION_TOKEN` and every other credential out of project settings and version
 control.
 
-The core lifecycle expects Claude Code, Bash, `jq`, Git, and Python 3, plus
-the target project's own build and test tools. The publication path
+### Codex
+
+```bash
+codex plugin marketplace add alvis/.claude
+codex plugin add essential@alvis
+codex plugin add coding@alvis
+codex plugin add specification@alvis
+```
+
+Codex reads `.agents/plugins/marketplace.json`, a structural projection of the
+authoritative Claude catalog. Install the workflow's listed plugins explicitly
+because Claude's plugin dependency metadata is harness-specific. Ask Codex to
+run `essential:install-agents` for the Codex harness, then start a fresh session
+so the native TOML specialist definitions are loaded. Role-binding context is
+withheld until its required specialist is installed. Open `/hooks` after
+installation and trust the bundled plugin hooks; Codex skips new or changed
+context-injection hooks until their definitions are reviewed.
+
+The core lifecycle expects Claude Code or Codex, Bash, `jq`, Git, and Python 3,
+plus the target project's own build and test tools. The publication path
 additionally expects an authenticated `gh`; it prefers `jj` where the
 repository is jj-colocated and uses Git directly everywhere else.
 Notion synchronization is optional — see

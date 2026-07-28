@@ -38,13 +38,15 @@ def run_installed_hooks(
     event: str,
     input_json: str,
 ) -> tuple[subprocess.CompletedProcess[str], ...]:
-    manifest = json.loads((plugin_root / ".claude-plugin/plugin.json").read_text())
+    hooks_document = json.loads(
+        (plugin_root / "hooks/hooks.json").read_text()
+    )
     substitutions = {
         "${CLAUDE_PLUGIN_ROOT}": str(plugin_root),
         "${HOME}": os.environ["HOME"],
     }
     completed = []
-    for matcher in manifest["hooks"][event]:
+    for matcher in hooks_document["hooks"][event]:
         for hook in matcher["hooks"]:
             command = hook["command"]
             args = hook.get("args", [])
