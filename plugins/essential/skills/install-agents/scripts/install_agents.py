@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -15,10 +16,15 @@ from typing import Any, Iterable
 
 from stitch_agent import (
     AgentTemplateError,
-    load_agent_frontmatter,
+    load_agent_sources,
     stitch_agent_definition,
     stitch_codex_agent_definition,
 )
+
+CACHE_COMPONENT = re.compile(r"^[A-Za-z0-9._-]+$")
+# NOTE: Versions additionally admit "+" because SemVer build metadata is
+# path-safe and part of the repository's accepted plugin-version contract.
+CACHE_VERSION_COMPONENT = re.compile(r"^[A-Za-z0-9._+-]+$")
 
 
 @dataclass(frozen=True)
@@ -89,11 +95,7 @@ def _read_plugin_records(harness: str) -> list[dict[str, Any]]:
             {
                 "id": record.get("pluginId"),
                 "enabled": record.get("enabled"),
-                "installPath": (
-                    record.get("source", {}).get("path")
-                    if isinstance(record.get("source"), dict)
-                    else None
-                ),
+                "version": record.get("version"),
                 "lastUpdated": record.get("lastUpdated"),
             }
             for record in installed
@@ -107,6 +109,44 @@ def _last_updated(record: dict[str, Any]) -> str:
     return value if isinstance(value, str) else ""
 
 
+def _codex_cache_plugin_root(
+    essential_root: Path,
+    record: dict[str, Any],
+) -> Path:
+    plugin_id = record.get("id")
+    version = record.get("version")
+    if not isinstance(plugin_id, str) or plugin_id.count("@") != 1:
+        raise AgentTemplateError(f"invalid installed Codex plugin id: {plugin_id!r}")
+    plugin_name, marketplace = plugin_id.split("@", 1)
+    if (
+        not isinstance(version, str)
+        or plugin_name in {".", ".."}
+        or marketplace in {".", ".."}
+        or version in {".", ".."}
+        or not CACHE_COMPONENT.fullmatch(plugin_name)
+        or not CACHE_COMPONENT.fullmatch(marketplace)
+        or not CACHE_VERSION_COMPONENT.fullmatch(version)
+    ):
+        raise AgentTemplateError(
+            f"invalid installed Codex plugin cache coordinates: {plugin_id!r} "
+            f"version {version!r}"
+        )
+    cache_root = essential_root.parent.parent.parent
+    candidate = cache_root / marketplace / plugin_name / version
+    try:
+        resolved = candidate.resolve().relative_to(cache_root.resolve())
+    except ValueError as error:
+        raise AgentTemplateError(
+            f"installed Codex plugin cache path escapes cache root: {candidate}"
+        ) from error
+    installed_root = cache_root / resolved
+    if not installed_root.is_dir():
+        raise AgentTemplateError(
+            f"installed Codex plugin cache root is absent: {installed_root}"
+        )
+    return installed_root
+
+
 def _installed_plugin_roots(
     essential_root: Path,
     records: list[dict[str, Any]],
@@ -114,22 +154,25 @@ def _installed_plugin_roots(
 ) -> list[tuple[str, Path]]:
     resolved_essential = essential_root.resolve()
     if harness == "codex":
-        cache_marketplace = (
-            essential_root.parent.parent.name
-            if essential_root.parent.name == "essential"
-            and essential_root.parent.parent.parent.name == "cache"
-            else None
-        )
+        if (
+            essential_root.parent.name != "essential"
+            or essential_root.parent.parent.parent.name != "cache"
+        ):
+            raise AgentTemplateError(
+                f"Codex skill is not loaded from an installed plugin cache: "
+                f"{essential_root}"
+            )
+        cache_marketplace = essential_root.parent.parent.name
         essential_records = [
             record
             for record in records
-            if isinstance(record.get("id"), str)
+            if record.get("enabled") is True
+            and isinstance(record.get("id"), str)
             and record["id"].count("@") == 1
             and record["id"].split("@", 1)[0] == "essential"
-            and (
-                cache_marketplace is None
-                or record["id"].rsplit("@", 1)[1] == cache_marketplace
-            )
+            and record["id"].rsplit("@", 1)[1] == cache_marketplace
+            and _codex_cache_plugin_root(essential_root, record).resolve()
+            == resolved_essential
         ]
     else:
         essential_records = [
@@ -163,8 +206,8 @@ def _installed_plugin_roots(
         if (
             record.get("enabled") is not True
             or not isinstance(plugin_id, str)
-            or not isinstance(install_path, str)
             or "@" not in plugin_id
+            or (harness != "codex" and not isinstance(install_path, str))
         ):
             continue
         record_marketplace = plugin_id.rsplit("@", 1)[1]
@@ -176,7 +219,14 @@ def _installed_plugin_roots(
 
     roots = sorted(
         (
-            (plugin_id.rsplit("@", 1)[0], Path(record["installPath"]))
+            (
+                plugin_id.rsplit("@", 1)[0],
+                (
+                    _codex_cache_plugin_root(essential_root, record)
+                    if harness == "codex"
+                    else Path(record["installPath"])
+                ),
+            )
             for plugin_id, record in best_by_id.items()
         ),
         key=lambda item: item[0],
@@ -215,15 +265,15 @@ def discover_agent_templates(
 
 
 def _preflight(
-    templates: list[AgentTemplate], harness: str
+    templates: list[AgentTemplate], harness: str, *, allow_legacy: bool
 ) -> list[tuple[str, str]]:
     if not templates:
         raise AgentTemplateError("no agent templates discovered")
     seen: dict[str, AgentTemplate] = {}
     staged: list[tuple[str, str]] = []
     for template in templates:
-        frontmatter = load_agent_frontmatter(template.path)
-        name = frontmatter["name"]
+        sources = load_agent_sources(template.path, allow_legacy=allow_legacy)
+        name = sources.metadata["name"]
         previous = seen.get(name)
         if previous is not None:
             raise AgentTemplateError(
@@ -231,9 +281,11 @@ def _preflight(
             )
         seen[name] = template
         content = (
-            stitch_agent_definition(template.path)
+            stitch_agent_definition(template.path, allow_legacy=allow_legacy)
             if harness == "claude"
-            else stitch_codex_agent_definition(template.path)
+            else stitch_codex_agent_definition(
+                template.path, allow_legacy=allow_legacy
+            )
         )
         staged.append((name, content))
     return staged
@@ -249,6 +301,7 @@ def install_agents(
     staged_definitions = _preflight(
         discover_agent_templates(essential_root, plugin_records, harness),
         harness,
+        allow_legacy=Path(essential_root).parent.name != "plugins",
     )
     destination = Path(destination)
     suffix = ".md" if harness == "claude" else ".toml"

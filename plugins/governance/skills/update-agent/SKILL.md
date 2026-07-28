@@ -1,6 +1,6 @@
 ---
 name: update-agent
-description: Update explicitly selected agent definitions to the current two-file template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
+description: Update explicitly selected agent definitions to the current split-source template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
 model: opus
 context: fork
 allowed-tools: Agent, Read, Write, Edit, Glob, Grep, Bash
@@ -9,8 +9,8 @@ argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 
 # Update Agent
 
-Find selected pairs under `plugins/*/templates/agents/<name>/`, then update
-their `base.md` and `frontmatter/claude.json` to the current template or a
+Find selected source sets under `plugins/*/templates/agents/<name>/`, then update
+their `base.md` and split `frontmatter/{meta,claude,codex}.json` to the current template or a
 stated behavior change. `create-agent` owns genuinely new roles.
 
 ## Boundaries
@@ -40,8 +40,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
 
 1. Search every plugin's `templates/agents/` directory for the selector. Read
    the agent template, `role-prompt.md`, the context catalog, the owning
-   plugin's `ALLAGENT.md`, relevant team edges, every selected source pair, and real callers. List exact
-   targets before mutation. Reject missing or malformed pairs, ambiguous
+   plugin's `ALLAGENT.md`, relevant team edges, every selected source set, and real callers. List exact
+   targets before mutation. Reject missing or malformed source sets, ambiguous
    globs, locked/in-use targets, or a request that actually creates a new
    role.
 2. Snapshot each target before editing:
@@ -49,16 +49,18 @@ stated behavior change. `create-agent` owns genuinely new roles.
      working voice, and stop rule;
    - exact standards and repo-derived context, collaboration/spawn edges, and
      skills/MCP/hooks;
-   - model, fixed effort, permissionMode, absence of a tools allowlist, memory, isolation,
+   - fixed intelligence level, permissionMode, absence of a tools allowlist, memory, isolation,
      background, maxTurns, and `initialPrompt`;
    - the explicit requested changes and the protected fields not authorized
      to change.
 3. Re-evaluate the role classification and launch scenario against
-   [../create-agent/references/model-effort-heuristic.md](../create-agent/references/model-effort-heuristic.md)
-   (model, effort, permissionMode, runtime tool inheritance, memory, and isolation criteria).
+   [../create-agent/references/intelligence-level-heuristic.md](../create-agent/references/intelligence-level-heuristic.md)
+   (intelligence level, permissionMode, runtime tool inheritance, memory, and isolation criteria).
    Change those fields only when the requested migration or template requires
    it; report every such change.
-4. Reconcile `frontmatter/claude.json` with the live template key surface.
+4. Reconcile `frontmatter/meta.json`, `claude.json`, and `codex.json` with
+   their ownership boundaries. Metadata contains only `name`, `description`,
+   and `intelligence`; harness files contain only harness-specific fields.
    Remove obsolete keys only with evidence. Always omit `tools` so runtime-provided capabilities remain visible;
    encode leaf and delegation posture in the role charter and shared orchestration rules. Use
    `disallowedTools` only for narrow durable restrictions on read-mostly roles, never as a general allowlist.
@@ -92,8 +94,8 @@ stated behavior change. `create-agent` owns genuinely new roles.
    not create a central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
-   bounded batches — one agent pair per subagent, never exceeding the declared
-   task-wide child-spawn budget (default three new children) — but each assignment must name exact source pairs and
+   bounded batches — one agent source set per subagent, never exceeding the declared
+   task-wide child-spawn budget (default three new children) — but each assignment must name exact source sets and
    protected behavior. Review the integrated diff for cross-agent trigger and
    edge conflicts.
 9. Run the verification below; when a check fails, fix the cause and re-run
@@ -102,11 +104,14 @@ stated behavior change. `create-agent` owns genuinely new roles.
 
 ## Verification
 
-- Run Essential's deterministic stitch helper for every selected source pair,
-  writing only temporary output, and inspect the generated definitions:
-  `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
-- Always parse each JSON file with `python3 -m json.tool`, check for
-  placeholders, and validate the key surface, model/effort compatibility,
+- Run Essential's deterministic stitch helper twice for every selected source set,
+  writing only separate temporary outputs, and inspect both generated definitions:
+  `uv run --python 3.13 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --harness claude --output <temporary-claude-path>`
+  and
+  `uv run --python 3.13 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --harness codex --output <temporary-codex-path>`.
+- Always parse all three JSON files with
+  `uv run --python 3.13 python -m json.tool`, check for
+  placeholders, and validate the key surface, intelligence level,
   permission values, tool/spawn posture, context paths, namespaced skills,
   MCP/hooks, initialPrompt/base consistency, trigger separation, and the owning
   plugin routing row. Do not claim official runtime validation unless the
@@ -118,5 +123,5 @@ Return the selector, targets, preserved role traits, changed fields, trigger
 examples, thought-experiment and blindspot coverage, validation evidence,
 runtime-loading status, confirmation that temporary Markdown
 thought-experiment notes were deleted before commit, and unresolved issues.
-Completion requires every selected pair to validate and no unrequested role,
+Completion requires every selected source set to validate and no unrequested role,
 voice, permission, or ownership change.

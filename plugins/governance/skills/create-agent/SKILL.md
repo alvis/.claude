@@ -1,16 +1,16 @@
 ---
 name: create-agent
-description: "Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing model, effort, and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
+description: "Creates a new specialist agent from a shared base prompt plus split metadata, Claude, and Codex JSON sources, proposing intelligence and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
 model: opus
 context: fork
 allowed-tools: Agent, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
-argument-hint: "<role description> [--plugin=<owner>] [--model=...] [--effort=...] [--permission=...] [--yes]"
+argument-hint: "<role description> [--plugin=<owner>] [--intelligence=...] [--permission=...] [--yes]"
 ---
 
 # Create Agent
 
-Create `plugins/<owner>/templates/agents/<name>/base.md` and
-`plugins/<owner>/templates/agents/<name>/frontmatter/claude.json` for one
+Create `base.md` plus `frontmatter/meta.json`, `claude.json`, and `codex.json`
+under `plugins/<owner>/templates/agents/<name>/` for one
 genuinely distinct role, with ownership and critical settings confirmed before
 anything is written. `update-agent` owns changes to existing definitions.
 
@@ -28,7 +28,7 @@ anything is written. `update-agent` owns changes to existing definitions.
 - **Required**: a role name or description clear enough to classify into an
   archetype and to write trigger-bearing frontmatter.
 - **Optional**: `--plugin=<owner>` pins the plugin that owns the role;
-  `--model=...`, `--effort=...`, `--permission=...` pin that
+  `--intelligence=...`, `--permission=...` pin that
   setting and skip its confirmation prompt; `--yes` accepts every
   recommendation without prompting.
 - **Owner token**: use the plugin's source-directory name under `plugins/`
@@ -57,11 +57,10 @@ anything is written. `update-agent` owns changes to existing definitions.
      condition;
    - the exact standards and repo-derived context verbatim from the context
      catalog — invent no standard or path;
-   - model, fixed effort, launch-appropriate `permissionMode`, and memory and
+   - fixed intelligence level, launch-appropriate `permissionMode`, and memory and
      isolation settings from
-     [references/model-effort-heuristic.md](references/model-effort-heuristic.md)
-     — pick the cheapest model that clears the role's bar and raise effort
-     within a tier before upgrading the model;
+     [references/intelligence-level-heuristic.md](references/intelligence-level-heuristic.md)
+     — pick the least expensive level that clears the role's bar;
    - no `tools` field, so both leaf-by-charter and coordinating roles inherit
      the complete runtime tool surface;
    - background, maxTurns, skills, MCP, hooks, and collaboration edges only
@@ -69,18 +68,21 @@ anything is written. `update-agent` owns changes to existing definitions.
      carried by its charter, its convergence predicate, and Essential's shared
      orchestration policy — never by a per-agent hook.
 4. Confirm before writing: compose one `AskUserQuestion` battery of at most
-   four questions covering model, effort, and — only when they deviate from
+   four questions covering intelligence level and — only when they deviate from
    the archetype default — permissionMode and leaf-vs-spawn posture. List the
    recommended value first marked "(Recommended)" with a free-text override
    as the last option. Flags override their named fields and skip their
    prompts; `--yes` accepts all recommendations. No file is written before
    this gate resolves; record the confirmed settings.
-5. Create only the two canonical source files beneath the confirmed owner's
-   `templates/agents/<name>/` directory. `frontmatter/claude.json` must
-   be valid JSON using only keys currently allowed by the live template;
-   `initialPrompt` is required. The directory and `name` field contain only
-   the role. End `description` with exactly three distinct preferred short
-   names in the canonical sentence so the main agent can name a teammate.
+5. Create only the four canonical source files beneath the confirmed owner's
+   `templates/agents/<name>/` directory. `frontmatter/meta.json` contains
+   exactly `name`, `description`, and `intelligence`; `claude.json` contains
+   only Claude-specific fields and requires `initialPrompt`; `codex.json`
+   contains only native Codex-specific fields and is `{}` when none apply.
+   Every file must be valid JSON. The directory and metadata `name` contain
+   only the role. End metadata `description` with exactly three distinct
+   preferred short names in the canonical sentence so the main agent can name
+   a teammate.
 6. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
    first-turn directive: its first move (propose if the role's next work is
    legible from repo state, else greet and state the artifact/brief it needs),
@@ -106,8 +108,8 @@ anything is written. `update-agent` owns changes to existing definitions.
    committed.
 10. Check runtime-tool behavior: every definition omits `tools`; a leaf does not claim it will spawn, and a
    coordinating role follows the shared nested-spawn policy. Use `disallowedTools` only for narrow durable
-   restrictions; workflow-spawned and teammate permissions must follow template rules. Also check model/effort
-   compatibility, allowed permission values, valid color/model values,
+   restrictions; workflow-spawned and teammate permissions must follow template rules. Also check the
+   intelligence level, allowed permission values, valid color values,
    context aliases and paths, namespaced skills, MCP references, hooks,
    memory semantics, initialPrompt/base consistency, explicit triggers, and
    non-overlap with neighbors.
@@ -117,10 +119,13 @@ anything is written. `update-agent` owns changes to existing definitions.
 
 ## Verification
 
-- Run `python3 -m json.tool plugins/<owner>/templates/agents/<name>/frontmatter/claude.json`.
-- Run Essential's deterministic stitch helper against the source directory,
-  writing only to a temporary output, then inspect that artifact:
-  `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
+- Parse `frontmatter/meta.json`, `claude.json`, and `codex.json` with
+  `uv run --python 3.13 python -m json.tool`.
+- Run Essential's deterministic stitch helper twice against the source directory,
+  writing only to separate temporary outputs, then inspect both artifacts:
+  `uv run --python 3.13 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --harness claude --output <temporary-claude-path>`
+  and
+  `uv run --python 3.13 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --harness codex --output <temporary-codex-path>`.
 - Check placeholders, the template key allowlist and required keys, referenced
   files/aliases/skills, duplicate seams, prompt contradictions, and the owning
   plugin routing row, point-form role-specific Collaboration section, and
@@ -136,6 +141,6 @@ flags, or `--yes`), archetype, trigger/near-miss examples, context
 assignments, thought-experiment and blindspot coverage, validation commands and
 results, whether runtime loading was exercised, confirmation that temporary
 Markdown thought-experiment notes were deleted before commit, and any unresolved
-concern. Completion requires both files, a
+concern. Completion requires all four files, a
 non-overlapping trigger surface, a role-specific voice, and all available
 validation passing.

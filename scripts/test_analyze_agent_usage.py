@@ -26,14 +26,14 @@ def test_unqualified_installed_agent_usage_maps_to_its_unique_owner() -> None:
     assert "frontend-implementer" not in stats.tallies
 
 
-def test_discovers_distributed_json_frontmatter_by_owner(tmp_path) -> None:
+def test_discovers_distributed_agent_metadata_by_owner(tmp_path) -> None:
     plugins = tmp_path / "plugins"
-    frontmatter = (
+    metadata = (
         plugins
-        / "web/templates/agents/frontend-implementer/frontmatter/claude.json"
+        / "web/templates/agents/frontend-implementer/frontmatter/meta.json"
     )
-    frontmatter.parent.mkdir(parents=True)
-    frontmatter.write_text(
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text(
         json.dumps({"name": "frontend-implementer"}),
         encoding="utf-8",
     )
@@ -44,15 +44,15 @@ def test_discovers_distributed_json_frontmatter_by_owner(tmp_path) -> None:
     agents = discover_plugin_agents(plugins)
 
     assert set(agents) == {"web:frontend-implementer"}
-    assert agents["web:frontend-implementer"]["path"] == str(frontmatter)
+    assert agents["web:frontend-implementer"]["path"] == str(metadata)
 
 
 def test_ignores_malformed_or_nameless_frontmatter_and_missing_root(
     tmp_path,
 ) -> None:
     plugins = tmp_path / "plugins"
-    malformed = plugins / "web/templates/agents/malformed/frontmatter/claude.json"
-    nameless = plugins / "web/templates/agents/nameless/frontmatter/claude.json"
+    malformed = plugins / "web/templates/agents/malformed/frontmatter/meta.json"
+    nameless = plugins / "web/templates/agents/nameless/frontmatter/meta.json"
     malformed.parent.mkdir(parents=True)
     nameless.parent.mkdir(parents=True)
     malformed.write_text("{", encoding="utf-8")

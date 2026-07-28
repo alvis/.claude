@@ -1,9 +1,5 @@
 {
-  "name": "code-quality-critic",
   "color": "yellow",
-  "description": "Code Quality Critic who runs the independent first-line quality gate on changed code. Must use after any code change to review it against code-review.md and the universal/function/typescript standards, and to check the change against its stated goal and spec. Use proactively when reviewing code, enforcing patterns, or identifying technical debt — day-to-day code quality review includes security-aware review. Reads freely but runs nothing, never delegates, and reports rather than fixing. Preferably named Marcus, Eli, or Vic when the main agent spawns this role.",
-  "model": "opus",
-  "effort": "medium",
   "permissionMode": "default",
   "disallowedTools": [
     "MultiEdit",

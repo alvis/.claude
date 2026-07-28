@@ -48,7 +48,7 @@ class Stats:
 
 
 def discover_plugin_agents(plugins_dir: Path) -> dict[str, dict]:
-    """Discover distributed plugins/*/templates/agents/* JSON frontmatter."""
+    """Discover distributed plugins/*/templates/agents/* metadata."""
     result: dict[str, dict] = {}
     if not plugins_dir.is_dir():
         return result
@@ -58,19 +58,19 @@ def discover_plugin_agents(plugins_dir: Path) -> dict[str, dict]:
         agents_dir = plugin_path / "templates" / "agents"
         if not agents_dir.is_dir():
             continue
-        for frontmatter_path in sorted(agents_dir.glob("*/frontmatter/claude.json")):
+        for metadata_path in sorted(agents_dir.glob("*/frontmatter/meta.json")):
             try:
-                frontmatter = json.loads(frontmatter_path.read_text(encoding="utf-8"))
+                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
-            name = frontmatter.get("name") if isinstance(frontmatter, dict) else None
+            name = metadata.get("name") if isinstance(metadata, dict) else None
             if not isinstance(name, str) or not name:
                 continue
             canonical_id = f"{plugin_path.name}:{name}"
             result[canonical_id] = {
                 "plugin": plugin_path.name,
                 "agent": name,
-                "path": str(frontmatter_path),
+                "path": str(metadata_path),
             }
     return result
 
