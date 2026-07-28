@@ -51,13 +51,16 @@ echo '[]' > "$FINDINGS_JSON"
 
 append_finding() {
   # $1=severity $2=category $3=story $4=title $5=description $6=evidence
+  # $7=confidence (optional; mechanical checks are confirmed by construction)
   local sev="$1" cat="$2" story="$3" title="$4" desc="$5" ev="$6"
+  local conf="${7:-confirmed}"
   local current
   current="$(cat "$FINDINGS_JSON")"
   printf '%s' "$current" | jq -c \
     --arg sev "$sev" --arg cat "$cat" --arg story "$story" \
     --arg title "$title" --arg desc "$desc" --arg ev "$ev" \
-    '. + [{severity:$sev, category:$cat, story:$story, title:$title, description:$desc, evidence:$ev}]' \
+    --arg conf "$conf" \
+    '. + [{severity:$sev, category:$cat, story:$story, title:$title, description:$desc, evidence:$ev, confidence:$conf}]' \
     > "$FINDINGS_JSON.tmp"
   mv "$FINDINGS_JSON.tmp" "$FINDINGS_JSON"
 }
@@ -210,8 +213,10 @@ for story_dir in "$RUN_DIR"/stories/*/; do
         # locate evidence PNG for this state.
         ev_png="$story_dir/${state}.png"
         [[ -f "$ev_png" ]] || ev_png="$gfile"
+        gtitle="Visual grounding ($state): $gsev"
+        [[ "$gconf" == "confirmed" ]] || gtitle="$gtitle ($gconf)"
         append_finding "$sev" "grounding-$state" "$story_id" \
-          "Visual grounding ($state): $gsev" "$gdesc" "$ev_png"
+          "$gtitle" "$gdesc" "$ev_png" "$gconf"
       done < <(jq -c '.issues // [] | .[]?' "$gfile" 2>/dev/null || true)
     done
   fi
@@ -250,7 +255,7 @@ jq -n \
     echo "## $sev"
     echo ""
     rows="$(jq -r --arg sev "$sev" \
-      '[.[] | select(.severity==$sev)] | .[] | "- **\(.story)** — \(.title)\n  - \(.description)\n  - evidence: `\(.evidence)`"' \
+      '[.[] | select(.severity==$sev)] | .[] | "- **\(.story)** — \(.title)\n  - \(.description)\n  - confidence: \(.confidence // "confirmed")\n  - evidence: `\(.evidence)`"' \
       "$FINDINGS_JSON")"
     if [[ -z "$rows" ]]; then
       echo "_(none)_"

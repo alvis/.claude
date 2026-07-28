@@ -34,11 +34,14 @@ only). The gate does not apply outside `.state/`; the only separate
 limit is the 2,000-byte injection limit for Essential's `ALLAGENT.md`,
 `MAINAGENT.md`, and `SUBAGENT.md`.
 
-No mechanical limit is not a licence to pad. Everywhere the gate does not
-reach — `docs/**`, READMEs, and any report or review artifact written outside
-`.state/` — match length to what the task needs: cover the substance, and add
-no filler sections, redundant summaries, or boilerplate. A document is the right length when removing a
-section would change what a reader does.
+No mechanical limit is not a licence to pad. This is the general length rule
+for every written artifact, and the one place it is defined: everywhere the
+gate does not reach — `docs/**`, READMEs, and any report or review artifact
+written outside `.state/` — match length to what the task needs, covering the
+substance and adding no filler sections, redundant summaries, or boilerplate.
+A document is the right length when removing a section would change what a
+reader does. Authoring standards may add their own limits on top; none of them
+restates this rule.
 
 On `split_required`, send all oversized files through one complete split
 round — each original path remains a concise overview linking its lowercase

@@ -21,6 +21,8 @@ STANDARD_REFERENCE = re.compile(
     r"(?<![\w-])(?:(?P<plugin>[a-z][a-z0-9-]*):)?constitution/standards/"
 )
 PLUGINS = ROOT / "plugins"
+# Frontmatter keys whose value is prompt text an installed agent actually reads.
+PROMPT_JSON_FIELDS = ("initialPrompt", "description")
 # A shipped prompt may cap what gets *published*, but never what gets *found*:
 # a finding an agent talks itself out of making is one nothing downstream can
 # recover. Each pattern pairs a hedging directive with a reporting verb, so
@@ -190,17 +192,44 @@ def test_instruction_contracts_reference_declared_dependencies_only() -> None:
             assert prefix in allowed, f"{name}: undeclared standard prefix {prefix}"
 
 
+def shipped_prompts() -> list[tuple[str, str]]:
+    """Return one (label, text) pair per prompt this marketplace ships.
+
+    Markdown carries most of them, but an agent's frontmatter JSON ships
+    `initialPrompt` and `description` straight into the installed agent, so a
+    directive placed there reaches a model without passing through any `*.md`.
+    """
+    prompts = [
+        (str(path.relative_to(ROOT)), path.read_text())
+        for path in sorted(PLUGINS.rglob("*.md"))
+    ]
+    prompts.extend(
+        (f"{path.relative_to(ROOT)}:{field}", value)
+        for path in sorted(PLUGINS.glob("*/templates/agents/*/frontmatter/*.json"))
+        for payload in (load_json(path),)
+        for field in PROMPT_JSON_FIELDS
+        for value in (payload.get(field),)
+        if isinstance(value, str)
+    )
+    return prompts
+
+
 def test_no_shipped_prompt_suppresses_reporting() -> None:
     offenders = [
-        f"{path.relative_to(ROOT)}:{text.count(chr(10), 0, match.start()) + 1}: "
-        f"{match.group(0)}"
-        for path in sorted(PLUGINS.rglob("*.md"))
-        for text in (path.read_text(),)
+        f"{label}:{text.count(chr(10), 0, match.start()) + 1}: {match.group(0)}"
+        for label, text in shipped_prompts()
         for pattern in SUPPRESSED_REPORTING
         for match in pattern.finditer(text)
     ]
 
     assert offenders == [], "\n".join(offenders)
+
+
+def test_shipped_prompts_cover_agent_frontmatter_json() -> None:
+    labels = [label for label, _ in shipped_prompts()]
+
+    assert any(label.endswith(":initialPrompt") for label in labels)
+    assert any(label.endswith("frontmatter/claude.json:description") for label in labels)
 
 
 def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
