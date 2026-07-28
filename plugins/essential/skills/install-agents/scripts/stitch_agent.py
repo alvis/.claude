@@ -126,6 +126,7 @@ CODEX_DERIVED_FIELDS = {
     "model_reasoning_effort",
     "developer_instructions",
 }
+TOML_BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 @dataclass(frozen=True)
@@ -148,31 +149,97 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     return document
 
 
-def load_agent_sources(template_directory: Path) -> AgentSources:
+def _legacy_agent_sources(frontmatter_path: Path) -> AgentSources:
+    legacy = _load_json_object(frontmatter_path)
+    name = legacy.pop("name", None)
+    description = legacy.pop("description", None)
+    intelligence = legacy.pop("intelligence", None)
+    previous_intelligence = legacy.pop("intelligenceLevel", None)
+    if intelligence is not None and previous_intelligence is not None:
+        raise AgentTemplateError(
+            "legacy frontmatter must not define both intelligence keys"
+        )
+    intelligence = intelligence if intelligence is not None else previous_intelligence
+    if intelligence is None:
+        legacy_projection = {
+            field: legacy.pop(field)
+            for field in ("model", "effort")
+            if field in legacy
+        }
+        intelligence = next(
+            (
+                level
+                for level, projections in INTELLIGENCE_LEVELS.items()
+                if projections["claude"] == legacy_projection
+            ),
+            None,
+        )
+        if intelligence is None:
+            raise AgentTemplateError(
+                "legacy model/effort pair is not represented by the intelligence matrix"
+            )
+    return AgentSources(
+        metadata={
+            "name": name,
+            "description": description,
+            "intelligence": intelligence,
+        },
+        claude=legacy,
+        codex={},
+    )
+
+
+def load_agent_sources(
+    template_directory: Path, *, allow_legacy: bool = False
+) -> AgentSources:
     frontmatter_directory = template_directory / "frontmatter"
     source_paths = {
         name: frontmatter_directory / name
         for name in ("meta.json", "claude.json", "codex.json")
     }
     base_path = template_directory / "base.md"
-    for name, source_path in source_paths.items():
-        if not source_path.is_file():
-            raise AgentTemplateError(
-                f"missing frontmatter/{name} in {template_directory}"
-            )
     if not base_path.is_file():
         raise AgentTemplateError(f"missing base.md in {template_directory}")
+    split_sources_exist = {
+        name: path.is_file() for name, path in source_paths.items()
+    }
+    legacy_source = (
+        allow_legacy
+        and split_sources_exist["claude.json"]
+        and not split_sources_exist["meta.json"]
+        and not split_sources_exist["codex.json"]
+    )
+    if not all(split_sources_exist.values()) and not legacy_source:
+        missing = next(
+            name for name, exists in split_sources_exist.items() if not exists
+        )
+        raise AgentTemplateError(
+            f"missing frontmatter/{missing} in {template_directory}"
+        )
     resolved_template = template_directory.resolve()
-    for source_path in (*source_paths.values(), base_path):
+    checked_sources = (
+        (source_paths["claude.json"],)
+        if legacy_source
+        else tuple(source_paths.values())
+    )
+    for source_path in (*checked_sources, base_path):
         try:
             source_path.resolve().relative_to(resolved_template)
         except ValueError as error:
             raise AgentTemplateError(
                 f"template symlink or path escapes agent directory: {source_path}"
             ) from error
-    metadata = _load_json_object(source_paths["meta.json"])
-    claude = _load_json_object(source_paths["claude.json"])
-    codex = _load_json_object(source_paths["codex.json"])
+    if legacy_source:
+        sources = _legacy_agent_sources(source_paths["claude.json"])
+        metadata, claude, codex = (
+            sources.metadata,
+            sources.claude,
+            sources.codex,
+        )
+    else:
+        metadata = _load_json_object(source_paths["meta.json"])
+        claude = _load_json_object(source_paths["claude.json"])
+        codex = _load_json_object(source_paths["codex.json"])
     if set(metadata) != METADATA_FIELDS:
         raise AgentTemplateError(
             "frontmatter/meta.json must contain exactly name, description, and intelligence"
@@ -187,6 +254,20 @@ def load_agent_sources(template_directory: Path) -> AgentSources:
                 f"frontmatter/{harness}.json must not define derived field "
                 f"{collision!r}"
             )
+    invalid_codex_field = next(
+        (
+            field
+            for field, value in codex.items()
+            if not TOML_BARE_KEY.fullmatch(field)
+            or not isinstance(value, (str, bool, int, float))
+        ),
+        None,
+    )
+    if invalid_codex_field:
+        raise AgentTemplateError(
+            "frontmatter/codex.json values must be TOML scalar fields: "
+            f"{invalid_codex_field!r}"
+        )
     name = metadata.get("name")
     if not isinstance(name, str) or not AGENT_NAME.fullmatch(name):
         raise AgentTemplateError(
@@ -281,10 +362,12 @@ def validate_agent_contract(sources: AgentSources, body: str) -> None:
         )
 
 
-def stitch_agent_definition(template_directory: Path) -> str:
+def stitch_agent_definition(
+    template_directory: Path, *, allow_legacy: bool = False
+) -> str:
     """Return one installable Markdown agent definition from split sources."""
     template_directory = Path(template_directory)
-    sources = load_agent_sources(template_directory)
+    sources = load_agent_sources(template_directory, allow_legacy=allow_legacy)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
     validate_agent_contract(sources, body)
     projected = {
@@ -330,7 +413,7 @@ def _codex_developer_instructions(body: str) -> str:
         re.MULTILINE | re.DOTALL,
     )
     match = delegation.search(projected)
-    if match is not None:
+    if match is not None and "Dynamic Workflow" in match.group("body"):
         direct = re.search(
             r"^- \*\*Direct persistent delegation\*\*.*?"
             r"(?=^- \*\*Dynamic Workflow delegation\*\*)",
@@ -363,10 +446,12 @@ def _codex_developer_instructions(body: str) -> str:
     return projected
 
 
-def stitch_codex_agent_definition(template_directory: Path) -> str:
+def stitch_codex_agent_definition(
+    template_directory: Path, *, allow_legacy: bool = False
+) -> str:
     """Return one installable Codex custom-agent TOML definition."""
     template_directory = Path(template_directory)
-    sources = load_agent_sources(template_directory)
+    sources = load_agent_sources(template_directory, allow_legacy=allow_legacy)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
     validate_agent_contract(sources, body)
     fields = [

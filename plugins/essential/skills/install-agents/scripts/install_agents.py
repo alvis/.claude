@@ -215,14 +215,14 @@ def discover_agent_templates(
 
 
 def _preflight(
-    templates: list[AgentTemplate], harness: str
+    templates: list[AgentTemplate], harness: str, *, allow_legacy: bool
 ) -> list[tuple[str, str]]:
     if not templates:
         raise AgentTemplateError("no agent templates discovered")
     seen: dict[str, AgentTemplate] = {}
     staged: list[tuple[str, str]] = []
     for template in templates:
-        sources = load_agent_sources(template.path)
+        sources = load_agent_sources(template.path, allow_legacy=allow_legacy)
         name = sources.metadata["name"]
         previous = seen.get(name)
         if previous is not None:
@@ -231,9 +231,11 @@ def _preflight(
             )
         seen[name] = template
         content = (
-            stitch_agent_definition(template.path)
+            stitch_agent_definition(template.path, allow_legacy=allow_legacy)
             if harness == "claude"
-            else stitch_codex_agent_definition(template.path)
+            else stitch_codex_agent_definition(
+                template.path, allow_legacy=allow_legacy
+            )
         )
         staged.append((name, content))
     return staged
@@ -249,6 +251,7 @@ def install_agents(
     staged_definitions = _preflight(
         discover_agent_templates(essential_root, plugin_records, harness),
         harness,
+        allow_legacy=Path(essential_root).parent.name != "plugins",
     )
     destination = Path(destination)
     suffix = ".md" if harness == "claude" else ".toml"

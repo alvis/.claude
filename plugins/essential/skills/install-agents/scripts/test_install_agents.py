@@ -72,6 +72,43 @@ def write_template(
     return template
 
 
+def write_legacy_template(
+    plugin_root: Path,
+    name: str,
+    *,
+    schema: str,
+    intelligence: str = "high",
+) -> Path:
+    template = write_template(
+        plugin_root,
+        name,
+        frontmatter={"name": name, "intelligence": intelligence},
+    )
+    metadata = json.loads(
+        (template / "frontmatter/meta.json").read_text(encoding="utf-8")
+    )
+    claude = json.loads(
+        (template / "frontmatter/claude.json").read_text(encoding="utf-8")
+    )
+    legacy = {
+        "name": metadata["name"],
+        "description": metadata["description"],
+    }
+    if schema == "intelligenceLevel":
+        legacy["intelligenceLevel"] = intelligence
+    elif schema == "model-effort":
+        legacy.update(INTELLIGENCE_LEVELS[intelligence]["claude"])
+    else:
+        raise AssertionError(f"unsupported test schema: {schema}")
+    legacy.update(claude)
+    (template / "frontmatter/claude.json").write_text(
+        json.dumps(legacy), encoding="utf-8"
+    )
+    (template / "frontmatter/meta.json").unlink()
+    (template / "frontmatter/codex.json").unlink()
+    return template
+
+
 def sources_from_combined(
     frontmatter: dict[str, object],
     codex: dict[str, object] | None = None,
@@ -219,6 +256,32 @@ def test_codex_projection_removes_claude_only_agent_behavior(
     assert "Workflow-only follow-up" not in instructions
     assert startup not in instructions
     assert "## Collaboration" in instructions
+
+
+def test_codex_projection_preserves_direct_only_delegation_modes(
+    tmp_path: Path,
+) -> None:
+    body = (
+        "# Test agent\n\nShared behavior.\n\n"
+        "## Delegation Modes\n\n"
+        "- **Direct persistent delegation** — Reuse a warm teammate.\n\n"
+        "## Collaboration\n\n"
+        "I collaborate with the runtime roster.\n"
+    )
+    template = write_template(
+        tmp_path,
+        "test-agent",
+        frontmatter={"name": "test-agent"},
+        body=body,
+    )
+
+    instructions = tomllib.loads(
+        stitch_codex_agent_definition(template)
+    )["developer_instructions"]
+
+    assert "## Delegation Modes" in instructions
+    assert "Direct persistent delegation" in instructions
+    assert "Reuse a warm teammate." in instructions
 
 
 def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
@@ -375,6 +438,21 @@ def test_rejects_metadata_and_harness_overlay_boundary_violations(
 
     with pytest.raises(AgentTemplateError, match="exactly|derived field"):
         stitch_agent_definition(template)
+
+
+def test_rejects_codex_overlay_values_without_toml_scalar_syntax(
+    tmp_path: Path,
+) -> None:
+    template = write_template(
+        tmp_path, "test-agent", frontmatter={"name": "test-agent"}
+    )
+    (template / "frontmatter/codex.json").write_text(
+        json.dumps({"native": {"mode": "strict"}}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AgentTemplateError, match="TOML scalar"):
+        stitch_codex_agent_definition(template)
 
 
 @pytest.mark.parametrize(
@@ -579,6 +657,31 @@ def test_distributed_agents_satisfy_the_delegation_contract() -> None:
         stitch_agent_definition(template.path)
 
 
+def test_install_skill_derives_smoke_expectations_from_the_matrix() -> None:
+    skill = (
+        ROOT / "plugins/essential/skills/install-agents/SKILL.md"
+    ).read_text(encoding="utf-8")
+    codex_models = {
+        projection["codex"]["model"]
+        for projection in INTELLIGENCE_LEVELS.values()
+        if "model" in projection["codex"]
+    }
+
+    assert "match the matrix rows" in skill
+    assert all(model not in skill for model in codex_models)
+
+
+def test_governance_heuristic_does_not_use_a_cross_plugin_relative_link() -> None:
+    heuristic = (
+        ROOT
+        / "plugins/governance/skills/create-agent/references"
+        / "intelligence-level-heuristic.md"
+    ).read_text(encoding="utf-8")
+
+    assert "../../../../essential/" not in heuristic
+    assert "essential:install-agents" in heuristic
+
+
 def test_every_distributed_agent_has_project_memory() -> None:
     templates = discover_agent_templates(ROOT / "plugins/essential")
     # parity against the on-disk template directories, not a hardcoded
@@ -724,6 +827,63 @@ def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(
     assert {
         f"{template.owner}:{template.name}" for template in templates
     } == {"essential:essential-agent", "web:web-agent"}
+
+
+@pytest.mark.parametrize("schema", ("intelligenceLevel", "model-effort"))
+@pytest.mark.parametrize("harness", ("claude", "codex"))
+def test_installed_mode_translates_recognized_legacy_frontmatter(
+    tmp_path: Path,
+    schema: str,
+    harness: str,
+) -> None:
+    essential = tmp_path / "cache/alvis/essential/2"
+    web = tmp_path / "cache/alvis/web/1"
+    for path in (essential, web):
+        path.mkdir(parents=True)
+    write_template(
+        essential,
+        "essential-agent",
+        frontmatter={"name": "essential-agent"},
+    )
+    write_legacy_template(web, "legacy-agent", schema=schema)
+    records = [
+        {"id": "essential@alvis", "enabled": True, "installPath": str(essential)},
+        {"id": "web@alvis", "enabled": True, "installPath": str(web)},
+    ]
+    destination = tmp_path / f"{harness}-agents"
+
+    count = install_agents(
+        essential,
+        destination,
+        records,
+        harness=harness,
+    )
+
+    assert count == 2
+    if harness == "claude":
+        installed = json.loads(
+            (destination / "legacy-agent.md")
+            .read_text(encoding="utf-8")
+            .split("---\n", 2)[1]
+        )
+    else:
+        installed = tomllib.loads(
+            (destination / "legacy-agent.toml").read_text(encoding="utf-8")
+        )
+    for field, value in INTELLIGENCE_LEVELS["high"][harness].items():
+        assert installed[field] == value
+
+
+def test_source_checkout_rejects_legacy_frontmatter(tmp_path: Path) -> None:
+    essential = tmp_path / "repo/plugins/essential"
+    write_legacy_template(
+        essential,
+        "legacy-agent",
+        schema="model-effort",
+    )
+
+    with pytest.raises(AgentTemplateError, match="meta.json"):
+        install_agents(essential, tmp_path / "agents")
 
 
 def test_codex_installed_mode_reads_native_plugin_list_shape(
@@ -952,6 +1112,18 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     )
     for field, value in INTELLIGENCE_LEVELS["mechanical"]["codex"].items():
         assert test_runner[field] == value
+    red_team = tomllib.loads(
+        (destination / "adversarial-red-team.toml").read_text(encoding="utf-8")
+    )
+    red_team_contract = (
+        red_team["description"] + "\n" + red_team["developer_instructions"]
+    ).lower()
+    for unsupported_claim in (
+        "isolated worktree",
+        "nothing i build there ships",
+        "nothing you break can touch",
+    ):
+        assert unsupported_claim not in red_team_contract
 
     templates_by_file = {
         f"{template.name}.toml": template

@@ -97,6 +97,7 @@ Enforced mechanically — each with the file that enforces it.
 | Agent metadata `name` matches `^[a-z0-9]+(?:-[a-z0-9]+)*$` and equals its directory name | same |
 | Agent metadata `intelligence` exists in `plugins/essential/skills/install-agents/references/intelligence-levels.json`; harness model/effort fields are derived | same |
 | Agent harness overlays **omit `tools`** (agents inherit runtime capabilities) | same |
+| Codex overlay values are scalar TOML fields; shared prose makes no promise from Claude-only isolation | same |
 | `memory` is `"project"`; body has exactly one `## Memory` section | same |
 | Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |
 | Every plugin's mandatory read chain ≤ 40,960 bytes | same |

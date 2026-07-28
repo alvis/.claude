@@ -44,7 +44,7 @@ Do not repeat `name`, `description`, or `intelligence`, and do not set derived `
 {}
 ```
 
-Keep this object empty until Codex supports a native per-agent field not already derived from `meta.json`, the intelligence matrix, or `base.md`. Never define `name`, `description`, `intelligence`, `intelligenceLevel`, `model`, `model_reasoning_effort`, or `developer_instructions` here.
+Keep this object empty until Codex supports a native scalar per-agent field not already derived from `meta.json`, the intelligence matrix, or `base.md`. Nested objects and arrays are rejected because they cannot be serialized by the scalar TOML projection. Never define `name`, `description`, `intelligence`, `intelligenceLevel`, `model`, `model_reasoning_effort`, or `developer_instructions` here.
 
 ### permissionMode — pick by launch scenario, not by vibe
 
@@ -71,6 +71,9 @@ would be hidden from that agent.
 coordinate nested work even when `Agent` is available at runtime; it returns results or hand-off requests to the
 caller. `disallowedTools` remains valid for narrow durable prohibitions, but never use it to recreate a general
 allowlist or to hide `Agent` merely to encode leaf posture.
+
+Shared metadata and `base.md` must stay true when a harness omits one of these fields. In particular, never
+promise worktree or sandbox isolation in shared prose merely because `claude.json` sets `isolation`.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 

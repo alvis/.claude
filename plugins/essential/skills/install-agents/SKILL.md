@@ -13,12 +13,12 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 `scripts/install-agents.sh` is idempotent and safe to re-run:
 
 1. In a source checkout, discovers `plugins/*/templates/agents/*`; from an installed Essential plugin, reads the current harness's plugin list and discovers templates only from enabled plugins in Essential's marketplace.
-2. Validates every `base.md` plus `frontmatter/meta.json`, `claude.json`, and `codex.json` source set, including its role-only definition name, three distinct preferred short teammate names, runtime tool inheritance, intelligence, field ownership, centralized-policy boundary, and required project-memory path and maintenance contract, and rejects malformed or duplicate names before touching the destination.
+2. Validates every `base.md` plus `frontmatter/meta.json`, `claude.json`, and `codex.json` source set, including its role-only definition name, three distinct preferred short teammate names, runtime tool inheritance, intelligence, field ownership, centralized-policy boundary, and required project-memory path and maintenance contract, and rejects malformed or duplicate names before touching the destination. Installed mode translates recognized legacy single-file intelligence or model/effort projections from lagging sibling-plugin caches; source checkouts require the split schema.
 3. Stitches all definitions into Claude Code Markdown or native Codex TOML. Shared `name`, `description`, and `intelligence` come only from `meta.json`; harness overlays contribute only harness-specific fields. `intelligence` is projected through the authoritative [intelligence matrix](references/intelligence-levels.json), which owns both harnesses' model and effort fields. Neither `intelligence` nor the retired `intelligenceLevel` key is emitted.
 4. Copies staged files into the selected harness's agent directory, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
 
-Codex has no safe equivalent for Claude's color, permission mode, project-memory mode, turn limit, startup prompt, or per-agent hooks, so the projection omits them. It also removes the Claude-managed `Memory` section and only the Dynamic Workflow portion of `Delegation Modes`, retaining direct persistent delegation; model tools, sandboxing, approvals, and local memories remain Codex-owned.
+Codex has no safe equivalent for Claude's color, permission mode, project-memory mode, worktree isolation, turn limit, startup prompt, or per-agent hooks, so the projection omits them. Shared descriptions and instructions therefore make no guarantees based on those fields. The projection also removes the Claude-managed `Memory` section and only the Dynamic Workflow portion of `Delegation Modes`, retaining direct persistent delegation; model tools, sandboxing, approvals, and local memories remain Codex-owned. Codex overlay fields must use scalar TOML-compatible values.
 
 ## Workflow
 
@@ -50,7 +50,7 @@ head -3 ~/.claude/agents/tech-lead.md
 head -3 ~/.codex/agents/tech-lead.toml
 ```
 
-In a fresh session, the roster appears in the selected harness's agent list. For Codex, confirm a lead such as `tech-lead` uses `gpt-5.6-sol` and the lightweight `test-runner` uses `gpt-5.6-luna`.
+In a fresh session, the roster appears in the selected harness's agent list. For Codex, confirm representative generated `model` and `model_reasoning_effort` values match the matrix rows selected by those agents' `frontmatter/meta.json` intelligence values.
 
 For maintainer verification, run the deterministic contract suite:
 

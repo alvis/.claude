@@ -1,6 +1,6 @@
 # Intelligence-Level Heuristic
 
-Shared decision guide for `create-agent` and `update-agent`. An agent owns one fixed `intelligence` value in `frontmatter/meta.json`; Essential's [authoritative matrix](../../../../essential/skills/install-agents/references/intelligence-levels.json) projects it to each harness's native model and effort fields. Pick the least expensive level that clears the role's bar.
+Shared decision guide for `create-agent` and `update-agent`. An agent owns one fixed `intelligence` value in `frontmatter/meta.json`; `essential:install-agents` resolves its own bundled intelligence matrix and projects that value to each harness's native model and effort fields. Governance never dereferences or duplicates that cross-plugin matrix. Pick the least expensive level that clears the role's bar.
 
 ## Levels
 
