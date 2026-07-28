@@ -187,8 +187,10 @@ The diff is the subject of the review, not the limit of the reading.
 - **Read whatever it takes.** Follow callers of a changed function, open the
   siblings a new file should resemble, read the module the change plugs into, the
   goal, and the spec. Understanding the change is the job; explore the checkout.
-- **Judge only the diff.** Every finding is about a changed line and anchors to
-  one. Read unchanged code to understand the change, not to grade it.
+- **Judge only the diff.** Every finding is about something this PR changed. Read
+  unchanged code to understand the change, not to grade it. Being about the diff and
+  hanging off a line in it are different things: a deleted file and a chore the PR
+  owes are squarely about the diff and anchor to nothing.
 - **Ask whether the diff is the best solution**, not only whether it works: walk
   the lean ladder in [WORKFLOW.md](../../references/WORKFLOW.md) — need, `@theriety/core`,
   existing codebase, platform, installed dependency, then minimum new code. A
@@ -213,8 +215,12 @@ no test at all are findings. Say what to test and why it matters, never a bare
 ### Anchor and de-duplicate
 
 Keep a finding when its file and line appear in the changed-line map, setting `side`
-to `RIGHT` for added lines or `LEFT` for removed ones; move anything unanchorable to
-the overall body with its file and line named in the text. Then skip whatever has
+to `RIGHT` for added lines or `LEFT` for removed ones. A finding that anchors to no
+line moves to the overall body under the null-anchor rule in
+[references/review.md](references/review.md), which owns what `subject` carries in
+place of the anchor. Never invent a plausible line to keep a finding inline — an
+unanchorable merge blocker is the one this step most has to survive. Then skip
+whatever has
 already been said at the same path and line:
 
 ```bash
