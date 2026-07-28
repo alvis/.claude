@@ -5,7 +5,7 @@
 Any single P0 violation blocks approval by default.
 If a violation is detected, load the matching rule guide at `./rules/<rule-id>.md` to confirm the violation and follow its fix guidance.
 
-> **During auditing**: Report all findings with severity. For the design skill, self-audit against this checklist and iterate until all categories score 10/10. For the audit skill, report violations without fixing them.
+> **During auditing**: Report all findings with severity. For the design skill, self-audit against this checklist and iterate toward 10/10 in every category, within that skill's rework budget — carry whatever still falls short to confirmation as a residual gap rather than looping past the budget. For the audit skill, report violations without fixing them.
 
 ## Quick Scan
 

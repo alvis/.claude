@@ -205,7 +205,8 @@ section, or copied transport history.
 `generated_files`, including work-local `.md` children and derived docs.
 Do not run file sizing; after all writers return, the PM checks only eligible
 work Markdown inside the target `.state/`. Derived `docs/**` has no
-mechanical size limit.
+mechanical size limit, but it is still length-calibrated — see
+`essential:references/output-manifest.md`.
 
 ## Verification
 

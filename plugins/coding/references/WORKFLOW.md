@@ -106,20 +106,27 @@ Follow every applicable standard listed above in full.
 Completed code goes through a **fix loop** before it is saved — any failing gate returns to implementation:
 
 ```
-edit code → review → (fail ⇒ back to code) → lint → (fail ⇒ back to code) → commit
+edit code → verify delivery → (fail ⇒ back to code) → lint → (fail ⇒ back to code) → commit
 ```
+
+Every mechanical gate — lint, type diagnostics, focused tests, and the cross-project consumer build below — runs on every completed change, whatever its size. What the change's size decides is only whether the work is *dispatched to another agent* or done in place.
 
 ### Gate before the loop
 
 **[IMPORTANT]** After modifying any publicly exported function or class, find every consumer project in the monorepo and run `npm run build` in each one's project root. Cross-project breakage is invisible from the changed project alone; the loop's own lint and type stages cover the rest.
 
-### 1. Verify delivery (review) first
+### 1. Verify delivery first
 
-Dispatch a review **subagent** to confirm every requirement was actually delivered — if a plan was executed, open the plan file and walk each task, confirming code/tests/docs match; otherwise verify the task's stated requirements. For large changes, dispatch a **review coordinator** that fans out sub-review agents per area and consolidates their findings. Have the reviewer invoke the `coding:review-code` skill with the Skill tool — **skills and agent types are separate namespaces; never pass a skill name as a `subagent_type`.** If any task is unmet, return to implementation, fix it, and restart the loop at review.
+Confirm every requirement was actually delivered — if a plan was executed, open the plan file and walk each task, confirming code/tests/docs match; otherwise verify the task's stated requirements. If any task is unmet, return to implementation, fix it, and restart the loop here.
+
+Who verifies is sized on the same test as "Decide who does the work" above:
+
+- **Small change, with no review requested** — verify it yourself against the standards `coding:review-code` applies, then continue. Do not spawn a subagent to re-read a small edit you just made.
+- **Consequential change, an explicit request for review, or PR finalization** — dispatch an independent review **subagent**; publishing a pull request is such a gate. For large changes, dispatch a **review coordinator** that fans out sub-review agents per area and consolidates their findings. Have the reviewer invoke the `coding:review-code` skill with the Skill tool — **skills and agent types are separate namespaces; never pass a skill name as a `subagent_type`.**
 
 ### 2. Then lint
 
-Once review passes, dispatch a lint subagent (or a lint sub-team for large changes) to invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. If lint reports any violation, return to implementation, fix it, then re-run review and lint. Proceed only once both review and lint are clean.
+Lint runs on every completed change: invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. Run it in place for a small change; dispatch a lint subagent (or a lint sub-team for large changes) when the scope is large or its output would be noisy. If lint reports any violation, return to implementation, fix it, then re-run verification and lint. Proceed only once both are clean.
 
 ### 3. Then commit
 

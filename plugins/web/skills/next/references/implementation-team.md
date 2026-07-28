@@ -14,14 +14,18 @@ slice; all direct messages and hand-offs target that ID, never a role or configu
 
 ## Partitioning and briefing
 
-Partition the file set so each implementer owns a coherent slice — by feature, route, or component cluster, never random shards. Brief each implementer with its slice plus standards as paths only:
+Partition the file set so each implementer owns a coherent slice — by feature, route, or component cluster, never random shards. Brief each implementer with its slice, its acceptance criteria, and standards as paths only:
 
 - `plugins/react/constitution/standards/`
 - `plugins/web/constitution/standards/`
 
+Acceptance criteria for a slice are the diagnosed symptom it must clear, the files it may touch, and the build/type/test commands that must pass on it. Off-limits for every implementer, regardless of slice: build and framework configuration, database migrations and schema, dependency manifests, environment and secret files, and routes or components outside its own slice. An implementer that believes it needs one of those returns `blocked:` with the reason instead of editing it.
+
 ## Cycle
 
-Implementers stream completed files; the reviewer audits each batch; the lead orchestrates and aggregates only (never reads file bodies); `TeamDelete` on completion.
+Implementers stream completed files; the reviewer audits each batch; the lead orchestrates and aggregates only (never reads file bodies).
+
+The cycle converges when every slice's acceptance criteria hold and the reviewer returns `ok` with no unresolved findings; the lead then runs `TeamDelete` on the team. Budget 3 implement–review rounds per slice — a slice still failing after the third round is escalated to the caller with the outstanding findings, not looped again.
 
 ## Context rotation
 

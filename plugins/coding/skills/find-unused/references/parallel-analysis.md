@@ -14,6 +14,8 @@ All three agents work independently and report findings to the parent, which mer
 
 ## Agent 1: Commented Code Finder
 
+Non-goal: this agent is read-only. Report candidates with `file:line` evidence; never delete, edit, or refactor what you find — `coding:lint` owns confirmed removal.
+
 Search for common comment patterns:
 
 - Single-line: `//` followed by code patterns
@@ -32,6 +34,8 @@ Distinguish from JSDoc, license headers, and intentional code examples.
 ---
 
 ## Agent 2: Unused Symbol Detector (Hierarchical LSP-Based)
+
+Non-goal: this agent is read-only. Report candidates with `file:line` evidence; never delete, edit, or refactor what you find — `coding:lint` owns confirmed removal.
 
 ### Phase 1: File-Level Analysis (Unreachable Production Files)
 
@@ -76,6 +80,8 @@ Distinguish from JSDoc, license headers, and intentional code examples.
 ---
 
 ## Agent 3: Test-Only Production Code Detector
+
+Non-goal: this agent is read-only. Report candidates with `file:line` evidence, including any recommended move; never delete, edit, or refactor what you find — `coding:lint` owns confirmed removal.
 
 ### Detection Algorithm
 

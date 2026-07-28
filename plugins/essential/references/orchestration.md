@@ -23,7 +23,6 @@ Classify the task and pick the substrate once, up front, then name the success c
 - **Delegate continuing work directly when the owner is known.** A subagent that knows the best teammate's `agent_id` messages it directly; knowing the teammate but not the ID, it asks the main agent to resolve it; only with no known owner does it ask the main agent to suggest one — the main agent prefers a living teammate with matching folder/feature history, else spawns a new named teammate and returns its `agent_id`.
 - **Message only by `agent_id`.** Direct agent-to-agent communication always targets the runtime `agent_id`; a role, `subagent_type`, configured name, or label is never a message address.
 - **Synthesize.** Collect what returns, identify patterns, and consolidate it into actionable results.
-- **Two-stage dispatch.** Use a prompt-generation subagent only when building the worker prompt would itself consume substantial context or noisy output; read small, bounded context inline.
 
 ## Scope and deliverable
 
@@ -74,7 +73,7 @@ moments.
 
 ## Review responsibility
 
-Never spawn a subagent to check your own output — you already did that as you wrote it.
+Never spawn a subagent to check your own output. Dispatch an independent reviewer when the change is consequential, the user asked for review, or a workflow gate requires it — publishing a pull request is such a gate. Small, bounded work is carried by its own mechanical gates.
 
 Whoever spawns an agent owns the quality of its output. For consequential output or changed code, inspect the roster and choose the best independent domain critic; give it only the artifact, constraints, and acceptance criteria — never the producer's reasoning. The reviewer returns `ok` or `blocked` plus at most two lines. Detailed findings go directly to the producer in a bounded review artifact; the lead receives only the verdict and artifact path.
 

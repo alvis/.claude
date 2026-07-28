@@ -20,6 +20,29 @@ INSTRUCTION_FILE = "WORKFLOW.md"
 STANDARD_REFERENCE = re.compile(
     r"(?<![\w-])(?:(?P<plugin>[a-z][a-z0-9-]*):)?constitution/standards/"
 )
+PLUGINS = ROOT / "plugins"
+# A shipped prompt may cap what gets *published*, but never what gets *found*:
+# a finding an agent talks itself out of making is one nothing downstream can
+# recover. Each pattern pairs a hedging directive with a reporting verb, so
+# "report only" in the sense of "report, don't edit" stays legal.
+SUPPRESSED_REPORTING = (
+    re.compile(r"be conservative", re.IGNORECASE),
+    re.compile(r"err on the side of (?:caution|silence|not reporting)", re.IGNORECASE),
+    re.compile(
+        r"only report (?:\w+ ){0,3}(?:problems|issues|findings|violations)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"when in doubt,? (?:omit|skip|stay silent|do ?n[o']t report)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:report|flag|raise) (?:\w+ ){0,4}only (?:if|when) you (?:are|'re) "
+        r"(?:certain|sure|confident)",
+        re.IGNORECASE,
+    ),
+)
+
 SEMVER = re.compile(
     r"""
     ^
@@ -157,6 +180,39 @@ def test_instruction_contracts_reference_declared_dependencies_only() -> None:
             prefix = reference.group("plugin")
             assert prefix is not None, f"{name}: unprefixed standard reference"
             assert prefix in allowed, f"{name}: undeclared standard prefix {prefix}"
+
+
+def test_no_shipped_prompt_suppresses_reporting() -> None:
+    offenders = [
+        f"{path.relative_to(ROOT)}:{text.count(chr(10), 0, match.start()) + 1}: "
+        f"{match.group(0)}"
+        for path in sorted(PLUGINS.rglob("*.md"))
+        for text in (path.read_text(),)
+        for pattern in SUPPRESSED_REPORTING
+        for match in pattern.finditer(text)
+    ]
+
+    assert offenders == [], "\n".join(offenders)
+
+
+def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
+    suppressing = (
+        "Be conservative: only report problems clearly visible in the image.",
+        "Err on the side of caution and leave it out.",
+        "When in doubt, omit the finding.",
+        "Report a violation only if you are certain it is one.",
+    )
+    legitimate = (
+        "Do not use for: deleting or modifying code (report only).",
+        "A claim survives into the report only when an independent source agrees.",
+        "Report context usage only when the runtime measures it.",
+        "Cap published nits at five; rank what you found.",
+    )
+
+    for text in suppressing:
+        assert any(pattern.search(text) for pattern in SUPPRESSED_REPORTING), text
+    for text in legitimate:
+        assert not any(pattern.search(text) for pattern in SUPPRESSED_REPORTING), text
 
 
 def test_instruction_contracts_list_every_owned_standard() -> None:

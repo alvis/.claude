@@ -34,6 +34,12 @@ only). The gate does not apply outside `.state/`; the only separate
 limit is the 2,000-byte injection limit for Essential's `ALLAGENT.md`,
 `MAINAGENT.md`, and `SUBAGENT.md`.
 
+No mechanical limit is not a licence to pad. Everywhere the gate does not
+reach — `docs/**`, READMEs, reports, review artifacts — match length to what
+the task needs: cover the substance, and add no filler sections, redundant
+summaries, or boilerplate. A document is the right length when removing a
+section would change what a reader does.
+
 On `split_required`, send all oversized files through one complete split
 round — each original path remains a concise overview linking its lowercase
 children — then rebuild the final manifest and run one subsequent batch

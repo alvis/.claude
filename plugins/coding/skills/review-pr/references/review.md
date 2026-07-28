@@ -6,10 +6,17 @@ adds what is specific to reviewing a PR diff.
 
 ## Depth
 
-Scale depth to the size zone: green reviews line by line, yellow leads
+Scale reading depth to the size zone: green reviews line by line, yellow leads
 with the key areas then goes line by line, red leads with architecture and goes
-line-level only where it matters, black says split it before reviewing further. A
-2,000-line review that comments on everything teaches nothing.
+line-level only where it matters, black says split it before reviewing further.
+The zone shapes how you read, never what you may find — nothing downstream can
+recover a finding you chose not to make.
+
+Selectivity belongs to publication, not detection. Collect every finding, then
+rank that set by consequence and publish the top of it: a 2,000-line review that
+comments on everything teaches nothing, so the cut is a deliberate ranking of
+what you found, and what you hold back is summarized in the overall body rather
+than lost.
 
 One finding per problem, at the highest priority that applies. The same mistake in
 eight places is one finding on the clearest instance, noting that it applies

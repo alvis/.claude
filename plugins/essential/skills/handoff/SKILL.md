@@ -87,7 +87,9 @@ that contract.
    the orchestrator and decision maker only: route each phase to the right
    agent with complete context, synthesize the results, and make the calls.
    Delegate all execution — reading, writing, running, testing — to
-   subagents; never do the work yourself. To pause a coding session rather
+   subagents, so this session keeps its context for the decisions; the one
+   exception is a step you would finish in a handful of tool calls, where
+   dispatching costs more than it isolates. To pause a coding session rather
    than hand a plan off, use `essential:handover`.
 4. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
