@@ -252,7 +252,13 @@ even when a later step rewrites what gets submitted:
 | Outstanding findings | Substantive verdict |
 |---|---|
 | Any P0/P1 finding, or any `chore` | `REQUEST_CHANGES` |
-| Only P2/P3/P4, only kinds other than `chore`, or nothing at all — and the tests genuinely cover the change | `APPROVE` |
+| Only P2/P3/P4, only kinds other than `chore`, or nothing at all | `APPROVE` |
+
+These two rows are exhaustive — every review lands on exactly one, and nothing else
+qualifies the grade. Whether the tests convince belongs to step 2, not here: it caps
+what may be submitted without changing what the findings concluded, and folding it in
+as a third condition would leave a review with weak tests and only P3 findings
+matching no row at all while the body still needs a substantive verdict to key off.
 
 **2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI,
 black zone, `headRefOid` no longer equal to `HEAD_OID`, or a blocker prevented a full
@@ -262,8 +268,9 @@ can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you cl
 certainty the review does not have.
 
 `chore` is the only kind that reaches step 1; `question`, `thought`, `note`, and
-`praise` never hold a verdict on their own. A review carrying nothing but those is an
-`APPROVE` when the tests hold up.
+`praise` never hold a verdict on their own. A review carrying nothing but those is a
+substantive `APPROVE`; unconvincing tests then cap the event in step 2 rather than
+unsettling what step 1 concluded.
 
 `goal_spec_alignment: skipped_unknown` does not hold the verdict either. A change with
 no goal or spec to resolve is the ordinary case, not a concern that failed to run, so

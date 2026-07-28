@@ -39,7 +39,7 @@ Reviewed `{{head_sha_short}}` — {{files_changed}} files, +{{additions}}/-{{del
 > [!IMPORTANT]
 > {{why_these_could_not_anchor}}
 
-- {{marker}} **{{file}}** — {{finding_that_could_not_anchor}}
+- {{marker}} **{{subject}}** — {{finding_that_could_not_anchor}}
 
 ### Not reviewed
 
@@ -64,11 +64,13 @@ Notes for the sections where the guidance is not self-evident:
   comment must not disagree about a finding's level.
 - **Alerts** — at most one per section, and only where it changes what the author
   does next; `tone.md` owns which alert means what. `> [!CAUTION]` opens *Must
-  change* under a substantive `REQUEST_CHANGES` — a self-review downgrade does not
-  clear it, because the blockers are still there. `> [!TIP]` opens *Worth
-  considering* only under a substantive `APPROVE`, and carries the single
-  highest-value optional improvement. An alert whose section is dropped is dropped
-  with it.
+  change* under a substantive `REQUEST_CHANGES` that was not capped — a self-review
+  downgrade does not clear it, because the blockers are still there, but a cap does,
+  because a review that cannot stand behind its own evidence cannot declare merge
+  blocked on it. Under a cap the findings still appear; the closing `WARNING`
+  carries the verdict instead. `> [!TIP]` opens *Worth considering* only under a
+  substantive `APPROVE`, and carries the single highest-value optional improvement.
+  An alert whose section is dropped is dropped with it.
 - **Goal and tests** — state whether the change matches its goal and spec, or say
   *skipped — goal/spec unknown* when neither could be resolved; never grade the diff
   against a goal inferred from the diff. Then answer the test question: would these
@@ -80,7 +82,10 @@ Notes for the sections where the guidance is not self-evident:
   --reorder`.
 - **Not anchored to a line** — findings about deleted files, missing files,
   architecture, or anything GitHub cannot attach to a diff line. Unanchorable is not
-  unimportant; never drop these.
+  unimportant; never drop these. `{{subject}}` is the file the finding is about, or
+  `This PR` where the finding carries no `path` at all — a chore owed before merge
+  has no file to name, and a blank or `null` label reads as a rendering fault rather
+  than as the deliberate scope it is.
 - **Not reviewed** — excluded paths and any concern that could not run. The author is
   entitled to know the boundary of what was actually looked at.
 
@@ -98,6 +103,12 @@ row wins:
 
 | Substantive verdict, and what happened to it | `{{verdict_alert}}` |
 |---|---|
-| `REQUEST_CHANGES`, whatever the submitted `event` ended up being | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them; where the event was downgraded, say that GitHub weakened the event and not the finding |
-| Capped at `COMMENT` because the review is incomplete or untrustworthy | `WARNING` — name which part could not be trusted |
-| `APPROVE`, whether submitted as-is or downgraded on your own PR | `NOTE` — say so plainly and name anything to watch after merge |
+| Capped at `COMMENT` in step 2 because the review is incomplete or untrustworthy | `WARNING` — name which part could not be trusted |
+| `REQUEST_CHANGES`, submitted as-is or downgraded on your own PR | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them; where the event was downgraded, say that GitHub weakened the event and not the finding |
+| `APPROVE`, submitted as-is or downgraded on your own PR | `NOTE` — say so plainly and name anything to watch after merge |
+
+A cap and a downgrade are not the same event and do not resolve the same way. A cap
+says the review could not be trusted, so it outranks the findings it was reached
+with — a P0 read against a revision that has since moved is not a blocker to close
+on. A downgrade says only that GitHub refused the event, which changes nothing about
+what the review found, so the blockers keep `CAUTION`.
