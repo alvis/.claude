@@ -671,6 +671,17 @@ def test_install_skill_derives_smoke_expectations_from_the_matrix() -> None:
     assert all(model not in skill for model in codex_models)
 
 
+def test_install_skill_resolves_codex_script_from_its_loaded_resource() -> None:
+    skill = (
+        ROOT / "plugins/essential/skills/install-agents/SKILL.md"
+    ).read_text(encoding="utf-8")
+    codex_instructions = skill.split("# Codex", 1)[1].split("```", 1)[0]
+
+    assert "absolute directory containing this loaded SKILL.md" in codex_instructions
+    assert "PLUGIN_ROOT" not in codex_instructions
+    assert "CLAUDE_PLUGIN_ROOT" not in codex_instructions
+
+
 def test_governance_heuristic_does_not_use_a_cross_plugin_relative_link() -> None:
     heuristic = (
         ROOT
@@ -847,8 +858,18 @@ def test_installed_mode_translates_recognized_legacy_frontmatter(
     )
     write_legacy_template(web, "legacy-agent", schema=schema)
     records = [
-        {"id": "essential@alvis", "enabled": True, "installPath": str(essential)},
-        {"id": "web@alvis", "enabled": True, "installPath": str(web)},
+        {
+            "id": "essential@alvis",
+            "enabled": True,
+            "version": "2",
+            "installPath": str(essential),
+        },
+        {
+            "id": "web@alvis",
+            "enabled": True,
+            "version": "1",
+            "installPath": str(web),
+        },
     ]
     destination = tmp_path / f"{harness}-agents"
 
@@ -886,13 +907,15 @@ def test_source_checkout_rejects_legacy_frontmatter(tmp_path: Path) -> None:
         install_agents(essential, tmp_path / "agents")
 
 
-def test_codex_installed_mode_reads_native_plugin_list_shape(
+def test_codex_installed_mode_resolves_versioned_cache_not_marketplace_source(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    essential = tmp_path / "cache/alvis/essential/1"
-    coding = tmp_path / "cache/alvis/coding/1"
-    for path in (essential, coding):
+    essential = tmp_path / "cache/alvis/essential/1.0.0"
+    coding = tmp_path / "cache/alvis/coding/1.0.0"
+    essential_source = tmp_path / "marketplace/plugins/essential"
+    coding_source = tmp_path / "marketplace/plugins/coding"
+    for path in (essential, coding, essential_source, coding_source):
         path.mkdir(parents=True)
     write_template(
         essential,
@@ -900,17 +923,29 @@ def test_codex_installed_mode_reads_native_plugin_list_shape(
         frontmatter={"name": "essential-agent"},
     )
     write_template(coding, "coding-agent", frontmatter={"name": "coding-agent"})
+    write_template(
+        essential_source,
+        "source-essential-agent",
+        frontmatter={"name": "source-essential-agent"},
+    )
+    write_template(
+        coding_source,
+        "source-coding-agent",
+        frontmatter={"name": "source-coding-agent"},
+    )
     payload = {
         "installed": [
             {
                 "pluginId": "essential@alvis",
                 "enabled": True,
-                "source": {"source": "local", "path": str(essential)},
+                "version": "1.0.0",
+                "source": {"source": "local", "path": str(essential_source)},
             },
             {
                 "pluginId": "coding@alvis",
                 "enabled": True,
-                "source": {"source": "local", "path": str(coding)},
+                "version": "1.0.0",
+                "source": {"source": "local", "path": str(coding_source)},
             },
         ],
         "available": [],
