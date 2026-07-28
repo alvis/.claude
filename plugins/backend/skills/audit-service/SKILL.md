@@ -56,9 +56,10 @@ with Backend/Coding owners.
    ambiguous pages and compare overview, signatures, inputs/outputs, errors,
    examples, ownership, status, and links.
 5. Run independent blind checks in bounded parallel batches, at most three
-   concurrently. Adversarially validate and deduplicate candidates, route
-   survivors to one assigned canonical `reviews/<area>.md` file, and preserve
-   stable IDs across reruns.
+   concurrently — the delegation standard's bound, which keeps each report
+   reviewable and a failed batch cheap to retry. Adversarially validate and
+   deduplicate candidates, route survivors to one assigned canonical
+   `reviews/<area>.md` file, and preserve stable IDs across reruns.
 6. Each area writer returns its path and current verdict/count/disposition
    deltas; it never writes `review.md`. The PM/coordinator alone reconciles that
    roll-up after all reviewers finish. Track `open`, `fixed`, `acknowledged`,

@@ -15,8 +15,8 @@ persists the current coding session in continuation files.
   session's context, and orchestrating a multi-domain plan's execution while
   retaining decision ownership.
 - Do not use for: persisting a coding session for later continuation
-  (`essential:handover`), or doing the planned work inline — execution is always
-  delegated.
+  (`essential:handover`), or doing the planned work inline — execution is
+  delegated, bar a step you would finish in a handful of tool calls.
 
 ## Inputs
 
@@ -110,9 +110,10 @@ that contract.
 - Every residual unknown is accepted and reversible, explicitly deferred with
   an owner and deadline, or blocking; the plan names evidence that requires a
   pivot.
-- When executed: every phase was delegated with complete context, and each
-  phase's results were checked against the plan's success criteria before the
-  next phase started.
+- When executed: every phase was delegated with complete context — bar any step
+  finished inline under the handful-of-tool-calls exception — and each phase's
+  results were checked against the plan's success criteria before the next
+  phase started.
 
 ## Completion
 

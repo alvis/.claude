@@ -26,7 +26,10 @@ PLUGINS = ROOT / "plugins"
 # recover. Each pattern pairs a hedging directive with a reporting verb, so
 # "report only" in the sense of "report, don't edit" stays legal.
 SUPPRESSED_REPORTING = (
-    re.compile(r"be conservative", re.IGNORECASE),
+    re.compile(
+        r"be conservative[^.!?\n]*?\b(?:report|flag|raise|surface|mention)\w*",
+        re.IGNORECASE,
+    ),
     re.compile(r"err on the side of (?:caution|silence|not reporting)", re.IGNORECASE),
     re.compile(
         r"only report (?:\w+ ){0,3}(?:problems|issues|findings|violations)",
@@ -207,6 +210,7 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "A claim survives into the report only when an independent source agrees.",
         "Report context usage only when the runtime measures it.",
         "Cap published nits at five; rank what you found.",
+        "Be conservative with resource consumption and migration blast radius.",
     )
 
     for text in suppressing:

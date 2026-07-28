@@ -126,7 +126,7 @@ Who verifies is sized on the same test as "Decide who does the work" above:
 
 ### 2. Then lint
 
-Lint runs on every completed change: invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. Run it in place for a small change; dispatch a lint subagent (or a lint sub-team for large changes) when the scope is large or its output would be noisy. If lint reports any violation, return to implementation, fix it, then re-run verification and lint. Proceed only once both are clean.
+Lint runs on every completed change: invoke the `coding:lint` skill on the touched source files — `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text/content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed. Invoke it yourself for a small change; hand the invocation to a lint subagent (or a lint sub-team for large changes) when the scope is large or its output would be noisy. Either way `coding:lint` runs its own scan-and-aggregate cycle internally — never lint by hand in its place. If lint reports any violation, return to implementation, fix it, then re-run verification and lint. Proceed only once both are clean.
 
 ### 3. Then commit
 

@@ -10,7 +10,9 @@ Scale reading depth to the size zone: green reviews line by line, yellow leads
 with the key areas then goes line by line, red leads with architecture and goes
 line-level only where it matters, black says split it before reviewing further.
 The zone shapes how you read, never what you may find — nothing downstream can
-recover a finding you chose not to make.
+recover a finding you chose not to make. A black-zone review defers the
+line-level pass; it still reports the structural findings that justify the
+split, rather than withholding what it already saw.
 
 Selectivity belongs to publication, not detection. Collect every finding, then
 rank that set by consequence and publish the top of it: a 2,000-line review that
