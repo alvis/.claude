@@ -13,7 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from stitch_agent import AgentTemplateError, load_agent_frontmatter, stitch_agent_definition
+from stitch_agent import (
+    AgentTemplateError,
+    load_agent_frontmatter,
+    stitch_agent_definition,
+    stitch_codex_agent_definition,
+)
 
 
 @dataclass(frozen=True)
@@ -39,25 +44,61 @@ def _plugin_templates(owner: str, plugin_root: Path) -> Iterable[AgentTemplate]:
             yield AgentTemplate(owner=owner, name=path.name, path=path)
 
 
-def _read_plugin_records() -> list[dict[str, Any]]:
+def _read_plugin_records(harness: str) -> list[dict[str, Any]]:
+    command = (
+        ["claude", "plugin", "list", "--json"]
+        if harness == "claude"
+        else ["codex", "plugin", "list", "--json"]
+    )
+    installed_label = "" if harness == "claude" else "codex "
     try:
         completed = subprocess.run(
-            ["claude", "plugin", "list", "--json"],
+            command,
             text=True,
             capture_output=True,
             check=False,
         )
     except OSError as error:
-        raise AgentTemplateError(f"cannot list installed plugins: {error}") from error
+        raise AgentTemplateError(
+            f"cannot list installed {installed_label}plugins: {error}"
+        ) from error
     if completed.returncode != 0:
         detail = completed.stderr.strip() or completed.stdout.strip()
-        raise AgentTemplateError(f"cannot list installed plugins: {detail}")
+        raise AgentTemplateError(
+            f"cannot list installed {installed_label}plugins: {detail}"
+        )
     try:
-        records = json.loads(completed.stdout)
+        payload = json.loads(completed.stdout)
     except json.JSONDecodeError as error:
-        raise AgentTemplateError(f"invalid JSON from claude plugin list: {error}") from error
-    if not isinstance(records, list):
-        raise AgentTemplateError("claude plugin list --json did not return a list")
+        raise AgentTemplateError(
+            f"invalid JSON from {harness} plugin list: {error}"
+        ) from error
+    if harness == "claude":
+        if not isinstance(payload, list):
+            raise AgentTemplateError(
+                "claude plugin list --json did not return a list"
+            )
+        records = payload
+    else:
+        installed = payload.get("installed") if isinstance(payload, dict) else None
+        if not isinstance(installed, list):
+            raise AgentTemplateError(
+                "codex plugin list --json did not return an installed list"
+            )
+        records = [
+            {
+                "id": record.get("pluginId"),
+                "enabled": record.get("enabled"),
+                "installPath": (
+                    record.get("source", {}).get("path")
+                    if isinstance(record.get("source"), dict)
+                    else None
+                ),
+                "lastUpdated": record.get("lastUpdated"),
+            }
+            for record in installed
+            if isinstance(record, dict)
+        ]
     return [record for record in records if isinstance(record, dict)]
 
 
@@ -67,21 +108,42 @@ def _last_updated(record: dict[str, Any]) -> str:
 
 
 def _installed_plugin_roots(
-    essential_root: Path, records: list[dict[str, Any]]
+    essential_root: Path,
+    records: list[dict[str, Any]],
+    harness: str,
 ) -> list[tuple[str, Path]]:
     resolved_essential = essential_root.resolve()
-    essential_records = [
-        record
-        for record in records
-        if isinstance(record.get("installPath"), str)
-        and Path(record["installPath"]).resolve() == resolved_essential
-        and isinstance(record.get("id"), str)
-        and record["id"].count("@") == 1
-        and record["id"].split("@", 1)[0] == "essential"
-    ]
+    if harness == "codex":
+        cache_marketplace = (
+            essential_root.parent.parent.name
+            if essential_root.parent.name == "essential"
+            and essential_root.parent.parent.parent.name == "cache"
+            else None
+        )
+        essential_records = [
+            record
+            for record in records
+            if isinstance(record.get("id"), str)
+            and record["id"].count("@") == 1
+            and record["id"].split("@", 1)[0] == "essential"
+            and (
+                cache_marketplace is None
+                or record["id"].rsplit("@", 1)[1] == cache_marketplace
+            )
+        ]
+    else:
+        essential_records = [
+            record
+            for record in records
+            if isinstance(record.get("installPath"), str)
+            and Path(record["installPath"]).resolve() == resolved_essential
+            and isinstance(record.get("id"), str)
+            and record["id"].count("@") == 1
+            and record["id"].split("@", 1)[0] == "essential"
+        ]
     if not essential_records:
         raise AgentTemplateError(
-            f"essential plugin is absent from claude plugin list: {essential_root}"
+            f"essential plugin is absent from {harness} plugin list: {essential_root}"
         )
     if len(essential_records) != 1:
         raise AgentTemplateError(
@@ -123,7 +185,9 @@ def _installed_plugin_roots(
 
 
 def discover_agent_templates(
-    essential_root: Path, plugin_records: list[dict[str, Any]] | None = None
+    essential_root: Path,
+    plugin_records: list[dict[str, Any]] | None = None,
+    harness: str = "claude",
 ) -> list[AgentTemplate]:
     """Discover source-checkout siblings or enabled same-marketplace installs."""
     essential_root = Path(essential_root)
@@ -136,7 +200,12 @@ def discover_agent_templates(
     else:
         roots = _installed_plugin_roots(
             essential_root,
-            plugin_records if plugin_records is not None else _read_plugin_records(),
+            (
+                plugin_records
+                if plugin_records is not None
+                else _read_plugin_records(harness)
+            ),
+            harness,
         )
     return [
         template
@@ -145,7 +214,9 @@ def discover_agent_templates(
     ]
 
 
-def _preflight(templates: list[AgentTemplate]) -> list[tuple[str, str]]:
+def _preflight(
+    templates: list[AgentTemplate], harness: str
+) -> list[tuple[str, str]]:
     if not templates:
         raise AgentTemplateError("no agent templates discovered")
     seen: dict[str, AgentTemplate] = {}
@@ -159,7 +230,12 @@ def _preflight(templates: list[AgentTemplate]) -> list[tuple[str, str]]:
                 f"duplicate agent name {name!r}: {previous.path} and {template.path}"
             )
         seen[name] = template
-        staged.append((name, stitch_agent_definition(template.path)))
+        content = (
+            stitch_agent_definition(template.path)
+            if harness == "claude"
+            else stitch_codex_agent_definition(template.path)
+        )
+        staged.append((name, content))
     return staged
 
 
@@ -167,19 +243,22 @@ def install_agents(
     essential_root: Path,
     destination: Path,
     plugin_records: list[dict[str, Any]] | None = None,
+    harness: str = "claude",
 ) -> int:
     """Install every discovered template after a complete roster preflight."""
     staged_definitions = _preflight(
-        discover_agent_templates(essential_root, plugin_records)
+        discover_agent_templates(essential_root, plugin_records, harness),
+        harness,
     )
     destination = Path(destination)
-    with tempfile.TemporaryDirectory(prefix="claude-agents-") as temporary:
+    suffix = ".md" if harness == "claude" else ".toml"
+    with tempfile.TemporaryDirectory(prefix=f"{harness}-agents-") as temporary:
         stage = Path(temporary)
         for name, content in staged_definitions:
-            (stage / f"{name}.md").write_text(content, encoding="utf-8")
+            (stage / f"{name}{suffix}").write_text(content, encoding="utf-8")
         destination.mkdir(parents=True, exist_ok=True)
         for name, _ in staged_definitions:
-            target = destination / f"{name}.md"
+            target = destination / f"{name}{suffix}"
             with tempfile.NamedTemporaryFile(
                 dir=destination, prefix=f".{name}.", suffix=".tmp", delete=False
             ) as temporary_file:
@@ -202,11 +281,25 @@ def main() -> int:
         default=Path(__file__).resolve().parents[3],
     )
     parser.add_argument(
-        "--destination", type=Path, default=Path.home() / ".claude/agents"
+        "--harness",
+        choices=("claude", "codex"),
+        default="claude",
+    )
+    parser.add_argument(
+        "--destination",
+        type=Path,
     )
     args = parser.parse_args()
+    if args.destination is not None:
+        destination = args.destination
+    elif args.harness == "codex":
+        destination = Path(
+            os.environ.get("CODEX_HOME", Path.home() / ".codex")
+        ) / "agents"
+    else:
+        destination = Path.home() / ".claude/agents"
     try:
-        install_agents(args.plugin_root, args.destination)
+        install_agents(args.plugin_root, destination, harness=args.harness)
     except AgentTemplateError as error:
         parser.error(str(error))
     return 0

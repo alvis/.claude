@@ -1,0 +1,19 @@
+{
+  "name": "specification",
+  "version": "1.0.0",
+  "description": "Design specifications, architecture specs, requirements gathering, and technical documentation with Notion integration",
+  "author": {
+    "name": "Alvis"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Specification",
+    "shortDescription": "Requirements, architecture, and technical specifications.",
+    "longDescription": "Discover requirements and author, synchronize, review, and implement architecture and technical specifications.",
+    "developerName": "Alvis",
+    "category": "development",
+    "capabilities": ["Skills", "Hooks", "MCP"],
+    "defaultPrompt": "Help me discover or write this specification."
+  }
+}

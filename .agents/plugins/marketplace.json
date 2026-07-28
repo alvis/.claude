@@ -1,0 +1,116 @@
+{
+  "name": "alvis",
+  "interface": {
+    "displayName": "Alvis"
+  },
+  "plugins": [
+    {
+      "name": "coding",
+      "source": {
+        "source": "local",
+        "path": "./plugins/coding"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    },
+    {
+      "name": "essential",
+      "source": {
+        "source": "local",
+        "path": "./plugins/essential"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "productivity"
+    },
+    {
+      "name": "governance",
+      "source": {
+        "source": "local",
+        "path": "./plugins/governance"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "meta"
+    },
+    {
+      "name": "react",
+      "source": {
+        "source": "local",
+        "path": "./plugins/react"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "frontend"
+    },
+    {
+      "name": "specification",
+      "source": {
+        "source": "local",
+        "path": "./plugins/specification"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    },
+    {
+      "name": "web",
+      "source": {
+        "source": "local",
+        "path": "./plugins/web"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "frontend"
+    },
+    {
+      "name": "backend",
+      "source": {
+        "source": "local",
+        "path": "./plugins/backend"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    },
+    {
+      "name": "client",
+      "source": {
+        "source": "local",
+        "path": "./plugins/client"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "frontend"
+    },
+    {
+      "name": "production",
+      "source": {
+        "source": "local",
+        "path": "./plugins/production"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "productivity"
+    }
+  ]
+}

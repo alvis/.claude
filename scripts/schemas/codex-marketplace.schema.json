@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex plugin marketplace",
+  "type": "object",
+  "required": ["name", "plugins"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "interface": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "policy", "category"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "source": {
+            "type": "object",
+            "required": ["source", "path"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["local"]
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^\\./plugins/[a-z0-9]+(?:-[a-z0-9]+)*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "policy": {
+            "type": "object",
+            "required": ["installation", "authentication"],
+            "properties": {
+              "installation": {
+                "type": "string",
+                "enum": [
+                  "NOT_AVAILABLE",
+                  "AVAILABLE",
+                  "INSTALLED_BY_DEFAULT"
+                ]
+              },
+              "authentication": {
+                "type": "string",
+                "enum": ["ON_INSTALL", "ON_USE"]
+              },
+              "products": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

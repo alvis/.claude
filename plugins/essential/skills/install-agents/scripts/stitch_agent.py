@@ -195,13 +195,39 @@ def stitch_agent_definition(template_directory: Path) -> str:
     return f"---\n{yaml}\n---\n\n{body}"
 
 
+def stitch_codex_agent_definition(template_directory: Path) -> str:
+    """Return one installable Codex custom-agent TOML definition."""
+    template_directory = Path(template_directory)
+    frontmatter = load_agent_frontmatter(template_directory)
+    body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
+    validate_agent_contract(frontmatter, body)
+    fields = {
+        "name": frontmatter["name"],
+        "description": frontmatter["description"],
+        "developer_instructions": body,
+    }
+    return "".join(
+        f"{name} = {json.dumps(value, ensure_ascii=False)}\n"
+        for name, value in fields.items()
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("template", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--harness",
+        choices=("claude", "codex"),
+        default="claude",
+    )
     args = parser.parse_args()
     try:
-        stitched = stitch_agent_definition(args.template)
+        stitched = (
+            stitch_agent_definition(args.template)
+            if args.harness == "claude"
+            else stitch_codex_agent_definition(args.template)
+        )
     except AgentTemplateError as error:
         parser.error(str(error))
     if args.output:

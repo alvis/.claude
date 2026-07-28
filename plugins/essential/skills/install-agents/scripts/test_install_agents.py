@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -19,6 +20,7 @@ from stitch_agent import (
     DESCRIPTION_LIMIT,
     AgentTemplateError,
     stitch_agent_definition,
+    stitch_codex_agent_definition,
     validate_agent_contract,
 )
 
@@ -84,6 +86,32 @@ def test_stitches_nested_json_lists_and_multiline_strings_deterministically(
     ) == json.loads(frontmatter_text)
     assert "---\n\n# Test agent\n" in stitched
     assert stitched == stitch_agent_definition(template)
+
+
+def test_stitches_native_codex_agent_toml_from_the_same_template(
+    tmp_path: Path,
+) -> None:
+    template = write_template(
+        tmp_path,
+        "test-agent",
+        frontmatter={
+            "name": "test-agent",
+            "description": "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
+        },
+        body="# Test agent\n\nCodex instructions.\n",
+    )
+
+    definition = stitch_codex_agent_definition(template)
+    parsed = tomllib.loads(definition)
+
+    assert parsed == {
+        "name": "test-agent",
+        "description": "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
+        "developer_instructions": (
+            "# Test agent\n\nCodex instructions.\n" + memory_section("test-agent")
+        ),
+    }
+    assert definition == stitch_codex_agent_definition(template)
 
 
 def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
@@ -273,15 +301,15 @@ def test_requires_project_memory_path_section_and_maintenance_contract(
 
 def test_role_hooks_expand_the_engineering_work_reference() -> None:
     essential = ROOT / "plugins/essential"
-    manifest = json.loads(
-        (essential / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+    hooks_document = json.loads(
+        (essential / "hooks/hooks.json").read_text(encoding="utf-8")
     )
     expected = str(essential / "references/engineering-work.md")
 
     for event in ("SessionStart", "SubagentStart"):
         commands = [
             hook["command"]
-            for group in manifest["hooks"][event]
+            for group in hooks_document["hooks"][event]
             for hook in group["hooks"]
             if hook["type"] == "command" and ".md\"" in hook["command"]
         ]
@@ -527,6 +555,50 @@ def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(
     } == {"essential:essential-agent", "web:web-agent"}
 
 
+def test_codex_installed_mode_reads_native_plugin_list_shape(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    essential = tmp_path / "cache/alvis/essential/1"
+    coding = tmp_path / "cache/alvis/coding/1"
+    for path in (essential, coding):
+        path.mkdir(parents=True)
+    write_template(
+        essential,
+        "essential-agent",
+        frontmatter={"name": "essential-agent"},
+    )
+    write_template(coding, "coding-agent", frontmatter={"name": "coding-agent"})
+    payload = {
+        "installed": [
+            {
+                "pluginId": "essential@alvis",
+                "enabled": True,
+                "source": {"source": "local", "path": str(essential)},
+            },
+            {
+                "pluginId": "coding@alvis",
+                "enabled": True,
+                "source": {"source": "local", "path": str(coding)},
+            },
+        ],
+        "available": [],
+    }
+    monkeypatch.setattr(
+        install_agents_module.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            [], 0, stdout=json.dumps(payload), stderr=""
+        ),
+    )
+
+    templates = discover_agent_templates(essential, harness="codex")
+
+    assert {
+        f"{template.owner}:{template.name}" for template in templates
+    } == {"essential:essential-agent", "coding:coding-agent"}
+
+
 def test_installed_mode_keeps_only_latest_record_per_plugin_id(
     tmp_path: Path,
 ) -> None:
@@ -672,6 +744,30 @@ def test_source_checkout_installs_every_discovered_agent(tmp_path: Path) -> None
     assert count == len(expected_names)
     assert {path.name for path in destination.glob("*.md")} == expected_names
     assert (destination / "frontend-implementer.md").is_file()
+
+
+def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
+    with redirect_stdout(StringIO()):
+        destination = tmp_path / "agents"
+        expected_names = {
+            f"{template.name}.toml"
+            for template in discover_agent_templates(ROOT / "plugins/essential")
+        }
+
+        count = install_agents(
+            ROOT / "plugins/essential",
+            destination,
+            harness="codex",
+        )
+
+    assert count == len(expected_names)
+    assert {path.name for path in destination.glob("*.toml")} == expected_names
+    tech_lead = tomllib.loads(
+        (destination / "tech-lead.toml").read_text(encoding="utf-8")
+    )
+    assert tech_lead["name"] == "tech-lead"
+    assert tech_lead["description"]
+    assert tech_lead["developer_instructions"].startswith("# Tech Lead")
 
 
 def test_duplicate_names_fail_before_any_destination_write(tmp_path: Path) -> None:

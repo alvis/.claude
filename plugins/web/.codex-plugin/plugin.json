@@ -1,0 +1,19 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "Web development tools including UX design, growth optimization, rapid prototyping, and browser automation",
+  "author": {
+    "name": "Alvis"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Web",
+    "shortDescription": "UX design, web development, and browser automation.",
+    "longDescription": "Design, build, audit, and optimize web experiences with browser automation and Next.js tooling.",
+    "developerName": "Alvis",
+    "category": "frontend",
+    "capabilities": ["Skills", "Hooks", "MCP"],
+    "defaultPrompt": "Help me design, build, or audit this web experience."
+  }
+}
