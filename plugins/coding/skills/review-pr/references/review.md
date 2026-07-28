@@ -21,7 +21,7 @@ These are the findings a diff-only reader cannot make, and they are usually the
 most valuable ones in the review:
 
 - **Is this the best solution?** Walk the lean ladder in
-  [CODING.md](../../../references/CODING.md). Search the repository before
+  [WORKFLOW.md](../../../references/WORKFLOW.md). Search the repository before
   accepting a new helper, type, or constant: a hand-rolled thing that
   `@theriety/core` or the codebase already provides is a finding, and so is an
   abstraction with one caller.

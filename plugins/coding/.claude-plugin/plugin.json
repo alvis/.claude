@@ -7,7 +7,7 @@
     "essential"
   ],
   "description": "General code writing tools including quality checks, testing, architecture, and implementation support",
-  "version": "2026-07-19",
+  "version": "1.0.0",
   "mcpServers": "./mcp.json",
   "hooks": {
     "SessionStart": [

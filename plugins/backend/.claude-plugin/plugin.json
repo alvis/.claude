@@ -9,7 +9,7 @@
     "essential"
   ],
   "description": "Domain-specific service and data orchestrator lifecycle management for Theriety — build and audit services and data layers",
-  "version": "2026-07-19",
+  "version": "1.0.0",
   "hooks": {
     "SessionStart": [
       {
