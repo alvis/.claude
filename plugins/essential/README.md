@@ -9,7 +9,7 @@ installer.
 
 ## The contracts
 
-Contracts load progressively — only the small `AGENTS.md`/`MAINAGENT.md`/
+Contracts load progressively — only the small `ALLAGENT.md`/`MAINAGENT.md`/
 `SUBAGENT.md` entry points are injected into every session; everything else
 is read at the moment it matters.
 

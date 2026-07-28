@@ -40,7 +40,7 @@ SCHEMA_KEYWORDS = {
 }
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CONTEXT_PAYLOAD_EVENTS = {
-    "AGENTS.md": {"SessionStart", "SubagentStart"},
+    "ALLAGENT.md": {"SessionStart", "SubagentStart"},
     "MAINAGENT.md": {"SessionStart"},
     "SUBAGENT.md": {"SubagentStart"},
 }

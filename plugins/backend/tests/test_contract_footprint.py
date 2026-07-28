@@ -8,8 +8,8 @@ PLUGIN = Path(__file__).resolve().parents[1]
 
 # This plugin owns both lists: what it injects at hook time, and what a session
 # must read before acting in its domain.
-PAYLOADS = ("AGENTS.md", "MAINAGENT.md")
-CHAIN = ("AGENTS.md", "references/WORKFLOW.md", "references/ROUTING.md")
+PAYLOADS = ("ALLAGENT.md", "MAINAGENT.md")
+CHAIN = ("ALLAGENT.md", "references/WORKFLOW.md", "references/ROUTING.md")
 
 
 def test_contract_footprint_stays_within_budget() -> None:

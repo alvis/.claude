@@ -31,7 +31,7 @@ The checker canonicalizes the declared root and every path, excludes
 traversal, symlink, and other-workspace escapes, and returns every eligible
 file greater than 16,384 bytes together (12,288 bytes is authoring guidance
 only). The gate does not apply outside `.state/`; the only separate
-limit is the 2,000-byte injection limit for Essential's `AGENTS.md`,
+limit is the 2,000-byte injection limit for Essential's `ALLAGENT.md`,
 `MAINAGENT.md`, and `SUBAGENT.md`.
 
 On `split_required`, send all oversized files through one complete split

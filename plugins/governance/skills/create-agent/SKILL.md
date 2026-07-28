@@ -93,7 +93,7 @@ anything is written. `update-agent` owns changes to existing definitions.
    rule, and collaboration/spawn posture. "Voice" means stable role-specific
    instructions, not a disposable persona, personalized identity, or decorative biography.
 8. Add or update the task-to-agent routing row in the owning plugin's
-   `AGENTS.md`, creating that file if necessary. Keep only this agent's owned
+   `ALLAGENT.md`, creating that file if necessary. Keep only this agent's owned
    tasks there; do not rebuild a central roster table.
 9. Conduct a paper-only thought experiment and blindspot test over positive
    trigger phrases, near-miss exclusions, collaboration edges, and first-turn
@@ -125,7 +125,7 @@ anything is written. `update-agent` owns changes to existing definitions.
   files/aliases/skills, duplicate seams, prompt contradictions, and the owning
   plugin routing row, point-form role-specific Collaboration section, and
   `SendMessage` capability against the actual tool list. Shared delegation,
-  handoff, workflow, and review policy belongs in Essential's `AGENTS.md`, not
+  handoff, workflow, and review policy belongs in Essential's `ALLAGENT.md`, not
   individual agent bodies. Official runtime loading remains "not exercised" unless
   the installed loader was actually run.
 

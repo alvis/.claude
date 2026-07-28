@@ -40,7 +40,7 @@ stated behavior change. `create-agent` owns genuinely new roles.
 
 1. Search every plugin's `templates/agents/` directory for the selector. Read
    the agent template, `role-prompt.md`, the context catalog, the owning
-   plugin's `AGENTS.md`, relevant team edges, every selected source pair, and real callers. List exact
+   plugin's `ALLAGENT.md`, relevant team edges, every selected source pair, and real callers. List exact
    targets before mutation. Reject missing or malformed pairs, ambiguous
    globs, locked/in-use targets, or a request that actually creates a new
    role.
@@ -88,7 +88,7 @@ stated behavior change. `create-agent` owns genuinely new roles.
    example table format with `:white_check_mark:`/`:x:` status markers,
    and delete them before staging; they are not deliverables and must not be
    committed. Keep the task-to-agent row in the
-   owning plugin's `AGENTS.md` aligned with the resulting trigger surface; do
+   owning plugin's `ALLAGENT.md` aligned with the resulting trigger surface; do
    not create a central routing table or widen role ownership incidentally.
 8. Independent targets may be delegated per
    `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` in
