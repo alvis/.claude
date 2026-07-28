@@ -8,9 +8,9 @@ PLUGIN = Path(__file__).resolve().parents[1]
 
 # This plugin owns both lists: what it injects at hook time, and what a session
 # must read before acting in its domain.
-PAYLOADS = ("CLAUDE.md", "MAINAGENT.md", "SUBAGENT.md")
+PAYLOADS = ("ALLAGENT.md", "MAINAGENT.md", "SUBAGENT.md")
 CHAIN = (
-    "CLAUDE.md",
+    "ALLAGENT.md",
     "references/orchestration.md",
     "references/engineering-work.md",
     "references/engineering-work-state.md",

@@ -81,7 +81,7 @@ def test_substitutes_plugin_dir_before_resolving(root: Path) -> None:
     write(root, "plugins/alpha/references/hook.md", "x")
     write(
         root,
-        "plugins/alpha/CLAUDE.md",
+        "plugins/alpha/ALLAGENT.md",
         "read `{{PLUGIN_DIR}}/references/hook.md` "
         "but not `{{PLUGIN_DIR}}/references/gone.md`",
     )
@@ -89,7 +89,7 @@ def test_substitutes_plugin_dir_before_resolving(root: Path) -> None:
     findings = check(root)
 
     assert findings == [
-        "plugins/alpha/CLAUDE.md:1 → {{PLUGIN_DIR}}/references/gone.md"
+        "plugins/alpha/ALLAGENT.md:1 → {{PLUGIN_DIR}}/references/gone.md"
     ]
 
 

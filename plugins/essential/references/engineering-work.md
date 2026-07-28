@@ -108,7 +108,7 @@ docs/                               # versioned; active working tree
 ```
 
 All generated project Markdown filenames are lowercase; plugin control files
-with fixed runtime names (`SKILL.md`, `CLAUDE.md`, …) keep them.
+with fixed runtime names (`SKILL.md`, `ALLAGENT.md`, …) keep them.
 
 ### Durable documentation
 

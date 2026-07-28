@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Session start hook: emits the session-type header and the plugin environment
-# block as one payload. Instruction files (CLAUDE.md, MAINAGENT.md) are emitted by
+# block as one payload. Instruction files (ALLAGENT.md, MAINAGENT.md) are emitted by
 # their own `sed | jq` hooks in plugin.json, not from here, so every payload
 # stays under the per-payload preview limit.
 # Compatible with bash 3.2+

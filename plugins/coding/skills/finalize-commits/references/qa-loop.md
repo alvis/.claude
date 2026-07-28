@@ -46,7 +46,7 @@ Compute the commit's lock-excluded patch id (`markers.md`). If a green marker wi
 
 ## Step 4 — QA gate (install + lint + test/coverage, together)
 
-One indivisible gate, run whole inside the worktree. A commit that skips any leg is NOT green, and the gate is never split across phases or batched across commits. Always prefer project scripts over raw tools (per coding CLAUDE.md); run in order, stop at first hard failure:
+One indivisible gate, run whole inside the worktree. A commit that skips any leg is NOT green, and the gate is never split across phases or batched across commits. Always prefer project scripts over raw tools (per coding ALLAGENT.md); run in order, stop at first hard failure:
 
 1. **install** — project install (e.g. `npm ci` / `pnpm install`). Failure → `pending_decision { kind: test_fail, detail: install }` (rare; usually environmental).
 2. **lint `--fix`** — run the project lint with autofix. Lint and lockfile fixes are validated in the worktree without a user prompt.

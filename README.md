@@ -57,7 +57,7 @@ Practical consequences you will see day to day:
   so drift between tables is settled by evidence, not guesswork. A small
   read-only `engineering-doctor` catches structural defects (cycles,
   dangling dependencies, contradictory statuses) without ever judging prose.
-- **Context is revealed progressively.** Only the tiny `CLAUDE.md` /
+- **Context is revealed progressively.** Only the tiny `ALLAGENT.md` /
   `MAINAGENT.md` / `SUBAGENT.md` entry points are injected into every
   session. Contracts load on demand at the moment they matter, so agents
   spend context on your work, not on ceremony.
@@ -233,7 +233,7 @@ or PR publication only after the local flow is understood.
 
 ## Agent team
 
-A 23-agent team for Claude Code organized into a main-session Project Manager, domain leads, and their teammates. Shared operation lives in `plugins/essential/CLAUDE.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol lives in `plugins/essential/SUBAGENT.md`, owner-specific routing lives in each contributing plugin's `CLAUDE.md`, and per-agent delegation topology lives in each agent definition. A plugin that owns a domain lead also carries a `MAINAGENT.md`, injected at `SessionStart` only, binding the main agent to hand that domain's work to the lead rather than decomposing it itself: `coding` to `tech-lead`, `web` to `design-lead`, and `backend` to `ai-research-lead`. Each of those leads wraps its `## Collaboration` map in an `<IMPORTANT>` tag, marking it as the map the lead routes from.
+A 23-agent team for Claude Code organized into a main-session Project Manager, domain leads, and their teammates. Shared operation lives in `plugins/essential/ALLAGENT.md` and `MAINAGENT.md`, subagent conduct including the Workflow-proxy protocol lives in `plugins/essential/SUBAGENT.md`, owner-specific routing lives in each contributing plugin's `ALLAGENT.md`, and per-agent delegation topology lives in each agent definition. A plugin that owns a domain lead also carries a `MAINAGENT.md`, injected at `SessionStart` only, binding the main agent to hand that domain's work to the lead rather than decomposing it itself: `coding` to `tech-lead`, `web` to `design-lead`, and `backend` to `ai-research-lead`. Each of those leads wraps its `## Collaboration` map in an `<IMPORTANT>` tag, marking it as the map the lead routes from.
 
 Install via the `essential:install-agents` skill (ask Claude to "install the agents"). Canonical sources live under `plugins/<owner>/templates/agents/<name>/` as `base.md` plus `frontmatter/claude.json`. The installer discovers source-checkout siblings or enabled same-marketplace plugins, validates the complete discovered roster, stages stitched files, and copies them into `~/.claude/agents/`. It overwrites current same-named discoveries and leaves unrelated or stale files untouched. Edits require a re-install, and changes take effect in the next session.
 
@@ -265,7 +265,7 @@ Install via the `essential:install-agents` skill (ask Claude to "install the age
 | `project-initializer` | Project Initializer — run-once bootstrap | sonnet | low | acceptEdits | leaf, memory |
 | `workflow-optimizer` | Workflow Optimizer — meta-review of agents/skills, proposes diffs only | opus | high | auto | background, memory |
 
-Each agent's `## Collaboration` section records proven role-level collaborators and delegation targets using role-only definition names. These are runtime defaults, not an allowlist; naming, `agent_id` messaging, main-agent brokering, and nested-spawn policy live in `plugins/essential/CLAUDE.md`.
+Each agent's `## Collaboration` section records proven role-level collaborators and delegation targets using role-only definition names. These are runtime defaults, not an allowlist; naming, `agent_id` messaging, main-agent brokering, and nested-spawn policy live in `plugins/essential/ALLAGENT.md`.
 
 Every agent owns project-scoped memory at `.claude/agent-memory/<role>/MEMORY.md`. Definitions state the durable role-specific knowledge to retain, while `plugins/essential/templates/memory.md` defines the shared evidence, freshness, contradiction, archival, and size-control contract. Memory writers keep Write and Edit available without new hooks; source-read-only roles restrict those tools to memory by charter.
 
@@ -331,7 +331,7 @@ Only the main agent names persistent teammates. It chooses one of the three shor
 
 ### Team operation
 
-- Works team-first: The Project Manager initiates the team, appoints domain leads, and handles staffing and user/session proxies. Each lead gathers teammate advice, decomposes its assigned work, owns the domain's implementation decisions, assigns and monitors the pieces across its team, and reconciles delivery. `plugins/essential/CLAUDE.md` carries shared operation rules; each owner plugin's `CLAUDE.md` carries only its task-to-specialist rows.
+- Works team-first: The Project Manager initiates the team, appoints domain leads, and handles staffing and user/session proxies. Each lead gathers teammate advice, decomposes its assigned work, owns the domain's implementation decisions, assigns and monitors the pieces across its team, and reconciles delivery. `plugins/essential/ALLAGENT.md` carries shared operation rules; each owner plugin's `ALLAGENT.md` carries only its task-to-specialist rows.
 - Subagents reply to the assigning teammate's `agent_id`. Roles and configured names are never direct-message addresses. For continuing work they message the best-known teammate directly when they have its ID, ask the main agent to resolve the ID when the teammate is known, and ask the main agent to suggest a warm peer by folder/feature history or spawn a new named teammate only when they cannot identify the owner.
 - Subagents never launch the `Workflow` tool: they compose the complete tool input and SendMessage it to the main agent, which launches it and replies with the result (see `plugins/essential/SUBAGENT.md`). Plans authored by a specialist in plan mode flow back to the main agent the same way for presentation.
 

@@ -94,7 +94,7 @@ def mentioned_plugins(text: str, names: set[str]) -> set[str]:
 
 
 def instruction_text(plugin: Path) -> str:
-    return (plugin / "CLAUDE.md").read_text() + (
+    return (plugin / "ALLAGENT.md").read_text() + (
         plugin / "references" / INSTRUCTION_FILE
     ).read_text()
 
@@ -105,16 +105,16 @@ def test_marketplace_plugins_ship_action_instruction_contracts() -> None:
 
     for name, plugin in plugins.items():
         domain = plugin / "references" / INSTRUCTION_FILE
-        claude = plugin / "CLAUDE.md"
+        agents = plugin / "ALLAGENT.md"
         manifest = load_json(plugin / ".claude-plugin" / "plugin.json")
         hooks = load_json(plugin / "hooks" / "hooks.json")
 
         assert domain.is_file(), name
-        assert claude.is_file(), name
+        assert agents.is_file(), name
         assert "hooks" not in manifest, name
-        assert f"{{{{PLUGIN_DIR}}}}/references/{INSTRUCTION_FILE}" in claude.read_text()
+        assert f"{{{{PLUGIN_DIR}}}}/references/{INSTRUCTION_FILE}" in agents.read_text()
         for event in ("SessionStart", "SubagentStart"):
-            assert any("/CLAUDE.md" in command for command in hook_commands(hooks, event))
+            assert any("/ALLAGENT.md" in command for command in hook_commands(hooks, event))
 
 
 def test_marketplace_and_plugin_versions_use_semver_from_one() -> None:

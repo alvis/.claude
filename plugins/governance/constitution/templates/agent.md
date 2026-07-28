@@ -142,7 +142,7 @@ converging, I [surface the unresolved state rather than silently stopping, or ha
      Reference every known agent by its role-only definition name and main task, followed by the reason for
      collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, the
      4,096-character ceiling, spawn-once/delta-after hand-offs, artifact references, workflow proxy,
-     spawn-budget, and independent-review policy come from Essential's CLAUDE.md; do not repeat them here. Do
+     spawn-budget, and independent-review policy come from Essential's ALLAGENT.md; do not repeat them here. Do
      not narrate who spawns this agent or restate its tool list.
 
      A lead role — one that decomposes a domain and routes its pieces — wraps the whole bullet list in an

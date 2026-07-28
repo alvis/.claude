@@ -6,8 +6,8 @@ from contract_footprint import check_plugin
 
 PLUGIN = Path(__file__).resolve().parents[1]
 
-PAYLOADS = ("CLAUDE.md",)
-CHAIN = ("CLAUDE.md", "references/WORKFLOW.md")
+PAYLOADS = ("ALLAGENT.md",)
+CHAIN = ("ALLAGENT.md", "references/WORKFLOW.md")
 
 
 def test_contract_footprint_stays_within_budget() -> None:
