@@ -17,6 +17,7 @@ sys.path.insert(0, str(SCRIPTS))
 import install_agents as install_agents_module
 from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
+    CODEX_MODEL_BY_CLAUDE_MODEL,
     DESCRIPTION_LIMIT,
     AgentTemplateError,
     stitch_agent_definition,
@@ -107,11 +108,86 @@ def test_stitches_native_codex_agent_toml_from_the_same_template(
     assert parsed == {
         "name": "test-agent",
         "description": "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
-        "developer_instructions": (
-            "# Test agent\n\nCodex instructions.\n" + memory_section("test-agent")
-        ),
+        "developer_instructions": "# Test agent\n\nCodex instructions.\n",
     }
     assert definition == stitch_codex_agent_definition(template)
+
+
+@pytest.mark.parametrize(
+    ("claude_model", "effort", "codex_model", "codex_effort"),
+    (
+        ("opus", "high", "gpt-5.6-sol", "high"),
+        ("sonnet", "medium", "gpt-5.6-sol", "medium"),
+        ("fable", "xhigh", "gpt-5.6-sol", "xhigh"),
+        ("haiku", None, "gpt-5.6-luna", "low"),
+        ("inherit", "low", None, "low"),
+    ),
+)
+def test_maps_claude_models_and_effort_to_codex(
+    tmp_path: Path,
+    claude_model: str,
+    effort: str | None,
+    codex_model: str | None,
+    codex_effort: str,
+) -> None:
+    frontmatter: dict[str, object] = {
+        "name": "test-agent",
+        "model": claude_model,
+    }
+    if effort is not None:
+        frontmatter["effort"] = effort
+    template = write_template(
+        tmp_path,
+        "test-agent",
+        frontmatter=frontmatter,
+    )
+
+    parsed = tomllib.loads(stitch_codex_agent_definition(template))
+
+    assert parsed.get("model") == codex_model
+    assert parsed["model_reasoning_effort"] == codex_effort
+
+
+def test_codex_projection_removes_claude_only_agent_behavior(
+    tmp_path: Path,
+) -> None:
+    body = (
+        "# Test agent\n\nShared behavior.\n\n"
+        "## Memory\n\n"
+        "I use `.claude/agent-memory/test-agent/MEMORY.md` and follow "
+        "`plugins/essential/templates/memory.md` with durable evidence, a "
+        "last-verified date, an archive before 150 lines or 20KB, and "
+        "`topics/<stable-area>/<specific-subject>.md`.\n\n"
+        "## Delegation Modes\n\n"
+        "I use Dynamic Workflow for bounded work.\n\n"
+        "## Collaboration\n\n"
+        "I collaborate with the runtime roster.\n"
+    )
+    startup = "Greet the user and wait for a task."
+    template = write_template(
+        tmp_path,
+        "test-agent",
+        frontmatter={
+            "name": "test-agent",
+            "model": "opus",
+            "effort": "medium",
+            "initialPrompt": startup,
+        },
+        body=body,
+    )
+
+    claude = stitch_agent_definition(template)
+    codex = tomllib.loads(stitch_codex_agent_definition(template))
+    instructions = codex["developer_instructions"]
+
+    assert body in claude
+    assert startup in claude
+    assert "## Memory" not in instructions
+    assert ".claude/agent-memory/" not in instructions
+    assert "## Delegation Modes" not in instructions
+    assert "Dynamic Workflow" not in instructions
+    assert startup not in instructions
+    assert "## Collaboration" in instructions
 
 
 def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
@@ -767,7 +843,40 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     )
     assert tech_lead["name"] == "tech-lead"
     assert tech_lead["description"]
+    assert tech_lead["model"] == "gpt-5.6-sol"
+    assert tech_lead["model_reasoning_effort"] == "high"
     assert tech_lead["developer_instructions"].startswith("# Tech Lead")
+    assert ".claude/agent-memory/" not in tech_lead["developer_instructions"]
+    assert "Dynamic Workflow" not in tech_lead["developer_instructions"]
+    test_runner = tomllib.loads(
+        (destination / "test-runner.toml").read_text(encoding="utf-8")
+    )
+    assert test_runner["model"] == "gpt-5.6-luna"
+    assert test_runner["model_reasoning_effort"] == "low"
+
+    templates_by_file = {
+        f"{template.name}.toml": template
+        for template in discover_agent_templates(ROOT / "plugins/essential")
+    }
+    for path in destination.glob("*.toml"):
+        agent = tomllib.loads(path.read_text(encoding="utf-8"))
+        source_template = templates_by_file[path.name]
+        frontmatter = json.loads(
+            (source_template.path / "frontmatter/claude.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        source_model = frontmatter.get("model")
+        if source_model in (None, "inherit"):
+            assert "model" not in agent
+        else:
+            assert agent["model"] == CODEX_MODEL_BY_CLAUDE_MODEL[source_model]
+        assert "color" not in agent
+        assert "permissionMode" not in agent
+        assert "memory" not in agent
+        assert "maxTurns" not in agent
+        assert "initialPrompt" not in agent
+        assert "hooks" not in agent
 
 
 def test_duplicate_names_fail_before_any_destination_write(tmp_path: Path) -> None:

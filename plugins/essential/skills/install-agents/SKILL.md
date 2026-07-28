@@ -14,9 +14,11 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 
 1. In a source checkout, discovers `plugins/*/templates/agents/*`; from an installed Essential plugin, reads the current harness's plugin list and discovers templates only from enabled plugins in Essential's marketplace.
 2. Validates every `base.md` + `frontmatter/claude.json` pair, including its role-only definition name, three distinct preferred short teammate names, runtime tool inheritance, model/effort, centralized-policy boundary, and required project-memory path and maintenance contract, and rejects malformed or duplicate names before touching the destination.
-3. Stitches all definitions into Claude Code Markdown or native Codex TOML with `name`, `description`, and `developer_instructions`.
+3. Stitches all definitions into Claude Code Markdown or native Codex TOML. Codex receives `name`, `description`, `developer_instructions`, `model`, and `model_reasoning_effort`: Opus, Sonnet, and Fable map to `gpt-5.6-sol`; Haiku maps to `gpt-5.6-luna` at low effort; `inherit` leaves the model unset. Explicit effort is preserved.
 4. Copies staged files into the selected harness's agent directory, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
+
+Codex has no safe equivalent for Claude's color, permission mode, project-memory mode, turn limit, startup prompt, or per-agent hooks, so the projection omits them. It also removes the Claude-managed `Memory` and Dynamic Workflow delegation sections from `developer_instructions`; model tools, sandboxing, approvals, and local memories remain Codex-owned.
 
 ## Workflow
 
@@ -48,7 +50,7 @@ head -3 ~/.claude/agents/tech-lead.md
 head -3 ~/.codex/agents/tech-lead.toml
 ```
 
-In a fresh session, the roster appears in the selected harness's agent list.
+In a fresh session, the roster appears in the selected harness's agent list. For Codex, confirm a lead such as `tech-lead` uses `gpt-5.6-sol` and the lightweight `test-runner` uses `gpt-5.6-luna`.
 
 For maintainer verification, run the deterministic contract suite:
 

@@ -38,6 +38,18 @@ DESCRIPTION_LIMIT = 1024
 # `inherit`) so they never pin to a version that goes stale.
 VALID_MODELS = ("sonnet", "opus", "haiku", "fable", "inherit")
 VALID_EFFORTS = ("low", "medium", "high", "xhigh", "max")
+CODEX_MODEL_BY_CLAUDE_MODEL = {
+    "opus": "gpt-5.6-sol",
+    "sonnet": "gpt-5.6-sol",
+    "haiku": "gpt-5.6-luna",
+    "fable": "gpt-5.6-sol",
+}
+CODEX_DEFAULT_EFFORT_BY_CLAUDE_MODEL = {
+    # Claude's lightweight deterministic tier has no configurable effort.
+    # Pin Codex's equivalent tier low so its role does not silently become
+    # more expensive when the target model's default changes.
+    "haiku": "low",
+}
 # NOTE: Kept deliberately permissive — these reject typos, not unfamiliar modes.
 # Claude Code owns this set and may extend it; a mode it accepts but we omit
 # would fail the whole roster here for no reason.
@@ -195,20 +207,65 @@ def stitch_agent_definition(template_directory: Path) -> str:
     return f"---\n{yaml}\n---\n\n{body}"
 
 
+def _remove_markdown_section(body: str, heading: str) -> str:
+    section = re.compile(
+        rf"^## {re.escape(heading)}\n.*?(?=^## |\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = section.search(body)
+    if match is None:
+        return body
+    before = body[: match.start()].rstrip()
+    after = body[match.end() :].lstrip("\n")
+    if before and after:
+        return f"{before}\n\n{after}"
+    return before or after
+
+
+def _codex_developer_instructions(body: str) -> str:
+    """Project shared instructions onto behavior available in Codex."""
+    projected = _remove_markdown_section(body, "Memory")
+    projected = _remove_markdown_section(projected, "Delegation Modes")
+    projected = projected.rstrip() + "\n"
+    unsupported = next(
+        (
+            marker
+            for marker in (".claude/agent-memory/", "Dynamic Workflow")
+            if marker in projected
+        ),
+        None,
+    )
+    if unsupported:
+        raise AgentTemplateError(
+            f"Codex developer instructions retain Claude-only behavior: {unsupported}"
+        )
+    return projected
+
+
 def stitch_codex_agent_definition(template_directory: Path) -> str:
     """Return one installable Codex custom-agent TOML definition."""
     template_directory = Path(template_directory)
     frontmatter = load_agent_frontmatter(template_directory)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
     validate_agent_contract(frontmatter, body)
-    fields = {
-        "name": frontmatter["name"],
-        "description": frontmatter["description"],
-        "developer_instructions": body,
-    }
+    fields = [
+        ("name", frontmatter["name"]),
+        ("description", frontmatter["description"]),
+    ]
+    claude_model = frontmatter.get("model")
+    if claude_model not in (None, "inherit"):
+        fields.append(("model", CODEX_MODEL_BY_CLAUDE_MODEL[claude_model]))
+    effort = frontmatter.get("effort") or CODEX_DEFAULT_EFFORT_BY_CLAUDE_MODEL.get(
+        claude_model
+    )
+    if effort is not None:
+        fields.append(("model_reasoning_effort", effort))
+    fields.append(
+        ("developer_instructions", _codex_developer_instructions(body))
+    )
     return "".join(
         f"{name} = {json.dumps(value, ensure_ascii=False)}\n"
-        for name, value in fields.items()
+        for name, value in fields
     )
 
 
