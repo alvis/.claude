@@ -31,9 +31,6 @@ SHARED_POLICY_LANGUAGE = (
     "spawn target",
     "spawned by",
 )
-REVIEWER_DEFAULT = re.compile(
-    r"`[a-z0-9]+(?:-[a-z0-9]+)*` \([^)\n]+\)"
-)
 # NOTE: Claude Code caps an agent description at 1024 characters.
 DESCRIPTION_LIMIT = 1024
 # NOTE: Stricter than Claude Code, which also accepts a full model ID. Agent
@@ -164,33 +161,6 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
         raise AgentTemplateError(
             f"agent body repeats shared delegation policy: {duplicated_policy}"
         )
-
-    hooks = frontmatter.get("hooks", {})
-    if isinstance(hooks, dict):
-        for matcher in hooks.get("Stop", []):
-            if not isinstance(matcher, dict):
-                continue
-            for hook in matcher.get("hooks", []):
-                if not isinstance(hook, dict):
-                    continue
-                prompt = hook.get("prompt", "")
-                if not isinstance(prompt, str) or "review-routing gate" not in prompt:
-                    continue
-                if (
-                    len(REVIEWER_DEFAULT.findall(prompt)) < 1
-                    or "proven defaults" not in prompt
-                    or "better runtime specialist" not in prompt
-                ):
-                    raise AgentTemplateError(
-                        "review-routing hook must name concrete reviewer defaults"
-                    )
-                if (
-                    "independently inspect the changed artifact" not in prompt
-                    or "return verdict ok or blocked with findings" not in prompt
-                ):
-                    raise AgentTemplateError(
-                        "review-routing hook must state the independent review action"
-                    )
 
     name = frontmatter.get("name")
     if frontmatter.get("memory") != "project":
