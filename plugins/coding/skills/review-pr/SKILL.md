@@ -55,7 +55,9 @@ PR, the repository, and the standards.
 - **Optional**: `--repo <owner/name>` to target another repository; `--area=<list>`
   to restrict the review to a subset of `alignment`, `correctness`, `security`,
   `quality`, `testing`, `docs`, `style` (default all); `--dry-run` to print the
-  payload and post nothing.
+  payload and post nothing. The `process` concern is not selectable and is never
+  filtered out — a `chore` blocks merge whichever areas were asked for, and a flag
+  that could drop one would report a blocked PR as clean.
 - **Prerequisites**: authenticated `gh` with write access, and network access to
   reach the PR.
 
@@ -243,7 +245,7 @@ Derive `event`; never choose it freely:
 |---|---|
 | Any P0/P1 finding, or any `chore` | `REQUEST_CHANGES` |
 | Only P2/P3/P4, only kinds other than `chore`, or nothing at all — and the tests genuinely cover the change | `APPROVE` |
-| Tests unconvincing, red CI, black zone, or a blocker prevented a full review | `COMMENT` |
+| Tests unconvincing, red CI, black zone, a head SHA that moved mid-review, or a blocker prevented a full review | `COMMENT` |
 
 `chore` is the only kind that reaches this table; `question`, `thought`, `note`, and
 `praise` never hold a verdict on their own. A review carrying nothing but those is an

@@ -76,7 +76,7 @@ findings:
     line: <line number in the head revision>
     side: RIGHT | LEFT
     start_line: <first line of a multi-line range, or null>
-    concern: alignment | correctness | security | quality | testing | docs | style
+    concern: alignment | correctness | security | quality | testing | docs | style | process
     priority: P0 | P1 | P2 | P3 | P4 | null
     kind: question | thought | note | chore | praise | null
     body: <the comment text, written per tone.md>
@@ -99,6 +99,10 @@ not_reviewed:
   or data integrity; **P1** violates a standard or will cause a real defect; **P2**
   is maintainability or design; **P3** is optional polish; **P4** is trivia. It
   drives the verdict.
+- `concern` is what the finding is about. Every value but `process` grades the code;
+  `process` is the one that does not, and it exists so a `chore` — which demands a
+  step the author owes rather than a change to the diff — has somewhere honest to
+  sit. Every `chore` is `process`, and nothing else is.
 - `kind` classifies a comment that makes no priority claim: `chore` for a process
   step the author owes before merge, `question` where intent is genuinely unclear,
   `thought` for a non-blocking idea that is explicitly not a request, `note` for a

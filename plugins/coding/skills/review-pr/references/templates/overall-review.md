@@ -46,6 +46,8 @@ Reviewed `{{head_sha_short}}` — {{files_changed}} files, +{{additions}}/-{{del
 > [!IMPORTANT]
 > {{excluded_paths_and_reason}}
 
+### Verdict
+
 > [!{{verdict_alert}}]
 > {{verdict_sentence}}
 ```
@@ -80,13 +82,15 @@ Notes for the sections where the guidance is not self-evident:
 - **Not reviewed** — excluded paths and any concern that could not run. The author is
   entitled to know the boundary of what was actually looked at.
 
-Close with the verdict in one sentence. `{{verdict_alert}}` is not a free choice:
-resolve it from the submitted `event` and the reason the verdict was held, so a
-review that cannot be trusted never closes as if it needed no action.
+*Verdict* is the one section that is never dropped, and it carries its own heading so
+the closing alert is never read as part of the exclusion list above it. Close it with
+the verdict in one sentence. `{{verdict_alert}}` is not a free choice: resolve it from
+the submitted `event` and the reason the verdict was held, so a review that cannot be
+trusted never closes as if it needed no action.
 
 | `event`, and why it was held | `{{verdict_alert}}` |
 |---|---|
 | `APPROVE` | `NOTE` — say so plainly and name anything to watch after merge |
 | `COMMENT` held on context alone — a self-review GitHub will not let you approve | `NOTE` |
-| `COMMENT` held because the review itself is incomplete or untrustworthy — unconvincing tests, red CI, a black-zone diff, a blocker, or a head SHA that moved mid-review | `WARNING` |
+| `COMMENT` held because the review itself is incomplete or untrustworthy — anything on the blocker row of the `event` table in `SKILL.md`, which owns that list | `WARNING` |
 | `REQUEST_CHANGES` | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them |

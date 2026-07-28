@@ -218,10 +218,9 @@ function validateEmail(email) { ... }"
 ### Comment Prefix System
 
 These prefixes are the authoring taxonomy for review notes. A comment posted to a
-GitHub PR is marked instead by a priority badge or an emoji, never a literal
-prefix — see
+GitHub PR carries a rendered marker instead, never a literal prefix — see
 [review-pr/references/tone.md](../../skills/review-pr/references/tone.md), which
-owns that surface.
+owns the marker set for that surface.
 
 **Purpose**: Categorize feedback by urgency and type
 
