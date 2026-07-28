@@ -39,8 +39,16 @@ SUPPRESSED_REPORTING = (
         re.IGNORECASE,
     ),
     re.compile(
+        # Scope and confidence read alike but mean opposite things: "only
+        # report accessibility issues" narrows an audit's domain, while "report
+        # only issues you can prove" narrows what survives doubt. Only the
+        # second is suppression, so a confidence word must appear next to the
+        # noun — as its adjective, or in the clause qualifying it.
         r"(?:only report|report only) (?:\w+ ){0,3}"
-        r"(?:problems|issues|findings|violations)",
+        r"(?:(?:definite|certain|provable|proven|unambiguous|indisputable"
+        r"|unmistakable|obvious)\w* (?:problems|issues|findings|violations)"
+        r"|(?:problems|issues|findings|violations)(?: \w+){0,2} "
+        r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)))",
         re.IGNORECASE,
     ),
     re.compile(
@@ -240,6 +248,8 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "When in doubt, omit the finding.",
         "Report a violation only if you are certain it is one.",
         "Report only issues you can prove.",
+        "Only report problems you are certain about.",
+        "Report only definite violations.",
     )
     legitimate = (
         "Do not use for: deleting or modifying code (report only).",
@@ -248,6 +258,9 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Cap published nits at five; rank what you found.",
         "Be conservative with resource consumption and migration blast radius.",
         "Err on the side of caution with a destructive migration.",
+        "Only report accessibility issues.",
+        "Report only security violations.",
+        "Only report findings that block release.",
     )
 
     for text in suppressing:
