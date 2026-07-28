@@ -87,6 +87,6 @@ review that cannot be trusted never closes as if it needed no action.
 | `event`, and why it was held | `{{verdict_alert}}` |
 |---|---|
 | `APPROVE` | `NOTE` — say so plainly and name anything to watch after merge |
-| `COMMENT` held on context alone — a self-review GitHub will not let you approve, or `goal_spec_alignment: skipped_unknown` | `NOTE` |
+| `COMMENT` held on context alone — a self-review GitHub will not let you approve | `NOTE` |
 | `COMMENT` held because the review itself is incomplete or untrustworthy — unconvincing tests, red CI, a black-zone diff, a blocker, or a head SHA that moved mid-review | `WARNING` |
 | `REQUEST_CHANGES` | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them |

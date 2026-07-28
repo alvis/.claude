@@ -303,8 +303,7 @@ When a feature spans more than one zone or category, split it into a stack gover
 - Focus on important issues first
 - Mark every comment per
   [review-pr/references/tone.md](../../../skills/review-pr/references/tone.md),
-  which owns how a PR comment is marked: a priority badge or an emoji, never a
-  literal prefix
+  which owns the marker set and how each one is rendered — never a literal prefix
 
 ### Merge Requirements
 

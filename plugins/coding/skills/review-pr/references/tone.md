@@ -24,8 +24,10 @@ the actual question.
 
 Every inline comment opens with exactly one marker, and the marker *is* the label:
 never a literal word, never a colon. `issue:`, `suggestion:`, `todo:`, and `nit:`
-appear nowhere in posted text. After the marker comes a bolded one-line imperative
-title, then the body.
+appear nowhere in posted text. After the marker comes a bolded one-line title, then
+the body. Write that title as an imperative where the comment asks for something —
+a badge or a tag — and as a plain statement where it does not, so a question reads
+as a question and praise is not phrased as an order.
 
 A comment that claims a consequence opens with a priority badge, wrapped so it
 renders at text height:

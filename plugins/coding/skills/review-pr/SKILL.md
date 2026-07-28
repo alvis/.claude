@@ -249,6 +249,12 @@ Derive `event`; never choose it freely:
 `praise` never hold a verdict on their own. A review carrying nothing but those is an
 `APPROVE` when the tests hold up.
 
+`goal_spec_alignment: skipped_unknown` does not hold the verdict either. A change with
+no goal or spec to resolve is the ordinary case, not a concern that failed to run, so
+disclose it in the body and derive `event` from the findings and the tests as usual.
+What does hold the verdict is a concern that could not run when there was something to
+check — that is the blocker row above.
+
 GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your own PR. Compare the author
 against `gh api user --jq .login` first; on a self-review, downgrade to `COMMENT`
 and say so in the body. With `--dry-run`, print the payload and post nothing.
@@ -268,7 +274,8 @@ and say so in the body. With `--dry-run`, print the payload and post nothing.
 
 Report per PR reviewed: review URL, reviewed SHA, the review tree used and whether
 it was reused or created, change-tracking path, PR zone, goal/spec alignment
-(including *skipped — unknown*), finding counts by priority, submitted `event`,
-unanchored findings, and paths not reviewed. For a stack, report each PR in the same
+(including *skipped — unknown*), finding counts by priority **and by kind** — an
+outstanding `chore` is a merge blocker and must never be summarised as zero findings
+— submitted `event`, unanchored findings, and paths not reviewed. For a stack, report each PR in the same
 bottom-up order it was reviewed. On a blocked run, name the blocker and which
 concerns never ran — a partial review is never reported as complete.
