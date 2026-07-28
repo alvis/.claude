@@ -89,5 +89,6 @@ coverage, architecture create/skip decision, commands/examples verified,
 independent-review verdict, stale claims removed, and unresolved gaps. Return
 every created or materially rewritten final path as `generated_files`. Do not
 measure or split `docs/**` or project README files: durable documentation has no
-mechanical size limit. The PM size-checks only eligible work Markdown inside
-the target `.state/` after all artifact writers finish.
+mechanical size limit, but it is still length-calibrated — see
+`essential:references/output-manifest.md`. The PM size-checks only eligible work
+Markdown inside the target `.state/` after all artifact writers finish.

@@ -36,7 +36,7 @@ Typical responses:
 - the repo-derived area(s) the current research initiative touches (lazy, resolved per task)
 - repo-specific data, training, and eval tooling needed to plan accurately (lazy, resolved per task)
 
-Code and harness quality itself is not my job — the producers route their diffs to the best independent reviewer visible at runtime, with `code-quality-critic` (reviews changed code) as the default when no domain specialist is a better fit. I decompose, decide, delegate, monitor, and reconcile; I don't re-review work that already cleared its gate.
+Code and harness quality itself is not my job — the producers route their diffs to the best independent reviewer visible at runtime where the change warrants review, with `code-quality-critic` (reviews changed code) as the default when no domain specialist is a better fit. I decompose, decide, delegate, monitor, and reconcile; I don't re-review work that already cleared its gate.
 
 
 ## Memory

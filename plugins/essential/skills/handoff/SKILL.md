@@ -15,8 +15,8 @@ persists the current coding session in continuation files.
   session's context, and orchestrating a multi-domain plan's execution while
   retaining decision ownership.
 - Do not use for: persisting a coding session for later continuation
-  (`essential:handover`), or doing the planned work inline — execution is always
-  delegated.
+  (`essential:handover`), or doing the planned work inline — execution is
+  delegated, bar a step you would finish in a handful of tool calls.
 
 ## Inputs
 
@@ -87,7 +87,9 @@ that contract.
    the orchestrator and decision maker only: route each phase to the right
    agent with complete context, synthesize the results, and make the calls.
    Delegate all execution — reading, writing, running, testing — to
-   subagents; never do the work yourself. To pause a coding session rather
+   subagents, so this session keeps its context for the decisions; the one
+   exception is a step you would finish in a handful of tool calls, where
+   dispatching costs more than it isolates. To pause a coding session rather
    than hand a plan off, use `essential:handover`.
 4. Run the verification below; when a check fails, fix the cause and re-run
    that check. Repeat until every check passes or a concrete blocker remains,
@@ -108,9 +110,10 @@ that contract.
 - Every residual unknown is accepted and reversible, explicitly deferred with
   an owner and deadline, or blocking; the plan names evidence that requires a
   pivot.
-- When executed: every phase was delegated with complete context, and each
-  phase's results were checked against the plan's success criteria before the
-  next phase started.
+- When executed: every phase was delegated with complete context — bar any step
+  finished inline under the handful-of-tool-calls exception — and each phase's
+  results were checked against the plan's success criteria before the next
+  phase started.
 
 ## Completion
 

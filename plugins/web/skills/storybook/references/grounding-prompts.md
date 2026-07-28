@@ -16,9 +16,9 @@ You are auditing the default rendered state of a Storybook story. Inspect the su
 - Missing or placeholder content where real content is expected.
 - Obvious render glitches (font fallback flashes, broken icons, missing images).
 
-Be conservative: only report problems clearly visible in the image. Do not speculate about behaviour, hover, or focus — those are separate states.
+Report every problem you see, including ones you are unsure about — rate impact in the severity tag and your certainty that the screenshot shows it in the confidence tag, so an uncertain finding is recorded rather than dropped or overstated. Judge only what this screenshot shows: behaviour, hover, and focus are audited from their own screenshots.
 
-Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] <description>".
+Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] [confidence: confirmed|possible] <description>". Severity is impact; confidence is whether this screenshot actually shows the problem. A `possible` finding never becomes a release blocker, so an uncertain observation costs nothing to report.
 
 ## hover
 
@@ -31,7 +31,7 @@ You are auditing the hover state of a Storybook story. The supplied screenshot w
 
 If the hover state looks identical to a typical default rendering, report it as a finding (the user expects discoverable affordance).
 
-Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] <description>".
+Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] [confidence: confirmed|possible] <description>". Severity is impact; confidence is whether this screenshot actually shows the problem. A `possible` finding never becomes a release blocker, so an uncertain observation costs nothing to report.
 
 ## active
 
@@ -44,7 +44,7 @@ You are auditing the active / pressed state of a Storybook story. The screenshot
 
 If the active state is indistinguishable from default or hover, report it as a medium-severity finding.
 
-Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] <description>".
+Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] [confidence: confirmed|possible] <description>". Severity is impact; confidence is whether this screenshot actually shows the problem. A `possible` finding never becomes a release blocker, so an uncertain observation costs nothing to report.
 
 ## focus-visible
 
@@ -57,4 +57,4 @@ You are auditing the keyboard focus-visible state of a Storybook story. The scre
 
 Report a missing or weak focus indicator as a high-severity finding. Report a low-contrast indicator as medium severity.
 
-Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] <description>".
+Output format: first line must be either "ISSUES: none" or "ISSUES: found". If found, list each issue on its own line as "- [severity: low|medium|high] [confidence: confirmed|possible] <description>". Severity is impact; confidence is whether this screenshot actually shows the problem. A `possible` finding never becomes a release blocker, so an uncertain observation costs nothing to report.

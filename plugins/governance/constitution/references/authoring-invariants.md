@@ -20,7 +20,9 @@ frontmatter syntax.
   Trim repetition and ceremony; never trim the executable contract.
 - Keep a main `SKILL.md` below 500 body lines. Prefer concise instructions over
   personas, metaphors, diagrams, repeated phase descriptions, and fixed report
-  envelopes.
+  envelopes. This is a skill-specific limit on top of the general artifact
+  length rule, which is defined once in
+  `essential:references/output-manifest.md` and is not restated here.
 - Use headings that fit the capability. Boundaries, inputs, workflow,
   verification, and completion are useful defaults, not mandatory names.
 - Delegate when performing a step directly would consume more session context

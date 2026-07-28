@@ -4,7 +4,9 @@
 # Reads the prompt section for the given state from references/grounding-prompts.md,
 # embeds the absolute image path so Claude Code reads it, parses the result.
 # Sentinel "ISSUES: none" → empty issues. Otherwise lines beginning with
-# "- [severity: low|medium|high] <description>" are parsed best-effort.
+# "- [severity: low|medium|high] [confidence: confirmed|possible] <description>"
+# are parsed best-effort; an omitted confidence reads as "possible", since a
+# dropped tag is a format failure and not evidence the model was certain.
 #
 # Always exits 0 — errors become an empty issues array with the raw error
 # text retained for debugging.
@@ -85,14 +87,15 @@ if [[ "$FIRST_LINE" =~ ^ISSUES:[[:space:]]*found ]]; then
   ISSUES_JSON="$(printf '%s\n' "$RAW" | awk '
     BEGIN { print "[" ; first = 1 }
     /^- \[severity:[[:space:]]*(low|medium|high)\]/ {
-      match($0, /^- \[severity:[[:space:]]*([a-z]+)\][[:space:]]*(.*)$/, m)
+      match($0, /^- \[severity:[[:space:]]*([a-z]+)\][[:space:]]*(\[confidence:[[:space:]]*([a-z]+)\][[:space:]]*)?(.*)$/, m)
       sev = m[1]
-      desc = m[2]
+      conf = (m[3] == "" ? "possible" : m[3])
+      desc = m[4]
       gsub(/"/, "\\\"", desc)
       gsub(/\\/, "\\\\", desc)
       if (!first) printf ","
       first = 0
-      printf "{\"severity\":\"%s\",\"description\":\"%s\"}", sev, desc
+      printf "{\"severity\":\"%s\",\"confidence\":\"%s\",\"description\":\"%s\"}", sev, conf, desc
     }
     END { print "]" }
   ')"
@@ -100,8 +103,8 @@ if [[ "$FIRST_LINE" =~ ^ISSUES:[[:space:]]*found ]]; then
   if ! printf '%s' "$ISSUES_JSON" | jq empty >/dev/null 2>&1 || [[ "$(printf '%s' "$ISSUES_JSON" | jq 'length')" == "0" ]]; then
     ISSUES_JSON="$(printf '%s\n' "$RAW" | \
       grep -E '^- \[severity: (low|medium|high)\]' | \
-      sed -E 's/^- \[severity: (low|medium|high)\] +(.*)$/\1\t\2/' | \
-      jq -Rsc 'split("\n") | map(select(length>0) | split("\t")) | map({severity: .[0], description: .[1]})')"
+      sed -E 's/^- \[severity: (low|medium|high)\] +(\[confidence: ([a-z]+)\] +)?(.*)$/\1\t\3\t\4/' | \
+      jq -Rsc 'split("\n") | map(select(length>0) | split("\t")) | map({severity: .[0], confidence: (if .[1] == "" then "possible" else .[1] end), description: .[2]})')"
   fi
 fi
 

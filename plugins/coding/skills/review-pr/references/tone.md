@@ -40,6 +40,8 @@ author who learns it is unreliable stops reading them.
 
 ## Volume
 
-Cap `nit:` at five. A forty-comment review gets skimmed and resented. Structural
+Find every `nit:`; publish at most five. A forty-comment review gets skimmed and
+resented, so rank what you found, publish the five that most repay the author's
+attention, and say in the overall body how many similar nits remain. Structural
 findings belong in the overall body where they can be seen whole, not scattered
 across eight lines that each show one symptom.

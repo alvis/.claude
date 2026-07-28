@@ -6,10 +6,21 @@ adds what is specific to reviewing a PR diff.
 
 ## Depth
 
-Scale depth to the size zone: green reviews line by line, yellow leads
+Scale reading depth to the size zone: green reviews line by line, yellow leads
 with the key areas then goes line by line, red leads with architecture and goes
-line-level only where it matters, black says split it before reviewing further. A
-2,000-line review that comments on everything teaches nothing.
+line-level only where it matters, black says split it before reviewing further.
+The zone shapes how you read, never what you may find — nothing downstream can
+recover a finding you chose not to make. A black-zone review defers the
+line-level pass; it still reports the structural findings that justify the
+split, rather than withholding what it already saw.
+
+Selectivity belongs to publication, not detection, and it caps only optional
+polish. Publish every `issue:` and `suggestion:` you found, however many that
+is; ranking decides the order they are read in, never whether they appear.
+`nit:` is the sole capped prefix — [tone.md](tone.md) publishes the five
+highest-ranked and counts the rest in the overall body — so a 2,000-line review
+of nits teaches nothing, while a long list of real defects is the review doing
+its job.
 
 One finding per problem, at the highest priority that applies. The same mistake in
 eight places is one finding on the clearest instance, noting that it applies

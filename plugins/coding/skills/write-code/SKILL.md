@@ -68,7 +68,10 @@ Run child skills in this order:
 5. `coding:refactor` for green behavior-preserving cleanup, then
    `coding:document` when the change affects public behavior, configuration,
    operations, or project documentation promised by the contract.
-6. `coding:review-code`; route outstanding findings to `coding:fix` and repeat
+6. `coding:review-code`, on the predicate in
+   [references/WORKFLOW.md](../../references/WORKFLOW.md) — a consequential
+   change, a requested review, or a publication gate, which a composite build
+   almost always meets; route outstanding findings to `coding:fix` and repeat
    the affected review areas until closed or concretely blocked.
 7. `coding:lint`, followed by final focused and full tests, types, coverage,
    and build gates that apply to the repository.
@@ -129,7 +132,8 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    must finish before code review, lint, final validation, and scoped-manifest
    sealing.
 6. Invoke `coding:review-code` against the completed change and pinned work
-   contract without transferring the pointer/overview coordinator lease. Area
+   contract, on the same predicate step 6 of the child-skill order applies,
+   without transferring the pointer/overview coordinator lease. Area
    reviewers write only their assigned files; reconcile their returned roll-up
    into `review.md` here. Route every outstanding finding to its owner, apply
    corrections, and rerun the affected review areas. Require review output to
@@ -153,7 +157,7 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
    each original as overview, then run one new batch pass. Never size files
    after each write; paths outside `.state/`, including `docs/**`, are
    not mechanically size-gated.
-9. Run the final verification sequence after review and lint: focused tests for
+9. Run the closing gates after review and lint: focused tests for
    every touched slice, then the repository's applicable full tests, types,
    coverage, lint check, and build. Route each failure to its owner, rerun any
    review invalidated by the correction, and repeat the affected gates until
@@ -207,8 +211,9 @@ Pass `--from-composite` only to children that declare it (`setup-project`,
   Lifecycle `completed` has no unfinished required executable leaf.
 - Every child returned a verified `generated_files` manifest and the scoped
   `.state` Markdown gate ran as one batch per pass when applicable.
-- Code review preceded lint, final tests/types/coverage/build preceded every
-  remote publication, and no correction left an invalidated review unstated.
+- Code review, wherever the predicate called for it, preceded lint; final
+  tests/types/coverage/build preceded every remote publication; and no
+  correction left an invalidated review unstated.
 - Commit/push ownership was preserved. A deferred run reports its exact
   `history_state` and `needs_save`, `ready_for_finalization`, or `no_change`
   terminal without a PR or remote mutation. `needs_save` carries a validated

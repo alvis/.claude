@@ -20,6 +20,102 @@ INSTRUCTION_FILE = "WORKFLOW.md"
 STANDARD_REFERENCE = re.compile(
     r"(?<![\w-])(?:(?P<plugin>[a-z][a-z0-9-]*):)?constitution/standards/"
 )
+PLUGINS = ROOT / "plugins"
+# Frontmatter keys whose value is prompt text an installed agent actually reads.
+PROMPT_JSON_FIELDS = ("initialPrompt", "description")
+# A shipped prompt may cap what gets *published*, but never what gets *found*:
+# a finding an agent talks itself out of making is one nothing downstream can
+# recover. Each pattern pairs a hedging directive with a reporting verb, so
+# "report only" in the sense of "report, don't edit" stays legal.
+# Words that qualify a finding by how sure or how visible it is, rather than by
+# what domain it belongs to. Shared by the adjective slot and the trailing
+# clause so both readings of a sentence are covered by one list.
+_CONFIDENCE = (
+    r"(?:(?:definite|certain|provable|proven|unambiguous|indisputable"
+    r"|unmistakable|obvious)\w*"
+    r"|(?:clearly|plainly|readily|obviously) (?:visible|evident|identifiable"
+    r"|apparent|verifiable))"
+)
+# What a suppressive directive suppresses. Named once so every pattern agrees
+# on what counts as a finding instead of drifting noun by noun.
+_FINDING = (
+    r"(?:problems?|issues?|findings?|violations?|observations?"
+    r"|concerns?|bugs?|defects?)"
+)
+# Doubt stated as a property of the finding. A negative imperative suppresses
+# only when it names doubt: "do not report context usage" sets scope, while
+# "do not report uncertain findings" discards evidence.
+_UNCERTAIN = (
+    r"(?:uncertain|unsure|unverified|unconfirmed|unproven|speculative"
+    r"|suspected|tentative|doubtful|ambiguous|possible|potential"
+    r"|low[- ]confidence)"
+)
+SUPPRESSED_REPORTING = (
+    re.compile(
+        # Caution about *how you work* is ordinary engineering advice; caution
+        # about *what you report* is suppression. Only a findings noun separates
+        # them, so "be conservative when reporting estimated token usage" stays
+        # legal while "be conservative about reporting issues" does not.
+        r"be conservative[^.!?;\n]*?\b(?:report|flag|raise|surface|mention)\w*"
+        r"[^.!?;\n]*?" + _FINDING,
+        re.IGNORECASE,
+    ),
+    re.compile(
+        # Same split for caution: it must land on a finding to suppress one.
+        # "Silence" and "not reporting" name the suppression outright and need
+        # no noun.
+        r"err on the side of (?:silence|not reporting|caution[^.!?;\n]*?"
+        r"(?:\b(?:report|flag|raise|surface|mention|omit|skip)\w*"
+        r"[^.!?;\n]*?" + _FINDING + r"|leave (?:it|them|the \w+) out))",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        # Suppression stated outright rather than as a hedge: "do not report
+        # uncertain findings" discards the same evidence without needing an
+        # "only" or a "be conservative" to carry it. Doubt and the finding it
+        # qualifies appear in either order, so both readings are matched.
+        r"(?:(?:do ?n[o']t|never|avoid)\s+"
+        r"(?:report|mention|flag|raise|surface|list|includ)\w*"
+        r"|omit|suppress|withhold|exclude)"
+        r"[^.!?;\n]*?"
+        r"(?:" + _UNCERTAIN + r"[^.!?;\n]*?" + _FINDING
+        + r"|" + _FINDING + r"[^.!?;\n]*?" + _UNCERTAIN + r")",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        # Scope and confidence read alike but mean opposite things: "only
+        # report accessibility issues" narrows an audit's domain, while "report
+        # only issues you can prove" narrows what survives doubt. Only the
+        # second is suppression, so a confidence word must appear next to the
+        # noun — as its adjective, or in the clause qualifying it.
+        # Scanning to the clause end, rather than a few words, closes the
+        # padding bypass: "only report the most clearly visible definite
+        # issues" separates the directive from its noun by more words than any
+        # fixed cap would allow. `;` bounds the scan alongside sentence
+        # punctuation so a following independent clause cannot supply the
+        # confidence words.
+        # Visibility is a confidence word too: "only report problems clearly
+        # visible in the image" is the grounding prompt's original suppressive
+        # clause, and it must fail on its own rather than only when a "be
+        # conservative" lead-in happens to precede it.
+        r"(?:only report|report only)[^.!?;\n]*?"
+        r"(?:" + _CONFIDENCE + r" " + _FINDING
+        + r"|" + _FINDING + r"[^.!?;\n]*? "
+        r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)|"
+        + _CONFIDENCE + r"))",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"when in doubt,? (?:omit|skip|stay silent|do ?n[o']t report)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:report|flag|raise)[^.!?;\n]*?only (?:if|when) you (?:are|'re) "
+        r"(?:certain|sure|confident)",
+        re.IGNORECASE,
+    ),
+)
+
 SEMVER = re.compile(
     r"""
     ^
@@ -157,6 +253,94 @@ def test_instruction_contracts_reference_declared_dependencies_only() -> None:
             prefix = reference.group("plugin")
             assert prefix is not None, f"{name}: unprefixed standard reference"
             assert prefix in allowed, f"{name}: undeclared standard prefix {prefix}"
+
+
+def shipped_prompts() -> list[tuple[str, str]]:
+    """Return one (label, text) pair per prompt this marketplace ships.
+
+    Markdown carries most of them, but an agent's frontmatter JSON ships
+    `initialPrompt` and `description` straight into the installed agent, so a
+    directive placed there reaches a model without passing through any `*.md`.
+    """
+    prompts = [
+        (str(path.relative_to(ROOT)), path.read_text())
+        for path in sorted(PLUGINS.rglob("*.md"))
+    ]
+    prompts.extend(
+        (f"{path.relative_to(ROOT)}:{field}", value)
+        for path in sorted(PLUGINS.glob("*/templates/agents/*/frontmatter/*.json"))
+        for payload in (load_json(path),)
+        for field in PROMPT_JSON_FIELDS
+        for value in (payload.get(field),)
+        if isinstance(value, str)
+    )
+    return prompts
+
+
+def test_no_shipped_prompt_suppresses_reporting() -> None:
+    offenders = [
+        f"{label}:{text.count(chr(10), 0, match.start()) + 1}: {match.group(0)}"
+        for label, text in shipped_prompts()
+        for pattern in SUPPRESSED_REPORTING
+        for match in pattern.finditer(text)
+    ]
+
+    assert offenders == [], "\n".join(offenders)
+
+
+def test_shipped_prompts_cover_agent_frontmatter_json() -> None:
+    labels = [label for label, _ in shipped_prompts()]
+
+    assert any(label.endswith("frontmatter/claude.json:initialPrompt") for label in labels)
+    assert any(label.endswith("frontmatter/meta.json:description") for label in labels)
+
+
+def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
+    suppressing = (
+        "Be conservative: only report problems clearly visible in the image.",
+        "Err on the side of caution and leave it out.",
+        "When in doubt, omit the finding.",
+        "Report a violation only if you are certain it is one.",
+        "Report only issues you can prove.",
+        "Only report problems you are certain about.",
+        "Report only definite violations.",
+        # Padding between the directive and its noun must not buy an escape.
+        "Only report the most clearly visible definite issues.",
+        "Report, after weighing all the available evidence, only if you are certain.",
+        # The grounding prompt's original clause, standing on its own.
+        "Only report problems clearly visible in the image.",
+        "Only report clearly visible problems.",
+        # Suppression needs no hedge to carry it.
+        "Do not report uncertain findings.",
+        "Don't mention low-confidence issues.",
+        "Omit speculative problems from the report.",
+        # Doubt may follow the noun it qualifies rather than precede it.
+        "Never surface findings you are unsure about.",
+    )
+    legitimate = (
+        "Do not use for: deleting or modifying code (report only).",
+        "A claim survives into the report only when an independent source agrees.",
+        "Report context usage only when the runtime measures it.",
+        "Cap published nits at five; rank what you found.",
+        "Be conservative with resource consumption and migration blast radius.",
+        "Err on the side of caution with a destructive migration.",
+        "Only report accessibility issues.",
+        "Report only security violations.",
+        "Only report findings that block release.",
+        # A separate clause supplies the confidence words but not the meaning.
+        "Report only security violations; you are certain to find some.",
+        # Caution aimed at the work, not at the finding, stays legal even when
+        # the sentence goes on to mention reporting.
+        "Be conservative when reporting estimated token usage.",
+        "Err on the side of caution when reporting a destructive migration.",
+        # A scope rule phrased as a negative imperative names no doubt.
+        "Do not report context usage the runtime does not measure.",
+    )
+
+    for text in suppressing:
+        assert any(pattern.search(text) for pattern in SUPPRESSED_REPORTING), text
+    for text in legitimate:
+        assert not any(pattern.search(text) for pattern in SUPPRESSED_REPORTING), text
 
 
 def test_instruction_contracts_list_every_owned_standard() -> None:

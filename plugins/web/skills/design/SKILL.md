@@ -138,7 +138,8 @@ Promote only reviewed, reusable knowledge after sign-off:
   separation materially improves ownership or navigation;
 - durable feature, interaction, information, or experience design goes to
   `docs/design/<design-slug>.md`, with same-stem semantic children only when
-  useful; durable `docs/**` has no mechanical size limit;
+  useful; durable `docs/**` has no mechanical size limit but is still
+  length-calibrated — see `essential:references/output-manifest.md`;
 - task state and implementation evidence remain under the work ID.
 
 Record rendered desktop/mobile evidence; both-mode composited contrast via
