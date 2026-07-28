@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -62,7 +63,7 @@ MEMORY_CONTRACT_MARKERS = (
 
 
 class AgentTemplateError(ValueError):
-    """Raised when an agent source pair cannot produce a valid definition."""
+    """Raised when an agent source set cannot produce a valid definition."""
 
 
 def _reject_nonstandard_number(value: str) -> None:
@@ -107,40 +108,95 @@ def _load_intelligence_levels() -> dict[str, dict[str, dict[str, str]]]:
 
 INTELLIGENCE_LEVELS = _load_intelligence_levels()
 VALID_INTELLIGENCE_LEVELS = tuple(INTELLIGENCE_LEVELS)
+METADATA_FIELDS = {"name", "description", "intelligence"}
+CLAUDE_DERIVED_FIELDS = {
+    "name",
+    "description",
+    "intelligence",
+    "intelligenceLevel",
+    "model",
+    "effort",
+}
+CODEX_DERIVED_FIELDS = {
+    "name",
+    "description",
+    "intelligence",
+    "intelligenceLevel",
+    "model",
+    "model_reasoning_effort",
+    "developer_instructions",
+}
 
 
-def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
-    frontmatter_path = template_directory / "frontmatter/claude.json"
+@dataclass(frozen=True)
+class AgentSources:
+    metadata: dict[str, Any]
+    claude: dict[str, Any]
+    codex: dict[str, Any]
+
+
+def _load_json_object(path: Path) -> dict[str, Any]:
+    try:
+        document = json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=_reject_nonstandard_number,
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as error:
+        raise AgentTemplateError(f"invalid JSON in {path}: {error}") from error
+    if not isinstance(document, dict):
+        raise AgentTemplateError(f"agent source must be a JSON object: {path}")
+    return document
+
+
+def load_agent_sources(template_directory: Path) -> AgentSources:
+    frontmatter_directory = template_directory / "frontmatter"
+    source_paths = {
+        name: frontmatter_directory / name
+        for name in ("meta.json", "claude.json", "codex.json")
+    }
     base_path = template_directory / "base.md"
-    if not frontmatter_path.is_file():
-        raise AgentTemplateError(f"missing frontmatter/claude.json in {template_directory}")
+    for name, source_path in source_paths.items():
+        if not source_path.is_file():
+            raise AgentTemplateError(
+                f"missing frontmatter/{name} in {template_directory}"
+            )
     if not base_path.is_file():
         raise AgentTemplateError(f"missing base.md in {template_directory}")
     resolved_template = template_directory.resolve()
-    for source_path in (frontmatter_path, base_path):
+    for source_path in (*source_paths.values(), base_path):
         try:
             source_path.resolve().relative_to(resolved_template)
         except ValueError as error:
             raise AgentTemplateError(
                 f"template symlink or path escapes agent directory: {source_path}"
             ) from error
-    try:
-        frontmatter = json.loads(
-            frontmatter_path.read_text(encoding="utf-8"),
-            parse_constant=_reject_nonstandard_number,
+    metadata = _load_json_object(source_paths["meta.json"])
+    claude = _load_json_object(source_paths["claude.json"])
+    codex = _load_json_object(source_paths["codex.json"])
+    if set(metadata) != METADATA_FIELDS:
+        raise AgentTemplateError(
+            "frontmatter/meta.json must contain exactly name, description, and intelligence"
         )
-    except (OSError, json.JSONDecodeError, ValueError) as error:
-        raise AgentTemplateError(f"invalid JSON in {frontmatter_path}: {error}") from error
-    if not isinstance(frontmatter, dict):
-        raise AgentTemplateError(f"frontmatter must be a JSON object: {frontmatter_path}")
-    name = frontmatter.get("name")
+    for harness, overlay, reserved in (
+        ("claude", claude, CLAUDE_DERIVED_FIELDS),
+        ("codex", codex, CODEX_DERIVED_FIELDS),
+    ):
+        collision = next((field for field in overlay if field in reserved), None)
+        if collision:
+            raise AgentTemplateError(
+                f"frontmatter/{harness}.json must not define derived field "
+                f"{collision!r}"
+            )
+    name = metadata.get("name")
     if not isinstance(name, str) or not AGENT_NAME.fullmatch(name):
-        raise AgentTemplateError(f"invalid agent name in {frontmatter_path}: {name!r}")
+        raise AgentTemplateError(
+            f"invalid agent name in {source_paths['meta.json']}: {name!r}"
+        )
     if name != template_directory.name:
         raise AgentTemplateError(
-            f"frontmatter name {name!r} does not match directory {template_directory.name!r}"
+            f"metadata name {name!r} does not match directory {template_directory.name!r}"
         )
-    description = frontmatter.get("description")
+    description = metadata.get("description")
     preferred_names = (
         PREFERRED_NAMES.search(description) if isinstance(description, str) else None
     )
@@ -148,36 +204,34 @@ def load_agent_frontmatter(template_directory: Path) -> dict[str, Any]:
         raise AgentTemplateError(
             "description must end with exactly three distinct preferred short names"
         )
-    return frontmatter
+    return AgentSources(metadata=metadata, claude=claude, codex=codex)
 
 
-def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
+def validate_agent_contract(sources: AgentSources, body: str) -> None:
     """Reject agent definitions whose fields are invalid or whose prose
     disagrees with their capabilities."""
-    description = frontmatter.get("description", "")
+    metadata = sources.metadata
+    claude = sources.claude
+    description = metadata.get("description", "")
     if len(description) > DESCRIPTION_LIMIT:
         raise AgentTemplateError(
             f"description exceeds {DESCRIPTION_LIMIT} characters: {len(description)}"
         )
 
     for field, allowed in (("permissionMode", VALID_PERMISSION_MODES),):
-        value = frontmatter.get(field)
+        value = claude.get(field)
         if value is not None and value not in allowed:
             raise AgentTemplateError(
                 f"invalid {field} {value!r}: expected one of {', '.join(allowed)}"
             )
 
-    if "model" in frontmatter or "effort" in frontmatter:
+    intelligence = metadata.get("intelligence")
+    if intelligence not in INTELLIGENCE_LEVELS:
         raise AgentTemplateError(
-            "agent sources must use intelligenceLevel; model and effort are derived"
-        )
-    intelligence_level = frontmatter.get("intelligenceLevel")
-    if intelligence_level not in INTELLIGENCE_LEVELS:
-        raise AgentTemplateError(
-            f"invalid intelligenceLevel {intelligence_level!r}: expected one of "
+            f"invalid intelligence {intelligence!r}: expected one of "
             f"{', '.join(VALID_INTELLIGENCE_LEVELS)}"
         )
-    if "tools" in frontmatter:
+    if "tools" in claude or "tools" in sources.codex:
         raise AgentTemplateError(
             "agent definitions must omit tools to inherit runtime capabilities"
         )
@@ -186,8 +240,8 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
         value
         for value in (
             body,
-            frontmatter.get("description"),
-            frontmatter.get("initialPrompt"),
+            metadata.get("description"),
+            claude.get("initialPrompt"),
         )
         if isinstance(value, str)
     )
@@ -204,8 +258,8 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
             f"agent body repeats shared delegation policy: {duplicated_policy}"
         )
 
-    name = frontmatter.get("name")
-    if frontmatter.get("memory") != "project":
+    name = metadata.get("name")
+    if claude.get("memory") != "project":
         raise AgentTemplateError("agent memory must be project-scoped")
     memory_sections = list(MEMORY_SECTION.finditer(body))
     if len(memory_sections) != 1:
@@ -228,23 +282,25 @@ def validate_agent_contract(frontmatter: dict[str, Any], body: str) -> None:
 
 
 def stitch_agent_definition(template_directory: Path) -> str:
-    """Return one installable Markdown agent definition for a source pair."""
+    """Return one installable Markdown agent definition from split sources."""
     template_directory = Path(template_directory)
-    frontmatter = load_agent_frontmatter(template_directory)
+    sources = load_agent_sources(template_directory)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
-    validate_agent_contract(frontmatter, body)
+    validate_agent_contract(sources, body)
     projected = {
-        field: frontmatter[field]
-        for field in ("name", "description", "color")
-        if field in frontmatter
+        field: sources.metadata[field]
+        for field in ("name", "description")
     }
-    projected.update(INTELLIGENCE_LEVELS[frontmatter["intelligenceLevel"]]["claude"])
+    if "color" in sources.claude:
+        projected["color"] = sources.claude["color"]
+    projected.update(
+        INTELLIGENCE_LEVELS[sources.metadata["intelligence"]]["claude"]
+    )
     projected.update(
         {
             field: value
-            for field, value in frontmatter.items()
-            if field
-            not in {"name", "description", "color", "intelligenceLevel", "model", "effort"}
+            for field, value in sources.claude.items()
+            if field != "color"
         }
     )
     yaml = json.dumps(projected, ensure_ascii=False, indent=2, allow_nan=False)
@@ -310,16 +366,17 @@ def _codex_developer_instructions(body: str) -> str:
 def stitch_codex_agent_definition(template_directory: Path) -> str:
     """Return one installable Codex custom-agent TOML definition."""
     template_directory = Path(template_directory)
-    frontmatter = load_agent_frontmatter(template_directory)
+    sources = load_agent_sources(template_directory)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
-    validate_agent_contract(frontmatter, body)
+    validate_agent_contract(sources, body)
     fields = [
-        ("name", frontmatter["name"]),
-        ("description", frontmatter["description"]),
+        ("name", sources.metadata["name"]),
+        ("description", sources.metadata["description"]),
     ]
     fields.extend(
-        INTELLIGENCE_LEVELS[frontmatter["intelligenceLevel"]]["codex"].items()
+        INTELLIGENCE_LEVELS[sources.metadata["intelligence"]]["codex"].items()
     )
+    fields.extend(sources.codex.items())
     fields.append(
         ("developer_instructions", _codex_developer_instructions(body))
     )

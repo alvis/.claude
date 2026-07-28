@@ -24,14 +24,14 @@ Runtime prerequisites: Bash, `jq`, Git, and `uv` (which supplies Python 3.13+), 
 | Codex marketplace projection | `.agents/plugins/marketplace.json` |
 | Plugin manifests | `plugins/<p>/.{claude,codex}-plugin/plugin.json` |
 | Skill | `plugins/<p>/skills/<name>/SKILL.md` (+ `references/`, `scripts/`, `assets/`) |
-| Agent | `plugins/<p>/templates/agents/<name>/base.md` + `frontmatter/claude.json` |
+| Agent | `plugins/<p>/templates/agents/<name>/base.md` + `frontmatter/{meta,claude,codex}.json` |
 | Standard | `plugins/<p>/constitution/standards/<name>/{meta,scan,write}.md` + `rules/` |
 | Injected payload | `plugins/<p>/{ALLAGENT,MAINAGENT,SUBAGENT}.md` |
 | Routing table | `plugins/<p>/references/ROUTING.md` |
 | Shared executables | `plugins/essential/bin/` |
 
 There are **no source `agents/` or `commands/` directories**. Agents ship as
-templates (`base.md` body + `frontmatter/claude.json`, JSON not YAML) that
+templates (`base.md` body + split JSON files under `frontmatter/`) that
 `/essential:install-agents` installs as Claude Markdown or Codex TOML. Every
 plugin depends on `essential`; `web` and `react` also depend on `coding`.
 
@@ -93,10 +93,10 @@ Enforced mechanically — each with the file that enforces it.
 | `SKILL.md` body < 500 lines | `plugins/governance/skills/write-skill/scripts/quick_validate.py` |
 | Skill `description` 25–60 words (warning) | same |
 | No placeholder text (`[TODO]`, `[Description]`, …) and no unresolved local links | same |
-| Agent `description` ≤ 1024 chars | `plugins/essential/skills/install-agents/scripts/stitch_agent.py` |
-| Agent `name` matches `^[a-z0-9]+(?:-[a-z0-9]+)*$` and equals its directory name | same |
-| Agent source `intelligenceLevel` exists in `plugins/essential/skills/install-agents/references/intelligence-levels.json`; raw `model`/`effort` are derived | same |
-| Agent frontmatter **omits `tools`** (agents inherit runtime capabilities) | same |
+| Agent metadata `description` ≤ 1024 chars | `plugins/essential/skills/install-agents/scripts/stitch_agent.py` |
+| Agent metadata `name` matches `^[a-z0-9]+(?:-[a-z0-9]+)*$` and equals its directory name | same |
+| Agent metadata `intelligence` exists in `plugins/essential/skills/install-agents/references/intelligence-levels.json`; harness model/effort fields are derived | same |
+| Agent harness overlays **omit `tools`** (agents inherit runtime capabilities) | same |
 | `memory` is `"project"`; body has exactly one `## Memory` section | same |
 | Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |
 | Every plugin's mandatory read chain ≤ 40,960 bytes | same |
@@ -107,7 +107,7 @@ Enforced mechanically — each with the file that enforces it.
 A plugin declares its own payloads and mandatory read chain in its own test; the shared
 script holds the budgets and fails a payload the plugin ships but forgot to declare.
 
-An agent `description` must also end with the exact sentence
+An agent metadata `description` must also end with the exact sentence
 `Preferably named <A>, <B>, or <C> when the main agent spawns this role.` — three
 distinct capitalized names.
 

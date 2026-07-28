@@ -19,6 +19,7 @@ from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
     DESCRIPTION_LIMIT,
     INTELLIGENCE_LEVELS,
+    AgentSources,
     AgentTemplateError,
     stitch_agent_definition,
     stitch_codex_agent_definition,
@@ -51,15 +52,40 @@ def write_template(
         "description",
         "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
     )
-    frontmatter.setdefault("intelligenceLevel", "inherit")
+    frontmatter.setdefault("intelligence", "inherit")
     frontmatter.setdefault("memory", "project")
+    metadata = {
+        field: frontmatter.pop(field)
+        for field in ("name", "description", "intelligence")
+        if field in frontmatter
+    }
+    (template / "frontmatter/meta.json").write_text(
+        json.dumps(metadata), encoding="utf-8"
+    )
     (template / "frontmatter/claude.json").write_text(
         json.dumps(frontmatter), encoding="utf-8"
     )
+    (template / "frontmatter/codex.json").write_text("{}", encoding="utf-8")
     if "## Memory" not in body:
         body += memory_section(name)
     (template / "base.md").write_text(body, encoding="utf-8")
     return template
+
+
+def sources_from_combined(
+    frontmatter: dict[str, object],
+    codex: dict[str, object] | None = None,
+) -> AgentSources:
+    combined = dict(frontmatter)
+    metadata = {
+        "name": combined.pop("name"),
+        "description": combined.pop(
+            "description",
+            "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
+        ),
+        "intelligence": combined.pop("intelligence", "inherit"),
+    }
+    return AgentSources(metadata=metadata, claude=combined, codex=codex or {})
 
 
 # stitch_agent_definition and validate_agent_contract
@@ -85,6 +111,7 @@ def test_stitches_nested_json_lists_and_multiline_strings_deterministically(
     frontmatter_text = stitched.split("---\n", 2)[1]
     source = json.loads((template / "frontmatter/claude.json").read_text())
     rendered = json.loads(frontmatter_text)
+    assert "intelligence" not in rendered
     assert "intelligenceLevel" not in rendered
     assert rendered["model"] == "inherit"
     assert rendered["emptyObject"] == source["emptyObject"]
@@ -127,7 +154,7 @@ def test_projects_intelligence_level_to_both_harnesses(
         "test-agent",
         frontmatter={
             "name": "test-agent",
-            "intelligenceLevel": intelligence_level,
+            "intelligence": intelligence_level,
         },
     )
 
@@ -138,6 +165,9 @@ def test_projects_intelligence_level_to_both_harnesses(
         assert claude[field] == value
     for field, value in INTELLIGENCE_LEVELS[intelligence_level]["codex"].items():
         assert codex[field] == value
+    for rendered in (claude, codex):
+        assert "intelligence" not in rendered
+        assert "intelligenceLevel" not in rendered
     if not INTELLIGENCE_LEVELS[intelligence_level]["codex"]:
         assert "model" not in codex
         assert "model_reasoning_effort" not in codex
@@ -168,7 +198,7 @@ def test_codex_projection_removes_claude_only_agent_behavior(
         "test-agent",
         frontmatter={
             "name": "test-agent",
-            "intelligenceLevel": "medium",
+            "intelligence": "medium",
             "initialPrompt": startup,
         },
         body=body,
@@ -194,18 +224,17 @@ def test_codex_projection_removes_claude_only_agent_behavior(
 def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
     tmp_path: Path,
 ) -> None:
-    missing = tmp_path / "templates/agents/missing"
-    (missing / "frontmatter").mkdir(parents=True)
-    (missing / "frontmatter/claude.json").write_text(
-        '{"name":"missing"}', encoding="utf-8"
+    missing = write_template(
+        tmp_path, "missing", frontmatter={"name": "missing"}
     )
+    (missing / "base.md").unlink()
     with pytest.raises(AgentTemplateError, match="base.md"):
         stitch_agent_definition(missing)
 
-    invalid = tmp_path / "templates/agents/invalid"
-    (invalid / "frontmatter").mkdir(parents=True)
+    invalid = write_template(
+        tmp_path, "invalid", frontmatter={"name": "invalid"}
+    )
     (invalid / "frontmatter/claude.json").write_text("{", encoding="utf-8")
-    (invalid / "base.md").write_text("body", encoding="utf-8")
     with pytest.raises(AgentTemplateError, match="invalid JSON"):
         stitch_agent_definition(invalid)
 
@@ -221,10 +250,23 @@ def test_rejects_missing_base_invalid_json_and_directory_name_mismatch(
         frontmatter={"name": "nonstandard-number"},
     )
     (nonstandard_number / "frontmatter/claude.json").write_text(
-        '{"name":"nonstandard-number","maxTurns":NaN}', encoding="utf-8"
+        '{"maxTurns":NaN}', encoding="utf-8"
     )
     with pytest.raises(AgentTemplateError, match="invalid JSON"):
         stitch_agent_definition(nonstandard_number)
+
+
+@pytest.mark.parametrize("source_file", ("meta.json", "claude.json", "codex.json"))
+def test_requires_every_split_frontmatter_source(
+    tmp_path: Path, source_file: str
+) -> None:
+    template = write_template(
+        tmp_path, "test-agent", frontmatter={"name": "test-agent"}
+    )
+    (template / "frontmatter" / source_file).unlink()
+
+    with pytest.raises(AgentTemplateError, match=source_file):
+        stitch_agent_definition(template)
 
 
 def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
@@ -255,11 +297,6 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
     ("frontmatter", "body", "message"),
     (
         (
-            {"name": "test-agent", "model": "haiku", "effort": "medium"},
-            "A role-specific body.",
-            "must use intelligenceLevel",
-        ),
-        (
             {
                 "name": "test-agent",
                 "description": "x" * (DESCRIPTION_LIMIT + 1),
@@ -268,14 +305,14 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
             f"description exceeds {DESCRIPTION_LIMIT} characters",
         ),
         (
-            {"name": "test-agent", "intelligenceLevel": "impossible"},
+            {"name": "test-agent", "intelligence": "impossible"},
             "A role-specific body.",
-            "invalid intelligenceLevel 'impossible'",
+            "invalid intelligence 'impossible'",
         ),
         (
             {
                 "name": "test-agent",
-                "intelligenceLevel": "inherit",
+                "intelligence": "inherit",
                 "permissionMode": "yolo",
             },
             "A role-specific body.",
@@ -284,21 +321,21 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
         (
             {
                 "name": "test-agent",
-                "intelligenceLevel": "inherit",
+                "intelligence": "inherit",
                 "tools": ["Read"],
             },
             "A role-specific body.",
             "must omit tools",
         ),
         (
-            {"name": "test-agent", "intelligenceLevel": "inherit"},
+            {"name": "test-agent", "intelligence": "inherit"},
             "I only spawn fixed-reviewer.",
             "fixed routing language conflicts with runtime discovery",
         ),
         (
             {
                 "name": "test-agent",
-                "intelligenceLevel": "inherit",
+                "intelligence": "inherit",
                 "description": "Always route reviews to fixed-reviewer",
                 "initialPrompt": "Only spawn fixed-reviewer for review",
             },
@@ -312,7 +349,32 @@ def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
     frontmatter: dict[str, object], body: str, message: str
 ) -> None:
     with pytest.raises(AgentTemplateError, match=message):
-        validate_agent_contract(frontmatter, body)
+        validate_agent_contract(sources_from_combined(frontmatter), body)
+
+
+@pytest.mark.parametrize(
+    ("source_file", "field"),
+    (
+        ("meta.json", "intelligenceLevel"),
+        ("claude.json", "intelligence"),
+        ("claude.json", "model"),
+        ("codex.json", "intelligenceLevel"),
+        ("codex.json", "model"),
+    ),
+)
+def test_rejects_metadata_and_harness_overlay_boundary_violations(
+    tmp_path: Path, source_file: str, field: str
+) -> None:
+    template = write_template(
+        tmp_path, "test-agent", frontmatter={"name": "test-agent"}
+    )
+    source_path = template / "frontmatter" / source_file
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    source[field] = "invalid"
+    source_path.write_text(json.dumps(source), encoding="utf-8")
+
+    with pytest.raises(AgentTemplateError, match="exactly|derived field"):
+        stitch_agent_definition(template)
 
 
 @pytest.mark.parametrize(
@@ -331,14 +393,17 @@ def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
 def test_rejects_shared_delegation_policy_in_agent_body(phrase: str) -> None:
     with pytest.raises(AgentTemplateError, match="repeats shared delegation policy"):
         validate_agent_contract(
-            {"name": "test-agent", "intelligenceLevel": "inherit"}, phrase
+            sources_from_combined(
+                {"name": "test-agent", "intelligence": "inherit"}
+            ),
+            phrase,
         )
 
 
 VALID_MEMORY_BODY = memory_section("test-agent")
 VALID_MEMORY_FRONTMATTER = {
     "name": "test-agent",
-    "intelligenceLevel": "inherit",
+    "intelligence": "inherit",
     "memory": "project",
 }
 
@@ -349,7 +414,7 @@ VALID_MEMORY_FRONTMATTER = {
         (
             {
                 "name": "test-agent",
-                "intelligenceLevel": "inherit",
+                "intelligence": "inherit",
                 "memory": "local",
             },
             VALID_MEMORY_BODY,
@@ -386,7 +451,7 @@ def test_requires_project_memory_path_section_and_maintenance_contract(
     frontmatter: dict[str, object], body: str, message: str
 ) -> None:
     with pytest.raises(AgentTemplateError, match=message):
-        validate_agent_contract(frontmatter, body)
+        validate_agent_contract(sources_from_combined(frontmatter), body)
 
 
 # agent discovery
@@ -527,12 +592,23 @@ def test_every_distributed_agent_has_project_memory() -> None:
     assert on_disk == {template.name for template in templates}
 
     for template in templates:
-        frontmatter = json.loads(
+        metadata = json.loads(
+            (template.path / "frontmatter/meta.json").read_text(encoding="utf-8")
+        )
+        claude = json.loads(
             (template.path / "frontmatter/claude.json").read_text(encoding="utf-8")
         )
+        codex = json.loads(
+            (template.path / "frontmatter/codex.json").read_text(encoding="utf-8")
+        )
         body = (template.path / "base.md").read_text(encoding="utf-8")
-        assert frontmatter.get("memory") == "project", template.name
-        assert "tools" not in frontmatter, template.name
+        assert set(metadata) == {"name", "description", "intelligence"}, template.name
+        assert metadata["name"] == template.name
+        assert metadata["intelligence"] in INTELLIGENCE_LEVELS
+        assert "intelligenceLevel" not in metadata
+        assert claude.get("memory") == "project", template.name
+        assert "tools" not in claude, template.name
+        assert codex == {}, template.name
         assert body.count("\n## Memory\n") == 1, template.name
         assert f".claude/agent-memory/{template.name}/MEMORY.md" in body
         assert "plugins/essential/templates/memory.md" in body, template.name
@@ -839,6 +915,10 @@ def test_source_checkout_installs_every_discovered_agent(tmp_path: Path) -> None
     assert count == len(expected_names)
     assert {path.name for path in destination.glob("*.md")} == expected_names
     assert (destination / "frontend-implementer.md").is_file()
+    for path in destination.glob("*.md"):
+        agent = json.loads(path.read_text(encoding="utf-8").split("---\n", 2)[1])
+        assert "intelligence" not in agent
+        assert "intelligenceLevel" not in agent
 
 
 def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
@@ -880,13 +960,13 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     for path in destination.glob("*.toml"):
         agent = tomllib.loads(path.read_text(encoding="utf-8"))
         source_template = templates_by_file[path.name]
-        frontmatter = json.loads(
-            (source_template.path / "frontmatter/claude.json").read_text(
+        metadata = json.loads(
+            (source_template.path / "frontmatter/meta.json").read_text(
                 encoding="utf-8"
             )
         )
         expected_projection = INTELLIGENCE_LEVELS[
-            frontmatter["intelligenceLevel"]
+            metadata["intelligence"]
         ]["codex"]
         for field in ("model", "model_reasoning_effort"):
             if field in expected_projection:
@@ -899,6 +979,8 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
         assert "maxTurns" not in agent
         assert "initialPrompt" not in agent
         assert "hooks" not in agent
+        assert "intelligence" not in agent
+        assert "intelligenceLevel" not in agent
 
 
 def test_duplicate_names_fail_before_any_destination_write(tmp_path: Path) -> None:

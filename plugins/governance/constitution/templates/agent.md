@@ -1,19 +1,28 @@
-<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from two canonical source files under
+<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from four canonical source files under
      plugins/<owner>/templates/agents/<name>/:
      - base.md — the BODY below (pure markdown, persona/charter/loop/context, no frontmatter)
-     - frontmatter/claude.json — the FRONTMATTER below, as valid JSON (this is verified, not YAML-in-md)
+     - frontmatter/meta.json — shared name, description, and intelligence metadata
+     - frontmatter/claude.json — Claude-only frontmatter
+     - frontmatter/codex.json — Codex-only fields
      Validate and build only a temporary artifact with Essential's install-agents stitch helper.
      Before editing any agent, re-check the live Claude Code docs for the current valid frontmatter key surface —
      this template mirrors it at time of writing, but the docs win on conflict. Log any conflict you find. -->
 
-## frontmatter/claude.json
+## frontmatter/meta.json
 
 ```json
 {
   "name": "role-only kebab-case name, e.g. frontend-implementer or principal-engineer",
   "description": "One-line purpose + explicit trigger phrases such as 'use proactively when...' or 'must use if...' + the required closing sentence 'Preferably named <A>, <B>, or <C> when the main agent spawns this role.'",
+  "intelligence": "mechanical|low|medium|high|xhigh|max|inherit — projected to harness-native model and effort fields by Essential's authoritative intelligence matrix"
+}
+```
+
+## frontmatter/claude.json
+
+```json
+{
   "color": "red|blue|green|yellow|purple|orange|pink|cyan",
-  "intelligenceLevel": "mechanical|low|medium|high|xhigh|max|inherit — repository source metadata projected to harness-native model and effort fields by Essential's authoritative intelligence-level matrix",
   "permissionMode": "EXACTLY ONE of default|acceptEdits|auto — never plan, never bypassPermissions, never dontAsk",
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
@@ -26,6 +35,16 @@
   "initialPrompt": "REQUIRED — see templates/role-prompt.md; a short role-kickoff string in the agent's own voice"
 }
 ```
+
+Do not repeat `name`, `description`, or `intelligence`, and do not set derived `model` or `effort`.
+
+## frontmatter/codex.json
+
+```json
+{}
+```
+
+Keep this object empty until Codex supports a native per-agent field not already derived from `meta.json`, the intelligence matrix, or `base.md`. Never define `name`, `description`, `intelligence`, `intelligenceLevel`, `model`, `model_reasoning_effort`, or `developer_instructions` here.
 
 ### permissionMode — pick by launch scenario, not by vibe
 

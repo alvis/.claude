@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 from stitch_agent import (
     AgentTemplateError,
-    load_agent_frontmatter,
+    load_agent_sources,
     stitch_agent_definition,
     stitch_codex_agent_definition,
 )
@@ -222,8 +222,8 @@ def _preflight(
     seen: dict[str, AgentTemplate] = {}
     staged: list[tuple[str, str]] = []
     for template in templates:
-        frontmatter = load_agent_frontmatter(template.path)
-        name = frontmatter["name"]
+        sources = load_agent_sources(template.path)
+        name = sources.metadata["name"]
         previous = seen.get(name)
         if previous is not None:
             raise AgentTemplateError(

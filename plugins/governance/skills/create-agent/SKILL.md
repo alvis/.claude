@@ -1,6 +1,6 @@
 ---
 name: create-agent
-description: "Creates a new specialist agent as two stitched source files, base.md plus frontmatter/claude.json, proposing intelligence level and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
+description: "Creates a new specialist agent from a shared base prompt plus split metadata, Claude, and Codex JSON sources, proposing intelligence and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
 model: opus
 context: fork
 allowed-tools: Agent, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
@@ -9,8 +9,8 @@ argument-hint: "<role description> [--plugin=<owner>] [--intelligence=...] [--pe
 
 # Create Agent
 
-Create `plugins/<owner>/templates/agents/<name>/base.md` and
-`plugins/<owner>/templates/agents/<name>/frontmatter/claude.json` for one
+Create `base.md` plus `frontmatter/meta.json`, `claude.json`, and `codex.json`
+under `plugins/<owner>/templates/agents/<name>/` for one
 genuinely distinct role, with ownership and critical settings confirmed before
 anything is written. `update-agent` owns changes to existing definitions.
 
@@ -74,12 +74,15 @@ anything is written. `update-agent` owns changes to existing definitions.
    as the last option. Flags override their named fields and skip their
    prompts; `--yes` accepts all recommendations. No file is written before
    this gate resolves; record the confirmed settings.
-5. Create only the two canonical source files beneath the confirmed owner's
-   `templates/agents/<name>/` directory. `frontmatter/claude.json` must
-   be valid JSON using only keys currently allowed by the live template;
-   `initialPrompt` is required. The directory and `name` field contain only
-   the role. End `description` with exactly three distinct preferred short
-   names in the canonical sentence so the main agent can name a teammate.
+5. Create only the four canonical source files beneath the confirmed owner's
+   `templates/agents/<name>/` directory. `frontmatter/meta.json` contains
+   exactly `name`, `description`, and `intelligence`; `claude.json` contains
+   only Claude-specific fields and requires `initialPrompt`; `codex.json`
+   contains only native Codex-specific fields and is `{}` when none apply.
+   Every file must be valid JSON. The directory and metadata `name` contain
+   only the role. End metadata `description` with exactly three distinct
+   preferred short names in the canonical sentence so the main agent can name
+   a teammate.
 6. Build `initialPrompt` from `role-prompt.md` in 2-4 sentences as a no-task
    first-turn directive: its first move (propose if the role's next work is
    legible from repo state, else greet and state the artifact/brief it needs),
@@ -116,7 +119,7 @@ anything is written. `update-agent` owns changes to existing definitions.
 
 ## Verification
 
-- Run `python3 -m json.tool plugins/<owner>/templates/agents/<name>/frontmatter/claude.json`.
+- Parse `frontmatter/meta.json`, `claude.json`, and `codex.json` with `python3 -m json.tool`.
 - Run Essential's deterministic stitch helper against the source directory,
   writing only to a temporary output, then inspect that artifact:
   `python3 plugins/essential/skills/install-agents/scripts/stitch_agent.py plugins/<owner>/templates/agents/<name> --output <temporary-path>`.
@@ -135,6 +138,6 @@ flags, or `--yes`), archetype, trigger/near-miss examples, context
 assignments, thought-experiment and blindspot coverage, validation commands and
 results, whether runtime loading was exercised, confirmation that temporary
 Markdown thought-experiment notes were deleted before commit, and any unresolved
-concern. Completion requires both files, a
+concern. Completion requires all four files, a
 non-overlapping trigger surface, a role-specific voice, and all available
 validation passing.
