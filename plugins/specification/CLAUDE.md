@@ -1,4 +1,1 @@
-For specification, architecture, design, requirements, documentation, or
-Notion work, read `{{PLUGIN_DIR}}/references/ROUTING.md` and route to the
-specialist. Project artifacts follow the absolute Essential
-`engineering-work.md` path injected in context.
+<IMPORTANT>Before specification, architecture, requirements, documentation, implementation planning, alignment review, or Notion work, you MUST read `{{PLUGIN_DIR}}/references/WORKFLOW.md` for action ownership and standards selection.</IMPORTANT> Before work delegation, read `{{PLUGIN_DIR}}/references/ROUTING.md`.

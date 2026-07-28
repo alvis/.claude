@@ -1,1 +1,1 @@
-To delegate any eval harness, quality gate, or meta-review of agents, skills, or patterns, read `{{PLUGIN_DIR}}/references/ROUTING.md` and route it to the right specialist.
+<IMPORTANT>Before creating, updating, or reviewing agents, skills, standards, eval harnesses, quality gates, or collaboration patterns, you MUST read `{{PLUGIN_DIR}}/references/WORKFLOW.md` for action ownership and authoring contracts.</IMPORTANT> Before work delegation, read `{{PLUGIN_DIR}}/references/ROUTING.md`.

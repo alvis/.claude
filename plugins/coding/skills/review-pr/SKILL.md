@@ -188,7 +188,7 @@ The diff is the subject of the review, not the limit of the reading.
 - **Judge only the diff.** Every finding is about a changed line and anchors to
   one. Read unchanged code to understand the change, not to grade it.
 - **Ask whether the diff is the best solution**, not only whether it works: walk
-  the lean ladder in [CODING.md](../../references/CODING.md) — need, `@theriety/core`,
+  the lean ladder in [WORKFLOW.md](../../references/WORKFLOW.md) — need, `@theriety/core`,
   existing codebase, platform, installed dependency, then minimum new code. A
   hand-rolled helper duplicating what the repository already provides is a finding.
 - **Say so when the change belongs somewhere else.** A guard repeated at each call

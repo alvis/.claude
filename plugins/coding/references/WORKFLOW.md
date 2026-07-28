@@ -11,7 +11,7 @@ Settle this first, from where the task came:
 - **From the user** — do it yourself when the change is small (low expected token spend); delegate it otherwise.
 - **From another agent** — do it yourself, unless you are a lead (an orchestrator). A lead never implements; it only advises and delegates.
 
-To delegate, read `ROUTING.md` in this same `references/` directory and route the work to the specialist whose role fits; and read `orchestration.md` in the essential plugin's `references/` directory before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
+Before work delegation, read `coding:references/ROUTING.md` and route the work to the specialist whose role fits; read `essential:references/orchestration.md` before you delegate, orchestrate, or review across a team. Hand the delegate the full file paths of every relevant skill and standard file — a subagent starts blind.
 
 ### Decide where the work will live
 
@@ -20,7 +20,7 @@ Settle this before editing:
 - **Small change** — if the user didn't request a specific location, work in place on the current local branch. With `jj` initialized, layer new changes onto the dirty HEAD (no isolation strategy to decide); on a git repository, work on the current branch as usual.
 - **Substantial change** (worth a stacked PR) — `AskUserQuestion` where the work should live: the **current branch**, a fresh **local branch** in the current repo, a **`git worktree`**, or a **`jj` workspace**. Default path for a new worktree/workspace: `~/.workspaces/<project-root-folder-name>/<work-id>` (reuse the engineering work-id; the built-in `EnterWorktree` harness tool uses `.claude/worktrees/` and is not governed by this convention).
   - The work-id names the state directory, the source tree, and the branch: `.state/works/<work-id>`, `~/.workspaces/<project-root-folder-name>/<work-id>`, and branch `<type>/<work-id>` — the type prefixes the branch only, never the id or the state path. Work that stays a single PR uses `<type>/<work-id>` and nothing more, no ordinal and no slice. A stream split into a stack or into sub-tasks becomes two-digit-numbered branches beneath it: `<type>/<work-id>/01-resolver`, `<type>/<work-id>/02-contract`. Either way the stream is identified from the branch that is checked out; a branch shaped otherwise resolves to nothing and the PM is asked instead.
-  - Those two shapes cannot coexist — git stores refs as files, so `<type>/<work-id>` blocks `<type>/<work-id>/01-resolver` and vice versa. A single-PR stream that grows cannot add a numbered branch beside the bare one, so it **renames** the bare branch into the first slice — through the forge's branch rename, which retargets the open PR rather than closing it — and pushes the later slices only after that lands. Full rules live in `naming.md` in the essential plugin's `references/` directory.
+  - Those two shapes cannot coexist — git stores refs as files, so `<type>/<work-id>` blocks `<type>/<work-id>/01-resolver` and vice versa. A single-PR stream that grows cannot add a numbered branch beside the bare one, so it **renames** the bare branch into the first slice — through the forge's branch rename, which retargets the open PR rather than closing it — and pushes the later slices only after that lands. Full rules live in `essential:references/naming.md`.
 
 ### If you're writing it yourself
 
@@ -46,6 +46,25 @@ Settle this before editing:
 | Resuming work | `/essential:takeover` |
 | Finding dead code | `/coding:find-unused` |
 | Modernizing syntax | `/coding:modernize` |
+
+### Standards
+
+Read every file in each applicable standards directory, following its cross-references. The inventory is exhaustive; select by action and language.
+
+| Applies to | Standards |
+| --- | --- |
+| All implementation work | `coding:constitution/standards/universal/` |
+| Functions, methods, and APIs | `coding:constitution/standards/function/` |
+| TypeScript and JavaScript | `coding:constitution/standards/typescript/` |
+| Identifiers and operation names | `coding:constitution/standards/naming/` |
+| Tests and testable implementation | `coding:constitution/standards/testing/` |
+| Commits, branches, and pull requests | `coding:constitution/standards/git/` |
+| Comments, JSDoc, and technical documentation | `coding:constitution/standards/documentation/` |
+| Errors, logging, and operational behavior | `coding:constitution/standards/observability/` |
+| Python | `coding:constitution/standards/python/` |
+| Rust | `coding:constitution/standards/rust/` |
+| Semantic review | `coding:constitution/standards/code-review.md` plus the implementation standards above |
+| New or moved files and project setup | `coding:constitution/standards/file-structure.md` |
 
 ## While Coding
 
@@ -80,7 +99,7 @@ Never simplify away: input validation at trust boundaries, error handling that p
 - **Check documentation** — before using an external library, consult **context7** to confirm the correct import or call signature, and **grep** for real-world GitHub usage.
 - **Runtime exploration** — to understand the runtime behaviour of a library or API, write a test file (or add a test case to an existing spec) instead of ad-hoc commands like `node -e "..."` or `npx ts-node -e "..."`. Test files are version-controlled, repeatable, and serve as living documentation.
 
-Type safety, test coverage, TDD, and naming/documentation rules are defined by the constitution standards under `constitution/standards/` — follow them in full; they are not restated here.
+Follow every applicable standard listed above in full.
 
 ## After Coding
 
