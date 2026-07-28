@@ -19,7 +19,7 @@
   "disallowedTools": "durable edit-prevention that binds in every launch scenario — main session, spawned subagent, workflow, or teammate",
   "skills": ["plugin:skill-name — always plugin-manifest-namespaced, e.g. coding:review-code, theriety:build-service, client:create-screen-design"],
   "mcpServers": "only if this agent needs a specific MCP server beyond what the plugin already wires in",
-  "hooks": "gated:true agents customize the runtime review-routing Stop hook with concrete default reviewers (each name, role, and main task) plus the independent-review action; critic:true+fence:true agents embed the PreToolUse fence verbatim",
+  "hooks": "critic:true+fence:true agents embed the PreToolUse write fence verbatim; no agent hooks its own review — independent review is carried by the charter and shared orchestration policy",
   "memory": "REQUIRED and always project — every roster agent owns .claude/agent-memory/<name>/MEMORY.md",
   "background": "true|false — long-running/detached execution",
   "isolation": "worktree | none — an isolated git worktree sandbox for agents that must not race the main working copy (e.g. adversarial red-team, parallel research)",
