@@ -44,10 +44,16 @@ SUPPRESSED_REPORTING = (
         # only issues you can prove" narrows what survives doubt. Only the
         # second is suppression, so a confidence word must appear next to the
         # noun — as its adjective, or in the clause qualifying it.
-        r"(?:only report|report only) (?:\w+ ){0,3}"
+        # Scanning to the clause end, rather than a few words, closes the
+        # padding bypass: "only report the most clearly visible definite
+        # issues" separates the directive from its noun by more words than any
+        # fixed cap would allow. `;` bounds the scan alongside sentence
+        # punctuation so a following independent clause cannot supply the
+        # confidence words.
+        r"(?:only report|report only)[^.!?;\n]*?"
         r"(?:(?:definite|certain|provable|proven|unambiguous|indisputable"
         r"|unmistakable|obvious)\w* (?:problems|issues|findings|violations)"
-        r"|(?:problems|issues|findings|violations)(?: \w+){0,2} "
+        r"|(?:problems|issues|findings|violations)[^.!?;\n]*? "
         r"(?:you can prove|you (?:are|'re) (?:certain|sure|confident)))",
         re.IGNORECASE,
     ),
@@ -56,7 +62,7 @@ SUPPRESSED_REPORTING = (
         re.IGNORECASE,
     ),
     re.compile(
-        r"(?:report|flag|raise) (?:\w+ ){0,4}only (?:if|when) you (?:are|'re) "
+        r"(?:report|flag|raise)[^.!?;\n]*?only (?:if|when) you (?:are|'re) "
         r"(?:certain|sure|confident)",
         re.IGNORECASE,
     ),
@@ -250,6 +256,9 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Report only issues you can prove.",
         "Only report problems you are certain about.",
         "Report only definite violations.",
+        # Padding between the directive and its noun must not buy an escape.
+        "Only report the most clearly visible definite issues.",
+        "Report, after weighing all the available evidence, only if you are certain.",
     )
     legitimate = (
         "Do not use for: deleting or modifying code (report only).",
@@ -261,6 +270,8 @@ def test_suppressed_reporting_patterns_catch_known_phrasings() -> None:
         "Only report accessibility issues.",
         "Report only security violations.",
         "Only report findings that block release.",
+        # A separate clause supplies the confidence words but not the meaning.
+        "Report only security violations; you are certain to find some.",
     )
 
     for text in suppressing:
