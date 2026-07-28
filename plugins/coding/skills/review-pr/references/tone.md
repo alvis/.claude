@@ -44,6 +44,17 @@ Substitute the level and its color:
 | P3 | `blue` | Optional polish |
 | P4 | `lightgrey` | Trivia |
 
+A process step the author owes before merge carries no priority level, because it is
+not a claim about the code. It still demands action, so it opens with a tag rather
+than an emoji:
+
+```markdown
+**<sub><sub>![WARNING Badge](https://img.shields.io/badge/WARNING-yellow?style=flat)</sub></sub> Rebase onto `master` before merging** — the base has moved twice since this branch forked.
+```
+
+An outstanding tag blocks merge exactly as a P0 or P1 does. Name the step, not the
+failure.
+
 A comment that demands nothing opens with an emoji instead:
 
 | Marker | Means | Voice |
@@ -51,17 +62,15 @@ A comment that demands nothing opens with an emoji instead:
 | ❓ | Intent is genuinely unclear | One real question, not a point made sideways. |
 | 💭 | A non-blocking idea | Say outright that it is not a request. |
 | 📝 | A fact the author should know | Neutral. No ask attached. |
-| 🧹 | A process step needed before merge | Name the step, not the failure. |
 | 💯 | Good work worth naming | One line, specific about what was good. |
 
 ```markdown
 **💯 Abort signal threaded all the way through** — that's the part everyone forgets.
 ```
 
-A badge or an emoji, never both and never two of either. Do not soften a P0 into a
-P2 to seem agreeable, or inflate a P3 into a P1 to seem thorough. The badge is a
-promise about consequence, and an author who learns it is unreliable stops reading
-them.
+A badge, a tag, or an emoji — exactly one, never two. Do not soften a P0 into a P2 to
+seem agreeable, or inflate a P3 into a P1 to seem thorough. The marker is a promise
+about consequence, and an author who learns it is unreliable stops reading them.
 
 ## Alerts
 

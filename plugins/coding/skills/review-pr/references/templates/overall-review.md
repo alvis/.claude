@@ -46,7 +46,7 @@ Reviewed `{{head_sha_short}}` — {{files_changed}} files, +{{additions}}/-{{del
 > [!IMPORTANT]
 > {{excluded_paths_and_reason}}
 
-> [!NOTE]
+> [!{{verdict_alert}}]
 > {{verdict_sentence}}
 ```
 
@@ -57,9 +57,9 @@ Notes for the sections where the guidance is not self-evident:
   things need to change before it merges." Name the zone when it is not green, and
   lead with it when it is black.
 - **Markers** — every bullet opens with the same marker its inline comment carries,
-  per `tone.md`: a P0–P4 badge when the finding claims a consequence, an emoji when
-  it does not. The body and the inline comment must not disagree about a finding's
-  level.
+  per `tone.md`: a P0–P4 badge when the finding claims a consequence, a tag when it
+  demands a process step, an emoji when it demands nothing. The body and the inline
+  comment must not disagree about a finding's level.
 - **Alerts** — at most one per section, and only where it changes what the author
   does next; `tone.md` owns which alert means what. `> [!CAUTION]` opens *Must
   change* only under `REQUEST_CHANGES`. `> [!TIP]` opens *Worth considering* only
@@ -80,11 +80,13 @@ Notes for the sections where the guidance is not self-evident:
 - **Not reviewed** — excluded paths and any concern that could not run. The author is
   entitled to know the boundary of what was actually looked at.
 
-Close with the verdict in one sentence, in an alert keyed to the submitted `event`.
-`> [!NOTE]` carries `APPROVE`, which says so plainly and names anything to watch
-after merge, and a `COMMENT` held on context alone — a self-review GitHub will not
-let you approve, or `goal_spec_alignment: skipped_unknown`. `> [!WARNING]` carries a
-`COMMENT` held because the review itself is incomplete or untrustworthy —
-unconvincing tests, red CI, a black-zone diff, a blocker, or a head SHA that moved
-mid-review. Under `REQUEST_CHANGES` the blockers already stand under *Must change*;
-close by naming what clears them.
+Close with the verdict in one sentence. `{{verdict_alert}}` is not a free choice:
+resolve it from the submitted `event` and the reason the verdict was held, so a
+review that cannot be trusted never closes as if it needed no action.
+
+| `event`, and why it was held | `{{verdict_alert}}` |
+|---|---|
+| `APPROVE` | `NOTE` — say so plainly and name anything to watch after merge |
+| `COMMENT` held on context alone — a self-review GitHub will not let you approve, or `goal_spec_alignment: skipped_unknown` | `NOTE` |
+| `COMMENT` held because the review itself is incomplete or untrustworthy — unconvincing tests, red CI, a black-zone diff, a blocker, or a head SHA that moved mid-review | `WARNING` |
+| `REQUEST_CHANGES` | `CAUTION` — the blockers already stand under *Must change*, so close by naming what clears them rather than repeating them |

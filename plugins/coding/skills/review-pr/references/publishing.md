@@ -19,12 +19,16 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
   "body": "<overall review, from templates/overall-review.md>",
   "event": "REQUEST_CHANGES | APPROVE | COMMENT",
   "comments": [
-    { "path": "src/auth/session.ts", "line": 42, "side": "RIGHT", "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub> Guard the empty case** — …" },
-    { "path": "src/auth/session.ts", "start_line": 51, "line": 58, "side": "RIGHT", "body": "**💭 Batch these lookups** — …" }
+    { "path": "src/auth/session.ts", "line": 42, "side": "RIGHT", "body": "**{{marker}} Guard the empty case** — …" },
+    { "path": "src/auth/session.ts", "start_line": 51, "line": 58, "side": "RIGHT", "body": "**{{marker}} Batch these lookups** — …" }
   ]
 }
 ```
 
+- `{{marker}}` is the badge, tag, or emoji that opens every comment. `tone.md` owns
+  that markup and is the only place it is written out; render from there rather than
+  copying a literal badge URL into this file, which would drift the moment a colour
+  or a wrapper changes.
 - `commit_id` is mandatory here even though the API treats it as optional. Without
   it GitHub anchors against the current head, so a push mid-review silently
   relocates every comment.

@@ -241,9 +241,13 @@ Derive `event`; never choose it freely:
 
 | Outstanding findings | `event` |
 |---|---|
-| Any P0/P1 finding | `REQUEST_CHANGES` |
-| Only P2/P3/P4 or none, and the tests genuinely cover the change | `APPROVE` |
+| Any P0/P1 finding, or any `chore` | `REQUEST_CHANGES` |
+| Only P2/P3/P4, only kinds other than `chore`, or nothing at all — and the tests genuinely cover the change | `APPROVE` |
 | Tests unconvincing, red CI, black zone, or a blocker prevented a full review | `COMMENT` |
+
+`chore` is the only kind that reaches this table; `question`, `thought`, `note`, and
+`praise` never hold a verdict on their own. A review carrying nothing but those is an
+`APPROVE` when the tests hold up.
 
 GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your own PR. Compare the author
 against `gh api user --jq .login` first; on a self-review, downgrade to `COMMENT`

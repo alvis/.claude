@@ -99,14 +99,17 @@ not_reviewed:
   or data integrity; **P1** violates a standard or will cause a real defect; **P2**
   is maintainability or design; **P3** is optional polish; **P4** is trivia. It
   drives the verdict.
-- `kind` classifies a comment that demands nothing: `question` where intent is
-  genuinely unclear, `thought` for a non-blocking idea that is explicitly not a
-  request, `note` for a fact the author should know, `chore` for a process step
-  needed before merge, `praise` where the work is genuinely good.
+- `kind` classifies a comment that makes no priority claim: `chore` for a process
+  step the author owes before merge, `question` where intent is genuinely unclear,
+  `thought` for a non-blocking idea that is explicitly not a request, `note` for a
+  fact the author should know, `praise` where the work is genuinely good.
 - Exactly one of `priority` and `kind` is non-null. A comment that claims a
   consequence carries a priority; one that does not carries a kind. `tone.md` renders
-  the first as a badge and the second as an emoji, so this field decides the marker
-  and no judgement is left at render time.
+  a priority as a badge, `chore` as a tag, and every other kind as an emoji, so this
+  field decides the marker and no judgement is left at render time.
+- `chore` is the one kind that blocks merge, because it demands an action even though
+  it grades nothing. An outstanding `chore` drives the verdict exactly as a P0 or P1
+  does; every other kind leaves the verdict untouched.
 - `evidence` is mandatory. A finding that cannot name the rule it applies or the
   failure it predicts is an opinion, and opinions are not posted.
 - `alternative` carries a real path, not a direction. "Move this to the service
