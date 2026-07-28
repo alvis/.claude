@@ -19,6 +19,7 @@ from install_agents import discover_agent_templates, install_agents
 from stitch_agent import (
     DESCRIPTION_LIMIT,
     INTELLIGENCE_LEVELS,
+    PREFERRED_NAMES,
     AgentSources,
     AgentTemplateError,
     stitch_agent_definition,
@@ -176,6 +177,7 @@ def test_stitches_native_codex_agent_toml_from_the_same_template(
     assert parsed == {
         "name": "test-agent",
         "description": "A test role. Preferably named Ava, Kit, or June when the main agent spawns this role.",
+        "nickname_candidates": ["Ava", "Kit", "June"],
         "developer_instructions": "# Test agent\n\nCodex instructions.\n",
     }
     assert definition == stitch_codex_agent_definition(template)
@@ -373,6 +375,11 @@ def test_requires_three_distinct_preferred_short_names(tmp_path: Path) -> None:
             "invalid intelligence 'impossible'",
         ),
         (
+            {"name": "test-agent", "intelligence": ["high"]},
+            "A role-specific body.",
+            "invalid intelligence \\['high'\\]",
+        ),
+        (
             {
                 "name": "test-agent",
                 "intelligence": "inherit",
@@ -423,6 +430,7 @@ def test_rejects_invalid_field_values_fixed_routing_and_tool_mismatches(
         ("claude.json", "model"),
         ("codex.json", "intelligenceLevel"),
         ("codex.json", "model"),
+        ("codex.json", "nickname_candidates"),
     ),
 )
 def test_rejects_metadata_and_harness_overlay_boundary_violations(
@@ -682,6 +690,14 @@ def test_install_skill_resolves_codex_script_from_its_loaded_resource() -> None:
     assert "CLAUDE_PLUGIN_ROOT" not in codex_instructions
 
 
+def test_install_skill_verifies_the_configured_codex_home() -> None:
+    skill = (
+        ROOT / "plugins/essential/skills/install-agents/SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert '"${CODEX_HOME:-$HOME/.codex}/agents/tech-lead.toml"' in skill
+
+
 def test_governance_heuristic_does_not_use_a_cross_plugin_relative_link() -> None:
     heuristic = (
         ROOT
@@ -691,6 +707,18 @@ def test_governance_heuristic_does_not_use_a_cross_plugin_relative_link() -> Non
 
     assert "../../../../essential/" not in heuristic
     assert "essential:install-agents" in heuristic
+
+
+@pytest.mark.parametrize("skill_name", ("create-agent", "update-agent"))
+def test_agent_authoring_skills_verify_both_harness_projections(
+    skill_name: str,
+) -> None:
+    skill = (
+        ROOT / f"plugins/governance/skills/{skill_name}/SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert "--harness claude" in skill
+    assert "--harness codex" in skill
 
 
 def test_every_distributed_agent_has_project_memory() -> None:
@@ -1175,6 +1203,9 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
         expected_projection = INTELLIGENCE_LEVELS[
             metadata["intelligence"]
         ]["codex"]
+        preferred_names = PREFERRED_NAMES.search(metadata["description"])
+        assert preferred_names is not None
+        assert agent["nickname_candidates"] == list(preferred_names.groups())
         for field in ("model", "model_reasoning_effort"):
             if field in expected_projection:
                 assert agent[field] == expected_projection[field]

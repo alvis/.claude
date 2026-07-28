@@ -14,7 +14,7 @@ Installs agent templates contributed by Essential and the other enabled plugins 
 
 1. In a source checkout, discovers `plugins/*/templates/agents/*`; from an installed Essential plugin, reads the current harness's plugin list and discovers templates only from enabled plugins in Essential's marketplace. Codex plugin IDs and versions resolve beneath the loaded Essential cache root; marketplace source paths are never treated as installed roots.
 2. Validates every `base.md` plus `frontmatter/meta.json`, `claude.json`, and `codex.json` source set, including its role-only definition name, three distinct preferred short teammate names, runtime tool inheritance, intelligence, field ownership, centralized-policy boundary, and required project-memory path and maintenance contract, and rejects malformed or duplicate names before touching the destination. Installed mode translates recognized legacy single-file intelligence or model/effort projections from lagging sibling-plugin caches; source checkouts require the split schema.
-3. Stitches all definitions into Claude Code Markdown or native Codex TOML. Shared `name`, `description`, and `intelligence` come only from `meta.json`; harness overlays contribute only harness-specific fields. `intelligence` is projected through the authoritative [intelligence matrix](references/intelligence-levels.json), which owns both harnesses' model and effort fields. Neither `intelligence` nor the retired `intelligenceLevel` key is emitted.
+3. Stitches all definitions into Claude Code Markdown or native Codex TOML. Shared `name`, `description`, and `intelligence` come only from `meta.json`; harness overlays contribute only harness-specific fields. `intelligence` is projected through the authoritative [intelligence matrix](references/intelligence-levels.json), which owns both harnesses' model and effort fields. Codex `nickname_candidates` are derived from the three validated preferred names in `description`. Neither `intelligence` nor the retired `intelligenceLevel` key is emitted.
 4. Copies staged files into the selected harness's agent directory, overwriting discovered same-named agents while leaving unrelated and formerly managed files untouched.
 5. Prints each installed path and a final count.
 
@@ -52,7 +52,7 @@ Smoke-check one representative definition after confirming the installer's repor
 head -3 ~/.claude/agents/tech-lead.md
 
 # Codex
-head -3 ~/.codex/agents/tech-lead.toml
+head -3 "${CODEX_HOME:-$HOME/.codex}/agents/tech-lead.toml"
 ```
 
 In a fresh session, the roster appears in the selected harness's agent list. For Codex, confirm representative generated `model` and `model_reasoning_effort` values match the matrix rows selected by those agents' `frontmatter/meta.json` intelligence values.

@@ -120,6 +120,7 @@ CLAUDE_DERIVED_FIELDS = {
 CODEX_DERIVED_FIELDS = {
     "name",
     "description",
+    "nickname_candidates",
     "intelligence",
     "intelligenceLevel",
     "model",
@@ -134,6 +135,18 @@ class AgentSources:
     metadata: dict[str, Any]
     claude: dict[str, Any]
     codex: dict[str, Any]
+
+
+def _preferred_name_candidates(description: Any) -> tuple[str, str, str]:
+    preferred_names = (
+        PREFERRED_NAMES.search(description) if isinstance(description, str) else None
+    )
+    if preferred_names is None or len(set(preferred_names.groups())) != 3:
+        raise AgentTemplateError(
+            "description must end with exactly three distinct preferred short names"
+        )
+    first, second, third = preferred_names.groups()
+    return first, second, third
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:
@@ -278,13 +291,7 @@ def load_agent_sources(
             f"metadata name {name!r} does not match directory {template_directory.name!r}"
         )
     description = metadata.get("description")
-    preferred_names = (
-        PREFERRED_NAMES.search(description) if isinstance(description, str) else None
-    )
-    if preferred_names is None or len(set(preferred_names.groups())) != 3:
-        raise AgentTemplateError(
-            "description must end with exactly three distinct preferred short names"
-        )
+    _preferred_name_candidates(description)
     return AgentSources(metadata=metadata, claude=claude, codex=codex)
 
 
@@ -307,7 +314,7 @@ def validate_agent_contract(sources: AgentSources, body: str) -> None:
             )
 
     intelligence = metadata.get("intelligence")
-    if intelligence not in INTELLIGENCE_LEVELS:
+    if not isinstance(intelligence, str) or intelligence not in INTELLIGENCE_LEVELS:
         raise AgentTemplateError(
             f"invalid intelligence {intelligence!r}: expected one of "
             f"{', '.join(VALID_INTELLIGENCE_LEVELS)}"
@@ -457,6 +464,10 @@ def stitch_codex_agent_definition(
     fields = [
         ("name", sources.metadata["name"]),
         ("description", sources.metadata["description"]),
+        (
+            "nickname_candidates",
+            list(_preferred_name_candidates(sources.metadata["description"])),
+        ),
     ]
     fields.extend(
         INTELLIGENCE_LEVELS[sources.metadata["intelligence"]]["codex"].items()

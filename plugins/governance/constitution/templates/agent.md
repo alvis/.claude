@@ -44,7 +44,7 @@ Do not repeat `name`, `description`, or `intelligence`, and do not set derived `
 {}
 ```
 
-Keep this object empty until Codex supports a native scalar per-agent field not already derived from `meta.json`, the intelligence matrix, or `base.md`. Nested objects and arrays are rejected because they cannot be serialized by the scalar TOML projection. Never define `name`, `description`, `intelligence`, `intelligenceLevel`, `model`, `model_reasoning_effort`, or `developer_instructions` here.
+Keep this object empty until Codex supports a native scalar per-agent field not already derived from `meta.json`, the intelligence matrix, or `base.md`. Nested objects and arrays are rejected because they cannot be serialized by the scalar TOML projection. Never define `name`, `description`, `nickname_candidates`, `intelligence`, `intelligenceLevel`, `model`, `model_reasoning_effort`, or `developer_instructions` here.
 
 ### permissionMode — pick by launch scenario, not by vibe
 
