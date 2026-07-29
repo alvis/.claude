@@ -188,7 +188,7 @@ A precise zone policy supersedes the loose Small/Medium/Large bands above when a
 | Zone   | Files Changed | Net LOC | Required Sections                          | Reviewer Expectation              |
 |--------|---------------|---------|--------------------------------------------|------------------------------------|
 | Green  | ≤ 15          | ≤ 500   | Summary, Verification                      | Quick read; default-mergeable      |
-| Yellow | ≤ 30          | ≤ 1200  | Summary, Verification, Risk                | One reviewer; ~30 min budget       |
+| Yellow | ≤ 30          | ≤ 1200  | Summary, Verification, Risk, Test plan     | One reviewer; ~30 min budget       |
 | Red    | ≤ 60          | ≤ 2000  | All of yellow + `## Why this size` (isolation justification) + reviewer-time estimate | Two reviewers; explicit time block |
 | Black  | > 60          | > 2000  | Reject by default; flag using template     | Author splits before review        |
 
@@ -237,6 +237,10 @@ Every PR declares exactly one category in its title prefix or body header (see `
 
 When a feature spans more than one zone or category, split it into a stack governed by `GIT-PR-STACK-*`:
 
+- Require every slice to be independently valid. A backward-compatible contract,
+  schema, migration, configuration, or feature flag may land as a prerequisite;
+  a dangling update may not. If splitting would break integrity or scatter one
+  atomic or mechanical operation, keep one PR and justify its actual size zone.
 - Bookmark each PR `<feature-slug>/NN-<scope>` (e.g. `auth-rewrite/01-spec`, `auth-rewrite/02-impl`), `<scope>` being any short kebab-case summary of the slice rather than a PR category — see `GIT-PR-STACK-01`.
 - Fix issues in the earliest owning unmerged change — `jj edit` / `jj absorb`, or `git rebase --interactive --autosquash` onto the owning commit — never by patching a later PR (`GIT-PR-STACK-02`).
 - Once a stack PR has merged upstream, never rewrite history — open a corrective PR instead (`GIT-PR-STACK-03`).

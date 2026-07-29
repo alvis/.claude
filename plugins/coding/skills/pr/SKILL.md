@@ -33,17 +33,21 @@ remote mutation.
   `--base` selects the intended PR base instead of the first-parent default.
 - `create` opens new draft PRs for one saved change or a linear stack. Load and
   follow [references/create-update.md](references/create-update.md) with
-  `ACTION=create`.
+  `ACTION=create`, and always load
+  [references/stacked-prs.md](references/stacked-prs.md).
 - `update` republishes existing PR heads, refreshes their title, body, and bases,
   and drives CI to green. Load and follow
-  [references/create-update.md](references/create-update.md) with `ACTION=update`.
+  [references/create-update.md](references/create-update.md) with
+  `ACTION=update`, and always load
+  [references/stacked-prs.md](references/stacked-prs.md).
 - `review` publishes one external review per PR. As the context-owning caller,
   load [references/review-workflow.md](references/review-workflow.md), provision
-  any owned review tree, and retain its cleanup lease. Run the read-only review
-  steps in a fresh `code-quality-critic` subagent with no inherited implementation
-  context, close the lease after any return or cancellation, and never delegate
-  again from that dedicated reviewer.
+  any owned tree, and retain its cleanup lease. Run the read-only steps in a
+  fresh `code-quality-critic` subagent with no inherited implementation context,
+  close the lease after any return or cancellation, and never delegate again
+  from that dedicated reviewer.
 - `merge` validates and merges a linear stack bottom-up. Load and follow
+  [references/stacked-prs.md](references/stacked-prs.md), then
   [references/merge.md](references/merge.md).
 
 <IMPORTANT>
