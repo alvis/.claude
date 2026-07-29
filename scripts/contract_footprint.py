@@ -21,9 +21,9 @@ __all__ = [
 INJECTED_PAYLOADS = ("ALLAGENT.md", "MAINAGENT.md", "SUBAGENT.md")
 PAYLOAD_BUDGET_BYTES = 2_000
 
-# The mandatory read chain a session pays before acting in a plugin's domain.
-# Growth past the budget must be a conscious review decision: move detail into a
-# per-moment reference instead of growing an always-read file.
+# The unconditional read chain created by hook injection. References guarded by
+# a per-moment trigger are excluded because a session reads them only when that
+# trigger occurs.
 CHAIN_BUDGET_BYTES = 40_960
 
 
@@ -91,7 +91,7 @@ def check_plugin(
     if total > CHAIN_BUDGET_BYTES:
         breakdown = ", ".join(f"{name}={size}" for name, size in sizes.items())
         violations.append(
-            f"{plugin_root.name} mandatory read chain is {total} bytes "
+            f"{plugin_root.name} unconditional read chain is {total} bytes "
             f"({breakdown}); budget is {CHAIN_BUDGET_BYTES}. Move detail into a "
             "per-moment reference instead of growing an always-read file."
         )
