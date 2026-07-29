@@ -59,6 +59,9 @@ in the diff. A comment on the wrong line costs more author time than no comment.
 
 - Skip a finding whose path, line, and substance already appear in
   `gh api repos/$OWNER/$REPO/pulls/$PR/comments`. The author has seen it.
+- Re-evaluate every existing unresolved P0/P1/P2 thread against the pinned head
+  and return `still_applies`, `fixed`, or `does_not_apply` in completion. Do not
+  repost it.
 - A previously reported finding that is now fixed gets one line in the overall body,
   not a new inline comment. Acknowledging the fix is what makes the next round land.
 - Never resolve or reply to another reviewer's threads. This skill adds its own

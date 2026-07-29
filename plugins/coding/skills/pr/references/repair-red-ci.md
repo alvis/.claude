@@ -80,10 +80,13 @@ engineering state into the plugin repository.
    `coding:commit --reorder` to reshape/reparent the current and every
    downstream PR above it, and monitors every PR in the resulting stack.
 5. Rerun affected local checks. On zero exits, the parent resumes the
-   [core publication phase](create-update.md#3-publish-bottom-up): push the repaired
-   bookmark, synchronize/re-push all restacked descendants, repair PR bases,
-   and verify the stack. A nonzero result gets one new evidence-backed fixer
-   cycle; unchanged evidence requiring user/external state is a blocker, never
+   [core publication phase](create-update.md#3-publish-bottom-up): push the
+   repaired bookmark, synchronize/re-push all restacked descendants, repair PR
+   bases, and verify the stack. Unless the original invocation supplied
+   `--no-review`, run [review-loop.md](review-loop.md) against the new heads
+   before polling CI again; any review-driven fix republishes and starts another
+   fresh review pass. A nonzero result gets one new evidence-backed fixer cycle;
+   unchanged evidence requiring user/external state is a blocker, never
    permission to weaken checks.
 
 The parent deduplicates `generated_files` from every accepted repair and

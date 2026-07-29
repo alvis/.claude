@@ -16,8 +16,8 @@ owned by `coding:review-code`.
 
 ```text
 /coding:pr author [<commit-ref>] [--base <ref>]
-/coding:pr create [<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--dry-run]
-/coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--dry-run]
+/coding:pr create [<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
+/coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
 /coding:pr review [<pr-number-or-url> | <source-tree-path>] [--repo <owner/name>] [--area=<list>] [--dry-run]
 /coding:pr merge <pr numbers...> [--method=rebase|squash|merge] [--force]
 ```
