@@ -6,10 +6,10 @@ from contract_footprint import check_plugin
 
 PLUGIN = Path(__file__).resolve().parents[1]
 
-# This plugin owns both lists: what it injects at hook time, and what a session
-# must read before acting in its domain.
+# This plugin owns both lists: hook-injected payloads and the files an injected
+# payload requires without a per-moment trigger.
 PAYLOADS = ("ALLAGENT.md",)
-CHAIN = ("ALLAGENT.md", "references/WORKFLOW.md", "references/ROUTING.md")
+CHAIN = ("ALLAGENT.md",)
 
 
 def test_contract_footprint_stays_within_budget() -> None:

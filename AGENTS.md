@@ -100,13 +100,14 @@ Enforced mechanically — each with the file that enforces it.
 | Codex overlay values are scalar TOML fields; nickname candidates derive from metadata; shared prose makes no promise from Claude-only isolation | same |
 | `memory` is `"project"`; body has exactly one `## Memory` section | same |
 | Every injected payload ≤ 2,000 bytes, per plugin | `scripts/contract_footprint.py`, declared in `plugins/<p>/tests/test_contract_footprint.py` |
-| Every plugin's mandatory read chain ≤ 40,960 bytes | same |
+| Every plugin's unconditional hook read chain ≤ 40,960 bytes | same |
 | `.state/` work Markdown flagged over 16,384 bytes | `plugins/essential/bin/check-markdown-size` |
 | `Agent`/`Task`/`SendMessage` body ≤ 4,096 characters | `plugins/essential/references/orchestration.md` |
 | Batch ≤ ~10 resources per subagent; structured reports < 1000 tokens; ~2 retries per batch | `plugins/governance/constitution/references/delegation.md` |
 
-A plugin declares its own payloads and mandatory read chain in its own test; the shared
-script holds the budgets and fails a payload the plugin ships but forgot to declare.
+A plugin declares its own payloads and unconditional hook read chain in its own test;
+the shared script holds the budgets and fails a payload the plugin ships but forgot to
+declare. Per-moment references are not part of that chain.
 
 An agent metadata `description` must also end with the exact sentence
 `Preferably named <A>, <B>, or <C> when the main agent spawns this role.` — three
