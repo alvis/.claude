@@ -65,9 +65,19 @@ Substitution rules:
 
 <!-- checks that must pass before sign-off, specific to this change, ticked as
      each one is confirmed; a check, never a result or an observation.
-     Pick from these where they apply: tests added or updated · docs updated
-     where user-visible · CI green locally · no new lint or type errors ·
-     reviewer assigned per zone (GIT-PR-SIZE-01..04) -->
+     Change-specific checks are required; these standard checks supplement
+     rather than replace them: tests added or updated · docs updated where
+     user-visible · CI green locally · no new lint or type errors.
+     Add one reviewer triplet for each reviewer required by the active size
+     zone (one for yellow, two for red, and any project-required green-zone
+     reviewers), in slot order:
+       - [ ] Reviewer slot N assigned
+       - [ ] Reviewer slot N reviewed `<head-oid>`
+       - [ ] Reviewer slot N approved `<head-oid>`
+     Text-only authoring keeps the identity-free slot label. Publication
+     replaces it with the assigned `@login` when known. After every push,
+     replace `<head-oid>` with the exact current head and reset its reviewed
+     and approved tasks until that reviewer acts on that revision. -->
 {{verification_body}}
 
 ## 🚫 Boundary

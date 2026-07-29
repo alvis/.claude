@@ -141,51 +141,10 @@ Always start with a draft PR and update it as the code evolves.
 - Use paragraphs for longer explanations in general, but use point form if points are short, related and best expressed as a list (e.g., checklist, breaking changes, etc.)
 - Require Summary and Verification sections; other sections are optional
 
-Use the following structure — a single arc of why, what, what it costs, what to check, and where it stops, with lookup material last:
-
-```markdown
-📌
-
-In plain language, explain the purpose of the PR and its main changes in less than 3 sentences.
-
-## 🧵 Context
-Include any relevant context or background information that helps reviewers understand the change, e.g.
-- Why is this change needed? Any problems or symptoms?
-- Links to the related bug tickets?
-- What problem does it solve? and Why?
-- Any relevant background or design considerations
-
-## 🛠️ Implementation
-Describe what has been implemented
-- Any features implemented
-- Outline how the solution was achieved
-- Any trade-offs, architectural choices, or design patterns
-- Evidence and results of what was done — they belong here, not in Verification
-
-## 💥 Breaking Changes
-List any breaking changes introduced by this PR
-- Note if there are any changes that might break existing functionality
-- Include upgrade or migration instructions if relevant
-
-## 🧪 Verification
-List the checks that must pass before this can be signed off, specific to this change, ticked as each one is confirmed. Every item is a check, never a result — pick from the standard items only where they apply
-- [x] A check already confirmed
-- [ ] A check still outstanding
-- [ ] Reviewer assigned per zone (`GIT-PR-SIZE-01..04`)
-
-## 🚫 Boundary
-Name the related work that was placed outside this change, so its edges are not read as gaps
-- Adjacent work excluded by the instruction, and where it lives instead
-- Anything a reader would reasonably expect here that this change was not asked to do
-
-## 📋 Additional Notes
-List any other information useful for reviewers or future maintainers, e.g.
-- Known issues, temporary limitations, future follow-ups
-
-## 🔗 Related Issues
-Reference related tickets, issues, RFCs, discussions, e.g.
-- `Closes #123, See #456, Spec: [Notion doc](https://...)`
-```
+Use the canonical bundled template at
+[`../../../skills/write-pr/references/templates/pr.md`](../../../skills/write-pr/references/templates/pr.md).
+It owns the structure and rendering guidance; this standard owns the required
+sections and review policy.
 
 ### PR Review Checklist
 

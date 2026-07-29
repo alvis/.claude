@@ -20,7 +20,7 @@ which are original. Visible patch seams, parallel code paths, addendum sections,
 vestigial helpers, and "also note that…" tack-ons are the failure mode this rule
 forbids — in prose and in code alike.
 
-Zone enforcement (GIT-PR-SIZE-01..04) belongs to the reviewer, not this skill.
+Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
 
 ## Boundaries
 
@@ -246,6 +246,9 @@ a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 
+Set `BASE=main` for PR 01 and the previous bookmark thereafter; run
+[Author the PR text](#author-the-pr-text) before any ref or remote mutation.
+
 On the jj path, point the bookmark at the change and push it:
 
 ```bash
@@ -262,10 +265,7 @@ git push --force-with-lease origin "$BOOKMARK"
 
 Either way the push is leased, never bare `--force`, so a remote that advanced
 underneath the rewrite is rejected rather than overwritten.
-Run the [Author the PR text](#author-the-pr-text) sub-procedure for this change
-and capture its exact `title\n\nbody` output as `TITLE` and `BODY`. Set
-`BASE=main` for PR 01 and the previous bookmark for every later PR. When no open
-PR has this head, create a draft:
+When no open PR has this head, create a draft:
 
 ```bash
 gh pr create --draft --title "$TITLE" --body-file - \
@@ -279,6 +279,9 @@ draft state:
 gh pr edit "$PR" --title "$TITLE" --body-file - --base "$BASE" <<<"$BODY"
 gh pr ready "$PR" --undo # skip only when already draft
 ```
+
+For the bundled template, fill reviewer slots with assigned `@login`s when
+known; bind review and approval to `headRefOid`, resetting both after a push.
 
 Capture each PR number, URL, head, base, bookmark, and change ID. After each
 push, record `expected_head_oid` from the pushed bookmark and verify it against
@@ -303,7 +306,9 @@ repository is jj-colocated and through `git fetch`/`git push
 --force-with-lease`/`git ls-remote` where it is not, and it reports which one it
 selected as `vcs` in its JSON summary. It aborts the whole sync on the first
 preflight mismatch rather than pushing a partially shaped stack; verify the PR
-base chain and each PR `headRefOid` mirror the recorded map.
+base chain and each PR `headRefOid` mirror the recorded map. Before monitoring,
+reauthor every pushed head against its verified base and update its PR body,
+resetting reviewer evidence onto the new OID.
 
 | Publication error | Action |
 |---|---|
@@ -411,16 +416,14 @@ restore on `--resume` or `--continue`; expired tasks are not replayed.
 
 ### Author the PR text
 
-Compose the deterministic `title\n\nbody` for one commit. This sub-procedure is
-self-contained: step 3 runs it at publish time, and a caller that needs only PR
-text (no publication) may run just this block and consume its stdout. It never
-invokes `gh`.
+Compose deterministic `title\n\nbody` for a commit and optional base. Step 3
+passes its base; text-only callers default to the first parent. Never invoke `gh`.
 
-1. Resolve the commit ref: try `jj log -r <ref> --no-graph -T 'description'`
-   first; fall back to `git log -1 --format=%B <ref>` when `jj` exits
-   non-zero. Unknown ref: exit 2, print "no such revision" plus the failing
-   ref. Neither `jj` nor `git` available: exit 3, "no commit source
-   available".
+1. Resolve the commit and base refs. Try
+   `jj log -r <ref> --no-graph -T 'description'` first; fall back to
+   `git log -1 --format=%B <ref>`. Unknown ref exits 2; neither tool exits 3.
+   From their merge base count all paths and net LOC, apply project overrides,
+   and record the canonical `GIT-PR-SIZE-*` zone.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
    `Fixes:`, `Breaking-Change:`, `Testing:`, `Manual-Test:`) for routing in
@@ -466,10 +469,8 @@ invokes `gh`.
      as a checklist of the checks that must pass before sign-off, specific to
      this change and ticked as each one is confirmed. Every item is a check;
      an observation, a result, or evidence of what already happened belongs in
-     Implementation. Pick from the standard items — tests added or updated,
-     docs updated where user-visible, CI green locally, no new lint or type
-     errors, reviewer assigned per zone — only where they apply, and never in
-     place of the change-specific ones.
+     Implementation. Change-specific checks are mandatory; standard items never
+     replace them; append items per the template's Verification guidance.
    - `{{boundary_body}}` — bullets naming related work the instruction placed
      outside this change, so its edges are not read as gaps. It records the
      scope it was given, not the author's own judgment calls. "None." when
