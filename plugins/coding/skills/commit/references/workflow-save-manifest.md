@@ -81,7 +81,7 @@ The manifest contains:
   },
   "publication_paths": [
     {
-      "path": "docs/specs/example/index.md",
+      "path": "docs/specs/example/README.md",
       "state": "file|symlink|deleted",
       "sha256": "<content-or-link-text hash, null only for deleted>",
       "mode": "100644|100755|120000|null for deleted",

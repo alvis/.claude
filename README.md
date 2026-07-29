@@ -181,8 +181,8 @@ Use a lowercase tracker-derived ID that will remain stable, such as
 ```text
 /essential:discover "Find delivery blind spots for checkout refunds" --work-id=eng-421-checkout-refunds --mode=blindspots --persist
 /specification:spec-code "Design idempotent checkout refunds from these requirements" --work-id=eng-421-checkout-refunds --capability=checkout-refunds
-/specification:plan-code --work-id=eng-421-checkout-refunds --spec=docs/specs/checkout-refunds/index.md
-/specification:implement-code docs/specs/checkout-refunds/index.md --work-id=eng-421-checkout-refunds --repo=/absolute/path/to/target-project --defer-publication
+/specification:plan-code --work-id=eng-421-checkout-refunds --spec=docs/specs/checkout-refunds/README.md
+/specification:implement-code docs/specs/checkout-refunds/README.md --work-id=eng-421-checkout-refunds --repo=/absolute/path/to/target-project --defer-publication
 ```
 
 This path avoids Notion and remote publication entirely. It leaves verified

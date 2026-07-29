@@ -31,18 +31,20 @@ touch \
   "$fixture/.state/works/eng-42/decisions.md" \
   "$fixture/.state/works/eng-99/state/working.md" \
   "$fixture/.state/works/eng-99/state.md" \
-  "$fixture/docs/index.md" \
-  "$fixture/docs/architecture/overview.md" \
+  "$fixture/docs/README.md" \
+  "$fixture/docs/architecture/README.md" \
   "$fixture/docs/architecture/runtime-boundaries.md" \
   "$fixture/docs/architecture/LEGACY.md" \
   "$fixture/docs/architecture/decisions/0001-runtime.md" \
+  "$fixture/docs/design/README.md" \
   "$fixture/docs/design/system.md" \
   "$fixture/docs/design/checkout-flow.md" \
   "$fixture/docs/design/LEGACY.md" \
   "$fixture/docs/design/system/10-tokens.md" \
-  "$fixture/docs/specs/accounts/index.md" \
+  "$fixture/docs/specs/README.md" \
+  "$fixture/docs/specs/accounts/README.md" \
   "$fixture/docs/specs/accounts/session.md" \
-  "$fixture/docs/specs/payments/index.md" \
+  "$fixture/docs/specs/payments/README.md" \
   "$fixture/docs/specs/payments/error-contract.md" \
   "$fixture/docs/specs/payments/UPPER.md"
 
@@ -93,11 +95,13 @@ assert_contains '- .state/works/eng-42/state/working.md'
 assert_contains '- .state/works/eng-42/state.md'
 assert_absent '.state/works/eng-99/state/working.md'
 assert_absent '.state/works/eng-99/state.md'
-assert_contains '- docs/index.md'
-assert_contains '- docs/architecture/overview.md'
-assert_contains '- docs/design/system.md'
-assert_absent 'docs/specs/accounts/index.md'
-assert_absent 'docs/specs/payments/index.md'
+assert_contains '- docs/README.md'
+assert_contains '- docs/architecture/README.md'
+assert_contains '- docs/design/README.md'
+assert_contains '- docs/specs/README.md'
+assert_absent 'docs/design/system.md'
+assert_absent 'docs/specs/accounts/README.md'
+assert_absent 'docs/specs/payments/README.md'
 
 assert_absent 'CONTEXT.md'
 assert_absent 'DESIGN.md'
@@ -121,9 +125,10 @@ if [[ "$readme_count" -ne 1 ]]; then
 fi
 
 assert_before '.state/works/eng-42/state/working.md' '.state/works/eng-42/state.md'
-assert_before '.state/works/eng-42/state.md' 'docs/index.md'
-assert_before 'docs/index.md' 'docs/architecture/overview.md'
-assert_before 'docs/architecture/overview.md' 'docs/design/system.md'
+assert_before '.state/works/eng-42/state.md' 'docs/README.md'
+assert_before 'docs/README.md' 'docs/architecture/README.md'
+assert_before 'docs/architecture/README.md' 'docs/design/README.md'
+assert_before 'docs/design/README.md' 'docs/specs/README.md'
 
 ambiguous_output="$(get_repo_root_documents_context "$fixture")"
 case "$ambiguous_output" in

@@ -28,18 +28,30 @@ outside Git; their identity and lineage do not.
 Before creating or materially rewriting a project artifact, read the absolute
 `engineering-work.md` path injected by Essential; if unavailable, stop
 artifact writes and report the missing contract. Then read Essential's
-`asset-manifest.md` template (the manifest shape) and its `anchors.md`
-reference (anchor declarations). The manifest is a durable
-versioned document under the contract's plugin-owned `docs/<domain>/<slug>/`
-clause: default location `docs/production/<deliverable-slug>/assets.md`
-unless the work stream's charter names another; work-local exploration stays
-under the stream's `.state/` per the contract.
+`${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md`,
+`${ESSENTIAL_ROOT}/templates/docs/domain-readme.template.md`, and
+`${ESSENTIAL_ROOT}/templates/docs/domain-item-readme.template.md`, using the
+root derived from the injected engineering-work contract. Read Production's
+[asset manifest template](../../templates/asset-manifest.template.md) for the
+semantic shape, and
+Essential's `anchors.md` reference (anchor declarations). The manifest is a
+durable versioned document under the contract's plugin-owned
+`docs/<domain>/<slug>/` clause: default location
+`docs/production/<deliverable-slug>/assets.md` unless the work stream's
+charter names another. Every manifest write ensures
+`docs/production/README.md` and
+`docs/production/<deliverable-slug>/README.md` exist, reconciles
+`docs/README.md`, and maps the item reader to `assets.md` as semantic
+authority. Work-local exploration stays under the stream's `.state/` per the
+contract.
 
 ## Workflow
 
 1. Resolve the manifest: the given path, the charter's declared manifest, or
    propose the default location for user confirmation. Read it fully when it
-   exists; never regenerate it from scratch over an existing file.
+   exists; never regenerate it from scratch over an existing file. Create a
+   missing domain or item README even for an existing semantic manifest; update
+   an existing README only when its navigation or authority map changes.
 2. For each asset to register or update: record the stable id (never renamed
    or reused), kind, store locator, content hash (`sha256sum` when the bytes
    are reachable; otherwise `pending`), observed technical facts, provenance
@@ -54,8 +66,10 @@ under the stream's `.state/` per the contract.
    record which entries the decision `preserves` untouched. Never delete an
    entry that any render or approval references.
 5. Return the manifest path and a summary of entries added, updated, and
-   marked stale in `generated_files`; report hashes still `pending` so the
-   next session can complete them.
+   marked stale. `generated_files` includes `assets.md` plus every
+   created/materially rewritten root, domain, or item README; do not list
+   unchanged paths. Report hashes still `pending` so the next session can
+   complete them.
 
 ## Verification
 
@@ -68,4 +82,5 @@ under the stream's `.state/` per the contract.
 ## Completion
 
 Report the manifest path, entry counts by disposition (added / updated /
-stale-marked / pending-hash), and `generated_files`.
+stale-marked / pending-hash), and complete `generated_files`, including every
+created/materially rewritten README floor.

@@ -78,8 +78,11 @@ The canonical template, parent database, and collection remain:
 6. Promote stable non-system design to `docs/design/<screen-slug>.md` with
    Notion ids, source revision/hash, approved decision links, and supersession
    metadata. Route any system-wide rules to `docs/design/system.md` without
-   duplicating them in the screen doc. Update `docs/index.md`/design links when
-   needed.
+   duplicating them in the screen doc. Read
+   `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+   `${ESSENTIAL_ROOT}/templates/docs/design-readme.template.md`, using the root
+   derived from the injected engineering-work contract, then update
+   `docs/README.md` and `docs/design/README.md` links when needed.
 7. Verify each remote page through the selected transport's diff or verification
    pull into an explicit verification location, and verify the durable
    derivation against that source. Stop on uncertain creation to avoid

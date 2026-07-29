@@ -110,7 +110,7 @@ def test_skips_runtime_placeholder_bare_and_absolute_mentions(root: Path) -> Non
         "\n".join(
             (
                 "state under `.state/works/demo/goal.md`",
-                "promoted to `docs/architecture/index.md`",
+                "promoted to `docs/architecture/README.md`",
                 "memory in `.claude/agent-memory/lead/MEMORY.md`",
                 "work state in `state/working.md`",
                 "review detail in `reviews/quality.md`",

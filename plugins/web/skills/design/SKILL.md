@@ -140,6 +140,11 @@ Promote only reviewed, reusable knowledge after sign-off:
   `docs/design/<design-slug>.md`, with same-stem semantic children only when
   useful; durable `docs/**` has no mechanical size limit but is still
   length-calibrated — see `essential:references/output-manifest.md`;
+- read `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+  `${ESSENTIAL_ROOT}/templates/docs/design-readme.template.md`, using the root
+  derived from the injected engineering-work contract, then reconcile
+  `docs/design/README.md` and `docs/README.md` so the promoted design remains
+  reachable and its status or supersession is explicit;
 - task state and implementation evidence remain under the work ID.
 
 Record rendered desktop/mobile evidence; both-mode composited contrast via

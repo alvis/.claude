@@ -55,15 +55,11 @@ replace this bootstrap contract.
 
 ### First-use work-memory bootstrap
 
-Once the user has confirmed a new work identity and the resolver returns
-`resolved` with `engineering_ignored: true`, the PM alone — while holding
-the coordinator lease — reruns the resolver with that confirmed ID and
-`--bootstrap`, before delegating or creating any other work artifact.
-`--bootstrap` never derives or mints an ID and cannot bypass
-`work_id_required` or `requires_ignore`. [lease.md](lease.md) carries the
-invocation, the no-clobber creation semantics, what the initial files hold,
-and the `bootstrap_created` and `bootstrap_existing` paths the PM adds to
-`generated_files`.
+After the user confirms a new ID and the resolver returns `resolved` with
+`engineering_ignored: true`, the lease-holding PM runs `--bootstrap` before
+delegation or any other artifact write. It never derives an ID or bypasses a
+resolver gate. [lease.md](lease.md) owns the invocation, no-clobber semantics,
+initial content, and returned paths that enter `generated_files`.
 
 ## Canonical topology
 
@@ -71,79 +67,54 @@ Versioned `docs/` follows the active working tree; ignored `.state/`
 lives only in the default source tree (`state_root`).
 
 ```text
-docs/                               # versioned; active working tree
-├── index.md
-├── architecture/
-│   ├── overview.md
-│   ├── <architecture-slug>.md
-│   ├── <architecture-slug>/*.md
-│   └── decisions/<nnnn>-<decision-slug>.md
-├── design/
-│   ├── system.md
-│   ├── system/*.md
-│   ├── <design-slug>.md
-│   └── <design-slug>/*.md
-├── specs/<capability>/
-│   ├── index.md
-│   ├── provenance.json
-│   └── *.md
-└── <domain>/<slug>/…                # plugin-owned durable documents
-
-.state/                       # ignored; default source tree only
-├── overview.md                      # global status index across every source tree
-├── notion/                          # default source tree only: Notion mirror
-├── archive/<work-id>/               # parked idle streams; resolver never enumerates
-└── works/<work-id>/                 # every stream, whichever tree works it
-    ├── goal.md
-    ├── state.md
-    ├── lease.json
-    ├── state/{working,journal,revisions,unresolved,plan,discovery}.md
-    ├── spec/
-    ├── proposals.md + proposals/*.md
-    ├── changes.md + changes/*.md
-    ├── decisions.md + decisions/*.md
-    ├── design.md + design/*.md
-    ├── review.md + reviews/*.md
-    └── artifacts/
+docs                                       # versioned docs in the active working tree
+├── README.md                              # reader entrypoint and durable-domain map
+├── retired-work-ids.md                    # retired IDs that must never be reused
+├── architecture                           # structural rules, boundaries, topology, protocols, and flows
+│   ├── README.md                              # architecture entrypoint and authority map
+│   ├── <architecture-slug>.md                 # authoritative document for one structural concern
+│   ├── <architecture-slug>/*.md               # supporting detail owned by that structural concern
+│   └── decisions/<nnnn>-<decision-slug>.md    # accepted choice, alternatives, and consequences
+├── design                                 # durable system-wide and feature design
+│   ├── README.md                          # design entrypoint and status map
+│   ├── system.md                          # authoritative system-wide design
+│   ├── system/*.md                        # supporting system-design detail
+│   ├── <design-slug>.md                   # authoritative feature or subsystem design
+│   └── <design-slug>/*.md                 # supporting detail owned by that design
+├── specs                                  # approved capability contracts
+│   ├── README.md                          # capability catalog and specification rules
+│   └── <capability>                       # one approved capability contract
+│       ├── README.md                      # authoritative contract plus reader orientation and usage
+│       ├── reference.md                   # optional intended consumer API reference
+│       ├── provenance.json                # source, approval, template, and output lineage
+│       └── <contract-unit>.md             # optional subordinate contract unit linked by README.md
+└── <domain>                               # plugin-owned durable document family
+    ├── README.md                          # domain scope, lifecycle, and item catalog
+    └── <slug>                             # one durable domain item
+        ├── README.md                      # item orientation and semantic authority map
+        ├── provenance.json                # optional lineage when the semantic document is derived
+        └── <semantic-document>.md         # plugin-owned authority such as manifest.md or assets.md
 ```
 
-All generated project Markdown filenames are lowercase; plugin control files
-with fixed runtime names (`SKILL.md`, `ALLAGENT.md`, …) keep them.
+Generated semantic and operational project Markdown filenames are lowercase.
+Durable directory entrypoints use the fixed runtime name `README.md`; plugin
+control files with fixed runtime names (`SKILL.md`, `ALLAGENT.md`, …) keep
+them.
 
-### Durable documentation
-
-- `docs/index.md` is the small entrypoint to architecture, design, and
-  capability specifications.
-- `docs/architecture/` owns structural rules, boundaries, topology,
-  protocols, and flows; a choice with alternatives and consequences is an ADR
-  under `decisions/`, never a second architecture truth.
-- `docs/design/` owns durable system-wide and feature design.
-- `docs/specs/<capability>/` is reviewed, versioned specification content.
-  For an inline source, `index.md` is the durable authoritative carrier; for
-  an explicit local source it is a content-equivalent durable carrier; for
-  Notion it is a verified derivation. `provenance.json` records source kind,
-  source and approval hashes, template identity, and output hashes.
-- Beyond those trees, **durable user-facing documents live under
-  `docs/<domain>/<slug>/`**, owned by the plugin that mints them and
-  referenced from the owning stream's state — for example
-  `docs/initiatives/<slug>/index.md` and
-  `docs/production/<slug>/assets.md`. The minting plugin defines the
-  document's shape; this contract defines only its home and provenance
-  obligations.
-- Task implementation state does not become durable merely because a skill
-  wrote it. Promote only stable knowledge, with provenance and supersession
-  links, during completion ([retirement.md](retirement.md)).
+Before writing versioned docs, read
+[durable-documentation.md](durable-documentation.md) for authority, content,
+template ownership, terminology, and lazy atomic migration. Before creating
+or migrating ignored work files, read
+[work-memory-topology.md](work-memory-topology.md) for the commented `.state`
+map; state semantics remain in
+[engineering-work-state.md](engineering-work-state.md).
 
 ## Deterministic names
 
-Names are decided by rule, never derived by a program and never random. A work
-ID is a slug of what the work is about (`work-id-naming`), carrying no type
-prefix: it names the stream's `works/<work-id>/` and its source tree, while
-the type belongs to the branch (`feat/<work-id>`). It is an identity and is
-never renamed or reused, so name one only when resolution cannot select safely
-and the PM resolved the ambiguity. [naming.md](naming.md) carries every shape
-— slugs, the collision ordinal, the branch a stack hangs under, and what
-generated documents are called. Read it before naming anything.
+Read [naming.md](naming.md) before naming a work stream, branch, or generated
+document. It owns every shape and collision rule. A work ID is a type-free,
+stable identity that is created only after resolver ambiguity is settled and
+is never renamed or reused.
 
 ## Work memory
 

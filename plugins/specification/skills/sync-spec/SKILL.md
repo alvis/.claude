@@ -186,8 +186,22 @@ approved specification content, not to any hash.
    rewrite an earlier base or receipt. A partial remote write is `partial` with
    exact recovery evidence, not success. Regenerate affected versioned specs
    under `docs/specs/<capability>/` with stable source id/revision and a
-   durable task/PR/Notion receipt anchor. The receipt and report store the
-   observed revision and a reference to the recorded content. The embedded
+   durable task/PR/Notion receipt anchor. Use Specification's `spec-code`
+   carrier, optional reference, and provenance templates:
+   `README.md` is the authoritative derived contract, `reference.md` exists
+   only for an intended consumer surface, and `provenance.json` remains the
+   strict machine-readable sidecar. Read
+   `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+   `${ESSENTIAL_ROOT}/templates/docs/specs-readme.template.md`, using the root
+   derived from the injected engineering-work contract, then reconcile
+   `docs/specs/README.md` and `docs/README.md` with the regenerated capability.
+   If `reference.md` exists, verify its whole consumer surface against current
+   repository-relative implementation paths: keep it
+   `**Status:** 🚧 Pending` until all entries are implemented, otherwise use
+   `**Status:** ✅ Implemented (<paths>, <paths>)`. Hash that final reference in its
+   provenance logical unit/output. The receipt and report
+   store the observed
+   revision and a reference to the recorded content. The embedded
    output set in `provenance.json` excludes `provenance.json` itself; store its
    post-write reference only in work/external evidence and the report.
 9. Enumerate locally registered Git worktrees and jj workspaces. For readable

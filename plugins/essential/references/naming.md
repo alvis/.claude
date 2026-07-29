@@ -108,6 +108,8 @@ outcome, not a failure.
 
 ## Documents
 
+- A durable directory entrypoint is the fixed uppercase filename `README.md`;
+  operational indexes and semantic documents keep descriptive lowercase names.
 - `docs/specs/<capability>/` takes the owning capability, never the task
   title.
 - ADRs alone carry a zero-padded monotonic numeric prefix

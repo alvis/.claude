@@ -19,6 +19,14 @@ Every workflow distinguishes three kinds of specification source:
 Approval always binds to exact content confirmed by direct comparison, and
 `docs/specs/<capability>/provenance.json` records source kind, content
 hashes, and outputs — so a resumed spec is verified, not assumed.
+`docs/specs/<capability>/README.md` is the reachable approved contract and
+reader orientation. `reference.md` is optional and exists only for an
+intended consumer surface.
+
+Specification owns the capability carriers it derives:
+`skills/spec-code/assets/capability-readme.template.md`,
+`skills/spec-code/assets/reference.template.md`, and
+`skills/spec-code/assets/provenance.template.json`.
 
 ## Skills
 

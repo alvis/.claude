@@ -97,4 +97,6 @@ rules to `docs/design/system.md` and durable non-system design to
 `docs/design/<design-slug>.md`. Each original durable path remains its overview;
 use a same-stem detail directory only when logical separation materially
 improves ownership or navigation. Durable `docs/**` has no mechanical size
-limit. Record work ID, source evidence, review, and supersession provenance.
+limit. Reconcile `docs/design/README.md` and `docs/README.md` so every promoted
+design is reachable. Record work ID, source evidence, review, and supersession
+provenance.

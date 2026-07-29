@@ -64,7 +64,7 @@ contract materialization, MDC authoring, alignment, and completion sync.
 2. Resolve the authoritative source/location/direction from the explicit request
    first, then active work state. A raw inline prompt is requirements evidence,
    not an implementation contract. For inline-origin work, require the
-   reachable `docs/specs/<capability>/index.md` carrier and durable
+   reachable `docs/specs/<capability>/README.md` carrier and durable
    `provenance.json` receipt produced by `spec-code`; compare its current content
    directly against provenance to confirm it matches the approved specification
    content, and return
@@ -224,7 +224,15 @@ contract materialization, MDC authoring, alignment, and completion sync.
     carrier and provenance receipt to map the exact reviewed content back
     to its explicit local path or approved inline candidate. Refresh the
     content-preserving derivation when necessary and do not claim a Notion
-    round trip.
+    round trip. After review, usage tracing, and completion sync have converged,
+    reconcile any `reference.md` one final time. Specification is its sole
+    writer: verify every declared consumer API against repository-relative
+    implementation paths; keep `**Status:** 🚧 Pending` until the whole surface
+    is implemented, otherwise use
+    `**Status:** ✅ Implemented (<paths>, <paths>)`. Update its logical-unit mapping
+    and exact output hash in `provenance.json`, refresh the external
+    provenance-file hash, re-run the source/carrier/provenance checks, and
+    include both materially changed files in `generated_files`.
 11. Only after review/usage, durable derivation, and applicable completion sync
     are stable at one exact specification content may history finalization or
     publication begin. Inspect relevant repository state against `base_rev` and

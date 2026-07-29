@@ -124,7 +124,7 @@ streams it refreshed and preserves every other row byte-for-byte. Follow this te
 
 | Work ID | Lifecycle | Headline | Next action | Location | Spec | Documentations |
 |---|---|---|---|---|---|---|
-| `<work-id>` | `<initialized\|active\|blocked\|reviewing\|completed\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](docs/<slug>.md)` or `-` |
+| `<work-id>` | `<initialized\|active\|blocked\|reviewing\|completed\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](<canonical promoted docs path>)` or `-` |
 | `<work-id>` | `completed` | `<one line>` | `-` | `-` | `-` | `-` |
 ```
 
