@@ -60,7 +60,11 @@ Canonical template/parent/collection ids remain `4555730e74b44592b77dd8a97620d3f
 6. Regenerate the approved durable `docs/design/<slug>.md` derivation with
    stable Notion ids, source revision/hash, decision/supersession links, and
    current behavior. Promote only system-wide rules to `docs/design/system.md`
-   and link rather than duplicate them. Maintain `docs/index.md` links.
+   and link rather than duplicate them. Read
+   `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+   `${ESSENTIAL_ROOT}/templates/docs/design-readme.template.md`, using the root
+   derived from the injected engineering-work contract, then maintain
+   `docs/README.md` and `docs/design/README.md` links.
 7. Reverify requested change, preservation map, relations, responsive states,
    accessibility, remote identity, and durable derivation. Confirm no
    unselected page changed.

@@ -68,8 +68,13 @@ independent-review audit checklist, and the retry/rollback criteria.
    cross-process or persistent data flow, meaningful dependency layering, or
    at least three cooperating components whose relationship is not clear from
    `readme.md`. Name it per `naming.md` in the essential plugin's
-   `references/` directory and repository capability, not a task title. Reconcile `docs/architecture/overview.md` and
-   `docs/index.md`; individual architectural choices remain ADRs under
+   `references/` directory and repository capability, not a task title.
+   At this write decision, read
+   `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+   `${ESSENTIAL_ROOT}/templates/docs/architecture-readme.template.md`, using
+   the root derived from the injected engineering-work contract.
+   Reconcile `docs/architecture/README.md` and `docs/README.md`; individual
+   architectural choices remain ADRs under
    `docs/architecture/decisions/`.
 8. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping. Decide review outcomes per the criteria in references/authoring-rules.md (proceed, targeted retry with at most two attempts per issue, or rollback).
 

@@ -30,7 +30,7 @@ class Harness:
             ".gitignore": ".state/\n",
             "src.txt": "source base\n",
             "tests.txt": "test base\n",
-            "docs/specs/capability/index.md": "spec base\n",
+            "docs/specs/capability/README.md": "spec base\n",
             "docs/specs/capability/provenance.json": "{}\n",
             "developer.txt": "developer base\n",
         }
@@ -203,7 +203,7 @@ def test_real_path_limited_save_preserves_unrelated_index_and_worktree(
     selected = [
         "src.txt",
         "tests.txt",
-        "docs/specs/capability/index.md",
+        "docs/specs/capability/README.md",
         "docs/specs/capability/provenance.json",
     ]
     for relative in selected:

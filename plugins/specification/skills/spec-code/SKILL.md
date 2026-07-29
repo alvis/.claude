@@ -94,12 +94,16 @@ section, or copied transport history.
    refuse, and never substitute a bundled snapshot. Only for local or inline
    work with neither an explicit nor project template, use the immutable
    source-kind-neutral fallback
-   [assets/technical-spec-template.md](assets/technical-spec-template.md).
+   [assets/capability-readme.template.md](assets/capability-readme.template.md).
    Record that fallback with portable locator
-   `plugin:specification/spec-code/assets/technical-spec-template.md`, the
+   `plugin:specification/spec-code/assets/capability-readme.template.md`, the
    exact installed Specification plugin version, and asset SHA-256; never
-   publish its machine-local install path. Record every selected template's
-   portable locator and exact SHA-256 so retries choose the same bytes. Preserve required section order and properties, and make
+   publish its machine-local install path. Record the primary carrier
+   template's portable locator and exact SHA-256 so retries choose the same
+   bytes. The singular v1 provenance `template` object remains that primary
+   carrier identity; the Specification plugin version prescribes the optional
+   reference template, whose derived file is hashed as an output. Preserve
+   required section order and properties, and make
    `--sync-template` an explicit content-preserving migration against this
    snapshot. Then gather requirements, discovery
    evidence, architecture, API/data contracts,
@@ -150,7 +154,7 @@ section, or copied transport history.
    `--skip-notion-sync`, perform a content-preserving promotion into the
    versioned `docs/specs/<capability>/` tree. The reachable authoritative entry
    for `plan-code` and `implement-code` is
-   `docs/specs/<capability>/index.md`; write the durable machine-readable
+   `docs/specs/<capability>/README.md`; write the durable machine-readable
    provenance receipt at `docs/specs/<capability>/provenance.json`. The receipt
    records source kind, durable source locator, source and carrier content
    references, the approved specification content, every
@@ -171,7 +175,12 @@ section, or copied transport history.
    receipt path, and the approved/carrier content references in active-work
    reconciliation so later skills never depend on the
    prompt transcript or ignored candidate alone. Do not claim a Notion round
-   trip for this path.
+   trip for this path. Read
+   `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` and
+   `${ESSENTIAL_ROOT}/templates/docs/specs-readme.template.md`, using the root
+   derived from the injected engineering-work contract, then reconcile
+   `docs/specs/README.md` and `docs/README.md` so the capability remains
+   reachable and its contract status is explicit.
 
    Authority is singular after promotion. A reachable `repo:` local source
    remains authoritative and `docs/specs/<capability>/` is its checked
@@ -181,6 +190,26 @@ section, or copied transport history.
    carrier becomes authoritative after content-equivalence verification; the
    original hash is historical provenance, not a second live source. Inline
    work likewise uses its approved durable carrier after promotion.
+
+   The capability `README.md` is the approved normative contract and begins
+   with reader orientation: what the capability is, when to use it, how it
+   works, and overall usage direction. Do not add installation instructions.
+   When the contract defines an intended consumer surface — including one
+   intended for another package in the same repository — also derive
+   `reference.md` from
+   [assets/reference.template.md](assets/reference.template.md). Group entries
+   logically and document each API's description, parameters, returns,
+   throws or rejections, side effects, and a minimal example. Put `## Overview`
+   first, followed immediately by `**Status:** 🚧 Pending` while the referenced
+   surface is not fully implemented, or
+   `**Status:** ✅ Implemented (<paths>, <paths>)` once every implementation path is
+   verified. Do not publish private helpers, and do
+   not add completeness, verification-owner, compatibility/versioning, or type
+   signature sections. Use
+   [assets/provenance.template.json](assets/provenance.template.json) for the
+   machine-readable receipt shape. When `reference.md` exists, include its
+   logical-unit mapping and exact hash in provenance; remove the template's
+   conditional reference entries when it does not.
 
    For a selected Notion source, `--skip-notion-sync` leaves authored Notion
    content temporary and does not claim promotion. Otherwise invoke
@@ -197,7 +226,7 @@ section, or copied transport history.
    `status: success` with `next_action: none`; propagate `remote_only` or
    `structural_change` plus `next_action: revalidate`, and never treat
    unchanged content alone as permission to ignore structural change.
-7. Verify the resulting derived spec reads as one contract, `index.md` points
+7. Verify the resulting derived spec reads as one contract, `README.md` points
    to all versioned children, and provenance matches the verification pull.
    Confirm the provenance output set excludes itself and its post-write exact
    hash exists only in work/external evidence and this run's report.
@@ -215,7 +244,7 @@ mechanical size limit, but it is still length-calibrated — see
 - Every authored MDC body change went through `specification:mdc` and retained
   Notion identity/path.
 - A completed Notion run has verified sync, verification pull, derivation
-  provenance, `index.md`, and revalidation results. A skipped Notion sync
+  provenance, `README.md`, and revalidation results. A skipped Notion sync
   remains explicitly temporary. A local/inline run always has a versioned
   carrier plus durable receipt and never claims a remote round trip.
 - Raw inline prompt text is never reported as the authoritative final contract;

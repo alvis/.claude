@@ -7,7 +7,7 @@ Read this when materializing, revalidating, or completing specification work.
 An explicit local path, approved inline candidate, or selected Notion
 identity may supply a specification. Inline prompt text is evidence only:
 before planning or implementation it becomes a complete approved candidate
-and a content-equivalent durable `docs/specs/<capability>/index.md` carrier.
+and a content-equivalent durable `docs/specs/<capability>/README.md` carrier.
 A local source retains its exact path and gains the same durable
 carrier/provenance. Neither path claims a Notion round trip.
 
@@ -52,7 +52,7 @@ external task, PR, and Notion anchors plus every known or unknown remote
 dependent that still needs revalidation.
 
 The authored-docs sweep rides the same trigger: on any
-`next_action: revalidate` outcome, check `docs/index.md` and the
+`next_action: revalidate` outcome, check `docs/README.md` and the
 `docs/architecture/` and `docs/design/` documents that reference the changed
 capability, and journal each file's disposition (`unaffected`, `updated`, or
 `superseded`) — only `docs/specs/` is hash-bound to the source, so ADRs and

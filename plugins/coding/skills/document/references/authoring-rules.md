@@ -99,7 +99,7 @@ adapters, providers, or runtimes.
 - **Path**: write `docs/architecture/<architecture-slug>.md`, naming the slug
   per `naming.md` in the essential plugin's `references/` directory and
   repository capability. Reconcile
-  `docs/architecture/overview.md` and `docs/index.md`. Never derive the slug
+  `docs/architecture/README.md` and `docs/README.md`. Never derive the slug
   from a task title.
 - **Split rule**: `docs/**` has no mechanical byte limit. Split a durable
   architecture document only when distinct ownership or navigation materially
@@ -110,19 +110,14 @@ adapters, providers, or runtimes.
   depth 2, and a link. Diagrams, design patterns, invariants, data flow, and
   extension points live in durable architecture only.
 
-### `docs/architecture/overview.md`
+### `docs/architecture/README.md`
 
-The single durable index every architecture document is reached from — one per
-repository, holding only what is true across all of them. Required, in order:
-
-- **Goal**: one paragraph — what the project is for and whom it serves.
-- **Requirements**: the overall functional and non-functional requirements the
-  architecture must satisfy, each traceable to code, configuration, or a stated
-  product constraint.
-- **Constraints**: repo-wide invariants the component documents inherit —
-  supported runtimes, deployment targets, boundaries that may not be crossed.
-- **Documents**: one line per `docs/architecture/<architecture-slug>.md` —
-  relative link plus what that document owns.
+Essential's
+`${ESSENTIAL_ROOT}/templates/docs/architecture-readme.template.md` owns the
+entrypoint's required shape; its
+`${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md` owns the parent
+catalog. Read both at the write decision rather than copying their section
+contract here.
 
 Reconciling it means: add, update, or remove the Documents line for the document
 just written or renamed, and revise Goal, Requirements, or Constraints only when

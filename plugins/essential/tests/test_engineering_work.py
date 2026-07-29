@@ -117,7 +117,7 @@ def test_deduplicates_and_excludes_working_and_external_markdown(
 ) -> None:
     measured = checker.write_bytes(".state/works/eng-421/normal.md", 100)
     working = checker.write_bytes(".state/works/eng-421/state/working.md", 30_000)
-    durable = checker.write_bytes("docs/specs/payments/index.md", 30_000)
+    durable = checker.write_bytes("docs/specs/payments/README.md", 30_000)
     plugin_source = checker.write_bytes("plugins/example/SKILL.md", 30_000)
 
     completed, payload = checker.run_checker(
@@ -1001,12 +1001,14 @@ def context_root(tmp_path: Path) -> Path:
         "CONTEXT.md",
         ".state/works/eng-42/state/working.md",
         ".state/works/eng-42/state.md",
-        "docs/index.md",
-        "docs/architecture/overview.md",
+        "docs/README.md",
+        "docs/architecture/README.md",
         "docs/architecture/runtime-boundaries.md",
+        "docs/design/README.md",
         "docs/design/system.md",
         "docs/design/checkout-flow.md",
-        "docs/specs/accounts/index.md",
+        "docs/specs/README.md",
+        "docs/specs/accounts/README.md",
         "docs/specs/accounts/session.md",
     ):
         path = root / relative
@@ -1038,9 +1040,10 @@ def assert_context_contract(context: str) -> None:
     expected = (
         ".state/works/eng-42/state/working.md",
         ".state/works/eng-42/state.md",
-        "docs/index.md",
-        "docs/architecture/overview.md",
-        "docs/design/system.md",
+        "docs/README.md",
+        "docs/architecture/README.md",
+        "docs/design/README.md",
+        "docs/specs/README.md",
     )
     for path in expected:
         assert path in context
@@ -1048,8 +1051,9 @@ def assert_context_contract(context: str) -> None:
         assert context.index(first) < context.index(second)
     for detail in (
         "docs/architecture/runtime-boundaries.md",
+        "docs/design/system.md",
         "docs/design/checkout-flow.md",
-        "docs/specs/accounts/index.md",
+        "docs/specs/accounts/README.md",
         "docs/specs/accounts/session.md",
     ):
         assert detail not in context
@@ -1073,7 +1077,7 @@ def test_subagent_start_omits_repository_and_work_catalogs(
         "README.md",
         ".state/works/eng-42/state/working.md",
         ".state/works/eng-42/state.md",
-        "docs/index.md",
+        "docs/README.md",
     ):
         assert path not in context
 

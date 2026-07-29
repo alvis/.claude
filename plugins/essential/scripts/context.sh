@@ -75,17 +75,21 @@ get_repo_root_documents_context() {
     context+="- Engineering work selection is unresolved; ask only when artifact work begins."$'\n'
   fi
 
-  # Durable entrypoints only. Their own indexes provide progressive disclosure
+  # Durable entrypoints only. Their READMEs provide progressive disclosure
   # into architecture, design, and specification detail.
-  if [[ -f "$repo_root/docs/index.md" ]]; then
-    context+="- docs/index.md"$'\n'
+  if [[ -f "$repo_root/docs/README.md" ]]; then
+    context+="- docs/README.md"$'\n'
   fi
-  if [[ -f "$repo_root/docs/architecture/overview.md" ]]; then
-    context+="- docs/architecture/overview.md"$'\n'
+  if [[ -f "$repo_root/docs/architecture/README.md" ]]; then
+    context+="- docs/architecture/README.md"$'\n'
   fi
 
-  if [[ -f "$repo_root/docs/design/system.md" ]]; then
-    context+="- docs/design/system.md"$'\n'
+  if [[ -f "$repo_root/docs/design/README.md" ]]; then
+    context+="- docs/design/README.md"$'\n'
+  fi
+
+  if [[ -f "$repo_root/docs/specs/README.md" ]]; then
+    context+="- docs/specs/README.md"$'\n'
   fi
 
   if [[ -n "$context" ]]; then

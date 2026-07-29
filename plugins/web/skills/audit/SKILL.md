@@ -100,9 +100,9 @@ discovery.
    v3, review counts agree with source findings, and skill-owned processes are
    torn down while reused processes remain.
 
-For alignment, discover active work design paths first, then
-`docs/design/system.md` and relevant `docs/design/<slug>.md`; never depend on a
-legacy root design file.
+For alignment, discover active work design paths first, then read
+`docs/design/README.md`, `docs/design/system.md`, and relevant
+`docs/design/<slug>.md`; never depend on a legacy root design file.
 
 ## Completion
 

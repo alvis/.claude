@@ -39,8 +39,9 @@ Before resolving engineering-work paths, read the absolute
 classify or remove `.state/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
 promotion records but does not create or rewrite them, `state/working.md`,
-`state.md`, or overview files. Its one durable write is the retirement
-ledger below, which is therefore its only project `generated_files` entry. Backup metadata lives only in the OS temporary backup tree.
+`state.md`, or overview files. Its durable writes are the retirement ledger
+below and, when its record link changes, `docs/README.md`. Backup metadata
+lives only in the OS temporary backup tree.
 
 ## Workflow
 
@@ -147,15 +148,19 @@ ledger below, which is therefore its only project `generated_files` entry. Backu
 10. **Record the retirement, then remove only approved, verified targets.**
     Before deleting an engineering-work directory, append its work ID and the
     retirement date to `docs/retired-work-ids.md`, one record per line as
-    `<work-id> <date>`, and include that file in `generated_files`. A work ID is never reused, and
+    `<work-id> <date>`. Using the root derived from the injected
+    engineering-work contract, read
+    `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md`; ensure
+    `docs/README.md` exists and links the ledger under Repository records.
+    Include every materially changed file in `generated_files`. A work ID is never reused, and
     deletion removes the last `.state/` trace of it, so the ledger entry is
     what keeps the name spent — this applies equally to a stream that promoted
     nothing else. Resolve `docs/` and that leaf without following symlinks and
     require the leaf to be a regular in-tree file — an append through a symlink
     writes past the lifecycle boundary, to a file outside this tree. Then save
     it before deleting anything, through `coding:commit`'s checksum-bound
-    scoped route: write a scope request selecting only
-    `docs/retired-work-ids.md`, invoke
+    scoped route: write a scope request selecting the ledger and
+    `docs/README.md` exactly when each changed, invoke
     `Skill(coding:commit --prepare-paths-from=<scope-request>)`, and save with
     the `--paths-from`/`--manifest-sha256` pair it returns. The inventory
     permits a checkout dirty with unrelated work, and approval covered the
@@ -202,5 +207,7 @@ Report tool/remote freshness and counts by VCS target plus work lifecycle
 (`active`, `interrupted`, `completed`, `ambiguous`) and cleanup disposition.
 For every engineering-work candidate report workspace path/name, work ID,
 retirement gates, `retirement_ready_at`, effective retention, promotion anchor,
-backup path, action, and restoration command. Report `generated_files` carrying `docs/retired-work-ids.md` whenever step 10 retired an engineering-work directory, and otherwise `[]`
+backup path, action, and restoration command. Report `generated_files`
+carrying `docs/retired-work-ids.md` and any created/materially rewritten
+`docs/README.md` whenever step 10 retired an engineering-work directory, and otherwise `[]`
 unless a separately authorized project-artifact write actually occurred.

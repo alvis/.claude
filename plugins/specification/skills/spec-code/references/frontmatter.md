@@ -30,7 +30,7 @@ parent: 01234567-89ab-cdef-0123-456789abcdef # only for an unsynced child
 
 ## Versioned contract carrier and provenance
 
-`docs/specs/<capability>/index.md` is the reachable capability entry and links
+`docs/specs/<capability>/README.md` is the reachable capability entry and links
 all derived children. Promotion preserves the source contract's semantic
 frontmatter and body; it does not inject source, timestamp, receipt, or hash
 fields into contract Markdown. If a selected project/template already requires
@@ -47,12 +47,12 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   "carrier_revision": "<git-blob-oid-or-empty>",
   "approved_content_ref": "<durable reachable locator to the exact approved specification content>",
   "logical_units": [
-    {"id": "contract:root", "source_path": "requirements/capability.md", "output_path": "docs/specs/capability/index.md"}
+    {"id": "contract:root", "source_path": "requirements/capability.md", "output_path": "docs/specs/capability/README.md"}
   ],
   "outputs": [
-    {"path": "docs/specs/capability/index.md", "exact_sha256": "sha256:<64-lowercase-hex>"}
+    {"path": "docs/specs/capability/README.md", "exact_sha256": "sha256:<64-lowercase-hex>"}
   ],
-  "template": {"locator": "plugin:specification/spec-code/assets/technical-spec-template.md", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
+  "template": {"locator": "plugin:specification/spec-code/assets/capability-readme.template.md", "plugin_version": "<exact-installed-version>", "exact_sha256": "sha256:<64-lowercase-hex>"},
   "derived_at": "2026-07-20T10:33:00Z",
   "receipt_anchor": "github-pr:owner/repository#123"
 }
@@ -82,7 +82,7 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   `review-implementation` can confirm a resumed spec still matches by direct
   content comparison. For a reachable `repo:` source it is that source path; for
   `local-approved:` and `inline-approved:` origins whose origin is not reachable,
-  it is the promoted durable carrier (`docs/specs/<capability>/index.md`) that
+  it is the promoted durable carrier (`docs/specs/<capability>/README.md`) that
   retains the approved content, or an external durable receipt/anchor holding it.
   It is required for local and inline sources and must resolve after ignored
   local work is retired. A Notion source uses `ref` plus per-unit
@@ -93,11 +93,23 @@ derivation metadata in `docs/specs/<capability>/provenance.json` instead:
   nor inline provenance requires a Notion id, page revision, or Notion receipt.
 - `logical_units` preserves the source logical ids in the output carrier, so a
   renamed derived path cannot silently remap semantic units.
+- When an intended consumer surface produces `reference.md`, include its
+  source-to-output logical-unit mapping and exact output hash. Remove those
+  conditional entries when no reference file exists; never leave a fictional
+  output in the receipt.
+- The receipt is JSON because this is a strict machine-readable sidecar:
+  standard parsers preserve arrays and objects without Markdown ambiguity or a
+  YAML dependency. Keep lineage separate from semantic contract prose so
+  changing derivation evidence never rewrites the approved contract.
 - The bundled fallback template uses the stable
-  `plugin:specification/spec-code/assets/technical-spec-template.md` locator,
-  exact installed plugin version, and exact asset SHA-256. Never record the
-  origin machine's plugin cache/install path. Explicit/project templates use a
-  durable `repo:` or selected remote locator instead.
+  `plugin:specification/spec-code/assets/capability-readme.template.md` locator,
+  exact installed plugin version, and exact asset SHA-256. This singular
+  `template` object identifies the primary README carrier template.
+  `reference.md` is prescribed by the same Specification workflow/plugin
+  version and is independently hashed as an output; v1 does not add a second
+  template object. Never record the origin machine's plugin cache/install
+  path. Explicit/project templates use a durable `repo:` or selected remote
+  locator instead.
 - `outputs` lists contract Markdown files only and **must exclude
   `provenance.json` itself**. Compute the provenance file's own exact SHA-256
   only after its final write; store that self-hash in ignored work evidence, an

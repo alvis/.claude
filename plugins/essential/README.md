@@ -25,13 +25,16 @@ is read at the moment it matters.
 | `references/overviews.md` | When reconciling lazy overviews | Proposals-vs-changes, child statuses, deviation provenance |
 | `references/reviews.md` | When writing review artifacts | The seven engineering areas plus plugin-namespaced areas, finding lifecycle |
 | `references/spec-lifecycle.md` | When materializing or revalidating specs | Mirrors, freshness sweep, completion verification |
+| `references/durable-documentation.md` | Before writing versioned project documentation | Entrypoint authority, capability/domain content, template ownership, terminology, migration |
+| `references/work-memory-topology.md` | When creating, locating, or migrating ignored work files | Commented `.state` file map |
 | `references/change-control.md` | On a mid-execution finding | Task-local / plan-level / spec-level routing |
 | `references/retirement.md` | When promoting, parking, or retiring | Promotion provenance, idle-stream parking, retirement gates |
 | `references/team-lifecycle.md` | At spawn and wind-down moments | Team forming/retiring, model and effort selection |
 
-Templates: `templates/memory.md` (agent memory) and
-`templates/asset-manifest.md` (media asset/render identity, used by the
-`production` plugin).
+Templates: `templates/memory.md` (agent memory),
+`templates/docs/*.template.md` (shared durable directory entrypoints), and
+`templates/initiative-manifest.template.md` (Essential's initiative-domain
+semantic authority). Domain plugins own their own semantic templates.
 
 ## The tools (`bin/`)
 
