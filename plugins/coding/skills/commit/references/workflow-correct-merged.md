@@ -99,10 +99,10 @@ remote change since the fetch rejects the push. Do not include descendants or
 any other bookmark in this command. The explicit Option 2 consent authorizes
 this affected bookmark only.
 
-If relevant open downstream PRs remain, invoke `coding:write-pr` afterward only
-to monitor those PRs and their CI. Exclude the already-synchronized merged
-bookmark. If there are no relevant open downstream PRs, do not invoke
-`coding:write-pr`.
+If open downstream PRs remain, inspect their current checks read-only with
+`gh pr checks`; do not invoke mutating `coding:pr update` as a monitor. Updating
+or restacking descendants requires separate explicit user consent. With no
+relevant downstream PR, skip monitoring.
 
 Verify the integrity guard in [SKILL.md](../SKILL.md) passes.
 
@@ -129,7 +129,7 @@ Notify reviewers and downstream consumers:
 
 - Option 1: normal save follow-ups ([workflow-save-local.md](./workflow-save-local.md)).
 - Option 2: integrity check and project scripts, direct force-with-lease sync
-  of the affected bookmark only, then `coding:write-pr` only when relevant open
+  of the affected bookmark only, then `coding:pr update` only when relevant open
   downstream PRs require monitoring.
 - Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 

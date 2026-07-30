@@ -120,5 +120,5 @@ Closes #482
 ## Enforcement
 
 - The skill applies the regex pre-mutation. Failures STOP the workflow; no silent rewrite.
-- `/coding:write-pr` reuses this regex for PR title generation.
+- `/coding:pr create` reuses this regex for PR title generation.
 - Lint hooks may also enforce; this file is the canonical contract.

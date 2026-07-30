@@ -80,7 +80,7 @@ engineering state into the plugin repository.
    `coding:commit --reorder` to reshape/reparent the current and every
    downstream PR above it, and monitors every PR in the resulting stack.
 5. Rerun affected local checks. On zero exits, the parent resumes the
-   [core publication phase](../SKILL.md#3-publish-bottom-up): push the repaired
+   [core publication phase](create-update.md#3-publish-bottom-up): push the repaired
    bookmark, synchronize/re-push all restacked descendants, repair PR bases,
    and verify the stack. A nonzero result gets one new evidence-backed fixer
    cycle; unchanged evidence requiring user/external state is a blocker, never
@@ -100,7 +100,7 @@ scheduler may run the exact core poll prompt once. If only `/loop` supports the
 delay, run:
 
 ```text
-/loop <wall-time-plus-1m> <the exact explicit poll prompt from coding:write-pr SKILL.md>
+/loop <wall-time-plus-1m> <the exact explicit poll prompt from coding:pr references/create-update.md>
 ```
 
 Capture the returned ID and cancel that exact ID after its first wake. Consume
@@ -108,7 +108,7 @@ the core poll report: green notifies/stops; red repeats this reference. If the
 result is pending, schedule and capture a replacement:
 
 ```text
-/loop 1m <the exact explicit poll prompt from coding:write-pr SKILL.md>
+/loop 1m <the exact explicit poll prompt from coding:pr references/create-update.md>
 ```
 
 Continue until the core report marks every PR green or supplies a concrete

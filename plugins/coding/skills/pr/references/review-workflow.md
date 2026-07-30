@@ -1,20 +1,10 @@
----
-name: review-pr
-description: 'Review a GitHub pull request from an isolated checkout of its head, judging the diff against the repository constitution standards and test intent, then publish inline comments on the exact changed lines plus one overall review. Use for "review PR 42", "review this pull request", or "leave line comments on the PR".'
-model: opus
-context: fork
-agent: code-quality-critic
-allowed-tools: Bash(gh:*), Bash(jj:*), Bash(git:*), Bash(mktemp:*), Bash(rm:*), Bash(jq:*), Bash(command:*), Read, Grep, Glob, AskUserQuestion
-argument-hint: "[<pr-number-or-url> | <source-tree-path>] [--repo <owner/name>] [--area=<list>] [--dry-run]"
----
-
 # Review Pull Request
 
 Review a remote GitHub pull request and publish the result where the author will
 act on it: one inline comment per finding, anchored to the exact file and line,
 plus one overall review carrying the verdict. This skill owns remote PR review, its
 publication, and PR-size zone enforcement (`GIT-PR-SIZE-01..04`, handed over by
-`coding:write-pr`). Local pre-commit review belongs to `coding:review-code`;
+`coding:pr create` and `coding:pr update`). Local pre-commit review belongs to `coding:review-code`;
 remediation to `coding:fix`.
 
 ## Boundaries
@@ -25,14 +15,14 @@ remediation to `coding:fix`.
 - Do not use for: reviewing uncommitted local work or writing work-local review
   artifacts (`coding:review-code`), fixing findings (`coding:fix`), mechanical
   standards enforcement (`coding:lint`), publishing PRs or driving CI
-  (`coding:write-pr`), or merging (`coding:merge-pr`).
+  (`coding:pr create` or `coding:pr update`), or merging (`coding:pr merge`).
 - One reviewer, one pass. Never fan out per area — a PR is sized so one reader can
   hold it whole, and split judgement produces split findings.
 
 ## Execution
 
-`context: fork` and `agent: code-quality-critic` run this skill in a fresh critic
-subagent with no inherited context. Review as an external party who knows only the
+The router runs this workflow in a fresh `code-quality-critic` subagent with no
+inherited implementation context. Review as an external party who knows only the
 PR, the repository, and the standards.
 
 <IMPORTANT>
@@ -43,7 +33,7 @@ PR, the repository, and the standards.
   read-only git, `gh`, and scanner commands named below. Treat the branch as
   untrusted code.
 - CI status counts only when already known, from the metadata *Resolve the pull
-  request* already fetches. Repair belongs to `coding:write-pr`.
+  request* already fetches. Repair belongs to `coding:pr update`.
 - Build `payload.json` by shell redirection from `jq`, never with a file-writing
   tool — this agent's `Write`/`Edit` fence would deny the path.
 </IMPORTANT>
@@ -115,12 +105,12 @@ fresh checkout would produce, minus the cost:
 3. With no candidate, create a disposable checkout and record that this run owns it:
 
    ```bash
-   REVIEW_DIR=$(mktemp -d "${TMPDIR:-/tmp}/review-pr-${PR}-XXXXXX")
+   REVIEW_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pr-review-${PR}-XXXXXX")
    REVIEW_TREE_OWNED=true
    trap cleanup EXIT HUP INT TERM
    ```
 
-[references/extraction.md](references/extraction.md) carries the checkout forms and
+[review-extraction.md](review-extraction.md) carries the checkout forms and
 the cleanup contract.
 
 <IMPORTANT>
@@ -192,7 +182,7 @@ The diff is the subject of the review, not the limit of the reading.
   hanging off a line in it are different things: a deleted file and a chore the PR
   owes are squarely about the diff and anchor to nothing.
 - **Ask whether the diff is the best solution**, not only whether it works: walk
-  the lean ladder in [WORKFLOW.md](../../references/WORKFLOW.md) — need, `@theriety/core`,
+  the lean ladder in [WORKFLOW.md](../../../references/WORKFLOW.md) — need, `@theriety/core`,
   existing codebase, platform, installed dependency, then minimum new code. A
   hand-rolled helper duplicating what the repository already provides is a finding.
 - **Say so when the change belongs somewhere else.** A guard repeated at each call
@@ -202,9 +192,9 @@ The diff is the subject of the review, not the limit of the reading.
 
 Cover the concerns in consequence order — correctness and security, then alignment,
 testing, quality, docs, style — in one pass.
-[references/review.md](references/review.md) carries the per-concern checklist, the
+[review-checklist.md](review-checklist.md) carries the per-concern checklist, the
 depth ladder, and the finding schema;
-[references/tone.md](references/tone.md) governs every word that gets posted.
+[review-tone.md](review-tone.md) governs every word that gets posted.
 
 `testing` answers one question above coverage: **would these tests fail if the
 implementation regressed?** Assertions that restate the implementation, tests with
@@ -217,7 +207,7 @@ no test at all are findings. Say what to test and why it matters, never a bare
 Keep a finding when its file and line appear in the changed-line map, setting `side`
 to `RIGHT` for added lines or `LEFT` for removed ones. A finding that anchors to no
 line moves to the overall body under the null-anchor rule in
-[references/review.md](references/review.md), which owns what `subject` carries in
+[review-checklist.md](review-checklist.md), which owns what `subject` carries in
 place of the anchor. Never invent a plausible line to keep a finding inline — an
 unanchorable merge blocker is the one this step most has to survive. Then skip
 whatever has
@@ -233,7 +223,7 @@ A re-review after a push adds only what is new.
 ### Publish the review
 
 Build the body from
-[references/templates/overall-review.md](references/templates/overall-review.md)
+[templates/overall-review.md](templates/overall-review.md)
 and submit the whole review in one atomic call, so a rejected comment cannot leave
 orphaned fragments:
 
@@ -243,7 +233,7 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 
 `payload.json` carries `commit_id` (the pinned `HEAD_OID`), `body`, `event`, and
 `comments[]` of `{path, line, side, body}`. Payload construction and 422 recovery
-are in [references/publishing.md](references/publishing.md).
+are in [review-publishing.md](review-publishing.md).
 
 Re-read `headRefOid` and compare it to the pinned `HEAD_OID` *before* building the
 payload. The verdict depends on the answer, so a head check that runs after the review

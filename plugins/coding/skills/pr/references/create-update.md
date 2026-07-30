@@ -1,35 +1,32 @@
----
-name: write-pr
-description: 'Author a conventional-commit PR title and unified body from a jj or git change ref, then publish saved changes as draft pull requests and drive GitHub CI to green. Use for PR descriptions, draft pull requests, and callers that need a unified title/body template from a commit, and when asked to push the latest commit, create or update a PR, repush after a fix, babysit pending checks, repair red CI, monitor every check, or converge a PR stack.'
-model: opus
-argument-hint: "[<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--dry-run]"
----
+# Create or Update Pull Requests
 
-# Write Pull Request
-
-Turn one saved change or an ordered stack into live, green draft pull requests.
-This skill composes deterministic Conventional Commits PR text, publishes the
-change or stack bottom-up as drafts, and owns hosted CI until green or blocked.
-Repair obeys the **Coherence Mandate**: produce one continuous, deliberate work;
-rewrite over restructure, restructure over integrate, never append. Dissolve
-new content into the existing structure. Visible seams, parallel paths,
-addenda, vestigial helpers, and "also note that…" tack-ons are forbidden.
+Load the complete workflow from `coding:pr create` or `coding:pr update`;
+`coding:pr author` loads only [Author the PR text](#author-the-pr-text). Turn
+one saved change or stack into live, green draft PRs. This workflow composes
+deterministic Conventional Commits PR text, publishes bottom-up, and owns hosted
+CI until green or blocked. Repair obeys the **Coherence Mandate**: produce one
+continuous work; rewrite over restructure, restructure over integrate, never
+append. Dissolve new content into the existing structure. Visible seams,
+parallel paths, addenda, vestigial helpers, and tack-ons are forbidden.
 
 Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
 
 ## Boundaries
 
-- Use for: composing PR text for any resolvable commit, then publishing or
-  republishing a saved change, draft PR, or ordered stack through CI repair.
-  `coding:commit --create-pr` reaches this path through its required handoff.
-- Do not use for: saving without publication (`coding:commit`), reviewing,
-  merging (`coding:merge-pr`), or reshaping history (`coding:commit --reorder`).
+- Use `ACTION=create` to compose a PR title and body, publish a new saved change
+  or ordered stack as draft PRs, and monitor every GitHub check through repair.
+  `coding:commit --create-pr` reaches this action through its required handoff.
+- Use `ACTION=update` to republish an existing draft PR or stack, refresh its
+  title, body, and bases, and monitor every GitHub check through repair.
+- Do not use for: saving work without publication (`coding:commit`), reviewing
+  code, merging PRs (`coding:pr merge`), or creating a new stack solely by
+  reshaping local history (`coding:commit --reorder`).
 - Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are
   intentionally ignored — selecting between them is a human choice and out of
   scope.
 - Delegate noisy commands to one small read-only tester before publication and
   one small read-oriented poller after publication, following the repository
-  [delegation contract](../../../governance/constitution/references/delegation.md).
+  [delegation contract](../../../../governance/constitution/references/delegation.md).
 
 <IMPORTANT>
 - Ownership is singular: `coding:commit` owns direct history mutations;
@@ -48,9 +45,11 @@ Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
 
 ## Inputs
 
-- **Required**: none; default to the current saved change — the jj working-copy
-  change (`@`), or `HEAD` on the git path — and include its ordered unmerged
-  descendants when they form a stack.
+- **Required**: `ACTION=create|update`, supplied by the router. `create` defaults
+  to the current saved change — the jj working-copy change (`@`), or `HEAD` on
+  the git path — and includes ordered unmerged descendants when they form a
+  stack. `update` requires an open PR number/URL, a ref whose head has an open
+  PR, or an unambiguous current branch with an open PR.
 - **Optional**:
 
 | Input | Effect |
@@ -89,10 +88,16 @@ write PM-owned pointers or overview files.
 Inspect the selected tool's working state — `jj status`, `jj log`, and
 `jj bookmark list`, or `git status --short`, `git log --oneline`, and
 `git branch --list` — plus open PRs. Resolve `<commit-ref>` or the current
-saved change and list changes, bookmarks, PR heads, and bases bottom-up. If work must be saved, split, or
+saved change and list changes, bookmarks, PR heads, and bases bottom-up.
+Resolve each selected head to zero or one open PR: publish a missing head and
+update an existing one in the same pass. This per-head choice makes retrying a
+partially published stack idempotent. `ACTION=update` must initially resolve
+its explicit PR/ref target to an open PR, but may include missing descendants
+introduced by an accepted stack rewrite. If work must be saved, split, or
 reordered, invoke `coding:commit`, then restart discovery. Reject an unknown
-ref, nonlinear chain, merged-history rewrite, missing authentication, or remote
-ambiguity with evidence. With `--dry-run`, print the exact plan and stop.
+ref, nonlinear chain, merged-history rewrite, missing authentication, multiple
+open PRs for one head, or remote ambiguity with evidence. With `--dry-run`,
+print the exact plan and stop.
 
 ### 2. Discover local CI parity and run it unless skipped
 
@@ -222,10 +227,10 @@ discovery and expected-check evidence but do not dispatch the tester.
 
 Require a saved, clean, linear chain to `main@origin`, standalone green changes,
 conventional descriptions per
-[conventional-commits.md](../commit/references/conventional-commits.md), no
+[conventional-commits.md](../../commit/references/conventional-commits.md), no
 selected change merged on origin, and a derived or supplied branch prefix. If
 needed, invoke `coding:commit --reorder`; for merged history follow
-[workflow-correct-merged.md](../commit/references/workflow-correct-merged.md).
+[workflow-correct-merged.md](../../commit/references/workflow-correct-merged.md).
 
 Bottom-up, preserve a change's existing bookmark when the caller selected that
 branch, it heads an open PR, or the stack already has explicit bookmarks: push
@@ -238,11 +243,14 @@ a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 
-Before mutation, record `PR_BASE` as the default branch then previous bookmark, and
-`AUTHOR_BASE_OID` as exact default-branch then predecessor change/commit OID.
-New-stack bookmarks do not yet exist, so author every head against `AUTHOR_BASE_OID`,
-never `PR_BASE`. Split each exact `title\n\nbody` into that head's `TITLE` and `BODY`;
-malformed output aborts the whole selection before any ref or remote mutation.
+If the immediate predecessor is selected, set `PR_BASE` to its bookmark and
+`AUTHOR_BASE_OID` to its change/commit OID. Otherwise preserve an existing
+PR's base; for a new PR resolve the immediate unmerged predecessor, using the
+repository default branch only when none exists, then resolve that exact base
+commit as `AUTHOR_BASE_OID`. New-stack bookmarks do not yet exist, so author
+each head against `AUTHOR_BASE_OID`, never `PR_BASE`. Split each exact
+`title\n\nbody` into that head's `TITLE` and `BODY`; malformed output aborts
+the whole selection before any ref or remote mutation.
 
 On the jj path, point the bookmark at the change and push it:
 
@@ -260,15 +268,14 @@ git push --force-with-lease origin "$BOOKMARK"
 
 Either way the push is leased, never bare `--force`, so a remote that advanced
 underneath the rewrite is rejected rather than overwritten.
-When no open PR has this head, create a draft:
+When the head has no open PR, create a draft:
 
 ```bash
 gh pr create --draft --title "$TITLE" --body-file - \
   --base "$PR_BASE" --head "$BOOKMARK" <<<"$BODY"
 ```
 
-When the head already has an open PR, update it without duplication and retain
-draft state:
+When the head has one open PR, edit it and retain draft state:
 
 ```bash
 gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
@@ -290,7 +297,7 @@ repair/history rewrite with downstream bookmarks, synchronize the whole stack
 before monitoring again:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/write-pr/scripts/restack.sh" \
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/restack.sh" \
   "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
   "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"
 ```
@@ -312,7 +319,7 @@ resetting reviewer evidence onto the new head/base OID pair.
 | Publication error | Action |
 |---|---|
 | `gh pr create` authentication failure | Run `gh auth status`; report a user/external blocker. |
-| Bookmark or branch conflict | Confirm the intended change, then update the head idempotently. |
+| Bookmark or branch conflict | Confirm the intended change, then rerun the selected action against that exact head. |
 | Push rejected because remote advanced | `jj git fetch` (git: `git fetch origin`), rebase through `coding:commit`, then retry. |
 | Conventional title invalid | Reword through `coding:commit`, then restart that iteration. |
 | Existing PR has wrong base | `gh pr edit "$PR" --base "$PR_BASE"`, then verify. |
@@ -324,7 +331,7 @@ Immediately after every initial publication, including `--skip-local-test`, run
 this command with actual bottom-to-top PR URLs substituted:
 
 ```text
-/loop 5m Dispatch ONE small read-oriented polling subagent for <stack PR URLs> in bottom-up order. Pass it the stack and discovered expected hosted checks, and require it to load and follow the Poll contract in coding:write-pr SKILL.md; only when it classifies a red check, require it to load references/repair-red-ci.md. Consume its bounded <report>, then take the parent action it requests. The scheduled parent MUST NOT run gh polling itself.
+/loop 5m Dispatch ONE small read-oriented polling subagent for <stack PR URLs> in bottom-up order. Pass it the stack and discovered expected hosted checks, and require it to load and follow the Poll contract in coding:pr references/create-update.md; only when it classifies a red check, require it to load references/repair-red-ci.md. Consume its bounded <report>, then take the parent action it requests. The scheduled parent MUST NOT run gh polling itself.
 ```
 
 Capture the returned task/job ID as `active_loop_id`. Cancel only that exact ID
@@ -388,7 +395,7 @@ red, pending, green:
 
 - **Red**: any check has a fail/cancel bucket or failure, cancelled, or
   timed-out state. Cancel `active_loop_id`, process the earliest red PR, and
-  load [repair-red-ci.md](references/repair-red-ci.md). The poller follows that
+  load [repair-red-ci.md](repair-red-ci.md). The poller follows that
   conditional reference before returning its report.
 - **Pending**: none are red and any check is pending, queued, expected, waiting,
   in progress, lacks `completedAt`, belongs to a mismatched head SHA, or is an
@@ -418,13 +425,19 @@ restore on `--resume` or `--continue`; expired tasks are not replayed.
 Compose deterministic `title\n\nbody` for a commit and optional base. Step 3
 passes its base; text-only callers default to the first parent. Never invoke `gh`.
 
-1. Resolve the commit and base refs. Read the description with `jj log`, then
-   `git log`; unknown ref exits 2 and neither tool exits 3. The default base is
-   the first parent, or `git hash-object -t tree /dev/null` for a root. For non-roots resolve
-   the review surface with jj `heads(::<head-oid> & ::<base-oid>)` or
-   `git merge-base <base-oid> <head-oid>`. Count paths and net LOC from that
-   merge base to the head, apply overrides, and record the `GIT-PR-SIZE-*`
-   zone. The empty tree is only the root fallback.
+1. Resolve the commit ref, defaulting to `@` after the functional jj check and
+   to `HEAD` otherwise. Resolve an optional base, defaulting to the first
+   parent or, for a root commit, the empty tree from
+   `git hash-object -t tree /dev/null`. Try
+   `jj log -r <ref> --no-graph -T 'description'`, then
+   `git log -1 --format=%B <ref>`. Unknown refs exit 2; neither tool exits 3.
+   For every non-root commit, resolve the review surface from the merge base:
+   use `jj log --no-graph -T 'commit_id' -r
+   "heads(::<head-oid> & ::<base-oid>)"` on the jj path or
+   `git merge-base <base-oid> <head-oid>` on the git path. Count all paths and
+   net LOC from that merge base to the head, apply project overrides, and
+   record the canonical `GIT-PR-SIZE-*` zone. Use the empty tree only for the
+   root-commit fallback.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
    `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in
@@ -439,7 +452,8 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
 
    On mismatch, exit 2 with the failing token, the regex, and the offending
    subject. This skill is the single source of truth for the regex; it is
-   mirrored in `coding:commit` (`../commit/references/conventional-commits.md`).
+   mirrored in `coding:commit`
+   (`../../commit/references/conventional-commits.md`).
 4. Resolve the template — first hit wins, paths relative to the repo root:
 
    1. `.github/PULL_REQUEST_TEMPLATE.md`
@@ -452,7 +466,7 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    <IMPORTANT>A repo-local template is emitted verbatim — never fill
    placeholders in or otherwise mutate a foreign template; skip step 5
    entirely.</IMPORTANT> When none exist, fall back to the bundled default at
-   [references/templates/pr.md](references/templates/pr.md) and continue.
+   [templates/pr.md](templates/pr.md) and continue.
    When the bundled default is also missing: exit 4, print the path that
    failed to resolve.
 5. Fill the bundled default's placeholders from the commit body:

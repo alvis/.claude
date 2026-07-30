@@ -1,6 +1,6 @@
 # Review checklist and finding schema
 
-Load this from the *Review* step of `coding:review-pr`. Evidence rules come from
+Load this from the *Review* step of `coding:pr review`. Evidence rules come from
 [the shared review mandates](../../review-code/references/mandates.md); this file
 adds what is specific to reviewing a PR diff.
 
@@ -17,7 +17,7 @@ split, rather than withholding what it already saw.
 Selectivity belongs to publication, not detection, and it caps only optional
 polish. Publish every P0 through P3 finding you found, however many that is;
 ranking decides the order they are read in, never whether they appear. P4 is the
-sole capped level — [tone.md](tone.md) publishes the five highest-ranked and
+sole capped level — [review-tone.md](review-tone.md) publishes the five highest-ranked and
 counts the rest in the overall body — so a 2,000-line review of trivia teaches
 nothing, while a long list of real defects is the review doing its job.
 
@@ -80,7 +80,7 @@ findings:
     concern: alignment | correctness | security | quality | testing | docs | style | process
     priority: P0 | P1 | P2 | P3 | P4 | null
     kind: question | thought | note | chore | praise | null
-    body: <the comment text, written per tone.md>
+    body: <the comment text, written per [review-tone.md](review-tone.md)>
     evidence: <the rule, failure path, or repository precedent it rests on>
     alternative: <exact path this change belongs in instead, or null>
 goal_spec_alignment: matches | diverges | skipped_unknown
@@ -121,7 +121,7 @@ not_reviewed:
   `thought` for a non-blocking idea that is explicitly not a request, `note` for a
   fact the author should know, `praise` where the work is genuinely good.
 - Exactly one of `priority` and `kind` is non-null. A comment that claims a
-  consequence carries a priority; one that does not carries a kind. `tone.md` renders
+  consequence carries a priority; one that does not carries a kind. [review-tone.md](review-tone.md) renders
   a priority as a badge, `chore` as a tag, and every other kind as an emoji, so this
   field decides the marker and no judgement is left at render time.
 - `chore` is the one kind that blocks merge, because it demands an action even though
@@ -138,5 +138,5 @@ not_reviewed:
 ## When a concern cannot be finished
 
 Name it in the completion report and cap the verdict at `COMMENT` per
-[publishing.md](publishing.md). Never present a partial review as complete, and
+[review-publishing.md](review-publishing.md). Never present a partial review as complete, and
 never fill the gap by dispatching another reviewer.

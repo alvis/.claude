@@ -1,6 +1,6 @@
 <!--
-Default PR template for coding:write-pr (coding:commit --create-pr delegates
-there).
+Default PR template for `coding:pr create` and `coding:pr update`
+(`coding:commit --create-pr` delegates to `create`).
 
 This is the **default** PR template used when the repo has no GitHub PR
 template of its own checked in (e.g. `.github/PULL_REQUEST_TEMPLATE.md`).

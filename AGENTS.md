@@ -82,7 +82,7 @@ these sources, and each is the rule a locally sensible change breaks first.
   what it was measured against.
 - **Supersede, never edit.** An accepted decision or a shipped contract is replaced by a
   successor that links back to it — the same discipline `coding:commit` and
-  `coding:write-pr` enforce on prose and code.
+  `coding:pr` enforce on prose and code.
 
 ## Hard limits
 
@@ -175,12 +175,12 @@ Conventional Commits, validated before any history mutation against
 ```
 
 Those 11 types only — no aliases, no emoji prefix. Scope is a plugin or `plugin/skill`
-(`feat(essential):`, `docs(coding/write-pr):`), omitted for global changes. Branches are
+(`feat(essential):`, `docs(coding/pr):`), omitted for global changes. Branches are
 `type/kebab-summary`, or `type/<work-id>` and `type/<work-id>/NN-<slice>` for a
 branch belonging to an engineering work stream. Work lands through pull requests whose titles are themselves
 conventional commits.
 
 Tooling is jj-first and git-compatible: `coding:commit` is the sole owner of history
-mutation, `coding:write-pr` owns publication and CI, `coding:merge-pr` merges stacks
-bottom-up. Route publication through those skills rather than hand-rolled
-`git commit` + `gh pr create`.
+mutation; `coding:pr create|update` owns publication and CI; `coding:pr merge`
+merges stacks bottom-up. Route publication through those skills rather than
+hand-rolled `git commit` + `gh pr create`.

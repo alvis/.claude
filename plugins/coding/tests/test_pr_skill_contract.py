@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 PLUGIN = Path(__file__).resolve().parents[1]
-WRITE_PR = PLUGIN / "skills" / "write-pr"
+WRITE_PR = PLUGIN / "skills" / "pr"
 
 
 def test_authoring_binds_all_deterministic_inputs_and_publication_output() -> None:

@@ -1,6 +1,6 @@
 # Creating the review tree
 
-Load this from *Locate or create the review tree* in `coding:review-pr`, once reuse
+Load this from *Locate or create the review tree* in `coding:pr review`, once reuse
 has been ruled out. The change-tracking path was already selected; follow only its
 row.
 

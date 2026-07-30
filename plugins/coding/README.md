@@ -14,7 +14,7 @@ Two mechanisms make saves and publication safe around AI-driven edits:
   save touches exactly the reviewed file set and preserves unrelated staged
   or dirty developer work. Any writer after sealing invalidates the manifest.
 - **Per-commit QA.** `coding:finalize-commits` verifies every unpushed commit
-  in isolation before `coding:write-pr` publishes draft PRs and drives CI to
+  in isolation before `coding:pr create` publishes draft PRs and drives CI to
   green. History mutation belongs to `coding:commit` alone.
 
 ## Skills
@@ -33,9 +33,7 @@ Two mechanisms make saves and publication safe around AI-driven edits:
 | `coding:document` | Source-backed package and architecture docs after meaningful changes. |
 | `coding:commit` | All history mutation: scoped saves, split/absorb, stacking, reordering. |
 | `coding:finalize-commits` | Isolated per-commit QA before publishing a stack. |
-| `coding:write-pr` | Conventional-commit PR title/body from a change ref, draft-PR publication, and CI babysitting. |
-| `coding:review-pr` | External first-line review of a remote PR: inline comments on the changed lines plus one overall verdict. |
-| `coding:merge-pr` | Bottom-up merging of a linear PR stack with restacks. |
+| `coding:pr` | Create or update draft PRs, publish external reviews, and merge linear stacks through explicit subcommands. |
 | `coding:setup-project` | Project/monorepo scaffolding when structure is missing. |
 | `coding:cleanup` | Evidence-based retirement of stale branches, worktrees, and work dirs. |
 | `coding:find-unused` | Read-only dead-code discovery. |

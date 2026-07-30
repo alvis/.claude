@@ -41,7 +41,7 @@ Settle this before editing:
 | Finalizing un-pushed commits (per-commit QA) | `/coding:finalize-commits` |
 | Creating tests | `/coding:complete-test` |
 | Documenting code | `/coding:document` |
-| Writing PR title/body, publishing or updating PRs, and driving CI green | `/coding:write-pr` |
+| Authoring, creating, updating, reviewing, or merging PRs | `/coding:pr <author|create|update|review|merge>` |
 | Pausing work | `/essential:handover` |
 | Resuming work | `/essential:takeover` |
 | Finding dead code | `/coding:find-unused` |
@@ -133,12 +133,25 @@ Type diagnostics and focused tests are separate gates that `coding:lint` does no
 ### 3. Then commit
 
 - `jj` is the **preferred** change-tracking tool when it is both installed on PATH and initialized for this repository — every op snapshots the working copy, so a dirty HEAD is never a blocker; work in place and don't create a `git worktree` just to isolate a task. Prove that initialization functionally rather than by directory presence: a `.jj` and a `.git` directory can both exist without sharing a backing repository, so confirm `git rev-parse HEAD` equals `jj log -r @- --no-graph -T 'commit_id'`. Anything else — `jj` missing, either command failing, or the two ids differing — means this is a git repository, and **`git` is then the normal, fully supported path** through every skill below, not a degraded one.
-- Saving changes goes through `coding:commit`, which owns routing among save/split/absorb/edit/parallel-workspace and all explicit history operations for both `jj` and `git`. It directly synchronizes only the explicitly authorized correct-merged bookmark and the chosen partial-to-branch target; PR publication and CI convergence go through `coding:write-pr`. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
+- Saving changes goes through `coding:commit`, which owns routing among save/split/absorb/edit/parallel-workspace and all explicit history operations for both `jj` and `git`. It directly synchronizes only the explicitly authorized correct-merged bookmark and the chosen partial-to-branch target; PR publication and CI convergence go through `coding:pr create`. Never hand-run `git commit`, `jj describe`, `jj split`, `jj bookmark set`, or `gh pr create` — except `coding:finalize-commits`, which is sanctioned to run `jj describe -r <rev> -m` / `git commit --amend` directly when finalizing un-pushed commits.
 - **If the user did not explicitly request a commit, ask whether to commit the work** (via `coding:commit`).
-- **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` remains the compatibility call: it finishes local history work, then delegates title/body authoring, bookmark/PR publication, and CI convergence to `/coding:write-pr`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
+- **If HEAD is not the local main branch, or the work is in a `jj` workspace or a linked `git worktree`, `AskUserQuestion`** whether to open a PR (`/coding:commit --create-pr` remains the compatibility call: it finishes local history work, then delegates title/body authoring, bookmark/PR publication, and CI convergence to `/coding:pr create`) or move the work onto the local main branch. A `git worktree` is NOT a `jj` workspace.
 
 ### Pull requests
 
-Creating or updating a pull request MUST go through the `write-pr` skill, not a hand-rolled `git`/`gh` sequence. `write-pr` composes the conventional-commit title and unified body from the commit, publishes it, and drives CI to green. This applies even when the request looks like a small, one-off PR.
+Creating or updating a pull request MUST go through `coding:pr create` or
+`coding:pr update`, not a hand-rolled `git`/`gh` sequence. The selected
+subcommand composes the conventional-commit title and unified body from the
+commit, publishes it, and drives CI to green. This applies even when the request
+looks like a small, one-off PR.
 
-`write-pr` publishes from whichever change-tracking tool the repository already uses, and decides which by running the functional colocation check above — never by asking anyone to initialize `jj`. On a jj-colocated repository it moves the bookmark and pushes with `jj git push`; on a git repository it pushes the same branch with `git push --force-with-lease` and opens or updates the PR with `gh pr create`/`gh pr edit`, using its authored title and body verbatim. Both are equally sanctioned publication paths: each ends with a draft PR on the intended base and CI driven to green (or its documented absence confirmed), and neither is an exception to be recorded, apologized for, or converted into the other.
+The `pr` skill publishes from whichever change-tracking tool the repository
+already uses, and decides which by running the functional colocation check above
+— never by asking anyone to initialize `jj`. On a jj-colocated repository it
+moves the bookmark and pushes with `jj git push`; on a git repository it pushes
+the same branch with `git push --force-with-lease` and opens or updates the PR
+with `gh pr create`/`gh pr edit`, using its authored title and body verbatim.
+Both are equally sanctioned publication paths: each ends with a draft PR on the
+intended base and CI driven to green (or its documented absence confirmed), and
+neither is an exception to be recorded, apologized for, or converted into the
+other.

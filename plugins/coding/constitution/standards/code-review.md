@@ -219,7 +219,7 @@ function validateEmail(email) { ... }"
 
 These prefixes are the authoring taxonomy for review notes. A comment posted to a
 GitHub PR carries a rendered marker instead, never a literal prefix — see
-[review-pr/references/tone.md](../../skills/review-pr/references/tone.md), which
+[pr/references/review-tone.md](../../skills/pr/references/review-tone.md), which
 owns the marker set for that surface.
 
 **Purpose**: Categorize feedback by urgency and type
