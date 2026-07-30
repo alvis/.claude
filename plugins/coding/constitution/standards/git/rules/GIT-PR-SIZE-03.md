@@ -8,7 +8,16 @@ warning
 
 A red-zone PR changes **≤ 60 files** AND nets **≤ 2000 LOC** while exceeding yellow thresholds. Red PRs are allowed only when splitting would harm review (mechanical refactors, generated files, atomic migrations). They MUST include an isolation justification and a reviewer-time estimate so reviewers can plan.
 
-A red PR carries everything yellow requires (Summary, Verification, Risk) **plus** a `## Why this size` section.
+A red PR carries everything yellow requires (Summary, Verification, Risk, and
+Test plan) **plus** a `## Why this size` section. Its estimate line, after an
+optional Markdown list marker, MUST match:
+
+```regex
+^Reviewer-time estimate: ~?[1-9][0-9]*(\.[0-9]+)? (min|minutes|hour|hours)( — .+)?$
+```
+
+The optional `~` marks an estimate; an optional em-dash suffix states review
+scope. Zero, a missing unit, or an unbounded phrase is not schedulable evidence.
 
 ## Fix
 
@@ -30,7 +39,7 @@ Codemod-driven rename of `User` -> `Account` across the persistence layer.
 - `npm run typecheck` clean across all workspaces
 - Existing test suite passes without modification
 
-## Checklist
+## Verification
 - [x] Codemod script committed under `scripts/codemods/`
 - [x] No behavior change verified
 ```

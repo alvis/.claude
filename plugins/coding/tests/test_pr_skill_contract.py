@@ -90,6 +90,8 @@ def test_owned_trees_bind_outputs_and_keep_cleanup_in_parent() -> None:
     assert "context-owning parent retains `TREE_LEASE`" in create_update
     assert "does\nnot remove the worktree, close `TREE_LEASE`, or report parent cleanup" in create_update
     assert "temporary_worktree_cleanup: parent-verified | blocked" in create_update
+    assert "context-owning parent passes only" in create_update
+    assert "never transfers cleanup ownership" in create_update
     assert 'open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"' in extraction
     assert "signal trap protects construction only" in extraction
     assert 'workspace="pr-tree-$(basename "$lease")"' in helper
@@ -201,8 +203,20 @@ def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
 def test_red_zone_requires_machine_checkable_reviewer_time() -> None:
     workflow = (WRITE_PR / "references" / "create-update.md").read_text()
     template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
+    standard = (
+        PLUGIN
+        / "constitution"
+        / "standards"
+        / "git"
+        / "rules"
+        / "GIT-PR-SIZE-03.md"
+    ).read_text()
 
-    expected = "Reviewer time: <positive number> minutes|hours"
-    assert expected in workflow
-    assert expected in template
+    assert "GIT-PR-SIZE-03" in workflow
+    assert "GIT-PR-SIZE-03" in template
+    assert "Reviewer-time estimate: ~20 min" in template
+    assert "^Reviewer-time estimate:" in standard
+    assert "(min|minutes|hour|hours)" in standard
+    assert "## Verification" in standard
+    assert "## Checklist" not in standard
     assert "absent, generic, or malformed" in workflow

@@ -501,9 +501,9 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
      `Test-Plan:`. Required for yellow/red; stop when absent.
    - `{{why_this_size_body}}` — exact content under `## Why this size`.
      Required for red and an allowed black-zone override. Require specific
-     prose explaining why the surface is indivisible plus
-     `Reviewer time: <positive number> minutes|hours`; stop when either is
-     absent, generic, or malformed.
+     prose explaining why the surface is indivisible plus an estimate matching
+     [GIT-PR-SIZE-03](../../../constitution/standards/git/rules/GIT-PR-SIZE-03.md);
+     stop when either is absent, generic, or malformed.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
    - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered
