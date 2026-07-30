@@ -57,6 +57,11 @@ path silently reshapes history.
   merges, fix forward instead of rewriting public history.
 - Update and merge the complete affected chain bottom-up.
 
+When the `gh stack` extension is available and the caller wants GitHub Stack
+grouping, load [github-stacks.md](github-stacks.md). It maps create, update,
+extension, and structural reorder onto this skill's jj/git ownership without
+making the extension a prerequisite.
+
 ## Inspect with jj
 
 Use jj only when it is functionally colocated with Git. Inspect the candidate

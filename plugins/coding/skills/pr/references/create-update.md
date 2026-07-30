@@ -133,9 +133,10 @@ test "$(git -C "$TEST_WORKTREE" rev-parse HEAD)" = "$TARGET_SHA"
 
 Repeat the binding with per-head variables and retain every returned lease/tree
 pair. The context-owning parent passes only the selected `TEST_WORKTREE` paths
-to testers; it never transfers cleanup ownership. After success, failure,
-cancellation, skipped testing, or blocked discovery, the parent closes every
-lease and verifies each lease and registration are gone.
+to testers; it never transfers cleanup ownership. Before dispatch, a
+cancellation, skipped run, or blocked discovery closes every lease. After
+dispatch begins, the parent closes only a completed batch's leases and retains
+undispatched batches. It verifies each closed lease and registration are gone.
 
 Read the workflow and script definitions from each returned `tree` to confirm
 the exact commands at that SHA, and inspect workflow `env`, `secrets.*`,
@@ -164,15 +165,16 @@ failure, and returns under 1000 tokens. Finish and consume one batch before
 dispatching the next.
 
 Treat repository workflows and scripts as untrusted code. The tester runs the
-allowlisted commands from `TEST_WORKTREE` and returns command results; it does
-not remove the worktree, close `TREE_LEASE`, or report parent cleanup. The
-parent closes the exact lease on every exit path — pass, failure, cancellation,
-or blocked environment discovery — and verifies the registration is gone.
-Limit filesystem writes to that worktree and a temporary directory, deny network by default, and remove ambient tokens,
-credential helpers, SSH agent sockets, cloud credentials, and unrelated
-environment variables. Pass only the minimal allowlisted toolchain environment.
-If this isolation is unavailable, or a command genuinely needs network access
-or a credential, classify it as hosted-only or ask the user for that specific
+allowlisted commands from `TEST_WORKTREE` and returns command results; it
+neither removes the worktree nor closes or reports on the parent-owned
+`TREE_LEASE`. The parent closes each exact lease after consuming a completed
+batch, and closes all retained leases on skipped, cancelled, or blocked paths.
+Limit filesystem writes to that worktree and a temporary directory, deny network
+by default, and remove ambient tokens, credential helpers, SSH agent sockets,
+cloud credentials, and unrelated environment variables. Pass only the minimal
+allowlisted toolchain environment. If this isolation is unavailable, or a
+command genuinely needs network access or a credential, classify it as
+hosted-only or ask the user for that specific
 authority; never expose the parent session's credentials to a local CI command.
 
 <report>
@@ -193,11 +195,6 @@ runnable_commands:
 hosted_only:
   - check: <job or step>
     unavailable_requirement: <service, secret, runner, or credential>
-temporary_worktree_cleanup:
-  - ref: <selected head SHA>
-    lease: <exact helper-issued lease>
-    tree: <exact helper-issued tree>
-    status: parent-verified | blocked
 expected_hosted_checks:
   - ref: <change-id or head SHA>
     names: [<workflow job or required status name>]
@@ -207,6 +204,14 @@ overall: pass | fail | blocked | skipped
 ```
 
 </report>
+
+After consuming each batch report, the parent closes that batch's retained
+leases and records the exact lease, tree, close status, and proof that both the
+lease file and VCS registration are gone. A tester result cannot claim parent
+cleanup. When a fixer changes a selected SHA, close every lease whose target
+was superseded, retain unchanged undispatched leases, and recreate the affected
+worktrees at their new exact SHAs before rerunning or continuing. On
+cancellation or a terminal failure, close every lease still retained.
 
 On local failure, diagnose captured output before editing and dispatch one
 relevant fixer scoped to the root cause and affected files. It may edit and
