@@ -21,9 +21,12 @@ remediation to `coding:fix`.
 
 ## Execution
 
-The router runs this workflow in a fresh `code-quality-critic` subagent with no
-inherited implementation context. Review as an external party who knows only the
-PR, the repository, and the standards.
+The context-owning router runs through *Locate or create the review tree*, then
+dispatches the remaining review steps to a fresh `code-quality-critic` subagent
+with no inherited implementation context. It retains any `TREE_LEASE`, passes
+only the clean `REVIEW_DIR`, and closes the lease after success, failure, or
+cancellation. Review as an external party who knows only the PR, repository,
+standards, and pinned review tree.
 
 <IMPORTANT>
 - Read-only against the reviewed code. Confine every mutation to the review tree
@@ -102,7 +105,8 @@ fresh checkout would produce, minus the cost:
 2. Accept one only when `git -C <tree> rev-parse HEAD` equals `HEAD_OID` **and**
    `git -C <tree> status --porcelain` is empty. A dirty tree is not the PR head, and
    reviewing it would describe uncommitted work as if the author had pushed it.
-3. With no candidate, create a disposable checkout and record that this run owns it:
+3. With no candidate, the context-owning parent creates a disposable checkout
+   and records that this run owns it:
 
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
@@ -110,12 +114,13 @@ fresh checkout would produce, minus the cost:
    ```
 
 [review-extraction.md](review-extraction.md) carries the checkout forms and
-the cleanup contract. Retain its returned `lease` as `TREE_LEASE`, its `tree`
-as `REVIEW_DIR`, and set `REVIEW_TREE_OWNED=true`.
+cleanup contract. The parent retains its returned `lease` as `TREE_LEASE`,
+passes its `tree` as `REVIEW_DIR`, and sets `REVIEW_TREE_OWNED=true`.
 
 <IMPORTANT>
-Close only the exact helper-issued lease when `REVIEW_TREE_OWNED` is true. A
-reused tree belongs to the user and its removal would destroy real work.
+The parent closes only the exact helper-issued lease when `REVIEW_TREE_OWNED`
+is true, including after subagent cancellation. A reused tree belongs to the
+user and its removal would destroy real work.
 </IMPORTANT>
 
 ### Build the reviewable surface

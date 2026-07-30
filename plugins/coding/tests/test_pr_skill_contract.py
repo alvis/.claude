@@ -1,4 +1,6 @@
+import json
 from pathlib import Path
+import subprocess
 
 
 PLUGIN = Path(__file__).resolve().parents[1]
@@ -28,7 +30,7 @@ def test_new_stack_authors_against_existing_commit_oids() -> None:
     skill = (WRITE_PR / "references" / "create-update.md").read_text()
 
     assert "`AUTHOR_BASE_OID`" in skill
-    assert "predecessor change/commit OID" in skill
+    assert "change/commit OID" in skill
     assert "New-stack bookmarks do not yet exist" in skill
     assert '--base "$PR_BASE"' in skill
 
@@ -77,3 +79,80 @@ def test_correct_merged_monitoring_stays_read_only() -> None:
 
     assert "read-only `gh pr checks`" in followups
     assert "`coding:pr update`" not in followups
+
+
+def test_owned_trees_bind_outputs_and_keep_cleanup_in_parent() -> None:
+    create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+    extraction = (WRITE_PR / "references" / "review-extraction.md").read_text()
+    helper = (WRITE_PR / "scripts" / "temp-tree.sh").read_text()
+
+    assert "TEST_WORKTREE=$(jq -er .tree" in create_update
+    assert "context-owning parent retains `TREE_LEASE`" in create_update
+    assert 'open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"' in extraction
+    assert "signal trap protects construction only" in extraction
+    assert 'workspace="pr-tree-$(basename "$lease")"' in helper
+    assert "workspace add --name" in helper
+    assert 'workspace forget "$workspace"' in helper
+
+
+def test_git_tree_lease_opens_and_closes(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    subprocess.run(
+        ["git", "init", "--quiet", "--initial-branch=main", str(repo)],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+        check=True,
+    )
+    (repo / "tracked").write_text("one\n")
+    subprocess.run(["git", "-C", str(repo), "add", "tracked"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "--quiet", "--no-gpg-sign", "-m", "base"],
+        check=True,
+    )
+    head = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    helper = WRITE_PR / "scripts" / "temp-tree.sh"
+    opened = subprocess.run(
+        ["bash", str(helper), "open-git", str(repo), head],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    lease = json.loads(opened.stdout)
+    tree = Path(lease["tree"])
+    assert tree.is_dir()
+    assert subprocess.run(
+        ["git", "-C", str(tree), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip() == head
+    subprocess.run(["bash", str(helper), "close", lease["lease"]], check=True)
+    assert not Path(lease["lease"]).exists()
+
+
+def test_restack_requires_explicit_root_base_and_reports_partial_progress() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    helper = (WRITE_PR / "scripts" / "restack.sh").read_text()
+
+    assert '--base "$ROOT_BASE"' in workflow
+    assert "for a suffix restack this is its unselected" in workflow
+    assert "forge operations are not transactional" in workflow
+    assert "missing-base" in helper
+    assert "duplicate-bookmark" in helper
+    assert "multiple-open" in helper
+    assert "closed-head" in helper
+    assert "nonlinear" in helper
+    assert "vcs_is_ancestor" in helper
+    assert "previous_base=$root_base" in helper
+    post_verify = helper.split(
+        '[ "$remote_sha" = "$expected_sha" ]', 1
+    )[1]
+    assert post_verify.index("restacked[") < post_verify.index('gh pr edit "$bookmark"')

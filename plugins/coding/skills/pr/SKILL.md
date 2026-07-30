@@ -37,10 +37,12 @@ remote mutation.
 - `update` republishes existing PR heads, refreshes their title, body, and bases,
   and drives CI to green. Load and follow
   [references/create-update.md](references/create-update.md) with `ACTION=update`.
-- `review` publishes one external review per PR. Run it in a fresh
-  `code-quality-critic` subagent with no inherited implementation context, then
-  load and follow [references/review-workflow.md](references/review-workflow.md).
-  When already executing as that dedicated reviewer, do not delegate again.
+- `review` publishes one external review per PR. As the context-owning caller,
+  load [references/review-workflow.md](references/review-workflow.md), provision
+  any owned review tree, and retain its cleanup lease. Run the read-only review
+  steps in a fresh `code-quality-critic` subagent with no inherited implementation
+  context, close the lease after any return or cancellation, and never delegate
+  again from that dedicated reviewer.
 - `merge` validates and merges a linear stack bottom-up. Load and follow
   [references/merge.md](references/merge.md).
 

@@ -114,18 +114,21 @@ and `.env.test` when present. These local files may be ignored and therefore
 absent from a disposable worktree. Do not execute repository commands from the
 main checkout or copy secret values into a report.
 
-Create a detached disposable worktree through the bundled resource helper,
-which returns a distinct cleanup lease:
+Create a detached disposable worktree through the bundled resource helper and
+bind its exact JSON result:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
-  open-git "$SOURCE_REPO_ROOT" "$TARGET_SHA"
+TREE_JSON=$(bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
+  open-git "$SOURCE_REPO_ROOT" "$TARGET_SHA")
+TREE_LEASE=$(jq -er .lease <<<"$TREE_JSON")
+TEST_WORKTREE=$(jq -er .tree <<<"$TREE_JSON")
+test "$(git -C "$TEST_WORKTREE" rev-parse HEAD)" = "$TARGET_SHA"
 ```
 
-Retain the exact `lease` and `tree` values from its JSON output. The parent uses
-`tree` to confirm selected-revision commands, then gives the lease and cleanup
-ownership to the tester. On pass, failure, cancellation, skipped testing, or
-blocked discovery, invoke `temp-tree.sh close <lease>` and verify it is gone.
+The context-owning parent retains `TREE_LEASE`; never transfer cleanup ownership
+to the tester. It passes only `TEST_WORKTREE` for execution, then invokes
+`temp-tree.sh close "$TREE_LEASE"` after success, failure, cancellation, skipped
+testing, or blocked discovery and verifies the lease and registration are gone.
 
 Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
 confirm the exact commands at the selected SHA, and inspect workflow `env`,
@@ -291,23 +294,22 @@ before monitoring again:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/restack.sh" \
+  --base "$ROOT_BASE" \
   "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
   "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"
 ```
 
 Supply every selected bookmark explicitly in bottom-up order with the exact
-local git commit SHA expected after the rewrite; never rediscover the set from
-a prefix. The sync script preflights the entire set, pushes each already-shaped
-unmerged bookmark, verifies the remote SHA, and updates open PR bases with
-`gh pr edit --base`; it does not reshape history. It drives both paths, running
-the same contract through `jj git fetch`/`jj git push --bookmark` where the
-repository is jj-colocated and through `git fetch`/`git push
---force-with-lease`/`git ls-remote` where it is not, and it reports which one it
-selected as `vcs` in its JSON summary. It aborts the whole sync on the first
-preflight mismatch rather than pushing a partially shaped stack; verify the PR
-base chain and each PR `headRefOid` mirror the recorded map. Before monitoring,
-reauthor every pushed head against its verified base and update its PR body,
-resetting reviewer evidence onto the new head/base OID pair.
+local git commit SHA expected after the rewrite, and pass the first head's exact
+intended base as `--base`; for a suffix restack this is its unselected
+predecessor, not the repository default. Never rediscover either from a prefix.
+The script preflights the set, uses leased pushes, verifies every remote SHA,
+and updates open PR bases; it never reshapes history. Preflight prevents known
+partial writes, but forge operations are not transactional: `restacked` records
+each verified remote head even if a later base edit or push fails, so recover
+from that map before retrying. Verify the PR base chain and every `headRefOid`,
+then reauthor changed heads against verified bases and reset reviewer evidence
+only where the head or base OID changed.
 
 | Publication error | Action |
 |---|---|

@@ -18,22 +18,24 @@ handle and keeps shell functions or traps out of the skill tool call.
 |---|---|---|
 | jj workspace | In the target repository, jj path | `temp-tree.sh open-jj "$REPOSITORY_ROOT" "$HEAD_OID"` |
 | git worktree | In the target repository, git path | `temp-tree.sh open-git "$REPOSITORY_ROOT" "$HEAD_OID"` |
-| Fresh clone | Not in the target repository, or `--repo` names another | `gh repo clone "$OWNER/$REPO" "$REVIEW_DIR" -- --no-checkout`, then fetch and `git -C "$REVIEW_DIR" checkout --detach "$HEAD_OID"` |
+| Fresh clone | Not in the target repository, or `--repo` names another | `temp-tree.sh open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"` |
 
 The workspace and worktree forms reuse local objects and are the fast path. In the
-clone form the clone is itself the disposable checkout, so its cleanup has no
-registration to release first.
+clone form the helper owns the whole clone under the same guarded lease.
 
 ## Cleanup contract
 
 For an owned tree, run
 `bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" close "$TREE_LEASE"`.
-The helper releases the git worktree or jj workspace before deleting its
-guarded temporary lease directory.
+The helper releases a git worktree or uniquely named jj workspace before
+deleting its guarded lease; a clone has no external registration.
 
 <IMPORTANT>
-The `REVIEW_TREE_OWNED` guard and exact helper-issued lease are the whole safety
-property. A reused tree belongs to the user; never pass it to `close`.
+The context-owning parent creates an owned tree before reviewer dispatch,
+retains the exact helper-issued lease, and runs `close` after reviewer success,
+failure, or cancellation. The helper's signal trap protects construction only;
+never transfer lifetime ownership to the disposable reviewer. A reused tree
+belongs to the user and is never passed to `close`.
 </IMPORTANT>
 
 Close on pass, failure, blocked discovery, and cancellation alike, then confirm
