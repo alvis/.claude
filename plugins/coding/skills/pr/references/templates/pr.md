@@ -26,7 +26,7 @@ Placeholders (for non-LLM callers performing literal substitution):
   breaking_changes_body      no        Breaking-change list + migration notes. Drop section if commit subject lacks `!` and no `BREAKING CHANGE:` trailer.
   risk_body                  by zone   Concrete failure modes and mitigations. Required for yellow/red.
   test_plan_body             by zone   Checks covering the named risks. Required for yellow/red.
-  why_this_size_body         by zone   Isolation justification and reviewer-time estimate. Required for red.
+  why_this_size_body         by zone   Isolation justification plus `Reviewer time: <positive number> minutes|hours`. Required for red.
   verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
   boundary_body              no        Related work the instruction placed outside this change. Drop section if empty.
   additional_notes_body      no        Known limitations, follow-ups. Drop section if empty.
@@ -80,8 +80,10 @@ Substitution rules:
 
 ## Why this size
 
-<!-- why this review surface is one indivisible change, plus reviewer-time
-     estimate; required for red -->
+<!-- specific reason this review surface is one indivisible change, plus a
+     machine-checkable estimate on its own line:
+     Reviewer time: <positive number> minutes|hours
+     Both are required for red; generic justification does not satisfy it. -->
 {{why_this_size_body}}
 
 ## 🧪 Verification

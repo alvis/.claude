@@ -137,31 +137,31 @@ to testers; it never transfers cleanup ownership. After success, failure,
 cancellation, skipped testing, or blocked discovery, the parent closes every
 lease and verifies each lease and registration are gone.
 
-Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
-confirm the exact commands at the selected SHA, and inspect workflow `env`,
-`secrets.*`, `vars.*`, and command-level environment references there for
-revision drift. List the exact compile, type, lint, test, and build commands
-that reproduce CI without hosted services. Record variable names and source
-presence only; never copy secret values into a report. For every required
-variable, verify that the isolated tester can receive it from a user-approved
-source in the main checkout or another explicitly approved location; an env
-file does not need to be copied into the worktree. Record hosted-only checks
-and unavailable services or credentials. If a required variable is missing and
-`--skip-local-test` was not supplied, ask the user to confirm its intended
-source or location; if it remains unavailable, ask whether to use
-`--skip-local-test` and proceed with publishing. When the flag was supplied,
-record the missing variable as a hosted-only gap and do not execute local
-commands. Do not guess a secret source or silently run with an empty value.
+Read the workflow and script definitions from each returned `tree` to confirm
+the exact commands at that SHA, and inspect workflow `env`, `secrets.*`,
+`vars.*`, and command-level environment references for revision drift. List
+the compile, type, lint, test, and build commands that reproduce CI without
+hosted services. Record variable names and source presence only; never copy
+secret values into a report. For every required variable, verify that the
+isolated tester can receive it from a user-approved source in the main checkout
+or another explicitly approved location; an env file need not be copied.
+Record hosted-only checks and unavailable services or credentials. If a
+required variable is missing without `--skip-local-test`, ask for its intended
+source; if unavailable, ask whether to skip local tests and publish. With the
+flag, record the hosted-only gap and run no local commands. Never guess a
+secret source or silently use an empty value.
 For each selected change, record expected hosted PR check/job names from
 `pull_request`-triggered jobs at that ref and required branch status
 checks/rulesets when accessible through `gh api`; record inaccessible sources
 instead of assuming they are empty.
 
-Unless `--skip-local-test` is present, dispatch one small-model read-only tester
-for the selected heads and command set. It MUST NOT edit, format, commit, or
-push. Bottom-up, it runs every runnable command against every head in CI order,
-continues through independent commands after failure, and returns under 1000
-tokens:
+Unless `--skip-local-test` is present, partition the ordered heads into
+sequential bottom-up batches of at most ten. Dispatch one fresh small-model
+read-only tester per batch; never reuse its context for another batch. It MUST
+NOT edit, format, commit, or push. For its batch it runs every runnable command
+against every head in CI order, continues through independent commands after
+failure, and returns under 1000 tokens. Finish and consume one batch before
+dispatching the next.
 
 Treat repository workflows and scripts as untrusted code. The tester runs the
 allowlisted commands from `TEST_WORKTREE` and returns command results; it does
@@ -195,6 +195,8 @@ hosted_only:
     unavailable_requirement: <service, secret, runner, or credential>
 temporary_worktree_cleanup:
   - ref: <selected head SHA>
+    lease: <exact helper-issued lease>
+    tree: <exact helper-issued tree>
     status: parent-verified | blocked
 expected_hosted_checks:
   - ref: <change-id or head SHA>
@@ -498,7 +500,10 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    - `{{test_plan_body}}` — exact content under `## Test plan` /
      `Test-Plan:`. Required for yellow/red; stop when absent.
    - `{{why_this_size_body}}` — exact content under `## Why this size`.
-     Required for red and an allowed black-zone override; stop when absent.
+     Required for red and an allowed black-zone override. Require specific
+     prose explaining why the surface is indivisible plus
+     `Reviewer time: <positive number> minutes|hours`; stop when either is
+     absent, generic, or malformed.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
    - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered

@@ -186,3 +186,23 @@ def test_reviewer_receives_the_pinned_mission_capsule() -> None:
     assert "holistically" in review
     assert "one holistic map" in review
     assert "A stack\nnever receives a second lease" in review
+
+
+def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+
+    assert "batches of at most ten" in workflow
+    assert "one fresh small-model" in workflow
+    assert "retain every returned lease/tree" in workflow
+    assert "parent closes every" in workflow
+    assert "lease: <exact helper-issued lease>" in workflow
+
+
+def test_red_zone_requires_machine_checkable_reviewer_time() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
+
+    expected = "Reviewer time: <positive number> minutes|hours"
+    assert expected in workflow
+    assert expected in template
+    assert "absent, generic, or malformed" in workflow
