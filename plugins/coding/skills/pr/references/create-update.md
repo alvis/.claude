@@ -114,24 +114,18 @@ and `.env.test` when present. These local files may be ignored and therefore
 absent from a disposable worktree. Do not execute repository commands from the
 main checkout or copy secret values into a report.
 
-Then create a detached disposable worktree at the resolved target SHA and
-install a guarded cleanup trap:
+Create a detached disposable worktree through the bundled resource helper,
+which returns a distinct cleanup lease:
 
 ```bash
-TEST_WORKTREE=$(mktemp -d)
-cleanup() {
-  if [ -n "${TEST_WORKTREE:-}" ] && [ "$TEST_WORKTREE" != / ]; then
-    git worktree remove --force "$TEST_WORKTREE" >/dev/null 2>&1 ||
-      rm -rf -- "$TEST_WORKTREE"
-  fi
-}
-trap cleanup EXIT HUP INT TERM
-git worktree add --detach "$TEST_WORKTREE" "$TARGET_SHA"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
+  open-git "$SOURCE_REPO_ROOT" "$TARGET_SHA"
 ```
 
-The parent uses this worktree to confirm selected-revision commands. If local
-testing is dispatched, give the path and cleanup ownership to the tester; if
-testing is skipped or blocked, the parent runs `cleanup` before proceeding.
+Retain the exact `lease` and `tree` values from its JSON output. The parent uses
+`tree` to confirm selected-revision commands, then gives the lease and cleanup
+ownership to the tester. On pass, failure, cancellation, skipped testing, or
+blocked discovery, invoke `temp-tree.sh close <lease>` and verify it is gone.
 
 Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
 confirm the exact commands at the selected SHA, and inspect workflow `env`,
@@ -158,9 +152,8 @@ for the whole command set. It MUST NOT edit, format, commit, or push. It runs
 every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
-Treat repository workflows and scripts as untrusted code. The tester installs
-the guarded trap shown above in its own process before running commands, runs
-the allowlisted commands from `"$TEST_WORKTREE"`, removes the worktree on every
+Treat repository workflows and scripts as untrusted code. The tester runs the
+allowlisted commands from the leased `tree`, closes the lease on every
 exit path — pass, failure, cancellation, or blocked environment discovery —
 and reports cleanup status. Limit filesystem writes to that worktree and a
 temporary directory, deny network by default, and remove ambient tokens,

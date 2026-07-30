@@ -105,17 +105,17 @@ fresh checkout would produce, minus the cost:
 3. With no candidate, create a disposable checkout and record that this run owns it:
 
    ```bash
-   REVIEW_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pr-review-${PR}-XXXXXX")
-   REVIEW_TREE_OWNED=true
-   trap cleanup EXIT HUP INT TERM
+   bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
+     <open-git-or-open-jj> <target-repository-root> "$HEAD_OID"
    ```
 
 [review-extraction.md](review-extraction.md) carries the checkout forms and
-the cleanup contract.
+the cleanup contract. Retain its returned `lease` as `TREE_LEASE`, its `tree`
+as `REVIEW_DIR`, and set `REVIEW_TREE_OWNED=true`.
 
 <IMPORTANT>
-`cleanup` removes a tree only when `REVIEW_TREE_OWNED` is true. A reused tree
-belongs to the user and its removal would destroy real work.
+Close only the exact helper-issued lease when `REVIEW_TREE_OWNED` is true. A
+reused tree belongs to the user and its removal would destroy real work.
 </IMPORTANT>
 
 ### Build the reviewable surface
@@ -142,7 +142,7 @@ as a finding citing its rule id:
 
 | Zone | Bound (stricter of the two wins) | PR body must add |
 |---|---|---|
-| green | ≤ 15 files and ≤ 500 net LOC | Summary, Checklist |
+| green | ≤ 15 files and ≤ 500 net LOC | Summary, Verification |
 | yellow | ≤ 30 files and ≤ 1200 LOC | Risk, Test plan |
 | red | ≤ 60 files and ≤ 2000 LOC | Why this size |
 | black | > 60 files or > 2000 LOC | should be split before review |
@@ -154,8 +154,7 @@ vendored paths carry no reviewable lines; list them as not reviewed.
 ### Run the mechanical candidate scan
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/pyrun.sh" \
-  "${CLAUDE_PLUGIN_ROOT}/scripts/scan_potential_violations.py" \
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/review-scan.sh" \
   <changed-files-in-review-tree> --category all --before 5 --after 10
 ```
 

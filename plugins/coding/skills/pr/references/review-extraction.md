@@ -11,10 +11,13 @@ alike without adding a remote. `jj` has no equivalent for fetching a bare PR ref
 `git fetch` is correct even on the jj path — in a colocated repository both share the
 same object store, and the fetched commit is immediately visible to `jj`.
 
-| Case | Condition | Checkout |
+Create owned trees through `scripts/temp-tree.sh`; its lease is the cleanup
+handle and keeps shell functions or traps out of the skill tool call.
+
+| Case | Condition | Helper |
 |---|---|---|
-| jj workspace | In the target repository, jj path | `jj workspace add --revision "$HEAD_OID" "$REVIEW_DIR"` |
-| git worktree | In the target repository, git path | `git worktree add --detach "$REVIEW_DIR" "$HEAD_OID"` |
+| jj workspace | In the target repository, jj path | `temp-tree.sh open-jj "$REPOSITORY_ROOT" "$HEAD_OID"` |
+| git worktree | In the target repository, git path | `temp-tree.sh open-git "$REPOSITORY_ROOT" "$HEAD_OID"` |
 | Fresh clone | Not in the target repository, or `--repo` names another | `gh repo clone "$OWNER/$REPO" "$REVIEW_DIR" -- --no-checkout`, then fetch and `git -C "$REVIEW_DIR" checkout --detach "$HEAD_OID"` |
 
 The workspace and worktree forms reuse local objects and are the fast path. In the
@@ -23,27 +26,18 @@ registration to release first.
 
 ## Cleanup contract
 
-```bash
-cleanup() {
-  if [ "${REVIEW_TREE_OWNED:-false}" = true ] &&
-     [ -n "${REVIEW_DIR:-}" ] && [ "$REVIEW_DIR" != / ]; then
-    jj workspace forget "$(basename "$REVIEW_DIR")" >/dev/null 2>&1 ||
-      git worktree remove --force "$REVIEW_DIR" >/dev/null 2>&1 || true
-    rm -rf -- "$REVIEW_DIR"
-  fi
-}
-```
+For an owned tree, run
+`bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" close "$TREE_LEASE"`.
+The helper releases the git worktree or jj workspace before deleting its
+guarded temporary lease directory.
 
 <IMPORTANT>
-The `REVIEW_TREE_OWNED` guard is the whole safety property. A reused tree is the
-user's working copy or worktree; removing it destroys real work. Never widen this
-condition, and never call `cleanup` for a tree this run did not create.
+The `REVIEW_TREE_OWNED` guard and exact helper-issued lease are the whole safety
+property. A reused tree belongs to the user; never pass it to `close`.
 </IMPORTANT>
 
-Release the workspace or worktree registration before removing the directory —
-skipping the release leaves a stale entry in `jj workspace list` or
-`git worktree list` even after the files are gone. Run on pass, failure, blocked
-discovery, and cancellation alike, then confirm nothing was left behind:
+Close on pass, failure, blocked discovery, and cancellation alike, then confirm
+nothing was left behind:
 
 ```bash
 jj workspace list 2>/dev/null | grep -F "$REVIEW_DIR" && echo "stale jj workspace"

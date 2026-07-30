@@ -129,8 +129,8 @@ Notify reviewers and downstream consumers:
 
 - Option 1: normal save follow-ups ([workflow-save-local.md](./workflow-save-local.md)).
 - Option 2: integrity check and project scripts, direct force-with-lease sync
-  of the affected bookmark only, then `coding:pr update` only when relevant open
-  downstream PRs require monitoring.
+  of the affected bookmark only, then read-only `gh pr checks` for relevant
+  downstream PRs. Updating or restacking them needs separate explicit consent.
 - Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases
