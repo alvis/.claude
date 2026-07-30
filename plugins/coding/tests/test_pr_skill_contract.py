@@ -324,3 +324,46 @@ def test_review_fetches_and_verifies_pinned_head_and_base_objects() -> None:
     reuse = workflow.index("Search for a candidate")
     assert load < reuse
     assert "before inspecting reuse candidates" in workflow
+
+
+def test_review_provisions_distinct_ledger_and_payload_paths() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+
+    assert 'REVIEW_LEDGER="$REVIEW_ARTIFACT_DIR/ledger.json"' in workflow
+    assert 'REVIEW_PAYLOAD="$REVIEW_ARTIFACT_DIR/payload.json"' in workflow
+    assert '--input "$REVIEW_PAYLOAD"' in workflow
+    assert '--input "$REVIEW_PAYLOAD"' in publishing
+    assert "reviewer may write only those two files" in workflow
+
+
+def test_convergence_dispatch_is_already_the_dedicated_reviewer() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert "preprovisioned per-PR capsules" in router
+    assert "fresh critic that" in loop
+    assert "do not invoke another router or" in loop
+    assert "already the dedicated" in workflow
+
+
+def test_batch_review_returns_and_cleans_every_pr_ledger() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+
+    assert "distinct artifact" in loop
+    assert "directory for each PR" in loop
+    assert "PR-to-ledger-path map" in loop
+    assert "missing, duplicate, or cross-PR path" in loop
+    assert "same per-PR cleanup" in loop
+
+
+def test_red_ci_routes_to_repair_without_spending_review_retry() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+
+    assert "`action: repair_ci_then_review`" in loop
+    assert "retry count unchanged" in loop
+    assert "`action: repair_ci_then_review`" in create_update
+    assert "Never retry a review against unchanged red-CI" in create_update
+    assert "evidence." in create_update

@@ -355,6 +355,13 @@ After every selected head is pushed or updated and its remote OID is verified,
 load and follow [review-loop.md](review-loop.md), unless `--no-review` is
 present. A review-driven fix republishes the affected stack, resets the expected
 head OIDs, and runs the loop again with a fresh subagent before CI monitoring.
+If the loop returns `action: repair_ci_then_review`, enter step 5 immediately
+without marking review convergence complete or incrementing its retry count.
+After the poller reports a red repair, the parent accepts the fix, saves it,
+and republishes through the owned workflow; if CI instead becomes green, no
+repair is needed. Then return to step 4 and run a fresh review pass before
+completing the ordinary CI gate. Never retry a review against unchanged red-CI
+evidence.
 
 ### 5. Schedule and consume the initial poll
 

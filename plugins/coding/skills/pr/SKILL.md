@@ -45,7 +45,10 @@ remote mutation.
   any owned tree, and retain its cleanup lease. Run the read-only steps in a
   fresh `code-quality-critic` subagent with no inherited implementation context,
   close the lease after any return or cancellation, and never delegate again
-  from that dedicated reviewer.
+  from that dedicated reviewer. A fresh critic dispatched by
+  [references/review-loop.md](references/review-loop.md) with explicit
+  preprovisioned per-PR capsules is already that dedicated reviewer: it runs the
+  review phase directly instead of nesting another dispatch.
 - `merge` validates and merges a linear stack bottom-up. Load and follow
   [references/stacked-prs.md](references/stacked-prs.md), then
   [references/merge.md](references/merge.md).

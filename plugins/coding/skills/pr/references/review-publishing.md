@@ -9,7 +9,7 @@ run.
 
 ```bash
 gh api --hostname "$HOST" --method POST \
-  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input payload.json
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input "$REVIEW_PAYLOAD"
 ```
 
 ## Payload
