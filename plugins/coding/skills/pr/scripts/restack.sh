@@ -184,9 +184,6 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
     fail_with 1 "local-sha-mismatch:$bookmark"
   fi
   [ "$local_sha" = "$expected_sha" ] || fail_with 1 "local-sha-mismatch:$bookmark"
-  vcs_is_ancestor "$previous_sha" "$expected_sha" ||
-    fail_with 1 "nonlinear:$bookmark"
-  previous_sha=$expected_sha
 
   if ! state=$(gh pr list --head "$bookmark" --state all --limit 100 \
     --json state,headRefOid --jq "
@@ -207,6 +204,14 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
     *) fail_with 1 "gh-discovery:$bookmark" ;;
   esac
   states[${#states[@]}]=$state
+
+  # Squash- or rebase-merged heads need not remain in destination ancestry.
+  # Never make that stale tip the required parent of the next live head.
+  if [ "$state" != MERGED ]; then
+    vcs_is_ancestor "$previous_sha" "$expected_sha" ||
+      fail_with 1 "nonlinear:$bookmark"
+    previous_sha=$expected_sha
+  fi
   index=$((index + 1))
 done
 

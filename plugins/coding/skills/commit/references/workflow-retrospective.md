@@ -118,9 +118,12 @@ After git rebase completes, jj will see the rewritten objects on next op; run `j
 
 - Whenever any unmerged bookmark sits at or below a rewritten change, follow
   the [SKILL.md](../SKILL.md) publication handoff with the resolved stack
-  metadata after local integrity passes. The
-  [`coding:pr update` publication workflow](../../pr/references/create-update.md#3-publish-bottom-up) owns
-  remote restacking, pushing, and PR-base repair.
+  metadata after local integrity passes. Discover open PRs for the selected
+  heads: invoke `coding:pr create` when none has one, otherwise invoke
+  `coding:pr update` against the lowest open head so it can include unpublished
+  descendants. The
+  [publication workflow](../../pr/references/create-update.md#3-publish-bottom-up)
+  owns remote restacking, pushing, and PR-base repair.
 
 - Integrity check ([SKILL.md](../SKILL.md) Verification) — the dual-checksum backup ensures the merged tree at `@` matches pre-state (since logically the same content lands, just redistributed across ancestors).
 - Project scripts: `npm run lint`, `npm run test`, `npm run build` for EACH affected change (check by `jj edit <change_id>` then build).

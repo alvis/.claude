@@ -23,10 +23,14 @@ remediation to `coding:fix`.
 
 The context-owning router runs through *Locate or create the review tree*, then
 dispatches the remaining review steps to a fresh `code-quality-critic` subagent
-with no inherited implementation context. It retains any `TREE_LEASE`, passes
-only the clean `REVIEW_DIR`, and closes the lease after success, failure, or
-cancellation. Review as an external party who knows only the PR, repository,
-standards, and pinned review tree.
+with no inherited implementation context. It retains any `TREE_LEASE` and
+passes the clean `REVIEW_DIR` plus a bounded mission capsule containing the
+resolved host, owner, repository, PR number and URL, `HEAD_OID`, base ref and
+OID, body, author, status rollup, requested areas, and dry-run state. The
+reviewer must not rediscover or silently replace those pinned inputs. The
+parent closes the lease after success, failure, or cancellation. Review as an
+external party who knows only that capsule, repository, standards, and pinned
+review tree.
 
 <IMPORTANT>
 - Read-only against the reviewed code. Confine every mutation to the review tree

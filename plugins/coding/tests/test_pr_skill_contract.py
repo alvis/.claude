@@ -39,9 +39,9 @@ def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
     skill = (WRITE_PR / "references" / "create-update.md").read_text()
     template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
 
-    assert "`headRefOid` and" in skill
+    assert "capture an existing PR's `headRefOid` and" in skill
     assert "`baseRefOid`" in skill
-    assert "Reset those tasks when either OID differs" in skill
+    assert "only where the head or base OID changed" in skill
     assert "head/base OID pairs" in template
     assert "no-op publication preserves evidence" in template
     assert "unchanged pair" in template
@@ -152,7 +152,32 @@ def test_restack_requires_explicit_root_base_and_reports_partial_progress() -> N
     assert "nonlinear" in helper
     assert "vcs_is_ancestor" in helper
     assert "previous_base=$root_base" in helper
+    discovery = helper.index("if ! state=$(gh pr list")
+    ancestry = helper.index('if [ "$state" != MERGED ]')
+    assert discovery < ancestry
     post_verify = helper.split(
         '[ "$remote_sha" = "$expected_sha" ]', 1
     )[1]
     assert post_verify.index("restacked[") < post_verify.index('gh pr edit "$bookmark"')
+
+
+def test_rewrites_route_unpublished_stacks_to_create() -> None:
+    references = [
+        WRITE_PR.parent / "commit" / "references" / "workflow-edit.md",
+        WRITE_PR.parent / "commit" / "references" / "workflow-reorder.md",
+        WRITE_PR.parent / "commit" / "references" / "workflow-retrospective.md",
+    ]
+
+    for reference in references:
+        workflow = reference.read_text()
+        assert "`coding:pr create` when none has one" in workflow
+        assert "`coding:pr update` against the lowest open head" in workflow
+
+
+def test_reviewer_receives_the_pinned_mission_capsule() -> None:
+    review = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert "bounded mission capsule" in review
+    assert "`HEAD_OID`, base ref and" in review
+    assert "OID, body, author, status rollup" in review
+    assert "body, author, status rollup, requested areas, and dry-run state" in review

@@ -41,7 +41,10 @@ if [ "$#" -eq 6 ] && [ "$1" = log ] && [ "$2" = -r ] &&
    [ "$6" = 'commit_id ++ "\n"' ] &&
    [[ "$3" == *" & descendants("* ]]; then
   child=${3%% & descendants(*}
+  parent=${3#* & descendants(}
+  parent=${parent%)}
   [ "$child" = "$ANCESTRY_FAIL_SHA" ] && exit 43
+  [ "$parent" = "$ANCESTRY_FAIL_PARENT_SHA" ] && exit 43
   printf '%s\n' "$child"
   exit 0
 fi
@@ -138,6 +141,7 @@ run_case() {
   EDIT_FAIL_BOOKMARK=
   GH_FAIL_BOOKMARK=
   ANCESTRY_FAIL_SHA=
+  ANCESTRY_FAIL_PARENT_SHA=
   base_args=(--base main)
   args=()
   expected_status=0
@@ -211,11 +215,13 @@ log:stack/01-a"
     nonlinear)
       args=(stack/01-a="$SHA_A")
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
+      add_ref "$PR_STATES" stack/01-a OPEN
       ANCESTRY_FAIL_SHA=$SHA_A
       expected_status=1
       expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["nonlinear:stack/01-a"]}'
       expected_log="fetch
-log:stack/01-a"
+log:stack/01-a
+discover:stack/01-a"
       ;;
     gh-failure)
       args=(stack/01-a="$SHA_A")
@@ -266,6 +272,9 @@ log:stack/01-a@origin"
       add_ref "$REMOTE_SHAS" stack/02-live@origin "$SHA_B"
       add_ref "$PR_STATES" stack/01-old MERGED
       add_ref "$PR_STATES" stack/02-live OPEN
+      # The merged tip was rewritten by the forge; the live child now descends
+      # the root base directly and must not be checked against that stale tip.
+      ANCESTRY_FAIL_PARENT_SHA=$SHA_A
       expected_json='{"vcs":"jj","restacked":["stack/02-live"],"skipped_merged":["stack/01-old"],"errors":[]}'
       expected_log="fetch
 log:stack/01-old
@@ -375,7 +384,7 @@ discover:stack/02-b"
   esac
 
   export FETCH_FAIL PUSH_FAIL_BOOKMARK EDIT_FAIL_BOOKMARK GH_FAIL_BOOKMARK \
-    ANCESTRY_FAIL_SHA
+    ANCESTRY_FAIL_SHA ANCESTRY_FAIL_PARENT_SHA
   set +e
   output=$(cd "$COLOCATED" &&
     /bin/bash "$RESTACK_SH" "${base_args[@]}" \
