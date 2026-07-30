@@ -8,30 +8,22 @@ argument-hint: "[<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--d
 # Write Pull Request
 
 Turn one saved change or an ordered stack into live, green draft pull requests.
-This skill composes a deterministic, regex-validated Conventional Commits PR
-title and a unified PR body from each commit, publishes the change (or stack)
-bottom-up as draft PRs, then owns the hosted-CI lifecycle until every PR is
-green or a concrete blocker requires user action or external state. Because
-repair can edit existing work, the governing rule is **Coherence Mandate.**
-Every edit must produce one continuous, deliberate work. Rewrite over
-restructure, restructure over integrate, never append. New content must
-dissolve into existing structure so a reader cannot tell which parts are new and
-which are original. Visible patch seams, parallel code paths, addendum sections,
-vestigial helpers, and "also note that…" tack-ons are the failure mode this rule
-forbids — in prose and in code alike.
+This skill composes deterministic Conventional Commits PR text, publishes the
+change or stack bottom-up as drafts, and owns hosted CI until green or blocked.
+Repair obeys the **Coherence Mandate**: produce one continuous, deliberate work;
+rewrite over restructure, restructure over integrate, never append. Dissolve
+new content into the existing structure. Visible seams, parallel paths,
+addenda, vestigial helpers, and "also note that…" tack-ons are forbidden.
 
 Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
 
 ## Boundaries
 
-- Use for: composing a PR title and body for the current jj working-copy change
-  or any resolvable commit ref, and publishing or republishing a saved jj
-  change, branch, current draft PR, or ordered stack while monitoring every
-  GitHub check through repair. `coding:commit --create-pr` reaches this path
-  through its required handoff.
-- Do not use for: saving work without publication (`coding:commit`), reviewing
-  code, merging PRs (`coding:merge-pr`), or creating a new stack solely by
-  reshaping local history (`coding:commit --reorder`).
+- Use for: composing PR text for any resolvable commit, then publishing or
+  republishing a saved change, draft PR, or ordered stack through CI repair.
+  `coding:commit --create-pr` reaches this path through its required handoff.
+- Do not use for: saving without publication (`coding:commit`), reviewing,
+  merging (`coding:merge-pr`), or reshaping history (`coding:commit --reorder`).
 - Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are
   intentionally ignored — selecting between them is a human choice and out of
   scope.
@@ -246,8 +238,11 @@ a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 
-Set `BASE=main` for PR 01 and the previous bookmark thereafter; run
-[Author the PR text](#author-the-pr-text) before any ref or remote mutation.
+Set `BASE=main` for PR 01 and the previous bookmark thereafter. Before any ref
+or remote mutation, run [Author the PR text](#author-the-pr-text) for every
+selected head and its resolved base. Split each exact `title\n\nbody` result
+into that head's `TITLE` and `BODY`; an output without one title, one blank
+separator, and a body aborts the whole selection before any push.
 
 On the jj path, point the bookmark at the change and push it:
 
@@ -422,11 +417,13 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
 1. Resolve the commit and base refs. Try
    `jj log -r <ref> --no-graph -T 'description'` first; fall back to
    `git log -1 --format=%B <ref>`. Unknown ref exits 2; neither tool exits 3.
-   From their merge base count all paths and net LOC, apply project overrides,
-   and record the canonical `GIT-PR-SIZE-*` zone.
+   When no base was supplied, use the commit's first parent; for a root commit,
+   use the empty tree from `git hash-object -t tree /dev/null`. From the
+   resolved head/base pair count all paths and net LOC, apply project
+   overrides, and record the canonical `GIT-PR-SIZE-*` zone.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
-   `Fixes:`, `Breaking-Change:`, `Testing:`, `Manual-Test:`) for routing in
+   `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in
    step 5.
 3. Validate the subject against the Conventional Commits regex — the
    canonical conventional-commits.org type allowlist with optional `(scope)`
@@ -461,7 +458,7 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
      `Background:`, if present.
    - `{{implementation_body}}` — content under `## Implementation` / `What:`
      / `How:`, if present.
-   - `{{breaking_changes_body}}` — `Breaking-Change:` trailers; "None." when
+   - `{{breaking_changes_body}}` — `BREAKING CHANGE:` footers; "None." when
      absent.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
@@ -487,11 +484,10 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
 
 ## Verification and Completion
 
-- The composed title matches the Conventional Commits regex; a repo template
-  was emitted byte-for-byte verbatim, or a bundled default has no
-  `{{placeholder}}` left unfilled and no dropped-section stubs. Authoring is
-  idempotent: the same commit ref plus the same resolved template produces
-  byte-identical `title\n\nbody` — no timestamps, random IDs, or diff stats.
+- The title matches the Conventional Commits regex; a repo template is verbatim,
+  or the bundled default has no placeholder or dropped-section stub. The same
+  head OID, base/empty-tree OID, template, thresholds, and placeholder map yield
+  byte-identical `title\n\nbody` without timestamps or random IDs.
 - Local checks passed with every command/result recorded, or command execution
   was explicitly skipped; hosted-only gaps and expected checks are named.
 - Every head was pushed under a lease — `jj git push` on the jj path,

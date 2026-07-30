@@ -47,12 +47,14 @@ Substitution rules:
 
 ## 🧵 Context
 
-<!-- why this change is needed: problem, symptoms, tickets, design background -->
+<!-- why this change is needed: the problem and symptoms, related bug or ticket
+     links, what problem it solves and why, and relevant design background -->
 {{context_body}}
 
 ## 🛠️ Implementation
 
-<!-- what was built and how; trade-offs, architectural choices; evidence and
+<!-- features or behavior implemented and how the solution was achieved;
+     trade-offs, architectural choices, and design patterns; evidence and
      results belong here, not in Verification -->
 {{implementation_body}}
 
@@ -82,8 +84,9 @@ Substitution rules:
 
 ## 🚫 Boundary
 
-<!-- bullets naming related work the instruction placed outside this change,
-     so its edges are not read as gaps; not the author's own judgment calls -->
+<!-- bullets naming adjacent work the instruction placed outside this change
+     and where it lives, plus anything a reader would reasonably expect here
+     that was not requested; not the author's own judgment calls -->
 {{boundary_body}}
 
 ## 📋 Additional Notes
@@ -93,5 +96,6 @@ Substitution rules:
 
 ## 🔗 Related Issues
 
-<!-- Closes #N, See #N, spec links -->
+<!-- related tickets, issues, RFCs, specs, and discussions, for example:
+     Closes #N · See #N · Spec: <link> · Discussion: <link> -->
 {{related_issues_body}}
