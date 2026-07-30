@@ -238,11 +238,11 @@ a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 
-Set `BASE=main` for PR 01 and the previous bookmark thereafter. Before any ref
-or remote mutation, run [Author the PR text](#author-the-pr-text) for every
-selected head and its resolved base. Split each exact `title\n\nbody` result
-into that head's `TITLE` and `BODY`; an output without one title, one blank
-separator, and a body aborts the whole selection before any push.
+Before mutation, record `PR_BASE` as the default branch then previous bookmark, and
+`AUTHOR_BASE_OID` as exact default-branch then predecessor change/commit OID.
+New-stack bookmarks do not yet exist, so author every head against `AUTHOR_BASE_OID`,
+never `PR_BASE`. Split each exact `title\n\nbody` into that head's `TITLE` and `BODY`;
+malformed output aborts the whole selection before any ref or remote mutation.
 
 On the jj path, point the bookmark at the change and push it:
 
@@ -264,19 +264,22 @@ When no open PR has this head, create a draft:
 
 ```bash
 gh pr create --draft --title "$TITLE" --body-file - \
-  --base "$BASE" --head "$BOOKMARK" <<<"$BODY"
+  --base "$PR_BASE" --head "$BOOKMARK" <<<"$BODY"
 ```
 
 When the head already has an open PR, update it without duplication and retain
 draft state:
 
 ```bash
-gh pr edit "$PR" --title "$TITLE" --body-file - --base "$BASE" <<<"$BODY"
+gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
 gh pr ready "$PR" --undo # skip only when already draft
 ```
 
 For the bundled template, fill reviewer slots with assigned `@login`s when
-known; bind review and approval to `headRefOid`, resetting both after a push.
+known. Before a push, capture an existing PR's `headRefOid`; after the push,
+bind review and approval to the verified new `headRefOid`. Reset those tasks
+only when the two OIDs differ. A no-op push or publication retry preserves
+evidence already bound to that exact revision.
 
 Capture each PR number, URL, head, base, bookmark, and change ID. After each
 push, record `expected_head_oid` from the pushed bookmark and verify it against
