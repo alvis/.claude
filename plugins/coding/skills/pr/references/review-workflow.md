@@ -62,26 +62,35 @@ review tree.
 
 ### Resolve the pull request
 
-From a PR number or URL, read its metadata directly:
+From a PR number or URL, resolve canonical coordinates and metadata through the
+bundled helper:
 
 ```bash
-gh pr view "$PR" --json number,url,title,body,state,isDraft,baseRefName,headRefName,\
-headRefOid,baseRefOid,headRepositoryOwner,changedFiles,additions,deletions,author,statusCheckRollup
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" \
+  <pr-number-or-url> [--repo <owner/name>]
 ```
+
+Retain its `number`, `owner`, `repo`, `url`, `headRefOid`, `baseRefName`, and
+`baseRefOid` as `PR_NUMBER`, `OWNER`, `REPO`, `PR_URL`, `HEAD_OID`,
+`BASE_REF`, and `BASE_OID`. Never put a URL into a REST path segment or
+GraphQL `Int!` variable.
 
 From a source tree path — or no argument at all, meaning the current tree — resolve
 which PRs that tree carries. A tree may hold a whole stack, so match every open PR
 head against its history rather than assuming one:
 
 ```bash
-gh pr list --state open --json number,headRefName,headRefOid,baseRefName
+gh pr list --state open \
+  --json number,url,headRefName,headRefOid,baseRefName,baseRefOid
 git -C "$TREE" merge-base --is-ancestor "$HEAD_REF_OID" HEAD   # per candidate PR
 ```
 
 Order the matches bottom-up by their base chain — each PR's `baseRefName` is the
 previous PR's `headRefName` — and review each in that order, so a finding lands on
 the PR that introduced it rather than the one that inherited it. No match is a clean
-stop naming the tree and its HEAD; an unresolvable tangle asks.
+stop naming the tree and its HEAD; an unresolvable tangle asks. Resolve every
+matched URL through `resolve-pr.sh` before its review so all paths use the same
+coordinate and metadata contract.
 
 Stop with evidence when a PR is closed, merged, or unreadable. Record
 `HEAD_OID`, `BASE_REF`, and `BASE_OID`; all review evidence binds to both tips.
@@ -93,10 +102,10 @@ reviewing. Page every connection; a partial discussion cannot support a
 `fixed`, `does_not_apply`, or de-duplication decision.
 
 ```bash
-gh api "repos/$OWNER/$REPO/issues/$PR/comments" --paginate
-gh api "repos/$OWNER/$REPO/pulls/$PR/reviews" --paginate
-gh api "repos/$OWNER/$REPO/pulls/$PR/comments" --paginate
-gh api graphql -F owner="$OWNER" -F name="$REPO" -F number="$PR" -f query='
+gh api "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
+gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
+gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
+gh api graphql -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
 query($owner:String!,$name:String!,$number:Int!,$cursor:String){
   repository(owner:$owner,name:$name){
     pullRequest(number:$number){
@@ -134,7 +143,7 @@ repository is fully supported and must not be colocated on its behalf.
 First create a secret-free handoff outside the review tree:
 
 ```bash
-REVIEW_LEDGER_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pr-review-ledger-${PR}-XXXXXX")
+REVIEW_LEDGER_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pr-review-ledger-${PR_NUMBER}-XXXXXX")
 REVIEW_LEDGER="$REVIEW_LEDGER_DIR/ledger.json"
 ```
 
@@ -262,7 +271,7 @@ whatever has
 already been said at the same path and line:
 
 ```bash
-gh api "repos/$OWNER/$REPO/pulls/$PR/comments" --paginate \
+gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate \
   --jq '.[] | {path, line, body}'
 ```
 
@@ -276,7 +285,8 @@ and submit the whole review in one atomic call, so a rejected comment cannot lea
 orphaned fragments:
 
 ```bash
-gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
+gh api --method POST \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input payload.json
 ```
 
 `payload.json` carries `commit_id` (the pinned `HEAD_OID`), `body`, `event`, and

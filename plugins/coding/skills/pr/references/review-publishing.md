@@ -8,7 +8,8 @@ any step fails, and a pending review is invisible to the author but blocks the n
 run.
 
 ```bash
-gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
+gh api --method POST \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input payload.json
 ```
 
 ## Payload
@@ -58,7 +59,7 @@ in the diff. A comment on the wrong line costs more author time than no comment.
 ## Re-review hygiene
 
 - Skip a finding whose path, line, and substance already appear in
-  `gh api repos/$OWNER/$REPO/pulls/$PR/comments`. The author has seen it.
+  `gh api repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments`. The author has seen it.
 - Re-evaluate every existing unresolved P0/P1/P2 thread against the pinned head
   and return `still_applies`, `fixed`, or `does_not_apply` in completion. Do not
   repost it.

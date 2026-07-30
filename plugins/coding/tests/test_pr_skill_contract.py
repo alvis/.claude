@@ -251,3 +251,27 @@ def test_github_stack_bridge_preserves_plugin_ownership() -> None:
     assert "`gh stack link --open` marks new and" in github_stacks
     assert "head branch name of every open stacked PR" in github_stacks
     assert "close-and-recreate migration" in github_stacks
+
+
+def test_review_resolves_canonical_coordinates_before_api_calls() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+
+    assert "scripts/resolve-pr.sh" in workflow
+    assert "scripts/resolve-pr.sh" in loop
+    assert "baseRefName,baseRefOid" in workflow
+    assert "$PR_NUMBER" in workflow
+    assert "$PR_NUMBER" in publishing
+    assert "pulls/$PR/" not in workflow
+    assert "pulls/$PR/" not in publishing
+
+
+def test_review_fetches_and_verifies_pinned_head_and_base_objects() -> None:
+    extraction = (WRITE_PR / "references" / "review-extraction.md").read_text()
+
+    assert 'fetch origin "pull/$PR_NUMBER/head"' in extraction
+    assert 'fetch origin "$BASE_OID"' in extraction
+    assert 'cat-file -e "$HEAD_OID^{commit}"' in extraction
+    assert 'cat-file -e "$BASE_OID^{commit}"' in extraction
+    assert "if either object is unavailable" in extraction

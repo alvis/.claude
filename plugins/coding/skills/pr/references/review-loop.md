@@ -44,14 +44,7 @@ the numeric PR ID from each URL, then re-read each live PR at its expected head,
 including inline comments, overall reviews, replies, and thread state:
 
 ```bash
-PR_NUMBER=$(gh pr view "$PR_URL" --json number --jq .number)
-CANONICAL_PR_URL=$(gh pr view "$PR_URL" --json url --jq .url)
-PR_PATH=${CANONICAL_PR_URL#https://github.com/}
-REPOSITORY=${PR_PATH%/pull/*}
-OWNER=${REPOSITORY%%/*}
-REPO=${REPOSITORY#*/}
-
-gh pr view "$PR_URL" --json headRefOid,baseRefName,baseRefOid,reviews,url
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" "$PR_URL"
 gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
 gh api "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
 gh api graphql -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" \
@@ -71,6 +64,7 @@ query($owner:String!,$name:String!,$number:Int!,$threadCursor:String){
 }'
 ```
 
+Retain the helper's canonical coordinates and metadata before the API calls.
 These commands illustrate the required fields; they are not a complete script.
 Page `reviewThreads` until `hasNextPage` is false. For every thread whose
 `comments.pageInfo.hasNextPage` is true, page that thread's `comments`
