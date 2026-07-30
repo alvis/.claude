@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -91,7 +92,10 @@ def test_owned_trees_bind_outputs_and_keep_cleanup_in_parent() -> None:
     assert "neither removes the worktree nor closes or reports on the parent-owned" in create_update
     assert "After consuming each batch report" in create_update
     assert "never transfers cleanup ownership" in create_update
-    assert 'open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"' in extraction
+    assert (
+        'open-clone "https://$HOST/$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"'
+        in extraction
+    )
     assert "signal trap protects construction only" in extraction
     assert 'workspace="pr-tree-$(basename "$lease")"' in helper
     assert "workspace add --name" in helper
@@ -265,13 +269,58 @@ def test_review_resolves_canonical_coordinates_before_api_calls() -> None:
     assert "$PR_NUMBER" in publishing
     assert "pulls/$PR/" not in workflow
     assert "pulls/$PR/" not in publishing
+    for content in (workflow, publishing, loop):
+        assert 'gh api "repos/' not in content
+        assert "gh api graphql -F" not in content
+        assert "gh api --method" not in content
+    assert '--hostname "$HOST"' in workflow
+    assert '--hostname "$HOST"' in publishing
+    assert '--hostname "$HOST"' in loop
+
+
+def test_resolver_accepts_canonical_enterprise_url(tmp_path: Path) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text('#!/usr/bin/env bash\nprintf "%s\\n" "$PR_METADATA"\n')
+    gh.chmod(0o755)
+    metadata = {
+        "number": 42,
+        "url": "https://github.example.test/octo/repo/pull/42",
+    }
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}:{env['PATH']}"
+    env["PR_METADATA"] = json.dumps(metadata)
+    resolved = subprocess.run(
+        [
+            "bash",
+            str(WRITE_PR / "scripts" / "resolve-pr.sh"),
+            "42",
+            "--repo",
+            "octo/repo",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    payload = json.loads(resolved.stdout)
+    assert payload["host"] == "github.example.test"
+    assert payload["owner"] == "octo"
+    assert payload["repo"] == "repo"
+    assert payload["number"] == 42
 
 
 def test_review_fetches_and_verifies_pinned_head_and_base_objects() -> None:
     extraction = (WRITE_PR / "references" / "review-extraction.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
 
     assert 'fetch origin "pull/$PR_NUMBER/head"' in extraction
     assert 'fetch origin "$BASE_OID"' in extraction
     assert 'cat-file -e "$HEAD_OID^{commit}"' in extraction
     assert 'cat-file -e "$BASE_OID^{commit}"' in extraction
     assert "if either object is unavailable" in extraction
+    load = workflow.index("load [review-extraction.md]")
+    reuse = workflow.index("Search for a candidate")
+    assert load < reuse
+    assert "before inspecting reuse candidates" in workflow

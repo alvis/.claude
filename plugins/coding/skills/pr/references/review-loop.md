@@ -39,15 +39,17 @@ anchoring, and publication. The parent owns every response and mutation.
 
 ## Read the published discussion
 
-Do not act from the subagent summary alone. Resolve repository coordinates and
-the numeric PR ID from each URL, then re-read each live PR at its expected head,
-including inline comments, overall reviews, replies, and thread state:
+Do not act from the subagent summary alone. Resolve the host, repository
+coordinates, and numeric PR ID from each URL, then re-read each live PR at its
+expected head, including inline comments, overall reviews, replies, and thread
+state. Bind the resolver's `host` as `HOST` before every API call:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" "$PR_URL"
-gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
-gh api "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
-gh api graphql -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" \
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
+gh api graphql --hostname "$HOST" \
+  -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" \
   -f query='
 query($owner:String!,$name:String!,$number:Int!,$threadCursor:String){
   repository(owner:$owner,name:$name){
@@ -109,7 +111,7 @@ comment merely because they came from GitHub.
 Reply to each inline comment after the claimed action exists remotely:
 
 ```bash
-gh api --method POST \
+gh api --hostname "$HOST" --method POST \
   "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
   -f body="$REPLY"
 ```
@@ -130,7 +132,7 @@ is fixed or does not apply on the current head, resolve that thread with the
 reviewer's evidence:
 
 ```bash
-gh api graphql -F threadId="$THREAD_ID" -f query='
+gh api graphql --hostname "$HOST" -F threadId="$THREAD_ID" -f query='
 mutation($threadId:ID!){
   resolveReviewThread(input:{threadId:$threadId}){
     thread{isResolved}
@@ -142,7 +144,7 @@ Never resolve a thread that the fresh reviewer says still applies.
 If a resolved thread regresses, reopen it before replying:
 
 ```bash
-gh api graphql -F threadId="$THREAD_ID" -f query='
+gh api graphql --hostname "$HOST" -F threadId="$THREAD_ID" -f query='
 mutation($threadId:ID!){
   unresolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}
 }'

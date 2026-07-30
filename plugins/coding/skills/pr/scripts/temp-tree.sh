@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: temp-tree.sh open-git|open-jj <repo> <revision> | open-clone <owner/repo> <pr-number> <revision> | close <lease>" >&2
+  echo "usage: temp-tree.sh open-git|open-jj <repo> <revision> | open-clone <repository-url> <pr-number> <revision> | close <lease>" >&2
   exit 2
 }
 

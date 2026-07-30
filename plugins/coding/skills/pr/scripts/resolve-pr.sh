@@ -19,15 +19,19 @@ metadata=$(gh pr view "$pr_input" "${repo_args[@]}" \
 headRefName,headRefOid,headRepositoryOwner,changedFiles,additions,deletions,\
 author,statusCheckRollup)
 url=$(jq -r .url <<<"$metadata")
-case "$url" in
-  https://github.com/*/*/pull/[0-9]*) ;;
-  *) echo "unrecognized canonical PR URL: $url" >&2; exit 2 ;;
-esac
+if [[ "$url" =~ ^https://([^/]+)/([^/]+)/([^/]+)/pull/([0-9]+)$ ]]; then
+  host=${BASH_REMATCH[1]}
+  owner=${BASH_REMATCH[2]}
+  repo=${BASH_REMATCH[3]}
+  url_number=${BASH_REMATCH[4]}
+else
+  echo "unrecognized canonical PR URL: $url" >&2
+  exit 2
+fi
+[ "$(jq -r .number <<<"$metadata")" = "$url_number" ] || {
+  echo "canonical PR number disagrees with metadata" >&2
+  exit 2
+}
 
-path=${url#https://github.com/}
-repository=${path%/pull/*}
-owner=${repository%%/*}
-repo=${repository#*/}
-
-jq --arg owner "$owner" --arg repo "$repo" \
-  '. + {owner:$owner, repo:$repo}' <<<"$metadata"
+jq --arg host "$host" --arg owner "$owner" --arg repo "$repo" \
+  '. + {host:$host, owner:$owner, repo:$repo}' <<<"$metadata"

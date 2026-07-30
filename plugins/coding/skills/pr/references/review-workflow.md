@@ -70,10 +70,11 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" \
   <pr-number-or-url> [--repo <owner/name>]
 ```
 
-Retain its `number`, `owner`, `repo`, `url`, `headRefOid`, `baseRefName`, and
-`baseRefOid` as `PR_NUMBER`, `OWNER`, `REPO`, `PR_URL`, `HEAD_OID`,
-`BASE_REF`, and `BASE_OID`. Never put a URL into a REST path segment or
-GraphQL `Int!` variable.
+Retain its `host`, `number`, `owner`, `repo`, `url`, `headRefOid`,
+`baseRefName`, and `baseRefOid` as `HOST`, `PR_NUMBER`, `OWNER`, `REPO`,
+`PR_URL`, `HEAD_OID`, `BASE_REF`, and `BASE_OID`. Never put a URL into a REST
+path segment or GraphQL `Int!` variable; pass `--hostname "$HOST"` to every
+`gh api` call.
 
 From a source tree path — or no argument at all, meaning the current tree — resolve
 which PRs that tree carries. A tree may hold a whole stack, so match every open PR
@@ -102,10 +103,11 @@ reviewing. Page every connection; a partial discussion cannot support a
 `fixed`, `does_not_apply`, or de-duplication decision.
 
 ```bash
-gh api "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
-gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
-gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
-gh api graphql -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
+gh api graphql --hostname "$HOST" \
+  -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
 query($owner:String!,$name:String!,$number:Int!,$cursor:String){
   repository(owner:$owner,name:$name){
     pullRequest(number:$number){
@@ -150,8 +152,9 @@ REVIEW_LEDGER="$REVIEW_LEDGER_DIR/ledger.json"
 The reviewer may write only that file via `jq` redirection. Review-tree cleanup
 must exclude it; after reading the ledger, the parent removes its directory.
 
-Reuse before you extract. A tree already sitting at `HEAD_OID` is the same content a
-fresh checkout would produce, minus the cost:
+For a local target repository, load [review-extraction.md](review-extraction.md)
+now and fetch and verify both pinned objects before inspecting reuse candidates.
+A clean tree already at `HEAD_OID` is then reusable without a new checkout:
 
 1. Search for a candidate at `HEAD_OID` — the invoked tree first, then entries from
    `git worktree list --porcelain` and `jj workspace list`.
@@ -166,9 +169,11 @@ fresh checkout would produce, minus the cost:
      <open-git-or-open-jj> <target-repository-root> "$HEAD_OID"
    ```
 
-[review-extraction.md](review-extraction.md) carries the checkout forms and
-cleanup contract. The parent retains its returned `lease` as `TREE_LEASE`,
-passes its `tree` as `REVIEW_DIR`, and sets `REVIEW_TREE_OWNED=true`.
+For a fresh clone, the helper fetches the pinned head; immediately run the
+reference's base fetch and final two-object verification inside that clone.
+The same reference carries the cleanup contract. The parent retains its
+returned `lease` as `TREE_LEASE`, passes its `tree` as `REVIEW_DIR`, and sets
+`REVIEW_TREE_OWNED=true`.
 
 <IMPORTANT>
 The parent closes only the exact helper-issued lease when `REVIEW_TREE_OWNED`
@@ -271,7 +276,8 @@ whatever has
 already been said at the same path and line:
 
 ```bash
-gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate \
+gh api --hostname "$HOST" \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate \
   --jq '.[] | {path, line, body}'
 ```
 
@@ -285,7 +291,7 @@ and submit the whole review in one atomic call, so a rejected comment cannot lea
 orphaned fragments:
 
 ```bash
-gh api --method POST \
+gh api --hostname "$HOST" --method POST \
   "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input payload.json
 ```
 
@@ -333,7 +339,8 @@ What does hold the verdict is a concern that could not run when there was someth
 check — that is the cap in step 2.
 
 **3. Downgrade a self-review.** GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your
-own PR. Compare the author against `gh api user --jq .login` first; on a self-review,
+own PR. Compare the author against
+`gh api --hostname "$HOST" user --jq .login` first; on a self-review,
 submit `COMMENT` and say so in the body. This step rewrites only what is submitted —
 the substantive verdict from step 1 survives it and still drives the body's alerts, so
 a blocker found on your own PR is still presented as one rather than as an observation
