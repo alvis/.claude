@@ -276,10 +276,11 @@ gh pr ready "$PR" --undo # skip only when already draft
 ```
 
 For the bundled template, fill reviewer slots with assigned `@login`s when
-known. Before a push, capture an existing PR's `headRefOid`; after the push,
-bind review and approval to the verified new `headRefOid`. Reset those tasks
-only when the two OIDs differ. A no-op push or publication retry preserves
-evidence already bound to that exact revision.
+known. Before a push or base edit, capture an existing PR's `headRefOid` and
+`baseRefOid`; after publication, bind review and approval to the verified
+`headRefOid`/`baseRefOid` pair. Reset those tasks when either OID differs. A
+no-op publication retry preserves evidence already bound to that exact review
+surface.
 
 Capture each PR number, URL, head, base, bookmark, and change ID. After each
 push, record `expected_head_oid` from the pushed bookmark and verify it against
@@ -306,7 +307,7 @@ selected as `vcs` in its JSON summary. It aborts the whole sync on the first
 preflight mismatch rather than pushing a partially shaped stack; verify the PR
 base chain and each PR `headRefOid` mirror the recorded map. Before monitoring,
 reauthor every pushed head against its verified base and update its PR body,
-resetting reviewer evidence onto the new OID.
+resetting reviewer evidence onto the new head/base OID pair.
 
 | Publication error | Action |
 |---|---|
@@ -314,7 +315,7 @@ resetting reviewer evidence onto the new OID.
 | Bookmark or branch conflict | Confirm the intended change, then update the head idempotently. |
 | Push rejected because remote advanced | `jj git fetch` (git: `git fetch origin`), rebase through `coding:commit`, then retry. |
 | Conventional title invalid | Reword through `coding:commit`, then restart that iteration. |
-| Existing PR has wrong base | `gh pr edit "$PR" --base "$BASE"`, then verify. |
+| Existing PR has wrong base | `gh pr edit "$PR" --base "$PR_BASE"`, then verify. |
 | Restack conflict | Resolve through `coding:commit`, run integrity checks, then republish bottom-up. |
 
 ### 4. Schedule and consume the initial poll
@@ -417,13 +418,13 @@ restore on `--resume` or `--continue`; expired tasks are not replayed.
 Compose deterministic `title\n\nbody` for a commit and optional base. Step 3
 passes its base; text-only callers default to the first parent. Never invoke `gh`.
 
-1. Resolve the commit and base refs. Try
-   `jj log -r <ref> --no-graph -T 'description'` first; fall back to
-   `git log -1 --format=%B <ref>`. Unknown ref exits 2; neither tool exits 3.
-   When no base was supplied, use the commit's first parent; for a root commit,
-   use the empty tree from `git hash-object -t tree /dev/null`. From the
-   resolved head/base pair count all paths and net LOC, apply project
-   overrides, and record the canonical `GIT-PR-SIZE-*` zone.
+1. Resolve the commit and base refs. Read the description with `jj log`, then
+   `git log`; unknown ref exits 2 and neither tool exits 3. The default base is
+   the first parent, or `git hash-object -t tree /dev/null` for a root. For non-roots resolve
+   the review surface with jj `heads(::<head-oid> & ::<base-oid>)` or
+   `git merge-base <base-oid> <head-oid>`. Count paths and net LOC from that
+   merge base to the head, apply overrides, and record the `GIT-PR-SIZE-*`
+   zone. The empty tree is only the root fallback.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
    `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in

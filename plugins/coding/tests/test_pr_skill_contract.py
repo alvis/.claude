@@ -8,7 +8,7 @@ WRITE_PR = PLUGIN / "skills" / "write-pr"
 def test_authoring_binds_all_deterministic_inputs_and_publication_output() -> None:
     skill = (WRITE_PR / "SKILL.md").read_text()
 
-    assert "empty tree from `git hash-object -t tree /dev/null`" in skill
+    assert "`git hash-object -t tree /dev/null`" in skill
     assert "head's `TITLE` and `BODY`" in skill
     assert "base/empty-tree OID" in skill
     assert "template, thresholds, and placeholder map" in skill
@@ -33,12 +33,13 @@ def test_new_stack_authors_against_existing_commit_oids() -> None:
     assert '--base "$PR_BASE"' in skill
 
 
-def test_reviewer_evidence_resets_only_for_a_changed_head() -> None:
+def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
     skill = (WRITE_PR / "SKILL.md").read_text()
     template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
 
-    assert "only when the two OIDs differ" in skill
-    assert "no-op push or publication retry preserves" in skill
-    assert "pre-push and verified post-push head OIDs" in template
-    assert "a no-op push preserves valid" in template
-    assert "evidence already bound to the unchanged OID" in template
+    assert "`headRefOid` and" in skill
+    assert "`baseRefOid`" in skill
+    assert "Reset those tasks when either OID differs" in skill
+    assert "head/base OID pairs" in template
+    assert "no-op publication preserves evidence" in template
+    assert "unchanged pair" in template

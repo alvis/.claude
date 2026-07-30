@@ -78,10 +78,10 @@ Substitution rules:
        - [ ] Reviewer slot N approved `<head-oid>`
      Text-only authoring keeps the identity-free slot label. Publication
      replaces it with the assigned `@login` when known. Compare the PR's
-     pre-push and verified post-push head OIDs. Only when they differ, replace
-     `<head-oid>` with the new head and reset its reviewed and approved tasks
-     until that reviewer acts on that revision; a no-op push preserves valid
-     evidence already bound to the unchanged OID. -->
+     pre-publication and verified post-publication head/base OID pairs. When
+     either differs, replace `<head-oid>` with the new head and reset its
+     reviewed and approved tasks until that reviewer acts on that surface; a
+     no-op publication preserves evidence bound to the unchanged pair. -->
 {{verification_body}}
 
 ## 🚫 Boundary
