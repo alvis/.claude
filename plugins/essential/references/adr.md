@@ -51,7 +51,9 @@ context.
 
 An effective ADR must not contain supersession language, links into
 `superseded/`, contradictory status declarations, or unresolved `TODO`/`TBD`
-placeholders. An archived ADR must have the prepended header, a link to an
-existing effective successor, and a non-empty change summary. The doctor
-reports each violation with a proposed repair; the doctor skill always offers
-the user an explicit, approved fix during investigation.
+placeholders. An archived ADR must have the prepended header, exactly one
+successor and change-summary field, a link to an existing effective successor,
+and a non-empty change summary that explicitly states whether the change is
+partial or complete. The doctor reports each violation with a proposed repair;
+the doctor skill always offers the user an explicit, approved fix during
+investigation.
