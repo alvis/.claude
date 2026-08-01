@@ -41,18 +41,20 @@ LIFECYCLE_STATUSES = (
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
 MARKDOWN_LINK = re.compile(
-    r"\[[^\]]*\]\(\s*([^\s)]+)"
+    r"\[[^\]]*\]\(\s*<?([^\s)>]+)>?"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
 MARKDOWN_LINK_WITH_LABEL = re.compile(
-    r"(?<!!)\[([^\]]+)\]\(\s*([^\s)]+)"
+    r"(?<!!)\[([^\]]+)\]\(\s*<?([^\s)>]+)>?"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
 ADR_INDEX_LINK = re.compile(
-    r"(?<!!)\[[^\]]*\]\(\s*([^\s)]+)"
+    r"(?<!!)\[[^\]]*\]\(\s*<?([^\s)>]+)>?"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
-ADR_REFERENCE_LINK = re.compile(r"(?<!!)\[[^\]]+\]\[([^\]]+)\]")
+ADR_REFERENCE_LINK = re.compile(
+    r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]"
+)
 ADR_REFERENCE_DEFINITION = re.compile(
     r"^[ \t]{0,3}\[([^\]]+)\]:\s*(?:<([^>\n]+)>|([^\s]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$",
@@ -159,8 +161,9 @@ def adr_index_links(
             for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(text)
         }
     targets = list(ADR_INDEX_LINK.findall(text))
-    for label in ADR_REFERENCE_LINK.findall(text):
-        target = references.get(" ".join(label.split()).casefold())
+    for label, reference in ADR_REFERENCE_LINK.findall(text):
+        key = reference or label
+        target = references.get(" ".join(key.split()).casefold())
         if target is not None:
             targets.append(target)
     return targets
@@ -377,8 +380,8 @@ ADR_STATUS_LINE = re.compile(
 )
 ADR_PLACEHOLDER = re.compile(
     r"(?:\[\s*(?:TODO|TBD)\s*\]|<\s*(?:TODO|TBD)\s*>|"
-    r"^\s*(?:[-*]\s*)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
-    r"^\s*[\w.-]+:\s*(?:TODO|TBD)\s*$)",
+    r"^[ \t]*(?:>\s*)?(?:[-*]\s*)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
+    r"^[ \t]*(?:>\s*)?[\w.-]+:\s*(?:TODO|TBD)\s*$)",
     re.IGNORECASE | re.MULTILINE,
 )
 ADR_TEMPLATE_PLACEHOLDER = re.compile(
@@ -413,7 +416,8 @@ ADR_RAW_HTML_BLOCK = re.compile(
     re.IGNORECASE,
 )
 ADR_GENERIC_HTML_BLOCK = re.compile(
-    r"^ {0,3}<(?P<tag>[A-Za-z][\w:-]*)>[ \t]*$"
+    r"^ {0,3}<(?P<closing>/)?(?P<tag>[A-Za-z][\w:-]*)"
+    r"(?:\s+[^>]*)?/?>[ \t]*$"
 )
 ADR_LIST_ITEM = re.compile(r"^(?P<indent> *)(?:[-+*]|\d+[.)])(?:\s+|$)")
 ADR_RAW_HTML_CLOSE_TAGS = {"pre", "script", "style", "textarea"}
@@ -435,7 +439,11 @@ ADR_REPLACEMENT_REFERENCE = re.compile(
     r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision))\b"
     r"[^\n.]{0,80}\bpredecessor\b[^\n.]{0,80}\bADR-[0-9]{4}\b|"
     r"\bADR-[0-9]{4}\b[^\n.]{0,80}\bpredecessor\b[^\n.]{0,80}\b"
-    r"(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|ADR-[0-9]{4})\b"
+    r"(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|ADR-[0-9]{4})\b|"
+    r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision))\s+"
+    r"(?:is\s+(?:the\s+)?)?successor\s+to\s+ADR-[0-9]{4}\b|"
+    r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision))\s+"
+    r"succeeds\s+ADR-[0-9]{4}\b"
     r")",
     re.IGNORECASE,
 )
@@ -505,7 +513,7 @@ def parse_superseded_header(
 def adr_header_prefix_lines(text: str) -> list[str]:
     """Return only the prepended archive header before the original ADR body."""
     lines = text.splitlines()
-    visible_lines = without_html_comments(text).splitlines()
+    visible_lines = without_yaml_frontmatter(without_html_comments(text)).splitlines()
     fence: tuple[str, int] | None = None
     for index, line in enumerate(visible_lines):
         marker = ADR_FENCE.match(line)
@@ -537,6 +545,7 @@ def resolve_adr_link(file: Path, target: str) -> Path | None:
 
 def adr_metadata_text(text: str) -> str:
     """Return the ADR header, excluding sections and fenced examples."""
+    text = without_yaml_frontmatter(text)
     lines: list[str] = []
     title_seen = False
     fence: tuple[str, int] | None = None
@@ -570,7 +579,7 @@ def adr_metadata_text(text: str) -> str:
 
 def adr_heading(text: str) -> tuple[int, str, str] | None:
     """Return the first canonical ADR heading outside comments and fences."""
-    visible = without_html_comments(text)
+    visible = without_yaml_frontmatter(without_html_comments(text))
     fence: tuple[str, int] | None = None
     for index, line in enumerate(visible.splitlines()):
         stripped = line.strip()
@@ -603,13 +612,46 @@ def adr_identity(text: str) -> tuple[str, str] | None:
 
 
 def normalize_adr_title(title: str) -> str:
-    return " ".join(title.split()).casefold()
+    normalized = re.sub(r"\s+#+\s*$", "", title.strip())
+    return normalize_index_cell(normalized)
 
 
 def without_html_comments(text: str) -> str:
     return ADR_HTML_COMMENT.sub(
         lambda match: "\n" * match.group(0).count("\n"), text
     )
+
+
+def without_yaml_frontmatter(text: str) -> str:
+    """Blank YAML frontmatter while preserving source line boundaries."""
+    lines: list[str] = []
+    in_frontmatter = False
+    frontmatter_started = False
+    seen_nonblank = False
+    archive_header_seen = False
+    for line in text.splitlines(keepends=True):
+        stripped = line.strip()
+        line_break = "\n" if line.endswith("\n") else ""
+        if in_frontmatter:
+            lines.append(line_break)
+            if stripped in {"---", "..."}:
+                in_frontmatter = False
+            continue
+        if (
+            stripped == "---"
+            and not frontmatter_started
+            and (not seen_nonblank or archive_header_seen)
+        ):
+            in_frontmatter = True
+            frontmatter_started = True
+            lines.append(line_break)
+            continue
+        lines.append(line)
+        if stripped:
+            seen_nonblank = True
+        if ADR_CHANGE_HEADER.match(line):
+            archive_header_seen = True
+    return "".join(lines)
 
 
 def without_fenced_blocks(text: str) -> str:
@@ -668,7 +710,7 @@ def without_inactive_markdown_regions(text: str) -> str:
                 raw_html_region = None
             continue
         raw_html_match = ADR_RAW_HTML_BLOCK.match(line)
-        if raw_html_match is None:
+        if raw_html_match is None and not ADR_TEMPLATE_PLACEHOLDER.search(line):
             raw_html_match = ADR_GENERIC_HTML_BLOCK.match(line)
         if raw_html_match:
             lines.append(line_break)
@@ -685,10 +727,13 @@ def without_inactive_markdown_regions(text: str) -> str:
             lines.append(line_break)
             continue
         if indentation >= 4:
-            if list_indent is not None and indentation >= list_indent:
+            if (
+                list_indent is not None
+                and indentation >= list_indent
+                and ADR_LIST_ITEM.match(line)
+            ):
                 lines.append(line)
-                if ADR_LIST_ITEM.match(line):
-                    list_indent = indentation
+                list_indent = indentation
             else:
                 lines.append(line_break)
             continue
