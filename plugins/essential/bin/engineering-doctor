@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from html import unescape
 import json
 import re
 import sys
@@ -41,7 +42,7 @@ LIFECYCLE_STATUSES = (
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
 MARKDOWN_LINK = re.compile(
-    r"\[[^\]]*\]\(\s*<?([^\s)>]+)>?"
+    r"\[[^\]]*\]\(\s*((?:<[^<>\s]+>)|(?:[^\s<>)]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
 ADR_REFERENCE_LINK = re.compile(
@@ -56,7 +57,7 @@ ADR_REFERENCE_DEFINITION = re.compile(
     re.MULTILINE,
 )
 ADR_LINK_DESTINATION = re.compile(
-    r"^\(\s*<?([^\s)>]+)>?"
+    r"^\(\s*(?P<target>(?:<[^<>\s]+>)|(?:[^\s<>)]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
@@ -187,6 +188,8 @@ def adr_index_links(
             continue
         label, reference = match.groups()
         key = reference or label
+        if key.strip().startswith("^"):
+            continue
         target = references.get(" ".join(key.split()).casefold())
         if target is not None:
             targets.append(target)
@@ -194,6 +197,8 @@ def adr_index_links(
         if is_escaped_markdown_character(text, match.start()):
             continue
         label = match.group(1)
+        if label.strip().startswith("^"):
+            continue
         target = references.get(" ".join(label.split()).casefold())
         if target is not None:
             targets.append(target)
@@ -208,6 +213,8 @@ def adr_reference_definitions(text: str) -> dict[str, str]:
         if is_escaped_markdown_character(text, match.start()):
             continue
         label, angle_target, bare_target = match.groups()
+        if label.strip().startswith("^"):
+            continue
         key = " ".join(label.split()).casefold()
         if key not in references:
             references[key] = angle_target or bare_target
@@ -246,7 +253,10 @@ def markdown_links_with_labels(text: str) -> list[tuple[str, str]]:
         if destination is None:
             index += 1
             continue
-        links.append((text[index + 1 : label_end], destination.group(1)))
+        target = destination.group("target")
+        if target.startswith("<"):
+            target = target[1:-1]
+        links.append((text[index + 1 : label_end], target))
         index = position + destination.end()
     return links
 
@@ -424,7 +434,10 @@ def check_file_references(report: Report, work: str, files: list[Path]) -> None:
         if not file.is_file():
             continue
         text = file.read_text(encoding="utf-8", errors="replace")
-        for target in MARKDOWN_LINK.findall(text):
+        for match in MARKDOWN_LINK.finditer(text):
+            target = match.group(1)
+            if target.startswith("<"):
+                target = target[1:-1]
             if EXTERNAL_LINK.match(target) or target.startswith("#"):
                 continue
             path_part = target.split("#", 1)[0]
@@ -768,6 +781,7 @@ def normalize_adr_title(title: str) -> str:
     normalized = re.sub(r"\s+#+\s*$", "", title.strip())
     normalized = re.sub(r"\\([^\w\s])", r"\1", normalized)
     normalized = without_inline_markup(normalized)
+    normalized = unescape(normalized)
     return normalize_index_cell(normalized)
 
 
@@ -795,6 +809,10 @@ def without_inline_html_tags(text: str) -> str:
     while index < len(text):
         if text[index] != "<":
             index += 1
+            continue
+        placeholder = ADR_TEMPLATE_PLACEHOLDER.match(text, index)
+        if placeholder:
+            index = placeholder.end()
             continue
         position = index + 1
         if position < len(text) and text[position] == "/":
@@ -1224,7 +1242,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "then update links without editing the historical body; ask the user to "
                 "resolve any provenance ambiguity."
                 if file.parent == superseded_dir
-                else "Make the canonical ADR heading number match the filename prefix, preserving the original decision body and links."
+                else "Ask the user to resolve the identity provenance; prefer renaming the effective file to match its retained canonical heading number and updating links/index entries, and only edit the accepted heading with explicit approval if provenance proves the heading drifted, while preserving the decision body."
             )
             report.error(
                 str(file.relative_to(repository_root)),
@@ -1288,7 +1306,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 + ", ".join(sorted(status_values)),
                 "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
             )
-        placeholder_content = without_inline_code(content)
+        placeholder_content = without_inline_html_tags(without_inline_code(content))
         if ADR_PLACEHOLDER.search(placeholder_content) or ADR_TEMPLATE_PLACEHOLDER.search(
             placeholder_content
         ):
@@ -1380,7 +1398,10 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "archived ADR must retain its original canonical ADR heading and body"
             )
         else:
-            visible_lines = without_html_comments(text).splitlines()
+            visible_text = without_yaml_frontmatter(
+                without_inline_html_tags(without_inactive_markdown_regions(text))
+            )
+            visible_lines = visible_text.splitlines()
             body_lines = visible_lines[heading[0] + 1 :]
             original_status_values = [
                 value.lower()
