@@ -721,6 +721,25 @@ def test_adr_nested_list_placeholders_survive_continuation(
     assert all(finding.get("fix") for finding in placeholders)
 
 
+def test_adr_four_space_list_continuation_remains_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="- Follow-up:\n    TODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
 @pytest.mark.parametrize("marker", ["1.", "2)", "+"])
 def test_adr_detects_ordered_and_plus_list_placeholders(
     workspace: Workspace, marker: str
@@ -1256,6 +1275,24 @@ def test_adr_index_uses_first_reference_definition(workspace: Workspace) -> None
     )
 
 
+def test_adr_index_ignores_inline_code_links(workspace: Workspace) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| `[Choice]` | Accepted |\n\n"
+        "[Choice]: decisions/0001-choice.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
 def test_adr_index_accepts_angle_bracket_destinations(workspace: Workspace) -> None:
     architecture = workspace.root / "docs" / "architecture"
     decisions = architecture / "decisions"
@@ -1607,6 +1644,41 @@ def test_adr_index_ignores_non_tag_raw_html_blocks(
         and "missing from the ADR index" in finding["message"]
         for finding in findings
     )
+
+
+def test_adr_placeholder_after_inline_generic_tag_remains_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Context\n<custom>\nTODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_ignores_placeholders_inside_blockquoted_fences(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "> ```text\n"
+            "> TODO: supplied-by-runtime\n"
+            "> ```\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
 
 
 def test_effective_adr_rejects_unfilled_template_fields(
