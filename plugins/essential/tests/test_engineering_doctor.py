@@ -235,6 +235,16 @@ def test_broken_file_reference_and_absolute_path(workspace: Workspace) -> None:
     assert "portability" in workspace.checks(findings)
 
 
+def test_broken_image_file_reference_is_still_reported(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA"),
+        metadata="- Diagram: ![diagram](missing.png)\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "file-reference" in workspace.checks(findings)
+
+
 def test_superseded_decision_without_successor(workspace: Workspace) -> None:
     workspace.write_state(row("AAA"))
     decisions = workspace.work_dir / "decisions"
@@ -614,7 +624,8 @@ def test_adr_literal_todo_prose_and_fenced_examples_are_not_placeholders(
         "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
         "## Context\n\nThe linter rejects literal TODO and TBD comments.\n\n"
         "```yaml\nexample: TODO\n```\n\n"
-        "~~~yaml\nexample: TBD\n~~~\n",
+        "~~~yaml\nexample: TBD\n~~~\n"
+        "    TODO: replace-me-at-runtime\n",
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
@@ -707,6 +718,30 @@ def test_adr_index_ignores_nonrendered_tables(workspace: Workspace) -> None:
         "| [Current](decisions/0001-current.md) | Accepted |\n````\n\n"
         "<!--\n| Document | Status |\n| --- | --- |\n"
         "| [Current](decisions/0001-current.md) | Accepted |\n-->\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_raw_html_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "<pre>\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n</pre>\n",
         encoding="utf-8",
     )
 
@@ -1093,6 +1128,8 @@ def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> 
         "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
         "> **What changed:** The complete choice changed.\n\n"
         "<!-- Retained historical note.\nStatus: Proposed\n"
+        "> **Superseded by:** [ADR-9999 — Example](../9999-example.md)\n"
+        "> **What changed:** The complete example choice changed.\n"
         "# Retained editor note\n-->\n"
         "# ADR-0001: Old choice\n\n"
         "<!-- Example metadata: Status: Proposed -->\n"
@@ -1635,6 +1672,31 @@ def test_adr_status_in_body_example_does_not_contradict_metadata(
 
     _, findings = workspace.run_doctor()
     assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_status_metadata_rejects_trailing_values(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted` / `Proposed`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    status = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "Accepted status declaration" in finding["message"]
+    ]
+    assert status
+    assert all(finding.get("fix") for finding in status)
 
 
 def test_adr_metadata_stops_at_deep_subheadings(workspace: Workspace) -> None:

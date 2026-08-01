@@ -40,10 +40,11 @@ LIFECYCLE_STATUSES = (
 )
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
-MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
+MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 MARKDOWN_LINK_WITH_LABEL = re.compile(
     r"(?<!!)\[([^\]]+)\]\(([^)\s]+)\)"
 )
+ADR_INDEX_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
 JOURNAL_EVENT = re.compile(
     r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|lease)\b"
@@ -340,7 +341,8 @@ ADR_CHANGE_HEADER = re.compile(
     r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGNORECASE
 )
 ADR_STATUS_LINE = re.compile(
-    r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}Status:\*{0,2}\s*`?([\w-]+)",
+    r"^[ \t]*(?:>[ \t]*)?(?:[-*][ \t]*)?\*{0,2}Status:\*{0,2}[ \t]*"
+    r"`?([\w-]+)`?[ \t]*$",
     re.IGNORECASE | re.MULTILINE,
 )
 ADR_PLACEHOLDER = re.compile(
@@ -372,6 +374,14 @@ ADR_CHANGE_SCOPE = re.compile(
 )
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+ADR_RAW_HTML_BLOCK = re.compile(
+    r"^ {0,3}<(?P<tag>address|article|aside|blockquote|body|caption|center|"
+    r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|"
+    r"footer|form|h[1-6]|head|header|html|iframe|legend|li|main|menu|"
+    r"menuitem|nav|ol|p|pre|script|section|summary|table|tbody|td|tfoot|"
+    r"th|thead|title|tr|ul|style|textarea)(?:\s|/?>)",
+    re.IGNORECASE,
+)
 ADR_METADATA_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
     re.IGNORECASE,
@@ -419,7 +429,7 @@ def parse_superseded_header(
     text: str,
 ) -> tuple[str | None, str | None, list[tuple[str, str]], int, int]:
     """Return header values, successor links, and duplicate counts from the prefix."""
-    lines = adr_header_prefix_lines(text)
+    lines = without_html_comments("\n".join(adr_header_prefix_lines(text))).splitlines()
     if not lines or not ADR_STATUS_HEADER.match(lines[0]):
         return None, None, [], 0, 0
     successor_lines: list[str] = []
@@ -572,10 +582,23 @@ def without_inactive_markdown_regions(text: str) -> str:
     """Blank comments, code blocks, and fences while preserving line boundaries."""
     lines: list[str] = []
     fence: tuple[str, int] | None = None
+    raw_html_tag: str | None = None
     for line in without_html_comments(text).splitlines(keepends=True):
         line_break = "\n" if line.endswith("\n") else ""
         if line.startswith(("    ", "\t")):
             lines.append(line_break)
+            continue
+        if raw_html_tag is not None:
+            lines.append(line_break)
+            if re.search(rf"</\s*{re.escape(raw_html_tag)}\s*>", line, re.IGNORECASE):
+                raw_html_tag = None
+            continue
+        raw_html_match = ADR_RAW_HTML_BLOCK.match(line)
+        if raw_html_match:
+            lines.append(line_break)
+            tag = raw_html_match.group("tag")
+            if not re.search(rf"</\s*{re.escape(tag)}\s*>", line, re.IGNORECASE):
+                raw_html_tag = tag
             continue
         marker = ADR_FENCE.match(line)
         if marker and is_valid_fence_marker(marker, fence):
@@ -694,7 +717,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     for file in current_files:
         text = file.read_text(encoding="utf-8", errors="replace")
         relative = file.relative_to(repository_root)
-        content = without_fenced_blocks(without_html_comments(text))
+        content = without_inactive_markdown_regions(text)
         metadata = adr_metadata_text(content)
         status_values = {value.lower() for value in ADR_STATUS_LINE.findall(metadata)}
         if "superseded" in status_values:
@@ -772,14 +795,15 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "archive header contains non-standard content before the original ADR heading: "
                 + ", ".join(unexpected_header_lines[:3])
             )
+        visible_header_lines = header_without_comments.splitlines()
         successor_positions = [
             index
-            for index, line in enumerate(header_lines)
+            for index, line in enumerate(visible_header_lines)
             if ADR_SUCCESSOR_HEADER.match(line)
         ]
         changed_positions = [
             index
-            for index, line in enumerate(header_lines)
+            for index, line in enumerate(visible_header_lines)
             if ADR_CHANGE_HEADER.match(line)
         ]
         if (
@@ -980,7 +1004,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             delimiter_expected = False
             if not document_table_active:
                 continue
-            for link in MARKDOWN_LINK.findall(cells[0]):
+            for link in ADR_INDEX_LINK.findall(cells[0]):
                 target = resolve_adr_link(index, link)
                 if target is None:
                     continue
@@ -1036,7 +1060,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         )
                 elif target.parent == superseded_dir or superseded_dir in target.parents:
                     archived_index_links.add(link)
-        for link in MARKDOWN_LINK.findall(index_visible_text):
+        for link in ADR_INDEX_LINK.findall(index_visible_text):
             target = resolve_adr_link(index, link)
             if target is not None and (
                 target.parent == superseded_dir or superseded_dir in target.parents
