@@ -178,7 +178,7 @@ def adr_index_links(
     text: str, references: dict[str, str] | None = None
 ) -> list[str]:
     """Return inline and reference-style Markdown targets from visible index text."""
-    text = without_inline_html_tags(without_inline_code(text))
+    text = without_inline_images(without_inline_html_tags(without_inline_code(text)))
     if references is None:
         references = adr_reference_definitions(text)
     targets = [target for _, target in markdown_links_with_labels(text)]
@@ -202,7 +202,7 @@ def adr_index_links(
 
 def adr_reference_definitions(text: str) -> dict[str, str]:
     """Return the first visible target for each Markdown reference label."""
-    text = without_inline_html_tags(without_inline_code(text))
+    text = without_inline_images(without_inline_html_tags(without_inline_code(text)))
     references: dict[str, str] = {}
     for match in ADR_REFERENCE_DEFINITION.finditer(text):
         if is_escaped_markdown_character(text, match.start()):
@@ -493,8 +493,7 @@ ADR_HTML_COMMENT = re.compile(r"<!--.*?(?:-->|$)", re.DOTALL)
 ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ADR_BLOCKQUOTE_PREFIX = re.compile(r"^ {0,3}>[ \t]?")
 ADR_RAW_HTML_NON_TAG = re.compile(
-    r"^ {0,3}<(?P<kind>\?|!\[CDATA\[|![A-Za-z])",
-    re.IGNORECASE,
+    r"^ {0,3}<(?P<kind>\?|!\[CDATA\[|![A-Z])",
 )
 ADR_RAW_HTML_BLOCK = re.compile(
     r"^ {0,3}<(?P<tag>address|article|aside|blockquote|body|caption|center|"
@@ -835,12 +834,75 @@ def without_inline_html_tags(text: str) -> str:
     return "".join(characters)
 
 
+def without_inline_images(text: str) -> str:
+    """Blank Markdown image syntax, including nested alt-text brackets."""
+    characters = list(text)
+    index = 0
+    while index < len(text) - 1:
+        if (
+            text[index] != "!"
+            or is_escaped_markdown_character(text, index)
+            or text[index + 1] != "["
+            or is_escaped_markdown_character(text, index + 1)
+        ):
+            index += 1
+            continue
+        position = index + 2
+        depth = 1
+        while position < len(text) and depth:
+            if text[position] == "\\":
+                position += 2
+                continue
+            if text[position] == "[":
+                depth += 1
+            elif text[position] == "]":
+                depth -= 1
+            position += 1
+        if depth:
+            index += 1
+            continue
+        end = position
+        if end < len(text) and text[end] == "(":
+            parenthesis_depth = 1
+            position = end + 1
+            while position < len(text) and parenthesis_depth:
+                if text[position] == "\\":
+                    position += 2
+                    continue
+                if text[position] == "(":
+                    parenthesis_depth += 1
+                elif text[position] == ")":
+                    parenthesis_depth -= 1
+                position += 1
+            if parenthesis_depth == 0:
+                end = position
+        else:
+            reference_position = end
+            while reference_position < len(text) and text[reference_position] in " \t\n":
+                reference_position += 1
+            if reference_position < len(text) and text[reference_position] == "[":
+                position = reference_position + 1
+                while position < len(text):
+                    if text[position] == "\\":
+                        position += 2
+                        continue
+                    if text[position] == "]":
+                        end = position + 1
+                        break
+                    position += 1
+        for character_index in range(index, end):
+            if characters[character_index] != "\n":
+                characters[character_index] = " "
+        index = end
+    return "".join(characters)
+
+
 def without_inline_code(text: str) -> str:
     """Blank matched inline code spans while preserving source line boundaries."""
     characters = list(text)
     index = 0
     while index < len(text):
-        if text[index] != "`" or (index and text[index - 1] == "\\"):
+        if text[index] != "`" or is_escaped_markdown_character(text, index):
             index += 1
             continue
         end = index
@@ -856,6 +918,9 @@ def without_inline_code(text: str) -> str:
             candidate_end = candidate
             while candidate_end < len(text) and text[candidate_end] == "`":
                 candidate_end += 1
+            if is_escaped_markdown_character(text, candidate):
+                search = candidate_end
+                continue
             if candidate_end - candidate == len(delimiter):
                 closing = candidate
                 break
@@ -1234,8 +1299,18 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "Replace the placeholder with evidence-backed content, or ask the user whether the ADR should remain proposed instead of effective.",
             )
         history_content = without_inline_markup(without_inline_code(content))
-        if "decisions/superseded/" in content or ADR_REPLACEMENT_REFERENCE.search(
-            history_content
+        effective_archived_link = False
+        for link in adr_index_links(content):
+            target = resolve_adr_link(file, link)
+            if target is not None and (
+                target.parent == superseded_dir or superseded_dir in target.parents
+            ):
+                effective_archived_link = True
+                break
+        if (
+            "decisions/superseded/" in content
+            or effective_archived_link
+            or ADR_REPLACEMENT_REFERENCE.search(history_content)
         ):
             report.error(
                 str(relative),
@@ -1428,7 +1503,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         )
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
-        index_visible_text = without_inactive_markdown_regions(index_text)
+        index_visible_text = without_inactive_markdown_regions(
+            without_yaml_frontmatter(index_text)
+        )
         reference_definitions = adr_reference_definitions(index_visible_text)
         indexed_current: set[str] = set()
         index_lines = index_visible_text.splitlines()
