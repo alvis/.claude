@@ -26,6 +26,7 @@ a second copy of the current architecture.
 <!--
 The ADR table is an index of effective records only. List every ADR directly
 under decisions/ and never list anything under decisions/superseded/. Read
-essential/references/adr.md and use essential/templates/docs/adr.template.md
+`${ESSENTIAL_ROOT}/references/adr.md` and use
+`${ESSENTIAL_ROOT}/templates/docs/adr.template.md`
 when creating or superseding an ADR.
 -->

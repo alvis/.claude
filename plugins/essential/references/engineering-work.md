@@ -286,7 +286,8 @@ cleared the `requires_ignore` gate writes nothing at all and reports.
 
 ## Structural doctor
 
-`"$ESSENTIAL_ROOT/bin/engineering-doctor" --work-dir <work_dir>` is a
+`"$ESSENTIAL_ROOT/bin/engineering-doctor" --work-dir <work_dir> \
+  --repository-root <durable_root>` is a
 read-only structural checker (broken IDs, cycles, contradictory statuses,
 missing evidence annotations, dead links, unsuperseded decisions, lease
 conflicts, overview drift). It never judges prose or blocks by default —
