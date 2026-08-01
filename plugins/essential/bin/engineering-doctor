@@ -329,13 +329,26 @@ ADR_PLACEHOLDER = re.compile(
     r"^\s*[\w.-]+:\s*(?:TODO|TBD)\s*$)",
     re.IGNORECASE | re.MULTILINE,
 )
-ADR_TEMPLATE_PLACEHOLDER = re.compile(r"<[^>\n]+>")
+ADR_TEMPLATE_PLACEHOLDER = re.compile(
+    r"<(?:nnnn|(?:decision[- ]?)?title|(?:decision[- ]?)?slug|"
+    r"architecture-slug|YYYY-MM-DD|"
+    r"(?:Describe|State|Name|List|Record)\b[^>\n]*)>",
+    re.IGNORECASE,
+)
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 ADR_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
+ADR_REPLACEMENT_REFERENCE = re.compile(
+    r"(?:\b(?:replaces?|replaced|replacement)\b[^\n.]{0,120}\bADR-[0-9]{4}\b|"
+    r"\bADR-[0-9]{4}\b[^\n.]{0,120}\b(?:replaces?|replaced|replacement)\b|"
+    r"\bpredecessor\b[^\n.]{0,120}\bADR-[0-9]{4}\b|"
+    r"\bADR-[0-9]{4}\b[^\n.]{0,120}\bpredecessor\b)",
+    re.IGNORECASE,
+)
 
 
 def repository_root_for_work_dir(work_dir: Path) -> Path:
@@ -383,7 +396,7 @@ def adr_header_prefix_lines(text: str) -> list[str]:
             continue
         if fence is not None:
             continue
-        if ADR_TITLE.match(line.strip()):
+        if re.match(r"^#\s+", line.strip()):
             return lines[:index]
     return lines[:20]
 
@@ -415,6 +428,8 @@ def adr_metadata_text(text: str) -> str:
             continue
         if not title_seen:
             if re.match(r"^#\s+", stripped):
+                if not ADR_TITLE.match(stripped):
+                    return ""
                 title_seen = True
             continue
         if re.match(r"^##\s+", stripped):
@@ -439,9 +454,11 @@ def adr_heading(text: str) -> tuple[int, str, str] | None:
             continue
         if fence is not None:
             continue
-        match = ADR_TITLE.match(stripped)
-        if match:
-            return index, match.group(1), match.group(2).strip()
+        if re.match(r"^#\s+", stripped):
+            match = ADR_TITLE.match(stripped)
+            if match:
+                return index, match.group(1), match.group(2).strip()
+            return None
     return None
 
 
@@ -584,7 +601,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             )
         if re.search(
             r"\bsupersed\w*\b|decisions/superseded/", content, re.IGNORECASE
-        ):
+        ) or ADR_REPLACEMENT_REFERENCE.search(content):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -604,6 +621,15 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         ) = parse_superseded_header(text)
         problems: list[str] = []
         header_lines = adr_header_prefix_lines(text)
+        status_values = [
+            value.lower()
+            for value in ADR_STATUS_LINE.findall("\n".join(header_lines))
+        ]
+        if status_values != ["superseded"]:
+            problems.append(
+                "expected exactly one Superseded status header "
+                f"(found {len(status_values)} with values {status_values})"
+            )
         successor_positions = [
             index
             for index, line in enumerate(header_lines)
@@ -695,6 +721,18 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         "successor link label does not match target ADR "
                         f"`ADR-{target_number} — {target_title}`: {label}"
                     )
+            archive_number = (
+                int(file.stem[:4]) if ADR_FILENAME.fullmatch(file.stem) else None
+            )
+            if (
+                archive_number is not None
+                and target_identity is not None
+                and int(target_identity[0]) <= archive_number
+            ):
+                problems.append(
+                    "successor ADR must have a later numeric identity than "
+                    f"archived ADR {file.stem[:4]}: {target_identity[0]}"
+                )
             valid_successors.append(target.stem)
         if successor_line is not None and not valid_successors:
             problems.append("Superseded by must link to an existing effective ADR")
@@ -719,16 +757,23 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         indexed_current: set[str] = set()
         index_lines = index_text.splitlines()
         status_column: int | None = None
+        delimiter_seen = False
         for line in index_lines:
             if not line.strip().startswith("|"):
                 status_column = None
+                delimiter_seen = False
                 continue
             cells = split_row(line)
-            if not cells or all(set(cell) <= {"-", " "} for cell in cells):
+            if not cells:
+                continue
+            if all(ADR_TABLE_DELIMITER.fullmatch(cell.strip()) for cell in cells):
+                if status_column is not None:
+                    delimiter_seen = True
                 continue
             normalized_cells = [cell.strip(" `").casefold() for cell in cells]
             if "status" in normalized_cells:
                 status_column = normalized_cells.index("status")
+                delimiter_seen = False
                 continue
             for link in MARKDOWN_LINK.findall(cells[0]):
                 target = resolve_adr_link(index, link)
@@ -743,6 +788,13 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                                 "adr-index",
                                 f"ADR index table has no Status column for effective ADR: {link}",
                                 "Add a `Status` column to the ADR index table and set this effective ADR row to `Accepted`.",
+                            )
+                        elif not delimiter_seen:
+                            report.error(
+                                "docs/architecture/README.md",
+                                "adr-index",
+                                f"ADR index table has no valid Markdown delimiter for effective ADR: {link}",
+                                "Add a Markdown delimiter row such as `| --- | --- |` immediately below the ADR index header.",
                             )
                         elif len(cells) <= status_column:
                             report.error(
