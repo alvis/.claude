@@ -858,8 +858,15 @@ def test_adr_filename_and_numeric_prefix_are_validated(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     _, findings = run_engineering_root(tmp_path)
-    assert any(finding["check"] == "adr-filename" for finding in findings)
-    assert any("duplicate ADR numeric prefix 0001" in finding["message"] for finding in findings)
+    assert any(
+        finding["check"] == "adr-layout"
+        and "filename must use" in finding["message"]
+        for finding in findings
+    )
+    assert any(
+        "ADR numeric identity 0001 is duplicated" in finding["message"]
+        for finding in findings
+    )
 
 
 def test_html_comments_do_not_trigger_adr_integrity_checks(tmp_path: Path) -> None:
@@ -907,7 +914,7 @@ def test_absolute_successor_link_is_rejected(tmp_path: Path) -> None:
     _, findings = run_engineering_root(tmp_path)
     assert any(
         finding["check"] == "adr-superseded"
-        and "must be relative" in finding["message"]
+        and "portable relative path" in finding["message"]
         for finding in findings
     )
 
