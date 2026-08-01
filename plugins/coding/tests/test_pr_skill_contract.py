@@ -179,7 +179,10 @@ def test_rewrites_route_unpublished_stacks_to_create() -> None:
 def test_reviewer_receives_the_pinned_mission_capsule() -> None:
     review = (WRITE_PR / "references" / "review-workflow.md").read_text()
 
-    assert "bounded mission capsule" in review
-    assert "`HEAD_OID`, base ref and" in review
-    assert "OID, body, author, status rollup" in review
-    assert "body, author, status rollup, requested areas, and dry-run state" in review
+    assert "bounded mission capsule" not in review
+    assert "`PR_SURFACES` array" in review
+    assert "one clean `REVIEW_DIR` at the top head" in review
+    assert "reviews the complete stack diff against the bottom base" in review
+    assert "holistically" in review
+    assert "one holistic map" in review
+    assert "A stack\nnever receives a second lease" in review
