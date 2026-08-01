@@ -661,6 +661,20 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "expected exactly one Superseded status header "
                 f"(found {len(status_values)} with values {status_values})"
             )
+        unexpected_header_lines = [
+            line.strip()
+            for line in header_lines
+            if line.strip()
+            and line.strip() != ">"
+            and not ADR_STATUS_HEADER.match(line.strip())
+            and not ADR_SUCCESSOR_HEADER.match(line.strip())
+            and not ADR_CHANGE_HEADER.match(line.strip())
+        ]
+        if unexpected_header_lines:
+            problems.append(
+                "archive header contains non-standard content before the original ADR heading: "
+                + ", ".join(unexpected_header_lines[:3])
+            )
         successor_positions = [
             index
             for index, line in enumerate(header_lines)
@@ -687,6 +701,14 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         else:
             visible_lines = ADR_HTML_COMMENT.sub("", text).splitlines()
             body_lines = visible_lines[heading[0] + 1 :]
+            original_status_values = [
+                value.lower()
+                for value in ADR_STATUS_LINE.findall(adr_metadata_text(text))
+            ]
+            if original_status_values != ["accepted"]:
+                problems.append(
+                    "archived ADR must retain exactly one original Accepted status declaration"
+                )
             substantive_lines = [
                 line.strip()
                 for line in body_lines
@@ -799,12 +821,15 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         index_lines = index_text.splitlines()
         status_column: int | None = None
         table_column_count: int | None = None
+        document_table_active = False
         delimiter_expected = False
         delimiter_seen = False
+        indexed_occurrences: dict[str, int] = {}
         for line in index_lines:
             if not line.strip().startswith("|"):
                 status_column = None
                 table_column_count = None
+                document_table_active = False
                 delimiter_expected = False
                 delimiter_seen = False
                 continue
@@ -814,27 +839,51 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             if all(ADR_TABLE_DELIMITER.fullmatch(cell.strip()) for cell in cells):
                 if (
                     delimiter_expected
-                    and status_column is not None
+                    and document_table_active
                     and table_column_count == len(cells)
                 ):
                     delimiter_seen = True
                 delimiter_expected = False
                 continue
             normalized_cells = [cell.strip(" `").casefold() for cell in cells]
-            if "status" in normalized_cells:
-                status_column = normalized_cells.index("status")
+            if normalized_cells and normalized_cells[0] == "document":
+                document_table_active = True
                 table_column_count = len(cells)
                 delimiter_expected = True
                 delimiter_seen = False
+                status_column = (
+                    normalized_cells.index("status")
+                    if "status" in normalized_cells
+                    else None
+                )
+                continue
+            if "status" in normalized_cells:
+                status_column = None
+                table_column_count = None
+                document_table_active = False
+                delimiter_expected = False
+                delimiter_seen = False
                 continue
             delimiter_expected = False
+            if not document_table_active:
+                continue
             for link in MARKDOWN_LINK.findall(cells[0]):
                 target = resolve_adr_link(index, link)
                 if target is None:
                     continue
                 if target.parent == decisions_dir:
                     if target.is_file():
+                        indexed_occurrences[target.stem] = (
+                            indexed_occurrences.get(target.stem, 0) + 1
+                        )
                         indexed_current.add(target.stem)
+                        if indexed_occurrences[target.stem] > 1:
+                            report.error(
+                                "docs/architecture/README.md",
+                                "adr-index",
+                                f"effective ADR is listed more than once in the ADR index: {link}",
+                                "Keep exactly one row for each effective ADR in the Documents table and remove duplicate links.",
+                            )
                         if status_column is None:
                             report.error(
                                 "docs/architecture/README.md",
