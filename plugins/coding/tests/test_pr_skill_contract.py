@@ -247,3 +247,7 @@ def test_github_stack_bridge_preserves_plugin_ownership() -> None:
     assert "Do not trust exit status alone" in github_stacks
     assert "--publish-only" not in github_stacks
     assert "If linking changes any review surface" in github_stacks
+    assert "8c9c8331309529e2114d4c34e77f4edea543f9fa" in github_stacks
+    assert "`gh stack link --open` marks new and" in github_stacks
+    assert "head branch name of every open stacked PR" in github_stacks
+    assert "close-and-recreate migration" in github_stacks

@@ -1,9 +1,12 @@
 # GitHub Stack Interoperability
 
-This optional operator map adapts the non-interactive workflows from
-[`github/gh-stack`](https://github.com/github/gh-stack/blob/main/skills/gh-stack/SKILL.md).
+This optional operator map adapts the non-interactive workflows from the pinned
+[`github/gh-stack` contract](https://github.com/github/gh-stack/blob/8c9c8331309529e2114d4c34e77f4edea543f9fa/skills/gh-stack/SKILL.md).
 Load it when `gh stack --help` succeeds and the user asks for GitHub Stack
 grouping or an existing PR chain is already grouped there.
+
+The upstream contract revision is `8c9c8331309529e2114d4c34e77f4edea543f9fa`.
+Re-check this pin before adopting a newer `gh stack` flag or behavior.
 
 <IMPORTANT>
 `gh stack` does not replace this plugin's owners. Shape or rewrite history
@@ -45,6 +48,10 @@ validation and review loop.
 3. Link the complete open chain with explicit `--base`, `--remote`, and branch
    arguments. To append to a known GitHub stack, an explicit stack number may
    be the first argument followed by only the new branches or PRs.
+   In the pinned upstream contract, `gh stack link --open` marks new and
+   existing PRs ready for review; it is not merely a browser-opening flag.
+   `gh stack submit --auto --open` likewise submits the stack with PRs ready for
+   review. Use either only when the caller requested ready state.
 4. Verify the branch/PR chain through `gh pr view`. When local tracking already
    exists, also require `gh stack view --json` to report the expected order,
    heads, PR URLs, merge state, and `needsRebase: false`.
@@ -77,8 +84,14 @@ GitHub grouping and branch history are separate state. For a structural edit:
 2. Run `gh stack unstack <stack-number>` to remove the GitHub grouping without
    deleting PRs or branches. Use `--local` only when intentionally keeping the
    remote grouping.
-3. Reshape and rename through `coding:commit --reorder` or the applicable
-   commit workflow. Prove content equivalence and linear ancestry.
+3. Reshape through `coding:commit --reorder` or the applicable commit workflow.
+   Preserve the head branch name of every open stacked PR: GitHub does not
+   transfer a stacked PR's immutable head ref when a branch is renamed. If a
+   reorder truly requires a different head name, stop after unstacking and get
+   explicit approval for the close-and-recreate migration, recording the old
+   PR/branch and replacement mapping. A non-stacked PR may use the forge's head
+   rename operation, but verify the PR head/base map afterward and never close
+   or delete it silently.
 4. Republish through `coding:pr update` when any selected head has an open PR;
    use `coding:pr create` only when none does.
 5. Re-link the full new branch order, then verify every remote head, PR base,
