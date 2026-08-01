@@ -432,6 +432,13 @@ def test_adr_numeric_identity_must_be_unique_across_current_and_archive(
         "docs/architecture/decisions/superseded/0001-database.md",
     }
     assert all(finding.get("fix") for finding in identity_findings)
+    archived_identity = next(
+        finding
+        for finding in identity_findings
+        if "superseded/0001-database.md" in finding["work"]
+    )
+    assert "provenance" in archived_identity["fix"]
+    assert "archived H1" in archived_identity["fix"]
 
 
 def test_adr_heading_identity_must_match_filename_for_current_and_archive(
@@ -691,6 +698,29 @@ def test_adr_nested_list_placeholders_remain_visible(
     assert all(finding.get("fix") for finding in placeholders)
 
 
+def test_adr_nested_list_placeholders_survive_continuation(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "- Follow-up:\n"
+            "  Additional context.\n"
+            "    - TODO: choose provider\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
 def test_adr_index_status_must_match_effective_status(workspace: Workspace) -> None:
     architecture = workspace.root / "docs" / "architecture"
     decisions = architecture / "decisions"
@@ -827,6 +857,31 @@ def test_adr_index_resumes_after_blank_line_in_block_html(
 
     _, findings = workspace.run_doctor()
     assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_ignores_generic_raw_html_blocks(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "<custom>\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n"
+        "</custom>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
 
 
 def test_adr_index_counts_links_only_from_document_cell(
@@ -1044,6 +1099,24 @@ def test_adr_index_accepts_link_titles(workspace: Workspace) -> None:
     (architecture / "README.md").write_text(
         "| Document | Status |\n| --- | --- |\n"
         '| [Current](decisions/0001-current.md "decision record") | Accepted |\n',
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_reference_style_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current][adr] | Accepted |\n\n"
+        "[adr]: decisions/0001-current.md\n",
         encoding="utf-8",
     )
 

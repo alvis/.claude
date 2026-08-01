@@ -52,6 +52,12 @@ ADR_INDEX_LINK = re.compile(
     r"(?<!!)\[[^\]]*\]\(\s*([^\s)]+)"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
+ADR_REFERENCE_LINK = re.compile(r"(?<!!)\[[^\]]+\]\[([^\]]+)\]")
+ADR_REFERENCE_DEFINITION = re.compile(
+    r"^[ \t]{0,3}\[([^\]]+)\]:\s*(?:<([^>\n]+)>|([^\s]+))"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$",
+    re.MULTILINE,
+)
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
 JOURNAL_EVENT = re.compile(
     r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|lease)\b"
@@ -141,6 +147,23 @@ def normalize_index_cell(cell: str) -> str:
                 changed = True
                 break
     return normalized.casefold()
+
+
+def adr_index_links(
+    text: str, references: dict[str, str] | None = None
+) -> list[str]:
+    """Return inline and reference-style Markdown targets from visible index text."""
+    if references is None:
+        references = {
+            " ".join(label.split()).casefold(): angle_target or bare_target
+            for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(text)
+        }
+    targets = list(ADR_INDEX_LINK.findall(text))
+    for label in ADR_REFERENCE_LINK.findall(text):
+        target = references.get(" ".join(label.split()).casefold())
+        if target is not None:
+            targets.append(target)
+    return targets
 
 
 def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
@@ -388,6 +411,9 @@ ADR_RAW_HTML_BLOCK = re.compile(
     r"menuitem|nav|ol|p|pre|script|section|summary|table|tbody|td|tfoot|"
     r"th|thead|title|tr|ul|style|textarea)(?:\s|/?>)",
     re.IGNORECASE,
+)
+ADR_GENERIC_HTML_BLOCK = re.compile(
+    r"^ {0,3}<(?P<tag>[A-Za-z][\w:-]*)>[ \t]*$"
 )
 ADR_LIST_ITEM = re.compile(r"^(?P<indent> *)(?:[-+*]|\d+[.)])(?:\s+|$)")
 ADR_RAW_HTML_CLOSE_TAGS = {"pre", "script", "style", "textarea"}
@@ -642,6 +668,8 @@ def without_inactive_markdown_regions(text: str) -> str:
                 raw_html_region = None
             continue
         raw_html_match = ADR_RAW_HTML_BLOCK.match(line)
+        if raw_html_match is None:
+            raw_html_match = ADR_GENERIC_HTML_BLOCK.match(line)
         if raw_html_match:
             lines.append(line_break)
             tag = raw_html_match.group("tag")
@@ -668,6 +696,8 @@ def without_inactive_markdown_regions(text: str) -> str:
         list_item = ADR_LIST_ITEM.match(line)
         if list_item:
             list_indent = len(list_item.group("indent"))
+        elif list_indent is not None and indentation > list_indent:
+            continue
         elif stripped:
             list_indent = None
     return "".join(lines)
@@ -759,11 +789,20 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             path.relative_to(repository_root).as_posix() for path in files
         )
         for file in files:
+            repair = (
+                "Preserve the archived ADR's canonical heading and historical body; "
+                "ask the user to decide which record owns the numeric identity, then "
+                "rename only the effective duplicate or the archived filename as "
+                "provenance permits and update links/index entries without editing "
+                "the archived H1."
+                if file.parent == superseded_dir
+                else "Assign each ADR a unique four-digit numeric identity and update only the affected filename, links, and index entry while preserving the decision bodies."
+            )
             report.error(
                 str(file.relative_to(repository_root)),
                 "adr-integrity",
                 f"ADR numeric identity {numeric_id} is duplicated: {locations}",
-                "Assign each ADR a unique four-digit numeric identity and update only the affected filename, links, and index entry while preserving the decision bodies.",
+                repair,
             )
     current_names = {path.stem for path in current_files}
 
@@ -994,6 +1033,12 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
         index_visible_text = without_inactive_markdown_regions(index_text)
+        reference_definitions = {
+            " ".join(label.split()).casefold(): angle_target or bare_target
+            for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(
+                index_visible_text
+            )
+        }
         indexed_current: set[str] = set()
         index_lines = index_visible_text.splitlines()
         status_column: int | None = None
@@ -1057,7 +1102,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             delimiter_expected = False
             if not document_table_active:
                 continue
-            for link in ADR_INDEX_LINK.findall(cells[0]):
+            for link in adr_index_links(cells[0], reference_definitions):
                 target = resolve_adr_link(index, link)
                 if target is None:
                     continue
@@ -1113,7 +1158,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         )
                 elif target.parent == superseded_dir or superseded_dir in target.parents:
                     archived_index_links.add(link)
-        for link in ADR_INDEX_LINK.findall(index_visible_text):
+        for link in adr_index_links(index_visible_text, reference_definitions):
             target = resolve_adr_link(index, link)
             if target is not None and (
                 target.parent == superseded_dir or superseded_dir in target.parents
