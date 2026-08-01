@@ -44,14 +44,6 @@ MARKDOWN_LINK = re.compile(
     r"\[[^\]]*\]\(\s*<?([^\s)>]+)>?"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
-MARKDOWN_LINK_WITH_LABEL = re.compile(
-    r"(?<!!)\[([^\]]+)\]\(\s*<?([^\s)>]+)>?"
-    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
-)
-ADR_INDEX_LINK = re.compile(
-    r"(?<!!)\[[^\]]*\]\(\s*<?([^\s)>]+)>?"
-    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
-)
 ADR_REFERENCE_LINK = re.compile(
     r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]"
 )
@@ -165,7 +157,7 @@ def adr_index_links(
     text = without_inline_code(text)
     if references is None:
         references = adr_reference_definitions(text)
-    targets = list(ADR_INDEX_LINK.findall(text))
+    targets = [target for _, target in markdown_links_with_labels(text)]
     for label, reference in ADR_REFERENCE_LINK.findall(text):
         key = reference or label
         target = references.get(" ".join(key.split()).casefold())
@@ -426,7 +418,7 @@ ADR_CHANGE_HEADER = re.compile(
     r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGNORECASE
 )
 ADR_STATUS_LINE = re.compile(
-    r"^[ \t]*(?:>[ \t]*)?(?:[-*][ \t]*)?\*{0,2}Status:\*{0,2}[ \t]*"
+    r"^[ \t]*(?:>[ \t]*)?(?:[-+*][ \t]*|\d+[.)][ \t]+)?\*{0,2}Status:\*{0,2}[ \t]*"
     r"`?([\w-]+)`?[ \t]*$",
     re.IGNORECASE | re.MULTILINE,
 )
@@ -482,7 +474,7 @@ ADR_RAW_HTML_CLOSE_TAGS = {"pre", "script", "style", "textarea"}
 ADR_EMPTY_CONTAINER = re.compile(r"^(?:>\s*)+$")
 ADR_NUMERIC_FILENAME = re.compile(r"^[0-9]{4}(?:-|$)")
 ADR_METADATA_LINE = re.compile(
-    r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
+    r"^\s*(?:>\s*)?(?:[-+*]\s*|\d+[.)]\s+)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
     re.IGNORECASE,
 )
 ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
@@ -977,6 +969,11 @@ def without_inactive_markdown_regions(text: str) -> str:
                 nested_item = ADR_LIST_ITEM.match(block_line)
                 if nested_item:
                     list_content_indent = nested_item.end()
+            elif list_content_indent is None and paragraph_active:
+                # An indented line cannot interrupt an active Markdown
+                # paragraph, so it remains a lazy continuation rather than
+                # becoming an indented code block.
+                lines.append(line)
             else:
                 lines.append(line_break)
             continue
@@ -1346,6 +1343,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         status_column: int | None = None
         table_column_count: int | None = None
         document_table_active = False
+        table_active = False
         delimiter_expected = False
         delimiter_seen = False
         indexed_occurrences: dict[str, int] = {}
@@ -1355,6 +1353,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 status_column = None
                 table_column_count = None
                 document_table_active = False
+                table_active = False
                 delimiter_expected = False
                 delimiter_seen = False
                 continue
@@ -1369,9 +1368,14 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 ):
                     delimiter_seen = True
                 delimiter_expected = False
+                table_active = True
                 continue
             normalized_cells = [normalize_index_cell(cell) for cell in cells]
-            if normalized_cells and normalized_cells[0] == "document":
+            if (
+                normalized_cells
+                and normalized_cells[0] == "document"
+                and not table_active
+            ):
                 document_table_active = True
                 table_column_count = len(cells)
                 delimiter_expected = True
@@ -1393,16 +1397,19 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     if status_columns
                     else None
                 )
+                table_active = True
                 continue
             if "status" in normalized_cells and not document_table_active:
                 status_column = None
                 table_column_count = None
                 document_table_active = False
+                table_active = True
                 delimiter_expected = False
                 delimiter_seen = False
                 continue
             delimiter_expected = False
             if not document_table_active:
+                table_active = True
                 continue
             for link in adr_index_links(cells[0], reference_definitions):
                 target = resolve_adr_link(index, link)
@@ -1460,6 +1467,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         )
                 elif target.parent == superseded_dir or superseded_dir in target.parents:
                     archived_index_links.add(link)
+            table_active = True
         for link in adr_index_links(index_visible_text, reference_definitions):
             target = resolve_adr_link(index, link)
             if target is not None and (
