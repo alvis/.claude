@@ -351,6 +351,98 @@ def test_adr_filenames_are_canonical_for_effective_and_archived_records(
     assert all(finding.get("fix") for finding in filename_findings)
 
 
+def test_adr_archive_rejects_multiple_successor_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (decisions / "0003-other.md").write_text(
+        "# ADR-0003: Other\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md), "
+        "[ADR-0003 — Other](../0003-other.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n"
+        "| [ADR-0003](decisions/0003-other.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "exactly one successor link" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_numeric_identity_must_be_unique_across_current_and_archive(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0001-cache.md").write_text(
+        "# ADR-0001: Cache\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-database.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-cache.md) | Accepted |\n"
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    identity_findings = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "numeric identity 0001 is duplicated" in finding["message"]
+    ]
+    assert {finding["work"] for finding in identity_findings} == {
+        "docs/architecture/decisions/0001-cache.md",
+        "docs/architecture/decisions/superseded/0001-database.md",
+    }
+    assert all(finding.get("fix") for finding in identity_findings)
+
+
+def test_adr_literal_todo_prose_and_fenced_examples_are_not_placeholders(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "## Context\n\nThe linter rejects literal TODO and TBD comments.\n\n"
+        "```yaml\nexample: TODO\n```\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
 def test_adr_index_status_must_match_effective_status(workspace: Workspace) -> None:
     architecture = workspace.root / "docs" / "architecture"
     decisions = architecture / "decisions"

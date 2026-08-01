@@ -298,13 +298,19 @@ ADR_STATUS_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}Status:\*{0,2}\s*`?([\w-]+)",
     re.IGNORECASE | re.MULTILINE,
 )
-ADR_PLACEHOLDER = re.compile(r"\b(?:TODO|TBD)\b", re.IGNORECASE)
+ADR_PLACEHOLDER = re.compile(
+    r"(?:\[\s*(?:TODO|TBD)\s*\]|<\s*(?:TODO|TBD)\s*>|"
+    r"^\s*(?:[-*]\s*)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
+    r"^\s*[\w.-]+:\s*(?:TODO|TBD)\s*$)",
+    re.IGNORECASE | re.MULTILINE,
+)
 ADR_TEMPLATE_PLACEHOLDER = re.compile(r"<[^>\n]+>")
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+ADR_FENCED_BLOCK = re.compile(r"```.*?```", re.DOTALL)
 
 
 def repository_root_for_work_dir(work_dir: Path) -> Path:
@@ -384,6 +390,10 @@ def without_html_comments(text: str) -> str:
     return ADR_HTML_COMMENT.sub("", text)
 
 
+def without_fenced_blocks(text: str) -> str:
+    return ADR_FENCED_BLOCK.sub("", text)
+
+
 def check_adrs(report: Report, repository_root: Path) -> None:
     """Check effective/archived ADR separation, index coverage, and clarity."""
     architecture_dir = repository_root / "docs" / "architecture"
@@ -419,12 +429,29 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "ADR filename must use a four-digit zero-padded prefix and lowercase kebab-case slug",
                 "Rename the ADR to <nnnn>-<decision-slug>.md without changing its numeric identity or moving it out of its effective/archive directory.",
             )
+    numeric_identities: dict[str, list[Path]] = {}
+    for file in sorted(allowed_files):
+        if ADR_FILENAME.fullmatch(file.stem):
+            numeric_identities.setdefault(file.stem.split("-", 1)[0], []).append(file)
+    for numeric_id, files in numeric_identities.items():
+        if len(files) < 2:
+            continue
+        locations = ", ".join(
+            path.relative_to(repository_root).as_posix() for path in files
+        )
+        for file in files:
+            report.error(
+                str(file.relative_to(repository_root)),
+                "adr-integrity",
+                f"ADR numeric identity {numeric_id} is duplicated: {locations}",
+                "Assign each ADR a unique four-digit numeric identity and update only the affected filename, links, and index entry while preserving the decision bodies.",
+            )
     current_names = {path.stem for path in current_files}
 
     for file in current_files:
         text = file.read_text(encoding="utf-8", errors="replace")
         relative = file.relative_to(repository_root)
-        content = without_html_comments(text)
+        content = without_fenced_blocks(without_html_comments(text))
         metadata = adr_metadata_text(content)
         status_values = {value.lower() for value in ADR_STATUS_LINE.findall(metadata)}
         if "superseded" in status_values:
@@ -495,6 +522,11 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             )
         if changed and not ADR_CHANGE_SCOPE.search(changed):
             problems.append("What changed must state whether the change is partial or complete")
+        if successor_count == 1 and len(links) != 1:
+            problems.append(
+                "Superseded by must contain exactly one successor link "
+                f"(found {len(links)})"
+            )
         valid_successors: list[str] = []
         for label, link in links:
             path_part = link.split("#", 1)[0]
