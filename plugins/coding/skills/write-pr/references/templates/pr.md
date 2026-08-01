@@ -47,12 +47,14 @@ Substitution rules:
 
 ## 🧵 Context
 
-<!-- why this change is needed: problem, symptoms, tickets, design background -->
+<!-- why this change is needed: the problem and symptoms, related bug or ticket
+     links, what problem it solves and why, and relevant design background -->
 {{context_body}}
 
 ## 🛠️ Implementation
 
-<!-- what was built and how; trade-offs, architectural choices; evidence and
+<!-- features or behavior implemented and how the solution was achieved;
+     trade-offs, architectural choices, and design patterns; evidence and
      results belong here, not in Verification -->
 {{implementation_body}}
 
@@ -65,15 +67,29 @@ Substitution rules:
 
 <!-- checks that must pass before sign-off, specific to this change, ticked as
      each one is confirmed; a check, never a result or an observation.
-     Pick from these where they apply: tests added or updated · docs updated
-     where user-visible · CI green locally · no new lint or type errors ·
-     reviewer assigned per zone (GIT-PR-SIZE-01..04) -->
+     Change-specific checks are required; these standard checks supplement
+     rather than replace them: tests added or updated · docs updated where
+     user-visible · CI green locally · no new lint or type errors.
+     Add one reviewer triplet for each reviewer required by the standard-owned
+     active size-zone policy and any project override, in slot order. Do not
+     duplicate reviewer counts here; derive them from
+     `plugins/coding/constitution/standards/git/write.md` (GIT-PR-SIZE-03):
+       - [ ] Reviewer slot N assigned
+       - [ ] Reviewer slot N reviewed `<head-oid>` against `<base-oid>`
+       - [ ] Reviewer slot N approved `<head-oid>` against `<base-oid>`
+     Text-only authoring keeps the identity-free slot label. Publication
+     replaces it with the assigned `@login` when known. Compare the PR's
+     pre-publication and verified post-publication head/base OID pairs. When
+     either differs, replace both OID placeholders and reset that reviewer's
+     reviewed and approved tasks until that reviewer acts on the new surface; a
+     no-op publication preserves evidence bound to the unchanged pair. -->
 {{verification_body}}
 
 ## 🚫 Boundary
 
-<!-- bullets naming related work the instruction placed outside this change,
-     so its edges are not read as gaps; not the author's own judgment calls -->
+<!-- bullets naming adjacent work the instruction placed outside this change
+     and where it lives, plus anything a reader would reasonably expect here
+     that was not requested; not the author's own judgment calls -->
 {{boundary_body}}
 
 ## 📋 Additional Notes
@@ -83,5 +99,6 @@ Substitution rules:
 
 ## 🔗 Related Issues
 
-<!-- Closes #N, See #N, spec links -->
+<!-- related tickets, issues, RFCs, specs, and discussions, for example:
+     Closes #N · See #N · Spec: <link> · Discussion: <link> -->
 {{related_issues_body}}

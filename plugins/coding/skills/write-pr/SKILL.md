@@ -8,30 +8,22 @@ argument-hint: "[<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--d
 # Write Pull Request
 
 Turn one saved change or an ordered stack into live, green draft pull requests.
-This skill composes a deterministic, regex-validated Conventional Commits PR
-title and a unified PR body from each commit, publishes the change (or stack)
-bottom-up as draft PRs, then owns the hosted-CI lifecycle until every PR is
-green or a concrete blocker requires user action or external state. Because
-repair can edit existing work, the governing rule is **Coherence Mandate.**
-Every edit must produce one continuous, deliberate work. Rewrite over
-restructure, restructure over integrate, never append. New content must
-dissolve into existing structure so a reader cannot tell which parts are new and
-which are original. Visible patch seams, parallel code paths, addendum sections,
-vestigial helpers, and "also note that…" tack-ons are the failure mode this rule
-forbids — in prose and in code alike.
+This skill composes deterministic Conventional Commits PR text, publishes the
+change or stack bottom-up as drafts, and owns hosted CI until green or blocked.
+Repair obeys the **Coherence Mandate**: produce one continuous, deliberate work;
+rewrite over restructure, restructure over integrate, never append. Dissolve
+new content into the existing structure. Visible seams, parallel paths,
+addenda, vestigial helpers, and "also note that…" tack-ons are forbidden.
 
-Zone enforcement (GIT-PR-SIZE-01..04) belongs to the reviewer, not this skill.
+Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
 
 ## Boundaries
 
-- Use for: composing a PR title and body for the current jj working-copy change
-  or any resolvable commit ref, and publishing or republishing a saved jj
-  change, branch, current draft PR, or ordered stack while monitoring every
-  GitHub check through repair. `coding:commit --create-pr` reaches this path
-  through its required handoff.
-- Do not use for: saving work without publication (`coding:commit`), reviewing
-  code, merging PRs (`coding:merge-pr`), or creating a new stack solely by
-  reshaping local history (`coding:commit --reorder`).
+- Use for: composing PR text for any resolvable commit, then publishing or
+  republishing a saved change, draft PR, or ordered stack through CI repair.
+  `coding:commit --create-pr` reaches this path through its required handoff.
+- Do not use for: saving without publication (`coding:commit`), reviewing,
+  merging (`coding:merge-pr`), or reshaping history (`coding:commit --reorder`).
 - Multi-template directories (`.github/PULL_REQUEST_TEMPLATE/*.md`) are
   intentionally ignored — selecting between them is a human choice and out of
   scope.
@@ -246,6 +238,12 @@ a stack indexes `NN` from `01` to `99` into `BOOKMARK=<prefix>/NN-<scope>`,
 kebab-case scope ≤30 characters; `<branch-prefix>` is `--branch-prefix`, else
 the resolved stream's branch, else as derived; record the mode first.
 
+Before mutation, record `PR_BASE` as the default branch then previous bookmark, and
+`AUTHOR_BASE_OID` as exact default-branch then predecessor change/commit OID.
+New-stack bookmarks do not yet exist, so author every head against `AUTHOR_BASE_OID`,
+never `PR_BASE`. Split each exact `title\n\nbody` into that head's `TITLE` and `BODY`;
+malformed output aborts the whole selection before any ref or remote mutation.
+
 On the jj path, point the bookmark at the change and push it:
 
 ```bash
@@ -262,23 +260,27 @@ git push --force-with-lease origin "$BOOKMARK"
 
 Either way the push is leased, never bare `--force`, so a remote that advanced
 underneath the rewrite is rejected rather than overwritten.
-Run the [Author the PR text](#author-the-pr-text) sub-procedure for this change
-and capture its exact `title\n\nbody` output as `TITLE` and `BODY`. Set
-`BASE=main` for PR 01 and the previous bookmark for every later PR. When no open
-PR has this head, create a draft:
+When no open PR has this head, create a draft:
 
 ```bash
 gh pr create --draft --title "$TITLE" --body-file - \
-  --base "$BASE" --head "$BOOKMARK" <<<"$BODY"
+  --base "$PR_BASE" --head "$BOOKMARK" <<<"$BODY"
 ```
 
 When the head already has an open PR, update it without duplication and retain
 draft state:
 
 ```bash
-gh pr edit "$PR" --title "$TITLE" --body-file - --base "$BASE" <<<"$BODY"
+gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
 gh pr ready "$PR" --undo # skip only when already draft
 ```
+
+For the bundled template, fill reviewer slots with assigned `@login`s when
+known. Before a push or base edit, capture an existing PR's `headRefOid` and
+`baseRefOid`; after publication, bind review and approval to the verified
+`headRefOid`/`baseRefOid` pair. Reset those tasks when either OID differs. A
+no-op publication retry preserves evidence already bound to that exact review
+surface.
 
 Capture each PR number, URL, head, base, bookmark, and change ID. After each
 push, record `expected_head_oid` from the pushed bookmark and verify it against
@@ -303,7 +305,9 @@ repository is jj-colocated and through `git fetch`/`git push
 --force-with-lease`/`git ls-remote` where it is not, and it reports which one it
 selected as `vcs` in its JSON summary. It aborts the whole sync on the first
 preflight mismatch rather than pushing a partially shaped stack; verify the PR
-base chain and each PR `headRefOid` mirror the recorded map.
+base chain and each PR `headRefOid` mirror the recorded map. Before monitoring,
+reauthor every pushed head against its verified base and update its PR body,
+resetting reviewer evidence onto the new head/base OID pair.
 
 | Publication error | Action |
 |---|---|
@@ -311,7 +315,7 @@ base chain and each PR `headRefOid` mirror the recorded map.
 | Bookmark or branch conflict | Confirm the intended change, then update the head idempotently. |
 | Push rejected because remote advanced | `jj git fetch` (git: `git fetch origin`), rebase through `coding:commit`, then retry. |
 | Conventional title invalid | Reword through `coding:commit`, then restart that iteration. |
-| Existing PR has wrong base | `gh pr edit "$PR" --base "$BASE"`, then verify. |
+| Existing PR has wrong base | `gh pr edit "$PR" --base "$PR_BASE"`, then verify. |
 | Restack conflict | Resolve through `coding:commit`, run integrity checks, then republish bottom-up. |
 
 ### 4. Schedule and consume the initial poll
@@ -411,19 +415,19 @@ restore on `--resume` or `--continue`; expired tasks are not replayed.
 
 ### Author the PR text
 
-Compose the deterministic `title\n\nbody` for one commit. This sub-procedure is
-self-contained: step 3 runs it at publish time, and a caller that needs only PR
-text (no publication) may run just this block and consume its stdout. It never
-invokes `gh`.
+Compose deterministic `title\n\nbody` for a commit and optional base. Step 3
+passes its base; text-only callers default to the first parent. Never invoke `gh`.
 
-1. Resolve the commit ref: try `jj log -r <ref> --no-graph -T 'description'`
-   first; fall back to `git log -1 --format=%B <ref>` when `jj` exits
-   non-zero. Unknown ref: exit 2, print "no such revision" plus the failing
-   ref. Neither `jj` nor `git` available: exit 3, "no commit source
-   available".
+1. Resolve the commit and base refs. Read the description with `jj log`, then
+   `git log`; unknown ref exits 2 and neither tool exits 3. The default base is
+   the first parent, or `git hash-object -t tree /dev/null` for a root. For non-roots resolve
+   the review surface with jj `heads(::<head-oid> & ::<base-oid>)` or
+   `git merge-base <base-oid> <head-oid>`. Count paths and net LOC from that
+   merge base to the head, apply overrides, and record the `GIT-PR-SIZE-*`
+   zone. The empty tree is only the root fallback.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
-   `Fixes:`, `Breaking-Change:`, `Testing:`, `Manual-Test:`) for routing in
+   `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in
    step 5.
 3. Validate the subject against the Conventional Commits regex — the
    canonical conventional-commits.org type allowlist with optional `(scope)`
@@ -458,7 +462,7 @@ invokes `gh`.
      `Background:`, if present.
    - `{{implementation_body}}` — content under `## Implementation` / `What:`
      / `How:`, if present.
-   - `{{breaking_changes_body}}` — `Breaking-Change:` trailers; "None." when
+   - `{{breaking_changes_body}}` — `BREAKING CHANGE:` footers; "None." when
      absent.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
@@ -466,10 +470,8 @@ invokes `gh`.
      as a checklist of the checks that must pass before sign-off, specific to
      this change and ticked as each one is confirmed. Every item is a check;
      an observation, a result, or evidence of what already happened belongs in
-     Implementation. Pick from the standard items — tests added or updated,
-     docs updated where user-visible, CI green locally, no new lint or type
-     errors, reviewer assigned per zone — only where they apply, and never in
-     place of the change-specific ones.
+     Implementation. Change-specific checks are mandatory; standard items never
+     replace them; append items per the template's Verification guidance.
    - `{{boundary_body}}` — bullets naming related work the instruction placed
      outside this change, so its edges are not read as gaps. It records the
      scope it was given, not the author's own judgment calls. "None." when
@@ -486,11 +488,10 @@ invokes `gh`.
 
 ## Verification and Completion
 
-- The composed title matches the Conventional Commits regex; a repo template
-  was emitted byte-for-byte verbatim, or a bundled default has no
-  `{{placeholder}}` left unfilled and no dropped-section stubs. Authoring is
-  idempotent: the same commit ref plus the same resolved template produces
-  byte-identical `title\n\nbody` — no timestamps, random IDs, or diff stats.
+- The title matches the Conventional Commits regex; a repo template is verbatim,
+  or the bundled default has no placeholder or dropped-section stub. The same
+  head OID, base/empty-tree OID, template, thresholds, and placeholder map yield
+  byte-identical `title\n\nbody` without timestamps or random IDs.
 - Local checks passed with every command/result recorded, or command execution
   was explicitly skipped; hosted-only gaps and expected checks are named.
 - Every head was pushed under a lease — `jj git push` on the jj path,
