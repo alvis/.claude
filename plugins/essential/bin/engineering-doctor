@@ -338,6 +338,7 @@ ADR_TEMPLATE_PLACEHOLDER = re.compile(
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_H1 = re.compile(r"^ {0,3}#\s+")
+ADR_SUBHEADING = re.compile(r"^ {0,3}#{2,}(?:\s+|$)")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
@@ -374,6 +375,17 @@ def repository_root_for_work_dir(work_dir: Path) -> Path:
     return resolved.parent
 
 
+def is_valid_fence_marker(
+    marker: re.Match[str], fence: tuple[str, int] | None
+) -> bool:
+    """Reject backtick fence openers whose info string contains a backtick."""
+    return not (
+        fence is None
+        and marker.group(1).startswith("`")
+        and "`" in marker.group(2)
+    )
+
+
 def parse_superseded_header(
     text: str,
 ) -> tuple[str | None, str | None, list[tuple[str, str]], int, int]:
@@ -402,7 +414,7 @@ def adr_header_prefix_lines(text: str) -> list[str]:
     fence: tuple[str, int] | None = None
     for index, line in enumerate(lines):
         marker = ADR_FENCE.match(line)
-        if marker:
+        if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
@@ -436,7 +448,7 @@ def adr_metadata_text(text: str) -> str:
     for line in text.splitlines():
         stripped = line.strip()
         marker = ADR_FENCE.match(line)
-        if marker:
+        if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
@@ -455,7 +467,7 @@ def adr_metadata_text(text: str) -> str:
                     return ""
                 title_seen = True
             continue
-        if re.match(r"^##\s+", stripped):
+        if ADR_SUBHEADING.match(line):
             break
         lines.append(line)
     return "\n".join(lines)
@@ -468,7 +480,7 @@ def adr_heading(text: str) -> tuple[int, str, str] | None:
     for index, line in enumerate(visible.splitlines()):
         stripped = line.strip()
         marker = ADR_FENCE.match(line)
-        if marker:
+        if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
@@ -508,7 +520,7 @@ def without_fenced_blocks(text: str) -> str:
     fence: tuple[str, int] | None = None
     for line in text.splitlines():
         marker = ADR_FENCE.match(line)
-        if marker:
+        if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
@@ -661,9 +673,10 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "expected exactly one Superseded status header "
                 f"(found {len(status_values)} with values {status_values})"
             )
+        header_without_comments = ADR_HTML_COMMENT.sub("", "\n".join(header_lines))
         unexpected_header_lines = [
             line.strip()
-            for line in header_lines
+            for line in header_without_comments.splitlines()
             if line.strip()
             and line.strip() != ">"
             and not ADR_STATUS_HEADER.match(line.strip())

@@ -903,6 +903,33 @@ def test_archived_header_rejects_nonstandard_fields(workspace: Workspace) -> Non
     assert all(finding.get("fix") for finding in header)
 
 
+def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n\n"
+        "<!-- Retained historical note. -->\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
 def test_effective_adr_rejects_unfilled_template_fields(
     workspace: Workspace,
 ) -> None:
@@ -1010,6 +1037,23 @@ def test_adr_text_bearing_fence_marker_does_not_close_fenced_content(
 
     _, findings = workspace.run_doctor()
     assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_rejects_backtick_fence_info_with_backtick(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="```example`value\nTODO:\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholder = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholder
+    assert all(finding.get("fix") for finding in placeholder)
 
 
 def test_effective_adr_requires_canonical_heading_as_first_title(
@@ -1330,6 +1374,16 @@ def test_adr_status_in_body_example_does_not_contradict_metadata(
     (architecture / "README.md").write_text(
         "| [ADR-0001](decisions/0001-current.md) | Accepted |\n",
         encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_metadata_stops_at_deep_subheadings(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="### Implementation note\n\nStatus: Proposed\n",
     )
 
     _, findings = workspace.run_doctor()
