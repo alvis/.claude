@@ -7,8 +7,9 @@ template of its own checked in (e.g. `.github/PULL_REQUEST_TEMPLATE.md`).
 When a repo template exists, that template takes precedence and is emitted
 verbatim instead of this one.
 
-Required sections: Summary + Verification.
-Optional sections: Context, Implementation, Breaking, Related, Boundary, Notes.
+Always required: Summary + Verification. Yellow and red zones also require
+Risk + Test plan; red also requires Why this size. Context, Implementation,
+Breaking, Related, Boundary, and Notes are optional.
 
 The order is a single arc — why, what, what it costs, what to check, where it
 stops — with lookup material last. Authors fill placeholders in
@@ -23,6 +24,9 @@ Placeholders (for non-LLM callers performing literal substitution):
   context_body               no        Why this change is needed; bug links; design background. Drop section if empty.
   implementation_body        no        What was implemented; trade-offs; design choices; evidence and results. Drop section if empty.
   breaking_changes_body      no        Breaking-change list + migration notes. Drop section if commit subject lacks `!` and no `BREAKING CHANGE:` trailer.
+  risk_body                  by zone   Concrete failure modes and mitigations. Required for yellow/red.
+  test_plan_body             by zone   Checks covering the named risks. Required for yellow/red.
+  why_this_size_body         by zone   Isolation justification plus the canonical `GIT-PR-SIZE-03` reviewer-time estimate. Required for red.
   verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
   boundary_body              no        Related work the instruction placed outside this change. Drop section if empty.
   additional_notes_body      no        Known limitations, follow-ups. Drop section if empty.
@@ -36,6 +40,7 @@ Substitution rules:
   rendered body, including this block.
 - Verification is required: it is never dropped, even when every item is still
   unticked.
+- Zone-required placeholders are never dropped or filled with generic stubs.
 - Output MUST be byte-stable for the same input map (deterministic ordering,
   trailing newline, no trailing whitespace).
 -->
@@ -62,6 +67,24 @@ Substitution rules:
 
 <!-- what breaks, and the migration for it -->
 {{breaking_changes_body}}
+
+## Risk
+
+<!-- concrete failure modes, impact, and mitigations; required for yellow/red -->
+{{risk_body}}
+
+## Test plan
+
+<!-- checks that exercise the named risks; required for yellow/red -->
+{{test_plan_body}}
+
+## Why this size
+
+<!-- specific reason this review surface is one indivisible change, plus a
+     machine-checkable estimate on its own line using the canonical
+     GIT-PR-SIZE-03 syntax, for example: Reviewer-time estimate: ~20 min
+     Both are required for red; generic justification does not satisfy it. -->
+{{why_this_size_body}}
 
 ## 🧪 Verification
 

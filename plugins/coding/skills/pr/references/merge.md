@@ -2,6 +2,9 @@
 
 Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remaining downstream branch after each merge so GitHub-generated merge commits or rebased commits do not cause the next PR to replay already-merged work. This skill owns remote PR merges plus descendant branch/bookmark rebases in either git or jj repositories; local commit creation remains `coding:commit`, and code/CI repair remains `coding:fix`.
 
+Load [stacked-prs.md](stacked-prs.md) first for the shared stack contract and
+jj/git operator map.
+
 ## Boundaries
 
 - Use for: `/coding:pr merge 12 13 14`, "merge this stack of PRs", or any
@@ -124,7 +127,18 @@ Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remai
 
    Use `jj rebase -s` for jj stacks because it moves the selected child-exclusive root and its descendants together. `jj git push --all` pushes all bookmarks in one command; if unrelated local bookmarks must not move, replace `--all` with repeated `--bookmark <stack-bookmark>` arguments in one `jj git push` command. Jujutsu's push safety checks are lease-like: rerun `jj git fetch --remote origin` and resolve bookmark conflicts if a remote bookmark changed unexpectedly.
 
-   e. After each push, use that child's new local tip as `<new-parent-ref>` for its child, but do not change any `round_tip` while the round is in progress. After every remaining descendant has been restacked and pushed successfully, replace the saved tips with the new branch/bookmark tips. The next merge round must snapshot these refreshed tips so it cannot replay commits already moved by an earlier round.
+   e. After each push, set and verify that PR's base as its new parent branch;
+   the immediate child targets the destination, while deeper descendants retain
+   the freshly restacked predecessor head:
+
+   ```bash
+   gh pr edit <child-number> --base <new-parent-branch>
+   gh pr view <child-number> --json baseRefName --jq .baseRefName
+   ```
+
+   Then use the child's new local tip as `<new-parent-ref>` for its child, but
+   do not change a `round_tip` mid-round. After all descendants are pushed,
+   refresh saved tips for the next round.
 
    f. Wait for GitHub to observe the push, then re-check CI before merging the next PR. If checks are pending, report that the stack was restacked and stop unless the user asked to wait; if asked to wait, poll at a reasonable interval for up to the user's requested duration.
 

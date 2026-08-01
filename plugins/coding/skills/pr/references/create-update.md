@@ -9,7 +9,8 @@ continuous work; rewrite over restructure, restructure over integrate, never
 append. Dissolve new content into the existing structure. Visible seams,
 parallel paths, addenda, vestigial helpers, and tack-ons are forbidden.
 
-Reviewers enforce `GIT-PR-SIZE-*`; authoring calculates it for reviewer slots.
+Reviewers own size-rule findings and reviewability judgments. This workflow
+owns deterministic zone calculation and the authoring gates below.
 
 ## Boundaries
 
@@ -96,7 +97,12 @@ its explicit PR/ref target to an open PR, but may include missing descendants
 introduced by an accepted stack rewrite. If work must be saved, split, or
 reordered, invoke `coding:commit`, then restart discovery. Reject an unknown
 ref, nonlinear chain, merged-history rewrite, missing authentication, multiple
-open PRs for one head, or remote ambiguity with evidence. With `--dry-run`,
+open PRs for one head, or remote ambiguity with evidence.
+
+Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory category
+splits. With no explicit shape, also calculate the size zone and suggest a stack
+when an over-green surface has independent domain-coherent slices. A declined
+optional suggestion or atomic change proceeds as one PR. With `--dry-run`,
 print the exact plan and stop.
 
 ### 2. Discover local CI parity and run it unless skipped
@@ -114,8 +120,8 @@ and `.env.test` when present. These local files may be ignored and therefore
 absent from a disposable worktree. Do not execute repository commands from the
 main checkout or copy secret values into a report.
 
-Create a detached disposable worktree through the bundled resource helper and
-bind its exact JSON result:
+For each selected head bottom-up, create a detached disposable worktree at its
+exact SHA through the bundled helper and bind its distinct JSON result:
 
 ```bash
 TREE_JSON=$(bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
@@ -125,46 +131,50 @@ TEST_WORKTREE=$(jq -er .tree <<<"$TREE_JSON")
 test "$(git -C "$TEST_WORKTREE" rev-parse HEAD)" = "$TARGET_SHA"
 ```
 
-The context-owning parent retains `TREE_LEASE`; never transfer cleanup ownership
-to the tester. It passes only `TEST_WORKTREE` for execution, then invokes
-`temp-tree.sh close "$TREE_LEASE"` after success, failure, cancellation, skipped
-testing, or blocked discovery and verifies the lease and registration are gone.
+Repeat the binding with per-head variables and retain every returned lease/tree
+pair. The context-owning parent passes only the selected `TEST_WORKTREE` paths
+to testers; it never transfers cleanup ownership. Before dispatch, a
+cancellation, skipped run, or blocked discovery closes every lease. After
+dispatch begins, the parent closes only a completed batch's leases and retains
+undispatched batches. It verifies each closed lease and registration are gone.
 
-Read the same workflow and script definitions from `"$TEST_WORKTREE"` to
-confirm the exact commands at the selected SHA, and inspect workflow `env`,
-`secrets.*`, `vars.*`, and command-level environment references there for
-revision drift. List the exact compile, type, lint, test, and build commands
-that reproduce CI without hosted services. Record variable names and source
-presence only; never copy secret values into a report. For every required
-variable, verify that the isolated tester can receive it from a user-approved
-source in the main checkout or another explicitly approved location; an env
-file does not need to be copied into the worktree. Record hosted-only checks
-and unavailable services or credentials. If a required variable is missing and
-`--skip-local-test` was not supplied, ask the user to confirm its intended
-source or location; if it remains unavailable, ask whether to use
-`--skip-local-test` and proceed with publishing. When the flag was supplied,
-record the missing variable as a hosted-only gap and do not execute local
-commands. Do not guess a secret source or silently run with an empty value.
+Read the workflow and script definitions from each returned `tree` to confirm
+the exact commands at that SHA, and inspect workflow `env`, `secrets.*`,
+`vars.*`, and command-level environment references for revision drift. List
+the compile, type, lint, test, and build commands that reproduce CI without
+hosted services. Record variable names and source presence only; never copy
+secret values into a report. For every required variable, verify that the
+isolated tester can receive it from a user-approved source in the main checkout
+or another explicitly approved location; an env file need not be copied.
+Record hosted-only checks and unavailable services or credentials. If a
+required variable is missing without `--skip-local-test`, ask for its intended
+source; if unavailable, ask whether to skip local tests and publish. With the
+flag, record the hosted-only gap and run no local commands. Never guess a
+secret source or silently use an empty value.
 For each selected change, record expected hosted PR check/job names from
 `pull_request`-triggered jobs at that ref and required branch status
 checks/rulesets when accessible through `gh api`; record inaccessible sources
 instead of assuming they are empty.
 
-Unless `--skip-local-test` is present, dispatch one small-model read-only tester
-for the whole command set. It MUST NOT edit, format, commit, or push. It runs
-every runnable command in CI order, continues through independent commands
-after a failure, and returns under 1000 tokens:
+Unless `--skip-local-test` is present, partition the ordered heads into
+sequential bottom-up batches of at most ten. Dispatch one fresh small-model
+read-only tester per batch; never reuse its context for another batch. It MUST
+NOT edit, format, commit, or push. For its batch it runs every runnable command
+against every head in CI order, continues through independent commands after
+failure, and returns under 1000 tokens. Finish and consume one batch before
+dispatching the next.
 
 Treat repository workflows and scripts as untrusted code. The tester runs the
-allowlisted commands from `TEST_WORKTREE` and returns command results; it does
-not remove the worktree, close `TREE_LEASE`, or report parent cleanup. The
-parent closes the exact lease on every exit path — pass, failure, cancellation,
-or blocked environment discovery — and verifies the registration is gone.
-Limit filesystem writes to that worktree and a temporary directory, deny network by default, and remove ambient tokens,
-credential helpers, SSH agent sockets, cloud credentials, and unrelated
-environment variables. Pass only the minimal allowlisted toolchain environment.
-If this isolation is unavailable, or a command genuinely needs network access
-or a credential, classify it as hosted-only or ask the user for that specific
+allowlisted commands from `TEST_WORKTREE` and returns command results; it
+neither removes the worktree nor closes or reports on the parent-owned
+`TREE_LEASE`. The parent closes each exact lease after consuming a completed
+batch, and closes all retained leases on skipped, cancelled, or blocked paths.
+Limit filesystem writes to that worktree and a temporary directory, deny network
+by default, and remove ambient tokens, credential helpers, SSH agent sockets,
+cloud credentials, and unrelated environment variables. Pass only the minimal
+allowlisted toolchain environment. If this isolation is unavailable, or a
+command genuinely needs network access or a credential, classify it as
+hosted-only or ask the user for that specific
 authority; never expose the parent session's credentials to a local CI command.
 
 <report>
@@ -176,7 +186,8 @@ required_environment:
     declared_source: <workflow/package/.env source>
     worktree_status: present | missing | hosted-only
 runnable_commands:
-  - command: <exact command>
+  - ref: <selected head SHA>
+    command: <exact command>
     source: <path and job/script>
     status: <integer exit status>
     duration_seconds: <elapsed seconds>
@@ -184,7 +195,6 @@ runnable_commands:
 hosted_only:
   - check: <job or step>
     unavailable_requirement: <service, secret, runner, or credential>
-temporary_worktree_cleanup: parent-verified | blocked
 expected_hosted_checks:
   - ref: <change-id or head SHA>
     names: [<workflow job or required status name>]
@@ -194,6 +204,14 @@ overall: pass | fail | blocked | skipped
 ```
 
 </report>
+
+After consuming each batch report, the parent closes that batch's retained
+leases and records the exact lease, tree, close status, and proof that both the
+lease file and VCS registration are gone. A tester result cannot claim parent
+cleanup. When a fixer changes a selected SHA, close every lease whose target
+was superseded, retain unchanged undispatched leases, and recreate the affected
+worktrees at their new exact SHAs before rerunning or continuing. On
+cancellation or a terminal failure, close every lease still retained.
 
 On local failure, diagnose captured output before editing and dispatch one
 relevant fixer scoped to the root cause and affected files. It may edit and
@@ -427,13 +445,7 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    `git hash-object -t tree /dev/null`. Try
    `jj log -r <ref> --no-graph -T 'description'`, then
    `git log -1 --format=%B <ref>`. Unknown refs exit 2; neither tool exits 3.
-   For every non-root commit, resolve the review surface from the merge base:
-   use `jj log --no-graph -T 'commit_id' -r
-   "heads(::<head-oid> & ::<base-oid>)"` on the jj path or
-   `git merge-base <base-oid> <head-oid>` on the git path. Count all paths and
-   net LOC from that merge base to the head, apply project overrides, and
-   record the canonical `GIT-PR-SIZE-*` zone. Use the empty tree only for the
-   root-commit fallback.
+   Record the resolved head/base OIDs for step 4.
 2. Extract the subject (first non-empty line) and body (everything after the
    first blank line). Recognize commit trailers (`Refs:`, `Closes:`,
    `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in
@@ -450,7 +462,18 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    subject. This skill is the single source of truth for the regex; it is
    mirrored in `coding:commit`
    (`../../commit/references/conventional-commits.md`).
-4. Resolve the template — first hit wins, paths relative to the repo root:
+4. For every non-root commit, resolve the review surface from the merge base:
+   use `jj log --no-graph -T 'commit_id' -r
+   "heads(::<head-oid> & ::<base-oid>)"` on the jj path or
+   `git merge-base <base-oid> <head-oid>` on the git path. Use the empty tree
+   only for the root-commit fallback. Calculate the active `GIT-PR-SIZE-*`
+   zone from every changed path and net LOC on that surface, including
+   generated and vendored paths, using project overrides when present. Record
+   the required sections for that zone. A black-zone change
+   blocks authoring unless it is split, or a project threshold override moves
+   it below black and the commit supplies an explicit `## Why this size`
+   justification plus reviewer-time estimate.
+5. Resolve the template — first hit wins, paths relative to the repo root:
 
    1. `.github/PULL_REQUEST_TEMPLATE.md`
    2. `.github/pull_request_template.md`
@@ -460,12 +483,19 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    6. `pull_request_template.md`
 
    <IMPORTANT>A repo-local template is emitted verbatim — never fill
-   placeholders in or otherwise mutate a foreign template; skip step 5
-   entirely.</IMPORTANT> When none exist, fall back to the bundled default at
+   placeholders in or otherwise mutate a foreign template; skip placeholder
+   filling in step 6.</IMPORTANT> Before emission, apply step 6's evidence
+   predicates to the content already under every zone-required heading. Stop
+   when a required section is missing, empty, placeholder-only, generic, or
+   lacks its named evidence. In particular, a red-zone `## Why this size` must
+   contain specific indivisibility prose and a valid reviewer-time estimate;
+   heading presence alone never passes. When no repo-local template exists,
+   fall back to the bundled default at
    [templates/pr.md](templates/pr.md) and continue.
    When the bundled default is also missing: exit 4, print the path that
    failed to resolve.
-5. Fill the bundled default's placeholders from the commit body:
+6. Fill the bundled default's placeholders from the commit body, diff, and
+   recorded verification evidence:
    - `{{summary_paragraph}}` — first body paragraph (≤3 sentences); fall back
      to the subject text after `: ` when the body is empty.
    - `{{context_body}}` — content under `## Context` / `Why:` /
@@ -474,6 +504,15 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
      / `How:`, if present.
    - `{{breaking_changes_body}}` — `BREAKING CHANGE:` footers; "None." when
      absent.
+   - `{{risk_body}}` — exact content under `## Risk` / `Risk:`. Required for
+     yellow/red; stop when absent rather than inventing it from the diff.
+   - `{{test_plan_body}}` — exact content under `## Test plan` /
+     `Test-Plan:`. Required for yellow/red; stop when absent.
+   - `{{why_this_size_body}}` — exact content under `## Why this size`.
+     Required for red and an allowed black-zone override. Require specific
+     prose explaining why the surface is indivisible plus an estimate matching
+     [GIT-PR-SIZE-03](../../../constitution/standards/git/rules/GIT-PR-SIZE-03.md);
+     stop when either is absent, generic, or malformed.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
    - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered
@@ -489,10 +528,12 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    - `{{additional_notes_body}}` — remaining unmapped body content; "None."
      when absent.
 
-   Drop any optional section that resolves to "None." rather than leaving a
-   stub, and strip every author-facing guidance comment from the rendered
-   body — keep Summary and Verification always.
-6. Emit the title line, a single blank line, then the Markdown body to stdout.
+   Drop an optional section that resolves to "None." rather than leaving a
+   stub. Never publish a generic or missing zone-required section; stop and
+   report the missing evidence when it cannot be derived specifically. Strip
+   every author-facing guidance comment from the rendered body — keep Summary
+   and Verification always.
+7. Emit the title line, a single blank line, then the Markdown body to stdout.
    Exit codes: `0` success, `2` unknown ref or non-conventional subject, `3` no
    commit source available, `4` bundled default template missing.
 
