@@ -87,7 +87,32 @@ class Report:
 
 
 def split_row(line: str) -> list[str]:
-    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+    text = line.strip()
+    if text.startswith("|"):
+        text = text[1:]
+    if text.endswith("|"):
+        backslashes = 0
+        for character in reversed(text[:-1]):
+            if character != "\\":
+                break
+            backslashes += 1
+        if backslashes % 2 == 0:
+            text = text[:-1]
+    cells: list[str] = []
+    cell: list[str] = []
+    escaped = False
+    for character in text:
+        if character == "|" and not escaped:
+            cells.append("".join(cell).strip())
+            cell = []
+            continue
+        cell.append(character)
+        if escaped:
+            escaped = False
+        elif character == "\\":
+            escaped = True
+    cells.append("".join(cell).strip())
+    return cells
 
 
 def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
@@ -310,7 +335,7 @@ ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
-ADR_FENCED_BLOCK = re.compile(r"```.*?```", re.DOTALL)
+ADR_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 
 
 def repository_root_for_work_dir(work_dir: Path) -> Path:
@@ -325,7 +350,7 @@ def parse_superseded_header(
     text: str,
 ) -> tuple[str | None, str | None, list[tuple[str, str]], int, int]:
     """Return header values, successor links, and duplicate counts from the prefix."""
-    lines = text.splitlines()[:20]
+    lines = adr_header_prefix_lines(text)
     if not lines or not ADR_STATUS_HEADER.match(lines[0]):
         return None, None, [], 0, 0
     successor_lines: list[str] = []
@@ -343,6 +368,26 @@ def parse_superseded_header(
     return successor, changed, links, len(successor_lines), len(changed_lines)
 
 
+def adr_header_prefix_lines(text: str) -> list[str]:
+    """Return only the prepended archive header before the original ADR body."""
+    lines = text.splitlines()
+    fence: tuple[str, int] | None = None
+    for index, line in enumerate(lines):
+        marker = ADR_FENCE.match(line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = (token[0], len(token))
+            elif token[0] == fence[0] and len(token) >= fence[1]:
+                fence = None
+            continue
+        if fence is not None:
+            continue
+        if ADR_TITLE.match(line.strip()):
+            return lines[:index]
+    return lines[:20]
+
+
 def resolve_adr_link(file: Path, target: str) -> Path | None:
     """Resolve a local ADR link, ignoring anchors and external URLs."""
     path_part = target.split("#", 1)[0]
@@ -355,17 +400,22 @@ def adr_metadata_text(text: str) -> str:
     """Return the ADR header, excluding sections and fenced examples."""
     lines: list[str] = []
     title_seen = False
-    in_fence = False
+    fence: tuple[str, int] | None = None
     for line in text.splitlines():
         stripped = line.strip()
+        marker = ADR_FENCE.match(line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = (token[0], len(token))
+            elif token[0] == fence[0] and len(token) >= fence[1]:
+                fence = None
+            continue
+        if fence is not None:
+            continue
         if not title_seen:
             if re.match(r"^#\s+", stripped):
                 title_seen = True
-            continue
-        if stripped.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if in_fence:
             continue
         if re.match(r"^##\s+", stripped):
             break
@@ -376,13 +426,18 @@ def adr_metadata_text(text: str) -> str:
 def adr_heading(text: str) -> tuple[int, str, str] | None:
     """Return the first canonical ADR heading outside comments and fences."""
     visible = ADR_HTML_COMMENT.sub("", text)
-    in_fence = False
+    fence: tuple[str, int] | None = None
     for index, line in enumerate(visible.splitlines()):
         stripped = line.strip()
-        if stripped.startswith("```"):
-            in_fence = not in_fence
+        marker = ADR_FENCE.match(line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = (token[0], len(token))
+            elif token[0] == fence[0] and len(token) >= fence[1]:
+                fence = None
             continue
-        if in_fence:
+        if fence is not None:
             continue
         match = ADR_TITLE.match(stripped)
         if match:
@@ -405,7 +460,20 @@ def without_html_comments(text: str) -> str:
 
 
 def without_fenced_blocks(text: str) -> str:
-    return ADR_FENCED_BLOCK.sub("", text)
+    lines: list[str] = []
+    fence: tuple[str, int] | None = None
+    for line in text.splitlines():
+        marker = ADR_FENCE.match(line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = (token[0], len(token))
+            elif token[0] == fence[0] and len(token) >= fence[1]:
+                fence = None
+            continue
+        if fence is None:
+            lines.append(line)
+    return "\n".join(lines)
 
 
 def check_adrs(report: Report, repository_root: Path) -> None:
@@ -535,6 +603,25 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             changed_count,
         ) = parse_superseded_header(text)
         problems: list[str] = []
+        header_lines = adr_header_prefix_lines(text)
+        successor_positions = [
+            index
+            for index, line in enumerate(header_lines)
+            if ADR_SUCCESSOR_HEADER.match(line)
+        ]
+        changed_positions = [
+            index
+            for index, line in enumerate(header_lines)
+            if ADR_CHANGE_HEADER.match(line)
+        ]
+        if (
+            len(successor_positions) == 1
+            and len(changed_positions) == 1
+            and successor_positions[0] > changed_positions[0]
+        ):
+            problems.append(
+                "archive header fields must appear in order: Superseded by before What changed"
+            )
         heading = adr_heading(text)
         if heading is None:
             problems.append(
@@ -643,7 +730,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             if "status" in normalized_cells:
                 status_column = normalized_cells.index("status")
                 continue
-            for link in MARKDOWN_LINK.findall(line):
+            for link in MARKDOWN_LINK.findall(cells[0]):
                 target = resolve_adr_link(index, link)
                 if target is None:
                     continue
@@ -929,7 +1016,7 @@ def main() -> int:
             repository_root or repository_root_for_work_dir(arguments.work_dir),
         )
     else:
-        root = arguments.engineering_root
+        root = arguments.engineering_root.resolve()
         if root.exists() and not root.is_dir():
             print(f"error: not a directory: {root}", file=sys.stderr)
             return 2

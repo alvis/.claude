@@ -49,11 +49,14 @@ context.
 
 ## Integrity contract
 
-An effective ADR must not contain supersession language, links into
-`superseded/`, contradictory status declarations, or unresolved `TODO`/`TBD`
-placeholders. An archived ADR must have the prepended header, exactly one
-successor and change-summary field, a link to an existing effective successor,
-and a non-empty change summary that explicitly states whether the change is
-partial or complete. The doctor reports each violation with a proposed repair;
-the doctor skill always offers the user an explicit, approved fix during
-investigation.
+Every ADR filename uses a zero-padded numeric prefix that matches its canonical
+`# ADR-<nnnn>: <title>` heading. An effective ADR must not contain supersession
+language, links into `superseded/`, contradictory status declarations, or
+unresolved template placeholders. An archived ADR must retain its original
+heading and body below the prepended header, whose fields appear in order with
+exactly one successor and change-summary field, a link to an existing effective
+successor, and a non-empty change summary that explicitly states whether the
+change is partial or complete. The ADR index table must include a `Status`
+column and mark every effective ADR `Accepted`. The doctor reports each
+violation with a proposed repair; the doctor skill always offers the user an
+explicit, approved fix during investigation.
