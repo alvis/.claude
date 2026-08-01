@@ -814,6 +814,25 @@ def test_adr_index_rejects_duplicate_effective_entries(workspace: Workspace) -> 
     assert all(finding.get("fix") for finding in duplicate)
 
 
+def test_adr_index_keeps_status_named_data_rows_active(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Authority | Status |\n| --- | --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Status | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-index" for finding in findings)
+
+
 def test_adr_index_accepts_escaped_pipes_in_other_cells(
     workspace: Workspace,
 ) -> None:
@@ -916,7 +935,9 @@ def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> 
         "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
         "> **What changed:** The complete choice changed.\n\n"
         "<!-- Retained historical note. -->\n"
-        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "# ADR-0001: Old choice\n\n"
+        "<!-- Example metadata: Status: Proposed -->\n"
+        "- Status: `Accepted`\n\n"
         "## Decision\n\nThe original choice.\n",
         encoding="utf-8",
     )
@@ -1481,6 +1502,39 @@ def test_adr_index_rejects_archived_entries(workspace: Workspace) -> None:
     )
     _, findings = workspace.run_doctor()
     assert "adr-index" in workspace.checks(findings)
+
+
+def test_adr_index_does_not_match_archived_filename_substrings(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-notes-0001-cache.md").write_text(
+        "# ADR-0002: Notes about cache\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-cache.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Notes about cache](../0002-notes-0001-cache.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n\n"
+        "# ADR-0001: Cache\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-notes-0001-cache.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(
+        finding["check"] == "adr-index"
+        and "archived ADR" in finding["message"]
+        for finding in findings
+    )
 
 
 def test_expired_and_conflicting_lease(workspace: Workspace) -> None:

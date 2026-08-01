@@ -716,7 +716,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             body_lines = visible_lines[heading[0] + 1 :]
             original_status_values = [
                 value.lower()
-                for value in ADR_STATUS_LINE.findall(adr_metadata_text(text))
+                for value in ADR_STATUS_LINE.findall(
+                    adr_metadata_text(ADR_HTML_COMMENT.sub("", text))
+                )
             ]
             if original_status_values != ["accepted"]:
                 problems.append(
@@ -838,6 +840,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         delimiter_expected = False
         delimiter_seen = False
         indexed_occurrences: dict[str, int] = {}
+        archived_index_links: set[str] = set()
         for line in index_lines:
             if not line.strip().startswith("|"):
                 status_column = None
@@ -870,7 +873,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     else None
                 )
                 continue
-            if "status" in normalized_cells:
+            if "status" in normalized_cells and not document_table_active:
                 status_column = None
                 table_column_count = None
                 document_table_active = False
@@ -935,32 +938,19 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                             "Remove the stale index row or restore the referenced effective ADR.",
                         )
                 elif target.parent == superseded_dir or superseded_dir in target.parents:
-                    report.error(
-                        "docs/architecture/README.md",
-                        "adr-index",
-                        f"ADR index links to archived ADR: {link}",
-                        "Remove the archived ADR from the index; history belongs under decisions/superseded/ and is selected only when needed.",
-                    )
-        for file in archived_files:
-            relative_target = file.relative_to(index.parent).as_posix()
-            archived_text = file.read_text(encoding="utf-8", errors="replace")
-            archived_title = next(
-                (
-                    line.lstrip("#").strip()
-                    for line in archived_text.splitlines()
-                    if line.startswith("#")
-                ),
-                None,
-            )
-            if (
-                relative_target in index_text
-                or file.name in index_text
-                or (archived_title and archived_title in index_text)
+                    archived_index_links.add(link)
+        for link in MARKDOWN_LINK.findall(index_text):
+            target = resolve_adr_link(index, link)
+            if target is not None and (
+                target.parent == superseded_dir or superseded_dir in target.parents
             ):
+                archived_index_links.add(link)
+        for link in sorted(archived_index_links):
+            if link:
                 report.error(
                     "docs/architecture/README.md",
                     "adr-index",
-                    f"ADR index mentions archived ADR {file.name}",
+                    f"ADR index links to archived ADR: {link}",
                     "Remove the archived ADR mention and keep only effective ADR rows in the index.",
                 )
         for name in sorted(current_names - indexed_current):
