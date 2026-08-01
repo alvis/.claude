@@ -63,6 +63,10 @@ ADR_REFERENCE_DEFINITION = re.compile(
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$",
     re.MULTILINE,
 )
+ADR_LINK_DESTINATION = re.compile(
+    r"^\s*\(\s*<?([^\s)>]+)>?"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
+)
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
 JOURNAL_EVENT = re.compile(
     r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|lease)\b"
@@ -183,6 +187,38 @@ def adr_reference_definitions(text: str) -> dict[str, str]:
         if key not in references:
             references[key] = angle_target or bare_target
     return references
+
+
+def markdown_links_with_labels(text: str) -> list[tuple[str, str]]:
+    """Parse inline Markdown links whose labels may contain balanced brackets."""
+    links: list[tuple[str, str]] = []
+    index = 0
+    while index < len(text):
+        if text[index] != "[" or (index and text[index - 1] == "!"):
+            index += 1
+            continue
+        depth = 1
+        position = index + 1
+        while position < len(text) and depth:
+            if text[position] == "\\":
+                position += 2
+                continue
+            if text[position] == "[":
+                depth += 1
+            elif text[position] == "]":
+                depth -= 1
+            position += 1
+        if depth:
+            index += 1
+            continue
+        label_end = position - 1
+        destination = ADR_LINK_DESTINATION.match(text[position:])
+        if destination is None:
+            index += 1
+            continue
+        links.append((text[index + 1 : label_end], destination.group(1)))
+        index = position + destination.end()
+    return links
 
 
 def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
@@ -422,7 +458,7 @@ ADR_CHANGE_SCOPE = re.compile(
     r")",
     re.IGNORECASE,
 )
-ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+ADR_HTML_COMMENT = re.compile(r"<!--.*?(?:-->|$)", re.DOTALL)
 ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ADR_BLOCKQUOTE_PREFIX = re.compile(r"^ {0,3}>[ \t]?")
 ADR_RAW_HTML_NON_TAG = re.compile(
@@ -531,8 +567,51 @@ def parse_superseded_header(
             changed_lines.append(change_match.group(1).strip())
     successor = successor_lines[-1] if successor_lines else None
     changed = changed_lines[-1] if changed_lines else None
-    links = MARKDOWN_LINK_WITH_LABEL.findall(successor or "")
+    links = markdown_links_with_labels(successor or "")
     return successor, changed, links, len(successor_lines), len(changed_lines)
+
+
+def archive_repair_advice(
+    file: Path, superseded_dir: Path, problems: list[str]
+) -> str:
+    """Offer a convergent repair for the specific archived-ADR defects found."""
+    if file.parent != superseded_dir:
+        return (
+            "Move the ADR directly under docs/architecture/decisions/superseded/; "
+            "then add the single standard Status, Superseded by, and What changed "
+            "header while preserving the original heading and historical body."
+        )
+    actions: list[str] = []
+    if any(
+        "Superseded status header" in problem
+        or "archive header contains" in problem
+        or "archive header fields" in problem
+        for problem in problems
+    ):
+        actions.append(
+            "repair the existing prepended Status, Superseded by, and What changed fields in place"
+        )
+    if any("original canonical ADR heading" in problem for problem in problems):
+        actions.append("restore the retained canonical ADR heading without changing its body")
+    if any("original Accepted status" in problem for problem in problems):
+        actions.append("restore exactly one original Accepted status declaration in the retained metadata")
+    if any("substantive decision content" in problem for problem in problems):
+        actions.append("restore substantive historical decision content without rewriting it")
+    if any("Superseded by" in problem or "successor" in problem for problem in problems):
+        actions.append("correct the existing successor link, label, target, and chronology")
+    if any("What changed" in problem for problem in problems):
+        actions.append(
+            "replace the existing What changed value with one non-empty partial or complete summary"
+        )
+    if any("archive must contain ADR files directly" in problem for problem in problems):
+        actions.append("move the file directly into the superseded archive")
+    if not actions:
+        actions.append("correct the reported archive field in place")
+    return (
+        "For this already archived ADR, "
+        + "; ".join(actions)
+        + "; preserve the single forward header and retained historical body, and do not prepend another header."
+    )
 
 
 def adr_header_prefix_lines(text: str) -> list[str]:
@@ -651,6 +730,7 @@ def adr_title_value(line: str) -> str | None:
 
 def normalize_adr_title(title: str) -> str:
     normalized = re.sub(r"\s+#+\s*$", "", title.strip())
+    normalized = re.sub(r"\\([^\w\s])", r"\1", normalized)
     normalized = without_inline_markup(normalized)
     return normalize_index_cell(normalized)
 
@@ -684,7 +764,19 @@ def without_inline_code(text: str) -> str:
         while end < len(text) and text[end] == "`":
             end += 1
         delimiter = text[index:end]
-        closing = text.find(delimiter, end)
+        closing = -1
+        search = end
+        while search < len(text):
+            candidate = text.find("`", search)
+            if candidate == -1:
+                break
+            candidate_end = candidate
+            while candidate_end < len(text) and text[candidate_end] == "`":
+                candidate_end += 1
+            if candidate_end - candidate == len(delimiter):
+                closing = candidate
+                break
+            search = candidate_end
         if closing == -1:
             index = end
             continue
@@ -758,6 +850,18 @@ def without_blockquote_prefix(line: str) -> str:
         content = content[marker.end() :]
 
 
+def without_list_container_indent(
+    line: str, list_content_indent: int | None
+) -> str:
+    """Remove the active list item's container indentation from a block line."""
+    if list_content_indent is None:
+        return line
+    indentation = len(line) - len(line.lstrip(" "))
+    if indentation < list_content_indent:
+        return line
+    return line[list_content_indent:]
+
+
 def without_inactive_markdown_regions(text: str) -> str:
     """Blank comments, code blocks, and fences while preserving line boundaries."""
     lines: list[str] = []
@@ -776,7 +880,10 @@ def without_inactive_markdown_regions(text: str) -> str:
         if not stripped:
             paragraph_active = False
         if fence is not None:
-            marker = ADR_FENCE.match(block_line)
+            fence_line = without_list_container_indent(
+                block_line, list_content_indent
+            )
+            marker = ADR_FENCE.match(fence_line)
             if (
                 marker
                 and is_valid_fence_marker(marker, fence)
@@ -794,7 +901,7 @@ def without_inactive_markdown_regions(text: str) -> str:
                 lines.append(line)
                 continue
             lines.append(line_break)
-            if re.search(
+            if close_terminated and re.search(
                 rf"</\s*{re.escape(tag)}\s*>", block_line, re.IGNORECASE
             ):
                 raw_html_region = None
@@ -835,22 +942,31 @@ def without_inactive_markdown_regions(text: str) -> str:
         if raw_html_match:
             lines.append(line_break)
             tag = raw_html_match.group("tag")
-            if not re.search(
-                rf"</\s*{re.escape(tag)}\s*>", block_line, re.IGNORECASE
-            ):
+            close_terminated = tag.casefold() in ADR_RAW_HTML_CLOSE_TAGS
+            if close_terminated:
+                has_close = re.search(
+                    rf"</\s*{re.escape(tag)}\s*>",
+                    block_line,
+                    re.IGNORECASE,
+                )
+            else:
+                has_close = False
+            if not has_close:
                 raw_html_region = (
                     tag,
-                    tag.casefold() in ADR_RAW_HTML_CLOSE_TAGS,
+                    close_terminated,
                 )
             paragraph_active = False
             list_content_indent = None
             continue
-        marker = ADR_FENCE.match(block_line)
+        fence_line = without_list_container_indent(
+            block_line, list_content_indent
+        )
+        marker = ADR_FENCE.match(fence_line)
         if marker and is_valid_fence_marker(marker, None):
             fence = (marker.group(1)[0], len(marker.group(1)))
             lines.append(line_break)
             paragraph_active = False
-            list_content_indent = None
             continue
         if indentation >= 4:
             if (
@@ -1210,7 +1326,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 str(relative),
                 "adr-superseded",
                 "; ".join(problems),
-                "Move the file directly under docs/architecture/decisions/superseded/ and prepend the standard Status, Superseded by, and What changed header while preserving the original body.",
+                archive_repair_advice(file, superseded_dir, problems),
             )
 
     index = architecture_dir / "README.md"
