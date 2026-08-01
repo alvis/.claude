@@ -459,6 +459,13 @@ def test_adr_heading_identity_must_match_filename_for_current_and_archive(
         "docs/architecture/decisions/superseded/0003-old-choice.md",
     }
     assert all(finding.get("fix") for finding in identity)
+    archived_identity = next(
+        finding
+        for finding in identity
+        if "superseded/0003-old-choice.md" in finding["work"]
+    )
+    assert "Rename the archived file" in archived_identity["fix"]
+    assert "historical body" in archived_identity["fix"]
 
 
 def test_archived_adr_must_retain_original_body(workspace: Workspace) -> None:
@@ -674,6 +681,32 @@ def test_adr_index_requires_document_header(workspace: Workspace) -> None:
     (architecture / "README.md").write_text(
         "| Reference | Status |\n| --- | --- |\n"
         "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_nonrendered_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "```markdown\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n````\n\n"
+        "<!--\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n-->\n",
         encoding="utf-8",
     )
 
@@ -1112,6 +1145,34 @@ def test_effective_adr_rejects_indented_code_heading(workspace: Workspace) -> No
     (decisions / "0001-current.md").write_text(
         "    # ADR-0001: Current\n\n- Status: `Accepted`\n\n"
         "The decision.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    heading = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "missing its canonical" in finding["message"]
+    ]
+    assert heading
+    assert all(finding.get("fix") for finding in heading)
+
+
+def test_effective_adr_preserves_line_boundaries_around_comments(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# <!--\nnote\n-->ADR-0001: Current\n\n"
+        "- Status: `Accepted`\n\nThe decision.\n",
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(

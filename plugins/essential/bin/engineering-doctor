@@ -475,7 +475,7 @@ def adr_metadata_text(text: str) -> str:
 
 def adr_heading(text: str) -> tuple[int, str, str] | None:
     """Return the first canonical ADR heading outside comments and fences."""
-    visible = ADR_HTML_COMMENT.sub("", text)
+    visible = without_html_comments(text)
     fence: tuple[str, int] | None = None
     for index, line in enumerate(visible.splitlines()):
         stripped = line.strip()
@@ -512,7 +512,9 @@ def normalize_adr_title(title: str) -> str:
 
 
 def without_html_comments(text: str) -> str:
-    return ADR_HTML_COMMENT.sub("", text)
+    return ADR_HTML_COMMENT.sub(
+        lambda match: "\n" * match.group(0).count("\n"), text
+    )
 
 
 def without_fenced_blocks(text: str) -> str:
@@ -534,6 +536,32 @@ def without_fenced_blocks(text: str) -> str:
         if fence is None:
             lines.append(line)
     return "\n".join(lines)
+
+
+def without_inactive_markdown_regions(text: str) -> str:
+    """Blank comments and fenced blocks while preserving source line boundaries."""
+    lines: list[str] = []
+    fence: tuple[str, int] | None = None
+    for line in without_html_comments(text).splitlines(keepends=True):
+        marker = ADR_FENCE.match(line)
+        line_break = "\n" if line.endswith("\n") else ""
+        if marker and is_valid_fence_marker(marker, fence):
+            token = marker.group(1)
+            if fence is None:
+                fence = (token[0], len(token))
+            elif (
+                token[0] == fence[0]
+                and len(token) >= fence[1]
+                and not marker.group(2).strip()
+            ):
+                fence = None
+            lines.append(line_break)
+            continue
+        if fence is not None:
+            lines.append(line_break)
+        else:
+            lines.append(line)
+    return "".join(lines)
 
 
 def check_adrs(report: Report, repository_root: Path) -> None:
@@ -582,11 +610,18 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "Restore the original ADR heading and body without changing the decision text; ensure the heading number matches the filename prefix.",
             )
         elif identity[0] != expected_number:
+            repair = (
+                "Rename the archived file to match its retained canonical heading number, "
+                "then update links without editing the historical body; ask the user to "
+                "resolve any provenance ambiguity."
+                if file.parent == superseded_dir
+                else "Make the canonical ADR heading number match the filename prefix, preserving the original decision body and links."
+            )
             report.error(
                 str(file.relative_to(repository_root)),
                 "adr-integrity",
                 f"ADR heading identity {identity[0]} does not match filename prefix {expected_number}",
-                "Make the canonical ADR heading number match the filename prefix, preserving the original decision body and links.",
+                repair,
             )
     numeric_identities: dict[str, list[Path]] = {}
     for file in sorted(allowed_files):
@@ -673,7 +708,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "expected exactly one Superseded status header "
                 f"(found {len(status_values)} with values {status_values})"
             )
-        header_without_comments = ADR_HTML_COMMENT.sub("", "\n".join(header_lines))
+        header_without_comments = without_html_comments("\n".join(header_lines))
         unexpected_header_lines = [
             line.strip()
             for line in header_without_comments.splitlines()
@@ -712,12 +747,12 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "archived ADR must retain its original canonical ADR heading and body"
             )
         else:
-            visible_lines = ADR_HTML_COMMENT.sub("", text).splitlines()
+            visible_lines = without_html_comments(text).splitlines()
             body_lines = visible_lines[heading[0] + 1 :]
             original_status_values = [
                 value.lower()
                 for value in ADR_STATUS_LINE.findall(
-                    adr_metadata_text(ADR_HTML_COMMENT.sub("", text))
+                    adr_metadata_text(without_html_comments(text))
                 )
             ]
             if original_status_values != ["accepted"]:
@@ -832,8 +867,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         )
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
+        index_visible_text = without_inactive_markdown_regions(index_text)
         indexed_current: set[str] = set()
-        index_lines = index_text.splitlines()
+        index_lines = index_visible_text.splitlines()
         status_column: int | None = None
         table_column_count: int | None = None
         document_table_active = False
@@ -939,7 +975,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         )
                 elif target.parent == superseded_dir or superseded_dir in target.parents:
                     archived_index_links.add(link)
-        for link in MARKDOWN_LINK.findall(index_text):
+        for link in MARKDOWN_LINK.findall(index_visible_text):
             target = resolve_adr_link(index, link)
             if target is not None and (
                 target.parent == superseded_dir or superseded_dir in target.parents
