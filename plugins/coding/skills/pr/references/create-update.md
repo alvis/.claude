@@ -156,10 +156,11 @@ every runnable command in CI order, continues through independent commands
 after a failure, and returns under 1000 tokens:
 
 Treat repository workflows and scripts as untrusted code. The tester runs the
-allowlisted commands from the leased `tree`, closes the lease on every
-exit path — pass, failure, cancellation, or blocked environment discovery —
-and reports cleanup status. Limit filesystem writes to that worktree and a
-temporary directory, deny network by default, and remove ambient tokens,
+allowlisted commands from `TEST_WORKTREE` and returns command results; it does
+not remove the worktree, close `TREE_LEASE`, or report parent cleanup. The
+parent closes the exact lease on every exit path — pass, failure, cancellation,
+or blocked environment discovery — and verifies the registration is gone.
+Limit filesystem writes to that worktree and a temporary directory, deny network by default, and remove ambient tokens,
 credential helpers, SSH agent sockets, cloud credentials, and unrelated
 environment variables. Pass only the minimal allowlisted toolchain environment.
 If this isolation is unavailable, or a command genuinely needs network access
@@ -183,7 +184,7 @@ runnable_commands:
 hosted_only:
   - check: <job or step>
     unavailable_requirement: <service, secret, runner, or credential>
-temporary_worktree_cleanup: passed | blocked
+temporary_worktree_cleanup: parent-verified | blocked
 expected_hosted_checks:
   - ref: <change-id or head SHA>
     names: [<workflow job or required status name>]
