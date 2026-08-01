@@ -164,20 +164,36 @@ def is_index_table_block_boundary(line: str) -> bool:
     )
 
 
+def is_escaped_markdown_character(text: str, index: int) -> bool:
+    """Return whether a Markdown punctuation character has an odd backslash run."""
+    backslashes = 0
+    index -= 1
+    while index >= 0 and text[index] == "\\":
+        backslashes += 1
+        index -= 1
+    return backslashes % 2 == 1
+
+
 def adr_index_links(
     text: str, references: dict[str, str] | None = None
 ) -> list[str]:
     """Return inline and reference-style Markdown targets from visible index text."""
-    text = without_inline_code(text)
+    text = without_inline_html_tags(without_inline_code(text))
     if references is None:
         references = adr_reference_definitions(text)
     targets = [target for _, target in markdown_links_with_labels(text)]
-    for label, reference in ADR_REFERENCE_LINK.findall(text):
+    for match in ADR_REFERENCE_LINK.finditer(text):
+        if is_escaped_markdown_character(text, match.start()):
+            continue
+        label, reference = match.groups()
         key = reference or label
         target = references.get(" ".join(key.split()).casefold())
         if target is not None:
             targets.append(target)
-    for label in ADR_REFERENCE_SHORTCUT.findall(text):
+    for match in ADR_REFERENCE_SHORTCUT.finditer(text):
+        if is_escaped_markdown_character(text, match.start()):
+            continue
+        label = match.group(1)
         target = references.get(" ".join(label.split()).casefold())
         if target is not None:
             targets.append(target)
@@ -186,9 +202,12 @@ def adr_index_links(
 
 def adr_reference_definitions(text: str) -> dict[str, str]:
     """Return the first visible target for each Markdown reference label."""
-    text = without_inline_code(text)
+    text = without_inline_html_tags(without_inline_code(text))
     references: dict[str, str] = {}
-    for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(text):
+    for match in ADR_REFERENCE_DEFINITION.finditer(text):
+        if is_escaped_markdown_character(text, match.start()):
+            continue
+        label, angle_target, bare_target = match.groups()
         key = " ".join(label.split()).casefold()
         if key not in references:
             references[key] = angle_target or bare_target
@@ -200,7 +219,12 @@ def markdown_links_with_labels(text: str) -> list[tuple[str, str]]:
     links: list[tuple[str, str]] = []
     index = 0
     while index < len(text):
-        if text[index] != "[" or (index and text[index - 1] == "!"):
+        image_opener = (
+            index
+            and text[index - 1] == "!"
+            and not is_escaped_markdown_character(text, index - 1)
+        )
+        if text[index] != "[" or is_escaped_markdown_character(text, index) or image_opener:
             index += 1
             continue
         depth = 1
@@ -438,6 +462,7 @@ ADR_STATUS_LINE = re.compile(
 )
 ADR_PLACEHOLDER = re.compile(
     r"(?:\[\s*(?:TODO|TBD)\s*\]|<\s*(?:TODO|TBD)\s*>|"
+    r"^[ \t]*(?:>\s*)?#{1,6}[ \t]+(?:ADR-[0-9]{4}:[ \t]*)?(?:TODO|TBD)\b|"
     r"^[ \t]*(?:>\s*)?(?:(?:[-+*]|\d+[.)])\s+)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
     r"^[ \t]*(?:>\s*)?[\w.-]+:\s*(?:TODO|TBD)\s*$)",
     re.IGNORECASE | re.MULTILINE,
@@ -455,7 +480,7 @@ ADR_SUBHEADING = re.compile(r"^ {0,3}#{2,}(?:\s+|$)")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(
     r"(?:"
-    r"\b(?:partial|complete)\s+(?:change|replacement|supersession|choice|decision)\b|"
+    r"\b(?:partial|complete)\s+(?:change|replacement|supersession)\b|"
     r"\b(?:partially|completely)\s+(?:change|replace|supersede)\w*\b|"
     r"\b(?:change|replacement|supersession)\s+(?:is|was|remains|became|becomes)\s+"
     r"(?:partial|complete)\b|"
@@ -502,6 +527,8 @@ ADR_THEMATIC_BREAK = re.compile(
 ADR_EMPTY_LIST_ITEM = re.compile(r"^(?:[-+*]|\d+[.)])\s*$")
 ADR_REPLACEMENT_REFERENCE = re.compile(
     r"(?:"
+    r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision))\s+"
+    r"(?:supersedes?|replaces?|succeeds?)\b|"
     r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|this)\s+"
     r"(?:replaces?|is\s+(?:the\s+)?replacement\s+for|has\s+(?:replaced|superseded))"
     r"[^\n.]{0,80}\bADR-[0-9]{4}\b|"
@@ -762,20 +789,50 @@ def without_inline_markup(text: str) -> str:
     )
 
 
-ADR_INLINE_HTML_TAG = re.compile(
-    r"<(?:[^>\"']|\"[^\"]*\"|'[^']*')*>"
-)
-
-
 def without_inline_html_tags(text: str) -> str:
     """Blank inline HTML tags while retaining text between the tags."""
-    return ADR_INLINE_HTML_TAG.sub(
-        lambda match: "".join(
-            "\n" if character == "\n" else " "
-            for character in match.group(0)
-        ),
-        text,
-    )
+    characters = list(text)
+    index = 0
+    while index < len(text):
+        if text[index] != "<":
+            index += 1
+            continue
+        position = index + 1
+        if position < len(text) and text[position] == "/":
+            position += 1
+        if position >= len(text) or not re.match(r"[A-Za-z]", text[position]):
+            index += 1
+            continue
+        position += 1
+        while position < len(text) and re.match(r"[A-Za-z0-9:-]", text[position]):
+            position += 1
+        if position >= len(text) or text[position] not in " \t\r\n/>":
+            index += 1
+            continue
+        if text[position] == "/":
+            if position + 1 >= len(text) or text[position + 1] != ">":
+                index += 1
+                continue
+        quote: str | None = None
+        end = position
+        while end < len(text):
+            character = text[end]
+            if quote:
+                if character == quote:
+                    quote = None
+            elif character in "\"'":
+                quote = character
+            elif character == ">":
+                break
+            end += 1
+        if end >= len(text) or quote:
+            index += 1
+            continue
+        for character_index in range(index, end + 1):
+            if characters[character_index] != "\n":
+                characters[character_index] = " "
+        index = end + 1
+    return "".join(characters)
 
 
 def without_inline_code(text: str) -> str:
@@ -1176,10 +1233,10 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "effective ADR contains an unresolved TODO/TBD placeholder",
                 "Replace the placeholder with evidence-backed content, or ask the user whether the ADR should remain proposed instead of effective.",
             )
-        history_content = without_inline_markup(content)
-        if re.search(
-            r"\bsupersed\w*\b|decisions/superseded/", content, re.IGNORECASE
-        ) or ADR_REPLACEMENT_REFERENCE.search(history_content):
+        history_content = without_inline_markup(without_inline_code(content))
+        if "decisions/superseded/" in content or ADR_REPLACEMENT_REFERENCE.search(
+            history_content
+        ):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -1265,7 +1322,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 for line in body_lines
                 if line.strip()
                 and not ADR_METADATA_LINE.match(line.strip())
-                and not re.match(r"^#{2,}\s+", line.strip())
+                and not ADR_SUBHEADING.match(line.strip())
                 and not ADR_FENCE.fullmatch(line.strip())
                 and not ADR_THEMATIC_BREAK.fullmatch(line.strip())
                 and not ADR_EMPTY_CONTAINER.fullmatch(line.strip())
