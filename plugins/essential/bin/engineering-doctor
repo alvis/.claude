@@ -159,10 +159,7 @@ def adr_index_links(
 ) -> list[str]:
     """Return inline and reference-style Markdown targets from visible index text."""
     if references is None:
-        references = {
-            " ".join(label.split()).casefold(): angle_target or bare_target
-            for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(text)
-        }
+        references = adr_reference_definitions(text)
     targets = list(ADR_INDEX_LINK.findall(text))
     for label, reference in ADR_REFERENCE_LINK.findall(text):
         key = reference or label
@@ -174,6 +171,16 @@ def adr_index_links(
         if target is not None:
             targets.append(target)
     return targets
+
+
+def adr_reference_definitions(text: str) -> dict[str, str]:
+    """Return the first visible target for each Markdown reference label."""
+    references: dict[str, str] = {}
+    for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(text):
+        key = " ".join(label.split()).casefold()
+        if key not in references:
+            references[key] = angle_target or bare_target
+    return references
 
 
 def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
@@ -405,6 +412,7 @@ ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(
     r"(?:"
     r"\b(?:partial|complete)\s+(?:change|replacement|supersession|choice|decision)\b|"
+    r"\b(?:partially|completely)\s+(?:change|replace|supersede)\w*\b|"
     r"\b(?:change|replacement|supersession)\s+(?:is|was|remains|became|becomes)\s+"
     r"(?:partial|complete)\b|"
     r"\b(?:change|replacement|supersession)\s*:\s*(?:partial|complete)\b|"
@@ -442,6 +450,7 @@ ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
 ADR_THEMATIC_BREAK = re.compile(
     r"^(?P<mark>[-*_])(?:\s*(?P=mark)){2,}\s*$"
 )
+ADR_EMPTY_LIST_ITEM = re.compile(r"^(?:[-+*]|\d+[.)])\s*$")
 ADR_REPLACEMENT_REFERENCE = re.compile(
     r"(?:"
     r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|this)\s+"
@@ -526,7 +535,9 @@ def parse_superseded_header(
 def adr_header_prefix_lines(text: str) -> list[str]:
     """Return only the prepended archive header before the original ADR body."""
     lines = text.splitlines()
-    visible_lines = without_yaml_frontmatter(without_html_comments(text)).splitlines()
+    visible_lines = without_yaml_frontmatter(
+        without_inactive_markdown_regions(text)
+    ).splitlines()
     fence: tuple[str, int] | None = None
     for index, line in enumerate(visible_lines):
         marker = ADR_FENCE.match(line)
@@ -558,7 +569,7 @@ def resolve_adr_link(file: Path, target: str) -> Path | None:
 
 def adr_metadata_text(text: str) -> str:
     """Return the ADR header, excluding sections and fenced examples."""
-    text = without_yaml_frontmatter(text)
+    text = without_yaml_frontmatter(without_inactive_markdown_regions(text))
     lines: list[str] = []
     title_seen = False
     fence: tuple[str, int] | None = None
@@ -592,7 +603,7 @@ def adr_metadata_text(text: str) -> str:
 
 def adr_heading(text: str) -> tuple[int, str, str] | None:
     """Return the first canonical ADR heading outside comments and fences."""
-    visible = without_yaml_frontmatter(without_html_comments(text))
+    visible = without_yaml_frontmatter(without_inactive_markdown_regions(text))
     fence: tuple[str, int] | None = None
     for index, line in enumerate(visible.splitlines()):
         stripped = line.strip()
@@ -656,6 +667,29 @@ def without_inline_markup(text: str) -> str:
         "",
         normalized,
     )
+
+
+def without_inline_code(text: str) -> str:
+    """Blank matched inline code spans while preserving source line boundaries."""
+    characters = list(text)
+    index = 0
+    while index < len(text):
+        if text[index] != "`" or (index and text[index - 1] == "\\"):
+            index += 1
+            continue
+        end = index
+        while end < len(text) and text[end] == "`":
+            end += 1
+        delimiter = text[index:end]
+        closing = text.find(delimiter, end)
+        if closing == -1:
+            index = end
+            continue
+        for position in range(index, closing + len(delimiter)):
+            if characters[position] != "\n":
+                characters[position] = " "
+        index = closing + len(delimiter)
+    return "".join(characters)
 
 
 def without_yaml_frontmatter(text: str) -> str:
@@ -950,7 +984,10 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 + ", ".join(sorted(status_values)),
                 "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
             )
-        if ADR_PLACEHOLDER.search(content) or ADR_TEMPLATE_PLACEHOLDER.search(content):
+        placeholder_content = without_inline_code(content)
+        if ADR_PLACEHOLDER.search(placeholder_content) or ADR_TEMPLATE_PLACEHOLDER.search(
+            placeholder_content
+        ):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -1050,6 +1087,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 and not ADR_FENCE.fullmatch(line.strip())
                 and not ADR_THEMATIC_BREAK.fullmatch(line.strip())
                 and not ADR_EMPTY_CONTAINER.fullmatch(line.strip())
+                and not ADR_EMPTY_LIST_ITEM.fullmatch(line.strip())
             ]
             if not substantive_lines:
                 problems.append(
@@ -1151,12 +1189,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
         index_visible_text = without_inactive_markdown_regions(index_text)
-        reference_definitions = {
-            " ".join(label.split()).casefold(): angle_target or bare_target
-            for label, angle_target, bare_target in ADR_REFERENCE_DEFINITION.findall(
-                index_visible_text
-            )
-        }
+        reference_definitions = adr_reference_definitions(index_visible_text)
         indexed_current: set[str] = set()
         index_lines = index_visible_text.splitlines()
         status_column: int | None = None
