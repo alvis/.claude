@@ -483,9 +483,13 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    6. `pull_request_template.md`
 
    <IMPORTANT>A repo-local template is emitted verbatim — never fill
-   placeholders in or otherwise mutate a foreign template; skip step 6
-   entirely.</IMPORTANT> If it omits a section required by the active zone,
-   stop before publication and name the missing headings. When none exist,
+   placeholders in or otherwise mutate a foreign template; skip placeholder
+   filling in step 6.</IMPORTANT> Before emission, apply step 6's evidence
+   predicates to the content already under every zone-required heading. Stop
+   when a required section is missing, empty, placeholder-only, generic, or
+   lacks its named evidence. In particular, a red-zone `## Why this size` must
+   contain specific indivisibility prose and a valid reviewer-time estimate;
+   heading presence alone never passes. When no repo-local template exists,
    fall back to the bundled default at
    [templates/pr.md](templates/pr.md) and continue.
    When the bundled default is also missing: exit 4, print the path that

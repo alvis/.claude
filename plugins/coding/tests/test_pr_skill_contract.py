@@ -87,10 +87,9 @@ def test_owned_trees_bind_outputs_and_keep_cleanup_in_parent() -> None:
     helper = (WRITE_PR / "scripts" / "temp-tree.sh").read_text()
 
     assert "TEST_WORKTREE=$(jq -er .tree" in create_update
-    assert "context-owning parent retains `TREE_LEASE`" in create_update
-    assert "does\nnot remove the worktree, close `TREE_LEASE`, or report parent cleanup" in create_update
-    assert "temporary_worktree_cleanup: parent-verified | blocked" in create_update
     assert "context-owning parent passes only" in create_update
+    assert "neither removes the worktree nor closes or reports on the parent-owned" in create_update
+    assert "After consuming each batch report" in create_update
     assert "never transfers cleanup ownership" in create_update
     assert 'open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"' in extraction
     assert "signal trap protects construction only" in extraction
@@ -200,7 +199,7 @@ def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
     assert "retains" in workflow
     assert "undispatched batches" in workflow
     assert "recreate the affected" in workflow
-    assert "neither closes nor reports on" in workflow
+    assert "neither removes the worktree nor closes or reports on" in workflow
     report = workflow.split("<report>", 1)[1].split("</report>", 1)[0]
     assert "temporary_worktree_cleanup" not in report
 
