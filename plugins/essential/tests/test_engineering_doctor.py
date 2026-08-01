@@ -280,7 +280,8 @@ def test_adr_supersession_requires_archive_header_and_current_index(
         "> **Status:** Superseded\n>\n"
         "> **Superseded by:** [ADR-0002 — New choice](../0002-new-choice.md)\n>\n"
         "> **What changed:** The complete choice changed.\n\n"
-        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
@@ -491,6 +492,40 @@ def test_archived_adr_must_retain_original_body(workspace: Workspace) -> None:
     assert all(finding.get("fix") for finding in body)
 
 
+def test_archived_adr_requires_substantive_content_after_metadata(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    substantive = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+    ]
+    assert substantive
+    assert all(finding.get("fix") for finding in substantive)
+
+
 def test_adr_literal_todo_prose_and_fenced_examples_are_not_placeholders(
     workspace: Workspace,
 ) -> None:
@@ -607,6 +642,32 @@ def test_adr_index_requires_markdown_delimiter_row(
     assert all(finding.get("fix") for finding in delimiter)
 
 
+def test_adr_index_requires_delimiter_row_to_match_header_width(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    delimiter = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "valid Markdown delimiter" in finding["message"]
+    ]
+    assert delimiter
+    assert all(finding.get("fix") for finding in delimiter)
+
+
 def test_adr_index_accepts_escaped_pipes_in_other_cells(
     workspace: Workspace,
 ) -> None:
@@ -689,12 +750,38 @@ def test_effective_adr_rejects_unfilled_template_fields(
     assert all(finding.get("fix") for finding in placeholders)
 
 
+@pytest.mark.parametrize(
+    "placeholder",
+    [
+        "<List the meaningful alternatives and why they were not selected.>",
+        "<Record the benefits, costs, risks, and operational consequences.>",
+    ],
+)
+def test_effective_adr_rejects_template_verb_placeholders(
+    workspace: Workspace, placeholder: str
+) -> None:
+    write_effective_adr(workspace.root, body=f"{placeholder}\n")
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
 def test_effective_adr_allows_autolinks_and_inline_html(
     workspace: Workspace,
 ) -> None:
     write_effective_adr(
         workspace.root,
-        body="Links: <https://example.com> <team@example.com> <span>valid</span>.\n",
+        body=(
+            "Links: <https://example.com> <team@example.com> "
+            "<span>valid</span> <List>items</List> <Record>entry</Record>.\n"
+        ),
     )
 
     _, findings = workspace.run_doctor()
@@ -715,6 +802,34 @@ def test_effective_adr_rejects_explicit_replacement_language(
     ]
     assert replacement
     assert all(finding.get("fix") for finding in replacement)
+
+
+def test_effective_adr_ignores_unrelated_replacement_language(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="As specified by ADR-0002, the cache replaces repeated database reads.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+@pytest.mark.parametrize("fence", ["```", "~~~"])
+def test_adr_text_bearing_fence_marker_does_not_close_fenced_content(
+    workspace: Workspace, fence: str
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            f"{fence}text\n# ADR-0099: Example\n"
+            f"{fence}not-a-closing-fence\n<decision title>\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
 
 
 def test_effective_adr_requires_canonical_heading_as_first_title(

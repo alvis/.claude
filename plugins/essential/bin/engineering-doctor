@@ -332,7 +332,7 @@ ADR_PLACEHOLDER = re.compile(
 ADR_TEMPLATE_PLACEHOLDER = re.compile(
     r"<(?:nnnn|(?:decision[- ]?)?title|(?:decision[- ]?)?slug|"
     r"architecture-slug|YYYY-MM-DD|"
-    r"(?:Describe|State|Name|List|Record)\b[^>\n]*)>",
+    r"(?:Describe|State|Name|List|Record)\s+[^>\n]*)>",
     re.IGNORECASE,
 )
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -340,13 +340,24 @@ ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
-ADR_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+ADR_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
+ADR_METADATA_LINE = re.compile(
+    r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
+    re.IGNORECASE,
+)
 ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
 ADR_REPLACEMENT_REFERENCE = re.compile(
-    r"(?:\b(?:replaces?|replaced|replacement)\b[^\n.]{0,120}\bADR-[0-9]{4}\b|"
-    r"\bADR-[0-9]{4}\b[^\n.]{0,120}\b(?:replaces?|replaced|replacement)\b|"
-    r"\bpredecessor\b[^\n.]{0,120}\bADR-[0-9]{4}\b|"
-    r"\bADR-[0-9]{4}\b[^\n.]{0,120}\bpredecessor\b)",
+    r"(?:"
+    r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|this)\s+"
+    r"(?:replaces?|is\s+(?:the\s+)?replacement\s+for|has\s+(?:replaced|superseded))"
+    r"[^\n.]{0,80}\bADR-[0-9]{4}\b|"
+    r"\bADR-[0-9]{4}\b[^\n.]{0,80}\b(?:is\s+)?(?:replaced|superseded)\s+by\s+"
+    r"(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|ADR-[0-9]{4})\b|"
+    r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision))\b"
+    r"[^\n.]{0,80}\bpredecessor\b[^\n.]{0,80}\bADR-[0-9]{4}\b|"
+    r"\bADR-[0-9]{4}\b[^\n.]{0,80}\bpredecessor\b[^\n.]{0,80}\b"
+    r"(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|ADR-[0-9]{4})\b"
+    r")",
     re.IGNORECASE,
 )
 
@@ -391,7 +402,11 @@ def adr_header_prefix_lines(text: str) -> list[str]:
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
-            elif token[0] == fence[0] and len(token) >= fence[1]:
+            elif (
+                token[0] == fence[0]
+                and len(token) >= fence[1]
+                and not marker.group(2).strip()
+            ):
                 fence = None
             continue
         if fence is not None:
@@ -421,7 +436,11 @@ def adr_metadata_text(text: str) -> str:
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
-            elif token[0] == fence[0] and len(token) >= fence[1]:
+            elif (
+                token[0] == fence[0]
+                and len(token) >= fence[1]
+                and not marker.group(2).strip()
+            ):
                 fence = None
             continue
         if fence is not None:
@@ -449,7 +468,11 @@ def adr_heading(text: str) -> tuple[int, str, str] | None:
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
-            elif token[0] == fence[0] and len(token) >= fence[1]:
+            elif (
+                token[0] == fence[0]
+                and len(token) >= fence[1]
+                and not marker.group(2).strip()
+            ):
                 fence = None
             continue
         if fence is not None:
@@ -485,7 +508,11 @@ def without_fenced_blocks(text: str) -> str:
             token = marker.group(1)
             if fence is None:
                 fence = (token[0], len(token))
-            elif token[0] == fence[0] and len(token) >= fence[1]:
+            elif (
+                token[0] == fence[0]
+                and len(token) >= fence[1]
+                and not marker.group(2).strip()
+            ):
                 fence = None
             continue
         if fence is None:
@@ -655,9 +682,17 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             )
         else:
             visible_lines = ADR_HTML_COMMENT.sub("", text).splitlines()
-            if not any(line.strip() for line in visible_lines[heading[0] + 1 :]):
+            body_lines = visible_lines[heading[0] + 1 :]
+            substantive_lines = [
+                line.strip()
+                for line in body_lines
+                if line.strip()
+                and not ADR_METADATA_LINE.match(line.strip())
+                and not re.match(r"^#{2,}\s+", line.strip())
+            ]
+            if not substantive_lines:
                 problems.append(
-                    "archived ADR must retain its original decision body after the canonical heading"
+                    "archived ADR must retain substantive decision content after the metadata"
                 )
         if file.parent != superseded_dir:
             problems.append("archive must contain ADR files directly, not in a nested folder")
@@ -757,22 +792,28 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         indexed_current: set[str] = set()
         index_lines = index_text.splitlines()
         status_column: int | None = None
+        table_column_count: int | None = None
         delimiter_seen = False
         for line in index_lines:
             if not line.strip().startswith("|"):
                 status_column = None
+                table_column_count = None
                 delimiter_seen = False
                 continue
             cells = split_row(line)
             if not cells:
                 continue
             if all(ADR_TABLE_DELIMITER.fullmatch(cell.strip()) for cell in cells):
-                if status_column is not None:
+                if (
+                    status_column is not None
+                    and table_column_count == len(cells)
+                ):
                     delimiter_seen = True
                 continue
             normalized_cells = [cell.strip(" `").casefold() for cell in cells]
             if "status" in normalized_cells:
                 status_column = normalized_cells.index("status")
+                table_column_count = len(cells)
                 delimiter_seen = False
                 continue
             for link in MARKDOWN_LINK.findall(cells[0]):
