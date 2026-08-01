@@ -40,14 +40,16 @@ remote mutation.
   [references/create-update.md](references/create-update.md) with
   `ACTION=update`, and always load
   [references/stacked-prs.md](references/stacked-prs.md).
-- `review` publishes one external review per PR. As the context-owning caller,
+- `review` publishes one external review per PR, or one holistic review unit for
+  a linear stack with findings attributed to its PR surfaces. As the
+  context-owning caller,
   load [references/review-workflow.md](references/review-workflow.md), provision
   any owned tree, and retain its cleanup lease. Run the read-only steps in a
   fresh `code-quality-critic` subagent with no inherited implementation context,
   close the lease after any return or cancellation, and never delegate again
   from that dedicated reviewer. A fresh critic dispatched by
-  [references/review-loop.md](references/review-loop.md) with explicit
-  preprovisioned per-PR capsules is already that dedicated reviewer: it runs the
+  [references/review-loop.md](references/review-loop.md) with an explicit
+  preprovisioned stack capsule is already that dedicated reviewer: it runs the
   review phase directly instead of nesting another dispatch.
 - `merge` validates and merges a linear stack bottom-up. Load and follow
   [references/stacked-prs.md](references/stacked-prs.md), then

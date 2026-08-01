@@ -190,7 +190,7 @@ def test_reviewer_receives_the_pinned_mission_capsule() -> None:
     assert "reviews the complete stack diff against the bottom base" in review
     assert "holistically" in review
     assert "one holistic map" in review
-    assert "A stack\nnever receives a second lease" in review
+    assert "A stack never receives a second lease" in review
 
 
 def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
@@ -337,15 +337,45 @@ def test_review_provisions_distinct_ledger_and_payload_paths() -> None:
     assert "reviewer may write only those two files" in workflow
 
 
+def test_stack_review_uses_one_tip_and_rechecks_every_surface() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+
+    assert "one clean `REVIEW_DIR` at the top head" in workflow
+    assert "reviews the complete stack diff against the bottom base" in workflow
+    assert "PR_SURFACES" in workflow
+    assert "baseRefName" in workflow
+    assert "baseRefOid" in workflow
+    assert "for every `PR_SURFACES` entry" in workflow
+    assert "one holistic" in loop
+    assert "checkout or lease per PR" in loop
+    assert "re-reads and compares those three" in publishing
+
+
+def test_adr_skill_references_follow_the_injected_essential_root() -> None:
+    document = (WRITE_PR.parent / "document" / "SKILL.md").read_text()
+    plugins = WRITE_PR.parent.parent.parent
+    doctor = (plugins / "essential" / "skills" / "doctor" / "SKILL.md").read_text()
+    plan = (plugins / "specification" / "skills" / "plan-code" / "SKILL.md").read_text()
+
+    for skill in (document, doctor, plan):
+        assert "${ESSENTIAL_ROOT}/references/adr.md" in skill
+        assert "plugins/essential/references/adr.md" not in skill
+    assert "${ESSENTIAL_ROOT}/templates/docs/adr.template.md" in document
+
+
 def test_convergence_dispatch_is_already_the_dedicated_reviewer() -> None:
     router = (WRITE_PR / "SKILL.md").read_text()
     loop = (WRITE_PR / "references" / "review-loop.md").read_text()
     workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
 
-    assert "preprovisioned per-PR capsules" in router
-    assert "fresh critic that" in loop
-    assert "do not invoke another router or" in loop
-    assert "already the dedicated" in workflow
+    assert "preprovisioned stack capsule" in router
+    assert "fresh critic" in loop
+    assert "do not invoke another" in loop
+    assert "router or delegate" in loop
+    assert "already the" in workflow
+    assert "dedicated reviewer" in workflow
 
 
 def test_review_tracks_unanchored_findings_until_convergence() -> None:
@@ -369,14 +399,14 @@ def test_dedicated_reviewer_reads_discussion_after_tree_provisioning() -> None:
     assert "created and verified `REVIEW_DIR`" in workflow
 
 
-def test_batch_review_returns_and_cleans_every_pr_ledger() -> None:
+def test_batch_review_returns_and_cleans_every_stack_ledger() -> None:
     loop = (WRITE_PR / "references" / "review-loop.md").read_text()
 
     assert "distinct artifact" in loop
-    assert "directory for each PR" in loop
-    assert "PR-to-ledger-path map" in loop
-    assert "missing, duplicate, or cross-PR path" in loop
-    assert "same per-PR cleanup" in loop
+    assert "directory for each stack" in loop
+    assert "stack-to-ledger-path map" in loop
+    assert "missing, duplicate, or cross-stack path" in loop
+    assert "same\nper-stack cleanup" in loop
 
 
 def test_red_ci_routes_to_repair_without_spending_review_retry() -> None:

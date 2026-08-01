@@ -78,7 +78,7 @@ locate the active workspace and `.state/`; on `requires_ignore` or
      next explicit rewrite;
    - **informational** — unrecognized-but-harmless files, or free-form
      sections the doctor could not parse.
-   For ADRs, read `plugins/essential/references/adr.md` and classify each
+   For ADRs, read `${ESSENTIAL_ROOT}/references/adr.md` and classify each
    finding against its contract: effective ADRs are direct children of
    `decisions/`, archived ADRs are direct children of `decisions/superseded/`
    with the prepended header, and the architecture index lists effective ADRs

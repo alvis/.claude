@@ -74,6 +74,35 @@ def workspace(tmp_path: Path) -> Workspace:
     return Workspace(tmp_path)
 
 
+def run_engineering_root(root: Path) -> tuple[int, list[dict]]:
+    completed = subprocess.run(
+        [str(DOCTOR), "--engineering-root", str(root / ".state"), "--json"],
+        capture_output=True,
+        text=True,
+    )
+    return completed.returncode, json.loads(completed.stdout)["findings"]
+
+
+def write_effective_adr(
+    root: Path, name: str = "0001-choice.md", body: str = ""
+) -> Path:
+    architecture = root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True, exist_ok=True)
+    path = decisions / name
+    path.write_text(
+        "# ADR: Choice\n\n- Status: `Accepted`\n\n" + body,
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "# Architecture\n\n"
+        "| Document | Status |\n| --- | --- |\n"
+        f"| [ADR]({decisions.name}/{name}) | Accepted |\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def test_clean_fixture_has_zero_findings(workspace: Workspace) -> None:
     workspace.write_state(
         row("AAA", "✓", "done", evidence="Merged in abc123.")
@@ -392,3 +421,97 @@ def test_written_under_drift_is_informational(workspace: Workspace) -> None:
     assert len(drift) == 1
     assert drift[0]["severity"] == "info"
     assert "written under contract 00000000" in drift[0]["message"]
+
+
+def test_missing_state_root_still_checks_repository_adrs(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path)
+    code, findings = run_engineering_root(tmp_path)
+    assert code == 0
+    assert findings == []
+
+
+def test_adr_filename_and_numeric_prefix_are_validated(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path)
+    architecture = tmp_path / "docs" / "architecture"
+    (architecture / "decisions" / "choice.md").write_text(
+        "# Invalid\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    archived = architecture / "decisions" / "superseded"
+    archived.mkdir()
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR](../choice.md)\n>\n"
+        "> **What changed:** Replaced.\n",
+        encoding="utf-8",
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert any(finding["check"] == "adr-filename" for finding in findings)
+    assert any("duplicate ADR numeric prefix 0001" in finding["message"] for finding in findings)
+
+
+def test_html_comments_do_not_trigger_adr_integrity_checks(tmp_path: Path) -> None:
+    write_effective_adr(
+        tmp_path,
+        body="<!-- - Status: Superseded; TODO <fill this> -->\n",
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert not any(finding["check"] == "adr-integrity" for finding in findings)
+
+
+def test_nested_adr_files_are_reported_as_layout_errors(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path)
+    nested = tmp_path / "docs" / "architecture" / "decisions" / "archive"
+    nested.mkdir()
+    (nested / "0002-nested.md").write_text(
+        "# Nested\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert any(finding["check"] == "adr-layout" for finding in findings)
+
+
+def test_narrative_adr_link_does_not_satisfy_index_table(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path)
+    readme = tmp_path / "docs" / "architecture" / "README.md"
+    readme.write_text(
+        "See [the choice](decisions/0001-choice.md).\n\n"
+        "| Document | Status |\n| --- | --- |\n",
+        encoding="utf-8",
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert any(finding["check"] == "adr-index" for finding in findings)
+
+
+def test_absolute_successor_link_is_rejected(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path, "0002-new-choice.md")
+    archived = tmp_path / "docs" / "architecture" / "decisions" / "superseded"
+    archived.mkdir()
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR](/docs/architecture/decisions/0002-new-choice.md)\n>\n"
+        "> **What changed:** Replaced.\n",
+        encoding="utf-8",
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "must be relative" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_archive_placeholder_summary_is_rejected(tmp_path: Path) -> None:
+    write_effective_adr(tmp_path, "0002-new-choice.md")
+    archived = tmp_path / "docs" / "architecture" / "decisions" / "superseded"
+    archived.mkdir()
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR](../0002-new-choice.md)\n>\n"
+        "> **What changed:** <State whether the decision changed>.\n",
+        encoding="utf-8",
+    )
+    _, findings = run_engineering_root(tmp_path)
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "What changed" in finding["message"]
+        for finding in findings
+    )

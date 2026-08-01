@@ -90,7 +90,7 @@ contract; `specification:implement-code` and Coding skills execute it.
    Ordinary work children always use an unnumbered semantic slug. Reserve
    `<nn>-<topic-slug>.md` for split output only; durable ADRs alone use
    `docs/architecture/decisions/<nnnn>-<decision-slug>.md`.
-   Read `plugins/essential/references/adr.md` before creating or superseding an
+   Read `${ESSENTIAL_ROOT}/references/adr.md` before creating or superseding an
    ADR. A superseding ADR stands alone; the prior ADR is moved under
    `decisions/superseded/` with the required archive header and is removed from
    the current ADR index.

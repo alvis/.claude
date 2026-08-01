@@ -21,22 +21,27 @@ remediation to `coding:fix`.
 
 ## Execution
 
-The context-owning router runs through *Locate or create the review tree*, then
-dispatches the remaining review steps to a fresh `code-quality-critic` subagent
-with no inherited implementation context. It retains any `TREE_LEASE` and
-passes the clean `REVIEW_DIR` plus a bounded mission capsule containing the
-resolved host, owner, repository, PR number and URL, `HEAD_OID`, base ref and
-OID, body, author, status rollup, requested areas, and dry-run state. The
-reviewer must not rediscover or silently replace those pinned inputs. The
-parent closes the lease after success, failure, or cancellation. Review as an
-external party who knows only that capsule, repository, standards, and pinned
-review tree.
+The context-owning router resolves one review unit before it reaches *Locate or
+create the review tree*, then dispatches the remaining review steps to a fresh
+`code-quality-critic` subagent with no inherited implementation context. A
+single PR is one review unit. When a source tree carries a linear stack, the
+unit is the whole stack: record its bottom base and top head, provision exactly
+one clean `REVIEW_DIR` at the top head, and include a `PR_SURFACES` array with
+each PR's number, URL, head/base refs and OIDs, and per-PR merge-base map. Do
+not create one checkout per PR. The capsule contains the stack metadata,
+`REVIEW_DIR`, and the requested areas/dry-run state; the reviewer checks out
+only the top tip, reviews the complete stack diff against the bottom base
+holistically, then attributes each finding to the earliest PR surface that
+owns it and publishes only to that PR. The reviewer must not rediscover or
+silently replace pinned inputs. The parent closes the one lease after success,
+failure, or cancellation. Review as an external party who knows only that
+capsule, repository, standards, and pinned review tree.
 
 When the caller is the fresh critic dispatched by
-[review-loop.md](review-loop.md), its preprovisioned per-PR capsule, clean
-`REVIEW_DIR`, ledger path, and payload path prove it is already the dedicated
-reviewer. It executes the remaining read-only review phase directly and does
-not dispatch another agent.
+[review-loop.md](review-loop.md), its preprovisioned stack capsule, clean
+top-tip `REVIEW_DIR`, ledger path, and payload path prove it is already the
+dedicated reviewer. It executes the remaining read-only review phase directly
+and does not dispatch another agent.
 
 <IMPORTANT>
 - Read-only against reviewed code. Confine filesystem mutation to the
@@ -94,14 +99,19 @@ git -C "$TREE" merge-base --is-ancestor "$HEAD_REF_OID" HEAD   # per candidate P
 ```
 
 Order the matches bottom-up by their base chain — each PR's `baseRefName` is the
-previous PR's `headRefName` — and review each in that order, so a finding lands on
-the PR that introduced it rather than the one that inherited it. No match is a clean
-stop naming the tree and its HEAD; an unresolvable tangle asks. Resolve every
-matched URL through `resolve-pr.sh` before its review so all paths use the same
-coordinate and metadata contract.
+previous PR's `headRefName` — and keep the chain as one review unit. The bottom
+PR supplies `STACK_BASE_REF`/`STACK_BASE_OID`; the top PR supplies
+`STACK_HEAD_REF`/`STACK_HEAD_OID`. Retain every matched PR's metadata in
+`PR_SURFACES` so findings can be attributed to the change that introduced them,
+but do not review each checkout independently. No match is a clean stop naming
+the tree and its HEAD; an unresolvable tangle asks. Resolve every matched URL
+through `resolve-pr.sh` before its review so all paths use the same coordinate
+and metadata contract.
 
-Stop with evidence when a PR is closed, merged, or unreadable. Record
-`HEAD_OID`, `BASE_REF`, and `BASE_OID`; all review evidence binds to both tips.
+Stop with evidence when a PR is closed, merged, or unreadable. For a single PR,
+record `HEAD_OID`, `BASE_REF`, and `BASE_OID`. For a stack, record the same fields
+for every `PR_SURFACES` entry plus the stack bottom/top pair; all downstream
+evidence binds to those exact objects.
 
 ### Select the change-tracking path
 
@@ -132,11 +142,13 @@ cleanup must exclude them; after consuming both, the parent removes only
 
 For a local target repository, load [review-extraction.md](review-extraction.md)
 now and fetch and verify both pinned objects before inspecting reuse candidates.
-A clean tree already at `HEAD_OID` is then reusable without a new checkout:
+A clean tree already at the pinned review tip is then reusable without a new
+checkout. For a single PR the tip is `HEAD_OID`; for a stack it is
+`STACK_HEAD_OID`:
 
-1. Search for a candidate at `HEAD_OID` — the invoked tree first, then entries from
+1. Search for a candidate at the review tip — the invoked tree first, then entries from
    `git worktree list --porcelain` and `jj workspace list`.
-2. Accept one only when `git -C <tree> rev-parse HEAD` equals `HEAD_OID` **and**
+2. Accept one only when `git -C <tree> rev-parse HEAD` equals the review tip **and**
    `git -C <tree> status --porcelain` is empty. A dirty tree is not the PR head, and
    reviewing it would describe uncommitted work as if the author had pushed it.
 3. With no candidate, the context-owning parent creates a disposable checkout
@@ -144,14 +156,14 @@ A clean tree already at `HEAD_OID` is then reusable without a new checkout:
 
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
-     <open-git-or-open-jj> <target-repository-root> "$HEAD_OID"
+     <open-git-or-open-jj> <target-repository-root> "$REVIEW_TIP_OID"
    ```
 
 For a fresh clone, the helper fetches the pinned head; immediately run the
 reference's base fetch and final two-object verification inside that clone.
 The same reference carries the cleanup contract. The parent retains its
 returned `lease` as `TREE_LEASE`, passes its `tree` as `REVIEW_DIR`, and sets
-`REVIEW_TREE_OWNED=true`.
+`REVIEW_TREE_OWNED=true`. A stack never receives a second lease for a lower PR.
 
 <IMPORTANT>
 The parent closes only the exact helper-issued lease when `REVIEW_TREE_OWNED`
@@ -195,15 +207,21 @@ resolved threads whose evidence commit differs from `HEAD_OID`.
 
 ### Build the reviewable surface
 
-Compare against the merge base, so the review covers the PR's own changes rather
-than base-branch drift:
+Compare against the merge base, so the review covers the selected surface rather
+than base-branch drift. For a stack, first build one holistic map from
+`STACK_BASE_OID` to `STACK_HEAD_OID`; then derive each PR's changed-line map from
+its recorded base/head pair while staying in that same top-tip tree. Use the
+holistic read for cross-layer correctness, and use the per-PR maps only to place
+comments on the PR that owns the finding:
 
 | Path | Merge base | Changed files | Line map |
 |---|---|---|---|
-| jj | `jj log --no-graph -T 'commit_id' -r "heads(::$HEAD_OID & ::$BASE_OID)"` | `jj diff --summary --from "$MERGE_BASE" --to "$HEAD_OID"` | `jj diff --git --context=0 --from "$MERGE_BASE" --to "$HEAD_OID"` |
-| git | `git merge-base "$BASE_OID" "$HEAD_OID"` | `git diff --name-status "$MERGE_BASE" "$HEAD_OID"` | `git diff --unified=0 "$MERGE_BASE" "$HEAD_OID"` |
+| jj | `jj log --no-graph -T 'commit_id' -r "heads(::$REVIEW_TIP_OID & ::$STACK_BASE_REF)"` | `jj diff --summary --from "$MERGE_BASE" --to "$REVIEW_TIP_OID"` | `jj diff --git --context=0 --from "$MERGE_BASE" --to "$REVIEW_TIP_OID"` |
+| git | `git merge-base "$STACK_BASE_OID" "$REVIEW_TIP_OID"` | `git diff --name-status "$MERGE_BASE" "$REVIEW_TIP_OID"` | `git diff --unified=0 "$MERGE_BASE" "$REVIEW_TIP_OID"` |
 
-Both paths emit unified diff, so one parser builds the map.
+Both paths emit unified diff, so one parser builds the holistic map and the
+per-PR attribution maps. A finding that belongs to no individual surface stays
+in that PR's overall review body rather than being copied to every PR.
 
 <IMPORTANT>
 The changed-line map is the anchoring contract. GitHub accepts an inline comment
@@ -311,8 +329,12 @@ gh api --hostname "$HOST" --method POST \
 `comments[]` of `{path, line, side, body}`. Payload construction and 422 recovery
 are in [review-publishing.md](review-publishing.md).
 
-Re-read `headRefOid` and compare it to the pinned `HEAD_OID` *before* building the
-payload. The verdict depends on the answer, so a head check that runs after the review
+Immediately before building the payload, re-resolve the PR metadata and compare
+`headRefOid`, `baseRefName`, and `baseRefOid` with the pinned values. For a stack,
+repeat that comparison for every `PR_SURFACES` entry, including the bottom and
+top pair. If any head or base moved, stop with a concurrency blocker, do not
+build or submit a payload, and record the new remote values for the caller.
+The verdict depends on all three objects, so a check that runs after the review
 is submitted came too late to change anything.
 
 Derive `event` in three ordered steps; never choose it freely.
@@ -333,8 +355,8 @@ as a third condition would leave a review with weak tests and only P3 findings
 matching no row at all while the body still needs a substantive verdict to key off.
 
 **2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI,
-black zone, `headRefOid` no longer equal to `HEAD_OID`, or a blocker prevented a full
-review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
+black zone, a head/base value no longer equal to its pinned value, or a blocker
+prevented a full review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
 with it. A P0 raised against a revision that is no longer the head is not a blocker you
 can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a
 certainty the review does not have.
@@ -362,9 +384,9 @@ With `--dry-run`, print the payload and post nothing.
 
 ## Verification
 
-- Confirm the `headRefOid` comparison ran before the payload was built, and that a head
-  which moved capped the event and is stated plainly in the body — the published review
-  describes the SHA it read, not the current head.
+- Confirm the head, base-ref, and base-OID comparisons ran for every surface before
+  the payload was built; any moved value blocked publication and is stated plainly
+  in the ledger — the published review describes only the pinned stack it read.
 - A created review tree is gone and leaves no entry in `jj workspace list` or
   `git worktree list`; a reused tree is untouched, still clean, still at `HEAD_OID`.
 - Every posted comment resolves to a line in the changed-line map and duplicates

@@ -33,6 +33,11 @@ gh api --hostname "$HOST" --method POST \
 - `commit_id` is mandatory here even though the API treats it as optional. Without
   it GitHub anchors against the current head, so a push mid-review silently
   relocates every comment.
+- Immediately before assembling this payload, re-read `headRefOid`, `baseRefName`,
+  and `baseRefOid` for the PR. A stacked review re-reads and compares those three
+  values for every `PR_SURFACES` entry. If any value differs from its pinned
+  capsule, stop before writing or submitting the payload and return a concurrency
+  blocker; never publish against a moved head or base.
 - `line` is the line number in the file at `commit_id`, not a diff offset.
 - `start_line` must be below `line` on the same `side`.
 

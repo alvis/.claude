@@ -76,8 +76,8 @@ independent-review audit checklist, and the retry/rollback criteria.
    Reconcile `docs/architecture/README.md` and `docs/README.md`; individual
    architectural choices remain ADRs under `docs/architecture/decisions/`.
    Before creating or superseding one, apply the ADR contract at
-   `plugins/essential/references/adr.md` and the template at
-   `plugins/essential/templates/docs/adr.template.md`: effective ADRs are
+   `${ESSENTIAL_ROOT}/references/adr.md` and the template at
+   `${ESSENTIAL_ROOT}/templates/docs/adr.template.md`: effective ADRs are
    indexed directly under `decisions/`, superseded ADRs move under
    `decisions/superseded/`, and a new successor stands alone without naming the
    old ADR.

@@ -297,7 +297,16 @@ ADR_STATUS_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}Status:\*{0,2}\s*`?([\w-]+)",
     re.IGNORECASE | re.MULTILINE,
 )
-ADR_PLACEHOLDER = re.compile(r"\b(?:TODO|TBD)\b", re.IGNORECASE)
+ADR_FILENAME = re.compile(r"^\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+ADR_PLACEHOLDER = re.compile(
+    r"\b(?:TODO|TBD)\b|<[^>\n]+>", re.IGNORECASE
+)
+
+
+def visible_adr_text(text: str) -> str:
+    """Exclude optional HTML guidance comments from ADR integrity checks."""
+    return HTML_COMMENT.sub("", text)
 
 
 def repository_root_for_work_dir(work_dir: Path) -> Path:
@@ -310,7 +319,7 @@ def repository_root_for_work_dir(work_dir: Path) -> Path:
 
 def parse_superseded_header(text: str) -> tuple[str | None, str | None, list[str]]:
     """Return (successor line, change summary, successor links) from the prefix."""
-    lines = text.splitlines()[:20]
+    lines = visible_adr_text(text).splitlines()[:20]
     if not lines or not ADR_STATUS_HEADER.match(lines[0]):
         return None, None, []
     successor: str | None = None
@@ -334,6 +343,30 @@ def resolve_adr_link(file: Path, target: str) -> Path | None:
     return (file.parent / path_part).resolve()
 
 
+def adr_index_links(index_text: str) -> list[str]:
+    """Return links from the first cell of rows in the Document table only."""
+    lines = index_text.splitlines()
+    header: int | None = None
+    for index, line in enumerate(lines):
+        if line.strip().startswith("|") and split_row(line)[0].casefold() == "document":
+            header = index
+            break
+    if header is None:
+        return []
+    links: list[str] = []
+    for line in lines[header + 1 :]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if not stripped.startswith("|"):
+            break
+        cells = split_row(stripped)
+        if not cells or all(set(cell) <= {"-", " ", ":"} for cell in cells):
+            continue
+        links.extend(MARKDOWN_LINK.findall(cells[0]))
+    return links
+
+
 def check_adrs(report: Report, repository_root: Path) -> None:
     """Check effective/archived ADR separation, index coverage, and clarity."""
     architecture_dir = repository_root / "docs" / "architecture"
@@ -341,17 +374,51 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     if not decisions_dir.is_dir():
         return
 
-    current_files = sorted(path for path in decisions_dir.glob("*.md") if path.is_file())
     superseded_dir = decisions_dir / "superseded"
-    archived_files = sorted(
-        path for path in superseded_dir.rglob("*.md") if path.is_file()
-    ) if superseded_dir.is_dir() else []
+    all_files = sorted(path for path in decisions_dir.rglob("*.md") if path.is_file())
+    current_files = [path for path in all_files if path.parent == decisions_dir]
+    archived_files = [
+        path for path in all_files if path.parent == superseded_dir
+    ]
+    allowed_files = set(current_files) | set(archived_files)
+    for file in all_files:
+        if file not in allowed_files:
+            report.error(
+                str(file.relative_to(repository_root)),
+                "adr-layout",
+                "ADR files must be directly under decisions/ or decisions/superseded/",
+                "Move the file to an allowed ADR directory; nested ADR directories are not part of the archive contract.",
+            )
+
+    numbers: dict[str, list[Path]] = {}
+    for file in [*current_files, *archived_files]:
+        relative = str(file.relative_to(repository_root))
+        if not ADR_FILENAME.fullmatch(file.name):
+            report.error(
+                relative,
+                "adr-filename",
+                "ADR filename must match 0000-lowercase-slug.md",
+                "Rename the ADR with a zero-padded four-digit number and lowercase hyphenated slug.",
+            )
+            continue
+        numbers.setdefault(file.name[:4], []).append(file)
+    for number, files in numbers.items():
+        if len(files) > 1:
+            for file in files:
+                report.error(
+                    str(file.relative_to(repository_root)),
+                    "adr-filename",
+                    f"duplicate ADR numeric prefix {number}",
+                    "Assign each effective and archived ADR a unique numeric prefix.",
+                )
+
     current_names = {path.stem for path in current_files}
 
     for file in current_files:
         text = file.read_text(encoding="utf-8", errors="replace")
+        visible = visible_adr_text(text)
         relative = file.relative_to(repository_root)
-        status_values = {value.lower() for value in ADR_STATUS_LINE.findall(text)}
+        status_values = {value.lower() for value in ADR_STATUS_LINE.findall(visible)}
         if "superseded" in status_values:
             report.error(
                 str(relative),
@@ -374,14 +441,14 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 + ", ".join(sorted(status_values)),
                 "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
             )
-        if ADR_PLACEHOLDER.search(text):
+        if ADR_PLACEHOLDER.search(visible):
             report.error(
                 str(relative),
                 "adr-integrity",
-                "effective ADR contains an unresolved TODO/TBD placeholder",
+                "effective ADR contains an unresolved placeholder",
                 "Replace the placeholder with evidence-backed content, or ask the user whether the ADR should remain proposed instead of effective.",
             )
-        if re.search(r"\bsupersed\w*\b|decisions/superseded/", text, re.IGNORECASE):
+        if re.search(r"\bsupersed\w*\b|decisions/superseded/", visible, re.IGNORECASE):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -392,18 +459,18 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     for file in archived_files:
         relative = file.relative_to(repository_root)
         text = file.read_text(encoding="utf-8", errors="replace")
-        successor_line, changed, links = parse_superseded_header(
-            text
-        )
+        successor_line, changed, links = parse_superseded_header(text)
         problems: list[str] = []
-        if file.parent != superseded_dir:
-            problems.append("archive must contain ADR files directly, not in a nested folder")
         if successor_line is None:
             problems.append("missing the prepended Superseded by header")
         if not changed or ADR_PLACEHOLDER.search(changed):
             problems.append("missing a non-empty What changed summary")
         valid_successors: list[str] = []
         for link in links:
+            path_part = link.split("#", 1)[0]
+            if path_part.startswith("/"):
+                problems.append(f"successor link must be relative: {link}")
+                continue
             target = resolve_adr_link(file, link)
             if target is None:
                 continue
@@ -432,7 +499,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
         linked_current: set[str] = set()
-        for link in MARKDOWN_LINK.findall(index_text):
+        for link in adr_index_links(index_text):
             target = resolve_adr_link(index, link)
             if target is None:
                 continue
@@ -452,28 +519,6 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     "adr-index",
                     f"ADR index links to archived ADR: {link}",
                     "Remove the archived ADR from the index; history belongs under decisions/superseded/ and is selected only when needed.",
-                )
-        for file in archived_files:
-            relative_target = file.relative_to(index.parent).as_posix()
-            archived_text = file.read_text(encoding="utf-8", errors="replace")
-            archived_title = next(
-                (
-                    line.lstrip("#").strip()
-                    for line in archived_text.splitlines()
-                    if line.startswith("#")
-                ),
-                None,
-            )
-            if (
-                relative_target in index_text
-                or file.name in index_text
-                or (archived_title and archived_title in index_text)
-            ):
-                report.error(
-                    "docs/architecture/README.md",
-                    "adr-index",
-                    f"ADR index mentions archived ADR {file.name}",
-                    "Remove the archived ADR mention and keep only effective ADR rows in the index.",
                 )
         for name in sorted(current_names - linked_current):
             report.error(
@@ -679,8 +724,8 @@ def main() -> int:
         check_work_dir(report, arguments.work_dir)
         check_adrs(report, repository_root_for_work_dir(arguments.work_dir))
     else:
-        root = arguments.engineering_root
-        if not root.is_dir():
+        root = arguments.engineering_root.resolve()
+        if not root.is_dir() and root.name != ".state":
             print(f"error: not a directory: {root}", file=sys.stderr)
             return 2
         works = root / "works"
