@@ -41,7 +41,7 @@ renders at text height:
 ```
 
 Substitute the level and its color. What each level *means* is the consequence ladder
-in [review.md](review.md), which owns it and is where a grading question gets settled;
+in [review-checklist.md](review-checklist.md), which owns it and is where a grading question gets settled;
 this table adds only the color that renders it, so the two can never disagree about
 what a badge claims:
 
@@ -89,7 +89,7 @@ section, and only where it changes what the author does next:
 | Alert | Used for |
 |---|---|
 | `> [!CAUTION]` | Merge is blocked — everything behind an *uncapped* substantive `REQUEST_CHANGES`, chores included, not P0/P1 alone. A capped review takes `WARNING` instead: it cannot declare merge blocked on evidence it has just said it does not trust |
-| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — whatever capped the event in `SKILL.md`, which owns that list |
+| `> [!WARNING]` | The review is incomplete or untrustworthy in a named way — whatever capped the event in [review-workflow.md](review-workflow.md), which owns that list |
 | `> [!IMPORTANT]` | A boundary: paths not reviewed, findings that could not anchor to a line |
 | `> [!NOTE]` | Verdict context needing no action |
 | `> [!TIP]` | One line on the highest-value optional improvement, when the verdict is `APPROVE` |

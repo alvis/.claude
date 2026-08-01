@@ -11,8 +11,9 @@ for the overall pipeline.
 - User names a target branch AND asks to save part of `@` (e.g. "land just the typo on master", "commit the doc fix to master and keep the rest on the feature branch").
 - One concern in `@` logically belongs to a different existing or new branch.
 - Not for numbered stacked-PR bookmark generation. If the user also requests
-  a PR, synchronize the chosen target first, then invoke
-  [`coding:write-pr`](../../write-pr/SKILL.md) separately for that exact bookmark.
+  a PR, synchronize the chosen target first, then invoke the matching
+  [`coding:pr create` or `coding:pr update`](../../pr/references/create-update.md)
+  action separately for that exact bookmark.
 
 If `@` mixes concerns but they all belong on the same new change → [workflow-split.md](./workflow-split.md).
 
@@ -92,16 +93,17 @@ jj git push --bookmark <target>             # existing remote target
 jj git push --bookmark <target> --allow-new # new remote target
 ```
 
-Run exactly one push. Do not derive or generate a numbered `write-pr` bookmark.
+Run exactly one push. Do not derive or generate a numbered `pr` bookmark.
 An existing tracked bookmark is updated with jj's force-with-lease protection;
 a new remote bookmark requires the explicit `--allow-new` form.
 
 ### 7. Hand off only when a PR was requested
 
-If the user requested a PR, invoke `coding:write-pr` separately with the exact
-`<target>` bookmark after direct sync. Do not pass a branch prefix or ask it to
-generate a numbered bookmark. `coding:write-pr` owns PR creation or update and
-CI convergence. Without a PR request, do not invoke it.
+If the user requested a PR, invoke `coding:pr create` for a new head or
+`coding:pr update` for an existing open PR, passing the exact `<target>`
+bookmark after direct sync. Do not pass a branch prefix or ask the subcommand to
+generate a numbered bookmark. The selected action owns PR publication and CI
+convergence. Without a PR request, do not invoke either action.
 
 ### 8. Confirm leftover working copy
 
@@ -128,13 +130,15 @@ npm run build
 - This route is the ONE sanctioned use of hand-run `git commit` inside this skill.
 - This route is the ONE sanctioned use of `jj bookmark move ... --allow-backwards` without an explicit `--allow-rewrite-merged` flag — the user-named target branch IS the consent.
 - This route is one of the TWO sanctioned direct `jj git push` paths in this skill; it pushes only the chosen target bookmark.
-- PR titles + bodies still go through `/coding:write-pr` if a PR follows.
+- PR titles + bodies still go through `/coding:pr create` or
+  `/coding:pr update` if a PR follows.
 - All other Hard Rules in [SKILL.md](../SKILL.md) still apply.
 
 ## Mandatory follow-ups
 
 - Directly synchronize the chosen target after integrity passes.
-- Invoke `coding:write-pr` only if the user requested a PR for that exact target.
+- Invoke the matching `coding:pr create` or `coding:pr update` action only if
+  the user requested a PR for that exact target.
 - Report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases

@@ -38,6 +38,19 @@ fi
 
 if [ "$#" -eq 6 ] && [ "$1" = log ] && [ "$2" = -r ] &&
    [ "$4" = --no-graph ] && [ "$5" = -T ] &&
+   [ "$6" = 'commit_id ++ "\n"' ] &&
+   [[ "$3" == *" & descendants("* ]]; then
+  child=${3%% & descendants(*}
+  parent=${3#* & descendants(}
+  parent=${parent%)}
+  [ "$child" = "$ANCESTRY_FAIL_SHA" ] && exit 43
+  [ "$parent" = "$ANCESTRY_FAIL_PARENT_SHA" ] && exit 43
+  printf '%s\n' "$child"
+  exit 0
+fi
+
+if [ "$#" -eq 6 ] && [ "$1" = log ] && [ "$2" = -r ] &&
+   [ "$4" = --no-graph ] && [ "$5" = -T ] &&
    [ "$6" = 'commit_id ++ "\n"' ]; then
   printf 'log:%s\n' "$3" >>"$FAKE_LOG"
   case "$3" in
@@ -67,10 +80,8 @@ lookup() {
   return 1
 }
 
-if [ "$#" -eq 10 ] && [ "$1" = pr ] && [ "$2" = list ] &&
-   [ "$3" = --head ] && [ "$5" = --state ] && [ "$6" = all ] &&
-   [ "$7" = --json ] && [ "$8" = state ] && [ "$9" = --jq ] &&
-   [ "${10}" = '.[0].state // "NONE"' ]; then
+if [ "$1" = pr ] && [ "$2" = list ] && [ "$3" = --head ] &&
+   [ "$5" = --state ] && [ "$6" = all ]; then
   printf 'discover:%s\n' "$4" >>"$FAKE_LOG"
   [ "$4" = "$GH_FAIL_BOOKMARK" ] && exit 44
   lookup "$4" "$PR_STATES" || exit 45
@@ -129,6 +140,9 @@ run_case() {
   PUSH_FAIL_BOOKMARK=
   EDIT_FAIL_BOOKMARK=
   GH_FAIL_BOOKMARK=
+  ANCESTRY_FAIL_SHA=
+  ANCESTRY_FAIL_PARENT_SHA=
+  base_args=(--base main)
   args=()
   expected_status=0
   expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":[]}'
@@ -138,6 +152,25 @@ run_case() {
     no-args)
       expected_status=2
       expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["no-specs"]}'
+      ;;
+    missing-base)
+      base_args=()
+      args=(stack/01-a="$SHA_A")
+      expected_status=2
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["missing-base"]}'
+      ;;
+    invalid-base)
+      base_args=(--base bad..base)
+      args=(stack/01-a="$SHA_A")
+      expected_status=2
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["invalid-base"]}'
+      ;;
+    missing-base-ref)
+      base_args=(--base absent)
+      args=(stack/01-a="$SHA_A")
+      expected_status=1
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["base-sha:absent"]}'
+      expected_log=fetch
       ;;
     unknown-flag)
       args=(--bogus)
@@ -159,6 +192,11 @@ run_case() {
       expected_status=2
       expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["invalid-sha"]}'
       ;;
+    duplicate-bookmark)
+      args=(stack/01-a="$SHA_A" stack/01-a="$SHA_A")
+      expected_status=2
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["duplicate-bookmark"]}'
+      ;;
     fetch-failure)
       args=(stack/01-a="$SHA_A")
       FETCH_FAIL=true
@@ -174,12 +212,43 @@ run_case() {
       expected_log="fetch
 log:stack/01-a"
       ;;
+    nonlinear)
+      args=(stack/01-a="$SHA_A")
+      add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
+      add_ref "$PR_STATES" stack/01-a OPEN
+      ANCESTRY_FAIL_SHA=$SHA_A
+      expected_status=1
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["nonlinear:stack/01-a"]}'
+      expected_log="fetch
+log:stack/01-a
+discover:stack/01-a"
+      ;;
     gh-failure)
       args=(stack/01-a="$SHA_A")
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
       GH_FAIL_BOOKMARK=stack/01-a
       expected_status=1
       expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["gh-discovery:stack/01-a"]}'
+      expected_log="fetch
+log:stack/01-a
+discover:stack/01-a"
+      ;;
+    multiple-open)
+      args=(stack/01-a="$SHA_A")
+      add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
+      add_ref "$PR_STATES" stack/01-a AMBIGUOUS
+      expected_status=1
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["multiple-open:stack/01-a"]}'
+      expected_log="fetch
+log:stack/01-a
+discover:stack/01-a"
+      ;;
+    closed-head)
+      args=(stack/01-a="$SHA_A")
+      add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
+      add_ref "$PR_STATES" stack/01-a CLOSED
+      expected_status=1
+      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["closed-head:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a"
@@ -203,6 +272,9 @@ log:stack/01-a@origin"
       add_ref "$REMOTE_SHAS" stack/02-live@origin "$SHA_B"
       add_ref "$PR_STATES" stack/01-old MERGED
       add_ref "$PR_STATES" stack/02-live OPEN
+      # The merged tip was rewritten by the forge; the live child now descends
+      # the root base directly and must not be checked against that stale tip.
+      ANCESTRY_FAIL_PARENT_SHA=$SHA_A
       expected_json='{"vcs":"jj","restacked":["stack/02-live"],"skipped_merged":["stack/01-old"],"errors":[]}'
       expected_log="fetch
 log:stack/01-old
@@ -234,6 +306,21 @@ push:stack/02-b
 log:stack/02-b@origin
 edit:stack/02-b:stack/01-a"
       ;;
+    custom-base)
+      base_args=(--base stack/00-root)
+      git -C "$COLOCATED" branch --force stack/00-root HEAD
+      args=(stack/01-a="$SHA_A")
+      add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
+      add_ref "$REMOTE_SHAS" stack/01-a@origin "$SHA_A"
+      add_ref "$PR_STATES" stack/01-a OPEN
+      expected_json='{"vcs":"jj","restacked":["stack/01-a"],"skipped_merged":[],"errors":[]}'
+      expected_log="fetch
+log:stack/01-a
+discover:stack/01-a
+push:stack/01-a
+log:stack/01-a@origin
+edit:stack/01-a:stack/00-root"
+      ;;
     push-failure)
       args=(stack/01-a="$SHA_A" stack/02-b="$SHA_B")
       add_ref "$LOCAL_SHAS" stack/01-a "$SHA_A"
@@ -259,7 +346,7 @@ push:stack/01-a"
       add_ref "$PR_STATES" stack/02-b OPEN
       EDIT_FAIL_BOOKMARK=stack/01-a
       expected_status=1
-      expected_json='{"vcs":"jj","restacked":[],"skipped_merged":[],"errors":["pr-edit:stack/01-a"]}'
+      expected_json='{"vcs":"jj","restacked":["stack/01-a"],"skipped_merged":[],"errors":["pr-edit:stack/01-a"]}'
       expected_log="fetch
 log:stack/01-a
 discover:stack/01-a
@@ -296,10 +383,12 @@ discover:stack/02-b"
       ;;
   esac
 
-  export FETCH_FAIL PUSH_FAIL_BOOKMARK EDIT_FAIL_BOOKMARK GH_FAIL_BOOKMARK
+  export FETCH_FAIL PUSH_FAIL_BOOKMARK EDIT_FAIL_BOOKMARK GH_FAIL_BOOKMARK \
+    ANCESTRY_FAIL_SHA ANCESTRY_FAIL_PARENT_SHA
   set +e
   output=$(cd "$COLOCATED" &&
-    /bin/bash "$RESTACK_SH" ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
+    /bin/bash "$RESTACK_SH" "${base_args[@]}" \
+      ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
   status=$?
   set -e
   actual_log=$(cat "$FAKE_LOG")
@@ -310,9 +399,10 @@ discover:stack/02-b"
 }
 
 for test_case in \
-  no-args unknown-flag malformed-spec unsafe-bookmark nonhex-sha fetch-failure \
-  local-mismatch gh-failure none merged success-chain push-failure edit-failure \
-  remote-mismatch dry-run
+  no-args missing-base invalid-base missing-base-ref unknown-flag malformed-spec \
+  unsafe-bookmark nonhex-sha duplicate-bookmark fetch-failure local-mismatch \
+  nonlinear gh-failure multiple-open closed-head none merged success-chain \
+  custom-base push-failure edit-failure remote-mismatch dry-run
 do
   run_case "$test_case"
 done
@@ -350,6 +440,7 @@ run_git_case() {
   : >"$PR_STATES"
   GH_FAIL_BOOKMARK=
   EDIT_FAIL_BOOKMARK=
+  base_args=(--base main)
   args=()
   expected_status=0
   expected_remote=
@@ -388,7 +479,8 @@ run_git_case() {
   set +e
   # a PATH without jj is what a plain git checkout looks like to the script
   output=$(cd "$PLAIN" && PATH="$GIT_BIN:/usr/bin:/bin" \
-    /bin/bash "$RESTACK_SH" ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
+    /bin/bash "$RESTACK_SH" "${base_args[@]}" \
+      ${args[@]+"${args[@]}"} 2>"$TMP_ROOT/stderr")
   status=$?
   set -e
   actual_remote=$(git -C "$ORIGIN" rev-parse --verify --quiet \
@@ -406,4 +498,4 @@ do
 done
 
 if [ "$failures" -ne 0 ]; then exit 1; fi
-printf 'PASS: 15 jj and 5 git fail-closed ordered stack sync cases\n'
+printf 'PASS: 23 jj and 5 git fail-closed ordered stack sync cases\n'

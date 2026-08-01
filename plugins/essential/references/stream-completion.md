@@ -17,7 +17,7 @@ capacity is freed rather than by opening a second front.
 Finished execution lands in `reviewing`, never straight in a terminal state:
 
 1. Propose the stream's pull request(s) — code delivery routes through
-   [coding:write-pr](../../coding/skills/write-pr/SKILL.md).
+   [coding:pr create](../../coding/skills/pr/SKILL.md).
 2. Set lifecycle `reviewing` and record the PR reference(s) in `state.md`, so
    whoever resumes can check them without rediscovering the branch.
 3. Reconcile the stream's `overview.md` row.

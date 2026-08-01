@@ -1,19 +1,16 @@
----
-name: merge-pr
-description: 'Merge a linear stack of GitHub pull requests while restacking descendants between merges. Use when a user invokes /merge-pr with PR numbers, asks to merge stacked PRs, or needs gh-driven bottom-up PR merging with automatic downstream rebase.'
-model: opus
-allowed-tools: Bash(git:*), Bash(jj:*), Bash(gh:*), Bash(sleep:*), Bash(jq:*), Read
-argument-hint: "<pr numbers...> [--method=rebase|squash|merge] [--force]"
----
-
 # Merge Stacked Pull Requests
 
 Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remaining downstream branch after each merge so GitHub-generated merge commits or rebased commits do not cause the next PR to replay already-merged work. This skill owns remote PR merges plus descendant branch/bookmark rebases in either git or jj repositories; local commit creation remains `coding:commit`, and code/CI repair remains `coding:fix`.
 
 ## Boundaries
 
-- Use for: `/merge-pr 12 13 14`, "merge this stack of PRs", "merge PRs 8, 9, and 10 with squash", or any request to merge multiple dependent GitHub PRs while automatically rebasing downstream PR branches.
-- Do not use for: creating PRs (`coding:commit --create-pr` + `coding:write-pr`), saving local changes (`coding:commit`), writing code fixes (`coding:fix`), or validating unpushed commits before opening PRs (`coding:finalize-commits`).
+- Use for: `/coding:pr merge 12 13 14`, "merge this stack of PRs", or any
+  request to merge dependent GitHub PRs while automatically rebasing downstream
+  PR branches.
+- Do not use for: creating PRs (`coding:commit --create-pr` +
+  `coding:pr create`), saving local changes (`coding:commit`), writing code
+  fixes (`coding:fix`), or validating unpushed commits before opening PRs
+  (`coding:finalize-commits`).
 
 ## Inputs
 
@@ -172,7 +169,7 @@ Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remai
 
   ```bash
   claude plugin validate --strict plugins/coding
-  python3 plugins/governance/skills/write-skill/scripts/quick_validate.py plugins/coding/skills/merge-pr
+  uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py plugins/coding/skills/pr
   ```
 
 ## Completion

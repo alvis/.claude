@@ -1,6 +1,6 @@
 # Publishing the review to GitHub
 
-Load this from the *Publish the review* step of `coding:review-pr`.
+Load this from the *Publish the review* step of `coding:pr review`.
 
 Submit body, verdict, and every inline comment in one `POST`. The create-pending /
 add-comments / submit sequence leaves a half-populated pending review on the PR when
@@ -25,7 +25,7 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 }
 ```
 
-- `{{marker}}` is the badge, tag, or emoji that opens every comment. `tone.md` owns
+- `{{marker}}` is the badge, tag, or emoji that opens every comment. [review-tone.md](review-tone.md) owns
   that markup and is the only place it is written out; render from there rather than
   copying a literal badge URL into this file, which would drift the moment a colour
   or a wrapper changes.
@@ -50,7 +50,7 @@ fence.
 Recovery moves the *finding*, never the rendered comment. The inline body already
 opens with its marker, and the body's bullet prepends one of its own, so relocating
 the posted text verbatim would ship two markers on one finding and break the
-exactly-one rule in `tone.md`.
+exactly-one rule in [review-tone.md](review-tone.md).
 
 Never answer a 422 by re-anchoring the comment to a nearby line that happens to be
 in the diff. A comment on the wrong line costs more author time than no comment.

@@ -142,7 +142,7 @@ Always start with a draft PR and update it as the code evolves.
 - Require Summary and Verification sections; other sections are optional
 
 Use the canonical bundled template at
-[`../../../skills/write-pr/references/templates/pr.md`](../../../skills/write-pr/references/templates/pr.md).
+[`../../../skills/pr/references/templates/pr.md`](../../../skills/pr/references/templates/pr.md).
 It owns the structure and rendering guidance; this standard owns the required
 sections and review policy.
 
@@ -261,7 +261,7 @@ When a feature spans more than one zone or category, split it into a stack gover
 - Acknowledge good code
 - Focus on important issues first
 - Mark every comment per
-  [review-pr/references/tone.md](../../../skills/review-pr/references/tone.md),
+  [pr/references/review-tone.md](../../../skills/pr/references/review-tone.md),
   which owns the marker set and how each one is rendered — never a literal prefix
 
 ### Merge Requirements
