@@ -40,11 +40,18 @@ LIFECYCLE_STATUSES = (
 )
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
-MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
-MARKDOWN_LINK_WITH_LABEL = re.compile(
-    r"(?<!!)\[([^\]]+)\]\(([^)\s]+)\)"
+MARKDOWN_LINK = re.compile(
+    r"\[[^\]]*\]\(\s*([^\s)]+)"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
-ADR_INDEX_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
+MARKDOWN_LINK_WITH_LABEL = re.compile(
+    r"(?<!!)\[([^\]]+)\]\(\s*([^\s)]+)"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
+)
+ADR_INDEX_LINK = re.compile(
+    r"(?<!!)\[[^\]]*\]\(\s*([^\s)]+)"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
+)
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
 JOURNAL_EVENT = re.compile(
     r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|lease)\b"
@@ -382,6 +389,8 @@ ADR_RAW_HTML_BLOCK = re.compile(
     r"th|thead|title|tr|ul|style|textarea)(?:\s|/?>)",
     re.IGNORECASE,
 )
+ADR_LIST_ITEM = re.compile(r"^(?P<indent> *)(?:[-+*]|\d+[.)])(?:\s+|$)")
+ADR_RAW_HTML_CLOSE_TAGS = {"pre", "script", "style", "textarea"}
 ADR_METADATA_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
     re.IGNORECASE,
@@ -425,11 +434,31 @@ def is_valid_fence_marker(
     )
 
 
+def archive_header_lines(text: str) -> list[str]:
+    """Return the visible prepended header, stopping at retained pre-title text."""
+    prefix = adr_header_prefix_lines(text)
+    lines = without_html_comments("\n".join(prefix)).splitlines()
+    header: list[str] = []
+    change_seen = False
+    for line in lines:
+        if change_seen and line.strip() and line.strip() != ">":
+            if not (
+                ADR_STATUS_HEADER.match(line)
+                or ADR_SUCCESSOR_HEADER.match(line)
+                or ADR_CHANGE_HEADER.match(line)
+            ):
+                break
+        header.append(line)
+        if ADR_CHANGE_HEADER.match(line):
+            change_seen = True
+    return header
+
+
 def parse_superseded_header(
     text: str,
 ) -> tuple[str | None, str | None, list[tuple[str, str]], int, int]:
     """Return header values, successor links, and duplicate counts from the prefix."""
-    lines = without_html_comments("\n".join(adr_header_prefix_lines(text))).splitlines()
+    lines = archive_header_lines(text)
     if not lines or not ADR_STATUS_HEADER.match(lines[0]):
         return None, None, [], 0, 0
     successor_lines: list[str] = []
@@ -582,41 +611,65 @@ def without_inactive_markdown_regions(text: str) -> str:
     """Blank comments, code blocks, and fences while preserving line boundaries."""
     lines: list[str] = []
     fence: tuple[str, int] | None = None
-    raw_html_tag: str | None = None
+    raw_html_region: tuple[str, bool] | None = None
+    list_indent: int | None = None
     for line in without_html_comments(text).splitlines(keepends=True):
         line_break = "\n" if line.endswith("\n") else ""
-        if line.startswith(("    ", "\t")):
+        stripped = line.strip()
+        indentation = len(line) - len(line.lstrip(" "))
+        if line.startswith("\t"):
+            indentation = 4
+        if fence is not None:
+            marker = ADR_FENCE.match(line)
+            if (
+                marker
+                and is_valid_fence_marker(marker, fence)
+                and marker.group(1)[0] == fence[0]
+                and len(marker.group(1)) >= fence[1]
+                and not marker.group(2).strip()
+            ):
+                fence = None
             lines.append(line_break)
             continue
-        if raw_html_tag is not None:
+        if raw_html_region is not None:
+            tag, close_terminated = raw_html_region
+            if not close_terminated and not stripped:
+                raw_html_region = None
+                lines.append(line)
+                continue
             lines.append(line_break)
-            if re.search(rf"</\s*{re.escape(raw_html_tag)}\s*>", line, re.IGNORECASE):
-                raw_html_tag = None
+            if re.search(rf"</\s*{re.escape(tag)}\s*>", line, re.IGNORECASE):
+                raw_html_region = None
             continue
         raw_html_match = ADR_RAW_HTML_BLOCK.match(line)
         if raw_html_match:
             lines.append(line_break)
             tag = raw_html_match.group("tag")
             if not re.search(rf"</\s*{re.escape(tag)}\s*>", line, re.IGNORECASE):
-                raw_html_tag = tag
+                raw_html_region = (
+                    tag,
+                    tag.casefold() in ADR_RAW_HTML_CLOSE_TAGS,
+                )
             continue
         marker = ADR_FENCE.match(line)
-        if marker and is_valid_fence_marker(marker, fence):
-            token = marker.group(1)
-            if fence is None:
-                fence = (token[0], len(token))
-            elif (
-                token[0] == fence[0]
-                and len(token) >= fence[1]
-                and not marker.group(2).strip()
-            ):
-                fence = None
+        if marker and is_valid_fence_marker(marker, None):
+            fence = (marker.group(1)[0], len(marker.group(1)))
             lines.append(line_break)
             continue
-        if fence is not None:
-            lines.append(line_break)
-        else:
-            lines.append(line)
+        if indentation >= 4:
+            if list_indent is not None and indentation >= list_indent:
+                lines.append(line)
+                if ADR_LIST_ITEM.match(line):
+                    list_indent = indentation
+            else:
+                lines.append(line_break)
+            continue
+        lines.append(line)
+        list_item = ADR_LIST_ITEM.match(line)
+        if list_item:
+            list_indent = len(list_item.group("indent"))
+        elif stripped:
+            list_indent = None
     return "".join(lines)
 
 
@@ -770,8 +823,8 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             changed_count,
         ) = parse_superseded_header(text)
         problems: list[str] = []
-        header_lines = adr_header_prefix_lines(text)
-        header_without_comments = without_html_comments("\n".join(header_lines))
+        header_lines = archive_header_lines(text)
+        header_without_comments = "\n".join(header_lines)
         status_values = [
             value.lower()
             for value in ADR_STATUS_LINE.findall(header_without_comments)
@@ -825,7 +878,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             original_status_values = [
                 value.lower()
                 for value in ADR_STATUS_LINE.findall(
-                    adr_metadata_text(without_html_comments(text))
+                    adr_metadata_text(without_inactive_markdown_regions(text))
                 )
             ]
             if original_status_values != ["accepted"]:
