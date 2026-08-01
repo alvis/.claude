@@ -926,6 +926,90 @@ def test_adr_index_accepts_rows_without_outer_pipes(workspace: Workspace) -> Non
     assert not any(finding["check"].startswith("adr-") for finding in findings)
 
 
+def test_adr_index_accepts_formatted_table_headers(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| **Document** | **Status** |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | **Accepted** |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_ignores_indented_code_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "    | Document | Status |\n    | --- | --- |\n"
+        "    | [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_image_destinations(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| ![ADR image](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_rejects_uppercase_markdown_extension(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.MD").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+
+    _, findings = workspace.run_doctor()
+    extension = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-layout"
+        and "lowercase `.md` extension" in finding["message"]
+    ]
+    assert extension
+    assert all(finding.get("fix") for finding in extension)
+
+
 def test_archived_header_fields_must_precede_body(
     workspace: Workspace,
 ) -> None:
@@ -1421,6 +1505,37 @@ def test_adr_archive_change_summary_must_classify_scope(
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "partial or complete" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_change_summary_rejects_incidental_scope_word(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The cache policy changed; see the complete reference for details.\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\nA retained choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
         "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
         encoding="utf-8",
     )

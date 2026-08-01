@@ -40,8 +40,10 @@ LIFECYCLE_STATUSES = (
 )
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
-MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
-MARKDOWN_LINK_WITH_LABEL = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
+MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
+MARKDOWN_LINK_WITH_LABEL = re.compile(
+    r"(?<!!)\[([^\]]+)\]\(([^)\s]+)\)"
+)
 EXTERNAL_LINK = re.compile(r"^[a-z][a-z0-9+.-]*:")
 JOURNAL_EVENT = re.compile(
     r"^- \S+ \S+ rev:\d+ (status|decision|revision|sync|sweep|lease)\b"
@@ -113,6 +115,24 @@ def split_row(line: str) -> list[str]:
             escaped = True
     cells.append("".join(cell).strip())
     return cells
+
+
+def normalize_index_cell(cell: str) -> str:
+    """Normalize the small Markdown formatting forms used in table headers."""
+    normalized = cell.strip()
+    changed = True
+    while changed and len(normalized) > 2:
+        changed = False
+        for marker in ("`", "**", "__", "*", "_"):
+            if (
+                normalized.startswith(marker)
+                and normalized.endswith(marker)
+                and len(normalized) > 2 * len(marker)
+            ):
+                normalized = normalized[len(marker) : -len(marker)].strip()
+                changed = True
+                break
+    return normalized.casefold()
 
 
 def parse_tasks(state_text: str) -> tuple[list[dict], int] | None:
@@ -340,7 +360,16 @@ ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
 ADR_H1 = re.compile(r"^ {0,3}#\s+")
 ADR_SUBHEADING = re.compile(r"^ {0,3}#{2,}(?:\s+|$)")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
-ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
+ADR_CHANGE_SCOPE = re.compile(
+    r"(?:"
+    r"\b(?:partial|complete)\s+(?:change|replacement|supersession|choice|decision)\b|"
+    r"\b(?:change|replacement|supersession)\s+(?:is|was|remains|became|becomes)\s+"
+    r"(?:partial|complete)\b|"
+    r"\b(?:change|replacement|supersession)\s*:\s*(?:partial|complete)\b|"
+    r"\b(?:change\s+)?scope\s*:\s*(?:partial|complete)\b"
+    r")",
+    re.IGNORECASE,
+)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ADR_METADATA_LINE = re.compile(
@@ -540,12 +569,15 @@ def without_fenced_blocks(text: str) -> str:
 
 
 def without_inactive_markdown_regions(text: str) -> str:
-    """Blank comments and fenced blocks while preserving source line boundaries."""
+    """Blank comments, code blocks, and fences while preserving line boundaries."""
     lines: list[str] = []
     fence: tuple[str, int] | None = None
     for line in without_html_comments(text).splitlines(keepends=True):
-        marker = ADR_FENCE.match(line)
         line_break = "\n" if line.endswith("\n") else ""
+        if line.startswith(("    ", "\t")):
+            lines.append(line_break)
+            continue
+        marker = ADR_FENCE.match(line)
         if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)
             if fence is None:
@@ -572,16 +604,32 @@ def check_adrs(report: Report, repository_root: Path) -> None:
     if not decisions_dir.is_dir():
         return
 
-    current_files = sorted(path for path in decisions_dir.glob("*.md") if path.is_file())
+    current_files = sorted(
+        path for path in decisions_dir.iterdir() if path.is_file() and path.suffix == ".md"
+    )
     superseded_dir = decisions_dir / "superseded"
     archived_files = sorted(
-        path for path in superseded_dir.glob("*.md") if path.is_file()
+        path
+        for path in superseded_dir.iterdir()
+        if path.is_file() and path.suffix == ".md"
     ) if superseded_dir.is_dir() else []
     all_adr_files = sorted(
-        path for path in decisions_dir.rglob("*.md") if path.is_file()
+        path
+        for path in decisions_dir.rglob("*")
+        if path.is_file() and path.suffix.casefold() == ".md"
     )
+    for file in all_adr_files:
+        if file.suffix != ".md":
+            report.error(
+                str(file.relative_to(repository_root)),
+                "adr-layout",
+                "ADR filename must use the lowercase `.md` extension",
+                "Rename the ADR to use a lowercase `.md` extension without changing its numeric identity or decision body.",
+            )
     allowed_files = set(current_files) | set(archived_files)
     for file in all_adr_files:
+        if file.suffix != ".md":
+            continue
         if file in allowed_files:
             continue
         relative = file.relative_to(repository_root)
@@ -898,7 +946,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     delimiter_seen = True
                 delimiter_expected = False
                 continue
-            normalized_cells = [cell.strip(" `").casefold() for cell in cells]
+            normalized_cells = [normalize_index_cell(cell) for cell in cells]
             if normalized_cells and normalized_cells[0] == "document":
                 document_table_active = True
                 table_column_count = len(cells)
@@ -971,7 +1019,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                                 "Add an `Accepted` status cell to the effective ADR row.",
                             )
                         else:
-                            index_status = cells[status_column].strip(" `").casefold()
+                            index_status = normalize_index_cell(cells[status_column])
                             if index_status != "accepted":
                                 report.error(
                                     "docs/architecture/README.md",
