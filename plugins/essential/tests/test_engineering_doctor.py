@@ -866,6 +866,30 @@ def test_adr_index_keeps_status_named_data_rows_active(
     assert not any(finding["check"] == "adr-index" for finding in findings)
 
 
+def test_adr_index_rejects_duplicate_status_columns(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status | Status |\n| --- | --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted | Superseded |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    duplicate = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "duplicate Status columns" in finding["message"]
+    ]
+    assert duplicate
+    assert all(finding.get("fix") for finding in duplicate)
+
+
 def test_adr_index_accepts_escaped_pipes_in_other_cells(
     workspace: Workspace,
 ) -> None:
@@ -878,6 +902,23 @@ def test_adr_index_accepts_escaped_pipes_in_other_cells(
     (architecture / "README.md").write_text(
         "| Document | Authority | Status |\n| --- | --- | --- |\n"
         "| [Current](decisions/0001-current.md) | Supports A \\| B | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_rows_without_outer_pipes(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "Document | Status\n--- | ---\n"
+        "[Current](decisions/0001-current.md) | Accepted\n",
         encoding="utf-8",
     )
 
@@ -967,7 +1008,7 @@ def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> 
         "> **Status:** Superseded\n>\n"
         "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
         "> **What changed:** The complete choice changed.\n\n"
-        "<!-- Retained historical note. -->\n"
+        "<!-- Retained historical note.\nStatus: Proposed\n-->\n"
         "# ADR-0001: Old choice\n\n"
         "<!-- Example metadata: Status: Proposed -->\n"
         "- Status: `Accepted`\n\n"
@@ -1097,6 +1138,23 @@ def test_adr_rejects_backtick_fence_info_with_backtick(workspace: Workspace) -> 
     write_effective_adr(
         workspace.root,
         body="```example`value\nTODO:\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholder = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholder
+    assert all(finding.get("fix") for finding in placeholder)
+
+
+def test_adr_rejects_tab_indented_fence_marker(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="\t```text\nTODO:\n\t```\n",
     )
 
     _, findings = workspace.run_doctor()

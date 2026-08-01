@@ -342,7 +342,7 @@ ADR_SUBHEADING = re.compile(r"^ {0,3}#{2,}(?:\s+|$)")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
-ADR_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
+ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ADR_METADATA_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
     re.IGNORECASE,
@@ -699,16 +699,16 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         ) = parse_superseded_header(text)
         problems: list[str] = []
         header_lines = adr_header_prefix_lines(text)
+        header_without_comments = without_html_comments("\n".join(header_lines))
         status_values = [
             value.lower()
-            for value in ADR_STATUS_LINE.findall("\n".join(header_lines))
+            for value in ADR_STATUS_LINE.findall(header_without_comments)
         ]
         if status_values != ["superseded"]:
             problems.append(
                 "expected exactly one Superseded status header "
                 f"(found {len(status_values)} with values {status_values})"
             )
-        header_without_comments = without_html_comments("\n".join(header_lines))
         unexpected_header_lines = [
             line.strip()
             for line in header_without_comments.splitlines()
@@ -878,7 +878,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         indexed_occurrences: dict[str, int] = {}
         archived_index_links: set[str] = set()
         for line in index_lines:
-            if not line.strip().startswith("|"):
+            if "|" not in line:
                 status_column = None
                 table_column_count = None
                 document_table_active = False
@@ -903,9 +903,21 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 table_column_count = len(cells)
                 delimiter_expected = True
                 delimiter_seen = False
+                status_columns = [
+                    index
+                    for index, cell in enumerate(normalized_cells)
+                    if cell == "status"
+                ]
+                if len(status_columns) > 1:
+                    report.error(
+                        "docs/architecture/README.md",
+                        "adr-index",
+                        "ADR index table declares duplicate Status columns",
+                        "Keep exactly one `Status` column in the Documents table and remove the duplicate status cells.",
+                    )
                 status_column = (
-                    normalized_cells.index("status")
-                    if "status" in normalized_cells
+                    status_columns[0]
+                    if status_columns
                     else None
                 )
                 continue
