@@ -526,6 +526,40 @@ def test_archived_adr_requires_substantive_content_after_metadata(
     assert all(finding.get("fix") for finding in substantive)
 
 
+def test_archived_adr_rejects_thematic_break_as_substantive_content(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n---\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    substantive = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+    ]
+    assert substantive
+    assert all(finding.get("fix") for finding in substantive)
+
+
 def test_adr_literal_todo_prose_and_fenced_examples_are_not_placeholders(
     workspace: Workspace,
 ) -> None:
@@ -653,6 +687,32 @@ def test_adr_index_requires_delimiter_row_to_match_header_width(
     )
     (architecture / "README.md").write_text(
         "| Document | Status |\n| --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    delimiter = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "valid Markdown delimiter" in finding["message"]
+    ]
+    assert delimiter
+    assert all(finding.get("fix") for finding in delimiter)
+
+
+def test_adr_index_requires_delimiter_row_immediately_after_header(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| Notes | Value |\n| --- | --- |\n"
         "| [Current](decisions/0001-current.md) | Accepted |\n",
         encoding="utf-8",
     )
@@ -855,6 +915,32 @@ def test_effective_adr_requires_canonical_heading_as_first_title(
         for finding in findings
         if finding["check"] == "adr-integrity"
         and "canonical" in finding["message"]
+    ]
+    assert heading
+    assert all(finding.get("fix") for finding in heading)
+
+
+def test_effective_adr_rejects_indented_code_heading(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "    # ADR-0001: Current\n\n- Status: `Accepted`\n\n"
+        "The decision.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    heading = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "missing its canonical" in finding["message"]
     ]
     assert heading
     assert all(finding.get("fix") for finding in heading)
@@ -1094,6 +1180,20 @@ def test_adr_scan_runs_when_engineering_root_is_absent(tmp_path: Path) -> None:
     )
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout)["findings"] == []
+
+
+def test_missing_non_state_engineering_root_is_an_error(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+
+    completed = subprocess.run(
+        [str(DOCTOR), "--engineering-root", ".staet", "--json"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 2
+    assert "not a directory" in completed.stderr
 
 
 def test_adr_status_in_body_example_does_not_contradict_metadata(

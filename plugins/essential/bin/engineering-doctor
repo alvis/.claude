@@ -337,6 +337,7 @@ ADR_TEMPLATE_PLACEHOLDER = re.compile(
 )
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 ADR_TITLE = re.compile(r"^#\s+ADR-([0-9]{4}):\s*(.+?)\s*$")
+ADR_H1 = re.compile(r"^ {0,3}#\s+")
 ADR_SUCCESSOR_LABEL = re.compile(r"^ADR-([0-9]{4})\s+—\s+(.+?)\s*$")
 ADR_CHANGE_SCOPE = re.compile(r"\b(?:partial|complete)\b", re.IGNORECASE)
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
@@ -346,6 +347,9 @@ ADR_METADATA_LINE = re.compile(
     re.IGNORECASE,
 )
 ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
+ADR_THEMATIC_BREAK = re.compile(
+    r"^(?P<mark>[-*_])(?:\s*(?P=mark)){2,}\s*$"
+)
 ADR_REPLACEMENT_REFERENCE = re.compile(
     r"(?:"
     r"\b(?:this\s+(?:ADR|decision)|the\s+current\s+(?:ADR|decision)|this)\s+"
@@ -411,7 +415,7 @@ def adr_header_prefix_lines(text: str) -> list[str]:
             continue
         if fence is not None:
             continue
-        if re.match(r"^#\s+", line.strip()):
+        if ADR_H1.match(line):
             return lines[:index]
     return lines[:20]
 
@@ -446,7 +450,7 @@ def adr_metadata_text(text: str) -> str:
         if fence is not None:
             continue
         if not title_seen:
-            if re.match(r"^#\s+", stripped):
+            if ADR_H1.match(line):
                 if not ADR_TITLE.match(stripped):
                     return ""
                 title_seen = True
@@ -477,7 +481,7 @@ def adr_heading(text: str) -> tuple[int, str, str] | None:
             continue
         if fence is not None:
             continue
-        if re.match(r"^#\s+", stripped):
+        if ADR_H1.match(line):
             match = ADR_TITLE.match(stripped)
             if match:
                 return index, match.group(1), match.group(2).strip()
@@ -689,6 +693,8 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 if line.strip()
                 and not ADR_METADATA_LINE.match(line.strip())
                 and not re.match(r"^#{2,}\s+", line.strip())
+                and not ADR_FENCE.fullmatch(line.strip())
+                and not ADR_THEMATIC_BREAK.fullmatch(line.strip())
             ]
             if not substantive_lines:
                 problems.append(
@@ -793,11 +799,13 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         index_lines = index_text.splitlines()
         status_column: int | None = None
         table_column_count: int | None = None
+        delimiter_expected = False
         delimiter_seen = False
         for line in index_lines:
             if not line.strip().startswith("|"):
                 status_column = None
                 table_column_count = None
+                delimiter_expected = False
                 delimiter_seen = False
                 continue
             cells = split_row(line)
@@ -805,17 +813,21 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 continue
             if all(ADR_TABLE_DELIMITER.fullmatch(cell.strip()) for cell in cells):
                 if (
-                    status_column is not None
+                    delimiter_expected
+                    and status_column is not None
                     and table_column_count == len(cells)
                 ):
                     delimiter_seen = True
+                delimiter_expected = False
                 continue
             normalized_cells = [cell.strip(" `").casefold() for cell in cells]
             if "status" in normalized_cells:
                 status_column = normalized_cells.index("status")
                 table_column_count = len(cells)
+                delimiter_expected = True
                 delimiter_seen = False
                 continue
+            delimiter_expected = False
             for link in MARKDOWN_LINK.findall(cells[0]):
                 target = resolve_adr_link(index, link)
                 if target is None:
@@ -1111,6 +1123,9 @@ def main() -> int:
     else:
         root = arguments.engineering_root.resolve()
         if root.exists() and not root.is_dir():
+            print(f"error: not a directory: {root}", file=sys.stderr)
+            return 2
+        if not root.exists() and root.name != ".state":
             print(f"error: not a directory: {root}", file=sys.stderr)
             return 2
         if root.is_dir():
