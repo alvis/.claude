@@ -348,6 +348,27 @@ def test_convergence_dispatch_is_already_the_dedicated_reviewer() -> None:
     assert "already the dedicated" in workflow
 
 
+def test_review_tracks_unanchored_findings_until_convergence() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert "findings with no inline anchor" in loop
+    assert "evidence OID" in loop
+    assert "still_applies`, `fixed`, or `does_not_apply" in loop
+    assert "null-anchor finding" in workflow
+    assert "anchored or unanchored" in workflow
+
+
+def test_dedicated_reviewer_reads_discussion_after_tree_provisioning() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert workflow.index("### Locate or create the review tree") < workflow.index(
+        "### Read the existing discussion"
+    )
+    assert "dedicated reviewer performs this phase after the parent has located or" in workflow
+    assert "created and verified `REVIEW_DIR`" in workflow
+
+
 def test_batch_review_returns_and_cleans_every_pr_ledger() -> None:
     loop = (WRITE_PR / "references" / "review-loop.md").read_text()
 

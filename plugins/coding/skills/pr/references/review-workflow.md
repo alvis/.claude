@@ -103,37 +103,6 @@ coordinate and metadata contract.
 Stop with evidence when a PR is closed, merged, or unreadable. Record
 `HEAD_OID`, `BASE_REF`, and `BASE_OID`; all review evidence binds to both tips.
 
-### Read the existing discussion
-
-Read issue comments, reviews, inline comments, and review-thread state before
-reviewing. Page every connection; a partial discussion cannot support a
-`fixed`, `does_not_apply`, or de-duplication decision.
-
-```bash
-gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
-gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
-gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
-gh api graphql --hostname "$HOST" \
-  -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
-query($owner:String!,$name:String!,$number:Int!,$cursor:String){
-  repository(owner:$owner,name:$name){
-    pullRequest(number:$number){
-      reviewThreads(first:100,after:$cursor){
-        pageInfo{hasNextPage endCursor}
-        nodes{id isResolved comments(first:100){
-          pageInfo{hasNextPage endCursor}
-          nodes{databaseId body url path line commit{oid} author{login}}
-        }}
-      }
-    }
-  }
-}'
-```
-
-Page `reviewThreads` and each thread's `comments` connection to exhaustion.
-Re-evaluate every existing P0/P1/P2 or mandatory-chore thread, including
-resolved threads whose evidence commit differs from `HEAD_OID`.
-
 ### Select the change-tracking path
 
 Prefer `jj` where it is available and genuinely initialized. Detect functionally — a
@@ -189,6 +158,40 @@ The parent closes only the exact helper-issued lease when `REVIEW_TREE_OWNED`
 is true, including after subagent cancellation. A reused tree belongs to the
 user and its removal would destroy real work.
 </IMPORTANT>
+
+### Read the existing discussion
+
+The dedicated reviewer performs this phase after the parent has located or
+created and verified `REVIEW_DIR`; it receives the pinned capsule and does not
+repeat parent metadata discovery. Read issue comments, reviews, inline comments,
+and review-thread state before reviewing. Page every connection; a partial
+discussion cannot support a `fixed`, `does_not_apply`, or de-duplication
+decision.
+
+```bash
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
+gh api graphql --hostname "$HOST" \
+  -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
+query($owner:String!,$name:String!,$number:Int!,$cursor:String){
+  repository(owner:$owner,name:$name){
+    pullRequest(number:$number){
+      reviewThreads(first:100,after:$cursor){
+        pageInfo{hasNextPage endCursor}
+        nodes{id isResolved comments(first:100){
+          pageInfo{hasNextPage endCursor}
+          nodes{databaseId body url path line commit{oid} author{login}}
+        }}
+      }
+    }
+  }
+}'
+```
+
+Page `reviewThreads` and each thread's `comments` connection to exhaustion.
+Re-evaluate every existing P0/P1/P2 or mandatory-chore thread, including
+resolved threads whose evidence commit differs from `HEAD_OID`.
 
 ### Build the reviewable surface
 
@@ -369,6 +372,9 @@ With `--dry-run`, print the payload and post nothing.
 - Every existing P0/P1/P2 or mandatory-chore thread required above was
   re-evaluated against `HEAD_OID` and reported as `still_applies`, `fixed`, or
   `does_not_apply`; it was not reposted, replied to, or resolved by the reviewer.
+- Every overall-review finding, including a null-anchor finding, has a stable
+  key, priority, kind, review ID/URL, summary, evidence OID, and disposition;
+  P0/P1/P2 and mandatory chores are explicitly re-evaluated on later heads.
 - `BASE_REF` and `BASE_OID` still match the reviewed base before publication.
 - The submitted `event` matches the verdict table, or the self-review downgrade is
   stated in the body.
@@ -383,5 +389,8 @@ submitted event, trust cap or `none`, unanchored count, paths not reviewed, and
 blocker. An outstanding `chore` is a
 merge blocker and must never be summarized as zero findings. Preserve stack
 order. The ledger includes every existing P0/P1/P2 or mandatory-chore thread's
-disposition so a publication caller acts only after independent confirmation.
+disposition and every overall-review finding (anchored or unanchored), keyed to
+the evidence OID, so a publication caller acts only after independent
+confirmation. A later head must re-evaluate any high-priority finding whose
+evidence OID changed.
 A partial review is never reported as complete.
