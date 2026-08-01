@@ -577,7 +577,7 @@ def parse_superseded_header(
             changed_lines.append(change_match.group(1).strip())
     successor = successor_lines[-1] if successor_lines else None
     changed = changed_lines[-1] if changed_lines else None
-    links = markdown_links_with_labels(successor or "")
+    links = markdown_links_with_labels(without_inline_html_tags(successor or ""))
     return successor, changed, links, len(successor_lines), len(changed_lines)
 
 
@@ -759,6 +759,22 @@ def without_inline_markup(text: str) -> str:
         r"(?<=\S)(?:\*{1,2}|_{1,2})(?!\w)",
         "",
         normalized,
+    )
+
+
+ADR_INLINE_HTML_TAG = re.compile(
+    r"<(?:[^>\"']|\"[^\"]*\"|'[^']*')*>"
+)
+
+
+def without_inline_html_tags(text: str) -> str:
+    """Blank inline HTML tags while retaining text between the tags."""
+    return ADR_INLINE_HTML_TAG.sub(
+        lambda match: "".join(
+            "\n" if character == "\n" else " "
+            for character in match.group(0)
+        ),
+        text,
     )
 
 
@@ -1266,16 +1282,17 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "expected exactly one Superseded by header "
                 f"(found {successor_count})"
             )
+        changed_for_validation = without_inline_code(changed) if changed else changed
         if (
             changed_count != 1
             or not changed
-            or ADR_PLACEHOLDER.search(changed)
-            or ADR_TEMPLATE_PLACEHOLDER.search(changed)
+            or ADR_PLACEHOLDER.search(changed_for_validation or "")
+            or ADR_TEMPLATE_PLACEHOLDER.search(changed_for_validation or "")
         ):
             problems.append(
                 "expected exactly one non-empty What changed summary"
             )
-        if changed and not ADR_CHANGE_SCOPE.search(changed):
+        if changed and not ADR_CHANGE_SCOPE.search(changed_for_validation or ""):
             problems.append("What changed must state whether the change is partial or complete")
         if successor_count == 1 and len(links) != 1:
             problems.append(
