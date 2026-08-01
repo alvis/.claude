@@ -8,7 +8,8 @@ any step fails, and a pending review is invisible to the author but blocks the n
 run.
 
 ```bash
-gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
+gh api --hostname "$HOST" --method POST \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input "$REVIEW_PAYLOAD"
 ```
 
 ## Payload
@@ -32,6 +33,11 @@ gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
 - `commit_id` is mandatory here even though the API treats it as optional. Without
   it GitHub anchors against the current head, so a push mid-review silently
   relocates every comment.
+- Immediately before assembling this payload, re-read `headRefOid`, `baseRefName`,
+  and `baseRefOid` for the PR. A stacked review re-reads and compares those three
+  values for every `PR_SURFACES` entry. If any value differs from its pinned
+  capsule, stop before writing or submitting the payload and return a concurrency
+  blocker; never publish against a moved head or base.
 - `line` is the line number in the file at `commit_id`, not a diff offset.
 - `start_line` must be below `line` on the same `side`.
 
@@ -58,7 +64,11 @@ in the diff. A comment on the wrong line costs more author time than no comment.
 ## Re-review hygiene
 
 - Skip a finding whose path, line, and substance already appear in
-  `gh api repos/$OWNER/$REPO/pulls/$PR/comments`. The author has seen it.
+  `gh api --hostname "$HOST" repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments`.
+  The author has seen it.
+- Re-evaluate every existing unresolved P0/P1/P2 thread against the pinned head
+  and return `still_applies`, `fixed`, or `does_not_apply` in completion. Do not
+  repost it.
 - A previously reported finding that is now fixed gets one line in the overall body,
   not a new inline comment. Acknowledging the fix is what makes the next round land.
 - Never resolve or reply to another reviewer's threads. This skill adds its own

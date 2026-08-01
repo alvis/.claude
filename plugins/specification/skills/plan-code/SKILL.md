@@ -90,6 +90,10 @@ contract; `specification:implement-code` and Coding skills execute it.
    Ordinary work children always use an unnumbered semantic slug. Reserve
    `<nn>-<topic-slug>.md` for split output only; durable ADRs alone use
    `docs/architecture/decisions/<nnnn>-<decision-slug>.md`.
+   Read `${ESSENTIAL_ROOT}/references/adr.md` before creating or superseding an
+   ADR. A superseding ADR stands alone; the prior ADR is moved under
+   `decisions/superseded/` with the required archive header and is removed from
+   the current ADR index.
 5. Assign every top-level task one globally unique mnemonic ID matching
    `^[A-Z]{3}$`. Assign each executable child its parent's ID plus `01`-`99`
    (for example `LFE01`); allow only this one child level. Once approved, never

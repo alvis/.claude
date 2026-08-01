@@ -22,3 +22,10 @@ Record the constraints that materially limit architectural choices.
 Architecture documents own current structural truth. An architectural
 decision record (ADR) records why one choice was accepted; it does not become
 a second copy of the current architecture.
+
+<!--
+The ADR table is an index of effective records only. List every ADR directly
+under decisions/ and never list anything under decisions/superseded/. Read
+essential/references/adr.md and use essential/templates/docs/adr.template.md
+when creating or superseding an ADR.
+-->

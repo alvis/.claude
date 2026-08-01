@@ -38,6 +38,10 @@ owns deterministic zone calculation and the authoring gates below.
   dispatch exactly one scoped fixer when the red branch requires it.
 - `--skip-local-test` skips only local command execution. It never skips CI
   discovery, publication, hosted monitoring, evidence, repair, or convergence.
+- `--no-review` skips only remote PR review dispatch and comment convergence.
+  It never skips local checks or hosted CI.
+- `--publish-only` returns after leased pushes, metadata updates, and head/base
+  verification. It skips review and CI because its caller owns convergence.
 - Fix root causes. MUST NOT weaken a correct test, alter a valid expectation,
   add ignores/suppressions, or delete checks merely to pass. Edit a test only
   when captured failure evidence proves the test itself is the root cause.
@@ -58,6 +62,8 @@ owns deterministic zone calculation and the authoring gates below.
 | `<commit-ref>` | Publish a resolvable jj change ID/revset/bookmark or git branch/SHA and its selected stack. Any jj revset (`@`, `@-`, a change id) or git ref (`HEAD`, `HEAD~1`, a SHA) also selects the commit to author from; behavior is deterministic given the ref. |
 | `--branch-prefix <name>` | Override the derived stack bookmark prefix. A prefix other than a resolved stream's `<type>/<work-id>` publishes a branch that will not resolve back to its work state — expected for a branch predating that convention, deliberate otherwise. |
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
+| `--no-review` | Skip the post-push `coding:pr review` convergence loop. It never skips local checks, publication, or hosted CI. |
+| `--publish-only` | Stop after the verified core publication phase so an existing review or repair caller can continue its convergence loop. |
 | `--dry-run` | Print the test, publication, and monitoring plan without agents or local/remote mutations. |
 
 - **Prerequisites**: for publication — a clean saved change or linear stack,
@@ -339,7 +345,25 @@ only where the head or base OID changed.
 | Existing PR has wrong base | `gh pr edit "$PR" --base "$PR_BASE"`, then verify. |
 | Restack conflict | Resolve through `coding:commit`, run integrity checks, then republish bottom-up. |
 
-### 4. Schedule and consume the initial poll
+With `--publish-only`, return the verified stack map plus refreshed expected
+hosted checks and their workflow/ruleset/config inputs. Do not enter review or
+hosted-CI convergence; the invoking review or red-CI workflow owns the next step.
+
+### 4. Converge review comments unless skipped
+
+After every selected head is pushed or updated and its remote OID is verified,
+load and follow [review-loop.md](review-loop.md), unless `--no-review` is
+present. A review-driven fix republishes the affected stack, resets the expected
+head OIDs, and runs the loop again with a fresh subagent before CI monitoring.
+If the loop returns `action: repair_ci_then_review`, enter step 5 immediately
+without marking review convergence complete or incrementing its retry count.
+After the poller reports a red repair, the parent accepts the fix, saves it,
+and republishes through the owned workflow; if CI instead becomes green, no
+repair is needed. Then return to step 4 and run a fresh review pass before
+completing the ordinary CI gate. Never retry a review against unchanged red-CI
+evidence.
+
+### 5. Schedule and consume the initial poll
 
 Immediately after every initial publication, including `--skip-local-test`, run
 this command with actual bottom-to-top PR URLs substituted:
@@ -548,10 +572,13 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
 - Every head was pushed under a lease — `jj git push` on the jj path,
   `git push --force-with-lease` on the git path; every PR is draft, uses the
   authored title/body, and has the intended stack base.
+- Review convergence passed on each final head with no unresolved P0/P1/P2
+  finding or mandatory chore, including replies and repair heads, or
+  `--no-review` was explicitly recorded.
 - Report success only after the final poll observes every PR green. Include the
   stack map, resolved commit refs, the template used per change (repo path or
-  bundled default), local results, repair commits, push/restack actions,
-  per-PR check states, CI wall times, and any blocker (with its authoring exit
-  code where relevant). Return every local project path created or materially
-  rewritten during repair as `generated_files`. The PM applies the shared size
-  pass only to eligible `.state` work Markdown.
+  bundled default), local results, review passes, replies, repair commits,
+  push/restack actions, per-PR check states, CI wall times, and any blocker
+  (with its authoring exit code where relevant). Return every local project path
+  created or materially rewritten during repair as `generated_files`. The PM
+  applies the shared size pass only to eligible `.state` work Markdown.

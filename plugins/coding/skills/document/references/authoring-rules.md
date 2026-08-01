@@ -123,6 +123,11 @@ Reconciling it means: add, update, or remove the Documents line for the document
 just written or renamed, and revise Goal, Requirements, or Constraints only when
 the change alters them. Never restate a component document's internals here.
 
+For ADR rows and ADR changes, apply the canonical
+[ADR contract](../../../../essential/references/adr.md) and use its template.
+The index contains effective ADRs only; history is selected from
+`decisions/superseded/` by the successor link when a current ADR is known.
+
 ## Independent review audits
 
 The read-only reviewer checks each item and returns pass/fail per audit with

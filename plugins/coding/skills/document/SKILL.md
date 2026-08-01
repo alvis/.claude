@@ -74,8 +74,13 @@ independent-review audit checklist, and the retry/rollback criteria.
    `${ESSENTIAL_ROOT}/templates/docs/architecture-readme.template.md`, using
    the root derived from the injected engineering-work contract.
    Reconcile `docs/architecture/README.md` and `docs/README.md`; individual
-   architectural choices remain ADRs under
-   `docs/architecture/decisions/`.
+   architectural choices remain ADRs under `docs/architecture/decisions/`.
+   Before creating or superseding one, apply the ADR contract at
+   `${ESSENTIAL_ROOT}/references/adr.md` and the template at
+   `${ESSENTIAL_ROOT}/templates/docs/adr.template.md`: effective ADRs are
+   indexed directly under `decisions/`, superseded ADRs move under
+   `decisions/superseded/`, and a new successor stands alone without naming the
+   old ADR.
 8. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping. Decide review outcomes per the criteria in references/authoring-rules.md (proceed, targeted retry with at most two attempts per issue, or rollback).
 
 ## Verification

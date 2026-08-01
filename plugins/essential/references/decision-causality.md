@@ -9,9 +9,11 @@ that keeps execution state honest after a decision changes.
 
 Every decision child records, beyond status/headline/owner/created/provenance:
 
-- `supersedes:` the decision id it replaces, when any. The superseded record
-  keeps its content and gains status `superseded` plus a forward link — its
-  text is never rewritten into the replacement.
+- `supersedes:` the decision id it replaces, when any. For work-local decision
+  children, the superseded record keeps its content and gains status
+  `superseded` plus a forward link. Durable ADRs use the separate
+  [ADR contract](adr.md): the old file moves to `decisions/superseded/` and the
+  new ADR does not mention it.
 - `affects:` task IDs, docs, or streams whose direction this decision sets.
 - `invalidates:` completed outputs, evidence, or approvals this decision makes
   stale, each named by id and exact revision or hash.
@@ -48,6 +50,7 @@ promotion receipt:
 | Only how this task was executed? | Retain in the work receipt |
 | Temporary and expired? | Archive with the expiration reason |
 
-A promoted record carries the standard promotion front matter; a superseded
-durable decision is never edited in place — its successor names it in
-`supersedes` and history stays intelligible.
+A promoted record carries the standard promotion front matter. A superseded
+work-local decision is never edited into its replacement; an ADR follows
+[the ADR contract](adr.md), including its archive header and current-only
+index.

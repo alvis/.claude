@@ -27,10 +27,11 @@ ambiguity. On `requires_ignore`, workers stop; the PM alone adds
 `.state/` to the default tree's `.gitignore`, records it in
 `generated_files`, and reruns.
 
-Work state lives only under the default source tree's `.state/` — the
-resolver's `state_root`, shared by every tree — plus the active tree's
-`docs/` at promotion and retirement. Never create a file because output is
-large; shorten it or point into `.state/`.
+Work state lives only under the default tree's `.state/`; the active tree's
+`docs/` is for promotion and retirement. Never spill large output into a new
+file; shorten it or point into `.state/`.
+
+For ADRs, read `{{PLUGIN_DIR}}/references/adr.md` (paths/history).
 
 ## Work Approach
 

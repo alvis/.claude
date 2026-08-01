@@ -80,9 +80,10 @@ these sources, and each is the rule a locally sensible change breaks first.
 - **Bind evidence to its exact inputs.** A recorded result names the revision and inputs
   that produced it. "Passed" alone carries no truth, and must not survive a change to
   what it was measured against.
-- **Supersede, never edit.** An accepted decision or a shipped contract is replaced by a
-  successor that links back to it — the same discipline `coding:commit` and
-  `coding:pr` enforce on prose and code.
+- **Supersede, never rewrite.** An accepted decision or shipped contract is replaced
+  without rewriting its historical body. ADRs move to their owning
+  `decisions/superseded/` folder, gain the standard forward header, and leave the
+  successor standing alone; other records follow their owning contract.
 
 ## Hard limits
 

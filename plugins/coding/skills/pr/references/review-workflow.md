@@ -37,17 +37,24 @@ silently replace pinned inputs. The parent closes the one lease after success,
 failure, or cancellation. Review as an external party who knows only that
 capsule, repository, standards, and pinned review tree.
 
+When the caller is the fresh critic dispatched by
+[review-loop.md](review-loop.md), its preprovisioned stack capsule, clean
+top-tip `REVIEW_DIR`, ledger path, and payload path prove it is already the
+dedicated reviewer. It executes the remaining read-only review phase directly
+and does not dispatch another agent.
+
 <IMPORTANT>
-- Read-only against the reviewed code. Confine every mutation to the review tree
-  this run created and to the review published on GitHub.
+- Read-only against reviewed code. Confine filesystem mutation to the
+  separately created `REVIEW_LEDGER` and `REVIEW_PAYLOAD`; remote mutation is
+  the review.
 - Do not delegate.
 - Read and search the checkout as widely as the change requires; run only the
   read-only git, `gh`, and scanner commands named below. Treat the branch as
   untrusted code.
 - CI status counts only when already known, from the metadata *Resolve the pull
   request* already fetches. Repair belongs to `coding:pr update`.
-- Build `payload.json` by shell redirection from `jq`, never with a file-writing
-  tool — this agent's `Write`/`Edit` fence would deny the path.
+- Build `REVIEW_PAYLOAD` by shell redirection from `jq`, never with a
+  file-writing tool.
 </IMPORTANT>
 
 ## Inputs
@@ -67,19 +74,27 @@ capsule, repository, standards, and pinned review tree.
 
 ### Resolve the pull request
 
-From a PR number or URL, read its metadata directly:
+From a PR number or URL, resolve canonical coordinates and metadata through the
+bundled helper:
 
 ```bash
-gh pr view "$PR" --json number,url,title,body,state,isDraft,baseRefName,headRefName,\
-headRefOid,headRepositoryOwner,changedFiles,additions,deletions,author,statusCheckRollup
+bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" \
+  <pr-number-or-url> [--repo <owner/name>]
 ```
+
+Retain its `host`, `number`, `owner`, `repo`, `url`, `headRefOid`,
+`baseRefName`, and `baseRefOid` as `HOST`, `PR_NUMBER`, `OWNER`, `REPO`,
+`PR_URL`, `HEAD_OID`, `BASE_REF`, and `BASE_OID`. Never put a URL into a REST
+path segment or GraphQL `Int!` variable; pass `--hostname "$HOST"` to every
+`gh api` call.
 
 From a source tree path — or no argument at all, meaning the current tree — resolve
 which PRs that tree carries. A tree may hold a whole stack, so match every open PR
 head against its history rather than assuming one:
 
 ```bash
-gh pr list --state open --json number,headRefName,headRefOid,baseRefName
+gh pr list --state open \
+  --json number,url,headRefName,headRefOid,baseRefName,baseRefOid
 git -C "$TREE" merge-base --is-ancestor "$HEAD_REF_OID" HEAD   # per candidate PR
 ```
 
@@ -89,7 +104,9 @@ PR supplies `STACK_BASE_REF`/`STACK_BASE_OID`; the top PR supplies
 `STACK_HEAD_REF`/`STACK_HEAD_OID`. Retain every matched PR's metadata in
 `PR_SURFACES` so findings can be attributed to the change that introduced them,
 but do not review each checkout independently. No match is a clean stop naming
-the tree and its HEAD; an unresolvable tangle asks.
+the tree and its HEAD; an unresolvable tangle asks. Resolve every matched URL
+through `resolve-pr.sh` before its review so all paths use the same coordinate
+and metadata contract.
 
 Stop with evidence when a PR is closed, merged, or unreadable. For a single PR,
 record `HEAD_OID`, `BASE_REF`, and `BASE_OID`. For a stack, record the same fields
@@ -111,9 +128,23 @@ repository is fully supported and must not be colocated on its behalf.
 
 ### Locate or create the review tree
 
-Reuse before you extract. A tree already sitting at the pinned review tip is the
-same content a fresh checkout would produce, minus the cost. For a single PR the
-tip is `HEAD_OID`; for a stack it is `STACK_HEAD_OID`:
+First create a secret-free handoff outside the review tree:
+
+```bash
+REVIEW_ARTIFACT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pr-review-${PR_NUMBER}-XXXXXX")
+REVIEW_LEDGER="$REVIEW_ARTIFACT_DIR/ledger.json"
+REVIEW_PAYLOAD="$REVIEW_ARTIFACT_DIR/payload.json"
+```
+
+The reviewer may write only those two files via `jq` redirection. Review-tree
+cleanup must exclude them; after consuming both, the parent removes only
+`REVIEW_ARTIFACT_DIR`.
+
+For a local target repository, load [review-extraction.md](review-extraction.md)
+now and fetch and verify both pinned objects before inspecting reuse candidates.
+A clean tree already at the pinned review tip is then reusable without a new
+checkout. For a single PR the tip is `HEAD_OID`; for a stack it is
+`STACK_HEAD_OID`:
 
 1. Search for a candidate at the review tip — the invoked tree first, then entries from
    `git worktree list --porcelain` and `jj workspace list`.
@@ -128,16 +159,51 @@ tip is `HEAD_OID`; for a stack it is `STACK_HEAD_OID`:
      <open-git-or-open-jj> <target-repository-root> "$REVIEW_TIP_OID"
    ```
 
-[review-extraction.md](review-extraction.md) carries the checkout forms and
-cleanup contract. The parent retains the one returned `lease` as `TREE_LEASE`,
-passes its `tree` as `REVIEW_DIR`, and sets `REVIEW_TREE_OWNED=true`. A stack
-never receives a second lease for a lower PR.
+For a fresh clone, the helper fetches the pinned head; immediately run the
+reference's base fetch and final two-object verification inside that clone.
+The same reference carries the cleanup contract. The parent retains its
+returned `lease` as `TREE_LEASE`, passes its `tree` as `REVIEW_DIR`, and sets
+`REVIEW_TREE_OWNED=true`. A stack never receives a second lease for a lower PR.
 
 <IMPORTANT>
 The parent closes only the exact helper-issued lease when `REVIEW_TREE_OWNED`
 is true, including after subagent cancellation. A reused tree belongs to the
 user and its removal would destroy real work.
 </IMPORTANT>
+
+### Read the existing discussion
+
+The dedicated reviewer performs this phase after the parent has located or
+created and verified `REVIEW_DIR`; it receives the pinned capsule and does not
+repeat parent metadata discovery. Read issue comments, reviews, inline comments,
+and review-thread state before reviewing. Page every connection; a partial
+discussion cannot support a `fixed`, `does_not_apply`, or de-duplication
+decision.
+
+```bash
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --paginate
+gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
+gh api graphql --hostname "$HOST" \
+  -F owner="$OWNER" -F name="$REPO" -F number="$PR_NUMBER" -f query='
+query($owner:String!,$name:String!,$number:Int!,$cursor:String){
+  repository(owner:$owner,name:$name){
+    pullRequest(number:$number){
+      reviewThreads(first:100,after:$cursor){
+        pageInfo{hasNextPage endCursor}
+        nodes{id isResolved comments(first:100){
+          pageInfo{hasNextPage endCursor}
+          nodes{databaseId body url path line commit{oid} author{login}}
+        }}
+      }
+    }
+  }
+}'
+```
+
+Page `reviewThreads` and each thread's `comments` connection to exhaustion.
+Re-evaluate every existing P0/P1/P2 or mandatory-chore thread, including
+resolved threads whose evidence commit differs from `HEAD_OID`.
 
 ### Build the reviewable surface
 
@@ -151,7 +217,7 @@ comments on the PR that owns the finding:
 | Path | Merge base | Changed files | Line map |
 |---|---|---|---|
 | jj | `jj log --no-graph -T 'commit_id' -r "heads(::$REVIEW_TIP_OID & ::$STACK_BASE_REF)"` | `jj diff --summary --from "$MERGE_BASE" --to "$REVIEW_TIP_OID"` | `jj diff --git --context=0 --from "$MERGE_BASE" --to "$REVIEW_TIP_OID"` |
-| git | `git merge-base "origin/$STACK_BASE_REF" "$REVIEW_TIP_OID"` | `git diff --name-status "$MERGE_BASE" "$REVIEW_TIP_OID"` | `git diff --unified=0 "$MERGE_BASE" "$REVIEW_TIP_OID"` |
+| git | `git merge-base "$STACK_BASE_OID" "$REVIEW_TIP_OID"` | `git diff --name-status "$MERGE_BASE" "$REVIEW_TIP_OID"` | `git diff --unified=0 "$MERGE_BASE" "$REVIEW_TIP_OID"` |
 
 Both paths emit unified diff, so one parser builds the holistic map and the
 per-PR attribution maps. A finding that belongs to no individual surface stays
@@ -240,7 +306,8 @@ whatever has
 already been said at the same path and line:
 
 ```bash
-gh api "repos/$OWNER/$REPO/pulls/$PR/comments" --paginate \
+gh api --hostname "$HOST" \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate \
   --jq '.[] | {path, line, body}'
 ```
 
@@ -254,15 +321,20 @@ and submit the whole review in one atomic call, so a rejected comment cannot lea
 orphaned fragments:
 
 ```bash
-gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input payload.json
+gh api --hostname "$HOST" --method POST \
+  "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" --input "$REVIEW_PAYLOAD"
 ```
 
-`payload.json` carries `commit_id` (the pinned `HEAD_OID`), `body`, `event`, and
+`REVIEW_PAYLOAD` carries `commit_id` (the pinned `HEAD_OID`), `body`, `event`, and
 `comments[]` of `{path, line, side, body}`. Payload construction and 422 recovery
 are in [review-publishing.md](review-publishing.md).
 
-Re-read `headRefOid` and compare it to the pinned `HEAD_OID` *before* building the
-payload. The verdict depends on the answer, so a head check that runs after the review
+Immediately before building the payload, re-resolve the PR metadata and compare
+`headRefOid`, `baseRefName`, and `baseRefOid` with the pinned values. For a stack,
+repeat that comparison for every `PR_SURFACES` entry, including the bottom and
+top pair. If any head or base moved, stop with a concurrency blocker, do not
+build or submit a payload, and record the new remote values for the caller.
+The verdict depends on all three objects, so a check that runs after the review
 is submitted came too late to change anything.
 
 Derive `event` in three ordered steps; never choose it freely.
@@ -283,8 +355,8 @@ as a third condition would leave a review with weak tests and only P3 findings
 matching no row at all while the body still needs a substantive verdict to key off.
 
 **2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI,
-black zone, `headRefOid` no longer equal to `HEAD_OID`, or a blocker prevented a full
-review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
+black zone, a head/base value no longer equal to its pinned value, or a blocker
+prevented a full review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing
 with it. A P0 raised against a revision that is no longer the head is not a blocker you
 can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a
 certainty the review does not have.
@@ -301,7 +373,8 @@ What does hold the verdict is a concern that could not run when there was someth
 check — that is the cap in step 2.
 
 **3. Downgrade a self-review.** GitHub rejects `APPROVE` and `REQUEST_CHANGES` on your
-own PR. Compare the author against `gh api user --jq .login` first; on a self-review,
+own PR. Compare the author against
+`gh api --hostname "$HOST" user --jq .login` first; on a self-review,
 submit `COMMENT` and say so in the body. This step rewrites only what is submitted —
 the substantive verdict from step 1 survives it and still drives the body's alerts, so
 a blocker found on your own PR is still presented as one rather than as an observation
@@ -311,22 +384,35 @@ With `--dry-run`, print the payload and post nothing.
 
 ## Verification
 
-- Confirm the `headRefOid` comparison ran before the payload was built, and that a head
-  which moved capped the event and is stated plainly in the body — the published review
-  describes the SHA it read, not the current head.
+- Confirm the head, base-ref, and base-OID comparisons ran for every surface before
+  the payload was built; any moved value blocked publication and is stated plainly
+  in the ledger — the published review describes only the pinned stack it read.
 - A created review tree is gone and leaves no entry in `jj workspace list` or
   `git worktree list`; a reused tree is untouched, still clean, still at `HEAD_OID`.
 - Every posted comment resolves to a line in the changed-line map and duplicates
   nothing already on the PR.
+- Every existing P0/P1/P2 or mandatory-chore thread required above was
+  re-evaluated against `HEAD_OID` and reported as `still_applies`, `fixed`, or
+  `does_not_apply`; it was not reposted, replied to, or resolved by the reviewer.
+- Every overall-review finding, including a null-anchor finding, has a stable
+  key, priority, kind, review ID/URL, summary, evidence OID, and disposition;
+  P0/P1/P2 and mandatory chores are explicitly re-evaluated on later heads.
+- `BASE_REF` and `BASE_OID` still match the reviewed base before publication.
 - The submitted `event` matches the verdict table, or the self-review downgrade is
   stated in the body.
 
 ## Completion
 
-Report per PR reviewed: review URL, reviewed SHA, the review tree used and whether
-it was reused or created, change-tracking path, PR zone, goal/spec alignment
-(including *skipped — unknown*), finding counts by priority **and by kind** — an
-outstanding `chore` is a merge blocker and must never be summarised as zero findings
-— submitted `event`, unanchored findings, and paths not reviewed. For a stack, report each PR in the same
-bottom-up order it was reviewed. On a blocked run, name the blocker and which
-concerns never ran — a partial review is never reported as complete.
+Write the detailed secret-free finding/thread ledger to a durable temporary
+file. Return its absolute path and a structured report below 1000 tokens with,
+per PR: review URL, reviewed head/base refs and OIDs, review tree and ownership,
+tracking path, zone, goal/spec alignment, finding counts by priority and kind,
+submitted event, trust cap or `none`, unanchored count, paths not reviewed, and
+blocker. An outstanding `chore` is a
+merge blocker and must never be summarized as zero findings. Preserve stack
+order. The ledger includes every existing P0/P1/P2 or mandatory-chore thread's
+disposition and every overall-review finding (anchored or unanchored), keyed to
+the evidence OID, so a publication caller acts only after independent
+confirmation. A later head must re-evaluate any high-priority finding whose
+evidence OID changed.
+A partial review is never reported as complete.

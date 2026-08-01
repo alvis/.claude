@@ -1,15 +1,31 @@
 # Creating the review tree
 
-Load this from *Locate or create the review tree* in `coding:pr review`, once reuse
-has been ruled out. The change-tracking path was already selected; follow only its
-row.
+Load this from *Locate or create the review tree* in `coding:pr review` before
+reuse selection for a local repository. The change-tracking path was already
+selected; follow only its row.
 
 ## Checkout forms
 
-Fetch the head through `pull/<n>/head`, which resolves same-repo and fork heads
-alike without adding a remote. `jj` has no equivalent for fetching a bare PR ref, so
-`git fetch` is correct even on the jj path — in a colocated repository both share the
-same object store, and the fetched commit is immediately visible to `jj`.
+Before accepting a local reused tree or creating a local owned tree, fetch and
+verify both pinned commit objects:
+
+```bash
+git -C <target-repository-root> fetch origin "pull/$PR_NUMBER/head"
+git -C <target-repository-root> cat-file -e "$HEAD_OID^{commit}" ||
+  git -C <target-repository-root> fetch origin "$HEAD_OID"
+git -C <target-repository-root> fetch origin "$BASE_REF"
+git -C <target-repository-root> cat-file -e "$BASE_OID^{commit}" ||
+  git -C <target-repository-root> fetch origin "$BASE_OID"
+git -C <target-repository-root> cat-file -e "$HEAD_OID^{commit}"
+git -C <target-repository-root> cat-file -e "$BASE_OID^{commit}"
+```
+
+`pull/<n>/head` resolves same-repo and fork heads without adding a remote.
+Fetching `BASE_REF` is not evidence that its current tip equals `BASE_OID`, so
+verify the pinned object and fetch that exact OID when necessary. Stop before
+merge-base calculation if either object is unavailable. `jj` has no equivalent
+for fetching a bare PR ref; in a colocated repository Git and jj share the
+object store, so these objects are immediately visible to jj.
 
 Create owned trees through `scripts/temp-tree.sh`; its lease is the cleanup
 handle and keeps shell functions or traps out of the skill tool call.
@@ -18,7 +34,7 @@ handle and keeps shell functions or traps out of the skill tool call.
 |---|---|---|
 | jj workspace | In the target repository, jj path | `temp-tree.sh open-jj "$REPOSITORY_ROOT" "$HEAD_OID"` |
 | git worktree | In the target repository, git path | `temp-tree.sh open-git "$REPOSITORY_ROOT" "$HEAD_OID"` |
-| Fresh clone | Not in the target repository, or `--repo` names another | `temp-tree.sh open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"` |
+| Fresh clone | Not in the target repository, or `--repo` names another | `temp-tree.sh open-clone "https://$HOST/$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"`, then fetch and verify the pinned base in the clone |
 
 The workspace and worktree forms reuse local objects and are the fast path. In the
 clone form the helper owns the whole clone under the same guarded lease.

@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -91,7 +92,10 @@ def test_owned_trees_bind_outputs_and_keep_cleanup_in_parent() -> None:
     assert "neither removes the worktree nor closes or reports on the parent-owned" in create_update
     assert "After consuming each batch report" in create_update
     assert "never transfers cleanup ownership" in create_update
-    assert 'open-clone "$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"' in extraction
+    assert (
+        'open-clone "https://$HOST/$OWNER/$REPO" "$PR_NUMBER" "$HEAD_OID"'
+        in extraction
+    )
     assert "signal trap protects construction only" in extraction
     assert 'workspace="pr-tree-$(basename "$lease")"' in helper
     assert "workspace add --name" in helper
@@ -186,7 +190,7 @@ def test_reviewer_receives_the_pinned_mission_capsule() -> None:
     assert "reviews the complete stack diff against the bottom base" in review
     assert "holistically" in review
     assert "one holistic map" in review
-    assert "A stack\nnever receives a second lease" in review
+    assert "A stack never receives a second lease" in review
 
 
 def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
@@ -251,3 +255,166 @@ def test_github_stack_bridge_preserves_plugin_ownership() -> None:
     assert "`gh stack link --open` marks new and" in github_stacks
     assert "head branch name of every open stacked PR" in github_stacks
     assert "close-and-recreate migration" in github_stacks
+
+
+def test_review_resolves_canonical_coordinates_before_api_calls() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+
+    assert "scripts/resolve-pr.sh" in workflow
+    assert "scripts/resolve-pr.sh" in loop
+    assert "baseRefName,baseRefOid" in workflow
+    assert "$PR_NUMBER" in workflow
+    assert "$PR_NUMBER" in publishing
+    assert "pulls/$PR/" not in workflow
+    assert "pulls/$PR/" not in publishing
+    for content in (workflow, publishing, loop):
+        assert 'gh api "repos/' not in content
+        assert "gh api graphql -F" not in content
+        assert "gh api --method" not in content
+    assert '--hostname "$HOST"' in workflow
+    assert '--hostname "$HOST"' in publishing
+    assert '--hostname "$HOST"' in loop
+
+
+def test_resolver_accepts_canonical_enterprise_url(tmp_path: Path) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text('#!/usr/bin/env bash\nprintf "%s\\n" "$PR_METADATA"\n')
+    gh.chmod(0o755)
+    metadata = {
+        "number": 42,
+        "url": "https://github.example.test/octo/repo/pull/42",
+    }
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}:{env['PATH']}"
+    env["PR_METADATA"] = json.dumps(metadata)
+    resolved = subprocess.run(
+        [
+            "bash",
+            str(WRITE_PR / "scripts" / "resolve-pr.sh"),
+            "42",
+            "--repo",
+            "octo/repo",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    payload = json.loads(resolved.stdout)
+    assert payload["host"] == "github.example.test"
+    assert payload["owner"] == "octo"
+    assert payload["repo"] == "repo"
+    assert payload["number"] == 42
+
+
+def test_review_fetches_and_verifies_pinned_head_and_base_objects() -> None:
+    extraction = (WRITE_PR / "references" / "review-extraction.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert 'fetch origin "pull/$PR_NUMBER/head"' in extraction
+    assert 'fetch origin "$BASE_OID"' in extraction
+    assert 'cat-file -e "$HEAD_OID^{commit}"' in extraction
+    assert 'cat-file -e "$BASE_OID^{commit}"' in extraction
+    assert "if either object is unavailable" in extraction
+    load = workflow.index("load [review-extraction.md]")
+    reuse = workflow.index("Search for a candidate")
+    assert load < reuse
+    assert "before inspecting reuse candidates" in workflow
+
+
+def test_review_provisions_distinct_ledger_and_payload_paths() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+
+    assert 'REVIEW_LEDGER="$REVIEW_ARTIFACT_DIR/ledger.json"' in workflow
+    assert 'REVIEW_PAYLOAD="$REVIEW_ARTIFACT_DIR/payload.json"' in workflow
+    assert '--input "$REVIEW_PAYLOAD"' in workflow
+    assert '--input "$REVIEW_PAYLOAD"' in publishing
+    assert "reviewer may write only those two files" in workflow
+
+
+def test_stack_review_uses_one_tip_and_rechecks_every_surface() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    publishing = (WRITE_PR / "references" / "review-publishing.md").read_text()
+
+    assert "one clean `REVIEW_DIR` at the top head" in workflow
+    assert "reviews the complete stack diff against the bottom base" in workflow
+    assert "PR_SURFACES" in workflow
+    assert "baseRefName" in workflow
+    assert "baseRefOid" in workflow
+    assert "for every `PR_SURFACES` entry" in workflow
+    assert "one holistic" in loop
+    assert "checkout or lease per PR" in loop
+    assert "re-reads and compares those three" in publishing
+
+
+def test_adr_skill_references_follow_the_injected_essential_root() -> None:
+    document = (WRITE_PR.parent / "document" / "SKILL.md").read_text()
+    plugins = WRITE_PR.parent.parent.parent
+    doctor = (plugins / "essential" / "skills" / "doctor" / "SKILL.md").read_text()
+    plan = (plugins / "specification" / "skills" / "plan-code" / "SKILL.md").read_text()
+
+    for skill in (document, doctor, plan):
+        assert "${ESSENTIAL_ROOT}/references/adr.md" in skill
+        assert "plugins/essential/references/adr.md" not in skill
+    assert "${ESSENTIAL_ROOT}/templates/docs/adr.template.md" in document
+
+
+def test_convergence_dispatch_is_already_the_dedicated_reviewer() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert "preprovisioned stack capsule" in router
+    assert "fresh critic" in loop
+    assert "do not invoke another" in loop
+    assert "router or delegate" in loop
+    assert "already the" in workflow
+    assert "dedicated reviewer" in workflow
+
+
+def test_review_tracks_unanchored_findings_until_convergence() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert "findings with no inline anchor" in loop
+    assert "evidence OID" in loop
+    assert "still_applies`, `fixed`, or `does_not_apply" in loop
+    assert "null-anchor finding" in workflow
+    assert "anchored or unanchored" in workflow
+
+
+def test_dedicated_reviewer_reads_discussion_after_tree_provisioning() -> None:
+    workflow = (WRITE_PR / "references" / "review-workflow.md").read_text()
+
+    assert workflow.index("### Locate or create the review tree") < workflow.index(
+        "### Read the existing discussion"
+    )
+    assert "dedicated reviewer performs this phase after the parent has located or" in workflow
+    assert "created and verified `REVIEW_DIR`" in workflow
+
+
+def test_batch_review_returns_and_cleans_every_stack_ledger() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+
+    assert "distinct artifact" in loop
+    assert "directory for each stack" in loop
+    assert "stack-to-ledger-path map" in loop
+    assert "missing, duplicate, or cross-stack path" in loop
+    assert "same\nper-stack cleanup" in loop
+
+
+def test_red_ci_routes_to_repair_without_spending_review_retry() -> None:
+    loop = (WRITE_PR / "references" / "review-loop.md").read_text()
+    create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+
+    assert "`action: repair_ci_then_review`" in loop
+    assert "retry count unchanged" in loop
+    assert "`action: repair_ci_then_review`" in create_update
+    assert "Never retry a review against unchanged red-CI" in create_update
+    assert "evidence." in create_update
