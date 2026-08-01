@@ -373,13 +373,27 @@ def adr_metadata_text(text: str) -> str:
     return "\n".join(lines)
 
 
+def adr_heading(text: str) -> tuple[int, str, str] | None:
+    """Return the first canonical ADR heading outside comments and fences."""
+    visible = ADR_HTML_COMMENT.sub("", text)
+    in_fence = False
+    for index, line in enumerate(visible.splitlines()):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        match = ADR_TITLE.match(stripped)
+        if match:
+            return index, match.group(1), match.group(2).strip()
+    return None
+
+
 def adr_identity(text: str) -> tuple[str, str] | None:
     """Return the ADR number and title from its first-level heading."""
-    for line in text.splitlines():
-        match = ADR_TITLE.match(line.strip())
-        if match:
-            return match.group(1), match.group(2).strip()
-    return None
+    heading = adr_heading(text)
+    return (heading[1], heading[2]) if heading else None
 
 
 def normalize_adr_title(title: str) -> str:
@@ -429,6 +443,23 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "ADR filename must use a four-digit zero-padded prefix and lowercase kebab-case slug",
                 "Rename the ADR to <nnnn>-<decision-slug>.md without changing its numeric identity or moving it out of its effective/archive directory.",
             )
+            continue
+        identity = adr_identity(file.read_text(encoding="utf-8", errors="replace"))
+        expected_number = file.stem.split("-", 1)[0]
+        if identity is None:
+            report.error(
+                str(file.relative_to(repository_root)),
+                "adr-integrity",
+                "ADR is missing its canonical `# ADR-<nnnn>: <title>` heading",
+                "Restore the original ADR heading and body without changing the decision text; ensure the heading number matches the filename prefix.",
+            )
+        elif identity[0] != expected_number:
+            report.error(
+                str(file.relative_to(repository_root)),
+                "adr-integrity",
+                f"ADR heading identity {identity[0]} does not match filename prefix {expected_number}",
+                "Make the canonical ADR heading number match the filename prefix, preserving the original decision body and links.",
+            )
     numeric_identities: dict[str, list[Path]] = {}
     for file in sorted(allowed_files):
         if ADR_FILENAME.fullmatch(file.stem):
@@ -476,7 +507,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 + ", ".join(sorted(status_values)),
                 "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
             )
-        if ADR_PLACEHOLDER.search(content):
+        if ADR_PLACEHOLDER.search(content) or ADR_TEMPLATE_PLACEHOLDER.search(content):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -504,6 +535,17 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             changed_count,
         ) = parse_superseded_header(text)
         problems: list[str] = []
+        heading = adr_heading(text)
+        if heading is None:
+            problems.append(
+                "archived ADR must retain its original canonical ADR heading and body"
+            )
+        else:
+            visible_lines = ADR_HTML_COMMENT.sub("", text).splitlines()
+            if not any(line.strip() for line in visible_lines[heading[0] + 1 :]):
+                problems.append(
+                    "archived ADR must retain its original decision body after the canonical heading"
+                )
         if file.parent != superseded_dir:
             problems.append("archive must contain ADR files directly, not in a nested folder")
         if successor_count != 1:
@@ -587,7 +629,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         )
     if index.is_file():
         index_text = index.read_text(encoding="utf-8", errors="replace")
-        linked_current: set[str] = set()
+        indexed_current: set[str] = set()
         index_lines = index_text.splitlines()
         status_column: int | None = None
         for line in index_lines:
@@ -607,24 +649,30 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     continue
                 if target.parent == decisions_dir:
                     if target.is_file():
-                        linked_current.add(target.stem)
-                        if status_column is not None:
-                            if len(cells) <= status_column:
+                        indexed_current.add(target.stem)
+                        if status_column is None:
+                            report.error(
+                                "docs/architecture/README.md",
+                                "adr-index",
+                                f"ADR index table has no Status column for effective ADR: {link}",
+                                "Add a `Status` column to the ADR index table and set this effective ADR row to `Accepted`.",
+                            )
+                        elif len(cells) <= status_column:
+                            report.error(
+                                "docs/architecture/README.md",
+                                "adr-index",
+                                f"ADR index row has no status for effective ADR: {link}",
+                                "Add an `Accepted` status cell to the effective ADR row.",
+                            )
+                        else:
+                            index_status = cells[status_column].strip(" `").casefold()
+                            if index_status != "accepted":
                                 report.error(
                                     "docs/architecture/README.md",
                                     "adr-index",
-                                    f"ADR index row has no status for effective ADR: {link}",
-                                    "Add an `Accepted` status cell to the effective ADR row.",
+                                    f"ADR index status {cells[status_column]!r} contradicts effective ADR {target.name}",
+                                    "Set the effective ADR index row status to `Accepted`; the ADR file is authoritative.",
                                 )
-                            else:
-                                index_status = cells[status_column].strip(" `").casefold()
-                                if index_status != "accepted":
-                                    report.error(
-                                        "docs/architecture/README.md",
-                                        "adr-index",
-                                        f"ADR index status {cells[status_column]!r} contradicts effective ADR {target.name}",
-                                        "Set the effective ADR index row status to `Accepted`; the ADR file is authoritative.",
-                                    )
                     else:
                         report.error(
                             "docs/architecture/README.md",
@@ -661,7 +709,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     f"ADR index mentions archived ADR {file.name}",
                     "Remove the archived ADR mention and keep only effective ADR rows in the index.",
                 )
-        for name in sorted(current_names - linked_current):
+        for name in sorted(current_names - indexed_current):
             report.error(
                 "docs/architecture/README.md",
                 "adr-index",
