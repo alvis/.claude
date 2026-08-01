@@ -332,7 +332,7 @@ ADR_PLACEHOLDER = re.compile(
 ADR_TEMPLATE_PLACEHOLDER = re.compile(
     r"<(?:nnnn|(?:decision[- ]?)?title|(?:decision[- ]?)?slug|"
     r"architecture-slug|YYYY-MM-DD|"
-    r"(?:Describe|State|Name|List|Record)\s+[^>\n]*)>",
+    r"(?:Describe|State|Name|List|Record)\s+(?:the|whether)\s+[^>\n]*)>",
     re.IGNORECASE,
 )
 ADR_FILENAME = re.compile(r"^[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -411,8 +411,9 @@ def parse_superseded_header(
 def adr_header_prefix_lines(text: str) -> list[str]:
     """Return only the prepended archive header before the original ADR body."""
     lines = text.splitlines()
+    visible_lines = without_html_comments(text).splitlines()
     fence: tuple[str, int] | None = None
-    for index, line in enumerate(lines):
+    for index, line in enumerate(visible_lines):
         marker = ADR_FENCE.match(line)
         if marker and is_valid_fence_marker(marker, fence):
             token = marker.group(1)

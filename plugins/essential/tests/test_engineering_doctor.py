@@ -1008,7 +1008,8 @@ def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> 
         "> **Status:** Superseded\n>\n"
         "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
         "> **What changed:** The complete choice changed.\n\n"
-        "<!-- Retained historical note.\nStatus: Proposed\n-->\n"
+        "<!-- Retained historical note.\nStatus: Proposed\n"
+        "# Retained editor note\n-->\n"
         "# ADR-0001: Old choice\n\n"
         "<!-- Example metadata: Status: Proposed -->\n"
         "- Status: `Accepted`\n\n"
@@ -1082,7 +1083,8 @@ def test_effective_adr_allows_autolinks_and_inline_html(
         workspace.root,
         body=(
             "Links: <https://example.com> <team@example.com> "
-            "<span>valid</span> <List>items</List> <Record>entry</Record>.\n"
+            "<span>valid</span> <List items=\"all\">items</List> "
+            "<Record class=\"entry\">entry</Record>.\n"
         ),
     )
 
