@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Structural doctor for Essential engineering work state.
+"""Structural doctor for Essential engineering work state and ADRs.
 
 A doctor, not a judge: this tool reports deterministic structural defects that
 machines detect better than readers — broken IDs, dangling dependencies,
 cycles, contradictory mark/status pairs, missing evidence annotations, broken
-file references, unsuperseded decisions, stale leases, and overview drift. It
-never judges prose, never edits files, and never blocks by default; free-form
-Markdown it cannot parse is at most an `info` finding. `--strict` exits
-nonzero when error-severity findings exist, for use when work is irreversible
-or release-critical.
+file references, unsuperseded decisions, stale leases, overview drift, and ADR
+supersession/index/integrity violations. It never silently edits files and
+never blocks by default; free-form Markdown it cannot parse is at most an
+`info` finding. ADR findings include a proposed repair for the doctor skill to
+offer for explicit user approval. `--strict` exits nonzero when error-severity
+findings exist, for use when work is irreversible or release-critical.
 """
 
 from __future__ import annotations
@@ -50,19 +51,38 @@ class Report:
     def __init__(self) -> None:
         self.findings: list[dict] = []
 
-    def add(self, severity: str, work: str, check: str, message: str) -> None:
-        self.findings.append(
-            {"severity": severity, "work": work, "check": check, "message": message}
-        )
+    def add(
+        self,
+        severity: str,
+        work: str,
+        check: str,
+        message: str,
+        fix: str | None = None,
+    ) -> None:
+        finding = {
+            "severity": severity,
+            "work": work,
+            "check": check,
+            "message": message,
+        }
+        if fix:
+            finding["fix"] = fix
+        self.findings.append(finding)
 
-    def error(self, work: str, check: str, message: str) -> None:
-        self.add("error", work, check, message)
+    def error(
+        self, work: str, check: str, message: str, fix: str | None = None
+    ) -> None:
+        self.add("error", work, check, message, fix)
 
-    def warning(self, work: str, check: str, message: str) -> None:
-        self.add("warning", work, check, message)
+    def warning(
+        self, work: str, check: str, message: str, fix: str | None = None
+    ) -> None:
+        self.add("warning", work, check, message, fix)
 
-    def info(self, work: str, check: str, message: str) -> None:
-        self.add("info", work, check, message)
+    def info(
+        self, work: str, check: str, message: str, fix: str | None = None
+    ) -> None:
+        self.add("info", work, check, message, fix)
 
 
 def split_row(line: str) -> list[str]:
@@ -264,6 +284,206 @@ def check_file_references(report: Report, work: str, files: list[Path]) -> None:
                 )
 
 
+ADR_STATUS_HEADER = re.compile(
+    r"^>\s*\*\*Status:\*\*\s*Superseded\s*$", re.IGNORECASE
+)
+ADR_SUCCESSOR_HEADER = re.compile(
+    r"^>\s*\*\*Superseded by:\*\*\s*(.+?)\s*$", re.IGNORECASE
+)
+ADR_CHANGE_HEADER = re.compile(
+    r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGNORECASE
+)
+ADR_STATUS_LINE = re.compile(
+    r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}Status:\*{0,2}\s*`?([\w-]+)",
+    re.IGNORECASE | re.MULTILINE,
+)
+ADR_PLACEHOLDER = re.compile(r"\b(?:TODO|TBD)\b", re.IGNORECASE)
+
+
+def repository_root_for_work_dir(work_dir: Path) -> Path:
+    """Derive the source-tree root from the canonical .state/works layout."""
+    resolved = work_dir.resolve()
+    if resolved.parent.name == "works" and resolved.parent.parent.name == ".state":
+        return resolved.parent.parent.parent
+    return resolved.parent
+
+
+def parse_superseded_header(text: str) -> tuple[str | None, str | None, list[str]]:
+    """Return (successor line, change summary, successor links) from the prefix."""
+    lines = text.splitlines()[:20]
+    if not lines or not ADR_STATUS_HEADER.match(lines[0]):
+        return None, None, []
+    successor: str | None = None
+    changed: str | None = None
+    for line in lines[1:]:
+        successor_match = ADR_SUCCESSOR_HEADER.match(line)
+        if successor_match:
+            successor = successor_match.group(1).strip()
+        change_match = ADR_CHANGE_HEADER.match(line)
+        if change_match:
+            changed = change_match.group(1).strip()
+    links = MARKDOWN_LINK.findall(successor or "")
+    return successor, changed, links
+
+
+def resolve_adr_link(file: Path, target: str) -> Path | None:
+    """Resolve a local ADR link, ignoring anchors and external URLs."""
+    path_part = target.split("#", 1)[0]
+    if not path_part or EXTERNAL_LINK.match(path_part):
+        return None
+    return (file.parent / path_part).resolve()
+
+
+def check_adrs(report: Report, repository_root: Path) -> None:
+    """Check effective/archived ADR separation, index coverage, and clarity."""
+    architecture_dir = repository_root / "docs" / "architecture"
+    decisions_dir = architecture_dir / "decisions"
+    if not decisions_dir.is_dir():
+        return
+
+    current_files = sorted(path for path in decisions_dir.glob("*.md") if path.is_file())
+    superseded_dir = decisions_dir / "superseded"
+    archived_files = sorted(
+        path for path in superseded_dir.rglob("*.md") if path.is_file()
+    ) if superseded_dir.is_dir() else []
+    current_names = {path.stem for path in current_files}
+
+    for file in current_files:
+        text = file.read_text(encoding="utf-8", errors="replace")
+        relative = file.relative_to(repository_root)
+        status_values = {value.lower() for value in ADR_STATUS_LINE.findall(text)}
+        if "superseded" in status_values:
+            report.error(
+                str(relative),
+                "adr-superseded",
+                "effective ADR declares status Superseded but is not archived",
+                "Move the file to docs/architecture/decisions/superseded/, prepend the standard header naming its successor, and remove it from the ADR index.",
+            )
+        if not status_values:
+            report.error(
+                str(relative),
+                "adr-integrity",
+                "effective ADR has no Accepted status declaration",
+                "Add one `- Status: Accepted` declaration after confirming the ADR is effective, or ask the user whether it belongs in the archive.",
+            )
+        elif status_values != {"accepted"}:
+            report.error(
+                str(relative),
+                "adr-integrity",
+                "effective ADR has contradictory or non-effective status declarations: "
+                + ", ".join(sorted(status_values)),
+                "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
+            )
+        if ADR_PLACEHOLDER.search(text):
+            report.error(
+                str(relative),
+                "adr-integrity",
+                "effective ADR contains an unresolved TODO/TBD placeholder",
+                "Replace the placeholder with evidence-backed content, or ask the user whether the ADR should remain proposed instead of effective.",
+            )
+        if re.search(r"\bsupersed\w*\b|decisions/superseded/", text, re.IGNORECASE):
+            report.error(
+                str(relative),
+                "adr-integrity",
+                "effective ADR contains supersession history that can confuse it with an archived decision",
+                "Remove predecessor/history references from the effective ADR; inspect the matching archived record only when history is needed.",
+            )
+
+    for file in archived_files:
+        relative = file.relative_to(repository_root)
+        text = file.read_text(encoding="utf-8", errors="replace")
+        successor_line, changed, links = parse_superseded_header(
+            text
+        )
+        problems: list[str] = []
+        if file.parent != superseded_dir:
+            problems.append("archive must contain ADR files directly, not in a nested folder")
+        if successor_line is None:
+            problems.append("missing the prepended Superseded by header")
+        if not changed or ADR_PLACEHOLDER.search(changed):
+            problems.append("missing a non-empty What changed summary")
+        valid_successors: list[str] = []
+        for link in links:
+            target = resolve_adr_link(file, link)
+            if target is None:
+                continue
+            if target.parent != decisions_dir or not target.is_file():
+                problems.append(f"successor link does not target an effective ADR: {link}")
+                continue
+            valid_successors.append(target.stem)
+        if successor_line is not None and not valid_successors:
+            problems.append("Superseded by must link to an existing effective ADR")
+        if problems:
+            report.error(
+                str(relative),
+                "adr-superseded",
+                "; ".join(problems),
+                "Move the file directly under docs/architecture/decisions/superseded/ and prepend the standard Status, Superseded by, and What changed header while preserving the original body.",
+            )
+
+    index = architecture_dir / "README.md"
+    if current_files and not index.is_file():
+        report.error(
+            "docs/architecture/README.md",
+            "adr-index",
+            "ADR index is missing while effective ADRs exist",
+            "Create or restore docs/architecture/README.md and list every effective ADR directly under decisions/.",
+        )
+    if index.is_file():
+        index_text = index.read_text(encoding="utf-8", errors="replace")
+        linked_current: set[str] = set()
+        for link in MARKDOWN_LINK.findall(index_text):
+            target = resolve_adr_link(index, link)
+            if target is None:
+                continue
+            if target.parent == decisions_dir:
+                if target.is_file():
+                    linked_current.add(target.stem)
+                else:
+                    report.error(
+                        "docs/architecture/README.md",
+                        "adr-index",
+                        f"ADR index links to missing effective ADR: {link}",
+                        "Remove the stale index row or restore the referenced effective ADR.",
+                    )
+            elif target.parent == superseded_dir or superseded_dir in target.parents:
+                report.error(
+                    "docs/architecture/README.md",
+                    "adr-index",
+                    f"ADR index links to archived ADR: {link}",
+                    "Remove the archived ADR from the index; history belongs under decisions/superseded/ and is selected only when needed.",
+                )
+        for file in archived_files:
+            relative_target = file.relative_to(index.parent).as_posix()
+            archived_text = file.read_text(encoding="utf-8", errors="replace")
+            archived_title = next(
+                (
+                    line.lstrip("#").strip()
+                    for line in archived_text.splitlines()
+                    if line.startswith("#")
+                ),
+                None,
+            )
+            if (
+                relative_target in index_text
+                or file.name in index_text
+                or (archived_title and archived_title in index_text)
+            ):
+                report.error(
+                    "docs/architecture/README.md",
+                    "adr-index",
+                    f"ADR index mentions archived ADR {file.name}",
+                    "Remove the archived ADR mention and keep only effective ADR rows in the index.",
+                )
+        for name in sorted(current_names - linked_current):
+            report.error(
+                "docs/architecture/README.md",
+                "adr-index",
+                f"effective ADR {name}.md is missing from the ADR index",
+                "Add the effective ADR directly under decisions/ to the index table; do not add archived records.",
+            )
+
+
 def check_decisions(report: Report, work: str, decisions_dir: Path) -> None:
     if not decisions_dir.is_dir():
         return
@@ -457,6 +677,7 @@ def main() -> int:
             print(f"error: not a directory: {arguments.work_dir}", file=sys.stderr)
             return 2
         check_work_dir(report, arguments.work_dir)
+        check_adrs(report, repository_root_for_work_dir(arguments.work_dir))
     else:
         root = arguments.engineering_root
         if not root.is_dir():
@@ -467,6 +688,7 @@ def main() -> int:
             for work_dir in sorted(path for path in works.iterdir() if path.is_dir()):
                 check_work_dir(report, work_dir)
         check_overview(report, root)
+        check_adrs(report, root.parent)
 
     if arguments.json:
         print(json.dumps({"findings": report.findings}, indent=2))
@@ -478,6 +700,8 @@ def main() -> int:
                 f"{finding['severity']}: [{finding['work']}] "
                 f"{finding['check']}: {finding['message']}"
             )
+            if finding.get("fix"):
+                print(f"  fix offered: {finding['fix']}")
 
     has_errors = any(finding["severity"] == "error" for finding in report.findings)
     return 1 if (arguments.strict and has_errors) else 0

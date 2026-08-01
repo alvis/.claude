@@ -113,7 +113,9 @@ outcome, not a failure.
 - `docs/specs/<capability>/` takes the owning capability, never the task
   title.
 - ADRs alone carry a zero-padded monotonic numeric prefix
-  (`decisions/0007-<decision-slug>.md`) and are never renumbered.
+  (`docs/architecture/decisions/0007-<decision-slug>.md`) and are never
+  renumbered. Superseded ADRs keep that filename under
+  `decisions/superseded/`.
 - Ordinary work-local children take unnumbered semantic `<slug>.md` names —
   never `part-1`, `misc`, or the task title.
 - Numbered `<nn>-<topic-slug>.md` children, in increments of 10, are reserved

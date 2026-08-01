@@ -17,7 +17,8 @@ migration rules for that tree.
   from `docs/README.md` under repository records when it exists.
 - `docs/architecture` owns structural rules, boundaries, topology, protocols,
   and flows. A choice with alternatives and consequences is an architectural
-  decision record under `decisions`, never a second architecture truth.
+  decision record under `decisions`, never a second architecture truth. Follow
+  [the ADR contract](adr.md) for current-only indexing and superseded archives.
 - `docs/design` owns durable system-wide and feature design.
 
 ## Capability specifications

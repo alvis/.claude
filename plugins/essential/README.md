@@ -18,6 +18,7 @@ is read at the moment it matters.
 | `references/engineering-work.md` | Before creating or rewriting any lifecycle-managed artifact | Topology (`docs/` + `.state/`), resolver/bootstrap, coordinator lease and write protocol, journal discipline, overviews, reviews, spec freshness, promotion, retirement |
 | `references/engineering-work-state.md` | When writing or migrating a `state.md` | Task table shape, stable IDs, mark/status pairs, DAG and roll-ups, change control, journal grammar |
 | `references/truth.md` | Once per work stream | Six kinds of truth, the five constitutional rules, validity, `capability_id` |
+| `references/adr.md` | When creating, superseding, indexing, or reviewing an ADR | Current/archive paths, superseded header, current-only index, targeted history, integrity checks |
 | `references/decision-causality.md` | When creating/accepting/superseding a decision | `supersedes`/`affects`/`invalidates`/`preserves`, blast-radius sweep, decision completion gate |
 | `references/approvals.md` | When recording approvals or durable claims that age | The approval binding tuple, freshness metadata |
 | `references/anchors.md` | For non-git anchors or cross-stream initiatives | Anchor declarations, adapter contract, initiative manifests |
@@ -55,9 +56,9 @@ semantic authority). Domain plugins own their own semantic templates.
 - **`engineering-doctor`** — read-only structural checker: duplicate or
   malformed task IDs, dangling dependencies, cycles, impossible roll-ups,
   contradictory mark/status pairs, missing evidence annotations, broken file
-  references, unsuperseded decisions, stale leases, overview drift. Advisory
-  by default; `--strict` for irreversible or release-critical moments. It
-  never judges prose and never edits files.
+  references, unsuperseded decisions, ADR archive/index/integrity drift, stale
+  leases, overview drift. Advisory by default; `--strict` for irreversible or
+  release-critical moments. It never silently edits files.
 - **`check-markdown-size`** — the 16,384-byte gate for work Markdown.
 
 ## Skills

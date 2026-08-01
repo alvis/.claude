@@ -215,6 +215,90 @@ def test_superseded_decision_without_successor(workspace: Workspace) -> None:
     assert "decision" not in workspace.checks(findings)
 
 
+def test_adr_supersession_requires_archive_header_and_current_index(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-old-choice.md").write_text(
+        "# ADR-0001: Old choice\n\n- Status: `Superseded`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "# Architecture\n\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0001](decisions/0001-old-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert "adr-superseded" in workspace.checks(findings)
+
+    old = decisions / "0001-old-choice.md"
+    archived = decisions / "superseded"
+    archived.mkdir()
+    old.rename(archived / old.name)
+    (decisions / "0002-new-choice.md").write_text(
+        "# ADR-0002: New choice\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002](../0002-new-choice.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "# Architecture\n\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0002](decisions/0002-new-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_integrity_finding_offers_a_fix(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "This ADR supersedes an earlier choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    integrity = [finding for finding in findings if finding["check"] == "adr-integrity"]
+    assert integrity
+    assert all(finding.get("fix") for finding in integrity)
+
+
+def test_adr_index_rejects_archived_entries(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-new-choice.md").write_text(
+        "# ADR-0002: New choice\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002](../0002-new-choice.md)\n>\n"
+        "> **What changed:** The complete choice changed.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-new-choice.md) | Accepted |\n"
+        "| [ADR-0001](decisions/superseded/0001-old-choice.md) | Superseded |\n",
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert "adr-index" in workspace.checks(findings)
+
+
 def test_expired_and_conflicting_lease(workspace: Workspace) -> None:
     workspace.write_state(row("AAA"))
     (workspace.work_dir / "lease.json").write_text(
