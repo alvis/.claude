@@ -70,17 +70,18 @@ Substitution rules:
      Change-specific checks are required; these standard checks supplement
      rather than replace them: tests added or updated · docs updated where
      user-visible · CI green locally · no new lint or type errors.
-     Add one reviewer triplet for each reviewer required by the active size
-     zone (one for yellow, two for red, and any project-required green-zone
-     reviewers), in slot order:
+     Add one reviewer triplet for each reviewer required by the standard-owned
+     active size-zone policy and any project override, in slot order. Do not
+     duplicate reviewer counts here; derive them from
+     `plugins/coding/constitution/standards/git/write.md` (GIT-PR-SIZE-03):
        - [ ] Reviewer slot N assigned
-       - [ ] Reviewer slot N reviewed `<head-oid>`
-       - [ ] Reviewer slot N approved `<head-oid>`
+       - [ ] Reviewer slot N reviewed `<head-oid>` against `<base-oid>`
+       - [ ] Reviewer slot N approved `<head-oid>` against `<base-oid>`
      Text-only authoring keeps the identity-free slot label. Publication
      replaces it with the assigned `@login` when known. Compare the PR's
      pre-publication and verified post-publication head/base OID pairs. When
-     either differs, replace `<head-oid>` with the new head and reset its
-     reviewed and approved tasks until that reviewer acts on that surface; a
+     either differs, replace both OID placeholders and reset that reviewer's
+     reviewed and approved tasks until that reviewer acts on the new surface; a
      no-op publication preserves evidence bound to the unchanged pair. -->
 {{verification_body}}
 

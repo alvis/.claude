@@ -43,3 +43,5 @@ def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
     assert "head/base OID pairs" in template
     assert "no-op publication preserves evidence" in template
     assert "unchanged pair" in template
+    assert "standard-owned" in template
+    assert "<base-oid>" in template
