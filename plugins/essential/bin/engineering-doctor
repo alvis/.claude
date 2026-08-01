@@ -55,6 +55,9 @@ ADR_INDEX_LINK = re.compile(
 ADR_REFERENCE_LINK = re.compile(
     r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]"
 )
+ADR_REFERENCE_SHORTCUT = re.compile(
+    r"(?<![!\]])\[([^\]]+)\](?!\s*(?:\(|\[|:))"
+)
 ADR_REFERENCE_DEFINITION = re.compile(
     r"^[ \t]{0,3}\[([^\]]+)\]:\s*(?:<([^>\n]+)>|([^\s]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$",
@@ -164,6 +167,10 @@ def adr_index_links(
     for label, reference in ADR_REFERENCE_LINK.findall(text):
         key = reference or label
         target = references.get(" ".join(key.split()).casefold())
+        if target is not None:
+            targets.append(target)
+    for label in ADR_REFERENCE_SHORTCUT.findall(text):
+        target = references.get(" ".join(label.split()).casefold())
         if target is not None:
             targets.append(target)
     return targets
@@ -380,7 +387,7 @@ ADR_STATUS_LINE = re.compile(
 )
 ADR_PLACEHOLDER = re.compile(
     r"(?:\[\s*(?:TODO|TBD)\s*\]|<\s*(?:TODO|TBD)\s*>|"
-    r"^[ \t]*(?:>\s*)?(?:[-*]\s*)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
+    r"^[ \t]*(?:>\s*)?(?:(?:[-+*]|\d+[.)])\s+)?(?:TODO|TBD)\b(?:\s*:|\s*$)|"
     r"^[ \t]*(?:>\s*)?[\w.-]+:\s*(?:TODO|TBD)\s*$)",
     re.IGNORECASE | re.MULTILINE,
 )
@@ -407,6 +414,10 @@ ADR_CHANGE_SCOPE = re.compile(
 )
 ADR_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 ADR_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+ADR_RAW_HTML_NON_TAG = re.compile(
+    r"^ {0,3}<(?P<kind>\?|!\[CDATA\[|![A-Za-z])",
+    re.IGNORECASE,
+)
 ADR_RAW_HTML_BLOCK = re.compile(
     r"^ {0,3}<(?P<tag>address|article|aside|blockquote|body|caption|center|"
     r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|"
@@ -421,6 +432,8 @@ ADR_GENERIC_HTML_BLOCK = re.compile(
 )
 ADR_LIST_ITEM = re.compile(r"^(?P<indent> *)(?:[-+*]|\d+[.)])(?:\s+|$)")
 ADR_RAW_HTML_CLOSE_TAGS = {"pre", "script", "style", "textarea"}
+ADR_EMPTY_CONTAINER = re.compile(r"^(?:>\s*)+$")
+ADR_NUMERIC_FILENAME = re.compile(r"^[0-9]{4}(?:-|$)")
 ADR_METADATA_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-*]\s*)?\*{0,2}(?:Status|Date):\*{0,2}\s*",
     re.IGNORECASE,
@@ -567,7 +580,7 @@ def adr_metadata_text(text: str) -> str:
             continue
         if not title_seen:
             if ADR_H1.match(line):
-                if not ADR_TITLE.match(stripped):
+                if adr_title_value(stripped) is None:
                     return ""
                 title_seen = True
             continue
@@ -599,8 +612,9 @@ def adr_heading(text: str) -> tuple[int, str, str] | None:
             continue
         if ADR_H1.match(line):
             match = ADR_TITLE.match(stripped)
-            if match:
-                return index, match.group(1), match.group(2).strip()
+            title = adr_title_value(stripped)
+            if match and title is not None:
+                return index, match.group(1), title
             return None
     return None
 
@@ -611,14 +625,36 @@ def adr_identity(text: str) -> tuple[str, str] | None:
     return (heading[1], heading[2]) if heading else None
 
 
+def adr_title_value(line: str) -> str | None:
+    """Return the rendered title, rejecting a heading made only of closing hashes."""
+    match = ADR_TITLE.match(line.strip())
+    if match is None:
+        return None
+    title = match.group(2).strip()
+    title = re.sub(r"(?:\s+#+|^#+)\s*$", "", title).strip()
+    return title or None
+
+
 def normalize_adr_title(title: str) -> str:
     normalized = re.sub(r"\s+#+\s*$", "", title.strip())
+    normalized = without_inline_markup(normalized)
     return normalize_index_cell(normalized)
 
 
 def without_html_comments(text: str) -> str:
     return ADR_HTML_COMMENT.sub(
         lambda match: "\n" * match.group(0).count("\n"), text
+    )
+
+
+def without_inline_markup(text: str) -> str:
+    """Remove simple inline Markdown wrappers while preserving word underscores."""
+    normalized = re.sub(r"`([^`\n]+)`", r"\1", text)
+    return re.sub(
+        r"(?<!\w)(?:\*{1,2}|_{1,2})(?=\S)|"
+        r"(?<=\S)(?:\*{1,2}|_{1,2})(?!\w)",
+        "",
+        normalized,
     )
 
 
@@ -680,6 +716,7 @@ def without_inactive_markdown_regions(text: str) -> str:
     lines: list[str] = []
     fence: tuple[str, int] | None = None
     raw_html_region: tuple[str, bool] | None = None
+    raw_html_non_tag: str | None = None
     list_indent: int | None = None
     for line in without_html_comments(text).splitlines(keepends=True):
         line_break = "\n" if line.endswith("\n") else ""
@@ -708,6 +745,35 @@ def without_inactive_markdown_regions(text: str) -> str:
             lines.append(line_break)
             if re.search(rf"</\s*{re.escape(tag)}\s*>", line, re.IGNORECASE):
                 raw_html_region = None
+            continue
+        if raw_html_non_tag is not None:
+            lines.append(line_break)
+            terminator = {
+                "?": r"\?>",
+                "!": r">",
+                "![CDATA[": r"\]\]>",
+            }[raw_html_non_tag]
+            if re.search(terminator, line):
+                raw_html_non_tag = None
+            continue
+        raw_html_non_tag_match = ADR_RAW_HTML_NON_TAG.match(line)
+        if raw_html_non_tag_match:
+            lines.append(line_break)
+            kind = raw_html_non_tag_match.group("kind")
+            raw_html_non_tag = (
+                "?"
+                if kind == "?"
+                else "![CDATA["
+                if kind.casefold() == "![cdata["
+                else "!"
+            )
+            terminator = {
+                "?": r"\?>",
+                "!": r">",
+                "![CDATA[": r"\]\]>",
+            }[raw_html_non_tag]
+            if re.search(terminator, line):
+                raw_html_non_tag = None
             continue
         raw_html_match = ADR_RAW_HTML_BLOCK.match(line)
         if raw_html_match is None and not ADR_TEMPLATE_PLACEHOLDER.search(line):
@@ -764,12 +830,17 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         for path in superseded_dir.iterdir()
         if path.is_file() and path.suffix == ".md"
     ) if superseded_dir.is_dir() else []
+    adr_candidates = sorted(
+        path
+        for path in decisions_dir.rglob("*")
+        if path.is_file() and ADR_NUMERIC_FILENAME.match(path.name)
+    )
     all_adr_files = sorted(
         path
         for path in decisions_dir.rglob("*")
         if path.is_file() and path.suffix.casefold() == ".md"
     )
-    for file in all_adr_files:
+    for file in adr_candidates:
         if file.suffix != ".md":
             report.error(
                 str(file.relative_to(repository_root)),
@@ -886,9 +957,10 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "effective ADR contains an unresolved TODO/TBD placeholder",
                 "Replace the placeholder with evidence-backed content, or ask the user whether the ADR should remain proposed instead of effective.",
             )
+        history_content = without_inline_markup(content)
         if re.search(
             r"\bsupersed\w*\b|decisions/superseded/", content, re.IGNORECASE
-        ) or ADR_REPLACEMENT_REFERENCE.search(content):
+        ) or ADR_REPLACEMENT_REFERENCE.search(history_content):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -977,6 +1049,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 and not re.match(r"^#{2,}\s+", line.strip())
                 and not ADR_FENCE.fullmatch(line.strip())
                 and not ADR_THEMATIC_BREAK.fullmatch(line.strip())
+                and not ADR_EMPTY_CONTAINER.fullmatch(line.strip())
             ]
             if not substantive_lines:
                 problems.append(
