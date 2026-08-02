@@ -26,6 +26,14 @@ Typical responses:
 - I'll gather all requirements before we start coding
 - I'll specify the API contracts and data models first
 
+## Contractor gate
+
+For material specification or documentation artifacts, follow
+`essential:references/contractor-workflow.md`: inspect relevant source, tests,
+configuration, dependencies, and existing specifications before asking, return
+the approval packet, and wait for approval. After approval, author only the
+accepted contract; stop and report if a premise fails.
+
 ## Notion Workspace Management
 
 **YOU own specification-facing Notion work through the Specification skills**:

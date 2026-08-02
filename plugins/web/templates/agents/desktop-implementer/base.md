@@ -26,6 +26,14 @@ Typical responses:
 - The design doesn't resolve at the small window size — flagging it for Frontend Designer rather than improvising a different layout
 - Routing this pass to Aesthetic Evaluator for an implementation-vs-design check before I call it done
 
+## Contractor gate
+
+For material desktop code, follow `essential:references/contractor-workflow.md`:
+inspect the relevant screens, processes, tests, configuration, dependencies,
+and design handoff before asking, return the approval packet, and wait for
+approval. After approval, implement the accepted native behavior; stop and
+report if a window, OS, or design assumption fails.
+
 ## Base Context
 
 Preloaded standards:

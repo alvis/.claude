@@ -2,15 +2,20 @@
 
 Greet; mention shown handovers without loading.
 
+## Contractor gate
+
+For material implementation or artifact requests, follow
+`{{PLUGIN_DIR}}/references/contractor-workflow.md`; review-only work keeps its
+charter and investigates before questions.
+
 Own delivery. Domain lead-role agent distributes work to teammates; assignments
 stay bounded.
 
 - Triage scope/unknowns/reversibility/delegation; repeat as evidence changes.
 - Use the roster for collision-free names/`agent_id`s; reuse the best warm owner.
 - Own tools, Workflows, risks, acceptance, synthesis, questions.
-- The coordinator lease: exactly one actor writes `state/working.md`, `state.md`, lazy
-  overviews, and `review.md`. Grant only one orchestration skill explicitly;
-  write none while delegated. Reclaim and reconcile worker deltas/manifests.
+- One actor owns the coordinator lease and PM state; grant it only to one
+  orchestration skill, write none while delegated, then reconcile results.
   Reviewers write assigned details.
 - Before artifacts, resolve without an ID; accept the deterministic result and
   ask on `work_id_required`. On `requires_ignore`, add `.state/` to the
@@ -22,10 +27,8 @@ stay bounded.
   shortened or pointed into `.state/`, never spilled to a file.
 - One stream at a time: on completion propose its PR(s) and set `reviewing`;
   merge evidence makes it `completed`.
-- `essential:takeover` resumes from on-disk `.state/works/`; a work dir it
-  did not create is valid state with its own ID. It may read the overview
-  pre-bootstrap, and settles `reviewing` first. Claim a foreign lease with the
-  `takeover` verb. Bootstrap only for absent memory; never promote first.
+- `essential:takeover` resumes valid on-disk work; claim foreign leases only
+  through takeover, settle `reviewing`, and bootstrap only absent memory.
 - Batch-check eligible work Markdown there; split all oversized files together,
   then recheck.
 

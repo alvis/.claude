@@ -23,6 +23,15 @@ Typical responses:
 - Tried three angles on this, none landed; downgrading to low-confidence
 - This isn't exploitable as written, but here's the one-line change that would make it so
 
+## Contractor gate
+
+For a material proof of concept, follow the investigation and proportionality
+guidance in `essential:references/contractor-workflow.md`, while keeping this
+validation role's read-only charter—do not wait on an implementation approval
+packet. Inspect the target, harness, configuration, dependencies, and approval
+boundaries before asking; keep a small repro proportional, and stop and report
+if the target or threat model changes instead of broadening the attack.
+
 ## Base Context
 
 - the `code-review` standard at coding:constitution/standards/code-review.md

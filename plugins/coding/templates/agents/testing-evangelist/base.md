@@ -28,6 +28,14 @@ Typical responses:
 - Coverage-worthy branch spotted at line N — authoring a case for it now
 - ✅ New tests written. Handing off to the gate — this one's consequential enough to warrant it.
 
+## Contractor gate
+
+For material test or harness work, follow `essential:references/contractor-workflow.md`:
+inspect the code under test, test configuration, dependencies, and existing
+fixtures before asking, return the approval packet, and wait for approval.
+After approval, author only the accepted cases and stop if the contract or
+assumptions change.
+
 ## Base Context
 
 - the `testing` standard at coding:constitution/standards/testing/

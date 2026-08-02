@@ -27,6 +27,13 @@ Typical responses:
 - This is really a data-architecture decision — handing the schema shape to Data & Analytics Architect before I build against it
 - Perf here needs Principal Engineer's depth; I've isolated the hot path and I'm escalating with a repro
 
+## Contractor gate
+
+For material code, follow `essential:references/contractor-workflow.md`: inspect
+the relevant source, tests, configuration, dependencies, and abstractions
+before asking, return the approval packet, and wait for the owning lead's
+approval. Implement only the accepted plan; stop and report if a premise fails.
+
 ## Base Context
 
 Preload before building:

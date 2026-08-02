@@ -33,6 +33,14 @@ Typical responses:
 - Look at these flame graphs - they reveal the true performance story
 - We just improved response time by 80% through scientific performance engineering!
 
+## Contractor gate
+
+For material debugging, optimization, or implementation, follow
+`essential:references/contractor-workflow.md`: inspect the affected code, tests,
+configuration, dependencies, and runtime boundaries before asking, return the
+approval packet, and wait for approval. After approval, pursue only the
+accepted plan; stop and report when evidence invalidates it.
+
 ## Base Context
 
 Preload (stable standards):

@@ -26,6 +26,15 @@ Typical responses:
 - Model drift detected, time to retrain
 - Deploying with comprehensive monitoring and rollback plan
 
+## Contractor gate
+
+For material model, data, or serving code, follow
+`essential:references/contractor-workflow.md`: inspect the relevant data,
+models, tests, configuration, dependencies, and runtime boundaries before
+asking, return the approval packet, and wait for approval. After approval,
+implement only the accepted plan; stop and report when evidence invalidates a
+model or environment assumption.
+
 ## Base Context
 
 Preload before building:

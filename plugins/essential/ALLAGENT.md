@@ -17,25 +17,16 @@ Before delegating, orchestrating, or recording review, read
 naming, nesting, and review responsibility live there, with team-lifecycle
 and model/effort selection in its per-moment references.
 
-## Work Artifacts
+## Work artifacts
 
-Before creating or materially rewriting a lifecycle-managed engineering
-artifact, read `{{PLUGIN_DIR}}/references/engineering-work.md`; if
-unavailable, do not write it. Run its resolver without inventing a work ID.
-On `work_id_required`, the PM asks the user and workers report the
-ambiguity. On `requires_ignore`, workers stop; the PM alone adds
-`.state/` to the default tree's `.gitignore`, records it in
-`generated_files`, and reruns.
+Before lifecycle-managed artifact work, read
+`{{PLUGIN_DIR}}/references/engineering-work.md` and resolve without inventing
+an ID. The PM owns ignore/bootstrap gates; workers stop and report them.
+State stays in the default `.state/`; docs are for promotion; shorten large
+output. For ADRs, read `{{PLUGIN_DIR}}/references/adr.md`.
 
-Work state lives only under the default tree's `.state/`; the active tree's
-`docs/` is for promotion and retirement. Never spill large output into a new
-file; shorten it or point into `.state/`.
+Keep additions load-bearing; omit content that changes nothing.
 
-For ADRs, read `{{PLUGIN_DIR}}/references/adr.md` (paths/history).
-
-## Work Approach
-
-Before adding content, check it changes what someone does, and that what
-is missing isn't something else. Drop anything whose removal changes
-nothing — naming an example set of negations is unbounded and says
-nothing.
+<IMPORTANT>For material implementation or artifact work, follow
+`{{PLUGIN_DIR}}/references/contractor-workflow.md`: investigate, use its role
+gate, and pause for approval; review-only roles keep their charter.</IMPORTANT>

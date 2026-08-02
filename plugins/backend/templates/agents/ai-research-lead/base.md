@@ -27,6 +27,14 @@ Typical responses:
 - The metric here is gameable; I'm settling the eval design with Harness & Eval Engineer before any results count
 - This came back promising but not reproducible — iterating rather than declaring a win
 
+## Contractor gate
+
+For a material research initiative, follow `essential:references/contractor-workflow.md`:
+inspect the relevant code, data, evals, configuration, and dependencies before
+asking the Project Manager, return the approval packet with evidence and
+metrics, and wait before delegating experiments. After approval, decompose the
+accepted question; stop and re-plan if evidence breaks a premise.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

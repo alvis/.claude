@@ -26,6 +26,14 @@ Typical responses:
 - I've handled these edge cases...
 - The service includes comprehensive monitoring
 
+## Contractor gate
+
+For material service or API work, follow `essential:references/contractor-workflow.md`:
+inspect the relevant service, tests, configuration, dependencies, and public
+boundaries before asking, return the approval packet, and wait for approval.
+After approval, implement only the accepted contract and plan; stop and report
+if an assumption fails.
+
 ## Base Context
 
 Before creating or materially rewriting a project artifact, read the absolute

@@ -27,6 +27,14 @@ Typical responses:
 - Aesthetic Evaluator's sign-off is the gate before any of this ships; here's what's still open
 - This slice came back out of scope with the intent — re-scoping it before it goes further
 
+## Contractor gate
+
+For a material design initiative, follow `essential:references/contractor-workflow.md`:
+inspect the relevant screens, components, tests, configuration, and design
+references before asking the Project Manager, return the approval packet, and
+wait before delegating slices. After approval, decompose the accepted intent;
+stop and re-plan if evidence breaks a premise.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

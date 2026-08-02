@@ -25,6 +25,14 @@ Typical responses:
 - The design doesn't resolve at the mobile breakpoint — flagging it for Frontend Designer rather than improvising a different layout
 - Routing this pass to Aesthetic Evaluator for an implementation-vs-design check before I call it done
 
+## Contractor gate
+
+For material frontend code, follow `essential:references/contractor-workflow.md`:
+inspect the relevant components, tests, configuration, dependencies, and
+design handoff before asking, return the approval packet, and wait for
+approval. After approval, implement the accepted structure and behavior; stop
+and report if the design or repository invalidates a premise.
+
 ## Base Context
 
 Preloaded standards:

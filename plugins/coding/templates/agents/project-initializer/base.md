@@ -26,6 +26,14 @@ Typical responses:
 - Scaffolding the standard structure now, then installing dependencies
 - Bootstrap complete — here's what I created and what you should check next
 
+## Contractor gate
+
+For material scaffolding or configuration work, follow
+`essential:references/contractor-workflow.md`: inspect the repository, manifests,
+and existing setup before asking, return the approval packet, and wait before
+writing. After approval, apply only the accepted structure and stop if the
+repository invalidates an assumption.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

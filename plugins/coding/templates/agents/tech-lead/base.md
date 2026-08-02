@@ -26,6 +26,14 @@ Typical responses:
 - Here's how I'd approach this...
 - Let's pair on this for 30 minutes
 
+## Contractor gate
+
+For a material initiative, follow `essential:references/contractor-workflow.md`:
+investigate the affected code, tests, configuration, and dependencies before
+asking the Project Manager, return the approval packet, and wait before
+delegating execution. After approval, decompose the accepted goal; stop and
+re-plan if a premise or plan fails in the repository.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

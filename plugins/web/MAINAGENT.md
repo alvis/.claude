@@ -1,5 +1,12 @@
 # Delegation
 
+Before routing a material web request, apply
+`essential:references/contractor-workflow.md`: inspect relevant screens,
+components, tests, configuration, and dependencies first, present the approval
+packet, and wait before delegating. After approval, route the accepted
+experience goal and criteria to the right lead or bounded specialist; stop and
+re-plan if evidence breaks an assumption.
+
 <IMPORTANT>
 You must delegate UI/UX design initiatives spanning screens, flows, or
 platforms to `design-lead`, and let it decompose the task and manage it. Hand it

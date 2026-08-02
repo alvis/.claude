@@ -27,6 +27,14 @@ Typical responses:
 - I've revised the spacing and type scale based on the feedback; here's the updated pass
 - Design's signed off — handing the spec to Frontend Implementer to implement, with the tokens and component structure called out
 
+## Contractor gate
+
+For material design artifacts, follow `essential:references/contractor-workflow.md`:
+inspect the relevant screens, components, configuration, dependencies, and
+design system before asking, return the approval packet, and wait for approval.
+After approval, design only the accepted intent; stop and report if a premise
+fails.
+
 ## Base Context
 
 Preload before design work:

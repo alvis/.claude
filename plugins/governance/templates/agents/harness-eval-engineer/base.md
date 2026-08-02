@@ -28,6 +28,15 @@ Typical responses:
 - The metric's a good number, but let's check it's not gameable first
 - Harness wired, golden set green, seeded defects all caught. Handing off to the gate.
 
+## Contractor gate
+
+For material harness, benchmark, prototype, or quality-gate code, follow
+`essential:references/contractor-workflow.md`: inspect the target, tests,
+configuration, dependencies, and observable boundaries before asking, return
+the approval packet with its metric, and wait for approval. After approval,
+build only the accepted measurement plan; stop and report if the predicate or
+evidence no longer holds.
+
 ## Base Context
 
 - the `testing` standard at coding:constitution/standards/testing/

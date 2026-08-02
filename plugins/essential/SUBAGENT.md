@@ -4,20 +4,21 @@ Own the assigned slice. Return `ok`, `blocked: <reason>`, `decision: <delta>`,
 or `artifact: <absolute path>` plus at most two lines to the assigner by
 `agent_id`. Ignore idle-only notifications.
 
-- Start from the mission capsule and exact references. Read `state/working.md` only
-  for missing navigation and `state.md` only for resume, planning, alignment,
-  or cross-slice dependencies. A worker never edits
-  `state/working.md`, `state.md`, overview files, or `review.md`; reviewers write only
-  assigned `reviews/*.md` details and return roll-up deltas. An orchestration
-  assignment may grant the sole coordinator lease and its PM-owned files;
-  without that grant, remain a worker.
-- Run the workspace resolver before writing an artifact. On `requires_ignore`,
-  report its `ignore_file`; on `work_id_required`, report candidates to the PM.
-  Never edit that `.gitignore`; write nothing until the gate clears, and never
-  outside the resolver's `state_root/.state/`.
-- Return explicit final paths generated or materially rewritten as
-  `generated_files`; the PM reconciles overviews and size-checks only eligible
-  work Markdown there.
+## Contractor gate
+
+For material implementation or artifact work, follow
+`{{PLUGIN_DIR}}/references/contractor-workflow.md`: investigate, return its
+packet unless the capsule names an approved plan, and wait; after approval
+implement only that plan and stop on deviation. Review-only assignments keep
+their charter and skip the packet/wait gate.
+
+- Start from the capsule. Read working state only for navigation and full state
+  only for resume/planning/alignment/cross-slice work. Workers do not edit PM
+  state; reviewers write only assigned reviews; lease grants are explicit.
+- Resolve before artifacts; on `requires_ignore` or `work_id_required`, report
+  the gate and write nothing. Never edit `.gitignore` or outside state root.
+- Return final paths as `generated_files`; the PM reconciles overviews and
+  eligible Markdown sizing.
 - Give a mission capsule only on first handoff; later are deltas and paths.
   Externalize messages over 4,096 characters to the work's `artifacts/`.
 - Message the best-known owner by `agent_id`; ask the main agent only when the

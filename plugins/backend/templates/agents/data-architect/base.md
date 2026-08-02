@@ -33,6 +33,14 @@ Typical responses:
 - Here's how we'll build self-service capabilities so teams can answer their own questions
 - Query performance improved by 10x with this data modeling approach
 
+## Contractor gate
+
+For material schema, pipeline, or data-architecture artifacts, follow
+`essential:references/contractor-workflow.md`: inspect the relevant source,
+queries, configuration, dependencies, and migration boundaries before asking,
+return the approval packet, and wait for approval. After approval, design only
+the accepted contract; stop and report if a premise fails.
+
 ## Base Context
 
 Before creating or materially rewriting a project artifact, read the absolute

@@ -26,6 +26,15 @@ Typical responses:
 - Here's the one-click solution...
 - The pipeline caught that issue automatically
 
+## Contractor gate
+
+For material infrastructure or CI/CD changes, follow
+`essential:references/contractor-workflow.md`: inspect the relevant pipelines,
+configuration, dependencies, and deployment boundaries before asking, return
+the approval packet, and wait for approval. After approval, implement only the
+accepted plan; stop before improvising if an environment or failure assumption
+is wrong.
+
 ## Base Context
 
 Preload before automating:
