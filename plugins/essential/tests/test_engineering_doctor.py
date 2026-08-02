@@ -55,9 +55,15 @@ class Workspace:
             encoding="utf-8",
         )
 
-    def run_doctor(self, *arguments: str) -> tuple[int, list[dict]]:
+    def run_doctor(
+        self, *arguments: str, repository_root: Path | None = None
+    ) -> tuple[int, list[dict]]:
+        command = [str(DOCTOR), "--work-dir", str(self.work_dir)]
+        if repository_root is not None:
+            command.extend(["--repository-root", str(repository_root)])
+        command.extend(["--json", *arguments])
         completed = subprocess.run(
-            [str(DOCTOR), "--work-dir", str(self.work_dir), "--json", *arguments],
+            command,
             capture_output=True,
             text=True,
         )
@@ -90,8 +96,9 @@ def write_effective_adr(
     decisions = architecture / "decisions"
     decisions.mkdir(parents=True, exist_ok=True)
     path = decisions / name
+    number = name[:4] if len(name) >= 4 and name[:4].isdigit() else "0001"
     path.write_text(
-        "# ADR: Choice\n\n- Status: `Accepted`\n\n" + body,
+        f"# ADR-{number}: Choice\n\n- Status: `Accepted`\n\n" + body,
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
@@ -228,6 +235,16 @@ def test_broken_file_reference_and_absolute_path(workspace: Workspace) -> None:
     assert "portability" in workspace.checks(findings)
 
 
+def test_broken_image_file_reference_is_still_reported(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA"),
+        metadata="- Diagram: ![diagram](missing.png)\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "file-reference" in workspace.checks(findings)
+
+
 def test_superseded_decision_without_successor(workspace: Workspace) -> None:
     workspace.write_state(row("AAA"))
     decisions = workspace.work_dir / "decisions"
@@ -271,9 +288,10 @@ def test_adr_supersession_requires_archive_header_and_current_index(
     )
     (archived / "0001-old-choice.md").write_text(
         "> **Status:** Superseded\n>\n"
-        "> **Superseded by:** [ADR-0002](../0002-new-choice.md)\n>\n"
-        "> **What changed:** The complete choice changed.\n\n"
-        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        "> **Superseded by:** [ADR-0002 — New choice](../0002-new-choice.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
@@ -305,6 +323,2923 @@ def test_adr_integrity_finding_offers_a_fix(workspace: Workspace) -> None:
     assert all(finding.get("fix") for finding in integrity)
 
 
+def test_adr_filenames_are_canonical_for_effective_and_archived_records(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "database.md").write_text(
+        "# ADR-0001: Database\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Database](decisions/database.md) | Accepted |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    filename_findings = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-layout"
+        and "filename must use" in finding["message"]
+    ]
+    assert {finding["work"] for finding in filename_findings} == {
+        "docs/architecture/decisions/database.md",
+        "docs/architecture/decisions/superseded/old-choice.md",
+    }
+    assert all(finding.get("fix") for finding in filename_findings)
+
+
+def test_adr_archive_rejects_multiple_successor_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (decisions / "0003-other.md").write_text(
+        "# ADR-0003: Other\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md), "
+        "[ADR-0003 — Other](../0003-other.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n"
+        "| [ADR-0003](decisions/0003-other.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "exactly one successor link" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_rejects_unpaired_angle_successor_destination(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](<../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "The original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    successor = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "successor link" in finding["message"]
+    ]
+    assert successor
+    assert all(finding.get("fix") for finding in successor)
+
+
+def test_adr_archive_decodes_character_references_in_successor_title(
+    workspace: Workspace,
+) -> None:
+    current = write_effective_adr(workspace.root, name="0002-current.md")
+    current.write_text(
+        "# ADR-0002: R&D\n\n- Status: `Accepted`\n\nThe current choice.\n",
+        encoding="utf-8",
+    )
+    decisions = current.parent
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — R&amp;D](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "The original choice.\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_numeric_identity_must_be_unique_across_current_and_archive(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0001-cache.md").write_text(
+        "# ADR-0001: Cache\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-database.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-cache.md) | Accepted |\n"
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    identity_findings = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "numeric identity 0001 is duplicated" in finding["message"]
+    ]
+    assert {finding["work"] for finding in identity_findings} == {
+        "docs/architecture/decisions/0001-cache.md",
+        "docs/architecture/decisions/superseded/0001-database.md",
+    }
+    assert all(finding.get("fix") for finding in identity_findings)
+    archived_identity = next(
+        finding
+        for finding in identity_findings
+        if "superseded/0001-database.md" in finding["work"]
+    )
+    assert "provenance" in archived_identity["fix"]
+    assert "archived H1" in archived_identity["fix"]
+
+
+def test_adr_heading_identity_must_match_filename_for_current_and_archive(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0003-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0004: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    identity = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "does not match filename prefix" in finding["message"]
+    ]
+    assert {finding["work"] for finding in identity} == {
+        "docs/architecture/decisions/0002-current.md",
+        "docs/architecture/decisions/superseded/0003-old-choice.md",
+    }
+    assert all(finding.get("fix") for finding in identity)
+    archived_identity = next(
+        finding
+        for finding in identity
+        if "superseded/0003-old-choice.md" in finding["work"]
+    )
+    assert "Rename the archived file" in archived_identity["fix"]
+    assert "historical body" in archived_identity["fix"]
+    current_identity = next(
+        finding
+        for finding in identity
+        if finding["work"] == "docs/architecture/decisions/0002-current.md"
+    )
+    assert "provenance" in current_identity["fix"]
+    assert "renaming the effective file" in current_identity["fix"]
+    assert "edit the accepted heading" in current_identity["fix"]
+
+
+def test_archived_adr_must_retain_original_body(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    body = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "original canonical ADR heading and body" in finding["message"]
+    ]
+    assert body
+    assert all(finding.get("fix") for finding in body)
+
+
+def test_archived_adr_rejects_empty_raw_html_body(workspace: Workspace) -> None:
+    current = write_effective_adr(workspace.root, name="0002-current.md")
+    decisions = current.parent
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Choice](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "<div></div>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    body = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+    ]
+    assert body
+    assert all(finding.get("fix") for finding in body)
+
+
+def test_archived_adr_requires_substantive_content_after_metadata(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    substantive = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+    ]
+    assert substantive
+    assert all(finding.get("fix") for finding in substantive)
+
+
+def test_archived_adr_rejects_thematic_break_as_substantive_content(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n---\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    substantive = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+    ]
+    assert substantive
+    assert all(finding.get("fix") for finding in substantive)
+
+
+@pytest.mark.parametrize("original_status", ["", "- Status: `Proposed`"])
+def test_archived_adr_requires_original_accepted_status(
+    workspace: Workspace, original_status: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    original_metadata = f"{original_status}\n\n" if original_status else ""
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n"
+        f"{original_metadata}## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    status = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "original Accepted status" in finding["message"]
+    ]
+    assert status
+    assert all(finding.get("fix") for finding in status)
+
+
+@pytest.mark.parametrize("marker", ["+", "1.", "2)"])
+def test_archived_adr_accepts_markdown_list_status_markers(
+    workspace: Workspace, marker: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n"
+        f"{marker} Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(
+        finding["check"] == "adr-superseded"
+        and "original Accepted status" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_archived_adr_ignores_indented_status_examples(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n## Decision\n\nThe original choice.\n"
+        "    - Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    status = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "original Accepted status" in finding["message"]
+    ]
+    assert status
+    assert all(finding.get("fix") for finding in status)
+
+
+def test_adr_literal_todo_prose_and_fenced_examples_are_not_placeholders(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "## Context\n\nThe linter rejects literal TODO and TBD comments.\n\n"
+        "```yaml\nexample: TODO\n```\n\n"
+        "~~~yaml\nexample: TBD\n~~~\n"
+        "    TODO: replace-me-at-runtime\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_nested_list_placeholders_remain_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="- Follow-up:\n    - TODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_nested_list_placeholders_survive_continuation(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "- Follow-up:\n"
+            "  Additional context.\n"
+            "    - TODO: choose provider\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_four_space_list_continuation_remains_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="- Follow-up:\n    TODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_four_space_lazy_paragraph_placeholder_remains_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Context\n    TODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+@pytest.mark.parametrize("marker", ["1.", "2)", "+"])
+def test_adr_detects_ordered_and_plus_list_placeholders(
+    workspace: Workspace, marker: str
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=f"{marker} TODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_indented_code_inside_list_is_ignored(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="- Runtime example:\n      TODO: supplied-by-runtime\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_detects_blockquote_placeholders(workspace: Workspace) -> None:
+    write_effective_adr(workspace.root, body="> TODO: choose provider\n")
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+@pytest.mark.parametrize("marker", ["+", "1.", "2)"])
+def test_adr_accepts_markdown_list_status_markers(
+    workspace: Workspace, marker: str
+) -> None:
+    path = write_effective_adr(workspace.root)
+    path.write_text(
+        "# ADR-0001: Choice\n\n"
+        f"{marker} Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(
+        finding["check"] == "adr-integrity"
+        and "Accepted status declaration" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_status_must_match_effective_status(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0001](decisions/0001-current.md) | Superseded |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "contradicts effective ADR" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_requires_status_column(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Authority |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    status = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "has no Status column" in finding["message"]
+    ]
+    assert status
+    assert all(finding.get("fix") for finding in status)
+
+
+def test_adr_index_requires_document_header(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Reference | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ends_before_pipe_bearing_heading(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "## Notes | detail\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_nonrendered_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "```markdown\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n````\n\n"
+        "<!--\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n-->\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_raw_html_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "<pre>\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n</pre>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_resumes_after_blank_line_in_block_html(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "<div>\n\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n\n</div>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_ignores_generic_raw_html_blocks(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "<custom>\n| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n"
+        "</custom>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_attribute_generic_raw_html_blocks(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        '<custom class="raw">\n| Document | Status |\n| --- | --- |\n'
+        "| [Current](decisions/0001-current.md) | Accepted |\n"
+        "</custom>\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_counts_links_only_from_document_cell(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Authority | Status |\n| --- | --- | --- |\n"
+        "| Architecture | See [ADR](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_requires_markdown_delimiter_row(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    delimiter = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "valid Markdown delimiter" in finding["message"]
+    ]
+    assert delimiter
+    assert all(finding.get("fix") for finding in delimiter)
+
+
+def test_adr_index_requires_delimiter_row_to_match_header_width(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    delimiter = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "valid Markdown delimiter" in finding["message"]
+    ]
+    assert delimiter
+    assert all(finding.get("fix") for finding in delimiter)
+
+
+def test_adr_index_requires_delimiter_row_immediately_after_header(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| Notes | Value |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    delimiter = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "valid Markdown delimiter" in finding["message"]
+    ]
+    assert delimiter
+    assert all(finding.get("fix") for finding in delimiter)
+
+
+def test_adr_index_rejects_duplicate_effective_entries(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    duplicate = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "listed more than once" in finding["message"]
+    ]
+    assert duplicate
+    assert all(finding.get("fix") for finding in duplicate)
+
+
+def test_adr_index_keeps_status_named_data_rows_active(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Authority | Status |\n| --- | --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Status | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-index" for finding in findings)
+
+
+def test_adr_index_rejects_duplicate_status_columns(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status | Status |\n| --- | --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted | Superseded |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    duplicate = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "duplicate Status columns" in finding["message"]
+    ]
+    assert duplicate
+    assert all(finding.get("fix") for finding in duplicate)
+
+
+def test_adr_index_accepts_escaped_pipes_in_other_cells(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Authority | Status |\n| --- | --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Supports A \\| B | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_rows_without_outer_pipes(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "Document | Status\n--- | ---\n"
+        "[Current](decisions/0001-current.md) | Accepted\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_link_titles(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        '| [Current](decisions/0001-current.md "decision record") | Accepted |\n',
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_balanced_bracket_labels(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-cache-v2.md").write_text(
+        "# ADR-0001: Cache [v2]\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Cache [v2]](decisions/0001-cache-v2.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_ignores_links_inside_inline_html_attributes(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| <span data-link=\"[Current](decisions/0001-current.md)\">Current</span> | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_rejects_document_header_inside_existing_table(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Other | Value |\n| --- | --- |\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_accepts_reference_style_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current][adr] | Accepted |\n\n"
+        "[adr]: decisions/0001-current.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_collapsed_reference_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current][] | Accepted |\n\n"
+        "[Current]: decisions/0001-current.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_shortcut_reference_links(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current] | Accepted |\n\n"
+        "[Current]: decisions/0001-current.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_uses_first_reference_definition(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current][adr] | Accepted |\n\n"
+        "[adr]: decisions/missing.md\n"
+        "[adr]: decisions/0001-current.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_ignores_inline_code_links(workspace: Workspace) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| `[Choice]` | Accepted |\n\n"
+        "[Choice]: decisions/0001-choice.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_ignores_nested_image_reference_labels(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| ![Architecture [Choice]](badge.svg) | Accepted |\n\n"
+        "[Choice]: decisions/0001-current.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_footnote_references(workspace: Workspace) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| Choice[^1] | Accepted |\n\n"
+        "[^1]: decisions/0001-choice.md\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_accepts_angle_bracket_destinations(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](<decisions/0001-current.md>) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_accepts_formatted_table_headers(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| **Document** | **Status** |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | **Accepted** |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_index_ignores_indented_code_tables(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "    | Document | Status |\n    | --- | --- |\n"
+        "    | [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_image_destinations(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| ![ADR image](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_index_ignores_frontmatter_table_examples(workspace: Workspace) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "---\n"
+        "index-example: >-\n"
+        "  | Document | Status |\n"
+        "  | --- | --- |\n"
+        "  | [Choice](decisions/0001-choice.md) | Accepted |\n"
+        "---\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    missing = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+    ]
+    assert missing
+    assert all(finding.get("fix") for finding in missing)
+
+
+def test_adr_rejects_uppercase_markdown_extension(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.MD").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+
+    _, findings = workspace.run_doctor()
+    extension = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-layout"
+        and "lowercase `.md` extension" in finding["message"]
+    ]
+    assert extension
+    assert all(finding.get("fix") for finding in extension)
+
+
+@pytest.mark.parametrize("filename", ["0001-current.markdown", "0001-current"])
+def test_adr_rejects_alternate_numeric_extensions(
+    workspace: Workspace, filename: str
+) -> None:
+    decisions = workspace.root / "docs" / "architecture" / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / filename).write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+
+    _, findings = workspace.run_doctor()
+    extension = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-layout"
+        and "lowercase `.md` extension" in finding["message"]
+    ]
+    assert extension
+    assert all(finding.get("fix") for finding in extension)
+
+
+def test_archived_header_fields_must_precede_body(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "header fields must appear in order" in finding["message"]
+        for finding in findings
+    )
+    assert all(
+        finding.get("fix")
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+    )
+
+
+def test_archived_header_rejects_nonstandard_fields(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **Rationale:** This extra historical claim is not part of the header.\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    header = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "non-standard content" in finding["message"]
+    ]
+    assert header
+    assert all(finding.get("fix") for finding in header)
+
+
+def test_archived_header_allows_retained_html_comments(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "<!-- Retained historical note.\nStatus: Proposed\n"
+        "> **Superseded by:** [ADR-9999 — Example](../9999-example.md)\n"
+        "> **What changed:** The complete change replaced the example choice.\n"
+        "# Retained editor note\n-->\n"
+        "# ADR-0001: Old choice\n\n"
+        "<!-- Example metadata: Status: Proposed -->\n"
+        "- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_archived_header_allows_retained_pre_title_frontmatter(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "---\n"
+        "title: Old choice\n"
+        "---\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_adr_heading_ignores_yaml_comments_before_title(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "---\n"
+        "title: Choice\n"
+        "# editor note\n"
+        "---\n"
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe accepted choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_heading_ignores_raw_html_examples_before_title(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "<pre>\n"
+        "# ADR-9999: Example\n"
+        "</pre>\n"
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe accepted choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_rejects_heading_without_rendered_title(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "# ADR-0001: #\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    integrity = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "canonical" in finding["message"]
+    ]
+    assert integrity
+    assert all(finding.get("fix") for finding in integrity)
+
+
+@pytest.mark.parametrize(
+    ("opening", "closing"),
+    [("<?raw", "?>"), ("<!DOCTYPE raw", ">"), ("<![CDATA[", "]]>")],
+)
+def test_adr_index_ignores_non_tag_raw_html_blocks(
+    workspace: Workspace, opening: str, closing: str
+) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        f"{opening}\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n"
+        f"{closing}\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_index_ignores_unterminated_html_comments(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "<!--\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_placeholder_after_inline_generic_tag_remains_visible(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Context\n<custom>\nTODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_ignores_placeholders_inside_blockquoted_fences(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "> ```text\n"
+            "> TODO: supplied-by-runtime\n"
+            "> ```\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_index_keeps_blank_terminated_html_blocks_active(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(workspace.root)
+    architecture = workspace.root / "docs" / "architecture"
+    (architecture / "README.md").write_text(
+        "<div></div>\n"
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Choice](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-index"
+        and "missing from the ADR index" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_ignores_fences_indented_in_list_content(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "- Example:\n"
+            "    ~~~\n"
+            "    TODO: supplied-by-runtime\n"
+            "    ~~~\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_rejects_unfilled_template_fields(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: <decision title>\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+@pytest.mark.parametrize("heading", ["# ADR-0001: TODO", "## TODO: Describe decision"])
+def test_effective_adr_rejects_todo_headings(
+    workspace: Workspace, heading: str
+) -> None:
+    path = write_effective_adr(workspace.root)
+    if heading.startswith("# ADR-"):
+        path.write_text(
+            f"{heading}\n\n- Status: `Accepted`\n",
+            encoding="utf-8",
+        )
+    else:
+        path.write_text(
+            "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+            f"{heading}\n",
+            encoding="utf-8",
+        )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+@pytest.mark.parametrize(
+    "placeholder",
+    [
+        "<List the meaningful alternatives and why they were not selected.>",
+        "<Record the benefits, costs, risks, and operational consequences.>",
+    ],
+)
+def test_effective_adr_rejects_template_verb_placeholders(
+    workspace: Workspace, placeholder: str
+) -> None:
+    write_effective_adr(workspace.root, body=f"{placeholder}\n")
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_effective_adr_allows_autolinks_and_inline_html(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            "Links: <https://example.com> <team@example.com> "
+            "<span>valid</span> <List items=\"all\">items</List> "
+            "<Record class=\"entry\">entry</Record>.\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_ignores_placeholders_inside_inline_html(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body='<span data-example="<decision-title>">this form</span>\n',
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_ignores_template_tokens_in_inline_code(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Decision IDs use `ADR-<nnnn>` in references.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_respects_even_backslash_code_opener(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Decision IDs use \\\\`<decision-title>` in references.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+@pytest.mark.parametrize("declaration", ["<!foo", "<![cdata["])
+def test_adr_keeps_lowercase_html_declarations_visible(
+    workspace: Workspace, declaration: str
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=f"{declaration}\nTODO: choose provider\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+def test_adr_detects_template_tokens_after_unequal_inline_code_runs(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Decision IDs use `<nnnn>`` in references.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholders = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholders
+    assert all(finding.get("fix") for finding in placeholders)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "This replaces ADR-0000.\n",
+        "This ADR supersedes an earlier choice.\n",
+    ],
+)
+def test_effective_adr_rejects_explicit_replacement_language(
+    workspace: Workspace, body: str
+) -> None:
+    write_effective_adr(workspace.root, body=body)
+
+    _, findings = workspace.run_doctor()
+    replacement = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "supersession history" in finding["message"]
+    ]
+    assert replacement
+    assert all(finding.get("fix") for finding in replacement)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "This ADR **replaces** ADR-0000.\n",
+        "This **ADR** replaces ADR-0000.\n",
+    ],
+)
+def test_effective_adr_rejects_emphasized_replacement_language(
+    workspace: Workspace, body: str
+) -> None:
+    write_effective_adr(workspace.root, body=body)
+
+    _, findings = workspace.run_doctor()
+    replacement = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "supersession history" in finding["message"]
+    ]
+    assert replacement
+    assert all(finding.get("fix") for finding in replacement)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "This ADR is the successor to ADR-0001.\n",
+        "This ADR succeeds ADR-0001.\n",
+    ],
+)
+def test_effective_adr_rejects_explicit_successor_language(
+    workspace: Workspace, body: str
+) -> None:
+    write_effective_adr(workspace.root, body=body)
+
+    _, findings = workspace.run_doctor()
+    successor = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "supersession history" in finding["message"]
+    ]
+    assert successor
+    assert all(finding.get("fix") for finding in successor)
+
+
+def test_effective_adr_ignores_unrelated_replacement_language(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="As specified by ADR-0002, the cache replaces repeated database reads.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_ignores_domain_supersession_language(
+    workspace: Workspace,
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="Newer queue events supersede pending events with the same key.\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_effective_adr_rejects_relative_archived_links(
+    workspace: Workspace,
+) -> None:
+    current = write_effective_adr(
+        workspace.root,
+        name="0002-current.md",
+        body="See [the old choice](superseded/0001-old-choice.md).\n",
+    )
+    decisions = current.parent
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Choice](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    history = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "supersession history" in finding["message"]
+    ]
+    assert history
+    assert all(finding.get("fix") for finding in history)
+
+
+@pytest.mark.parametrize("fence", ["```", "~~~"])
+def test_adr_text_bearing_fence_marker_does_not_close_fenced_content(
+    workspace: Workspace, fence: str
+) -> None:
+    write_effective_adr(
+        workspace.root,
+        body=(
+            f"{fence}text\n# ADR-0099: Example\n"
+            f"{fence}not-a-closing-fence\n<decision title>\n"
+        ),
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_rejects_backtick_fence_info_with_backtick(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="```example`value\nTODO:\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholder = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholder
+    assert all(finding.get("fix") for finding in placeholder)
+
+
+def test_adr_rejects_tab_indented_fence_marker(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="\t```text\nTODO:\n\t```\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    placeholder = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "unresolved TODO/TBD placeholder" in finding["message"]
+    ]
+    assert placeholder
+    assert all(finding.get("fix") for finding in placeholder)
+
+
+def test_effective_adr_requires_canonical_heading_as_first_title(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# Notes\n\n- Status: `Accepted`\n\n"
+        "# ADR-0001: Current\n\nThe decision.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    heading = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "canonical" in finding["message"]
+    ]
+    assert heading
+    assert all(finding.get("fix") for finding in heading)
+
+
+def test_effective_adr_rejects_indented_code_heading(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "    # ADR-0001: Current\n\n- Status: `Accepted`\n\n"
+        "The decision.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    heading = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "missing its canonical" in finding["message"]
+    ]
+    assert heading
+    assert all(finding.get("fix") for finding in heading)
+
+
+def test_effective_adr_preserves_line_boundaries_around_comments(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# <!--\nnote\n-->ADR-0001: Current\n\n"
+        "- Status: `Accepted`\n\nThe decision.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    heading = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "missing its canonical" in finding["message"]
+    ]
+    assert heading
+    assert all(finding.get("fix") for finding in heading)
+
+
+def test_adr_template_comment_is_ignored_by_integrity_checks(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-choice.md").write_text(
+        "# ADR-0001: Choice\n\n- Status: `Accepted`\n\n"
+        "## Context\n\nThe accepted choice.\n\n"
+        "<!-- Optional superseded guidance says TODO and Superseded by. -->\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_archive_rejects_duplicate_header_fields(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n"
+        "> **What changed:** The complete change replaced the old choice again.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    duplicate = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "exactly one" in finding["message"]
+    ]
+    assert duplicate
+    assert "Superseded by" in duplicate[0]["message"]
+    assert "What changed" in duplicate[0]["message"]
+
+
+def test_archived_adr_rejects_duplicate_status_headers(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Status:** Accepted\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    duplicate = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "exactly one Superseded status header" in finding["message"]
+    ]
+    assert duplicate
+    assert all(finding.get("fix") for finding in duplicate)
+
+
+def test_archived_adr_rejects_backward_successor_identity(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0003-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0003: Old choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    chronology = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "later numeric identity" in finding["message"]
+    ]
+    assert chronology
+    assert all(finding.get("fix") for finding in chronology)
+
+
+def test_adr_archive_successor_label_must_match_target(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0003-database.md").write_text(
+        "# ADR-0003: Database\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Cache](../0003-database.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0003](decisions/0003-database.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    mismatch = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-superseded"
+        and "label does not match target ADR" in finding["message"]
+    ]
+    assert mismatch
+    assert "successor link" in mismatch[0]["fix"]
+    assert "do not prepend another header" in mismatch[0]["fix"]
+
+
+def test_adr_archive_accepts_rendered_successor_title(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current-choice.md").write_text(
+        "# ADR-0002: **Current choice** ##\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current choice](../0002-current-choice.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_adr_archive_accepts_inline_formatted_successor_title(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current-choice.md").write_text(
+        "# ADR-0002: Use the **current** cache\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Use the current cache](../0002-current-choice.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current-choice.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+@pytest.mark.parametrize("label_title", ["Cache [v2]", r"Cache \[v2\]"])
+def test_adr_archive_accepts_bracketed_successor_title(
+    workspace: Workspace, label_title: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-cache-v2.md").write_text(
+        "# ADR-0002: Cache [v2]\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        f"> **Superseded by:** [ADR-0002 — {label_title}](../0002-cache-v2.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-cache-v2.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_adr_archive_ignores_links_inside_inline_html_attributes(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** <span data-link=\"[ADR-0002 — Current](../0002-current.md)\">Current</span>\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "exactly one successor link" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_rejects_escaped_successor_link(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** \\[ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "exactly one successor link" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_ignores_template_placeholders_in_code_spans(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change now treats `<decision-title>` as a literal.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_adr_archive_rejects_empty_blockquote_body(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n>\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+        for finding in findings
+    )
+
+
+@pytest.mark.parametrize("marker", ["-", "*", "+", "1."])
+def test_adr_archive_rejects_empty_list_body(
+    workspace: Workspace, marker: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        f"# ADR-0001: Old choice\n\n- Status: `Accepted`\n{marker}\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_rejects_empty_heading_body(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n##\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "substantive decision content" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_change_summary_must_classify_scope(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** Switched databases.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "partial or complete" in finding["message"]
+        for finding in findings
+    )
+
+
+@pytest.mark.parametrize(
+    "summary",
+    [
+        "The old choice was completely replaced.",
+        "The old choice was partially changed.",
+    ],
+)
+def test_adr_archive_accepts_adverbial_change_scope(
+    workspace: Workspace, summary: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        f"> **What changed:** {summary}\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(finding["check"] == "adr-superseded" for finding in findings)
+
+
+def test_adr_archive_change_summary_rejects_incidental_scope_word(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** The cache policy changed; the complete decision is documented elsewhere.\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\nA retained choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "partial or complete" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_scan_uses_explicit_active_repository_root(workspace: Workspace) -> None:
+    wrong_architecture = workspace.root / "docs" / "architecture"
+    wrong_decisions = wrong_architecture / "decisions"
+    wrong_decisions.mkdir(parents=True)
+    (wrong_decisions / "0001-wrong.md").write_text(
+        "# ADR-0001: Wrong tree\n\n- Status: `Superseded`\n",
+        encoding="utf-8",
+    )
+
+    active_root = workspace.root / "active-worktree"
+    active_decisions = active_root / "docs" / "architecture" / "decisions"
+    active_decisions.mkdir(parents=True)
+    (active_decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current tree\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (active_root / "docs" / "architecture" / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor(repository_root=active_root)
+    assert not any(finding["check"].startswith("adr-") for finding in findings)
+
+
+def test_adr_scan_runs_when_engineering_root_is_absent(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    decisions = repository / "docs" / "architecture" / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (repository / "docs" / "architecture" / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [ADR-0001](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [
+            str(DOCTOR),
+            "--engineering-root",
+            ".state",
+            "--json",
+        ],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(completed.stdout)["findings"] == []
+
+
+def test_missing_non_state_engineering_root_is_an_error(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+
+    completed = subprocess.run(
+        [str(DOCTOR), "--engineering-root", ".staet", "--json"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 2
+    assert "not a directory" in completed.stderr
+
+
+def test_adr_status_in_body_example_does_not_contradict_metadata(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted`\n\n"
+        "## Context\n\n```yaml\nstatus: pending\n```\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0001](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_status_metadata_rejects_trailing_values(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    decisions.mkdir(parents=True)
+    (decisions / "0001-current.md").write_text(
+        "# ADR-0001: Current\n\n- Status: `Accepted` / `Proposed`\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0001-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    status = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-integrity"
+        and "Accepted status declaration" in finding["message"]
+    ]
+    assert status
+    assert all(finding.get("fix") for finding in status)
+
+
+def test_adr_metadata_stops_at_deep_subheadings(workspace: Workspace) -> None:
+    write_effective_adr(
+        workspace.root,
+        body="### Implementation note\n\nStatus: Proposed\n",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert "adr-integrity" not in workspace.checks(findings)
+
+
+def test_adr_unrecognized_subdirectory_is_reported(workspace: Workspace) -> None:
+    decisions = workspace.root / "docs" / "architecture" / "decisions"
+    misplaced = decisions / "legacy"
+    misplaced.mkdir(parents=True)
+    (misplaced / "0001-old.md").write_text(
+        "# ADR-0001: Old\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+
+    _, findings = workspace.run_doctor()
+    layout = [finding for finding in findings if finding["check"] == "adr-layout"]
+    assert layout
+    assert layout[0].get("fix")
+
+
+def test_adr_archive_rejects_unfilled_change_summary(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current](../0002-current.md)\n>\n"
+        "> **What changed:** <State whether the change is partial or complete and summarize the changed choice.>\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "What changed" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_rejects_absolute_successor_link(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    current = decisions / "0002-current.md"
+    current.write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    old = archived / "0001-old.md"
+    old.write_text(
+        "> **Status:** Superseded\n>\n"
+        f"> **Superseded by:** [ADR-0002 — Current]({current.resolve()})\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| [ADR-0002](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "portable relative path" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_adr_archive_rejects_spaced_successor_link(workspace: Workspace) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-current.md").write_text(
+        "# ADR-0002: Current\n\n- Status: `Accepted`\n", encoding="utf-8"
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Current] (../0002-current.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-current.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert any(
+        finding["check"] == "adr-superseded"
+        and "exactly one successor link" in finding["message"]
+        for finding in findings
+    )
+
+
 def test_adr_index_rejects_archived_entries(workspace: Workspace) -> None:
     architecture = workspace.root / "docs" / "architecture"
     decisions = architecture / "decisions"
@@ -315,8 +3250,8 @@ def test_adr_index_rejects_archived_entries(workspace: Workspace) -> None:
     )
     (archived / "0001-old-choice.md").write_text(
         "> **Status:** Superseded\n>\n"
-        "> **Superseded by:** [ADR-0002](../0002-new-choice.md)\n>\n"
-        "> **What changed:** The complete choice changed.\n",
+        "> **Superseded by:** [ADR-0002 — New choice](../0002-new-choice.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n",
         encoding="utf-8",
     )
     (architecture / "README.md").write_text(
@@ -326,6 +3261,83 @@ def test_adr_index_rejects_archived_entries(workspace: Workspace) -> None:
     )
     _, findings = workspace.run_doctor()
     assert "adr-index" in workspace.checks(findings)
+
+
+@pytest.mark.parametrize(
+    "archived_cell",
+    [
+        "decisions/superseded/0001-old-choice.md",
+        "`decisions/superseded/0001-old-choice.md`",
+    ],
+)
+def test_adr_index_rejects_unlinked_archived_paths(
+    workspace: Workspace, archived_cell: str
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-new-choice.md").write_text(
+        "# ADR-0002: New choice\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-old-choice.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — New choice](../0002-new-choice.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Old choice\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [New choice](decisions/0002-new-choice.md) | Accepted |\n"
+        f"| {archived_cell} | Superseded |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    archived_paths = [
+        finding
+        for finding in findings
+        if finding["check"] == "adr-index"
+        and "lists an archived ADR path" in finding["message"]
+    ]
+    assert archived_paths
+    assert all(finding.get("fix") for finding in archived_paths)
+
+
+def test_adr_index_does_not_match_archived_filename_substrings(
+    workspace: Workspace,
+) -> None:
+    architecture = workspace.root / "docs" / "architecture"
+    decisions = architecture / "decisions"
+    archived = decisions / "superseded"
+    archived.mkdir(parents=True)
+    (decisions / "0002-notes-0001-cache.md").write_text(
+        "# ADR-0002: Notes about cache\n\n- Status: `Accepted`\n",
+        encoding="utf-8",
+    )
+    (archived / "0001-cache.md").write_text(
+        "> **Status:** Superseded\n>\n"
+        "> **Superseded by:** [ADR-0002 — Notes about cache](../0002-notes-0001-cache.md)\n>\n"
+        "> **What changed:** The complete change replaced the old choice.\n\n"
+        "# ADR-0001: Cache\n\n- Status: `Accepted`\n\n"
+        "## Decision\n\nThe original choice.\n",
+        encoding="utf-8",
+    )
+    (architecture / "README.md").write_text(
+        "| Document | Status |\n| --- | --- |\n"
+        "| [Current](decisions/0002-notes-0001-cache.md) | Accepted |\n",
+        encoding="utf-8",
+    )
+
+    _, findings = workspace.run_doctor()
+    assert not any(
+        finding["check"] == "adr-index"
+        and "archived ADR" in finding["message"]
+        for finding in findings
+    )
 
 
 def test_expired_and_conflicting_lease(workspace: Workspace) -> None:
@@ -445,8 +3457,15 @@ def test_adr_filename_and_numeric_prefix_are_validated(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     _, findings = run_engineering_root(tmp_path)
-    assert any(finding["check"] == "adr-filename" for finding in findings)
-    assert any("duplicate ADR numeric prefix 0001" in finding["message"] for finding in findings)
+    assert any(
+        finding["check"] == "adr-layout"
+        and "filename must use" in finding["message"]
+        for finding in findings
+    )
+    assert any(
+        "ADR numeric identity 0001 is duplicated" in finding["message"]
+        for finding in findings
+    )
 
 
 def test_html_comments_do_not_trigger_adr_integrity_checks(tmp_path: Path) -> None:
@@ -494,7 +3513,7 @@ def test_absolute_successor_link_is_rejected(tmp_path: Path) -> None:
     _, findings = run_engineering_root(tmp_path)
     assert any(
         finding["check"] == "adr-superseded"
-        and "must be relative" in finding["message"]
+        and "portable relative path" in finding["message"]
         for finding in findings
     )
 

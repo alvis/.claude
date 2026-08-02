@@ -52,14 +52,15 @@ locate the active workspace and `.state/`; on `requires_ignore` or
    (`--work-dir <work_dir>`); otherwise check everything
    (`--engineering-root <state_root>/.state`, covering every
    stream plus `overview.md`) and the repository's
-   `docs/architecture/decisions/` tree. `state_root` comes from the resolver: it is
-   the default source tree, so the doctor sees every stream whichever
-   checkout it is run from, and never silently skips streams as a per-tree
-   scope would. A missing `.state/` or ADR tree is a clean report, not an
-   error.
+   `docs/architecture/decisions/` tree. `state_root` comes from the resolver and
+   owns centralized work memory; pass the resolver's `durable_root` as
+   `--repository-root` so ADRs are read from the active source tree, including
+   secondary worktrees or jj workspaces. A missing `.state/` or ADR tree is a
+   clean report, not an error.
 2. **Run the doctor.** Invoke
    `"$ESSENTIAL_ROOT/bin/engineering-doctor" --json` with the scope from
-   step 1, passing `--strict` through when given. Collect the findings; the
+   step 1 and `--repository-root <durable_root>`, passing `--strict` through
+   when given. Collect the findings; the
    doctor is read-only. ADR findings include a `fix` offer; its silence about
    prose outside the ADR integrity contract is not an endorsement.
 3. **Inspect structure the doctor cannot judge.** Compare each stream's
