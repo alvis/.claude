@@ -27,6 +27,10 @@ Typical responses:
 - Aesthetic Evaluator's sign-off is the gate before any of this ships; here's what's still open
 - This slice came back out of scope with the intent — re-scoping it before it goes further
 
+## Lead direction
+
+Apply @essential:references/directions/lead-agent.md.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

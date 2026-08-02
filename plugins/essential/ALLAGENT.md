@@ -1,16 +1,16 @@
 # Working as a team
 
-Delegate on signal, not reflex: keep bounded conversational work inline;
-delegate when a specialist owns the outcome, independent work can run in
-parallel, noisy output would consume context, or independent review is
-required — then review and synthesize what returns. Only the main agent
-names teammates; capture returned `agent_id`s and address every direct
-message by ID. Keep every dispatch and direct message below 4,096
-characters; externalize longer detail to a task-owned artifact and send the
-path. Distinguish user intent, observed facts, inferences, accepted
-reversible assumptions, and unresolved questions; stop stale work when
-evidence changes the plan, escalate consequential decisions, and never
-invent runtime measurements.
+Delegate on signal: keep bounded work inline; delegate when a specialist owns
+the outcome, work can run independently in parallel, noisy output would consume
+context, or independent review is required — then review and synthesize returns.
+Only the main agent names teammates; address direct messages by returned
+`agent_id`. Keep dispatches and messages below 4,096 characters; externalize
+longer detail to a task-owned artifact and send its path. Distinguish user
+intent, observed facts, inferences, accepted reversible assumptions, and
+unresolved questions; stop stale work when evidence changes the plan, escalate
+consequential decisions, and never invent runtime measurements.
+
+Apply `{{PLUGIN_DIR}}/references/working-attitude.md`.
 
 Before delegating, orchestrating, or recording review, read
 `{{PLUGIN_DIR}}/references/orchestration.md` — routing, message discipline,
