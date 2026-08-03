@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 AGENT_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 PREFERRED_NAMES = re.compile(
     r"(?:^| )Preferably named ([A-Z][a-z]{1,15}), ([A-Z][a-z]{1,15}), "
@@ -60,6 +59,10 @@ MEMORY_CONTRACT_MARKERS = (
     "plugins/essential/templates/memory.md",
     "topics/<stable-area>/<specific-subject>.md",
 )
+LEAD_AGENT_DIRECTION_ALIAS = (
+    "@essential:references/directions/lead-agent.md"
+)
+LEAD_AGENT_DIRECTION_PATH = Path("references/directions/lead-agent.md")
 
 
 class AgentTemplateError(ValueError):
@@ -372,14 +375,72 @@ def validate_agent_contract(sources: AgentSources, body: str) -> None:
         )
 
 
+def _derive_essential_root(template_directory: Path) -> Path | None:
+    resolved_template = template_directory.resolve()
+    for parent in resolved_template.parents:
+        if parent.name != "plugins":
+            continue
+        candidate = parent / "essential"
+        if (candidate / LEAD_AGENT_DIRECTION_PATH).is_file():
+            return candidate.resolve()
+    if len(resolved_template.parents) > 2:
+        plugin_root = resolved_template.parents[2]
+        cache_candidate = plugin_root.parent.parent / "essential" / plugin_root.name
+        if (cache_candidate / LEAD_AGENT_DIRECTION_PATH).is_file():
+            return cache_candidate.resolve()
+    return None
+
+
+def _resolve_essential_references(
+    body: str,
+    template_directory: Path,
+    essential_root: Path | None,
+    reference_root: Path | None,
+) -> str:
+    if LEAD_AGENT_DIRECTION_ALIAS not in body:
+        return body
+    resolved_root = (
+        Path(essential_root).resolve()
+        if essential_root is not None
+        else _derive_essential_root(template_directory)
+    )
+    if resolved_root is None:
+        raise AgentTemplateError(
+            "agent template uses @essential references; pass --essential-root "
+            "or place the template in an unambiguous source checkout"
+        )
+    direction = resolved_root / LEAD_AGENT_DIRECTION_PATH
+    if not direction.is_file():
+        raise AgentTemplateError(f"missing Essential lead direction: {direction}")
+    rendered_root = (
+        Path(reference_root).resolve()
+        if reference_root is not None
+        else resolved_root
+    )
+    return body.replace(
+        LEAD_AGENT_DIRECTION_ALIAS,
+        f"@{rendered_root / LEAD_AGENT_DIRECTION_PATH}",
+    )
+
+
 def stitch_agent_definition(
-    template_directory: Path, *, allow_legacy: bool = False
+    template_directory: Path,
+    *,
+    essential_root: Path | None = None,
+    reference_root: Path | None = None,
+    allow_legacy: bool = False,
 ) -> str:
     """Return one installable Markdown agent definition from split sources."""
     template_directory = Path(template_directory)
     sources = load_agent_sources(template_directory, allow_legacy=allow_legacy)
     body = (template_directory / "base.md").read_text(encoding="utf-8").lstrip("\n")
     validate_agent_contract(sources, body)
+    body = _resolve_essential_references(
+        body,
+        template_directory,
+        essential_root,
+        reference_root,
+    )
     projected = {
         field: sources.metadata[field]
         for field in ("name", "description")
@@ -472,7 +533,11 @@ def _codex_developer_instructions(body: str) -> str:
 
 
 def stitch_codex_agent_definition(
-    template_directory: Path, *, allow_legacy: bool = False
+    template_directory: Path,
+    *,
+    essential_root: Path | None = None,
+    reference_root: Path | None = None,
+    allow_legacy: bool = False,
 ) -> str:
     """Return one installable Codex custom-agent TOML definition."""
     template_directory = Path(template_directory)
@@ -495,7 +560,15 @@ def stitch_codex_agent_definition(
     )
     fields.extend(sources.codex.items())
     fields.append(
-        ("developer_instructions", _codex_developer_instructions(body))
+        (
+            "developer_instructions",
+            _resolve_essential_references(
+                _codex_developer_instructions(body),
+                template_directory,
+                essential_root,
+                reference_root,
+            ),
+        )
     )
     return "".join(
         f"{name} = {json.dumps(value, ensure_ascii=False)}\n"
@@ -512,12 +585,31 @@ def main() -> int:
         choices=("claude", "codex"),
         default="claude",
     )
+    parser.add_argument(
+        "--essential-root",
+        type=Path,
+        help=(
+            "Essential plugin root used to resolve @essential references; "
+            "inferred from normal source-checkout and installed-cache layouts"
+        ),
+    )
     args = parser.parse_args()
+    essential_root = args.essential_root
+    if essential_root is None:
+        candidate = Path(__file__).resolve().parents[3]
+        if (candidate / LEAD_AGENT_DIRECTION_PATH).is_file():
+            essential_root = candidate
     try:
         stitched = (
-            stitch_agent_definition(args.template)
+            stitch_agent_definition(
+                args.template,
+                essential_root=essential_root,
+            )
             if args.harness == "claude"
-            else stitch_codex_agent_definition(args.template)
+            else stitch_codex_agent_definition(
+                args.template,
+                essential_root=essential_root,
+            )
         )
     except AgentTemplateError as error:
         parser.error(str(error))

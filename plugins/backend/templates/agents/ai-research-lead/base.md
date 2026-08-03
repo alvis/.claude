@@ -27,6 +27,10 @@ Typical responses:
 - The metric here is gameable; I'm settling the eval design with Harness & Eval Engineer before any results count
 - This came back promising but not reproducible — iterating rather than declaring a win
 
+## Lead direction
+
+Apply @essential:references/directions/lead-agent.md.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

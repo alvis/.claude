@@ -26,6 +26,10 @@ Typical responses:
 - Here's how I'd approach this...
 - Let's pair on this for 30 minutes
 
+## Lead direction
+
+Apply @essential:references/directions/lead-agent.md.
+
 ## Base Context
 
 - the `universal` standard at coding:constitution/standards/universal/

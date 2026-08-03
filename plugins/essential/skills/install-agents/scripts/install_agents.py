@@ -10,11 +10,14 @@ import re
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from stitch_agent import (
+    LEAD_AGENT_DIRECTION_ALIAS,
+    LEAD_AGENT_DIRECTION_PATH,
     AgentTemplateError,
     load_agent_sources,
     stitch_agent_definition,
@@ -265,7 +268,12 @@ def discover_agent_templates(
 
 
 def _preflight(
-    templates: list[AgentTemplate], harness: str, *, allow_legacy: bool
+    templates: list[AgentTemplate],
+    harness: str,
+    *,
+    essential_root: Path,
+    reference_root: Path,
+    allow_legacy: bool,
 ) -> list[tuple[str, str]]:
     if not templates:
         raise AgentTemplateError("no agent templates discovered")
@@ -281,14 +289,38 @@ def _preflight(
             )
         seen[name] = template
         content = (
-            stitch_agent_definition(template.path, allow_legacy=allow_legacy)
+            stitch_agent_definition(
+                template.path,
+                essential_root=essential_root,
+                reference_root=reference_root,
+                allow_legacy=allow_legacy,
+            )
             if harness == "claude"
             else stitch_codex_agent_definition(
-                template.path, allow_legacy=allow_legacy
+                template.path,
+                essential_root=essential_root,
+                reference_root=reference_root,
+                allow_legacy=allow_legacy,
             )
         )
         staged.append((name, content))
     return staged
+
+
+def _replace_file(source: Path, target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        dir=target.parent,
+        prefix=f".{target.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as temporary_file:
+        temporary_path = Path(temporary_file.name)
+    try:
+        shutil.copy2(source, temporary_path)
+        os.replace(temporary_path, target)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def install_agents(
@@ -298,29 +330,42 @@ def install_agents(
     harness: str = "claude",
 ) -> int:
     """Install every discovered template after a complete roster preflight."""
-    staged_definitions = _preflight(
-        discover_agent_templates(essential_root, plugin_records, harness),
-        harness,
-        allow_legacy=Path(essential_root).parent.name != "plugins",
+    essential_root = Path(essential_root).resolve()
+    templates = discover_agent_templates(essential_root, plugin_records, harness)
+    installs_lead_direction = any(
+        LEAD_AGENT_DIRECTION_ALIAS
+        in (template.path / "base.md").read_text(encoding="utf-8")
+        for template in templates
     )
+    source_direction = essential_root / LEAD_AGENT_DIRECTION_PATH
+    if installs_lead_direction and not source_direction.is_file():
+        raise AgentTemplateError(f"missing Essential lead direction: {source_direction}")
     destination = Path(destination)
+    installed_essential_root = (destination / ".essential").resolve()
+    staged_definitions = _preflight(
+        templates,
+        harness,
+        essential_root=essential_root,
+        reference_root=installed_essential_root,
+        allow_legacy=essential_root.parent.name != "plugins",
+    )
     suffix = ".md" if harness == "claude" else ".toml"
     with tempfile.TemporaryDirectory(prefix=f"{harness}-agents-") as temporary:
         stage = Path(temporary)
+        staged_direction = stage / LEAD_AGENT_DIRECTION_PATH
+        if installs_lead_direction:
+            staged_direction.parent.mkdir(parents=True)
+            shutil.copy2(source_direction, staged_direction)
         for name, content in staged_definitions:
             (stage / f"{name}{suffix}").write_text(content, encoding="utf-8")
         destination.mkdir(parents=True, exist_ok=True)
+        if installs_lead_direction:
+            installed_direction = installed_essential_root / LEAD_AGENT_DIRECTION_PATH
+            _replace_file(staged_direction, installed_direction)
+            print(f"installed: {installed_direction}")
         for name, _ in staged_definitions:
             target = destination / f"{name}{suffix}"
-            with tempfile.NamedTemporaryFile(
-                dir=destination, prefix=f".{name}.", suffix=".tmp", delete=False
-            ) as temporary_file:
-                temporary_path = Path(temporary_file.name)
-            try:
-                shutil.copy2(stage / target.name, temporary_path)
-                os.replace(temporary_path, target)
-            finally:
-                temporary_path.unlink(missing_ok=True)
+            _replace_file(stage / target.name, target)
             print(f"installed: {target}")
     print(f"done — installed {len(staged_definitions)} agent(s) into {destination}")
     return len(staged_definitions)

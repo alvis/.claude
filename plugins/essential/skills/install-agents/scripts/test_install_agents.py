@@ -1,14 +1,14 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
-import tomllib
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
 import pytest
-
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[5]
 SCRIPTS = Path(__file__).resolve().parent
@@ -181,6 +181,135 @@ def test_stitches_native_codex_agent_toml_from_the_same_template(
         "developer_instructions": "# Test agent\n\nCodex instructions.\n",
     }
     assert definition == stitch_codex_agent_definition(template)
+
+
+@pytest.mark.parametrize("harness", ("claude", "codex"))
+def test_standalone_stitch_requires_or_derives_essential_root(
+    tmp_path: Path,
+    harness: str,
+) -> None:
+    template = write_template(
+        tmp_path / "external",
+        "lead-agent",
+        frontmatter={"name": "lead-agent"},
+        body=(
+            "# Lead agent\n\n"
+            "@essential:references/directions/lead-agent.md\n"
+        ),
+    )
+    stitch = (
+        stitch_agent_definition
+        if harness == "claude"
+        else stitch_codex_agent_definition
+    )
+    with pytest.raises(AgentTemplateError, match="--essential-root"):
+        stitch(template)
+
+    essential = tmp_path / "essential"
+    direction = essential / "references/directions/lead-agent.md"
+    direction.parent.mkdir(parents=True)
+    direction.write_text("# Shared lead direction\n", encoding="utf-8")
+    direct = stitch(template, essential_root=essential)
+    assert f"@{direction.resolve()}" in direct
+    assert "@essential:" not in direct
+    command = [
+        sys.executable,
+        str(SCRIPTS / "stitch_agent.py"),
+        str(template),
+        "--harness",
+        harness,
+    ]
+    resolved = subprocess.run(
+        [*command, "--essential-root", str(essential)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert resolved.returncode == 0, resolved.stderr
+    assert f"@{direction.resolve()}" in resolved.stdout
+    assert "@essential:" not in resolved.stdout
+
+
+@pytest.mark.parametrize("harness", ("claude", "codex"))
+def test_standalone_stitch_derives_source_checkout_essential_root(
+    tmp_path: Path,
+    harness: str,
+) -> None:
+    output = tmp_path / ("tech-lead.md" if harness == "claude" else "tech-lead.toml")
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "stitch_agent.py"),
+            str(ROOT / "plugins/coding/templates/agents/tech-lead"),
+            "--harness",
+            harness,
+            "--output",
+            str(output),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    installed = output.read_text(encoding="utf-8")
+    assert (
+        f"@{(ROOT / 'plugins/essential/references/directions/lead-agent.md').resolve()}"
+        in installed
+    )
+    assert "@essential:" not in installed
+
+
+@pytest.mark.parametrize("harness", ("claude", "codex"))
+def test_standalone_stitch_derives_installed_cache_essential_root(
+    tmp_path: Path,
+    harness: str,
+) -> None:
+    essential = tmp_path / "cache/alvis/essential/1.0.0"
+    shutil.copytree(
+        ROOT / "plugins/essential/skills/install-agents",
+        essential / "skills/install-agents",
+    )
+    direction = essential / "references/directions/lead-agent.md"
+    direction.parent.mkdir(parents=True)
+    direction.write_text("# Shared lead direction\n", encoding="utf-8")
+    template = write_template(
+        tmp_path / "cache/alvis/coding/1.0.0",
+        "tech-lead",
+        frontmatter={"name": "tech-lead"},
+        body=(
+            "# Tech lead\n\n"
+            "@essential:references/directions/lead-agent.md\n"
+        ),
+    )
+    stitch = (
+        stitch_agent_definition
+        if harness == "claude"
+        else stitch_codex_agent_definition
+    )
+
+    direct = stitch(template)
+
+    assert f"@{direction.resolve()}" in direct
+    assert "@essential:" not in direct
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(essential / "skills/install-agents/scripts/stitch_agent.py"),
+            str(template),
+            "--harness",
+            harness,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert f"@{direction.resolve()}" in completed.stdout
+    assert "@essential:" not in completed.stdout
 
 
 @pytest.mark.parametrize("intelligence_level", INTELLIGENCE_LEVELS)
@@ -874,6 +1003,76 @@ def test_installed_mode_uses_only_enabled_plugins_from_essential_marketplace(
     } == {"essential:essential-agent", "web:web-agent"}
 
 
+@pytest.mark.parametrize(
+    ("harness", "suffix"),
+    (("claude", ".md"), ("codex", ".toml")),
+)
+def test_installed_lead_reference_survives_cache_cleanup_and_refreshes(
+    tmp_path: Path,
+    harness: str,
+    suffix: str,
+) -> None:
+    essential_v1 = tmp_path / "cache/alvis/essential/1.0.0"
+    essential_v2 = tmp_path / "cache/alvis/essential/2.0.0"
+    coding = tmp_path / "cache/alvis/coding/1.0.0"
+    destination = tmp_path / harness / "agents"
+    direction_relative = Path("references/directions/lead-agent.md")
+    direction_v1 = essential_v1 / direction_relative
+    direction_v1.parent.mkdir(parents=True)
+    direction_v1.write_text("first direction\n", encoding="utf-8")
+    write_template(
+        coding,
+        "tech-lead",
+        frontmatter={"name": "tech-lead"},
+        body=(
+            "# Tech lead\n\n"
+            "@essential:references/directions/lead-agent.md\n"
+        ),
+    )
+    records = [
+        {
+            "id": "essential@alvis",
+            "enabled": True,
+            "version": "1.0.0",
+            "installPath": str(essential_v1),
+        },
+        {
+            "id": "coding@alvis",
+            "enabled": True,
+            "version": "1.0.0",
+            "installPath": str(coding),
+        },
+    ]
+
+    install_agents(essential_v1, destination, records, harness=harness)
+
+    stable_direction = (
+        destination / ".essential" / direction_relative
+    )
+    installed_agent = destination / f"tech-lead{suffix}"
+    assert f"@{stable_direction.resolve()}" in installed_agent.read_text(
+        encoding="utf-8"
+    )
+    assert stable_direction.read_text(encoding="utf-8") == "first direction\n"
+
+    shutil.rmtree(essential_v1)
+
+    assert installed_agent.is_file()
+    assert stable_direction.read_text(encoding="utf-8") == "first direction\n"
+
+    direction_v2 = essential_v2 / direction_relative
+    direction_v2.parent.mkdir(parents=True)
+    direction_v2.write_text("second direction\n", encoding="utf-8")
+    records[0]["installPath"] = str(essential_v2)
+    records[0]["version"] = "2.0.0"
+    install_agents(essential_v2, destination, records, harness=harness)
+
+    assert f"@{stable_direction.resolve()}" in installed_agent.read_text(
+        encoding="utf-8"
+    )
+    assert stable_direction.read_text(encoding="utf-8") == "second direction\n"
+
+
 @pytest.mark.parametrize("schema", ("intelligenceLevel", "model-effort"))
 @pytest.mark.parametrize("harness", ("claude", "codex"))
 def test_installed_mode_translates_recognized_legacy_frontmatter(
@@ -1168,6 +1367,14 @@ def test_source_checkout_installs_every_discovered_agent(tmp_path: Path) -> None
         agent = json.loads(path.read_text(encoding="utf-8").split("---\n", 2)[1])
         assert "intelligence" not in agent
         assert "intelligenceLevel" not in agent
+    expected_direction = (
+        f"@{destination.resolve()}"
+        "/.essential/references/directions/lead-agent.md"
+    )
+    for name in ("tech-lead", "ai-research-lead", "design-lead"):
+        installed = (destination / f"{name}.md").read_text(encoding="utf-8")
+        assert expected_direction in installed
+        assert "@essential:" not in installed
 
 
 def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
@@ -1196,6 +1403,16 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     assert tech_lead["developer_instructions"].startswith("# Tech Lead")
     assert ".claude/agent-memory/" not in tech_lead["developer_instructions"]
     assert "Dynamic Workflow" not in tech_lead["developer_instructions"]
+    expected_direction = (
+        f"@{destination.resolve()}"
+        "/.essential/references/directions/lead-agent.md"
+    )
+    for name in ("tech-lead", "ai-research-lead", "design-lead"):
+        installed = tomllib.loads(
+            (destination / f"{name}.toml").read_text(encoding="utf-8")
+        )["developer_instructions"]
+        assert expected_direction in installed
+        assert "@essential:" not in installed
     test_runner = tomllib.loads(
         (destination / "test-runner.toml").read_text(encoding="utf-8")
     )
@@ -1235,7 +1452,7 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
         codex_contract = (
             agent["description"] + "\n" + agent["developer_instructions"]
         )
-        assert "worktree" not in codex_contract
+        assert "worktree" not in codex_contract.replace(expected_direction, "")
         assert "Workflow launches" not in codex_contract
         for field in ("model", "model_reasoning_effort"):
             if field in expected_projection:

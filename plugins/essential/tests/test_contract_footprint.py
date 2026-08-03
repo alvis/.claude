@@ -9,7 +9,7 @@ PLUGIN = Path(__file__).resolve().parents[1]
 # This plugin owns both lists: hook-injected payloads and the files an injected
 # payload requires without a per-moment trigger.
 PAYLOADS = ("ALLAGENT.md", "MAINAGENT.md", "SUBAGENT.md")
-CHAIN = ("ALLAGENT.md",)
+CHAIN = ("ALLAGENT.md", "references/working-attitude.md")
 
 
 def test_contract_footprint_stays_within_budget() -> None:
