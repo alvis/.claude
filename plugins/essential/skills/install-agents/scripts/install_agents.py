@@ -265,7 +265,11 @@ def discover_agent_templates(
 
 
 def _preflight(
-    templates: list[AgentTemplate], harness: str, *, allow_legacy: bool
+    templates: list[AgentTemplate],
+    harness: str,
+    *,
+    essential_root: Path,
+    allow_legacy: bool,
 ) -> list[tuple[str, str]]:
     if not templates:
         raise AgentTemplateError("no agent templates discovered")
@@ -281,10 +285,16 @@ def _preflight(
             )
         seen[name] = template
         content = (
-            stitch_agent_definition(template.path, allow_legacy=allow_legacy)
+            stitch_agent_definition(
+                template.path,
+                essential_root=essential_root,
+                allow_legacy=allow_legacy,
+            )
             if harness == "claude"
             else stitch_codex_agent_definition(
-                template.path, allow_legacy=allow_legacy
+                template.path,
+                essential_root=essential_root,
+                allow_legacy=allow_legacy,
             )
         )
         staged.append((name, content))
@@ -301,6 +311,7 @@ def install_agents(
     staged_definitions = _preflight(
         discover_agent_templates(essential_root, plugin_records, harness),
         harness,
+        essential_root=Path(essential_root).resolve(),
         allow_legacy=Path(essential_root).parent.name != "plugins",
     )
     destination = Path(destination)

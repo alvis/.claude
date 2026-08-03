@@ -70,8 +70,7 @@ Read every file in each applicable standards directory, following its cross-refe
 
 Before writing code, apply the code-scoped lean-work ladder, minimum-change
 rules, and non-negotiable exceptions in
-`essential:references/working-attitude.md`. Follow every applicable standard
-listed above in full.
+`essential:references/working-attitude.md`.
 
 ### Working practices
 

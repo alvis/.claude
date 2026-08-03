@@ -1168,6 +1168,14 @@ def test_source_checkout_installs_every_discovered_agent(tmp_path: Path) -> None
         agent = json.loads(path.read_text(encoding="utf-8").split("---\n", 2)[1])
         assert "intelligence" not in agent
         assert "intelligenceLevel" not in agent
+    expected_direction = (
+        f"@{(ROOT / 'plugins/essential').resolve()}"
+        "/references/directions/lead-agent.md"
+    )
+    for name in ("tech-lead", "ai-research-lead", "design-lead"):
+        installed = (destination / f"{name}.md").read_text(encoding="utf-8")
+        assert expected_direction in installed
+        assert "@essential:" not in installed
 
 
 def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
@@ -1196,6 +1204,16 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
     assert tech_lead["developer_instructions"].startswith("# Tech Lead")
     assert ".claude/agent-memory/" not in tech_lead["developer_instructions"]
     assert "Dynamic Workflow" not in tech_lead["developer_instructions"]
+    expected_direction = (
+        f"@{(ROOT / 'plugins/essential').resolve()}"
+        "/references/directions/lead-agent.md"
+    )
+    for name in ("tech-lead", "ai-research-lead", "design-lead"):
+        installed = tomllib.loads(
+            (destination / f"{name}.toml").read_text(encoding="utf-8")
+        )["developer_instructions"]
+        assert expected_direction in installed
+        assert "@essential:" not in installed
     test_runner = tomllib.loads(
         (destination / "test-runner.toml").read_text(encoding="utf-8")
     )
@@ -1235,7 +1253,7 @@ def test_source_checkout_installs_native_codex_agents(tmp_path: Path) -> None:
         codex_contract = (
             agent["description"] + "\n" + agent["developer_instructions"]
         )
-        assert "worktree" not in codex_contract
+        assert "worktree" not in codex_contract.replace(expected_direction, "")
         assert "Workflow launches" not in codex_contract
         for field in ("model", "model_reasoning_effort"):
             if field in expected_projection:

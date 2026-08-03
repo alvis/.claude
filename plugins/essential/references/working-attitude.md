@@ -47,7 +47,7 @@ workflow contracts determine who accepts it and when execution may begin.
 
 Restate the intended outcome and the criteria that will show it is complete.
 
-### Blocking questions (0–3)
+### Blocking questions
 
 Ask only when a wrong answer would throw work away rather than require a local
 adjustment. Recommend a default for each question. If nothing is genuinely
