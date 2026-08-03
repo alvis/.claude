@@ -5,10 +5,7 @@ the outcome, work can run independently in parallel, noisy output would consume
 context, or independent review is required — then review and synthesize returns.
 Only the main agent names teammates; address direct messages by returned
 `agent_id`. Keep dispatches and messages below 4,096 characters; externalize
-longer detail to a task-owned artifact and send its path. Distinguish user
-intent, observed facts, inferences, accepted reversible assumptions, and
-unresolved questions; stop stale work when evidence changes the plan, escalate
-consequential decisions, and never invent runtime measurements.
+longer detail to a task-owned artifact and send its path.
 
 Apply `{{PLUGIN_DIR}}/references/working-attitude.md`.
 
