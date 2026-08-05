@@ -331,25 +331,28 @@ def test_repo_templates_validate_zone_evidence_before_verbatim_emission() -> Non
     assert "specific indivisibility prose" in workflow
 
 
-def test_github_stack_bridge_preserves_plugin_ownership() -> None:
-    stacked = (WRITE_PR / "references" / "stacked-prs.md").read_text()
+def test_github_stack_reference_tracks_current_upstream_contract() -> None:
     github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
 
-    assert "[github-stacks.md](github-stacks.md)" in stacked
-    assert "`gh stack link`" in github_stacks
-    assert "`gh stack unstack <stack-number>`" in github_stacks
-    assert "Shape or rewrite history" in github_stacks
-    assert "through `coding:commit`" in github_stacks
-    assert "Do not trust exit status alone" in github_stacks
-    assert "--publish-only" not in github_stacks
-    assert "If linking changes any review surface" in github_stacks
-    assert "14fc42ed9b6c376a53b2f999f138d3bd26dac546" in github_stacks
-    assert "`gh stack link --open` marks new and" in github_stacks
-    assert "head branch name of every open stacked PR" in github_stacks
-    assert "close-and-recreate migration" in github_stacks
+    assert "github.com/github/gh-stack/blob/main/skills/gh-stack/SKILL.md" in github_stacks
+    assert "https://gh.io/stacks" in github_stacks
+    assert "pinned" not in github_stacks.lower()
+    assert "14fc42ed9b6c376a53b2f999f138d3bd26dac546" not in github_stacks
 
 
-def test_pr_router_exposes_explicit_github_stack_discovery_and_checkout() -> None:
+def test_github_stack_actions_attempt_the_command_before_optional_installation() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+
+    direct_attempt = github_stacks.index("Attempt the requested command or API call directly")
+    missing_extension = github_stacks.index("reports that the extension is missing")
+    approval = github_stacks.index("ask before running")
+    install = github_stacks.index("gh extension install github/gh-stack")
+    assert direct_attempt < missing_extension < approval < install
+    assert "Never install implicitly" in github_stacks
+    assert "Do not run `gh auth status`" in github_stacks
+
+
+def test_pr_router_loads_github_stack_contract_for_every_stack_request() -> None:
     router = (WRITE_PR / "SKILL.md").read_text()
 
     assert "/coding:pr stack list" in router
@@ -358,33 +361,205 @@ def test_pr_router_exposes_explicit_github_stack_discovery_and_checkout() -> Non
         "<stack-number-or-pr-number-or-pr-url-or-local-branch>"
     ) in router
     assert "references/github-stacks.md" in router
+    assert "For every request to create, inspect, update, restructure, publish" in router
+    assert "GitHub PR stack" in router
 
 
-def test_github_stack_checkout_is_deterministic_and_safe() -> None:
+def test_generic_stack_contract_delegates_github_listing_without_restatement() -> None:
+    stacked = (WRITE_PR / "references" / "stacked-prs.md").read_text()
+    normalized = " ".join(stacked.split())
+
+    assert "Load [github-stacks.md](github-stacks.md) for every GitHub PR-stack request" in normalized
+    assert "including discovery" in normalized
+    assert "dynamic selection between an advertised non-interactive machine-readable list" in normalized
+    assert "capability and its REST fallback" in normalized
+    assert "`stack list` uses the paginated GitHub REST endpoint" not in normalized
+
+
+def test_github_stack_listing_discovers_advertised_capabilities_before_selection() -> None:
     github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    list_section = github_stacks.split("## List or check out", 1)[1].split(
+        "## Create, extend, and publish", 1
+    )[0]
+    normalized = " ".join(list_section.split())
 
+    discovery = normalized.index("inspect the subcommand table advertised by `gh stack --help`")
+    missing_extension = normalized.index("reports that the extension is missing")
+    confirmation = normalized.index("ask for confirmation", missing_extension)
+    acceptance = normalized.index("On acceptance", confirmation)
+    install = normalized.index("gh extension install github/gh-stack", acceptance)
+    rerun_help = normalized.index("rerun root help", install)
+    advertised = normalized.index("If root help advertises a non-mutating `list` subcommand")
+    list_help = normalized.index("inspect `gh stack list --help`", advertised)
+    documented_form = normalized.index("documented non-interactive, machine-readable form")
+    assert (
+        discovery
+        < missing_extension
+        < confirmation
+        < acceptance
+        < install
+        < rerun_help
+        < advertised
+        < list_help
+        < documented_form
+    )
+    assert "install the latest extension" in normalized
+    assert "use the REST fallback rather than inventing flags" in normalized
+    assert "Do not use `gh stack list --help` itself for capability detection" in normalized
+    assert "may misleadingly print root help and exit zero" in normalized
+    assert "Never substitute bare `gh stack checkout`" in normalized
+
+
+def test_github_stack_rest_fallback_preserves_identity_for_unsupported_or_declined_list() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    list_section = github_stacks.split("## List or check out", 1)[1].split(
+        "## Create, extend, and publish", 1
+    )[0]
+    normalized = " ".join(list_section.split())
+
+    assert "On an explicit decline, use the REST fallback" in normalized
+    assert "If the installed extension does not advertise `list`" in normalized
+    assert "If current help documents no such form, use the REST fallback" in normalized
     assert 'GET /repos/{owner}/{repo}/stacks' in github_stacks
     assert "paginated" in github_stacks
-    assert "`gh stack checkout <stack-number>`" in github_stacks
-    assert "bare `gh stack checkout`" in github_stacks
-    assert "human-only discovery" in github_stacks
-    assert "numeric stack number first" in github_stacks
-    assert "PR URL" in github_stacks
-    assert "local-only branch" in github_stacks
-    assert "clean worktree" in github_stacks
-    assert "fetch" in github_stacks
-    assert "setup" in github_stacks
-    assert "divergent composition" in github_stacks
-    assert "stop and report" in github_stacks
-    assert "multiple remotes" in github_stacks
+    assert "fully merged and closed stacks" in github_stacks
+    assert "headSha: .head.sha" in github_stacks
+    assert "capability discovery, not an authentication preflight" in normalized
+
+
+def test_github_stack_checkout_separates_human_choice_from_agent_selection() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    checkout_section = github_stacks.split("## List or check out", 1)[1].split(
+        "## Create, extend, and publish", 1
+    )[0]
+    normalized = " ".join(github_stacks.lower().split())
+    normalized_checkout = " ".join(checkout_section.lower().split())
+
+    assert "bare `gh stack checkout`" in normalized
+    assert "human-only interactive checkout chooser" in normalized
+    assert "never a list or discovery action" in normalized
+    assert "require the caller's stack number, pr number, pr url" in normalized
+    assert 'gh stack checkout "$STACK_SELECTOR" || exit $?' in github_stacks
+    assert "gh stack view --json || exit $?" in github_stacks
+    assert "numeric stack number first" in normalized
+    assert "pr url" in normalized
+    assert "local-only branch" in normalized
+    assert "fetch" in normalized
+    assert "multiple remotes" in normalized
+    assert "it cannot force replacement" in normalized
+    assert "report the conflict" in normalized
+    assert "only with explicit approval" in normalized
+    assert "gh stack unstack --local || exit $?" in normalized
+    assert "exits 3" not in normalized_checkout
+    assert "prints both chains" not in normalized_checkout
+
+
+def test_github_stack_checkout_guards_local_mutations_with_a_clean_worktree() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    checkout_section = github_stacks.split("## List or check out", 1)[1].split(
+        "## Create, extend, and publish", 1
+    )[0]
+
+    status_check = checkout_section.index("git status --porcelain")
+    clean_check = checkout_section.index('test -z "$WORKTREE_STATUS"', status_check)
+    rejection = checkout_section.index("refusing stack checkout", clean_check)
+    initial_checkout = checkout_section.index(
+        'gh stack checkout "$STACK_SELECTOR"', rejection
+    )
+    approval = checkout_section.index("Only with explicit approval", initial_checkout)
+    repeated_guard = checkout_section.index(
+        "rerun the clean-worktree guard above", approval
+    )
+    local_unstack = checkout_section.index("gh stack unstack --local", repeated_guard)
+    retried_checkout = checkout_section.index(
+        'gh stack checkout "$STACK_SELECTOR"', local_unstack
+    )
+
+    assert status_check < clean_check < rejection < initial_checkout
+    assert approval < repeated_guard < local_unstack < retried_checkout
+
+
+def test_github_stack_reference_maps_every_supported_operator() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    direct_commands = (
+        "gh stack init",
+        "gh stack add",
+        "gh stack link",
+        "gh stack checkout",
+        "gh stack view --json",
+        "gh stack rebase",
+        "gh stack sync",
+        "gh stack push",
+        "gh stack submit",
+        "gh stack modify",
+        "gh stack unstack",
+        "gh stack merge",
+    )
+
+    assert all(command in github_stacks for command in direct_commands)
+    assert "`gh stack up [n]`, `down [n]`, `top`, `bottom`, and `trunk`" in github_stacks
+
+
+def test_github_stack_failures_report_actual_errors_and_verify_the_owned_scope() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    normalized = " ".join(github_stacks.split())
+
+    assert "preserve stderr" in github_stacks
+    assert "report the command and unchanged or partial state" in github_stacks
+    assert "operational failures, not preconditions" in normalized
+    assert "After every locally tracked mutation" in normalized
+    assert "use `gh stack view --json`" in normalized
+    assert "For `link`, remote unstack, and regrouping" in normalized
+    assert "paginated Stacks REST projection" in normalized
+    assert "verify every PR with `gh pr view`" in normalized
+    assert "`view --json` cannot verify state that has no local tracking" in normalized
+    assert "Do not trust exit status alone" in github_stacks
+    assert "separately use `gh pr view` to verify remote head" in normalized
+
+
+def test_github_stack_mutation_snippets_guard_every_dependency_boundary() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    normalized = " ".join(github_stacks.split())
+    bash_blocks = [
+        fenced.split("\n```", 1)[0]
+        for fenced in github_stacks.split("```bash\n")[1:]
+    ]
+    sequential_mutations: list[list[str]] = []
+    for block in bash_blocks:
+        commands: list[str] = []
+        command_parts: list[str] = []
+        for line in block.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            command_parts.append(stripped.removesuffix("\\").rstrip())
+            if not stripped.endswith("\\"):
+                commands.append(" ".join(command_parts))
+                command_parts = []
+        if len(commands) > 1 and any("gh stack " in command for command in commands):
+            sequential_mutations.append(commands)
+
+    assert sequential_mutations
+    assert all(
+        command.endswith("|| exit $?")
+        for commands in sequential_mutations
+        for command in commands
+    )
+    assert "Stop and verify the intended remote unstack" in normalized
+    assert "through the paginated Stacks REST projection and `gh pr view`" in normalized
+    assert "Only after that verification succeeds" in normalized
 
 
 def test_github_stack_snippets_stop_before_consuming_failed_commands() -> None:
     github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
-    discovery = github_stacks.split("Fetch every page", 1)[1].split("```bash", 1)[1]
-    discovery = discovery.split("```", 1)[0]
-    checkout = github_stacks.split("for the preferred selector", 1)[1]
-    checkout = checkout.split("```bash", 1)[1].split("```", 1)[0]
+    discovery_command = github_stacks.index("REPOSITORY=$(gh repo view")
+    discovery_start = github_stacks.rfind("```bash", 0, discovery_command)
+    discovery_end = github_stacks.index("```", discovery_command)
+    discovery = github_stacks[discovery_start:discovery_end]
+    checkout_command = github_stacks.index('gh stack checkout "$STACK_SELECTOR"')
+    checkout_start = github_stacks.rfind("```bash", 0, checkout_command)
+    checkout_end = github_stacks.index("```", checkout_command)
+    checkout = github_stacks[checkout_start:checkout_end]
 
     assert "mktemp" not in discovery
     assert "trap " not in discovery

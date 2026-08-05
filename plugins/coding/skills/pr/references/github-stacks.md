@@ -1,72 +1,91 @@
-# GitHub Stack Interoperability
+# GitHub PR Stacks
 
-This optional operator map adapts the non-interactive workflows from the pinned
-[`github/gh-stack` contract](https://github.com/github/gh-stack/blob/14fc42ed9b6c376a53b2f999f138d3bd26dac546/skills/gh-stack/SKILL.md).
-Load it for the explicit `coding:pr stack` route, or when `gh stack --help`
-succeeds and the user asks for GitHub Stack grouping or an existing PR chain
-is already grouped there.
+Use the current upstream skill at
+<https://github.com/github/gh-stack/blob/main/skills/gh-stack/SKILL.md>, the
+[official documentation](https://gh.io/stacks), and
+`gh stack <command> --help` for the latest contract. Load this reference for
+every GitHub PR-stack request, regardless of which `coding:pr` route received
+it.
 
-The upstream contract revision is `14fc42ed9b6c376a53b2f999f138d3bd26dac546`.
-Re-check this pin before adopting a newer `gh stack` flag or behavior.
+`gh stack` owns supported stack operations: initialize, add a layer, link,
+checkout, view, rebase, sync, push, submit, modify, unstack, merge, and
+navigate. `coding:commit` owns a plain commit within a layer, while
+`coding:pr review` owns review. Do not route a supported stack action through a
+generic jj/git implementation.
 
 ## Contents
 
-- [Select the integration path](#select-the-integration-path)
-- [Discover or check out an existing stack](#discover-or-check-out-an-existing-stack)
-- [Create or extend](#create-or-extend)
-- [Update a lower layer](#update-a-lower-layer)
-- [Reorder, remove, or rename](#reorder-remove-or-rename)
-- [Non-interactive and recovery rules](#non-interactive-and-recovery-rules)
+- [Run the requested action](#run-the-requested-action)
+- [List or check out](#list-or-check-out)
+- [Create, extend, and publish](#create-extend-and-publish)
+- [Update and synchronize](#update-and-synchronize)
+- [Restructure or remove grouping](#restructure-or-remove-grouping)
+- [Merge and navigate](#merge-and-navigate)
+- [Verify and recover](#verify-and-recover)
 
-<IMPORTANT>
-`gh stack` does not replace this plugin's owners. Shape or rewrite history
-through `coding:commit`; author, push, lease, create/update PRs, review, and
-drive CI through `coding:pr`. Use `gh stack` here for GitHub grouping and
-machine-readable inspection after those owners have produced verified heads.
-</IMPORTANT>
+## Run the requested action
 
-## Select the integration path
+Attempt the requested command or API call directly. Do not run `gh auth status`
+or a general extension probe first. The root-help inspection for `stack list`
+below is the sole capability-discovery exception. Authentication, repository
+support, and extension availability are operational failures, not
+preconditions.
 
-For jj, Sapling, git-town, or skill-owned Git history, use `gh stack link`.
-It creates no local tracking state and is the upstream-recommended bridge for
-externally managed branches. Require at least two PRs and pass branch names in
-bottom-to-top order so a numeric first argument cannot be mistaken for a stack
-number:
+If an attempted `gh stack` action reports that the extension is missing or
+offers installation, ask before running:
 
 ```bash
-gh stack link --base "$DESTINATION" --remote "$REMOTE" \
-  "$BOTTOM_BRANCH" "$NEXT_BRANCH" "$TOP_BRANCH"
+gh extension install github/gh-stack
 ```
 
-Run it only after `coding:pr create` or `coding:pr update` has pushed and
-verified every branch and PR. Omit `--open` while new PRs must remain draft;
-pass it only when the caller explicitly requested ready-for-review state.
-Because branch arguments may be pushed and bases may be corrected, re-read
-every PR head SHA, base, and draft state after linking.
+Never install implicitly. For every other failure, preserve stderr, stop, and
+report the command and unchanged or partial state. Do not convert an auth or API
+failure into a speculative setup step.
 
-When a plain-Git checkout is already tracked by `gh stack`, its navigation and
-JSON view may be used for discovery. Local branch creation, commits, rebases,
-sync, pushes, and submission still route to the owners above; do not run
-`init`, `add`, `rebase`, `sync`, `push`, or `submit` as a shortcut around their
-validation and review loop.
+Agents must select non-interactive forms:
 
-## Discover or check out an existing stack
+| Action | Agent form | Avoid |
+| --- | --- | --- |
+| inspect | `gh stack view --json` | bare `view` |
+| submit | `gh stack submit --auto [--remote <name>]` | bare `submit` |
+| checkout | `gh stack checkout <target>` | bare `checkout` |
+| initialize | `gh stack init [--base <trunk>] <branch>...` | bare `init` |
+| add layer | `gh stack add <branch>` | bare `add` |
+| merge | `gh stack merge <target> --yes --<method>` | interactive merge |
 
-Both actions require authenticated GitHub CLI access:
+`modify` is an interactive TUI and has no non-interactive restructure form.
+An agent may use only `modify --continue` or `modify --abort` for an existing
+session; otherwise ask the user to operate the TUI or use the explicit
+unstack-and-reinitialize path below.
 
-```bash
-gh auth status || exit $?
-```
+Set `--remote <name>` on `link`, `push`, `submit`, `sync`, and `rebase` when the
+repository has multiple remotes. `checkout` has no remote flag: use configured
+remote resolution and stop on the command's actual ambiguity or remote error.
 
-Stop if authentication fails. Listing requires only authenticated `gh` access
-to a repository with the Stacks API; checkout additionally requires the
-`github/gh-stack` extension.
+## List or check out
 
-`coding:pr stack list` lists the current repository's GitHub stacks through the
-official paginated `GET /repos/{owner}/{repo}/stacks` REST endpoint. Never run
-bare `gh stack checkout`: its no-argument picker combines local and remote
-stacks and is human-only discovery because it requires a TTY. Fetch every page
-and retain JSON for agent decisions:
+For `/coding:pr stack list`, first inspect the subcommand table advertised by
+`gh stack --help`. This is capability discovery, not an authentication
+preflight. If root help reports that the extension is missing or offers
+installation, ask for confirmation. On acceptance, install the latest extension
+with `gh extension install github/gh-stack`, rerun root help, and select from
+the newly advertised capabilities. On an explicit decline, use the REST
+fallback below.
+
+If root help advertises a non-mutating `list` subcommand, inspect
+`gh stack list --help` and use only its documented non-interactive,
+machine-readable form. If current help documents no such form, use the REST
+fallback rather than inventing flags or parsing human-oriented output.
+
+Do not use `gh stack list --help` itself for capability detection: when `list`
+is unadvertised, that call may misleadingly print root help and exit zero.
+Never substitute bare `gh stack checkout`, which is an interactive checkout
+chooser rather than a list operation.
+
+If the installed extension does not advertise `list`, use the current
+repository's paginated `GET /repos/{owner}/{repo}/stacks` REST endpoint. Fetch
+every page and retain the JSON for agent decisions. Unlike the checkout chooser,
+the REST inventory keeps fully merged and closed stacks returned by the API.
 
 ```bash
 REPOSITORY=$(gh repo view --json nameWithOwner --jq '.nameWithOwner') || exit $?
@@ -83,136 +102,199 @@ jq '[.[][] | {
     state,
     draft,
     mergedAt: .merged_at,
-    head: .head.ref
+    head: .head.ref,
+    headSha: .head.sha
   }]
 }] | sort_by(.number) | reverse' <<<"$STACKS_JSON" || exit $?
 ```
 
-An empty array is a successful empty result. A nonzero `gh api` status is a
-failed discovery: preserve stderr and stop. In particular, the pinned client
-treats HTTP 404 as stacked PRs unavailable for the repository.
+An empty array is success. A nonzero API status is failure; preserve stderr and
+stop.
 
-`coding:pr stack checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>`
-requires the caller's explicit selector and a clean worktree. Bind
-`STACK_SELECTOR` to that exact selector; for the preferred selector this runs
-`gh stack checkout <stack-number>`:
+Bare `gh stack checkout` is a human-only interactive checkout chooser for local
+and remote stacks. It is never a list or discovery action. Agent checkout is
+explicit and deterministic: require the caller's stack number, PR number, PR
+URL, or locally tracked branch. As plugin safety policy, require a clean
+worktree before either checkout path below; this is not an upstream CLI
+precondition:
 
 ```bash
-gh stack --help || exit $?
 WORKTREE_STATUS=$(git status --porcelain) || exit $?
 test -z "$WORKTREE_STATUS" || {
   echo 'refusing stack checkout: worktree has uncommitted changes' >&2
   exit 1
 }
-REMOTE_COUNT=$(git remote | jq -Rsc 'split("\n") | map(select(length > 0)) | length') || exit $?
-if [ "$REMOTE_COUNT" -gt 1 ]; then
-  git config --get remote.pushDefault >/dev/null || {
-    echo 'refusing stack checkout: configure remote.pushDefault' >&2
-    exit 1
-  }
-fi
+```
+
+For the preferred selector, then run an explicit
+`gh stack checkout <stack-number>`:
+
+```bash
 gh stack checkout "$STACK_SELECTOR" || exit $?
 git branch --show-current || exit $?
 gh stack view --json || exit $?
 ```
 
-If the extension check fails, stop and ask whether to install it with
-`gh extension install github/gh-stack`; do not install it implicitly.
+Prefer a stack number from the selected listing path. Resolution tries a
+numeric stack number first, then a locally tracked PR, a GitHub PR, and a
+local-only branch. A PR URL is accepted. A branch name resolves only against
+local stack tracking. Remote checkout may fetch PR branches and create local
+tracking branches; verify the selected branch and JSON composition afterward.
+If checkout reports that a different local stack already covers those branches,
+it cannot force replacement. Report the conflict. Only with explicit approval,
+rerun the clean-worktree guard above immediately before removing that local
+tracking, then retry the same explicit checkout:
 
-Prefer the listed stack number. Resolution tries a numeric stack number first,
-then a locally tracked PR, a GitHub PR, and finally a local-only branch; it also
-accepts a PR URL. A nonnumeric local-only branch resolves only against local
-stack tracking. A remote stack checkout fetches its PR branches, creates
-missing local branches from their remote refs, completes local tracking setup,
-and records local stack state. A stack number selects the topmost unmerged
-branch; a PR number or URL selects that PR's branch. With multiple remotes,
-require `remote.pushDefault` before checkout because this command has no
-`--remote` flag.
+```bash
+gh stack unstack --local || exit $?
+gh stack checkout "$STACK_SELECTOR" || exit $?
+git branch --show-current || exit $?
+gh stack view --json || exit $?
+```
 
-On divergent composition between local and GitHub stacks, the extension
-prompts a human to replace local state, delete remote grouping, or cancel. An
-agent must stop and report both compositions instead of choosing. Likewise,
-stop on any nonzero exit and preserve stderr; the pinned contract assigns
-distinct failures to not being in a stack, API errors, invalid arguments,
-ambiguity, lock contention, and unavailable repository support. Exit zero
-means the command completed, but still verify the checked-out branch and
-`gh stack view --json`. A human who uses the no-argument picker may also exit
-zero after cancelling or finding no available stacks, so that mode never
-proves a checkout occurred.
+## Create, extend, and publish
 
-## Create or extend
+For a new plain-Git stack, initialize explicit bottom-to-top branches and add
+later layers with current extension commands:
 
-1. Shape independent bottom-to-top changes through `coding:commit`.
-2. Publish through `coding:pr create`; for an extension with at least one open
-   PR, use `coding:pr update` against the lowest existing PR.
-3. Link the complete open chain with explicit `--base`, `--remote`, and branch
-   arguments. To append to a known GitHub stack, an explicit stack number may
-   be the first argument followed by only the new branches or PRs.
-   In the pinned upstream contract, `gh stack link --open` marks new and
-   existing PRs ready for review; it is not merely a browser-opening flag.
-   `gh stack submit --auto --open` likewise submits the stack with PRs ready for
-   review. Use either only when the caller requested ready state.
-4. Verify the branch/PR chain through `gh pr view`. When local tracking already
-   exists, also require `gh stack view --json` to report the expected order,
-   heads, PR URLs, merge state, and `needsRebase: false`.
+```bash
+git config rerere.enabled true || exit $?
+gh stack init --base "$DESTINATION" "$BOTTOM" "$NEXT" "$TOP" || exit $?
+gh stack add "$NEW_TOP" || exit $?
+```
 
-`gh stack link` is additive: it can append and repair bases, but it does not
-remove existing members. A repository without GitHub Stacks support may reject
-grouping; keep the already verified ordinary PR chain and report that optional
-grouping was unavailable.
+Existing branches are adopted by `init`; missing ones are created, and the last
+branch is checked out. Enabling rerere prevents `init` from opening its first-run
+confirmation prompt. `add` must run from the current top. Use `coding:commit`
+for each layer's plain commit rather than `add -m`/`-A`/`-u`.
 
-## Update a lower layer
+For branches managed by jj, Sapling, git-town, or another history owner, link
+the externally managed bottom-to-top chain without local gh-stack tracking.
+Provide at least two branch or PR selectors:
 
-Put the fix in the earliest unmerged owner. Run `coding:commit` there, then
-`coding:pr update <lowest-affected-pr>` so descendants are replayed, pushed
-with leases, reviewed, and driven through CI. Re-link the complete open order
-after that supported update returns, then verify every head/base pair and
-grouping. If linking changes any review surface unexpectedly, re-enter
-`coding:pr update` rather than treating the earlier convergence as current.
+```bash
+gh stack link --base "$DESTINATION" --remote "$REMOTE" \
+  "$BOTTOM_BRANCH" "$NEXT_BRANCH" "$TOP_BRANCH" || exit $?
+```
 
-This is the same invariant as `gh stack rebase --upstack`: a lower-layer edit
-must propagate through every dependent branch. The PR skill uses its own
-restack helper because it records exact expected SHAs, merged skips, partial
-remote progress, and post-push base verification.
+`gh stack link` may push branches, create missing PRs, repair bases, and add
+members; it never removes existing members. A known stack number may be the
+first argument when appending new branches or PRs. `--open` marks new and
+existing PRs ready for review, so omit it unless the caller requested ready
+state. Because `link` creates no local tracking, verify its grouping through
+the paginated Stacks REST projection above and verify every PR with
+`gh pr view`.
 
-## Reorder, remove, or rename
+For a locally tracked stack, publish with:
 
-GitHub grouping and branch history are separate state. For a structural edit:
+```bash
+gh stack submit --auto --remote "$REMOTE" || exit $?
+gh stack view --json || exit $?
+```
 
-1. Snapshot the stack number, destination, bottom-to-top PR/branch/head/base
-   map, and `gh stack view --json` output when local tracking exists.
-2. Run `gh stack unstack <stack-number>` to remove the GitHub grouping without
-   deleting PRs or branches. Use `--local` only when intentionally keeping the
-   remote grouping.
-3. Reshape through `coding:commit --reorder` or the applicable commit workflow.
-   Preserve the head branch name of every open stacked PR: GitHub does not
-   transfer a stacked PR's immutable head ref when a branch is renamed. If a
-   reorder truly requires a different head name, stop after unstacking and get
-   explicit approval for the close-and-recreate migration, recording the old
-   PR/branch and replacement mapping. A non-stacked PR may use the forge's head
-   rename operation, but verify the PR head/base map afterward and never close
-   or delete it silently.
-4. Republish through `coding:pr update` when any selected head has an open PR;
-   use `coding:pr create` only when none does.
-5. Re-link the full new branch order, then verify every remote head, PR base,
-   draft state, and GitHub grouping.
+`submit --auto` skips the editor and creates new PRs as drafts. Add `--open`
+only when ready-for-review state was requested. Submission pushes branches,
+creates or updates PRs and their bases, and creates or updates GitHub grouping.
+The PR, base, and grouping steps are best-effort, so verify all remote state.
 
-Unstack first for removal or reorder because linking is additive. Never delete
-an underlying PR or branch merely to change its stack membership.
+## Update and synchronize
 
-## Non-interactive and recovery rules
+Check out the earliest unmerged owning layer, put the plain commit there through
+`coding:commit`, then propagate it with the extension:
 
-- Give `init`, `add`, and `checkout` explicit arguments if they are ever used
-  for read/setup work; bare forms prompt. `submit` requires `--auto`, and
-  `view` requires `--json`.
-- Set `--remote` or `remote.pushDefault` when multiple remotes exist.
-- Do not trust exit status alone. `gh stack sync` can report an aborted
-  local/remote divergence with a successful exit; always verify post-state.
-- Treat push/submit as non-transactional. Earlier branches may update before a
-  later lease fails; recover from the recorded remote head map.
-- A conflict must be completed or aborted explicitly. Never leave a rebase or
-  partially regrouped stack as success.
-- After squash or rebase merges, skip the stale merged head and replay only
-  live descendants from the new destination, as
-  [workflow-correct-merged.md](../../commit/references/workflow-correct-merged.md)
-  and [merge.md](merge.md) require.
+```bash
+gh stack checkout "$OWNING_BRANCH" || exit $?
+# Invoke /coding:commit for the owning layer before continuing.
+gh stack rebase --upstack --remote "$REMOTE" || exit $?
+gh stack push --remote "$REMOTE" || exit $?
+gh stack view --json || exit $?
+```
+
+Use `rebase --downstack` for trunk through the current layer, `--no-trunk` for
+inter-layer alignment only, and `--continue` or `--abort` after conflicts.
+
+For full remote reconciliation use:
+
+```bash
+gh stack sync --remote "$REMOTE" || exit $?
+gh stack view --json || exit $?
+```
+
+`sync` fetches, reconciles remote membership, updates trunk, cascade-rebases,
+pushes, refreshes PR state, and links two or more open PRs. It never creates
+PRs. Add `--prune` only with explicit approval to delete local merged branches.
+It may exit zero after a divergence abort or a push warning; verify post-state.
+
+## Restructure or remove grouping
+
+For a human-operated restructure, `gh stack modify` can drop, fold, insert,
+reorder, and rename layers; afterward the agent runs
+`gh stack submit --auto [--remote <name>]` to publish the new shape. Agents do
+not drive this TUI.
+
+For a deterministic regroup, record `gh stack view --json`, then remove only
+the grouping with an explicit target:
+
+```bash
+gh stack unstack "$STACK_NUMBER" || exit $?
+```
+
+Stop and verify the intended remote unstack through the paginated Stacks REST
+projection and `gh pr view`. Only after that verification succeeds, rebuild and
+publish the local stack:
+
+```bash
+gh stack init --base "$DESTINATION" "$BOTTOM" "$NEXT" "$TOP" || exit $?
+gh stack submit --auto --remote "$REMOTE" || exit $?
+gh stack view --json || exit $?
+```
+
+`gh stack unstack <stack-number>` deletes neither PRs nor branches. `--local`
+removes only local tracking and preserves GitHub grouping. GitHub may refuse
+some members and keep the stack and local tracking, so verify both scopes after
+the call. Verify remote unstack or regrouping through the paginated Stacks REST
+projection and each member through `gh pr view`. After `unstack --local`, verify
+that the former branch reports no local stack while the REST projection still
+contains the remote grouping. Never delete or close a PR merely to change stack
+membership.
+
+## Merge and navigate
+
+Use GitHub's atomic stack merge, not `gh pr merge` or the generic bottom-up
+loop, for a GitHub PR stack:
+
+```bash
+gh stack merge "$STACK_OR_PR_NUMBER" --yes \
+  --merge-method "$MERGE_METHOD" || exit $?
+```
+
+Bind `MERGE_METHOD` from the caller or repository policy; do not select a
+default. The equivalent explicit flags are `--squash`, `--rebase`, or
+`--merge`. A PR target merges that PR and every unmerged PR below it; a stack
+target merges the whole stack. The operation is all-or-nothing unless a merge
+queue accepts the stack, in which case repository queue policy controls
+landing.
+
+`gh stack up [n]`, `down [n]`, `top`, `bottom`, and `trunk` are supported
+non-interactive navigation commands. For automation, prefer
+`gh stack checkout <exact-branch-or-PR>` followed by `view --json` when the
+destination is known. Do not use interactive `gh stack switch`.
+
+## Verify and recover
+
+After every locally tracked mutation, use `gh stack view --json` to confirm
+saved local order, current branch, PR URLs, heads, bases, merge state, and
+`needsRebase`. Its API refresh is best-effort, so separately use `gh pr view`
+to verify remote head SHAs, bases, and draft state. For `link`, remote unstack,
+and regrouping, verify grouping through the paginated Stacks REST projection;
+`view --json` cannot verify state that has no local tracking.
+
+- Do not trust exit status alone: divergence and push-warning paths can leave
+  `sync` at exit zero. Verify post-state.
+- `push` and `submit` may update earlier branches before a later lease fails.
+  Preserve the pre-operation remote head map, report partial progress, and
+  retry only after resolving the rejected branch.
+- Resolve a rebase conflict, stage files, and run `rebase --continue`, or run
+  `rebase --abort`; never leave a partial rebase as success.
+- Repository support, authentication, API, ambiguity, lock, and invalid-input
+  errors are command failures. Preserve their stderr and stop.

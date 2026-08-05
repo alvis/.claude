@@ -33,15 +33,22 @@ remote mutation.
 
 ## Routing
 
+For every request to create, inspect, update, restructure, publish, check out,
+sync, navigate, unstack, or merge a GitHub PR stack, load
+[references/github-stacks.md](references/github-stacks.md) before selecting an
+operator. This applies even when the request arrives through `create`, `update`,
+or `merge`, rather than the explicit `stack` route.
+
 - `author` writes deterministic PR title and body text without publication.
   Follow only [Author the PR text](references/create-update.md#author-the-pr-text);
   `--base` selects the intended PR base instead of the first-parent default.
-- `create` opens new draft PRs for one saved change or a linear stack. Load and
-  follow [references/create-update.md](references/create-update.md) with
+- `create` opens new draft PRs for one saved change or a conventional linear
+  stack. Load and follow
+  [references/create-update.md](references/create-update.md) with
   `ACTION=create`, and always load
   [references/stacked-prs.md](references/stacked-prs.md).
-- `update` republishes existing PR heads, refreshes their title, body, and bases,
-  and drives CI to green. Load and follow
+- `update` republishes existing PR heads for a conventional linear stack,
+  refreshes their title, body, and bases, and drives CI to green. Load and follow
   [references/create-update.md](references/create-update.md) with
   `ACTION=update`, and always load
   [references/stacked-prs.md](references/stacked-prs.md).
@@ -57,11 +64,13 @@ remote mutation.
   preprovisioned stack capsule is already that dedicated reviewer: it runs the
   review phase directly instead of nesting another dispatch.
 - `stack list` lists the current repository's GitHub PR stacks; `stack checkout`
-  checks out one explicitly selected stack and requires `gh stack`. Load and
-  follow [references/github-stacks.md](references/github-stacks.md#discover-or-check-out-an-existing-stack).
+  checks out one explicitly selected stack and requires `gh stack`. Follow
+  [references/github-stacks.md](references/github-stacks.md#list-or-check-out).
   Checkout may fetch and create local tracking branches, but this route does
   not own commits, history rewriting, pushes, or PR publication.
-- `merge` validates and merges a linear stack bottom-up. Load and follow
+- `merge` validates and merges a conventional linear stack bottom-up. For a
+  GitHub PR stack, use the GitHub operator map loaded above instead. Otherwise
+  load and follow
   [references/stacked-prs.md](references/stacked-prs.md), then
   [references/merge.md](references/merge.md).
 

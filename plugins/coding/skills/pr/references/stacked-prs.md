@@ -46,6 +46,10 @@ path silently reshapes history.
 
 ## Stack contract
 
+The default contract below applies when the caller is not operating a GitHub PR
+stack. For a GitHub PR stack, [github-stacks.md](github-stacks.md) supersedes
+these generic lifecycle operators wherever `gh stack` supports the action.
+
 - Shape local history through `coding:commit`; `coding:pr` does not split,
   reorder, amend, or absorb changes.
 - Name each head `<feature-slug>/NN-<scope>` per `GIT-PR-STACK-01`; `NN` is a
@@ -57,11 +61,13 @@ path silently reshapes history.
   merges, fix forward instead of rewriting public history.
 - Update and merge the complete affected chain bottom-up.
 
-Load [github-stacks.md](github-stacks.md) for the explicit `coding:pr stack`
-discovery/checkout route. Also load it when the `gh stack` extension is
-available and the caller wants GitHub Stack grouping. It maps discovery,
-checkout, create, update, extension, and structural reorder onto this skill's
-jj/git ownership without making the extension a prerequisite for listing.
+Load [github-stacks.md](github-stacks.md) for every GitHub PR-stack request,
+including discovery, checkout, creation, publication, update, navigation,
+restructure, unstack, or merge. Use the current `gh stack` commands there for
+the stack lifecycle. `coding:commit` still owns a plain commit within a layer,
+and `coding:pr review` still owns review. That reference owns the dynamic
+selection between an advertised non-interactive machine-readable list
+capability and its REST fallback.
 
 ## Inspect with jj
 
