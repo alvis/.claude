@@ -1,6 +1,6 @@
 # Action: create
 
-Loaded by `SKILL.md` when the first argument is `create`. Add a new reusable
+Loaded by `SKILL.md` when the requested action is `create`. Add a new reusable
 skill; the shared policy, thought-experiment/blindspot test, and verification
 commands live in `SKILL.md`.
 
@@ -11,25 +11,24 @@ commands live in `SKILL.md`.
 - Search existing skills first. Update an existing owner (the `update` action)
   when the capability overlaps instead of creating a competing trigger.
 
-Start from `${CLAUDE_SKILL_DIR}/../../constitution/templates/skill.md`, adapting
-headings to the capability.
+Use the strict shared structure in `references/authoring.md`. When a harness
+difference affects the result, follow `references/harnesses.md`.
 
 ## Inputs
 
-- **Required**: skill purpose, target plugin, and concrete trigger examples.
-- **Optional**: allowed tools, execution context, references, and output
-  contract.
+- **Required**: skill purpose, name, and concrete trigger examples.
+- **Optional**: supporting references, scripts, assets, and output contract.
 
 ## Workflow
 
-1. Inspect neighboring skills, plugin conventions, and call sites.
+1. Inspect neighboring skills and call sites.
 2. Define the new skill's owned outcome, positive triggers, near-miss prompts,
    exclusions, inputs, failure behavior, and verification.
 3. Before writing the skill, run the shared thought-experiment and blindspot
    test (see `SKILL.md`) for the intended triggers and behavior.
-4. Create the smallest `skills/<name>/SKILL.md` that teaches the missing
-   behavior. Keep always-used instructions inline and conditional bulk in
-   references.
+4. Create the smallest self-contained `<name>/SKILL.md` that teaches the
+   missing behavior. Keep always-used instructions inline and conditional bulk
+   in root-relative supporting resources.
 5. Add supporting scripts only for deterministic operations that prose should
    not reproduce. Test scripts before documenting them.
 6. Run structural and policy validation (see `SKILL.md`), then re-run the
@@ -46,5 +45,4 @@ completion with the remaining issues.
 
 Report the created path, ownership boundary, thought-experiment and blindspot
 coverage, validation results, runtime evaluation status (`exercised`, `not
-requested`, or `blocked`), and any intentionally deferred cases. Confirm any
-temporary Markdown thought-experiment notes were deleted before commit.
+requested`, or `blocked`), and any intentionally deferred cases.

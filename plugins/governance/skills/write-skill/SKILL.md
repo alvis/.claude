@@ -1,17 +1,15 @@
 ---
 name: write-skill
-description: "Use when authoring, revising, or validating a Claude Code skill through its create, update, and verify actions: define a new reusable capability, align existing skills with repository policy, or check structural, trigger, and behavior compliance before deployment. Invoke as write-skill create, update, or verify."
-model: opus
-context: fork
-argument-hint: "<create|update|verify> [target] [--changes=...] [--mode=...] [--runtime]"
+description: "Use when authoring, revising, or validating an Agent Skill for Claude Code, Codex, or both through its create, update, and verify actions: define a reusable capability, align existing skills with repository policy, or check structure, triggers, portability, and behavior before use."
 ---
 
 # Write Skill
 
-Author, revise, and validate Claude Code skills. One skill, three actions:
+Author, revise, and validate Agent Skills. One skill, three actions:
 `create` a new skill, `update` one or more existing skills, or `verify` a
-skill's structural, policy, and trigger compliance. The first argument selects
-the action; route to its reference below and follow that workflow.
+skill's structural, policy, and trigger compliance. Infer the action from the
+user's stated intent, then route to its reference below and follow that
+workflow.
 
 ## Actions
 
@@ -32,34 +30,39 @@ functional and trigger evaluation.
 
 ## Shared policy
 
-Follow
-`${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md` for
-all three actions. Claude Code's validator remains authoritative for manifest
-and frontmatter schema; repository policy checks never duplicate the evolving
-Claude schema.
+Follow [references/authoring.md](references/authoring.md) for all three actions.
+Load [references/harnesses.md](references/harnesses.md) only when a Claude Code
+or Codex difference affects execution, required tools, or validation.
 
 ## Shared thought experiment and blindspot test
 
 Whenever an action changes a trigger or behavior, conduct a paper-only thought
 experiment and blindspot test over positive and near-miss prompts before and
-after the change. If written notes help, keep them as a temporary Markdown
-scratch document in an OS temp folder (for example `${TMPDIR:-/tmp}/check.md`)
-using `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the table
-format with `:white_check_mark:`/`:x:` status markers. Delete the scratch
-document before staging; these notes are reasoning aids, not deliverables, and
-must not be committed. Do not claim runtime trigger behavior was exercised
-unless an executable evaluation actually ran.
+after the change. Record the prompt, expected owner and behavior, evidence kind,
+outcome, and rationale in context. If written notes help, keep them in an OS
+temporary directory and delete them before staging. Do not claim runtime
+behavior was exercised unless an executable evaluation actually ran.
 
 ## Verification
 
+Resolve `scripts/quick_validate.py` from this skill's root—the directory
+containing this loaded `SKILL.md`—rather than from the process working
+directory. For each affected skill, set `TARGET` to its exact `SKILL.md` or
+skill directory and run one invocation:
+
 ```bash
-claude plugin validate --strict <plugin-path>
-python3 "${CLAUDE_SKILL_DIR}/scripts/quick_validate.py" <skill-or-plugin-path>
+uv run --python 3.13 "<loaded-write-skill-root>/scripts/quick_validate.py" --portable "$TARGET"
 ```
 
-Run both commands after every fix iteration. When a check fails, change only
-the reported cause and re-run that check; loop fix and re-verify at most 3
-times, then report partial completion with the remaining issues.
+Portable mode rejects required Markdown links outside the skill root and checks
+root-relative links in `references/`. The script resolves a containing Claude
+plugin through the target's ancestors and validates it when present. Complete
+the checks in [references/authoring.md](references/authoring.md) and any
+applicable harness checks in
+[references/harnesses.md](references/harnesses.md) after every fix iteration.
+When a check fails, change only the reported cause and re-run that check; loop
+fix and re-verify at most 3 times, then report partial completion with the
+remaining issues.
 
 ## Completion
 

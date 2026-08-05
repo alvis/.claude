@@ -1,11 +1,9 @@
-"""Repository policy checks for Claude Code skills.
+"""Repository policy checks for Agent Skills.
 
 Claude Code owns manifest and frontmatter schema validation. This script runs
 ``claude plugin validate --strict`` first, then checks only local authoring
 policies that the official validator does not cover.
 """
-
-from __future__ import annotations
 
 import argparse
 import json
@@ -13,7 +11,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-
+from typing import TypedDict
 
 MAX_BODY_LINES = 500
 MIN_DESCRIPTION_WORDS = 25
@@ -23,8 +21,23 @@ PLACEHOLDERS = (
     re.compile(r"\[(?:skill-name|Skill Name|Description|Step Name)\]"),
 )
 LOCAL_LINK = re.compile(r"\[[^]]+\]\((?![a-z]+:|#)([^)]+)\)", re.IGNORECASE)
+REFERENCE_DEFINITION = re.compile(
+    r"^[ \t]{0,3}\[(?:\\.|[^\]\\])+\]:[ \t]*(<[^>\n]*>|[^\s<][^\s]*)"
+)
+EXTERNAL_DESTINATION = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
+ILLUSTRATIVE_DESTINATION = re.compile(
+    r"<[^>]+>|\[[^]]+\]|\{\{[^}]+\}\}|\{[^{}]+\}"
+)
 LOCAL_DIRECTORIES = {"agents", "assets", "evals", "hooks", "references", "scripts", "templates"}
 CLAUDE_TIMEOUT_SECONDS = 30
+
+
+class PolicyReport(TypedDict):
+    """JSON-ready repository policy result for one skill."""
+
+    path: str
+    errors: list[dict[str, object]]
+    warnings: list[dict[str, object]]
 
 
 def discover_skills(target: Path) -> list[Path]:
@@ -82,22 +95,32 @@ def scalar_value(frontmatter: list[str], key: str) -> str | None:
     return None
 
 
+def normalize_markdown_destination(destination: str) -> str:
+    """Return a destination without Markdown angle wrapping or an anchor."""
+    destination = destination.strip()
+    if len(destination) >= 2 and destination[0] == "<" and destination[-1] == ">":
+        destination = destination[1:-1].strip()
+    return destination.split("#", 1)[0].strip()
+
+
 def is_local_file_destination(destination: str) -> bool:
-    """Return whether a Markdown destination clearly denotes a local file."""
-    destination = destination.strip().split("#", 1)[0]
+    """Return whether a normalized destination clearly denotes a local file."""
     if not destination or destination in {"url", "...", "…"}:
         return False
-    if destination[0] in "<[" or destination[-1] in ">]":
+    if EXTERNAL_DESTINATION.match(destination) or ILLUSTRATIVE_DESTINATION.search(
+        destination
+    ):
         return False
     path = Path(destination)
     return (
-        destination.startswith(("./", "../"))
-        or (path.parts and path.parts[0] in LOCAL_DIRECTORIES)
+        path.is_absolute()
+        or destination.startswith(("./", "../"))
+        or bool(path.parts and path.parts[0] in LOCAL_DIRECTORIES)
         or bool(path.suffix)
     )
 
 
-def validate_policy(skill: Path) -> dict[str, object]:
+def validate_policy(skill: Path, *, portable: bool = False) -> PolicyReport:
     """Validate repository-specific content policies for one skill."""
     text = skill.read_text(encoding="utf-8")
     frontmatter, body = frontmatter_and_body(text)
@@ -121,15 +144,42 @@ def validate_policy(skill: Path) -> dict[str, object]:
     for number, line in enumerate(text.splitlines(), 1):
         if any(pattern.search(line) for pattern in PLACEHOLDERS):
             errors.append(issue("Placeholder text remains in the skill.", line=number))
-        for match in LOCAL_LINK.finditer(line):
-            raw = match.group(1).split("#", 1)[0]
-            if not is_local_file_destination(raw):
-                continue
-            reference = (skill.parent / raw).resolve()
-            if not reference.exists():
-                errors.append(
-                    issue(f"Unresolved local reference: {match.group(1)}", line=number)
-                )
+
+    markdown_files = [skill]
+    references = skill.parent / "references"
+    if portable and references.is_dir():
+        markdown_files.extend(sorted(references.glob("**/*.md")))
+
+    for markdown_file in markdown_files:
+        source = markdown_file.relative_to(skill.parent)
+        for number, line in enumerate(markdown_file.read_text(encoding="utf-8").splitlines(), 1):
+            destinations = LOCAL_LINK.findall(line)
+            if definition := REFERENCE_DEFINITION.match(line):
+                destinations.append(definition.group(1))
+            for raw_destination in dict.fromkeys(destinations):
+                destination = normalize_markdown_destination(raw_destination)
+                if not is_local_file_destination(destination):
+                    continue
+                reference = (skill.parent / destination).resolve()
+                if portable:
+                    try:
+                        reference.relative_to(skill.parent.resolve())
+                    except ValueError:
+                        errors.append(
+                            issue(
+                                f"Reference escapes skill root in {source}: {raw_destination}",
+                                line=number,
+                            )
+                        )
+                        continue
+                if not reference.exists():
+                    location = "" if markdown_file == skill else f" in {source}"
+                    errors.append(
+                        issue(
+                            f"Unresolved local reference{location}: {raw_destination}",
+                            line=number,
+                        )
+                    )
 
     return {"path": str(skill), "errors": errors, "warnings": warnings}
 
@@ -154,7 +204,8 @@ def claude_targets(target: Path) -> list[Path]:
             path.parent.parent
             for path in plugins.glob("*/.claude-plugin/plugin.json")
         )
-        return roots
+        if roots:
+            return roots
     for parent in target.parents:
         if (parent / ".claude-plugin" / "plugin.json").is_file():
             return [parent]
@@ -163,7 +214,7 @@ def claude_targets(target: Path) -> list[Path]:
 
 def run_claude_validation(targets: list[Path]) -> tuple[int, list[dict[str, object]]]:
     """Run Claude's validator; do not reproduce or reinterpret its schema."""
-    results = []
+    results: list[dict[str, object]] = []
     failed = False
     for target in targets:
         command = ["claude", "plugin", "validate", "--strict", str(target)]
@@ -220,6 +271,11 @@ def run(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Skip the official validator (intended for unit tests and focused policy checks).",
     )
+    parser.add_argument(
+        "--portable",
+        action="store_true",
+        help="Require skill-root-contained links and check Markdown under references/.",
+    )
     args = parser.parse_args(argv)
 
     skills = discover_skills(args.target)
@@ -230,7 +286,7 @@ def run(argv: list[str] | None = None) -> int:
     if not args.policy_only:
         claude_status, claude_results = run_claude_validation(claude_targets(args.target))
 
-    policies = [validate_policy(skill) for skill in skills]
+    policies = [validate_policy(skill, portable=args.portable) for skill in skills]
     policy_errors = sum(len(report["errors"]) for report in policies)
     report = {
         "status": "fail" if claude_status or policy_errors else "pass",
