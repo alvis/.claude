@@ -1,6 +1,6 @@
 ---
 name: presetter
-description: "Configures Presetter in consumer repositories: adopts or migrates Presetter, composes or authors presets, targets monorepo packages, manages generated assets, and diagnoses preset conflicts. Use for Presetter bootstrap, presetter.config.ts, preset overrides, custom presets, or missing generated configs; exclude engine internals, generic config, documentation-only, and pull-request work."
+description: "Configures Presetter in consumer repositories: adopts or migrates Presetter, composes or authors presets, targets monorepo packages, manages generated assets, and diagnoses conflicts. Use whenever the target repo contains presetter.config.ts, or for Presetter bootstrap, overrides, custom presets, or missing generated configs; ask before generating TypeScript config without established Presetter ownership. Exclude engine internals, generic config, documentation-only, and pull-request work."
 ---
 
 # Presetter
@@ -15,10 +15,19 @@ Applicable standards: `universal/write`, `documentation/write`, and
 
 ## Boundaries
 
+- Use this skill as the required first routing and inspection step whenever
+  `presetter.config.ts` appears anywhere in the target repository, including a
+  nested package, even when the requested change sounds like generic config
+  work. After inspection, route work with no Presetter-owned effect to the
+  appropriate coding skill; this gate does not make generic config in scope.
 - Use for requests such as “adopt Presetter in this package,” “compose the
   React and strict presets,” “add a local Presetter override,” “author a shared
   custom preset,” “bootstrap only these workspace packages,” “migrate this
   Presetter setup,” or “find why Presetter stopped generating this config.”
+- If a TypeScript project has no established Presetter owner and the requested
+  work would generate configuration files, ask the user whether Presetter
+  should own them before generating anything. A “no” answer routes to the
+  appropriate generic configuration skill; a “yes” answer starts adoption.
 - Do not use for “enable strict mode in tsconfig” or other generic TypeScript,
   ESLint, test, or package configuration with no Presetter ownership; route to
   the coding skill matching the requested implementation or fix.
@@ -37,22 +46,30 @@ Applicable standards: `universal/write`, `documentation/write`, and
 
 ## Inspect before acting
 
-1. Resolve the repository root, workspace root, and exact target package. Read
+1. Search the entire target repository for `presetter.config.ts`, including
+   nested packages and ignored local files while excluding dependency/vendor
+   trees. If any match exists, keep this skill as the routing gate and inspect
+   every matching config that can affect the target.
+2. If no match exists, decide whether the requested work will generate
+   TypeScript configuration files. When it will and Presetter ownership is not
+   already established by repository evidence, stop and ask the user whether
+   Presetter should be used; do not generate files before that answer.
+3. Resolve the repository root, workspace root, and exact target package. Read
    the package-manager declaration, lockfiles, workspace configuration, root
    and target `package.json` files, scripts, dependencies, package name, and
    relevant sibling packages. Use only the detected manager for installs,
    dependency queries, local binaries, and scripts.
-2. Establish the effective Presetter version from the target's manifest range,
+4. Establish the effective Presetter version from the target's manifest range,
    lockfile resolution or manager-native dependency query, and the local CLI's
    version output. If these disagree or the package is not installed, resolve
    that ambiguity before relying on an API or running bootstrap.
-3. Find every `presetter.config.ts` that can own the target, from workspace root
+5. Find every `presetter.config.ts` that can own the target, from workspace root
    through package-local config. Trace imports and `extends` in order, then map
    `variables`, `scripts`, `assets`, `override`, context-dependent functions,
    and custom preset sources. Read installed Presetter types, package exports,
    README or migration notes, and `--help` for the resolved version instead of
    copying syntax from a different release.
-4. Classify each affected file as checked-in preset source, repository-owned
+6. Classify each affected file as checked-in preset source, repository-owned
    local configuration, or generated output. Use repository policy,
    `git ls-files`, `git check-ignore -v`, status/diff evidence, generation
    headers, and Presetter logs; a familiar filename does not prove ownership.
