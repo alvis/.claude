@@ -7,11 +7,16 @@ Use the current upstream skill at
 every GitHub PR-stack request, regardless of which `coding:pr` route received
 it.
 
-`gh stack` owns supported stack operations: initialize, add a layer, link,
-checkout, view, rebase, sync, push, submit, modify, unstack, merge, and
-navigate. `coding:commit` owns a plain commit within a layer, while
-`coding:pr review` owns review. Do not route a supported stack action through a
-generic jj/git implementation.
+For the jj route, consult the current
+[bookmark documentation](https://docs.jj-vcs.dev/latest/bookmarks/),
+[Git comparison for experts](https://docs.jj-vcs.dev/latest/git-experts/), and
+live `jj git push --help` output before relying on push behavior.
+
+Choose history ownership once. A repository is jj-colocated only when
+`git rev-parse HEAD` equals
+`jj log -r @- --no-graph -T 'commit_id'`; a missing command, failed command, or
+different ID selects the fully supported plain Git route. `coding:pr review`
+owns review on both routes.
 
 ## Contents
 
@@ -136,8 +141,54 @@ gh stack view --json || exit $?
 
 ## Create, extend, and publish
 
-For a new plain-Git stack, initialize explicit bottom-to-top branches and add
-later layers with current extension commands:
+### jj-colocated repositories
+
+All editing, saving, splitting, reordering, and rewriting goes through
+`coding:commit`. Rely on jj's automatic descendant rebase and bookmark movement
+after an owning change is rewritten. Do not subsequently run the gh-stack
+history publication operators over jj-owned history.
+
+Publish all and only affected unmerged bookmarks in one command. Build the
+argument list from the explicit bottom-to-top stack map; never infer it from a
+prefix or select every bookmark implicitly:
+
+```bash
+jj git push --remote "$REMOTE" \
+  --bookmark "$BOTTOM_BOOKMARK" \
+  --bookmark "$NEXT_BOOKMARK" \
+  --bookmark "$TOP_BOOKMARK" || exit $?
+```
+
+jj checks each selected bookmark against its last-seen remote state before
+updating it, providing force-with-lease-like protection against overwriting a
+remote advance; preserve stderr and report partial state on failure. After the
+call, verify every remote head, every PR base, every PR's draft state, and
+GitHub grouping before continuing.
+
+`gh stack link` is a conditional, additive, no local tracking bridge for PR
+creation, grouping, base repair, or membership. It is not routine history
+publication. Its branch arguments are pushed non-force and atomically; that is
+link behavior, not an atomicity claim about the preceding `jj git push`. Use it
+only after the explicit jj push when GitHub stack state is missing or wrong:
+
+A new stack requires at least two branch or PR selectors. To extend an existing
+stack, pass its stack number first and then at least one branch or PR selector.
+
+```bash
+gh stack link --base "$DESTINATION" --remote "$REMOTE" \
+  "$BOTTOM_BOOKMARK" "$NEXT_BOOKMARK" "$TOP_BOOKMARK" || exit $?
+```
+
+The command may create missing PRs, repair bases, and add members; its additive
+membership behavior never removes members. Omit `--open` to preserve draft
+creation. Because it creates
+no local tracking, verify grouping through the paginated Stacks REST projection
+and verify every PR with `gh pr view`.
+
+### Plain Git repositories
+
+Initialize explicit bottom-to-top branches and add later layers with current
+extension commands:
 
 ```bash
 git config rerere.enabled true || exit $?
@@ -149,23 +200,6 @@ Existing branches are adopted by `init`; missing ones are created, and the last
 branch is checked out. Enabling rerere prevents `init` from opening its first-run
 confirmation prompt. `add` must run from the current top. Use `coding:commit`
 for each layer's plain commit rather than `add -m`/`-A`/`-u`.
-
-For branches managed by jj, Sapling, git-town, or another history owner, link
-the externally managed bottom-to-top chain without local gh-stack tracking.
-Creating a new stack requires at least two branch or PR selectors:
-
-```bash
-gh stack link --base "$DESTINATION" --remote "$REMOTE" \
-  "$BOTTOM_BRANCH" "$NEXT_BRANCH" "$TOP_BRANCH" || exit $?
-```
-
-`gh stack link` may push branches, create missing PRs, repair bases, and add
-members; it never removes existing members. When extending an existing stack,
-pass its number first and at least one branch or PR selector to append. Branch
-pushes are non-force and atomic. `--open` marks new and existing PRs ready for
-review, so omit it unless the caller requested ready state. Because `link`
-creates no local tracking, verify its grouping through the paginated Stacks
-REST projection above and verify every PR with `gh pr view`.
 
 For a locally tracked stack, publish with:
 
@@ -183,6 +217,15 @@ then verify every branch, PR base, draft state, and grouping so partial effects
 are reported exactly.
 
 ## Update and synchronize
+
+### jj-colocated repositories
+
+Put every history update through `coding:commit`. Rely on jj's automatic
+descendant rebase and bookmark movement, then republish once through the
+explicit affected-unmerged-bookmark batch defined above. Never follow that
+publication with gh-stack's rebase, sync, push, or submit operators.
+
+### Plain Git repositories
 
 Run the clean-worktree guard from [List or check out](#list-or-check-out), check
 out the earliest unmerged owning layer, put the plain commit there through
@@ -214,6 +257,23 @@ push warning; verify the branch graph, remote head, PR state, and grouping
 rather than accepting exit zero as success.
 
 ## Restructure or remove grouping
+
+### jj-colocated regrouping
+
+Record the paginated Stacks REST projection, then remove only the remote
+grouping with an explicit target:
+
+```bash
+gh stack unstack "$STACK_NUMBER" || exit $?
+```
+
+Stop and verify the intended remote unstack through the paginated Stacks REST
+projection and `gh pr view`. Only after that verification succeeds, use the
+conditional additive `gh stack link` bridge from the jj route to recreate or
+repair grouping, bases, and membership. Do not initialize local gh-stack
+tracking or submit jj-owned history.
+
+### Plain Git regrouping
 
 For a human-operated restructure, `gh stack modify` can drop, fold, insert,
 reorder, and rename layers; afterward the agent runs

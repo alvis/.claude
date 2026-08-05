@@ -33,7 +33,7 @@ owns deterministic zone calculation and the authoring gates below.
 - Ownership is singular: `coding:commit` owns direct history mutations;
   its `--reorder` workflow owns reshaping/reparenting when a root cause belongs
   in a lower PR outside the current PR; the core publication phase below owns
-  push, restack, and PR-base mechanics. The parent alone accepts
+  batch push, restack, and PR-base mechanics. The parent alone accepts
   fixer edits and performs commit, push, and restack mutations; the poller may
   dispatch exactly one scoped fixer when the red branch requires it.
 - `--skip-local-test` skips only local command execution. It never skips CI
@@ -61,6 +61,7 @@ owns deterministic zone calculation and the authoring gates below.
 |---|---|
 | `<commit-ref>` | Publish a resolvable jj change ID/revset/bookmark or git branch/SHA and its selected stack. Any jj revset (`@`, `@-`, a change id) or git ref (`HEAD`, `HEAD~1`, a SHA) also selects the commit to author from; behavior is deterministic given the ref. |
 | `--branch-prefix <name>` | Override the derived stack bookmark prefix. A prefix other than a resolved stream's `<type>/<work-id>` publishes a branch that will not resolve back to its work state — expected for a branch predating that convention, deliberate otherwise. |
+| `--remote <name>` | Select the named push remote explicitly; remote names are treated as values even when they begin with `-`. |
 | `--skip-local-test` | Skip only the local tester dispatch and commands. |
 | `--no-review` | Skip the post-push `coding:pr review` convergence loop. It never skips local checks, publication, or hosted CI. |
 | `--publish-only` | Stop after the verified core publication phase so an existing review or repair caller can continue its convergence loop. |
@@ -91,6 +92,46 @@ write PM-owned pointers or overview files.
 ## Workflow
 
 ### 1. Resolve and plan
+
+#### Bind the push remote
+
+Bind `REMOTE` before any publication helper. Use the caller-selected named
+remote when supplied, then the current branch's configured push remote, then
+`remote.pushDefault`. With none configured, accept only the sole remote whose
+push URL resolves through GitHub. Every Git remote lookup uses `--` before the
+name so a remote beginning with `-` remains data, not an option:
+
+```bash
+REMOTE=${CALLER_REMOTE:-}
+CURRENT_BRANCH=$(git branch --show-current) || exit $?
+if [ -z "$REMOTE" ] && [ -n "$CURRENT_BRANCH" ]; then
+  REMOTE=$(git config --get -- "branch.$CURRENT_BRANCH.pushRemote") || REMOTE=
+fi
+if [ -z "$REMOTE" ]; then
+  REMOTE=$(git config --get -- remote.pushDefault) || REMOTE=
+fi
+if [ -n "$REMOTE" ]; then
+  git remote get-url --push -- "$REMOTE" >/dev/null || exit $?
+else
+  GITHUB_REMOTES=()
+  while IFS= read -r CANDIDATE; do
+    PUSH_URL=$(git remote get-url --push -- "$CANDIDATE") || exit $?
+    if gh repo view "$PUSH_URL" --json nameWithOwner >/dev/null 2>&1; then
+      GITHUB_REMOTES[${#GITHUB_REMOTES[@]}]=$CANDIDATE
+    fi
+  done < <(git remote || exit $?)
+  [ "${#GITHUB_REMOTES[@]}" -eq 1 ] || {
+    printf 'remote resolution requires one GitHub push remote; found %s\n' \
+      "${#GITHUB_REMOTES[@]}" >&2
+    exit 1
+  }
+  REMOTE=${GITHUB_REMOTES[0]}
+fi
+printf 'REMOTE=%s\n' "$REMOTE"
+```
+
+Record `REMOTE` in the publication plan. On zero or ambiguous GitHub candidates,
+preserve the candidate evidence and stop rather than selecting one.
 
 Inspect the selected tool's working state — `jj status`, `jj log`, and
 `jj bookmark list`, or `git status --short`, `git log --oneline`, and
@@ -246,16 +287,16 @@ discovery and expected-check evidence but do not dispatch the tester.
 
 ### 3. Publish bottom-up
 
-Require a saved, clean, linear chain to `main@origin`, standalone green changes,
-conventional descriptions per
+Require a saved, clean, linear chain to the selected `ROOT_BASE`/`DESTINATION`
+at authoritative `$REMOTE`, standalone green changes, conventional descriptions per
 [conventional-commits.md](../../commit/references/conventional-commits.md), no
-selected change merged on origin, and a derived or supplied branch prefix. If
+selected change already merged at `$REMOTE`, and a derived or supplied branch prefix. If
 needed, invoke `coding:commit --reorder`; for merged history follow
 [workflow-correct-merged.md](../../commit/references/workflow-correct-merged.md).
 
 Bottom-up, preserve a change's existing bookmark when the caller selected that
-branch, it heads an open PR, or the stack already has explicit bookmarks: push
-and update that exact head. A bare `<branch-prefix>` head blocks its own `NN-`
+branch, it heads an open PR, or the stack already has explicit bookmarks:
+include that exact head in publication. A bare `<branch-prefix>` head blocks its own `NN-`
 children, so a stream growing into a stack renames it — local ref and forge
 alike, since either blocks the child — before pushing the rest, per Essential's
 naming contract. Only for an unbookmarked new change/stack: a lone change
@@ -288,22 +329,61 @@ stale-label cleanup and post-publication verification. Split each exact `title\n
 into that head's `TITLE` and `BODY`; malformed output aborts
 the whole selection before any ref or remote mutation.
 
-On the jj path, point the bookmark at the change and push it:
+After every per-head `PR_BASE` is resolved, bind the batch root to the first
+selected affected head's exact base:
 
 ```bash
-jj bookmark set "$BOOKMARK" --revision "$CHANGE_ID"
-jj git push --bookmark "$BOOKMARK" --allow-new
+ROOT_BASE=$PR_BASE_01
+printf 'ROOT_BASE=%s\n' "$ROOT_BASE"
 ```
 
-On the git path, the bookmark is a branch and the push carries the same lease:
+For a suffix restack, `PR_BASE_01` is the unselected predecessor, not the
+repository destination. Record `ROOT_BASE` with the selected head/base map and
+keep it unchanged for a retry only while that selection and map remain
+unchanged. Any discovery restart or base-map change recomputes it before the
+next helper call.
+
+On the jj path, all history edits and existing-bookmark movement belong to
+`coding:commit`; rely on jj's automatic descendant rebase and bookmark movement.
+Only during initial publication, establish the identity of an unbookmarked
+change before the batch push:
+
+```bash
+jj bookmark create "$BOOKMARK" --revision "$CHANGE_ID"
+```
+
+Never run that command for an update or to move an existing bookmark. Collect
+every affected unmerged bookmark and its exact expected local Git SHA for the
+single batch publication below.
+
+On the git path, prepare the local branch; the helper owns its only push:
 
 ```bash
 git branch --force "$BOOKMARK" "$CHANGE_ID"
-git push --force-with-lease origin "$BOOKMARK"
 ```
 
-Either way the push is leased, never bare `--force`, so a remote that advanced
-underneath the rewrite is rejected rather than overwritten.
+The helper's Git push is leased, never bare `--force`. Its jj batch push checks
+each bookmark against its last-seen remote state, giving force-with-lease-like
+protection against overwriting a remote advance.
+
+Before creating or editing PRs, publish the complete affected selection through
+the helper in one call:
+
+```bash
+bash "${CODING_PR_SKILL_DIR}/scripts/restack.sh" \
+  --remote "$REMOTE" \
+  --base "$ROOT_BASE" \
+  "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
+  "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"
+```
+
+On jj this produces one `jj git push --remote "$REMOTE"` with repeated explicit
+`--bookmark` selectors for all and only affected unmerged heads; it never uses
+`--all`. On plain Git the helper retains per-branch `--force-with-lease`
+publication. Do not follow a jj batch with gh-stack rebase, sync, push, or
+submit. Preserve stderr and the helper's `restacked` and `errors` arrays so a
+failure reports verified partial state rather than implying an all-or-nothing
+result.
 When the head has no open PR, create a draft with the selected label:
 
 ```bash
@@ -345,15 +425,19 @@ known. Before a push or base edit, capture an existing PR's `headRefOid` and
 no-op publication retry preserves evidence already bound to that exact review
 surface.
 
-Capture each PR number, URL, head, base, bookmark, and change ID. After each
-push, record `expected_head_oid` from the pushed bookmark and verify it against
+Capture each PR number, URL, head, base, bookmark, and change ID. After the
+batch push, record `expected_head_oid` from each pushed bookmark and verify it
+against
 `gh pr view "$PR" --json headRefOid --jq .headRefOid`; a mismatch is not the
 published result and must be resolved before monitoring. After any accepted
-repair/history rewrite with downstream bookmarks, synchronize the whole stack
-before monitoring again:
+repair/history rewrite with downstream bookmarks, synchronize the affected
+stack before monitoring again. Reuse `ROOT_BASE` only when the selected heads
+and their base map are unchanged; otherwise restart discovery and recompute it
+first:
 
 ```bash
 bash "${CODING_PR_SKILL_DIR}/scripts/restack.sh" \
+  --remote "$REMOTE" \
   --base "$ROOT_BASE" \
   "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
   "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"
@@ -375,7 +459,7 @@ only where the head or base OID changed.
 |---|---|
 | `gh pr create` authentication failure | Run `gh auth status`; report a user/external blocker. |
 | Bookmark or branch conflict | Confirm the intended change, then rerun the selected action against that exact head. |
-| Push rejected because remote advanced | `jj git fetch` (git: `git fetch origin`), rebase through `coding:commit`, then retry. |
+| Push rejected because remote advanced | `jj git fetch --remote "$REMOTE"` (git: `git fetch -- "$REMOTE"`), rebase through `coding:commit`, then retry. |
 | Conventional title invalid | Reword through `coding:commit`, then restart that iteration. |
 | Existing PR has wrong base | `gh pr edit "$PR" --base "$PR_BASE"`, then verify. |
 | Restack conflict | Resolve through `coding:commit`, run integrity checks, then republish bottom-up. |
@@ -623,7 +707,8 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
   byte-identical `title\n\nbody` without timestamps or random IDs.
 - Local checks passed with every command/result recorded, or command execution
   was explicitly skipped; hosted-only gaps and expected checks are named.
-- Every head was pushed under a lease — `jj git push` on the jj path,
+- Every head was pushed under a lease — one explicit affected-bookmark
+  `jj git push` on the jj path,
   `git push --force-with-lease` on the git path; every PR is draft, uses the
   authored title/body, and has the intended stack base.
 - Review convergence passed on each final head with no unresolved P0/P1/P2

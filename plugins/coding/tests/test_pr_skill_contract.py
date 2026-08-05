@@ -37,6 +37,25 @@ def test_new_stack_authors_against_existing_commit_oids() -> None:
     assert '--base "$PR_BASE"' in skill
 
 
+def test_batch_root_base_is_bound_after_base_resolution_before_both_pushes() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    normalized = " ".join(workflow.split())
+
+    base_resolution = workflow.index("If the immediate predecessor is selected")
+    root_binding = workflow.index("ROOT_BASE=$PR_BASE_01")
+    restacks = [
+        index
+        for index in range(len(workflow))
+        if workflow.startswith("scripts/restack.sh", index)
+    ]
+    assert len(restacks) == 2
+    assert base_resolution < root_binding < restacks[0] < restacks[1]
+    assert "first selected affected head's exact base" in normalized
+    assert "For a suffix restack, `PR_BASE_01` is the unselected predecessor" in normalized
+    assert "keep it unchanged for a retry only while" in normalized
+    assert "discovery restart or base-map change recomputes it" in normalized
+
+
 def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
     skill = (WRITE_PR / "references" / "create-update.md").read_text()
     template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
@@ -220,6 +239,36 @@ def test_restack_requires_explicit_root_base_and_reports_partial_progress() -> N
     assert post_verify.index("restacked[") < post_verify.index('gh pr edit "$bookmark"')
 
 
+def test_create_update_binds_remote_before_publication_and_reuses_it() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    normalized = " ".join(workflow.split())
+
+    binding = workflow.index("REMOTE=${CALLER_REMOTE:-}")
+    first_restack = workflow.index("scripts/restack.sh")
+    assert binding < first_restack
+    assert 'git remote get-url --push -- "$REMOTE"' in workflow
+    assert 'git remote get-url --push -- "$CANDIDATE"' in workflow
+    assert "sole remote whose push URL resolves through GitHub" in normalized
+    assert "Record `REMOTE`" in workflow
+    assert 'jj git fetch --remote "$REMOTE"' in workflow
+    assert 'git fetch -- "$REMOTE"' in workflow
+
+
+def test_stack_publication_and_inspection_have_no_implicit_origin() -> None:
+    create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+    stacked = (WRITE_PR / "references" / "stacked-prs.md").read_text()
+
+    for reference in (create_update, stacked):
+        assert "main@origin" not in reference
+        assert "@origin" not in reference
+        assert "origin/" not in reference
+    assert "selected `ROOT_BASE`/`DESTINATION`" in create_update
+    assert "at authoritative `$REMOTE`" in create_update
+    assert "create-update.md#bind-the-push-remote" in stacked
+    assert '"$REMOTE"/<destination>' in stacked
+    assert "<parent>@$REMOTE" in stacked
+
+
 def test_rewrites_route_unpublished_stacks_to_create() -> None:
     references = [
         WRITE_PR.parent / "commit" / "references" / "workflow-edit.md",
@@ -336,8 +385,30 @@ def test_github_stack_reference_tracks_current_upstream_contract() -> None:
 
     assert "github.com/github/gh-stack/blob/main/skills/gh-stack/SKILL.md" in github_stacks
     assert "https://gh.io/stacks" in github_stacks
+    assert "https://docs.jj-vcs.dev/latest/bookmarks/" in github_stacks
+    assert "https://docs.jj-vcs.dev/latest/git-experts/" in github_stacks
+    assert "`jj git push --help`" in github_stacks
     assert "pinned" not in github_stacks.lower()
     assert "14fc42ed9b6c376a53b2f999f138d3bd26dac546" not in github_stacks
+
+
+def test_github_stack_update_has_conditional_history_routes() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    update = github_stacks.split("## Update and synchronize", 1)[1].split(
+        "## Restructure or remove grouping", 1
+    )[0]
+    jj_route = update.split("### jj-colocated repositories", 1)[1].split(
+        "### Plain Git repositories", 1
+    )[0]
+    git_route = update.split("### Plain Git repositories", 1)[1]
+
+    assert "`coding:commit`" in jj_route
+    assert "automatic" in jj_route
+    assert "affected-unmerged-bookmark batch" in jj_route
+    for forbidden in ("gh stack rebase", "gh stack sync", "gh stack push", "gh stack submit"):
+        assert forbidden not in jj_route
+    for command in ("gh stack rebase", "gh stack sync", "gh stack push"):
+        assert command in git_route
 
 
 def test_github_stack_actions_attempt_the_command_before_optional_installation() -> None:
@@ -363,6 +434,14 @@ def test_pr_router_loads_github_stack_contract_for_every_stack_request() -> None
     assert "references/github-stacks.md" in router
     assert "For every request to create, inspect, update, restructure, publish" in router
     assert "GitHub PR stack" in router
+
+
+def test_pr_router_usage_exposes_remote_and_merge_destination_inputs() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
+
+    assert "/coding:pr create [<commit-ref>] [--branch-prefix <name>] [--remote <name>]" in router
+    assert "/coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--remote <name>]" in router
+    assert "[--method=rebase|squash|merge] [--remote <name>] [--destination <branch>] [--force]" in router
 
 
 def test_generic_stack_contract_delegates_github_listing_without_restatement() -> None:
@@ -477,7 +556,7 @@ def test_github_stack_audit_contract_matches_current_mutation_semantics() -> Non
     github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
     normalized = " ".join(github_stacks.split())
 
-    assert "Branch pushes are non-force and atomic" in normalized
+    assert "It is non-atomic: a later branch push or PR update can fail" in normalized
     assert "pushes all active branches atomically" in normalized
     assert "`push` and `submit` are non-atomic" in normalized
     assert 'gh stack merge "$STACK_OR_PR_NUMBER" --yes \\' in github_stacks
@@ -566,6 +645,159 @@ def test_github_stack_snippets_stop_before_consuming_failed_commands() -> None:
     branch_verification = checkout.index("git branch --show-current || exit $?")
     stack_verification = checkout.index("gh stack view --json || exit $?")
     assert checkout_command < branch_verification < stack_verification
+
+
+def test_github_stack_jj_route_uses_functional_colocation_proof() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    normalized = " ".join(github_stacks.split())
+
+    assert "`git rev-parse HEAD`" in normalized
+    assert "`jj log -r @- --no-graph -T 'commit_id'`" in normalized
+    assert "equals" in normalized
+    assert "presence of `.jj`" not in normalized
+
+
+def test_github_stack_jj_route_leaves_history_mutation_to_commit() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    jj_route = github_stacks.split("### jj-colocated repositories", 1)[1].split(
+        "### Plain Git repositories", 1
+    )[0]
+    normalized = " ".join(jj_route.split())
+
+    assert "`coding:commit`" in normalized
+    assert "automatic descendant rebase" in normalized
+    assert "bookmark movement" in normalized
+    for forbidden in (
+        "gh stack rebase",
+        "gh stack sync",
+        "gh stack push",
+        "gh stack submit",
+    ):
+        assert forbidden not in jj_route
+
+
+def test_github_stack_jj_publication_is_one_explicit_remote_push() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    jj_route = github_stacks.split("### jj-colocated repositories", 1)[1].split(
+        "### Plain Git repositories", 1
+    )[0]
+    assert jj_route.count('jj git push --remote "$REMOTE"') == 1
+    assert jj_route.count("--bookmark") >= 2
+    assert "--remote" in jj_route
+    assert "--all" not in jj_route
+    jj_publication = jj_route.split("Publish all and only", 1)[1].split(
+        "`gh stack link`", 1
+    )[0]
+    assert "atomic" not in jj_publication.lower()
+
+
+def test_github_stack_jj_publication_verifies_every_remote_surface() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    jj_route = github_stacks.split("### jj-colocated repositories", 1)[1].split(
+        "### Plain Git repositories", 1
+    )[0]
+    normalized = " ".join(jj_route.split())
+
+    assert "every remote head" in normalized
+    assert "every PR base" in normalized
+    assert "grouping" in normalized
+    assert "preserve stderr" in normalized
+    assert "partial state" in normalized
+
+
+def test_github_stack_link_is_an_additive_bridge_for_jj() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    jj_route = github_stacks.split("### jj-colocated repositories", 1)[1].split(
+        "### Plain Git repositories", 1
+    )[0]
+    normalized = " ".join(jj_route.split())
+
+    assert "conditional" in normalized
+    assert "additive" in normalized
+    assert "no local tracking" in normalized
+    assert "creation, grouping, base repair, or membership" in normalized
+    assert "not routine history publication" in normalized
+    assert "new stack requires at least two branch or PR selectors" in normalized
+    assert "pass its stack number first" in normalized
+    assert "at least one branch or PR selector" in normalized
+    assert "never removes members" in normalized
+
+
+def test_github_stack_plain_git_keeps_native_history_operators() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    git_route = github_stacks.split("### Plain Git repositories", 1)[1]
+
+    for command in (
+        "gh stack init",
+        "gh stack add",
+        "gh stack rebase",
+        "gh stack push",
+        "gh stack submit",
+        "gh stack sync",
+    ):
+        assert command in git_route
+
+
+def test_jj_merge_publishes_only_remaining_affected_bookmarks_once() -> None:
+    merge = (WRITE_PR / "references" / "merge.md").read_text()
+    normalized = " ".join(merge.split())
+
+    assert merge.count('jj git push --remote "$REMOTE"') == 1
+    assert merge.count('jj rebase -s "$child_root"') == 1
+    assert 'jj rebase -s "$child_root" --onto <new-parent-ref>' in merge
+    assert 'jj rebase -s "$child_root" -d' not in merge
+    push = merge.split('jj git push --remote "$REMOTE"', 1)[1].split("```", 1)[0]
+    assert push.count("--bookmark") >= 2
+    assert "--all" not in merge
+    assert "jj bookmark set" not in merge
+    assert "automatically rebases every descendant" in normalized
+    assert "moves their bookmarks" in normalized
+    assert "all and only remaining affected bookmarks" in normalized
+    assert "jj does not iterate links" in normalized.lower()
+
+
+def test_merge_uses_functional_jj_colocation_proof() -> None:
+    merge = (WRITE_PR / "references" / "merge.md").read_text()
+
+    assert "jj root" not in merge
+    assert "command -v jj" in merge
+    assert "git rev-parse HEAD" in merge
+    assert "jj log -r @- --no-graph -T 'commit_id'" in merge
+    assert '[ "$GIT_HEAD" = "$JJ_HEAD" ]' in merge
+    assert "fully supported Git route" in merge
+    assert "git status --short" in merge
+    assert "git worktree list" in merge
+
+
+def test_merge_binds_remote_and_destination_before_inspection() -> None:
+    merge = (WRITE_PR / "references" / "merge.md").read_text()
+
+    remote_gate = merge.index("create-update.md#bind-the-push-remote")
+    destination_binding = merge.index("DESTINATION=${CALLER_DESTINATION:-}")
+    first_inspection = merge.index('jj log -r "$DESTINATION@$REMOTE..@"')
+    assert remote_gate < first_inspection
+    assert destination_binding < first_inspection
+    assert "sole owner of remote" in merge
+    assert "GITHUB_REMOTES" not in merge
+    assert "git remote get-url" not in merge
+    assert 'jj git fetch --remote "$REMOTE"' in merge
+    assert 'git fetch -- "$REMOTE"' in merge
+    for hard_coded in (
+        "main@origin",
+        "origin/main",
+        "git fetch origin",
+        "git push --force-with-lease origin",
+    ):
+        assert hard_coded not in merge
+
+
+def test_stack_contract_preserves_merge_induced_topology_ownership() -> None:
+    stacked = (WRITE_PR / "references" / "stacked-prs.md").read_text()
+    normalized = " ".join(stacked.split())
+
+    assert "edit- and fix-induced rewrites" in normalized
+    assert "Merge-induced descendant topology changes remain owned by" in normalized
+    assert "`coding:pr merge`" in normalized
 
 
 def test_review_resolves_canonical_coordinates_before_api_calls() -> None:
