@@ -17,19 +17,19 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 - DO NOT use camelCase or underscores in branch names instead of lowercase-kebab-case [`GIT-BRN-01`]
 - DO NOT use branch scopes that don't follow the commit scope convention, except an engineering stream's branch — shape owned by `naming.md` in the essential plugin's `references/` — whose middle segment is the work ID, not a package scope [`GIT-BRN-02`]
 - DO NOT create PRs as ready-for-review without starting as draft [`GIT-PR-01`]
-- DO NOT omit the required Summary or Verification sections from PR descriptions [`GIT-PR-02`]
+- DO NOT publish a PR body that violates the canonical PR template [`GIT-PR-02`]
 - DO NOT use PR titles that don't follow the commit message format [`GIT-PR-03`]
-- DO NOT submit a PR outside the green zone without a Risk and Test plan section [`GIT-PR-SIZE-02`]
-- DO NOT submit a red-zone PR without an isolation justification and reviewer-time estimate [`GIT-PR-SIZE-03`]
-- DO NOT submit a black-zone PR (>60 files OR >2000 LOC) without surfacing the rejection template from `write.md` [`GIT-PR-SIZE-04`]
-- DO NOT open a PR without declaring one of the 12 PR categories in title prefix or body header [`GIT-PR-TYPE-01`]
+- DO NOT submit a PR outside the green zone without the evidence required by the canonical PR template [`GIT-PR-SIZE-02`]
+- DO NOT submit a red-zone PR without a concise indivisibility rationale [`GIT-PR-SIZE-03`]
+- DO NOT submit a black-zone PR (>60 files OR >2000 LOC) without splitting it or recording a justified threshold override [`GIT-PR-SIZE-04`]
+- DO NOT publish a PR without exactly one existing GitHub archetype label [`GIT-PR-TYPE-01`]
 - DO NOT mix code spec or scaffolding with implementation in the same PR [`GIT-PR-TYPE-02`]
 - DO NOT mix database or config migrations with logic changes in the same PR [`GIT-PR-TYPE-03`]
 - DO NOT mix mechanical refactors (renames, file moves) with behaviour changes [`GIT-PR-TYPE-04`]
 - DO NOT mix generated files with hand-written changes without a clear marker or separation [`GIT-PR-TYPE-05`]
-- DO NOT submit a migration PR without a rollback section [`GIT-PR-TYPE-03`]
+- DO NOT submit a migration PR without the canonical template's rollback evidence [`GIT-PR-TYPE-03`]
 - DO NOT submit a feature-flag PR without naming the flag and stating its default state [`GIT-PR-STACK-04`]
-- DO NOT submit a UI PR without before/after screenshots in the description [`GIT-PR-TYPE-01`]
+- DO NOT submit a UI PR without the canonical template's UI evidence [`GIT-PR-TYPE-01`]
 - DO NOT use stack bookmarks that don't follow `<feature-slug>/NN-<scope>`, `<scope>` being any short kebab-case summary [`GIT-PR-STACK-01`]
 - DO NOT fix issues by patching a later PR when the bug originates in an earlier unmerged change [`GIT-PR-STACK-02`]
 - DO NOT rewrite public history after a stacked PR merges; use a corrective PR instead [`GIT-PR-STACK-03`]
@@ -51,15 +51,15 @@ If a violation is detected, load the matching rule guide at `./rules/<rule-id>.m
 | `GIT-BRN-01` | Non-kebab-case branch name | `feat/addFilter`; `fix/user_profile` |
 | `GIT-BRN-02` | Branch scope mismatch | `feat/client-web-talent/add-filter` (uses directory path, not package name) |
 | `GIT-PR-01` | PR not started as draft | Creating PR directly as ready-for-review |
-| `GIT-PR-02` | Missing required PR sections | PR without Summary or Verification |
+| `GIT-PR-02` | Canonical PR template violation | PR body missing template-required change evidence |
 | `GIT-PR-03` | PR title format incorrect | `Add new feature`; `Fix: bug in auth` |
 | `GIT-PR-SIZE-01` | Green-zone definition not respected | (informational — establishes ≤15 files OR ≤500 LOC baseline) |
-| `GIT-PR-SIZE-02` | Yellow-zone PR missing Risk or Test plan | 22 files / 900 LOC PR with no Risk section |
-| `GIT-PR-SIZE-03` | Red-zone PR without justification or reviewer-time estimate | 45 files / 1500 LOC PR with no `## Why this size` block |
-| `GIT-PR-SIZE-04` | Black-zone PR submitted without rejection template | 80 files / 3500 LOC PR opened ready-for-review |
-| `GIT-PR-TYPE-01` | Missing PR category declaration | `feat(api): add export` with no category prefix or body header among the 12 archetypes |
+| `GIT-PR-SIZE-02` | Yellow-zone PR missing template-required evidence | 22 files / 900 LOC PR lacking the canonical template's risk evidence |
+| `GIT-PR-SIZE-03` | Red-zone PR without indivisibility rationale | 45 files / 1500 LOC PR with no specific reason it cannot be split |
+| `GIT-PR-SIZE-04` | Unsplit black-zone PR without an override | 80 files / 3500 LOC PR with no justified project threshold override |
+| `GIT-PR-TYPE-01` | Missing or ambiguous archetype label | PR with no archetype label, multiple archetype labels, or a label absent from the repository |
 | `GIT-PR-TYPE-02` | Spec or scaffolding mixed with implementation | One PR adds `domain/order.ts` types and the `processOrder()` impl |
-| `GIT-PR-TYPE-03` | Migration mixed with logic, or migration PR missing rollback | Prisma migration + new business rule in same PR; migration PR with no `## Rollback` |
+| `GIT-PR-TYPE-03` | Migration mixed with logic, or missing template evidence | Prisma migration + new business rule in same PR; migration PR lacking rollback evidence |
 | `GIT-PR-TYPE-04` | Mechanical refactor mixed with behaviour change | Rename `User` -> `Account` plus a new `suspend()` method in same PR |
 | `GIT-PR-TYPE-05` | Generated files mixed with hand-written code without marker | `pnpm-lock.yaml` + lockfile-shaped diffs alongside hand edits, no separator |
 | `GIT-PR-STACK-01` | Bookmark naming wrong | `auth-rewrite-spec`; `01_spec`; `feature/auth/spec` |

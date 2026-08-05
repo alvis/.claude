@@ -6,36 +6,24 @@ warning
 
 ## Intent
 
-A black-zone PR changes **> 60 files** OR **> 2000 LOC**. The lint flags black-zone PRs and surfaces the rejection template (`write.md` -> Black-Zone Rejection Template). The flag is **advisory**, not auto-blocking — escape hatches matter for genuine atomic changes — but the default expectation is that the PR is split before review.
+A black-zone PR changes **> 60 files** OR **> 2000 LOC**. The lint reports the concise canonical finding below and publication blocks until the PR is split or a justified project threshold override moves it below black.
 
 ## Fix
 
-When a PR enters the black zone, the author either splits it or paste-replies to the flag with explicit justification:
+Report this finding once; do not auto-post a canned PR comment:
 
-```markdown
-## ⛔ PR Size — Black Zone
-
-This PR exceeds **60 files** or **2000 LOC** (zone threshold).
-
-Black-zone PRs are flagged because reviewer attention degrades sharply past this size.
-Please split before requesting review:
-
-- [ ] Extract mechanical refactors into their own PR (`GIT-PR-TYPE-04`)
-- [ ] Extract migrations into their own PR with rollback (`GIT-PR-TYPE-03`)
-- [ ] Extract generated files into their own PR or mark them clearly (`GIT-PR-TYPE-05`)
-- [ ] Land code spec / scaffolding first (`GIT-PR-TYPE-02`)
-- [ ] Stack remaining behaviour changes per `GIT-PR-STACK-*`
+```text
+Black-zone PR: split the review surface or record a justified project threshold override.
 ```
 
-If splitting is genuinely impossible (e.g. a single atomic migration), the author writes `## Why this size` justifying the override and applies the project-local threshold escape:
+If splitting is genuinely impossible, apply the project-local threshold escape;
+the canonical PR template owns the indivisibility rationale in the body.
 
 ```toml
 # standard-overrides.toml
 [git.pr.thresholds]
 files_red   = 80
 loc_red     = 2800
-files_black = 80
-loc_black   = 2800
 ```
 
 ### Why this matters

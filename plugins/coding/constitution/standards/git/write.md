@@ -11,7 +11,7 @@
 - Body: wrap at 72 characters, keep short but descriptive
 - Footer: `Closes #<issue-number>, #<issue-number>...` (use commas, not `Fixes`)
 - Branch format: `<type>/(<scope>)/<topic>` in lowercase-kebab-case
-- Always start PRs as drafts; require Summary and Verification sections
+- Always start PRs as drafts; author bodies through the canonical PR template
 
 ## Core Rules Summary
 
@@ -33,7 +33,7 @@
 ### Pull Request (GIT-PR)
 
 - **GIT-PR-01**: Always start with a draft PR and update it as the code evolves.
-- **GIT-PR-02**: Require Summary and Verification sections; other sections are optional.
+- **GIT-PR-02**: Follow the canonical PR template for body content and conditional evidence.
 - **GIT-PR-03**: PR title follows the same format as commit messages.
 
 ## Patterns
@@ -131,20 +131,10 @@ Always start with a draft PR and update it as the code evolves.
 
 - `feat(api): add support for user analytics export`
 
-**PR Description**:
-
-- Stay clear and professional
-- Keep each section focused and concise
-- Link to code, tickets, specs, or discussions
-- Explain non-obvious decisions or technical details
-- Make it easy for reviewers and future maintainers to follow and understand
-- Use paragraphs for longer explanations in general, but use point form if points are short, related and best expressed as a list (e.g., checklist, breaking changes, etc.)
-- Require Summary and Verification sections; other sections are optional
-
 Use the canonical bundled template at
 [`../../../skills/pr/references/templates/pr.md`](../../../skills/pr/references/templates/pr.md).
-It owns the structure and rendering guidance; this standard owns the required
-sections and review policy.
+It is the sole owner of PR-body structure, conditional sections, rendering
+guidance, and body examples. This standard owns review and publication policy.
 
 ### PR Review Checklist
 
@@ -174,51 +164,28 @@ When reviewing PRs:
 - [ ] **Documentation**: Is the code self-documenting or commented?
 - [ ] **Edge Cases**: Are edge cases handled?
 
-### PR Size Guidelines
-
-- **Small**: < 100 lines changed (quick review)
-- **Medium**: 100-500 lines changed (normal review)
-- **Large**: 500-1000 lines changed (needs justification)
-- **Too Large**: > 1000 lines (split into multiple PRs)
-
 ### PR Size Zones
 
 A precise zone policy supersedes the loose Small/Medium/Large bands above when an enforced lint or stacked-PR workflow is configured. A PR's zone is the **stricter** of files-changed and net-LOC.
 
-| Zone   | Files Changed | Net LOC | Required Sections                          | Reviewer Expectation              |
-|--------|---------------|---------|--------------------------------------------|------------------------------------|
-| Green  | ≤ 15          | ≤ 500   | Summary, Verification                      | Quick read; default-mergeable      |
-| Yellow | ≤ 30          | ≤ 1200  | Summary, Verification, Risk, Test plan     | One reviewer; ~30 min budget       |
-| Red    | ≤ 60          | ≤ 2000  | All of yellow + `## Why this size` (isolation justification) + reviewer-time estimate | Two reviewers; explicit time block |
-| Black  | > 60          | > 2000  | Reject by default; flag using template     | Author splits before review        |
+| Zone   | Files Changed | Net LOC | Reviewer Expectation              |
+|--------|---------------|---------|------------------------------------|
+| Green  | ≤ 15          | ≤ 500   | Quick read; default-mergeable      |
+| Yellow | ≤ 30          | ≤ 1200  | One reviewer                       |
+| Red    | ≤ 60          | ≤ 2000  | Two reviewers; indivisibility rationale |
+| Black  | > 60          | > 2000  | Split by default                   |
 
-Black-zone PRs are flag-only — the lint surfaces the rejection template but does not auto-block merge so escape hatches stay possible. Override the thresholds per-project via a `[git.pr.thresholds]` block in standard-overrides config (`files_green`, `loc_green`, `files_yellow`, `loc_yellow`, `files_red`, `loc_red`).
-
-### Black-Zone Rejection Template
-
-Reviewers paste this on any PR that crosses into the black zone. It is a flag, not an automatic block:
-
-```markdown
-## ⛔ PR Size — Black Zone
-
-This PR exceeds **60 files** or **2000 LOC** (zone threshold).
-
-Black-zone PRs are flagged because reviewer attention degrades sharply past this size.
-Please split before requesting review:
-
-- [ ] Extract mechanical refactors (renames, moves) into their own PR (`GIT-PR-TYPE-04`)
-- [ ] Extract migrations into their own PR with rollback (`GIT-PR-TYPE-03`)
-- [ ] Extract generated files into their own PR or mark them clearly (`GIT-PR-TYPE-05`)
-- [ ] Land code spec / scaffolding first (`GIT-PR-TYPE-02`)
-- [ ] Stack remaining behaviour changes per `GIT-PR-STACK-*`
-
-If a split is genuinely impossible (e.g. atomic migration), justify under `## Why this size`
-and override locally via `[git.pr.thresholds]` in standard-overrides.
-```
+Black-zone PRs produce the single concise finding defined by
+`GIT-PR-SIZE-04`; tooling does not auto-post canned comments. Override the
+thresholds per-project via a `[git.pr.thresholds]` block in standard-overrides
+config (`files_green`, `loc_green`, `files_yellow`, `loc_yellow`, `files_red`,
+`loc_red`).
 
 ### PR Categories (the 12 Archetypes)
 
-Every PR declares exactly one category in its title prefix or body header (see `GIT-PR-TYPE-01`). Categories drive expected size, required sections, and review depth.
+Every PR carries exactly one existing GitHub label named for an archetype (see
+`GIT-PR-TYPE-01`). The label is absent from the title and body. Publication
+blocks when the selected label does not exist and never creates labels.
 
 - **rfc** — A proposal-only PR adding a design document or decision record. No production code. Use when a change needs alignment before implementation. Lands as the top of a stack so reviewers can comment on intent before reviewing scaffolding.
 - **code-spec** — Types, interfaces, schema definitions, and JSDoc-only contracts with no runtime behaviour. Use to lock the shape of an API or domain model before any implementation. Lands first in the stack so downstream PRs reference settled types.
@@ -226,9 +193,9 @@ Every PR declares exactly one category in its title prefix or body header (see `
 - **domain-model** — Pure domain entities, value objects, and invariants with their unit tests. Use when introducing or reshaping the ubiquitous-language layer. No I/O, no transport, no framework code.
 - **implementation** — Business logic that fulfils a previously-landed code-spec or domain-model. Use for the bulk of feature work. Should not introduce new public types — those land in code-spec first.
 - **integration** — Wiring between modules, adapters, dependency-injection bindings, and end-to-end tests. Use when connecting already-implemented pieces; expect cross-cutting touch but isolated semantics.
-- **feature-flag** — Adds, flips, or removes a feature flag. Use to introduce reversibility before a behaviour change lands, and again to clean up the flag once a rollout settles. Must name the flag and state its default.
-- **migration** — Database schema migrations, data backfills, or config-format upgrades. Isolated from logic changes (`GIT-PR-TYPE-03`) and must include a `## Rollback` section. Land behind a flag whenever the migration is observable.
-- **ui** — User-facing visual or interaction changes. Use for component, layout, copy, or styling work. Must include before/after screenshots and accessibility notes when relevant.
+- **feature-flag** — Adds, flips, or removes a feature flag. Use to introduce reversibility before a behaviour change lands, and again to clean up the flag once a rollout settles.
+- **migration** — Database schema migrations, data backfills, or config-format upgrades. Isolated from logic changes (`GIT-PR-TYPE-03`). Land behind a flag whenever the migration is observable.
+- **ui** — User-facing visual or interaction changes. Use for component, layout, copy, or styling work.
 - **mechanical-refactor** — Renames, file moves, automated codemods, and pure restructuring. Isolated from behaviour changes (`GIT-PR-TYPE-04`) so reviewers can trust the diff is mechanical. Often large in LOC but low in cognitive load — qualifies for red-zone justification.
 - **cleanup** — Dead-code removal, deprecated-API deletion, lint-debt repayment. Use when the change reduces surface area without altering behaviour. Pairs naturally with a preceding `feature-flag` retirement.
 - **observability** — Logs, metrics, traces, dashboards, alerts, and instrumentation. Use when adding visibility without changing behaviour. Reviewed for cardinality, PII, and alert-noise risk.
@@ -286,7 +253,7 @@ Before merging:
 
 For critical production fixes:
 
-- Title must start with `hotfix:`
+- Title uses the applicable Conventional Commit type, usually `fix:`
 - Minimal changes only
 - Must include tests
 - Fast-track review process
@@ -296,7 +263,7 @@ For critical production fixes:
 
 For backwards-incompatible changes:
 
-- Title must include `BREAKING CHANGE:`
+- Title uses `type(scope)!:`; the commit body uses a `BREAKING CHANGE:` footer
 - Migration guide required
 - Major version bump needed
 - Extended review period
@@ -320,7 +287,7 @@ For documentation-only changes:
 - Exceeding 72-character hard limit on commit titles.
 - More than 2 comma-separated scopes in a single commit.
 - Creating PRs directly as ready-for-review instead of starting as draft.
-- Omitting Summary or Verification sections from PR descriptions.
+- Publishing a PR body that violates the canonical PR template.
 
 ## Quick Decision Tree
 
@@ -329,4 +296,4 @@ For documentation-only changes:
 3. Title too long? Aim for ≤50 chars; accept up to 72 for clarity; never exceed 72 (`GIT-MSG-03`).
 4. Closing issues? Use `Closes #123, #456` in footer, never `Fixes` (`GIT-MSG-05`).
 5. Creating a branch? Use `<type>/(<scope>)/<topic>`, same scope as commits, lowercase-kebab-case (`GIT-BRN-01`, `GIT-BRN-02`).
-6. Opening a PR? Start as draft, include Summary + Verification, title = commit format (`GIT-PR-01`, `GIT-PR-02`, `GIT-PR-03`).
+6. Opening a PR? Start as draft, use the canonical body template, and format the title as a commit (`GIT-PR-01`, `GIT-PR-02`, `GIT-PR-03`).

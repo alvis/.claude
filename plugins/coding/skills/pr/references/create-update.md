@@ -105,7 +105,7 @@ reordered, invoke `coding:commit`, then restart discovery. Reject an unknown
 ref, nonlinear chain, merged-history rewrite, missing authentication, multiple
 open PRs for one head, or remote ambiguity with evidence.
 
-Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory category
+Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory archetype
 splits. With no explicit shape, also calculate the size zone and suggest a stack
 when an over-green surface has independent domain-coherent slices. A declined
 optional suggestion or atomic change proceeds as one PR. With `--dry-run`,
@@ -269,8 +269,23 @@ If the immediate predecessor is selected, set `PR_BASE` to its bookmark and
 PR's base; for a new PR resolve the immediate unmerged predecessor, using the
 repository default branch only when none exists, then resolve that exact base
 commit as `AUTHOR_BASE_OID`. New-stack bookmarks do not yet exist, so author
-each head against `AUTHOR_BASE_OID`, never `PR_BASE`. Split each exact
-`title\n\nbody` into that head's `TITLE` and `BODY`; malformed output aborts
+each head against `AUTHOR_BASE_OID`, never `PR_BASE`.
+
+Select exactly one archetype label for each head using the `GIT-PR-TYPE-01`
+selection table. Preflight the repository labels before any push or PR create/edit. If the
+selected label does not exist, stop with an actionable blocker naming it;
+never create or silently substitute a label. Do not call any label creation
+command. Bind the canonical set before either publication branch and resolve
+repository names read-only:
+
+```bash
+ARCHETYPE_LABELS='["rfc","code-spec","contract","domain-model","implementation","integration","feature-flag","migration","ui","mechanical-refactor","cleanup","observability"]'
+REPOSITORY_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
+```
+
+Use `REPOSITORY_LABELS` for the existence check and `ARCHETYPE_LABELS` for
+stale-label cleanup and post-publication verification. Split each exact `title\n\nbody`
+into that head's `TITLE` and `BODY`; malformed output aborts
 the whole selection before any ref or remote mutation.
 
 On the jj path, point the bookmark at the change and push it:
@@ -289,18 +304,38 @@ git push --force-with-lease origin "$BOOKMARK"
 
 Either way the push is leased, never bare `--force`, so a remote that advanced
 underneath the rewrite is rejected rather than overwritten.
-When the head has no open PR, create a draft:
+When the head has no open PR, create a draft with the selected label:
 
 ```bash
-gh pr create --draft --title "$TITLE" --body-file - \
-  --base "$PR_BASE" --head "$BOOKMARK" <<<"$BODY"
+PR=$(gh pr create --draft --title "$TITLE" --body-file - \
+  --base "$PR_BASE" --head "$BOOKMARK" --label "$ARCHETYPE" <<<"$BODY")
 ```
 
-When the head has one open PR, edit it and retain draft state:
+When the head has one open PR, edit it and retain draft state. Discover its
+current labels, remove every stale archetype label, add the selected one, and
+verify exactly one archetype label remains:
 
 ```bash
 gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
+CURRENT_LABELS=$(gh pr view "$PR" --json labels --jq '.labels[].name')
+while IFS= read -r label; do
+  if jq -e --arg label "$label" 'index($label) != null' <<<"$ARCHETYPE_LABELS" >/dev/null &&
+     [ "$label" != "$ARCHETYPE" ]; then
+    gh pr edit "$PR" --remove-label "$label"
+  fi
+done <<<"$CURRENT_LABELS"
+gh pr edit "$PR" --add-label "$ARCHETYPE"
 gh pr ready "$PR" --undo # skip only when already draft
+```
+
+After either create or update, verify the post-publication label invariant:
+
+```bash
+ACTUAL_ARCHETYPES=$(gh pr view "$PR" --json labels | jq -c --argjson archetypes \
+  "$ARCHETYPE_LABELS" \
+  '[.labels[].name as $label | select($archetypes | index($label))] | sort')
+EXPECTED_ARCHETYPES=$(jq -cn --arg label "$ARCHETYPE" '[$label]')
+test "$ACTUAL_ARCHETYPES" = "$EXPECTED_ARCHETYPES"
 ```
 
 For the bundled template, fill reviewer slots with assigned `@login`s when
@@ -496,7 +531,7 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    the required sections for that zone. A black-zone change
    blocks authoring unless it is split, or a project threshold override moves
    it below black and the commit supplies an explicit `## Why this size`
-   justification plus reviewer-time estimate.
+   justification.
 5. Resolve the template — first hit wins, paths relative to the repo root:
 
    1. `.github/PULL_REQUEST_TEMPLATE.md`
@@ -509,11 +544,21 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
    <IMPORTANT>A repo-local template is emitted verbatim — never fill
    placeholders in or otherwise mutate a foreign template; skip placeholder
    filling in step 6.</IMPORTANT> Before emission, apply step 6's evidence
-   predicates to the content already under every zone-required heading. Stop
-   when a required section is missing, empty, placeholder-only, generic, or
-   lacks its named evidence. In particular, a red-zone `## Why this size` must
-   contain specific indivisibility prose and a valid reviewer-time estimate;
-   heading presence alone never passes. When no repo-local template exists,
+   predicates to the content—every predicate, including always-required, zone-required,
+   archetype-required, and diff-required. Stop when a required section is
+   missing, empty, placeholder-only, generic, or lacks its named evidence.
+   This validation never inserts category, label, title, or body metadata.
+   In particular:
+   - a red-zone `## Why this size` contains specific indivisibility prose;
+   - a `migration`, `feature-flag`, or `ui` PR supplies the corresponding
+     Rollback, Feature Flag, or Screenshots evidence from step 6; and
+   - whenever the review diff contains generated files, the body contains the
+     exact `## 🏭 Generated Files` heading with at least one generated path or
+     path pattern and its source or generator. A heading alone, `N/A`,
+     "generated files present", or another path-free summary is generic and
+     blocks emission.
+
+   A heading's presence alone never passes. When no repo-local template exists,
    fall back to the bundled default at
    [templates/pr.md](templates/pr.md) and continue.
    When the bundled default is also missing: exit 4, print the path that
@@ -528,15 +573,24 @@ passes its base; text-only callers default to the first parent. Never invoke `gh
      / `How:`, if present.
    - `{{breaking_changes_body}}` — `BREAKING CHANGE:` footers; "None." when
      absent.
+   - `{{rollback_body}}` — exact rollback steps or explicit forward-only
+     mitigation. Required for the `migration` archetype.
+   - `{{feature_flag_body}}` — flag name, default state, removal target, and
+     rollout plan. Required for the `feature-flag` archetype.
+   - `{{screenshots_body}}` — before/after screenshots and relevant
+     accessibility notes. Required for the `ui` archetype.
+   - `{{generated_files_body}}` — every generated path and its source or
+     generator. Required whenever the diff contains generated files, even when
+     platform metadata marks them as generated.
    - `{{risk_body}}` — exact content under `## Risk` / `Risk:`. Required for
      yellow/red; stop when absent rather than inventing it from the diff.
    - `{{test_plan_body}}` — exact content under `## Test plan` /
      `Test-Plan:`. Required for yellow/red; stop when absent.
    - `{{why_this_size_body}}` — exact content under `## Why this size`.
      Required for red and an allowed black-zone override. Require specific
-     prose explaining why the surface is indivisible plus an estimate matching
-     [GIT-PR-SIZE-03](../../../constitution/standards/git/rules/GIT-PR-SIZE-03.md);
-     stop when either is absent, generic, or malformed.
+     prose explaining why the surface is indivisible; stop when it is absent
+     or generic. Do not render size counts, zone metadata, or reviewer-time
+     estimates.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers;
      "None." when absent.
    - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered

@@ -12,27 +12,13 @@ A PR's zone is the stricter of the two metrics: 12 files / 600 LOC is yellow, no
 
 ## Fix
 
-```markdown
-## Summary
-Adds the `archiveOrder()` operation to the order service.
-
-## Checklist
-- [x] Tests added
-- [x] Docs updated
-```
-
-PR metadata:
-
-```text
-files changed: 7
-net LOC: 184
-zone: green
-```
+Calculate size internally and author the body through the canonical PR template.
+Do not add file counts, LOC, or zone bookkeeping to the PR body.
 
 ### Why this matters
 
 - Reviewer working memory is the binding constraint, not LOC alone.
-- Green PRs need only the Summary and Verification sections (`GIT-PR-02`); ceremony scales with size.
+- Green PR body requirements are owned by the canonical PR template (`GIT-PR-02`).
 - Stacks are healthier when each layer fits in green — splits become natural, not forced.
 
 ## Edge Cases

@@ -8,7 +8,7 @@ error
 
 Every PR — stacked or standalone — opens in draft. Draft mode communicates "the author is still iterating; CI is the audience, not reviewers" and prevents premature reviewer notifications while a stack is still settling. Reinforces and sharpens `GIT-PR-01` for stack workflows where multiple PRs land in flight at once.
 
-The PR converts to ready-for-review only after: CI passes, the author has self-reviewed the diff, the description has all required sections for its zone (`GIT-PR-SIZE-*`), and lower stack PRs (if any) have either merged or are also marked ready.
+The PR converts to ready-for-review only after: CI passes, the author has self-reviewed the diff, the body satisfies the canonical template for its zone, and lower stack PRs (if any) have either merged or are also marked ready.
 
 ## Fix
 
@@ -18,7 +18,7 @@ Open the PR as draft from the CLI:
 gh pr create --draft \
   --base main \
   --head auth-rewrite/02-impl \
-  --title "feat(orders): [implementation] add archiveOrder" \
+  --title "feat(orders): add archiveOrder" \
   --body-file .pr-body.md
 ```
 
@@ -46,7 +46,7 @@ default_draft = true
 
 - Hotfix PRs may skip draft only when a documented incident is in flight — the incident commander records the override.
 - Auto-generated PRs (dependabot, renovate, codemod sweeps) follow the platform's default; this rule applies to human-authored PRs.
-- Converting back to draft after review is acceptable when scope expands materially; explain the conversion in a PR comment.
+- Converting back to draft after review is acceptable when scope expands materially; comment only when reviewers need material context.
 
 ## Related
 

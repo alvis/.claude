@@ -15,24 +15,13 @@ This rule is the safety net that makes stacked merges practical: each PR can lan
 Three-PR pattern:
 
 ```text
-order-archive/01-flag    feat(orders): [feature-flag] add orders.archive (default off)
-order-archive/02-impl    feat(orders): [implementation] archiveOrder gated on orders.archive
-order-archive/03-cleanup chore(orders): [cleanup] remove orders.archive flag (default on, week 4)
+order-archive/01-flag    feat(orders): add orders.archive (default off)
+order-archive/02-impl    feat(orders): gate archiveOrder on orders.archive
+order-archive/03-cleanup chore(orders): remove orders.archive flag
 ```
 
-Flag PR body MUST state name and default:
-
-```markdown
-## Category
-feature-flag
-
-## Flag
-- Name: `orders.archive`
-- Default: off
-- Owner: payments-platform team
-- Removal target: 2026-05-20 (4 weeks)
-- Rollout plan: 1 % -> 10 % -> 50 % -> 100 % over 2 weeks
-```
+The canonical PR template owns the feature-flag body's operational evidence.
+Team ownership stays in CODEOWNERS or forge assignments instead of the body.
 
 Implementation PR consumes the flag:
 

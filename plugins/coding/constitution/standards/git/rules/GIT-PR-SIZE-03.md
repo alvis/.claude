@@ -6,48 +6,16 @@ warning
 
 ## Intent
 
-A red-zone PR changes **≤ 60 files** AND nets **≤ 2000 LOC** while exceeding yellow thresholds. Red PRs are allowed only when splitting would harm review (mechanical refactors, generated files, atomic migrations). They MUST include an isolation justification and a reviewer-time estimate so reviewers can plan.
-
-A red PR carries everything yellow requires (Summary, Verification, Risk, and
-Test plan) **plus** a `## Why this size` section. Its estimate line, after an
-optional Markdown list marker, MUST match:
-
-```regex
-^Reviewer-time estimate: ~?[1-9][0-9]*(\.[0-9]+)? (min|minutes|hour|hours)( — .+)?$
-```
-
-The optional `~` marks an estimate; an optional em-dash suffix states review
-scope. Zero, a missing unit, or an unbounded phrase is not schedulable evidence.
+A red-zone PR changes **≤ 60 files** AND nets **≤ 2000 LOC** while exceeding yellow thresholds. Red PRs are allowed only when splitting would harm review (mechanical refactors, generated files, atomic migrations). They require a concise, specific explanation of why the review surface is indivisible. The canonical PR template owns where and how that evidence is rendered.
 
 ## Fix
 
-```markdown
-## Summary
-Codemod-driven rename of `User` -> `Account` across the persistence layer.
-
-## Why this size
-- Mechanical refactor (`GIT-PR-TYPE-04`); 47 files touched, all by automated codemod
-- Splitting would leave the codebase non-compiling between PRs
-- No behavior change; type-checker is the safety net
-- Reviewer-time estimate: ~20 min — diff is uniform; spot-check 5 representative files
-
-## Risk
-- Snapshot tests will need re-recording (tracked in follow-up)
-- No public API renamed; downstream consumers unaffected
-
-## Test plan
-- `npm run typecheck` clean across all workspaces
-- Existing test suite passes without modification
-
-## Verification
-- [x] Codemod script committed under `scripts/codemods/`
-- [x] No behavior change verified
-```
+Author the PR body through the canonical template with a concrete indivisibility
+rationale. Keep size counts, zone metadata, and review scheduling internal.
 
 ### Why this matters
 
 - Without justification, a red PR signals an unsplit feature, not a cohesive change.
-- The reviewer-time estimate is a forcing function: if the author cannot estimate, the PR is not ready.
 - Acceptable red-zone categories are narrow: `mechanical-refactor`, `migration` (atomic), `cleanup` (sweeping deprecations), and PRs dominated by `GIT-PR-TYPE-05` generated files.
 
 ## Edge Cases

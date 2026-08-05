@@ -14,21 +14,11 @@ Bug found after `auth-rewrite/01-spec` already merged:
 
 ```text
 # correct
-fix-archive/01-fix    fix(orders): [code-spec] correct ArchiveReason union to allow "expired"
+fix-archive/01-fix    fix(orders): correct ArchiveReason union to allow "expired"
 ```
 
-PR body explains the link to the merged change:
-
-```markdown
-## Summary
-Fixes the `ArchiveReason` union introduced in `auth-rewrite/01-spec`
-(merged to main in #4821) which omitted the `"expired"` variant.
-
-## Why a corrective PR
-The original change has merged; per `GIT-PR-STACK-03` we do not
-rewrite public history. This PR ships the missing variant forward
-and updates the consumers in `auth-rewrite/02-impl`.
-```
+Link the original PR naturally in the canonical template's Summary or Context.
+Do not publish internal rule IDs or a dedicated process-explanation section.
 
 What this rule forbids:
 

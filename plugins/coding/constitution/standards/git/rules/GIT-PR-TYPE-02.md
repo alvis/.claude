@@ -13,9 +13,9 @@ In any stack, the `code-spec` (types, interfaces, schemas, JSDoc-only contracts)
 Stack layout for a new `archiveOrder` operation:
 
 ```text
-auth-rewrite/01-spec        feat(orders): [code-spec] add archive types
-auth-rewrite/02-impl        feat(orders): [implementation] add archiveOrder
-auth-rewrite/03-integration feat(orders): [integration] wire archive to API
+auth-rewrite/01-spec        feat(orders): add archive types
+auth-rewrite/02-impl        feat(orders): add archiveOrder
+auth-rewrite/03-integration feat(orders): wire archive to API
 ```
 
 Inside the spec PR — types only, no runtime behaviour:
