@@ -1,22 +1,19 @@
 ---
 name: skill-name
-description: "[Description] — third person, what the skill does plus a 'Use when...' clause with concrete trigger phrases a user would actually type; 25-60 words; lead with the key use case."
+description: "[Description] — third person, what the skill does plus a 'Use when...' clause with concrete natural-language requests that express the activating intent; 25-60 words; lead with the key use case."
 ---
 
 <!-- AUTHOR GUIDE — delete every comment before shipping. Policy lives in
-plugins/governance/constitution/references/authoring-invariants.md. This
+plugins/governance/skills/write-skill/references/authoring.md. This
 template is a seed, not a heading contract: adapt headings to the capability.
 
 Frontmatter
 - name: kebab-case, identical to the skill directory name.
 - description: third person, what + when, key use case first. Repository
-  budget is 25-60 words (Claude Code allows up to 1024 characters). Name a
+  budget is 25-60 words; Agent Skills allows up to 1024 characters. Name a
   neighboring exclusion only when it prevents a real trigger collision.
-- Optional fields Claude Code supports: argument-hint, allowed-tools,
-  disallowed-tools, model, effort, context (fork = fresh isolated subagent),
-  agent, user-invocable, disable-model-invocation, paths, hooks. Add a field
-  only when it changes behavior; coding:commit and coding:finalize-commits
-  are worked examples.
+- For a shared Claude Code and Codex skill, follow the authoring contract's
+  portable fields and never depend on experimental or harness-only metadata.
 -->
 
 # [Skill Name]
@@ -63,7 +60,7 @@ contested, which neighboring skill owns the adjacent work.]
   the dispatch bounds you adopt at that step.
 - Wrap hard guardrails in <IMPORTANT>...</IMPORTANT> and machine-readable
   output contracts in <report>...</report> per the Content Boundary
-  Convention in authoring-invariants.md; name tags for the content's role,
+  Convention in the authoring contract; name tags for the content's role,
   never to echo a heading.
 - Use consistent terminology throughout, forward slashes in paths, and no
   time-sensitive facts.
@@ -78,12 +75,14 @@ contested, which neighboring skill owns the adjacent work.]
 
 ## Verification
 
-<!-- Keep the two repository checks. Add the skill-specific checks that prove
+<!-- Keep the portable and repository checks. Add skill-specific checks that prove
 the promised outcome actually happened, not merely that steps ran. -->
 
 - Run the checks that demonstrate the promised outcome.
-- Validate frontmatter with `claude plugin validate --strict <plugin-path>`.
-- Run repository policy checks with `quick_validate.py <skill-or-plugin-path>`.
+- Validate the skill with
+  `uvx --python 3.13 --from skills-ref agentskills validate "<skill-root>"`.
+- Run `<loaded-write-skill-root>/scripts/quick_validate.py --portable` against
+  the skill directory; it validates a containing Claude plugin when resolvable.
 
 ## Completion
 

@@ -1,40 +1,26 @@
 # Claude Code and Codex compatibility
 
 Load this reference only when a Claude Code or Codex difference affects a
-skill's invocation, execution, required tools, or validation. The
-[authoring invariants](../../../constitution/references/authoring-invariants.md)
-own the shared Agent Skills contract.
+skill's execution, required tools, or validation.
 
 ## Behavior-affecting differences
 
-- Claude Code invokes a skill explicitly as `/skill-name`; Codex uses
-  `$skill-name`. Do not present either syntax as portable or use explicit
-  invocation as evidence of implicit discovery.
-- Claude Code path variables and frontmatter controls have no portable meaning.
-  Apply the shared-source placement and fallback rules in the
-  [authoring invariants](../../../constitution/references/authoring-invariants.md);
-  keep harness-only metadata in that single shared file under those rules.
-- Resolve shared supporting files relative to the loaded skill directory. When
-  a command needs an absolute path, set a variable from the path used to load
-  that skill's `SKILL.md`; do not depend on a fixed root or current working
-  directory.
+- Explicit skill selection does not test implicit discovery. Use
+  natural-language intent for agent activation guidance and trigger checks.
+- Claude Code path substitutions and frontmatter extensions have no portable
+  meaning. Do not put them in the shared `SKILL.md`.
+- Resolve every supporting file from the skill root according to
+  `references/authoring.md`.
 - Do not translate a Claude-only control or runtime command into a Codex
   equivalent by analogy. Use only behavior documented by the target harness.
 
 ## Validation
 
-Validate the shared skill against the Agent Skills specification. Run
-`skills-ref validate "$TARGET_SKILL_DIR"` when `skills-ref` is available, with
-`TARGET_SKILL_DIR` resolved to the directory containing the target `SKILL.md`;
-otherwise record the specification checks performed and that no standard
-validator ran.
-
-For Claude Code and repository policy, run the commands in
-[the write-skill verification section](../SKILL.md#verification). This
+After the portable checks in `references/authoring.md`, run the root
+`SKILL.md` verification command when the target includes Claude Code. This
 repository defines no general Codex validator or runtime evaluator, so do not
-invent a `codex plugin validate` command. When an isolated Codex check is
-unavailable, report the unverified Codex behavior instead of substituting a
-Claude result.
+invent one. When an isolated Codex check is unavailable, report the unverified
+behavior instead of substituting a Claude result.
 
 ## Sources
 

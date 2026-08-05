@@ -1,6 +1,6 @@
 # Action: verify
 
-Loaded by `SKILL.md` when the first argument is `verify`. Validate a new or
+Loaded by `SKILL.md` when the requested action is `verify`. Validate a new or
 changed skill; the shared policy, thought-experiment/blindspot test, and
 verification commands live in `SKILL.md`.
 
@@ -33,17 +33,18 @@ verification commands live in `SKILL.md`.
 ## Workflow
 
 1. Resolve the target and enumerate affected skills and plugin roots.
-2. Validate the portable core and load [harnesses.md](harnesses.md). Run only
+2. Validate the portable core and load `references/harnesses.md`. Run only
    the applicable checks for the target harnesses. Report unavailable commands
    as not run or blocked rather than substituting a private validator.
-3. Run `<write-skill-root>/scripts/quick_validate.py` on the target. Review body
-   length, description budget, unresolved local references, and placeholders.
-   Use `--policy-only` only when Claude validation is not part of the available
-   target environment, and report that omission.
+3. Resolve `scripts/quick_validate.py` from the loaded `write-skill` root and
+   invoke `--portable` separately for each enumerated skill file or directory.
+   Review body length, description budget, root-contained references, and
+   placeholders. Use `--policy-only` only when Claude validation is
+   unavailable, and report that omission.
 4. For functional or full mode, derive a transient representative-case matrix
    from the owned outcome and any caller-supplied prompts. Keep it in context or
    a temporary Markdown scratch file in the OS temp folder (for example
-   `${TMPDIR:-/tmp}/check.md`). Follow [functional-mode.md](functional-mode.md)
+   `${TMPDIR:-/tmp}/check.md`). Follow `references/functional-mode.md`
    for the case shape, paper-only reasoning, and optional isolated runtime
    execution.
 5. Include positive trigger prompts, nearby negative prompts, and behavior or
@@ -51,10 +52,6 @@ verification commands live in `SKILL.md`.
    observed runtime evidence; a pass must not claim execution that did not run.
 6. Aggregate evidence by skill and delete any temporary scratch file. When fixes
    are requested, change only reported causes and rerun the failed checks.
-
-No harness-neutral validator requires fixed headings, personas, diagrams,
-subagent prompts, XML report envelopes, or a section literally named "Skill
-Completion."
 
 ## Verification
 

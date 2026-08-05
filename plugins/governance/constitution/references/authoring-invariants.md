@@ -1,9 +1,9 @@
-# Skill-Authoring Invariants
+# Governance authoring invariants
 
-These are the shared repository rules for authoring skills and agents — the
-`write-skill` create, update, and verify actions, plus `create-agent` and
-`update-agent`. This file owns the repository's portable Agent Skills contract;
-each harness owns its extensions and manifest syntax.
+These are the repository-wide rules for authoring skills, agents, and
+standards. `plugins/governance/skills/write-skill/references/authoring.md` owns
+the portable Agent Skills directory, frontmatter, resource, and validation
+contract.
 
 ## Content
 
@@ -12,24 +12,15 @@ each harness owns its extensions and manifest syntax.
   naming an example set of negations is unbounded and says nothing.
 - Write one coherent document. Integrate changes where readers expect them;
   remove superseded prose instead of appending corrections or addenda.
-- Keep the always-used workflow in `SKILL.md` and move bulky conditional detail
-  to `references/<topic>.md`, linked at the decision point.
-- Concision must preserve operational sufficiency. A skill is not complete when
-  it names an outcome but omits the commands, decision gates, state handoff,
-  failure behavior, or verification procedure needed to produce that outcome.
+- Concision must preserve operational sufficiency. An artifact is not complete
+  when it names an outcome but omits the decisions, failure behavior, or
+  verification needed to produce it.
   Trim repetition and ceremony; never trim the executable contract.
-- Keep a main `SKILL.md` below 500 body lines. Prefer concise instructions over
-  personas, metaphors, diagrams, repeated phase descriptions, and fixed report
-  envelopes. This is a skill-specific limit on top of the general artifact
-  length rule, which is defined once in
-  `essential:references/output-manifest.md` and is not restated here.
 - Use headings that fit the capability. Boundaries, inputs, workflow,
   verification, and completion are useful defaults, not mandatory names.
-- Delegate when performing a step directly would consume more session context
-  than describing the task to a subagent and reading its report; keep small
-  work inline — a skill does not need subagents, diagrams, or orchestration
-  ceremony to be complete. When a skill does delegate, follow the batching,
-  report, and decision guidance in [delegation.md](delegation.md).
+- Delegate when direct execution would consume more session context than a
+  bounded assignment and report. Follow [delegation.md](delegation.md) whenever
+  an artifact dispatches subagents.
 
 ## Content Boundary Convention
 
@@ -49,49 +40,3 @@ that must not be missed.
 - Keep a language hint on a fenced block inside the tags (the tags are the
   boundary, the fence is the syntax hint).
 - Every opening tag has a matching close.
-
-## Portable Agent Skills contract
-
-- Require the Agent Skills `name` and `description`; make `name` lowercase
-  kebab-case and identical to the skill directory. Quote scalar values when
-  YAML punctuation could change their meaning.
-- Make descriptions concrete trigger guidance. Aim for 25-60 words and explain
-  neighboring exclusions only when they prevent a real trigger collision. Lead
-  with the owned outcome and activation conditions because harnesses discover
-  skills from metadata before loading the body.
-- Keep the body and supporting-file references portable. Do not encode one
-  harness's explicit invocation syntax, path variables, plugin namespace, or
-  control fields as a cross-harness promise.
-- Treat `allowed-tools` as experimental in the Agent Skills specification;
-  preserve a valid target-harness representation, but do not promise identical
-  semantics elsewhere.
-- A Claude Code and Codex skill has one shared `SKILL.md`, not harness-specific
-  branches. Omit `context` for inline execution and use `context: fork` only
-  when intentional. Add Claude-only controls such as
-  `disable-model-invocation`, `user-invocable`, and `paths` to the shared
-  frontmatter only when their effect is optional in Codex and an isolated Codex
-  check accepts the file; otherwise omit them. Never make portable correctness
-  depend on a Claude-only control.
-
-## Validation
-
-1. Check the portable skill against the Agent Skills specification. Use a
-   standard validator only when it is documented and available; otherwise
-   record the reference checks performed.
-2. When the target includes Claude Code, run
-   `claude plugin validate --strict <plugin-path>` after resolving
-   `<plugin-path>` to the nearest ancestor of the target skill that contains
-   `.claude-plugin/plugin.json`.
-3. Run `quick_validate.py` for repository policies such as body length,
-   placeholders, description budget, and unresolved local Markdown links. Its
-   default mode delegates schema validation to Claude; use `--policy-only` only
-   when that branch is unavailable and report the omission.
-4. Reason through representative positive and near-miss prompts when behavior
-   or trigger ownership changed. This is a paper-only thought experiment and
-   blindspot test unless an executable evaluation runs; do not report runtime
-   behavior as exercised from paper reasoning alone. Any
-   written scratch notes should be Markdown tables following
-   [check.md](check.md) with `:white_check_mark:`/`:x:` status
-   markers, stored only in an OS temp folder (for example
-   `${TMPDIR:-/tmp}/check.md`). They are temporary reasoning aids,
-   not deliverables, and must be deleted before staging or committing.

@@ -1,6 +1,6 @@
 # Action: update
 
-Loaded by `SKILL.md` when the first argument is `update`. Revise one or more
+Loaded by `SKILL.md` when the requested action is `update`. Revise one or more
 existing skills; the shared policy, thought-experiment/blindspot test, and
 verification commands live in `SKILL.md`.
 
@@ -26,9 +26,10 @@ concise aid, not a migration target whose headings must be copied.
 1. Resolve the selector and list exact targets. Reject ambiguity before edits.
 2. Read each target completely, including directly referenced files and real
    cross-skill invocations.
-3. When discovery, invocation, packaging, or harness support changes, load
-   [harnesses.md](harnesses.md) and separate the portable core from each
-   harness extension. Define current ownership and the requested end state.
+3. When discovery, invocation, or harness support changes, load
+   `references/harnesses.md`. Express harness-only behavior as an equivalent
+   portable instruction or report incompatibility. Define current ownership
+   and the requested end state.
    Run the shared thought-experiment and blindspot test (see `SKILL.md`) over
    positive and near-miss cases for changed triggers or behavior.
 4. Capture a failing baseline for testable behavior when a deterministic check
@@ -37,8 +38,8 @@ concise aid, not a migration target whose headings must be copied.
 5. Keep the core workflow concise; move only genuinely conditional bulk to
    references. Do not add personas, diagrams, fixed phases, or delegation
    ceremony unless they materially clarify this particular skill.
-6. Validate each affected plugin and run repository policy checks (see
-   `SKILL.md`).
+6. Validate each skill with the commands in `SKILL.md`. Run Claude validation
+   only for a containing plugin the bundled validator can resolve.
 7. Re-run the thought experiment and blindspot test for relevant functional and
    trigger behavior. Fix identified blindspots without widening the requested
    scope. Do not claim runtime behavior was exercised unless an executable
@@ -56,6 +57,5 @@ issues, and continue to the next target.
 
 Report updated skills, ownership changes, validation results, thought-experiment
 and blindspot coverage, runtime evaluation status (`exercised`, `not
-requested`, or `blocked`), and unresolved ambiguity. Confirm temporary Markdown
-thought-experiment notes were deleted before commit. Never claim a bulk update
+requested`, or `blocked`), and unresolved ambiguity. Never claim a bulk update
 without listing its targets.
