@@ -2,7 +2,6 @@
 name: pr
 description: 'Author, create, update, review, or merge GitHub pull requests, including linear stacks. Use for deterministic PR text, publication and CI convergence, external review comments and verdicts, or bottom-up stack merges; the first argument selects the subcommand.'
 model: opus
-allowed-tools: Bash(git:*), Bash(jj:*), Bash(gh:*), Bash(sleep:*), Bash(jq:*), Bash(mktemp:*), Bash(rm:*), Bash(command:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/*), Read, Grep, Glob, Agent, Skill, AskUserQuestion, CronCreate, CronDelete
 argument-hint: "<author|create|update|review|merge> [arguments]"
 ---
 

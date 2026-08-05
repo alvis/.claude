@@ -2,7 +2,6 @@
 name: audit-service
 description: Audit a backend service against its work-local authoritative specification and canonical review areas, with optional approved remediation. Use for implementation, operation completeness, documentation, semantic, security, testing, and quality audits.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill, AskUserQuestion
 argument-hint: "<service-name> [--work-id=<id>] [--spec=<path-or-ref>] [--scope=implementation|docs|all] [--operation=...] [--area=...] [--auto-fix]"
 ---
 

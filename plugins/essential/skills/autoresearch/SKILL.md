@@ -3,7 +3,6 @@ name: autoresearch
 description: 'Run a metric-driven research loop: define a metric, evaluator, baseline, and target; evolve candidate solutions; score and adversarially verify them; then mutate survivors until the target, budget, or plateau ends the run. Use for measurable optimization of prompts, code, experiments, or creative variants; use deep-research for fact-finding.'
 model: opus
 context: fork
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, Skill, Workflow, TodoWrite, AskUserQuestion
 argument-hint: "<research-goal-or-brief-path> [--brief=<path>] [--resume=<run-dir>] [--max-rounds=<n>] [--backend=programmatic|judges|human]"
 ---
 

@@ -2,7 +2,6 @@
 name: spec-code
 description: Design, update, or retrospectively document a technical specification from a user-selected local, inline, or Notion source through an active engineering work item and versioned derived docs. Use for specification authoring; keep Notion transport in sync-notion and implementation planning in plan-code.
 model: opus
-allowed-tools: Bash, Write, Read, Edit, Task, WebSearch, WebFetch, Glob, Grep, TodoWrite, AskUserQuestion, Skill
 argument-hint: "<instruction> --capability=<slug> [--work-id=<id>] [--source=<path-or-ref>] [--source-direction=<direction>] [--transport-root=<dir>] [--transport-profile=<absolute-file>] [--template=<path-or-ref>] [--local-mdc=<path>] [--parent=<ref>] [--type=api|web-app|mobile|library|fullstack]"
 ---
 

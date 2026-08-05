@@ -2,7 +2,6 @@
 name: review-code
 description: Review alignment, semantic correctness, security, test intent, documentation, quality, and style after code changes. Use for explicit post-implementation or pre-merge review; write canonical work-local review artifacts without editing the reviewed code.
 model: opus
-allowed-tools: Task, Read, Grep, Glob, Bash, WebSearch, AskUserQuestion, Write, Edit
 argument-hint: "[specifier] [--area=alignment|correctness|security|quality|testing|docs|style|all] [--work-id=<id>] [--plan=<path>] [--explain]"
 ---
 

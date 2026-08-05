@@ -2,7 +2,6 @@
 name: build-service
 description: Build or extend a backend service from an approved work-local specification through manifests, implementation, tests, canonical review, and handoff. Use for new services, operations, integrations, webhooks, or manifest schemas; keep audits in audit-service.
 model: opus
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill, AskUserQuestion
 argument-hint: "<service-name> <operations...> [--work-id=<id>] [--spec=<path-or-ref>] [--extend] [--notion-url=...]"
 ---
 

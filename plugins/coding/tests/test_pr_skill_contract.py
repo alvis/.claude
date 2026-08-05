@@ -50,15 +50,20 @@ def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
     assert "<base-oid>" in template
 
 
-def test_merged_skill_uses_authorized_helpers_for_resource_lifetimes() -> None:
-    router = (WRITE_PR / "SKILL.md").read_text()
+def test_merged_skill_resolves_bundled_helpers_for_resource_lifetimes() -> None:
     create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+    review_extraction = (
+        WRITE_PR / "references" / "review-extraction.md"
+    ).read_text()
     review = (WRITE_PR / "references" / "review-workflow.md").read_text()
 
-    assert "skills/pr/scripts/*" in router
-    assert "scripts/temp-tree.sh" in create_update
-    assert "scripts/temp-tree.sh" in review
-    assert "scripts/review-scan.sh" in review
+    helper_consumers = {
+        "scripts/temp-tree.sh": (create_update, review_extraction, review),
+        "scripts/review-scan.sh": (review,),
+    }
+    for helper, consumers in helper_consumers.items():
+        assert (WRITE_PR / helper).is_file()
+        assert all(helper in consumer for consumer in consumers)
     assert "cleanup() {" not in create_update
 
 

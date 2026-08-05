@@ -1,4 +1,5 @@
 import ast
+import importlib.util
 import json
 import os
 import re
@@ -6,10 +7,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MARKETPLACE_PATH = ROOT / ".claude-plugin" / "marketplace.json"
 CODEX_MARKETPLACE_PATH = ROOT / ".agents" / "plugins" / "marketplace.json"
+QUICK_VALIDATE_PATH = (
+    ROOT
+    / "plugins"
+    / "governance"
+    / "skills"
+    / "write-skill"
+    / "scripts"
+    / "quick_validate.py"
+)
 SCHEMA_ROOT = ROOT / "scripts" / "schemas"
 JSON_TYPES = {
     "array": lambda value: isinstance(value, list),
@@ -44,6 +53,14 @@ CONTEXT_PAYLOAD_EVENTS = {
     "MAINAGENT.md": {"SessionStart"},
     "SUBAGENT.md": {"SubagentStart"},
 }
+
+QUICK_VALIDATE_SPEC = importlib.util.spec_from_file_location(
+    "governance_quick_validate",
+    QUICK_VALIDATE_PATH,
+)
+assert QUICK_VALIDATE_SPEC and QUICK_VALIDATE_SPEC.loader
+quick_validate = importlib.util.module_from_spec(QUICK_VALIDATE_SPEC)
+QUICK_VALIDATE_SPEC.loader.exec_module(quick_validate)
 
 
 def load_json(path: Path) -> dict:
@@ -272,6 +289,10 @@ def test_shared_skills_follow_the_cross_harness_agent_skills_contract() -> None:
             assert name == skill_path.parent.name
             assert description
             assert len(description) <= 1024
+            policy_report = quick_validate.validate_policy(skill_path)
+            assert policy_report["errors"] == [], (
+                f"{skill_path.relative_to(ROOT)}: {policy_report['errors']}"
+            )
 
 
 def test_shared_hooks_follow_the_cross_harness_schema() -> None:

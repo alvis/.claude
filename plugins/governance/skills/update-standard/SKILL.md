@@ -3,7 +3,6 @@ name: update-standard
 description: Update explicitly selected plugin standards to the current meta.md, scan.md, write.md, and rules contract while preserving valid policy and stable rule IDs. Use when applying scoped rule changes, migrating standards to a template revision, or batch-updating the standards library. Require a path, glob, or --all; route missing targets to create-standard.
 model: opus
 context: fork
-allowed-tools: Bash, Task, Read, Glob, Grep, Edit, Write
 argument-hint: "<standard path, name, or glob> [--changes=...] [--all]"
 ---
 

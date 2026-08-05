@@ -2,7 +2,6 @@
 name: lint
 description: Use when React JSX, components, hooks, accessibility, project structure, tests, or Storybook files need mechanical standards enforcement through the shared Coding lint workflow; React owns framework rules while Coding owns generic execution and reporting.
 model: opus
-allowed-tools: "Skill(coding:lint *)"
 argument-hint: "[specifier] [--scope=SCOPE]"
 ---
 

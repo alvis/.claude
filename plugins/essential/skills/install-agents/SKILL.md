@@ -1,7 +1,6 @@
 ---
 name: install-agents
 description: "Discover, validate, stitch, and install specialist agent templates contributed by Essential and other enabled plugins in the same marketplace. Use when asked to install agents, set up subagents, refresh the agent team, or configure Claude Code or Codex on a new machine."
-allowed-tools: Bash, Read
 ---
 
 # Install Agents

@@ -3,7 +3,6 @@ name: design
 version: 5.0.0
 description: Design or redesign a web interface — and implement it when authorized — with coherent visual direction, responsive layout, typography, color, motion, and accessible states. Maintains work-local design contracts and ranked variant boards, then drives an independent implement-evaluate loop with visual-diff confirmation. Use for new pages, component polish, mockups, or facelifts.
 argument-hint: "[page/component/site] [--facelift] [--style=<style>] [--variants=<N>] [--skip-directions] [--quick]"
-allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet, AskUserQuestion, SendUserFile
 ---
 
 # Web design

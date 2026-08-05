@@ -2,7 +2,6 @@
 name: mdc
 description: Read, edit, and author Notion-backed MDC files safely with native text tools while preserving @theriety/mdc grammar and ref identity. Use for any authored .mdc body change. Keep transport, pairing, and conflict orchestration in sync-notion and sync-spec.
 model: sonnet
-allowed-tools: Read, Edit, Write, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(cat:*), Bash(*/bin/resolve-engineering-workspace:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/*)
 argument-hint: "[<path-to-.mdc>] [--mode=read|edit|author]"
 ---
 

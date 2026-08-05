@@ -2,7 +2,6 @@
 name: react
 description: Use when creating, editing, reviewing, or routing work involving React, JSX, hooks, components, accessibility behavior, project structure, tests, or Storybook stories; this router selects React standards while Coding owns generic execution.
 model: sonnet
-allowed-tools: Read, Glob, Grep, Skill
 ---
 
 # React Standards Router

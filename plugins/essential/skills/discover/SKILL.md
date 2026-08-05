@@ -2,7 +2,6 @@
 name: discover
 description: "Discovers material unknowns before planning. Use for a blindspot pass or unknown unknowns, to brainstorm approaches from cheapest to ambitious, interview about architecture, extract reference implementation semantics, make a disposable prototype before touching the real app, or check whether discovery is ready for a decision; researched option selection belongs to essential:decide."
 model: opus
-allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Task, AskUserQuestion, WebSearch, WebFetch, Skill
 argument-hint: "<problem> [--mode=blindspots|options|interview|reference|prototype|readiness] [--persist] [--work-id=<id>]"
 ---
 

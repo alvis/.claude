@@ -2,7 +2,6 @@
 name: build-data
 description: Build or extend a data orchestrator from an approved work-local specification through schema, operations, controller integration, tests, canonical review, and handoff. Use for new data domains, operations, or Prisma schemas; keep audits in audit-data.
 model: opus
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill, AskUserQuestion
 argument-hint: "<domain-name> <operations...> [--work-id=<id>] [--spec=<path-or-ref>] [--extend] [--notion-url=...]"
 ---
 
