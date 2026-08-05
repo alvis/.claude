@@ -371,60 +371,32 @@ def test_generic_stack_contract_delegates_github_listing_without_restatement() -
 
     assert "Load [github-stacks.md](github-stacks.md) for every GitHub PR-stack request" in normalized
     assert "including discovery" in normalized
-    assert "dynamic selection between an advertised non-interactive machine-readable list" in normalized
-    assert "capability and its REST fallback" in normalized
-    assert "`stack list` uses the paginated GitHub REST endpoint" not in normalized
+    assert "sole owner of GitHub stack inventory behavior" in normalized
+    assert "paginated GitHub REST endpoint" not in normalized
+    assert "GET /repos/{owner}/{repo}/stacks" not in normalized
 
 
-def test_github_stack_listing_discovers_advertised_capabilities_before_selection() -> None:
+def test_github_stack_listing_uses_only_the_paginated_rest_inventory() -> None:
     github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
     list_section = github_stacks.split("## List or check out", 1)[1].split(
         "## Create, extend, and publish", 1
     )[0]
     normalized = " ".join(list_section.split())
+    forbidden_cli = "gh stack " + "list"
 
-    discovery = normalized.index("inspect the subcommand table advertised by `gh stack --help`")
-    missing_extension = normalized.index("reports that the extension is missing")
-    confirmation = normalized.index("ask for confirmation", missing_extension)
-    acceptance = normalized.index("On acceptance", confirmation)
-    install = normalized.index("gh extension install github/gh-stack", acceptance)
-    rerun_help = normalized.index("rerun root help", install)
-    advertised = normalized.index("If root help advertises a non-mutating `list` subcommand")
-    list_help = normalized.index("inspect `gh stack list --help`", advertised)
-    documented_form = normalized.index("documented non-interactive, machine-readable form")
-    assert (
-        discovery
-        < missing_extension
-        < confirmation
-        < acceptance
-        < install
-        < rerun_help
-        < advertised
-        < list_help
-        < documented_form
-    )
-    assert "install the latest extension" in normalized
-    assert "use the REST fallback rather than inventing flags" in normalized
-    assert "Do not use `gh stack list --help` itself for capability detection" in normalized
-    assert "may misleadingly print root help and exit zero" in normalized
-    assert "Never substitute bare `gh stack checkout`" in normalized
-
-
-def test_github_stack_rest_fallback_preserves_identity_for_unsupported_or_declined_list() -> None:
-    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
-    list_section = github_stacks.split("## List or check out", 1)[1].split(
-        "## Create, extend, and publish", 1
-    )[0]
-    normalized = " ".join(list_section.split())
-
-    assert "On an explicit decline, use the REST fallback" in normalized
-    assert "If the installed extension does not advertise `list`" in normalized
-    assert "If current help documents no such form, use the REST fallback" in normalized
+    assert forbidden_cli not in github_stacks
+    assert "unconditionally inventory" in normalized
     assert 'GET /repos/{owner}/{repo}/stacks' in github_stacks
-    assert "paginated" in github_stacks
+    assert "gh api --paginate --slurp" in list_section
+    assert '"repos/$REPOSITORY/stacks?per_page=100"' in list_section
     assert "fully merged and closed stacks" in github_stacks
+    assert "number," in list_section
+    assert "url," in list_section
+    assert "base: .base.ref" in list_section
+    assert "open," in list_section
+    assert "pullRequests: [.pull_requests[]" in list_section
     assert "headSha: .head.sha" in github_stacks
-    assert "capability discovery, not an authentication preflight" in normalized
+    assert "Do not run `gh auth status`" in github_stacks
 
 
 def test_github_stack_checkout_separates_human_choice_from_agent_selection() -> None:
@@ -436,8 +408,9 @@ def test_github_stack_checkout_separates_human_choice_from_agent_selection() -> 
     normalized_checkout = " ".join(checkout_section.lower().split())
 
     assert "bare `gh stack checkout`" in normalized
-    assert "human-only interactive checkout chooser" in normalized
-    assert "never a list or discovery action" in normalized
+    assert "human-only interactive chooser" in normalized
+    assert "checks out the chosen local or remote stack" in normalized
+    assert "not a non-mutating inventory operation" in normalized
     assert "require the caller's stack number, pr number, pr url" in normalized
     assert 'gh stack checkout "$STACK_SELECTOR" || exit $?' in github_stacks
     assert "gh stack view --json || exit $?" in github_stacks
@@ -498,6 +471,20 @@ def test_github_stack_reference_maps_every_supported_operator() -> None:
 
     assert all(command in github_stacks for command in direct_commands)
     assert "`gh stack up [n]`, `down [n]`, `top`, `bottom`, and `trunk`" in github_stacks
+
+
+def test_github_stack_audit_contract_matches_current_mutation_semantics() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    normalized = " ".join(github_stacks.split())
+
+    assert "Branch pushes are non-force and atomic" in normalized
+    assert "pushes all active branches atomically" in normalized
+    assert "`push` and `submit` are non-atomic" in normalized
+    assert 'gh stack merge "$STACK_OR_PR_NUMBER" --yes \\' in github_stacks
+    assert '--merge-method "$MERGE_METHOD" || exit $?' in github_stacks
+    assert "merged, merging, or queued PRs" in normalized
+    assert "PRs with auto-merge enabled" in normalized
+    assert "leaves local tracking unchanged" in normalized
 
 
 def test_github_stack_failures_report_actual_errors_and_verify_the_owned_scope() -> None:

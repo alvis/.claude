@@ -65,9 +65,8 @@ Load [github-stacks.md](github-stacks.md) for every GitHub PR-stack request,
 including discovery, checkout, creation, publication, update, navigation,
 restructure, unstack, or merge. Use the current `gh stack` commands there for
 the stack lifecycle. `coding:commit` still owns a plain commit within a layer,
-and `coding:pr review` still owns review. That reference owns the dynamic
-selection between an advertised non-interactive machine-readable list
-capability and its REST fallback.
+and `coding:pr review` still owns review. That reference is the sole owner of
+GitHub stack inventory behavior.
 
 ## Inspect with jj
 
