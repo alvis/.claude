@@ -1,12 +1,22 @@
 # GitHub Stack Interoperability
 
 This optional operator map adapts the non-interactive workflows from the pinned
-[`github/gh-stack` contract](https://github.com/github/gh-stack/blob/8c9c8331309529e2114d4c34e77f4edea543f9fa/skills/gh-stack/SKILL.md).
-Load it when `gh stack --help` succeeds and the user asks for GitHub Stack
-grouping or an existing PR chain is already grouped there.
+[`github/gh-stack` contract](https://github.com/github/gh-stack/blob/14fc42ed9b6c376a53b2f999f138d3bd26dac546/skills/gh-stack/SKILL.md).
+Load it for the explicit `coding:pr stack` route, or when `gh stack --help`
+succeeds and the user asks for GitHub Stack grouping or an existing PR chain
+is already grouped there.
 
-The upstream contract revision is `8c9c8331309529e2114d4c34e77f4edea543f9fa`.
+The upstream contract revision is `14fc42ed9b6c376a53b2f999f138d3bd26dac546`.
 Re-check this pin before adopting a newer `gh stack` flag or behavior.
+
+## Contents
+
+- [Select the integration path](#select-the-integration-path)
+- [Discover or check out an existing stack](#discover-or-check-out-an-existing-stack)
+- [Create or extend](#create-or-extend)
+- [Update a lower layer](#update-a-lower-layer)
+- [Reorder, remove, or rename](#reorder-remove-or-rename)
+- [Non-interactive and recovery rules](#non-interactive-and-recovery-rules)
 
 <IMPORTANT>
 `gh stack` does not replace this plugin's owners. Shape or rewrite history
@@ -39,6 +49,96 @@ JSON view may be used for discovery. Local branch creation, commits, rebases,
 sync, pushes, and submission still route to the owners above; do not run
 `init`, `add`, `rebase`, `sync`, `push`, or `submit` as a shortcut around their
 validation and review loop.
+
+## Discover or check out an existing stack
+
+Both actions require authenticated GitHub CLI access:
+
+```bash
+gh auth status || exit $?
+```
+
+Stop if authentication fails. Listing requires only authenticated `gh` access
+to a repository with the Stacks API; checkout additionally requires the
+`github/gh-stack` extension.
+
+`coding:pr stack list` lists the current repository's GitHub stacks through the
+official paginated `GET /repos/{owner}/{repo}/stacks` REST endpoint. Never run
+bare `gh stack checkout`: its no-argument picker combines local and remote
+stacks and is human-only discovery because it requires a TTY. Fetch every page
+and retain JSON for agent decisions:
+
+```bash
+REPOSITORY=$(gh repo view --json nameWithOwner --jq '.nameWithOwner') || exit $?
+STACKS_JSON=$(gh api --paginate --slurp \
+  -H 'Accept: application/vnd.github+json' \
+  "repos/$REPOSITORY/stacks?per_page=100") || exit $?
+jq '[.[][] | {
+  number,
+  url,
+  base: .base.ref,
+  open,
+  pullRequests: [.pull_requests[] | {
+    number,
+    state,
+    draft,
+    mergedAt: .merged_at,
+    head: .head.ref
+  }]
+}] | sort_by(.number) | reverse' <<<"$STACKS_JSON" || exit $?
+```
+
+An empty array is a successful empty result. A nonzero `gh api` status is a
+failed discovery: preserve stderr and stop. In particular, the pinned client
+treats HTTP 404 as stacked PRs unavailable for the repository.
+
+`coding:pr stack checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>`
+requires the caller's explicit selector and a clean worktree. Bind
+`STACK_SELECTOR` to that exact selector; for the preferred selector this runs
+`gh stack checkout <stack-number>`:
+
+```bash
+gh stack --help || exit $?
+WORKTREE_STATUS=$(git status --porcelain) || exit $?
+test -z "$WORKTREE_STATUS" || {
+  echo 'refusing stack checkout: worktree has uncommitted changes' >&2
+  exit 1
+}
+REMOTE_COUNT=$(git remote | jq -Rsc 'split("\n") | map(select(length > 0)) | length') || exit $?
+if [ "$REMOTE_COUNT" -gt 1 ]; then
+  git config --get remote.pushDefault >/dev/null || {
+    echo 'refusing stack checkout: configure remote.pushDefault' >&2
+    exit 1
+  }
+fi
+gh stack checkout "$STACK_SELECTOR" || exit $?
+git branch --show-current || exit $?
+gh stack view --json || exit $?
+```
+
+If the extension check fails, stop and ask whether to install it with
+`gh extension install github/gh-stack`; do not install it implicitly.
+
+Prefer the listed stack number. Resolution tries a numeric stack number first,
+then a locally tracked PR, a GitHub PR, and finally a local-only branch; it also
+accepts a PR URL. A nonnumeric local-only branch resolves only against local
+stack tracking. A remote stack checkout fetches its PR branches, creates
+missing local branches from their remote refs, completes local tracking setup,
+and records local stack state. A stack number selects the topmost unmerged
+branch; a PR number or URL selects that PR's branch. With multiple remotes,
+require `remote.pushDefault` before checkout because this command has no
+`--remote` flag.
+
+On divergent composition between local and GitHub stacks, the extension
+prompts a human to replace local state, delete remote grouping, or cancel. An
+agent must stop and report both compositions instead of choosing. Likewise,
+stop on any nonzero exit and preserve stderr; the pinned contract assigns
+distinct failures to not being in a stack, API errors, invalid arguments,
+ambiguity, lock contention, and unavailable repository support. Exit zero
+means the command completed, but still verify the checked-out branch and
+`gh stack view --json`. A human who uses the no-argument picker may also exit
+zero after cancelling or finding no available stacks, so that mode never
+proves a checkout occurred.
 
 ## Create or extend
 

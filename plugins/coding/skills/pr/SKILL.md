@@ -1,8 +1,8 @@
 ---
 name: pr
-description: 'Use for GitHub pull-request workflows when the user asks to draft PR text, publish a branch, create or update a PR, monitor CI, review PR changes or comments, or merge a PR or linear stack. Trigger before running gh pr or publishing PR-related changes.'
+description: 'Use for GitHub pull-request workflows when the user asks to draft PR text, publish a branch, create, update, discover, check out, review, or merge a PR or linear stack. Trigger before running gh pr, inspecting GitHub stacks, or publishing PR-related changes.'
 model: opus
-argument-hint: "<author|create|update|review|merge> [arguments]"
+argument-hint: "<author|create|update|review|stack|merge> [arguments]"
 ---
 
 # Pull Requests
@@ -22,6 +22,8 @@ owned by `coding:review-code`.
 /coding:pr create [<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
 /coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
 /coding:pr review [<pr-number-or-url> | <source-tree-path>] [--repo <owner/name>] [--area=<list>] [--dry-run]
+/coding:pr stack list
+/coding:pr stack checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>
 /coding:pr merge <pr numbers...> [--method=rebase|squash|merge] [--force]
 ```
 
@@ -54,6 +56,11 @@ remote mutation.
   [references/review-loop.md](references/review-loop.md) with an explicit
   preprovisioned stack capsule is already that dedicated reviewer: it runs the
   review phase directly instead of nesting another dispatch.
+- `stack list` lists the current repository's GitHub PR stacks; `stack checkout`
+  checks out one explicitly selected stack and requires `gh stack`. Load and
+  follow [references/github-stacks.md](references/github-stacks.md#discover-or-check-out-an-existing-stack).
+  Checkout may fetch and create local tracking branches, but this route does
+  not own commits, history rewriting, pushes, or PR publication.
 - `merge` validates and merges a linear stack bottom-up. Load and follow
   [references/stacked-prs.md](references/stacked-prs.md), then
   [references/merge.md](references/merge.md).

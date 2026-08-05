@@ -343,10 +343,67 @@ def test_github_stack_bridge_preserves_plugin_ownership() -> None:
     assert "Do not trust exit status alone" in github_stacks
     assert "--publish-only" not in github_stacks
     assert "If linking changes any review surface" in github_stacks
-    assert "8c9c8331309529e2114d4c34e77f4edea543f9fa" in github_stacks
+    assert "14fc42ed9b6c376a53b2f999f138d3bd26dac546" in github_stacks
     assert "`gh stack link --open` marks new and" in github_stacks
     assert "head branch name of every open stacked PR" in github_stacks
     assert "close-and-recreate migration" in github_stacks
+
+
+def test_pr_router_exposes_explicit_github_stack_discovery_and_checkout() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
+
+    assert "/coding:pr stack list" in router
+    assert (
+        "/coding:pr stack checkout "
+        "<stack-number-or-pr-number-or-pr-url-or-local-branch>"
+    ) in router
+    assert "references/github-stacks.md" in router
+
+
+def test_github_stack_checkout_is_deterministic_and_safe() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+
+    assert 'GET /repos/{owner}/{repo}/stacks' in github_stacks
+    assert "paginated" in github_stacks
+    assert "`gh stack checkout <stack-number>`" in github_stacks
+    assert "bare `gh stack checkout`" in github_stacks
+    assert "human-only discovery" in github_stacks
+    assert "numeric stack number first" in github_stacks
+    assert "PR URL" in github_stacks
+    assert "local-only branch" in github_stacks
+    assert "clean worktree" in github_stacks
+    assert "fetch" in github_stacks
+    assert "setup" in github_stacks
+    assert "divergent composition" in github_stacks
+    assert "stop and report" in github_stacks
+    assert "multiple remotes" in github_stacks
+
+
+def test_github_stack_snippets_stop_before_consuming_failed_commands() -> None:
+    github_stacks = (WRITE_PR / "references" / "github-stacks.md").read_text()
+    discovery = github_stacks.split("Fetch every page", 1)[1].split("```bash", 1)[1]
+    discovery = discovery.split("```", 1)[0]
+    checkout = github_stacks.split("for the preferred selector", 1)[1]
+    checkout = checkout.split("```bash", 1)[1].split("```", 1)[0]
+
+    assert "mktemp" not in discovery
+    assert "trap " not in discovery
+    assert "rm " not in discovery
+    assert discovery.count("\njq ") == 1
+    repo_command = discovery.index("REPOSITORY=$(gh repo view")
+    repo_guard = discovery.index(") || exit $?", repo_command)
+    api_command = discovery.index("STACKS_JSON=$(gh api --paginate --slurp")
+    api_guard = discovery.index(") || exit $?", api_command)
+    parsing = discovery.index("jq '[.[][]")
+    parsing_guard = discovery.index('<<<"$STACKS_JSON" || exit $?', parsing)
+    assert repo_command < repo_guard < api_command < api_guard < parsing < parsing_guard
+
+    checkout_command = checkout.index(
+        'gh stack checkout "$STACK_SELECTOR" || exit $?'
+    )
+    branch_verification = checkout.index("git branch --show-current || exit $?")
+    stack_verification = checkout.index("gh stack view --json || exit $?")
+    assert checkout_command < branch_verification < stack_verification
 
 
 def test_review_resolves_canonical_coordinates_before_api_calls() -> None:
