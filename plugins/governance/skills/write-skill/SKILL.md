@@ -33,20 +33,9 @@ functional and trigger evaluation.
 ## Shared policy
 
 Follow the [authoring invariants](../../constitution/references/authoring-invariants.md)
-for all three actions. Author the shared `skills/<name>/SKILL.md` and its
-supporting files to the harness-neutral Agent Skills contract; put
-product-specific locations, invocation syntax, controls, metadata, and
-validation in the applicable harness branch. Load
-[references/harnesses.md](references/harnesses.md) whenever discovery,
-invocation, packaging, or portability is in scope.
-
-The portable core is a directory whose required `SKILL.md` has a `name` that
-matches the directory and a `description` that leads with what the skill does
-and when it should activate. Keep executable workflow instructions in the body,
-always-needed behavior in `SKILL.md`, and conditional detail in directly linked
-supporting files. Both implicit matching and direct invocation are concepts
-shared by Claude Code and Codex, but their explicit invocation syntax is not
-portable and must not appear as a cross-harness promise.
+for all three actions; that file owns the portable Agent Skills contract. Load
+[references/harnesses.md](references/harnesses.md) only when a Claude Code or
+Codex difference affects invocation, execution, required tools, or validation.
 
 ## Shared thought experiment and blindspot test
 
@@ -62,14 +51,18 @@ unless an executable evaluation actually ran.
 
 ## Verification
 
+Set the shell variable `WRITE_SKILL_ROOT` to the absolute directory containing
+this loaded `SKILL.md`, using the same path from which the harness loaded the
+skill. Set `TARGET` to the skill file, skill directory, plugin directory, or
+plugins directory being checked, then run:
+
 ```bash
-claude plugin validate --strict <plugin-path>
-uv run --python 3.13 <write-skill-root>/scripts/quick_validate.py <skill-or-plugin-path>
+uv run --python 3.13 "$WRITE_SKILL_ROOT/scripts/quick_validate.py" "$TARGET"
 ```
 
-These are this marketplace's Claude schema and repository-policy checks; the
-policy script delegates schema validation to the Claude validator. Run the
-applicable cross-harness checks in [references/harnesses.md](references/harnesses.md)
+The script applies repository policy and, in its default mode, invokes Claude's
+validator when it resolves a containing Claude plugin. Run the applicable
+portable and Codex checks in [references/harnesses.md](references/harnesses.md)
 after every fix iteration. When a check fails, change only the reported cause
 and re-run that check; loop fix and re-verify at most 3 times, then report
 partial completion with the remaining issues.

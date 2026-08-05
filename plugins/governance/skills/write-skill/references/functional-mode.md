@@ -50,7 +50,7 @@ skill invocation or runtime output in any harness.
 Run executable cases only when `runtime: true`. Name the harness, use one fresh
 session per prompt, and load only the affected plugin. Avoid explicit invocation
 for trigger checks because Claude Code's `/skill-name`, Codex's `$skill-name`,
-and ChatGPT's `@skill-name` select a skill directly instead of exercising
+and direct invocation in either harness selects a skill instead of exercising
 implicit discovery.
 
 For Claude Code trigger-only checks, a suitable starting command is:

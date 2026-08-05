@@ -1,98 +1,43 @@
-# Cross-harness Agent Skills
+# Claude Code and Codex compatibility
 
-Load this reference when an action chooses skill locations, invocation,
-frontmatter extensions, plugin packaging, or validation for Claude Code,
-ChatGPT, or Codex. The Agent Skills specification is the portable source;
-harness documentation owns product behavior.
+Load this reference only when a Claude Code or Codex difference affects a
+skill's invocation, execution, required tools, or validation. The
+[authoring invariants](../../../constitution/references/authoring-invariants.md)
+own the shared Agent Skills contract.
 
-## Portable core
+## Behavior-affecting differences
 
-A portable skill is one directory containing a required `SKILL.md` and optional
-`references/`, `scripts/`, and `assets/`. Require `name` and `description`, make
-`name` match the parent directory, and put the owned outcome and activation
-conditions first in `description`. Harnesses discover from metadata and load the
-body after activation, so keep always-needed procedure in `SKILL.md` and link
-supporting files at the point they become relevant.
+- Claude Code invokes a skill explicitly as `/skill-name`; Codex uses
+  `$skill-name`. Do not present either syntax as portable or use explicit
+  invocation as evidence of implicit discovery.
+- Claude Code path variables and frontmatter controls have no portable meaning.
+  Apply the shared-source placement and fallback rules in the
+  [authoring invariants](../../../constitution/references/authoring-invariants.md);
+  keep harness-only metadata in that single shared file under those rules.
+- Resolve shared supporting files relative to the loaded skill directory. When
+  a command needs an absolute path, set a variable from the path used to load
+  that skill's `SKILL.md`; do not depend on a fixed root or current working
+  directory.
+- Do not translate a Claude-only control or runtime command into a Codex
+  equivalent by analogy. Use only behavior documented by the target harness.
 
-Write body instructions in terms of outcomes, inputs, tools, and files available
-in every target harness. Use relative supporting-file references from the skill
-root. Keep explicit invocation syntax, product path variables, namespaces, and
-control fields out of the portable behavior. The Agent Skills specification
-lists `allowed-tools` as experimental with implementation-dependent support.
+## Validation
 
-Both supported harnesses can select a skill from metadata or by explicit user
-invocation. That concept is portable; the syntax and policy controls below are
-not.
+Validate the shared skill against the Agent Skills specification. Run
+`skills-ref validate "$TARGET_SKILL_DIR"` when `skills-ref` is available, with
+`TARGET_SKILL_DIR` resolved to the directory containing the target `SKILL.md`;
+otherwise record the specification checks performed and that no standard
+validator ran.
 
-## Claude Code
-
-- Locations are managed enterprise skills, personal
-  `~/.claude/skills/<name>/SKILL.md`, project
-  `.claude/skills/<name>/SKILL.md`, and `<plugin>/skills/<name>/SKILL.md` while
-  that plugin is enabled. Plugin skills use a plugin namespace.
-- Explicit invocation uses Claude Code's `/skill-name` or namespaced plugin
-  form. Do not present slash syntax as portable to Codex or ChatGPT.
-- `${CLAUDE_SKILL_DIR}` and fields such as `context`,
-  `disable-model-invocation`, `user-invocable`, `allowed-tools`, and `paths`
-  have Claude-documented behavior. Keep them in a Claude branch and provide a
-  portable fallback whenever the skill also targets Codex.
-- Run `claude plugin validate --strict <plugin-path>` for Claude manifests and
-  frontmatter. This marketplace's `quick_validate.py` invokes that validator in
-  its default mode and then applies repository policy checks.
-
-## Codex and ChatGPT
-
-- Codex loads repository skills from `.agents/skills` from the current working
-  directory through the repository root, user skills from `~/.agents/skills`,
-  admin skills from `/etc/codex/skills`, and bundled system skills. Codex
-  plugins expose shared skills through their `.codex-plugin/plugin.json`.
-- Explicit invocation is `@skill-name` in ChatGPT and `$skill-name` in Codex.
-  Neither form is a portable body-level contract.
-- Optional OpenAI agent metadata at agents/openai.yaml configures interface, tool
-  dependencies, and policy. `policy.allow_implicit_invocation: false` disables
-  implicit selection while preserving explicit `$skill-name` use in Codex. Do
-  not map Claude-only frontmatter controls onto this file by analogy.
-- Validate the Agent Skills core against the current specification. If the
-  target environment already provides a documented standard validator, run it
-  and record the exact command; otherwise perform the reference checks and say
-  no standard validator ran. Do not invent a `codex plugin validate` command.
-
-## This marketplace
-
-Keep one shared skill source at `plugins/<plugin>/skills/<name>/SKILL.md`.
-Claude and Codex packaging are thin projections: each plugin has
-`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`; the authoritative
-catalog is `.claude-plugin/marketplace.json`, and
-`.agents/plugins/marketplace.json` is its generated Codex projection. Change a
-manifest or catalog only when packaging changes, not for a body-only skill edit.
-
-When the source catalog changes, regenerate and check the projection with:
-
-```bash
-uv run --python 3.13 scripts/generate_codex_marketplace.py
-uv run --python 3.13 scripts/generate_codex_marketplace.py --check
-```
-
-Validate the dual manifests, shared Agent Skills contract, and catalog
-projection with the repository's configured focused test:
-
-```bash
-uvx pytest scripts/test_plugin_marketplace.py
-```
-
-Run repository skill policy checks from the loaded write-skill root:
-
-```bash
-uv run --python 3.13 <write-skill-root>/scripts/quick_validate.py <target>
-```
-
-Use `--policy-only` only when Claude validation is unavailable and report the
-Claude branch as not run or blocked. A cross-harness marketplace release is not
-fully verified until both harness branches and the projection test pass.
+For Claude Code and repository policy, run the commands in
+[the write-skill verification section](../SKILL.md#verification). This
+repository defines no general Codex validator or runtime evaluator, so do not
+invent a `codex plugin validate` command. When an isolated Codex check is
+unavailable, report the unverified Codex behavior instead of substituting a
+Claude result.
 
 ## Sources
 
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Claude Code skills](https://code.claude.com/docs/en/slash-commands)
-- [OpenAI skill concepts](https://developers.openai.com/plugins/concepts/skills)
 - [OpenAI skill building](https://developers.openai.com/plugins/build/skills)

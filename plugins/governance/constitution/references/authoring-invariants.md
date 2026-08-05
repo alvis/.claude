@@ -2,8 +2,8 @@
 
 These are the shared repository rules for authoring skills and agents — the
 `write-skill` create, update, and verify actions, plus `create-agent` and
-`update-agent`. The Agent Skills specification owns the portable skill
-contract; each harness owns its extensions and manifest syntax.
+`update-agent`. This file owns the repository's portable Agent Skills contract;
+each harness owns its extensions and manifest syntax.
 
 ## Content
 
@@ -50,7 +50,7 @@ that must not be missed.
   boundary, the fence is the syntax hint).
 - Every opening tag has a matching close.
 
-## Frontmatter and discovery
+## Portable Agent Skills contract
 
 - Require the Agent Skills `name` and `description`; make `name` lowercase
   kebab-case and identical to the skill directory. Quote scalar values when
@@ -65,27 +65,28 @@ that must not be missed.
 - Treat `allowed-tools` as experimental in the Agent Skills specification;
   preserve a valid target-harness representation, but do not promise identical
   semantics elsewhere.
-- For Claude Code, omit `context` for inline execution and use `context: fork`
-  only when intentional. Other Claude controls such as
-  `disable-model-invocation`, `user-invocable`, and `paths` remain Claude-only
-  unless another target harness independently documents them.
+- A Claude Code and Codex skill has one shared `SKILL.md`, not harness-specific
+  branches. Omit `context` for inline execution and use `context: fork` only
+  when intentional. Add Claude-only controls such as
+  `disable-model-invocation`, `user-invocable`, and `paths` to the shared
+  frontmatter only when their effect is optional in Codex and an isolated Codex
+  check accepts the file; otherwise omit them. Never make portable correctness
+  depend on a Claude-only control.
 
 ## Validation
 
 1. Check the portable skill against the Agent Skills specification. Use a
    standard validator only when it is documented and available; otherwise
    record the reference checks performed.
-2. Run `claude plugin validate --strict <plugin-path>` for Claude schema
-   correctness when the target includes Claude Code.
+2. When the target includes Claude Code, run
+   `claude plugin validate --strict <plugin-path>` after resolving
+   `<plugin-path>` to the nearest ancestor of the target skill that contains
+   `.claude-plugin/plugin.json`.
 3. Run `quick_validate.py` for repository policies such as body length,
    placeholders, description budget, and unresolved local Markdown links. Its
    default mode delegates schema validation to Claude; use `--policy-only` only
    when that branch is unavailable and report the omission.
-4. For this marketplace's Codex target, validate the `.codex-plugin` manifest
-   and the `.agents/plugins/marketplace.json` projection with the repository's
-   configured tests; do not claim a Codex validator the repository does not
-   provide.
-5. Reason through representative positive and near-miss prompts when behavior
+4. Reason through representative positive and near-miss prompts when behavior
    or trigger ownership changed. This is a paper-only thought experiment and
    blindspot test unless an executable evaluation runs; do not report runtime
    behavior as exercised from paper reasoning alone. Any
