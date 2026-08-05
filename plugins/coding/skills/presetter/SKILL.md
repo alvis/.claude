@@ -5,80 +5,92 @@ description: "Configure repositories with Presetter: adopt stacks, preserve over
 
 # Presetter
 
-Manage checked-in Presetter source and generated consumer outputs from target-local ownership and version evidence.
+Use Presetter to control a TypeScript project's toolchain with one explicit
+preset stack. Declare the stack in `presetter.config.ts`; `presetter bootstrap`
+resolves it and materializes the tool configs and package scripts the project uses.
 
-## Workflow
+## Build a working consumer setup
 
-1. Establish the target and its owner.
+1. Choose the outcome and exact target.
 
-   - Search the whole repository, including nested packages and ignored local
-     paths, for `presetter.config.ts`; exclude dependency and vendor trees.
-   - Resolve the repository root, workspace root, and exact package. Determine
-     whether that target has a local config or is reached through a root or
-     ancestor config. An unrelated config elsewhere does not establish
-     ownership for this target.
-2. Establish evidence before editing.
+   - Name the intended result: adoption, a capability or override, monorepo
+     targeting, a custom preset, migration, regeneration, or diagnosis.
+   - Search the repository, including nested packages and ignored local paths,
+     for `presetter.config.ts`; exclude dependency and vendor trees. Resolve the
+     repository root, workspace root, exact package, and every root or package
+     config that composes into it. A config elsewhere does not own the target.
+
+2. Inspect the consumer without changing it.
 
    - Detect the package manager from repository declarations, lockfiles, and
      workspace metadata. Read the root and target package manifests, scripts,
-     dependencies, existing config, and generated-file policy.
-   - Establish version evidence from manifest constraints, lockfile resolution,
-     and already-installed package metadata. Treat a proven-read-only local CLI
-     version as optional corroboration; resolve disagreement before using an API
-     or command, and report unavailable evidence instead of probing.
-   - Read the target's complete config chain and installed release's types,
-     exports, and bundled documentation. Load [mechanics.md](references/mechanics.md)
-     only for composition, custom preset, monorepo targeting, migration, or diagnosis.
-
-3. Change the source of truth.
-
-   - Keep `presetter.config.ts`, custom preset package source, and deliberate
-     local overrides under version control. Preserve composition order and
-     existing behavior unless the requested change owns the difference.
-   - For adoption or migration, record the existing scripts/config and choose
-     a compatible preset stack before installing packages with the detected
-     manager. Use the installed CLI's documented adoption command when adding
-     Presetter; otherwise edit the owning source directly.
-   - For an existing setup, change the owning config or preset source, not an
-     ignored generated output. Select the narrowest explicit project or package
-     scope supported by the installed CLI.
+     Presetter dependencies, existing configs, and generated-file policy.
+   - Use the v9 model: install the `presetter` CLI with scoped
+     `@presetter/preset-*` packages, import `preset()` from `presetter`, and use
+     `bootstrap` to resolve the stack, generate assets, and merge preset scripts.
+     Local `package.json` scripts take priority.
+   - Identify migration inputs from legacy package names, imports, script names,
+     and generated config behavior. Use the v9 recipe; do not probe alternate
+     CLI flows.
 
 <IMPORTANT>
-Classify every affected file as checked-in preset source, repository-owned
-local configuration, or generated output before changing it. Use repository
-policy plus `git ls-files`, `git check-ignore -v`, status, and diff evidence.
-Never hand-edit ignored output, delete a tracked local config to make a preset
-fit, edit a lockfile by hand, or run `unset` or broad cleanup without explicit
-authorization. Keep inspection non-mutating: never use a package runner to
-discover a version or run anything that may install, invoke lifecycle hooks,
-bootstrap, or regenerate. Invoke an already-present local binary only after its
-resolution and requested operation are proven read-only. Obtain user
-authorization for the exact command and target before mutation.
+Keep inspection read-only. Do not run a package-manager or CLI command that may
+install packages, invoke lifecycle hooks, bootstrap, or regenerate until the
+user authorizes the exact command and target.
+
+Keep the readable preset stack, custom preset code, and deliberate local
+overrides as durable inputs. Treat bootstrap-created wrappers as generated
+results and keep them ignored when repository policy does. Use `git ls-files`,
+`git check-ignore -v`, status, and diff evidence before touching a conflicting
+path. Never manually edit ignored generated output or lockfiles. An authorized
+dependency change may let the detected package manager update its lockfile as a
+durable result. Never delete tracked local configuration to make a preset fit or
+perform broad cleanup without explicit authorization.
 </IMPORTANT>
 
-4. Regenerate and inspect the bounded result.
+3. Resolve ownership before generating configuration.
 
-   - Invoke the resolved local Presetter binary through the detected package manager,
-     using the installed release's `bootstrap` command and target selectors.
-     Review selected targets, asset/script output, errors, and the resulting
-     status/diff before accepting changes.
-   - If a generated path is tracked, verify the repository expects that output
-     to be checked in. If it is ignored, verify the source change and successful
-     generation instead of adding the output.
+   - If the work would generate tool config files for the exact TypeScript
+     target and its resolved config chain has no `presetter.config.ts`, ask:
+     "Should Presetter own these generated config files?"
+   - On yes, use the adoption recipe. On no, make no Presetter mutation and hand
+     configuration generation back to its generic owner.
+   - Do not ask for source-only work or when an existing config chain already
+     owns the target.
 
-5. Verify the consumer.
+4. Follow the recipe that matches the outcome.
 
-   - Run the affected package's existing build, lint, type-check, and test
-     scripts through its package manager, plus required workspace consumers.
-     Run custom-preset tests and a representative consumer bootstrap when
-     authoring a preset.
-   - On failure, trace the target, owner chain, installed version, composition,
-     conditional asset, local override, dependency resolution, and generated
-     policy before changing the earliest authoritative cause. Re-bootstrap the
-     same bounded scope and repeat the failed check.
+   - Load only the relevant recipe from
+     [mechanics.md](references/mechanics.md): adopt Presetter, compose presets
+     and overrides, target a monorepo, author a custom preset, migrate to v9,
+     regenerate after a stack change, or troubleshoot bootstrap.
+   - Start new TypeScript projects with `@presetter/preset-essentials`, then add
+     only the runtime, framework, module, or quality presets the project needs.
+     Re-export one preset directly; use `preset()` when composing or overriding.
+   - Keep shared behavior in the preset stack and project-only differences in
+     narrow variables, scripts, asset transforms, or `override` entries.
+
+5. Bootstrap the smallest useful scope.
+
+   - After authorization, install or update packages with the detected manager.
+     Invoke the resolved local `presetter bootstrap` through the repository's
+     bootstrap script when available; select exact package paths with
+     `--projects` or package names with `--packages` instead of bootstrapping an
+     unrelated workspace.
+   - Review selected targets, generated assets, merged scripts, aggregated
+     errors, status, and diff. If the result is wrong, use the troubleshooting
+     recipe before widening the scope.
+
+6. Prove the toolchain works.
+
+   - Run the affected package's existing build, lint, typecheck, and test scripts
+     through its package manager, plus required workspace consumers.
+   - For a custom preset, also run its focused tests and bootstrap a representative
+     consumer. On failure, change the earliest preset, override, dependency, or
+     selector that explains the evidence; bootstrap the same target and retry.
 
 <report>
-Return the target and scope, package manager, installed-version evidence,
-owner/source-versus-output decision, bootstrap result, checks run, and any
-unresolved ownership or compatibility issue.
+Return the target and desired setup, chosen preset stack and local differences,
+safe local-package evidence, bootstrap scope and result, consumer checks, and
+any unresolved conflict or migration decision.
 </report>
