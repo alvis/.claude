@@ -1,100 +1,139 @@
-# Presetter consumer recipes
+# Presetter mechanics
 
-Load only the recipe matching the requested outcome.
+Use this reference as the authority for reasoning about a consumer. Task recipes may
+apply these rules but must not redefine them.
 
-## Adopt Presetter
+## Contents
 
-1. Record the project's working build, lint, typecheck, test, scripts, and
-   deliberate tool customizations as the comparison baseline.
-2. Install `presetter` and at least one `@presetter/preset-*` package as
-   development dependencies with the repository's package manager. Start a
-   general TypeScript project with `@presetter/preset-essentials`; add only the
-   runtime, framework, module, or quality presets it needs.
-3. Write `presetter.config.ts`. Re-export the single preset when it is the whole
-   stack; otherwise import `preset` from `presetter` and list the selected
-   presets in `extends` from foundation to specialization.
-4. Add `"bootstrap": "presetter bootstrap"` and the standalone task delegates
-   the project needs, such as `"build": "run build"` and
-   `"lint": "run lint --"`, to `package.json`. Preserve intentional local
-   scripts; they override preset scripts with the same name.
-5. Run the bootstrap script with the detected package manager. Inspect the
-   materialized tool configs and merged scripts, then run the baseline checks.
-   Express intentional differences in the stack instead of copying generated
-   wrappers.
+- [Exact-target config lookup](#exact-target-config-lookup)
+- [Preset graph and two-pass resolution](#preset-graph-and-two-pass-resolution)
+- [Bootstrap writes assets](#bootstrap-writes-assets)
+- [Runtime script composition](#runtime-script-composition)
+- [Durable and generated state](#durable-and-generated-state)
 
-## Compose presets and overrides
+## Exact-target config lookup
 
-1. Import `preset` from `presetter`; place the foundation first in `extends`,
-   followed by runtime, framework, and quality capabilities in intentional
-   order.
-2. Put ordinary project settings in `variables` and additional commands in
-   `scripts`. Keep package-local scripts when they intentionally override a
-   preset script; local `package.json` scripts take priority.
-3. Put inherited changes in `override`. Deep-merge object assets, use a
-   current-value function when preserving upstream arrays or executable config,
-   and set an asset to `null` when the stack must stop generating it.
-4. Bootstrap the exact target and verify that each capability contributes the
-   expected scripts, dependencies, and tool configuration.
+Given a target package root, Presetter checks that directory for
+`presetter.config.mts`, `.ts`, `.mjs`, then `.js`. It searches upward through package
+boundaries to the repository root, but loads only the first path found. Therefore:
 
-## Target a monorepo
+- the closest config owns the target;
+- a root config can own packages that have no closer config;
+- finding multiple configs does not make an implicit chain;
+- a closer config composes an ancestor only by importing, re-exporting, or listing it
+  in `extends`.
 
-1. Use `@presetter/preset-monorepo` for the workspace baseline. Resolve the root
-   config and each package config that extends or specializes it.
-2. Select project-directory globs with `presetter bootstrap --projects` or
-   package-name globs with `presetter bootstrap --packages`. Use `!` exclusions
-   only to subtract from an explicit positive selection.
-3. Confirm every selected package before accepting the run. Bootstrap the
-   narrowest useful set and inspect all aggregated package failures.
-4. Run package checks plus workspace consumers affected by shared scripts,
-   project references, or generated test configuration.
+```typescript
+// packages/api/presetter.config.ts
+import root from '../../presetter.config';
+import node from '@presetter/preset-node';
+import { preset } from 'presetter';
 
-## Author a custom preset
+export default preset('@acme/api', {
+  extends: [root, node],
+});
+```
 
-1. Create a package that exposes typed preset code and checked-in templates.
-   Use `@presetter/types` for `PresetGenerator`, `ProjectContext`, and asset
-   types; declare `presetter` compatibility and the tools the preset requires.
-2. Return reusable `variables`, `scripts`, and `assets`. Use project context
-   only for real package differences, merge current content when augmenting a
-   file, and keep options small enough to preserve a recognizable convention.
-3. Test default, option, conditional, and merge paths. Build the package and
-   bootstrap it in a representative consumer; verify the resulting scripts and
-   tool configs, not only the generator's return value.
+Without the `root` import and `extends` entry, this package stands alone. This is why
+ownership is resolved from the exact target before deciding whether to adopt or edit.
 
-## Migrate to v9
+## Preset graph and two-pass resolution
 
-1. Preserve a working baseline and inventory existing Presetter dependencies,
-   imports, script delegates, local overrides, and generated config behavior.
-2. Rename legacy `presetter-preset-*` packages to `@presetter/preset-*`, rename
-   `presetter-types` to `@presetter/types`, and import consumer `preset()` from
-   `presetter`. Update dependencies with the detected package manager.
-3. Adopt v9 script names such as `test:coverage` and `test:watch`; account for
-   the TypeScript 6 baseline, strict defaults, and `noUncheckedIndexedAccess`
-   before weakening a rule in an override.
-4. Bootstrap only the migrated targets, compare generated assets and scripts
-   with the baseline, then run typecheck, lint, test, and build.
+`preset()` gives a definition an ID. `extends` builds an explicit graph. Presetter
+resolves each `variables`, `scripts`, and asset value twice:
 
-## Regenerate after a stack change
+1. The initial pass walks extended presets from left to right, merges each child graph,
+   then applies the current definition.
+2. The final pass starts with the complete initial value and walks the same graph in
+   the same order, applying every `override`; the owning definition's override is last.
 
-1. Confirm the edited stack, affected packages, and authorized scope. Invoke
-   the resolved local binary through the repository's bootstrap script.
-2. Use `--projects` or `--packages` to constrain monorepo regeneration. Review
-   selected targets, each generated asset, merged scripts, and aggregated errors.
-3. Keep generated wrappers ignored when repository policy expects that. If a
-   tracked local file occupies a generated path, preserve it until the stack or
-   override explicitly resolves the ownership conflict.
+For ordinary content, plain objects deep-merge, arrays extend according to Presetter's
+merge rules, and a defined primitive or `null` replaces the current value. A content
+function receives `(current, context)` and owns the returned value, so preserve
+upstream content explicitly when that is intended.
 
-## Troubleshoot a failed or surprising bootstrap
+```typescript
+import { asset, merge, preset } from 'presetter';
 
-1. Reproduce one explicit target and retain its selected package, asset log,
-   error, status, and diff.
-2. Trace the selected target, owning config chain, `extends` order, variables,
-   scripts, asset conditions, override pass, local file, dependency resolution,
-   and ignore policy in that order.
-3. For missing output, check whether the target matched, an asset was set to
-   `null` or made conditional, a local file won, or the wrapper is ignored. For
-   conflicts, check duplicate asset owners and merge-versus-replacement logic.
-4. Check old unscoped imports and old script names during migration. Preset
-   binaries enter composed script paths, but dynamically imported libraries may
-   still require a direct consumer dependency.
-5. Change the earliest stack, override, dependency, or selector that explains
-   the evidence; bootstrap the same target and repeat its failed consumer check.
+export default preset('consumer', {
+  extends: [foundation, capability],
+  override: {
+    assets: {
+      '.gitignore': asset<string[]>((current) => [
+        ...(current ?? []),
+        '/generated-client',
+      ]),
+      'tsconfig.json': asset((current) =>
+        merge(current, {
+          compilerOptions: { noEmit: true },
+        }),
+      ),
+      'vitest.config.ts': null,
+    },
+  },
+});
+```
+
+Use `override` for changes that must see the fully composed initial value. Use `null`
+to remove an inherited asset from the output set; bootstrap logs it as skipped.
+
+## Bootstrap writes assets
+
+`presetter bootstrap` resolves the target context, loads the closest config, resolves
+the graph and variables, computes every asset, serializes it by extension, creates
+parent directories, and writes each non-null asset to the target root. The write is an
+overwrite; bootstrap does not merge with an existing file on disk. Merge behavior
+happens in memory from preset definitions and content functions before the write.
+
+Consequences:
+
+- represent edits in a config, preset template, or override, never in generated output;
+- inspect tracked files before the first bootstrap because a matching asset path will
+  be overwritten;
+- keep generated paths ignored and untracked;
+- expect repeated bootstrap runs to regenerate the same paths after stack changes;
+- in multi-target runs, Presetter attempts every selected project, then reports all
+  failures together and exits nonzero.
+
+## Runtime script composition
+
+Bootstrap does not write `package.json` scripts. `presetter run`, `run`, `run-s`, and
+`run-p` resolve scripts at execution time:
+
+1. Presetter resolves preset scripts through the same initial and override passes.
+2. It overlays the target package's checked-in `scripts`; a local script with the same
+   name wins as the task entry.
+3. While expanding a composed `run <task>` command, the preset template is preferred,
+   then a non-self-referential local task. This lets a delegate such as
+   `"build": "run build"` call the preset's `build` without recursing into itself.
+4. Preset package binary directories are added to `PATH` for task execution. A library
+   dynamically imported by project code may still need to be a direct dependency.
+
+Use `presetter run <task> --template` to suppress local scripts and execute the preset
+template for comparison. Arguments for the underlying task follow `--`:
+
+```bash
+pnpm exec presetter run test -- --watch
+pnpm exec presetter run build --template
+```
+
+## Durable and generated state
+
+Durable inputs are:
+
+- `presetter.config.*` and imported preset modules;
+- custom preset source and template files;
+- intentional local `package.json` delegates or overrides;
+- dependency declarations and package-manager lockfile changes.
+
+Generated outputs are every asset bootstrap writes, including tool configs and ignore
+files. They must be ignored and untracked. If a generated `.gitignore` is itself
+ignored, its durable source is the preset asset that produces it.
+
+Before changing ownership, use both index and ignore evidence:
+
+```bash
+git ls-files -- tsconfig.json eslint.config.ts vitest.config.ts
+git check-ignore -v tsconfig.json eslint.config.ts vitest.config.ts
+git status --short
+```
