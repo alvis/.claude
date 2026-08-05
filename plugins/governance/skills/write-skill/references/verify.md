@@ -14,9 +14,9 @@ verification commands live in `SKILL.md`.
   evolving Claude schema. Its default run delegates schema validation to
   Claude; `--policy-only` is the bounded path when that validator is not
   available.
-- Codex validation uses the documented Agent Skills contract and this
-  marketplace's Codex manifest/projection checks. Do not invent a `codex plugin
-  validate` command or infer Codex support from a Claude-only field.
+- Codex validation uses the documented Agent Skills contract and applicable
+  documented Codex behavior. Do not invent a `codex plugin validate` command
+  or infer Codex support from a Claude-only field.
 - Functional and trigger checks are required when behavior or discovery changed,
   not for a wording-only edit with unchanged meaning.
 
@@ -34,9 +34,8 @@ verification commands live in `SKILL.md`.
 
 1. Resolve the target and enumerate affected skills and plugin roots.
 2. Validate the portable core and load [harnesses.md](harnesses.md). Run only
-   the branches for the target harnesses; a marketplace release that projects
-   to both harnesses requires both branches. Report unavailable commands as not
-   run or blocked rather than substituting a private validator.
+   the applicable checks for the target harnesses. Report unavailable commands
+   as not run or blocked rather than substituting a private validator.
 3. Run `<write-skill-root>/scripts/quick_validate.py` on the target. Review body
    length, description budget, unresolved local references, and placeholders.
    Use `--policy-only` only when Claude validation is not part of the available
@@ -65,8 +64,7 @@ observed outcome, and pass/fail rationale.
 
 ## Completion
 
-Return a concise per-skill verdict with Agent Skills, Claude, Codex, and
-marketplace-projection statuses as applicable; policy issues; transient
-functional/trigger evidence when applicable; runtime status (`exercised`, `not
-requested`, or `blocked`); scratch cleanup confirmation; and actionable
-failures.
+Return a concise per-skill verdict with Agent Skills, Claude, and Codex statuses
+as applicable; policy issues; transient functional/trigger evidence when
+applicable; runtime status (`exercised`, `not requested`, or `blocked`); scratch
+cleanup confirmation; and actionable failures.
