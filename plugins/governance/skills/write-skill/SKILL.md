@@ -1,6 +1,6 @@
 ---
 name: write-skill
-description: "Use when authoring, revising, or validating a Claude Code skill through its create, update, and verify actions: define a new reusable capability, align existing skills with repository policy, or check structural, trigger, and behavior compliance before deployment. Invoke as write-skill create, update, or verify."
+description: "Use when authoring, revising, or validating an Agent Skill for Claude Code, Codex, or both through its create, update, and verify actions: define a reusable capability, align existing skills with repository policy, or check structure, triggers, portability, and behavior before deployment."
 model: opus
 context: fork
 argument-hint: "<create|update|verify> [target] [--changes=...] [--mode=...] [--runtime]"
@@ -8,7 +8,7 @@ argument-hint: "<create|update|verify> [target] [--changes=...] [--mode=...] [--
 
 # Write Skill
 
-Author, revise, and validate Claude Code skills. One skill, three actions:
+Author, revise, and validate Agent Skills. One skill, three actions:
 `create` a new skill, `update` one or more existing skills, or `verify` a
 skill's structural, policy, and trigger compliance. The first argument selects
 the action; route to its reference below and follow that workflow.
@@ -32,11 +32,21 @@ functional and trigger evaluation.
 
 ## Shared policy
 
-Follow
-`${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md` for
-all three actions. Claude Code's validator remains authoritative for manifest
-and frontmatter schema; repository policy checks never duplicate the evolving
-Claude schema.
+Follow the [authoring invariants](../../constitution/references/authoring-invariants.md)
+for all three actions. Author the shared `skills/<name>/SKILL.md` and its
+supporting files to the harness-neutral Agent Skills contract; put
+product-specific locations, invocation syntax, controls, metadata, and
+validation in the applicable harness branch. Load
+[references/harnesses.md](references/harnesses.md) whenever discovery,
+invocation, packaging, or portability is in scope.
+
+The portable core is a directory whose required `SKILL.md` has a `name` that
+matches the directory and a `description` that leads with what the skill does
+and when it should activate. Keep executable workflow instructions in the body,
+always-needed behavior in `SKILL.md`, and conditional detail in directly linked
+supporting files. Both implicit matching and direct invocation are concepts
+shared by Claude Code and Codex, but their explicit invocation syntax is not
+portable and must not appear as a cross-harness promise.
 
 ## Shared thought experiment and blindspot test
 
@@ -44,7 +54,7 @@ Whenever an action changes a trigger or behavior, conduct a paper-only thought
 experiment and blindspot test over positive and near-miss prompts before and
 after the change. If written notes help, keep them as a temporary Markdown
 scratch document in an OS temp folder (for example `${TMPDIR:-/tmp}/check.md`)
-using `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the table
+using the [check template](../../constitution/references/check.md) as the table
 format with `:white_check_mark:`/`:x:` status markers. Delete the scratch
 document before staging; these notes are reasoning aids, not deliverables, and
 must not be committed. Do not claim runtime trigger behavior was exercised
@@ -54,12 +64,15 @@ unless an executable evaluation actually ran.
 
 ```bash
 claude plugin validate --strict <plugin-path>
-python3 "${CLAUDE_SKILL_DIR}/scripts/quick_validate.py" <skill-or-plugin-path>
+uv run --python 3.13 <write-skill-root>/scripts/quick_validate.py <skill-or-plugin-path>
 ```
 
-Run both commands after every fix iteration. When a check fails, change only
-the reported cause and re-run that check; loop fix and re-verify at most 3
-times, then report partial completion with the remaining issues.
+These are this marketplace's Claude schema and repository-policy checks; the
+policy script delegates schema validation to the Claude validator. Run the
+applicable cross-harness checks in [references/harnesses.md](references/harnesses.md)
+after every fix iteration. When a check fails, change only the reported cause
+and re-run that check; loop fix and re-verify at most 3 times, then report
+partial completion with the remaining issues.
 
 ## Completion
 

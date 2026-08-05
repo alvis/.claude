@@ -6,9 +6,17 @@ verification commands live in `SKILL.md`.
 
 ## Boundaries
 
-- Claude Code's validator owns manifest and frontmatter schema correctness.
+- The Agent Skills specification owns the portable directory, required
+  frontmatter, and supporting-file contract.
+- Claude Code's validator owns Claude manifest and frontmatter schema
+  correctness only.
 - `quick_validate.py` owns repository policies only; it must not duplicate the
-  evolving Claude schema.
+  evolving Claude schema. Its default run delegates schema validation to
+  Claude; `--policy-only` is the bounded path when that validator is not
+  available.
+- Codex validation uses the documented Agent Skills contract and this
+  marketplace's Codex manifest/projection checks. Do not invent a `codex plugin
+  validate` command or infer Codex support from a Claude-only field.
 - Functional and trigger checks are required when behavior or discovery changed,
   not for a wording-only edit with unchanged meaning.
 
@@ -25,12 +33,14 @@ verification commands live in `SKILL.md`.
 ## Workflow
 
 1. Resolve the target and enumerate affected skills and plugin roots.
-2. Resolve each affected plugin root from the target path, then run official
-   strict validation for every affected plugin. Report Claude's errors verbatim
-   enough to identify their source; do not reinterpret valid fields through a
-   private schema.
-3. Run `${CLAUDE_SKILL_DIR}/scripts/quick_validate.py` on the target. Review body
+2. Validate the portable core and load [harnesses.md](harnesses.md). Run only
+   the branches for the target harnesses; a marketplace release that projects
+   to both harnesses requires both branches. Report unavailable commands as not
+   run or blocked rather than substituting a private validator.
+3. Run `<write-skill-root>/scripts/quick_validate.py` on the target. Review body
    length, description budget, unresolved local references, and placeholders.
+   Use `--policy-only` only when Claude validation is not part of the available
+   target environment, and report that omission.
 4. For functional or full mode, derive a transient representative-case matrix
    from the owned outcome and any caller-supplied prompts. Keep it in context or
    a temporary Markdown scratch file in the OS temp folder (for example
@@ -43,8 +53,9 @@ verification commands live in `SKILL.md`.
 6. Aggregate evidence by skill and delete any temporary scratch file. When fixes
    are requested, change only reported causes and rerun the failed checks.
 
-The validator does not require fixed headings, personas, diagrams, subagent
-prompts, XML report envelopes, or a section literally named "Skill Completion."
+No harness-neutral validator requires fixed headings, personas, diagrams,
+subagent prompts, XML report envelopes, or a section literally named "Skill
+Completion."
 
 ## Verification
 
@@ -54,7 +65,8 @@ observed outcome, and pass/fail rationale.
 
 ## Completion
 
-Return a concise per-skill verdict with official validation status, policy
-issues, transient functional/trigger evidence when applicable, runtime status
-(`exercised`, `not requested`, or `blocked`), scratch cleanup confirmation, and
-actionable failures.
+Return a concise per-skill verdict with Agent Skills, Claude, Codex, and
+marketplace-projection statuses as applicable; policy issues; transient
+functional/trigger evidence when applicable; runtime status (`exercised`, `not
+requested`, or `blocked`); scratch cleanup confirmation; and actionable
+failures.

@@ -4,9 +4,6 @@ Loaded by `SKILL.md` when the first argument is `update`. Revise one or more
 existing skills; the shared policy, thought-experiment/blindspot test, and
 verification commands live in `SKILL.md`.
 
-Recommended tools for this action: `Bash, Agent, Read, Glob, Edit, MultiEdit,
-TodoWrite`.
-
 ## Boundaries
 
 - Update existing skill behavior and documentation; use the `create` action
@@ -29,9 +26,11 @@ concise aid, not a migration target whose headings must be copied.
 1. Resolve the selector and list exact targets. Reject ambiguity before edits.
 2. Read each target completely, including directly referenced files and real
    cross-skill invocations.
-3. Define current ownership and the requested end state. Run the shared
-   thought-experiment and blindspot test (see `SKILL.md`) over positive and
-   near-miss cases for changed triggers or behavior.
+3. When discovery, invocation, packaging, or harness support changes, load
+   [harnesses.md](harnesses.md) and separate the portable core from each
+   harness extension. Define current ownership and the requested end state.
+   Run the shared thought-experiment and blindspot test (see `SKILL.md`) over
+   positive and near-miss cases for changed triggers or behavior.
 4. Capture a failing baseline for testable behavior when a deterministic check
    exists, then rewrite the existing document coherently. Remove superseded
    instructions and stale references.

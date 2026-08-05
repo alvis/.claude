@@ -43,14 +43,17 @@ the target workflow and verification contract. A reasoned pass requires:
 
 Fix a discovered blindspot in the owning instruction, rerun the affected cases,
 and bound the loop to two iterations. Paper reasoning does not establish actual
-Claude skill invocation or runtime output.
+skill invocation or runtime output in any harness.
 
 ## Optionally exercise isolated runtime prompts
 
-Run executable cases only when `runtime: true`. Use one fresh session per
-prompt, load only the affected plugin, and avoid explicit `/skill-name`
-invocation because it bypasses discovery. For trigger-only checks, a suitable
-starting command is:
+Run executable cases only when `runtime: true`. Name the harness, use one fresh
+session per prompt, and load only the affected plugin. Avoid explicit invocation
+for trigger checks because Claude Code's `/skill-name`, Codex's `$skill-name`,
+and ChatGPT's `@skill-name` select a skill directly instead of exercising
+implicit discovery.
+
+For Claude Code trigger-only checks, a suitable starting command is:
 
 ```bash
 claude --bare --print --plugin-dir <plugin-root> \
@@ -64,11 +67,14 @@ the prompt in a disposable directory or detached worktree with only the
 minimum required tools, then compare the resulting output and filesystem state
 with the case expectation. Treat the plugin and its commands as untrusted.
 
-Do not fall back to a non-isolated session when `--bare` authentication,
-required tools, credentials, or sandboxing are unavailable. Report runtime as
-`blocked` with the exact missing prerequisite; otherwise report `observed` per
-case. Runtime failure may justify a targeted fix, but never weakening the case
-expectation merely to pass.
+Do not fall back to a non-isolated Claude session when `--bare` authentication,
+required tools, credentials, or sandboxing are unavailable. For Codex, run only
+an isolated evaluation mechanism documented and available in the target
+environment; this repository defines no general Codex runtime evaluator, so do
+not translate the Claude command or use explicit `$skill-name` as discovery
+evidence. Report runtime as `blocked` with the exact missing prerequisite;
+otherwise report `observed` per case. Runtime failure may justify a targeted
+fix, but never weakening the case expectation merely to pass.
 
 ## Report and clean up
 

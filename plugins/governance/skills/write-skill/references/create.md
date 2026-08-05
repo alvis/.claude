@@ -11,25 +11,30 @@ commands live in `SKILL.md`.
 - Search existing skills first. Update an existing owner (the `update` action)
   when the capability overlaps instead of creating a competing trigger.
 
-Start from `${CLAUDE_SKILL_DIR}/../../constitution/templates/skill.md`, adapting
-headings to the capability.
+Start from the [skill template](../../../constitution/templates/skill.md),
+adapting headings to the capability. When the target includes Codex or
+portability, follow [harnesses.md](harnesses.md) and treat template fields beyond
+the Agent Skills core as harness-specific until the target harness documents
+support.
 
 ## Inputs
 
-- **Required**: skill purpose, target plugin, and concrete trigger examples.
+- **Required**: skill purpose, target location or plugin, target harnesses, and
+  concrete trigger examples.
 - **Optional**: allowed tools, execution context, references, and output
   contract.
 
 ## Workflow
 
-1. Inspect neighboring skills, plugin conventions, and call sites.
+1. Inspect neighboring skills, target-harness conventions, plugin conventions,
+   and call sites.
 2. Define the new skill's owned outcome, positive triggers, near-miss prompts,
    exclusions, inputs, failure behavior, and verification.
 3. Before writing the skill, run the shared thought-experiment and blindspot
    test (see `SKILL.md`) for the intended triggers and behavior.
 4. Create the smallest `skills/<name>/SKILL.md` that teaches the missing
-   behavior. Keep always-used instructions inline and conditional bulk in
-   references.
+   behavior. Keep its core instructions portable, always-used instructions
+   inline, and conditional or harness-specific bulk in references.
 5. Add supporting scripts only for deterministic operations that prose should
    not reproduce. Test scripts before documenting them.
 6. Run structural and policy validation (see `SKILL.md`), then re-run the
