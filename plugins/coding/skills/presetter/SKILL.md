@@ -24,10 +24,11 @@ Applicable standards: `universal/write`, `documentation/write`, and
   React and strict presets,” “add a local Presetter override,” “author a shared
   custom preset,” “bootstrap only these workspace packages,” “migrate this
   Presetter setup,” or “find why Presetter stopped generating this config.”
-- If a TypeScript project has no established Presetter owner and the requested
-  work would generate configuration files, ask the user whether Presetter
-  should own them before generating anything. A “no” answer routes to the
-  appropriate generic configuration skill; a “yes” answer starts adoption.
+- If the exact TypeScript target has no established Presetter owner and the
+  requested work would generate configuration files, ask the user whether
+  Presetter should own them before generating anything. A “no” answer routes
+  to the appropriate generic configuration skill; a “yes” answer starts
+  adoption.
 - Do not use for “enable strict mode in tsconfig” or other generic TypeScript,
   ESLint, test, or package configuration with no Presetter ownership; route to
   the coding skill matching the requested implementation or fix.
@@ -50,15 +51,18 @@ Applicable standards: `universal/write`, `documentation/write`, and
    nested packages and ignored local files while excluding dependency/vendor
    trees. If any match exists, keep this skill as the routing gate and inspect
    every matching config that can affect the target.
-2. If no match exists, decide whether the requested work will generate
-   TypeScript configuration files. When it will and Presetter ownership is not
-   already established by repository evidence, stop and ask the user whether
-   Presetter should be used; do not generate files before that answer.
-3. Resolve the repository root, workspace root, and exact target package. Read
+2. Resolve the repository root, workspace root, and exact target package. Read
    the package-manager declaration, lockfiles, workspace configuration, root
    and target `package.json` files, scripts, dependencies, package name, and
    relevant sibling packages. Use only the detected manager for installs,
-   dependency queries, local binaries, and scripts.
+   dependency queries, local binaries, and scripts. Determine whether the
+   exact target has a package-local config or is reached through a root/ancestor
+   config; a config elsewhere that does not compose into this target is
+   unrelated and does not establish Presetter ownership for it.
+3. If the requested work would generate TypeScript configuration files for the
+   exact target and no Presetter owner was established in step 2, stop and ask
+   the user whether Presetter should be used; do not generate files before that
+   answer. A “no” answer routes to the appropriate generic configuration skill.
 4. Establish the effective Presetter version from the target's manifest range,
    lockfile resolution or manager-native dependency query, and the local CLI's
    version output. If these disagree or the package is not installed, resolve
