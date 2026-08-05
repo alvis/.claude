@@ -35,6 +35,20 @@ def write_skill(root: Path, name: str, description: str, body: str) -> Path:
     return path
 
 
+def yaml_lines(*lines: str) -> str:
+    return "\n".join(lines)
+
+
+def collect_skill_policy_failures(skills: list[Path]) -> dict[str, object]:
+    return {
+        str(report["path"]): report["errors"]
+        for report in (
+            quick_validate.validate_policy(skill) for skill in skills
+        )
+        if report["errors"]
+    }
+
+
 def test_discovers_skills_from_plugins_directory(tmp_path: Path) -> None:
     first = write_skill(
         tmp_path / "plugins" / "one",
@@ -72,6 +86,287 @@ def test_accepts_minimal_skill_without_ceremony(tmp_path: Path) -> None:
     assert "diagram" not in messages.lower()
     assert "subagent" not in messages.lower()
     assert "coherence mandate" not in messages.lower()
+
+
+def test_reports_allowed_tools_failure_by_shared_skill_path(tmp_path: Path) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\n"
+        "name: shared\n"
+        'description: "Use when validating shared skill metadata across supported runtime harnesses."\n'
+        "allowed-tools: Read, Write\n"
+        "---\n\n"
+        "# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    failures = collect_skill_policy_failures([skill])
+
+    assert failures == {
+        str(skill): [
+            {
+                "message": (
+                    "Shared skills must not declare allowed-tools: Codex does not support "
+                    "this field; shared skills inherit runtime capabilities."
+                ),
+                "line": 4,
+            }
+        ]
+    }
+
+
+@pytest.mark.parametrize(
+    "allowed_tools_key",
+    ("allowed-tools :", "'allowed-tools':", '"allowed-tools":'),
+)
+def test_rejects_yaml_variants_of_allowed_tools_in_shared_skill_frontmatter(
+    tmp_path: Path, allowed_tools_key: str
+) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\n"
+        "name: shared\n"
+        'description: "Use when validating shared skill metadata across supported runtime harnesses."\n'
+        f"{allowed_tools_key} Read\n"
+        "---\n\n"
+        "# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    report = quick_validate.validate_policy(skill)
+
+    assert report["errors"] == [
+        {
+            "message": (
+                "Shared skills must not declare allowed-tools: Codex does not support "
+                "this field; shared skills inherit runtime capabilities."
+            ),
+            "line": 4,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("frontmatter", "expected_line"),
+    (
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating shared skill metadata across supported runtime harnesses."',
+                r'"allowed\u002dtools": Read',
+            ),
+            4,
+        ),
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating shared skill metadata across supported runtime harnesses."',
+                r'"allowed\x2dtools": Read',
+            ),
+            4,
+        ),
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating shared skill metadata across supported runtime harnesses."',
+                r'"allowed\U0000002dtools": Read',
+            ),
+            4,
+        ),
+        (
+            "{name: shared, description: cross-harness metadata, allowed-tools: Read}",
+            2,
+        ),
+        ('{"allowed-tools":Read}', 2),
+        ("{? allowed-tools}", 2),
+        ("{allowed-tools}", 2),
+        (
+            yaml_lines(
+                "{name: shared,",
+                " description: cross-harness metadata,",
+                r' "allowed\u002dtools": Read}',
+            ),
+            4,
+        ),
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating shared skill metadata across supported runtime harnesses."',
+                "? allowed-tools",
+                ": Read",
+            ),
+            4,
+        ),
+    ),
+)
+def test_rejects_semantic_allowed_tools_mapping_keys(
+    tmp_path: Path,
+    frontmatter: str,
+    expected_line: int,
+) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        f"---\n{frontmatter}\n---\n\n# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    report = quick_validate.validate_policy(skill)
+
+    assert report["errors"] == [
+        {
+            "message": (
+                "Shared skills must not declare allowed-tools: Codex does not support "
+                "this field; shared skills inherit runtime capabilities."
+            ),
+            "line": expected_line,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("frontmatter", "expected_line"),
+    (
+        (
+            yaml_lines(
+                "name: &forbidden allowed-tools",
+                "? *forbidden",
+                ": Read",
+            ),
+            3,
+        ),
+        (yaml_lines("? |-", "  allowed-tools", ": Read"), 2),
+        (yaml_lines('? "allowed-\\', '  tools"', ": Read"), 2),
+        ("{name: &forbidden allowed-tools, ? *forbidden}", 2),
+        (yaml_lines('{"allowed-\\', '  tools": Read}'), 2),
+    ),
+)
+def test_rejects_unsupported_complex_root_mapping_keys(
+    tmp_path: Path,
+    frontmatter: str,
+    expected_line: int,
+) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        f"---\n{frontmatter}\n---\n\n# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    report = quick_validate.validate_policy(skill)
+
+    assert report["errors"] == [
+        {
+            "message": (
+                "Shared skill frontmatter uses an unsupported complex root mapping "
+                "key; use a plain or quoted scalar key."
+            ),
+            "line": expected_line,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("frontmatter", "expected_line"),
+    (
+        ("!!map {allowed-tools: Read}", 2),
+        ("&catalog {allowed-tools: Read}", 2),
+        (
+            yaml_lines(
+                "  name: shared",
+                "  allowed-tools: Read",
+            ),
+            2,
+        ),
+        (
+            yaml_lines(
+                "defaults: &defaults {allowed-tools: Read}",
+                "<<: *defaults",
+            ),
+            3,
+        ),
+        (
+            yaml_lines(
+                "defaults: &defaults {allowed-tools: Read}",
+                "!!merge inherited: *defaults",
+            ),
+            3,
+        ),
+        (
+            yaml_lines(
+                "defaults: &defaults {allowed-tools: Read}",
+                "!<tag:yaml.org,2002:merge> inherited: *defaults",
+            ),
+            3,
+        ),
+        ("{defaults: &defaults {allowed-tools: Read}, <<: *defaults}", 2),
+    ),
+)
+def test_rejects_unsupported_root_mapping_syntax(
+    tmp_path: Path,
+    frontmatter: str,
+    expected_line: int,
+) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        f"---\n{frontmatter}\n---\n\n# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    report = quick_validate.validate_policy(skill)
+
+    assert report["errors"] == [
+        {
+            "message": (
+                "Shared skill frontmatter must use a plain, unwrapped root mapping "
+                "without merge keys."
+            ),
+            "line": expected_line,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "frontmatter",
+    (
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating nested skill metadata handling."',
+                "metadata:",
+                "  allowed-tools: Read",
+            )
+        ),
+        (
+            yaml_lines(
+                "name: shared",
+                'description: "Use when validating nested skill metadata handling."',
+                "metadata: {allowed-tools: Read}",
+            )
+        ),
+        "{name: shared, metadata: {allowed-tools: Read}}",
+        "allowed-tools",
+        "allowed-tools:not-a-mapping",
+        "{allowed-tools:Read}",
+    ),
+)
+def test_ignores_allowed_tools_outside_root_mapping_keys(
+    tmp_path: Path,
+    frontmatter: str,
+) -> None:
+    skill = tmp_path / "skills" / "shared" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        f"---\n{frontmatter}\n---\n\n# Shared\n\n## Workflow\n\nDo the work.\n",
+        encoding="utf-8",
+    )
+
+    report = quick_validate.validate_policy(skill)
+
+    assert report["errors"] == []
 
 
 def test_reports_placeholders_long_body_and_missing_local_reference(
@@ -362,13 +657,8 @@ def test_this_repository_passes_the_skill_policy_gate() -> None:
     the rule it enforces.
     """
     root = Path(__file__).resolve().parents[5]
-    failures = {
-        report["path"]: report["errors"]
-        for report in (
-            quick_validate.validate_policy(skill)
-            for skill in quick_validate.discover_skills(root)
-        )
-        if report["errors"]
-    }
+    failures = collect_skill_policy_failures(
+        quick_validate.discover_skills(root)
+    )
 
     assert failures == {}

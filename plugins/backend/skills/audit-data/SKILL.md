@@ -2,7 +2,6 @@
 name: audit-data
 description: Audit a data orchestrator against its work-local authoritative specification and the canonical review taxonomy, then remediate explicitly approved gaps. Use for schema, operation, controller, testing, and data-layer quality review; keep service audits in audit-service.
 model: opus
-allowed-tools: Bash, Read, Write, MultiEdit, Edit, Glob, Grep, Task, TodoRead, TodoWrite, Skill, AskUserQuestion
 argument-hint: "<domain-name> [--work-id=<id>] [--spec=<path-or-ref>] [--operation=...] [--entity=...] [--auto-fix]"
 ---
 

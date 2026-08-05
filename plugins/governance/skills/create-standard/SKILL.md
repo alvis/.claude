@@ -2,7 +2,6 @@
 name: create-standard
 description: Create a new technical standard at a plugin's canonical constitution/standards root using meta.md, scan.md, write.md, and per-rule guides. Use when establishing new coding standards, documenting technical requirements, or creating compliance guidelines for reusable policy with explicit dependencies, detection, compliant patterns, and stable rule IDs. Route existing-standard revisions to update-standard.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task
 argument-hint: "<plugin>/<standard-name> [--detail=...]"
 ---
 

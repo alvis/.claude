@@ -3,7 +3,6 @@ name: update-agent
 description: Update explicitly selected agent definitions to the current split-source template or a stated behavior change while preserving useful role expertise, trigger boundaries, context, collaboration links, and working voice. Use when migrating agents to a template revision, correcting agent configuration, or batch-updating selected agents; require an exact selector and route genuinely new roles to create-agent.
 model: opus
 context: fork
-allowed-tools: Agent, Read, Write, Edit, Glob, Grep, Bash
 argument-hint: "<agent path, name, or glob> [--changes=...] [--all]"
 ---
 

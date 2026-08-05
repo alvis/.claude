@@ -2,7 +2,6 @@
 name: sync-notion
 description: Synchronize paired local files and Notion pages in a declared direction, including recursive pulls, guarded pushes, and explicit base-aware conflict resolution. Own Notion transport and pairing; keep specification orchestration in sync-spec and authored MDC edits in mdc.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, AskUserQuestion, Skill
 argument-hint: "<local-to-notion|notion-to-local|two-way-merge> <file-or-ref> [counterpart...] --transport-profile=<absolute-file> [--transport-root=<dir>] [--out=<dir>]"
 ---
 

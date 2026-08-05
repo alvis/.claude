@@ -2,7 +2,6 @@
 name: doctor
 description: Check the integrity of engineering work memory and durable ADRs with the structural doctor, diagnose folder-structure and format drift against current contracts, and offer user-approved migration or repair. Use for health checks of .state/ or docs/architecture/decisions/, before resuming old work, or after suspected corruption or drift; this skill repairs records, never the work itself.
 model: opus
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 argument-hint: "[work-id] [--strict]"
 ---
 

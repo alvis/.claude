@@ -2,7 +2,6 @@
 name: implement-code
 description: Execute an approved specification work item from an authoritative local, inline, or Notion-backed contract through delegated coding, review, applicable completion sync, and durable derivation. Use after plan-code approval, when resuming partial work, or when auditing delivered ticket work.
 model: opus
-allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, Skill, AskUserQuestion, Workflow, TodoWrite
 argument-hint: "<spec-path-or-ref> [--work-id=<id>] [--source-direction=<direction>] [--transport-root=<dir>] [--transport-profile=<absolute-file>] [--repo=<path>] [--dry-run] [--skip-approval] [--defer-publication]"
 ---
 

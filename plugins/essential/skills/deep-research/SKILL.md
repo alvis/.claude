@@ -2,7 +2,6 @@
 name: deep-research
 description: Conduct comprehensive multi-source research with AI-assisted analysis, adversarial claim verification, and explicit source synthesis. Use when investigating complex topics, comparing evidence, gathering current information, or producing a fact-finding report with citations and uncertainty notes. Do not use for metric-driven candidate optimization.
 model: opus
-allowed-tools: Bash, Task, Read, Write, Edit, MultiEdit, WebSearch, WebFetch, Grep, Glob, TodoWrite
 argument-hint: "<research-topic> [optional-focus-area]"
 ---
 

@@ -2,7 +2,6 @@
 name: update-screen-design
 description: Update explicitly selected responsive screen-design contracts from user-selected product and specification context, preserving identity and approved content while recording temporary work design and promoting durable versioned design. Require a selector or --all; route missing pages to create-screen-design.
 model: opus
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion
 argument-hint: "[--work-id=<id>] [--product=<name>] [--screens=<selector>] [--changes=<request>] [--context=<path-or-ref>] [--context-direction=<direction>] [--transport-root=<dir>] [--all]"
 ---
 

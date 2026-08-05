@@ -6,6 +6,7 @@ policies that the official validator does not cover.
 """
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -29,6 +30,7 @@ ILLUSTRATIVE_DESTINATION = re.compile(
     r"<[^>]+>|\[[^]]+\]|\{\{[^}]+\}\}|\{[^{}]+\}"
 )
 LOCAL_DIRECTORIES = {"agents", "assets", "evals", "hooks", "references", "scripts", "templates"}
+YAML_MERGE_TAGS = {"!!merge", "!<tag:yaml.org,2002:merge>"}
 CLAUDE_TIMEOUT_SECONDS = 30
 
 
@@ -103,6 +105,221 @@ def normalize_markdown_destination(destination: str) -> str:
     return destination.split("#", 1)[0].strip()
 
 
+def without_yaml_comments(source: str) -> str:
+    """Mask YAML comments while retaining offsets used for diagnostics."""
+    masked_lines = []
+    for line in source.splitlines():
+        quote = None
+        escaped = False
+        comment = None
+        for index, character in enumerate(line):
+            if quote == '"':
+                if escaped:
+                    escaped = False
+                elif character == "\\":
+                    escaped = True
+                elif character == quote:
+                    quote = None
+                continue
+            if quote == "'":
+                if character == quote:
+                    quote = None
+                continue
+            if character in "\"'":
+                quote = character
+            elif character == "#" and (
+                index == 0 or line[index - 1].isspace()
+            ):
+                comment = index
+                break
+        if comment is None:
+            masked_lines.append(line)
+        else:
+            masked_lines.append(line[:comment] + " " * (len(line) - comment))
+    return "\n".join(masked_lines)
+
+
+def mapping_separator(source: str, *, flow: bool = False) -> int | None:
+    """Locate a mapping colon outside quoted scalars and nested flows."""
+    quote = None
+    escaped = False
+    depth = 0
+    index = 0
+    while index < len(source):
+        character = source[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+        elif quote == "'":
+            if character == quote:
+                if index + 1 < len(source) and source[index + 1] == quote:
+                    index += 1
+                else:
+                    quote = None
+        elif character in "\"'":
+            quote = character
+        elif character in "[{":
+            depth += 1
+        elif character in "]}":
+            depth = max(0, depth - 1)
+        elif character == ":" and depth == 0:
+            following = source[index + 1 : index + 2]
+            key = source[:index].lstrip()
+            quoted_key = key.startswith(("'", '"'))
+            separated = not following or following.isspace()
+            flow_delimiter = flow and following in ",]}"
+            if quoted_key or separated or flow_delimiter:
+                return index
+        index += 1
+    return None
+
+
+def yaml_scalar(source: str) -> str | None:
+    """Decode a scalar mapping key far enough to compare its semantic value."""
+    source = source.strip()
+    if source.startswith(("!", "&")):
+        property_name, separator, _ = source.partition(" ")
+        if not separator:
+            return None
+        if property_name in YAML_MERGE_TAGS:
+            return "<<"
+        return None
+    if source.startswith(("'", '"')) and "\n" in source:
+        return None
+    if source.startswith("'"):
+        if len(source) < 2 or not source.endswith("'"):
+            return None
+        return source[1:-1].replace("''", "'")
+    if source.startswith('"'):
+        if len(source) < 2 or not source.endswith('"'):
+            return None
+        try:
+            value = ast.literal_eval(source)
+        except (SyntaxError, ValueError):
+            return None
+        return value if isinstance(value, str) else None
+    if not source or source.startswith(("*", "|", ">", "[", "{")):
+        return None
+    return source
+
+
+def root_flow_entries(source: str) -> list[tuple[int, int]] | None:
+    """Return entry spans when the frontmatter root is a flow mapping."""
+    opening = next(
+        (index for index, character in enumerate(source) if not character.isspace()),
+        None,
+    )
+    if opening is None or source[opening] != "{":
+        return None
+
+    entries = []
+    entry_start = opening + 1
+    quote = None
+    escaped = False
+    depth = 0
+    index = opening
+    while index < len(source):
+        character = source[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+        elif quote == "'":
+            if character == quote:
+                if index + 1 < len(source) and source[index + 1] == quote:
+                    index += 1
+                else:
+                    quote = None
+        elif character in "\"'":
+            quote = character
+        elif character in "[{":
+            depth += 1
+        elif character in "]}":
+            if character == "}" and depth == 1:
+                entries.append((entry_start, index))
+                return entries
+            depth = max(0, depth - 1)
+        elif character == "," and depth == 1:
+            entries.append((entry_start, index))
+            entry_start = index + 1
+        index += 1
+    return entries
+
+
+def flow_mapping_keys(
+    source: str,
+    entries: list[tuple[int, int]],
+) -> list[tuple[str | None, int]]:
+    keys = []
+    for start, end in entries:
+        entry = source[start:end]
+        key_offset = len(entry) - len(entry.lstrip())
+        candidate = entry.lstrip()
+        if not candidate:
+            continue
+        if candidate.startswith("?"):
+            after_indicator = candidate[1:]
+            key_offset += 1 + len(after_indicator) - len(after_indicator.lstrip())
+            candidate = after_indicator.lstrip()
+        line = 2 + source.count("\n", 0, start + key_offset)
+        if not candidate:
+            keys.append((None, line))
+            continue
+        separator = mapping_separator(candidate, flow=True)
+        key_source = candidate if separator is None else candidate[:separator]
+        key = yaml_scalar(key_source)
+        keys.append((key, line))
+    return keys
+
+
+def frontmatter_mapping_keys(
+    frontmatter: list[str],
+) -> list[tuple[str | None, int]]:
+    """Read semantic string keys from the root frontmatter mapping."""
+    source = without_yaml_comments("\n".join(frontmatter))
+    flow_entries = root_flow_entries(source)
+    if flow_entries is not None:
+        return flow_mapping_keys(source, flow_entries)
+
+    keys = []
+    for number, line in enumerate(source.splitlines(), 2):
+        if not line or line[0].isspace():
+            continue
+        candidate = line.rstrip()
+        if candidate.startswith(":"):
+            continue
+        explicit = candidate.startswith("?")
+        if explicit:
+            candidate = candidate[1:].lstrip()
+        separator = mapping_separator(candidate)
+        if separator is None and not explicit:
+            continue
+        if separator is not None:
+            candidate = candidate[:separator]
+        key = yaml_scalar(candidate)
+        keys.append((key, number))
+    return keys
+
+
+def unsupported_root_mapping_line(frontmatter: list[str]) -> int | None:
+    """Locate root indentation or node properties outside the authoring contract."""
+    source = without_yaml_comments("\n".join(frontmatter))
+    for number, line in enumerate(source.splitlines(), 2):
+        if not line.strip():
+            continue
+        if line[0].isspace() or line.startswith(("!", "&")):
+            return number
+        return None
+    return None
+
+
 def is_local_file_destination(destination: str) -> bool:
     """Return whether a normalized destination clearly denotes a local file."""
     if not destination or destination in {"url", "...", "…"}:
@@ -126,6 +343,40 @@ def validate_policy(skill: Path, *, portable: bool = False) -> PolicyReport:
     frontmatter, body = frontmatter_and_body(text)
     errors: list[dict[str, object]] = []
     warnings: list[dict[str, object]] = []
+
+    mapping_keys = frontmatter_mapping_keys(frontmatter)
+    unsupported_root_line = unsupported_root_mapping_line(frontmatter)
+    if unsupported_root_line is None:
+        unsupported_root_line = next(
+            (number for key, number in mapping_keys if key == "<<"),
+            None,
+        )
+    if unsupported_root_line is not None:
+        errors.append(
+            issue(
+                "Shared skill frontmatter must use a plain, unwrapped root mapping "
+                "without merge keys.",
+                line=unsupported_root_line,
+            )
+        )
+    else:
+        for key, number in mapping_keys:
+            if key is None:
+                errors.append(
+                    issue(
+                        "Shared skill frontmatter uses an unsupported complex root "
+                        "mapping key; use a plain or quoted scalar key.",
+                        line=number,
+                    )
+                )
+            elif key == "allowed-tools":
+                errors.append(
+                    issue(
+                        "Shared skills must not declare allowed-tools: Codex does not "
+                        "support this field; shared skills inherit runtime capabilities.",
+                        line=number,
+                    )
+                )
 
     if len(body) > MAX_BODY_LINES:
         errors.append(issue(f"Skill body exceeds {MAX_BODY_LINES} lines ({len(body)})."))

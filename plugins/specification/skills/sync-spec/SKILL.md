@@ -2,7 +2,6 @@
 name: sync-spec
 description: Materialize a required Notion specification into an active engineering work directory or complete approved specification changes through an explicitly selected local transport pair. Use before specification planning, implementation, or review and when publishing a reviewed contract. Delegate transport and conflicts to sync-notion.
 model: opus
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite, Skill, AskUserQuestion
 argument-hint: "<notion-url-or-id> [--work-id=<id>] [--mirror=<path>] [--transport-profile=<absolute-file>] [--mode=materialize|complete] [--stage=specification|implementation] [--capability=<slug>]"
 ---
 

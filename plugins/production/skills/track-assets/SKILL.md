@@ -2,7 +2,6 @@
 name: track-assets
 description: Create or maintain the versioned asset and render manifest for a production work stream — register source assets with content hashes and rights, record every render with its exact inputs and settings, and mark stale entries when a decision invalidates them. Use when footage, audio, graphics, fonts, or a new render/export needs durable identity; this skill writes manifests, never media bytes.
 model: opus
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 argument-hint: "[manifest-path] [--work-id=<id>]"
 ---
 

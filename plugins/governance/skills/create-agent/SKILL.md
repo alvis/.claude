@@ -3,7 +3,6 @@ name: create-agent
 description: "Creates a new specialist agent from a shared base prompt plus split metadata, Claude, and Codex JSON sources, proposing intelligence and permissions by role archetype and confirming them with the user before writing. Use when adding a new subagent, defining a new specialist role, scaffolding an agent definition, or when update-agent hands off new-agent creation."
 model: opus
 context: fork
-allowed-tools: Agent, Read, Write, Edit, Glob, Grep, AskUserQuestion, Bash
 argument-hint: "<role description> [--plugin=<owner>] [--intelligence=...] [--permission=...] [--yes]"
 ---
 
