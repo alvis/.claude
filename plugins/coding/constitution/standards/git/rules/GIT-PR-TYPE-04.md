@@ -13,8 +13,8 @@ Renames, file moves, codemods, and pure restructuring land in dedicated `mechani
 Two-PR sequence:
 
 ```text
-auth-rename/01-rename     refactor(auth): [mechanical-refactor] rename User -> Account
-auth-rename/02-suspend    feat(auth): [implementation] add Account.suspend()
+auth-rename/01-rename     refactor(auth): rename User to Account
+auth-rename/02-suspend    feat(auth): add Account.suspend()
 ```
 
 The mechanical PR is permitted to be large (red zone allowed under `GIT-PR-SIZE-03`) because cognitive load is low:

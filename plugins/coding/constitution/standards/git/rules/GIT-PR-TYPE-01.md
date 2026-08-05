@@ -6,31 +6,19 @@ error
 
 ## Intent
 
-Every PR declares exactly one of the 12 PR archetypes — either as a title prefix or as a `## Category` body header. Categorisation drives expected size, required sections, and review depth; an unclassified PR cannot be reviewed against the right checklist.
+Every PR has exactly one GitHub label named for one of the 12 PR archetypes.
+The category never appears as a title prefix or PR-body section. Categorisation
+drives review depth; an unclassified PR cannot be reviewed against the right
+checklist.
 
-The 12 categories are: `rfc`, `code-spec`, `contract`, `domain-model`, `implementation`, `integration`, `feature-flag`, `migration`, `ui`, `mechanical-refactor`, `cleanup`, `observability`. See `write.md` -> PR Categories for selection guidance.
+The 12 labels are: `rfc`, `code-spec`, `contract`, `domain-model`, `implementation`, `integration`, `feature-flag`, `migration`, `ui`, `mechanical-refactor`, `cleanup`, `observability`. The selection table below owns archetype choice; the canonical PR template owns publication metadata and rendered or conditional body content.
 
 ## Fix
 
-Title-prefix form (preferred for short, single-category PRs):
-
-```text
-feat(orders): [implementation] add archiveOrder operation
-refactor(auth): [mechanical-refactor] rename User -> Account via codemod
-chore(api-types): [code-spec] add OrderStatus union
-```
-
-Body-header form (when the conventional-commit prefix is already saturated):
-
-```markdown
-## Category
-implementation
-
-## Summary
-Adds `archiveOrder()` to the order service.
-```
-
-UI PRs include screenshots; migration PRs include rollback; feature-flag PRs name the flag (see related rules).
+Select the archetype before publication, verify that its label already exists in
+the repository, then attach exactly that label. If the label is absent,
+publication blocks with the missing label named. Publication never creates or
+silently substitutes repository labels.
 
 ### Selecting the category
 
@@ -52,8 +40,8 @@ UI PRs include screenshots; migration PRs include rollback; feature-flag PRs nam
 ## Edge Cases
 
 - A PR that is genuinely two categories (e.g. `migration` + `implementation`) violates `GIT-PR-TYPE-03` and must be split.
-- The category prefix is independent of the conventional-commit type (`GIT-MSG-01`); both appear in the title when both are useful.
-- For `ui` PRs, the rule is satisfied only when before/after screenshots also appear in the body — categorisation without artefacts is incomplete.
+- The Conventional Commit type remains the only type marker in the PR title (`GIT-MSG-01`).
+- Conditional body evidence for an archetype is owned by the canonical PR template.
 
 ## Related
 

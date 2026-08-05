@@ -7,9 +7,17 @@ template of its own checked in (e.g. `.github/PULL_REQUEST_TEMPLATE.md`).
 When a repo template exists, that template takes precedence and is emitted
 verbatim instead of this one.
 
+Publication metadata: every PR receives exactly one existing GitHub archetype
+label (`rfc`, `code-spec`, `contract`, `domain-model`, `implementation`,
+`integration`, `feature-flag`, `migration`, `ui`, `mechanical-refactor`,
+`cleanup`, or `observability`). The label is never rendered in the title or
+body. Publication blocks when it is absent from the repository and never
+creates labels.
+
 Always required: Summary + Verification. Yellow and red zones also require
 Risk + Test plan; red also requires Why this size. Context, Implementation,
-Breaking, Related, Boundary, and Notes are optional.
+Breaking, Rollback, Feature Flag, Screenshots, Generated Files, Related,
+Boundary, and Notes are conditional.
 
 The order is a single arc — why, what, what it costs, what to check, where it
 stops — with lookup material last. Authors fill placeholders in
@@ -26,7 +34,11 @@ Placeholders (for non-LLM callers performing literal substitution):
   breaking_changes_body      no        Breaking-change list + migration notes. Drop section if commit subject lacks `!` and no `BREAKING CHANGE:` trailer.
   risk_body                  by zone   Concrete failure modes and mitigations. Required for yellow/red.
   test_plan_body             by zone   Checks covering the named risks. Required for yellow/red.
-  why_this_size_body         by zone   Isolation justification plus the canonical `GIT-PR-SIZE-03` reviewer-time estimate. Required for red.
+  why_this_size_body         by zone   Concise, specific indivisibility rationale. Required for red.
+  rollback_body              by type   Rollback steps or explicit forward-only mitigation. Required for migration.
+  feature_flag_body          by type   Flag name, default, removal target, and rollout plan. Required for feature-flag.
+  screenshots_body           by type   Before/after screenshots and relevant accessibility notes. Required for ui.
+  generated_files_body       by diff   Generated paths and their source/generator. Required whenever any generated files exist.
   verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
   boundary_body              no        Related work the instruction placed outside this change. Drop section if empty.
   additional_notes_body      no        Known limitations, follow-ups. Drop section if empty.
@@ -68,6 +80,29 @@ Substitution rules:
 <!-- what breaks, and the migration for it -->
 {{breaking_changes_body}}
 
+## ⏪ Rollback
+
+<!-- migration rollback steps; when irreversible, say so and document the
+     forward-only mitigation; required for migration -->
+{{rollback_body}}
+
+## 🚩 Feature Flag
+
+<!-- flag name, default state, removal target, and rollout plan; team ownership
+     belongs in CODEOWNERS or forge assignments; required for feature-flag -->
+{{feature_flag_body}}
+
+## 🖼️ Screenshots
+
+<!-- before/after screenshots and relevant accessibility notes; required for ui -->
+{{screenshots_body}}
+
+## 🏭 Generated Files
+
+<!-- every generated path plus its source or generator; required whenever any
+     generated files exist even when platform metadata collapses their diffs -->
+{{generated_files_body}}
+
 ## Risk
 
 <!-- concrete failure modes, impact, and mitigations; required for yellow/red -->
@@ -80,10 +115,9 @@ Substitution rules:
 
 ## Why this size
 
-<!-- specific reason this review surface is one indivisible change, plus a
-     machine-checkable estimate on its own line using the canonical
-     GIT-PR-SIZE-03 syntax, for example: Reviewer-time estimate: ~20 min
-     Both are required for red; generic justification does not satisfy it. -->
+<!-- concise, specific reason this review surface is one indivisible change;
+     required for red; generic justification does not satisfy it. Do not add
+     file counts, zone metadata, or reviewer-time estimates. -->
 {{why_this_size_body}}
 
 ## 🧪 Verification

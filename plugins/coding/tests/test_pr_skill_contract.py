@@ -260,7 +260,7 @@ def test_stacked_local_checks_are_batched_and_cleanup_every_lease() -> None:
     assert "temporary_worktree_cleanup" not in report
 
 
-def test_red_zone_requires_machine_checkable_reviewer_time() -> None:
+def test_pr_metadata_stays_internal_and_template_owns_rationale() -> None:
     workflow = (WRITE_PR / "references" / "create-update.md").read_text()
     template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
     standard = (
@@ -272,14 +272,54 @@ def test_red_zone_requires_machine_checkable_reviewer_time() -> None:
         / "GIT-PR-SIZE-03.md"
     ).read_text()
 
-    assert "GIT-PR-SIZE-03" in workflow
-    assert "GIT-PR-SIZE-03" in template
-    assert "Reviewer-time estimate: ~20 min" in template
-    assert "^Reviewer-time estimate:" in standard
-    assert "(min|minutes|hour|hours)" in standard
-    assert "## Verification" in standard
-    assert "## Checklist" not in standard
-    assert "absent, generic, or malformed" in workflow
+    assert "specific indivisibility prose" in workflow
+    assert "## Why this size" in template
+    assert "reviewer-time estimates" in template
+    assert "reviewer-time estimate" not in standard
+    assert "size counts, zone metadata" in workflow
+    assert "## 🧪 Verification" in template
+
+
+def test_archetype_is_a_preflighted_label_not_pr_content() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
+
+    assert "Preflight the repository labels before any push" in workflow
+    assert "never create or silently substitute a label" in workflow
+    assert "exactly one archetype label remains" in workflow
+    assert '--label "$ARCHETYPE"' in workflow
+    assert 'PR=$(gh pr create' in workflow
+    assert '--remove-label "$label"' in workflow
+    assert 'gh pr view "$PR" --json labels' in workflow
+    assert 'EXPECTED_ARCHETYPES=$(jq -cn --arg label "$ARCHETYPE"' in workflow
+    assert 'test "$ACTUAL_ARCHETYPES" = "$EXPECTED_ARCHETYPES"' in workflow
+    assert workflow.index("ARCHETYPE_LABELS='[") < workflow.index('PR=$(gh pr create')
+    assert "The label is never rendered in the title or" in template
+    assert "## Category" not in template
+
+
+def test_generated_files_section_is_conditional_and_emoji_named() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    template = (WRITE_PR / "references" / "templates" / "pr.md").read_text()
+
+    assert "## 🏭 Generated Files" in template
+    assert "whenever any generated files exist" in template
+    assert "`{{generated_files_body}}`" in workflow
+
+
+def test_repo_local_templates_enforce_conditional_evidence_before_emission() -> None:
+    workflow = (WRITE_PR / "references" / "create-update.md").read_text()
+    local_template_gate = workflow.split(
+        "<IMPORTANT>A repo-local template is emitted verbatim", 1
+    )[1].split("When no repo-local template exists", 1)[0]
+
+    assert "every predicate" in local_template_gate
+    assert "archetype-required, and diff-required" in local_template_gate
+    assert "never inserts category, label, title, or body metadata" in local_template_gate
+    assert "exact `## 🏭 Generated Files` heading" in local_template_gate
+    assert "generated path or" in local_template_gate
+    assert "its source or generator" in local_template_gate
+    assert "path-free summary is generic" in local_template_gate
 
 
 def test_repo_templates_validate_zone_evidence_before_verbatim_emission() -> None:
@@ -287,7 +327,7 @@ def test_repo_templates_validate_zone_evidence_before_verbatim_emission() -> Non
 
     assert "apply step 6's evidence" in workflow
     assert "predicates to the content" in workflow
-    assert "heading presence alone never passes" in workflow
+    assert "A heading's presence alone never passes" in workflow
     assert "specific indivisibility prose" in workflow
 
 

@@ -34,6 +34,10 @@ Required exception note fields:
 - `temporary_mitigation`
 - `follow_up_action`
 
+Record exception notes in the project's standard-overrides configuration. Do
+not publish them in a PR body or comment unless repository policy explicitly
+requires disclosure.
+
 If exception note is missing, submission is rejected.
 
 ## Rule Groups

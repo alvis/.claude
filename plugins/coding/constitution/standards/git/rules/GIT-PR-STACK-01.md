@@ -8,7 +8,7 @@ error
 
 Every stacked-PR bookmark (Jujutsu bookmark, Git branch, or Graphite branch) follows the format `<feature-slug>/NN-<scope>` where `<feature-slug>` is the shared kebab-case feature identifier, `NN` is a zero-padded ordinal, and `<scope>` is a short kebab-case summary of what that PR does.
 
-`<scope>` is free-form. It is not drawn from the `GIT-PR-TYPE-01` categories, and it need not match the conventional-commit scope either — a PR declares its category in the PR itself, so encoding one in the bookmark would only duplicate it less reliably. Write whatever names the slice: `02-impl`, `03-token-refresh`, `04-rollback-path`.
+`<scope>` is free-form. It is not drawn from the `GIT-PR-TYPE-01` labels, and it need not match the conventional-commit scope either — the PR's GitHub label declares its archetype, so encoding one in the bookmark would only duplicate it less reliably. Write whatever names the slice: `02-impl`, `03-token-refresh`, `04-rollback-path`.
 
 Consistent bookmark naming makes the stack legible at a glance, lets tooling sort the stack lexicographically, and tells a reviewer what each PR covers before they open it.
 
