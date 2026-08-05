@@ -281,7 +281,7 @@ jj rebase -s ghi789 -d main@origin
 jj rebase -s def456 -d ghi789
 jj rebase -s abc123 -d def456
 
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 # ── Integrity Check ──
 # GIT_TREE_MATCH: PASS
 # CONTENT_MATCH:  PASS

@@ -130,7 +130,7 @@ For each selected head bottom-up, create a detached disposable worktree at its
 exact SHA through the bundled helper and bind its distinct JSON result:
 
 ```bash
-TREE_JSON=$(bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
+TREE_JSON=$(bash "${CODING_PR_SKILL_DIR}/scripts/temp-tree.sh" \
   open-git "$SOURCE_REPO_ROOT" "$TARGET_SHA")
 TREE_LEASE=$(jq -er .lease <<<"$TREE_JSON")
 TEST_WORKTREE=$(jq -er .tree <<<"$TREE_JSON")
@@ -318,7 +318,7 @@ repair/history rewrite with downstream bookmarks, synchronize the whole stack
 before monitoring again:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/restack.sh" \
+bash "${CODING_PR_SKILL_DIR}/scripts/restack.sh" \
   --base "$ROOT_BASE" \
   "$BOOKMARK_01=$EXPECTED_HEAD_OID_01" \
   "$BOOKMARK_02=$EXPECTED_HEAD_OID_02"

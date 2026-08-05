@@ -25,7 +25,7 @@ route resolves `repo`, `work_root`, and `base_rev` from the active work state an
 runs only:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/validate-scoped-save.sh" build \
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/validate-scoped-save.sh" build \
   --repo "<repo>" --work-root "<work-root>" --base-rev "<base_rev>" \
   --scope "<scope-request>"
 ```
@@ -151,7 +151,7 @@ Perform all checks again immediately before the first history or index
 mutation:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/validate-scoped-save.sh" preflight \
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/validate-scoped-save.sh" preflight \
   --repo "<repo>" --manifest "<manifest>" \
   --manifest-sha256 "<sha256>"
 ```
@@ -272,7 +272,7 @@ bookmark, or remote operation belongs to this route.
 After the save and before reporting success:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/validate-scoped-save.sh" verify \
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/validate-scoped-save.sh" verify \
   --repo "<repo>" --manifest "<manifest>" \
   --manifest-sha256 "<sha256>" --snapshot "<preflight-snapshot>" \
   --snapshot-sha256 "<preflight-snapshot-sha256>" \
@@ -306,7 +306,7 @@ If any proof fails, stop. For plain Git, while current `HEAD` is still exactly
 the failed saved commit and its sole parent is preflight `old_head`, run:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/validate-scoped-save.sh" recover \
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/validate-scoped-save.sh" recover \
   --repo "<repo>" --manifest "<manifest>" \
   --manifest-sha256 "<sha256>" --snapshot "<preflight-snapshot>" \
   --snapshot-sha256 "<preflight-snapshot-sha256>" \

@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 
 
@@ -51,12 +52,14 @@ def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
 
 
 def test_merged_skill_resolves_bundled_helpers_for_resource_lifetimes() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
     create_update = (WRITE_PR / "references" / "create-update.md").read_text()
     review_extraction = (
         WRITE_PR / "references" / "review-extraction.md"
     ).read_text()
     review = (WRITE_PR / "references" / "review-workflow.md").read_text()
 
+    assert "set `CODING_PR_SKILL_DIR` to the absolute directory" in router
     helper_consumers = {
         "scripts/temp-tree.sh": (create_update, review_extraction, review),
         "scripts/review-scan.sh": (review,),
@@ -65,6 +68,50 @@ def test_merged_skill_resolves_bundled_helpers_for_resource_lifetimes() -> None:
         assert (WRITE_PR / helper).is_file()
         assert all(helper in consumer for consumer in consumers)
     assert "cleanup() {" not in create_update
+
+
+def test_review_scan_self_resolves_and_propagates_helper_failure(
+    tmp_path: Path,
+) -> None:
+    plugin = tmp_path / "plugin"
+    helper = plugin / "skills" / "pr" / "scripts" / "review-scan.sh"
+    helper.parent.mkdir(parents=True)
+    shutil.copyfile(WRITE_PR / "scripts" / "review-scan.sh", helper)
+    scripts = plugin / "scripts"
+    scripts.mkdir()
+    marker = tmp_path / "review-scan-argv"
+    pyrun = scripts / "pyrun.sh"
+    pyrun.write_text(
+        "#!/usr/bin/env bash\n"
+        'expected="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)'
+        '/scan_potential_violations.py"\n'
+        '[ "$1" = "$expected" ] || exit 98\n'
+        'printf "%s\\n" "$@" > "$REVIEW_SCAN_MARKER"\n'
+        "exit 99\n"
+    )
+    pyrun.chmod(0o755)
+    scanner = scripts / "scan_potential_violations.py"
+    scanner.write_text("")
+    other_cwd = tmp_path / "elsewhere"
+    other_cwd.mkdir()
+    env = os.environ.copy()
+    env.pop("CLAUDE_PLUGIN_ROOT", None)
+    env.pop("CLAUDE_SKILL_DIR", None)
+    env["REVIEW_SCAN_MARKER"] = str(marker)
+
+    completed = subprocess.run(
+        ["bash", str(helper), "--area=security", "target path.py"],
+        cwd=other_cwd,
+        env=env,
+        check=False,
+    )
+
+    assert completed.returncode == 99
+    assert marker.read_text().splitlines() == [
+        str(scanner),
+        "--area=security",
+        "target path.py",
+    ]
 
 
 def test_review_uses_canonical_verification_section_name() -> None:

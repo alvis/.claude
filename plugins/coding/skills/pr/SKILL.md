@@ -1,11 +1,15 @@
 ---
 name: pr
-description: 'Author, create, update, review, or merge GitHub pull requests, including linear stacks. Use for deterministic PR text, publication and CI convergence, external review comments and verdicts, or bottom-up stack merges; the first argument selects the subcommand.'
+description: 'Use for GitHub pull-request workflows when the user asks to draft PR text, publish a branch, create or update a PR, monitor CI, review PR changes or comments, or merge a PR or linear stack. Trigger before running gh pr or publishing PR-related changes.'
 model: opus
 argument-hint: "<author|create|update|review|merge> [arguments]"
 ---
 
 # Pull Requests
+
+Before any script call, set `CODING_PR_SKILL_DIR` to the absolute directory
+containing this loaded `SKILL.md`. This works in both harnesses; ordinary Codex
+shell calls do not receive a plugin-root environment variable.
 
 Route every remote pull-request operation through one explicit subcommand. Local
 history mutation remains owned by `coding:commit`; local pre-commit review remains

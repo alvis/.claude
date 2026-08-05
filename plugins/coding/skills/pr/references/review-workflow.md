@@ -78,7 +78,7 @@ From a PR number or URL, resolve canonical coordinates and metadata through the
 bundled helper:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" \
+bash "${CODING_PR_SKILL_DIR}/scripts/resolve-pr.sh" \
   <pr-number-or-url> [--repo <owner/name>]
 ```
 
@@ -155,7 +155,7 @@ checkout. For a single PR the tip is `HEAD_OID`; for a stack it is
    and records that this run owns it:
 
    ```bash
-   bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" \
+   bash "${CODING_PR_SKILL_DIR}/scripts/temp-tree.sh" \
      <open-git-or-open-jj> <target-repository-root> "$REVIEW_TIP_OID"
    ```
 
@@ -247,7 +247,7 @@ vendored paths carry no reviewable lines; list them as not reviewed.
 ### Run the mechanical candidate scan
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/review-scan.sh" \
+bash "${CODING_PR_SKILL_DIR}/scripts/review-scan.sh" \
   <changed-files-in-review-tree> --category all --before 5 --after 10
 ```
 

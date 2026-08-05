@@ -6,6 +6,9 @@ argument-hint: "<URL> [--project=<path>] [--all-pages] [--viewport=mobile|tablet
 
 # Web design audit
 
+Set `WEB_AUDIT_SKILL_DIR` to the absolute directory containing this loaded
+`SKILL.md` before invoking its scripts.
+
 Assess a rendered interface and report evidence-backed findings. This skill
 owns independent assessment; `design` owns visual direction, `next` owns
 runtime debugging, and fixes belong to the owning implementation skill.
@@ -59,7 +62,7 @@ discovery.
    skill, never a source checkout:
 
    ```bash
-   SKILL_DIR="${CLAUDE_SKILL_DIR}"
+   SKILL_DIR="${WEB_AUDIT_SKILL_DIR}"
    OUT="<work-dir>/artifacts/web-audit/<audit-slug>"
    PYTHONPATH="$SKILL_DIR/cli" python3 -m audit_cli audit "$TARGET" \
      --out "$OUT" --viewport all --max-pages 25 --cdp-url "$CDP_URL"

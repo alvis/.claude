@@ -42,7 +42,7 @@ clone form the helper owns the whole clone under the same guarded lease.
 ## Cleanup contract
 
 For an owned tree, run
-`bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/temp-tree.sh" close "$TREE_LEASE"`.
+`bash "${CODING_PR_SKILL_DIR}/scripts/temp-tree.sh" close "$TREE_LEASE"`.
 The helper releases a git worktree or uniquely named jj workspace before
 deleting its guarded lease; a clone has no external registration.
 

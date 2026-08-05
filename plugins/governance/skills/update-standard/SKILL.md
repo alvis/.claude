@@ -8,6 +8,9 @@ argument-hint: "<standard path, name, or glob> [--changes=...] [--all]"
 
 # Update Standard
 
+Set `GOVERNANCE_UPDATE_STANDARD_SKILL_DIR` to the absolute directory containing
+this loaded `SKILL.md` before invoking its validator.
+
 Update standard directories only under
 `plugins/<plugin>/constitution/standards/<standard-name>/`, folding requested
 changes into the existing three tiers. `create-standard` owns missing
@@ -29,8 +32,9 @@ standards.
 - **Required**: a standard path, name, or glob — or explicit `--all`.
 - **Optional**: `--changes=...` describing the requested rule or structure
   changes.
-- **Prerequisites**: `${CLAUDE_SKILL_DIR}/../../constitution/templates/standard-meta.md`,
-  `standard-scan.md`, and `standard-write.md`.
+- **Prerequisites**: [standard-meta.md](../../constitution/templates/standard-meta.md),
+  [standard-scan.md](../../constitution/templates/standard-scan.md), and
+  [standard-write.md](../../constitution/templates/standard-write.md).
 
 ## Workflow
 
@@ -53,7 +57,7 @@ standards.
 5. Update every affected `rules/<lowercase-rule-id>.md` and every
    inbound/outbound local link. Preserve unrelated rule examples and IDs.
 6. For multiple independent targets, bounded delegation per
-   `${CLAUDE_SKILL_DIR}/../../constitution/references/delegation.md` is
+   [delegation guidance](../../constitution/references/delegation.md) is
    allowed — at most 3 standard directories per batch (each directory is 3
    tier files plus rules) and 8 parallel `Task` calls per dispatch — but
    review the combined ID/dependency/link graph before validation.
@@ -70,7 +74,7 @@ standards.
   dependencies, invalid exception fields, orphan guides, or unapproved
   breaking renames.
 - Run `claude plugin validate --strict plugins/<plugin>` and
-  `python3 "${CLAUDE_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
+  `python3 "${GOVERNANCE_UPDATE_STANDARD_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
   for repository policy checks.
 - Exercise representative violating and compliant examples for changed rule
   groups.

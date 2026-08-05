@@ -7,6 +7,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+
 ROOT = Path(__file__).resolve().parents[1]
 MARKETPLACE_PATH = ROOT / ".claude-plugin" / "marketplace.json"
 CODEX_MARKETPLACE_PATH = ROOT / ".agents" / "plugins" / "marketplace.json"
@@ -53,6 +56,17 @@ CONTEXT_PAYLOAD_EVENTS = {
     "MAINAGENT.md": {"SessionStart"},
     "SUBAGENT.md": {"SubagentStart"},
 }
+RESOURCE_ROOT = re.compile(
+    r"\$\{([A-Z][A-Z0-9_]*_(?:PLUGIN_ROOT|PLUGIN_DIR|SKILL_DIR))\}"
+)
+LOADED_RESOURCE_ROOT = re.compile(
+    r"^[ \t]*(?:[-*][ \t]+)?(?:\*\*[^*\n]+\*\*:[ \t]*)?"
+    r"(?:Before\b[^,\n]*,\s*)?set\s+"
+    r"`(?P<root>[A-Z][A-Z0-9_]*)`\s+"
+    r"(?:to\s+|by\s+resolving\s+`[^`]+`\s+from\s+)"
+    r"the\s+absolute\s+directory\s+containing\s+this\s+loaded\s+`SKILL\.md`",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 QUICK_VALIDATE_SPEC = importlib.util.spec_from_file_location(
     "governance_quick_validate",
@@ -293,6 +307,260 @@ def test_shared_skills_follow_the_cross_harness_agent_skills_contract() -> None:
             assert policy_report["errors"] == [], (
                 f"{skill_path.relative_to(ROOT)}: {policy_report['errors']}"
             )
+
+
+def shared_codex_skill_root_violations(plugin_root: Path) -> list[str]:
+    violations = []
+    claude_only_roots = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_SKILL_DIR")
+    install_agents_test = Path(
+        "essential/skills/install-agents/scripts/test_install_agents.py"
+    )
+    install_agents_fixture_literals = (
+        '            env["CLAUDE_PLUGIN_ROOT"] = str(essential)',
+        '    assert "CLAUDE_PLUGIN_ROOT" not in codex_instructions',
+    )
+
+    for path in sorted(plugin_root.glob("*/skills/**/*")):
+        if not path.is_file():
+            continue
+        relative_path = path.relative_to(plugin_root)
+        if relative_path.parts[:3] == (
+            "essential",
+            "skills",
+            "install-statusline",
+        ):
+            continue
+
+        raw_content = path.read_bytes()
+        if b"\0" in raw_content:
+            continue
+        try:
+            content = raw_content.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        if path.name == "SKILL.md" and content.startswith("---\n"):
+            content = content.split("---\n", 2)[2]
+        if relative_path == Path(
+            "essential/skills/install-agents/SKILL.md"
+        ):
+            content = content.split("# Codex", 1)[1]
+        if relative_path == install_agents_test:
+            for literal in install_agents_fixture_literals:
+                content = content.replace(literal, "")
+        for variable in claude_only_roots:
+            if variable in content:
+                violations.append(f"{relative_path}: {variable}")
+
+        skill_contract_path = plugin_root.joinpath(
+            *relative_path.parts[:3], "SKILL.md"
+        )
+        skill_contract = (
+            skill_contract_path.read_text(encoding="utf-8")
+            if skill_contract_path.is_file()
+            else ""
+        )
+        loaded_roots = {
+            match.group("root")
+            for match in LOADED_RESOURCE_ROOT.finditer(skill_contract)
+        }
+        assigned_roots = {
+            match.group(1)
+            for match in re.finditer(
+                r"(?m)^(?:export\s+)?([A-Z][A-Z0-9_]*)=",
+                content,
+            )
+        }
+        for variable in RESOURCE_ROOT.findall(content):
+            if variable not in loaded_roots | assigned_roots:
+                violations.append(f"{relative_path}: {variable}")
+
+    return violations
+
+
+def assert_shared_codex_skill_paths_use_loaded_resource_roots(
+    plugin_root: Path,
+) -> None:
+    violations = shared_codex_skill_root_violations(plugin_root)
+    assert not violations, (
+        "shared Codex skill paths use undeclared resource roots: "
+        + ", ".join(violations)
+    )
+
+
+def test_shared_codex_skill_paths_use_loaded_resource_roots() -> None:
+    assert_shared_codex_skill_paths_use_loaded_resource_roots(
+        ROOT / "plugins"
+    )
+
+
+@pytest.mark.parametrize("suffix", (".js", ".py"))
+def test_shared_codex_skill_path_scan_catches_claude_roots_in_all_text_files(
+    tmp_path: Path,
+    suffix: str,
+) -> None:
+    leaked_path = tmp_path / "example" / "skills" / "leak" / f"script{suffix}"
+    leaked_path.parent.mkdir(parents=True)
+    leaked_path.write_text("CLAUDE_PLUGIN_ROOT\n", encoding="utf-8")
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(
+            tmp_path
+        )
+
+    assert (
+        f"example/skills/leak/script{suffix}: CLAUDE_PLUGIN_ROOT"
+        in str(error.value)
+    )
+
+
+def test_shared_codex_skill_path_scan_limits_claude_statusline_exemption(
+    tmp_path: Path,
+) -> None:
+    claude_statusline = (
+        tmp_path / "essential" / "skills" / "install-statusline" / "script"
+    )
+    claude_statusline.parent.mkdir(parents=True)
+    claude_statusline.write_text("CLAUDE_PLUGIN_ROOT\n", encoding="utf-8")
+    shared_statusline = (
+        tmp_path / "example" / "skills" / "install-statusline" / "script"
+    )
+    shared_statusline.parent.mkdir(parents=True)
+    shared_statusline.write_text("CLAUDE_PLUGIN_ROOT\n", encoding="utf-8")
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(
+            tmp_path
+        )
+
+    assert "example/skills/install-statusline/script" in str(error.value)
+    assert "essential/skills/install-statusline/script" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "variable",
+    (
+        "FOO_SKILL_DIR",
+        "EXAMPLE_LEAK_SKILL_DIR",
+        "EXAMPLE_LEKA_SKILL_DIR",
+        "EXAMPLE_OTHER_SKILL_DIR",
+    ),
+)
+def test_shared_codex_skill_path_scan_rejects_invalid_resource_roots(
+    tmp_path: Path,
+    variable: str,
+) -> None:
+    skill_path = tmp_path / "example" / "skills" / "leak" / "SKILL.md"
+    skill_path.parent.mkdir(parents=True)
+    skill_path.write_text(f'run "${{{variable}}}/script"\n', encoding="utf-8")
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(
+            tmp_path
+        )
+
+    assert f"example/skills/leak/SKILL.md: {variable}" in str(error.value)
+
+
+def test_shared_codex_skill_path_scan_accepts_loaded_resource_roots(
+    tmp_path: Path,
+) -> None:
+    skill_path = tmp_path / "example" / "skills" / "loaded-skill" / "SKILL.md"
+    skill_path.parent.mkdir(parents=True)
+    skill_path.write_text(
+        "Set `EXAMPLE_LOADED_SKILL_DIR` to the absolute directory containing "
+        "this loaded `SKILL.md`.\n"
+        "Set `EXAMPLE_PLUGIN_ROOT` by resolving `../..` from the absolute "
+        "directory containing this loaded `SKILL.md`.\n\n"
+        'run "${EXAMPLE_LOADED_SKILL_DIR}/script"\n'
+        'read "${EXAMPLE_PLUGIN_ROOT}/reference"',
+        encoding="utf-8",
+    )
+
+    assert_shared_codex_skill_paths_use_loaded_resource_roots(tmp_path)
+
+
+def test_shared_codex_skill_path_scan_scopes_loaded_roots_to_owning_skill(
+    tmp_path: Path,
+) -> None:
+    owner_path = tmp_path / "example" / "skills" / "owner" / "SKILL.md"
+    owner_path.parent.mkdir(parents=True)
+    owner_path.write_text(
+        "Set `EXAMPLE_OWNER_SKILL_DIR` to the absolute directory containing "
+        "this loaded `SKILL.md`.\n",
+        encoding="utf-8",
+    )
+    consumer_path = tmp_path / "example" / "skills" / "consumer" / "SKILL.md"
+    consumer_path.parent.mkdir(parents=True)
+    consumer_path.write_text(
+        'run "${EXAMPLE_OWNER_SKILL_DIR}/script"\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(
+            tmp_path
+        )
+
+    assert (
+        "example/skills/consumer/SKILL.md: EXAMPLE_OWNER_SKILL_DIR"
+        in str(error.value)
+    )
+
+
+def test_shared_codex_skill_path_scan_does_not_treat_mentions_as_declarations(
+    tmp_path: Path,
+) -> None:
+    skill_path = tmp_path / "example" / "skills" / "mention" / "SKILL.md"
+    skill_path.parent.mkdir(parents=True)
+    skill_path.write_text(
+        "Set `EXAMPLE_MENTION_SKILL_DIR` to the absolute directory containing "
+        "this loaded `SKILL.md`; `EXAMPLE_UNDECLARED_SKILL_DIR` is forbidden.\n\n"
+        'run "${EXAMPLE_UNDECLARED_SKILL_DIR}/script"\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(tmp_path)
+
+    assert (
+        "example/skills/mention/SKILL.md: EXAMPLE_UNDECLARED_SKILL_DIR"
+        in str(error.value)
+    )
+
+
+def test_shared_codex_skill_path_scan_does_not_authorize_negated_roots(
+    tmp_path: Path,
+) -> None:
+    skill_path = tmp_path / "example" / "skills" / "negated" / "SKILL.md"
+    skill_path.parent.mkdir(parents=True)
+    skill_path.write_text(
+        "Do not set `EXAMPLE_OLD_SKILL_DIR` to the absolute directory "
+        "containing this loaded `SKILL.md`.\n\n"
+        'run "${EXAMPLE_OLD_SKILL_DIR}/script"\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AssertionError) as error:
+        assert_shared_codex_skill_paths_use_loaded_resource_roots(tmp_path)
+
+    assert (
+        "example/skills/negated/SKILL.md: EXAMPLE_OLD_SKILL_DIR"
+        in str(error.value)
+    )
+
+
+def test_shared_codex_skill_path_scan_accepts_locally_assigned_shell_roots(
+    tmp_path: Path,
+) -> None:
+    script_path = tmp_path / "example" / "skills" / "local" / "script.sh"
+    script_path.parent.mkdir(parents=True)
+    script_path.write_text(
+        'LOCAL_SKILL_DIR="$(dirname -- "$0")"\n'
+        'run "${LOCAL_SKILL_DIR}/resource"\n',
+        encoding="utf-8",
+    )
+
+    assert_shared_codex_skill_paths_use_loaded_resource_roots(tmp_path)
 
 
 def test_shared_hooks_follow_the_cross_harness_schema() -> None:
