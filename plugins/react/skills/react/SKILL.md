@@ -24,12 +24,13 @@ implementation teams or duplicate another skill's workflow.
 
 - **Required**: the files or task at hand, enough to identify which React
   surfaces are touched (components, hooks, stories, structure, theming).
-- **Prerequisites**: React standards under
-  `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`.
+- **Prerequisites**: set `REACT_PLUGIN_ROOT` by resolving `../..` from the
+  absolute directory containing this loaded `SKILL.md`; React standards live
+  under `${REACT_PLUGIN_ROOT}/constitution/standards/`.
 
 ## Standards
 
-Standards live under `${CLAUDE_PLUGIN_ROOT}/constitution/standards/`; rule
+Standards live under `${REACT_PLUGIN_ROOT}/constitution/standards/`; rule
 files in each standard's `rules/` directory define the prefixed violation
 codes:
 

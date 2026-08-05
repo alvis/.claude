@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT is required}"
+PR_SKILL_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+CODING_PLUGIN_DIR="$(cd -- "${PR_SKILL_DIR}/../.." && pwd)"
 
-exec "${CLAUDE_PLUGIN_ROOT}/scripts/pyrun.sh" \
-  "${CLAUDE_PLUGIN_ROOT}/scripts/scan_potential_violations.py" "$@"
+exec "${CODING_PLUGIN_DIR}/scripts/pyrun.sh" \
+  "${CODING_PLUGIN_DIR}/scripts/scan_potential_violations.py" "$@"

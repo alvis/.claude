@@ -32,11 +32,10 @@ anything is written. `update-agent` owns changes to existing definitions.
   recommendation without prompting.
 - **Owner token**: use the plugin's source-directory name under `plugins/`
   (for example, `backend`; its manifest namespace remains `theriety`).
-- **Prerequisites**: `${CLAUDE_SKILL_DIR}/../../constitution/templates/agent.md`,
-  `role-prompt.md` beside it, and
-  `${CLAUDE_SKILL_DIR}/../../constitution/references/context-catalog.md`.
-  Follow the content rules in
-  `${CLAUDE_SKILL_DIR}/../../constitution/references/authoring-invariants.md`.
+- **Prerequisites**: the [agent template](../../constitution/templates/agent.md),
+  `role-prompt.md` beside it, and the
+  [context catalog](../../constitution/references/context-catalog.md). Follow
+  the [authoring invariants](../../constitution/references/authoring-invariants.md).
 
 ## Workflow
 
@@ -101,7 +100,7 @@ anything is written. `update-agent` owns changes to existing definitions.
    behavior. If notes are written down, keep them temporary as a Markdown scratch
    document in an OS temp
    folder (for example `${TMPDIR:-/tmp}/check.md`) using
-   `${CLAUDE_SKILL_DIR}/../../constitution/references/check.md` as the
+   [check reference](../../constitution/references/check.md) as the
    example table format with `:white_check_mark:`/`:x:` status markers,
    and delete them before staging; they are not deliverables and must not be
    committed.

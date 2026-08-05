@@ -7,6 +7,9 @@ argument-hint: "<plugin>/<standard-name> [--detail=...]"
 
 # Create Standard
 
+Set `GOVERNANCE_CREATE_STANDARD_SKILL_DIR` to the absolute directory containing
+this loaded `SKILL.md` before invoking its validator.
+
 Create exactly one new directory at
 `plugins/<plugin>/constitution/standards/<standard-name>/` holding the
 three-tier standard (meta.md, scan.md, write.md, rules/). `update-standard`
@@ -27,9 +30,10 @@ owns revisions to existing standards.
   plus enough policy intent to define scope and rules.
 - **Optional**: `--detail=...` with domain specifics that shape examples and
   rule guidance.
-- **Prerequisites**: the installed governance templates resolvable from
-  `${CLAUDE_SKILL_DIR}/../../constitution/templates/` — `standard-meta.md`,
-  `standard-scan.md`, and `standard-write.md` (one per target tier file).
+- **Prerequisites**: the installed governance templates
+  [standard-meta.md](../../constitution/templates/standard-meta.md),
+  [standard-scan.md](../../constitution/templates/standard-scan.md), and
+  [standard-write.md](../../constitution/templates/standard-write.md).
 
 ## Workflow
 
@@ -69,7 +73,7 @@ owns revisions to existing standards.
 - Resolve every local Markdown link from its containing file. Verify
   dependent-standard targets exist and no dependency cycle is introduced.
 - Run `claude plugin validate --strict plugins/<plugin>` and
-  `python3 "${CLAUDE_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
+  `python3 "${GOVERNANCE_CREATE_STANDARD_SKILL_DIR}/../write-skill/scripts/quick_validate.py" plugins/<plugin>`
   for repository policy checks.
 - Exercise at least one violating and one compliant example per rule group
   against the scan/write guidance.

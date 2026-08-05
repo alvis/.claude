@@ -7,6 +7,10 @@ argument-hint: "[<path-to-.mdc>] [--mode=read|edit|author]"
 
 # MDC
 
+Before any script call, set `SPECIFICATION_MDC_SKILL_DIR` to the absolute
+directory containing this loaded `SKILL.md`. This works in both harnesses;
+ordinary Codex shell calls do not receive a plugin-root environment variable.
+
 Safely read or author Notion-backed MDC (`@theriety/mdc`) while preserving its
 block tree, annotations, refs, closing markers, and YAML frontmatter.
 
@@ -88,7 +92,7 @@ Full grammar: [references/syntax.md](references/syntax.md). Marker rationale:
    together once with the read-only validator:
 
    ```bash
-   bash "${CLAUDE_PLUGIN_ROOT}/skills/mdc/scripts/validate-transport-metadata.sh" \
+   bash "${SPECIFICATION_MDC_SKILL_DIR}/scripts/validate-transport-metadata.sh" \
      path/to/a.mdc path/to/b.mdc
    ```
 

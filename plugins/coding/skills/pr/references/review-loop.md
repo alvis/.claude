@@ -64,7 +64,7 @@ discussion to individual surfaces. Bind the resolver's `host` as `HOST` before
 every API call:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/pr/scripts/resolve-pr.sh" "$PR_URL"
+bash "${CODING_PR_SKILL_DIR}/scripts/resolve-pr.sh" "$PR_URL"
 gh api --hostname "$HOST" "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" --paginate
 gh api --hostname "$HOST" "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" --paginate
 gh api graphql --hostname "$HOST" \

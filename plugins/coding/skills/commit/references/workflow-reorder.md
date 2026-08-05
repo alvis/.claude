@@ -85,7 +85,7 @@ Use when reordering a single change without disturbing others. v0.40+ supports t
 After all rebases, the merged tree at `@` MUST match the pre-state. Run:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 ```
 
 Read the `── Integrity Check ──` table:

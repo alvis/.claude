@@ -183,6 +183,36 @@ def test_stitches_native_codex_agent_toml_from_the_same_template(
     assert definition == stitch_codex_agent_definition(template)
 
 
+def test_codex_projection_maps_backend_claude_namespace_without_changing_claude(
+    tmp_path: Path,
+) -> None:
+    description = (
+        "Builds services with theriety:build-service. "
+        "Preferably named Ava, Kit, or June when the main agent spawns this role."
+    )
+    body = (
+        "# Test agent\n\n"
+        "Use `theriety:build-service` and standards at "
+        "`theriety:constitution/standards/function/`.\n"
+    )
+    template = write_template(
+        tmp_path,
+        "test-agent",
+        frontmatter={"name": "test-agent", "description": description},
+        body=body,
+    )
+
+    claude = stitch_agent_definition(template)
+    codex = tomllib.loads(stitch_codex_agent_definition(template))
+
+    assert json.loads(claude.split("---\n", 2)[1])["description"] == description
+    assert body in claude
+    assert codex["description"] == description.replace("theriety:", "backend:")
+    assert codex["developer_instructions"] == body.replace(
+        "theriety:", "backend:"
+    )
+
+
 @pytest.mark.parametrize("harness", ("claude", "codex"))
 def test_standalone_stitch_requires_or_derives_essential_root(
     tmp_path: Path,

@@ -7,6 +7,9 @@ argument-hint: "[--only <name1,name2>] [--check] [--dry-run] [--force]"
 
 # Sync Tool
 
+Set `CODING_SYNC_TOOL_SKILL_DIR` to the absolute directory containing this
+loaded `SKILL.md` before invoking its scripts.
+
 Idempotently installs or updates a fixed registry of coding CLI tools from
 their official upstream sources so any sibling skill (for example
 `coding:commit`, which needs `jj` and `gh`) can rely on them being on `PATH`
@@ -51,7 +54,7 @@ contract — lives in [references/tool-registry.md](references/tool-registry.md)
 1. Parse flags, validate any `--only` names against the registry, and resolve
    the tool list (default = full registry, in order; order matters because
    `brew` must precede the other tools on macOS).
-2. Run the pipeline: `python3 "${CLAUDE_SKILL_DIR}/scripts/sync.py" [flags]`.
+2. Run the pipeline: `python3 "${CODING_SYNC_TOOL_SKILL_DIR}/scripts/sync.py" [flags]`.
    For each selected tool the script detects the OS via `uname -s`, runs
    `scripts/installers/<tool>.sh` with the `DRY_RUN`/`FORCE` env vars,
    verifies `<tool> --version` against the registry minimum, and — for `gh`
@@ -61,10 +64,10 @@ contract — lives in [references/tool-registry.md](references/tool-registry.md)
 
    ```bash
    # Only sync jj and gh (e.g., from coding:commit)
-   python3 "${CLAUDE_SKILL_DIR}/scripts/sync.py" --only=jj,gh
+   python3 "${CODING_SYNC_TOOL_SKILL_DIR}/scripts/sync.py" --only=jj,gh
 
    # Non-interactive: skip the gh auth poll, fail fast
-   SYNC_TOOL_NO_WAIT=1 python3 "${CLAUDE_SKILL_DIR}/scripts/sync.py" --only=gh
+   SYNC_TOOL_NO_WAIT=1 python3 "${CODING_SYNC_TOOL_SKILL_DIR}/scripts/sync.py" --only=gh
    ```
 
 3. Review the per-tool status lines: a tool passes when its status is

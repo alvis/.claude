@@ -42,7 +42,7 @@ adapters, providers, or runtimes.
 ### TOC discipline
 
 - Exactly one line, ≤110 **displayed** characters.
-  `${CLAUDE_SKILL_DIR}/scripts/toc_width.py <file>` is the source of truth —
+  `${CODING_DOCUMENT_SKILL_DIR}/scripts/toc_width.py <file>` is the source of truth —
   run it before finalizing; any `OVER` row fails (non-zero exit).
 - Counting rules (mirror the script): `&emsp;` = 2; `&nbsp;`/`&ensp;` = 1;
   emoji/CJK = 2; combining marks (VS16/ZWJ) = 0; `[caption](url)` counts the

@@ -18,6 +18,10 @@ hooks:
 
 # Save Any Code Change — jj-first, git-compatible
 
+Before any script call, set `CODING_COMMIT_SKILL_DIR` to the absolute directory
+containing this loaded `SKILL.md`. This works in both harnesses; ordinary Codex
+shell calls do not receive a plugin-root environment variable.
+
 This skill is the single entrypoint for saving work: local snapshots, edits to prior changes, splits, reorders, parallel tasks, the two exceptional direct-bookmark sync routes, and the compatibility route from `--create-pr` to `coding:pr create`. It auto-routes based on working-copy state; flags exist only for explicit operations and behavioural overrides. It is the sole owner of history mutations — `coding:finalize-commits` verifies stacks, and `coding:pr create` authors PR text, owns PR publication, and drives CI convergence.
 
 **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike.
@@ -116,7 +120,7 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
    When backup runs, the PreToolUse hook fires it on the first rewriting op and injects `Auto-backup: GIT_TREE_SHA=... CONTENT_HASH=... BACKUP_PATH=...` into context. If the route rewrites history but the hook didn't fire, run manually:
 
    ```bash
-   bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/backup.sh"
+   bash "${CODING_COMMIT_SKILL_DIR}/scripts/backup.sh"
    ```
 
    For every route, capture `jj op log -n1 --no-graph -T 'self.id().short()'` as a rollback handle (`jj op restore <id>` undoes any jj operation).
@@ -159,7 +163,7 @@ The PostToolUse hook auto-runs `verify.sh` after any successful rewriting op and
 If the hook didn't fire, run manually:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/commit/scripts/verify.sh"
+bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 ```
 
 Then run the project's own lint, test, and build commands (skip if `--no-verify`) — `npm run lint`/`test`/`build` where `package.json` defines them, otherwise the equivalents its language standard mandates — and confirm the final chain is linear with each change self-contained.
