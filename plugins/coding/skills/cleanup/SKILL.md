@@ -38,8 +38,8 @@ Before resolving engineering-work paths, read the absolute
 classify or remove `.state/works/`; report the missing contract and
 continue only the traditional git/jj audit when useful. Cleanup reads final
 promotion records but does not create or rewrite them, `state/working.md`,
-`state.md`, or overview files. Its durable writes are the retirement ledger
-below and, when its record link changes, `docs/README.md`. Backup metadata
+`state.md`, or overview files. It makes no durable `docs/` write of its own.
+Backup metadata
 lives only in the OS temporary backup tree.
 
 ## Workflow
@@ -144,30 +144,14 @@ lives only in the OS temporary backup tree.
    and its manifest matches. Preserve existing git bundle/patch backups for
    branches and full-directory backups for worktrees. For jj changes, record
    IDs and restoration commands because operation history preserves them.
-10. **Record the retirement, then remove only approved, verified targets.**
-    Before deleting an engineering-work directory, append its work ID and the
-    retirement date to `docs/retired-work-ids.md`, one record per line as
-    `<work-id> <date>`. Using the root derived from the injected
-    engineering-work contract, read
-    `${ESSENTIAL_ROOT}/templates/docs/docs-root-readme.template.md`; ensure
-    `docs/README.md` exists and links the ledger under Repository records.
-    Include every materially changed file in `generated_files`. A work ID is never reused, and
-    deletion removes the last `.state/` trace of it, so the ledger entry is
-    what keeps the name spent — this applies equally to a stream that promoted
-    nothing else. Resolve `docs/` and that leaf without following symlinks and
-    require the leaf to be a regular in-tree file — an append through a symlink
-    writes past the lifecycle boundary, to a file outside this tree. Then save
-    it before deleting anything, through `coding:commit`'s checksum-bound
-    scoped route: write a scope request selecting the ledger and
-    `docs/README.md` exactly when each changed, invoke
-    `Skill(coding:commit --prepare-paths-from=<scope-request>)`, and save with
-    the `--paths-from`/`--manifest-sha256` pair it returns. The inventory
-    permits a checkout dirty with unrelated work, and approval covered the
-    retirement rather than those edits, so every excluded path must remain
-    byte-identical. An uncommitted entry is discarded by the next
-    `git reset --hard`, after the state it replaced is already gone; a stream
-    whose entry cannot be committed is not removable.
-    Use the existing safe git/jj
+10. **Remove only approved, verified targets.** This skill deletes under
+    `.state/works/` alone and never touches `.state/archive/`, which is
+    permanent and is the only thing holding a retired ID against reuse — so a
+    stream that was archived keeps its name whatever happens here, and one
+    deleted straight out of `works/` does not. Confirm before deleting that
+    everything worth keeping was promoted to `docs/` under step 8's promotion
+    anchor — nothing that survives the stream may exist only in the directory
+    being deleted. Use the existing safe git/jj
     commands. Remove an engineering-work directory only by its fully resolved,
     validated `.state/works/<work-id>` path after rechecking the gate and
     backup immediately before deletion; never target `.state/works/`,
@@ -206,7 +190,5 @@ Report tool/remote freshness and counts by VCS target plus work lifecycle
 (`active`, `interrupted`, `completed`, `ambiguous`) and cleanup disposition.
 For every engineering-work candidate report workspace path/name, work ID,
 retirement gates, `retirement_ready_at`, effective retention, promotion anchor,
-backup path, action, and restoration command. Report `generated_files`
-carrying `docs/retired-work-ids.md` and any created/materially rewritten
-`docs/README.md` whenever step 10 retired an engineering-work directory, and otherwise `[]`
+backup path, action, and restoration command. Report `generated_files` as `[]`
 unless a separately authorized project-artifact write actually occurred.

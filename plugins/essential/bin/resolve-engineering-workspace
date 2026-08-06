@@ -28,8 +28,11 @@ Output (JSON) on status:"resolved":
   bootstrap_requested / bootstrap_created / bootstrap_existing
                       bootstrap mode and its exact created/preserved paths
 
-Other statuses: work_id_required (with candidate_work_ids, workspace_label,
-suggested_work_id), requires_ignore (with ignore_file), invalid (with error).
+Other statuses: work_id_required (with work_id_grammar, naming_reference,
+workspace_label, suggested_work_id, and existing_work_ids — every stream on
+disk under works/ and archive/, to check a proposed ID against for collision,
+never a set of format examples), requires_ignore (with ignore_file), invalid
+(with error).
 EOF
 }
 
@@ -243,27 +246,10 @@ state_root="${default_workspace:-$active_workspace}"
 engineering_dir="$state_root/.state"
 work_root="$engineering_dir/works"
 archive_root="$engineering_dir/archive"
-# versioned, so it lives with the active tree's docs, not with .state/
-retired_ledger="$active_workspace/docs/retired-work-ids.md"
-
-# A retired ID is spent even after its directories are gone, which is the
-# whole reason the ledger is versioned while `.state/` is not.
-is_retired_work_id() {
-  [[ -f "$retired_ledger" ]] || return 1
-  # the ID is the first field of `<work-id> <date>`; comparing whole lines
-  # would silently miss every dated record the ledger actually holds
-  awk -v id="$1" '$1 == id { found = 1 } END { exit found ? 0 : 1 }' \
-    "$retired_ledger"
-}
-
 # A parked stream still owns its name. Minting a second one beside it would
 # leave two streams with one identity and no way to tell which unparks.
 if [[ -n "$work_id" && ! -d "$work_root/$work_id" && -d "$archive_root/$work_id" ]]; then
   invalid "work ID from $work_id_source names a parked stream under archive/; unpark that one instead of minting a second"
-fi
-
-if [[ -n "$work_id" && ! -d "$work_root/$work_id" ]] && is_retired_work_id "$work_id"; then
-  invalid "work ID from $work_id_source was retired and is recorded in docs/retired-work-ids.md; an identity is never reused"
 fi
 
 # The canonical shape governs minting, never resumption: a stream created
@@ -298,6 +284,20 @@ while IFS= read -r candidate_dir; do
     work_candidates+=("$candidate_id")
   fi
 done < <(find "$work_root" -mindepth 1 -maxdepth 1 \
+  -type d 2>/dev/null | LC_ALL=C sort)
+
+# Which names are spoken for is a different question from which streams are
+# live: an archived ID resolves nothing, but minting over it gives one identity
+# two streams. Keeping the two lists apart is load-bearing — folding archive/
+# into work_candidates makes a parked stream resolve as a live one.
+taken_ids=()
+while IFS= read -r candidate_dir; do
+  [[ -n "$candidate_dir" ]] || continue
+  candidate_id="${candidate_dir##*/}"
+  if valid_work_id "$candidate_id"; then
+    taken_ids+=("$candidate_id")
+  fi
+done < <(find "$work_root" "$archive_root" -mindepth 1 -maxdepth 1 \
   -type d 2>/dev/null | LC_ALL=C sort)
 
 slugify() {
@@ -373,8 +373,7 @@ if [[ -n "$workspace_label" ]]; then
     # that then refuses it.
     if canonical_work_id "$candidate_from_label" &&
        within_id_bound "$candidate_from_label" &&
-       [[ ! -d "$archive_root/$candidate_from_label" ]] &&
-       ! is_retired_work_id "$candidate_from_label"; then
+       [[ ! -d "$archive_root/$candidate_from_label" ]]; then
       workspace_work_id="$candidate_from_label"
     fi
   fi
@@ -388,8 +387,15 @@ if [[ -z "$work_id" ]]; then
     work_id="${work_candidates[0]}"
     work_id_source="sole_existing"
   else
-    candidates_json="$(jq -n '$ARGS.positional' \
-      --args ${work_candidates[@]+"${work_candidates[@]}"})"
+    # The list is every name on disk, live in works/ or parked in archive/, so
+    # a proposed name can be checked against it for a collision. It is never a set of format examples: names
+    # minted under older rules keep resolving forever, so reading the shape off
+    # them reproduces exactly the drift this response is asked to stop. The
+    # grammar and the file that owns it ship in the same body, so the reader
+    # never has to infer either.
+    existing_work_ids_json="$(jq -n '$ARGS.positional | unique' \
+      --args ${taken_ids[@]+"${taken_ids[@]}"})"
+    naming_reference="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/references/naming.md"
     jq -n \
       --arg vcs "$vcs" \
       --arg repo_root "$repo_root" \
@@ -398,8 +404,10 @@ if [[ -z "$work_id" ]]; then
       --arg workspace_label "$workspace_label" \
       --arg state_root "$state_root" \
       --arg suggested_work_id "$workspace_work_id" \
-      --argjson candidates "$candidates_json" \
-      --arg error "work ID cannot be selected safely; the PM must ask the user" \
+      --arg work_id_grammar '^[a-z0-9]+(-[a-z0-9]+)*$ at or under 32 bytes, naming what the work is about: no date prefix, no type prefix, no random suffix' \
+      --arg naming_reference "$naming_reference" \
+      --argjson existing_work_ids "$existing_work_ids_json" \
+      --arg error "work ID cannot be selected safely; the PM must ask the user. existing_work_ids are every stream on disk under works/ and archive/, to check a proposed ID against for collision — not examples of the format, which is work_id_grammar" \
       '{status:"work_id_required", vcs:$vcs, repo_root:$repo_root,
         durable_root:$active_workspace, active_workspace:$active_workspace,
         state_root:$state_root,
@@ -407,7 +415,8 @@ if [[ -z "$work_id" ]]; then
         workspace_label:(if $workspace_label == "" then null else $workspace_label end),
         suggested_work_id:(if $suggested_work_id == "" then null
           else $suggested_work_id end),
-        candidate_work_ids:$candidates, error:$error}'
+        work_id_grammar:$work_id_grammar, naming_reference:$naming_reference,
+        existing_work_ids:$existing_work_ids, error:$error}'
     exit 4
   fi
 fi
@@ -497,7 +506,7 @@ if [[ $bootstrap -eq 1 ]]; then
 
 - Work ID: \`$work_id\`
 - Updated: \`$bootstrap_timestamp\`
-- Status: \`initialized\`
+- Status: Bootstrapped; the charter is not written yet.
 - Working now: Confirm the goal, scope, and acceptance criteria.
 - Handback point: First-use bootstrap is complete; discovery has not started.
 
@@ -510,7 +519,7 @@ if [[ $bootstrap -eq 1 ]]; then
 
 - State role: \`root\`
 - Work ID: \`$work_id\`
-- Lifecycle status: \`initialized\`
+- Phase: \`planned\`
 - Updated: \`$bootstrap_timestamp\`
 - Charter: [goal.md](goal.md)
 - Current focus: [working.md](state/working.md)
@@ -527,7 +536,6 @@ if [[ $bootstrap -eq 1 ]]; then
 
 ## Status
 
-- Lifecycle: \`initialized\`
 - Topology: \`linear\`
 - Overall graph: \`GOL → OWN\`
 
@@ -553,6 +561,7 @@ None recorded.
   goal_contents="# Charter
 
 - Work ID: \`$work_id\`
+- Charter: \`absent\`
 - Charter revision: \`1\`
 - Created: \`$bootstrap_timestamp\`
 - State: [state.md](state.md)
@@ -588,7 +597,7 @@ Append-only event log, newest last, never rewritten. Line grammar:
 \`- <ISO-8601> <actor>@<capability_id> rev:<N> <event-type> <subject>: <summary> [evidence: <ref>] [invalidates: <ids>]\`
 with event types \`status|decision|revision|sync|sweep|lease\`.
 
-- $bootstrap_timestamp PM@pm rev:1 status $work_id: initialized
+- $bootstrap_timestamp PM@pm rev:1 status $work_id: bootstrapped, phase \`planned\`
 "
   write_bootstrap_file "$work_dir/goal.md" "$goal_contents"
   write_bootstrap_file "$work_dir/state/working.md" "$working_contents"

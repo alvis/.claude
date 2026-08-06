@@ -27,7 +27,8 @@ Root state metadata contains at least:
 ```markdown
 - State role: `root`
 - Work ID: `eng-421-example`
-- Lifecycle status: `active`
+- Phase: `working`
+- Blocked on: `operator ruling on the retention window`
 - Charter: [goal.md](goal.md)
 - Plan source: `state.md`
 - Plan revision: `3`
@@ -37,7 +38,16 @@ Root state metadata contains at least:
 
 The charter pointer names the work's `goal.md`, which owns the goal, scope,
 numbered success criteria, and specification provenance; the root state never
-restates them. `Plan revision` counts approved definition changes, starting at
+restates them. That charter carries
+`Charter: approved | reconstructed | absent`: `approved` means the user agreed
+to those success criteria, `reconstructed` means a later reader wrote them
+from what the work had already done, and `absent` means the stream has no
+`goal.md`. An `SC-n` cited against a reconstructed charter is a description,
+never an operator commitment, so it cannot close work on the user's behalf —
+get the charter approved first. `absent` is a defect to repair, never a shape
+to run under: a stream with no charter has no success criteria to demonstrate,
+so nothing can show it is done. Write the charter and get it approved.
+`Plan revision` counts approved definition changes, starting at
 `1`. `State revision` is a monotonic counter bumped on every coordinator write
 of `state.md` (progress and definition alike), starting at `1`; it orders
 journal lines and lets the lease and doctor detect a stale writer.
@@ -49,10 +59,66 @@ under X, current is Y" and order migrations by staleness. All three fields
 apply to new and coordinator-rewritten files only — an older file gains them
 at its next explicit rewrite under the lazy-migration rule, never on read.
 
-Keep lifecycle status
-(`initialized|active|blocked|reviewing|completed|retiring`), task
-status, attempt outcome (`pass|fail|partial`), file state, review state, and
-sync state in separately named fields. Never reuse one vocabulary for another.
+## Phase and blockers
+
+Where a stream sits in the pipeline and what is stopping it are independent
+facts, so they are separate fields. Carried in one field, a stream blocked on
+an operator either lies as "active" or, marked "blocked", loses its place in
+the pipeline.
+
+They are separate metadata lines, never one. Every reader of this metadata is
+anchored at one key per line, so a single line carrying both —
+`- Phase: planned · Blocked on: reviewer` — parses as neither field, and each
+check gated on phase then reports a
+confident zero for that stream instead of an error. The packed form looks
+tidier, which is exactly why it must not be written: the cost is invisible at
+the point where someone would re-pack it.
+
+`Phase` is ordered and terminal at the end:
+
+| Phase | Entry evidence |
+| --- | --- |
+| `planned` | user-confirmed work ID, `--bootstrap` run, charter written |
+| `working` | an owner exists and at least one required leaf is runnable |
+| `reviewing` | every required leaf `done` **and** the pull request(s) recorded |
+| `completed` | recorded pull request(s) observed merged, or the changes observed on the default branch |
+| `archived` | completed or parked; the directory has left `works/` |
+
+`- Blocked on:` is orthogonal to phase, and it is **nullable**: write the line
+only when the stream is stopped.
+
+| Line | Meaning |
+| --- | --- |
+| `- Blocked on: <named blocker>` | stopped, and the blocker is named |
+| `- Blocked on: unknown` | stopped, and nobody recorded why |
+| line absent | not blocked |
+
+`unknown` is a first-class value, not an absent field. Collapsing the two makes
+a forgotten stream read exactly like a healthy one, so a stream nobody owns
+disappears instead of surfacing. Equally, an empty value or an unowned-shaped
+placeholder (`-`, `none`, `tbd`) is not a value: an unnamed blocker cannot be
+chased. Write the blocker, or write `unknown`.
+
+Duration is never typed into this field. It is derived at read time from
+`Last progress` — the last journal `status` event, or the marked `state.md`
+fallback ([overviews.md](overviews.md)) — so a stored day count cannot rot
+against the events that define it. Nor is a next action a value here: "due to
+be moved to archive" is derived from phase `completed`, recorded merge
+evidence, and the days since `Last progress`, and the doctor's `retention`
+check computes it. A computed next action in a fact field is the defect this
+field exists without.
+
+`initialized`, `active`, `blocked`, and `retiring` are retired words —
+`initialized` is phase `planned`, `active` is `working`, `blocked` is
+`Blocked on: <who or what>` at whatever phase the stream actually sits in, and
+`retiring` is phase `completed` with `Blocked on: retention`. A file written
+under the single `Lifecycle status` field keeps it until the coordinator's next
+explicit rewrite, which maps it through that list under the lazy-migration
+rule, never on read.
+
+Keep phase, blocker, task status, attempt outcome (`pass|fail|partial`), file
+state, review state, and sync state in separately named fields. Never reuse
+one vocabulary for another.
 
 ## Task identity and tables
 
@@ -135,17 +201,27 @@ predecessor to explicit `! blocked` with `unblock:` evidence. Leave ordinary
 future work `planned` while it waits only on planned or working predecessors.
 An executable task may become `working`, `done`, or `failed` only after every
 own dependency and every predecessor of its parent is `done`; a task that
-cannot be attempted is `blocked`, never `failed`. Lifecycle `blocked` is
-invalid while any required executable leaf is still `working`.
+cannot be attempted is `blocked`, never `failed`.
 
-Lifecycle `reviewing` requires every required executable leaf to be `done` and
-the stream's pull request(s) recorded; `completed` is terminal and reachable
-only from `reviewing`, only on merge evidence.
-[stream-completion.md](stream-completion.md) states both in full.
+A stream with a runnable required executable leaf carries no `Blocked on:`
+line; a `Blocked on:` value needs unfinished required work and no runnable
+required leaf. Phase `reviewing` requires every required executable leaf to be
+`done` and the stream's pull request(s) recorded; `completed` is terminal,
+reachable only from `reviewing`, only on merge evidence.
+[stream-completion.md](stream-completion.md) states both in full. Passing
+tests do not reach `completed` while review, sync, publication, or history
+anchoring remains required.
 
-Lifecycle `blocked` requires unfinished required work and no runnable required
-leaf. Passing tests alone does not make a lifecycle `completed` while review,
-sync, publication, or history anchoring remains required.
+## Completion receipt
+
+A stream entering phase `completed` adds `## Completion receipt` to
+`state.md`, holding the merge evidence, every promoted `docs/` path, and every
+outlives-me item with the owner that took it. Its `overview.md` row is
+generated from this section, so parity is not a copy step — it is the check
+that nothing consequential was ever overview-only, and the row can be dropped
+on schedule without reading anything back out of it. An outlives-me item with
+no owner blocks completion; [retirement.md](retirement.md) owns that rule and
+what dropping the row costs.
 
 ## Reading state and definition changes
 
@@ -171,7 +247,13 @@ plan or charter revision, sync event, sweep, or lease event —
 newest last, never rewritten or deleted. `<event-type>` is one of
 `status|decision|revision|sync|sweep|lease`; `rev:<N>` is the
 `State revision` the writer was at; `invalidates:` names outputs or evidence
-the event made stale. Older lines in the pre-grammar form
+the event made stale. A bulk rewrite across many streams — a migration, a
+backfill, a reformat — takes `sweep`, never `status`. Migrating N headers is
+not N streams making progress, and `Last progress` reads `status` events
+only ([overviews.md](overviews.md)), so booking a sweep as `status` dates
+every stream it touched to the day it ran and reports long-dead streams as
+fresh, destroying the freshness signal the migration was run to restore.
+Older lines in the pre-grammar form
 (`- <ISO-8601> <actor> <task-id or event>: <summary>`) remain valid history.
 `state/revisions.md` is the same discipline at plan granularity: one entry per
 approved revision. Neither file is ever the plan authority; both make the

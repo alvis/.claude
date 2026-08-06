@@ -12,9 +12,6 @@ migration rules for that tree.
 - A durable directory uses `README.md` only for its reader entrypoint.
   Operational indexes such as `.state/overview.md` and semantic documents such
   as `system.md`, `manifest.md`, and `assets.md` keep their descriptive names.
-- `docs/retired-work-ids.md` is the immutable semantic ledger of retired work
-  IDs, which must never be reused. It is not a directory entrypoint. Link it
-  from `docs/README.md` under repository records when it exists.
 - `docs/architecture` owns structural rules, boundaries, topology, protocols,
   and flows. A choice with alternatives and consequences is an architectural
   decision record under `decisions`, never a second architecture truth. Follow

@@ -9,6 +9,7 @@ handover-specific content; all timestamps are one real UTC ISO-8601 value.
 # <Work headline> charter
 
 - Work ID: `<work-id>`
+- Charter: `<approved|reconstructed|absent>`
 - Charter revision: `<n>`
 - Updated: `<timestamp>`
 - State: [state.md](state.md)
@@ -38,7 +39,7 @@ authored against — the canonical specification stays the sole authority.
 # <Work headline>
 
 - Work ID: `<work-id>`
-- Lifecycle status: `<initialized|active|blocked|reviewing|completed|retiring>`
+- Phase: `<planned|working|reviewing|completed|archived>`
 - Updated: `<timestamp>`
 - Charter: [goal.md](goal.md)
 - Current focus: [working.md](state/working.md)
@@ -68,8 +69,17 @@ authored against — the canonical specification stays the sole authority.
 ## Evidence and validation
 ## Durable promotion
 ## Specification sync and revalidation
+## Completion receipt
 ## Continuation
 ```
+
+Add one further metadata line, `- Blocked on: <named blocker>`, only when the
+stream is stopped — or `- Blocked on: unknown` when it is stopped and nobody
+recorded why. The line is absent from the template because absence is a fact:
+it means the stream is not blocked. It is never carried as an empty or
+placeholder value, which would claim a blocker that does not exist and cost the
+distinction between a healthy stream and a forgotten one
+([engineering-work-state.md](../../../references/engineering-work-state.md)).
 
 The root table contains the complete registry: every three-letter parent and
 every `AAA01`-style child exactly once. A resumable `state/*.md` child may mirror
@@ -86,6 +96,11 @@ proposal not yet implemented, each with its status and child path, so a
 same-machine resume reads the outstanding approval/implementation work from
 `state.md` without scanning the folder. Omit the section only when no such
 proposal exists.
+
+`## Completion receipt` appears once the stream reaches phase `completed` and
+holds its merge evidence, promoted `docs/` paths, and each outlives-me item
+with the owner that took it; the stream's overview row is generated from it.
+Omit it before then.
 
 File substates: completed; `need-draft`; `need-completion`; `need-fixing`;
 `need-testing`; `need-linting`; `need-refactoring`; blocked. Record path,
@@ -120,37 +135,30 @@ streams it refreshed and preserves every other row byte-for-byte. Follow this te
 
 - `<overall requirement the end result must satisfy>`
 
+## Awaiting you
+
+| Stream | Question | Waiting since |
+|---|---|---|
+| `<work-id>` | `<the question, as the user must answer it>` | `<date> (<n>d)` |
+
 ## Streams
 
-| Work ID | Lifecycle | Headline | Next action | Location | Spec | Documentations |
-|---|---|---|---|---|---|---|
-| `<work-id>` | `<initialized\|active\|blocked\|reviewing\|completed\|retiring>` | `<one line>` | `<one line or ->` | `<source-tree path> (<git-worktree\|jj-workspace> @ <revision>)` | `<capability>` or `<capability> (pending-publication)` or `-` | `[<title>](<canonical promoted docs path>)` or `-` |
-| `<work-id>` | `completed` | `<one line>` | `-` | `-` | `-` | `-` |
+| Work ID | Phase | Blocked on | Last progress | Headline | Next action | Location | Links |
+|---|---|---|---|---|---|---|---|
+| `<work-id>` | `<planned\|working\|reviewing\|completed>` | `<named blocker\|unknown\|->` | `<date> (<n>d)` | `<one line>` | `<one imperative sentence, ≤200 chars, or ->` | `<absolute checkout path> (<git-worktree\|jj-workspace>)` or `-` | `<capability>`, `<capability> (pending-publication)`, `[<title>](<promoted docs path>)`, or `-` |
+
+## Recently landed
+
+- `<work-id>` — `<one line>` `<merge date>`
 ```
 
-- `Goal` and `Requirements` sections are authored, not derived — semantics live
-  in the Global overview section of `engineering-work.md`. Upserts and
-  rebuilds preserve them byte-for-byte, exactly like unrefreshed rows; when
-  creating a brand-new overview, fill them from user intent or leave an
-  explicit `-` for the PM to resolve, never invent them from stream files.
-- `Location` is the checkout the stream's **code** is worked in: its
-  repository-relative or absolute path plus the tree kind and current revision.
-  The stream's state is not there — it is centralized under the default source
-  tree — so a removed checkout leaves `-` here and costs the stream only its
-  working copy, never its state.
-- `Spec` names the capability or specification source the stream works against,
-  suffixed `(pending-publication)` while the stream holds accepted spec
-  deviations not yet pushed to the canonical source, or `-` for generic work.
-  Before planning a new stream against a capability, resolve any sibling
-  stream's pending publication on it first.
-- `Documentations` links any durable `docs/` material for the stream — an
-  architecture document, ADR index, or capability specification — or `-` when
-  none exists.
-- Every stream in `.state/works/` appears as exactly one row, continuable
-  and index-only alike. The overview is a status index only; each
-  stream's authoritative resumable context stays in that stream's own
-  `state.md`/`state/` files. A retired stream may be dropped once its row adds no
-  signal.
+Every cell's derivation, the `Next action` budget, the `Last progress` rule,
+and the sort order live in
+[overviews.md](../../../references/overviews.md); this template is only their
+shape. Handover fills `Goal` and `Requirements` from user intent when creating
+a brand-new overview, or leaves an explicit `-` for the PM to resolve — never
+inventing them from stream files — and preserves them byte-for-byte
+afterwards, exactly like unrefreshed rows.
 
 ## `state/working.md`
 

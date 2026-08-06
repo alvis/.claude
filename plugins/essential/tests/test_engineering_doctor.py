@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import time
 
@@ -11,6 +12,17 @@ import pytest
 ESSENTIAL = Path(__file__).resolve().parents[1]
 DOCTOR = ESSENTIAL / "bin/engineering-doctor"
 RESOLVER = ESSENTIAL / "bin/resolve-engineering-workspace"
+DOCTOR_SOURCE = DOCTOR.read_text(encoding="utf-8")
+
+
+def doctor_constant(name: str) -> int:
+    """Read a threshold from the doctor, so the test cannot drift off it."""
+    found = re.search(rf"^{name} = (\d+)$", DOCTOR_SOURCE, re.MULTILINE)
+    assert found is not None, name
+    return int(found.group(1))
+
+
+UNKNOWN_BLOCKER_STALE_DAYS = doctor_constant("UNKNOWN_BLOCKER_STALE_DAYS")
 
 HEADER = (
     "| ID | Mark | Status | Task | Depends on | Required | Acceptance | Owner "
@@ -40,9 +52,24 @@ class Workspace:
         self.root = root
         self.work_dir = root / ".state" / "works" / "demo"
         (self.work_dir / "state").mkdir(parents=True)
+        self.write_charter()
+
+    def write_charter(self, provenance: str = "approved") -> None:
+        """Write the charter every stream must have; `-` writes none."""
+        goal = self.work_dir / "goal.md"
+        if provenance == "-":
+            goal.unlink(missing_ok=True)
+            return
+        goal.write_text(
+            "# Charter\n\n"
+            f"- Charter: `{provenance}`\n"
+            "- Charter revision: `1`\n\n"
+            "## Goal\n\nDemonstrate the doctor.\n",
+            encoding="utf-8",
+        )
 
     def write_state(
-        self, task_rows: str, metadata: str = "", lifecycle: str = "active"
+        self, task_rows: str, metadata: str = "", lifecycle: str = "working"
     ) -> None:
         (self.work_dir / "state.md").write_text(
             "# Engineering work\n\n"
@@ -140,7 +167,7 @@ def test_retired_lifecycle_value_is_flagged(workspace: Workspace) -> None:
     assert "lifecycle" in workspace.checks(findings)
 
 
-def test_bootstrap_output_has_zero_findings(tmp_path: Path) -> None:
+def test_bootstrap_output_carries_no_defect(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", str(repo)], check=True, capture_output=True)
@@ -159,7 +186,22 @@ def test_bootstrap_output_has_zero_findings(tmp_path: Path) -> None:
         text=True,
     )
     assert completed.returncode == 0, completed.stderr
-    assert json.loads(completed.stdout)["findings"] == []
+    findings = json.loads(completed.stdout)["findings"]
+    # Nothing the bootstrap writes may be a defect.
+    assert [f for f in findings if f["severity"] == "error"] == []
+    # A stream whose phase cannot be read is skipped in silence by every
+    # phase-gated check, so a freshly bootstrapped stream must be visible to
+    # them from its first byte. Asserted by name: the absence of this check is
+    # the claim, and a count would not say so.
+    assert "state-metadata" not in {f["check"] for f in findings}
+    assert {f["check"] for f in findings} <= {
+        "lifecycle-vocabulary",
+        "charter-provenance",
+    }
+    # A re-packed template is caught here only as this absence; the packed
+    # shape itself is exercised against a synthetic fixture in
+    # `test_an_unparseable_phase_is_reported_not_silently_skipped`. Do not add
+    # a byte-level pin for it here — the resolver's own suite owns that.
 
 
 def test_malformed_and_duplicate_ids(workspace: Workspace) -> None:
@@ -227,7 +269,7 @@ def test_parent_done_with_unfinished_required_child(workspace: Workspace) -> Non
 def test_broken_file_reference_and_absolute_path(workspace: Workspace) -> None:
     workspace.write_state(
         row("AAA"),
-        metadata="- Charter: [goal.md](goal.md)\n"
+        metadata="- Charter: [charter](missing-goal.md)\n"
         "- Notes: [notes](/etc/absolute.md)\n",
     )
     _, findings = workspace.run_doctor()
@@ -3366,7 +3408,13 @@ def test_unparseable_state_is_only_info(workspace: Workspace) -> None:
     )
     code, findings = workspace.run_doctor("--strict")
     assert code == 0
-    assert {finding["severity"] for finding in findings} == {"info"}
+    assert [f for f in findings if f["check"] == "layout"][0]["severity"] == "info"
+    assert not [f for f in findings if f["severity"] == "error"]
+    # Free-form prose is not a defect, but an unreadable phase must still
+    # surface: it is what silences every phase-gated check.
+    assert {f["check"] for f in findings if f["severity"] == "warning"} == {
+        "state-metadata"
+    }
 
 
 def test_strict_exit_code(workspace: Workspace) -> None:
@@ -3393,6 +3441,42 @@ def test_overview_drift(workspace: Workspace) -> None:
     )
     findings = json.loads(completed.stdout)["findings"]
     assert any(finding["check"] == "overview" for finding in findings)
+
+
+def test_overview_drift_ignores_tables_outside_the_streams_section(
+    workspace: Workspace,
+) -> None:
+    """Awaiting-you questions and archived rows are not dangling stream rows.
+
+    The overview carries three tables and only Streams indexes `works/`. A
+    check that walks all three reports every operator question as a missing
+    work directory, which is noise loud enough to bury the real drift it also
+    reports — so this asserts the real one survives and the noise is gone.
+    """
+    workspace.write_state(row("AAA"))
+    engineering_root = workspace.root / ".state"
+    (engineering_root / "overview.md").write_text(
+        "# Overview\n\n"
+        "## Awaiting you\n\n"
+        "| Question | Stream | Waiting since |\n| --- | --- | --- |\n"
+        "| Accept ADR-0008? | `demo` | 2026-07-22 |\n\n"
+        "## Streams\n\n"
+        "| Work ID | Phase | Headline |\n| --- | --- | --- |\n"
+        "| demo | completed | Demo. |\n\n"
+        "## Recently landed\n\n"
+        "| Work ID | Landed | Locator |\n| --- | --- | --- |\n"
+        "| gone-for-good | 2026-07-28 | PR #71 |\n",
+        encoding="utf-8",
+    )
+    completed = subprocess.run(
+        [str(DOCTOR), "--engineering-root", str(engineering_root), "--json"],
+        capture_output=True,
+        text=True,
+    )
+    findings = json.loads(completed.stdout)["findings"]
+    overview = [f for f in findings if f["check"] == "overview"]
+    assert [f["work"] for f in overview] == ["demo"]
+    assert "completed" in overview[0]["message"]
 
 
 def test_unparseable_rows_surface_as_warning(workspace: Workspace) -> None:
@@ -3534,3 +3618,831 @@ def test_archive_placeholder_summary_is_rejected(tmp_path: Path) -> None:
         and "What changed" in finding["message"]
         for finding in findings
     )
+
+
+# --- structure migration: the detections that let any repo move to the
+# --- two-axis lifecycle, the split overview, and the archival ledger.
+
+
+def overview_row(
+    work_id: str = "demo",
+    phase: str = "working",
+    # a table cell cannot be absent, so `-` is how the overview carries "not
+    # blocked"; it is a different fact from `unknown`
+    blocked_on: str = "-",
+    progress: str = "2026-07-30 (7d)",
+    next_action: str = "Ship it.",
+    location: str = "/Users/dev/tree",
+) -> str:
+    return (
+        "| Work ID | Phase | Blocked on | Last progress | Headline "
+        "| Next action | Location | Links |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        f"| {work_id} | {phase} | {blocked_on} | {progress} | Demo. "
+        f"| {next_action} | {location} | - |\n"
+    )
+
+
+def write_overview(root: Path, body: str, siblings: bool = True) -> None:
+    state = root / ".state"
+    (state / "overview.md").write_text(body, encoding="utf-8")
+    if siblings:
+        for name in ("environment.md", "traps.md"):
+            (state / name).write_text(f"# {name}\n", encoding="utf-8")
+
+
+def write_journal(workspace: Workspace, *lines: str, name: str = "journal.md") -> None:
+    (workspace.work_dir / "state" / name).write_text(
+        "# Journal\n\n" + "".join(f"{line}\n" for line in lines),
+        encoding="utf-8",
+    )
+
+
+def status_line(date: str, payload: str) -> str:
+    return f"- {date}T09:00:00Z PM@pm rev:1 status demo: {payload}"
+
+
+def test_overview_monolith_reports_missing_siblings_and_stray_sections(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n"
+        "The tree carries three jj workspaces and one orphaned checkout.\n\n"
+        "## Environment\n\nBranch protection is absent on main.\n\n"
+        "## Streams\n\n" + overview_row(),
+        siblings=False,
+    )
+    _, findings = run_engineering_root(workspace.root)
+    monolith = [f for f in findings if f["check"] == "overview-monolith"]
+    messages = " ".join(finding["message"] for finding in monolith)
+    assert "environment.md is missing" in messages
+    assert "traps.md is missing" in messages
+    assert "'Environment' is not one of" in messages
+    assert "preamble line(s)" in messages
+    assert all(finding["severity"] == "warning" for finding in monolith)
+    assert all(finding.get("fix") for finding in monolith)
+
+
+def test_canonical_overview_sections_are_not_reported(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n- Updated: `2026-08-06`\n\n"
+        "## Goal\n\nShip.\n\n## Requirements\n\nNone.\n\n"
+        "## Awaiting you\n\n## Streams\n\n"
+        + overview_row(progress="2026-07-30 (7d)")
+        + "\n## Recently landed\n",
+    )
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    _, findings = run_engineering_root(workspace.root)
+    assert "overview-monolith" not in Workspace.checks(findings)
+
+
+def test_retired_lifecycle_words_are_format_drift_not_defects(
+    workspace: Workspace,
+) -> None:
+    for retired, replacement in (
+        ("initialized", "phase `planned`"),
+        ("active", "phase `working`"),
+        ("blocked", "`Blocked on:"),
+        ("retiring", "phase `completed`"),
+    ):
+        workspace.write_state(
+            row("AAA", "✓", "done", evidence="Merged in PR #42."),
+            lifecycle=retired,
+        )
+        code, findings = workspace.run_doctor("--strict")
+        drift = [f for f in findings if f["check"] == "lifecycle-vocabulary"]
+        assert code == 0, retired
+        assert len(drift) == 1, retired
+        assert drift[0]["severity"] == "info"
+        assert replacement in drift[0]["message"]
+
+
+def test_blocked_on_must_name_a_blocker_or_record_unknown(
+    workspace: Workspace,
+) -> None:
+    for metadata, expected in (
+        # present and empty records neither a blocker nor the absence of one
+        ("- Blocked on:\n", "present but empty"),
+        ("- Blocked on: ``\n", "present but empty"),
+        # `-` is the overview's cell for "not blocked"; in state.md the field
+        # is nullable, so the same fact is written by omitting it
+        ("- Blocked on: `-`\n", "names no blocker"),
+        ("- Blocked on: `none`\n", "names no blocker"),
+        ("- Blocked on: `tbd`\n", "names no blocker"),
+        # the retired vocabulary carried in the new field
+        ("- Blocked on: `running`\n", "retired motion vocabulary"),
+        ("- Blocked on: `idle 9d`\n", "retired motion vocabulary"),
+        ("- Blocked on: `waiting: operator`\n", "retired motion vocabulary"),
+    ):
+        workspace.write_state(row("AAA"), metadata=metadata)
+        _, findings = workspace.run_doctor()
+        blocked = [f for f in findings if f["check"] == "blocked-on"]
+        assert len(blocked) == 1, metadata
+        assert blocked[0]["severity"] == "warning", metadata
+        assert expected in blocked[0]["message"], metadata
+
+    # positive control for every zero below: a named blocker on the same
+    # fixture reports nothing, so a silent run means the value was accepted
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `an operator ruling`\n")
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" not in Workspace.checks(findings)
+
+
+def test_an_absent_blocked_on_is_a_different_fact_from_unknown(
+    workspace: Workspace,
+) -> None:
+    # `unknown` says the stream is stopped and nobody recorded why; absence
+    # says nothing stopped it. A stale hold separates them: were they the same
+    # value, a forgotten stream would read exactly like a healthy one.
+    stale = time.strftime(
+        "%Y-%m-%d",
+        time.localtime(time.time() - (UNKNOWN_BLOCKER_STALE_DAYS + 2) * 86400),
+    )
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line(stale, "working"))
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" not in Workspace.checks(findings)
+
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `unknown`\n")
+    write_journal(workspace, status_line(stale, "working"))
+    _, findings = workspace.run_doctor()
+    forgotten = [f for f in findings if f["check"] == "blocked-on"]
+    assert len(forgotten) == 1
+    assert forgotten[0]["severity"] == "warning"
+    assert stale in forgotten[0]["message"]
+    assert f"{UNKNOWN_BLOCKER_STALE_DAYS}-day window" in forgotten[0]["message"]
+
+
+def test_a_fresh_unknown_blocker_is_not_yet_a_finding(workspace: Workspace) -> None:
+    # the day it is written, `unknown` is honest; it rots into a finding only
+    # once nobody can reconstruct the question
+    today = time.strftime("%Y-%m-%d")
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `unknown`\n")
+    write_journal(workspace, status_line(today, "working"))
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" not in Workspace.checks(findings)
+
+    # positive control: the check does fire on this fixture when it should
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `none`\n")
+    write_journal(workspace, status_line(today, "working"))
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" in Workspace.checks(findings)
+
+
+def test_an_undatable_unknown_blocker_is_reported_rather_than_skipped(
+    workspace: Workspace,
+) -> None:
+    """A hold with no reason AND no date must not be the one that reads clean.
+
+    Measured against 26 live streams: 5 of the 6 carrying `unknown` had no
+    derivable last progress, so an age-gated check skipped every one of them
+    and reported zero. That is worse than the case it does report — neither why
+    the stream stopped nor when was ever recorded — yet it was the quiet one.
+    """
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `unknown`\n")
+    # no journal written at all, so no progress date can be derived
+    _, findings = workspace.run_doctor()
+    undatable = [f for f in findings if f["check"] == "blocked-on"]
+    assert len(undatable) == 1
+    assert undatable[0]["severity"] == "warning"
+    assert "no derivable last progress" in undatable[0]["message"]
+
+    # ...and the same fixture goes quiet once the date exists and is fresh,
+    # so the finding tracks the missing date and not merely the missing journal
+    write_journal(workspace, status_line(time.strftime("%Y-%m-%d"), "working"))
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" not in Workspace.checks(findings)
+
+
+def test_an_unreadable_blocked_on_line_is_a_finding_not_a_silent_zero(
+    workspace: Workspace,
+) -> None:
+    # a packed line parses as no field at all, so the blocker reads as absent
+    # — which is the value for "not blocked", the healthiest state there is
+    workspace.write_state(
+        row("AAA"), metadata="- Blocked on: `operator` · Owner: `PM`\n"
+    )
+    _, findings = workspace.run_doctor()
+    packed = [f for f in findings if f["check"] == "blocked-on"]
+    assert len(packed) == 1
+    assert packed[0]["severity"] == "warning"
+    assert "does not parse as a single-value metadata field" in packed[0]["message"]
+    assert packed[0]["fix"]
+
+    # positive control on the same workspace: well-formed, the check is silent
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `operator`\n")
+    _, findings = workspace.run_doctor()
+    assert "blocked-on" not in Workspace.checks(findings)
+
+
+def test_both_migration_paths_into_blocked_on_are_detected(
+    workspace: Workspace,
+) -> None:
+    # legacy: the pre-split single field
+    workspace.write_state(row("AAA"), lifecycle="blocked")
+    _, findings = workspace.run_doctor()
+    legacy = [f for f in findings if f["check"] == "lifecycle-vocabulary"]
+    assert len(legacy) == 1
+    assert legacy[0]["severity"] == "info"
+    assert "`Blocked on:" in legacy[0]["message"]
+
+    # live: the field this contract retires, offered its migration map
+    workspace.write_state(row("AAA"), metadata="- Motion: `waiting: operator`\n")
+    _, findings = workspace.run_doctor()
+    live = [f for f in findings if f["check"] == "motion-vocabulary"]
+    assert len(live) == 1
+    assert live[0]["severity"] == "info"
+    assert "`waiting: X` → `Blocked on: X`" in live[0]["message"]
+
+    # keyed on the raw line, not the parsed value: a packed line parses as no
+    # field, and a value-keyed probe would offer it nothing
+    (workspace.work_dir / "state.md").write_text(
+        "# Engineering work\n\n- Work ID: `demo`\n"
+        "- Phase: `working` · Motion: `idle 14d`\n"
+        "\n## Tasks\n\n" + HEADER + row("AAA"),
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert "motion-vocabulary" in Workspace.checks(findings)
+
+
+def test_last_progress_column_and_journal_backing_are_required(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        "| Work ID | Phase | Headline |\n| --- | --- | --- |\n"
+        "| demo | working | Demo. |\n",
+    )
+    _, findings = run_engineering_root(workspace.root)
+    missing = [f for f in findings if f["check"] == "last-progress"]
+    assert len(missing) == 1
+    assert "no `Last progress` column" in missing[0]["message"]
+
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(progress="2026-08-06 (0d)"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    drift = [f for f in findings if f["check"] == "last-progress"]
+    assert len(drift) == 1
+    assert "does not match the journal evidence dated 2026-07-30" in drift[0]["message"]
+
+
+def test_last_progress_rejects_a_value_that_is_not_a_date(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n" + overview_row(progress="recent"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    assert any(
+        finding["check"] == "last-progress" and "carries no date" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_a_backfilled_journal_tail_is_not_progress(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"), lifecycle="working")
+    write_journal(
+        workspace,
+        status_line("2026-07-20", "working"),
+        status_line("2026-08-06", "initialized"),
+    )
+    _, findings = workspace.run_doctor()
+    freshness = [f for f in findings if f["check"] == "journal-freshness"]
+    assert len(freshness) == 1
+    assert "a phase the stream has already left" in freshness[0]["message"]
+
+
+def test_a_stub_journal_older_than_state_is_reported(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged 2026-07-28`\n",
+        lifecycle="completed",
+    )
+    write_journal(workspace, status_line("2026-07-27", "reviewing"))
+    _, findings = workspace.run_doctor()
+    freshness = [f for f in findings if f["check"] == "journal-freshness"]
+    assert len(freshness) == 1
+    assert "the journal is a stub" in freshness[0]["message"]
+    assert "(from state.md)" in freshness[0]["fix"]
+
+
+def test_an_unmarked_state_fallback_is_a_finding(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged 2026-07-28`\n",
+        lifecycle="completed",
+    )
+    write_journal(workspace, status_line("2026-07-27", "reviewing"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(phase="completed", progress="2026-07-28 (9d)"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    unmarked = [f for f in findings if f["check"] == "last-progress"]
+    assert len(unmarked) == 1
+    assert "does not say so" in unmarked[0]["message"]
+
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(phase="completed", progress="2026-07-28 (from state.md)"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    assert "last-progress" not in Workspace.checks(findings)
+
+
+def test_a_segmented_journal_is_followed_to_its_newest_segment(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-08-06", "working"))
+    write_journal(
+        workspace, status_line("2026-08-04", "working"), name="07-journal-late.md"
+    )
+    _, findings = workspace.run_doctor()
+    segments = [f for f in findings if f["check"] == "journal-segments"]
+    assert len(segments) == 1
+    assert "07-journal-late.md ends at 2026-08-04" in segments[0]["message"]
+    assert "false freshness" in segments[0]["message"]
+
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(progress="2026-08-06 (0d)"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    assert any(
+        finding["check"] == "last-progress" and "2026-08-04" in finding["message"]
+        for finding in findings
+    )
+
+
+def test_location_must_be_absolute_or_a_dash(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(progress="2026-07-30 (7d)", location="../trees/demo"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    location = [f for f in findings if f["check"] == "location"]
+    assert len(location) == 1
+    assert location[0]["severity"] == "warning"
+    assert "neither an absolute path nor `-`" in location[0]["message"]
+
+
+def test_an_inferred_location_is_an_error(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(
+            progress="2026-07-30 (7d)", location="/Users/dev/tree ⚠ inferred"
+        ),
+    )
+    code, findings = run_engineering_root(workspace.root)
+    inferred = [f for f in findings if f["check"] == "location"]
+    assert len(inferred) == 1
+    assert inferred[0]["severity"] == "error"
+    assert "manufactures a fact" in inferred[0]["message"]
+
+
+def test_a_recorded_dash_location_is_honest(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(progress="2026-07-30 (7d)", location="-"),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    assert "location" not in Workspace.checks(findings)
+
+
+def test_next_action_budget_reports_the_offender_size(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    write_journal(workspace, status_line("2026-07-30", "working"))
+    write_overview(
+        workspace.root,
+        "# Engineering overview\n\n## Streams\n\n"
+        + overview_row(progress="2026-07-30 (7d)", next_action="x" * 260),
+    )
+    _, findings = run_engineering_root(workspace.root)
+    budget = [f for f in findings if f["check"] == "overview-budget"]
+    assert len(budget) == 1
+    assert "260 chars, over the 200-char budget by 60" in budget[0]["message"]
+
+
+def test_a_completed_stream_past_the_window_must_leave_works(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n",
+        lifecycle="completed",
+    )
+    stale = time.strftime("%Y-%m-%d", time.localtime(time.time() - 9 * 86400))
+    write_journal(workspace, status_line(stale, "completed"))
+    _, findings = workspace.run_doctor()
+    retention = [f for f in findings if f["check"] == "retention"]
+    assert len(retention) == 1
+    assert "past the 3-day window" in retention[0]["message"]
+    assert (
+        "Move works/<work-id>/ to .state/archive/<work-id>/ first, then drop "
+        "the overview row" in retention[0]["fix"]
+    )
+
+
+def test_a_completed_stream_inside_the_window_is_left_alone(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n",
+        lifecycle="completed",
+    )
+    recent = time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+    write_journal(workspace, status_line(recent, "completed"))
+    _, findings = workspace.run_doctor()
+    assert "retention" not in Workspace.checks(findings)
+
+
+@pytest.mark.parametrize(
+    ("work_id", "problem"),
+    [
+        ("20260727-feat-trading-venue-routing-v5cfxb", "carries a date prefix"),
+        ("feat-trading-venue-routing", "carries a type prefix"),
+        ("markets-and-symbols-v5cfxb", "random suffix"),
+        ("a-work-id-that-runs-past-the-thirty-two-byte-bound", "over the 32-byte bound"),
+        ("Markets_And_Symbols", "not a plain lowercase-hyphen slug"),
+    ],
+)
+def test_non_conforming_work_ids_are_reported_never_renamed(
+    tmp_path: Path, work_id: str, problem: str
+) -> None:
+    work_dir = tmp_path / ".state" / "works" / work_id
+    (work_dir / "state").mkdir(parents=True)
+    (work_dir / "goal.md").write_text(
+        "# Charter\n\n- Charter: `approved`\n", encoding="utf-8"
+    )
+    (work_dir / "state.md").write_text(
+        f"# Engineering work\n\n- Work ID: `{work_id}`\n"
+        "- Lifecycle status: `working`\n",
+        encoding="utf-8",
+    )
+    code, findings = run_engineering_root(tmp_path)
+    naming = [f for f in findings if f["check"] == "work-id-naming"]
+    assert len(naming) == 1
+    assert naming[0]["severity"] == "info"
+    assert problem in naming[0]["message"]
+    assert "never renamed" in naming[0]["message"]
+
+
+def test_a_conforming_work_id_is_silent(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"))
+    _, findings = workspace.run_doctor()
+    assert "work-id-naming" not in Workspace.checks(findings)
+
+
+def test_a_charter_without_provenance_is_drift_and_a_missing_one_is_a_defect(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    workspace.write_charter("reconstructed")
+    _, findings = workspace.run_doctor()
+    assert "charter-provenance" not in Workspace.checks(findings)
+
+    # An absent field is unmeasured, which is not the declared value `absent`.
+    (workspace.work_dir / "goal.md").write_text(
+        "# Charter\n\n- Charter revision: `1`\n", encoding="utf-8"
+    )
+    _, findings = workspace.run_doctor()
+    drift = [f for f in findings if f["check"] == "charter-provenance"]
+    assert len(drift) == 1
+    assert drift[0]["severity"] == "warning"
+    assert "approved | reconstructed | absent" in drift[0]["message"]
+
+    workspace.write_charter("-")
+    code, findings = workspace.run_doctor("--strict")
+    absent = [f for f in findings if f["check"] == "charter-provenance"]
+    assert code == 1
+    assert len(absent) == 1
+    assert absent[0]["severity"] == "error"
+    assert "no goal.md" in absent[0]["message"]
+    assert "reconstructed" in absent[0]["fix"]
+
+
+def test_an_unknown_charter_provenance_value_is_reported(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(row("AAA"))
+    workspace.write_charter("assumed")
+    _, findings = workspace.run_doctor()
+    unknown = [f for f in findings if f["check"] == "charter-provenance"]
+    assert len(unknown) == 1
+    assert unknown[0]["severity"] == "warning"
+
+
+def test_a_completed_stream_may_not_hold_unowned_debt(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n",
+        lifecycle="completed",
+    )
+    receipt = (
+        "\n## Completion receipt\n\n"
+        "- Merge evidence: PR #42 merged.\n"
+        "- Outlives me:\n"
+        "  - `U1` unresolved coverage gap. owner: -\n"
+        "  - `U3` deferred backfill. owner: Raj\n"
+    )
+    state_path = workspace.work_dir / "state.md"
+    state_path.write_text(
+        state_path.read_text(encoding="utf-8") + receipt, encoding="utf-8"
+    )
+    code, findings = workspace.run_doctor("--strict")
+    debt = [f for f in findings if f["check"] == "outlives-me"]
+    assert code == 1
+    assert len(debt) == 1
+    assert debt[0]["severity"] == "error"
+    assert "`U1`" in debt[0]["message"]
+    assert ".state/backlog.md" in debt[0]["fix"]
+
+
+def test_owned_debt_and_live_streams_do_not_report(workspace: Workspace) -> None:
+    receipt = (
+        "\n## Completion receipt\n\n"
+        "- Merge evidence: PR #42 merged.\n"
+        "- Outlives me:\n"
+        "  - `U3` deferred backfill. owner: Raj\n"
+    )
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n",
+        lifecycle="completed",
+    )
+    state_path = workspace.work_dir / "state.md"
+    state_path.write_text(
+        state_path.read_text(encoding="utf-8") + receipt, encoding="utf-8"
+    )
+    _, findings = workspace.run_doctor()
+    assert "outlives-me" not in Workspace.checks(findings)
+
+    workspace.write_state(row("AAA"), lifecycle="working")
+    state_path.write_text(
+        state_path.read_text(encoding="utf-8")
+        + "\n## Completion receipt\n\n- Outlives me: `U1` gap. owner: -\n",
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert "outlives-me" not in Workspace.checks(findings)
+
+
+def test_legacy_unowned_debt_outside_a_receipt_is_still_found(
+    workspace: Workspace,
+) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n"
+        "- Note: three deferred follow-ups, owned by nobody yet\n",
+        lifecycle="completed",
+    )
+    _, findings = workspace.run_doctor()
+    debt = [f for f in findings if f["check"] == "outlives-me"]
+    assert len(debt) == 1
+    assert "deferred follow-ups" in debt[0]["message"]
+
+
+def test_completed_without_merge_evidence_is_an_error(workspace: Workspace) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Landed as 4f9a2b1."),
+        lifecycle="completed",
+    )
+    code, findings = workspace.run_doctor("--strict")
+    evidence = [f for f in findings if f["check"] == "merge-evidence"]
+    assert code == 1
+    assert len(evidence) == 1
+    assert evidence[0]["severity"] == "error"
+    assert "a bare commit hash is not merge evidence" in evidence[0]["message"]
+    assert "reviewing" in evidence[0]["fix"]
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    ["Merged in PR #42.", "Branch observed merged into main.", "See /pull/42."],
+)
+def test_recorded_merge_evidence_satisfies_completed(
+    workspace: Workspace, evidence: str
+) -> None:
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence=evidence), lifecycle="completed"
+    )
+    _, findings = workspace.run_doctor()
+    assert "merge-evidence" not in Workspace.checks(findings)
+
+
+def test_charter_absent_severity_is_conditioned_on_phase(
+    workspace: Workspace,
+) -> None:
+    # Nothing is built against a charter at `planned`, so the honest,
+    # measured value `absent` is not yet a risk there.
+    workspace.write_state(row("AAA"), lifecycle="planned")
+    workspace.write_charter("absent")
+    _, findings = workspace.run_doctor()
+    unstarted = [f for f in findings if f["check"] == "charter-provenance"]
+    assert len(unstarted) == 1
+    assert unstarted[0]["severity"] == "info"
+
+    for phase in ("working", "reviewing"):
+        workspace.write_state(row("AAA"), lifecycle=phase)
+        _, findings = workspace.run_doctor()
+        in_flight = [f for f in findings if f["check"] == "charter-provenance"]
+        assert len(in_flight) == 1, phase
+        assert in_flight[0]["severity"] == "warning", phase
+        assert "no recorded success criteria" in in_flight[0]["message"]
+
+
+def test_a_completed_stream_waiting_on_a_blocker_holds_its_place(
+    workspace: Workspace,
+) -> None:
+    # archive/ is resolver-skipped, so archiving a stream with an open
+    # question would drop that question out of the overview.
+    workspace.write_state(
+        row("AAA", "✓", "done", evidence="Merged."),
+        metadata="- Merge evidence: `PR #42 merged`\n"
+        "- Blocked on: `an operator ruling on D4`\n",
+        lifecycle="completed",
+    )
+    stale = time.strftime("%Y-%m-%d", time.localtime(time.time() - 9 * 86400))
+    write_journal(workspace, status_line(stale, "completed"))
+    _, findings = workspace.run_doctor()
+    held = [f for f in findings if f["check"] == "retention"]
+    assert len(held) == 1
+    assert held[0]["severity"] == "info"
+    assert "an operator ruling on D4" in held[0]["message"]
+    assert "9d ago" in held[0]["message"]
+    assert "Awaiting you" in held[0]["message"]
+
+
+def test_a_completed_stream_with_no_named_blocker_past_the_window_warns(
+    workspace: Workspace,
+) -> None:
+    # `unknown` names no question, so archiving drops nothing out of Awaiting
+    # you: the hold is not legitimate and the ordinary retention warning
+    # stands. Its staleness is `blocked-on`'s to report, not retention's.
+    for metadata in ("", "- Blocked on: `unknown`\n"):
+        workspace.write_state(
+            row("AAA", "✓", "done", evidence="Merged."),
+            metadata="- Merge evidence: `PR #42 merged`\n" + metadata,
+            lifecycle="completed",
+        )
+        stale = time.strftime("%Y-%m-%d", time.localtime(time.time() - 9 * 86400))
+        write_journal(workspace, status_line(stale, "completed"))
+        _, findings = workspace.run_doctor()
+        overdue = [f for f in findings if f["check"] == "retention"]
+        assert len(overdue) == 1, metadata
+        assert overdue[0]["severity"] == "warning", metadata
+        assert "past the 3-day window" in overdue[0]["message"], metadata
+
+
+def test_an_unparseable_phase_is_reported_not_silently_skipped(
+    workspace: Workspace,
+) -> None:
+    # Two fields packed onto one line satisfy every eye and no parser: every
+    # phase-gated check then skips the stream and reports a clean zero.
+    (workspace.work_dir / "state.md").write_text(
+        "# Engineering work\n\n"
+        "- Work ID: `demo`\n"
+        "- Phase: `completed` · Blocked on: `an operator ruling`\n"
+        "\n## Tasks\n\n" + HEADER + row("AAA"),
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    unreadable = [f for f in findings if f["check"] == "state-metadata"]
+    assert len(unreadable) == 1
+    assert unreadable[0]["severity"] == "warning"
+    assert "does not parse as a single-value metadata field" in unreadable[0]["message"]
+    assert "reports a clean zero" in unreadable[0]["message"]
+    # The false clear the packed line produced, named in the finding.
+    # `blocked-on` stays on this list: its own raw probe is line-anchored, so
+    # a packed line whose first key is `Phase` is invisible to it and only
+    # `state-metadata` can report the false clear
+    for silenced in ("retention", "merge-evidence", "blocked-on", "outlives-me"):
+        assert silenced in unreadable[0]["message"]
+        assert silenced not in Workspace.checks(findings)
+
+
+def test_an_absent_phase_field_reads_differently_from_an_unparseable_one(
+    workspace: Workspace,
+) -> None:
+    (workspace.work_dir / "state.md").write_text(
+        "# Engineering work\n\n- Work ID: `demo`\n\n## Tasks\n\n"
+        + HEADER
+        + row("AAA"),
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    absent = [f for f in findings if f["check"] == "state-metadata"]
+    assert len(absent) == 1
+    assert absent[0]["severity"] == "warning"
+    assert "neither `Phase` nor `Lifecycle status`" in absent[0]["message"]
+
+
+def test_a_readable_phase_reports_nothing(workspace: Workspace) -> None:
+    workspace.write_state(row("AAA"), metadata="- Blocked on: `an operator`\n")
+    _, findings = workspace.run_doctor()
+    assert "state-metadata" not in Workspace.checks(findings)
+
+    (workspace.work_dir / "state.md").write_text(
+        "# Engineering work\n\n- Work ID: `demo`\n- Phase: `working`\n"
+        "- Blocked on: `an operator`\n\n## Tasks\n\n" + HEADER + row("AAA"),
+        encoding="utf-8",
+    )
+    _, findings = workspace.run_doctor()
+    assert "state-metadata" not in Workspace.checks(findings)
+
+
+# --- the skill's migration table is keyed by doctor `check` ids, and a typo
+# --- there offers a repair for a finding that is never emitted.
+
+DOCTOR_SKILL = ESSENTIAL / "skills/doctor/SKILL.md"
+# `report.<severity>(work, "<check>", …)` is the only way a finding is emitted.
+EMITTED_CHECK = re.compile(
+    r'report\.(?:info|warning|error)\(\s*[^,()]+,\s*"([a-z0-9][a-z0-9-]*)"'
+)
+MIGRATION_TABLE_HEADING = "## Structure migration"
+TABLE_KEY_CELL = re.compile(r"^\|\s*`([a-z0-9-]+)`")
+TABLE_DELIMITER = re.compile(r"^\|\s*-{3,}")
+
+
+def migration_table_check_ids(skill_text: str) -> set[str]:
+    """Return the `check` ids keying the Structure migration table's rows.
+
+    The header cell is itself `` `check` ``, and the literal word appears all
+    over the doctor — so a header left in passes for the wrong reason. Rows
+    are taken only after the header and its delimiter.
+    """
+    section = skill_text.split(MIGRATION_TABLE_HEADING, 1)[-1].splitlines()
+    rows: list[str] = []
+    seen_delimiter = False
+    for line in section:
+        # `|---|---|` and `| --- | --- |` are the same table; keying the gate on
+        # one spelling makes cosmetic reformatting silently empty the row set,
+        # and an empty row set is the clean zero this extractor must not report
+        if TABLE_DELIMITER.match(line):
+            seen_delimiter = True
+            continue
+        if not line.startswith("|"):
+            if rows:
+                break
+            continue
+        if seen_delimiter:
+            rows.append(line)
+    return {found.group(1) for line in rows if (found := TABLE_KEY_CELL.match(line))}
+
+
+def unemittable_check_ids(skill_text: str, doctor_text: str) -> set[str]:
+    """Return the table's ids that no doctor `report.*` call can ever emit."""
+    return migration_table_check_ids(skill_text) - set(
+        EMITTED_CHECK.findall(doctor_text)
+    )
+
+
+def test_every_migration_offer_answers_a_check_the_doctor_emits() -> None:
+    skill_text = DOCTOR_SKILL.read_text(encoding="utf-8")
+    ids = migration_table_check_ids(skill_text)
+    # a zero from an extractor that found no rows is the same green as a
+    # correct table, so the rows are asserted found before the ids are judged
+    assert len(ids) > 1
+    assert "check" not in ids, "the header row was read as an offer"
+    assert not unemittable_check_ids(skill_text, DOCTOR_SOURCE)
+
+
+def test_the_migration_table_gate_catches_an_id_no_check_emits() -> None:
+    # positive control: without it, an extractor returning nothing passes
+    fabricated = (
+        f"{MIGRATION_TABLE_HEADING}\n\n"
+        "| `check` | Offer |\n"
+        "| --- | --- |\n"
+        "| `retention` | A real one. |\n"
+        "| `no-such-check` | An offer for a finding nobody emits. |\n"
+    )
+    assert migration_table_check_ids(fabricated) == {"retention", "no-such-check"}
+    assert unemittable_check_ids(fabricated, DOCTOR_SOURCE) == {"no-such-check"}

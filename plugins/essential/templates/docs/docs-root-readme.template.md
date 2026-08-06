@@ -13,12 +13,6 @@ Explain which document a new contributor should read first and why.
 | Capability specifications | Approved capability contracts and their provenance | [`specs/README.md`](specs/README.md) |
 | `<domain>` | <What this plugin-owned domain contains> | [`<domain>/README.md`](<domain>/README.md) |
 
-## Repository records
-
-| Record | Purpose |
-|---|---|
-| [`retired-work-ids.md`](retired-work-ids.md) | Retired work IDs that must never be reused; include this row only when the ledger exists |
-
 ## Reading rules
 
 State which documents are authoritative, how supersession is recorded, and
