@@ -63,11 +63,13 @@ or `merge`, rather than the explicit `stack` route.
   [references/review-loop.md](references/review-loop.md) with an explicit
   preprovisioned stack capsule is already that dedicated reviewer: it runs the
   review phase directly instead of nesting another dispatch.
-- `stack list` lists the current repository's GitHub PR stacks; `stack checkout`
-  checks out one explicitly selected stack and requires `gh stack`. Follow
-  [references/github-stacks.md](references/github-stacks.md#list-or-check-out).
-  Checkout may fetch and create local tracking branches, but this route does
-  not own commits, history rewriting, pushes, or PR publication.
+- `stack` follows
+  [references/github-stacks.md](references/github-stacks.md#list-or-check-out):
+  - `list` lists the current repository's GitHub PR stacks.
+  - `checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>` checks out
+    one explicitly selected stack and requires `gh stack`. Checkout may fetch
+    and create local tracking branches, but it does not own commits, history
+    rewriting, pushes, or PR publication.
 - `merge` validates and merges a conventional linear stack bottom-up. For a
   GitHub PR stack, use the GitHub operator map loaded above instead. Otherwise
   load and follow

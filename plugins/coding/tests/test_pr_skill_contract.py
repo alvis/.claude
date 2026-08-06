@@ -436,6 +436,19 @@ def test_pr_router_loads_github_stack_contract_for_every_stack_request() -> None
     assert "GitHub PR stack" in router
 
 
+def test_pr_router_nests_stack_list_and_checkout_subactions() -> None:
+    router = (WRITE_PR / "SKILL.md").read_text()
+    routing = router.split("## Routing", 1)[1]
+    stack_parent = routing.index("\n- `stack`")
+    merge_route = routing.index("\n- `merge`", stack_parent)
+    stack_route = routing[stack_parent:merge_route]
+
+    assert "\n  - `list`" in stack_route
+    assert "\n  - `checkout" in stack_route
+    assert "\n- `stack list`" not in routing
+    assert "\n- `stack checkout`" not in routing
+
+
 def test_pr_router_usage_exposes_remote_and_merge_destination_inputs() -> None:
     router = (WRITE_PR / "SKILL.md").read_text()
 
@@ -747,9 +760,26 @@ def test_jj_merge_publishes_only_remaining_affected_bookmarks_once() -> None:
     assert 'jj rebase -s "$child_root" --onto <new-parent-ref>' in merge
     assert 'jj rebase -s "$child_root" -d' not in merge
     push = merge.split('jj git push --remote "$REMOTE"', 1)[1].split("```", 1)[0]
-    assert push.count("--bookmark") >= 2
+    assert '--revision "$PUSH_REVSET"' in push
+    assert "--bookmark" not in push
     assert "--all" not in merge
     assert "jj bookmark set" not in merge
+    assert (
+        'PUSH_REVSET="${FIRST_REMAINING_COMMIT}::${LAST_REMAINING_COMMIT}"'
+        in merge
+    )
+    assert "FIRST_REMAINING_BOOKMARK=${REMAINING_BOOKMARKS[0]}" in merge
+    assert 'case "$FIRST_REMAINING_COMMIT" in' in merge
+    assert 'case "$LAST_REMAINING_COMMIT" in' in merge
+    assert '"$FIRST_REMAINING_COMMIT & ::$LAST_REMAINING_COMMIT"' in merge
+    assert "refusing revision-range push: boundaries are not linear" in merge
+    bookmark_preflight = merge.index('jj bookmark list -r "$PUSH_REVSET"')
+    tag_preflight = merge.index('jj tag list -r "$PUSH_REVSET"')
+    push_command = merge.index('jj git push --remote "$REMOTE"')
+    assert bookmark_preflight < tag_preflight < push_command
+    assert 'ACTUAL_BOOKMARKS" = "$EXPECTED_BOOKMARKS' in merge
+    assert "refusing revision-range push: unexpected bookmarks" in merge
+    assert "refusing revision-range push: selected tags" in merge
     assert "automatically rebases every descendant" in normalized
     assert "moves their bookmarks" in normalized
     assert "all and only remaining affected bookmarks" in normalized
