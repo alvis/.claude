@@ -39,6 +39,130 @@ LIFECYCLE_STATUSES = (
     "completed",
     "retiring",
 )
+# Phase says where a stream sits in the pipeline; `Blocked on` names what
+# stopped it, and is absent when nothing has. One field carried both until a
+# stream blocked on an operator either lied as `active` or lost its pipeline
+# place as `blocked`.
+PHASES = ("planned", "working", "reviewing", "completed", "archived")
+RETIRED_LIFECYCLE_WORDS = {
+    "initialized": "phase `planned`",
+    "active": "phase `working`",
+    "blocked": "`Blocked on: <who or what>`",
+    "retiring": "phase `completed` + `Blocked on: retention`",
+}
+# `Blocked on` is nullable and one key per line: a named blocker, `unknown`
+# when nobody recorded why, and absent when nothing blocks the stream. Absence
+# and `unknown` are different facts, so `unknown` is never an unowned value.
+BLOCKED_ON_UNKNOWN = "unknown"
+BLOCKED_ON_LINE = re.compile(r"^-\s*Blocked on\s*:", re.MULTILINE)
+# Keyed on the raw line, not the parsed value: a packed line parses as nothing
+# and would otherwise be offered no migration at all. `Motion` is matched
+# anywhere on a metadata line rather than only as its first key, because
+# `- Phase: `x` · Motion: `y`` is the shape most in need of the offer and the
+# one an anchored `^-\s*Motion` misses.
+MOTION_LINE = re.compile(r"^-.*\bMotion\s*:", re.MULTILINE)
+RETIRED_MOTION_VALUE = re.compile(
+    r"^(?:running|idle\s+\d+d|waiting\b.*)$", re.IGNORECASE
+)
+MOTION_MIGRATION = (
+    "`running` → drop the field entirely (nothing is blocking the stream); "
+    "`idle <N>d` → `Blocked on: unknown`, since no reason was ever recorded "
+    "and inventing one would be false; `waiting: X` → `Blocked on: X`; "
+    "`waiting:` with no blocker → `Blocked on: unknown`; anything else → "
+    "rewrite by hand as the named blocker or `unknown`"
+)
+# A blocker nobody wrote down is honest on the day it is recorded and useless
+# a week later: past a full working week nobody but the author can still
+# reconstruct the question, so the record has to be repaired while it can be.
+UNKNOWN_BLOCKER_STALE_DAYS = 7
+# One imperative sentence fits inside this; narrative belongs in the stream.
+NEXT_ACTION_BUDGET = 200
+# A completed row is dropped this long after merge evidence, so a completed
+# stream still in works/ past it has an unfinished archival.
+COMPLETED_RETENTION_DAYS = 3
+# A work ID is repeated in every state path, source tree path, and branch.
+WORK_ID_MAX_BYTES = 32
+WORK_ID_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+WORK_ID_DATE_PREFIX = re.compile(r"^(?:\d{8}|\d{4}-\d{2}-\d{2}|\d{6})-")
+WORK_ID_TYPE_PREFIX = re.compile(
+    r"^(?:build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)-"
+)
+# A base-36 suffix alternates letters and digits; a real word segment keeps
+# its digits at one end (`v2`, `p95`, `oauth2`).
+WORK_ID_RANDOM_SUFFIX = re.compile(
+    r"^(?=[a-z0-9]*[a-z]\d)(?=[a-z0-9]*\d[a-z])[a-z0-9]{5,8}$"
+)
+CANONICAL_OVERVIEW_SECTIONS = {
+    "goal",
+    "requirements",
+    "awaiting you",
+    "streams",
+    "recently landed",
+}
+OVERVIEW_SIBLINGS = {
+    "environment.md": "trees, refs, and gates — dated and re-measurable",
+    "traps.md": "symptom → cause → do-this-instead",
+}
+ISO_DATE = re.compile(r"(\d{4}-\d{2}-\d{2})")
+JOURNAL_STATUS_EVENT = re.compile(
+    r"^- (\d{4}-\d{2}-\d{2})\S* \S+ rev:\d+ status\b\s*(.*)$"
+)
+PHASE_ORDER = {name: index for index, name in enumerate(PHASES)}
+PHASE_ORDER.update(
+    {
+        "initialized": PHASE_ORDER["planned"],
+        "active": PHASE_ORDER["working"],
+        "retiring": PHASE_ORDER["completed"],
+    }
+)
+# A long journal is compacted into numbered segments beside its index, so the
+# index's own tail is not the last real event.
+JOURNAL_SEGMENT = re.compile(r"^(\d+)-journal[-.]", re.IGNORECASE)
+# `completed` is terminal and reachable only on merge evidence: a recorded
+# pull request, or the change observed on the default branch. A bare commit
+# hash is neither.
+MERGE_PR_REFERENCE = re.compile(
+    r"(?:\bPR[\s:]*#?\d+\b|(?<![\w/#])#\d+\b|/pull/\d+)"
+)
+MERGE_BRANCH_EVIDENCE = re.compile(
+    r"\bmerge(?:d|s)?\s+(?:into|to)\b|\bmerge[- ]commit\b|"
+    r"\bobserved\s+(?:merged|present|on)\b",
+    re.IGNORECASE,
+)
+STATE_EVIDENCE_LINE = re.compile(
+    r"\b(?:merged?|completed|reviewing|landed|shipped|pull request|PR)\b",
+    re.IGNORECASE,
+)
+# A fallback to state.md is honest only while it says so.
+STATE_FALLBACK_MARK = "(from state.md)"
+COMPLETION_RECEIPT_HEADING = re.compile(
+    r"^#{2,}\s+completion receipt\b", re.IGNORECASE
+)
+LIST_ITEM = re.compile(r"^(\s*)(?:[-+*]|\d+[.)])\s+(.*)$")
+OUTLIVES_LABEL = re.compile(r"outlives", re.IGNORECASE)
+OWNER_FIELD = re.compile(r"owner\s*:\s*([^|;]*)", re.IGNORECASE)
+UNOWNED_VALUES = {
+    "",
+    "-",
+    "—",
+    "?",
+    "none",
+    "nobody",
+    "no one",
+    "tbd",
+    "unassigned",
+    "unowned",
+    "n/a",
+}
+UNOWNED_PROSE = re.compile(
+    r"\b(?:owned by (?:nobody|no one)|nobody yet|no owner|unowned|unassigned)\b",
+    re.IGNORECASE,
+)
+CHARTER_PROVENANCE_VALUES = ("approved", "reconstructed", "absent")
+# The flag exists so a reconstructed criterion is never read as an operator
+# commitment. At `planned` nothing is being built against the charter yet, so
+# `absent` is the honest state; the risk begins the moment work does.
+CHARTERED_PHASES = ("working", "reviewing", "completed", "archived")
 PARENT_ID = re.compile(r"^[A-Z]{3}$")
 CHILD_ID = re.compile(r"^([A-Z]{3})(0[1-9]|[1-9][0-9])$")
 MARKDOWN_LINK = re.compile(
@@ -318,8 +442,18 @@ def parse_dependencies(cell: str) -> list[str]:
 
 
 def metadata_value(text: str, key: str) -> str | None:
+    """Return one anchored `- <key>:` value, or None when the line is absent.
+
+    The whitespace around the value is horizontal only. `\\s` matches newlines,
+    so a greedy `\\s*` walks an empty field past the blank line after it and
+    returns the document's next content line — `- Blocked on:` followed by
+    `## Tasks` read back as `## Tasks`. That fabricates a value for every empty
+    field, and a fabricated blocker reports clean, which is the exact false
+    clear the one-key-per-line rule exists to prevent. Bounded here, an empty
+    field reads as empty and its own check reports it.
+    """
     match = re.search(
-        rf"^- {re.escape(key)}:\s*`?([^`\n]*)`?\s*$", text, re.MULTILINE
+        rf"^- {re.escape(key)}:[^\S\n]*`?([^`\n]*)`?[^\S\n]*$", text, re.MULTILINE
     )
     return match.group(1).strip() if match else None
 
@@ -1786,17 +1920,633 @@ def check_written_under(report: Report, work: str, state_text: str) -> None:
         )
 
 
-def check_lifecycle(report: Report, work: str, state_text: str) -> None:
+def work_phase(state_text: str) -> str | None:
+    """Return the stream's phase, reading the pre-split field when needed."""
+    phase = metadata_value(state_text, "Phase")
+    if phase:
+        return phase.strip().casefold()
     lifecycle = metadata_value(state_text, "Lifecycle status")
     if not lifecycle:
+        return None
+    lifecycle = lifecycle.strip().casefold()
+    if lifecycle in RETIRED_LIFECYCLE_WORDS:
+        replacement = RETIRED_LIFECYCLE_WORDS[lifecycle]
+        for phase_name in PHASES:
+            if f"phase `{phase_name}`" in replacement:
+                return phase_name
+        return None
+    return lifecycle
+
+
+def check_state_metadata(report: Report, work: str, state_text: str) -> None:
+    """Report a state.md whose phase cannot be read at all.
+
+    Every phase-gated check — retention, merge evidence, blocked-on,
+    outlives-me —
+    skips a stream whose phase is unreadable, and skips it in silence. A row
+    of zeros from those checks is then indistinguishable from a healthy
+    stream, so the unreadable field is itself the finding.
+    """
+    if metadata_value(state_text, "Phase") or metadata_value(
+        state_text, "Lifecycle status"
+    ):
         return
-    if lifecycle not in LIFECYCLE_STATUSES:
+    present = [
+        name
+        for name, pattern in (
+            ("Phase", r"^-\s*Phase\s*:"),
+            ("Lifecycle status", r"^-\s*Lifecycle status\s*:"),
+        )
+        if re.search(pattern, state_text, re.MULTILINE)
+    ]
+    if present:
+        # Two fields packed onto one line satisfy every eye and no parser.
+        report.warning(
+            work,
+            "state-metadata",
+            f"state.md has a `- {present[0]}:` line that does not parse as a "
+            "single-value metadata field, so every phase-gated check "
+            "(retention, merge-evidence, blocked-on, outlives-me) skips this "
+            "stream and reports a clean zero for it",
+            "Put each metadata field on its own line as `- Phase: `<phase>`` "
+            "and, when the stream is stopped, `- Blocked on: `<blocker>``; one "
+            "line carrying both parses as neither.",
+        )
+        return
+    report.warning(
+        work,
+        "state-metadata",
+        "state.md records neither `Phase` nor `Lifecycle status`, so every "
+        "phase-gated check (retention, merge-evidence, blocked-on, "
+        "outlives-me) skips this stream and reports a clean zero for it",
+        "Record the stream's phase, and `Blocked on:` beside it when something "
+        "has stopped the stream; a stream whose phase cannot be read is not a "
+        "stream with no problems.",
+    )
+
+
+def check_lifecycle(report: Report, work: str, state_text: str) -> None:
+    lifecycle = metadata_value(state_text, "Lifecycle status")
+    if lifecycle:
+        value = lifecycle.strip().casefold()
+        if value in RETIRED_LIFECYCLE_WORDS:
+            # Format drift, never a defect: the record was true when written,
+            # and it migrates at the next explicit coordinator rewrite.
+            report.info(
+                work,
+                "lifecycle-vocabulary",
+                f"lifecycle word {lifecycle!r} is retired; the current "
+                f"vocabulary splits the pipeline phase from what the stream "
+                f"is blocked on, so this becomes "
+                f"{RETIRED_LIFECYCLE_WORDS[value]}",
+            )
+        elif value not in PHASES and value not in LIFECYCLE_STATUSES:
+            report.warning(
+                work,
+                "lifecycle",
+                f"lifecycle status {lifecycle!r} is not one of "
+                f"{'|'.join(PHASES)}",
+            )
+    phase = metadata_value(state_text, "Phase")
+    if phase and phase.strip().casefold() not in PHASES:
         report.warning(
             work,
             "lifecycle",
-            f"lifecycle status {lifecycle!r} is not one of "
-            f"{'|'.join(LIFECYCLE_STATUSES)}",
+            f"phase {phase!r} is not one of {'|'.join(PHASES)}",
         )
+    check_motion_vocabulary(report, work, state_text)
+
+
+def check_motion_vocabulary(report: Report, work: str, state_text: str) -> None:
+    """Offer the `Motion` → `Blocked on` migration to a state.md still on it.
+
+    Info, never a defect: the record was true when it was written, exactly as
+    a retired lifecycle word is treated. Keyed on the raw line so a packed
+    `- Phase: `x` · Motion: `y`` — which parses as no field at all — still
+    gets the offer instead of a silent zero.
+    """
+    if MOTION_LINE.search(state_text) is None:
+        return
+    report.info(
+        work,
+        "motion-vocabulary",
+        "`- Motion:` is retired: `running` was never durably true, and a "
+        "typed `idle <N>d` is a stored projection of `Last progress` that "
+        "nothing recomputes. Only the blocker is irreducible, so it becomes "
+        f"the nullable `- Blocked on:` — {MOTION_MIGRATION}. Duration is "
+        "never typed; it is derived at read time from `Last progress`.",
+    )
+
+
+def check_blocked_on(
+    report: Report, work: str, work_dir: Path, state_text: str
+) -> None:
+    """Reject a `Blocked on:` value that records no answerable question.
+
+    Absent means the stream is not blocked and is the one silent case;
+    `unknown` means nobody recorded why, which is a first-class value and must
+    never read as absence. Everything between the two — empty, unowned-shaped,
+    packed, or retired motion vocabulary — records nothing at all.
+    """
+    value = metadata_value(state_text, "Blocked on")
+    if value is None:
+        if BLOCKED_ON_LINE.search(state_text) is None:
+            # Absent is the value: this stream is not blocked.
+            return
+        report.warning(
+            work,
+            "blocked-on",
+            "state.md has a `- Blocked on:` line that does not parse as a "
+            "single-value metadata field, so the blocker cannot be read and "
+            "the stream reports as unblocked",
+            "Put the field on its own line as `- Blocked on: `<blocker>``; a "
+            "line carrying a second field parses as neither.",
+        )
+        return
+    blocker = value.strip().strip("`").strip()
+    if not blocker:
+        report.warning(
+            work,
+            "blocked-on",
+            "`Blocked on:` is present but empty, which records neither a "
+            "blocker nor the absence of one",
+            "Name the blocker, record `unknown` when nobody wrote the reason "
+            "down, or drop the field entirely to record that nothing blocks "
+            "the stream.",
+        )
+        return
+    folded = blocker.casefold()
+    if folded in UNOWNED_VALUES:
+        report.warning(
+            work,
+            "blocked-on",
+            f"`Blocked on: {blocker}` names no blocker; absence already "
+            "records that nothing blocks the stream, and `unknown` records "
+            "that the reason was never written down",
+            "Drop the field if the stream is not blocked; record `unknown` if "
+            "it is and nobody knows why.",
+        )
+        return
+    if RETIRED_MOTION_VALUE.match(blocker):
+        report.warning(
+            work,
+            "blocked-on",
+            f"`Blocked on: {blocker}` carries retired motion vocabulary; the "
+            f"field holds the blocker itself — {MOTION_MIGRATION}",
+        )
+        return
+    if folded != BLOCKED_ON_UNKNOWN:
+        return
+    recorded_on, _ = progress_source(work_dir, state_text)
+    age = days_since(recorded_on) if recorded_on else None
+    if recorded_on is None or age is None:
+        # Returning here would be the false clear this field exists to prevent:
+        # a stream nobody wrote a reason for AND nobody can date is strictly
+        # less reconstructable than one this check does report, yet it is the
+        # one that reads clean. `last-progress` names the unreadable source;
+        # this names what the unreadability is hiding.
+        report.warning(
+            work,
+            "blocked-on",
+            "`Blocked on: unknown` on a stream with no derivable last "
+            "progress: neither why it stopped nor when was recorded, so its "
+            "age cannot be measured against the "
+            f"{UNKNOWN_BLOCKER_STALE_DAYS}-day window and the hold cannot be "
+            "reconstructed by anyone but its author",
+            "Fix the journal so `last-progress` resolves, then name the "
+            "blocker or unblock the stream and drop the field.",
+        )
+        return
+    if age <= UNKNOWN_BLOCKER_STALE_DAYS:
+        return
+    report.warning(
+        work,
+        "blocked-on",
+        f"`Blocked on: unknown` with no progress since {recorded_on} "
+        f"({age}d ago), past the {UNKNOWN_BLOCKER_STALE_DAYS}-day window: a "
+        "hold whose question was never recorded cannot be answered by anyone "
+        "but its author, and stops being reconstructable",
+        "Name what the stream is waiting on, or unblock it and drop the "
+        "field.",
+    )
+
+
+def check_work_id_naming(report: Report, work: str) -> None:
+    """Report a non-conforming work ID; an ID is an identity and is never renamed."""
+    problems: list[str] = []
+    if not WORK_ID_SLUG.fullmatch(work):
+        problems.append("not a plain lowercase-hyphen slug")
+    if len(work.encode("utf-8")) > WORK_ID_MAX_BYTES:
+        problems.append(
+            f"{len(work.encode('utf-8'))} bytes, over the "
+            f"{WORK_ID_MAX_BYTES}-byte bound"
+        )
+    if WORK_ID_DATE_PREFIX.match(work):
+        problems.append("carries a date prefix")
+    if WORK_ID_TYPE_PREFIX.match(work):
+        problems.append("carries a type prefix; the type belongs to the branch")
+    tail = work.rsplit("-", 1)[-1]
+    if "-" in work and WORK_ID_RANDOM_SUFFIX.fullmatch(tail):
+        problems.append(f"ends in what reads as a random suffix {tail!r}")
+    if not problems:
+        return
+    report.info(
+        work,
+        "work-id-naming",
+        f"work ID does not conform to naming.md: {'; '.join(problems)}; "
+        "an existing ID is an identity and is never renamed — the fix is "
+        "forward-only, on the next stream",
+    )
+
+
+def check_charter_provenance(
+    report: Report, work: str, work_dir: Path, phase: str | None
+) -> None:
+    """Require a charter, and require it to say whether it was approved."""
+    goal = work_dir / "goal.md"
+    if not goal.is_file():
+        report.error(
+            work,
+            "charter-provenance",
+            "no goal.md: the stream has no charter at all, so its scope and "
+            "success criteria exist nowhere",
+            "Reconstruct the charter with the user from the stream's recorded "
+            "history and mark it `Charter: reconstructed` until the user "
+            "approves it; never mark a reconstruction approved.",
+        )
+        return
+    text = goal.read_text(encoding="utf-8", errors="replace")
+    provenance = metadata_value(text, "Charter provenance")
+    if provenance is None:
+        raw = metadata_value(text, "Charter")
+        # `- Charter: [goal.md](…)` is a link, not a provenance value.
+        if raw is not None and not raw.strip().startswith("["):
+            provenance = raw
+    if provenance is None:
+        # An absent field is unmeasured; the value `absent` is measured and
+        # declared. The two never collapse into one finding.
+        report.warning(
+            work,
+            "charter-provenance",
+            "goal.md records no `Charter: "
+            f"{' | '.join(CHARTER_PROVENANCE_VALUES)}` field, so nothing says "
+            "whether its success criteria are an operator commitment or a "
+            "reconstruction",
+            "Add the field, recording what is true: `approved` only where the "
+            "user approved the charter.",
+        )
+        return
+    value = provenance.strip().casefold()
+    if value not in CHARTER_PROVENANCE_VALUES:
+        report.warning(
+            work,
+            "charter-provenance",
+            f"goal.md Charter provenance {provenance!r} is not "
+            f"{' or '.join(CHARTER_PROVENANCE_VALUES)}",
+        )
+        return
+    if value != "absent":
+        return
+    if phase in CHARTERED_PHASES:
+        report.warning(
+            work,
+            "charter-provenance",
+            f"phase {phase!r} with `Charter: absent`: the stream is being "
+            "worked against no recorded success criteria, so nothing can "
+            "demonstrate it is done",
+            "Charter it with the user before it goes further, or reconstruct "
+            "the criteria from its recorded history and mark them "
+            "`reconstructed` until the user approves them.",
+        )
+        return
+    report.info(
+        work,
+        "charter-provenance",
+        "`Charter: absent` on an unstarted stream: honest and expected, since "
+        "nothing is being built against the charter yet",
+    )
+
+
+def status_events(path: Path) -> list[tuple[str, str]]:
+    """Return every `status` event in one journal file as (date, payload)."""
+    if not path.is_file():
+        return []
+    events: list[tuple[str, str]] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = JOURNAL_STATUS_EVENT.match(line)
+        if match:
+            remainder = match.group(2)
+            payload = remainder.split(":", 1)[1] if ":" in remainder else remainder
+            events.append((match.group(1), payload.strip()))
+    return events
+
+
+def status_event_dates(path: Path) -> list[str]:
+    """Return every `status` event date in one journal file, in file order."""
+    return [date for date, _ in status_events(path)]
+
+
+def payload_phase(payload: str) -> int | None:
+    """Return the pipeline position a status payload names, if it names one."""
+    word = re.split(r"[^A-Za-z]+", payload.strip(), maxsplit=1)[0].casefold()
+    return PHASE_ORDER.get(word)
+
+
+def genuine_status_events(
+    work_dir: Path, phase: str | None
+) -> list[tuple[str, str]]:
+    """Return the newest journal's status events, backfill sweeps dropped.
+
+    A backfill writes today's date against a transition the stream made weeks
+    ago, so a payload naming a phase the stream has already left is a record
+    of history, not progress.
+    """
+    segments = journal_segments(work_dir)
+    events = status_events(segments[-1]) if segments else []
+    if not events:
+        events = status_events(work_dir / "state" / "journal.md")
+    current = PHASE_ORDER.get(phase) if phase else None
+    if current is None:
+        return events
+    genuine: list[tuple[str, str]] = []
+    for date, payload in events:
+        position = payload_phase(payload)
+        if position is not None and position < current:
+            continue
+        genuine.append((date, payload))
+    return genuine
+
+
+def journal_segments(work_dir: Path) -> list[Path]:
+    """Return numbered journal segments beside the index, oldest first."""
+    state_dir = work_dir / "state"
+    if not state_dir.is_dir():
+        return []
+    numbered: list[tuple[int, Path]] = []
+    for path in state_dir.iterdir():
+        if not path.is_file() or path.suffix != ".md":
+            continue
+        match = JOURNAL_SEGMENT.match(path.name)
+        if match:
+            numbered.append((int(match.group(1)), path))
+    return [path for _, path in sorted(numbered, key=lambda item: (item[0], item[1].name))]
+
+
+def last_status_event_date(work_dir: Path, phase: str | None = None) -> str | None:
+    """Return the last genuine `status` date, segments before the index.
+
+    Where a journal is segmented, its index carries only a pointer, so tailing
+    the index reports the compaction sweep as the last event.
+    """
+    events = genuine_status_events(work_dir, phase)
+    return events[-1][0] if events else None
+
+
+def state_evidence_date(state_text: str) -> str | None:
+    """Return the newest date on a dated lifecycle or merge line in state.md.
+
+    An `Updated:` stamp is any-write and is deliberately not evidence.
+    """
+    dates: list[str] = []
+    for line in state_text.splitlines():
+        if STATE_EVIDENCE_LINE.search(line):
+            dates.extend(ISO_DATE.findall(line))
+    return max(dates) if dates else None
+
+
+def progress_source(work_dir: Path, state_text: str) -> tuple[str | None, str]:
+    """Return the last-progress date and the source it may honestly claim.
+
+    A journal that is absent, a stub, or older than the lifecycle evidence in
+    `state.md` reports a stream as fresher or staler than it is, so the fall
+    back to `state.md` is allowed — and must say so.
+    """
+    phase = work_phase(state_text)
+    journal_date = last_status_event_date(work_dir, phase)
+    state_date = state_evidence_date(state_text)
+    if state_date and (journal_date is None or state_date > journal_date):
+        return state_date, "state.md"
+    return journal_date, "journal"
+
+
+def check_journal_freshness(
+    report: Report, work: str, work_dir: Path, state_text: str
+) -> None:
+    """Report a journal that disagrees with what state.md already records."""
+    phase = work_phase(state_text)
+    journal_date = last_status_event_date(work_dir, phase)
+    state_date = state_evidence_date(state_text)
+    dropped = [
+        date
+        for date, payload in status_events(work_dir / "state" / "journal.md")
+        if (position := payload_phase(payload)) is not None
+        and phase is not None
+        and PHASE_ORDER.get(phase) is not None
+        and position < PHASE_ORDER[phase]
+    ]
+    raw = status_event_dates(work_dir / "state" / "journal.md")
+    newest_raw = max(raw) if raw else None
+    superseding = dropped and max(dropped) > max(
+        journal_date or "", state_date or ""
+    )
+    if superseding:
+        report.warning(
+            work,
+            "journal-freshness",
+            f"the journal's newest status event is dated {max(dropped)} but "
+            f"records a phase the stream has already left: a backfill sweep "
+            "is history, not progress",
+            "Derive last progress from the newest genuine event, or from "
+            f"state.md marked `{STATE_FALLBACK_MARK}` when none survives.",
+        )
+        return
+    if state_date is None:
+        return
+    if journal_date is None and newest_raw is None:
+        report.warning(
+            work,
+            "journal-freshness",
+            f"state.md records lifecycle or merge evidence dated {state_date} "
+            "but no journal status event backs it, so progress derived from "
+            "the journal alone reports nothing",
+            "Derive last progress from state.md and mark the value "
+            f"`{STATE_FALLBACK_MARK}`; never leave the fallback unmarked.",
+        )
+        return
+    if journal_date is None or state_date > journal_date:
+        report.warning(
+            work,
+            "journal-freshness",
+            f"the journal's newest status event is {journal_date or newest_raw} "
+            f"but state.md records lifecycle or merge evidence dated "
+            f"{state_date}: the journal is a stub and understates the "
+            "stream's progress",
+            "Derive last progress from state.md and mark the value "
+            "`(from state.md)`; never leave the fallback unmarked.",
+        )
+
+
+def check_journal_segments(report: Report, work: str, work_dir: Path) -> None:
+    """Report an index whose tail disagrees with the newest journal segment."""
+    segments = journal_segments(work_dir)
+    if not segments:
+        return
+    newest = status_event_dates(segments[-1])
+    index = status_event_dates(work_dir / "state" / "journal.md")
+    if not newest or not index or newest[-1] == index[-1]:
+        return
+    report.warning(
+        work,
+        "journal-segments",
+        f"journal.md's last status event is {index[-1]} but the newest "
+        f"segment {segments[-1].name} ends at {newest[-1]}: reading the index "
+        "alone reports false freshness",
+        "Derive progress from the newest segment, and keep journal.md an "
+        "index that points at its segments rather than carrying a tail that "
+        "reads as the last event.",
+    )
+
+
+def check_merge_evidence(
+    report: Report, work: str, state_text: str, phase: str | None
+) -> None:
+    """`completed` is reachable only on merge evidence, never on an assertion."""
+    if phase != "completed":
+        return
+    if MERGE_PR_REFERENCE.search(state_text) or MERGE_BRANCH_EVIDENCE.search(state_text):
+        return
+    report.error(
+        work,
+        "merge-evidence",
+        "phase `completed` records no pull request and no observation of the "
+        "change on the default branch; a bare commit hash is not merge evidence",
+        "Record the merged pull request(s), or the observation that the "
+        "branch or its changes are present on the default branch; if neither "
+        "holds, return the stream to `reviewing`.",
+    )
+
+
+def days_since(date_text: str) -> int | None:
+    """Return whole days from an ISO date to today, or None when unparseable."""
+    try:
+        recorded = time.strptime(date_text, "%Y-%m-%d")
+    except ValueError:
+        return None
+    return int((time.time() - time.mktime(recorded)) // 86400)
+
+
+def check_retention(
+    report: Report, work: str, work_dir: Path, state_text: str, phase: str | None
+) -> None:
+    """Report a completed stream still occupying works/ past its window."""
+    if phase != "completed" or work_dir.resolve().parent.name != "works":
+        return
+    completed_on, _ = progress_source(work_dir, state_text)
+    if completed_on is None:
+        return
+    age = days_since(completed_on)
+    if age is None or age <= COMPLETED_RETENTION_DAYS:
+        return
+    blocker = (metadata_value(state_text, "Blocked on") or "").strip().strip("`")
+    if (
+        blocker
+        and blocker.casefold() != BLOCKED_ON_UNKNOWN
+        and blocker.casefold() not in UNOWNED_VALUES
+    ):
+        # archive/ is skipped by the resolver, so archiving a stream that
+        # still carries an open question drops it out of the overview's
+        # `Awaiting you`. Merge evidence retires the work, not the question —
+        # but a blocker can go stale, so the hold is reported with its age.
+        # `unknown` names no question, so it holds nothing and falls through
+        # to the ordinary warning; `blocked-on` carries its staleness instead.
+        report.info(
+            work,
+            "retention",
+            f"completed on {completed_on} ({age}d ago) and held in works/ at "
+            f"`Blocked on: {blocker}`: the hold is legitimate and archiving "
+            "would drop the open question out of Awaiting you",
+            f"Answer the question with {blocker}, or give its answer a carrier "
+            "that outlives the stream; only then does the stream archive.",
+        )
+        return
+    report.warning(
+        work,
+        "retention",
+        f"completed on {completed_on} ({age}d ago) but still in works/, past "
+        f"the {COMPLETED_RETENTION_DAYS}-day window",
+        "Move works/<work-id>/ to .state/archive/<work-id>/ first, then drop "
+        "the overview row: while the stream sits in works/ the row is its only "
+        "index, so dropping it first hides live work. The stream stays visible "
+        "in Recently landed, and its archived state.md carries it after that.",
+    )
+
+
+def outlives_me_items(state_text: str) -> list[str]:
+    """Return the outlives-me items a completed stream still carries.
+
+    The receipt is where this debt belongs; a stream written before the
+    receipt existed records the same debt loose in its prose, and dropping its
+    row at retention shreds it just the same — so both are read.
+    """
+    lines = state_text.splitlines()
+    has_receipt = any(
+        COMPLETION_RECEIPT_HEADING.match(line.strip()) for line in lines
+    )
+    if not has_receipt:
+        return [
+            line.strip()
+            for line in lines
+            if line.strip()
+            and (OUTLIVES_LABEL.search(line) or UNOWNED_PROSE.search(line))
+        ]
+    items: list[str] = []
+    inside = False
+    label_indent: int | None = None
+    for line in lines:
+        if line.strip().startswith("#"):
+            inside = bool(COMPLETION_RECEIPT_HEADING.match(line.strip()))
+            label_indent = None
+            continue
+        if not inside:
+            continue
+        item = LIST_ITEM.match(line)
+        if item is None:
+            if line.strip() and OUTLIVES_LABEL.search(line):
+                label_indent = 0
+                items.append(line.strip())
+            continue
+        indent, body = len(item.group(1)), item.group(2)
+        labelled = bool(OUTLIVES_LABEL.search(body))
+        nested = label_indent is not None and indent > label_indent
+        if labelled and not body.split(":", 1)[-1].strip():
+            # A bare `Outlives me:` label heads the items nested under it.
+            label_indent = indent
+            continue
+        if labelled:
+            label_indent = indent
+        elif not nested:
+            continue
+        items.append(body)
+    return items
+
+
+def check_outlives_me(report: Report, work: str, state_text: str, phase: str | None) -> None:
+    """A completed stream may not still hold an unowned outlives-me item."""
+    if phase != "completed":
+        return
+    for body in outlives_me_items(state_text):
+        owner = OWNER_FIELD.search(body)
+        owner_value = owner.group(1).strip().strip("`").casefold() if owner else ""
+        if owner is None or owner_value in UNOWNED_VALUES or UNOWNED_PROSE.search(body):
+            report.error(
+                work,
+                "outlives-me",
+                "completed stream holds an outlives-me item with no owner: "
+                + body.strip()[:120],
+                "Promote the item, open a successor stream, or file it in "
+                ".state/backlog.md with an owner or `unowned` — a completed "
+                "row is dropped at retention and shreds the debt.",
+            )
 
 
 def check_work_dir(report: Report, work_dir: Path) -> None:
@@ -1829,24 +2579,121 @@ def check_work_dir(report: Report, work_dir: Path) -> None:
     check_journal(report, work, work_dir, state_text)
     check_written_under(report, work, state_text)
     check_lifecycle(report, work, state_text)
+    check_blocked_on(report, work, work_dir, state_text)
+    check_state_metadata(report, work, state_text)
+    phase = work_phase(state_text)
+    check_work_id_naming(report, work)
+    check_charter_provenance(report, work, work_dir, phase)
+    check_journal_segments(report, work, work_dir)
+    check_journal_freshness(report, work, work_dir, state_text)
+    check_merge_evidence(report, work, state_text, phase)
+    check_retention(report, work, work_dir, state_text, phase)
+    check_outlives_me(report, work, state_text, phase)
+
+
+def check_overview_layout(report: Report, engineering_root: Path) -> None:
+    """Report an overview.md that still carries what its siblings now own."""
+    overview = engineering_root / "overview.md"
+    if not overview.is_file():
+        return
+    text = overview.read_text(encoding="utf-8", errors="replace")
+    for name, purpose in OVERVIEW_SIBLINGS.items():
+        if not (engineering_root / name).is_file():
+            report.warning(
+                "overview.md",
+                "overview-monolith",
+                f"{name} is missing ({purpose}); without it that content has "
+                "nowhere to live but the overview, where it rots on a "
+                "different clock than the stream table",
+                f"Create .state/{name} and move the matching narrative out of "
+                "overview.md; drop nothing that is still true and carry no "
+                "paragraph that the current table contradicts.",
+            )
+    narrative: list[str] = []
+    seen_section = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("##"):
+            seen_section = True
+            heading = stripped.lstrip("#").strip().casefold()
+            if heading not in CANONICAL_OVERVIEW_SECTIONS:
+                report.warning(
+                    "overview.md",
+                    "overview-monolith",
+                    f"section {stripped.lstrip('#').strip()!r} is not one of "
+                    "the overview's sections (Goal, Requirements, Awaiting "
+                    "you, Streams, Recently landed): environment narrative "
+                    "belongs in environment.md and traps in traps.md",
+                    "Move the section into .state/environment.md or "
+                    ".state/traps.md as its content dictates, preserving "
+                    "authored Goal and Requirements byte-for-byte.",
+                )
+            continue
+        if seen_section or not stripped:
+            continue
+        if stripped.startswith("#") or stripped.startswith("- ") or stripped.startswith("|"):
+            continue
+        narrative.append(stripped)
+    if narrative:
+        size = sum(len(line.encode("utf-8")) for line in narrative)
+        report.warning(
+            "overview.md",
+            "overview-monolith",
+            f"{len(narrative)} preamble line(s), {size} bytes, sit before the "
+            "first section: a preamble is environment narrative that belongs "
+            "in environment.md",
+            "Move the preamble into .state/environment.md, dated and "
+            "re-measurable, and leave overview.md its title and metadata.",
+        )
+
+
+def overview_column_map(cells: list[str]) -> dict[str, int]:
+    return {normalize_index_cell(cell): index for index, cell in enumerate(cells)}
+
+
+def streams_section(text: str) -> str:
+    """Return the ``## Streams`` section, or the whole file if it has none.
+
+    The current overview carries three tables — Awaiting you, Streams, and
+    Recently landed — and only the middle one indexes `works/`. Scanning all
+    three reports every operator question and every archived stream as a
+    dangling row, which is noise that trains a reader to ignore the check. A
+    pre-migration overview has no such heading and its whole body is the table,
+    so falling back to the full text keeps that shape detectable.
+    """
+    lines = text.splitlines()
+    for start, line in enumerate(lines):
+        if line.strip().lower() != "## streams":
+            continue
+        for end in range(start + 1, len(lines)):
+            if lines[end].startswith("## "):
+                return "\n".join(lines[start:end])
+        return "\n".join(lines[start:])
+    return text
 
 
 def check_overview(report: Report, engineering_root: Path) -> None:
     overview = engineering_root / "overview.md"
     if not overview.is_file():
         return
-    text = overview.read_text(encoding="utf-8", errors="replace")
+    text = streams_section(overview.read_text(encoding="utf-8", errors="replace"))
+    # Without a header row the first two columns are the historical shape.
+    columns: dict[str, int] = {"work id": 0, "phase": 1}
+    header_seen = False
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped.startswith("|"):
             continue
         cells = split_row(stripped)
-        if len(cells) < 2 or cells[0].lower() in {"work id", "id"}:
+        if len(cells) < 2:
             continue
-        if set(cells[0]) <= {"-", " "}:
+        if normalize_index_cell(cells[0]) in {"work id", "id", "stream"}:
+            columns = overview_column_map(cells)
+            header_seen = True
+            continue
+        if set(cells[0]) <= {"-", " ", ":"}:
             continue
         work_id = cells[0].strip("`")
-        lifecycle = cells[1].strip("`")
         state_path = engineering_root / "works" / work_id / "state.md"
         if not state_path.is_file():
             # Work state is centralized under the default source tree, so an
@@ -1859,13 +2706,150 @@ def check_overview(report: Report, engineering_root: Path) -> None:
             )
             continue
         state_text = state_path.read_text(encoding="utf-8", errors="replace")
-        local = metadata_value(state_text, "Lifecycle status")
-        if local and lifecycle and local != lifecycle:
+        phase_column = columns.get("phase", columns.get("lifecycle"))
+        if phase_column is not None and len(cells) > phase_column:
+            lifecycle = cells[phase_column].strip("`")
+            local = metadata_value(state_text, "Phase") or metadata_value(
+                state_text, "Lifecycle status"
+            )
+            if local and lifecycle and local != lifecycle:
+                report.warning(
+                    work_id,
+                    "overview",
+                    f"overview.md says {lifecycle!r} but local state.md says {local!r}",
+                )
+        check_overview_row(
+            report,
+            work_id,
+            cells,
+            columns,
+            engineering_root / "works" / work_id,
+            state_text,
+            header_seen,
+        )
+
+
+def check_overview_row(
+    report: Report,
+    work_id: str,
+    cells: list[str],
+    columns: dict[str, int],
+    work_dir: Path,
+    state_text: str,
+    header_seen: bool,
+) -> None:
+    """Check one Streams row's budget, anchor, and progress derivation."""
+    next_action = columns.get("next action")
+    if next_action is not None and len(cells) > next_action:
+        size = len(cells[next_action])
+        if size > NEXT_ACTION_BUDGET:
             report.warning(
                 work_id,
-                "overview",
-                f"overview.md says {lifecycle!r} but local state.md says {local!r}",
+                "overview-budget",
+                f"Next action is {size} chars, over the "
+                f"{NEXT_ACTION_BUDGET}-char budget by {size - NEXT_ACTION_BUDGET}",
+                "Replace the cell with one imperative sentence and move the "
+                "narrative into the stream's state/working.md.",
             )
+    location = columns.get("location")
+    if location is not None and len(cells) > location:
+        check_overview_location(report, work_id, cells[location])
+    if not header_seen:
+        return
+    progress = columns.get("last progress")
+    if progress is None:
+        report.warning(
+            "overview.md",
+            "last-progress",
+            "the Streams table has no `Last progress` column, so nothing "
+            "records when each stream last moved",
+            "Add a `Last progress` column carrying the date of the last "
+            "genuine journal status event plus its age, marking any fall back "
+            f"to state.md `{STATE_FALLBACK_MARK}`.",
+        )
+        columns["last progress"] = -1  # report the missing column once
+        return
+    if progress < 0 or len(cells) <= progress:
+        return
+    check_last_progress(report, work_id, cells[progress], work_dir, state_text)
+
+
+def check_overview_location(report: Report, work_id: str, cell: str) -> None:
+    value = cell.strip().strip("`").strip()
+    if "inferred" in value.casefold() or "⚠" in value:
+        report.error(
+            work_id,
+            "location",
+            f"Location {value!r} is inferred, not recorded: inferring an "
+            "anchor manufactures a fact the tree never stated",
+            "Record the anchor the stream is actually worked in, or write "
+            "`-`; `-` is honest and an inferred path is not.",
+        )
+        return
+    if value in {"-", "—", ""}:
+        return
+    path_part = re.sub(r"\s*\([^)]*\)\s*$", "", value).strip().strip("`")
+    if not path_part.startswith("/"):
+        report.warning(
+            work_id,
+            "location",
+            f"Location {value!r} is neither an absolute path nor `-`: a "
+            "relative anchor resolves differently from every other tree",
+            "Record the absolute path plus its tree kind, or `-` when no "
+            "anchor is recorded.",
+        )
+
+
+def check_last_progress(
+    report: Report, work_id: str, cell: str, work_dir: Path, state_text: str
+) -> None:
+    """Require Last progress to be a status-event date, or a marked fallback."""
+    value = cell.strip()
+    expected, source = progress_source(work_dir, state_text)
+    recorded = ISO_DATE.search(value)
+    if recorded is None:
+        report.warning(
+            work_id,
+            "last-progress",
+            f"Last progress {value!r} carries no date: a file mtime or an "
+            "any-write timestamp is not progress",
+            "Write the date of the last genuine journal status event, "
+            f"marking a fall back to state.md `{STATE_FALLBACK_MARK}`.",
+        )
+        return
+    if expected is None:
+        report.warning(
+            work_id,
+            "last-progress",
+            f"Last progress {recorded.group(1)} is backed by no journal "
+            "status event and no dated evidence in state.md, so its source is "
+            "unknown",
+            "Record the status event in the journal, or derive the value from "
+            f"state.md and mark it `{STATE_FALLBACK_MARK}`.",
+        )
+        return
+    if recorded.group(1) != expected:
+        report.warning(
+            work_id,
+            "last-progress",
+            f"Last progress {recorded.group(1)} does not match the "
+            f"{source} evidence dated {expected}: a reformat is not news and "
+            "an mtime dies the moment .state/ is copied out and back",
+            f"Set the cell to {expected}"
+            + (f" {STATE_FALLBACK_MARK}" if source == "state.md" else "")
+            + " plus its age.",
+        )
+        return
+    if source == "state.md" and STATE_FALLBACK_MARK not in value.casefold():
+        report.warning(
+            work_id,
+            "last-progress",
+            f"Last progress {recorded.group(1)} falls back to state.md "
+            "because the journal is absent, a stub, or older, but the cell "
+            "does not say so",
+            f"Mark the value `{STATE_FALLBACK_MARK}`; an unmarked fallback is "
+            "false freshness in a different costume.",
+        )
 
 
 def main() -> int:
@@ -1918,6 +2902,7 @@ def main() -> int:
         if not root.exists() and root.name != ".state":
             print(f"error: not a directory: {root}", file=sys.stderr)
             return 2
+        durable_root = repository_root or root.parent
         if root.is_dir():
             works = root / "works"
             if works.is_dir():
@@ -1925,8 +2910,9 @@ def main() -> int:
                     path for path in works.iterdir() if path.is_dir()
                 ):
                     check_work_dir(report, work_dir)
+            check_overview_layout(report, root)
             check_overview(report, root)
-        check_adrs(report, repository_root or root.parent)
+        check_adrs(report, durable_root)
 
     if arguments.json:
         print(json.dumps({"findings": report.findings}, indent=2))

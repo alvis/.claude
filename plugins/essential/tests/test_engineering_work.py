@@ -277,10 +277,10 @@ def test_suggests_but_does_not_invent_new_work_from_git_branch(
     # the suggestion is what the branch names, not the whole label slugged,
     # so bootstrapping it produces an ID this same branch resolves to
     assert payload["suggested_work_id"] == "refunds"
-    assert payload["candidate_work_ids"] == []
+    assert payload["existing_work_ids"] == []
     assert "work_dir" not in payload
 
-    # candidates come from the default source tree, the only tree that
+    # existing streams come from the default source tree, the only tree that
     # carries .state/, never from the secondary worktree
     for work_id in ("refunds", "other-work"):
         (root / ".state/works" / work_id).mkdir(parents=True)
@@ -405,41 +405,6 @@ def test_a_parked_stream_still_owns_its_name(tmp_path: Path) -> None:
     assert payload["suggested_work_id"] is None
 
 
-def test_a_retired_id_is_spent_after_its_directories_are_gone(
-    tmp_path: Path,
-) -> None:
-    root = tmp_path / "retired"
-    initialize_git(root)
-    commit_initial(root)
-    (root / ".state/works/unrelated-work").mkdir(parents=True)
-    # nothing under works/ or archive/ any more: the ledger is the only record,
-    # which is exactly why it is versioned while .state/ is not
-    ledger = root / "docs/retired-work-ids.md"
-    ledger.parent.mkdir(parents=True)
-    # the record cleanup actually writes is `<work-id> <date>`, so a
-    # whole-line comparison would miss every entry the ledger holds
-    ledger.write_text(
-        "payments-rewrite 2026-06-01\nrefunds 2026-07-27\n", encoding="utf-8"
-    )
-
-    completed, payload = run_resolver(root, "refunds")
-
-    assert completed.returncode == 2
-    assert "retired" in payload["error"]
-
-    git("checkout", "-q", "-b", "feat/refunds", cwd=root)
-    completed, payload = run_resolver(root)
-
-    assert completed.returncode == 4, completed.stderr
-    assert payload["suggested_work_id"] is None
-
-    # a name merely containing a retired one is untouched
-    completed, payload = run_resolver(root, "refunds-v2", bootstrap=False)
-
-    assert completed.returncode == 0, completed.stderr
-    assert payload["work_id"] == "refunds-v2"
-
-
 def test_a_label_that_folds_to_nothing_still_blocks_the_sole_fallback(
     tmp_path: Path,
 ) -> None:
@@ -490,7 +455,7 @@ def test_feature_branch_does_not_select_a_mismatched_sole_work_id(
     # the label is meaningful enough to block the sole-existing fallback, but
     # not a shape this contract defines, so it suggests nothing to accept
     assert payload["suggested_work_id"] is None
-    assert payload["candidate_work_ids"] == ["unrelated-work"]
+    assert payload["existing_work_ids"] == ["unrelated-work"]
 
 
 def test_explicit_then_environment_then_existing_selection_order(
@@ -600,6 +565,41 @@ def test_pm_bootstrap_creates_only_missing_entrypoints(tmp_path: Path) -> None:
     assert state.is_file()
 
 
+def test_bootstrap_writes_the_current_state_vocabulary(tmp_path: Path) -> None:
+    root = tmp_path / "bootstrap vocabulary"
+    initialize_git(root)
+    work_id = "bootstrap-vocabulary"
+
+    created, payload = run_resolver(root, work_id, bootstrap=True)
+    assert created.returncode == 0, created.stderr
+    work_dir = Path(payload["work_dir"])
+
+    state = (work_dir / "state.md").read_text(encoding="utf-8")
+    # a newborn stream is not blocked, and absence is how that is recorded:
+    # writing any `Blocked on:` value here would invent a blocker
+    assert "- Phase: `planned`\n" in state
+    assert "Blocked on" not in state
+    # `Motion` is retired entirely — `running` was never durably true and a
+    # typed `idle <N>d` is a stored projection of `Last progress`
+    assert "Motion" not in state
+    # one key per line, never packed: a reader anchored at one key per line
+    # takes the packed form as neither field, and every phase-gated check on
+    # this stream then reads a confident zero
+    assert " · " not in state
+    assert "Lifecycle status" not in state
+
+    goal = (work_dir / "goal.md").read_text(encoding="utf-8")
+    # a bootstrap has had no operator conversation, so any other value would
+    # claim a provenance the criteria below it do not have
+    assert "- Charter: `absent`" in goal
+
+    # the birth path cannot mint the vocabulary the contract retired, or every
+    # stream created after this upgrade is born needing migration
+    for retired in ("initialized", "`active`", "`blocked`", "retiring", "motion"):
+        for name in ("goal.md", "state.md", "state/working.md", "state/journal.md"):
+            assert retired not in (work_dir / name).read_text(encoding="utf-8"), name
+
+
 def test_bootstrap_cannot_bypass_identity_or_ignore_gates(tmp_path: Path) -> None:
     root = tmp_path / "bootstrap gates"
     initialize_git(root, ignored=False)
@@ -687,6 +687,38 @@ def test_normal_and_bootstrap_resolution_reject_symlinked_entrypoint(
     assert outside.read_text(encoding="utf-8") == "outside must remain unchanged\n"
 
 
+def test_the_collision_list_covers_archived_ids_without_resolving_them(
+    tmp_path: Path,
+) -> None:
+    """An archived ID is spoken for, but it is not a live stream.
+
+    `archive/` is the only thing holding a retired name against reuse, so a
+    collision list built from `works/` alone reports a name as free that is
+    not. Folding the two into one list is the opposite failure — a parked
+    stream then resolves as live — so this pins both halves at once.
+    """
+    root = tmp_path / "collision"
+    initialize_git(root)
+    commit_initial(root)
+    # two live streams, so the sole_existing shortcut cannot fire and the
+    # ambiguous response — the one that carries the collision list — is reached
+    for work_id in ("live-work", "other-work"):
+        (root / ".state/works" / work_id).mkdir(parents=True)
+    (root / ".state/archive/parked-work").mkdir(parents=True)
+
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4
+    assert payload["existing_work_ids"] == ["live-work", "other-work", "parked-work"]
+
+    # ...and the archived one still does not resolve as a live stream
+    git("checkout", "-q", "-b", "feat/parked-work", cwd=root)
+    completed, payload = run_resolver(root)
+    assert completed.returncode == 4, completed.stderr
+    assert payload["status"] == "work_id_required"
+    assert not payload["suggested_work_id"]
+
+
 def test_returns_structured_ambiguity_and_uses_workspace_match(
     tmp_path: Path,
 ) -> None:
@@ -701,7 +733,7 @@ def test_returns_structured_ambiguity_and_uses_workspace_match(
 
     assert completed.returncode == 4
     assert payload["status"] == "work_id_required"
-    assert payload["candidate_work_ids"] == ["eng-42", "eng-99"]
+    assert payload["existing_work_ids"] == ["eng-42", "eng-99"]
     assert payload["workspace_label"] == "main"
 
     # a bare one-segment Git branch is not a documented branch shape, so it
@@ -732,8 +764,42 @@ def test_generic_workspace_without_existing_work_requires_selection(
 
     assert completed.returncode == 4
     assert payload["status"] == "work_id_required"
-    assert payload["candidate_work_ids"] == []
+    assert payload["existing_work_ids"] == []
     assert payload["suggested_work_id"] is None
+
+
+def test_work_id_required_carries_the_grammar_not_just_existing_names(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "main"
+    initialize_git(root)
+    commit_initial(root)
+    # every stream on disk here was minted under none of the current rules,
+    # which is the real starting condition: a reader with only this list in
+    # front of it infers the format from it and mints a 29th name like them
+    legacy = ("20260727-feat-refunds-v5cfxb", "20260721-fix-ingest-a54yx4")
+    for work_id in legacy:
+        (root / ".state/works" / work_id).mkdir(parents=True)
+
+    completed, payload = run_resolver(root)
+
+    assert completed.returncode == 4
+    assert payload["status"] == "work_id_required"
+    # the list is a collision check, and says so in its own name
+    assert payload["existing_work_ids"] == sorted(legacy)
+    assert "candidate_work_ids" not in payload
+    assert "collision" in payload["error"]
+    assert "not examples of the format" in payload["error"]
+    # the format arrives with the response, so nobody has to read it off the
+    # names above — including the three shapes those names demonstrate
+    grammar = payload["work_id_grammar"]
+    assert "^[a-z0-9]+(-[a-z0-9]+)*$" in grammar
+    for anti_pattern in ("no date prefix", "no type prefix", "no random suffix"):
+        assert anti_pattern in grammar
+    # and the pointer resolves, so the full rule is one read away
+    naming = Path(payload["naming_reference"])
+    assert naming == ESSENTIAL / "references/naming.md"
+    assert naming.is_file()
 
 
 def test_requires_pm_ignore_bootstrap_after_selection(tmp_path: Path) -> None:

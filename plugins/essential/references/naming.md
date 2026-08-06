@@ -40,26 +40,38 @@ eng-421-checkout-refunds      # a stream that came from a tracker keeps its key
 That one name is the stream's state directory (`.state/works/<work-id>/`) and
 its source tree directory (`~/.workspaces/<project>/<work-id>`).
 
-A work ID is an identity and is never renamed or reused. Before taking one,
-read every ID under `works/` **and** `archive/`; if the name is occupied,
-append the next free ordinal — shortening the scope first so the ordinal still
-fits in 32 bytes, since `<31-byte-name>-2` would not. That ordinal makes a
-distinct stream, not a slice of the one it collided with.
+Three shapes recur, and none of them is a work ID:
 
-Those directories are where a name is looked up, not what makes it spent: a
-name is taken while **any** trace of it survives, including a branch or a
-source tree left behind by a stream whose `works/` entry is already gone. Take
-a colliding name only after establishing that nothing is still using it.
+- **No date prefix** — `20260727-refunds`. The date is already in the journal,
+  the branch, and the commit, so in the ID it spends the 32-byte budget on a
+  fact recorded three times over, and it sorts streams by when someone started
+  them rather than by what they are.
+- **No type prefix** — `feat-refunds`. The type belongs to the branch, and
+  `feat/refunds` and `fix/refunds` resolve to the same stream; carrying it in
+  the ID gives one identity two names and invites a second directory for work
+  the first already owns.
+- **No random suffix** — `refunds-v5cfxb`. Collisions are settled by reading
+  `works/` and `archive/` and taking the next free
+  ordinal, so the suffix defends against a collision that lookup has already
+  ruled out — at the cost of a name nobody can say, type, or recognise.
 
-Retirement deletes a stream's `works/` and `archive/` directories after its
-retention window, so those two directories cannot be the only record of which
-IDs are spoken for. A retired ID is still spent, and a stream with nothing to
-promote is the case that proves it — code-only work leaves no durable document
-to carry its name. Retirement therefore records every ID it retires in
-`docs/retired-work-ids.md`, whether or not anything else was promoted
-([retirement.md](retirement.md)). One record per line, the ID first and the
-retirement date after it (`refunds 2026-07-27`), so the ID is readable as the
-first field. That file is the third place a new name is checked against.
+An ID already on disk is never renamed to correct its shape: it is an
+identity, and identities do not change to satisfy a rule written later. The
+repair is forward-only — mint the next name right.
+
+A work ID is an identity and is never reused — a rule nothing enforces, so it
+holds only if you check. Before taking one, read every ID under `works/` **and**
+`archive/`; if the name is occupied, append the next free ordinal — shortening
+the scope first so the ordinal still fits in 32 bytes, since `<31-byte-name>-2`
+would not. That ordinal makes a distinct stream, not a slice of the one it
+collided with.
+
+`archive/` is permanent — no skill deletes it — so those two directories
+together are a complete record of which IDs are spoken for, and the resolver
+reads both. They are still not the whole answer: a name is taken while **any**
+trace of it survives, including a branch, a source tree, or a merged pull
+request left by a stream whose directory was removed by hand. Take a colliding
+name only after establishing that nothing is still using it.
 
 ## Branch
 

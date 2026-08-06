@@ -6,10 +6,12 @@ memory. `engineering-work.md` owns the lifecycle and resolver;
 
 ```text
 .state                                  # ignored operational work memory in the default source tree
-├── overview.md                         # global status index across every source tree
+├── overview.md                         # authored goal plus the derived index of every stream
+├── environment.md                      # dated, re-measurable trees, refs, and gates; never per-stream
+├── traps.md                            # one line each: symptom, cause, and what to do instead
 ├── notion                              # default-source-tree Notion mirror
-├── archive/<work-id>                   # parked idle stream; never enumerated by the resolver
-└── works/<work-id>                     # one stream worked from any registered tree
+├── archive/<work-id>                   # completed or parked stream; never enumerated by the resolver
+└── works/<work-id>                     # one live stream, phase planned, working, or reviewing
     ├── goal.md                         # approved charter, scope, and success criteria
     ├── state.md                        # complete resumable context and canonical task graph
     ├── lease.json                      # coordinator ownership and expiry record
@@ -33,3 +35,16 @@ memory. `engineering-work.md` owns the lifecycle and resolver;
     ├── reviews/*.md                    # one area-specific review and its findings
     └── artifacts                       # non-Markdown evidence and generated carriers
 ```
+
+`archive/` is the single sink for every stream that leaves `works/`, whether
+it completed or was parked. Keep it singular: a sibling `archives/` would
+leave every future reader guessing which of two near-identical directories
+holds what. Why a stream left is recorded in its own `state.md` completion
+receipt, never encoded in the directory name, so the reason survives being
+moved and can say more than one word.
+
+`environment.md` and `traps.md` sit beside `overview.md` rather than inside
+it because they rot on a different clock: which trees, refs, and gates exist
+changes when the repository does, not when a stream advances, and a trap is
+true until the underlying tool changes. Both are re-measurable and dated; a
+claim in either that no longer reproduces is replaced, not annotated.

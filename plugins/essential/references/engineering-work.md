@@ -69,7 +69,6 @@ lives only in the default source tree (`state_root`).
 ```text
 docs                                       # versioned docs in the active working tree
 ├── README.md                              # reader entrypoint and durable-domain map
-├── retired-work-ids.md                    # retired IDs that must never be reused
 ├── architecture                           # structural rules, boundaries, topology, protocols, and flows
 │   ├── README.md                              # architecture entrypoint and authority map
 │   ├── <architecture-slug>.md                 # authoritative document for one structural concern
@@ -121,24 +120,28 @@ is never renamed or reused.
 ### Global overview (`.state/overview.md`)
 
 The default source tree carries `.state/`, and with it the single global
-`overview.md`: an authored `Goal` and `Requirements` preamble, then one table
-of every work stream (work ID, lifecycle, headline, next action, `Location`,
-`Spec`, `Documentations`). Every stream's state sits under the same `works/`,
-so this is an index over local state, not a cross-tree aggregator; its
-`Location` column records **which checkout each stream is worked in**, one
-tree per stream. Every table cell derives from each stream's own files, so a
-stale table is rebuilt by re-reading them; the preamble is not.
-The PM/coordinator updates it whenever a stream's status changes — in
-particular at handover. Before planning against a capability, resolve any
-sibling row marked `pending-publication` first.
+`overview.md`: an authored `Goal` and `Requirements` preamble, the questions
+waiting on the user, then one row per work stream. Every stream's state sits
+under the same `works/`, so this is an index over local state, not a
+cross-tree aggregator; its `Location` column records **which checkout each
+stream is worked in**, one tree per stream. Every table cell derives from each
+stream's own files, so a stale table is rebuilt by re-reading them; the
+preamble is not. Environment narrative and known traps are not preamble —
+they live beside the overview in `environment.md` and `traps.md`, because they
+change when the repository does, not when a stream advances. The
+PM/coordinator updates the overview whenever a stream's phase changes or it
+becomes blocked or unblocked — in particular at handover. Sections, columns,
+and each cell's derivation live in [overviews.md](overviews.md).
 
 ### One stream at a time
 
-Work **one** stream to completion before starting another. Finished execution
-sets lifecycle `reviewing`, not a terminal state; `completed` needs merge
-evidence, never the author's say-so. Read
-[stream-completion.md](stream-completion.md) when a stream finishes or is
-settled.
+Work **one** stream to completion before starting another: at most one stream
+sits at phase `working` or `reviewing`. A `reviewing` stream holds that slot
+even while it waits, since a verdict can send the work back, and being blocked
+never frees it. Finished execution sets phase `reviewing`, not
+a terminal state; `completed` needs merge evidence, never the author's
+say-so. Read [stream-completion.md](stream-completion.md) when a stream
+finishes or is settled.
 
 ### `goal.md`
 
@@ -165,8 +168,9 @@ gate. A subagent reads it only for current-work navigation and reads
 reports paths, evidence, and state deltas to the PM and never edits PM-owned
 work memory.
 
-`state.md` is the complete resumable execution context: full plan, lifecycle
-status, decisions, dependencies, blockers, open questions, review state,
+`state.md` is the complete resumable execution context: full plan, the
+stream's phase and what it is blocked on, its completion receipt once it has one,
+decisions, dependencies, blockers, open questions, review state,
 evidence references, repository revision, and sync state. It links to the
 charter rather than restating it, carries `Plan revision: N` (each bump
 appends what/why/approver/spec base-id to `state/revisions.md`), the
@@ -260,7 +264,10 @@ stream carries non-recoverable decisions, and promote durable knowledge
 early. [essential:doctor](../skills/doctor/SKILL.md) checks a recovered
 tree's structural integrity before it is resumed. Idle streams are parked and completed streams retired per
 [retirement.md](retirement.md); retirement deletes the operational
-projection, so it is gated on promotion and decision dispositions.
+projection, so it is gated on promotion and decision dispositions. A
+completed stream's directory moves into `archive/` — the one sink for
+everything that leaves `works/` — when its overview row is dropped, days
+before the retention window deletes anything.
 
 ## Write boundary
 
@@ -269,8 +276,7 @@ Work state has exactly two homes: the **default source tree's**
 versioned `docs/`. Every write a lifecycle skill makes lands in
 `state_root/.state/works/<work-id>/**`,
 `state_root/.state/overview.md`, or the active tree's `docs/` at promotion
-and for the retirement ledger ([retirement.md](retirement.md)), which records
-a name as spent at the moment its state is deleted. Any other destination is
+([retirement.md](retirement.md)). Any other destination is
 a contract violation. A skill that
 believes it needs one has misread this contract; stop and report instead.
 
