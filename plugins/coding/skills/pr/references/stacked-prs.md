@@ -57,18 +57,27 @@ path silently reshapes history.
   merges, fix forward instead of rewriting public history.
 - Update and merge the complete affected chain bottom-up.
 
-When the `gh stack` extension is available and the caller wants GitHub Stack
-grouping, load [github-stacks.md](github-stacks.md). It maps create, update,
-extension, and structural reorder onto this skill's jj/git ownership without
-making the extension a prerequisite.
+Load [github-stacks.md](github-stacks.md) for every GitHub PR-stack request,
+including discovery, checkout, creation, publication, update, navigation,
+restructure, unstack, or merge. That reference is the sole owner of GitHub
+stack inventory behavior and selects one conditional history owner. A
+repository is jj-colocated only when `git rev-parse HEAD` equals
+`jj log -r @- --no-graph -T 'commit_id'`; every other result is fully supported
+plain Git. On the jj route, `coding:commit` owns history mutation for edit- and
+fix-induced rewrites, where jj automatically rebases descendants and moves
+bookmarks. Merge-induced descendant topology changes remain owned by
+`coding:pr merge`. On the plain Git route, the extension retains its local
+tracking and native stack operators.
 
 ## Inspect with jj
 
-Use jj only when it is functionally colocated with Git. Inspect the candidate
-chain and bookmark placement without mutating it:
+Before either inspection route, execute the shared authoritative
+[REMOTE gate](create-update.md#bind-the-push-remote). Use jj only when it is
+functionally colocated with Git. Inspect the candidate chain and bookmark
+placement without mutating it:
 
 ```bash
-jj log -r '<destination>@origin..<selected-top-change>' --no-graph \
+jj log -r "<destination>@$REMOTE..<selected-top-change>" --no-graph \
   -T 'change_id.short() ++ " " ++ bookmarks ++ " " ++ description.first_line() ++ "\n"'
 jj bookmark list --all
 jj log -r '<parent-change> & ::<child-change>' --no-graph -T 'commit_id'
@@ -76,7 +85,7 @@ jj log -r '<parent-change> & ::<child-change>' --no-graph -T 'commit_id'
 
 For new publication, the containment query uses the selected local change IDs
 because remote bookmarks do not exist yet. For an existing stack, repeat it
-with `<parent>@origin` and `<child>@origin` to verify the published chain. Every
+with `<parent>@$REMOTE` and `<child>@$REMOTE` to verify the published chain. Every
 query must return a commit ID for its adjacent pair. If one saved change must be
 split, invoke `coding:commit` with the accepted slices. Reserve
 `coding:commit --reorder` for an already partitioned chain that needs reordering
@@ -86,23 +95,23 @@ or reparenting. After the result is linear, use
 workflow owns bookmark placement, leased pushes, PR bases, and the explicit
 restack map.
 
-After a lower PR merges, use `coding:pr merge` for the remaining round. It
-records the pre-merge change IDs, rebases the child-exclusive root with
-`jj rebase -s`, moves only the remaining bookmarks, and pushes them through
-jj's remote-change safety checks.
+After a lower PR merges, use `coding:pr merge` for the remaining round. Any
+merge-induced descendant rebase, bookmark movement, and affected-head batch
+publication remain owned by that merge workflow. `coding:commit` owns edit- or
+fix-induced rewrites outside the merge operation.
 
 ## Inspect with Git
 
 Inspect the candidate chain and branch placement without mutating it:
 
 ```bash
-git log --reverse --oneline origin/<destination>..<selected-top-ref>
+git log --reverse --oneline "$REMOTE"/<destination>..<selected-top-ref>
 git branch --list '<feature-slug>/*'
 git merge-base --is-ancestor <parent-commit> <child-commit>
 ```
 
 For new publication, use selected local commit IDs. For an existing stack,
-repeat the command with `origin/<parent-head>` and `origin/<child-head>`.
+repeat the command with `$REMOTE/<parent-head>` and `$REMOTE/<child-head>`.
 Every ancestry command must exit zero. If one commit must be split, invoke
 `coding:commit` with the accepted slices; use `coding:commit --reorder` only
 for an already partitioned chain needing reorder or reparenting. Then use

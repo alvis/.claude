@@ -1,8 +1,8 @@
 ---
 name: pr
-description: 'Use for GitHub pull-request workflows when the user asks to draft PR text, publish a branch, create or update a PR, monitor CI, review PR changes or comments, or merge a PR or linear stack. Trigger before running gh pr or publishing PR-related changes.'
+description: 'Use for GitHub pull-request workflows when the user asks to draft PR text, publish a branch, create, update, discover, check out, review, or merge a PR or linear stack. Trigger before running gh pr, inspecting GitHub stacks, or publishing PR-related changes.'
 model: opus
-argument-hint: "<author|create|update|review|merge> [arguments]"
+argument-hint: "<author|create|update|review|stack|merge> [arguments]"
 ---
 
 # Pull Requests
@@ -19,10 +19,12 @@ owned by `coding:review-code`.
 
 ```text
 /coding:pr author [<commit-ref>] [--base <ref>]
-/coding:pr create [<commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
-/coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
+/coding:pr create [<commit-ref>] [--branch-prefix <name>] [--remote <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
+/coding:pr update [<pr-number-or-url> | <commit-ref>] [--branch-prefix <name>] [--remote <name>] [--skip-local-test] [--no-review] [--publish-only] [--dry-run]
 /coding:pr review [<pr-number-or-url> | <source-tree-path>] [--repo <owner/name>] [--area=<list>] [--dry-run]
-/coding:pr merge <pr numbers...> [--method=rebase|squash|merge] [--force]
+/coding:pr stack list
+/coding:pr stack checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>
+/coding:pr merge <pr numbers...> [--method=rebase|squash|merge] [--remote <name>] [--destination <branch>] [--force]
 ```
 
 When the request omits a subcommand, names no clear action, or could select more
@@ -31,15 +33,22 @@ remote mutation.
 
 ## Routing
 
+For every request to create, inspect, update, restructure, publish, check out,
+sync, navigate, unstack, or merge a GitHub PR stack, load
+[references/github-stacks.md](references/github-stacks.md) before selecting an
+operator. This applies even when the request arrives through `create`, `update`,
+or `merge`, rather than the explicit `stack` route.
+
 - `author` writes deterministic PR title and body text without publication.
   Follow only [Author the PR text](references/create-update.md#author-the-pr-text);
   `--base` selects the intended PR base instead of the first-parent default.
-- `create` opens new draft PRs for one saved change or a linear stack. Load and
-  follow [references/create-update.md](references/create-update.md) with
+- `create` opens new draft PRs for one saved change or a conventional linear
+  stack. Load and follow
+  [references/create-update.md](references/create-update.md) with
   `ACTION=create`, and always load
   [references/stacked-prs.md](references/stacked-prs.md).
-- `update` republishes existing PR heads, refreshes their title, body, and bases,
-  and drives CI to green. Load and follow
+- `update` republishes existing PR heads for a conventional linear stack,
+  refreshes their title, body, and bases, and drives CI to green. Load and follow
   [references/create-update.md](references/create-update.md) with
   `ACTION=update`, and always load
   [references/stacked-prs.md](references/stacked-prs.md).
@@ -54,7 +63,16 @@ remote mutation.
   [references/review-loop.md](references/review-loop.md) with an explicit
   preprovisioned stack capsule is already that dedicated reviewer: it runs the
   review phase directly instead of nesting another dispatch.
-- `merge` validates and merges a linear stack bottom-up. Load and follow
+- `stack` follows
+  [references/github-stacks.md](references/github-stacks.md#list-or-check-out):
+  - `list` lists the current repository's GitHub PR stacks.
+  - `checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>` checks out
+    one explicitly selected stack and requires `gh stack`. Checkout may fetch
+    and create local tracking branches, but it does not own commits, history
+    rewriting, pushes, or PR publication.
+- `merge` validates and merges a conventional linear stack bottom-up. For a
+  GitHub PR stack, use the GitHub operator map loaded above instead. Otherwise
+  load and follow
   [references/stacked-prs.md](references/stacked-prs.md), then
   [references/merge.md](references/merge.md).
 

@@ -2,12 +2,13 @@
 set -euo pipefail
 
 # publish an explicitly ordered pull request stack and repair each live base
-# usage: restack.sh [--dry-run] --base <root-base> <bookmark>=<expected-git-sha>...
+# usage: restack.sh [--dry-run] --remote <name> --base <root-base> <bookmark>=<expected-git-sha>...
 # stdout: a json summary with the selected vcs plus restacked, skipped_merged,
 #         and errors arrays
 
 dry_run=false
 root_base=
+remote=
 bookmarks=()
 expected_shas=()
 states=()
@@ -33,9 +34,9 @@ fi
 
 vcs_fetch() {
   if [ "$vcs" = jj ]; then
-    jj git fetch >/dev/null 2>&1
+    jj git fetch --remote "$remote" >/dev/null
   else
-    git fetch origin >/dev/null 2>&1
+    git fetch -- "$remote" >/dev/null
   fi
 }
 
@@ -47,29 +48,19 @@ vcs_local_sha() {
   fi
 }
 
-# both pushes carry a lease, so a remote that advanced under a rewrite is
-# rejected rather than overwritten
-vcs_push() {
-  if [ "$vcs" = jj ]; then
-    jj git push --bookmark "$1" >/dev/null 2>&1
-  else
-    git push --force-with-lease origin \
-      "refs/heads/$1:refs/heads/$1" >/dev/null 2>&1
-  fi
+git_push() {
+  git push --force-with-lease -- "$remote" \
+    "refs/heads/$1:refs/heads/$1" >/dev/null
 }
 
 vcs_remote_sha() {
-  if [ "$vcs" = jj ]; then
-    jj log -r "$1@origin" --no-graph -T 'commit_id ++ "\n"' 2>/dev/null
-  else
-    remote_ref=$(git ls-remote origin "refs/heads/$1" 2>/dev/null) || return 1
-    [ -n "$remote_ref" ] || return 1
-    printf '%s\n' "${remote_ref%%	*}"
-  fi
+  remote_ref=$(git ls-remote -- "$remote" "refs/heads/$1") || return 1
+  [ -n "$remote_ref" ] || return 1
+  printf '%s\n' "${remote_ref%%	*}"
 }
 
 vcs_base_sha() {
-  git rev-parse --verify --quiet "refs/remotes/origin/$1" ||
+  git rev-parse --verify --quiet "refs/remotes/$remote/$1" ||
     git rev-parse --verify --quiet "refs/heads/$1"
 }
 
@@ -136,11 +127,17 @@ while [ "$#" -gt 0 ]; do
       root_base=$2
       shift 2
       ;;
+    --remote)
+      [ "$#" -ge 2 ] || fail_with 2 missing-remote
+      remote=$2
+      shift 2
+      ;;
     --*) fail_with 2 unknown-flag ;;
     *) break ;;
   esac
 done
 
+[ -n "$remote" ] || fail_with 2 missing-remote
 [ -n "$root_base" ] || fail_with 2 missing-base
 valid_bookmark "$root_base" || fail_with 2 invalid-base
 [ "$#" -gt 0 ] || fail_with 2 no-specs
@@ -194,7 +191,7 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
         then \"MERGED\"
       elif any(.[]; .state == \"CLOSED\" and .headRefOid == \"$expected_sha\")
         then \"CLOSED\"
-      else \"NONE\" end" 2>/dev/null); then
+      else \"NONE\" end"); then
     fail_with 1 "gh-discovery:$bookmark"
   fi
   case "$state" in
@@ -215,8 +212,11 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
   index=$((index + 1))
 done
 
-# merged pull requests never become the base of a remaining live item
+# Merged pull requests never become the base of a remaining live item. The jj
+# path publishes the complete live selection in one command after preflight;
+# Git retains its per-branch force-with-lease behavior.
 previous_base=$root_base
+live_indices=()
 index=0
 while [ "$index" -lt "${#bookmarks[@]}" ]; do
   bookmark=${bookmarks[$index]}
@@ -229,25 +229,63 @@ while [ "$index" -lt "${#bookmarks[@]}" ]; do
     continue
   fi
 
+  live_indices[${#live_indices[@]}]=$index
+  index=$((index + 1))
+done
+
+if [ "$dry_run" = false ] && [ "$vcs" = jj ] &&
+  [ "${#live_indices[@]}" -gt 0 ]; then
+  push_args=(git push --remote "$remote")
+  for index in ${live_indices[@]+"${live_indices[@]}"}; do
+    push_args[${#push_args[@]}]=--bookmark
+    push_args[${#push_args[@]}]=${bookmarks[$index]}
+  done
+
+  push_failed=false
+  jj "${push_args[@]}" >/dev/null || push_failed=true
+  [ "$push_failed" = false ] || errors[${#errors[@]}]=push
+
+  for index in ${live_indices[@]+"${live_indices[@]}"}; do
+    bookmark=${bookmarks[$index]}
+    expected_sha=${expected_shas[$index]}
+    if remote_sha=$(vcs_remote_sha "$bookmark") &&
+      [ "$remote_sha" = "$expected_sha" ]; then
+      restacked[${#restacked[@]}]=$bookmark
+    else
+      errors[${#errors[@]}]="remote-sha-mismatch:$bookmark"
+    fi
+  done
+
+  if [ "${#errors[@]}" -gt 0 ]; then
+    emit_json
+    exit 1
+  fi
+fi
+
+for index in ${live_indices[@]+"${live_indices[@]}"}; do
+  bookmark=${bookmarks[$index]}
+  expected_sha=${expected_shas[$index]}
+  state=${states[$index]}
+
   if [ "$dry_run" = true ]; then
-    index=$((index + 1))
     continue
   fi
 
-  vcs_push "$bookmark" || fail_with 1 "push:$bookmark"
-  if ! remote_sha=$(vcs_remote_sha "$bookmark"); then
-    fail_with 1 "remote-sha-mismatch:$bookmark"
+  if [ "$vcs" = git ]; then
+    git_push "$bookmark" || fail_with 1 "push:$bookmark"
+    if ! remote_sha=$(vcs_remote_sha "$bookmark"); then
+      fail_with 1 "remote-sha-mismatch:$bookmark"
+    fi
+    [ "$remote_sha" = "$expected_sha" ] || fail_with 1 "remote-sha-mismatch:$bookmark"
+    restacked[${#restacked[@]}]=$bookmark
   fi
-  [ "$remote_sha" = "$expected_sha" ] || fail_with 1 "remote-sha-mismatch:$bookmark"
-  restacked[${#restacked[@]}]=$bookmark
 
   if [ "$state" = OPEN ]; then
-    gh pr edit "$bookmark" --base "$previous_base" >/dev/null 2>&1 || \
+    gh pr edit "$bookmark" --base "$previous_base" >/dev/null || \
       fail_with 1 "pr-edit:$bookmark"
   fi
 
   previous_base=$bookmark
-  index=$((index + 1))
 done
 
 emit_json
