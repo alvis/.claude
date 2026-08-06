@@ -73,6 +73,7 @@ def test_reviewer_evidence_binds_to_the_complete_review_surface() -> None:
 def test_merged_skill_resolves_bundled_helpers_for_resource_lifetimes() -> None:
     router = (WRITE_PR / "SKILL.md").read_text()
     create_update = (WRITE_PR / "references" / "create-update.md").read_text()
+    merge = (WRITE_PR / "references" / "merge.md").read_text()
     review_extraction = (
         WRITE_PR / "references" / "review-extraction.md"
     ).read_text()
@@ -80,6 +81,7 @@ def test_merged_skill_resolves_bundled_helpers_for_resource_lifetimes() -> None:
 
     assert "set `CODING_PR_SKILL_DIR` to the absolute directory" in router
     helper_consumers = {
+        "scripts/preflight-jj-range-push.sh": (merge,),
         "scripts/temp-tree.sh": (create_update, review_extraction, review),
         "scripts/review-scan.sh": (review,),
     }
@@ -753,33 +755,34 @@ def test_github_stack_plain_git_keeps_native_history_operators() -> None:
 
 def test_jj_merge_publishes_only_remaining_affected_bookmarks_once() -> None:
     merge = (WRITE_PR / "references" / "merge.md").read_text()
+    helper = (WRITE_PR / "scripts" / "preflight-jj-range-push.sh").read_text()
     normalized = " ".join(merge.split())
 
-    assert merge.count('jj git push --remote "$REMOTE"') == 1
+    assert merge.count('scripts/preflight-jj-range-push.sh') == 1
+    assert 'scripts/test-jj-range-push.sh' in merge
+    assert helper.count('git push --remote "$remote"') == 1
     assert merge.count('jj rebase -s "$child_root"') == 1
     assert 'jj rebase -s "$child_root" --onto <new-parent-ref>' in merge
     assert 'jj rebase -s "$child_root" -d' not in merge
-    push = merge.split('jj git push --remote "$REMOTE"', 1)[1].split("```", 1)[0]
-    assert '--revision "$PUSH_REVSET"' in push
-    assert "--bookmark" not in push
-    assert "--all" not in merge
+    assert '--revision "$push_revset"' in helper
+    assert "--bookmark" not in helper
+    assert "--all" not in merge + helper
     assert "jj bookmark set" not in merge
-    assert (
-        'PUSH_REVSET="${FIRST_REMAINING_COMMIT}::${LAST_REMAINING_COMMIT}"'
-        in merge
-    )
-    assert "FIRST_REMAINING_BOOKMARK=${REMAINING_BOOKMARKS[0]}" in merge
-    assert 'case "$FIRST_REMAINING_COMMIT" in' in merge
-    assert 'case "$LAST_REMAINING_COMMIT" in' in merge
-    assert '"$FIRST_REMAINING_COMMIT & ::$LAST_REMAINING_COMMIT"' in merge
-    assert "refusing revision-range push: boundaries are not linear" in merge
-    bookmark_preflight = merge.index('jj bookmark list -r "$PUSH_REVSET"')
-    tag_preflight = merge.index('jj tag list -r "$PUSH_REVSET"')
-    push_command = merge.index('jj git push --remote "$REMOTE"')
+    assert 'push_revset="${first_commit}::${last_commit}"' in helper
+    assert "resolve_endpoint first" in helper
+    assert "resolve_endpoint last" in helper
+    assert "empty $position endpoint" in helper
+    assert "ambiguous $position endpoint" in helper
+    assert '"$first_commit & ::$last_commit"' in helper
+    assert "fail 'boundaries are not linear'" in helper
+    assert helper.count('--at-operation "$operation_id"') == 5
+    bookmark_preflight = helper.index('bookmark list')
+    tag_preflight = helper.index('tag list')
+    push_command = helper.index('git push --remote "$remote"')
     assert bookmark_preflight < tag_preflight < push_command
-    assert 'ACTUAL_BOOKMARKS" = "$EXPECTED_BOOKMARKS' in merge
-    assert "refusing revision-range push: unexpected bookmarks" in merge
-    assert "refusing revision-range push: selected tags" in merge
+    assert 'actual_bookmarks" = "$expected_bookmarks' in helper
+    assert "fail 'unexpected bookmarks'" in helper
+    assert "fail 'selected tags'" in helper
     assert "automatically rebases every descendant" in normalized
     assert "moves their bookmarks" in normalized
     assert "all and only remaining affected bookmarks" in normalized

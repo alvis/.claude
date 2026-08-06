@@ -171,67 +171,25 @@ jj/git operator map.
      <child-head-branch>
      <grandchild-head-branch>
    )
-   FIRST_REMAINING_BOOKMARK=${REMAINING_BOOKMARKS[0]}
-   LAST_REMAINING_BOOKMARK=
-   for bookmark in "${REMAINING_BOOKMARKS[@]}"; do
-     LAST_REMAINING_BOOKMARK=$bookmark
-   done
-
-   FIRST_REMAINING_COMMIT=$(jj log -r "$FIRST_REMAINING_BOOKMARK" \
-     --no-graph -T 'commit_id ++ "\n"') || exit $?
-   LAST_REMAINING_COMMIT=$(jj log -r "$LAST_REMAINING_BOOKMARK" \
-     --no-graph -T 'commit_id ++ "\n"') || exit $?
-   case "$FIRST_REMAINING_COMMIT" in
-     ''|*$'\n'*)
-       echo 'refusing revision-range push: ambiguous first commit' >&2
-       exit 1
-       ;;
-   esac
-   case "$LAST_REMAINING_COMMIT" in
-     ''|*$'\n'*)
-       echo 'refusing revision-range push: ambiguous last commit' >&2
-       exit 1
-       ;;
-   esac
-   FIRST_IN_RANGE=$(jj log \
-     -r "$FIRST_REMAINING_COMMIT & ::$LAST_REMAINING_COMMIT" \
-     --no-graph -T 'commit_id ++ "\n"') || exit $?
-   [ "$FIRST_IN_RANGE" = "$FIRST_REMAINING_COMMIT" ] || {
-     echo 'refusing revision-range push: boundaries are not linear' >&2
-     exit 1
-   }
-   PUSH_REVSET="${FIRST_REMAINING_COMMIT}::${LAST_REMAINING_COMMIT}"
-
-   EXPECTED_BOOKMARKS=$(printf '%s\n' "${REMAINING_BOOKMARKS[@]}" | \
-     LC_ALL=C sort -u) || exit $?
-   UNSORTED_BOOKMARKS=$(jj bookmark list -r "$PUSH_REVSET" \
-     -T 'name ++ "\n"') || exit $?
-   ACTUAL_BOOKMARKS=$(printf '%s\n' "$UNSORTED_BOOKMARKS" | \
-     LC_ALL=C sort -u) || exit $?
-   [ "$ACTUAL_BOOKMARKS" = "$EXPECTED_BOOKMARKS" ] || {
-     echo 'refusing revision-range push: unexpected bookmarks' >&2
-     exit 1
-   }
-   RANGE_TAGS=$(jj tag list -r "$PUSH_REVSET" \
-     -T 'name ++ "\n"') || exit $?
-   [ -z "$RANGE_TAGS" ] || {
-     echo 'refusing revision-range push: selected tags' >&2
-     exit 1
-   }
-   jj git push --remote "$REMOTE" --revision "$PUSH_REVSET" || exit $?
+   "$CODING_PR_SKILL_DIR/scripts/preflight-jj-range-push.sh" \
+     --remote "$REMOTE" "${REMAINING_BOOKMARKS[@]}" || exit $?
    ```
 
    jj does not iterate links. Rebase exactly once from the immediate
    child-exclusive root: that source rebase automatically rebases every
    descendant and moves their bookmarks. Bind `REMOTE` to the resolved head
    remote and build `REMAINING_BOOKMARKS` from the recorded remaining PR heads
-   in bottom-to-top order. The inclusive `FIRST::LAST` range is bounded by
-   their exact post-rebase commit IDs. Per the current Jujutsu
+   in bottom-to-top order. The helper resolves the first and last bookmarks to
+   exactly one post-rebase commit each, proves the first is an ancestor of the
+   last, and builds their inclusive `FIRST::LAST` range. It pins one jj
+   operation for every lookup and the push so concurrent local operations
+   cannot invalidate the evidence. Per the current Jujutsu
    [`git push --revision` contract](https://docs.jj-vcs.dev/latest/cli-reference/#jj-git-push),
    that selector includes every local bookmark and tag pointing to a selected
-   commit. Therefore require the range's bookmarks to equal the recorded set
-   exactly and require no tags before publishing all and only remaining
-   affected bookmarks once. Never widen the range or accept an extra ref.
+   commit. Therefore the helper requires the range's bookmarks to equal the
+   recorded set exactly and requires no tags before publishing all and only
+   remaining affected bookmarks once. Every rejection exits before its sole
+   push command. Never widen the range or accept an extra ref.
    Jujutsu's push safety checks are lease-like: rerun
    `jj git fetch --remote "$REMOTE"` and resolve bookmark conflicts if a remote
    bookmark changed unexpectedly.
@@ -296,6 +254,7 @@ jj/git operator map.
 - Validate this skill when edited:
 
   ```bash
+  bash "$CODING_PR_SKILL_DIR/scripts/test-jj-range-push.sh"
   claude plugin validate --strict plugins/coding
   uv run --python 3.13 plugins/governance/skills/write-skill/scripts/quick_validate.py plugins/coding/skills/pr
   ```
