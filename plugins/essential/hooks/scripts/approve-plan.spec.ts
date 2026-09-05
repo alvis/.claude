@@ -8,11 +8,13 @@ import { describe, expect, it } from "vitest";
 const pluginRoot = resolve(import.meta.dirname, "../..");
 const script = resolve(import.meta.dirname, "approve-plan");
 
-function runHook(input: Record<string, unknown>, harness = "codex", root?: string): ReturnType<typeof spawnSync> {
+function runHook(input: Record<string, unknown>, harness = "codex", root?: string, automation?: string): ReturnType<typeof spawnSync> {
   const environment = { ...process.env };
   delete environment.CLAUDE_PLUGIN_ROOT;
   delete environment.PLUGIN_ROOT;
   delete environment.GROK_PLUGIN_ROOT;
+  delete environment.ESSENTIAL_APPROVED_PLAN_AUTOMATION;
+  if (automation !== undefined) environment.ESSENTIAL_APPROVED_PLAN_AUTOMATION = automation;
   environment[harness === "claude" ? "CLAUDE_PLUGIN_ROOT" : harness === "grok" ? "GROK_PLUGIN_ROOT" : "PLUGIN_ROOT"] = pluginRoot;
   if (root) environment.TMPDIR = root;
   const result = spawnSync("bash", [script], { env: environment, encoding: "utf8", input: JSON.stringify(input) });
@@ -34,6 +36,25 @@ describe("approved plan hook delivery", () => {
     const result = parse(runHook({ hook_event_name: "UserPromptSubmit", prompt: "Implement the plan." }, harness));
     expect(result).toMatchObject({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: expect.stringContaining("directions/approve-plan.md") } });
     expect((result.hookSpecificOutput as { additionalContext: string }).additionalContext.length).toBeGreaterThan(0);
+  });
+
+  it.each(["codex", "claude", "grok"])("should disable approval automation under %s for off and malformed values", (harness) => withRoot((root) => {
+    for (const automation of ["0", "invalid", ""]) {
+      const result = runHook({ hook_event_name: "UserPromptSubmit", session_id: "disabled", prompt: "Implement the plan." }, harness, root, automation);
+      expect(result.stdout).toBe("");
+      expect(runHook({ hook_event_name: "PreToolUse", session_id: "disabled", tool_name: "read_file" }, harness, root, automation).stdout).toBe("");
+    }
+  }));
+
+  it("should discard pending Grok delivery when automation is disabled", () => withRoot((root) => {
+    runHook({ hook_event_name: "UserPromptSubmit", session_id: "pending", prompt: "Implement the plan." }, "grok", root, "1");
+    expect(runHook({ hook_event_name: "PreToolUse", session_id: "pending", tool_name: "read_file" }, "grok", root, "0").stdout).toBe("");
+    expect(runHook({ hook_event_name: "PreToolUse", session_id: "pending", tool_name: "read_file" }, "grok", root, "1").stdout).toBe("");
+  }));
+
+  it.each(["codex", "claude"])("should explicitly enable approval automation under %s", (harness) => {
+    const result = parse(runHook({ hook_event_name: "UserPromptSubmit", prompt: "Implement the plan." }, harness, undefined, "1"));
+    expect(result).toMatchObject({ hookSpecificOutput: { additionalContext: expect.stringContaining("directions/approve-plan.md") } });
   });
 
   it("should retain verified OpenCode approval provenance", () => {

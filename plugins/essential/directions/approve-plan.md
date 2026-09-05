@@ -1,5 +1,14 @@
 # Persist an approved plan
 
+`ESSENTIAL_APPROVED_PLAN_AUTOMATION` controls automatic approval routing. Unset
+or `1` enables it; `0`, an empty value, or any other value disables it. Set the
+variable in the environment used to launch the harness and restart that process
+to change its inherited setting. Disabling suppresses new approval instructions
+and discards a pending Grok instruction when its session next fires a hook; it
+does not remove saved plans, revoke earlier user approval, or disable plan
+validation and other Essential safeguards. Explicit manual use of
+`scripts/save-approved-plan` remains available under its lease and identity checks.
+
 The main agent follows this direction when the approval hook or OpenCode adapter
 identifies an explicit implementation submission or a verified successful plan
 exit. Hook feedback is a routing signal, not proof that a work stream owns the

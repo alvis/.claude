@@ -14,14 +14,23 @@ hash_text() {
 }
 event="$(field '.hook_event_name // .hookEventName')"
 session="$(field '.session_id // .sessionId')"
+automation_enabled=false
+[[ "${ESSENTIAL_APPROVED_PLAN_AUTOMATION-1}" != 1 ]] || automation_enabled=true
 pending=""
 if [[ "$harness" == grok && -n "$session" ]]; then
   # The directory belongs to this OS user; hashed session IDs cannot escape it.
   pending_dir="${TMPDIR:-/tmp}/essential-plan-approval-$UID"
   [[ ! -L "$pending_dir" ]] || { echo 'unsafe approval queue' >&2; exit 1; }
-  if [[ ! -d "$pending_dir" ]]; then (umask 077; mkdir "$pending_dir") || [[ -d "$pending_dir" ]]; fi
+  if [[ ! -d "$pending_dir" ]]; then
+    [[ "$automation_enabled" == true ]] || exit 0
+    (umask 077; mkdir "$pending_dir") || [[ -d "$pending_dir" ]]
+  fi
   [[ -O "$pending_dir" && "$(find "$pending_dir" -prune -perm 0700)" == "$pending_dir" ]] || { echo 'unsafe approval queue permissions' >&2; exit 1; }
   pending="$pending_dir/$(printf '%s' "$session" | hash_text).json"
+fi
+if [[ "$automation_enabled" != true ]]; then
+  [[ -z "$pending" ]] || rm -f "$pending"
+  exit 0
 fi
 if [[ "$harness" == grok && ( "$event" == PreToolUse || "$event" == Stop ) ]]; then
   [[ -n "$pending" && -f "$pending" && ! -L "$pending" ]] || exit 0

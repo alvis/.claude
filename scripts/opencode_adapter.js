@@ -554,6 +554,9 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
   const hookBindings = manifest.plugins.flatMap((plugin) =>
     plugin.hooks.map((receipt) => ({ plugin, receipt })),
   )
+  const approvalAutomationEnabled =
+    process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === undefined ||
+    process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === "1"
   const pendingAdvice = new Map()
   const pendingPlans = new Map()
 
@@ -617,6 +620,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
     config: async (config) =>
       configureModelContextProtocol(config, configRoot, manifest, client),
     "chat.message": async (input, output) => {
+      if (!approvalAutomationEnabled) return
       if (typeof output.message?.id !== "string") {
         throw new Error("OpenCode chat.message output has no message ID")
       }
@@ -699,7 +703,11 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
       if (advice.length > 0) {
         pendingAdvice.set(adviceKey(input.sessionID, input.callID), advice)
       }
-      if (input.tool === "plan_exit" && currentPlan !== undefined) {
+      if (
+        approvalAutomationEnabled &&
+        input.tool === "plan_exit" &&
+        currentPlan !== undefined
+      ) {
         pendingPlans.set(adviceKey(input.sessionID, input.callID), currentPlan)
       }
     },
@@ -710,7 +718,12 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
       const approvedPlan = pendingPlans.get(key)
       pendingPlans.delete(key)
       for (const { plugin, receipt } of await bindingsForTool("after", input)) {
+        const approvalReceipt = receipt.managed_resource.endsWith(
+          "/hooks/scripts/approve-plan",
+        )
+        if (approvalReceipt && !approvalAutomationEnabled) continue
         if (
+          approvalReceipt &&
           input.tool === "plan_exit" &&
           (approvedPlan === undefined ||
             output.title !== "Switching to build agent" ||
@@ -719,7 +732,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
         ) {
           continue
         }
-        if (input.tool === "plan_exit") {
+        if (approvalReceipt && input.tool === "plan_exit") {
           let currentPlan
           try {
             currentPlan = await readSessionPlan(
@@ -748,7 +761,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
           output.metadata?.exitCode ??
           output.metadata?.exit ??
           output.metadata?.code
-        const hookInput = input.tool === "plan_exit"
+        const hookInput = approvalReceipt && input.tool === "plan_exit"
           ? {
               approval_origin: "opencode-v1",
               approval_reference: `session:${input.sessionID}:call:${input.callID}`,
