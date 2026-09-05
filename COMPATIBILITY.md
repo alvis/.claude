@@ -28,7 +28,8 @@ Claude Code, Codex, and Grok Build are native targets. OpenCode support targets 
 | Question guard | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | The adapter runs the receipt-bound Essential validator before OpenCode `question` execution and retains allow advice for the matching result. |
 | Subagent dispatch guard | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode validates `task` prompts through the receipt alias; the host has no persistent teammate identity. |
 | Plan-exit guard | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | Claude validates injected plan input or its explicit plan-file path. Codex/T3 validates the current final response at Stop, after rendering, independently of permission mode. Grok validates the session plan beside its transcript before `exit_plan_mode`. OpenCode validates the current session file before `plan_exit` when that tool is enabled; it has no general cancellable Stop event. Native payload and adapter tests cover these paths; live Claude/Grok inference verification requires working authentication. |
-| Stop state reminder | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | Grok ignores the blocking Stop envelope. OpenCode exposes no cancellable Stop event, so the receipt is labelled advisory system context and creates no synthetic turn. |
+| Approved-plan persistence | 🧪 Native hooks | 🧪 Native hooks | 🧪 Explicit prompts only | 🧪 Adapter | Verified approval prompts dispatch the main-agent [persistence workflow](plugins/essential/directions/approve-plan.md). Claude also uses successful main-agent `ExitPlanMode` results; OpenCode uses successful `plan_exit` results. Grok bridges explicit prompts through its next PreToolUse denial or Stop continuation; normal UI approval lacks a distinct hook-visible signal and is unsupported. The shared saver enforces centralized work, leases, immutable revision evidence, and verified bytes; goal creation remains tool-dependent. Live agent execution is unverified. |
+| Stop state reminder | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | Grok public source supports Stop continuation, but stable-release consumption remains unverified (see plan lifecycle evidence below). OpenCode exposes no cancellable Stop event, so the receipt is labelled advisory system context and creates no synthetic turn. |
 | MCP servers | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | The adapter maps HTTP to remote and command definitions to local MCP servers. |
 | Specialist agents | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode Markdown agents inherit the active provider and model. |
 | Child subagent sessions | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode task sessions work; persistent teammate IDs and direct peer messaging do not. |
@@ -39,6 +40,19 @@ Claude Code, Codex, and Grok Build are native targets. OpenCode support targets 
 | Image generation | 🔌 Integration | 🔌 Integration | 🔌 Integration | 🔌 Integration | Requires a supported image provider or tool. |
 | Claude output styles | ✅ Native | ❌ Unavailable | ❌ Unavailable | ❌ Unavailable | The repository intentionally scopes output-style installation to Claude Code. |
 | Claude statusline | ✅ Native | ❌ Unavailable | ❌ Unavailable | ❌ Unavailable | The repository intentionally scopes statusline installation to Claude Code. |
+
+## Plan lifecycle verification
+
+The native command fixtures and OpenCode projection exercise plugin behavior; they do not establish that a live host delivers or follows the instructions. Live inference attempts on 2026-09-05 were blocked:
+
+| Harness | Exercised version | Evidence / blocker |
+| --- | --- | --- |
+| Codex | 0.153.4 | Usage limit before inference; Stop validation runs after the first rendering. |
+| Claude Code | 2.1.261 | Strict plugin validation passed; expired OAuth prevented inference. |
+| Grok Build | 1.0.13 (`5e9a58528b76`) | Plugin validation passed; sign-in required. Normal approval-button coverage also needs an upstream/client signal distinguishing human approval from headless auto-exit. |
+| OpenCode V1 | 1.18.29 | Project projection passed; Zen model disabled and OpenRouter key limit exhausted. |
+
+Codex approval submissions are defined in its [plan implementation source](https://github.com/openai/codex/blob/a31c18ab7a5d8bb5da8e67e20261aa14d91aa3b2/codex-rs/tui/src/chatwidget/plan_implementation.rs). Grok's [pre-release public hook implementation](https://github.com/xai-org/grok-build/tree/bc7f02eddd3d84085849dc19ed216f11c23b0571/crates/codegen/xai-grok-shell/src) supports Stop continuation but observes PostToolUse output without injecting it. That public snapshot is not the released binary's source identity; newer main-branch capabilities do not establish stable-release support.
 
 ## Skills
 

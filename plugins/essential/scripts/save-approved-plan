@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# main-agent-only snapshot writer; selection and approval authority stay with
+# directions/approve-plan.md, while state-write enforces every lease-bound write
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+fail() {
+  jq -cn --arg error "$1" '{status: "error", error: $error}'
+  exit 1
+}
+
+hash_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+safe_target() {
+  local relative="$1" component="$work_dir"
+  while [[ "$relative" == */* ]]; do
+    component="$component/${relative%%/*}"
+    relative="${relative#*/}"
+    [[ ! -L "$component" ]] || fail "snapshot path contains a symlink"
+    [[ ! -e "$component" || -d "$component" ]] || fail "snapshot parent is not a directory"
+  done
+  component="$component/$relative"
+  [[ ! -L "$component" ]] || fail "snapshot target is a symlink"
+  [[ ! -e "$component" || -f "$component" ]] || fail "snapshot target is not a regular file"
+}
+
+write_state() {
+  local target="$1" result
+  shift
+  if ! result="$("$SCRIPTS_DIR/state-write" --work-dir "$work_dir" --token "$token" --target "$target" "$@")"; then
+    fail "lease-verified snapshot write refused: $result"
+  fi
+  generated_files="$(jq -c --arg path "$work_dir/$target" '. + [$path]' <<<"$generated_files")"
+}
+
+work_id=""
+token=""
+plan_file=""
+approval_source=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --work-id|--token|--plan-file|--source)
+      [[ $# -ge 2 ]] || fail "$1 requires a value"
+      case "$1" in
+        --work-id) work_id="$2" ;;
+        --token) token="$2" ;;
+        --plan-file) plan_file="$2" ;;
+        --source) approval_source="$2" ;;
+      esac
+      shift 2 ;;
+    -h|--help)
+      printf '%s\n' 'usage: save-approved-plan --work-id ID --token TOKEN --plan-file ABSOLUTE_PATH --source APPROVAL_ID'
+      exit 0 ;;
+    *) fail "unknown argument: $1" ;;
+  esac
+done
+[[ -n "$work_id" && -n "$token" && -n "$approval_source" ]] || fail "work ID, lease token, and approval source are required"
+[[ "$approval_source" != fingerprint:* ]] || fail "approval source requires the actual submission identity, not a payload fingerprint"
+[[ "$plan_file" == /* && -f "$plan_file" && ! -L "$plan_file" && -r "$plan_file" ]] || fail "approved plan must be an absolute readable regular file"
+# Freeze external plan bytes before computing identity or issuing state writes.
+staged_plan="$(mktemp "${TMPDIR:-/tmp}/essential-approved-plan.XXXXXX")"
+trap 'rm -f "$staged_plan"' EXIT
+cat "$plan_file" >"$staged_plan" || fail "cannot stage approved plan"
+plan_file="$staged_plan"
+# output-manifest.md caps work Markdown at 16 KiB; never truncate approved bytes
+plan_bytes="$(wc -c <"$plan_file" | tr -d ' ')"
+[[ "$plan_bytes" -le 16384 ]] || fail "approved plan exceeds the 16384-byte work-Markdown limit; resolve a compliant approved plan before saving"
+python3 -c 'import pathlib,sys; text=pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"); sys.exit(0 if text.strip() else 1)' "$plan_file" >/dev/null 2>&1 || fail "approved plan must contain nonempty UTF-8 text"
+
+if ! resolved="$("$SCRIPTS_DIR/resolve-state-workspace" --work-id "$work_id")"; then
+  fail "workspace resolution refused: $resolved"
+fi
+jq -e '.status == "resolved" and .state_ignored == true' <<<"$resolved" >/dev/null || fail "workspace must resolve with ignored state: $resolved"
+work_dir="$(jq -r '.work_dir' <<<"$resolved")"
+[[ -d "$work_dir" ]] || fail "work stream must be established before saving"
+for required in goal.md state.md; do
+  safe_target "$required"
+  [[ -f "$work_dir/$required" ]] || fail "work stream must contain $required"
+done
+lease="$("$SCRIPTS_DIR/state-lease" status --work-dir "$work_dir" --token "$token")" || fail "lease status is unavailable"
+jq -e '.status == "held"' <<<"$lease" >/dev/null || fail "a current main-agent lease is required"
+
+safe_target plan.md
+sha256="$(hash_file "$plan_file")"
+snapshot="artifacts/plan-approvals/$sha256.txt"
+receipt="artifacts/plan-approvals/$sha256.json"
+safe_target "$snapshot"
+safe_target "$receipt"
+if [[ -f "$work_dir/$snapshot" ]]; then
+  cmp -s "$plan_file" "$work_dir/$snapshot" || fail "immutable approved-plan snapshot conflicts with its hash"
+fi
+if [[ -f "$work_dir/$receipt" ]]; then
+  jq -e --arg sha256 "$sha256" --arg work_id "$work_id" '
+    .sha256 == $sha256 and .work_id == $work_id and .approved_by == "user"
+    and (.source | type == "string" and length > 0)
+  ' "$work_dir/$receipt" >/dev/null 2>&1 || fail "immutable approval receipt is invalid"
+fi
+old_snapshot=""
+old_sha256=""
+if [[ -f "$work_dir/plan.md" ]]; then
+  old_sha256="$(hash_file "$work_dir/plan.md")"
+  old_snapshot="artifacts/plan-approvals/$old_sha256.txt"
+  safe_target "$old_snapshot"
+  if [[ -f "$work_dir/$old_snapshot" ]]; then
+    cmp -s "$work_dir/plan.md" "$work_dir/$old_snapshot" || fail "prior-plan snapshot conflicts with its hash"
+  fi
+fi
+
+# Immutable event records serialize approval publication independently of content
+# reuse. A pending event must finish before a later approval can publish.
+event_id="$(printf '%s' "$approval_source" | hash_file -)"
+event_intent="artifacts/plan-approvals/events/$event_id.json"
+event_complete="artifacts/plan-approvals/events/$event_id.published.json"
+safe_target "$event_intent"
+safe_target "$event_complete"
+latest_revision=0
+latest_sha256=""
+event_count=0
+pending_event=""
+shopt -s nullglob
+for intent_path in "$work_dir"/artifacts/plan-approvals/events/*.json; do
+  if [[ "$intent_path" == *.published.json ]]; then
+    [[ -f "${intent_path%.published.json}.json" ]] || fail "approval publication receipt has no event"
+    continue
+  fi
+  relative_intent="${intent_path#"$work_dir/"}"
+  safe_target "$relative_intent"
+  jq -e --arg work_id "$work_id" '
+    .work_id == $work_id and (.source | type == "string" and length > 0)
+    and (.sha256 | test("^[a-f0-9]{64}$"))
+    and (.previous_sha256 | test("^([a-f0-9]{64})?$"))
+    and (.revision | type == "number" and . > 0 and floor == .)
+  ' "$intent_path" >/dev/null 2>&1 || fail "invalid approval event history"
+  [[ "$(basename "$intent_path" .json)" == "$(jq -j '.source' "$intent_path" | hash_file -)" ]] || fail "approval event identity conflicts"
+  revision="$(jq -r '.revision' "$intent_path")"
+  if [[ "$revision" -gt "$latest_revision" ]]; then
+    latest_revision="$revision"
+    latest_sha256="$(jq -r '.sha256' "$intent_path")"
+  fi
+  event_count=$((event_count + 1))
+  complete_path="${intent_path%.json}.published.json"
+  safe_target "${complete_path#"$work_dir/"}"
+  if [[ -f "$complete_path" ]]; then
+    jq -e --slurpfile intent "$intent_path" '. == $intent[0]' "$complete_path" >/dev/null 2>&1 || fail "invalid approval publication receipt"
+  else
+    [[ -z "$pending_event" ]] || fail "multiple pending approval publications"
+    pending_event="$relative_intent"
+  fi
+done
+[[ "$latest_revision" -eq "$event_count" ]] || fail "approval publication revision history is incomplete"
+if [[ "$event_count" -gt 0 ]]; then
+  # Duplicate revision numbers cannot be concealed by an otherwise valid maximum.
+  revisions="$(jq -s '[.[] | select(has("revision")) | .revision] | unique | length' "$work_dir"/artifacts/plan-approvals/events/*.json)"
+  [[ "$revisions" -eq "$event_count" ]] || fail "approval publication revisions conflict"
+fi
+if [[ -n "$pending_event" ]]; then
+  [[ "$(jq -r '.revision' "$work_dir/$pending_event")" -eq "$latest_revision" ]] || fail "older approval publication is incomplete"
+  [[ "$pending_event" == "$event_intent" ]] || fail "pending approval publication must be resolved first"
+fi
+if [[ -f "$work_dir/$event_intent" ]]; then
+  jq -e --arg source "$approval_source" --arg sha256 "$sha256" '
+    .source == $source and .sha256 == $sha256
+  ' "$work_dir/$event_intent" >/dev/null || fail "approval event conflicts with approved content"
+  if [[ -f "$work_dir/$event_complete" ]]; then
+    [[ "$old_sha256" == "$sha256" ]] || fail "stale approval event cannot replace the current plan"
+  else
+    previous_sha256="$(jq -r '.previous_sha256' "$work_dir/$event_intent")"
+    [[ "$old_sha256" == "$sha256" || "$old_sha256" == "$previous_sha256" ]] || fail "pending approval publication conflicts with the current plan"
+  fi
+elif [[ "$latest_revision" -gt 0 && "$old_sha256" != "$latest_sha256" ]]; then
+  fail "current plan conflicts with the latest approval publication"
+fi
+
+generated_files='[]'
+if [[ ! -f "$work_dir/$event_intent" ]]; then
+  event_body="$(jq -cn --arg work_id "$work_id" --arg source "$approval_source" \
+    --arg sha256 "$sha256" --arg previous_sha256 "$old_sha256" \
+    --argjson revision "$((latest_revision + 1))" \
+    '{work_id:$work_id,source:$source,sha256:$sha256,previous_sha256:$previous_sha256,revision:$revision}')"
+  write_state "$event_intent" <<<"$event_body"
+fi
+# preserve previous bytes before any replacement, including plans predating receipts
+if [[ -n "$old_snapshot" && ! -f "$work_dir/$old_snapshot" ]]; then
+  write_state "$old_snapshot" --content-file "$work_dir/plan.md"
+fi
+if [[ ! -f "$work_dir/$snapshot" ]]; then
+  write_state "$snapshot" --content-file "$plan_file"
+fi
+if [[ ! -f "$work_dir/$receipt" ]]; then
+  receipt_body="$(jq -cn --arg sha256 "$sha256" --arg work_id "$work_id" \
+    --arg source "$approval_source" --arg recorded_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{sha256: $sha256, work_id: $work_id, source: $source, approved_by: "user", recorded_at: $recorded_at}')"
+  write_state "$receipt" <<<"$receipt_body"
+fi
+# snapshot bytes are now immutable; read that verified copy for the final publish
+if [[ ! -f "$work_dir/plan.md" ]] || ! cmp -s "$work_dir/$snapshot" "$work_dir/plan.md"; then
+  write_state plan.md --content-file "$work_dir/$snapshot"
+fi
+[[ "$(hash_file "$work_dir/plan.md")" == "$sha256" ]] || fail "saved plan verification failed"
+if [[ ! -f "$work_dir/$event_complete" ]]; then
+  write_state "$event_complete" --content-file "$work_dir/$event_intent"
+fi
+jq -cn --arg plan_path "$work_dir/plan.md" --arg sha256 "$sha256" --argjson generated_files "$generated_files" \
+  '{status: (if ($generated_files | length) == 0 then "unchanged" else "saved" end), plan_path: $plan_path, sha256: $sha256, generated_files: $generated_files}'

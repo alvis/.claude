@@ -1,0 +1,89 @@
+# Persist an approved plan
+
+The main agent follows this direction when the approval hook or OpenCode adapter
+identifies an explicit implementation submission or a verified successful plan
+exit. Hook feedback is a routing signal, not proof that a work stream owns the
+plan. A subagent returns the signal to its main agent without writing state.
+
+1. Recover the current approved candidate: the nonempty plan embedded in the user
+   submission, the successful plan-exit response, or the immediately preceding plan
+   that the submission refers to. Read a native plan file only when this approval
+   identifies it. Check any supplied content hash against those exact bytes. Never
+   choose the newest file by timestamp, an earlier transcript plan, or another
+   session's plan. Missing content, changed bytes, or ambiguous approval scope must
+   be resolved with the user before saving or implementation. A quoted example,
+   negation, generic “yes,” or unapproved tool proposal is not authority.
+2. Follow [establish-work-stream.md](establish-work-stream.md), including charter
+   ownership and intent checks, then [the state lifecycle](../references/state.md).
+   Run Essential's resolver from the target repository; select the matching work
+   contextually and rerun with explicit `--work-id`. Existing `goal.md` and its
+   specification authority still govern scope. Establish a stream when none owns
+   the approved work; do not overwrite an unrelated charter. Resolve ignore gates
+   and acquire or renew the main-agent lease through [lease.md](lease.md). Worktrees
+   share the default source tree's state; a live foreign lease blocks this write.
+3. Stage the approved candidate as an absolute regular UTF-8 file with the exact
+   approved bytes. Do not reformat, truncate, or silently split it. The
+   [work-Markdown limit](../references/output-manifest.md) applies to root `plan.md`;
+   obtain a compliant approved revision if its exact bytes exceed that limit.
+   Bind approval to the source event or submission identity, content SHA-256, user,
+   scope, and exceptions per [approval binding](../references/approvals.md).
+   The hook's `fingerprint:` value hashes event content; native prompt payloads
+   can repeat it across distinct submissions. Never pass that fingerprint as
+   `--source`. Recover a stable identity for this actual user submission from its
+   conversation message ID or verified transcript record position, qualified by
+   session/transcript identity. Codex's `session_id` plus `turn_id`, a successful
+   Claude exit's `tool_use_id`, or the adapter's message/call reference supplies an
+   event identity directly. Redelivery
+   retains that identity; a later approval of identical text has a different one.
+   Do not invent random IDs, timestamps, or counters to escape a stale-event refusal.
+   If the current submission cannot be identified, resolve that missing provenance
+   before saving; a source-payload digest alone does not establish freshness.
+   Under the held lease, append the approval journal event before publishing.
+4. Derive `ESSENTIAL_ROOT` from this direction's installed path and run:
+
+   ```bash
+   "$ESSENTIAL_ROOT/scripts/save-approved-plan" \
+     --work-id "$WORK_ID" --token "$LEASE_TOKEN" \
+     --plan-file "$APPROVED_PLAN_FILE" --source "$APPROVAL_SOURCE"
+   ```
+
+   The helper re-resolves centralized state, checks the lease, freezes input bytes,
+   preserves prior snapshots, and writes through `state-write`. Its immutable
+   `artifacts/plan-approvals/<sha256>.txt` and `.json` receipts retain content and
+   first-approval provenance. Authoritative `events/<source-sha256>.json` intents
+   bind each approval event to its content, previous content, and publication
+   revision; the matching `.published.json` records verified publication. Serialize
+   calls under the main-agent lease. An unfinished event blocks newer events: rerun
+   that same source with its exact approved bytes to finish when the current plan
+   still matches the previous or target content. Conflicting or corrupt history
+   requires reconciliation before another write; never delete receipts to bypass it.
+   A completed stale event cannot overwrite a newer plan. Explicit fresh reapproval
+   of older content uses its new event identity and retains every prior event.
+   Repeated events do not create a new plan revision
+   or duplicate journal approval when the existing source/content receipt covers
+   them; reconcile an interrupted journal event instead.
+5. Require `saved` or `unchanged`, reread the returned absolute `plan_path`, and
+   verify its SHA-256 equals both the helper result and the approved candidate.
+   A failed save or mismatch blocks implementation and goal creation. Reconcile
+   plan revision history and execution state only after success; include returned
+   `generated_files` in the output manifest. Root `plan.md` is the exact approved
+   delivery snapshot; `goal.md` remains the charter and `state.md` remains the
+   canonical execution task graph. A revised plan requires its own explicit
+   approval and retains the previous content and approval receipts.
+6. After verified persistence, discover the runtime's goal-creation capability
+   (`create_goal` or its documented equivalent). If goal lookup exists, inspect it
+   first. Reuse an active goal only when it requests delivery of this saved path
+   and approved content; do not replace, complete, or relabel an unrelated goal.
+   If an existing goal cannot be inspected or creation reports an active conflict,
+   preserve it and continue the saved plan without another creation attempt.
+   For a new goal, use an objective such as `Deliver the approved plan saved at
+   <absolute plan_path> (SHA-256 <sha256>), including implementation and verification.`
+   Omit token budgets unless the user specified one. Goal tools being unavailable
+   does not block implementation from the saved plan.
+
+Native event and approval-source evidence, adapter limits, and live verification
+status are recorded in the marketplace's `COMPATIBILITY.md`. Grok's normal plan UI
+and headless plan exit expose the same result in the investigated source, so that
+result never counts as approval. Its explicit submission route defers this direction
+until a PreToolUse denial or Stop feedback can reach the agent; a new prompt cancels
+any pending delivery. This bridge remains subject to the documented live-test gap.

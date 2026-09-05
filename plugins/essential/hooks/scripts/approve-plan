@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/context.sh"
+harness="$(resolve_harness)" || { echo 'plugin root unset' >&2; exit 1; }
+plugin_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+payload="$(cat)"
+jq -e 'type == "object"' <<<"$payload" >/dev/null
+field() { jq -r "$1 // empty" <<<"$payload"; }
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum | awk '{print $1}';
+  else shasum -a 256 | awk '{print $1}'; fi
+}
+event="$(field '.hook_event_name // .hookEventName')"
+session="$(field '.session_id // .sessionId')"
+pending=""
+if [[ "$harness" == grok && -n "$session" ]]; then
+  # The directory belongs to this OS user; hashed session IDs cannot escape it.
+  pending_dir="${TMPDIR:-/tmp}/essential-plan-approval-$UID"
+  [[ ! -L "$pending_dir" ]] || { echo 'unsafe approval queue' >&2; exit 1; }
+  if [[ ! -d "$pending_dir" ]]; then (umask 077; mkdir "$pending_dir") || [[ -d "$pending_dir" ]]; fi
+  [[ -O "$pending_dir" && "$(find "$pending_dir" -prune -perm 0700)" == "$pending_dir" ]] || { echo 'unsafe approval queue permissions' >&2; exit 1; }
+  pending="$pending_dir/$(printf '%s' "$session" | hash_text).json"
+fi
+if [[ "$harness" == grok && ( "$event" == PreToolUse || "$event" == Stop ) ]]; then
+  [[ -n "$pending" && -f "$pending" && ! -L "$pending" ]] || exit 0
+  # Rename claims the one delivery before producing model-visible feedback.
+  claimed="$(mktemp "$pending_dir/claimed.XXXXXX")"
+  trap 'rm -f "$claimed"' EXIT
+  mv "$pending" "$claimed" 2>/dev/null || exit 0
+  reason="$(jq -er '.reason' "$claimed")"
+  decision=deny
+  [[ "$event" != Stop ]] || decision=block
+  jq -cn --arg decision "$decision" --arg reason "$reason" '{decision:$decision,reason:$reason}'
+  exit 0
+fi
+
+approved=false
+plan_selector='empty'
+source_kind=""
+if [[ "$event" == UserPromptSubmit ]]; then
+  # Every new user turn supersedes a deferred directive from an older prompt.
+  [[ -z "$pending" ]] || rm -f "$pending"
+  approved="$(jq -r '
+    (.prompt // "") | if type != "string" then false else
+    gsub("^\\s+|\\s+$"; "") as $prompt |
+    ["Implement the following plan:\n\n", "PLEASE IMPLEMENT THIS PLAN:\n",
+     "A previous agent produced the plan below to accomplish the user\u0027s task. Implement the plan in a fresh context. Treat the plan as the source of user intent, re-read files as needed, and carry the work through implementation and verification.\n\n"] as $prefixes |
+    ($prompt == "Implement the plan." or
+     $prompt == "The user approved the plan. Implement the plan in plan.md." or
+     any($prefixes[]; . as $prefix | ($prompt | startswith($prefix)) and
+       ($prompt[($prefix | length):] | test("\\S")))) end
+  ' <<<"$payload")"
+  source_kind=explicit-submission
+elif [[ "$event" == PostToolUse && "$harness" != grok ]]; then
+  tool="$(field '.tool_name // .toolName')"
+  if [[ "$tool" == ExitPlanMode || "$tool" == plan_exit ]]; then
+    approved="$(jq -r '.tool_response |
+      type == "object" and .isAgent == false and .awaitingLeaderApproval != true
+      and .is_error != true and .error == null and (.plan | type == "string" and test("\\S"))' <<<"$payload")"
+    plan_selector='.tool_response.plan'
+    source_kind=successful-plan-exit
+  fi
+fi
+[[ "$approved" == true ]] || exit 0
+approval_origin="$harness"
+# The generated adapter uses native root resolution but retains its own provenance.
+if [[ "$(field '.approval_origin')" == opencode-v1 ]]; then
+  approval_origin=opencode-v1
+fi
+source_id="fingerprint:$approval_origin:$event:$source_kind:$(printf '%s' "$payload" | hash_text)"
+approval_reference="$(field '.approval_reference // .tool_use_id')"
+if [[ "$approval_origin" == codex && "$event" == UserPromptSubmit && -n "$session" ]]; then
+  turn_id="$(field '.turn_id')"
+  if [[ -n "$turn_id" ]]; then
+    approval_reference="session:$session:turn:$turn_id"
+  fi
+fi
+if [[ -n "$approval_reference" ]]; then
+  source_id="$approval_origin:$event:$(jq -Rn --arg reference "$approval_reference" '$reference')"
+fi
+source_recovery=""
+if [[ "$source_id" == fingerprint:* ]]; then
+  source_recovery=" Host session: $(jq -Rn --arg session "$session" '$session')."
+  source_transcript="$(field '.transcript_path // .transcriptPath')"
+  if [[ "$source_transcript" == /* ]]; then
+    source_recovery="$source_recovery Recover this submission's record from the host-supplied transcript $(jq -Rn --arg path "$source_transcript" '$path'); do not select a different transcript."
+  else
+    source_recovery="$source_recovery No absolute transcript path was supplied; use the current conversation message identity or resolve missing provenance before saving."
+  fi
+fi
+plan_identity=""
+if [[ "$plan_selector" != empty ]]; then
+  plan_identity=" Approved content SHA-256: $(jq -j "$plan_selector" <<<"$payload" | hash_text). Recover exactly the plan in this successful tool response."
+  if [[ "$approval_origin" == opencode-v1 ]]; then
+    approved_path="$(field '.tool_response.plan_file_path')"
+    [[ "$approved_path" == /* ]] || { echo 'OpenCode approved plan requires an absolute source path' >&2; exit 1; }
+    plan_identity=" Approved content SHA-256: $(jq -j "$plan_selector" <<<"$payload" | hash_text). Recover the exact approved plan from $(jq -Rn --arg path "$approved_path" '$path') and verify this hash before saving."
+  fi
+elif [[ "$harness" == grok ]]; then
+  transcript="$(field '.transcriptPath // .transcript_path')"
+  if [[ "$transcript" == /* && -f "$(dirname "$transcript")/plan.md" ]]; then
+    native_plan="$(dirname "$transcript")/plan.md"
+    plan_identity=" Approved candidate path: $(jq -Rn --arg path "$native_plan" '$path'); SHA-256: $(hash_text <"$native_plan"). Verify it is the plan this user approved."
+  fi
+fi
+reason="Plan approval submission detected. Main agent: follow $plugin_root/directions/approve-plan.md and use $plugin_root/scripts/save-approved-plan before implementation or goal creation. Approval source: $source_id.$source_recovery$plan_identity A fingerprint is content evidence, not a unique approval event: recover the actual submission identity before passing --source. Recover the current approved content from this submission or its immediately preceding plan; never select an older plan. Missing content must be resolved before persistence."
+if [[ "$harness" == grok ]]; then
+  [[ -n "$pending" ]] || { echo 'Grok approval delivery requires sessionId' >&2; exit 1; }
+  staged="$(mktemp "$pending_dir/pending.XXXXXX")"
+  trap 'rm -f "$staged"' EXIT
+  jq -cn --arg reason "$reason" '{reason:$reason}' >"$staged"
+  mv "$staged" "$pending"
+  exit 0
+fi
+output_hook_context "$event" "$reason"

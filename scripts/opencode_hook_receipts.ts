@@ -236,6 +236,14 @@ function nativeMatcher(policy: JsonObject, description: string): string | undefi
     : stringValue(policy.matcher, `${description} native matcher`);
 }
 
+function policyVariants(value: unknown, description: string): readonly JsonObject[] {
+  return Array.isArray(value)
+    ? value.map((policy, index) =>
+        objectValue(policy, `${description} variant ${index + 1}`),
+      )
+    : [objectValue(value, description)];
+}
+
 function receiptFromGlobalRegistration(
   contract: JsonObject,
   pluginName: string,
@@ -309,13 +317,22 @@ function receiptFromGlobalRegistration(
     hookContract(contract).scripts,
     "script policies",
   );
-  for (const [scriptName, rawPolicy] of Object.entries(scriptPolicies)) {
-    const policy = objectValue(rawPolicy, `script policy ${scriptName}`);
-    if (registration.command !== nativeScriptCommand(scriptName, policy)) continue;
-    if (
-      policy.event !== registration.event ||
-      nativeMatcher(policy, `script policy ${scriptName}`) !== registration.matcher
-    ) {
+  for (const [scriptName, rawPolicies] of Object.entries(scriptPolicies)) {
+    const commandPolicies = policyVariants(
+      rawPolicies,
+      `script policy ${scriptName}`,
+    ).filter(
+      (policy) =>
+        registration.command === nativeScriptCommand(scriptName, policy),
+    );
+    if (commandPolicies.length === 0) continue;
+    const policy = commandPolicies.find(
+      (candidate) =>
+        candidate.event === registration.event &&
+        nativeMatcher(candidate, `script policy ${scriptName}`) ===
+          registration.matcher,
+    );
+    if (policy === undefined) {
       throw new Error(`unsupported OpenCode hook registration: ${scriptName}`);
     }
     const resource =
