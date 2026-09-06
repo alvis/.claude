@@ -17,13 +17,13 @@ label discovery, selection, and attachment follow
 [create-update.md](../directions/create-update.md#discover-and-select-repository-labels).
 Attached labels are never rendered in the title or body.
 
-Always required: Summary + Goal + Requirements + Context + Verification. Goal
+Always required: Summary + Goal + Requirements + Context + Verification + Additional Notes. Goal
 states the outcome; Requirements lists observable behavior, never generic
 process gates.
 Yellow, red, and black zones also require Risk + Test Plan; red and black
 require Why This Size. Specification, Implementation, Breaking, Rollback,
 Feature Flag, Screenshots, Generated Files, Risk, Test Plan, Why This Size,
-Related, Boundary, and Notes are conditional and carry the `[ Optional ]` suffix in this
+Related and Boundary are conditional and carry the `[ Optional ]` suffix in this
 authoring template even when a zone, archetype, or diff makes one mandatory for
 that PR. Remove `[ Optional ]` from every heading in the final rendered PR
 message. Every section heading starts with an emoji.
@@ -53,13 +53,14 @@ Placeholders (for non-LLM callers performing literal substitution):
   generated_files_body       by diff   Generated paths and their source/generator. Required whenever any generated files exist.
   verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
   boundary_body              no        Related work the instruction placed outside this change. Drop section if empty.
-  additional_notes_body      no        Deviations from the spec or original request (what changed and why), known limitations, follow-ups. Drop section if empty.
+  additional_notes_body      no        Deviations from the spec or original request (what changed and why), known limitations, follow-ups. Keep the section and its review instruction when empty.
   related_issues_body        no        `Closes #N`, issue and discussion links. Drop section if empty.
 
 Substitution rules:
 - All placeholders are literal `{{name}}` tokens; no nesting, no expressions.
 - An optional placeholder whose value is empty/whitespace MUST cause its entire
-  section header (`## ...`) and body to be omitted from the rendered output.
+  section header (`## ...`) and body to be omitted from the rendered output,
+  except Additional Notes, whose fixed review instruction is always retained.
 - Every guidance comment is author-facing and MUST be stripped from the
   rendered body, including this block.
 - Verification is required: standards checks are green before submission;
@@ -189,7 +190,9 @@ Substitution rules:
      that was not requested; not the author's own judgment calls -->
 {{boundary_body}}
 
-## 📋 Additional Notes [ Optional ]
+## 📋 Additional Notes
+
+Publish review findings and the verdict as a separate PR review or comment. Never append them to the main PR description.
 
 <!-- deviations from the spec or original request (what changed and why),
      known limitations, follow-ups, anything else a maintainer needs -->

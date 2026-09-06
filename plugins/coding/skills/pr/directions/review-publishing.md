@@ -82,7 +82,7 @@ in the diff. A comment on the wrong line costs more author time than no comment.
   and return `still_applies`, `fixed`, or `does_not_apply` in completion. Do not
   repost it.
 - When a previously reported issue's latest verdict differs from its verdict in the
-  immediately preceding review, add one line under `### 🔄 Previous reports` that
+  immediately preceding review, add one line under `### 🔄 Previous Reports` that
   links the original report and summarizes the latest verdict and changed evidence.
   Omit the section when no prior issue changed verdict, and do not repeat unchanged
   issues. A fixed issue remains an overall-body line rather than a new inline comment.

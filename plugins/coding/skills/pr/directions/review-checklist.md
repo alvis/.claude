@@ -4,6 +4,12 @@ Load this from the *Review* step of `coding:pr review`. Evidence rules come from
 [the shared review mandates](../../review-code/references/mandates.md); this file
 adds what is specific to reviewing a PR diff.
 
+You will be rewarded for substantiated relevant standards violations, work
+beyond the minimum sufficient solution, and unexplained differences from
+comparable existing work. Encourage abstraction; do not flag abstraction alone
+or count callers as proof of unnecessary complexity. Report only findings
+backed by a rule, concrete consequence, or repository comparison.
+
 ## Depth
 
 Scale reading depth to the size zone: green reviews line by line, yellow leads
@@ -52,8 +58,8 @@ most valuable ones in the review:
   [WORKFLOW.md](../../../directions/WORKFLOW.md). Search the repository before
   accepting new code, content, tests, helpers, types, fixtures, utilities, or
   constants. Reimplementing what a foundational module, nearby code, the
-  platform, or an installed dependency already provides is a finding, as is an
-  abstraction with one caller.
+  platform, or an installed dependency already provides is a finding. Encourage
+  abstractions that clarify responsibilities or enable reuse.
 - **Is this the right place?** A correct change in the wrong location is still a
   finding. Watch for a guard repeated at every call site that belongs in the callee,
   validation in a controller that belongs in the domain layer, a constant copied
@@ -89,7 +95,8 @@ most valuable ones in the review:
   rule for a violation.
 - **Can anything be removed without changing the result?** Flag code, content,
   tests, helpers, wrappers, assertions, or repeated prose whose removal leaves
-  required behavior and readability unchanged. Repetition is justified only
+  required behavior and readability unchanged; abstraction alone is not evidence
+  of removable work. Repetition is justified only
   when it materially improves readability or preserves a required boundary.
 - **Secrets and trust boundaries the diff introduces.** Any token, credential,
   internal hostname, or widened trust boundary entering the repository in this diff.
@@ -139,7 +146,7 @@ overall body without copying inline-only markers or markup.
 
 - `path` and `line` must come from the changed-line map. A finding rooted in
   unchanged code anchors to the changed line that causes it.
-- A finding that anchors to no line is posted in the body's *Not anchored to a line*
+- A finding that anchors to no line is posted in the body's *Not Anchored to a Line*
   section, and every anchoring field goes null together: `path`, `line`, `side`, and
   `start_line`. They describe one anchor between them, so a surviving non-null `side`
   would assert a diff position the finding does not have. Null is the only

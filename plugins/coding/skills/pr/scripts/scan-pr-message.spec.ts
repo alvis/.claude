@@ -24,9 +24,9 @@ const headOid = "1".repeat(40),
 // The complete 159-input grammar matrix launches a real Bun subprocess per input.
 const SUBPROCESS_GRAMMAR_MATRIX_TIMEOUT_MS = 15_000;
 const requiredTemplate =
-  "📌\n\n{{summary}}\n\n## 🎯 Goal\n\n{{goal}}\n\n## ✅ Requirements\n\n{{requirements}}\n\n## 🧵 Context\n\n{{context}}\n\n";
+  "📌\n\n{{summary}}\n\n## 🎯 Goal\n\n{{goal}}\n\n## ✅ Requirements\n\n{{requirements}}\n\n## 🧵 Context\n\n{{context}}\n\n## 📋 Additional Notes\n\n{{notes}}\n\n";
 const requiredBody =
-  "📌\n\nSpecific summary.\n\n## 🎯 Goal\n\nMake repository PR intent explicit.\n\n## ✅ Requirements\n\n- Readers can identify the PR's observable behavior.\n\n## 🧵 Context\n\nRepository authors need a stable contract.\n\n";
+  "📌\n\nSpecific summary.\n\n## 🎯 Goal\n\nMake repository PR intent explicit.\n\n## ✅ Requirements\n\n- Readers can identify the PR's observable behavior.\n\n## 🧵 Context\n\nRepository authors need a stable contract.\n\n## 📋 Additional Notes\n\nPublish reviews separately from the PR description.\n\n";
 type Result = {
   valid: boolean;
   violations: Array<{ message: string; rule_id: string }>;
@@ -56,6 +56,15 @@ function message(...sections: Array<[string, string]>): string {
   };
   for (const [heading, body] of sections)
     rendered.push("", bundled[heading] ?? heading, "", body);
+  if (
+    !sections.some(([heading]) => heading.startsWith("## 📋 Additional Notes"))
+  )
+    rendered.push(
+      "",
+      "## 📋 Additional Notes",
+      "",
+      "Publish review findings and the verdict as a separate PR review or comment. Never append them to the main PR description.",
+    );
   return `${rendered.join("\n")}\n`;
 }
 const verification = (): [string, string] => [
@@ -138,6 +147,26 @@ function expectMissingFileTrace(stderr: string, value: string) {
 }
 
 describe("PR message scanner", () => {
+  it("should reject a bundled PR message without Additional Notes", async () => {
+    const body = message(verification()).replace(
+      /\n## 📋 Additional Notes\n[\s\S]*$/,
+      "",
+    );
+    const scanned = await run(body);
+    expect(scanned).toMatchObject({
+      code: 1,
+      result: {
+        valid: false,
+        violations: [
+          {
+            rule_id: "GIT-PR-02",
+            message: "missing required section: ## 📋 Additional Notes",
+          },
+        ],
+      },
+    });
+  });
+
   it.each([
     "--body-file",
     "--template",
@@ -908,7 +937,7 @@ describe("PR message scanner", () => {
       [...messages].filter((item) =>
         item.startsWith("missing required section:"),
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(4);
   });
   it("allows a mandatory custom section", async () => {
     const custom =

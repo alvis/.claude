@@ -17,7 +17,8 @@ requirements. Every heading has an emoji prefix. The authoring template marks
 omittable sections with `[ Optional ]`; the final PR message removes that
 authoring marker from every rendered heading. Verification names every
 applicable standard, its green result, and supporting evidence for the exact
-head/base revisions.
+head/base revisions. Additional Notes retains the bundled template's visible
+instruction to publish reviews separately from the PR description.
 
 ## Scan
 

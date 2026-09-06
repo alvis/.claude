@@ -302,8 +302,9 @@ Use the classifier's returned zone. The table below explains that result for
 review; do not inspect or reproduce the classifier's internal threshold data.
 
 Every zone requires Summary, `## 🎯 Goal`, `## ✅ Requirements`,
-`## 🧵 Context`, and `## 🧪 Verification`. Verify revision-bound green
-standards evidence in Verification. The zone adds:
+`## 🧵 Context`, `## 🧪 Verification`, and `## 📋 Additional Notes`. Verify
+revision-bound green standards evidence in Verification and the separate-review
+instruction in Additional Notes. The zone adds:
 
 | Zone | Additional PR-body evidence |
 |---|---|
