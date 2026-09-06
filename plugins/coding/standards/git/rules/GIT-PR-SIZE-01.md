@@ -36,7 +36,8 @@ Do not add file counts, LOC, or zone bookkeeping to the PR body.
 
 - Package lockfiles such as `pnpm-lock.yaml`, and paths marked
   `linguist-generated=true`, contribute no LOC but still count as changed
-  files. Mark them per `GIT-PR-TYPE-05` so reviewers know their generator.
+  files. Sizing does not authorize shipping them: `GIT-PR-TYPE-05` permits
+  only package lockfiles to remain as generated output.
 - Tests count toward LOC. A green-LOC PR with a 400-line test file is still green; do not split tests away from the code they cover.
 - A generated file not covered by the classifier's deterministic lockfile or
   Git-attribute contract remains authored for LOC sizing.

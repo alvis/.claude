@@ -3,7 +3,7 @@
 ## Workflow at a glance
 
 1. Resolve the requested change or linear stack, its GitHub push remote, open PRs, exact heads and bases, and the required PR shape.
-2. Run applicable pull-request tests and lint through `jj run`: integrated tip first, then every independently publishable surface bottom-up.
+2. Audit submitted files and apply every relevant standard; run applicable pull-request tests and lint through `jj run`: integrated tip first, then every independently publishable surface bottom-up.
 3. Publish saved bookmarks bottom-up, author and scan each PR body, apply its available archetype label, and verify the remote head, base, draft state, body, and labels.
 4. Perform mandatory PR review with a fresh independent subagent, converging findings by repairing the owning change and restarting invalidated discovery and verification gates.
 5. Poll every published PR until hosted CI is green; diagnose the first red surface, fix its root cause, republish, and repeat without hiding blockers.
@@ -17,8 +17,9 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 - Format the title as a Conventional Commit subject.
 - Open every human-authored PR as a draft. A documented incident may authorize a hotfix exception; automated dependency or generator PRs follow their platform configuration.
 - Use a repository-local PR template when present; otherwise render [message.md](../templates/message.md). Keep labels and size bookkeeping out of the title and body.
+- Before submission, inspect every changed file under `GIT-PR-TYPE-05` for a durable purpose and remove prohibited artifacts through the implementation/history owner. Select and apply every relevant standard through `essential:directions/standards.md`; fix violations and record green revision-bound evidence in Verification before publication.
 - Bind authoring and review evidence to the exact head and base OIDs. Reset reviewer evidence when either OID changes; preserve it on a no-op retry.
-- Make each PR independently valid and reviewable. Keep its tests and generated outputs with the implementation that needs them.
+- Make each PR independently valid and reviewable. Keep its tests and package lockfiles with the implementation that needs them.
 - Keep each PR draft through publication and review authoring. After the review loop's exit gate reports substantive `APPROVE`, it promotes that surface to ready for review and verifies the transition. A materially expanded surface returns to draft; notify reviewers when they need the changed context.
 
 ### Select the PR archetype
@@ -466,12 +467,12 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
    - `{{rollback_body}}` — exact rollback steps or explicit forward-only mitigation. Required for the `migration` archetype.
    - `{{feature_flag_body}}` — flag name, default state, removal target, rollout plan, and cleanup change. Required for the `feature-flag` archetype.
    - `{{screenshots_body}}` — before/after screenshots and relevant accessibility notes. Required for the `ui` archetype.
-   - `{{generated_files_body}}` — every generated path and its source or generator. Required whenever the diff contains generated files, even when platform metadata marks them as generated.
+   - `{{generated_files_body}}` — every generated path and its source or generator. Required whenever the diff contains generated files; only package lockfiles may remain in the head under `GIT-PR-TYPE-05`, and removed artifacts are identified as deleted.
    - `{{risk_body}}` — exact content under `## Risk` / `Risk:`. Required for yellow/red/black; stop when absent rather than inventing it from the diff.
    - `{{test_plan_body}}` — exact content under `## Test plan` / `Test-Plan:`. Required for yellow/red/black; stop when absent.
    - `{{why_this_size_body}}` — exact content under `## Why this size`. Required for red and black. Require specific prose explaining why the surface is indivisible; stop when it is absent or generic. Do not render size counts, zone metadata, or reviewer-time estimates.
    - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers; "None." when absent.
-   - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered as a checklist of the checks that must pass before sign-off, specific to this change and ticked as each one is confirmed. Every item is a check; an observation, a result, or evidence of what already happened belongs in Implementation. Change-specific checks are mandatory; standard items never replace them. When Additional Notes records deviations from the specification or original request, append `- [ ] Specification deviations approved: <what changed and why>`. Append one assigned/reviewed/approved reviewer triplet per `required_reviewers`, in slot order, using the exact head/base OIDs recorded in step 4 and the template's Verification shape.
+   - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered as a checklist of the checks that must pass before sign-off, specific to this change and ticked as each one is confirmed. Keep each check with its result and revision-bound evidence. Name every applicable standard selected through `essential:directions/standards.md`, its green scan/review result, the exact head/base OIDs, and the command or semantic evidence supporting it. Resolve every standards violation before submission; pending reviewer slots do not stand in for standards verification. Change-specific checks remain mandatory. When Additional Notes records deviations from the specification or original request, append `- [ ] Specification deviations approved: <what changed and why>`. Append one assigned/reviewed/approved reviewer triplet per `required_reviewers`, in slot order, using the exact head/base OIDs recorded in step 4 and the template's Verification shape.
    - `{{boundary_body}}` — bullets naming related work the instruction placed outside this change, so its edges are not read as gaps. It records the scope it was given, not the author's own judgment calls. "None." when absent.
    - `{{additional_notes_body}}` — remaining unmapped body content; record deviations from the specification or original request (what changed and why), known limitations, and follow-ups there; "None." when absent.
 

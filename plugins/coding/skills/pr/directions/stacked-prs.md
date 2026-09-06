@@ -39,8 +39,9 @@ directly: public shape and prerequisite scaffolding stay with the first
 implementation that fulfills or consumes them, even when the atomic feature is
 large, while declarations that are themselves complete type-level
 implementations, including inside mixed runtime packages, and standalone
-runnable or buildable initialization retain that rule's exceptions. Coupled
-generated output stays in that feature and is marked under `GIT-PR-TYPE-05`.
+runnable or buildable initialization retain that rule's exceptions. Apply
+`GIT-PR-TYPE-05` before splitting: prohibited generated output is removed, not
+moved to another PR.
 Every proposed slice must be
 independently valid: non-migratory configuration prerequisites stay with the
 first behavior that consumes them, while database migrations, data backfills,

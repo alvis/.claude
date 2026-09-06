@@ -6,8 +6,7 @@ error
 
 ## Intent
 
-Public types, interfaces, signatures, schemas, exports, generated declaration
-surfaces, and feature prerequisite scaffolding ship atomically with the first
+Public types, interfaces, signatures, schemas, exports, and feature prerequisite scaffolding ship atomically with the first
 runtime or type-level implementation that fulfills or consumes them. Publishing
 shape alone creates a contract with no behavior and forces later work to
 complete the same feature.
@@ -52,8 +51,8 @@ public entrypoint.
 - Database migrations, data backfills, and configuration-format upgrades remain
   governed by `GIT-PR-TYPE-03` because rollout and rollback concerns may require
   separation from consumer logic.
-- Generated contract output stays with the implementing feature when coupled
-  and is marked under `GIT-PR-TYPE-05`.
+- Generated contract output is produced outside the submitted source tree;
+  `GIT-PR-TYPE-05` owns the generated-artifact prohibition.
 
 ## Related
 
