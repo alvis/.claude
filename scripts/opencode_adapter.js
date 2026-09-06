@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto"
+import { createHash, randomBytes } from "node:crypto"
 import { spawn } from "node:child_process"
 import { lstat, readFile, realpath } from "node:fs/promises"
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
@@ -7,9 +7,23 @@ import { fileURLToPath } from "node:url"
 
 const adapterDirectory = dirname(fileURLToPath(import.meta.url))
 const configRoot = resolve(adapterDirectory, "..")
+const identifierCharacters =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"))
+}
+
+function createOpenCodePartId() {
+  const time = (BigInt(Date.now()) * 0x1000n + 1n)
+    .toString(16)
+    .padStart(12, "0")
+    .slice(-12)
+  const entropy = Array.from(
+    randomBytes(14),
+    (byte) => identifierCharacters[byte % identifierCharacters.length],
+  ).join("")
+  return `prt_${time}${entropy}`
 }
 
 function validateContract(contract) {
@@ -43,7 +57,7 @@ function validateHookReceipt(receipt, plugin, manifest) {
     audiences.length === 0 ||
     audiences.some((audience) => !["root", "child"].includes(audience)) ||
     new Set(audiences).size !== audiences.length ||
-    !["advisory", "after", "before", "context", "unavailable"].includes(
+    !["advisory", "after", "before", "context", "prompt", "unavailable"].includes(
       receipt?.enforcement_mode,
     ) ||
     typeof receipt?.managed_resource !== "string" ||
@@ -52,7 +66,7 @@ function validateHookReceipt(receipt, plugin, manifest) {
     receipt.requirements === null ||
     Array.isArray(receipt.requirements) ||
     Object.values(requirements).some((value) => typeof value !== "string") ||
-    !["PostToolUse", "PreToolUse", "SessionStart", "Stop", "SubagentStart"].includes(
+    !["PostToolUse", "PreToolUse", "SessionStart", "Stop", "SubagentStart", "UserPromptSubmit"].includes(
       receipt?.source_event,
     ) ||
     !Number.isInteger(receipt?.source_order) ||
@@ -485,7 +499,7 @@ async function isSuppressedByProjectProjection(manifest, contract, worktree) {
 
 /**
  * reads the current session plan using OpenCode's Session.plan storage contract
- * @returns {Promise<string>} the disk-backed plan presented by plan_exit
+ * @returns {Promise<{path: string, text: string}>} the disk-backed plan presented by plan_exit
  */
 async function readSessionPlan(client, sessionID, directory, worktree) {
   const [sessionResult, projectResult] = await Promise.all([
@@ -521,7 +535,11 @@ async function readSessionPlan(client, sessionID, directory, worktree) {
     : join(globalData, "opencode", "plans")
   const planPath = join(planDirectory, `${session.time.created}-${session.slug}.md`)
   try {
-    return await readFile(planPath, "utf8")
+    const [path, text] = await Promise.all([
+      realpath(planPath),
+      readFile(planPath, "utf8"),
+    ])
+    return { path, text }
   } catch (error) {
     throw new Error("Plan validation is unavailable: the current session plan cannot be read", {
       cause: error,
@@ -536,13 +554,20 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
   const hookBindings = manifest.plugins.flatMap((plugin) =>
     plugin.hooks.map((receipt) => ({ plugin, receipt })),
   )
+  const approvalAutomationEnabled =
+    process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === undefined ||
+    process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === "1"
   const pendingAdvice = new Map()
+  const pendingPlans = new Map()
 
   const adviceKey = (sessionID, callID) => `${sessionID}\0${callID}`
   const clearSessionAdvice = (sessionID) => {
     const prefix = `${sessionID}\0`
     for (const key of pendingAdvice.keys()) {
       if (key.startsWith(prefix)) pendingAdvice.delete(key)
+    }
+    for (const key of pendingPlans.keys()) {
+      if (key.startsWith(prefix)) pendingPlans.delete(key)
     }
   }
 
@@ -582,6 +607,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
   return {
     dispose: async () => {
       pendingAdvice.clear()
+      pendingPlans.clear()
     },
     event: async ({ event }) => {
       if (event.type === "session.idle") {
@@ -593,6 +619,50 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
     },
     config: async (config) =>
       configureModelContextProtocol(config, configRoot, manifest, client),
+    "chat.message": async (input, output) => {
+      if (!approvalAutomationEnabled) return
+      if (typeof output.message?.id !== "string") {
+        throw new Error("OpenCode chat.message output has no message ID")
+      }
+      const prompt = output.parts
+        .filter(
+          (part) =>
+            part?.type === "text" &&
+            part.synthetic !== true &&
+            typeof part.text === "string",
+        )
+        .map((part) => part.text)
+        .join("\n")
+      for (const { plugin, receipt } of hookBindings.filter(
+        ({ receipt }) => receipt.enforcement_mode === "prompt",
+      )) {
+        const result = await runHookReceipt(
+          configRoot,
+          manifest,
+          plugin,
+          receipt,
+          {
+            approval_origin: "opencode-v1",
+            approval_reference: `session:${input.sessionID}:message:${output.message.id}`,
+            hook_event_name: "UserPromptSubmit",
+            prompt,
+            session_id: input.sessionID,
+          },
+          directory,
+        )
+        const context = parseHookOutput(result, "prompt").context
+        if (context) {
+          output.parts.push({
+            id: createOpenCodePartId(),
+            messageID: output.message.id,
+            sessionID: input.sessionID,
+            type: "text",
+            text: context,
+            synthetic: true,
+          })
+        }
+      }
+    },
     "experimental.chat.system.transform": async (input, output) => {
       const context = await buildSystemContext(
         configRoot,
@@ -606,11 +676,17 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
     },
     "tool.execute.before": async (input, output) => {
       const advice = []
+      let currentPlan
       for (const { plugin, receipt } of await bindingsForTool("before", input)) {
         const toolInput = input.tool === "plan_exit"
           ? {
               ...output.args,
-              plan: await readSessionPlan(client, input.sessionID, directory, worktree),
+              plan: (currentPlan ??= await readSessionPlan(
+                client,
+                input.sessionID,
+                directory,
+                worktree,
+              )).text,
             }
           : output.args
         const result = await runHookReceipt(
@@ -627,32 +703,93 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
       if (advice.length > 0) {
         pendingAdvice.set(adviceKey(input.sessionID, input.callID), advice)
       }
+      if (
+        approvalAutomationEnabled &&
+        input.tool === "plan_exit" &&
+        currentPlan !== undefined
+      ) {
+        pendingPlans.set(adviceKey(input.sessionID, input.callID), currentPlan)
+      }
     },
     "tool.execute.after": async (input, output) => {
       const key = adviceKey(input.sessionID, input.callID)
       const advice = pendingAdvice.get(key) ?? []
       pendingAdvice.delete(key)
+      const approvedPlan = pendingPlans.get(key)
+      pendingPlans.delete(key)
       for (const { plugin, receipt } of await bindingsForTool("after", input)) {
+        const approvalReceipt = receipt.managed_resource.endsWith(
+          "/hooks/scripts/approve-plan",
+        )
+        if (approvalReceipt && !approvalAutomationEnabled) continue
+        if (
+          approvalReceipt &&
+          input.tool === "plan_exit" &&
+          (approvedPlan === undefined ||
+            output.title !== "Switching to build agent" ||
+            output.output !==
+              "User approved switching to build agent. Wait for further instructions.")
+        ) {
+          continue
+        }
+        if (approvalReceipt && input.tool === "plan_exit") {
+          let currentPlan
+          try {
+            currentPlan = await readSessionPlan(
+              client,
+              input.sessionID,
+              directory,
+              worktree,
+            )
+          } catch (error) {
+            throw new Error(
+              "Plan approval is unavailable: the approved plan cannot be verified after exit",
+              { cause: error },
+            )
+          }
+          if (
+            currentPlan.path !== approvedPlan.path ||
+            currentPlan.text !== approvedPlan.text
+          ) {
+            throw new Error(
+              "Plan approval is stale: the current plan changed after validation; validate and approve the revised plan",
+            )
+          }
+        }
         const exitCode =
           output.metadata?.exit_code ??
           output.metadata?.exitCode ??
           output.metadata?.exit ??
           output.metadata?.code
+        const hookInput = approvalReceipt && input.tool === "plan_exit"
+          ? {
+              approval_origin: "opencode-v1",
+              approval_reference: `session:${input.sessionID}:call:${input.callID}`,
+              hook_event_name: "PostToolUse",
+              session_id: input.sessionID,
+              tool_name: "plan_exit",
+              tool_response: {
+                isAgent: false,
+                plan: approvedPlan.text,
+                plan_file_path: approvedPlan.path,
+              },
+            }
+          : {
+              exit_code: exitCode,
+              tool_input: input.args,
+              tool_name: input.tool,
+              tool_output: {
+                ...output.metadata,
+                exit_code: exitCode,
+                output: output.output,
+              },
+            }
         const result = await runHookReceipt(
           configRoot,
           manifest,
           plugin,
           receipt,
-          {
-            exit_code: exitCode,
-            tool_input: input.args,
-            tool_name: input.tool,
-            tool_output: {
-              ...output.metadata,
-              exit_code: exitCode,
-              output: output.output,
-            },
-          },
+          hookInput,
           directory,
         )
         const parsed = parseHookOutput(result, input.tool)

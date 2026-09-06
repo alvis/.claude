@@ -1,4 +1,5 @@
 import { execFile, execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -44,6 +45,7 @@ interface ToolResult {
 }
 
 interface AdapterHooks {
+  readonly "chat.message": (input: { readonly sessionID: string }, output: { message: { id: string }; parts: Array<{ id: string; sessionID: string; messageID: string; type: string; text: string; synthetic?: boolean }> }) => Promise<void>;
   readonly config: (config: Record<string, unknown>) => Promise<void>;
   readonly dispose: () => Promise<void>;
   readonly event: (input: { readonly event: Record<string, unknown> }) => Promise<void>;
@@ -355,6 +357,127 @@ describe("opencode adapter manifest validation", () => {
     )).rejects.toThrow(/Plan validation is unavailable/);
   });
 
+  it("should inject approval instructions into an explicit OpenCode prompt", async () => {
+    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "1");
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    const output = { message: { id: "msg_approved" }, parts: [{ id: "prt_original", sessionID: "approved-prompt", messageID: "msg_approved", type: "text", text: "Implement the plan." }] };
+    await hooks["chat.message"]({ sessionID: "approved-prompt" }, output);
+    expect(output.parts).toEqual([
+      { id: "prt_original", sessionID: "approved-prompt", messageID: "msg_approved", type: "text", text: "Implement the plan." },
+      { id: expect.stringMatching(/^prt_[0-9a-f]{12}[A-Za-z0-9]{14}$/), sessionID: "approved-prompt", messageID: "msg_approved", type: "text", text: expect.stringContaining("directions/approve-plan.md"), synthetic: true },
+    ]);
+  });
+
+  it.each(["0", "invalid", ""])("should bypass disabled approval prompt routing for toggle %s", async (automation) => {
+    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", automation);
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    const parts = [{ id: "prt_disabled", sessionID: "disabled-prompt", messageID: "msg_disabled", type: "text", text: "Implement the plan." }];
+    const output = { parts } as Parameters<AdapterHooks["chat.message"]>[1];
+    await expect(hooks["chat.message"]({ sessionID: "disabled-prompt" }, output)).resolves.toBeUndefined();
+    expect(output.parts).toEqual([{ id: "prt_disabled", sessionID: "disabled-prompt", messageID: "msg_disabled", type: "text", text: "Implement the plan." }]);
+  });
+
+  it("should disable approval freshness checks while retaining native plan validation", async () => {
+    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "0");
+    const directory = join(sandbox.project, ".opencode", "plans");
+    mkdirSync(directory, { recursive: true });
+    const path = join(directory, "132-disabled.md");
+    writeFileSync(path, "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n");
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({
+      client: {
+        project: { current: async () => ({ data: { vcs: "git" } }) },
+        session: { get: async () => ({ data: { slug: "disabled", time: { created: 132 } } }) },
+      },
+      directory: sandbox.project,
+      worktree: sandbox.project,
+    });
+    const input = { callID: "disabled-native", sessionID: "disabled-native", tool: "plan_exit" };
+    await hooks["tool.execute.before"](input, { args: {} });
+    writeFileSync(path, "# Goal\nChanged after preflight.\n");
+    const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
+    await expect(hooks["tool.execute.after"]({ ...input, args: {} }, result)).resolves.toBeUndefined();
+    expect(result.output).not.toContain("save-approved-plan");
+    await expect(hooks["tool.execute.before"]({ ...input, callID: "still-validate" }, { args: {} })).rejects.toThrow(/missing headings/);
+  });
+
+  it("should deliver approval instructions after a successful native plan exit", async () => {
+    const directory = join(sandbox.project, ".opencode", "plans");
+    mkdirSync(directory, { recursive: true });
+    const approvedPlan = "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n";
+    writeFileSync(join(directory, "128-approved.md"), approvedPlan);
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({
+      client: {
+        project: { current: async () => ({ data: { vcs: "git" } }) },
+        session: { get: async () => ({ data: { slug: "approved", time: { created: 128 } } }) },
+      },
+      directory: sandbox.project,
+      worktree: sandbox.project,
+    });
+    const input = { callID: "approve-native", sessionID: "approved-native", tool: "plan_exit" };
+    await hooks["tool.execute.before"](input, { args: {} });
+    const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
+    await hooks["tool.execute.after"]({ ...input, args: {} }, result);
+    expect(result.output.startsWith("User approved switching to build agent. Wait for further instructions.")).toBe(true);
+    expect(result.output).toContain("save-approved-plan");
+    expect(result.output).toContain("opencode-v1:PostToolUse");
+    expect(result.output).toContain(join(realpathSync(sandbox.project), ".opencode", "plans", "128-approved.md"));
+    expect(result.output).toContain(createHash("sha256").update(approvedPlan).digest("hex"));
+  });
+
+  it("should reject approval when the plan changes after native preflight", async () => {
+    const directory = join(sandbox.project, ".opencode", "plans");
+    mkdirSync(directory, { recursive: true });
+    const path = join(directory, "130-changed.md");
+    writeFileSync(path, "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n");
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({
+      client: {
+        project: { current: async () => ({ data: { vcs: "git" } }) },
+        session: { get: async () => ({ data: { slug: "changed", time: { created: 130 } } }) },
+      },
+      directory: sandbox.project,
+      worktree: sandbox.project,
+    });
+    const input = { callID: "changed-native", sessionID: "changed-native", tool: "plan_exit" };
+    await hooks["tool.execute.before"](input, { args: {} });
+    writeFileSync(path, "Changed after preflight.");
+    const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
+    await expect(hooks["tool.execute.after"]({ ...input, args: {} }, result)).rejects.toThrow(/changed|revalidate|stale/i);
+    expect(result.output).not.toContain("save-approved-plan");
+  });
+
+  it("should not fabricate approval context without native preflight", async () => {
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
+    await hooks["tool.execute.after"]({ callID: "no-preflight", sessionID: "missing", tool: "plan_exit", args: {} }, result);
+    expect(result.output).not.toContain("save-approved-plan");
+  });
+
+  it("should not deliver approval context after a rejected native exit", async () => {
+    const directory = join(sandbox.project, ".opencode", "plans");
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(join(directory, "129-rejected.md"), "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n");
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({
+      client: {
+        project: { current: async () => ({ data: { vcs: "git" } }) },
+        session: { get: async () => ({ data: { slug: "rejected", time: { created: 129 } } }) },
+      },
+      directory: sandbox.project,
+      worktree: sandbox.project,
+    });
+    const input = { callID: "reject-native", sessionID: "rejected-native", tool: "plan_exit" };
+    await hooks["tool.execute.before"](input, { args: {} });
+    const result = { metadata: {}, output: "User rejected switching to build agent.", title: "Staying in plan mode" };
+    await hooks["tool.execute.after"]({ ...input, args: {} }, result);
+    expect(result.output).not.toContain("save-approved-plan");
+  });
+
   it("should enforce the OpenCode task alias with the native dispatch validator", async () => {
     const { AlvisMarketplace } = await loadAdapter();
     const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
@@ -419,7 +542,8 @@ describe("opencode adapter manifest validation", () => {
     expect(unresolvedContext).not.toContain("Stop hook is advisory");
   });
 
-  it("should retain commit backup advice and post-rewrite diagnostics", async () => {
+  it("should retain commit backup advice and post-rewrite diagnostics with approval automation disabled", async () => {
+    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "0");
     writeFileSync(join(sandbox.project, ".gitignore"), ".opencode/\n");
     writeFileSync(join(sandbox.project, "tracked.txt"), "tracked\n");
     execFileSync("git", ["init", "--quiet"], { cwd: sandbox.project });
@@ -454,6 +578,34 @@ describe("opencode adapter manifest validation", () => {
     expect(result.output).toContain("Integrity Check");
     expect(result.metadata).toBe(metadata);
   }, hookTimeoutMs);
+
+  it("should reject approval delivery after the projected shell context is tampered", async () => {
+    const { AlvisMarketplace } = await loadAdapter();
+    const directory = join(sandbox.project, ".opencode", "plans");
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(join(directory, "131-tamper.md"), "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n");
+    const hooks = await AlvisMarketplace({
+      client: {
+        project: { current: async () => ({ data: { vcs: "git" } }) },
+        session: { get: async () => ({ data: { slug: "tamper", time: { created: 131 } } }) },
+      },
+      directory: sandbox.project,
+      worktree: sandbox.project,
+    });
+    const input = { callID: "tampered-after", sessionID: "tampered-after", tool: "plan_exit" };
+    await hooks["tool.execute.before"](input, { args: {} });
+    const contextPath = join(realpathSync(sandbox.project), ".opencode", "alvis", "plugins", "essential", "hooks", "scripts", "context.sh");
+    const original = readFileSync(contextPath, "utf8");
+    try {
+      writeFileSync(contextPath, `${original}\n# tampered test input\n`);
+      const output = { message: { id: "msg_approved" }, parts: [{ id: "prt_original", sessionID: "approved-prompt", messageID: "msg_approved", type: "text", text: "Implement the plan." }] };
+      await expect(hooks["chat.message"]({ sessionID: "tampered-context" }, output)).rejects.toThrow(/modified|digest|mismatch/i);
+      const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
+      await expect(hooks["tool.execute.after"]({ ...input, args: {} }, result)).rejects.toThrow(/modified|digest|mismatch/i);
+    } finally {
+      writeFileSync(contextPath, original);
+    }
+  });
 
   it("rejects a managed runtime file whose bytes drifted", async () => {
     const contractPath = join(
