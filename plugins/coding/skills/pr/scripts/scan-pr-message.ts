@@ -56,7 +56,7 @@ const PROCESS_GATE = new RegExp(
 const PROCESS_SUBJECT_FRAGMENT = new RegExp(`^${PROCESS_SUBJECT}$`, "i");
 
 /** inclusive Unicode code-point ranges a heading emoji prefix may come from */
-export const EMOJI_RANGES: ReadonlyArray<readonly [number, number]> = [
+const EMOJI_RANGES: ReadonlyArray<readonly [number, number]> = [
   [0x00a9, 0x00a9],
   [0x00ae, 0x00ae],
   [0x203c, 0x203c],
@@ -441,7 +441,7 @@ export function requirementsAreProcessOnly(value: string): boolean {
  * @param prefix - first token of a heading, before any section name
  * @returns true when the prefix is a keycap sequence or falls inside a declared emoji range
  */
-export function isEmojiPrefix(prefix: string): boolean {
+function isEmojiPrefix(prefix: string): boolean {
   if (KEYCAP_EMOJI.test(prefix)) return true;
   const codepoint = prefix.codePointAt(0);
   return (
