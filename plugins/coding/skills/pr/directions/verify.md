@@ -41,11 +41,12 @@ the 0.44 version floor, and linked Git worktree handling belong to the shared
 jj guide and `coding:sync-tool`. Failure to prove them blocks verification;
 only create/update's explicit `--no-verify` can bypass its local gate.
 
-Use the source checkout only for read-only discovery of environment sources
-such as `.env`, `.env.local`, and `.env.test`, and as the repository argument
-to `jj run`. Command definitions there are not parity evidence; do not execute
-test, lint, setup, or formatter commands directly there or copy secret values
-into a report.
+Use the source checkout as the repository argument to `jj run` and for
+read-only discovery of environment sources such as `.env`, `.env.local`, and
+`.env.test`. Load task variables only from user-approved sources, preserve CI's
+declared values and precedence, and pass only the task's required environment.
+Never copy secret values into reports or execute repository test, lint, setup,
+or formatter commands directly in the source checkout.
 
 Create one detached disposable worktree at the target revision through the bundled
 helper and verify its revision. It owns workflow and command discovery; do not
@@ -75,9 +76,12 @@ included workflow's repo-local reusable workflows, composite actions, package
 scripts, workspace manifests, Makefiles, and task files from the target revision.
 Record the exact test and lint `run:` commands in workflow order plus only
 their required setup, preserving shell, working directory, matrix values, and
-environment. Do not substitute a nearby command or invent a check. Record an
-exact absence when no included workflow defines test or lint. A non-secret
-requirement that cannot be reproduced locally blocks the gate.
+environment. Install necessary tooling and dependencies without asking for
+approval, using the target revision's CI setup and package-manager inputs in
+the isolated task. Do not substitute a nearby command or invent a check. Record
+an exact absence when no included workflow defines test or lint. An unavailable
+setup requirement is a setup failure, never evidence that an unattempted test
+failed.
 
 For each parsed workflow, apply this decision contract. The parser supplies
 `HAS_PULL_REQUEST_TRIGGER` from the workflow's `on` declaration; filter values
@@ -104,33 +108,37 @@ printf 'CI_PARITY_APPLICABILITY_MODE=%s\n' "$CI_PARITY_APPLICABILITY_MODE"
 printf 'CI_PARITY_UNEVALUATED_FILTERS=%s\n' "$CI_PARITY_UNEVALUATED_FILTERS"
 ```
 
-Inspect the selected workflows and command chain for `env`, `secrets.*`,
-`vars.*`, and command-level environment references. Record names and source
-presence only. Verify that the isolated tester can receive each required value
-from a user-approved source in the main checkout or another explicitly approved
-location. If a required secret is missing, close the lease and ask the user to
-supply an explicit source or approve proceeding without the local run for this
-exact target revision and named secrets. A changed revision requires a new decision.
-Never guess a source, pass an empty value, treat an unavailable secret as
-optional, or infer approval from another flag or workflow.
+Inspect CI `env`, `secrets.*`, `vars.*`, and command-level references to
+supply available values with the declared precedence. A missing declaration
+alone never fails a task or creates a question: attempt the exact command with
+the available environment first, without inventing an empty replacement. Record
+unavailable names without exposing values. If a supplied non-secret CI value
+cannot be reproduced, retain the attempted result but mark parity blocked;
+a successful run under different inputs is not exact CI evidence. An unused
+unavailable declaration does not invalidate a successful task.
 
-After sorting the discovered missing-secret names into one comma-separated
-value, enforce the stop or exact-approval decision before any local command or
-push:
-
-```bash
-source "${CODING_PR_SKILL_DIR}/scripts/gate-missing-secrets.sh"
-```
+After a command fails, classify it as a missing-variable failure only when its
+captured output explicitly names a CI-declared variable it could not obtain.
+Validate those names against the selected workflow and command chain, then
+close the lease and ask for an explicit source and rerun, or approval for this
+exact target revision and exact lexically sorted name list. Missing tools,
+dependencies, authentication, and other errors remain ordinary failures; repair
+permitted setup and rerun, or report the blocker. Never infer skip approval from
+another flag, a declaration, or an earlier revision.
 
 Record expected hosted check/job names from the selected workflows at
 `TARGET_SHA` and required branch status checks or rulesets when accessible
 through `gh api`; record inaccessible sources instead of assuming they are
 empty.
 
-Without a missing-secret exception, dispatch one fresh small-model read-only
-tester. It MUST NOT edit, format, commit, or push. It runs the discovered test
-and lint commands in CI order at the target revision, continues through independent
-commands after failure, and returns under 1000 tokens.
+Dispatch one fresh small-model read-only tester. It MUST NOT edit, format,
+commit, or push. It first runs the discovered test and lint commands in CI order
+at the target revision with the required setup and available environment,
+continues through independent commands after failure, and returns under 1000
+tokens. Assign a stable nonempty `dependency_group` to every command: commands
+whose prerequisites are coupled share a group, while independent commands use
+different groups. Keep setup and its dependent command in the same isolated
+invocation so `--clean` cannot discard their installed dependencies.
 
 Resolve the workflow's complete shell template, including GitHub Actions'
 default flags when `shell` is omitted, into `CI_SHELL_TEMPLATE`. The template
@@ -149,8 +157,8 @@ jj --repository "$SOURCE_REPO_ROOT" --ignore-working-copy run \
 ```
 
 `CI_SHELL_TEMPLATE` preserves every workflow shell flag and placeholder;
-`CI_TASK_SCRIPT` preserves the working directory, matrix values, environment,
-required setup, and exact test or lint command. One fresh
+`CI_TASK_SCRIPT` preserves the working directory, matrix values, required
+environment and setup, and exact test or lint command. One fresh
 `--clean` invocation per task prevents artifacts from another revision or task
 from affecting the result; setup and its dependent command stay inside that
 same invocation. `--ignore-changes` is mandatory because verification must not
@@ -158,25 +166,59 @@ amend the target or rebase descendants. Do not use `--ignore-errors`, which
 would hide the task's failing exit status. Continue through other independent
 tasks with separate invocations and record each status.
 
+Install project dependencies from the target revision inside each clean task
+using its CI package-manager command, lockfile, workspace configuration, and
+install scripts. Do not copy an installed dependency tree from another checkout:
+its manifests cannot prove which patches or lifecycle inputs produced it.
+Package-manager downloads may use their normal content-verified cache; installed
+outputs remain disposable and local to the exact target task.
+
 For every task, verify that the runner's `JJ_COMMIT_ID` equals the target revision ID; a
 mismatch blocks the gate.
+
+After the first attempt, if and only if its captured failure evidence names
+missing CI variables, sort those names into one comma-separated value and set
+`MISSING_SECRET_FAILURE_CONFIRMED=true`. Then enforce the stop or exact-
+approval decision:
+
+```bash
+source "${CODING_PR_SKILL_DIR}/scripts/gate-missing-secrets.sh"
+```
+
+When `MISSING_SECRET_FAILURE_CONFIRMED` is unset or false, the helper keeps the
+local run pending even if CI declarations or an approval happen to name
+variables. With confirmation, `MISSING_SECRET_APPROVED=true`, the exact
+`TARGET_SHA`, and the exact lexically sorted `MISSING_SECRET_NAMES` approval
+remain required for `approved_without_local_run`.
 
 Treat repository workflows and scripts as untrusted code. Run allowlisted
 commands through the selected isolated runner, limit writes to its working copy
 and a temporary directory, deny network by default, and remove ambient tokens,
 credential helpers, SSH agent sockets, cloud credentials, and unrelated
-environment variables. Pass only the minimal toolchain environment. Ask for
-specific authority when a command requires network or a non-secret credential;
-stop when it is unavailable. Never expose the parent session's credentials. The
+environment variables. Pass only the minimal toolchain and task-specific environment. Permit network
+access needed for the selected tooling/dependency setup; other network access
+or credentials require specific authority. Stop when that authority is
+unavailable. Never expose the parent session's credentials. The
 tester neither removes the discovery worktree nor closes or reports on the
 parent-owned `TREE_LEASE`.
 
 Serialize the exact ordered workflow command/result set once as canonical JSON
 in `CI_PARITY_EXPECTED_WORKFLOW_COMMAND_RESULTS_JSON`. Every entry records the
-target ref, kind, exact command, source, and result status. A successful local
-run records integer status `0`; the approved missing-secret path records
-`not_run_missing_secret` for every command. Serialize the exact lexically sorted
-missing-secret-name array as
+target ref, kind, exact command, source, result status, and
+`failure_evidence` and a dependency group. A successful attempted command
+records integer status `0` and `failure_evidence: null`. When a command exits
+nonzero because it could not obtain one or more named CI variables, retain its
+numeric shell status and record exactly
+`{"type":"missing_ci_variable","names":["<variable name>"]}` as its
+`failure_evidence`, with every name declared missing and the array lexically
+sorted and unique. An approved receipt must contain at least one such attempted
+failure, and the sorted unique union of all evidence names must equal the exact
+missing-secret name array. Use `not_run_missing_secret` with
+`failure_evidence: null` only for commands genuinely skipped after a qualifying
+failure in the same dependency group. Independent groups continue to run and
+retain their attempted results. Any other status/evidence pair, including an
+ordinary non-secret numeric failure or a non-integral/out-of-range status, blocks
+the receipt. Serialize the exact lexically sorted missing-secret-name array as
 `CI_PARITY_EXPECTED_MISSING_SECRET_NAMES_JSON`; use `[]` when none are missing.
 Embed those exact arrays in the complete JSON receipt below and return all three
 values to the caller. Do not return a standalone approval as a substitute for
@@ -208,6 +250,7 @@ the receipt.
       "kind": "<test-or-lint>",
       "command": "<exact command>",
       "source": "<path and job/script>",
+      "dependency_group": "<ordered dependency group>",
       "status": 0,
       "duration_seconds": 0,
       "failure_evidence": null
@@ -230,6 +273,14 @@ the receipt.
 }
 ```
 
+For an approved receipt, a nonzero attempted result replaces `null` with the
+exact `type`/`names` missing-variable evidence object above. A string
+`not_run_missing_secret` status remains a genuine skip and must keep
+`failure_evidence` null; it is not interchangeable with an attempted numeric
+result. Results in one dependency group remain in workflow order; a group enters
+skip state only after its own qualifying failure, while an independent group may
+continue attempting tasks.
+
 </report>
 
 After consuming the report, the parent closes the retained lease and records
@@ -243,8 +294,9 @@ unresolved blockers under 1000 tokens. The public verifier remains read-only.
 Its create/update caller owns tip-first failure localization, selects the
 earliest failing bookmark/PR, dispatches the relevant fixer only after that
 ownership is known, and restarts the complete gate at new exact revision IDs. Any
-nonzero applicable command or unresolved diagnosis blocks publication. Any
-separate review is read-only.
+ordinary or unapproved nonzero applicable command, or unresolved diagnosis,
+blocks publication; a confirmed missing-variable failure follows the exact
+approval contract above. Any separate review is read-only.
 
 ## Verification
 
