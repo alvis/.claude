@@ -248,7 +248,7 @@ PR=$(gh pr create --repo "$HOST/$REPOSITORY" --draft --title "$TITLE" --body-fil
   --base "$PR_BASE" --head "$PUSH_OWNER:$BOOKMARK" <<<"$BODY")
 ```
 
-After creation, read back that numeric PR with `--repo "$HOST/$REPOSITORY"` and verify its number, `headRepositoryOwner.login`, `headRefOid`, `baseRefName`, and `baseRefOid` against the bound owner, head, base name, and base OID. Creation is not complete until this deferred base becomes verified.
+After creation, read back that numeric PR with `--repo "$HOST/$REPOSITORY"` and verify its number, `headRepositoryOwner.login`, `headRefOid`, `baseRefName`, and `baseRefOid` against the bound owner, head, base name, and base OID; require `state: OPEN` and `isDraft: true`. Creation is not complete until this deferred base and draft state become verified.
 
 When the head has one open PR, edit it and retain draft state:
 
@@ -256,6 +256,10 @@ When the head has one open PR, edit it and retain draft state:
 gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
 gh pr ready "$PR" --undo
 ```
+
+Read back the same metadata after an update and require the bound head/base
+pair, `state: OPEN`, and `isDraft: true`. A successful mutation command alone
+does not establish publication or draft state.
 
 #### Attach selected repository labels
 
@@ -351,7 +355,7 @@ With an accepted internal `--publish-only`, return the verified stack map plus r
 
 For a top-level create or update, the owning main agent retains `MAX_ITERATION` from `--max-iteration` or its default and starts `REVIEW_ITERATION` at zero in its working context. It keeps both values across nested publish-only and CI-repair calls without putting them on another CLI; only [review-loop.md](review-loop.md) increments the current iteration.
 
-After every selected head is pushed or updated and its remote OID is verified, load and follow [review-loop.md](review-loop.md). A review-driven fix republishes the affected stack, resets the expected head OIDs, and runs the loop again with a fresh subagent before CI monitoring. If the loop returns `action: repair_ci_then_review`, enter step 5 immediately without marking review convergence complete or attempting another review against unchanged CI. After the poller reports a red repair, the parent accepts the fix, saves it, and republishes through the owned workflow; if CI instead becomes green, no repair is needed. Then return to step 4 and run a fresh review pass before completing the ordinary CI gate. Never retry a review against unchanged red-CI evidence.
+After every selected PR is published or updated and its open draft state and exact head/base pair are verified, load and follow [review-loop.md](review-loop.md). A review-driven fix republishes the affected stack, resets the expected head OIDs, and runs the loop again with a fresh subagent before CI monitoring. If the loop returns `action: repair_ci_then_review`, enter step 5 immediately without marking review convergence complete or attempting another review against unchanged CI. After the poller reports a red repair, the parent accepts the fix, saves it, and republishes through the owned workflow; if CI instead becomes green, no repair is needed. Then return to step 4 and run a fresh review pass before completing the ordinary CI gate. Never retry a review against unchanged red-CI evidence.
 
 If the loop returns `action: await_owner_authorization`, record the approval blocker and its complete `authorization_required` list, including each PR URL and exact head/base OIDs, then enter step 5 without marking review convergence complete or retrying the review. After CI is green, report the published drafts with that list under `approval_blocked: authorization_required`. A later invocation reruns review against every then-current head and base; review alone verifies each authorization at the moment it would submit `APPROVE`.
 

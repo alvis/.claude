@@ -1,7 +1,9 @@
 # Converge Pull Request Reviews
 
 Load this reference after `coding:pr create` or `coding:pr update` has pushed
-every selected head and verified each PR's `headRefOid`.
+every selected head and verified each PR's draft state and head/base pair.
+Local pre-commit source review remains owned by `coding:review-code`; PR review
+starts only after the hosted draft exists.
 
 Dispatch review without a prior authorization receipt, including for a
 self-contained black-zone draft. The review workflow performs the full review
@@ -27,6 +29,26 @@ still counts as an attempt, and every batch in that pass shares the incremented
 value. Stop early when the exit gate approves every current head.
 
 ## Dispatch a fresh review
+
+Before provisioning or dispatching a reviewer, bind `EXPECTED_HEAD_OID`,
+`EXPECTED_BASE_REF`, and `EXPECTED_BASE_OID` from the publication owner's saved
+surface map. Verify every selected PR exists as an open draft at that surface:
+
+```bash
+PR_METADATA=$(gh pr view "$PR_URL" --repo "$HOST/$OWNER/$REPO" \
+  --json state,headRefOid,baseRefName,baseRefOid,isDraft) || exit 1
+jq -e --arg head "$EXPECTED_HEAD_OID" --arg base "$EXPECTED_BASE_REF" \
+  --arg base_oid "$EXPECTED_BASE_OID" '
+  .state == "OPEN" and .isDraft == true and
+  .headRefOid == $head and .baseRefName == $base and .baseRefOid == $base_oid
+' >/dev/null <<<"$PR_METADATA" || {
+  printf '%s\n' 'PR is not an open draft at the published revision; stop before review.' >&2
+  exit 1
+}
+```
+
+A failure stops the batch before dispatch; the publication owner reconciles
+it. Never create or adopt a different review surface inside this gate.
 
 Record the current iteration, stack PR URLs, and expected head/base refs
 and OIDs. For each stack, the parent performs the resolve and tree/artifact
@@ -208,21 +230,47 @@ Review convergence passes only when all of these hold for every current head:
 - each PR head/base target and OID still equal the reviewed surface.
 
 After the exit gate passes, promote each approved draft surface to ready for
-review. For every surface whose latest review reports substantive `APPROVE`,
-re-read its metadata:
+review. Bind `SUBSTANTIVE_VERDICT` and `REVIEWED_HEAD_OID`,
+`REVIEWED_BASE_REF`, and `REVIEWED_BASE_OID` from that surface's latest fresh
+review evidence, not its submitted GitHub event. Retain the expected surface
+map from publication; never replace it with observed values to clear a mismatch.
 
 ```bash
-gh pr view "$PR_URL" --repo "$HOST/$OWNER/$REPO" \
-  --json headRefOid,baseRefName,baseRefOid,isDraft
+[ "$SUBSTANTIVE_VERDICT" = APPROVE ] &&
+  [ "$REVIEWED_HEAD_OID" = "$EXPECTED_HEAD_OID" ] &&
+  [ "$REVIEWED_BASE_REF" = "$EXPECTED_BASE_REF" ] &&
+  [ "$REVIEWED_BASE_OID" = "$EXPECTED_BASE_OID" ] || {
+  printf '%s\n' 'No approval for the current head/base surface; keep the PR draft.' >&2
+  exit 1
+}
+PR_METADATA=$(gh pr view "$PR_URL" --repo "$HOST/$OWNER/$REPO" \
+  --json state,headRefOid,baseRefName,baseRefOid,isDraft) || exit 1
+jq -e --arg head "$EXPECTED_HEAD_OID" --arg base "$EXPECTED_BASE_REF" \
+  --arg base_oid "$EXPECTED_BASE_OID" '
+  .state == "OPEN" and (.isDraft | type) == "boolean" and
+  .headRefOid == $head and .baseRefName == $base and .baseRefOid == $base_oid
+' >/dev/null <<<"$PR_METADATA" || {
+  printf '%s\n' 'PR changed after review; stop before readiness promotion.' >&2
+  exit 1
+}
+if jq -e '.isDraft' >/dev/null <<<"$PR_METADATA"; then
+  gh pr ready "$PR_URL" --repo "$HOST/$OWNER/$REPO" || exit 1
+fi
+PR_METADATA=$(gh pr view "$PR_URL" --repo "$HOST/$OWNER/$REPO" \
+  --json state,headRefOid,baseRefName,baseRefOid,isDraft) || exit 1
+jq -e --arg head "$EXPECTED_HEAD_OID" --arg base "$EXPECTED_BASE_REF" \
+  --arg base_oid "$EXPECTED_BASE_OID" '
+  .state == "OPEN" and .isDraft == false and
+  .headRefOid == $head and .baseRefName == $base and .baseRefOid == $base_oid
+' >/dev/null <<<"$PR_METADATA" || {
+  printf '%s\n' 'Ready transition is unverified or the reviewed surface changed.' >&2
+  exit 1
+}
 ```
 
-Compare `headRefOid`, `baseRefName`, and `baseRefOid` with the reviewed
-surface; if any value changed, stop with a concurrency blocker. When `isDraft`
-is true, run:
-
-```bash
-gh pr ready "$PR_URL" --repo "$HOST/$OWNER/$REPO"
-```
+If the final read fails or differs, do not report readiness as verified. Record
+the observed partial outcome and stop for publication-owner reconciliation;
+never mutate a concurrently changed surface to hide the failure.
 
 Return the converged head map and review evidence to the caller. The initial
 publication caller continues to its initial CI poll; a red-CI repair caller
