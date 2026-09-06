@@ -11,8 +11,9 @@ changing it; inspect only enough context to decide and verify safely.
 Use this as a quick decision reflex, not a separate research project. Skip
 inapplicable options and stop when the requirements are satisfied:
 
-1. **Need:** Does the requested outcome require this work? Omit speculative
-   additions; preserve everything explicitly requested.
+1. **Need:** Tie each addition to an explicit requirement, demonstrated defect,
+   or applicable standard. If removing it preserves the requested outcome and
+   required validation, omit it; preserve everything explicitly requested.
 2. **Reuse:** Can an existing artifact, shared module, local pattern, or result
    satisfy it? Check the relevant source before creating another.
 3. **Standard library:** Can the language's built-ins solve it directly?
@@ -20,9 +21,10 @@ inapplicable options and stop when the requirements are satisfied:
    provide it? Prefer a database constraint or CSS where it fits the behavior.
 5. **Installed dependency:** Can an already available dependency satisfy it
    without more machinery than the task warrants?
-6. **Minimum sufficient solution:** Add only the content, code, abstraction, or
-   dependency needed for the actual outcome; justify added machinery by a
-   concrete requirement.
+6. **Minimum sufficient solution:** Apply the need test to files, sections,
+   abstractions, dependencies, and checks. Fit content to its destination's
+   purpose: durable documentation carries lasting behavior and constraints;
+   run-specific results belong in work artifacts or PR evidence.
 
 ## Stop at sufficient evidence
 
