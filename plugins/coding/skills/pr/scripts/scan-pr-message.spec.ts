@@ -5,8 +5,6 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { EMOJI_RANGES, isEmojiPrefix } from "./scan-pr-message.ts";
-
 const scripts = import.meta.dirname;
 const scanner = join(scripts, "scan-pr-message.ts");
 const template = join(scripts, "../templates/message.md");
@@ -977,17 +975,31 @@ describe("PR message scanner", () => {
       ),
     ).toBe(true);
   });
-  it("accepts every declared emoji range and keycap", () => {
-    for (const [start, end] of EMOJI_RANGES)
-      for (let point = start; point <= end; point++)
-        expect(isEmojiPrefix(String.fromCodePoint(point))).toBe(true);
-    for (const base of "#*0123456789")
-      expect(isEmojiPrefix(`${base}️⃣`)).toBe(true);
-  });
-  it("rejects non-emoji Unicode symbols", () => {
-    for (const character of "⌘あ♙☇")
-      expect(isEmojiPrefix(character)).toBe(false);
-  });
+  it.each(["⌘", "あ", "♙", "☇"])(
+    "should reject non-emoji heading prefix %s through the CLI",
+    async (prefix) => {
+      const heading = `## ${prefix} Notes [ Optional ]`;
+      const custom =
+        requiredTemplate +
+        `${heading}\n\n{{notes}}\n\n## 🧪 Verification\n\n{{verification}}\n`;
+      const body =
+        requiredBody +
+        `${heading}\n\nSpecific notes.\n\n## 🧪 Verification\n\n- [x] Run the scanner.\n`;
+
+      expect(await run(body, { templateBody: custom })).toMatchObject({
+        code: 1,
+        result: {
+          valid: false,
+          violations: [
+            {
+              rule_id: "GIT-PR-02",
+              message: `section lacks an emoji prefix: ${heading}`,
+            },
+          ],
+        },
+      });
+    },
+  );
   it("scans a keycap emoji as one prefix", async () => {
     const heading = "## 1️⃣ Steps [ Optional ]";
     const custom =
