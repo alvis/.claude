@@ -551,7 +551,7 @@ per PR: review URL, reviewed head/base refs and OIDs, review tree and ownership,
 tracking path, zone, goal/spec and intended-behavior
 alignment, specification-deviation capture (`captured`, `missing`, or `skipped`),
 standards alignment, reuse, minimality, finding counts by priority and kind,
-submitted event, trust cap or `none`, unanchored count, paths not reviewed, and
+substantive verdict, submitted event, trust cap or `none`, unanchored count, paths not reviewed, and
 blocker. An outstanding `chore` is a
 merge blocker and must never be summarized as zero findings. Preserve stack
 order. The ledger includes every existing P0/P1/P2 or mandatory-chore thread's
