@@ -37,7 +37,7 @@ For complex changes, perform a deliberate "what am I missing" pass before finali
 ```typescript
 // ✅ GOOD: explicit risk assessment
 // Risk: Migration changes user-facing API
-// Rollback: Redeploy the previous release
+// Rollback: Feature flag allows instant revert
 // Monitoring: Alert on error rate > 1% in first 24h
 // Dependencies: Requires client SDK v2.1+
 ```

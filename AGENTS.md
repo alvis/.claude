@@ -155,6 +155,10 @@ illustrative. That exemption is by directory, never by filename — a file merel
 
 ## Design invariants
 
+This repository does not use runtime feature flags. Coding's reusable feature-flag
+standards and PR tooling apply to target projects with implemented flag support;
+do not add switches to this marketplace to satisfy those standards.
+
 These plugins are built to one model of how knowledge ages:
 `plugins/essential/references/truth.md`. Read it before changing how a skill records,
 reads, or retires anything. The invariants below are what it forbids while you edit

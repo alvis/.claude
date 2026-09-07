@@ -20,7 +20,7 @@ it("should throw when config missing", fn);
 
 - Error-handling branches (`catch`, `if (error)`, fallback returns)
 - Validation failures (guard clauses, input checks)
-- Configuration branches that affect behavior
+- Feature flags / configuration branches that affect behavior
 - Timeout and retry paths
 
 Prioritize tests for failure/fallback branches before adding variation tests for happy paths.

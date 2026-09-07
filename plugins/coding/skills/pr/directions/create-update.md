@@ -24,6 +24,10 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 
 ### Select the PR archetype
 
+Select `feature-flag` only when the target project has implemented flag support
+and this change implements or modifies a flag. A template section or PR size
+does not establish project support or authorize adding it.
+
 For each head, choose the `--archetype` value accepted by `scripts/scan-pr-message.ts` that best describes its implementation surface. This controls conditional body evidence and scanner behavior only; repository labels come only from the receiving repository's live inventory below.
 
 ## Boundaries
@@ -456,7 +460,7 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
    - every body contains a non-empty Summary, `## 🎯 Goal`, `## ✅ Requirements`, `## 🧵 Context`, `## 🧪 Verification`, and `## 📋 Additional Notes`; Additional Notes preserves the separate-review instruction in the bundled template; Goal states the intended outcome, while Requirements lists observable, testable behavior rather than generic gates such as tests passing, standards compliance, or green CI;
    - every `##` section heading starts with an emoji, and every section the template permits authors to omit ends with the exact `[ Optional ]` suffix; the suffix describes template conditionality and does not waive a zone, archetype, or diff requirement;
    - a red- or black-zone `## 📐 Why This Size` contains specific indivisibility prose, and a black-zone body also contains specific Risk and Test plan evidence;
-   - a `migration` or `ui` PR supplies the corresponding Rollback or Screenshots evidence from step 6; and
+   - a `migration`, `feature-flag`, or `ui` PR supplies the corresponding Rollback, Feature Flag, or Screenshots evidence from step 6; and
    - whenever the review diff contains generated files, the body contains the exact `## 🏭 Generated Files` heading with at least one generated path or path pattern and its source or generator. A heading alone, `N/A`, "generated files present", or another path-free summary is generic and blocks emission.
 
    A heading's presence alone never passes. When no repo-local template exists, fall back to the bundled default at [message.md](../templates/message.md) and continue. When the bundled default is also missing: exit 4, print the path that failed to resolve.
@@ -469,6 +473,7 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
    - `{{implementation_body}}` — content under `## Implementation` / `What:` / `How:`, if present.
    - `{{breaking_changes_body}}` — `BREAKING CHANGE:` footers; "None." when absent.
    - `{{rollback_body}}` — exact rollback steps or explicit forward-only mitigation. Required for the `migration` archetype.
+   - `{{feature_flag_body}}` — flag name, default state, removal target, rollout plan, and cleanup change. Required for the `feature-flag` archetype.
    - `{{screenshots_body}}` — before/after screenshots and relevant accessibility notes. Required for the `ui` archetype.
    - `{{generated_files_body}}` — every generated path and its source or generator. Required whenever the diff contains generated files; only package lockfiles may remain in the head under `GIT-PR-TYPE-05`, and removed artifacts are identified as deleted.
    - `{{risk_body}}` — exact content under `## Risk` / `Risk:`. Required for yellow/red/black; stop when absent rather than inventing it from the diff.

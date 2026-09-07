@@ -15,6 +15,7 @@ export const ARCHETYPES = [
   "domain-model",
   "implementation",
   "integration",
+  "feature-flag",
   "migration",
   "ui",
   "mechanical-refactor",
@@ -820,6 +821,7 @@ export function scan(options: ScanOptions): Violation[] {
       addRequiredSection(violations, parsed, heading, "GIT-PR-SIZE-04");
   const conditional: Record<string, [string, string]> = {
     migration: ["Rollback", "GIT-PR-TYPE-03"],
+    "feature-flag": ["Feature Flag", "GIT-PR-STACK-04"],
     ui: ["Screenshots", "GIT-PR-02"],
   };
   if (conditional[archetype])
@@ -862,7 +864,7 @@ interface Arguments {
   generatedFiles: string[];
 }
 const USAGE =
-  "usage: scan-pr-message.ts [-h] --body-file BODY_FILE [--template TEMPLATE]\n                          --zone {green,yellow,red,black}\n                          --archetype {rfc,code-spec,contract,domain-model,implementation,integration,migration,ui,mechanical-refactor,cleanup,observability}\n                          --head-oid HEAD_OID --base-oid BASE_OID\n                          [--allow-pending-reviewers]\n                          [--generated-file GENERATED_FILE]";
+  "usage: scan-pr-message.ts [-h] --body-file BODY_FILE [--template TEMPLATE]\n                          --zone {green,yellow,red,black}\n                          --archetype {rfc,code-spec,contract,domain-model,implementation,integration,feature-flag,migration,ui,mechanical-refactor,cleanup,observability}\n                          --head-oid HEAD_OID --base-oid BASE_OID\n                          [--allow-pending-reviewers]\n                          [--generated-file GENERATED_FILE]";
 const SCANNER_OPTIONS = [
   "--help",
   "--body-file",

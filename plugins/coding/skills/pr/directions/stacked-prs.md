@@ -4,7 +4,7 @@ Load this reference when a create or update target contains multiple dependent
 changes, when merge receives more than one PR, or when the caller has not chosen
 a PR shape and the review surface may benefit from a stack.
 
-Apply `GIT-PR-SIZE-*` and `GIT-PR-TYPE-02..05` from
+Apply `GIT-PR-SIZE-*`, `GIT-PR-TYPE-02..05`, and `GIT-PR-STACK-04` from
 `coding:standards/git/`; this reference owns stack directions and executable
 operators.
 
@@ -45,7 +45,11 @@ moved to another PR.
 Every proposed slice must be
 independently valid: non-migratory configuration prerequisites stay with the
 first behavior that consumes them, while database migrations, data backfills,
-and configuration-format upgrades remain governed by `GIT-PR-TYPE-03`. Keep runtime-behavior tests,
+and configuration-format upgrades remain governed by `GIT-PR-TYPE-03`. When
+the target project has implemented feature-flag support and its rollout
+requirements call for a flag, keep the flag with the behavior
+that consumes it under `GIT-PR-STACK-04` and `GIT-PR-TYPE-02`; it is not a
+prerequisite slice. Keep runtime-behavior tests,
 focused compiler-semantic tests permitted by `TST-CORE-10`, and
 lockfiles with the change that needs them. When splitting would break integrity
 or merely scatter one feature or mechanical operation, keep one PR and apply
