@@ -40,6 +40,11 @@ instead. For example, use title `Consolidate vendors` and begin its detail with
 `[Pragmatic] [Recommended]`.
 
 For a material decision, identify the recommendation and explain why.
+Use the tool’s native schema: object options carry tags in their label or first
+description line; asynchronous string options carry tags in the string itself.
+When the asynchronous tool permits free text, omit options for an open question.
+If validation rejects a question, read the direction path in its feedback and
+correct the payload before presenting it.
 
 | Tag | Use when |
 | --- | --- |

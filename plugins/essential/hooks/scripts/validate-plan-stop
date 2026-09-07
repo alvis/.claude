@@ -9,6 +9,7 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=/dev/null
 source "$SCRIPTS_DIR/context.sh"
+DIRECTIONS_DIR="$(cd "$SCRIPTS_DIR/../../directions" && pwd)"
 
 stop_with_feedback() {
   local reason="$1"
@@ -26,7 +27,8 @@ stop_with_feedback() {
 }
 
 input="$(cat)"
-if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
+if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then
+  jq -cn '{systemMessage: "Plan validation is unavailable: expected a JSON Stop event object."}'
   exit 0
 fi
 
@@ -98,6 +100,9 @@ candidate="$(jq -Rsc '
 opening_count="$(jq '.opening | length' <<<"$candidate")"
 closing_count="$(jq '.closing | length' <<<"$candidate")"
 if [[ "$opening_count" == "0" && "$closing_count" == "0" ]]; then
+  if [[ -e "$retry_flag" ]]; then
+    stop_with_feedback "The rejected plan is still pending. Read $DIRECTIONS_DIR/plan.md and re-emit one corrected <proposed_plan> block." "$active" "$retry_flag"
+  fi
   exit 0
 fi
 
@@ -110,12 +115,22 @@ fi
 plan="$(jq -r '.lines[.opening[0] + 1:.closing[0]] | join("\n")' <<<"$candidate")"
 validator_input="$(jq -cn --arg plan "$plan" '{tool_input: {plan: $plan}}')"
 if ! validator_output="$(printf '%s' "$validator_input" | "$SCRIPTS_DIR/validate-plan")" ||
-   ! printf '%s' "$validator_output" | jq -e . >/dev/null 2>&1; then
+   ! printf '%s' "$validator_output" | jq -se '
+     length == 1 and (.[0] | type == "object" and
+       (.hookSpecificOutput | type == "object" and .hookEventName == "PreToolUse" and
+         (if has("permissionDecision") then
+            .permissionDecision == "deny" and (.permissionDecisionReason | type == "string" and length > 0)
+          else .additionalContext | type == "string" end)))
+   ' >/dev/null 2>&1; then
   stop_with_feedback "$unavailable_reason" "$active" "$retry_flag"
 fi
 
 decision="$(jq -r '.hookSpecificOutput.permissionDecision // empty' <<<"$validator_output")"
 if [[ "$decision" != "deny" ]]; then
+  if ! jq -e '.hookSpecificOutput | .hookEventName == "PreToolUse" and (.additionalContext | type == "string") and (has("permissionDecision") | not)' <<<"$validator_output" >/dev/null; then
+    stop_with_feedback "$unavailable_reason" "$active" "$retry_flag"
+  fi
+  rm -f "$retry_flag"
   exit 0
 fi
 

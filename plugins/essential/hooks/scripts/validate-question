@@ -9,9 +9,10 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=/dev/null
 source "$SCRIPTS_DIR/context.sh"
+DIRECTIONS_DIR="$(cd "$SCRIPTS_DIR/../../directions" && pwd)"
 
 deny() {
-  output_pretooluse_decision "deny" "$1"
+  output_pretooluse_decision "deny" "$1 Read $DIRECTIONS_DIR/questions.md before correcting the question."
 }
 
 allow() {
@@ -21,15 +22,32 @@ allow() {
 
 input=$(cat)
 
-if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
-  allow
+# Reject unsupported envelopes before accessing their fields.
+if ! jq -se 'length == 1 and (.[0] | type == "object")' <<<"$input" >/dev/null 2>&1; then
+  deny "Question validation is unavailable: expected a JSON object."
 fi
-
-# Claude Code and Codex send snake_case tool_input; Grok Build sends camelCase
-# toolInput. Collapse once so every field read below is key-agnostic. Grok's
-# ask_user_question also carries a different field schema, so any shape this
-# filter cannot read fails open rather than inventing a denial.
-input=$(printf '%s' "$input" | jq -c '(.tool_input // .toolInput)')
+tool_name="$(jq -r '.tool_name // .toolName // empty' <<<"$input")"
+if ! input="$(jq -ce --arg tool "$tool_name" '
+  def require(condition): if condition then . else error("unsupported question schema") end;
+  (.tool_input // .toolInput)
+  | require(type == "object")
+  | .questions |= (require(type == "array" and length > 0) | map(
+      if ($tool | endswith("request_user_input_async")) then
+        require(.title | type == "string" and length > 0)
+        | if has("options") then
+            .options |= (require(type == "array" and length > 0)
+              | map(require(type == "string" and length > 0) | {label: ., description: ""}))
+          else .options = [] end
+      else
+        require(.question | type == "string" and length > 0)
+        | .options |= (require(type == "array" and length > 0) | map(
+            require(type == "object")
+            | require(.label | type == "string" and length > 0)
+            | require((has("description") | not) or (.description | type == "string"))))
+      end))
+' <<<"$input" 2>/dev/null)"; then
+  deny "Question validation is unavailable: unsupported question payload. Supply nonempty questions and correctly typed options."
+fi
 
 # A tag is a single capitalised word in brackets, so ordinary Markdown links in
 # a description are not mistaken for one. Only the first line of a description

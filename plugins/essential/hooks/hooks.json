@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/validate-question\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/validate-question\""
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/validate-plan\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/validate-plan\""
           }
         ]
       },
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/validate-dispatch\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/validate-dispatch\""
           }
         ]
       },
@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
           }
         ]
       }
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/session-start\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/session-start\""
           }
         ]
       },
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g\" \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g\" \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
           }
         ]
       },
@@ -59,7 +59,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; if [ -n \"${PLUGIN_ROOT:-}\" ] && [ ! -f \"${CODEX_HOME:-${HOME}/.codex}/agents/tech-lead.toml\" ]; then exit 0; fi; sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g\" \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/MAINAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; if [ -n \"${PLUGIN_ROOT:-}\" ] && [ ! -f \"${CODEX_HOME:-${HOME}/.codex}/agents/tech-lead.toml\" ]; then exit 0; fi; sed \"s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g\" \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/MAINAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}'"
           }
         ]
       }
@@ -69,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/stop-first\" \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/STOP.md\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/stop-first\" \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/STOP.md\""
           }
         ]
       },
@@ -77,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/validate-plan-stop\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/validate-plan-stop\""
           }
         ]
       },
@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
           }
         ]
       }
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/subagent-start\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/subagent-start\""
           }
         ]
       },
@@ -103,7 +103,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g\" \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g\" \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
           }
         ]
       },
@@ -111,7 +111,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g\" \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/SUBAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; sed \"s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g\" \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/SUBAGENT.md\" | jq -Rs '{hookSpecificOutput:{hookEventName:\"SubagentStart\",additionalContext:.}}'"
           }
         ]
       }
@@ -121,7 +121,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
           }
         ]
       }
@@ -132,7 +132,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
           }
         ]
       }

@@ -10,7 +10,7 @@ set -euo pipefail
 # retries on the next stop instead of spending the session's one shot.
 # Compatible with bash 3.2+
 
-root="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}"
+root="${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}"
 if [ -z "$root" ]; then
   echo "plugin root unset" >&2
   exit 1

@@ -58,13 +58,14 @@ developer docs. Each context-owning plugin's
 and `jq` into the user's session context:
 
 ```bash
-sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g" \
-  "${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md" \
+sed "s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g" \
+  "${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md" \
   | jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}'
 ```
 
 Claude Code sets `CLAUDE_PLUGIN_ROOT`, Codex sets `PLUGIN_ROOT`, and Grok Build sets
-`GROK_PLUGIN_ROOT`, so every path in every hook command — the `sed` replacement
+`GROK_PLUGIN_ROOT`. Codex and Grok also set a Claude compatibility alias; their
+native variables take precedence, so every path in every hook command — the `sed` replacement
 included — carries that exact anchor, quoted; this example is derived from its
 single home, `scripts/harness_contract.ts`. Anchoring on one variable alone makes the
 hook resolve nothing under another harness, and a `sed | jq` pipeline still exits 0

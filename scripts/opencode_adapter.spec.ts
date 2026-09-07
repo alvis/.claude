@@ -179,6 +179,15 @@ describe("opencode adapter manifest validation", () => {
     expect({ ...process.env }).toEqual(environmentBefore);
   });
 
+  it("should reject malformed OpenCode question input before execution", async () => {
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    await expect(hooks["tool.execute.before"](
+      { callID: "malformed-question", sessionID: "session", tool: "question" },
+      { args: { questions: [] } },
+    )).rejects.toThrow(/question/i);
+  });
+
   it("should retain allow advice until the matching result and clear it on idle", async () => {
     const { AlvisMarketplace } = await loadAdapter();
     const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });

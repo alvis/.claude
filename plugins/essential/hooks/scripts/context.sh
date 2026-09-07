@@ -25,12 +25,12 @@ EOF
 # the anchor chain in scripts/harness_contract.ts. Prints claude, codex, or
 # grok; a new harness extends this chain by one segment.
 resolve_harness() {
-  if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-    printf '%s\n' claude
-  elif [[ -n "${PLUGIN_ROOT:-}" ]]; then
+  if [[ -n "${PLUGIN_ROOT:-}" ]]; then
     printf '%s\n' codex
   elif [[ -n "${GROK_PLUGIN_ROOT:-}" ]]; then
     printf '%s\n' grok
+  elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+    printf '%s\n' claude
   else
     return 1
   fi

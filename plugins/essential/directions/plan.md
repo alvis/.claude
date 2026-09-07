@@ -27,13 +27,11 @@ evidence. [ALLAGENT.md](../hooks/ALLAGENT.md) owns mandatory gates and changed-p
 
 ## Required ingredients
 
-For low-risk conversational plans, a short statement of the verifiable goal,
-scope, material assumptions, next step, and proportionate check is sufficient;
-omit empty categories and do not create a plan artifact for formatting alone.
-
-Persisted or material plans make the following ingredients available in order.
-When another artifact owns an ingredient, give its exact path and only the
-summary needed to navigate it.
+Every presented plan, including conversational and sample plans, uses the five
+headings below in order. Keep small plans concise; do not create a plan artifact
+for formatting alone. When another artifact owns an ingredient, give its exact
+path and only the summary needed to navigate it. Progress checklists are not plan
+presentations.
 
 ### Goal
 
@@ -115,8 +113,9 @@ Goal, Requirements, and Boundary remain fixed and the owning workflow grants
 that authority. Surface any proposed contract change to its owner before
 continuing.
 
-Before handing off, approving, or executing a plan, check its risk-appropriate
-contract above: the goal is verifiable, scope and assumptions are clear, and the
-next step and validation are executable. For persisted or material plans, also
-verify that ingredients are present or linked, context is current, links resolve,
-records are directly related, and each record summary is at most 19 words.
+Before handing off, approving, or executing a plan, check that all five sections
+are present, the goal is verifiable, scope and assumptions are clear, and the
+next step and validation are executable. Verify that context is current, links
+resolve, records are directly related, and each record summary is at most 19
+words. Hook feedback requires rereading this direction and presenting the
+corrected plan; an acknowledgement does not resolve rejected plan content.
