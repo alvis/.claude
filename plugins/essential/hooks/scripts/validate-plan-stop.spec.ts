@@ -399,6 +399,18 @@ describe("Codex plan Stop validator", () => {
   });
 
   it.each([
+    ["record", "[]"],
+    ["response payload", '{"type":"response_item","payload":[]}'],
+  ])("should report a malformed transcript %s without a parser error", (_name, line) => {
+    const result = runHook({ lines: [line] });
+
+    expect(parseHookOutput(result)).toEqual({
+      systemMessage: expect.stringContaining(resolve(pluginRoot, "directions/plan.md")),
+    });
+    expect(result.stderr).toBe("");
+  });
+
+  it.each([
     ["claude", "plan"],
     ["grok", "plan"],
     ["codex", "default"],

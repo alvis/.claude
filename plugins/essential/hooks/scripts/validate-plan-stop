@@ -74,7 +74,7 @@ else
      ! jq -R 'select(length > 0) | fromjson' "$transcript_path" >/dev/null 2>&1; then
     stop_system_message "$unavailable_reason"
   fi
-  encoded_message="$(jq -Rr --arg turn_id "$turn_id" '
+  if ! encoded_message="$(jq -Rr --arg turn_id "$turn_id" '
     fromjson?
     | select(.type == "response_item")
     | .payload
@@ -84,7 +84,9 @@ else
     | map(select(type == "string"))
     | join("")
     | @base64
-  ' "$transcript_path" | tail -n 1)"
+  ' "$transcript_path" 2>/dev/null | tail -n 1)"; then
+    stop_system_message "$unavailable_reason"
+  fi
   if [[ -z "$encoded_message" ]]; then
     stop_system_message "$unavailable_reason"
   fi
