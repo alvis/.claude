@@ -257,6 +257,23 @@
         find("#mobile-nav").getAttribute("aria-expanded") === "false" &&
         find(".page.active").dataset.content === "quickstart",
     );
+    const originalScrollBehavior =
+      document.documentElement.style.scrollBehavior;
+    try {
+      document.documentElement.style.scrollBehavior = "auto";
+      click('#contents-links a[href="#define"]');
+      // Hash navigation schedules its target after the page has been activated.
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const targetTop = find("#define").getBoundingClientRect().top;
+      const headerBottom = find(".topbar").getBoundingClientRect().bottom;
+      check(
+        "contents navigation keeps heading visible below sticky header",
+        targetTop >= headerBottom && targetTop < window.innerHeight,
+      );
+    } finally {
+      document.documentElement.style.scrollBehavior = originalScrollBehavior;
+    }
     const clipboardDescriptor = Object.getOwnPropertyDescriptor(
       navigator,
       "clipboard",

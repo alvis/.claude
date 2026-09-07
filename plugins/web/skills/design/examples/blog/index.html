@@ -326,34 +326,6 @@
         padding: 0.4rem 0.6rem 0 0;
         color: var(--ui-action);
       }
-      .pullquote {
-        margin: var(--space-6) 0;
-        padding: var(--space-3) 0;
-        border-block: 1px solid var(--ui-action);
-        font:
-          italic 2rem/1.25 Georgia,
-          serif;
-        color: var(--ui-action);
-      }
-      .figure {
-        margin: var(--space-4) 0;
-      }
-      .figure-art {
-        height: 20rem;
-        background: linear-gradient(
-          135deg,
-          var(--ui-action) 0 30%,
-          var(--ui-wash) 30% 65%,
-          var(--ui-ink) 65%
-        );
-      }
-      figcaption {
-        font:
-          0.82rem/1.5 system-ui,
-          sans-serif;
-        color: var(--ui-muted);
-        margin-top: 0.5rem;
-      }
       .back {
         display: block;
         margin: var(--space-3) auto 0;
@@ -430,9 +402,6 @@
         }
         .article-body {
           font-size: 1rem;
-        }
-        .figure-art {
-          height: 13rem;
         }
       }
       @media (max-width: 360px) {
@@ -525,117 +494,18 @@
           ← Back to journal
         </button>
         <header class="article-header">
-          <p class="topic" id="article-topic">Craft · Field essay</p>
-          <h1 id="article-title" tabindex="-1">
-            The patient work of making a place
-          </h1>
-          <p class="article-deck" id="article-deck">
-            A visit to a small civic workshop asks what changes when repair
-            becomes a public ritual.
-          </p>
-          <p class="byline" id="article-byline">
-            By Rowan Hale · Published 4 September 2026 · Updated 6 September
-            2026 · 7 min read
-          </p>
+          <p class="topic" id="article-topic"></p>
+          <h1 id="article-title" tabindex="-1"></h1>
+          <p class="article-deck" id="article-deck"></p>
+          <p class="byline" id="article-byline"></p>
         </header>
         <div class="article-layout">
           <nav
             class="contents"
             id="article-contents"
             aria-label="Article contents"
-          >
-            <strong>In this essay</strong
-            ><a href="#threshold">At the threshold</a
-            ><a href="#tools">Tools in common</a
-            ><a href="#measure">A different measure</a>
-          </nav>
-          <div class="article-body" id="article-body">
-            <p>
-              The first sound is not a saw or a drill. It is the soft exchange
-              of names. On Saturday mornings, people bring chairs with loose
-              joints, lamps with uncertain switches, and objects that have
-              outlived the instructions they arrived with. The workshop begins
-              by asking what each thing means to its keeper.
-            </p>
-            <h2 id="threshold">At the threshold</h2>
-            <p>
-              The building sits between a library and a bus stop, ordinary
-              enough to miss. Its largest window has been kept clear. Passers-by
-              can see work benches, careful hands, and the long pauses when a
-              repair resists an easy answer. That visibility changes the room
-              from a private service into a shared invitation.
-            </p>
-            <p>
-              The organizers call this the threshold: the moment a person
-              decides they know enough to enter, even if they do not know enough
-              to fix what they carry. Labels on the door name the day’s
-              materials in plain language. A low bench near the entrance lets a
-              visitor watch before committing.
-            </p>
-            <figure class="figure">
-              <div
-                class="figure-art"
-                role="img"
-                aria-label="Abstract sample illustration in rust, paper, and ink bands"
-              ></div>
-              <figcaption>
-                Sample illustration: the workshop’s long table interpreted as
-                three fields of shared attention.
-              </figcaption>
-            </figure>
-            <h2 id="tools">Tools in common</h2>
-            <p>
-              Tools are arranged by task rather than prestige. Measuring,
-              holding, opening, joining: each station begins with a verb.
-              Experienced volunteers work from the same drawers as first-time
-              visitors, removing the quiet hierarchy created by a locked cabinet
-              or an unexplained machine.
-            </p>
-            <blockquote class="pullquote">
-              The useful object is only half the outcome. The other half is a
-              person who knows where to begin next time.
-            </blockquote>
-            <p>
-              No repaired object leaves without a small handwritten record of
-              what changed. These notes are deliberately incomplete. They name
-              the fault, the choice made, and one thing to watch. They do not
-              pretend that a single successful afternoon creates certainty.
-            </p>
-            <h2 id="measure">A different measure</h2>
-            <p>
-              The workshop counts visits and completed repairs, but those
-              numbers sit beside another ledger: returned tools, introductions
-              made, skills offered, and questions still open. The result is less
-              a score than a portrait of capacity moving through a neighborhood.
-            </p>
-            <p>
-              This is sample editorial content written for the interface
-              demonstration. It does not document a real organization or provide
-              repair advice.
-            </p>
-            <aside class="newsletter">
-              <h2>Letters from the margin</h2>
-              <p>
-                Demonstrate the subscription response without sending or storing
-                an address.
-              </p>
-              <form id="subscribe">
-                <label for="email" class="topic">Email address</label
-                ><input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="reader@example.com"
-                /><button type="submit">Preview subscription</button>
-              </form>
-              <p
-                class="form-status"
-                id="subscribe-status"
-                role="status"
-                aria-live="polite"
-              ></p>
-            </aside>
-          </div>
+          ></nav>
+          <div class="article-body" id="article-body"></div>
         </div>
       </article>
     </main>
@@ -915,9 +785,6 @@
           : "Enter an email in the form name@example.com to preview the response.";
         if (!input.validity.valid) input.focus();
       }
-      document
-        .getElementById("subscribe")
-        .addEventListener("submit", previewSubscription);
       render();
     </script>
   </body>
