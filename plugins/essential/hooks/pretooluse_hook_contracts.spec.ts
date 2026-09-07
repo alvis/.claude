@@ -211,7 +211,7 @@ describe("PreToolUse hook wiring", () => {
   it.each(matrix)(
     "should emit the native allow envelope for %s resolved through %s",
     (matcher, variable) => {
-      const output = runHook(matcher, {}, variable);
+      const output = runHook(matcher, matcher === questions ? question({ label: "Proceed [Recommended]", description: "Continue validation." }) : {}, variable);
       if (variable === "GROK_PLUGIN_ROOT") expectGrokAllow(output);
       else expectAllowed(output);
     },
@@ -238,20 +238,19 @@ describe("PreToolUse hook wiring", () => {
         ? grokDenialReason(denied)
         : denialReason(denied);
       expect(reason).toContain(violationFragments[matcher]!);
-      const passed = runCamelHook(matcher, {}, variable);
+      const passed = runCamelHook(matcher, matcher === questions ? question({ label: "Proceed [Recommended]", description: "Continue validation." }) : {}, variable);
       if (isGrok) expectGrokAllow(passed);
       else expectAllowed(passed);
     },
   );
 
   it("should resolve two set harness variables by chain precedence", () => {
-    // The grok envelope would appear if grok outranked the winner.
-    expectAllowed(
-      runHookWithVariables(questions, {}, {
-        CLAUDE_PLUGIN_ROOT: plugin,
-        GROK_PLUGIN_ROOT: "/plugins/grok",
+    expect(grokDenialReason(
+      runHookWithVariables(questions, violations[questions]!, {
+        CLAUDE_PLUGIN_ROOT: "/plugins/claude-compatibility",
+        GROK_PLUGIN_ROOT: plugin,
       }),
-    );
+    )).toContain("Consolidate purchasing");
     expectAllowed(
       runHookWithVariables(plans, {}, {
         PLUGIN_ROOT: plugin,
@@ -262,6 +261,37 @@ describe("PreToolUse hook wiring", () => {
 });
 
 describe("question validator", () => {
+  it.each([
+    ["tagged strings", { questions: [{ title: "Choose a route", options: ["Ship [Recommended]", "Wait [Pragmatic]"] }] }],
+    ["free text", { questions: [{ title: "What constraint must we preserve?" }] }],
+  ])("should accept async %s questions", (_name, toolInput) => {
+    const entry = hooks.hooks.PreToolUse.find(({ matcher }) => new RegExp(matcher).test("request_user_input_async") && matcher !== ".*");
+    expect(entry).toBeDefined();
+    const completed = spawnSync("bash", ["-c", entry!.hooks[0]!.command], {
+      encoding: "utf8",
+      env: harnessEnvironment("PLUGIN_ROOT"),
+      input: JSON.stringify({ tool_name: "request_user_input_async", tool_input: toolInput }),
+    });
+    expect(completed.status, completed.stderr).toBe(0);
+    expectAllowed(JSON.parse(completed.stdout));
+  });
+
+  it.each([{}, { questions: [] }, { questions: "invalid" }, { questions: [{ question: "Choose?", options: [42] }] }])(
+    "should deny malformed question payload %j",
+    (input) => expect(denialReason(runHook(questions, input))).toBeTruthy(),
+  );
+
+  it.each(HARNESS_ROOT_VARIABLES)("should deny missing question envelopes under %s", (variable) => {
+    const completed = spawnSync("bash", ["-c", commandFor(questions)], {
+      encoding: "utf8",
+      env: harnessEnvironment(variable),
+      input: JSON.stringify({ tool_name: "request_user_input" }),
+    });
+    expect(completed.status, completed.stderr).toBe(0);
+    const output = JSON.parse(completed.stdout) as Envelope;
+    expect(variable === "GROK_PLUGIN_ROOT" ? grokDenialReason(output) : denialReason(output)).toBeTruthy();
+  });
+
   it("should deny an option without a tag and name every valid tag", () => {
     const reason = denialReason(
       runHook(
@@ -517,8 +547,6 @@ describe("dispatch validator", () => {
 
 describe("fail-open behavior", () => {
   it.each([
-    [questions, {}],
-    [questions, { questions: [] }],
     [plans, {}],
     [dispatch, {}],
     [plans, { plan: [{ step: "audit", status: "pending" }] }],
@@ -527,7 +555,7 @@ describe("fail-open behavior", () => {
     expectAllowed(runHook(matcher, input)),
   );
   it.each(matrix)(
-    "should fail open identically on malformed stdin for %s under %s",
+    "should report malformed stdin for %s under %s",
     (matcher, variable) => {
       const completed = spawnSync("bash", ["-c", commandFor(matcher)], {
         encoding: "utf8",
@@ -536,8 +564,24 @@ describe("fail-open behavior", () => {
       });
       expect(completed.status, completed.stderr).toBe(0);
       const output = JSON.parse(completed.stdout) as Envelope;
-      if (variable === "GROK_PLUGIN_ROOT") expectGrokAllow(output);
+      if (matcher === questions || matcher === plans) {
+        expect(variable === "GROK_PLUGIN_ROOT" ? grokDenialReason(output) : denialReason(output)).toBeTruthy();
+      } else if (variable === "GROK_PLUGIN_ROOT") expectGrokAllow(output);
       else expectAllowed(output);
     },
   );
+});
+
+
+describe("unconditional validation", () => {
+  it.each(HARNESS_ROOT_VARIABLES)("should reject malformed plans and questions despite the retired validation switch under %s", (variable) => {
+    for (const [matcher, toolInput] of [[plans, { plan: "incomplete" }], [questions, { questions: [] }]] as const) {
+      const output = runHookWithVariables(matcher, toolInput, {
+        [variable]: plugin,
+        ESSENTIAL_VALIDATION_ENABLED: "0",
+      });
+
+      expect(variable === "GROK_PLUGIN_ROOT" ? grokDenialReason(output) : denialReason(output)).toBeTruthy();
+    }
+  });
 });

@@ -1,8 +1,22 @@
-# Scanner architecture
+# Marketplace architecture
+
+The marketplace shares a native harness contract across Claude Code, Codex, and Grok Build; OpenCode V1 consumes a generated adapter projection. The coding plugin also provides an advisory review scanner.
+
+## Native harness resolution
+
+[`scripts/harness_contract.ts`](scripts/harness_contract.ts) owns root-variable precedence; hook commands and Essential's [`resolve_harness`](plugins/essential/hooks/scripts/context.sh) derive their order from it. Native Codex and Grok variables precede the Claude compatibility alias.
+
+Shell fallback expansion selects the first nonempty variable, not the first distinct path. Codex can set both `PLUGIN_ROOT` and `CLAUDE_PLUGIN_ROOT` to the same directory. Either order then locates the plugin, but a resolver that checks Claude first labels the session `claude`. The Codex-only [`validate-plan-stop`](plugins/essential/hooks/scripts/validate-plan-stop) consequently exits 0 before validation, producing no corrective feedback. Grok's compatibility alias can similarly select the wrong feedback envelope.
+
+A path-only reorder does not repair harness identification. Keep the canonical contract, identity resolver, and derived consumers aligned. Regression coverage must exercise native-only environments and native variables alongside Claude aliases, asserting harness identity and emitted feedback—not just the resolved directory. Existing executable coverage lives in [native hook contracts](plugins/essential/hooks/pretooluse_hook_contracts.spec.ts) and [Codex Stop contracts](plugins/essential/hooks/scripts/validate-plan-stop.spec.ts).
+
+OpenCode V1 remains an adapter, not another native fallback. Its projected hook-child environment is isolated from native harness identity; support limits belong in [COMPATIBILITY.md](COMPATIBILITY.md).
+
+## Advisory scanner
 
 The coding plugin ships an advisory scanner that finds mechanically recognizable review candidates before semantic lint or code review. It never decides that code violates a standard: candidate counts do not affect the status of a completed scan, and a human or reviewing agent must confirm each candidate against the referenced rule guide.
 
-## Components
+### Components
 
 ```text
 plugins/coding/scripts/
@@ -22,7 +36,7 @@ plugins/coding/scripts/
 - **Rule modules** (`plugins/coding/scripts/scanners/*.ts`): recognize one mechanically detectable candidate shape and append `Match` values.
 - **Test suite** (`plugins/coding/scripts/scanlib/core.spec.ts`): exercises rule behavior directly and uses golden fixtures where the rendered command-line interface is the behavior under test.
 
-## Pipeline
+### Pipeline
 
 ```mermaid
 flowchart LR
@@ -43,7 +57,7 @@ flowchart LR
 
 Candidate generation and violation decisions are deliberately separate. A scanner may trade precision for recall when its label and rule guide make the review requirement explicit. For example, the `TST-CORE-10` scanner flags static file reads in test files because they often precede assertions over checked-in prose; reading a generated output file can be valid and must be dismissed after review.
 
-## Invocation lifecycle
+### Invocation lifecycle
 
 ```mermaid
 sequenceDiagram
@@ -65,7 +79,7 @@ sequenceDiagram
     Reviewer-->>Caller: confirmed findings or dismissals
 ```
 
-## Extension interfaces
+### Extension interfaces
 
 Every scanner module exports `RULE` or `RULES`. The loader discovers modules automatically, so adding a scanner requires no dispatcher edit.
 
@@ -95,7 +109,7 @@ The interfaces are:
 
 `scan` functions must not edit files, execute project code, or raise findings. They append candidates only. The engine catches file-read errors, isolates module import failures, and returns zero after a completed scan regardless of its match count. Invalid arguments and other operational failures remain errors.
 
-## Command-line contract
+### Command-line contract
 
 ```text
 bun run scanlib/core.ts [paths ...]
@@ -107,7 +121,7 @@ bun run scanlib/core.ts [paths ...]
 
 Paths may name files or directories. The engine scans supported JavaScript, TypeScript, Python, and Rust suffixes while excluding generated, dependency, cache, coverage, and version-control directories. Output is grouped by rule, includes source context, and ends with match and file counts.
 
-## Adding a scanner
+### Adding a scanner
 
 1. Add one kebab-case TypeScript module under `plugins/coding/scripts/scanners` that exports a `Rule`.
 2. Reuse or add a narrow predicate in `plugins/coding/scripts/scanlib/predicates.ts`.

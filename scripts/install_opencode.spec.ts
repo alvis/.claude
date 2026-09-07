@@ -531,7 +531,7 @@ describe("projection inventory", () => {
                   {
                     type: "command",
                     command:
-                      '"${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/scripts/mystery"',
+                      '"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/mystery"',
                   },
                 ],
               },

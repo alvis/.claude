@@ -6,7 +6,7 @@
 - Classify size from the exact committed base/head diff.
 - Keep public shape with its first implementation; separate migrations and
   mechanical work, and exclude temporary and generated artifacts except package lockfiles.
-- Gate nontrivial behavior with a feature flag.
+- Use existing feature-flag support when project rollout requirements call for it.
 - Fix each violation in the implementation diff or rendered PR message that
   owns it.
 - Follow [coding:commit](../../skills/commit/SKILL.md) for commit, branch, and
@@ -39,7 +39,7 @@
 
 ### Behavior Gating (`GIT-PR-STACK`)
 
-- **GIT-PR-STACK-04**: Gate nontrivial behavior and document the flag.
+- **GIT-PR-STACK-04**: Apply flags only in projects with implemented support; document flags changed by the PR.
 
 ## Canonical Outputs
 
@@ -69,6 +69,6 @@
 2. Reviewing a diff? Classify its exact size (`GIT-PR-SIZE-*`).
 3. Does the implementation strand public shape, mix migrations or mechanical
    work, or retain temporary or prohibited generated artifacts? Apply `GIT-PR-TYPE-02..05`.
-4. Does it add nontrivial behavior? Verify its feature flag
-   (`GIT-PR-STACK-04`).
+4. Does the project have implemented feature-flag support? Apply its rollout
+   requirements and document changed flags (`GIT-PR-STACK-04`).
 5. Found a violation? Fix the owning diff or message and rescan.

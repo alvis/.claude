@@ -25,8 +25,9 @@ Syntax alone cannot establish these findings.
   retained in the head. Deletions of prohibited artifacts are compliant. A declaration that is itself a complete type-level implementation and
   a standalone initialization whose requested result is the runnable or
   buildable baseline are complete rather than stranded.
-- `GIT-PR-STACK-04` — Inspect the implementation diff for nontrivial behavior
-  lacking a feature flag.
+- `GIT-PR-STACK-04` — First verify implemented feature-flag support in the target
+  project. Then inspect changed flags and project-required rollout controls
+  against [the rule](rules/GIT-PR-STACK-04.md); never require new flag infrastructure.
 
 Do not report commit messages, branch names, PR titles, draft state, labels,
 stack position, history mutation, or merge order as standard violations. They
@@ -45,7 +46,7 @@ are directions in [coding:commit](../../skills/commit/SKILL.md) and the
 - DO NOT mix migrations with logic or omit migration rollback evidence [`GIT-PR-TYPE-03`]
 - DO NOT mix mechanical refactors with behavior changes [`GIT-PR-TYPE-04`]
 - DO NOT retain temporary files or generated artifacts except package lockfiles [`GIT-PR-TYPE-05`]
-- DO NOT ship nontrivial behavior without a feature flag or its required message evidence [`GIT-PR-STACK-04`]
+- DO NOT omit a changed flag's runtime consumer or PR evidence in a project with implemented flag support [`GIT-PR-STACK-04`]
 
 ## Rule Matrix
 
@@ -60,4 +61,4 @@ are directions in [coding:commit](../../skills/commit/SKILL.md) and the
 | `GIT-PR-TYPE-03` | Migration mixed with logic or missing rollback | Schema and business rule together |
 | `GIT-PR-TYPE-04` | Mechanical and behavioral changes mixed | Rename plus new method |
 | `GIT-PR-TYPE-05` | Temporary or prohibited generated artifacts | Generated client retained in the head |
-| `GIT-PR-STACK-04` | Nontrivial behavior lacks a flag or evidence | Ungated pricing-engine replacement |
+| `GIT-PR-STACK-04` | Changed flag lacks a consumer or evidence | Rollout flag documented but never evaluated |

@@ -9,9 +9,10 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=/dev/null
 source "$SCRIPTS_DIR/context.sh"
+DIRECTIONS_DIR="$(cd "$SCRIPTS_DIR/../../directions" && pwd)"
 
 deny() {
-  output_pretooluse_decision "deny" "$1"
+  output_pretooluse_decision "deny" "$1 Read $DIRECTIONS_DIR/plan.md before correcting the plan."
 }
 
 allow() {
@@ -21,8 +22,8 @@ allow() {
 
 input=$(cat)
 
-if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
-  allow
+if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then
+  deny "Plan validation is unavailable: expected a JSON object."
 fi
 
 harness="$(resolve_harness)" || {
@@ -31,6 +32,9 @@ harness="$(resolve_harness)" || {
 }
 tool_name="$(jq -r '.tool_name // .toolName // empty' <<<"$input")"
 tool_input="$(jq -c '.tool_input // .toolInput // {}' <<<"$input")"
+if ! jq -e 'type == "object"' <<<"$tool_input" >/dev/null; then
+  deny "Plan validation is unavailable: tool input must be an object."
+fi
 plan_path=""
 
 # Grok reads the session plan rather than accepting model-supplied plan prose.

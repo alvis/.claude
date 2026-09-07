@@ -58,15 +58,23 @@ developer docs. Each context-owning plugin's
 and `jq` into the user's session context:
 
 ```bash
-sed "s|{{PLUGIN_DIR}}|${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}|g" \
-  "${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md" \
+sed "s|{{PLUGIN_DIR}}|${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}|g" \
+  "${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/ALLAGENT.md" \
   | jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}'
 ```
 
 Claude Code sets `CLAUDE_PLUGIN_ROOT`, Codex sets `PLUGIN_ROOT`, and Grok Build sets
-`GROK_PLUGIN_ROOT`, so every path in every hook command — the `sed` replacement
+`GROK_PLUGIN_ROOT`. Codex and Grok also set a Claude compatibility alias; their
+native variables take precedence, so every path in every hook command — the `sed` replacement
 included — carries that exact anchor, quoted; this example is derived from its
-single home, `scripts/harness_contract.ts`. Anchoring on one variable alone makes the
+single home, `scripts/harness_contract.ts`. Preserve its precedence in
+`resolve_harness` too: these variables select harness identity as well as a path.
+A Claude compatibility alias can point to the correct directory while identifying
+Codex as Claude, making its Codex-only Stop validator exit 0 without feedback.
+Test identity and feedback with native and compatibility variables set together;
+path resolution alone cannot detect this failure. See
+[Native harness resolution](ARCHITECTURE.md#native-harness-resolution).
+Anchoring on one variable alone makes the
 hook resolve nothing under another harness, and a `sed | jq` pipeline still exits 0
 while emitting nothing. Quoting is equally load-bearing:
 the anchor expands to a path the user chose, so an unquoted expansion word-splits on
@@ -146,6 +154,10 @@ illustrative. That exemption is by directory, never by filename — a file merel
 *named* like a template is still checked.
 
 ## Design invariants
+
+This repository does not use runtime feature flags. Coding's reusable feature-flag
+standards and PR tooling apply to target projects with implemented flag support;
+do not add switches to this marketplace to satisfy those standards.
 
 These plugins are built to one model of how knowledge ages:
 `plugins/essential/references/truth.md`. Read it before changing how a skill records,

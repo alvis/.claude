@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -61,17 +61,23 @@ function createAssistantMessage(
 
 function runHook({
   active = false,
+  eventInput,
+  compatibilityRoot = false,
   environment = "codex",
   lines = [createAssistantMessage(turnId, validPlan)],
   permissionMode = "bypassPermissions",
+  selectedPluginRoot = pluginRoot,
   lastAssistantMessage,
   runtimeRoot,
   transcriptPath,
 }: {
   readonly active?: boolean;
+  readonly eventInput?: string;
+  readonly compatibilityRoot?: boolean;
   readonly environment?: "claude" | "codex" | "grok";
   readonly lines?: readonly string[];
   readonly permissionMode?: string;
+  readonly selectedPluginRoot?: string;
   readonly lastAssistantMessage?: string;
   readonly runtimeRoot?: string;
   readonly transcriptPath?: string;
@@ -94,12 +100,14 @@ function runHook({
         : environment === "grok"
           ? "GROK_PLUGIN_ROOT"
           : "PLUGIN_ROOT"
-    ] = pluginRoot;
+    ] = selectedPluginRoot;
+
+    if (compatibilityRoot) environmentVariables.CLAUDE_PLUGIN_ROOT = pluginRoot;
 
     return spawnSync("/bin/bash", ["-c", stopCommand], {
       encoding: "utf8",
       env: environmentVariables,
-      input: JSON.stringify({
+      input: eventInput ?? JSON.stringify({
         last_assistant_message: lastAssistantMessage,
         hook_event_name: "Stop",
         permission_mode: permissionMode,
@@ -122,6 +130,63 @@ function parseHookOutput(
 }
 
 describe("Codex plan Stop validator", () => {
+  it("should direct malformed Stop events to the resolved plan instructions", () => {
+    expect(parseHookOutput(runHook({ eventInput: "not json" }))).toEqual({
+      systemMessage: expect.stringContaining(resolve(pluginRoot, "directions/plan.md")),
+    });
+  });
+
+  it.each([
+    ["array", "[]"],
+    ["string", '"invalid"'],
+    ["malformed denial", '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":42}}'],
+    ["multiple records", '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":""}}\n{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":""}}'],
+  ])("should report unavailable validation for an inner %s response", (_name, output) => {
+    const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-inner-"));
+    try {
+      const selectedPluginRoot = resolve(root, "essential");
+      cpSync(pluginRoot, selectedPluginRoot, { recursive: true });
+      writeFileSync(resolve(selectedPluginRoot, "hooks/scripts/validate-plan"), `#!/usr/bin/env bash\ncat <<'VALIDATOR_RESPONSE'\n${output}\nVALIDATOR_RESPONSE\n`);
+      const decision = parseHookOutput(runHook({ runtimeRoot: root, selectedPluginRoot, lastAssistantMessage: validPlan }));
+      expect(decision).toEqual({
+        decision: "block",
+        reason: expect.stringContaining("Plan validation is unavailable"),
+      });
+      expect(decision.reason).toContain(resolve(selectedPluginRoot, "directions/plan.md"));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("should reject invalid plans with Codex's Claude compatibility root", () => {
+    expect(parseHookOutput(runHook({ compatibilityRoot: true, lastAssistantMessage: "<proposed_plan>" })).decision).toBe("block");
+  });
+
+  it("should keep rejected plans pending across an ordinary acknowledgement", () => {
+    const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-pending-"));
+    try {
+      expect(parseHookOutput(runHook({ runtimeRoot: root, lastAssistantMessage: "<proposed_plan>" })).decision).toBe("block");
+      const result = parseHookOutput(runHook({ active: true, runtimeRoot: root, lastAssistantMessage: "No state update is needed." }));
+      expect(result.continue).toBe(false);
+      expect(result.stopReason).toContain("Plan validation still failed");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("should clear pending rejection after a valid correction", () => {
+    const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-cleared-"));
+    try {
+      expect(parseHookOutput(runHook({ runtimeRoot: root, lastAssistantMessage: "<proposed_plan>" })).decision).toBe("block");
+      const corrected = runHook({ active: true, runtimeRoot: root, lastAssistantMessage: validPlan });
+      expect(corrected.status, corrected.stderr).toBe(0);
+      expect(corrected.stdout).toBe("");
+      expect(parseHookOutput(runHook({ active: true, runtimeRoot: root, lastAssistantMessage: "<proposed_plan>" })).decision).toBe("block");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("should allow a valid plan from the current turn", () => {
     const result = runHook();
     expect(result.status, result.stderr).toBe(0);
@@ -156,6 +221,7 @@ describe("Codex plan Stop validator", () => {
     expect(decision.reason).toContain(
       "exactly one complete <proposed_plan> block",
     );
+    expect(decision.reason).toContain(resolve(pluginRoot, "directions/plan.md"));
   });
 
   it("should use the newest plan for the current turn only", () => {
@@ -322,6 +388,7 @@ describe("Codex plan Stop validator", () => {
       systemMessage: expect.stringContaining("Plan validation is unavailable"),
     });
     expect(decision.systemMessage).not.toContain(transcriptPath);
+    expect(decision.systemMessage).toContain(resolve(pluginRoot, "directions/plan.md"));
   });
 
   it("should report malformed transcript JSON as unavailable", () => {
@@ -329,6 +396,18 @@ describe("Codex plan Stop validator", () => {
     expect(decision).toEqual({
       systemMessage: expect.stringContaining("Plan validation is unavailable"),
     });
+  });
+
+  it.each([
+    ["record", "[]"],
+    ["response payload", '{"type":"response_item","payload":[]}'],
+  ])("should report a malformed transcript %s without a parser error", (_name, line) => {
+    const result = runHook({ lines: [line] });
+
+    expect(parseHookOutput(result)).toEqual({
+      systemMessage: expect.stringContaining(resolve(pluginRoot, "directions/plan.md")),
+    });
+    expect(result.stderr).toBe("");
   });
 
   it.each([

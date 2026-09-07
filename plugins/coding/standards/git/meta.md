@@ -54,4 +54,4 @@ not this exception policy.
 - `GIT-PR-02`: Rendered PR-message conformance.
 - `GIT-PR-SIZE-*`: Diff-size inputs, zones, evidence, and approval gates.
 - `GIT-PR-TYPE-02..05`: Atomic feature composition, migration and mechanical separation, and generated-output marking.
-- `GIT-PR-STACK-04`: Feature-flag coverage for nontrivial behavior changes.
+- `GIT-PR-STACK-04`: Existing feature-flag support and changed-flag evidence.

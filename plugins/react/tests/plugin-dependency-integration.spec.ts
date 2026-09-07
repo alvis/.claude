@@ -76,7 +76,7 @@ describe.skipIf(claude === undefined)(
         readFileSync(join(pluginRoot, "hooks/hooks.json"), "utf8"),
       ) as HooksDocument;
       const substitutions: readonly (readonly [string, string])[] = [
-        ["${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-}}}", pluginRoot],
+        ["${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}", pluginRoot],
         [PLUGIN_ROOT_ANCHOR, pluginRoot],
         ["${HOME}", process.env.HOME!],
       ];

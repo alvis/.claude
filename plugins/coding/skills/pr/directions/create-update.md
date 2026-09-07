@@ -24,6 +24,10 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 
 ### Select the PR archetype
 
+Select `feature-flag` only when the target project has implemented flag support
+and this change implements or modifies a flag. A template section or PR size
+does not establish project support or authorize adding it.
+
 For each head, choose the `--archetype` value accepted by `scripts/scan-pr-message.ts` that best describes its implementation surface. This controls conditional body evidence and scanner behavior only; repository labels come only from the receiving repository's live inventory below.
 
 ## Boundaries
