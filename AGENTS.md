@@ -67,7 +67,14 @@ Claude Code sets `CLAUDE_PLUGIN_ROOT`, Codex sets `PLUGIN_ROOT`, and Grok Build 
 `GROK_PLUGIN_ROOT`. Codex and Grok also set a Claude compatibility alias; their
 native variables take precedence, so every path in every hook command — the `sed` replacement
 included — carries that exact anchor, quoted; this example is derived from its
-single home, `scripts/harness_contract.ts`. Anchoring on one variable alone makes the
+single home, `scripts/harness_contract.ts`. Preserve its precedence in
+`resolve_harness` too: these variables select harness identity as well as a path.
+A Claude compatibility alias can point to the correct directory while identifying
+Codex as Claude, making its Codex-only Stop validator exit 0 without feedback.
+Test identity and feedback with native and compatibility variables set together;
+path resolution alone cannot detect this failure. See
+[Native harness resolution](ARCHITECTURE.md#native-harness-resolution).
+Anchoring on one variable alone makes the
 hook resolve nothing under another harness, and a `sed | jq` pipeline still exits 0
 while emitting nothing. Quoting is equally load-bearing:
 the anchor expands to a path the user chose, so an unquoted expansion word-splits on

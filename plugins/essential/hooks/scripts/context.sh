@@ -24,6 +24,8 @@ EOF
 # Resolve the harness whose plugin-root variable fired, in the same order as
 # the anchor chain in scripts/harness_contract.ts. Prints claude, codex, or
 # grok; a new harness extends this chain by one segment.
+# Native variables must beat Claude compatibility aliases even when paths match:
+# Claude-first would misidentify Codex and silently skip its Stop validator.
 resolve_harness() {
   if [[ -n "${PLUGIN_ROOT:-}" ]]; then
     printf '%s\n' codex

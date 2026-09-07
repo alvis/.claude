@@ -1,4 +1,10 @@
-/** shell parameter expansion resolving the installed plugin root across Claude Code, Codex, and Grok Build */
+/**
+ * native roots must precede Claude's compatibility alias: Codex and Grok set both
+ * the first nonempty variable determines harness identity as well as the path
+ * checking Claude first can resolve the correct directory but misidentify Codex as Claude,
+ * causing its Codex-only Stop validator to exit successfully without feedback
+ * keep resolve_harness in Essential's context.sh and derived consumers aligned
+ */
 export const PLUGIN_ROOT_ANCHOR =
   "${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}";
 
