@@ -1,42 +1,44 @@
-# GIT-PR-TYPE-05: Isolate or Mark Generated Output
+# GIT-PR-TYPE-05: Submit Only Durable Source and Package Lockfiles
 
 ## Severity
 
-warning
+error
 
 ## Intent
 
-Generated artifacts coupled to an implementing feature stay in that atomic
-feature diff. Every generated path is identifiable as generated and the
-rendered PR message names its source or generator, so reviewers can distinguish
-authored logic from derived output. Unrelated generated output is isolated.
+Every submitted file serves a durable purpose: production code, tests,
+configuration, documentation, skills, templates, or static assets. Temporary
+files and generated artifacts do not ship; package lockfiles are the only
+generated-artifact exception.
 
 ## Scan
 
-Compare the classifier's generated paths with the implementation diff, Git
-attributes, and the rendered Generated Files section. Report unmarked paths,
-missing source or generator evidence, or generated output mixed with unrelated
-authored changes. Do not report coupled generated contract output merely for
-shipping with the feature that implements it.
+Inspect every changed path and its purpose in the head revision, including
+files the classifier does not recognize as generated. Report temporary files,
+files without a durable purpose, and generated artifacts other than package
+lockfiles. Deleting a prohibited artifact is compliant.
+
+Compare the classifier's generated paths with the diff and Generated Files
+section. The message scanner checks path evidence, not whether a changed path
+survives in the head; semantic review owns the prohibition and deletion check.
 
 ## Fix
 
-Keep coupled generated output with its implementing feature and mark every
-generated path and its source or generator in the selected PR message. Move
-only unrelated generated output into a focused diff. Configure
-`linguist-generated=true` when the repository supports it, without excluding
-the path from the PR file count.
+Remove prohibited artifacts from the submitted head. Keep generated output in
+ignored build/cache locations and retain its source or generator when needed.
+Keep package lockfiles with the change that needs them. In Generated Files,
+name each changed generated path and its source or generator; identify deleted
+artifacts as removed so cleanup is distinguishable from shipped output.
 
 ## Edge Cases
 
-- A path that humans edit and review as source is authored even if a tool
-  originally created it.
-- Lockfiles remain in the file count while their additions and deletions are
-  excluded from authored net LOC.
-- Snapshot-only changes may remain together when they are one reproducible
-  generated surface.
-- A public schema, its generated client, and the endpoint that implements it
-  form one atomic feature surface; mark the generated client paths.
+- A file maintained and reviewed as source is authored even if a tool
+  originally created it. Manually maintained manifests and projections qualify.
+- Generated snapshots, clients, bundles, and reports remain prohibited even
+  when coupled to the feature or useful to a reviewer; use reproducible checks
+  and external review evidence instead.
+- Package lockfiles remain in the file count while their additions and
+  deletions are excluded from authored net LOC.
 
 ## Related
 

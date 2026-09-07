@@ -62,8 +62,8 @@ Substitution rules:
   section header (`## ...`) and body to be omitted from the rendered output.
 - Every guidance comment is author-facing and MUST be stripped from the
   rendered body, including this block.
-- Verification is required: it is never dropped, even when every item is still
-  unticked.
+- Verification is required: standards checks are green before submission;
+  reviewer and hosted-CI tasks may remain unticked until their gates run.
 - Zone-required placeholders are never dropped or filled with generic stubs.
 - Remove `[ Optional ]` from every included section heading in rendered output.
 - Output MUST be byte-stable for the same input map (deterministic ordering,
@@ -101,8 +101,8 @@ Substitution rules:
 ## 🛠️ Implementation [ Optional ]
 
 <!-- features or behavior implemented and how the solution was achieved;
-     trade-offs, architectural choices, and design patterns; evidence and
-     results belong here, not in Verification -->
+     trade-offs, architectural choices, and design patterns; verification
+     results belong with their checks in Verification -->
 {{implementation_body}}
 
 ## 💥 Breaking Changes [ Optional ]
@@ -131,7 +131,8 @@ Substitution rules:
 ## 🏭 Generated Files [ Optional ]
 
 <!-- every generated path plus its source or generator; required whenever any
-     generated files exist even when platform metadata collapses their diffs -->
+     generated files exist; distinguish allowed package lockfiles from removed
+     artifacts, since no other generated output may remain in the head -->
 {{generated_files_body}}
 
 ## ⚠️ Risk [ Optional ]
@@ -154,7 +155,11 @@ Substitution rules:
 ## 🧪 Verification
 
 <!-- checks that must pass before sign-off, specific to this change, ticked as
-     each one is confirmed; a check, never a result or an observation.
+     each one is confirmed, with its result and supporting evidence.
+     Name every applicable standard, its green scan/review result, exact
+     head/base OIDs, and the command or semantic evidence supporting it.
+     Standards checks must be green before submission; reviewer slots may
+     remain pending until the published draft is reviewed.
      Change-specific checks are required; these standard checks supplement
      rather than replace them: tests added or updated · docs updated where
      user-visible · CI green locally · no new lint or type errors.

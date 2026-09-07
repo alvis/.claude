@@ -5,7 +5,7 @@
 - Render and scan the selected PR message template.
 - Classify size from the exact committed base/head diff.
 - Keep public shape with its first implementation; separate migrations and
-  mechanical work, and mark generated output.
+  mechanical work, and exclude temporary and generated artifacts except package lockfiles.
 - Gate nontrivial behavior with a feature flag.
 - Fix each violation in the implementation diff or rendered PR message that
   owns it.
@@ -35,7 +35,7 @@
 - **GIT-PR-TYPE-02**: Ship public shape or feature prerequisite scaffolding atomically with the first implementation that fulfills or consumes it; a declaration that is itself a complete type-level implementation and standalone initialization whose requested result is the complete runnable or buildable baseline may ship without a runtime consumer.
 - **GIT-PR-TYPE-03**: Separate migrations from logic and document rollback.
 - **GIT-PR-TYPE-04**: Separate mechanical work from behavior changes.
-- **GIT-PR-TYPE-05**: Keep coupled generated output with its feature and mark it; isolate generated output only when it is unrelated.
+- **GIT-PR-TYPE-05**: Require a durable purpose for every submitted file; remove temporary and generated artifacts except package lockfiles.
 
 ### Behavior Gating (`GIT-PR-STACK`)
 
@@ -68,7 +68,7 @@
 1. Authoring a PR body? Render and scan the selected message (`GIT-PR-02`).
 2. Reviewing a diff? Classify its exact size (`GIT-PR-SIZE-*`).
 3. Does the implementation strand public shape, mix migrations or mechanical
-   work, or leave generated output unmarked? Apply `GIT-PR-TYPE-02..05`.
+   work, or retain temporary or prohibited generated artifacts? Apply `GIT-PR-TYPE-02..05`.
 4. Does it add nontrivial behavior? Verify its feature flag
    (`GIT-PR-STACK-04`).
 5. Found a violation? Fix the owning diff or message and rescan.

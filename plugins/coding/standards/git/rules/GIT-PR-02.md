@@ -15,7 +15,9 @@ placeholders or author guidance comments. Every message states its Goal and
 observable behavioral Requirements; generic process gates are not behavioral
 requirements. Every heading has an emoji prefix. The authoring template marks
 omittable sections with `[ Optional ]`; the final PR message removes that
-authoring marker from every rendered heading.
+authoring marker from every rendered heading. Verification names every
+applicable standard, its green result, and supporting evidence for the exact
+head/base revisions.
 
 ## Scan
 
