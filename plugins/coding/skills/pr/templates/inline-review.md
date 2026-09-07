@@ -6,7 +6,9 @@ Placeholders:
 
   Name     Required  Source / Description
   -------  --------  ---------------------------------------------------------
-  marker   yes       One rendered priority badge, process tag, or kind emoji. title    yes       One-line imperative for an ask; plain statement otherwise. body     yes       Specific evidence, consequence, and actionable correction.
+  marker   yes       One rendered priority badge, process tag, or kind emoji.
+  title    yes       One-line imperative for an ask; plain statement otherwise.
+  body     yes       Specific evidence, consequence, and actionable correction.
 
 Substitution rules:
 - Substitute literal `{{name}}` tokens without nesting or expressions.

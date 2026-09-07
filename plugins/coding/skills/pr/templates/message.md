@@ -14,7 +14,24 @@ Placeholders (for non-LLM callers performing literal substitution):
 
   Name                       Required  Source / Description
   -------------------------  --------  ----------------------------------------
-  summary_paragraph          yes       Plain-language purpose, ≤3 sentences. Derived from commit body lead paragraph. goal_body                  yes       Outcome this PR is intended to achieve and why it matters; no implementation detail. requirements_body          yes       Testable, observable behavior required from the result; no generic quality/process gates. context_body               yes       Why this change is needed; bug links; design background. specification_body         no        A canonical committed-doc path or external page such as Notion. Drop section if empty. implementation_body        no        What was implemented; trade-offs; design choices; evidence and results. Drop section if empty. breaking_changes_body      no        Breaking-change list + migration notes. Drop section if commit subject lacks `!` and no `BREAKING CHANGE:` trailer. risk_body                  by zone   Concrete failure modes and mitigations. Required for yellow/red/black. test_plan_body             by zone   Checks covering the named risks. Required for yellow/red/black. why_this_size_body         by zone   Concise, specific indivisibility rationale. Required for red/black. rollback_body              by type   Rollback steps or explicit forward-only mitigation. Required for migration. feature_flag_body          by type   Flag name, default, removal target, rollout plan, and cleanup change. Required for feature-flag. screenshots_body           by type   Before/after screenshots and relevant accessibility notes. Required for ui. generated_files_body       by diff   Generated paths and their source/generator. Required whenever any generated files exist. verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed. boundary_body              no        Related work the instruction placed outside this change. Drop section if empty. additional_notes_body      no        Deviations from the spec or original request (what changed and why), known limitations, follow-ups. Keep the section and its review instruction when empty. related_issues_body        no        `Closes #N`, issue and discussion links. Drop section if empty.
+  summary_paragraph          yes       Plain-language purpose, ≤3 sentences. Derived from commit body lead paragraph.
+  goal_body                  yes       Outcome this PR is intended to achieve and why it matters; no implementation detail.
+  requirements_body          yes       Testable, observable behavior required from the result; no generic quality/process gates.
+  context_body               yes       Why this change is needed; bug links; design background.
+  specification_body         no        A canonical committed-doc path or external page such as Notion. Drop section if empty.
+  implementation_body        no        What was implemented; trade-offs; design choices; evidence and results. Drop section if empty.
+  breaking_changes_body      no        Breaking-change list + migration notes. Drop section if commit subject lacks `!` and no `BREAKING CHANGE:` trailer.
+  risk_body                  by zone   Concrete failure modes and mitigations. Required for yellow/red/black.
+  test_plan_body             by zone   Checks covering the named risks. Required for yellow/red/black.
+  why_this_size_body         by zone   Concise, specific indivisibility rationale. Required for red/black.
+  rollback_body              by type   Rollback steps or explicit forward-only mitigation. Required for migration.
+  feature_flag_body          by type   Flag name, default, removal target, rollout plan, and cleanup change. Required for feature-flag.
+  screenshots_body           by type   Before/after screenshots and relevant accessibility notes. Required for ui.
+  generated_files_body       by diff   Generated paths and their source/generator. Required whenever any generated files exist.
+  verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
+  boundary_body              no        Related work the instruction placed outside this change. Drop section if empty.
+  additional_notes_body      no        Deviations from the spec or original request (what changed and why), known limitations, follow-ups. Keep the section and its review instruction when empty.
+  related_issues_body        no        `Closes #N`, issue and discussion links. Drop section if empty.
 
 Substitution rules:
 - All placeholders are literal `{{name}}` tokens; no nesting, no expressions.

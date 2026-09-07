@@ -16,7 +16,13 @@
    - code fences always language-tagged (mermaid, ts, plain, yaml)
    - comments inside file trees and tables are lowercase
 
-EMOJI PALETTE (do not swap, do not duplicate): 📌 Overview          💡 Core Concepts      🌐 System Context 🚶 User Journey      🛰️ Network Topology   🗂️ Module Topology 🧩 Component          🔄 Data Flow          🔁 State & Lifecycle 🗃️ Data Model         🧠 Design Patterns    🔌 Extension Points 🛡️ Invariants         📊 Non-Functional     🧭 Roadmap 📦 Related Packages -->
+EMOJI PALETTE (do not swap, do not duplicate):
+  📌 Overview          💡 Core Concepts      🌐 System Context
+  🚶 User Journey      🛰️ Network Topology   🗂️ Module Topology
+  🧩 Component          🔄 Data Flow          🔁 State & Lifecycle
+  🗃️ Data Model         🧠 Design Patterns    🔌 Extension Points
+  🛡️ Invariants         📊 Non-Functional     🧭 Roadmap
+  📦 Related Packages -->
 
 <br/>
 
