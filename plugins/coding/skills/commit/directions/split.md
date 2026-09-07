@@ -110,16 +110,7 @@ After EACH split + describe pair, run:
 jj log -r '@-..@' --no-graph
 ```
 
-After all splits, run the [SKILL.md](../SKILL.md) integrity verification and
-applicable project scripts for each cluster (unless `--no-verify`), including
-configured typecheck or equivalent diagnostics for all changed code, plus
-affected-consumer builds for changed public shape. Runtime tests apply only to
-runtime behavior; focused
-compile-time tests apply only to allowed compiler-semantic promises under
-`TST-CORE-10`. For a declaration-only cluster with neither test kind, run the
-diagnostics and consumer-build gates, then record both test gates as `SKIP (not
-applicable)`; do not run or invent a test. For example, a runtime-producing npm
-cluster may require:
+After all splits, run the [SKILL.md](../SKILL.md) integrity verification and applicable project scripts for each cluster (unless `--no-verify`), including configured typecheck or equivalent diagnostics for all changed code, plus affected-consumer builds for changed public shape. Runtime tests apply only to runtime behavior; focused compile-time tests apply only to allowed compiler-semantic promises under `TST-CORE-10`. For a declaration-only cluster with neither test kind, run the diagnostics and consumer-build gates, then record both test gates as `SKIP (not applicable)`; do not run or invent a test. For example, a runtime-producing npm cluster may require:
 
 ```bash
 npm run lint
@@ -142,9 +133,7 @@ jj edit <change_id> && npm run build
 
 ## Mandatory follow-ups
 
-- If any downstream bookmark exists on the affected chain, follow the
-  [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata;
-  it owns remote restacking and republication.
+- If any downstream bookmark exists on the affected chain, follow the [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata; it owns remote restacking and republication.
 - Final report per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases

@@ -1,8 +1,6 @@
 # Delegating work
 
-Read this before dispatching a subagent or composing a first task handover.
-Whether to delegate, which substrate, scope, uncertainty, teammate retirement,
-and review responsibility stay in [orchestration.md](orchestration.md).
+Read this before dispatching a subagent or composing a first task handover. Whether to delegate, which substrate, scope, uncertainty, teammate retirement, and review responsibility stay in [orchestration.md](orchestration.md).
 
 ## Delegate well
 
@@ -16,12 +14,7 @@ and review responsibility stay in [orchestration.md](orchestration.md).
 
 ## First handover
 
-This section owns the prompt interface; task-specific instructions add detail
-without restating or renaming its fields. Put the stable reference alone on the
-first line — the Work ID, else the runtime Task ID, or a PR ID or commit SHA for
-Git history; an ordinal or semantic task label is never a substitute.
-[naming.md](../references/naming.md) owns the identifier shapes, read only when
-you must mint a new name.
+This section owns the prompt interface; task-specific instructions add detail without restating or renaming its fields. Put the stable reference alone on the first line — the Work ID, else the runtime Task ID, or a PR ID or commit SHA for Git history; an ordinal or semantic task label is never a substitute. [naming.md](../references/naming.md) owns the identifier shapes, read only when you must mint a new name.
 
 ```text
 <stable-reference>
@@ -47,11 +40,7 @@ Recent work:
 - Parser migration landed; conversion remains — state/journal.md
 ```
 
-Put mandatory behavior, acceptance criteria, and required standards in
-`Requirements`; keep `Directions` advisory. `Context` extends the interface to
-fit the task: `Decisions` and `Recent work` are standard subsections, and
-authors may add others such as `Inputs`, `Risks`, `Dependencies`, or
-`References` without changing or duplicating the top-level fields.
+Put mandatory behavior, acceptance criteria, and required standards in `Requirements`; keep `Directions` advisory. `Context` extends the interface to fit the task: `Decisions` and `Recent work` are standard subsections, and authors may add others such as `Inputs`, `Risks`, `Dependencies`, or `References` without changing or duplicating the top-level fields.
 
 - `Decisions` and `Recent work` may each hold several items, and `Recent work` excludes decisions.
 - Each item summary contains 1–19 words; its label and path do not count.
@@ -85,12 +74,4 @@ Only the main agent assigns a configurable teammate `name` or label. Use `<short
 
 ## Resolve intelligence
 
-Choose the lowest intelligence whose `best_for` examples cover the task, from
-the authoritative ranks and examples in
-`skills/install-agents/references/intelligence-levels.json`. Metadata
-declares the role's level; harness adapters alone translate it into native model
-and effort fields. [ALLAGENT.md](../hooks/ALLAGENT.md) owns skill eligibility.
-Resolve `inherit`, and a main session carrying no level, from the active harness
-projection before dispatch: take its exact configured rank, or the highest
-configured rank for the same model when the active effort exceeds every
-configured effort. Other missing or ambiguous projections are ineligible.
+Choose the lowest intelligence whose `best_for` examples cover the task, from the authoritative ranks and examples in `skills/install-agents/references/intelligence-levels.json`. Metadata declares the role's level; harness adapters alone translate it into native model and effort fields. [ALLAGENT.md](../hooks/ALLAGENT.md) owns skill eligibility. Resolve `inherit`, and a main session carrying no level, from the active harness projection before dispatch: take its exact configured rank, or the highest configured rank for the same model when the active effort exceeds every configured effort. Other missing or ambiguous projections are ineligible.

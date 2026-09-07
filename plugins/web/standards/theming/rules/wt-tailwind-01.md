@@ -55,10 +55,7 @@ In Tailwind v4.3, the `@theme { … }` block is the authoritative declaration of
 }
 ```
 
-Mode-sensitive overrides do not belong in that unlayered brand block. Use the
-complete baseline/system/explicit block in
-[`theming/write.md`](../write.md#composing-brand-with-color-mode), which keeps
-raw tokens and active aliases inside `@layer theme` per `CSS-MODE-03/04`.
+Mode-sensitive overrides do not belong in that unlayered brand block. Use the complete baseline/system/explicit block in [`theming/write.md`](../write.md#composing-brand-with-color-mode), which keeps raw tokens and active aliases inside `@layer theme` per `CSS-MODE-03/04`.
 
 ## Code Superpowers
 

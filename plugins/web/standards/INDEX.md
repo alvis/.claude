@@ -1,8 +1,6 @@
 # Web standards index
 
-Select applicable standards for design, color-mode, and theming work from the
-table below. The protocol that governs selection, scanning, and rule lookup is
-`essential:directions/standards.md`; this file only says which standard applies.
+Select applicable standards for design, color-mode, and theming work from the table below. The protocol that governs selection, scanning, and rule lookup is `essential:directions/standards.md`; this file only says which standard applies.
 
 | Applies to | Standard |
 | --- | --- |

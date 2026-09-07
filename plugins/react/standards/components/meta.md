@@ -7,11 +7,7 @@ _Standards for React component structure, patterns, and performance optimization
 
 ### Functional Components with TypeScript
 
-Always use functional components. A component that accepts props exports a
-component-named props type alias; a genuinely zero-prop component needs no
-artificial alias. React props are the explicit exception to TypeScript's
-plain-object `interface` rule because React helper types and prop composition
-routinely require intersections.
+Always use functional components. A component that accepts props exports a component-named props type alias; a genuinely zero-prop component needs no artificial alias. React props are the explicit exception to TypeScript's plain-object `interface` rule because React helper types and prop composition routinely require intersections.
 
 ```typescript
 // ✅ GOOD: exported type alias, inherits element props, wraps children
@@ -129,9 +125,7 @@ Components are accessible by default: semantic HTML, `aria-*` attributes, keyboa
 ## Rule Groups
 
 - `RC-NAMING-*`: File naming conventions and directory structure for components, tests, and stories.
-- `RC-STRUCT-*`: Functional component structure with TypeScript type aliases
-  for accepted props; no artificial zero-prop aliases and no class components
-  except Error Boundaries.
+- `RC-STRUCT-*`: Functional component structure with TypeScript type aliases for accepted props; no artificial zero-prop aliases and no class components except Error Boundaries.
   - `RC-STRUCT-01`: Functional Components Only
   - `RC-STRUCT-02`: Exported Props Type Alias for components that accept props (use `export type <Name>Props = …`, not `interface`; zero-prop components are exempt)
   - `RC-STRUCT-03`: Use `PropsWithChildren` for `children`

@@ -63,12 +63,7 @@ export const Default: Story = {};
 
 ### Typed, Interactive, Controllable Stories
 
-Declare `const meta = { ... } satisfies Meta<typeof Component>`, export it as
-default, and derive `StoryObj<typeof meta>`. Interactive stories import
-`within` and `userEvent` from `@storybook/testing-library`, await every user
-interaction, and assert the observable result. Give each configurable prop a
-documented `argTypes` control; set function and complex-object controls to
-`false`.
+Declare `const meta = { ... } satisfies Meta<typeof Component>`, export it as default, and derive `StoryObj<typeof meta>`. Interactive stories import `within` and `userEvent` from `@storybook/testing-library`, await every user interaction, and assert the observable result. Give each configurable prop a documented `argTypes` control; set function and complex-object controls to `false`.
 
 ## Rule Groups
 

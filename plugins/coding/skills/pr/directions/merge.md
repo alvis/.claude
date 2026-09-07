@@ -2,18 +2,12 @@
 
 Merge a supplied stack of GitHub PRs bottom-up with `gh`, restacking every remaining downstream branch after each merge so GitHub-generated merge commits or rebased commits do not cause the next PR to replay already-merged work. This skill owns remote PR merges plus descendant branch/bookmark rebases in either git or jj repositories; local commit creation remains `coding:commit`, and code/CI repair remains `coding:fix`.
 
-Load [stacked-prs.md](stacked-prs.md) first for the shared stack contract and
-jj/git operator map.
+Load [stacked-prs.md](stacked-prs.md) first for the shared stack contract and jj/git operator map.
 
 ## Boundaries
 
-- Use for: `/coding:pr merge 12 13 14`, "merge this stack of PRs", or any
-  request to merge dependent GitHub PRs while automatically rebasing downstream
-  PR branches.
-- Do not use for: creating PRs (`coding:commit --create-pr` +
-  `coding:pr create`), saving local changes (`coding:commit`), writing code
-  fixes (`coding:fix`), or validating unpushed commits before opening PRs
-  (`coding:finalize-commits`).
+- Use for: `/coding:pr merge 12 13 14`, "merge this stack of PRs", or any request to merge dependent GitHub PRs while automatically rebasing downstream PR branches.
+- Do not use for: creating PRs (`coding:commit --create-pr` + `coding:pr create`), saving local changes (`coding:commit`), writing code fixes (`coding:fix`), or validating unpushed commits before opening PRs (`coding:finalize-commits`).
 
 ## Inputs
 
@@ -23,40 +17,23 @@ jj/git operator map.
   - `--force`; bypasses the green-CI gate but never bypasses stack-shape validation or conflict safety.
   - `--remote <name>`; select the named push remote.
   - `--destination <branch>`; override the first PR's base after verification.
-- **Prerequisites**: authenticated `gh`, a clean git or jj working copy, and all
-  target PR head branches/bookmarks pushable by the current actor.
+- **Prerequisites**: authenticated `gh`, a clean git or jj working copy, and all target PR head branches/bookmarks pushable by the current actor.
 
 ## Merge directions
 
-Merge a stack bottom-to-top. Before each merge, require configured approvals,
-green checks unless `--force` was explicit, no conflicts, addressed comments,
-and every standard violation fixed. After a lower PR lands, refresh the next
-head onto the destination, verify its reduced diff, and update the remaining
-chain before continuing.
+Merge a stack bottom-to-top. Before each merge, require configured approvals, green checks unless `--force` was explicit, no conflicts, addressed comments, and every standard violation fixed. After a lower PR lands, refresh the next head onto the destination, verify its reduced diff, and update the remaining chain before continuing.
 
 <IMPORTANT>
 - Do not merge any PR until all supplied PRs are proven to form one linear base chain.
 - Without `--force`, do not merge any PR unless every PR currently in the stack has green CI.
 - If you make or request fixes for failing CI, summarize the changes to the user and post the same summary as a PR comment, then wait for explicit user approval before merging.
-- Never rebase a descendant onto an assumed default branch. Before each merge,
-  snapshot the current tip of every PR still in the stack, then restack with
-  `git rebase --onto <new-parent> <round-parent-tip> <child>` in git repos or
-  the equivalent jj rebase. Keep that round's snapshot unchanged until every
-  descendant has been restacked, then refresh the saved tips before the next
-  merge.
+- Never rebase a descendant onto an assumed default branch. Before each merge, snapshot the current tip of every PR still in the stack, then restack with `git rebase --onto <new-parent> <round-parent-tip> <child>` in git repos or the equivalent jj rebase. Keep that round's snapshot unchanged until every descendant has been restacked, then refresh the saved tips before the next merge.
 - On conflicts, stop with the current branch, conflicted files, and exact recovery commands; do not resolve unless the user asks.
 </IMPORTANT>
 
 ## Workflow
 
-1. **Parse arguments and preflight.** Extract PR numbers, merge method,
-   `--force`, optional named remote, and optional destination. Reject unknown
-   methods. Before inspection or any `REMOTE` use, load and execute
-   [Bind the push remote](create-update.md#bind-the-push-remote), passing the
-   explicit named remote when supplied. That gate is the sole owner of remote
-   resolution, ambiguity failure, evidence, and option-safe remote handling.
-   Then bind `DESTINATION` from the explicit input or the first supplied PR's
-   base:
+1. **Parse arguments and preflight.** Extract PR numbers, merge method, `--force`, optional named remote, and optional destination. Reject unknown methods. Before inspection or any `REMOTE` use, load and execute [Bind the push remote](create-update.md#bind-the-push-remote), passing the explicit named remote when supplied. That gate is the sole owner of remote resolution, ambiguity failure, evidence, and option-safe remote handling. Then bind `DESTINATION` from the explicit input or the first supplied PR's base:
 
    ```bash
    DESTINATION=${CALLER_DESTINATION:-}
@@ -66,11 +43,7 @@ chain before continuing.
    printf 'DESTINATION=%s\n' "$DESTINATION"
    ```
 
-   Select jj only when it exists and the Git
-   HEAD equals jj's working-copy parent commit; any missing command, failed
-   command, or unequal ID selects the fully supported Git route. Then discover
-   the selected route's existing local state before creating or checking out
-   anything:
+   Select jj only when it exists and the Git HEAD equals jj's working-copy parent commit; any missing command, failed command, or unequal ID selects the fully supported Git route. Then discover the selected route's existing local state before creating or checking out anything:
 
    ```bash
    if command -v jj >/dev/null 2>&1 && \
@@ -113,9 +86,7 @@ chain before continuing.
    git merge-base --is-ancestor "$REMOTE"/<previous-head> "$REMOTE"/<child-head>
    ```
 
-   For PR 1, verify `git merge-base --is-ancestor "$REMOTE"/<base>
-   "$REMOTE"/<head>`. In jj repos, verify explicit ancestor containment instead
-   of using `x..y`, which does not require `x` to be an ancestor of `y`:
+   For PR 1, verify `git merge-base --is-ancestor "$REMOTE"/<base> "$REMOTE"/<head>`. In jj repos, verify explicit ancestor containment instead of using `x..y`, which does not require `x` to be an ancestor of `y`:
 
    ```bash
    jj log -r "<previous-head>@$REMOTE & ::<child-head>@$REMOTE" --no-graph -T 'commit_id'
@@ -160,11 +131,7 @@ chain before continuing.
    git fetch --prune -- "$REMOTE"
    ```
 
-   d. Restack every remaining downstream PR through the repository's native
-   VCS path. Plain Git iterates link by link: the immediate child replays only
-   child-exclusive commits onto `"$REMOTE"/"$DESTINATION"` using the merged
-   parent's `round_tip`; each deeper descendant replays onto its freshly
-   restacked parent using that parent's pre-restack `round_tip`:
+   d. Restack every remaining downstream PR through the repository's native VCS path. Plain Git iterates link by link: the immediate child replays only child-exclusive commits onto `"$REMOTE"/"$DESTINATION"` using the merged parent's `round_tip`; each deeper descendant replays onto its freshly restacked parent using that parent's pre-restack `round_tip`:
 
    ```bash
    git rebase --onto <new-parent-ref> <round-parent-tip-sha> <child-head-branch>
@@ -183,38 +150,16 @@ chain before continuing.
      --remote "$REMOTE" "${REMAINING_BOOKMARKS[@]}" || exit $?
    ```
 
-   jj does not iterate links. Rebase exactly once from the immediate
-   child-exclusive root: that source rebase automatically rebases every
-   descendant and moves their bookmarks. Bind `REMOTE` to the resolved head
-   remote and build `REMAINING_BOOKMARKS` from the recorded remaining PR heads
-   in bottom-to-top order. The helper resolves the first and last bookmarks to
-   exactly one post-rebase commit each, proves the first is an ancestor of the
-   last, and builds their inclusive `FIRST::LAST` range. It pins one jj
-   operation for every lookup and the push so concurrent local operations
-   cannot invalidate the evidence. Per the current Jujutsu
-   [`git push --revision` contract](https://docs.jj-vcs.dev/latest/cli-reference/#jj-git-push),
-   that selector includes every local bookmark and tag pointing to a selected
-   commit. Therefore the helper requires the range's bookmarks to equal the
-   recorded set exactly and requires no tags before publishing all and only
-   remaining affected bookmarks once. Every rejection exits before its sole
-   push command. Never widen the range or accept an extra ref.
-   Jujutsu's push safety checks are lease-like: rerun
-   `jj git fetch --remote "$REMOTE"` and resolve bookmark conflicts if a remote
-   bookmark changed unexpectedly.
+   jj does not iterate links. Rebase exactly once from the immediate child-exclusive root: that source rebase automatically rebases every descendant and moves their bookmarks. Bind `REMOTE` to the resolved head remote and build `REMAINING_BOOKMARKS` from the recorded remaining PR heads in bottom-to-top order. The helper resolves the first and last bookmarks to exactly one post-rebase commit each, proves the first is an ancestor of the last, and builds their inclusive `FIRST::LAST` range. It pins one jj operation for every lookup and the push so concurrent local operations cannot invalidate the evidence. Per the current Jujutsu [`git push --revision` contract](https://docs.jj-vcs.dev/latest/cli-reference/#jj-git-push), that selector includes every local bookmark and tag pointing to a selected commit. Therefore the helper requires the range's bookmarks to equal the recorded set exactly and requires no tags before publishing all and only remaining affected bookmarks once. Every rejection exits before its sole push command. Never widen the range or accept an extra ref. Jujutsu's push safety checks are lease-like: rerun `jj git fetch --remote "$REMOTE"` and resolve bookmark conflicts if a remote bookmark changed unexpectedly.
 
-   e. After each plain-Git link push, or after the one jj batch push, set and
-   verify every remaining PR's base as its new parent branch. The immediate
-   child targets the destination; deeper descendants retain the freshly
-   restacked predecessor head:
+   e. After each plain-Git link push, or after the one jj batch push, set and verify every remaining PR's base as its new parent branch. The immediate child targets the destination; deeper descendants retain the freshly restacked predecessor head:
 
    ```bash
    gh pr edit <child-number> --base <new-parent-branch>
    gh pr view <child-number> --json baseRefName --jq .baseRefName
    ```
 
-   Then use the child's new local tip as `<new-parent-ref>` for its child, but
-   do not change a `round_tip` mid-round. After all descendants are pushed,
-   refresh saved tips for the next round.
+   Then use the child's new local tip as `<new-parent-ref>` for its child, but do not change a `round_tip` mid-round. After all descendants are pushed, refresh saved tips for the next round.
 
    f. Wait for GitHub to observe the push, then re-check CI before merging the next PR. If checks are pending, report that the stack was restacked and stop unless the user asked to wait; if asked to wait, poll at a reasonable interval for up to the user's requested duration.
 
@@ -240,11 +185,7 @@ chain before continuing.
    jj op restore <operation-id-before-rebase>
    ```
 
-   Include the conflicted branch/bookmark, round parent tip, intended new
-   parent, and PR number. On push rejection, run
-   `jj git fetch --remote "$REMOTE"` or `git fetch -- "$REMOTE"`, then rerun
-   the same native restack only after confirming the remote branch/bookmark was
-   not updated by someone else.
+   Include the conflicted branch/bookmark, round parent tip, intended new parent, and PR number. On push rejection, run `jj git fetch --remote "$REMOTE"` or `git fetch -- "$REMOTE"`, then rerun the same native restack only after confirming the remote branch/bookmark was not updated by someone else.
 
 ## Verification
 

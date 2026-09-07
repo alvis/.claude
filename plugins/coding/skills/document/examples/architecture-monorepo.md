@@ -79,9 +79,7 @@ Subsystems are only expanded to depth 2 here; each part file expands its own sub
 | `services` | Long-running processes that implement contracts | [`platform/services.md`](./platform/services.md) |
 | `sdks` | Client libraries published to consumers of the platform | [`platform/sdks.md`](./platform/sdks.md) |
 
-> **Note**: In this bundled example the subsystem files carry an `.example.md`
-> suffix for discoverability. In real projects the skill emits them as
-> `docs/architecture/platform/<subsystem>.md` matching the links shown here.
+> **Note**: In this bundled example the subsystem files carry an `.example.md` suffix for discoverability. In real projects the skill emits them as `docs/architecture/platform/<subsystem>.md` matching the links shown here.
 
 ---
 

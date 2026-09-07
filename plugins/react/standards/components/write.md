@@ -26,9 +26,7 @@ components/
 
 ### Props Design
 
-Keep accepted props simple, predictable, and well-typed. Export a
-component-named props alias when a component accepts props; leave a genuinely
-zero-prop component as `FC` without an artificial empty alias.
+Keep accepted props simple, predictable, and well-typed. Export a component-named props alias when a component accepts props; leave a genuinely zero-prop component as `FC` without an artificial empty alias.
 
 ```typescript
 // ✅ GOOD: simple, focused props

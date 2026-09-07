@@ -1,7 +1,6 @@
 # React Hooks: Violation Scan
 
-Any single violation blocks approval by default.
-Protocol: `essential:directions/standards.md`.
+Any single violation blocks approval by default. Protocol: `essential:directions/standards.md`.
 
 ## Quick Scan
 

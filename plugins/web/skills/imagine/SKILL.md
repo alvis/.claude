@@ -8,8 +8,7 @@ argument-hint: "[prompt, instruction, or reference image for style analysis]"
 
 # Image generation
 
-Set `WEB_IMAGINE_SKILL_DIR` to the absolute directory containing this loaded
-`SKILL.md` before invoking its script.
+Set `WEB_IMAGINE_SKILL_DIR` to the absolute directory containing this loaded `SKILL.md` before invoking its script.
 
 Generate or edit images for the current project — website assets, game assets, UI mockups, product mockups, wireframes, logos, photorealistic images, infographics. Defaults to **Google Gemini** (`gemini-3.1-flash-image-preview`), with **OpenAI** (`gpt-image-1.5`) via `--provider openai` and **Recraft** (`recraftv4`) via `--provider recraft`. Prefer the bundled CLI for deterministic, reproducible runs. `design` owns web design decisions; `audit` owns visual audits.
 

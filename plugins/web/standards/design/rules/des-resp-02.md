@@ -2,10 +2,7 @@
 
 ## Intent
 
-Touch targets >=44px on mobile. This is the project's stricter usability rule,
-not a WCAG AA requirement. Primary actions belong in the thumb zone and
-hover-only interactions need touch-friendly alternatives. Mobile experience
-must be a first-class citizen, not a desktop afterthought.
+Touch targets >=44px on mobile. This is the project's stricter usability rule, not a WCAG AA requirement. Primary actions belong in the thumb zone and hover-only interactions need touch-friendly alternatives. Mobile experience must be a first-class citizen, not a desktop afterthought.
 
 ## Fix
 

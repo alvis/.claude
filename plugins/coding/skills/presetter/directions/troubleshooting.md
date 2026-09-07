@@ -1,7 +1,6 @@
 # Troubleshooting recipes
 
-Run observation commands through the resolved local binary. Examples use pnpm; replace
-the prefix with the detected package manager.
+Run observation commands through the resolved local binary. Examples use pnpm; replace the prefix with the detected package manager.
 
 | Symptom | Observation command and evidence | Fix |
 | --- | --- | --- |
@@ -19,6 +18,4 @@ the prefix with the detected package manager.
 | Upgrade leaves old imports or task names | `rg -n 'presetter-preset-|presetter-types|"coverage"|"watch"' --glob '!node_modules/**'` plus the installed migration guide | Apply only the migration mapping supported by the detected versions; update dependencies with the package manager and regenerate. |
 | Packages resolve incompatible Presetter generations | `pnpm list --depth 0 presetter '@presetter/*'` and inspect workspace catalogs plus lockfile entries | Align CLI and preset ranges using repository conventions; let the package manager rewrite the lockfile, then bootstrap again. |
 
-After a fix, rerun the same observation command against the same exact target before
-widening scope. Then run that target's build, lint, typecheck, and tests and confirm
-generated outputs remain ignored and untracked.
+After a fix, rerun the same observation command against the same exact target before widening scope. Then run that target's build, lint, typecheck, and tests and confirm generated outputs remain ignored and untracked.

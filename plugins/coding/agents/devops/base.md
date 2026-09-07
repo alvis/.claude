@@ -10,8 +10,7 @@ Build and verify deployment automation, CI/CD pipelines, and infrastructure.
 
 ## Base Context
 
-Apply `coding:skills/commit/SKILL.md` before saving and the selected
-`coding:skills/pr/references/` action before publishing work.
+Apply `coding:skills/commit/SKILL.md` before saving and the selected `coding:skills/pr/references/` action before publishing work.
 
 Role context:
 

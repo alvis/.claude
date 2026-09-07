@@ -6,12 +6,7 @@ module: "any"
 
 ## Detection
 
-`new Date()`
-`Date.now()`
-`moment()`
-`dayjs(`
-`date-fns`
-manual date arithmetic using `getTime() + 86400000`
+`new Date()` `Date.now()` `moment()` `dayjs(` `date-fns` manual date arithmetic using `getTime() + 86400000`
 
 ## Before
 

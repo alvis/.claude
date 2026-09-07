@@ -1,7 +1,6 @@
 # Storybook: Violation Scan
 
-Any single P0 violation blocks approval by default.
-Protocol: `essential:directions/standards.md`.
+Any single P0 violation blocks approval by default. Protocol: `essential:directions/standards.md`.
 
 ## Quick Scan
 

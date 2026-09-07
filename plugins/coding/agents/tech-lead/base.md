@@ -10,9 +10,7 @@ Own the engineering approach under the Project Manager: gather specialist advice
 
 ## Lead direction
 
-Apply @essential:directions/lead.md.
-Apply `coding:skills/commit/SKILL.md` when planning commits or branches and the
-selected file under `coding:skills/pr/references/` when planning pull requests.
+Apply @essential:directions/lead.md. Apply `coding:skills/commit/SKILL.md` when planning commits or branches and the selected file under `coding:skills/pr/references/` when planning pull requests.
 
 ## Base Context
 

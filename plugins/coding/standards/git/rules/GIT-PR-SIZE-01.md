@@ -6,25 +6,15 @@ warning
 
 ## Intent
 
-A green-zone PR changes **≤ 15 files** AND has **≤ 500 authored net LOC**.
-Green PRs are the default-mergeable unit of work — small enough that a
-reviewer can hold the entire diff in their head, fast enough that turnaround
-does not stall a stack.
+A green-zone PR changes **≤ 15 files** AND has **≤ 500 authored net LOC**. Green PRs are the default-mergeable unit of work — small enough that a reviewer can hold the entire diff in their head, fast enough that turnaround does not stall a stack.
 
-A PR's zone is the stricter of the two metrics: 12 files / 600 authored net
-LOC is yellow, not green. Every changed path counts toward the file metric.
-Exclude additions and deletions from generated files from the authored net LOC
-metric.
+A PR's zone is the stricter of the two metrics: 12 files / 600 authored net LOC is yellow, not green. Every changed path counts toward the file metric. Exclude additions and deletions from generated files from the authored net LOC metric.
 
-The limits above are a human-readable projection of
-`../../../skills/pr/assets/size-thresholds.json`, the sole numeric threshold
-authority, and contract verification checks them against that asset.
+The limits above are a human-readable projection of `../../../skills/pr/assets/size-thresholds.json`, the sole numeric threshold authority, and contract verification checks them against that asset.
 
 ## Fix
 
-Run `bun run ../../../skills/pr/scripts/classify-pr-size.ts` against the
-exact base/head pair, then author the body through the canonical PR template.
-Do not add file counts, LOC, or zone bookkeeping to the PR body.
+Run `bun run ../../../skills/pr/scripts/classify-pr-size.ts` against the exact base/head pair, then author the body through the canonical PR template. Do not add file counts, LOC, or zone bookkeeping to the PR body.
 
 ### Why this matters
 
@@ -34,16 +24,10 @@ Do not add file counts, LOC, or zone bookkeeping to the PR body.
 
 ## Edge Cases
 
-- Package lockfiles such as `pnpm-lock.yaml`, and paths marked
-  `linguist-generated=true`, contribute no LOC but still count as changed
-  files. Sizing does not authorize shipping them: `GIT-PR-TYPE-05` permits
-  only package lockfiles to remain as generated output.
+- Package lockfiles such as `pnpm-lock.yaml`, and paths marked `linguist-generated=true`, contribute no LOC but still count as changed files. Sizing does not authorize shipping them: `GIT-PR-TYPE-05` permits only package lockfiles to remain as generated output.
 - Tests count toward LOC. A green-LOC PR with a 400-line test file is still green; do not split tests away from the code they cover.
-- A generated file not covered by the classifier's deterministic lockfile or
-  Git-attribute contract remains authored for LOC sizing.
-- Uncommitted `.git/info/attributes`, global/system attributes, and external
-  diff configuration never classify a path or change its line count; only the
-  committed base/head inputs do.
+- A generated file not covered by the classifier's deterministic lockfile or Git-attribute contract remains authored for LOC sizing.
+- Uncommitted `.git/info/attributes`, global/system attributes, and external diff configuration never classify a path or change its line count; only the committed base/head inputs do.
 
 ## Related
 

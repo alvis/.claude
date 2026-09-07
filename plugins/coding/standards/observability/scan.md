@@ -1,7 +1,6 @@
 # Observability: Violation Scan
 
-Any single violation blocks submission by default.
-Protocol: `essential:directions/standards.md`.
+Any single violation blocks submission by default. Protocol: `essential:directions/standards.md`.
 
 > **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 

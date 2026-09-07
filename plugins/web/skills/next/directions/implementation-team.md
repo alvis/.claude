@@ -9,8 +9,7 @@ Estimate scope by counting the components, hooks, and files implied by the task,
 - low-intelligence implementer teammates — `ceil(files / 10)`, minimum 1; the 10-file bound keeps each slice reviewable and a failed slice cheap to retry
 - 1 medium-intelligence reviewer teammate
 
-Only the main agent assigns the configured teammate names. Capture each returned `agent_id` beside its role and
-slice; all direct messages and hand-offs target that ID, never a role or configured name.
+Only the main agent assigns the configured teammate names. Capture each returned `agent_id` beside its role and slice; all direct messages and hand-offs target that ID, never a role or configured name.
 
 ## Partitioning and briefing
 

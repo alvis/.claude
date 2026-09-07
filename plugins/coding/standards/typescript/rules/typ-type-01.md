@@ -2,9 +2,7 @@
 
 ## Intent
 
-Use `interface` for plain object shapes regardless of whether they are public,
-exported, private, or local. Use `type` for unions, intersections, mapped
-types, computed types, function signatures, and tuples. Shape decides; visibility does not.
+Use `interface` for plain object shapes regardless of whether they are public, exported, private, or local. Use `type` for unions, intersections, mapped types, computed types, function signatures, and tuples. Shape decides; visibility does not.
 
 ## Fix
 
@@ -26,8 +24,7 @@ type EventHandler<T> = (event: T) => void;
 
 - Plain object shape? Use `interface`, regardless of visibility.
 - Union, intersection, mapped/computed type, function signature, or tuple? Use `type`.
-- React component props are the explicit exception defined by `RC-STRUCT-02`:
-  use a `type` alias so intersections and React helper types compose consistently.
+- React component props are the explicit exception defined by `RC-STRUCT-02`: use a `type` alias so intersections and React helper types compose consistently.
 
 ### Interface Strategy
 

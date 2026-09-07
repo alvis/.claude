@@ -5,15 +5,9 @@
 
 # @scope/compose
 
-**Composable workspace configuration for modern JavaScript projects.**
-_Stop copy-pasting configs. Extend a preset. Override what you need. Ship._
+**Composable workspace configuration for modern JavaScript projects.** _Stop copy-pasting configs. Extend a preset. Override what you need. Ship._
 
-[![npm version](https://img.shields.io/npm/v/@scope/compose.svg?style=flat-square)](https://www.npmjs.com/package/@scope/compose)
-[![CI](https://img.shields.io/github/actions/workflow/status/example/compose/ci.yml?branch=main&style=flat-square)](https://github.com/example/compose/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/example/compose?style=flat-square)](https://codecov.io/gh/example/compose)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](./LICENSE)
-[![Downloads](https://img.shields.io/npm/dm/@scope/compose.svg?style=flat-square)](https://www.npmjs.com/package/@scope/compose)
-[![Discord](https://img.shields.io/discord/000000000000000000?style=flat-square&label=discord)](https://discord.gg/example-compose)
+[![npm version](https://img.shields.io/npm/v/@scope/compose.svg?style=flat-square)](https://www.npmjs.com/package/@scope/compose) [![CI](https://img.shields.io/github/actions/workflow/status/example/compose/ci.yml?branch=main&style=flat-square)](https://github.com/example/compose/actions) [![Coverage](https://img.shields.io/codecov/c/github/example/compose?style=flat-square)](https://codecov.io/gh/example/compose) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](./LICENSE) [![Downloads](https://img.shields.io/npm/dm/@scope/compose.svg?style=flat-square)](https://www.npmjs.com/package/@scope/compose) [![Discord](https://img.shields.io/discord/000000000000000000?style=flat-square&label=discord)](https://discord.gg/example-compose)
 
 </div>
 
@@ -243,23 +237,17 @@ Join the [Discord](https://discord.gg/example-compose) to chat with maintainers 
 
 ## ❓ FAQ
 
-**Does `@scope/compose` replace Turborepo / Nx / Lerna?**
-No. It focuses on _configuration composition_. Pair it with Turbo or Nx for task orchestration — we ship a first-party Turbo integration.
+**Does `@scope/compose` replace Turborepo / Nx / Lerna?** No. It focuses on _configuration composition_. Pair it with Turbo or Nx for task orchestration — we ship a first-party Turbo integration.
 
-**How is this different from `tsconfig/bases` or shareable ESLint configs?**
-Those solve one tool at a time. Compose treats your entire toolchain (TS, ESLint, Prettier, Vitest, Prettier, bundlers) as a single composable graph, so a single preset update keeps everything consistent.
+**How is this different from `tsconfig/bases` or shareable ESLint configs?** Those solve one tool at a time. Compose treats your entire toolchain (TS, ESLint, Prettier, Vitest, Prettier, bundlers) as a single composable graph, so a single preset update keeps everything consistent.
 
-**Can I use it without a monorepo?**
-Yes. A single-package repo works identically — just install the engine and a preset.
+**Can I use it without a monorepo?** Yes. A single-package repo works identically — just install the engine and a preset.
 
-**What happens when I eject?**
-`compose eject <plugin>` copies the generated file into your repo and removes it from the managed set. You own it from then on.
+**What happens when I eject?** `compose eject <plugin>` copies the generated file into your repo and removes it from the managed set. You own it from then on.
 
-**Is it production-ready?**
-We use it across 40+ internal repos at Example, and it powers several mid-sized OSS projects. Semver discipline is enforced via Changesets.
+**Is it production-ready?** We use it across 40+ internal repos at Example, and it powers several mid-sized OSS projects. Semver discipline is enforced via Changesets.
 
-**How do I write my own preset?**
-See [guide/authoring-presets](https://compose.example.dev/guide/authoring-presets). A preset is a package that exports a `PresetDefinition` — roughly 30 lines of TypeScript.
+**How do I write my own preset?** See [guide/authoring-presets](https://compose.example.dev/guide/authoring-presets). A preset is a package that exports a `PresetDefinition` — roughly 30 lines of TypeScript.
 
 ---
 

@@ -21,10 +21,7 @@ When a client app — or one feature within a client app — needs a shared comp
 }
 ```
 
-The literals intentionally bind the most-specific component override knobs.
-The shared component still consumes them through its full component → active
-semantic/UI → literal chain; this scope does not create a competing styled
-declaration.
+The literals intentionally bind the most-specific component override knobs. The shared component still consumes them through its full component → active semantic/UI → literal chain; this scope does not create a competing styled declaration.
 
 ```tsx
 // ✅ GOOD: scope class wraps the buttons; no component changes

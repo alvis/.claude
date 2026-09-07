@@ -5,36 +5,20 @@ This catalog owns role context assignments. Standards indexes own canonical name
 ## Rules
 
 - **Role context is not task selection.** Each agent declares its role context from the assignment map below. At task time, select standards through `essential:directions/standards.md`; the role list does not exclude other applicable standards.
-- **Repo-derived context is lazy.** The entries in the repo-derived menu are resolved per task, from whatever repo
-  the agent is currently working in. They are NEVER preloaded at agent-definition time and never hold a fixed path
-  in this catalog; an agent's base.md states that it resolves them lazily, not what they currently point to.
-- **Every agent self-curates project memory.** Every roster definition carries `"memory": "project"` and owns
-  `.claude/agent-memory/<name>/MEMORY.md`; there is no external memory steward or shared runtime memory file.
-  Each definition names role-specific durable content and follows
-  `essential:templates/memory.md` for
-  evidence, verification, contradiction replacement, archival, size control, and sensitive-data exclusions.
+- **Repo-derived context is lazy.** The entries in the repo-derived menu are resolved per task, from whatever repo the agent is currently working in. They are NEVER preloaded at agent-definition time and never hold a fixed path in this catalog; an agent's base.md states that it resolves them lazily, not what they currently point to.
+- **Every agent self-curates project memory.** Every roster definition carries `"memory": "project"` and owns `.claude/agent-memory/<name>/MEMORY.md`; there is no external memory steward or shared runtime memory file. Each definition names role-specific durable content and follows `essential:templates/memory.md` for evidence, verification, contradiction replacement, archival, size control, and sensitive-data exclusions.
 
 ## Standards menu
 
-Standard names used in the assignment map below resolve through the standards
-indexes, which own the list, the paths, and the dependency edges:
-`coding:standards/INDEX.md`, `react:standards/INDEX.md`,
-`web:standards/INDEX.md`, and `governance:standards/INDEX.md`. An agent's
-`base.md` cites the path its owning index gives and never derives one. *The
-design standards* is this catalog's shorthand for `web:standards/{css,design,
-theming}/` plus `react:standards/{components,accessibility,hooks,project-structure,storybook}/`.
+Standard names used in the assignment map below resolve through the standards indexes, which own the list, the paths, and the dependency edges: `coding:standards/INDEX.md`, `react:standards/INDEX.md`, `web:standards/INDEX.md`, and `governance:standards/INDEX.md`. An agent's `base.md` cites the path its owning index gives and never derives one. *The design standards* is this catalog's shorthand for `web:standards/{css,design, theming}/` plus `react:standards/{components,accessibility,hooks,project-structure,storybook}/`.
 
-Selecting and applying a standard follows `essential:directions/standards.md`;
-this catalog says which agent gets which standards, not how they are applied.
+Selecting and applying a standard follows `essential:directions/standards.md`; this catalog says which agent gets which standards, not how they are applied.
 
 ### GAP note
 
-No `authentication.md` or `data-protection.md` standard has been written anywhere in this repo. Any agent,
-template, or prior agent file that cites `authentication.md`, `data-protection.md`, `communication.md`,
+No `authentication.md` or `data-protection.md` standard has been written anywhere in this repo. Any agent, template, or prior agent file that cites `authentication.md`, `data-protection.md`, `communication.md`,
 `checklist.md`, `infrastructure.md`, `monitoring.md`, `deployment.md`, or `naming/README.md` is citing a standard <!-- doc-path-gate: ignore -->
-that was never written — those are fake and MUST NOT appear in any agent's base context. Security- and
-data-protection-sensitive agents (e.g. `security-champion`) fall back to `code-review` + `universal` until a real
-auth/data-protection standard is authored; do not paper over the gap by inventing a path.
+that was never written — those are fake and MUST NOT appear in any agent's base context. Security- and data-protection-sensitive agents (e.g. `security-champion`) fall back to `code-review` + `universal` until a real auth/data-protection standard is authored; do not paper over the gap by inventing a path.
 
 ## Repo-derived menu (lazy — never preloaded, no fixed path here)
 
@@ -45,8 +29,7 @@ auth/data-protection standard is authored; do not paper over the gap by inventin
 | Handover notes | Any paused-work/design notes left for the current task (`essential:handover` output, design docs) |
 | Repo-local standards | Additional repo-local standards, if the target repo defines any; they cannot replace canonical rule IDs or thresholds |
 
-An agent's base.md names which of these it consults and states that resolution happens lazily per task — it never
-bakes in a repo path, because the agent is not scoped to one repo.
+An agent's base.md names which of these it consults and states that resolution happens lazily per task — it never bakes in a repo path, because the agent is not scoped to one repo.
 
 ## Per-agent context assignment map
 
@@ -81,9 +64,4 @@ Update this catalog when changing a role's context assignment, not when a task s
 
 ## How an agent cites this catalog
 
-An agent's `base.md` Base Context section lists its role context by canonical name + real path from the owning index, states which repo-derived context it resolves lazily, and — if it
-carries a `memory` frontmatter key — states that it self-curates `.claude/agent-memory/<name>/MEMORY.md`. See
-`../skills/create-agent/templates/agent.md` for the required `## Memory` section,
-`essential:templates/memory.md` for its maintenance schema, and
-`../skills/create-agent/templates/role-prompt.md` for how the same context
-list is compressed into an `initialPrompt` load-context clause.
+An agent's `base.md` Base Context section lists its role context by canonical name + real path from the owning index, states which repo-derived context it resolves lazily, and — if it carries a `memory` frontmatter key — states that it self-curates `.claude/agent-memory/<name>/MEMORY.md`. See `../skills/create-agent/templates/agent.md` for the required `## Memory` section, `essential:templates/memory.md` for its maintenance schema, and `../skills/create-agent/templates/role-prompt.md` for how the same context list is compressed into an `initialPrompt` load-context clause.

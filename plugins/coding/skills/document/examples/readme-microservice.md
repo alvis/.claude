@@ -175,8 +175,7 @@ The admin HTTP surface is disabled by default and must be opted in via `worker.a
 <details>
 <summary><code>createWorker(config: WorkerConfig): Worker</code></summary>
 
-**Description:**
-Constructs a `Worker` bound to the chosen adapters. Does not open connections until `.start()` is called, so tests can assert configuration eagerly without side effects.
+**Description:** Constructs a `Worker` bound to the chosen adapters. Does not open connections until `.start()` is called, so tests can assert configuration eagerly without side effects.
 
 **Parameters:**
 
@@ -203,8 +202,7 @@ const worker = createWorker({
 <details>
 <summary><code>defineJob&lt;S extends ZodSchema&gt;(spec: JobSpec&lt;S&gt;): JobDefinition&lt;S&gt;</code></summary>
 
-**Description:**
-Declares a job `kind` with its payload schema and retry policy. The returned definition is shared between producer and consumer so payload types cannot drift.
+**Description:** Declares a job `kind` with its payload schema and retry policy. The returned definition is shared between producer and consumer so payload types cannot drift.
 
 **Parameters:**
 
@@ -256,20 +254,15 @@ See [`docs/architecture/durable-job-worker.md`](./docs/architecture/durable-job-
 
 ## ❓ FAQ
 
-**Q: How does the admin HTTP surface authenticate callers?**
-A: The admin surface is disabled by default; `worker.admin({ port })` accepts a `verify(req)` hook that returns the caller identity or rejects the request. In our reference deployment, the hook validates a short-lived service-to-service JWT minted by the platform's auth gateway — the worker itself never sees long-lived credentials. `/health` is the only endpoint exempt from the hook so liveness probes do not need a token; `/jobs`, `/jobs/:id`, and `/admin/drain` all require a valid principal.
+**Q: How does the admin HTTP surface authenticate callers?** A: The admin surface is disabled by default; `worker.admin({ port })` accepts a `verify(req)` hook that returns the caller identity or rejects the request. In our reference deployment, the hook validates a short-lived service-to-service JWT minted by the platform's auth gateway — the worker itself never sees long-lived credentials. `/health` is the only endpoint exempt from the hook so liveness probes do not need a token; `/jobs`, `/jobs/:id`, and `/admin/drain` all require a valid principal.
 
-**Q: Are there rate limits on `JobClient.enqueue` or the `POST /jobs` endpoint?**
-A: The worker does not impose a fixed RPS limit; throughput is gated by the `JobAdapter` write path (for `@scope/adapter-postgres`, that is a single `INSERT ... RETURNING`). In practice we recommend callers keep enqueue concurrency below `QUEUE_CONCURRENCY` on the writer side, and lean on the broker's backpressure — `@scope/adapter-redis-broker` will reject enqueues once its stream depth exceeds the configured high-water mark, surfacing as a typed `QueueBackpressureError`.
+**Q: Are there rate limits on `JobClient.enqueue` or the `POST /jobs` endpoint?** A: The worker does not impose a fixed RPS limit; throughput is gated by the `JobAdapter` write path (for `@scope/adapter-postgres`, that is a single `INSERT ... RETURNING`). In practice we recommend callers keep enqueue concurrency below `QUEUE_CONCURRENCY` on the writer side, and lean on the broker's backpressure — `@scope/adapter-redis-broker` will reject enqueues once its stream depth exceeds the configured high-water mark, surfacing as a typed `QueueBackpressureError`.
 
-**Q: When is the `idempotencyKey` required and how is it enforced?**
-A: It is optional but strongly recommended for anything triggered from an HTTP handler or webhook. When present, the store enforces a unique constraint over `(kind, idempotencyKey)`; a duplicate enqueue returns the existing job rather than creating a second row, so retried producers cannot double-dispatch. The key is also surfaced in structured logs and in the `attempts[]` response so operators can trace a user action through every retry.
+**Q: When is the `idempotencyKey` required and how is it enforced?** A: It is optional but strongly recommended for anything triggered from an HTTP handler or webhook. When present, the store enforces a unique constraint over `(kind, idempotencyKey)`; a duplicate enqueue returns the existing job rather than creating a second row, so retried producers cannot double-dispatch. The key is also surfaced in structured logs and in the `attempts[]` response so operators can trace a user action through every retry.
 
-**Q: How do correlation IDs flow through the five-phase lifecycle?**
-A: Every `JobContext` exposes a `traceId` and `spanId` derived from the enqueue-time headers (W3C `traceparent` if present, otherwise a fresh ULID). The same IDs are stamped on every log line emitted during execute, on the `Attempt` row written at ack, and on Prometheus exemplars attached to the `queue_job_duration_seconds` histogram — so a single request ID can be followed from the producer through every retry without bespoke glue.
+**Q: How do correlation IDs flow through the five-phase lifecycle?** A: Every `JobContext` exposes a `traceId` and `spanId` derived from the enqueue-time headers (W3C `traceparent` if present, otherwise a fresh ULID). The same IDs are stamped on every log line emitted during execute, on the `Attempt` row written at ack, and on Prometheus exemplars attached to the `queue_job_duration_seconds` histogram — so a single request ID can be followed from the producer through every retry without bespoke glue.
 
-**Q: What is the versioning policy for job kinds and payload schemas?**
-A: Job kinds are part of the public API — renaming one is a breaking change. To evolve a payload, bump the `kind` (e.g. `send-email` → `send-email.v2`) and register both handlers during the transition; `defineJob` uses the Zod schema passed in, so old in-flight jobs keep validating against the old schema while new enqueues use the new one. We follow semver at the package level: adapter changes that alter on-disk layout are major bumps and ship with a `npx queue-worker migrate` step.
+**Q: What is the versioning policy for job kinds and payload schemas?** A: Job kinds are part of the public API — renaming one is a breaking change. To evolve a payload, bump the `kind` (e.g. `send-email` → `send-email.v2`) and register both handlers during the transition; `defineJob` uses the Zod schema passed in, so old in-flight jobs keep validating against the old schema while new enqueues use the new one. We follow semver at the package level: adapter changes that alter on-disk layout are major bumps and ship with a `npx queue-worker migrate` step.
 
 ---
 

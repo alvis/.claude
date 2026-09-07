@@ -2,10 +2,7 @@
 
 ## Intent
 
-Object contract ordering is mandatory: required fields first, optional fields
-second, callback/function fields last. Choose the declaration form through
-`TYP-TYPE-01` first, then apply this order consistently to the resulting
-interface or type and related constructor/options contracts.
+Object contract ordering is mandatory: required fields first, optional fields second, callback/function fields last. Choose the declaration form through `TYP-TYPE-01` first, then apply this order consistently to the resulting interface or type and related constructor/options contracts.
 
 ## Fix
 

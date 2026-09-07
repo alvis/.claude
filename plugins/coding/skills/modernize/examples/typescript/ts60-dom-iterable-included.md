@@ -6,8 +6,7 @@ module: "any"
 
 ## Detection
 
-`"dom.iterable"` in tsconfig `lib` array
-`"dom.asynciterable"` in tsconfig `lib` array
+`"dom.iterable"` in tsconfig `lib` array `"dom.asynciterable"` in tsconfig `lib` array
 
 ## Before
 

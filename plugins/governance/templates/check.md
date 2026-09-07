@@ -1,17 +1,10 @@
 # Check Scratch Template
 
-This is an example format for temporary authoring notes used while creating or
-updating skills and agents. Copy this shape into a Markdown scratch file in an
-OS temp folder (for example `${TMPDIR:-/tmp}/check.md`). Use it
-during the work, then delete the scratch file before staging or committing. Do
-not commit filled-in copies of this file.
+This is an example format for temporary authoring notes used while creating or updating skills and agents. Copy this shape into a Markdown scratch file in an OS temp folder (for example `${TMPDIR:-/tmp}/check.md`). Use it during the work, then delete the scratch file before staging or committing. Do not commit filled-in copies of this file.
 
 ## Example Experiment Matrix
 
-`Status` records the result of the comparison: use `:white_check_mark:` when the
-reasoned or observed outcome matches the expectation, and `:x:` when the check
-finds a blindspot that needs follow-up. Replace these illustrative rows rather
-than treating them as evidence that an evaluation ran.
+`Status` records the result of the comparison: use `:white_check_mark:` when the reasoned or observed outcome matches the expectation, and `:x:` when the check finds a blindspot that needs follow-up. Replace these illustrative rows rather than treating them as evidence that an evaluation ran.
 
 | Status | Scenario | Prompt or situation | Expected behavior | Reasoned or observed outcome | Blindspot checked | Follow-up |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -22,10 +15,7 @@ than treating them as evidence that an evaluation ran.
 
 ## Notes
 
-- Keep rows short and concrete; this is a working checklist, not a permanent
-  evaluation suite.
+- Keep rows short and concrete; this is a working checklist, not a permanent evaluation suite.
 - Prefer one row per positive trigger, near miss, failure case, or risk probe.
-- Identify paper-only outcomes as reasoned; reserve observed outcomes for checks
-  that actually ran.
-- Convert any useful finding into the skill/agent instructions, then delete the
-  scratch file.
+- Identify paper-only outcomes as reasoned; reserve observed outcomes for checks that actually ran.
+- Convert any useful finding into the skill/agent instructions, then delete the scratch file.

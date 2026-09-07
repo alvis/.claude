@@ -1,21 +1,10 @@
 # Notion transport profile
 
-Every remote operation receives
-`--transport-profile=<absolute-profile-file>`. There is no implicit profile,
-PATH lookup, bundled binary, or origin-workspace fallback. The file is
-destination/team-owned configuration and contains no credential; authentication
-comes only from `NOTION_TOKEN` at invocation time.
+Every remote operation receives `--transport-profile=<absolute-profile-file>`. There is no implicit profile, PATH lookup, bundled binary, or origin-workspace fallback. The file is destination/team-owned configuration and contains no credential; authentication comes only from `NOTION_TOKEN` at invocation time.
 
 ## File safety
 
-Before parsing, require an absolute normalized path, safe non-symlink parent
-components, and a non-symlink regular file. Reject group/world-writable files,
-duplicate JSON keys, unknown fields, placeholders, control characters, and any
-field/key/value that carries a token, secret, authorization header, private
-key, cookie, or environment value. Read it once, retain those exact bytes, and
-record their SHA-256. Do not interpolate profile values into a shell command;
-invoke the canonical executable with an argv array and only the declared
-validated command/flag tokens.
+Before parsing, require an absolute normalized path, safe non-symlink parent components, and a non-symlink regular file. Reject group/world-writable files, duplicate JSON keys, unknown fields, placeholders, control characters, and any field/key/value that carries a token, secret, authorization header, private key, cookie, or environment value. Read it once, retain those exact bytes, and record their SHA-256. Do not interpolate profile values into a shell command; invoke the canonical executable with an argv array and only the declared validated command/flag tokens.
 
 ## `notion-sync-transport-profile/v1`
 
@@ -93,66 +82,29 @@ The strict JSON shape is:
 }
 ```
 
-All listed keys are required. In v1, the two probe argv arrays must be exactly
-the shown inert values. `package`, `version`, commands, and flags are literal
-single argv tokens, not fragments containing whitespace or shell syntax. The
-four core capability results must be `pass`. `conditional_update` and
-`conditional_create` are independent: each is `supported` only when its result
-is `pass`, its command equals the corresponding core `push` or `create`
-command, and its exact precondition flag is present in verified help. An
-unavailable conditional capability uses `command: null`, `flags: []`, and
-`output_contract: null`; its conformance vector is `[]`, output contract is the
-literal `unavailable`, and result is `unavailable`. Update-CAS evidence never
-proves atomic create-if-absent. Such a profile remains valid for read-only
-operations. It cannot authorize the corresponding mutation: an existing-page
-write without supported `conditional_update`, or a page creation without
-supported `conditional_create`, returns `status: refused` with
-`next_action: provide_conditional_transport` before any remote or
-canonical-local mutation. This differs from `transport_unverified`, which
-means the profile itself failed structural, fingerprint, probe, or conformance
-verification.
+All listed keys are required. In v1, the two probe argv arrays must be exactly the shown inert values. `package`, `version`, commands, and flags are literal single argv tokens, not fragments containing whitespace or shell syntax. The four core capability results must be `pass`. `conditional_update` and `conditional_create` are independent: each is `supported` only when its result is `pass`, its command equals the corresponding core `push` or `create` command, and its exact precondition flag is present in verified help. An unavailable conditional capability uses `command: null`, `flags: []`, and `output_contract: null`; its conformance vector is `[]`, output contract is the literal `unavailable`, and result is `unavailable`. Update-CAS evidence never proves atomic create-if-absent. Such a profile remains valid for read-only operations. It cannot authorize the corresponding mutation: an existing-page write without supported `conditional_update`, or a page creation without supported `conditional_create`, returns `status: refused` with `next_action: provide_conditional_transport` before any remote or canonical-local mutation. This differs from `transport_unverified`, which means the profile itself failed structural, fingerprint, probe, or conformance verification.
 
-The canonical vector for a core capability is exactly `[command, ...flags]`.
-For a supported conditional capability it is the corresponding core vector
-followed by the conditional precondition flags. Conformance evidence records
-those six exact vectors, their output contracts, and results. The validator
-requires exact equality with `capabilities`; a pass result from a different
-command or flag vector cannot be reused.
+The canonical vector for a core capability is exactly `[command, ...flags]`. For a supported conditional capability it is the corresponding core vector followed by the conditional precondition flags. Conformance evidence records those six exact vectors, their output contracts, and results. The validator requires exact equality with `capabilities`; a pass result from a different command or flag vector cannot be reused.
 
 The output contracts are plugin-owned adapters, not free-form labels:
 
-- `notion-page-tree-json-v1` returns one root plus complete recursive units with
-  canonical refs, parents, relationships, paths, revisions, and exact bytes;
-- `notion-search-json-v1` returns a JSON object containing canonical-ref,
-  parent-ref, and title candidates without selecting one;
-- `notion-created-page-json-v1` returns the new canonical ref, parent, revision,
-  path, relationships, and exact accepted body; and
-- `notion-page-write-json-v1` returns canonical ref, compared/precondition
-  revision, resulting revision, path, relationships, and exact accepted body.
+- `notion-page-tree-json-v1` returns one root plus complete recursive units with canonical refs, parents, relationships, paths, revisions, and exact bytes;
+- `notion-search-json-v1` returns a JSON object containing canonical-ref, parent-ref, and title candidates without selecting one;
+- `notion-created-page-json-v1` returns the new canonical ref, parent, revision, path, relationships, and exact accepted body; and
+- `notion-page-write-json-v1` returns canonical ref, compared/precondition revision, resulting revision, path, relationships, and exact accepted body.
 
-Any executable needs a separately checksum-bound conformance run proving these
-exact output shapes. Help text alone is not an output contract.
+Any executable needs a separately checksum-bound conformance run proving these exact output shapes. Help text alone is not an output contract.
 
-Verification binds the exact profile bytes, canonical executable, executable
-SHA-256, version output, help output, capability tokens, and canonicalized
-conformance evidence. A mismatch in any one field returns
-`transport_unverified` before a Notion query or canonical local write. The
-completion report records the profile path/digest and actual fingerprints, but
-never records `NOTION_TOKEN` or its value.
+Verification binds the exact profile bytes, canonical executable, executable SHA-256, version output, help output, capability tokens, and canonicalized conformance evidence. A mismatch in any one field returns `transport_unverified` before a Notion query or canonical local write. The completion report records the profile path/digest and actual fingerprints, but never records `NOTION_TOKEN` or its value.
 
-Run the bundled dependency-free structural verifier before any executable
-probe:
+Run the bundled dependency-free structural verifier before any executable probe:
 
 ```bash
 bun run <sync-notion-skill-root>/scripts/validate-transport-profile.ts \
   /absolute/path/to/notion-sync-transport.json
 ```
 
-The verifier reads the profile once, rejects duplicate/unknown/secret-bearing
-content, checks path and mode safety, hashes the exact profile and executable
-bytes, validates every strict v1 field, and emits the normalized expected
-fingerprints/capabilities. It never executes the transport or reads
-`NOTION_TOKEN`.
+The verifier reads the profile once, rejects duplicate/unknown/secret-bearing content, checks path and mode safety, hashes the exact profile and executable bytes, validates every strict v1 field, and emits the normalized expected fingerprints/capabilities. It never executes the transport or reads `NOTION_TOKEN`.
 
 For command help or a starter profile, run:
 
@@ -161,18 +113,6 @@ bun run <sync-notion-skill-root>/scripts/validate-transport-profile.ts --help
 bun run <sync-notion-skill-root>/scripts/validate-transport-profile.ts --print-template
 ```
 
-The template output is a secret-free JSON envelope with
-`status: unverified_template`. Its nested `profile` has the complete v1 shape,
-declares both conditional capabilities unavailable, and contains conspicuous
-placeholder fingerprints and paths. It is configuration scaffolding only: do
-not pass the envelope to transport, and do not use the nested profile until all
-placeholders and checksum-bound conformance evidence have been replaced and
-the positional validation command succeeds.
+The template output is a secret-free JSON envelope with `status: unverified_template`. Its nested `profile` has the complete v1 shape, declares both conditional capabilities unavailable, and contains conspicuous placeholder fingerprints and paths. It is configuration scaffolding only: do not pass the envelope to transport, and do not use the nested profile until all placeholders and checksum-bound conformance evidence have been replaced and the positional validation command succeeds.
 
-For v1, canonical conformance evidence bytes are produced by the bundled
-verifier from the validated fixed-shape `evidence` object using Python
-`json.dumps(evidence, ensure_ascii=False, sort_keys=True,
-separators=(",", ":"))`, encoded as UTF-8 with no trailing newline. This
-restricted algorithm is the contract; it does not depend on an external JCS
-implementation. The profile's `evidence_sha256` is SHA-256 of exactly those
-bytes.
+For v1, canonical conformance evidence bytes are produced by the bundled verifier from the validated fixed-shape `evidence` object using Python `json.dumps(evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":"))`, encoded as UTF-8 with no trailing newline. This restricted algorithm is the contract; it does not depend on an external JCS implementation. The profile's `evidence_sha256` is SHA-256 of exactly those bytes.

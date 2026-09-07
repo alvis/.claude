@@ -1,8 +1,6 @@
 # Web
 
-Web UX design and verification: visual direction, design audits, image
-generation, Next.js runtime diagnosis, and Storybook checks. Depends on
-`coding` and `essential`.
+Web UX design and verification: visual direction, design audits, image generation, Next.js runtime diagnosis, and Storybook checks. Depends on `coding` and `essential`.
 
 ## Skills
 

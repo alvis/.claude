@@ -2,16 +2,11 @@
 
 ## Intent
 
-Always use functional components. Components that accept props use
-`FC<ComponentNameProps>` and export the component-named props alias; zero-prop
-components need no artificial props type. Class components are forbidden
-except where React itself requires them (Error Boundaries).
+Always use functional components. Components that accept props use `FC<ComponentNameProps>` and export the component-named props alias; zero-prop components need no artificial props type. Class components are forbidden except where React itself requires them (Error Boundaries).
 
 ## Fix
 
-- Convert any `class X extends Component` to a functional component; use
-  `export const X: FC<XProps> = (props) => { ... }` when it accepts props and
-  `export const X: FC = () => { ... }` when it accepts none
+- Convert any `class X extends Component` to a functional component; use `export const X: FC<XProps> = (props) => { ... }` when it accepts props and `export const X: FC = () => { ... }` when it accepts none
 - Move lifecycle methods into `useEffect` and instance state into `useState`/`useReducer`
 - Keep class components only for React Error Boundaries (`componentDidCatch` / `getDerivedStateFromError`)
 

@@ -8,8 +8,7 @@ argument-hint: "[specifier] [--scope=SCOPE] [--skip-unused] [--profile=ABSOLUTE_
 
 # Linting
 
-Set `CODING_LINT_SKILL_DIR` to the absolute directory containing this loaded
-`SKILL.md` before invoking its scripts.
+Set `CODING_LINT_SKILL_DIR` to the absolute directory containing this loaded `SKILL.md` before invoking its scripts.
 
 Apply generic coding standards mechanically. This skill owns file discovery, scope handling, batching, the generic scanner, verification, aggregation, and the final report. It does not select or dispatch framework skills; a framework plugin extends it by passing a portable profile.
 
@@ -49,15 +48,7 @@ Fail before editing if the profile is invalid, references a missing standard/sca
 ## Workflow
 
 <IMPORTANT>
-The implementing owner remains responsible for discovery, standards loading,
-the scanner, mechanical edits, focused checks, and self-review. Classify the
-scope through the Coding workflow before choosing topology. Tier 0/1 stays
-with that one owner. Add independent review only when the change is
-consequential, explicitly requested for review, or publication-bound. Tier 3,
-multiple dependent milestones, or multiple implementers may use governed
-coordination, but each assigned implementing owner keeps those mechanical
-responsibilities for its disjoint batch. Load [cycle.md](directions/cycle.md)
-only when an independent-review or coordinated topology applies.
+The implementing owner remains responsible for discovery, standards loading, the scanner, mechanical edits, focused checks, and self-review. Classify the scope through the Coding workflow before choosing topology. Tier 0/1 stays with that one owner. Add independent review only when the change is consequential, explicitly requested for review, or publication-bound. Tier 3, multiple dependent milestones, or multiple implementers may use governed coordination, but each assigned implementing owner keeps those mechanical responsibilities for its disjoint batch. Load [cycle.md](directions/cycle.md) only when an independent-review or coordinated topology applies.
 </IMPORTANT>
 
 0. Unless `--skip-unused` is set, run the pre-flight unused-code scan: invoke `coding:find-unused` with the specifier (or repo root). Zero findings → proceed silently. Otherwise present each finding through a graphical or structured user-input tool (file:line + symbol, Remove/Keep, ≤4 questions per call, paginated), then have the implementing owner delete precisely the confirmed-unused list. Record scan/removed/kept counts for the final report; they never count toward `violations_found_total`. `--scope` does not apply here — dead-code detection is project-wide by nature.
@@ -68,13 +59,7 @@ only when an independent-review or coordinated topology applies.
    - Always exclude ignored files, dependencies, generated output, and paths outside the repository.
    - When the selected files include compiler tests, group files by owning project and resolve each project's configured type-test mechanism and discovery patterns before batching. Keep each batch within one project root, pass that absolute root as `--test-root` and every applicable compiler-test glob as a repeated `--test-pattern`, and never combine files owned by different test roots in one runner invocation; do not infer test status from filenames alone.
 3. Apply profile eligibility and exclusions when supplied. Stop cleanly if no files remain.
-4. Select generic standards from [the Coding index](../../standards/INDEX.md)
-   using the discovered artifacts, languages, and configured compiler-test
-   classification. Apply `essential:directions/standards.md`. Resolve profile
-   standards as exact directories in the enabled extension plugin's index;
-   reject missing or unindexed targets. Add them without replacing or
-   duplicating generic standards. Never infer selection from prompt headings,
-   filename-stem matching, or an unrestricted standards-tree search.
+4. Select generic standards from [the Coding index](../../standards/INDEX.md) using the discovered artifacts, languages, and configured compiler-test classification. Apply `essential:directions/standards.md`. Resolve profile standards as exact directories in the enabled extension plugin's index; reject missing or unindexed targets. Add them without replacing or duplicating generic standards. Never infer selection from prompt headings, filename-stem matching, or an unrestricted standards-tree search.
 5. Batch related files that share one owning project root, with at most two files per runner invocation. Batching does not authorize delegation.
 6. For each owned batch, the implementing owner:
    - Run `bun run ${CODING_LINT_SKILL_DIR}/../../scripts/lint_profile_runner.ts [--profile=<absolute-path>] [--test-root=<project-root> --test-pattern=<compiler-test-glob> ...] <files>` exactly once. The runner resolves Coding resources from its installed location and forwards compiler-test classification only to the generic scanner.

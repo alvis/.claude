@@ -8,8 +8,7 @@ argument-hint: "[--port 6006] [--headed] [--no-spawn] [--story <id-glob>] [--max
 
 # Storybook audit
 
-Set `WEB_STORYBOOK_SKILL_DIR` to the absolute directory containing this loaded
-`SKILL.md` before invoking its scripts.
+Set `WEB_STORYBOOK_SKILL_DIR` to the absolute directory containing this loaded `SKILL.md` before invoking its scripts.
 
 Audit Storybook setup, stories, states, addon panels, and visual evidence. Product files are read-only. The bundled scripts own deterministic work; do not reproduce their logic or use an edit tool to fix findings.
 

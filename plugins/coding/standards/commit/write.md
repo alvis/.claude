@@ -2,10 +2,8 @@
 
 ## Key Principles
 
-- Validate the subject against the regex below BEFORE any `jj describe` or
-  `git commit` runs. A failure stops the workflow; nothing is silently rewritten.
-- The header states the kind of change; the subject states the change; the body
-  states why.
+- Validate the subject against the regex below BEFORE any `jj describe` or `git commit` runs. A failure stops the workflow; nothing is silently rewritten.
+- The header states the kind of change; the subject states the change; the body states why.
 - One scope names one concern, never a package list.
 
 ## Subject regex
@@ -14,8 +12,7 @@
 ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w./-]+\))?!?: .+
 ```
 
-Anchored at start. Required colon-space between header and subject text.
-Optional `(scope)` and optional `!` for a breaking change.
+Anchored at start. Required colon-space between header and subject text. Optional `(scope)` and optional `!` for a breaking change.
 
 Quick bash check:
 
@@ -49,9 +46,7 @@ Scope is optional but recommended for monorepo / multi-package projects.
 - **Short package name** — e.g. `user-profile`, `auth`, `web`, `service`, `data`.
 - **Drop catalog prefixes** — write `auth`, NOT `@scope/auth`; write `web`, NOT `@example/web`.
 - **Cross-package concerns** — name the concern, not the package list. e.g. `feat(theming): unify dark mode` across `web` + `react` packages.
-- **Repository-specific multi-scope syntax** — use it only when the active
-  repository's commit policy explicitly permits it. The canonical regex above
-  permits one scope, so name a shared concern instead.
+- **Repository-specific multi-scope syntax** — use it only when the active repository's commit policy explicitly permits it. The canonical regex above permits one scope, so name a shared concern instead.
 - **Global changes** — OMIT the scope entirely. e.g. `chore: bump node to 22`.
 - **Kebab-case only**. No spaces, no underscores, no caps.
 
@@ -100,16 +95,14 @@ Add `!` immediately before the colon to signal a breaking change:
 feat(auth)!: drop deprecated /v1/login endpoint
 ```
 
-A breaking change MUST be documented in the body under a `BREAKING CHANGE:`
-footer (Conventional Commits spec).
+A breaking change MUST be documented in the body under a `BREAKING CHANGE:` footer (Conventional Commits spec).
 
 ## Body rules
 
 - Separate from subject by ONE blank line.
 - Wrap every body line at 72 characters; this is a hard limit.
 - Explain **WHY**, not WHAT. The diff shows what; the body explains the reasoning, trade-offs, alternatives considered.
-- Close issues only with `Closes #<number>, #<number>...` at the bottom. Use
-  commas for multiple issues; never substitute `Fixes` or `Resolves`.
+- Close issues only with `Closes #<number>, #<number>...` at the bottom. Use commas for multiple issues; never substitute `Fixes` or `Resolves`.
 - Reference non-closing issues or PRs by URL or `#NNN` at the bottom.
 - For `revert`, include a `Reverts <sha>` line.
 - For `BREAKING CHANGE`, include a `BREAKING CHANGE:` paragraph describing migration.

@@ -37,7 +37,4 @@ Only `sync-spec` may complete a specification across work copy, selected mirror,
 
 ## Completion
 
-`validate-metadata` returns only `status`, `mode`, exact `paths`, reported
-transport identities/revisions, `bytes_changed: false`, and `unresolved`.
-Remote modes follow the verification and report contract in
-[directions/execution.md](directions/execution.md).
+`validate-metadata` returns only `status`, `mode`, exact `paths`, reported transport identities/revisions, `bytes_changed: false`, and `unresolved`. Remote modes follow the verification and report contract in [directions/execution.md](directions/execution.md).

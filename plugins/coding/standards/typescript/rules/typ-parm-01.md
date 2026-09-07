@@ -19,9 +19,7 @@ function processUser(options?: UserOptions) {
 }
 ```
 
-See `FUNC-SIGN-04` for canonical guidance. Named parameter shapes follow
-`TYP-TYPE-01`: plain object shapes use `interface`; unions, intersections,
-mapped/computed types, function signatures, and tuples use `type`.
+See `FUNC-SIGN-04` for canonical guidance. Named parameter shapes follow `TYP-TYPE-01`: plain object shapes use `interface`; unions, intersections, mapped/computed types, function signatures, and tuples use `type`.
 
 ## Edge Cases
 

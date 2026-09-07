@@ -1,7 +1,6 @@
 # Plan change structure BEFORE writing code
 
-Follow `essential:directions/plan.md`; this reference adds commit and
-pull-request structure to that shared plan contract.
+Follow `essential:directions/plan.md`; this reference adds commit and pull-request structure to that shared plan contract.
 
 This reference is consulted at the START of any non-trivial task, before code edits begin. The goal: structure work so that commits and PRs end up independently mergeable, with no forward references, and no "split by directory" anti-patterns. See [SKILL.md](../SKILL.md) for the overall pipeline.
 
@@ -93,9 +92,7 @@ User asks: "add password reset AND profile picture upload". Plan:
 02 feat(user-profile): add avatar upload    → bookmark feat-x/02-avatar
 ```
 
-Two commits. Each is independent. `/coding:commit --create-pr` preserves the
-compatibility call and delegates the saved stack to
-[`coding:pr create`](../../pr/directions/create-update.md).
+Two commits. Each is independent. `/coding:commit --create-pr` preserves the compatibility call and delegates the saved stack to [`coding:pr create`](../../pr/directions/create-update.md).
 
 ### Example C: refactor first consumed by a feature (ONE commit)
 
@@ -107,9 +104,7 @@ The utility ships with the first behavior that consumes it; exporting or testing
 
 ## Output of planning
 
-Before invoking [save.md](./save.md),
-[split.md](./split.md), or handing publication to
-[`coding:pr create`](../../pr/directions/create-update.md), produce:
+Before invoking [save.md](./save.md), [split.md](./split.md), or handing publication to [`coding:pr create`](../../pr/directions/create-update.md), produce:
 
 1. Ordered list of intended commits
 2. For each: conventional title (see [commit-message standard](../../../standards/commit/write.md)) + file list

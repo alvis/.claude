@@ -15,5 +15,4 @@ Read this before creating, updating, or reviewing agents, skills, standards, or 
 
 ## Standards
 
-Select from `governance:standards/INDEX.md` and apply each selected standard
-under `essential:directions/standards.md`.
+Select from `governance:standards/INDEX.md` and apply each selected standard under `essential:directions/standards.md`.

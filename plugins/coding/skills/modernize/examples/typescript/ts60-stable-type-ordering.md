@@ -6,8 +6,7 @@ module: "any"
 
 ## Detection
 
-Non-deterministic union ordering in `.d.ts` files causing unnecessary git diffs between builds.
-Flapping type order in generated declaration files.
+Non-deterministic union ordering in `.d.ts` files causing unnecessary git diffs between builds. Flapping type order in generated declaration files.
 
 ## Before
 

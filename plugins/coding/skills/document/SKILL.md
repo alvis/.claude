@@ -34,13 +34,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 ## Workflow
 
 <IMPORTANT>
-Classify the documentation change through the Coding workflow before choosing
-topology. Tier 0/1 stays with the main-agent writing owner; do not delegate its
-drafting. That owner performs the evidence check, drafting, mechanical
-verification, and self-review. Add an independent read-only reviewer only when
-the change is consequential, explicitly requested for review, or
-publication-bound. Tier 3 or genuinely multi-milestone work may use its
-governed coordination without transferring document-write ownership.
+Classify the documentation change through the Coding workflow before choosing topology. Tier 0/1 stays with the main-agent writing owner; do not delegate its drafting. That owner performs the evidence check, drafting, mechanical verification, and self-review. Add an independent read-only reviewer only when the change is consequential, explicitly requested for review, or publication-bound. Tier 3 or genuinely multi-milestone work may use its governed coordination without transferring document-write ownership.
 </IMPORTANT>
 
 Load [references/authoring-rules.md](references/authoring-rules.md) for the concrete drafting rules (section order, TOC discipline, Support Matrix, folder notation, banned behaviors), the ARCHITECTURE tree/diagram/split rules, the review audit checklist, and the retry/rollback criteria.

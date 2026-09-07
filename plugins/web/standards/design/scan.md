@@ -1,11 +1,6 @@
 # Design: Violation Scan
 
-Any P0 or P1 finding blocks UI approval and completion unless it is closed under
-the canonical [audit disposition contract](../../skills/audit/templates/review.md).
-A non-fixed closure requires explicit risk-acceptance authority, an accountable
-owner, non-placeholder rationale, durable acceptance evidence, and a concrete
-recheck condition.
-Protocol: `essential:directions/standards.md`.
+Any P0 or P1 finding blocks UI approval and completion unless it is closed under the canonical [audit disposition contract](../../skills/audit/templates/review.md). A non-fixed closure requires explicit risk-acceptance authority, an accountable owner, non-placeholder rationale, durable acceptance evidence, and a concrete recheck condition. Protocol: `essential:directions/standards.md`.
 
 > **During auditing**: Report all findings with severity. For the design skill, self-audit against this checklist and iterate toward 10/10 in every category, within that skill's rework budget — carry whatever still falls short to confirmation as a residual gap rather than looping past the budget. For the audit skill, report violations without fixing them.
 

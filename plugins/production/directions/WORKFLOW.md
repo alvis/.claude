@@ -13,9 +13,7 @@ Select by the requested action, not the subject noun.
 
 Production skills write versioned manifests and review records. They never edit media bytes, invent provenance or rights facts, or carry approval across a revision without explicit preserved scope.
 
-When establishing a production work stream, declare a `media-project` or
-`asset-store` anchor per `essential:references/anchors.md`. Essential owns
-state, decisions, journal, and handover through its state lifecycle contract.
+When establishing a production work stream, declare a `media-project` or `asset-store` anchor per `essential:references/anchors.md`. Essential owns state, decisions, journal, and handover through its state lifecycle contract.
 
 ## Standards
 

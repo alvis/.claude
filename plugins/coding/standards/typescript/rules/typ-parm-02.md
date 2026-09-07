@@ -2,11 +2,7 @@
 
 ## Intent
 
-Exported functions with non-trivial input/output must use named contracts whose
-declaration form follows `TYP-TYPE-01`. Plain object shapes use `interface`;
-unions, intersections, mapped/computed types, function signatures, and tuples
-use `type`. Simple scalar parameters (`id: string`) do not need dedicated
-contracts.
+Exported functions with non-trivial input/output must use named contracts whose declaration form follows `TYP-TYPE-01`. Plain object shapes use `interface`; unions, intersections, mapped/computed types, function signatures, and tuples use `type`. Simple scalar parameters (`id: string`) do not need dedicated contracts.
 
 ## Fix
 

@@ -1,7 +1,6 @@
 # React Project Structure: Violation Scan
 
-Any single violation blocks submission by default.
-Protocol: `essential:directions/standards.md`.
+Any single violation blocks submission by default. Protocol: `essential:directions/standards.md`.
 
 ## Quick Scan
 

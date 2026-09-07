@@ -1,8 +1,6 @@
 # Universal: Violation Scan
 
-Any single violation blocks submission by default.
-Protocol: `essential:directions/standards.md`.
-During linting, fix only mechanical corrections — formatting, naming, documentation, casing, import ordering, field/function reordering; report without fixing anything that would add logic, change control flow, introduce runtime validation, or alter program behavior.
+Any single violation blocks submission by default. Protocol: `essential:directions/standards.md`. During linting, fix only mechanical corrections — formatting, naming, documentation, casing, import ordering, field/function reordering; report without fixing anything that would add logic, change control flow, introduce runtime validation, or alter program behavior.
 
 ## Quick Scan
 

@@ -25,13 +25,7 @@ The shared library ships a base CSS-variable contract with safe hardcoded fallba
 
 ### Three-Tier Fallback Chain
 
-Every component-level style resolves through `var(--component-specific,
-var(--active-semantic-or-ui-token, hardcoded-default))`. The component token is
-the most specific override knob; mode-sensitive color uses an active `--ui-*`
-token; the literal keeps the library shippable in isolation. Per `CSS-MODE-04`,
-every active UI token aliases the corresponding raw light/dark token in each
-mode branch. Components never bypass it for `--theme-light-*`,
-`--theme-dark-*`, or a static brand color.
+Every component-level style resolves through `var(--component-specific, var(--active-semantic-or-ui-token, hardcoded-default))`. The component token is the most specific override knob; mode-sensitive color uses an active `--ui-*` token; the literal keeps the library shippable in isolation. Per `CSS-MODE-04`, every active UI token aliases the corresponding raw light/dark token in each mode branch. Components never bypass it for `--theme-light-*`, `--theme-dark-*`, or a static brand color.
 
 ```css
 /* ✅ GOOD: three-tier resolution */

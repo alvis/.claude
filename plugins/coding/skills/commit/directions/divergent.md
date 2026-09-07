@@ -62,9 +62,7 @@ jj log -r 'change_id(<id>)' --no-graph
 
 ### 5. Surface remote stack impact
 
-If any unmerged bookmark sat at or below the divergent change, follow the
-[SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata
-after local integrity passes.
+If any unmerged bookmark sat at or below the divergent change, follow the [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata after local integrity passes.
 
 ## Prevention rules
 

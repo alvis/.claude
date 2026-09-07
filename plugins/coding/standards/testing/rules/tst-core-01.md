@@ -29,8 +29,7 @@ const mockRepo: any = {
 };
 ```
 
-For mock typing patterns (`satisfies`, class type disambiguation, triple pattern), see `TST-MOCK-05`.
-For import organization rules, see `TYP-IMPT-01` through `TYP-IMPT-06`.
+For mock typing patterns (`satisfies`, class type disambiguation, triple pattern), see `TST-MOCK-05`. For import organization rules, see `TYP-IMPT-01` through `TYP-IMPT-06`.
 
 ## Minimal Testing Principle
 
@@ -42,8 +41,7 @@ For import organization rules, see `TYP-IMPT-01` through `TYP-IMPT-06`.
 - Every test must verify: different code path, different behavior, OR real edge case
 </IMPORTANT>
 
-For detailed guidance on test uniqueness, see `TST-CORE-04` and `TST-CORE-05`.
-For coverage thresholds and workflow, see `TST-COVR-01` through `TST-COVR-04`.
+For detailed guidance on test uniqueness, see `TST-CORE-04` and `TST-CORE-05`. For coverage thresholds and workflow, see `TST-COVR-01` through `TST-COVR-04`.
 
 ## Performance Guidelines
 

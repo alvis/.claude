@@ -22,8 +22,7 @@ Use this reference to adapt an existing stack or package reusable Presetter beha
 | Project-only command that intentionally shadows a preset task | local `package.json` |
 | Behavior shared by multiple repositories | a custom preset package |
 
-Keep ordinary reusable behavior in the preset stack. Keep only genuine project
-differences in the consumer config or local package script.
+Keep ordinary reusable behavior in the preset stack. Keep only genuine project differences in the consumer config or local package script.
 
 ## Compose variables, scripts, and assets
 
@@ -52,8 +51,7 @@ export default preset('@scope/service', {
 });
 ```
 
-Definitions merge after earlier `extends` entries. Use this initial pass for new
-capability. Use `override` when the change must see and amend the final inherited value.
+Definitions merge after earlier `extends` entries. Use this initial pass for new capability. Use `override` when the change must see and amend the final inherited value.
 
 ## Apply late overrides
 
@@ -80,8 +78,7 @@ export default preset('@scope/service', {
 });
 ```
 
-Use a local package script instead when the difference is intentionally private to one
-package and should win only at runtime:
+Use a local package script instead when the difference is intentionally private to one package and should win only at runtime:
 
 ```json
 {
@@ -92,13 +89,11 @@ package and should win only at runtime:
 }
 ```
 
-`presetter run build` uses `vite build`; `presetter run build --template` bypasses the
-local shadow and exposes the preset task for comparison.
+`presetter run build` uses `vite build`; `presetter run build --template` bypasses the local shadow and exposes the preset task for comparison.
 
 ## Preserve, merge, or remove assets
 
-Use a current-value function for arrays or executable configuration whose upstream
-content must be retained:
+Use a current-value function for arrays or executable configuration whose upstream content must be retained:
 
 ```typescript
 import { asset, merge, preset } from 'presetter';
@@ -124,23 +119,18 @@ export default preset('@scope/service', {
 });
 ```
 
-Return `undefined` from a function for no change and `null` to suppress the asset.
-`merge(current, patch)` preserves inherited object structure while applying the patch.
-When returning an array or object directly from a function, include every inherited
-part that must survive because the function owns its returned value.
+Return `undefined` from a function for no change and `null` to suppress the asset. `merge(current, patch)` preserves inherited object structure while applying the patch. When returning an array or object directly from a function, include every inherited part that must survive because the function owns its returned value.
 
 ## Author a reusable preset package
 
-Create a normal TypeScript package containing checked-in source and templates. Install
-the currently compatible packages using the workspace's manager:
+Create a normal TypeScript package containing checked-in source and templates. Install the currently compatible packages using the workspace's manager:
 
 ```bash
 pnpm add @presetter/types @presetter/preset-essentials
 pnpm add -D presetter typescript
 ```
 
-Declare `presetter` as a peer using the compatibility range verified from the installed
-CLI/presets, and expose compiled source plus templates:
+Declare `presetter` as a peer using the compatibility range verified from the installed CLI/presets, and expose compiled source plus templates:
 
 ```json
 {
@@ -161,8 +151,7 @@ CLI/presets, and expose compiled source plus templates:
 }
 ```
 
-Replace `workspace:*` with the repository's verified compatible range before publishing
-outside that workspace.
+Replace `workspace:*` with the repository's verified compatible range before publishing outside that workspace.
 
 ```typescript
 // src/index.ts
@@ -189,13 +178,8 @@ export default preset('@scope/preset-service', {
 });
 ```
 
-Set `root` to the preset package root so binaries supplied by that package resolve when
-consumer scripts run. Put tools required by generated/runtime behavior in the package's
-appropriate dependency or peer dependency fields.
+Set `root` to the preset package root so binaries supplied by that package resolve when consumer scripts run. Put tools required by generated/runtime behavior in the package's appropriate dependency or peer dependency fields.
 
 ## Validate a custom preset
 
-Test the definition's default, conditional, function, merge, and null paths. Build the
-package, install/link it into a disposable representative consumer, run bootstrap, and
-assert generated files and runnable tasks. A generator-unit test alone does not prove
-serialization, binary resolution, or consumer package integration.
+Test the definition's default, conditional, function, merge, and null paths. Build the package, install/link it into a disposable representative consumer, run bootstrap, and assert generated files and runnable tasks. A generator-unit test alone does not prove serialization, binary resolution, or consumer package integration.

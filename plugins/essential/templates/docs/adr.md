@@ -19,17 +19,12 @@
 
 <Record the benefits, costs, risks, and operational consequences.>
 
-<!--
-OPTIONAL SUPERSEDED HEADER
+<!-- OPTIONAL SUPERSEDED HEADER
 
-Use only after moving this file to
-docs/architecture/decisions/superseded/. Prepend it above this document,
-preserve the document body unchanged, and do not add the header to a new
-successor ADR:
+Use only after moving this file to docs/architecture/decisions/superseded/. Prepend it above this document, preserve the document body unchanged, and do not add the header to a new successor ADR:
 
 > **Status:** Superseded
 >
 > **Superseded by:** [ADR-<nnnn> — <title>](../<nnnn>-<slug>.md)
 >
-> **What changed:** <State whether the change is partial or complete and summarize the changed choice.>
--->
+> **What changed:** <State whether the change is partial or complete and summarize the changed choice.> -->

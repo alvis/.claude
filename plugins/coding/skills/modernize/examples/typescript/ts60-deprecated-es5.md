@@ -6,9 +6,7 @@ module: "any"
 
 ## Detection
 
-`"target": "es5"` in tsconfig.json
-`"target": "ES5"` in tsconfig.json
-`"target": "es3"` in tsconfig.json
+`"target": "es5"` in tsconfig.json `"target": "ES5"` in tsconfig.json `"target": "es3"` in tsconfig.json
 
 ## Before
 

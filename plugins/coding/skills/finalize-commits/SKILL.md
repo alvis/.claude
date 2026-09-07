@@ -8,45 +8,30 @@ argument-hint: "[--auto-push]"
 
 # Finalize Commits
 
-Verify that every unpushed commit is independently shippable. This skill owns
-isolated per-commit QA and the finalization report. `coding:commit` is the sole
-owner of history mutations.
+Verify that every unpushed commit is independently shippable. This skill owns isolated per-commit QA and the finalization report. `coding:commit` is the sole owner of history mutations.
 
 ## Boundaries
 
 - Enumerate the unpushed stack oldest first without changing it.
-- Run each commit's install, lint, test or coverage, and build gate in a fresh
-  isolated worktree.
-- Diagnose failures and propose the smallest correction. Code corrections route
-  to `coding:fix` before the commit is tested again.
-- Route every fold, squash, amend, reword, reorder, abandon, bookmark, or
-  branch move through `coding:commit`, and remote restack/publication through
-  `coding:pr create`. Never issue a direct `git` or `jj` history-mutating command
-  from this skill or its QA workers.
+- Run each commit's install, lint, test or coverage, and build gate in a fresh isolated worktree.
+- Diagnose failures and propose the smallest correction. Code corrections route to `coding:fix` before the commit is tested again.
+- Route every fold, squash, amend, reword, reorder, abandon, bookmark, or branch move through `coding:commit`, and remote restack/publication through `coding:pr create`. Never issue a direct `git` or `jj` history-mutating command from this skill or its QA workers.
 - Stop for user approval when a correction changes commit meaning or order.
-- Publish only when `--auto-push` was explicitly supplied and all commits are
-  green; delegate publication to `coding:pr create`.
+- Publish only when `--auto-push` was explicitly supplied and all commits are green; delegate publication to `coding:pr create`.
 
 ## Workflow
 
 1. Detect jj or git and record the current working state and upstream without mutation. Load [dependency-scan.md](directions/dependency-scan.md) to enumerate unpushed commits oldest first and determine dependency order.
 2. Load [orchestration.md](directions/orchestration.md) for the coordination and approval contract. Report any recommended reorder or fold before QA.
 3. For each commit, load [qa-loop.md](directions/qa-loop.md), create a disposable worktree at that revision, and run the repository's complete QA gate. Never split a required gate to hide failure.
-4. If QA changes source or a generated lockfile, validate the correction in the
-   isolated worktree, then invoke `coding:commit` to apply it to the owning commit.
-5. If a subject is non-conforming, propose the truthful replacement and invoke
-   `coding:commit` for the approved reword.
+4. If QA changes source or a generated lockfile, validate the correction in the isolated worktree, then invoke `coding:commit` to apply it to the owning commit.
+5. If a subject is non-conforming, propose the truthful replacement and invoke `coding:commit` for the approved reword.
 6. Load [squash-fixups.md](directions/squash-fixups.md) only when a fixup/fold is approved. Re-run the affected commit and all dependent later commits after any mutation.
-7. Run the verification below; when a check fails, route the correction (steps
-   4-6) and re-run that commit and its dependents. Repeat until every commit is
-   green or a concrete blocker or pending decision remains, then report it
-   instead of looping. If requested, invoke `coding:pr create` only after every
-   commit passes.
+7. Run the verification below; when a check fails, route the correction (steps 4-6) and re-run that commit and its dependents. Repeat until every commit is green or a concrete blocker or pending decision remains, then report it instead of looping. If requested, invoke `coding:pr create` only after every commit passes.
 
 ## Verification
 
-- Every unpushed commit passes its full install, lint, test/coverage, and build
-  gate in a fresh isolated worktree (or carries a valid QA marker).
+- Every unpushed commit passes its full install, lint, test/coverage, and build gate in a fresh isolated worktree (or carries a valid QA marker).
 - The final stack is linear and conflict-free, and every commit subject conforms.
 - No history-mutating command was issued outside `coding:commit`.
 

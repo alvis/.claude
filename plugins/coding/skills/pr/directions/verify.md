@@ -1,20 +1,14 @@
 # Verify Exact Local CI Parity
 
-Run the local test and lint commands defined by applicable `pull_request`
-workflows for one exact revision surface. This action never publishes or mutates a
-remote.
+Run the local test and lint commands defined by applicable `pull_request` workflows for one exact revision surface. This action never publishes or mutates a remote.
 
 ## Inputs
 
 - `TARGET_SHA`: immutable revision ID for the standalone head or selected stack tip.
 - `TARGET_BASE`: immutable revision ID for the standalone PR base or selected stack root base.
-- `TARGET_KIND`: `standalone` or `stack-tip` for the receipt; defaults to
-  `standalone` only for the public `coding:pr verify` action.
+- `TARGET_KIND`: `standalone` or `stack-tip` for the receipt; defaults to `standalone` only for the public `coding:pr verify` action.
 
-Reject unresolved refs, an unknown kind, or an empty input. A changed target,
-base, or applicable workflow input invalidates all evidence and restarts the
-gate. These inputs intentionally provide neither the pull request's base ref
-nor its create/update event type.
+Reject unresolved refs, an unknown kind, or an empty input. A changed target, base, or applicable workflow input invalidates all evidence and restarts the gate. These inputs intentionally provide neither the pull request's base ref nor its create/update event type.
 
 ## Workflow
 
@@ -24,8 +18,7 @@ Resolve the target repository's main source checkout first:
 SOURCE_REPO_ROOT=$(git rev-parse --show-toplevel)
 ```
 
-Require jj to be installed, initialized for that checkout, and able to resolve
-the exact target commit without snapshotting the current working copy:
+Require jj to be installed, initialized for that checkout, and able to resolve the exact target commit without snapshotting the current working copy:
 
 ```bash
 command -v jj >/dev/null 2>&1 || exit 42
@@ -36,21 +29,11 @@ CI_PARITY_EXECUTION_ENGINE=jj-run
 printf 'CI_PARITY_EXECUTION_ENGINE=%s\n' "$CI_PARITY_EXECUTION_ENGINE"
 ```
 
-Do not initialize or upgrade jj inside this action. Repository initialization,
-the 0.44 version floor, and linked Git worktree handling belong to the shared
-jj guide and `coding:sync-tool`. Failure to prove them blocks verification;
-only create/update's explicit `--no-verify` can bypass its local gate.
+Do not initialize or upgrade jj inside this action. Repository initialization, the 0.44 version floor, and linked Git worktree handling belong to the shared jj guide and `coding:sync-tool`. Failure to prove them blocks verification; only create/update's explicit `--no-verify` can bypass its local gate.
 
-Use the source checkout as the repository argument to `jj run` and for
-read-only discovery of environment sources such as `.env`, `.env.local`, and
-`.env.test`. Load task variables only from user-approved sources, preserve CI's
-declared values and precedence, and pass only the task's required environment.
-Never copy secret values into reports or execute repository test, lint, setup,
-or formatter commands directly in the source checkout.
+Use the source checkout as the repository argument to `jj run` and for read-only discovery of environment sources such as `.env`, `.env.local`, and `.env.test`. Load task variables only from user-approved sources, preserve CI's declared values and precedence, and pass only the task's required environment. Never copy secret values into reports or execute repository test, lint, setup, or formatter commands directly in the source checkout.
 
-Create one detached disposable worktree at the target revision through the bundled
-helper and verify its revision. It owns workflow and command discovery; do not
-execute repository tasks from it:
+Create one detached disposable worktree at the target revision through the bundled helper and verify its revision. It owns workflow and command discovery; do not execute repository tasks from it:
 
 ```bash
 TREE_JSON=$(bash "${CODING_PR_SKILL_DIR}/scripts/temp-tree.sh" \
@@ -60,32 +43,11 @@ TEST_WORKTREE=$(jq -er .tree <<<"$TREE_JSON")
 test "$(git -C "$TEST_WORKTREE" rev-parse HEAD)" = "$TARGET_SHA"
 ```
 
-The context-owning parent passes `TEST_WORKTREE`, `SOURCE_REPO_ROOT`,
-the target revision, and the selected execution engine to the tester. It retains
-cleanup ownership. On cancellation or blocked discovery it closes the lease
-and verifies that its file and VCS registration are gone.
+The context-owning parent passes `TEST_WORKTREE`, `SOURCE_REPO_ROOT`, the target revision, and the selected execution engine to the tester. It retains cleanup ownership. On cancellation or blocked discovery it closes the lease and verifies that its file and VCS registration are gone.
 
-Read `.github/workflows/*.yml` and `.github/workflows/*.yaml` only from
-`TEST_WORKTREE`. Set applicability mode to `conservative_pull_request` and
-include every workflow triggered by `pull_request`. Do not exclude one because
-of `branches`, `branches-ignore`, `types`, `paths`, or `paths-ignore` filters:
-bare revision IDs do not carry the complete hosted event context needed to
-evaluate those filters reliably. Use `TARGET_BASE..TARGET_SHA` only as the
-changed command surface, not to narrow workflow applicability. Follow every
-included workflow's repo-local reusable workflows, composite actions, package
-scripts, workspace manifests, Makefiles, and task files from the target revision.
-Record the exact test and lint `run:` commands in workflow order plus only
-their required setup, preserving shell, working directory, matrix values, and
-environment. Install necessary tooling and dependencies without asking for
-approval, using the target revision's CI setup and package-manager inputs in
-the isolated task. Do not substitute a nearby command or invent a check. Record
-an exact absence when no included workflow defines test or lint. An unavailable
-setup requirement is a setup failure, never evidence that an unattempted test
-failed.
+Read `.github/workflows/*.yml` and `.github/workflows/*.yaml` only from `TEST_WORKTREE`. Set applicability mode to `conservative_pull_request` and include every workflow triggered by `pull_request`. Do not exclude one because of `branches`, `branches-ignore`, `types`, `paths`, or `paths-ignore` filters: bare revision IDs do not carry the complete hosted event context needed to evaluate those filters reliably. Use `TARGET_BASE..TARGET_SHA` only as the changed command surface, not to narrow workflow applicability. Follow every included workflow's repo-local reusable workflows, composite actions, package scripts, workspace manifests, Makefiles, and task files from the target revision. Record the exact test and lint `run:` commands in workflow order plus only their required setup, preserving shell, working directory, matrix values, and environment. Install necessary tooling and dependencies without asking for approval, using the target revision's CI setup and package-manager inputs in the isolated task. Do not substitute a nearby command or invent a check. Record an exact absence when no included workflow defines test or lint. An unavailable setup requirement is a setup failure, never evidence that an unattempted test failed.
 
-For each parsed workflow, apply this decision contract. The parser supplies
-`HAS_PULL_REQUEST_TRIGGER` from the workflow's `on` declaration; filter values
-are deliberately absent because they cannot change the decision:
+For each parsed workflow, apply this decision contract. The parser supplies `HAS_PULL_REQUEST_TRIGGER` from the workflow's `on` declaration; filter values are deliberately absent because they cannot change the decision:
 
 ```bash
 case "$HAS_PULL_REQUEST_TRIGGER" in
@@ -108,42 +70,15 @@ printf 'CI_PARITY_APPLICABILITY_MODE=%s\n' "$CI_PARITY_APPLICABILITY_MODE"
 printf 'CI_PARITY_UNEVALUATED_FILTERS=%s\n' "$CI_PARITY_UNEVALUATED_FILTERS"
 ```
 
-Inspect CI `env`, `secrets.*`, `vars.*`, and command-level references to
-supply available values with the declared precedence. A missing declaration
-alone never fails a task or creates a question: attempt the exact command with
-the available environment first, without inventing an empty replacement. Record
-unavailable names without exposing values. If a supplied non-secret CI value
-cannot be reproduced, retain the attempted result but mark parity blocked;
-a successful run under different inputs is not exact CI evidence. An unused
-unavailable declaration does not invalidate a successful task.
+Inspect CI `env`, `secrets.*`, `vars.*`, and command-level references to supply available values with the declared precedence. A missing declaration alone never fails a task or creates a question: attempt the exact command with the available environment first, without inventing an empty replacement. Record unavailable names without exposing values. If a supplied non-secret CI value cannot be reproduced, retain the attempted result but mark parity blocked; a successful run under different inputs is not exact CI evidence. An unused unavailable declaration does not invalidate a successful task.
 
-After a command fails, classify it as a missing-variable failure only when its
-captured output explicitly names a CI-declared variable it could not obtain.
-Validate those names against the selected workflow and command chain, then
-close the lease and ask for an explicit source and rerun, or approval for this
-exact target revision and exact lexically sorted name list. Missing tools,
-dependencies, authentication, and other errors remain ordinary failures; repair
-permitted setup and rerun, or report the blocker. Never infer skip approval from
-another flag, a declaration, or an earlier revision.
+After a command fails, classify it as a missing-variable failure only when its captured output explicitly names a CI-declared variable it could not obtain. Validate those names against the selected workflow and command chain, then close the lease and ask for an explicit source and rerun, or approval for this exact target revision and exact lexically sorted name list. Missing tools, dependencies, authentication, and other errors remain ordinary failures; repair permitted setup and rerun, or report the blocker. Never infer skip approval from another flag, a declaration, or an earlier revision.
 
-Record expected hosted check/job names from the selected workflows at
-`TARGET_SHA` and required branch status checks or rulesets when accessible
-through `gh api`; record inaccessible sources instead of assuming they are
-empty.
+Record expected hosted check/job names from the selected workflows at `TARGET_SHA` and required branch status checks or rulesets when accessible through `gh api`; record inaccessible sources instead of assuming they are empty.
 
-Dispatch one fresh small-model read-only tester. It MUST NOT edit, format,
-commit, or push. It first runs the discovered test and lint commands in CI order
-at the target revision with the required setup and available environment,
-continues through independent commands after failure, and returns under 1000
-tokens. Assign a stable nonempty `dependency_group` to every command: commands
-whose prerequisites are coupled share a group, while independent commands use
-different groups. Keep setup and its dependent command in the same isolated
-invocation so `--clean` cannot discard their installed dependencies.
+Dispatch one fresh small-model read-only tester. It MUST NOT edit, format, commit, or push. It first runs the discovered test and lint commands in CI order at the target revision with the required setup and available environment, continues through independent commands after failure, and returns under 1000 tokens. Assign a stable nonempty `dependency_group` to every command: commands whose prerequisites are coupled share a group, while independent commands use different groups. Keep setup and its dependent command in the same isolated invocation so `--clean` cannot discard their installed dependencies.
 
-Resolve the workflow's complete shell template, including GitHub Actions'
-default flags when `shell` is omitted, into `CI_SHELL_TEMPLATE`. The template
-must contain `{0}` for the script path. Execute every discovered test or lint
-task with its exact required setup as one shell task through this runner shape:
+Resolve the workflow's complete shell template, including GitHub Actions' default flags when `shell` is omitted, into `CI_SHELL_TEMPLATE`. The template must contain `{0}` for the script path. Execute every discovered test or lint task with its exact required setup as one shell task through this runner shape:
 
 ```bash
 CI_TASK_FILE=$(mktemp)
@@ -156,73 +91,23 @@ jj --repository "$SOURCE_REPO_ROOT" --ignore-working-copy run \
   bash -c 'exec bash -c "$1"' _ "$CI_SHELL_COMMAND"
 ```
 
-`CI_SHELL_TEMPLATE` preserves every workflow shell flag and placeholder;
-`CI_TASK_SCRIPT` preserves the working directory, matrix values, required
-environment and setup, and exact test or lint command. One fresh
-`--clean` invocation per task prevents artifacts from another revision or task
-from affecting the result; setup and its dependent command stay inside that
-same invocation. `--ignore-changes` is mandatory because verification must not
-amend the target or rebase descendants. Do not use `--ignore-errors`, which
-would hide the task's failing exit status. Continue through other independent
-tasks with separate invocations and record each status.
+`CI_SHELL_TEMPLATE` preserves every workflow shell flag and placeholder; `CI_TASK_SCRIPT` preserves the working directory, matrix values, required environment and setup, and exact test or lint command. One fresh `--clean` invocation per task prevents artifacts from another revision or task from affecting the result; setup and its dependent command stay inside that same invocation. `--ignore-changes` is mandatory because verification must not amend the target or rebase descendants. Do not use `--ignore-errors`, which would hide the task's failing exit status. Continue through other independent tasks with separate invocations and record each status.
 
-Install project dependencies from the target revision inside each clean task
-using its CI package-manager command, lockfile, workspace configuration, and
-install scripts. Do not copy an installed dependency tree from another checkout:
-its manifests cannot prove which patches or lifecycle inputs produced it.
-Package-manager downloads may use their normal content-verified cache; installed
-outputs remain disposable and local to the exact target task.
+Install project dependencies from the target revision inside each clean task using its CI package-manager command, lockfile, workspace configuration, and install scripts. Do not copy an installed dependency tree from another checkout: its manifests cannot prove which patches or lifecycle inputs produced it. Package-manager downloads may use their normal content-verified cache; installed outputs remain disposable and local to the exact target task.
 
-For every task, verify that the runner's `JJ_COMMIT_ID` equals the target revision ID; a
-mismatch blocks the gate.
+For every task, verify that the runner's `JJ_COMMIT_ID` equals the target revision ID; a mismatch blocks the gate.
 
-After the first attempt, if and only if its captured failure evidence names
-missing CI variables, sort those names into one comma-separated value and set
-`MISSING_SECRET_FAILURE_CONFIRMED=true`. Then enforce the stop or exact-
-approval decision:
+After the first attempt, if and only if its captured failure evidence names missing CI variables, sort those names into one comma-separated value and set `MISSING_SECRET_FAILURE_CONFIRMED=true`. Then enforce the stop or exact- approval decision:
 
 ```bash
 source "${CODING_PR_SKILL_DIR}/scripts/gate-missing-secrets.sh"
 ```
 
-When `MISSING_SECRET_FAILURE_CONFIRMED` is unset or false, the helper keeps the
-local run pending even if CI declarations or an approval happen to name
-variables. With confirmation, `MISSING_SECRET_APPROVED=true`, the exact
-`TARGET_SHA`, and the exact lexically sorted `MISSING_SECRET_NAMES` approval
-remain required for `approved_without_local_run`.
+When `MISSING_SECRET_FAILURE_CONFIRMED` is unset or false, the helper keeps the local run pending even if CI declarations or an approval happen to name variables. With confirmation, `MISSING_SECRET_APPROVED=true`, the exact `TARGET_SHA`, and the exact lexically sorted `MISSING_SECRET_NAMES` approval remain required for `approved_without_local_run`.
 
-Treat repository workflows and scripts as untrusted code. Run allowlisted
-commands through the selected isolated runner, limit writes to its working copy
-and a temporary directory, deny network by default, and remove ambient tokens,
-credential helpers, SSH agent sockets, cloud credentials, and unrelated
-environment variables. Pass only the minimal toolchain and task-specific environment. Permit network
-access needed for the selected tooling/dependency setup; other network access
-or credentials require specific authority. Stop when that authority is
-unavailable. Never expose the parent session's credentials. The
-tester neither removes the discovery worktree nor closes or reports on the
-parent-owned `TREE_LEASE`.
+Treat repository workflows and scripts as untrusted code. Run allowlisted commands through the selected isolated runner, limit writes to its working copy and a temporary directory, deny network by default, and remove ambient tokens, credential helpers, SSH agent sockets, cloud credentials, and unrelated environment variables. Pass only the minimal toolchain and task-specific environment. Permit network access needed for the selected tooling/dependency setup; other network access or credentials require specific authority. Stop when that authority is unavailable. Never expose the parent session's credentials. The tester neither removes the discovery worktree nor closes or reports on the parent-owned `TREE_LEASE`.
 
-Serialize the exact ordered workflow command/result set once as canonical JSON
-in `CI_PARITY_EXPECTED_WORKFLOW_COMMAND_RESULTS_JSON`. Every entry records the
-target ref, kind, exact command, source, result status, and
-`failure_evidence` and a dependency group. A successful attempted command
-records integer status `0` and `failure_evidence: null`. When a command exits
-nonzero because it could not obtain one or more named CI variables, retain its
-numeric shell status and record exactly
-`{"type":"missing_ci_variable","names":["<variable name>"]}` as its
-`failure_evidence`, with every name declared missing and the array lexically
-sorted and unique. An approved receipt must contain at least one such attempted
-failure, and the sorted unique union of all evidence names must equal the exact
-missing-secret name array. Use `not_run_missing_secret` with
-`failure_evidence: null` only for commands genuinely skipped after a qualifying
-failure in the same dependency group. Independent groups continue to run and
-retain their attempted results. Any other status/evidence pair, including an
-ordinary non-secret numeric failure or a non-integral/out-of-range status, blocks
-the receipt. Serialize the exact lexically sorted missing-secret-name array as
-`CI_PARITY_EXPECTED_MISSING_SECRET_NAMES_JSON`; use `[]` when none are missing.
-Embed those exact arrays in the complete JSON receipt below and return all three
-values to the caller. Do not return a standalone approval as a substitute for
-the receipt.
+Serialize the exact ordered workflow command/result set once as canonical JSON in `CI_PARITY_EXPECTED_WORKFLOW_COMMAND_RESULTS_JSON`. Every entry records the target ref, kind, exact command, source, result status, and `failure_evidence` and a dependency group. A successful attempted command records integer status `0` and `failure_evidence: null`. When a command exits nonzero because it could not obtain one or more named CI variables, retain its numeric shell status and record exactly `{"type":"missing_ci_variable","names":["<variable name>"]}` as its `failure_evidence`, with every name declared missing and the array lexically sorted and unique. An approved receipt must contain at least one such attempted failure, and the sorted unique union of all evidence names must equal the exact missing-secret name array. Use `not_run_missing_secret` with `failure_evidence: null` only for commands genuinely skipped after a qualifying failure in the same dependency group. Independent groups continue to run and retain their attempted results. Any other status/evidence pair, including an ordinary non-secret numeric failure or a non-integral/out-of-range status, blocks the receipt. Serialize the exact lexically sorted missing-secret-name array as `CI_PARITY_EXPECTED_MISSING_SECRET_NAMES_JSON`; use `[]` when none are missing. Embed those exact arrays in the complete JSON receipt below and return all three values to the caller. Do not return a standalone approval as a substitute for the receipt.
 
 <report>
 
@@ -273,40 +158,14 @@ the receipt.
 }
 ```
 
-For an approved receipt, a nonzero attempted result replaces `null` with the
-exact `type`/`names` missing-variable evidence object above. A string
-`not_run_missing_secret` status remains a genuine skip and must keep
-`failure_evidence` null; it is not interchangeable with an attempted numeric
-result. Results in one dependency group remain in workflow order; a group enters
-skip state only after its own qualifying failure, while an independent group may
-continue attempting tasks.
+For an approved receipt, a nonzero attempted result replaces `null` with the exact `type`/`names` missing-variable evidence object above. A string `not_run_missing_secret` status remains a genuine skip and must keep `failure_evidence` null; it is not interchangeable with an attempted numeric result. Results in one dependency group remain in workflow order; a group enters skip state only after its own qualifying failure, while an independent group may continue attempting tasks.
 
 </report>
 
-After consuming the report, the parent closes the retained lease and records
-the exact lease, tree, close status, and proof that both the lease file and VCS
-registration are gone. A tester result cannot claim parent cleanup. Close the
-lease before stopping on cancellation or terminal failure.
+After consuming the report, the parent closes the retained lease and records the exact lease, tree, close status, and proof that both the lease file and VCS registration are gone. A tester result cannot claim parent cleanup. Close the lease before stopping on cancellation or terminal failure.
 
-On local failure, diagnose captured output without editing and return the root
-cause, likely owning change, affected files, exact commands and statuses, and
-unresolved blockers under 1000 tokens. The public verifier remains read-only.
-Its create/update caller owns tip-first failure localization, selects the
-earliest failing bookmark/PR, dispatches the relevant fixer only after that
-ownership is known, and restarts the complete gate at new exact revision IDs. Any
-ordinary or unapproved nonzero applicable command, or unresolved diagnosis,
-blocks publication; a confirmed missing-variable failure follows the exact
-approval contract above. Any separate review is read-only.
+On local failure, diagnose captured output without editing and return the root cause, likely owning change, affected files, exact commands and statuses, and unresolved blockers under 1000 tokens. The public verifier remains read-only. Its create/update caller owns tip-first failure localization, selects the earliest failing bookmark/PR, dispatches the relevant fixer only after that ownership is known, and restarts the complete gate at new exact revision IDs. Any ordinary or unapproved nonzero applicable command, or unresolved diagnosis, blocks publication; a confirmed missing-variable failure follows the exact approval contract above. Any separate review is read-only.
 
 ## Verification
 
-Return `pass` only when every test and lint command from every included
-`pull_request` workflow exits zero at the exact target/base surface and the
-complete receipt records the exact target revision ID, base revision ID, kind,
-`conservative_pull_request` applicability, the `jj-run` execution engine, and
-canonical workflow command/result set. A pass additionally proves
-`--clean --ignore-changes --root -r "$TARGET_SHA"` was used for every task and
-that `JJ_COMMIT_ID` matched the target. The sole alternative is a complete
-`approved_without_local_run` receipt with those same fields plus the exact
-target revision ID and lexically sorted names in `missing_secret_approval`. Always close
-the retained lease before returning.
+Return `pass` only when every test and lint command from every included `pull_request` workflow exits zero at the exact target/base surface and the complete receipt records the exact target revision ID, base revision ID, kind, `conservative_pull_request` applicability, the `jj-run` execution engine, and canonical workflow command/result set. A pass additionally proves `--clean --ignore-changes --root -r "$TARGET_SHA"` was used for every task and that `JJ_COMMIT_ID` matched the target. The sole alternative is a complete `approved_without_local_run` receipt with those same fields plus the exact target revision ID and lexically sorted names in `missing_secret_approval`. Always close the retained lease before returning.

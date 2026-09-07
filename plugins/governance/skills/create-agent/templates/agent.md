@@ -1,15 +1,10 @@
-<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from five canonical source files under
-     plugins/<owner>/agents/<name>/:
+<!-- INSTRUCTION: This template describes ONE stitched agent, assembled from five canonical source files under plugins/<owner>/agents/<name>/:
      - base.md — the BODY below (pure markdown, persona/charter/loop/context, no frontmatter)
      - frontmatter/meta.json — shared name, description, and intelligence metadata
      - frontmatter/claude.json — Claude-only frontmatter
      - frontmatter/codex.json — Codex-only fields
      - frontmatter/grok.json — Grok Build-only fields
-     Validate and build only a temporary artifact with Essential's install-agents stitch helper.
-     The stitcher derives one Intelligence level line beneath the rendered H1 from meta.json;
-     never duplicate that line in base.md.
-     Before editing any agent, re-check the live Claude Code docs for the current valid frontmatter key surface —
-     this template mirrors it at time of writing, but the docs win on conflict. Log any conflict you find. -->
+     Validate and build only a temporary artifact with Essential's install-agents stitch helper. The stitcher derives one Intelligence level line beneath the rendered H1 from meta.json; never duplicate that line in base.md. Before editing any agent, re-check the live Claude Code docs for the current valid frontmatter key surface — this template mirrors it at time of writing, but the docs win on conflict. Log any conflict you find. -->
 
 ## frontmatter/meta.json
 
@@ -74,23 +69,15 @@ Per-role default (main-session/spawned-subagent scenarios only — workflow and 
 
 ### Runtime tools and leaf posture
 
-Every agent definition omits `tools` so Claude Code can supply the complete tool surface available at runtime.
-An explicit allowlist is a stale snapshot: tools introduced by plugins, MCP servers, or later runtime versions
-would be hidden from that agent.
+Every agent definition omits `tools` so Claude Code can supply the complete tool surface available at runtime. An explicit allowlist is a stale snapshot: tools introduced by plugins, MCP servers, or later runtime versions would be hidden from that agent.
 
-`leaf` is therefore a behavioral charter, not a frontmatter capability boundary. A leaf does not spawn or
-coordinate nested work even when subagent dispatch is available at runtime; it returns results or hand-off requests to the
-caller. `disallowedTools` remains valid for narrow durable prohibitions, but never use it to recreate a general
-allowlist or to hide subagent dispatch merely to encode leaf posture.
+`leaf` is therefore a behavioral charter, not a frontmatter capability boundary. A leaf does not spawn or coordinate nested work even when subagent dispatch is available at runtime; it returns results or hand-off requests to the caller. `disallowedTools` remains valid for narrow durable prohibitions, but never use it to recreate a general allowlist or to hide subagent dispatch merely to encode leaf posture.
 
-Shared metadata and `base.md` must stay true when a harness omits one of these fields. In particular, never
-promise worktree or sandbox isolation in shared prose merely because `claude.json` sets `isolation`.
+Shared metadata and `base.md` must stay true when a harness omits one of these fields. In particular, never promise worktree or sandbox isolation in shared prose merely because `claude.json` sets `isolation`.
 
 ## base.md (BODY — pure markdown, no frontmatter, no JSON)
 
-<!-- INSTRUCTION: Each principle should be actionable and clear. Write this as one continuous personality —
-     never as a form with blanks. The section headers below are structural; the prose inside them is the agent's
-     own voice. -->
+<!-- INSTRUCTION: Each principle should be actionable and clear. Write this as one continuous personality — never as a form with blanks. The section headers below are structural; the prose inside them is the agent's own voice. -->
 
 # Role Title
 
@@ -109,10 +96,7 @@ promise worktree or sandbox isolation in shared prose merely because `claude.jso
 
 ## Base Context
 
-<!-- INSTRUCTION: use references/context-catalog.md for role context and the owning standards
-     INDEX.md for canonical standard names and paths. Role context does not restrict task-based selection.
-     Retain exactly one posture-specific progressive paragraph below in the authored base and delete its label
-     and the unused branch. -->
+<!-- INSTRUCTION: use references/context-catalog.md for role context and the owning standards INDEX.md for canonical standard names and paths. Role context does not restrict task-based selection. Retain exactly one posture-specific progressive paragraph below in the authored base and delete its label and the unused branch. -->
 
 Role context:
 
@@ -127,8 +111,7 @@ Read-only critic or verifier:
 
 Select task-applicable standards from their indexes and apply them as a read-only reviewer under `essential:directions/standards.md`.
 
-Lazy, repo-derived context (resolved per task, never preloaded — see context-catalog.md for what each resolves
-to at task time):
+Lazy, repo-derived context (resolved per task, never preloaded — see context-catalog.md for what each resolves to at task time):
 
 - the current task's functional area, its own conventions and siblings
 - the target repo's build/lint/test configuration
@@ -136,8 +119,7 @@ to at task time):
 
 ## Memory
 
-<!-- INSTRUCTION: every agent uses `"memory": "project"` and names its exact role-derived path here. State the
-     role-specific durable knowledge worth retaining. Keep the maintenance paragraph self-contained for installed agents and derive it from essential:templates/memory.md. -->
+<!-- INSTRUCTION: every agent uses `"memory": "project"` and names its exact role-derived path here. State the role-specific durable knowledge worth retaining. Keep the maintenance paragraph self-contained for installed agents and derive it from essential:templates/memory.md. -->
 
 I self-curate `.claude/agent-memory/<name>/MEMORY.md` under `essential:templates/memory.md`, retaining only durable, repository-specific [role memory categories].
 
@@ -145,25 +127,13 @@ Record current facts, reusable lessons, and watchpoints with evidence and a last
 
 ## Coordination Posture
 
-<!-- INSTRUCTION: state, in this agent's voice: how it coordinates with others, its iterative loop, exactly what
-     makes it stop (the convergence predicate), and its hard iteration budget. Warm-core roles (`tech-lead`,
-     `code-quality-critic`, `testing-evangelist`, `generalist-engineer`, and
-     `harness-eval-engineer`) read as trusting team members; leaf/mechanical agents are crisp and terse — match
-     the register to the role, not a template default. -->
+<!-- INSTRUCTION: state, in this agent's voice: how it coordinates with others, its iterative loop, exactly what makes it stop (the convergence predicate), and its hard iteration budget. Warm-core roles (`tech-lead`, `code-quality-critic`, `testing-evangelist`, `generalist-engineer`, and `harness-eval-engineer`) read as trusting team members; leaf/mechanical agents are crisp and terse — match the register to the role, not a template default. -->
 
-I work in a loop: [describe the loop — investigate, act, verify, or generate/score/refute, whatever the role's
-actual cycle is]. I stop when [the concrete convergence predicate — a passing gate, a verifier's sign-off, a
-review with zero findings, whatever is actually checkable]. My hard iteration budget is [n] — if I hit it without
-converging, I [surface the unresolved state rather than silently stopping, or hand back to whoever spawned me].
+I work in a loop: [describe the loop — investigate, act, verify, or generate/score/refute, whatever the role's actual cycle is]. I stop when [the concrete convergence predicate — a passing gate, a verifier's sign-off, a review with zero findings, whatever is actually checkable]. My hard iteration budget is [n] — if I hit it without converging, I [surface the unresolved state rather than silently stopping, or hand back to whoever spawned me].
 
 ## Collaboration
 
-<!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets.
-     Reference every known agent by its role-only definition name and main task, followed by the reason for
-     collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, the
-     4,096-character ceiling, spawn-once/delta-after hand-offs, artifact references, workflow proxy,
-     spawn-budget, and independent-review policy come from Essential's hooks/ALLAGENT.md; do not repeat them here. Do
-     not narrate who spawns this agent or restate its tool list.
+<!-- INSTRUCTION: list only this agent's outbound collaborators and delegation targets as concise bullets. Reference every known agent by its role-only definition name and main task, followed by the reason for collaboration. Shared runtime discovery, `agent_id`-only messaging, main-agent naming/brokering, the 4,096-character ceiling, spawn-once/delta-after hand-offs, artifact references, workflow proxy, spawn-budget, and independent-review policy come from Essential's hooks/ALLAGENT.md; do not repeat them here. Do not narrate who spawns this agent or restate its tool list.
 
      A lead role — one that decomposes a domain and routes its pieces — wraps the whole bullet list in an
      `<IMPORTANT>` tag, because for a lead this section is the delegation map it works from rather than a list

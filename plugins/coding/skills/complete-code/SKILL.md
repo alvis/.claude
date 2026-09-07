@@ -38,10 +38,7 @@ This skill may read and run existing tests to discover and verify the establishe
 - **Required**: `<scope>` — the file, directory, or package to scan.
 - **Optional**: none. If `$ARGUMENTS` contains `--test-only`, stop immediately with exactly:
   > `--test-only` was removed; use `coding:complete-test <scope>`.
-- **Prerequisites**: select `universal`, `function`, `typescript`,
-  `documentation`, and `observability`, plus `testing` when touching tests to
-  verify a contract. Apply each as a writer under
-  `essential:directions/standards.md`.
+- **Prerequisites**: select `universal`, `function`, `typescript`, `documentation`, and `observability`, plus `testing` when touching tests to verify a contract. Apply each as a writer under `essential:directions/standards.md`.
 
 ## State gate
 

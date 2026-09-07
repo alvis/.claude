@@ -9,8 +9,7 @@ The default route when the user invokes `/coding:commit` with no flag and `@` co
 - `@` is not empty
 - `@` is not already described with a final message (else this is a no-op)
 
-If `@` mixes concerns → [split.md](./split.md).
-If `@` is empty → [empty.md](./empty.md).
+If `@` mixes concerns → [split.md](./split.md). If `@` is empty → [empty.md](./empty.md).
 
 ## Procedure
 
@@ -79,15 +78,7 @@ This creates an empty `@` on top of the just-described change so subsequent edit
 
 The PostToolUse hook fires `verify.sh` after `git commit`. Read the `── Integrity Check ──` stderr block per [SKILL.md](../SKILL.md) Verification.
 
-Run applicable project scripts (unless `--no-verify`): lint and build where the
-project defines them, configured typecheck or equivalent type diagnostics for
-all changed code, affected-consumer builds for changed public shape,
-runtime tests only for runtime behavior, and focused compile-time tests only
-for allowed compiler-semantic promises under `TST-CORE-10`. For a
-declaration-only change with no runtime behavior or allowed compiler-semantic
-promise, record those two test gates as `SKIP (not applicable)` after type
-diagnostics and affected-consumer builds pass; do not run or invent a test. For
-example, a runtime-producing npm project may require:
+Run applicable project scripts (unless `--no-verify`): lint and build where the project defines them, configured typecheck or equivalent type diagnostics for all changed code, affected-consumer builds for changed public shape, runtime tests only for runtime behavior, and focused compile-time tests only for allowed compiler-semantic promises under `TST-CORE-10`. For a declaration-only change with no runtime behavior or allowed compiler-semantic promise, record those two test gates as `SKIP (not applicable)` after type diagnostics and affected-consumer builds pass; do not run or invent a test. For example, a runtime-producing npm project may require:
 
 ```bash
 npm run lint

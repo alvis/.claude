@@ -1,7 +1,6 @@
 # Web Theming: Violation Scan
 
-Any single violation blocks approval by default.
-Protocol: `essential:directions/standards.md`.
+Any single violation blocks approval by default. Protocol: `essential:directions/standards.md`.
 
 ## Quick Scan
 
@@ -33,12 +32,7 @@ Protocol: `essential:directions/standards.md`.
 
 ## Framework boundary
 
-React prop-shape, native-element inheritance, and workspace-promotion checks
-are unavailable from Web alone. When React components or their package placement
-are in scope, return a blocking `unavailable` verdict and request verification
-from an eligible React owner. Approval remains blocked until that owner returns
-the applicable checks against the reviewed revision. Do not load an undeclared
-plugin or claim those checks passed.
+React prop-shape, native-element inheritance, and workspace-promotion checks are unavailable from Web alone. When React components or their package placement are in scope, return a blocking `unavailable` verdict and request verification from an eligible React owner. Approval remains blocked until that owner returns the applicable checks against the reviewed revision. Do not load an undeclared plugin or claim those checks passed.
 
 ## Rule Matrix
 

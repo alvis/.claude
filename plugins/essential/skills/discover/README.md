@@ -1,16 +1,8 @@
 # Discover presentation features — the migration record
 
-The `discover` skill has finished migrating from a hand-authored HTML pipeline
-to a JSON-driven renderer. This document is the reconciliation that made the
-target set choosable: it lists **every feature across all three reference
-points**, so what the renderer now owes the reader was decided deliberately
-rather than discovered missing.
+The `discover` skill has finished migrating from a hand-authored HTML pipeline to a JSON-driven renderer. This document is the reconciliation that made the target set choosable: it lists **every feature across all three reference points**, so what the renderer now owes the reader was decided deliberately rather than discovered missing.
 
-It reads as history. The 🏛️ column describes a pipeline whose files have since
-been deleted, and its line citations are evidence of what that system did, not
-paths to open. What survives is the `Pick` column: the rows ticked there are
-the set the renderer was built to carry, and they are the list any review of
-that build is owed.
+It reads as history. The 🏛️ column describes a pipeline whose files have since been deleted, and its line citations are evidence of what that system did, not paths to open. What survives is the `Pick` column: the rows ticked there are the set the renderer was built to carry, and they are the list any review of that build is owed.
 
 ## The three columns
 
@@ -34,39 +26,20 @@ that build is owed.
 
 **1. The 📄 rows are the trap.** `references/features.md` §H presents a
 validation-mapping table crediting `scripts/build-artifact.ts` with a <!-- doc-path-gate: ignore -->
-`_validate()` that enforces the token whitelist, dual-theme completeness, stray
-hex, `${…}` literals and self-containment, and crediting
+`_validate()` that enforces the token whitelist, dual-theme completeness, stray hex, `${…}` literals and self-containment, and crediting
 `scripts/test-html-templates.ts` with asserting the board-set block, selection <!-- doc-path-gate: ignore -->
 annotation, density scale and Mermaid wiring.
 
-No `_validate()` exists in `build-artifact.ts` — all 509 lines were read.
-`test-html-templates.ts` contains zero occurrences of `data-board-set`,
-`selection`, `annotation`, `grid-density` or `data-mermaid`; it checks that
-required **files exist**, not that features are wired. Every 📄 row below was
-therefore an intention, not a guarantee. Picking one means building it, not
-restoring it.
+No `_validate()` exists in `build-artifact.ts` — all 509 lines were read. `test-html-templates.ts` contains zero occurrences of `data-board-set`, `selection`, `annotation`, `grid-density` or `data-mermaid`; it checks that required **files exist**, not that features are wired. Every 📄 row below was therefore an intention, not a guarantee. Picking one means building it, not restoring it.
 
-**2. Inline devices force a schema change.** Provenance pills mid-sentence,
-`data-term` glossary spans, `<mark>` inside `<pre>`, and source-ref chips are
-all *inline* — they live inside a sentence, not beside it. The renderer's
-`prose` block is a plain string passed through `escapeHtml`
-(`scripts/render-page/escape.ts`) and there is **no HTML pass-through anywhere**.
-Picking any row marked **⚠ inline** means adopting either a rich-text
-sub-format in the JSON or a restricted inline grammar, which changes the
-contract for every existing example. These rows are cheap to want and expensive
-to have.
+**2. Inline devices force a schema change.** Provenance pills mid-sentence, `data-term` glossary spans, `<mark>` inside `<pre>`, and source-ref chips are all *inline* — they live inside a sentence, not beside it. The renderer's `prose` block is a plain string passed through `escapeHtml` (`scripts/render-page/escape.ts`) and there is **no HTML pass-through anywhere**. Picking any row marked **⚠ inline** means adopting either a rich-text sub-format in the JSON or a restricted inline grammar, which changes the contract for every existing example. These rows are cheap to want and expensive to have.
 
 **3. Two corrections to earlier statements.**
 
-- **There is no Mermaid in the current samples.** All four contain zero
-  occurrences. `page-diagram.ts` is a bespoke inline-SVG layout engine over
-  `nodes`/`edges`. Mermaid exists only in the legacy CDN path. Mermaid is owed,
-  not delivered.
-- **The reference page is ours.** Its embedded `WebResourceURL` decodes to the
-  `prospector` repository (`.state/works/signal-to-execution/plan.html`), and its
+- **There is no Mermaid in the current samples.** All four contain zero occurrences. `page-diagram.ts` is a bespoke inline-SVG layout engine over `nodes`/`edges`. Mermaid exists only in the legacy CDN path. Mermaid is owed, not delivered.
+- **The reference page is ours.** Its embedded `WebResourceURL` decodes to the `prospector` repository (`.state/works/signal-to-execution/plan.html`), and its
   HTML is byte-identical to `artifacts/rival-specimen.html`. It is not a <!-- doc-path-gate: ignore -->
-  third-party design, so its choices carry no external authority — only whatever
-  merit they have on inspection.
+  third-party design, so its choices carry no external authority — only whatever merit they have on inspection.
 
 ---
 
@@ -132,8 +105,7 @@ to have.
 
 ## D. Annotations — reader-authored
 
-Every row here is ✅/❌/❌: the legacy runtime has the whole system, and neither
-other page has any of it. This is the single largest block of lost function.
+Every row here is ✅/❌/❌: the legacy runtime has the whole system, and neither other page has any of it. This is the single largest block of lost function.
 
 | Feature | 🏛️ | 🆕 | 🔍 | Pick | Notes |
 | --- | :-: | :-: | :-: | :-: | --- |
@@ -186,9 +158,7 @@ Teaching devices the author places. Distinct from section D throughout.
 
 ## G. Content blocks
 
-The renderer's 12 block types are its whole content vocabulary. The legacy
-catalogue is open-ended by design — `components.md` calls itself "a reference
-shelf, not a ceiling".
+The renderer's 12 block types are its whole content vocabulary. The legacy catalogue is open-ended by design — `components.md` calls itself "a reference shelf, not a ceiling".
 
 | Feature | 🏛️ | 🆕 | 🔍 | Pick | Notes |
 | --- | :-: | :-: | :-: | :-: | --- |
@@ -351,10 +321,7 @@ shelf, not a ceiling".
 
 ## Coverage: presentation directions
 
-The legacy system shipped **15 example boards** under `examples/src/` but only
-**14 direction files** under `directions/presentation/actions/` — `architecture-board`
-had an example and no direction. The renderer implemented **4 kinds** when this
-was written; it now renders all fifteen from `examples/data/`.
+The legacy system shipped **15 example boards** under `examples/src/` but only **14 direction files** under `directions/presentation/actions/` — `architecture-board` had an example and no direction. The renderer implemented **4 kinds** when this was written; it now renders all fifteen from `examples/data/`.
 
 | Direction | 🏛️ | 🆕 | Pick | Notes |
 | --- | :-: | :-: | :-: | --- |
@@ -378,11 +345,6 @@ was written; it now renders all fifteen from `examples/data/`.
 
 ## How to read this list
 
-The ticked `Pick` rows are what the renderer was built to carry. Rows marked
-**📄** were builds rather than restorations — the legacy system documented them
-without implementing them, so nothing was there to port. Rows marked
-**⚠ inline** forced the schema decision that came first: rich text is an array
-of typed runs, and every run's text is escaped.
+The ticked `Pick` rows are what the renderer was built to carry. Rows marked **📄** were builds rather than restorations — the legacy system documented them without implementing them, so nothing was there to port. Rows marked **⚠ inline** forced the schema decision that came first: rich text is an array of typed runs, and every run's text is escaped.
 
-The build is not approved. This list is the standard it is to be reviewed
-against.
+The build is not approved. This list is the standard it is to be reviewed against.

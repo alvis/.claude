@@ -1,24 +1,16 @@
 # Python: Violation Scan
 
-Any single violation blocks submission by default.
-Protocol: `essential:directions/standards.md`.
-During linting, apply a fix only when it is mechanical — formatting, naming, documentation, casing, import ordering, or field/function reordering; if the fix would add logic, change control flow, introduce runtime validation, or alter behavior, report without fixing.
+Any single violation blocks submission by default. Protocol: `essential:directions/standards.md`. During linting, apply a fix only when it is mechanical — formatting, naming, documentation, casing, import ordering, or field/function reordering; if the fix would add logic, change control flow, introduce runtime validation, or alter behavior, report without fixing.
 
 > **Scanner-backed rules**: `PYT-CORE-03`, `PYT-IMPT-03`, and `PYT-IMPT-05` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
 
 ## Required Verification
 
-Target Python **3.13+** for the modern typing and concurrency features used
-here: PEP 695 aliases/generics, `@override`, `Self`, `TypeIs`, and
-`ExceptionGroup` / `except*`.
+Target Python **3.13+** for the modern typing and concurrency features used here: PEP 695 aliases/generics, `@override`, `Self`, `TypeIs`, and `ExceptionGroup` / `except*`.
 
-Every commit must pass both `ruff` (lint and formatting) and `ty` (static
-types), with zero errors. Missing results, a failed check, or an older runtime
-blocks submission even when the semantic checklist finds nothing.
+Every commit must pass both `ruff` (lint and formatting) and `ty` (static types), with zero errors. Missing results, a failed check, or an older runtime blocks submission even when the semantic checklist finds nothing.
 
-Use each rule's Tool Coverage to distinguish mechanical checks from semantic
-review. Do not re-litigate checks proved by tool results for the exact inputs;
-review uncovered cases and the semantic remainder of partial coverage.
+Use each rule's Tool Coverage to distinguish mechanical checks from semantic review. Do not re-litigate checks proved by tool results for the exact inputs; review uncovered cases and the semantic remainder of partial coverage.
 
 ## Quick Scan
 

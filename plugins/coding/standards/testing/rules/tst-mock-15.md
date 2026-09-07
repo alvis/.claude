@@ -30,23 +30,17 @@ vi.mock("node:fs", () => ({
 
 ## Signs You're Violating Mock Standards
 
-❌ **You're setting the same `.mockResolvedValue()` in multiple tests**
-→ Define a default in `vi.hoisted()` or `vi.mock()`
+❌ **You're setting the same `.mockResolvedValue()` in multiple tests** → Define a default in `vi.hoisted()` or `vi.mock()`
 
-❌ **You have `vi.fn()` with chained `.mockResolvedValue()` or `.mockReturnValue()`**
-→ Either add a default return, or remove if unused
+❌ **You have `vi.fn()` with chained `.mockResolvedValue()` or `.mockReturnValue()`** → Either add a default return, or remove if unused
 
-❌ **Your mock object has more than 3-4 methods**
-→ Likely mocking unused methods; use `satisfies Partial<T>`
+❌ **Your mock object has more than 3-4 methods** → Likely mocking unused methods; use `satisfies Partial<T>`
 
-❌ **You're copying mock setup between test files**
-→ Move shared mocks to `spec/mocks/` with proper defaults
+❌ **You're copying mock setup between test files** → Move shared mocks to `spec/mocks/` with proper defaults
 
-❌ **You're using mutable variables to control mock behavior**
-→ Use input-based mock logic instead (path patterns, argument values)
+❌ **You're using mutable variables to control mock behavior** → Use input-based mock logic instead (path patterns, argument values)
 
-❌ **You're defining a custom interface for your mock (e.g., `interface MockBrowserWindow`)**
-→ Use `satisfies Partial<BrowserWindow>` instead — the real type is the source of truth
+❌ **You're defining a custom interface for your mock (e.g., `interface MockBrowserWindow`)** → Use `satisfies Partial<BrowserWindow>` instead — the real type is the source of truth
 
 ## Quick Reference
 
