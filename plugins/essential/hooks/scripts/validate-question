@@ -20,11 +20,6 @@ allow() {
     "Remind you to follow instructions in essential:directions/questions.md"
 }
 
-if ! validation_is_enabled; then
-  output_pretooluse_decision "allow" \
-    "Plan and question validation is disabled because ESSENTIAL_VALIDATION_ENABLED=0."
-fi
-
 input=$(cat)
 
 # Reject unsupported envelopes before accessing their fields.

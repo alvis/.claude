@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -62,7 +62,6 @@ function createAssistantMessage(
 function runHook({
   active = false,
   eventInput,
-  validationEnabled = "1",
   compatibilityRoot = false,
   environment = "codex",
   lines = [createAssistantMessage(turnId, validPlan)],
@@ -74,7 +73,6 @@ function runHook({
 }: {
   readonly active?: boolean;
   readonly eventInput?: string;
-  readonly validationEnabled?: string;
   readonly compatibilityRoot?: boolean;
   readonly environment?: "claude" | "codex" | "grok";
   readonly lines?: readonly string[];
@@ -96,7 +94,6 @@ function runHook({
     delete environmentVariables.PLUGIN_ROOT;
     delete environmentVariables.GROK_PLUGIN_ROOT;
     environmentVariables.TMPDIR = root;
-    environmentVariables.ESSENTIAL_VALIDATION_ENABLED = validationEnabled;
     environmentVariables[
       environment === "claude"
         ? "CLAUDE_PLUGIN_ROOT"
@@ -137,22 +134,6 @@ describe("Codex plan Stop validator", () => {
     expect(parseHookOutput(runHook({ eventInput: "not json" }))).toEqual({
       systemMessage: expect.stringContaining(resolve(pluginRoot, "directions/plan.md")),
     });
-  });
-
-  it("should bypass malformed Stop input without leaving a pending correction when disabled", () => {
-    const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-disabled-"));
-    try {
-      for (const options of [{ eventInput: "not json" }, { lastAssistantMessage: "<proposed_plan>" }]) {
-        expect(parseHookOutput(runHook({ ...options, runtimeRoot: root, validationEnabled: "0" }))).toEqual({
-          systemMessage: expect.stringMatching(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i),
-        });
-      }
-      expect(readdirSync(root)).toEqual(["transcript.jsonl"]);
-      const resumed = runHook({ runtimeRoot: root, lastAssistantMessage: "An ordinary acknowledgement." });
-      expect(resumed.stdout).toBe("");
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
   });
 
   it.each([

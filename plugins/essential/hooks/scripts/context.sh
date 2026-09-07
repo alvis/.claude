@@ -38,11 +38,6 @@ resolve_harness() {
   fi
 }
 
-# keeps plan and question validation enabled unless rollout explicitly disables it
-validation_is_enabled() {
-  [[ "${ESSENTIAL_VALIDATION_ENABLED:-1}" != "0" ]]
-}
-
 # Emit a PreToolUse decision in the resolving harness's native envelope. Claude
 # Code and Codex read permissionDecision* inside hookSpecificOutput and express
 # an allow as plain context beside it; Grok Build honors only a top-level

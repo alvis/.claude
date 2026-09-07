@@ -22,7 +22,7 @@ states the outcome; Requirements lists observable behavior, never generic
 process gates.
 Yellow, red, and black zones also require Risk + Test Plan; red and black
 require Why This Size. Specification, Implementation, Breaking, Rollback,
-Feature Flag, Screenshots, Generated Files, Risk, Test Plan, Why This Size,
+Screenshots, Generated Files, Risk, Test Plan, Why This Size,
 Related and Boundary are conditional and carry the `[ Optional ]` suffix in this
 authoring template even when a zone, archetype, or diff makes one mandatory for
 that PR. Remove `[ Optional ]` from every heading in the final rendered PR
@@ -48,7 +48,6 @@ Placeholders (for non-LLM callers performing literal substitution):
   test_plan_body             by zone   Checks covering the named risks. Required for yellow/red/black.
   why_this_size_body         by zone   Concise, specific indivisibility rationale. Required for red/black.
   rollback_body              by type   Rollback steps or explicit forward-only mitigation. Required for migration.
-  feature_flag_body          by type   Flag name, default, removal target, rollout plan, and cleanup change. Required for feature-flag.
   screenshots_body           by type   Before/after screenshots and relevant accessibility notes. Required for ui.
   generated_files_body       by diff   Generated paths and their source/generator. Required whenever any generated files exist.
   verification_body          yes       Checklist of the checks that must pass before sign-off, ticked as each is confirmed.
@@ -116,13 +115,6 @@ Substitution rules:
 <!-- migration rollback steps; when irreversible, say so and document the
      forward-only mitigation; required for migration -->
 {{rollback_body}}
-
-## 🚩 Feature Flag [ Optional ]
-
-<!-- flag name, default state, removal target, rollout plan, and cleanup change;
-     team ownership belongs in CODEOWNERS or forge assignments; required for
-     feature-flag -->
-{{feature_flag_body}}
 
 ## 🖼️ Screenshots [ Optional ]
 

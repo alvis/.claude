@@ -50,13 +50,6 @@ harness="$(resolve_harness)" || {
 if [[ "$harness" != "codex" ]]; then
   exit 0
 fi
-if ! validation_is_enabled; then
-  jq -cn --arg reason \
-    "Plan and question validation is disabled because ESSENTIAL_VALIDATION_ENABLED=0." \
-    '{systemMessage: $reason}'
-  exit 0
-fi
-
 input="$(cat)"
 if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then
   stop_system_message "Plan validation is unavailable: expected a JSON Stop event object."

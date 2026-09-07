@@ -11,12 +11,12 @@ const template = join(scripts, "../templates/message.md");
 const scannerUsage =
   "usage: scan-pr-message.ts [-h] --body-file BODY_FILE [--template TEMPLATE]\n" +
   "                          --zone {green,yellow,red,black}\n" +
-  "                          --archetype {rfc,code-spec,contract,domain-model,implementation,integration,feature-flag,migration,ui,mechanical-refactor,cleanup,observability}\n" +
+  "                          --archetype {rfc,code-spec,contract,domain-model,implementation,integration,migration,ui,mechanical-refactor,cleanup,observability}\n" +
   "                          --head-oid HEAD_OID --base-oid BASE_OID\n" +
   "                          [--allow-pending-reviewers]\n" +
   "                          [--generated-file GENERATED_FILE]";
 const archetypeChoices =
-  "'rfc', 'code-spec', 'contract', 'domain-model', 'implementation', 'integration', 'feature-flag', 'migration', 'ui', 'mechanical-refactor', 'cleanup', 'observability'";
+  "'rfc', 'code-spec', 'contract', 'domain-model', 'implementation', 'integration', 'migration', 'ui', 'mechanical-refactor', 'cleanup', 'observability'";
 const headOid = "1".repeat(40),
   baseOid = "2".repeat(40);
 // The complete 159-input grammar matrix launches a real Bun subprocess per input.
@@ -851,7 +851,6 @@ describe("PR message scanner", () => {
   );
   it.each([
     ["migration", "GIT-PR-TYPE-03"],
-    ["feature-flag", "GIT-PR-STACK-04"],
     ["ui", "GIT-PR-02"],
   ])("reports owning rule for %s archetype", async (archetype, rule) => {
     const scanned = await run(message(verification()), { archetype });

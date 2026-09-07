@@ -34,4 +34,4 @@ resulting diff must remain independently valid. Use
 
 ## Related
 
-GIT-PR-02, GIT-PR-SIZE-02, GIT-PR-TYPE-02, GIT-PR-STACK-04
+GIT-PR-02, GIT-PR-SIZE-02, GIT-PR-TYPE-02

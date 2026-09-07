@@ -179,22 +179,6 @@ describe("opencode adapter manifest validation", () => {
     expect({ ...process.env }).toEqual(environmentBefore);
   });
 
-  it.each([
-    ["question", { questions: [] }],
-    ["plan_exit", { plan: "incomplete" }],
-  ])("should deliver disabled validation feedback for malformed OpenCode %s input", async (tool, args) => {
-    vi.stubEnv("ESSENTIAL_VALIDATION_ENABLED", "0");
-    const { AlvisMarketplace } = await loadAdapter();
-    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
-    const input = { callID: `disabled-${tool}`, sessionID: `disabled-${tool}`, tool };
-
-    await hooks["tool.execute.before"](input, { args });
-    const result = { metadata: {}, output: "original output", title: "Tool" };
-    await hooks["tool.execute.after"]({ ...input, args }, result);
-
-    expect(result.output).toMatch(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i);
-  });
-
   it("should reject malformed OpenCode question input before execution", async () => {
     const { AlvisMarketplace } = await loadAdapter();
     const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
@@ -383,7 +367,6 @@ describe("opencode adapter manifest validation", () => {
   });
 
   it("should inject approval instructions into an explicit OpenCode prompt", async () => {
-    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "1");
     const { AlvisMarketplace } = await loadAdapter();
     const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
     const output = { message: { id: "msg_approved" }, parts: [{ id: "prt_original", sessionID: "approved-prompt", messageID: "msg_approved", type: "text", text: "Implement the plan." }] };
@@ -394,43 +377,7 @@ describe("opencode adapter manifest validation", () => {
     ]);
   });
 
-  it.each(["0", "invalid", ""])("should bypass disabled approval prompt routing for toggle %s", async (automation) => {
-    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", automation);
-    const { AlvisMarketplace } = await loadAdapter();
-    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
-    const parts = [{ id: "prt_disabled", sessionID: "disabled-prompt", messageID: "msg_disabled", type: "text", text: "Implement the plan." }];
-    const output = { parts } as Parameters<AdapterHooks["chat.message"]>[1];
-    await expect(hooks["chat.message"]({ sessionID: "disabled-prompt" }, output)).resolves.toBeUndefined();
-    expect(output.parts).toEqual([{ id: "prt_disabled", sessionID: "disabled-prompt", messageID: "msg_disabled", type: "text", text: "Implement the plan." }]);
-  });
-
-  it("should disable approval freshness checks while retaining native plan validation", async () => {
-    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "0");
-    const directory = join(sandbox.project, ".opencode", "plans");
-    mkdirSync(directory, { recursive: true });
-    const path = join(directory, "132-disabled.md");
-    writeFileSync(path, "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n");
-    const { AlvisMarketplace } = await loadAdapter();
-    const hooks = await AlvisMarketplace({
-      client: {
-        project: { current: async () => ({ data: { vcs: "git" } }) },
-        session: { get: async () => ({ data: { slug: "disabled", time: { created: 132 } } }) },
-      },
-      directory: sandbox.project,
-      worktree: sandbox.project,
-    });
-    const input = { callID: "disabled-native", sessionID: "disabled-native", tool: "plan_exit" };
-    await hooks["tool.execute.before"](input, { args: {} });
-    writeFileSync(path, "# Goal\nChanged after preflight.\n");
-    const result = { metadata: {}, output: "User approved switching to build agent. Wait for further instructions.", title: "Switching to build agent" };
-    await expect(hooks["tool.execute.after"]({ ...input, args: {} }, result)).resolves.toBeUndefined();
-    expect(result.output).not.toContain("save-approved-plan");
-    await expect(hooks["tool.execute.before"]({ ...input, callID: "still-validate" }, { args: {} })).rejects.toThrow(/missing headings/);
-  });
-
-  it.each(["1", "0"])("should deliver approval instructions after a successful native plan exit with validation %s", async (validation) => {
-    vi.stubEnv("ESSENTIAL_VALIDATION_ENABLED", validation);
-    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "1");
+  it("should deliver approval instructions after a successful native plan exit", async () => {
     const directory = join(sandbox.project, ".opencode", "plans");
     mkdirSync(directory, { recursive: true });
     const approvedPlan = "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n";
@@ -569,8 +516,7 @@ describe("opencode adapter manifest validation", () => {
     expect(unresolvedContext).not.toContain("Stop hook is advisory");
   });
 
-  it("should retain commit backup advice and post-rewrite diagnostics with approval automation disabled", async () => {
-    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "0");
+  it("should retain commit backup advice and post-rewrite diagnostics after a repository rewrite", async () => {
     writeFileSync(join(sandbox.project, ".gitignore"), ".opencode/\n");
     writeFileSync(join(sandbox.project, "tracked.txt"), "tracked\n");
     execFileSync("git", ["init", "--quiet"], { cwd: sandbox.project });
