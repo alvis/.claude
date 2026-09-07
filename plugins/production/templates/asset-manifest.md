@@ -1,16 +1,8 @@
 # Asset manifest
 
-Version this manifest as text; keep media bytes outside Git. A filesystem
-path is not identity: every asset and render is named by a stable ID and an
-immutable content reference, so reproducing a render is an operation rather
-than archaeology. Use `essential:references/anchors.md` for anchor kinds
-and `essential:references/approvals.md` for approval binding.
+Version this manifest as text; keep media bytes outside Git. A filesystem path is not identity: every asset and render is named by a stable ID and an immutable content reference, so reproducing a render is an operation rather than archaeology. Use `essential:references/anchors.md` for anchor kinds and `essential:references/approvals.md` for approval binding.
 
-A SHA-256 content hash identifies exact bytes; a changed hash is a new revision
-that must be reviewed again. Provenance records which exact inputs produced a
-derived asset. A LUT is a colour lookup table used by a render, and
-`capability_id` identifies the approving agent or role so the approval remains
-traceable.
+A SHA-256 content hash identifies exact bytes; a changed hash is a new revision that must be reviewed again. Provenance records which exact inputs produced a derived asset. A LUT is a colour lookup table used by a render, and `capability_id` identifies the approving agent or role so the approval remains traceable.
 
 ```yaml
 assets:
@@ -40,6 +32,4 @@ renders:
     delivered_to: <destination|null>
 ```
 
-An approval binds to exactly one render ID and revision; it never carries to
-the next render. When a decision invalidates a render, mark it
-`validity: stale (<decision-id>)` in place. The entry is history and remains.
+An approval binds to exactly one render ID and revision; it never carries to the next render. When a decision invalidates a render, mark it `validity: stale (<decision-id>)` in place. The entry is history and remains.

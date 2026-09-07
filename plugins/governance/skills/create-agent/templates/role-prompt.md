@@ -1,42 +1,24 @@
-<!-- INSTRUCTION: This is the companion template for an agent's `initialPrompt` frontmatter field — the short
-     string every agent's claude.json carries (see templates/agent.md). `initialPrompt` fires ONLY on a no-task
-     launch: when the agent is started as the session agent with no input, no task given. It governs just the
-     agent's FIRST response — it does not run when the agent is spawned with a task. It is NOT a separate file on
-     disk; it is the literal string value of `initialPrompt` in frontmatter/claude.json. This template exists so
-     every agent's no-task response follows the same shape without reading as boilerplate. -->
+<!-- INSTRUCTION: This is the companion template for an agent's `initialPrompt` frontmatter field — the short string every agent's claude.json carries (see templates/agent.md). `initialPrompt` fires ONLY on a no-task launch: when the agent is started as the session agent with no input, no task given. It governs just the agent's FIRST response — it does not run when the agent is spawned with a task. It is NOT a separate file on disk; it is the literal string value of `initialPrompt` in frontmatter/claude.json. This template exists so every agent's no-task response follows the same shape without reading as boilerplate. -->
 
 # Role Prompt (initialPrompt) — Template
 
-`initialPrompt` answers one question: *launched with no task, what does this agent do on its first turn?* The
-answer is never "start working" — with no task there is nothing to work on. It is either **propose** (glance at
-what's in front of it and offer the concrete work it would pick up) or **greet + state need** (say what artifact
-or brief it needs before it can begin), and then wait.
+`initialPrompt` answers one question: *launched with no task, what does this agent do on its first turn?* The answer is never "start working" — with no task there is nothing to work on. It is either **propose** (glance at what's in front of it and offer the concrete work it would pick up) or **greet + state need** (say what artifact or brief it needs before it can begin), and then wait.
 
 ## What it must NOT contain
 
-- **No identity line.** Do not open with `You are the <role>.` — the role-only def-file body already
-  establishes who it is. Open directly with the instruction.
-- **No "no task" announcement.** Do not narrate `You've been launched with no task…` — that is the implicit
-  context, not something to say back. Jump straight to the first move.
-- **No preloaded context.** Do not tell it to load standards on start. A greeting shouldn't burn context on
-  work that may not come; the agent selects applicable standard directories only when real work is named, then applies
-  them under `essential:directions/standards.md`. It follows the matching posture clause below; `base.md`
-  documents the same progressive contract.
+- **No identity line.** Do not open with `You are the <role>.` — the role-only def-file body already establishes who it is. Open directly with the instruction.
+- **No "no task" announcement.** Do not narrate `You've been launched with no task…` — that is the implicit context, not something to say back. Jump straight to the first move.
+- **No preloaded context.** Do not tell it to load standards on start. A greeting shouldn't burn context on work that may not come; the agent selects applicable standard directories only when real work is named, then applies them under `essential:directions/standards.md`. It follows the matching posture clause below; `base.md` documents the same progressive contract.
 
 ## The three beats, in order
 
 A short directive — 2–4 sentences, in the agent's own voice, as a flowing string:
 
 1. **First move** — pick by role:
-   - *propose* (role-fit — the next work is legible from repo/its area): take a light glance, then greet and
-     propose the concrete work it'd pick up first, with a couple of examples.
-   - *greet + state need* (it needs a human brief or an upstream artifact): greet, name plainly what it needs to
-     begin, and what it'll do with it once handed over.
-   A one-clause reason *why* it needs that, in voice, may lead.
+   - *propose* (role-fit — the next work is legible from repo/its area): take a light glance, then greet and propose the concrete work it'd pick up first, with a couple of examples.
+   - *greet + state need* (it needs a human brief or an upstream artifact): greet, name plainly what it needs to begin, and what it'll do with it once handed over. A one-clause reason *why* it needs that, in voice, may lead.
 2. **Wait** — an explicit "then wait for the user"; do not execute, edit, or spawn on this turn.
-3. **Defer + posture + guardrail** — only once real work is named, it selects applicable standards and applies them
-   under `essential:directions/standards.md` — as a writer, or as a read-only role against the owner-produced
-   revision. Fold the role's one specific guardrail into this clause.
+3. **Defer + posture + guardrail** — only once real work is named, it selects applicable standards and applies them under `essential:directions/standards.md` — as a writer, or as a read-only role against the owner-produced revision. Fold the role's one specific guardrail into this clause.
 
 Keep it 2–4 sentences. It is a first-turn directive, not a spec restatement.
 
@@ -107,15 +89,7 @@ against that owner-produced revision.
 
 ## Notes
 
-- **Propose vs greet is a role property.** A role proposes only when its next work is visible without a human
-  brief — a lead reading the plan, an initializer reading an empty directory, an optimizer reading the roster.
-  Everything that needs an upstream artifact (a diff to review, an approved design to build, a hypothesis to
-  test) greets and states the need instead. When in doubt, greet.
-- The guardrail beat is where role identity survives compression — a generic "be careful" guardrail is a sign the
-  prompt was written from the template, not the agent's own base.md. Derive it from what this specific role gets
-  wrong most often.
-- If the agent is `leaf:true`, the first move is greet-and-report, never "coordinate" or "delegate" — a leaf's
-  `initialPrompt` must not imply spawning capability it does not have.
-- If the agent is workflow-spawned or a teammate, do not restate `permissionMode` in the `initialPrompt` — that
-  is a frontmatter concern (see templates/agent.md's permissionMode-by-launch-scenario table), not a voice
-  concern.
+- **Propose vs greet is a role property.** A role proposes only when its next work is visible without a human brief — a lead reading the plan, an initializer reading an empty directory, an optimizer reading the roster. Everything that needs an upstream artifact (a diff to review, an approved design to build, a hypothesis to test) greets and states the need instead. When in doubt, greet.
+- The guardrail beat is where role identity survives compression — a generic "be careful" guardrail is a sign the prompt was written from the template, not the agent's own base.md. Derive it from what this specific role gets wrong most often.
+- If the agent is `leaf:true`, the first move is greet-and-report, never "coordinate" or "delegate" — a leaf's `initialPrompt` must not imply spawning capability it does not have.
+- If the agent is workflow-spawned or a teammate, do not restate `permissionMode` in the `initialPrompt` — that is a frontmatter concern (see templates/agent.md's permissionMode-by-launch-scenario table), not a voice concern.

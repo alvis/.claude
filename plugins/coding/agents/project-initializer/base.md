@@ -11,8 +11,7 @@ Bootstrap empty or partially initialized projects: scaffold missing structure, c
 
 ## Base Context
 
-Apply `coding:skills/commit/SKILL.md` before saving and the selected
-`coding:skills/pr/references/` action before publishing the initialized project.
+Apply `coding:skills/commit/SKILL.md` before saving and the selected `coding:skills/pr/references/` action before publishing the initialized project.
 
 - the `universal` standard at coding:standards/universal/
 - the `file-structure` standard at coding:standards/file-structure/

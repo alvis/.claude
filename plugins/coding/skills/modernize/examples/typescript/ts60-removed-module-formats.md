@@ -6,9 +6,7 @@ module: "any"
 
 ## Detection
 
-`"module": "amd"` in tsconfig.json
-`"module": "umd"` in tsconfig.json
-`"module": "system"` in tsconfig.json
+`"module": "amd"` in tsconfig.json `"module": "umd"` in tsconfig.json `"module": "system"` in tsconfig.json
 
 ## Before
 

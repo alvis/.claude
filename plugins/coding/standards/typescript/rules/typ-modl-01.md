@@ -40,25 +40,15 @@ function validateUserInput(input: CreateUserInput): ValidationResult { /* ... */
 1. `import` statements (code imports)
 2. `import type` statements (type-only imports)
 
-**GROUP 2: Re-exports**
-3. `export { ... } from` statements (code re-exports)
-4. `export type { ... } from` statements (type-only re-exports)
+**GROUP 2: Re-exports** 3. `export { ... } from` statements (code re-exports) 4. `export type { ... } from` statements (type-only re-exports)
 
-**GROUP 3: Type Definitions**
-5. Exported types/interfaces (`export type`, `export interface`)
-6. Private types/interfaces (non-exported)
+**GROUP 3: Type Definitions** 5. Exported types/interfaces (`export type`, `export interface`) 6. Private types/interfaces (non-exported)
 
-**GROUP 4: Constants & Variables**
-7. Exported constants (`export const`)
-8. Private constants (non-exported `const`)
+**GROUP 4: Constants & Variables** 7. Exported constants (`export const`) 8. Private constants (non-exported `const`)
 
-**GROUP 5: Classes**
-9. Exported classes (`export class`)
-10. Private classes (non-exported)
+**GROUP 5: Classes** 9. Exported classes (`export class`) 10. Private classes (non-exported)
 
-**GROUP 6: Functions**
-11. Exported functions (`export function`, `export const fn =`)
-12. Private functions (non-exported)
+**GROUP 6: Functions** 11. Exported functions (`export function`, `export const fn =`) 12. Private functions (non-exported)
 
 ### Complete File Example
 

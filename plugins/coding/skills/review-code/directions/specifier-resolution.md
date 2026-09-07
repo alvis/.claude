@@ -48,9 +48,6 @@ When dispatching subagent tasks, filter the discovered file list per scope:
 - **security**: source files (especially `auth/`, `api/`, `services/`)
 - **style**: source + test files
 
-For compatibility, normalize the old selectors `test`, `documentation`, and
-`code-quality` to `testing`, `docs`, and `quality,correctness` respectively;
-report the normalization. Path output still follows the canonical work-local
-contract.
+For compatibility, normalize the old selectors `test`, `documentation`, and `code-quality` to `testing`, `docs`, and `quality,correctness` respectively; report the normalization. Path output still follows the canonical work-local contract.
 
 Prepare a separate file list per selected scope before dispatch.

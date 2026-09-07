@@ -2,9 +2,7 @@
 
 ## Intent
 
-The nav/hamburger item representing the page the user is currently on must
-(a) be visually distinct from sibling links and
-(b) not behave as a link — clicking it should not navigate or reload.
+The nav/hamburger item representing the page the user is currently on must (a) be visually distinct from sibling links and (b) not behave as a link — clicking it should not navigate or reload.
 
 ## Fix
 

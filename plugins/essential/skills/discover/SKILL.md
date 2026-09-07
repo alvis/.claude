@@ -71,8 +71,7 @@ The evidence ledger uses these fields:
    - **Check `references/features.md`** — the Floor features are mandatory; the Menu is a shelf of proven devices, never a completeness requirement.
    - **Build a coverage map**: list every ledger finding, unknown, stream, and decision, and assign each to a section. Content that fits no block type goes in prose rather than being dropped — never lose ledger content to satisfy the catalog.
    - **Theme the board**: give the board a `theme`, whose `accent` hue rotates the whole accent ramp from one number (companion boards get distinct hues), and whose `light` and `dark` maps override any `--ui-*` token, including the semantic ramps (`--ui-verdict-*`, `--ui-status-*`, `--ui-k-*`). No token is whitelisted, so the contrast a themed board reaches is yours to hold.
-   - **Design within the block vocabulary.** Section order, block choice, and the shape of each block are yours to design for the content at hand — approach it like a design lead, not a form-filler. The boards under `examples/data/` are the working catalogue of what the blocks can be asked to do. Where a card carries a real decision with alternatives, render the option set with reasons and a badged recommendation — never a bare accept.
-   Then render the board, which is self-contained and makes no network request:
+   - **Design within the block vocabulary.** Section order, block choice, and the shape of each block are yours to design for the content at hand — approach it like a design lead, not a form-filler. The boards under `examples/data/` are the working catalogue of what the blocks can be asked to do. Where a card carries a real decision with alternatives, render the option set with reasons and a badged recommendation — never a bare accept. Then render the board, which is self-contained and makes no network request:
 
    ```bash
    bun run scripts/render-page/cli.ts <board>.json -o <board>.html   # one board

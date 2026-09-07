@@ -1,17 +1,6 @@
 # Complete-Test Execution — direct ownership, coordinated batches, and reports
 
-Referenced from SKILL.md. The selected topology governs every sub-step. A
-Tier 0/1 owner performs analysis, authoring, checks, and self-review
-directly. An independent reviewer is read-only and appears only on the SKILL
-predicate. A qualifying coordinated run may assign disjoint batches, with at
-most **8 parallel implementers**, and aggregates each wave before moving on.
-Every dispatch is a mission capsule naming the exact scope, expected result,
-the applicable standards to apply under `essential:directions/standards.md`,
-active work root, and only the relevant contract/evidence paths. Delegates
-do not reread broad work journals unless the assignment is a resume or
-cross-slice alignment task; they never write main-agent-owned
-pointers/overviews or delegate further. Every writer returns explicit
-`generated_files` to the main agent.
+Referenced from SKILL.md. The selected topology governs every sub-step. A Tier 0/1 owner performs analysis, authoring, checks, and self-review directly. An independent reviewer is read-only and appears only on the SKILL predicate. A qualifying coordinated run may assign disjoint batches, with at most **8 parallel implementers**, and aggregates each wave before moving on. Every dispatch is a mission capsule naming the exact scope, expected result, the applicable standards to apply under `essential:directions/standards.md`, active work root, and only the relevant contract/evidence paths. Delegates do not reread broad work journals unless the assignment is a resume or cross-slice alignment task; they never write main-agent-owned pointers/overviews or delegate further. Every writer returns explicit `generated_files` to the main agent.
 
 ## Sub-step 1 — Initial test analysis
 
@@ -45,12 +34,7 @@ Batches:      1: auth/service, auth/controller, users/service   (450 lines, 3 fi
 Record separate runtime and compiler batch maps in structured task tracking (one todo per batch) so no target is skipped. A Tier 0/1 owner executes the maps directly. A qualifying coordinated run may dispatch each kind in waves of at most 8 concurrent disjoint batches and aggregates every batch in one wave before scheduling the next. A compiler batch owner adds one consumer-like case at a time, runs the configured type-test/typecheck command after each case, and keeps only distinct compiler-semantic evidence. Authoring may run in parallel where safe outside a sensitivity critical section; from each temporary runtime or compiler mutation through every observing test/type command, restoration, and green rerun, quiesce all other writes in the same project or run the proof in an isolated workspace. When an already-correct compiler behavior gains an initially passing oracle, the batch owner follows `TST-CORE-02`: make the case fail through a temporary implementation mutation or equivalent controlled sensitivity proof, restore the implementation, rerun green, and report the proof/restoration with target-to-oracle coverage. Compiler batches never invoke Vitest or runtime coverage. Each runtime batch owner runs this loop **for each source file**:
 
 1. **Initial coverage check**: `vitest --coverage <spec path>`; note current coverage and the first uncovered line/branch.
-2. **Progressive writing loop** (repeat until statements, branches, functions, and lines are each 100%):
-   a. Write ONE test that reaches a specific uncovered runtime line/branch through a supported public entrypoint (AAA pattern, proper types, per standards).
-   b. Re-run the focused coverage command and parse the new numbers.
-   c. For already-correct behavior, prove the initially passing case detects the named regression through a temporary implementation mutation or equivalent controlled proof, restore the implementation, and rerun the focused case green (`TST-CORE-02`).
-   d. Decide: coverage increased → KEEP only after applicable `TST-CORE-02` proof; coverage unchanged → KEEP only when the test provides distinct behavioral evidence and satisfies `TST-CORE-02`, otherwise DELETE it and write a different one.
-   e. All four metrics at 100% → next file in the batch; otherwise repeat from (a).
+2. **Progressive writing loop** (repeat until statements, branches, functions, and lines are each 100%): a. Write ONE test that reaches a specific uncovered runtime line/branch through a supported public entrypoint (AAA pattern, proper types, per standards). b. Re-run the focused coverage command and parse the new numbers. c. For already-correct behavior, prove the initially passing case detects the named regression through a temporary implementation mutation or equivalent controlled proof, restore the implementation, and rerun the focused case green (`TST-CORE-02`). d. Decide: coverage increased → KEEP only after applicable `TST-CORE-02` proof; coverage unchanged → KEEP only when the test provides distinct behavioral evidence and satisfies `TST-CORE-02`, otherwise DELETE it and write a different one. e. All four metrics at 100% → next file in the batch; otherwise repeat from (a).
 3. **Batch completion verification**: run coverage for all the batch's test files together; verify every source file is at 100% statements, branches, functions, and lines; count tests created vs deleted.
 4. **Standards compliance**: lint the created test files, fix type errors, verify documentation.
 
@@ -66,9 +50,7 @@ Each runtime batch reports: per-file coverage (lines/branches/statements/functio
 - same lines AND same behavioral aspect as another test;
 - artificial scenarios contributing neither coverage nor behavioral documentation;
 - wrapper-function tests without unique coverage or insight;
-- assertions over checked-in existence, absence, bytes, literals, inventories,
-  path layout, parity, or systematic properties — flag regardless of coverage
-  contribution (`TST-CORE-10`).
+- assertions over checked-in existence, absence, bytes, literals, inventories, path layout, parity, or systematic properties — flag regardless of coverage contribution (`TST-CORE-10`).
 - assertions over exact type/interface members, signatures, export inventories, schema declaration fields, or barrel/re-export layout — flag regardless of coverage contribution (`TST-CORE-10`). Do not flag a representative consumer case permitted by that rule. Tests that execute a runtime schema parser with valid or invalid input remain behavior tests.
 
 The plan groups candidates by file, marks each `safe_to_remove` | `uncertain` | `keep`, and emits removal tasks (max 10 tests per task, least-risky first).

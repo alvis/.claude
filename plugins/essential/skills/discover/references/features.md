@@ -1,9 +1,6 @@
 # Discover board — feature inventory
 
-The definitive checklist for every board the discover skill generates. **Floor** features are
-mandatory and validator-enforced; **Menu** features are proven options the generator reaches for
-when the content calls for them. Consult this file before composing (workflow step 7) and again
-at verification (step 8) — no generation may silently drop a Floor feature.
+The definitive checklist for every board the discover skill generates. **Floor** features are mandatory and validator-enforced; **Menu** features are proven options the generator reaches for when the content calls for them. Consult this file before composing (workflow step 7) and again at verification (step 8) — no generation may silently drop a Floor feature.
 
 ## A. Shell (floor)
 
@@ -45,13 +42,7 @@ Board level:
 
 ## E. Content devices (menu — reach for what the content calls for)
 
-verdict/finding cards with semantic edge + pill · option card set with recommended badge ·
-readiness meter (`n/5`) · provenance chips (observed / inferred / needs-live-query) · owner chips
-with initials · severity tags · landing-map disposition rows · critical-path strip · risk-matrix
-table · Prevent/Detect/Contain failure map · timeline rail with recheck triggers · scope-cuts
-note · sign-off card · tl;dr block · glossary · entity card · flow strip · stat tiles ·
-plain-English translation line · `file:line` source chips · data-driven card sets rendered from a
-JSON array
+verdict/finding cards with semantic edge + pill · option card set with recommended badge · readiness meter (`n/5`) · provenance chips (observed / inferred / needs-live-query) · owner chips with initials · severity tags · landing-map disposition rows · critical-path strip · risk-matrix table · Prevent/Detect/Contain failure map · timeline rail with recheck triggers · scope-cuts note · sign-off card · tl;dr block · glossary · entity card · flow strip · stat tiles · plain-English translation line · `file:line` source chips · data-driven card sets rendered from a JSON array
 
 ## F. Legibility (floor)
 

@@ -2,8 +2,7 @@
 
 ## Intent
 
-Statements, branches, functions, and lines must each reach 100% for target
-code, excluding approved ignore-file exceptions (barrel/type-only files).
+Statements, branches, functions, and lines must each reach 100% for target code, excluding approved ignore-file exceptions (barrel/type-only files).
 
 ## Fix
 
@@ -22,12 +21,8 @@ global: { lines: 100, statements: 100 }
 <IMPORTANT>
 - **100% statements, branches, functions, and lines** (excluding barrel and type files)
 - Write tests ONE AT A TIME with coverage verification after each
-- If a test adds zero coverage improvement, keep it only when it provides
-  distinct behavioral evidence; otherwise delete it immediately
-- Remove dead code BEFORE measuring coverage — the 100% threshold applies to
-  living code only. Never keep an unused symbol, no-value wrapper, or
-  change-detector test to satisfy the threshold; delete the dead subject
-  (`GEN-DESN-04`, `FUNC-ARCH-03`) and the threshold applies to what remains.
+- If a test adds zero coverage improvement, keep it only when it provides distinct behavioral evidence; otherwise delete it immediately
+- Remove dead code BEFORE measuring coverage — the 100% threshold applies to living code only. Never keep an unused symbol, no-value wrapper, or change-detector test to satisfy the threshold; delete the dead subject (`GEN-DESN-04`, `FUNC-ARCH-03`) and the threshold applies to what remains.
 </IMPORTANT>
 
 Exclude barrel files (`index.ts`) and pure type files (`types.ts`) by placing `/* v8 ignore file */` at the top of the file. Do not add tests to manufacture coverage for them. Validate their public shape with type diagnostics and builds of affected consumers.
@@ -52,12 +47,8 @@ For the one-test-at-a-time workflow, see `TST-COVR-03`.
 
 - When existing code matches prior violation patterns such as `lines: 98`, refactor before adding new behavior.
 - If uncovered lines remain, prioritize tests for failure/fallback branches before adding variation tests.
-- Barrel files are ignore-marked with `/* v8 ignore file */`; do not write
-  re-export tests to chase their coverage.
-- Pure type files are excluded from runtime coverage. A focused compile-time
-  test remains valid only for a compiler-observable behavior permitted by
-  `TST-CORE-10`; exact declaration shape stays with type diagnostics and
-  affected-consumer builds.
+- Barrel files are ignore-marked with `/* v8 ignore file */`; do not write re-export tests to chase their coverage.
+- Pure type files are excluded from runtime coverage. A focused compile-time test remains valid only for a compiler-observable behavior permitted by `TST-CORE-10`; exact declaration shape stays with type diagnostics and affected-consumer builds.
 
 ## Related
 

@@ -6,10 +6,7 @@ revalidate_on:
 
 # <Initiative name> manifest
 
-A workspace anchor is a stable locator plus an immutable revision: it lets a
-reader recover the exact participating workspace state. `last_verified` is
-the date this manifest was checked; any named `revalidate_on` trigger requires
-checking it again before relying on its dependencies.
+A workspace anchor is a stable locator plus an immutable revision: it lets a reader recover the exact participating workspace state. `last_verified` is the date this manifest was checked; any named `revalidate_on` trigger requires checking it again before relying on its dependencies.
 
 ## Participating streams
 

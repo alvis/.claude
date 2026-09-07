@@ -1,10 +1,6 @@
 # React standards index
 
-Select applicable standards for React work from the table below. The protocol
-that governs selection, scanning, and rule lookup is
-`essential:directions/standards.md`; this file only says which standard applies.
-React declares no other framework or design plugin as a dependency; do not
-select standards from one.
+Select applicable standards for React work from the table below. The protocol that governs selection, scanning, and rule lookup is `essential:directions/standards.md`; this file only says which standard applies. React declares no other framework or design plugin as a dependency; do not select standards from one.
 
 | Applies to | Standard |
 | --- | --- |

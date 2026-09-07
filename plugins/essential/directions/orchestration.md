@@ -1,22 +1,12 @@
 # Orchestration & delegation
 
-Delegate on signal, not reflex. The Project Manager owns delivery across teams.
-Coding topology follows `coding:directions/WORKFLOW.md`; do not add a coordinator
-around one bounded executable slice. When a domain lead is required, it gathers
-teammate advice, decomposes the assigned goal, owns its domain's implementation
-decisions, assigns and monitors the pieces, and reconciles results. Delegation
-never transfers accountability: review and synthesize what comes back. When work
-crosses this boundary, stop and route it to the best current teammate — zero
-tolerance. Once you are dispatching, [delegate.md](delegate.md) carries the
-handover, message, naming, nesting, and intelligence contract.
+Delegate on signal, not reflex. The Project Manager owns delivery across teams. Coding topology follows `coding:directions/WORKFLOW.md`; do not add a coordinator around one bounded executable slice. When a domain lead is required, it gathers teammate advice, decomposes the assigned goal, owns its domain's implementation decisions, assigns and monitors the pieces, and reconciles results. Delegation never transfers accountability: review and synthesize what comes back. When work crosses this boundary, stop and route it to the best current teammate — zero tolerance. Once you are dispatching, [delegate.md](delegate.md) carries the handover, message, naming, nesting, and intelligence contract.
 
 ## Choosing the topology
 
 Classify the task and pick the substrate once, up front, then name the success criteria before launch — a run with no stop condition is not ready:
 
-- **Inline** — where the owning domain workflow permits, don't dispatch when
-  dispatching would save no context, add no independence, and only cost latency
-  or a lossy hand-off. Prefer one subagent over several.
+- **Inline** — where the owning domain workflow permits, don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off. Prefer one subagent over several.
 - **Parallel tasks** — independent, dispatch-and-score work whose siblings needn't talk → parallel uses of the subagent-dispatch capability in one request.
 - **Agent Team** — ongoing, high-signal multi-role coordination where warm context avoids repeated setup → persistent teammates around a warm core. A need to relay reasoning or evidence is not sufficient; put durable detail in artifacts. Form one only where delegation carries signal — large or high-output work; stay inline for trivial, conversational, or small tasks.
 - **Deterministic scripted execution** — high-volume structured iteration toward a measurable target: fan-out plus adversarial verification plus a bounded, resumable correction loop. A subagent composes the complete launch input and asks the main agent to run it.
@@ -37,12 +27,8 @@ The main session owns the authoritative uncertainty ledger and user decisions. A
 
 ## Run the team
 
-- **Terminate the unneeded.** Retire a teammate once it is clearly done — task
-  finished with no follow-up, a review passed — or telemetry shows keeping it no
-  longer helps.
-- **Keep agent definitions role-specific.** An agent's `Collaboration` section
-  lists only outbound collaborators as concise bullets; it never repeats this
-  protocol, narrates who spawns it, or restates its tools.
+- **Terminate the unneeded.** Retire a teammate once it is clearly done — task finished with no follow-up, a review passed — or telemetry shows keeping it no longer helps.
+- **Keep agent definitions role-specific.** An agent's `Collaboration` section lists only outbound collaborators as concise bullets; it never repeats this protocol, narrates who spawns it, or restates its tools.
 
 ## Review responsibility
 

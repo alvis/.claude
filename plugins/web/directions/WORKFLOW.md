@@ -20,7 +20,6 @@ Before work delegation, read `web:references/ROUTING.md`.
 
 ## Standards
 
-Select from `web:standards/INDEX.md` and apply each selected standard under
-`essential:directions/standards.md`.
+Select from `web:standards/INDEX.md` and apply each selected standard under `essential:directions/standards.md`.
 
 Web does not declare another framework plugin as a dependency; do not load its standards or skills.

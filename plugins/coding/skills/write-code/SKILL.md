@@ -29,8 +29,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 
 ## Composition
 
-Use the required skills in this order. For Tier 0/1, the same owner loads them
-directly; a distinct skill phase does not justify delegation or a coordinator.
+Use the required skills in this order. For Tier 0/1, the same owner loads them directly; a distinct skill phase does not justify delegation or a coordinator.
 
 1. `coding:setup-project`, only if essential structure is missing.
 2. `coding:draft-code`, for types, skeleton, canonical implementation markers, and red/pending test structure.

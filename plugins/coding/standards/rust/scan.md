@@ -1,25 +1,16 @@
 # Rust: Violation Scan
 
-Any single violation blocks submission by default.
-Protocol: `essential:directions/standards.md`.
+Any single violation blocks submission by default. Protocol: `essential:directions/standards.md`.
 
 > **During linting**: Only apply a rule's fix if it is a mechanical correction — formatting, naming, documentation, casing, import ordering, or field/function reordering. If the fix would add new logic, change control flow, introduce runtime validation, or alter program behavior, report the violation without fixing it.
 
 ## Required Verification
 
-Target stable Rust **1.95+**, edition **2024**, pinned through
-`rust-toolchain.toml`; these rules assume modern async/type features and the
-edition-2024 prelude.
+Target stable Rust **1.95+**, edition **2024**, pinned through `rust-toolchain.toml`; these rules assume modern async/type features and the edition-2024 prelude.
 
-Every commit must pass `rustfmt`, `clippy`, and `cargo nextest run`.
-`clippy::all` and `clippy::pedantic` are denied with the curated allowances in
-`RST-CORE-04`. Check the configured `bacon` development loop and `rustup`
-channel/components through `RST-TOOL-*`. Missing results, failed checks, or an
-unsupported target block submission even when other scan triggers are clear.
+Every commit must pass `rustfmt`, `clippy`, and `cargo nextest run`. `clippy::all` and `clippy::pedantic` are denied with the curated allowances in `RST-CORE-04`. Check the configured `bacon` development loop and `rustup` channel/components through `RST-TOOL-*`. Missing results, failed checks, or an unsupported target block submission even when other scan triggers are clear.
 
-Use each rule's Tool Coverage to distinguish mechanical checks from semantic
-review. Do not re-litigate checks proved by tool results for the exact inputs;
-review uncovered cases and the semantic remainder of partial coverage.
+Use each rule's Tool Coverage to distinguish mechanical checks from semantic review. Do not re-litigate checks proved by tool results for the exact inputs; review uncovered cases and the semantic remainder of partial coverage.
 
 ## Quick Scan
 

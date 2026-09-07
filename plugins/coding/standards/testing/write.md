@@ -139,8 +139,7 @@ Pick the form by *what you assert*, not by call count:
 
 ## Coverage Workflow
 
-0. Before measuring, remove dead code — unused constants, regexps, no-value
-   wrappers (`GEN-DESN-04`, `FUNC-ARCH-03`). Coverage applies to living code only.
+0. Before measuring, remove dead code — unused constants, regexps, no-value wrappers (`GEN-DESN-04`, `FUNC-ARCH-03`). Coverage applies to living code only.
 1. Write one test -> run coverage -> check delta
 2. For already-correct behavior, prove the initially passing case detects the named regression through a temporary implementation mutation or equivalent controlled proof; restore the implementation and rerun green
 3. Zero coverage gain? Keep the test only when it provides distinct behavioral evidence and satisfies `TST-CORE-02`; otherwise delete it
@@ -162,10 +161,8 @@ Patterns derive from [`TST-STRU-01`].
 ## Anti-Patterns
 
 - Repeating nearly identical tests to inflate coverage numbers.
-- Asserting a checked-in file's existence, absence, layout, inventory, bytes,
-  literals, or parity, including through a snapshot or golden-output mirror.
-- Using exact-type, signature, export, schema-field, or barrel assertions to
-  mirror a static declaration inventory.
+- Asserting a checked-in file's existence, absence, layout, inventory, bytes, literals, or parity, including through a snapshot or golden-output mirror.
+- Using exact-type, signature, export, schema-field, or barrel assertions to mirror a static declaration inventory.
 - Mocking internal pure functions instead of testing outcomes.
 - Reassigning shared test data with `let` in suites.
 - Building large fake interfaces that diverge from real contracts.

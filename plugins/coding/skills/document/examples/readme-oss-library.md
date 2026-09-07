@@ -2,11 +2,7 @@
 
 > Tiny, type-safe exponential backoff retry for Node.js and the browser — zero dependencies, fully tree-shakeable.
 
-[![npm version](https://img.shields.io/npm/v/@scope/retry.svg?style=flat-square)](https://www.npmjs.com/package/@scope/retry)
-[![CI](https://img.shields.io/github/actions/workflow/status/example/retry/ci.yml?branch=main&style=flat-square)](https://github.com/example/retry/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/example/retry?style=flat-square)](https://codecov.io/gh/example/retry)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](./LICENSE)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@scope/retry?style=flat-square)](https://bundlephobia.com/package/@scope/retry)
+[![npm version](https://img.shields.io/npm/v/@scope/retry.svg?style=flat-square)](https://www.npmjs.com/package/@scope/retry) [![CI](https://img.shields.io/github/actions/workflow/status/example/retry/ci.yml?branch=main&style=flat-square)](https://github.com/example/retry/actions) [![Coverage](https://img.shields.io/codecov/c/github/example/retry?style=flat-square)](https://codecov.io/gh/example/retry) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](./LICENSE) [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@scope/retry?style=flat-square)](https://bundlephobia.com/package/@scope/retry)
 
 ---
 
@@ -253,39 +249,29 @@ Pass `backoff` as a function and you own the delay. Jitter is just `delay * Math
 
 ## ❓ FAQ
 
-**Does it retry on _any_ thrown error by default?**
-Yes. Override with `retryIf` to narrow. We chose retry-all as the default because `fn` can decide what to throw.
+**Does it retry on _any_ thrown error by default?** Yes. Override with `retryIf` to narrow. We chose retry-all as the default because `fn` can decide what to throw.
 
-**Why full jitter and not equal jitter?**
-[AWS Architecture Blog — Exponential Backoff and Jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/) showed full jitter minimizes contention under load. Equal is also available via `jitter: 'equal'`.
+**Why full jitter and not equal jitter?** [AWS Architecture Blog — Exponential Backoff and Jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/) showed full jitter minimizes contention under load. Equal is also available via `jitter: 'equal'`.
 
-**Can I use this with `axios`, `ky`, `got`, `undici`?**
-Yes — it's transport-agnostic. Wrap the call: `retry(() => axios.get(url))`. For `ky`, prefer `ky`'s built-in retry unless you need features it lacks (e.g. typed `retryIf`).
+**Can I use this with `axios`, `ky`, `got`, `undici`?** Yes — it's transport-agnostic. Wrap the call: `retry(() => axios.get(url))`. For `ky`, prefer `ky`'s built-in retry unless you need features it lacks (e.g. typed `retryIf`).
 
-**What happens if my `fn` never settles?**
-`retry` won't time it out — that's your job. Pass `signal: AbortSignal.timeout(5000)` or wire your own controller.
+**What happens if my `fn` never settles?** `retry` won't time it out — that's your job. Pass `signal: AbortSignal.timeout(5000)` or wire your own controller.
 
-**Is this safe in React `useEffect`?**
-Yes — pass the effect's `AbortSignal` and abort on cleanup. The pending delay is cancelled too.
+**Is this safe in React `useEffect`?** Yes — pass the effect's `AbortSignal` and abort on cleanup. The pending delay is cancelled too.
 
-**Does it support circuit breaking?**
-No. That's a bigger concern — use [`cockatiel`](https://github.com/connor4312/cockatiel) and wrap this inside its policy, or keep state in your own module.
+**Does it support circuit breaking?** No. That's a bigger concern — use [`cockatiel`](https://github.com/connor4312/cockatiel) and wrap this inside its policy, or keep state in your own module.
 
 ---
 
 ## 🛠️ Troubleshooting
 
-**`Error: AbortError: The operation was aborted`**
-Your `signal` fired before `fn` resolved. This is the intended behavior — catch `AbortError` separately from `RetryError`.
+**`Error: AbortError: The operation was aborted`** Your `signal` fired before `fn` resolved. This is the intended behavior — catch `AbortError` separately from `RetryError`.
 
-**Retries never happen — `attempts` seems ignored.**
-Check `retryIf`. If it returns `false` for your error shape, retry aborts immediately. Log the error inside `retryIf` to verify.
+**Retries never happen — `attempts` seems ignored.** Check `retryIf`. If it returns `false` for your error shape, retry aborts immediately. Log the error inside `retryIf` to verify.
 
-**Delays feel too short or too long.**
-Full jitter means the actual delay is uniformly distributed in `[minDelay, base * 2 ** attempt]`. Bump `minDelay` for a floor, or switch to `jitter: 'equal'` for tighter distribution.
+**Delays feel too short or too long.** Full jitter means the actual delay is uniformly distributed in `[minDelay, base * 2 ** attempt]`. Bump `minDelay` for a floor, or switch to `jitter: 'equal'` for tighter distribution.
 
-**TypeScript complains about `ctx.signal` being `AbortSignal | undefined`.**
-Upgrade to `@scope/retry` ≥ 2.0 — we made it non-optional. On older versions, non-null-assert after narrowing.
+**TypeScript complains about `ctx.signal` being `AbortSignal | undefined`.** Upgrade to `@scope/retry` ≥ 2.0 — we made it non-optional. On older versions, non-null-assert after narrowing.
 
 ---
 

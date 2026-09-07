@@ -32,10 +32,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 
 ## Standards
 
-Select standards for the artifact being corrected. Test corrections use
-`testing`, `typescript`, and `documentation`; fixture optimization uses
-`universal`, `typescript`, `function`, `documentation`, and `testing`. Apply
-each selected standard as a writer under `essential:directions/standards.md`.
+Select standards for the artifact being corrected. Test corrections use `testing`, `typescript`, and `documentation`; fixture optimization uses `universal`, `typescript`, `function`, `documentation`, and `testing`. Apply each selected standard as a writer under `essential:directions/standards.md`.
 
 ## Workflow
 

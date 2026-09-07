@@ -34,15 +34,8 @@ overviews_reconciled: [<relative paths>]
 generated_files: [<absolute created/materially rewritten paths, including overview.md>]
 ```
 
-Every stream in `state_root/.state/works/` appears once in `streams`.
-`work_dir` is present for `planned`, `working`, `reviewing`, and `completed`
-streams. Archived streams live under `.state/archive/`, outside this report.
-`overview_path` is the global index beside the live work, updated with only the
-refreshed streams' rows.
-Then state the immediate next action per selected stream.
+Every stream in `state_root/.state/works/` appears once in `streams`. `work_dir` is present for `planned`, `working`, `reviewing`, and `completed` streams. Archived streams live under `.state/archive/`, outside this report. `overview_path` is the global index beside the live work, updated with only the refreshed streams' rows. Then state the immediate next action per selected stream.
 
-Reserve a top-level `handover: blocked` for a failure that prevents persistence
-itself — an unresolvable workspace, an unreadable contract, or an unwritable
-`overview.md`.
+Reserve a top-level `handover: blocked` for a failure that prevents persistence itself — an unresolvable workspace, an unreadable contract, or an unwritable `overview.md`.
 
 </report>

@@ -7,12 +7,7 @@ requirements:
 
 # Install Agents
 
-Installs agent templates contributed by Essential, the other enabled plugins in
-its marketplace, and any enabled marketplace named explicitly with
-`--include-marketplace`. The same authoritative template becomes a Claude Code
-Markdown definition under `~/.claude/agents/`, a Codex TOML definition under
-`~/.codex/agents/`, or a Grok Build Markdown definition under
-`${GROK_HOME:-${HOME}/.grok}/agents/`.
+Installs agent templates contributed by Essential, the other enabled plugins in its marketplace, and any enabled marketplace named explicitly with `--include-marketplace`. The same authoritative template becomes a Claude Code Markdown definition under `~/.claude/agents/`, a Codex TOML definition under `~/.codex/agents/`, or a Grok Build Markdown definition under `${GROK_HOME:-${HOME}/.grok}/agents/`.
 
 ## What the installer does
 
@@ -44,18 +39,9 @@ bash "<absolute directory containing this loaded SKILL.md>/scripts/install-agent
   --harness grok
 ```
 
-Add repeatable `--include-marketplace <name>` arguments only for enabled
-marketplaces the user explicitly trusts. Use the exact configured marketplace
-name; this repository does not require an external marketplace.
+Add repeatable `--include-marketplace <name>` arguments only for enabled marketplaces the user explicitly trusts. Use the exact configured marketplace name; this repository does not require an external marketplace.
 
-For Codex and Grok Build, replace the placeholder with the directory from the loaded
-`essential:install-agents` skill resource path exposed by the runtime; ordinary shell
-calls do not receive a plugin-root environment variable. Neither harness currently
-ingests this repository's custom agents directly from a plugin — Codex reads only
-native TOML definitions and Grok Build discovers plugin agents only from direct
-`agents/*.md` children, which our split layout never produces. This install step uses each harness's supported
-personal-agent directory; start a fresh session afterward so it loads the new
-definitions (TOML for Codex, Markdown for Grok Build).
+For Codex and Grok Build, replace the placeholder with the directory from the loaded `essential:install-agents` skill resource path exposed by the runtime; ordinary shell calls do not receive a plugin-root environment variable. Neither harness currently ingests this repository's custom agents directly from a plugin — Codex reads only native TOML definitions and Grok Build discovers plugin agents only from direct `agents/*.md` children, which our split layout never produces. This install step uses each harness's supported personal-agent directory; start a fresh session afterward so it loads the new definitions (TOML for Codex, Markdown for Grok Build).
 
 ### Step 2: Verify
 
@@ -91,9 +77,7 @@ bun run plugins/essential/skills/install-agents/scripts/stitch_agent.ts \
   plugins/coding/agents/tech-lead --harness grok
 ```
 
-The stitcher resolves Essential from normal source-checkout and installed-cache
-layouts. For another layout, pass `--essential-root <plugin-root>`; it fails
-rather than emitting an unresolved `@essential` reference.
+The stitcher resolves Essential from normal source-checkout and installed-cache layouts. For another layout, pass `--essential-root <plugin-root>`; it fails rather than emitting an unresolved `@essential` reference.
 
 ### Step 3: Report
 

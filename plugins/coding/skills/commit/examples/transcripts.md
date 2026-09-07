@@ -96,9 +96,7 @@ jj edit abc123
 jj new
 ```
 
-Downstream bookmark exists → after local integrity passes, report the resolved
-stack metadata and current PR states without mutating them. The caller may
-authorize `coding:pr update` separately.
+Downstream bookmark exists → after local integrity passes, report the resolved stack metadata and current PR states without mutating them. The caller may authorize `coding:pr update` separately.
 
 ---
 
@@ -190,8 +188,7 @@ jj log -r 'change_id(abc123)' --no-graph
 # (single result — divergence resolved)
 ```
 
-After local integrity passes, report the affected stack metadata and current PR
-states. Do not re-sync or mutate the PR from the commit route.
+After local integrity passes, report the affected stack metadata and current PR states. Do not re-sync or mutate the PR from the commit route.
 
 ---
 
@@ -222,8 +219,7 @@ jj describe @ -m "fix(auth): raise login rate limit from 5 to 10 per minute" \
 git commit ...
 ```
 
-Subsequently `/coding:commit --create-pr` delegates the saved change to
-`coding:pr create`, which opens and monitors the single new PR on `main`.
+Subsequently `/coding:commit --create-pr` delegates the saved change to `coding:pr create`, which opens and monitors the single new PR on `main`.
 
 ---
 
@@ -256,8 +252,7 @@ jj diff --stat
 # (empty — Stage 2 complete)
 ```
 
-Stage 3 not needed (no git-only target). Integrity PASS. Per-change build
-PASS. Report rewritten descendant metadata without invoking PR publication.
+Stage 3 not needed (no git-only target). Integrity PASS. Per-change build PASS. Report rewritten descendant metadata without invoking PR publication.
 
 ---
 
@@ -288,8 +283,7 @@ bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 # CONTENT_MATCH:  PASS
 ```
 
-Integrity passes locally, then report the reordered stack metadata and current
-PR states. The commit route does not republish or reparent the three open PRs.
+Integrity passes locally, then report the reordered stack metadata and current PR states. The commit route does not republish or reparent the three open PRs.
 
 ---
 
@@ -297,17 +291,13 @@ PR states. The commit route does not republish or reparent the three open PRs.
 
 User: "/coding:commit --create-pr --branch-prefix platform-updates"
 
-Chain is already clean + linear (from prior `--reorder`). `coding:commit`
-finishes local history work, then delegates publication and hosted-CI
-convergence:
+Chain is already clean + linear (from prior `--reorder`). `coding:commit` finishes local history work, then delegates publication and hosted-CI convergence:
 
 ```text
 coding:pr create <resolved-stack: ghi789..abc123> --branch-prefix platform-updates
 ```
 
-`coding:pr create` owns bookmarks, pushes, PR title/body authoring, draft PRs,
-CI polling, and repairs. `coding:commit` preserves the returned 3 PR URLs and
-final green state in its report.
+`coding:pr create` owns bookmarks, pushes, PR title/body authoring, draft PRs, CI polling, and repairs. `coding:commit` preserves the returned 3 PR URLs and final green state in its report.
 
 ---
 

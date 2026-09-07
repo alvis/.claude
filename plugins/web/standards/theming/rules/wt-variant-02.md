@@ -47,9 +47,7 @@ When a component switches variants, the only thing that changes in the JSX/TSX i
 }
 ```
 
-Variant classes define component-token values, so they use active UI → literal
-resolution. The base styled declarations add the outer component tier and are
-the only place visual properties are applied.
+Variant classes define component-token values, so they use active UI → literal resolution. The base styled declarations add the outer component tier and are the only place visual properties are applied.
 
 ## Code Superpowers
 

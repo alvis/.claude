@@ -6,9 +6,7 @@ module: "any"
 
 ## Detection
 
-`Promise.resolve().then(() =>`
-`new Promise((resolve, reject) => { try {`
-wrapping synchronous functions in promise chains to catch thrown errors
+`Promise.resolve().then(() =>` `new Promise((resolve, reject) => { try {` wrapping synchronous functions in promise chains to catch thrown errors
 
 ## Before
 

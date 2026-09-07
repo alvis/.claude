@@ -1,8 +1,6 @@
 # Coding standards index
 
-Select applicable standards by action and language from the table below. The
-protocol that governs selection, scanning, and rule lookup is
-`essential:directions/standards.md`; this file only says which standard applies.
+Select applicable standards by action and language from the table below. The protocol that governs selection, scanning, and rule lookup is `essential:directions/standards.md`; this file only says which standard applies.
 
 | Applies to | Standard |
 | --- | --- |

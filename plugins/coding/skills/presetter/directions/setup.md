@@ -1,7 +1,6 @@
 # Setup and project-shape recipes
 
-Use this reference for first adoption, choosing a complete stack, package-script
-delegates, or monorepo bootstrap scope.
+Use this reference for first adoption, choosing a complete stack, package-script delegates, or monorepo bootstrap scope.
 
 ## Contents
 
@@ -13,8 +12,7 @@ delegates, or monorepo bootstrap scope.
 
 ## Select a complete stack
 
-Inspect the installed preset packages before composing them; presets may change their
-internal foundations over time. Add a preset only for behavior not already supplied.
+Inspect the installed preset packages before composing them; presets may change their internal foundations over time. Add a preset only for behavior not already supplied.
 
 | Project shape | Complete top-level stack | Why |
 | --- | --- | --- |
@@ -26,28 +24,19 @@ internal foundations over time. Add a preset only for behavior not already suppl
 | Next application | `next` | Next already composes ESM, Node, strict, web, and React. Do not add those again. |
 | Node ESM monorepo root | `monorepo, node, esm` | Monorepo supplies essentials plus strict and workspace overrides; Node and ESM complete runtime and module build. This is the `core` root pattern. |
 
-`essentials` alone is intentionally incomplete for compilation: its
-`build:typescript` task exits until a module target such as ESM or CJS is supplied.
-Likewise, `monorepo` does not choose a module target. Do not redundantly list
-`essentials` under ESM, CJS, hybrid, or monorepo, and do not surround `next` with the
-capabilities it already composes.
+`essentials` alone is intentionally incomplete for compilation: its `build:typescript` task exits until a module target such as ESM or CJS is supplied. Likewise, `monorepo` does not choose a module target. Do not redundantly list `essentials` under ESM, CJS, hybrid, or monorepo, and do not surround `next` with the capabilities it already composes.
 
-Real repositories are evidence, not universal policy. `core` demonstrates explicit
-ancestor composition and a complete monorepo stack; `xception` demonstrates a small
-standalone `esm, strict` stack. Preserve a consumer's actual runtime and framework
-requirements instead of copying either stack blindly.
+Real repositories are evidence, not universal policy. `core` demonstrates explicit ancestor composition and a complete monorepo stack; `xception` demonstrates a small standalone `esm, strict` stack. Preserve a consumer's actual runtime and framework requirements instead of copying either stack blindly.
 
 ## Adopt a standalone Node ESM project
 
-For a new pnpm consumer, install the currently resolved packages without embedding a
-release number in the config:
+For a new pnpm consumer, install the currently resolved packages without embedding a release number in the config:
 
 ```bash
 pnpm add -D presetter @presetter/preset-esm @presetter/preset-node
 ```
 
-Use the equivalent add command for the detected manager. In an existing workspace,
-follow its catalog, workspace protocol, and version-range conventions.
+Use the equivalent add command for the detected manager. In an existing workspace, follow its catalog, workspace protocol, and version-range conventions.
 
 ```typescript
 // presetter.config.ts
@@ -89,13 +78,9 @@ pnpm test
 
 ## Add package-script delegates
 
-Use delegates only for tasks the project exposes. Common delegates are `build`,
-`lint`, `prepare`, `prepublishOnly`, `release`, `test`, `test:coverage`, `test:watch`,
-and `typecheck`; framework presets may add `start`, `storybook`, or other tasks.
+Use delegates only for tasks the project exposes. Common delegates are `build`, `lint`, `prepare`, `prepublishOnly`, `release`, `test`, `test:coverage`, `test:watch`, and `typecheck`; framework presets may add `start`, `storybook`, or other tasks.
 
-`"prepare": "run prepare"` invokes the preset's `prepare`, which runs setup tasks and
-bootstrap. Because package scripts override preset entries, preserve existing local
-lifecycle work explicitly:
+`"prepare": "run prepare"` invokes the preset's `prepare`, which runs setup tasks and bootstrap. Because package scripts override preset entries, preserve existing local lifecycle work explicitly:
 
 ```json
 {
@@ -105,9 +90,7 @@ lifecycle work explicitly:
 }
 ```
 
-Do not replace a meaningful local command merely to match the standard delegate. Some
-repositories intentionally use another lifecycle script or a direct filtered
-`presetter bootstrap`; that is a local constraint, not a default for new consumers.
+Do not replace a meaningful local command merely to match the standard delegate. Some repositories intentionally use another lifecycle script or a direct filtered `presetter bootstrap`; that is a local constraint, not a default for new consumers.
 
 ## Set up a Node ESM monorepo
 
@@ -131,8 +114,7 @@ export default preset(name, {
 });
 ```
 
-Packages without a closer config inherit this root because nearest-config lookup reaches
-it. A package needing distinct behavior must explicitly compose the root:
+Packages without a closer config inherit this root because nearest-config lookup reaches it. A package needing distinct behavior must explicitly compose the root:
 
 ```typescript
 // packages/ui/presetter.config.ts
@@ -148,11 +130,7 @@ export default preset('@scope/ui', {
 
 ## Control monorepo lifecycle scope
 
-Normally each included workspace package carries `"prepare": "run prepare"`; the
-package manager invokes that lifecycle for packages participating in installation, and
-each package bootstraps itself through its closest config. When deployment filters,
-disabled lifecycle scripts, or root-only setup make that scope unreliable, call
-bootstrap directly with an explicit positive selection.
+Normally each included workspace package carries `"prepare": "run prepare"`; the package manager invokes that lifecycle for packages participating in installation, and each package bootstraps itself through its closest config. When deployment filters, disabled lifecycle scripts, or root-only setup make that scope unreliable, call bootstrap directly with an explicit positive selection.
 
 ```bash
 pnpm exec presetter bootstrap \
@@ -163,10 +141,6 @@ pnpm exec presetter bootstrap \
   --packages "@scope/*" "!@scope/deploy-skipped"
 ```
 
-`--projects` matches directories containing `package.json`; `--packages` matches
-declared package names. Both flags add to one selection set. A `!` pattern only
-subtracts and can exclude a target selected by either flag; a negative pattern alone
-selects nothing. Quote globs so the shell does not expand them first.
+`--projects` matches directories containing `package.json`; `--packages` matches declared package names. Both flags add to one selection set. A `!` pattern only subtracts and can exclude a target selected by either flag; a negative pattern alone selects nothing. Quote globs so the shell does not expand them first.
 
-After a multi-target run, review every selected package. Presetter continues after an
-individual failure, aggregates failures, and exits nonzero when any target failed.
+After a multi-target run, review every selected package. Presetter continues after an individual failure, aggregates failures, and exits nonzero when any target failed.

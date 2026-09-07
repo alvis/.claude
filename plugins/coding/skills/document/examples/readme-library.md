@@ -95,8 +95,7 @@ await retry(() => breaker.execute(() => callDownstream()), policy);
 <details>
 <summary><code>retry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, policy?: Policy, signal?: AbortSignal): Promise&lt;T&gt;</code></summary>
 
-**Description:**
-Runs `operation` under the retry engine. Resolves with the first successful value or rejects with a `RetryError` once the policy is exhausted.
+**Description:** Runs `operation` under the retry engine. Resolves with the first successful value or rejects with a `RetryError` once the policy is exhausted.
 
 **Parameters:**
 
@@ -126,8 +125,7 @@ const data = await retry(() => fetchJson('/api/health'));
 <details>
 <summary><code>createRetryPolicy(): PolicyBuilder</code></summary>
 
-**Description:**
-Returns a fluent builder for a `Policy`. Each chained method narrows the retry behavior; `.build()` freezes the policy.
+**Description:** Returns a fluent builder for a `Policy`. Each chained method narrows the retry behavior; `.build()` freezes the policy.
 
 **Parameters:** none
 
@@ -162,8 +160,7 @@ const policy = createRetryPolicy()
 <details>
 <summary><code>class RetryError extends Error</code></summary>
 
-**Description:**
-Aggregate error thrown when a retry policy is exhausted. Preserves every attempt for diagnostics.
+**Description:** Aggregate error thrown when a retry policy is exhausted. Preserves every attempt for diagnostics.
 
 **Fields:**
 

@@ -1,43 +1,26 @@
 # Jujutsu guide
 
-This is the coding plugin's canonical source for how to run Jujutsu (`jj`).
-`coding:directions/WORKFLOW.md` owns when to use `jj` and mutation ownership —
-`coding:commit` for local history, `coding:pr` for publication. Route-specific
-references retain exact transactions, non-`jj` gates, and handoffs where their
-owning skill needs them.
+This is the coding plugin's canonical source for how to run Jujutsu (`jj`). `coding:directions/WORKFLOW.md` owns when to use `jj` and mutation ownership — `coding:commit` for local history, `coding:pr` for publication. Route-specific references retain exact transactions, non-`jj` gates, and handoffs where their owning skill needs them.
 
-Read through the situation guide for shared setup and safety, then read only
-the recipe selected there. Reuse the guide within the task; its state checks
-still run at each operation that requires them.
+Read through the situation guide for shared setup and safety, then read only the recipe selected there. Reuse the guide within the task; its state checks still run at each operation that requires them.
 
 <IMPORTANT>
-Never rewrite published or merged history — squashing, rebasing, abandoning, or
-describing a change that has already been pushed or landed. Correct it with a
-new change unless explicit authority permits rewriting shared history. This
-applies to every operation below, not only the merged-work row of the situation
-guide.
+Never rewrite published or merged history — squashing, rebasing, abandoning, or describing a change that has already been pushed or landed. Correct it with a new change unless explicit authority permits rewriting shared history. This applies to every operation below, not only the merged-work row of the situation guide.
 
-Never use `--all` for routine publication. Push all and only the bookmarks
-selected by the PR workflow, then verify every remote head and PR base.
-After every rewrite, verify the stack is linear, conflict-free, and
-self-contained; run the affected lint, type, test, and build gates before
-publication.
+Never use `--all` for routine publication. Push all and only the bookmarks selected by the PR workflow, then verify every remote head and PR base. After every rewrite, verify the stack is linear, conflict-free, and self-contained; run the affected lint, type, test, and build gates before publication.
 </IMPORTANT>
 
 ## Setup when first using `jj`
 
-`jj` requires 0.44+ — run `coding:sync-tool --only jj --check`, run
-`coding:sync-tool --only jj` if it fails, then repeat the check.
+`jj` requires 0.44+ — run `coding:sync-tool --only jj --check`, run `coding:sync-tool --only jj` if it fails, then repeat the check.
 
-For an ordinary Git checkout that has not been initialized, run this before
-editing:
+For an ordinary Git checkout that has not been initialized, run this before editing:
 
 ```bash
 jj git init --colocate
 ```
 
-Prove colocation by comparing the Git HEAD with the parent of the `jj` working
-copy; directory names alone are not evidence:
+Prove colocation by comparing the Git HEAD with the parent of the `jj` working copy; directory names alone are not evidence:
 
 ```bash
 GIT_HEAD=$(git rev-parse HEAD) || exit $?
@@ -46,24 +29,17 @@ JJ_HEAD=$(jj log -r @- --no-graph -T 'commit_id') || exit $?
 ```
 
 <IMPORTANT>
-A linked Git worktree cannot be initialized in place: current `jj` rejects
-`jj git init --colocate` there. Before working in a selected Git worktree, run
-that command from the repository's primary Git checkout, then create a
-`jj workspace` at the intended revision and work there. Do not begin edits in
-an uninitialized linked Git worktree or treat it as a `jj workspace`.
+A linked Git worktree cannot be initialized in place: current `jj` rejects `jj git init --colocate` there. Before working in a selected Git worktree, run that command from the repository's primary Git checkout, then create a `jj workspace` at the intended revision and work there. Do not begin edits in an uninitialized linked Git worktree or treat it as a `jj workspace`.
 </IMPORTANT>
 
-Use the repository's work-ID and location rules when creating the replacement
-workspace:
+Use the repository's work-ID and location rules when creating the replacement workspace:
 
 ```bash
 jj workspace add ~/.workspaces/<project-root-folder-name>/<work-id> \
   --revision <base-revision>
 ```
 
-Each `jj` workspace has its own `@` and shares the repository's operation log.
-Never edit another workspace's working-copy change. After integration, forget
-the registered workspace before removing its directory:
+Each `jj` workspace has its own `@` and shares the repository's operation log. Never edit another workspace's working-copy change. After integration, forget the registered workspace before removing its directory:
 
 ```bash
 jj workspace forget <workspace-name>
@@ -71,21 +47,16 @@ jj workspace forget <workspace-name>
 
 ## Working model
 
-- `@` is the working-copy change. Most `jj` commands snapshot the filesystem
-  before they run, so a dirty working copy is normal.
-- Change IDs survive rewrites; commit IDs do not. Use change IDs while shaping
-  local history and exact commit IDs when binding review or publication
-  evidence.
-- Bookmarks are the Git-facing branch refs. Move only the bookmark owned by the
-  selected change or stack.
+- `@` is the working-copy change. Most `jj` commands snapshot the filesystem before they run, so a dirty working copy is normal.
+- Change IDs survive rewrites; commit IDs do not. Use change IDs while shaping local history and exact commit IDs when binding review or publication evidence.
+- Bookmarks are the Git-facing branch refs. Move only the bookmark owned by the selected change or stack.
 - Capture the current operation before a rewrite:
 
 ```bash
 jj op log -n1 --no-graph -T 'self.id().short()'
 ```
 
-  Restore that operation with `jj op restore <operation-id>` when the owning
-  workflow's integrity check requires rollback.
+  Restore that operation with `jj op restore <operation-id>` when the owning workflow's integrity check requires rollback.
 
 ## Situation guide
 
@@ -112,27 +83,18 @@ jj op log -n1 --no-graph -T 'self.id().short()'
 
 ## Arrange mutable history
 
-Use `jj arrange` when a human needs a visual, interactive reordering or
-abandonment pass over an already partitioned mutable stack:
+Use `jj arrange` when a human needs a visual, interactive reordering or abandonment pass over an already partitioned mutable stack:
 
 ```bash
 jj op log -n1 --no-graph -T 'self.id().short()'
 jj arrange '<root-change>::<stack-tip>'
 ```
 
-This rewrites history and therefore belongs to `coding:commit`. Keep immutable
-or merged revisions outside the selected revset. After the TUI exits, inspect
-the graph, conflicts, descriptions, and content equivalence before accepting
-the operation. Prefer explicit `jj rebase --insert-before` or
-`--insert-after` when the desired order is already known or execution is
-non-interactive.
+This rewrites history and therefore belongs to `coding:commit`. Keep immutable or merged revisions outside the selected revset. After the TUI exits, inspect the graph, conflicts, descriptions, and content equivalence before accepting the operation. Prefer explicit `jj rebase --insert-before` or `--insert-after` when the desired order is already known or execution is non-interactive.
 
 ## Fix files across revisions
 
-Use `jj fix` for deterministic stdin-to-stdout tools such as Prettier. Define
-the tool once in repository configuration; this example resolves the
-repository-local Prettier executable through pnpm and preserves filename-aware
-parsing:
+Use `jj fix` for deterministic stdin-to-stdout tools such as Prettier. Define the tool once in repository configuration; this example resolves the repository-local Prettier executable through pnpm and preserves filename-aware parsing:
 
 ```toml
 [fix.tools.prettier]
@@ -149,9 +111,7 @@ patterns = [
 ]
 ```
 
-`jj fix -s` also rewrites every descendant of each source revision. First prove
-that the source's mutable descendant set contains only the stack you intend to
-rewrite:
+`jj fix -s` also rewrites every descendant of each source revision. First prove that the source's mutable descendant set contains only the stack you intend to rewrite:
 
 ```bash
 jj op log -n1 --no-graph -T 'self.id().short()'
@@ -160,18 +120,11 @@ jj fix -s '<earliest-change>' --all-lines
 jj op show -p
 ```
 
-`jj fix` rewrites matching revisions and descendants, deduplicates identical
-file contents, and saves output only from tools that exit successfully. Tools
-must therefore be deterministic and must read stdin and write the replacement
-to stdout. If the inspected descendant set includes an unrelated change, stop
-and isolate the intended history instead of using that source. Run the rewrite
-through `coding:commit`, inspect the operation diff, and rerun the affected
-tests before publication.
+`jj fix` rewrites matching revisions and descendants, deduplicates identical file contents, and saves output only from tools that exit successfully. Tools must therefore be deterministic and must read stdin and write the replacement to stdout. If the inspected descendant set includes an unrelated change, stop and isolate the intended history instead of using that source. Run the rewrite through `coding:commit`, inspect the operation diff, and rerun the affected tests before publication.
 
 ## Advance bookmarks
 
-Use `jj bookmark advance` when a bookmark already behind a selected descendant
-should move forward without spelling out its current revision:
+Use `jj bookmark advance` when a bookmark already behind a selected descendant should move forward without spelling out its current revision:
 
 ```bash
 jj bookmark list
@@ -179,87 +132,50 @@ jj bookmark advance feature/01-api --to <descendant-change>
 jj bookmark list feature/01-api
 ```
 
-With no bookmark name, the command advances the closest bookmarks reachable
-from the target (which defaults to `@`). Name each bookmark explicitly in
-publication-sensitive work so an adjacent bookmark cannot move accidentally.
-The command moves only forward; sideways or backwards movement needs a
-different, explicitly authorized route. Bookmark mutation belongs to
-`coding:commit`; remote publication still belongs to `coding:pr`.
+With no bookmark name, the command advances the closest bookmarks reachable from the target (which defaults to `@`). Name each bookmark explicitly in publication-sensitive work so an adjacent bookmark cannot move accidentally. The command moves only forward; sideways or backwards movement needs a different, explicitly authorized route. Bookmark mutation belongs to `coding:commit`; remote publication still belongs to `coding:pr`.
 
 ## Run tasks across revisions
 
-Use `jj run` to execute the same command in isolated working copies without
-moving the current workspace:
+Use `jj run` to execute the same command in isolated working copies without moving the current workspace:
 
 ```bash
 jj run --ignore-changes --root -r '<revision>' -- <test-or-lint-command>
 ```
 
-`--ignore-changes` is mandatory for validation because `jj run` otherwise
-amends successful revisions with command output. Add `--clean` when cached
-ignored artifacts could invalidate the result. Run one exact revision per
-invocation when result order or bookmark attribution matters; `JJ_CHANGE_ID`,
-`JJ_COMMIT_ID`, and `JJ_WORKSPACE_ROOT` identify the active surface.
+`--ignore-changes` is mandatory for validation because `jj run` otherwise amends successful revisions with command output. Add `--clean` when cached ignored artifacts could invalidate the result. Run one exact revision per invocation when result order or bookmark attribution matters; `JJ_CHANGE_ID`, `JJ_COMMIT_ID`, and `JJ_WORKSPACE_ROOT` identify the active surface.
 
-Higher-level workflows own the revision set, execution order, failure
-attribution, and any explicit skip. Follow their reference instead of choosing
-an ad hoc revset or inferring a skip from another flag.
+Higher-level workflows own the revision set, execution order, failure attribution, and any explicit skip. Follow their reference instead of choosing an ad hoc revset or inferring a skip from another flag.
 
-`coding:pr create|update` requires this runner for its local publication gate:
-it validates the selected tip first, then each PR bookmark bottom-up through the
-tip. It stops at the earliest failing surface so the owning bookmark/PR is fixed
-before publication. Only that action's explicit `--no-verify` skips the gate.
+`coding:pr create|update` requires this runner for its local publication gate: it validates the selected tip first, then each PR bookmark bottom-up through the tip. It stops at the earliest failing surface so the owning bookmark/PR is fixed before publication. Only that action's explicit `--no-verify` skips the gate.
 
 ## Fix a review bug in a stack
 
-When review finds a bug in a stack whose rewrite is authorized, repair the
-earliest mutable change that owns the faulty artifact. Unmerged does not mean
-unpublished: without authority to rewrite every affected published revision,
-create a corrective change instead.
+When review finds a bug in a stack whose rewrite is authorized, repair the earliest mutable change that owns the faulty artifact. Unmerged does not mean unpublished: without authority to rewrite every affected published revision, create a corrective change instead.
 
-1. Resolve and inspect the owning change and its descendants. Record the
-   current stack-tip change ID before switching revisions.
-2. Confirm it is mutable and not merged into the destination. Check the owning
-   change and every descendant that will be rebased for publication; require
-   explicit rewrite authority for each published revision before continuing.
+1. Resolve and inspect the owning change and its descendants. Record the current stack-tip change ID before switching revisions.
+2. Confirm it is mutable and not merged into the destination. Check the owning change and every descendant that will be rebased for publication; require explicit rewrite authority for each published revision before continuing.
 3. Capture the current operation ID.
 4. Run `jj edit <owning-change>`.
 5. Apply the bug fix and run the focused validation while `@` is that change.
-6. Run `jj edit <saved-stack-tip-change-id>` to return `@` to the automatically
-   rebased stack tip. If the owning change was already the tip, remain there.
-   Use `jj new <saved-stack-tip-change-id>` only when the caller deliberately
-   needs a new change above the completed stack.
-7. Verify the repaired chain, then invoke `coding:pr update` for every affected
-   PR from the edited change through the stack tip.
+6. Run `jj edit <saved-stack-tip-change-id>` to return `@` to the automatically rebased stack tip. If the owning change was already the tip, remain there. Use `jj new <saved-stack-tip-change-id>` only when the caller deliberately needs a new change above the completed stack.
+7. Verify the repaired chain, then invoke `coding:pr update` for every affected PR from the edited change through the stack tip.
 
-If the target is immutable or already merged, stop using `jj edit` and take the
-corrective-change route. If fixes belong to multiple ancestors, use the
-retrospective route instead of serial edits.
+If the target is immutable or already merged, stop using `jj edit` and take the corrective-change route. If fixes belong to multiple ancestors, use the retrospective route instead of serial edits.
 
 ## Work in parallel
 
-Use a parallel workspace only when the new task has no file or semantic
-dependency on the current `@`. Shared files or required ordering stay in the
-current workspace and are split later if needed.
+Use a parallel workspace only when the new task has no file or semantic dependency on the current `@`. Shared files or required ordering stay in the current workspace and are split later if needed.
 
 1. Record the default workspace's current change ID and inspect visible heads.
-2. Reuse the selected work ID and create the workspace with `jj workspace add`
-   at the intended base revision.
-3. Work only from the new directory's own `@`; never reach across workspaces
-   with `jj edit`.
+2. Reuse the selected work ID and create the workspace with `jj workspace add` at the intended base revision.
+3. Work only from the new directory's own `@`; never reach across workspaces with `jj edit`.
 4. Finish with one of these explicit dispositions:
    - keep the parallel change independent and publish it separately;
-   - integrate it above the default change with
-     `jj rebase -s <parallel-change> -d <default-change>`; or
-   - create an intentional merge change with
-     `jj new <default-change> <parallel-change>`.
-5. Verify the resulting graph. Once the workspace has no remaining independent
-   work, run `jj workspace forget <workspace-name>`, verify it is no longer
-   registered, then remove its directory through the cleanup owner.
+   - integrate it above the default change with `jj rebase -s <parallel-change> -d <default-change>`; or
+   - create an intentional merge change with `jj new <default-change> <parallel-change>`.
+5. Verify the resulting graph. Once the workspace has no remaining independent work, run `jj workspace forget <workspace-name>`, verify it is no longer registered, then remove its directory through the cleanup owner.
 
-If `jj workspace add` cannot resolve the base, fetch the selected remote and
-retry only after confirming the exact revision. If two workspaces edited the
-same change ID, stop normal integration and use the divergence route.
+If `jj workspace add` cannot resolve the base, fetch the selected remote and retry only after confirming the exact revision. If two workspaces edited the same change ID, stop normal integration and use the divergence route.
 
 ## Inspection and recovery
 

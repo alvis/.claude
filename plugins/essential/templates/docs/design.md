@@ -12,5 +12,4 @@ Link the durable system-wide design and explain its authority.
 
 ## Status and supersession
 
-State how a design becomes approved, how validity is checked, and how a
-successor links to the design it replaces.
+State how a design becomes approved, how validity is checked, and how a successor links to the design it replaces.

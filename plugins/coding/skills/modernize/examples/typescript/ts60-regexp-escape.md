@@ -6,11 +6,7 @@ module: "any"
 
 ## Detection
 
-`_.escapeRegExp(`
-`.replace(/[.*+?^${}()|[\]\\]/g`
-`escapeRegex(`
-`escapeRegExp(`
-custom functions that escape special regex characters
+`_.escapeRegExp(` `.replace(/[.*+?^${}()|[\]\\]/g` `escapeRegex(` `escapeRegExp(` custom functions that escape special regex characters
 
 ## Before
 

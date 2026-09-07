@@ -62,15 +62,7 @@ const parsedConfig = configSchema.parse(rawConfig);
 startServer(parsedConfig);
 ```
 
-Do not repeat that validation after a typed, first-party call. Before adding a
-guard, name the value's provenance and who can violate the condition during
-supported execution.
-Runtime validation is justified for deserialization, user or network input,
-external SDKs, public plugin implementations, persistence reads, unsafe casts,
-or mutable, concurrent, and security-sensitive state that can change after a
-trusted producer returns. A postcondition of code shipped and tested in the
-same repository belongs in producer tests even when the type system cannot
-express it fully; an interface alone does not create a boundary.
+Do not repeat that validation after a typed, first-party call. Before adding a guard, name the value's provenance and who can violate the condition during supported execution. Runtime validation is justified for deserialization, user or network input, external SDKs, public plugin implementations, persistence reads, unsafe casts, or mutable, concurrent, and security-sensitive state that can change after a trusted producer returns. A postcondition of code shipped and tested in the same repository belongs in producer tests even when the type system cannot express it fully; an interface alone does not create a boundary.
 
 ### Wrapper Value Test
 

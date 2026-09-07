@@ -13,5 +13,4 @@ Read this before React, JSX, hooks, component, accessibility, project-structure,
 
 ## Standards
 
-Select from `react:standards/INDEX.md` and apply each selected standard under
-`essential:directions/standards.md`.
+Select from `react:standards/INDEX.md` and apply each selected standard under `essential:directions/standards.md`.

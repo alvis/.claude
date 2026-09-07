@@ -158,25 +158,18 @@ def schedule(*, retry: bool, timeout: int, on_error: Callable[[Exception], None]
 
 **"I need to represent structured data — what do I use?"**
 
-1. **Is the value crossing a trust boundary?** (CLI args, file input, HTTP body, external API, message queue payload)
-   → **Pydantic `BaseModel`**. Validate at the edge; never pass raw dicts inward.
+1. **Is the value crossing a trust boundary?** (CLI args, file input, HTTP body, external API, message queue payload) → **Pydantic `BaseModel`**. Validate at the edge; never pass raw dicts inward.
 
-2. **Do I need a contract across unrelated implementations (duck-typed)?**
-   → **`Protocol`**. Add `@runtime_checkable` only if `isinstance()` is genuinely required.
+2. **Do I need a contract across unrelated implementations (duck-typed)?** → **`Protocol`**. Add `@runtime_checkable` only if `isinstance()` is genuinely required.
 
-3. **Do I need shared behavior plus a nominal "is-a" relationship?**
-   → **`ABC` with `@abstractmethod`**. Use when subclasses inherit real code, not just a shape.
+3. **Do I need shared behavior plus a nominal "is-a" relationship?** → **`ABC` with `@abstractmethod`**. Use when subclasses inherit real code, not just a shape.
 
-4. **Is it an immutable internal value object (equality by fields, hashable)?**
-   → **`@dataclass(frozen=True, slots=True)`**. Default choice for internal data.
+4. **Is it an immutable internal value object (equality by fields, hashable)?** → **`@dataclass(frozen=True, slots=True)`**. Default choice for internal data.
 
-5. **Is it a lightweight dict-shaped payload I already can't change (e.g. third-party JSON I pass through)?**
-   → **`TypedDict`**. Pure structural typing over an existing `dict`, no runtime cost.
+5. **Is it a lightweight dict-shaped payload I already can't change (e.g. third-party JSON I pass through)?** → **`TypedDict`**. Pure structural typing over an existing `dict`, no runtime cost.
 
-6. **Is it the same primitive as something else, but semantically distinct (e.g. `UserId` vs `OrderId`, both `str`)?**
-   → **`NewType`**. Identity-only wrapper; zero runtime overhead, blocks accidental mixing.
+6. **Is it the same primitive as something else, but semantically distinct (e.g. `UserId` vs `OrderId`, both `str`)?** → **`NewType`**. Identity-only wrapper; zero runtime overhead, blocks accidental mixing.
 
-7. **Is it a reusable type shape (union, generic, complex alias)?**
-   → **PEP 695 `type Alias = ...`**. Never `TypeAlias` from `typing`.
+7. **Is it a reusable type shape (union, generic, complex alias)?** → **PEP 695 `type Alias = ...`**. Never `TypeAlias` from `typing`.
 
 **Tie-breaker:** when two options fit, prefer the one with the smallest runtime surface — `NewType` < `TypedDict` < `dataclass` < `Protocol`/`ABC` < `Pydantic`.

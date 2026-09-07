@@ -21,66 +21,37 @@ hooks:
 
 When running a `jj` operation, follow `coding:directions/jj.md`.
 
-Before any script call, set `CODING_COMMIT_SKILL_DIR` to the absolute directory
-containing this loaded `SKILL.md`. This works in all three harnesses; not every harness exposes a plugin-root
-variable to ordinary shell calls.
+Before any script call, set `CODING_COMMIT_SKILL_DIR` to the absolute directory containing this loaded `SKILL.md`. This works in all three harnesses; not every harness exposes a plugin-root variable to ordinary shell calls.
 
 This skill is the single entrypoint for saving work: local snapshots, edits to prior changes, splits, reorders, parallel tasks, the two exceptional direct-bookmark sync routes, and the compatibility route from `--create-pr` to `coding:pr create`. It auto-routes based on working-copy state; flags exist only for explicit operations and behavioural overrides. It is the sole owner of history mutations — `coding:finalize-commits` verifies stacks, and `coding:pr create` authors PR text, owns PR publication, and drives CI convergence.
 
-This skill owns commit, branch, and local-history directions. The PR action
-references own publication directions; `coding:standards/git/` separately owns
-findings in rendered PR messages and implementation diffs.
+This skill owns commit, branch, and local-history directions. The PR action references own publication directions; `coding:standards/git/` separately owns findings in rendered PR messages and implementation diffs.
 
 **Coherence Mandate.** Every edit must produce one continuous, deliberate work. Rewrite over restructure, restructure over integrate, never append. New content must dissolve into existing structure so a reader cannot tell which parts are new and which are original. Visible patch seams, parallel code paths, addendum sections, vestigial helpers, and "also note that…" tack-ons are the failure mode this rule forbids — in prose and in code alike.
 
 ## Commit and branch directions
 
-Inspect the working tree, branch or bookmark graph, remote refs, and open PRs
-before mutation. Plan domain-coherent changes that compile, pass applicable tests, and remain
-reviewable without forward references; preserve unrelated dirty paths.
+Inspect the working tree, branch or bookmark graph, remote refs, and open PRs before mutation. Plan domain-coherent changes that compile, pass applicable tests, and remain reviewable without forward references; preserve unrelated dirty paths.
 
-Use lowercase kebab-case branch segments. An ordinary branch is
-`<type>/<kebab-summary>`; preserve an established `<type>/<scope>/<topic>`
-shape when the repository uses scoped branches. A work stream uses exactly the
-single-PR or numbered-stack shape from `essential:references/naming.md`; its
-work ID is an identity, not a commit scope. Delete merged branches.
+Use lowercase kebab-case branch segments. An ordinary branch is `<type>/<kebab-summary>`; preserve an established `<type>/<scope>/<topic>` shape when the repository uses scoped branches. A work stream uses exactly the single-PR or numbered-stack shape from `essential:references/naming.md`; its work ID is an identity, not a commit scope. Delete merged branches.
 
-Never rewrite a commit already merged into a shared destination. Fix merged
-work with a corrective commit or PR. Rewriting a merged non-destination branch
-requires explicit user consent and coordination; rewriting the shared
-destination tip is forbidden. Route an unmerged stack fix to the earliest
-change that owns the faulty artifact, then return the rewritten stack metadata
-to the caller that owns any subsequent `coding:pr update`.
+Never rewrite a commit already merged into a shared destination. Fix merged work with a corrective commit or PR. Rewriting a merged non-destination branch requires explicit user consent and coordination; rewriting the shared destination tip is forbidden. Route an unmerged stack fix to the earliest change that owns the faulty artifact, then return the rewritten stack metadata to the caller that owns any subsequent `coding:pr update`.
 
 ## Boundaries
 
-- Use for: committing or describing changes, saving an exact lifecycle-owned
-  path set while preserving unrelated dirty work, splitting mixed work, editing
-  prior changes, retrospective blame fixups, reordering history, parallel
-  workspaces, direct bookmark sync for the correct-merged and
-  partial-to-branch routes, and preserving the `--create-pr` compatibility
-  entrypoint.
+- Use for: committing or describing changes, saving an exact lifecycle-owned path set while preserving unrelated dirty work, splitting mixed work, editing prior changes, retrospective blame fixups, reordering history, parallel workspaces, direct bookmark sync for the correct-merged and partial-to-branch routes, and preserving the `--create-pr` compatibility entrypoint.
 - Do not use for: composing PR titles or bodies, general remote publication, or opening, updating, and polling PRs (`coding:pr create`), per-commit QA of an unpushed stack (`coding:finalize-commits`), or diagnosing code failures (`coding:fix`).
-- Tool precedence, functional colocation, initialization, workspace use, and
-  command selection come from `coding:directions/jj.md`.
-  This skill applies that policy to the selected save route; `coding:pr`
-  remains the publication owner.
+- Tool precedence, functional colocation, initialization, workspace use, and command selection come from `coding:directions/jj.md`. This skill applies that policy to the selected save route; `coding:pr` remains the publication owner.
 
 <IMPORTANT>
 - Every workflow MUST end with a linear clean chain + working code. No exceptions. If a workflow cannot guarantee this, STOP and surface to the user.
 - This skill never opens, updates, or polls PRs. Its only pushes are the explicit, single-bookmark sync steps in `directions/merged.md` Option 2 and `directions/partial.md`; `coding:pr create` owns PR publication and CI convergence.
-- Before either sanctioned direct push, bind the exact pushed Git SHA and base,
-  then invoke `coding:pr verify --target <sha> --base <sha> --kind standalone`.
-  `--no-verify` never skips this direct-sync gate. Passing it does not make a
-  direct bookmark sync PR publication.
+- Before either sanctioned direct push, bind the exact pushed Git SHA and base, then invoke `coding:pr verify --target <sha> --base <sha> --kind standalone`. `--no-verify` never skips this direct-sync gate. Passing it does not make a direct bookmark sync PR publication.
 - NEVER rewrite merged-on-origin history without explicit consent. For a detected target, prompt through the graphical or structured user-input tool; default to the corrective-PR route in [merged.md](directions/merged.md). `--allow-rewrite-merged` skips the prompt.
 - Every change MUST be self-contained: compile/type diagnostics + lint + applicable tests and affected-consumer builds pass for each change in isolation. Runtime tests apply to runtime behavior; focused compile-time tests apply only to allowed compiler-semantic promises under `TST-CORE-10`. A declaration-only change with neither test kind still runs its configured typecheck or equivalent diagnostics and affected-consumer builds; it must not receive a static-shape test. Shared files (package.json, tsconfig, lockfiles) evolve incrementally — no forward references.
-- `--paths-from` is a closed-set save, not a path suggestion. Never save,
-  stage, reset, stash, or rewrite a non-selected dirty path, and never continue
-  when exact isolation or the before/after preservation proof is unavailable.
+- `--paths-from` is a closed-set save, not a path suggestion. Never save, stage, reset, stash, or rewrite a non-selected dirty path, and never continue when exact isolation or the before/after preservation proof is unavailable.
 - The Conventional Commits subject regex MUST match BEFORE any mutation (see [commit-message standard](../../standards/commit/write.md)); no emoji prefixes in commit subjects.
-- Follow the shared guide's linked-Git-worktree guard before editing or
-  mutating history.
+- Follow the shared guide's linked-Git-worktree guard before editing or mutating history.
 </IMPORTANT>
 
 ## Inputs
@@ -101,17 +72,7 @@ to the caller that owns any subsequent `coding:pr update`.
 | `--dry-run` | Print the plan, don't mutate. |
 | `--allow-rewrite-merged` | Explicit consent to rewrite history already merged on origin (skips the graphical or structured user-input tool corrective-PR prompt). |
 
-- **Prerequisites**: a git repository, jj-colocated or not. The
-  manifest-scoped route additionally requires a checksum-bound manifest under
-  the resolved work root's ignored artifacts directory. Producer receipts must
-  use the strict generated-files schema and reconcile exactly to the
-  publication set. The helper capability-probes the shared guide's required
-  operations and structural colocation; no version string alone authorizes the
-  scoped route. Publication
-  prerequisites are checked by `coding:pr create`. The directions above bind
-  branch naming, earliest-owner fix routing, and public-history safety.
-  Pull-request size and implementation-composition standards are review inputs
-  and informational here.
+- **Prerequisites**: a git repository, jj-colocated or not. The manifest-scoped route additionally requires a checksum-bound manifest under the resolved work root's ignored artifacts directory. Producer receipts must use the strict generated-files schema and reconcile exactly to the publication set. The helper capability-probes the shared guide's required operations and structural colocation; no version string alone authorizes the scoped route. Publication prerequisites are checked by `coding:pr create`. The directions above bind branch naming, earliest-owner fix routing, and public-history safety. Pull-request size and implementation-composition standards are review inputs and informational here.
 
 ## Workflow
 
@@ -156,18 +117,9 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
    bash "${CODING_COMMIT_SKILL_DIR}/scripts/backup.sh"
    ```
 
-   For every `jj` rewrite route, capture the rollback handle specified by the
-   shared Jujutsu guide.
+   For every `jj` rewrite route, capture the rollback handle specified by the shared Jujutsu guide.
 
-2. **Detect mode.** `--prepare-paths-from` runs only the producer contract and
-   returns before proposing or mutating history; it cannot combine with another
-   operation flag. A valid `--paths-from`/`--manifest-sha256` pair forces the
-   manifest-scoped route and cannot be combined with `--retrospective`,
-   `--reorder`, a named partial-to-branch target, or `--create-pr`. Otherwise,
-   read working-copy state with the shared Jujutsu guide's inspection commands
-   (or the route's Git equivalents) and pick exactly one route from the table
-   above. A history-operation flag forces its route; `--create-pr` adds the
-   post-save publication handoff.
+2. **Detect mode.** `--prepare-paths-from` runs only the producer contract and returns before proposing or mutating history; it cannot combine with another operation flag. A valid `--paths-from`/`--manifest-sha256` pair forces the manifest-scoped route and cannot be combined with `--retrospective`, `--reorder`, a named partial-to-branch target, or `--create-pr`. Otherwise, read working-copy state with the shared Jujutsu guide's inspection commands (or the route's Git equivalents) and pick exactly one route from the table above. A history-operation flag forces its route; `--create-pr` adds the post-save publication handoff.
 
 3. **Propose the plan** to the user before any mutation. For multi-change routes (`--retrospective`, `--reorder`, `--create-pr`, auto-split), show the ordered list of operations. With `--dry-run`, skip local mutation but still perform the `coding:pr create --dry-run` handoff when `--create-pr` is present.
 
@@ -196,21 +148,8 @@ bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 
 Then run the project's own applicable lint, typecheck/diagnostics, affected-consumer build, test, and build commands (skip if `--no-verify`) and confirm the final chain is linear with each change self-contained. Runtime tests apply only to runtime behavior; focused compile-time tests apply only to allowed compiler-semantic promises under `TST-CORE-10`. For a declaration-only change with neither test kind, run its configured typecheck or equivalent diagnostics and affected-consumer builds, then record runtime and compiler tests as `SKIP (not applicable)` rather than running or inventing a test. Use configured project commands where they exist and the equivalents its language standard mandates otherwise.
 
-The direct-sync publication gate in the two sanctioned push references is
-separate from these ordinary checks and remains mandatory with `--no-verify`.
+The direct-sync publication gate in the two sanctioned push references is separate from these ordinary checks and remains mandatory with `--no-verify`.
 
 ## Completion
 
-Report the route taken (save, manifest-scoped save, split, edit, parallel,
-retrospective, reorder, create-pr compatibility handoff, partial-to-branch,
-empty, divergent, or correct-merged), changes touched (change IDs), any
-directly synchronized bookmark, the last jj op id as the rollback handle, and
-verification results — lint/type diagnostics/affected-consumer build/applicable
-tests/build as PASS/SKIP/FAIL plus the integrity outcome. A manifest-scoped
-result also reports the exact manifest path/hash,
-selected paths, saved-tree hash evidence, preservation receipt, and whether all
-non-selected dirty bytes and index/status entries remained identical. When a
-plain-Git scoped save was recovered, report the immutable recovery receipt and
-restored HEAD/index hash instead of a PASS preservation receipt. When
-`--create-pr` ran, preserve the PR URLs and final green state returned by
-`coding:pr create`; this skill itself never opens, updates, or polls PRs.
+Report the route taken (save, manifest-scoped save, split, edit, parallel, retrospective, reorder, create-pr compatibility handoff, partial-to-branch, empty, divergent, or correct-merged), changes touched (change IDs), any directly synchronized bookmark, the last jj op id as the rollback handle, and verification results — lint/type diagnostics/affected-consumer build/applicable tests/build as PASS/SKIP/FAIL plus the integrity outcome. A manifest-scoped result also reports the exact manifest path/hash, selected paths, saved-tree hash evidence, preservation receipt, and whether all non-selected dirty bytes and index/status entries remained identical. When a plain-Git scoped save was recovered, report the immutable recovery receipt and restored HEAD/index hash instead of a PASS preservation receipt. When `--create-pr` ran, preserve the PR URLs and final green state returned by `coding:pr create`; this skill itself never opens, updates, or polls PRs.

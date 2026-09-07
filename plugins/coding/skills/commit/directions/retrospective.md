@@ -109,13 +109,7 @@ After git rebase completes, jj will see the rewritten objects on next op; run `j
 
 ## Mandatory follow-ups
 
-- Whenever any unmerged bookmark sits at or below a rewritten change, follow
-  the [SKILL.md](../SKILL.md) publication handoff with the resolved stack
-  metadata after local integrity passes. Discover open PRs for the selected
-  heads and report their states without mutating them. The caller separately
-  authorizes any publication or restacking through the
-  [publication workflow](../../pr/directions/create-update.md#3-publish-bottom-up)
-  that owns pushing and PR-base repair.
+- Whenever any unmerged bookmark sits at or below a rewritten change, follow the [SKILL.md](../SKILL.md) publication handoff with the resolved stack metadata after local integrity passes. Discover open PRs for the selected heads and report their states without mutating them. The caller separately authorizes any publication or restacking through the [publication workflow](../../pr/directions/create-update.md#3-publish-bottom-up) that owns pushing and PR-base repair.
 
 - Integrity check ([SKILL.md](../SKILL.md) Verification) — the dual-checksum backup ensures the merged tree at `@` matches pre-state (since logically the same content lands, just redistributed across ancestors).
 - Project scripts for EACH affected change (check by `jj edit <change_id>`): run lint/build where defined, configured typecheck or equivalent type diagnostics for all changed code, affected-consumer builds for changed public shape, runtime tests only for runtime behavior, and focused compile-time tests only for allowed compiler-semantic promises under `TST-CORE-10`. For a declaration-only change with no runtime behavior or allowed compiler-semantic promise, record those two test gates as `SKIP (not applicable)` after type diagnostics and affected-consumer builds pass; do not run or invent a test.

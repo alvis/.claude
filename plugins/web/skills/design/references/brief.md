@@ -128,13 +128,7 @@ Choose light or dark deliberately based on audience and context. Neither is a de
 | Hospital or clinical patient portal | Light | Trust and legibility are paramount; clinical associations favor light |
 | Vintage or artisanal brand site | Cream/warm light | Dark would clash with analog material references |
 
-A light-only visual direction is a deliberate design choice, not a default and
-not a runtime mode contract. Record the chosen direction from audience and
-context evidence. When the product supports both light and dark runtime modes,
-route implementation through `web:css`: define raw light/dark tokens inside
-`@layer theme`, resolve active semantic/UI tokens across all five branches
-(baseline, system light, explicit light, system dark, explicit dark), and let
-components consume only those active tokens with the canonical fallback chain.
+A light-only visual direction is a deliberate design choice, not a default and not a runtime mode contract. Record the chosen direction from audience and context evidence. When the product supports both light and dark runtime modes, route implementation through `web:css`: define raw light/dark tokens inside `@layer theme`, resolve active semantic/UI tokens across all five branches (baseline, system light, explicit light, system dark, explicit dark), and let components consume only those active tokens with the canonical fallback chain.
 
 ### Absolute Bans
 
@@ -342,17 +336,7 @@ Every component must handle these 5 states:
 
 ## World-class element checklist
 
-Every design this skill produces — and every board variant it shows the user —
-covers this checklist as standard. These are not enhancements bolted on at the
-end; they are part of the proposal, the active work design ("Motion, Transitions
-& Separators"), and the evaluation. Verify the checklist row by row against
-the rendered result: any missing applicable row is a defect, not a
-nice-to-have. Motion values (durations, easings, distances, staggers) come
-from [Motion Specifics](#motion-specifics) above — do not restate or invent them.
-When a direction needs scroll-scrubbed or 3D motion, the
-[Motion Libraries](#motion-libraries--gsap--threejs) section (GSAP/Three.js
-scoped teardown, DPR caps, offscreen pausing,
-reduced-motion branches) is binding, not optional.
+Every design this skill produces — and every board variant it shows the user — covers this checklist as standard. These are not enhancements bolted on at the end; they are part of the proposal, the active work design ("Motion, Transitions & Separators"), and the evaluation. Verify the checklist row by row against the rendered result: any missing applicable row is a defect, not a nice-to-have. Motion values (durations, easings, distances, staggers) come from [Motion Specifics](#motion-specifics) above — do not restate or invent them. When a direction needs scroll-scrubbed or 3D motion, the [Motion Libraries](#motion-libraries--gsap--threejs) section (GSAP/Three.js scoped teardown, DPR caps, offscreen pausing, reduced-motion branches) is binding, not optional.
 
 | # | Element | Standard |
 |---|---------|----------|
@@ -369,9 +353,7 @@ reduced-motion branches) is binding, not optional.
 | 11 | **Responsive proof** | Verified at 375 / 768 / 1280 px; touch targets ≥44px; no horizontal scroll. |
 | 12 | **Light/dark parity** | Both modes designed and contrast-verified per `../directions/contrast-protocol.md` — never light-only with an inverted afterthought. |
 
-Applicability: full pages cover all 12; single components cover every row that
-has a surface to land on (a button has no section separator; it still has
-hover, focus, motion, states, responsive proof, and mode parity).
+Applicability: full pages cover all 12; single components cover every row that has a surface to land on (a button has no section separator; it still has hover, focus, motion, states, responsive proof, and mode parity).
 
 ---
 

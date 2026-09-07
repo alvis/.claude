@@ -1,7 +1,6 @@
 # Review completion formats
 
-Render only a compact summary; detailed findings live under the active work
-root. Both interactive and non-interactive modes report:
+Render only a compact summary; detailed findings live under the active work root. Both interactive and non-interactive modes report:
 
 ```markdown
 # Code review summary
@@ -25,8 +24,4 @@ root. Both interactive and non-interactive modes report:
 - Generated files: `<explicit paths>`
 ```
 
-Report every existing canonical area even when only selected areas were rerun;
-mark an area `not_run` only when no area file exists yet. CI/non-interactive
-mode additionally returns nonzero for any outstanding finding; it never
-prompts. Interactive mode may name the next owning skill but must not inline
-the findings.
+Report every existing canonical area even when only selected areas were rerun; mark an area `not_run` only when no area file exists yet. CI/non-interactive mode additionally returns nonzero for any outstanding finding; it never prompts. Interactive mode may name the next owning skill but must not inline the findings.

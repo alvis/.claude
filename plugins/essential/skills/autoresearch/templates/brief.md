@@ -1,20 +1,13 @@
 # research-brief.md — template
 
-This is the verbatim template Step 3 renders into the run directory. The brief is the single source of truth for
-the entire run: every generator, scorer, verifier, and evolver machine-reads it and nothing else. The orchestrator
-writes it **once**, the user approves it before any agent launches, and after that only `## Amendments` is ever
-appended — the frontmatter and prose body are immutable for the life of the run.
+This is the verbatim template Step 3 renders into the run directory. The brief is the single source of truth for the entire run: every generator, scorer, verifier, and evolver machine-reads it and nothing else. The orchestrator writes it **once**, the user approves it before any agent launches, and after that only `## Amendments` is ever appended — the frontmatter and prose body are immutable for the life of the run.
 
 Contract:
 
-- **Frontmatter is the machine surface.** Agents parse the YAML; the prose body exists for the human and for
-  generator context. A field missing from the frontmatter does not exist, no matter what the prose says.
-- **MANDATORY fields must be unambiguous before launch.** Step 1 validates a pre-filled brief against the
-  checklist below; Step 2's interview exit-criteria enforce the same checklist for interactive runs.
-- **Rounds are the primary budget unit.** Token spend is not measurable mid-run, so `budget.max_rounds` is
-  MANDATORY and `budget.max_wall_clock_min` is an optional secondary bound.
-- **Amendments are append-only.** Every extend/pivot decision from Step 6 lands as a dated entry; nothing above
-  it is rewritten.
+- **Frontmatter is the machine surface.** Agents parse the YAML; the prose body exists for the human and for generator context. A field missing from the frontmatter does not exist, no matter what the prose says.
+- **MANDATORY fields must be unambiguous before launch.** Step 1 validates a pre-filled brief against the checklist below; Step 2's interview exit-criteria enforce the same checklist for interactive runs.
+- **Rounds are the primary budget unit.** Token spend is not measurable mid-run, so `budget.max_rounds` is MANDATORY and `budget.max_wall_clock_min` is an optional secondary bound.
+- **Amendments are append-only.** Every extend/pivot decision from Step 6 lands as a dated entry; nothing above it is rewritten.
 
 ## Template
 
@@ -98,27 +91,19 @@ verbatim choice. Never edit prior entries.>
 
 ## Mandatory-field checklist
 
-Step 1 (pre-filled brief validation) and Step 2 (interview exit-criteria) both gate on this exact list. A run may
-not reach Step 3 while any item is missing or ambiguous:
+Step 1 (pre-filled brief validation) and Step 2 (interview exit-criteria) both gate on this exact list. A run may not reach Step 3 while any item is missing or ambiguous:
 
 1. `goal` — non-empty, one sentence.
 2. `artifact_type` — one of the five enum values.
-3. `metric.name`, `metric.definition`, `metric.direction`, `metric.scale` — all set; the definition must be
-   computable by a third party with no follow-up questions.
+3. `metric.name`, `metric.definition`, `metric.direction`, `metric.scale` — all set; the definition must be computable by a third party with no follow-up questions.
 4. `eval.backend` — one of the three enum values, **plus** the matching conditional block:
-   - `backend: programmatic` → `eval.programmatic.command` set, and it prints exactly one parseable number on
-     stdout (verified by the Step 2 dry-run against the baseline).
+   - `backend: programmatic` → `eval.programmatic.command` set, and it prints exactly one parseable number on stdout (verified by the Step 2 dry-run against the baseline).
    - `backend: judges` → `eval.judges.rubric` set with >=3 anchored scale points; `count` >= 3 and odd.
    - `backend: human` → `eval.human.scale` set with stated anchors.
-5. `baseline.artifact` — a path that exists, or the literal `'none'` for a cold start. `score` may stay `null`
-   (Step 4 measures it).
+5. `baseline.artifact` — a path that exists, or the literal `'none'` for a cold start. `score` may stay `null` (Step 4 measures it).
 6. `target.threshold` — a number on `metric.scale`, coherent with `metric.direction`.
-7. `constraints` — a list where every entry is checkable (a refuter could rule violation yes/no), or the explicit
-   `['none declared']`. An empty list is invalid.
+7. `constraints` — a list where every entry is checkable (a refuter could rule violation yes/no), or the explicit `['none declared']`. An empty list is invalid.
 8. `search_space.framing_directions` — >=3 distinct directions, each with a rationale subsection in the body.
 9. `budget.max_rounds` — numeric. `max_wall_clock_min` optional.
-10. `plateau.rounds` and `plateau.epsilon` — numeric; epsilon is the minimum improvement on `metric.scale` that
-    counts as progress.
-11. Code mode only (`artifact_type: code` or any candidate must run code): `execution.code_execution` explicitly
-    `true` (user-granted, never defaulted), and `search_space.mutable_paths` / `immutable_paths` declared. The
-    eval command or script is auto-appended to `immutable_paths` regardless of what the user lists.
+10. `plateau.rounds` and `plateau.epsilon` — numeric; epsilon is the minimum improvement on `metric.scale` that counts as progress.
+11. Code mode only (`artifact_type: code` or any candidate must run code): `execution.code_execution` explicitly `true` (user-granted, never defaulted), and `search_space.mutable_paths` / `immutable_paths` declared. The eval command or script is auto-appended to `immutable_paths` regardless of what the user lists.

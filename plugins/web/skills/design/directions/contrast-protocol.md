@@ -1,36 +1,25 @@
 # Contrast and Readability Protocol
 
-This protocol is a hard requirement: no design is complete until every step
-passes. Always measure rendered composited values in the browser — never trust
-declared CSS, because elements inherit, overlay, and composite.
+This protocol is a hard requirement: no design is complete until every step passes. Always measure rendered composited values in the browser — never trust declared CSS, because elements inherit, overlay, and composite.
 
 ## Standard capture sequence
 
-The single definition of the browser capture procedure. Every evaluation cycle
-follows this exact sequence:
+The single definition of the browser capture procedure. Every evaluation cycle follows this exact sequence:
 
 1. Confirm the chrome-devtools MCP Chrome is running and navigate:
-   - `list_pages` — confirm Chrome is running; capture the port from
-     `webSocketDebuggerUrl`.
+   - `list_pages` — confirm Chrome is running; capture the port from `webSocketDebuggerUrl`.
    - `new_page <url>` — open the target in the isolated Chrome.
-   - `agent-browser --cdp <port> open <url>` — attach the CLI to the same
-     Chrome when CLI-side automation is needed.
+   - `agent-browser --cdp <port> open <url>` — attach the CLI to the same Chrome when CLI-side automation is needed.
 2. `take_snapshot` — capture DOM structure.
 3. `take_screenshot` — desktop viewport screenshot.
 4. `emulate("iPhone 14")` → `take_screenshot` — mobile viewport screenshot.
 5. `evaluate_script` — run the WCAG contrast script below.
 
-When the page is themed, run the contrast script twice — once with
-`data-theme="light"` and once with `data-theme="dark"` set via
-`evaluate_script` — and both must pass. Let CSS transitions settle after
-setting the attribute (wait roughly 2× the longest transition duration) before
-measuring; a synchronous read reports the previous mode's colors
-mid-transition.
+When the page is themed, run the contrast script twice — once with `data-theme="light"` and once with `data-theme="dark"` set via `evaluate_script` — and both must pass. Let CSS transitions settle after setting the attribute (wait roughly 2× the longest transition duration) before measuring; a synchronous read reports the previous mode's colors mid-transition.
 
 ## WCAG contrast script
 
-Use this script verbatim with `evaluate_script` to check every visible text
-element:
+Use this script verbatim with `evaluate_script` to check every visible text element:
 
 ```javascript
 (() => {
@@ -147,27 +136,15 @@ element:
 
 - **Normal text**: minimum 4.5:1 contrast ratio (WCAG AA).
 - **Large text** (≥24px, or ≥18.67px bold): minimum 3:1 (WCAG AA).
-- For each failing element, record selector, text, computed foreground and
-  background, ratio, and threshold before fixing.
-- Elements with `hasGradient: true` — plus any glassmorphism, backdrop-blur,
-  or overlay surface — cannot be scored automatically: visually verify the
-  screenshot at the worst-case point of the gradient or blur.
-- Perceived readability check: review desktop and mobile screenshots for text
-  that technically passes but feels dim or hard to read — low-opacity text,
-  thin fonts on busy backgrounds, small text near the 4.5:1 boundary — and
-  iterate until it is clearly readable.
+- For each failing element, record selector, text, computed foreground and background, ratio, and threshold before fixing.
+- Elements with `hasGradient: true` — plus any glassmorphism, backdrop-blur, or overlay surface — cannot be scored automatically: visually verify the screenshot at the worst-case point of the gradient or blur.
+- Perceived readability check: review desktop and mobile screenshots for text that technically passes but feels dim or hard to read — low-opacity text, thin fonts on busy backgrounds, small text near the 4.5:1 boundary — and iterate until it is clearly readable.
 
-For individual element deep-dives beyond the script, inspect via
-`evaluate_script`: computed `color` and `background-color`,
-`background-image` (gradients, overlays), `opacity` and alpha at every
-ancestor, `font-size`/`font-weight` for the large-text threshold, and class
-names to trace back to design tokens.
+For individual element deep-dives beyond the script, inspect via `evaluate_script`: computed `color` and `background-color`, `background-image` (gradients, overlays), `opacity` and alpha at every ancestor, `font-size`/`font-weight` for the large-text threshold, and class names to trace back to design tokens.
 
 ## Lighthouse is secondary
 
 - Lighthouse accessibility scores are a secondary signal only.
-- If Lighthouse passes but the script or screenshot shows unreadable text, the
-  element fails.
-- If Lighthouse fails but rendered values and screenshots confirm adequate
-  contrast, the element passes.
+- If Lighthouse passes but the script or screenshot shows unreadable text, the element fails.
+- If Lighthouse fails but rendered values and screenshots confirm adequate contrast, the element passes.
 - Always prefer `evaluate_script` + screenshot evidence over Lighthouse.

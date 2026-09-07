@@ -152,20 +152,15 @@ A full architectural breakdown — system context, module topology, data flow di
 
 ## ❓ FAQ
 
-**Q: What is the precedence when a flag, env var, and config file all set the same option?**
-A: CLI flag wins, then env var (e.g. `TSX_LINT_CONFIG`, `TSX_LINT_CACHE_DIR`, `NO_COLOR`), then values from the discovered `tsx-lint.config.ts`, then the built-in default. This is the same order documented in [Environment Variables](#-environment-variables); `--config` on the command line overrides `TSX_LINT_CONFIG` even when both are set.
+**Q: What is the precedence when a flag, env var, and config file all set the same option?** A: CLI flag wins, then env var (e.g. `TSX_LINT_CONFIG`, `TSX_LINT_CACHE_DIR`, `NO_COLOR`), then values from the discovered `tsx-lint.config.ts`, then the built-in default. This is the same order documented in [Environment Variables](#-environment-variables); `--config` on the command line overrides `TSX_LINT_CONFIG` even when both are set.
 
-**Q: What do the exit codes mean and how should CI react to them?**
-A: `0` means no error-level findings (warn and info are still printed, but the run is considered clean), `1` means at least one error-level finding, and `2` means CLI misuse — bad flags, an unreadable config, or an invalid pattern. Pipelines should fail on `1` or `2`; treating `2` as "no findings, therefore green" hides broken config.
+**Q: What do the exit codes mean and how should CI react to them?** A: `0` means no error-level findings (warn and info are still printed, but the run is considered clean), `1` means at least one error-level finding, and `2` means CLI misuse — bad flags, an unreadable config, or an invalid pattern. Pipelines should fail on `1` or `2`; treating `2` as "no findings, therefore green" hides broken config.
 
-**Q: How is the config file discovered when `--config` is not passed?**
-A: The CLI walks upward from the current working directory looking for `tsx-lint.config.ts`, stopping at the first hit or at the filesystem root. `TSX_LINT_CONFIG` short-circuits that walk with an absolute path; `--config` overrides both. The `.tsxlintignore` file is discovered the same way and merged with any `--ignore` globs.
+**Q: How is the config file discovered when `--config` is not passed?** A: The CLI walks upward from the current working directory looking for `tsx-lint.config.ts`, stopping at the first hit or at the filesystem root. `TSX_LINT_CONFIG` short-circuits that walk with an absolute path; `--config` overrides both. The `.tsxlintignore` file is discovered the same way and merged with any `--ignore` globs.
 
-**Q: Can I pipe source through stdin instead of passing file globs?**
-A: Yes — `tsx-lint lint --stdin --stdin-filename src/app.ts < app.ts` lints the piped buffer as if it lived at the given filename, so path-sensitive rules still fire. Reporter output goes to stdout, diagnostics to stderr, and `fix` in stdin mode writes the rewritten source to stdout so editors can splice it back in.
+**Q: Can I pipe source through stdin instead of passing file globs?** A: Yes — `tsx-lint lint --stdin --stdin-filename src/app.ts < app.ts` lints the piped buffer as if it lived at the given filename, so path-sensitive rules still fire. Reporter output goes to stdout, diagnostics to stderr, and `fix` in stdin mode writes the rewritten source to stdout so editors can splice it back in.
 
-**Q: Why did `tsx-lint fix` leave some findings in place?**
-A: Only rules explicitly marked fixable are rewritten; findings from unfixable rules are still reported to stderr with the normal severity so CI stays honest. Run `tsx-lint lint` (not `fix`) afterwards to confirm nothing slipped through, or pass `--rules strict` to surface rules that have no autofixer at all.
+**Q: Why did `tsx-lint fix` leave some findings in place?** A: Only rules explicitly marked fixable are rewritten; findings from unfixable rules are still reported to stderr with the normal severity so CI stays honest. Run `tsx-lint lint` (not `fix`) afterwards to confirm nothing slipped through, or pass `--rules strict` to surface rules that have no autofixer at all.
 
 ---
 

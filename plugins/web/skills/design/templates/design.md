@@ -361,9 +361,7 @@ var(--font-display) var(--font-body) var(--font-mono)
 
 **Chosen direction** (3-line Direction Summary, verbatim from the direction gate):
 
-> {{DIRECTION_SUMMARY_LINE_1}}
-> {{DIRECTION_SUMMARY_LINE_2}}
-> {{DIRECTION_SUMMARY_LINE_3}}
+> {{DIRECTION_SUMMARY_LINE_1}} {{DIRECTION_SUMMARY_LINE_2}} {{DIRECTION_SUMMARY_LINE_3}}
 
 **Rejected direction candidates**:
 

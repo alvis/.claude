@@ -8,24 +8,13 @@ argument-hint: "<resolve|checkout|author|verify|create|update|review|stack|merge
 
 # Pull Requests
 
-When running a `jj` operation, follow `coding:directions/jj.md`; its
-stacked-review repair route precedes `coding:pr update` publication.
+When running a `jj` operation, follow `coding:directions/jj.md`; its stacked-review repair route precedes `coding:pr update` publication.
 
-Before any script call, set `CODING_PR_SKILL_DIR` to the absolute directory
-containing this loaded `SKILL.md`. This works in all three harnesses; not every harness exposes a plugin-root
-variable to ordinary shell calls.
+Before any script call, set `CODING_PR_SKILL_DIR` to the absolute directory containing this loaded `SKILL.md`. This works in all three harnesses; not every harness exposes a plugin-root variable to ordinary shell calls.
 
-Route every remote pull-request operation through one explicit subcommand. Local
-history mutation remains owned by `coding:commit`; local pre-commit review remains
-owned by `coding:review-code`.
+Route every remote pull-request operation through one explicit subcommand. Local history mutation remains owned by `coding:commit`; local pre-commit review remains owned by `coding:review-code`.
 
-Each action reference owns its directions. Scan each implementation diff and
-rendered PR body against `coding:standards/git/`. Author PR bodies through
-[message.md](templates/message.md), then validate them with
-[scan-pr-message.ts](scripts/scan-pr-message.ts). Render anchored
-review comments through [inline-review.md](templates/inline-review.md)
-and the overall verdict through
-[overall-review.md](templates/overall-review.md).
+Each action reference owns its directions. Scan each implementation diff and rendered PR body against `coding:standards/git/`. Author PR bodies through [message.md](templates/message.md), then validate them with [scan-pr-message.ts](scripts/scan-pr-message.ts). Render anchored review comments through [inline-review.md](templates/inline-review.md) and the overall verdict through [overall-review.md](templates/overall-review.md).
 
 ## Usage
 
@@ -42,85 +31,26 @@ and the overall verdict through
 /coding:pr merge <pr numbers...> [--method=rebase|squash|merge] [--remote <name>] [--destination <branch>] [--force]
 ```
 
-When the request omits a subcommand, names no clear action, or could select more
-than one action, print the complete usage block above and stop. Do not infer a
-remote mutation.
+When the request omits a subcommand, names no clear action, or could select more than one action, print the complete usage block above and stop. Do not infer a remote mutation.
 
 ## Routing
 
-PR numbers and stack numbers are separate sequences, so a bare number can name
-both. Before `resolve`, `checkout`, `update`, `review`, `merge`, or a `stack`
-selector acts on a number or URL, bind its namespace through
-[resolve.md](directions/resolve.md), which orders
-the two lookups by the request's own wording. Never report a number as
-unlocatable from one namespace's lookup alone.
+PR numbers and stack numbers are separate sequences, so a bare number can name both. Before `resolve`, `checkout`, `update`, `review`, `merge`, or a `stack` selector acts on a number or URL, bind its namespace through [resolve.md](directions/resolve.md), which orders the two lookups by the request's own wording. Never report a number as unlocatable from one namespace's lookup alone.
 
-For every request to create, inspect, update, restructure, publish, check out,
-sync, navigate, unstack, or merge a GitHub PR stack, load
-[github-stacks.md](references/github-stacks.md) before selecting an
-operator. This applies even when the request arrives through `create`, `update`,
-or `merge`, rather than the explicit `stack` route.
+For every request to create, inspect, update, restructure, publish, check out, sync, navigate, unstack, or merge a GitHub PR stack, load [github-stacks.md](references/github-stacks.md) before selecting an operator. This applies even when the request arrives through `create`, `update`, or `merge`, rather than the explicit `stack` route.
 
-- `resolve` reports which namespace a number or URL names, and mutates nothing.
-  Follow [resolve.md](directions/resolve.md) and
-  report the resolved surface, the rejected candidate, and any ambiguity.
-- `checkout` lands a resolved stack or PR in a `jj` workspace. Follow
-  [Land the resolved surface](directions/resolve.md#land-the-resolved-surface),
-  which fetches the resolved head and adds a workspace on it, leaving every
-  existing workspace untouched. It never commits, rewrites, pushes, or
-  publishes.
-- `author` writes deterministic PR title and body text without publication,
-  using [message.md](templates/message.md) when the repository has no
-  local template.
-  Follow only [Author the PR text](directions/create-update.md#author-the-pr-text);
-  `--base` selects the intended PR base instead of the first-parent default.
-- `verify` runs the fail-closed local test/lint gate for one exact target and
-  base without publishing. Load and follow
-  [verify.md](directions/verify.md); callers must
-  pass resolved immutable revision IDs, and `--kind` defaults to `standalone`. Because these
-  inputs do not identify a base ref or event type, workflow applicability is
-  conservative and the receipt records that mode.
-- `create` opens new draft PRs for one saved change or a conventional linear
-  stack. Load and follow
-  [create-update.md](directions/create-update.md) with
-  `ACTION=create`, including its default tip-first and bottom-up local
-  verification gate, and always load
-  [stacked-prs.md](directions/stacked-prs.md).
-- `update` republishes existing PR heads for a conventional linear stack,
-  refreshes their title, body, and bases, and drives CI to green. Load and follow
-  [create-update.md](directions/create-update.md) with
-  `ACTION=update`, including its default tip-first and bottom-up local
-  verification gate, and always load
-  [stacked-prs.md](directions/stacked-prs.md).
-- `review` publishes one external review per PR, or one holistic review unit for
-  a linear stack with findings attributed to its PR surfaces. As the
-  context-owning caller,
-  load [review.md](directions/review.md), provision
-  any owned tree, and retain its cleanup lease. Run the read-only steps in a
-  fresh `code-quality-critic` subagent with no inherited implementation context,
-  close the lease after any return or cancellation, and never delegate again
-  from that dedicated reviewer. A fresh critic dispatched by
-  [review-loop.md](directions/review-loop.md) with an explicit
-  preprovisioned stack capsule is already that dedicated reviewer: it runs the
-  review phase directly instead of nesting another dispatch.
-- `stack` follows
-  [references/github-stacks.md](references/github-stacks.md#list-and-land):
+- `resolve` reports which namespace a number or URL names, and mutates nothing. Follow [resolve.md](directions/resolve.md) and report the resolved surface, the rejected candidate, and any ambiguity.
+- `checkout` lands a resolved stack or PR in a `jj` workspace. Follow [Land the resolved surface](directions/resolve.md#land-the-resolved-surface), which fetches the resolved head and adds a workspace on it, leaving every existing workspace untouched. It never commits, rewrites, pushes, or publishes.
+- `author` writes deterministic PR title and body text without publication, using [message.md](templates/message.md) when the repository has no local template. Follow only [Author the PR text](directions/create-update.md#author-the-pr-text); `--base` selects the intended PR base instead of the first-parent default.
+- `verify` runs the fail-closed local test/lint gate for one exact target and base without publishing. Load and follow [verify.md](directions/verify.md); callers must pass resolved immutable revision IDs, and `--kind` defaults to `standalone`. Because these inputs do not identify a base ref or event type, workflow applicability is conservative and the receipt records that mode.
+- `create` opens new draft PRs for one saved change or a conventional linear stack. Load and follow [create-update.md](directions/create-update.md) with `ACTION=create`, including its default tip-first and bottom-up local verification gate, and always load [stacked-prs.md](directions/stacked-prs.md).
+- `update` republishes existing PR heads for a conventional linear stack, refreshes their title, body, and bases, and drives CI to green. Load and follow [create-update.md](directions/create-update.md) with `ACTION=update`, including its default tip-first and bottom-up local verification gate, and always load [stacked-prs.md](directions/stacked-prs.md).
+- `review` publishes one external review per PR, or one holistic review unit for a linear stack with findings attributed to its PR surfaces. As the context-owning caller, load [review.md](directions/review.md), provision any owned tree, and retain its cleanup lease. Run the read-only steps in a fresh `code-quality-critic` subagent with no inherited implementation context, close the lease after any return or cancellation, and never delegate again from that dedicated reviewer. A fresh critic dispatched by [review-loop.md](directions/review-loop.md) with an explicit preprovisioned stack capsule is already that dedicated reviewer: it runs the review phase directly instead of nesting another dispatch.
+- `stack` follows [references/github-stacks.md](references/github-stacks.md#list-and-land):
   - `list` lists the current repository's GitHub PR stacks.
-  - `checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>` lands one
-    explicitly selected stack, after namespace resolution, in a `jj` workspace
-    at its top member's head. It may fetch, but it does not own commits,
-    history rewriting, pushes, or PR publication.
-- `merge` validates and merges a conventional linear stack bottom-up. For a
-  GitHub PR stack, use the GitHub operator map loaded above instead. Otherwise
-  load and follow
-  [stacked-prs.md](directions/stacked-prs.md), then
-  [merge.md](directions/merge.md).
+  - `checkout <stack-number-or-pr-number-or-pr-url-or-local-branch>` lands one explicitly selected stack, after namespace resolution, in a `jj` workspace at its top member's head. It may fetch, but it does not own commits, history rewriting, pushes, or PR publication.
+- `merge` validates and merges a conventional linear stack bottom-up. For a GitHub PR stack, use the GitHub operator map loaded above instead. Otherwise load and follow [stacked-prs.md](directions/stacked-prs.md), then [merge.md](directions/merge.md).
 
 <IMPORTANT>
-Execute exactly one subcommand per invocation. A workflow may instruct a later
-`coding:pr` invocation, but it must name that subcommand explicitly. Reject an
-option absent from the public usage contract and stop before any remote
-mutation. The sole internal option is `--publish-only`; accept it only from the
-owned review-loop or red-CI-repair continuations under
-[create-update.md](directions/create-update.md), never from a direct caller.
+Execute exactly one subcommand per invocation. A workflow may instruct a later `coding:pr` invocation, but it must name that subcommand explicitly. Reject an option absent from the public usage contract and stop before any remote mutation. The sole internal option is `--publish-only`; accept it only from the owned review-loop or red-CI-repair continuations under [create-update.md](directions/create-update.md), never from a direct caller.
 </IMPORTANT>

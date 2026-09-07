@@ -226,11 +226,7 @@ Brand identity (`data-brand`) and color mode (`data-theme`) compose at the selec
 }
 ```
 
-Raw tokens and aliases both remain inside `@layer theme`; baseline,
-system-light, explicit-light, system-dark, and explicit-dark branches all
-resolve the aliases. The fallback-less `var(--theme-*)` assignments here are
-token aliases, not styled declarations: their raw inputs are declared in the
-same layer. Component styles still use the full three-tier fallback chain.
+Raw tokens and aliases both remain inside `@layer theme`; baseline, system-light, explicit-light, system-dark, and explicit-dark branches all resolve the aliases. The fallback-less `var(--theme-*)` assignments here are token aliases, not styled declarations: their raw inputs are declared in the same layer. Component styles still use the full three-tier fallback chain.
 
 ## CSS Import Order
 
@@ -306,9 +302,7 @@ When a single feature needs one-off variation without forking the component, dec
 }
 ```
 
-These literals intentionally bind the most-specific component override knobs.
-They do not replace the consuming component declarations, which retain the
-full component → active semantic/UI → literal fallback chain.
+These literals intentionally bind the most-specific component override knobs. They do not replace the consuming component declarations, which retain the full component → active semantic/UI → literal fallback chain.
 
 ```tsx
 // apps/example/src/features/checkout/CheckoutFlow.tsx

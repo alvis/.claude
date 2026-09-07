@@ -31,8 +31,7 @@ vitest --coverage spec/path/to/file.spec.ts
 ## Edge Cases
 
 - When existing code matches prior violation patterns such as `it.each(cases)(...)`, refactor before adding new behavior.
-- A zero-gain test may remain when it records distinct behavioral evidence not
-  captured elsewhere; otherwise delete or merge it.
+- A zero-gain test may remain when it records distinct behavioral evidence not captured elsewhere; otherwise delete or merge it.
 
 ## Related
 

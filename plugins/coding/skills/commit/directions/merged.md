@@ -45,8 +45,7 @@ If `--allow-rewrite-merged` is set, skip the prompt and proceed directly to Opti
 
 ### 2. Option 1 — corrective PR (default, recommended)
 
-Follow the direction's corrective-PR route: preserve merged history and layer a
-fix on top.
+Follow the direction's corrective-PR route: preserve merged history and layer a fix on top.
 
 ```bash
 # Start a fresh change on top of main@origin
@@ -94,8 +93,7 @@ After the local rewrite and integrity guard pass, fetch remote state:
 jj git fetch
 ```
 
-Bind `TARGET_SHA` to the rewritten bookmark's exact Git commit and
-`TARGET_BASE` to the fetched pre-push `<affected-bookmark>@origin` commit:
+Bind `TARGET_SHA` to the rewritten bookmark's exact Git commit and `TARGET_BASE` to the fetched pre-push `<affected-bookmark>@origin` commit:
 
 ```bash
 TARGET_SHA=$(jj log -r <affected-bookmark> --no-graph -T 'commit_id')
@@ -109,21 +107,13 @@ Before any push, invoke the public parity action for this standalone surface:
 coding:pr verify --target "$TARGET_SHA" --base "$TARGET_BASE" --kind "$TARGET_KIND"
 ```
 
-Capture the action's complete `CI_PARITY_RECEIPT_JSON`, its canonical
-`CI_PARITY_EXPECTED_WORKFLOW_COMMAND_RESULTS_JSON`, and its canonical
-`CI_PARITY_EXPECTED_MISSING_SECRET_NAMES_JSON`, then consume them before the
-push:
+Capture the action's complete `CI_PARITY_RECEIPT_JSON`, its canonical `CI_PARITY_EXPECTED_WORKFLOW_COMMAND_RESULTS_JSON`, and its canonical `CI_PARITY_EXPECTED_MISSING_SECRET_NAMES_JSON`, then consume them before the push:
 
 ```bash
 source "${CODING_COMMIT_SKILL_DIR}/../../scripts/validate-ci-parity-receipt.sh"
 ```
 
-On the exception path, its `sha` equals the exact `TARGET_SHA` and its `names`
-equal the verifier's exact lexically sorted missing-secret names. A SHA-only
-approval or any name/order mismatch cannot form a complete receipt and stops
-before the push. Neither `--no-verify` nor `--allow-rewrite-merged` skips this
-gate. This is direct synchronization of the already-authorized bookmark, not
-PR publication; do not invoke a publication action.
+On the exception path, its `sha` equals the exact `TARGET_SHA` and its `names` equal the verifier's exact lexically sorted missing-secret names. A SHA-only approval or any name/order mismatch cannot form a complete receipt and stops before the push. Neither `--no-verify` nor `--allow-rewrite-merged` skips this gate. This is direct synchronization of the already-authorized bookmark, not PR publication; do not invoke a publication action.
 
 Synchronize only the existing bookmark whose rewrite the user authorized:
 
@@ -131,23 +121,15 @@ Synchronize only the existing bookmark whose rewrite the user authorized:
 jj git push --bookmark <affected-bookmark>
 ```
 
-The tracked remote bookmark gives `jj git push` force-with-lease semantics: a
-remote change since the fetch rejects the push. Do not include descendants or
-any other bookmark in this command. The explicit Option 2 consent authorizes
-this affected bookmark only.
+The tracked remote bookmark gives `jj git push` force-with-lease semantics: a remote change since the fetch rejects the push. Do not include descendants or any other bookmark in this command. The explicit Option 2 consent authorizes this affected bookmark only.
 
-If open downstream PRs remain, inspect their current checks read-only with
-`gh pr checks`; do not invoke mutating `coding:pr update` as a monitor. Updating
-or restacking descendants requires separate explicit user consent. With no
-relevant downstream PR, skip monitoring.
+If open downstream PRs remain, inspect their current checks read-only with `gh pr checks`; do not invoke mutating `coding:pr update` as a monitor. Updating or restacking descendants requires separate explicit user consent. With no relevant downstream PR, skip monitoring.
 
 Verify the integrity guard in [SKILL.md](../SKILL.md) passes.
 
 ### 4. Communicate to reviewers (Option 2 only)
 
-After the affected bookmark is synchronized, the user MUST notify any open
-downstream PRs / consumers that their base has been rewritten. This is
-procedural, not automated — the skill surfaces a reminder:
+After the affected bookmark is synchronized, the user MUST notify any open downstream PRs / consumers that their base has been rewritten. This is procedural, not automated — the skill surfaces a reminder:
 
 ```text
 Rewrote merged-on-origin history at <bookmark>.
@@ -165,10 +147,7 @@ Notify reviewers and downstream consumers:
 ## Mandatory follow-ups
 
 - Option 1: normal save follow-ups ([save.md](./save.md)).
-- Option 2: integrity check, ordinary project scripts unless `--no-verify`,
-  mandatory exact-revision publication gate, direct force-with-lease sync of
-  the affected bookmark only, then read-only `gh pr checks` for relevant
-  downstream PRs. Updating or restacking them needs separate explicit consent.
+- Option 2: integrity check, ordinary project scripts unless `--no-verify`, mandatory exact-revision publication gate, direct force-with-lease sync of the affected bookmark only, then read-only `gh pr checks` for relevant downstream PRs. Updating or restacking them needs separate explicit consent.
 - Always: report the chosen route per [SKILL.md](../SKILL.md) Completion.
 
 ## Error / edge cases

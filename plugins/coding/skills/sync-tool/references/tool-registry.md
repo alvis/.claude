@@ -1,7 +1,6 @@
 # Tool Registry
 
-`sync-tool` operates on a fixed registry of CLI tools, evaluated in order.
-Order matters: on macOS, `brew` must be present before `jj` and `gh` are installed.
+`sync-tool` operates on a fixed registry of CLI tools, evaluated in order. Order matters: on macOS, `brew` must be present before `jj` and `gh` are installed.
 
 ## Currently registered
 
@@ -36,5 +35,4 @@ To register a new tool (e.g., `rg`):
 
 `sync-tool` is intentionally not a generic package manager. It exists to guarantee a known set of coding CLIs are present at minimum versions for sibling skills (e.g., `coding:commit` uses `jj` for history and `gh` for remote-state checks, while `coding:pr create` uses both for publication). Keeping the registry small and explicit means each tool gets a hand-tuned, audited installer that matches its upstream's official guidance.
 
-The `jj` floor is 0.44.0 because the shared coding guide and PR workflow rely
-on `jj arrange`, `jj bookmark advance`, and read-only `jj run`.
+The `jj` floor is 0.44.0 because the shared coding guide and PR workflow rely on `jj arrange`, `jj bookmark advance`, and read-only `jj run`.

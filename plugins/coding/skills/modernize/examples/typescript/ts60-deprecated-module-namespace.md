@@ -6,8 +6,7 @@ module: "any"
 
 ## Detection
 
-`module ` followed by an identifier and `{` (namespace declaration using `module` keyword)
-`module` keyword used outside of `declare module` augmentations
+`module ` followed by an identifier and `{` (namespace declaration using `module` keyword) `module` keyword used outside of `declare module` augmentations
 
 ## Before
 

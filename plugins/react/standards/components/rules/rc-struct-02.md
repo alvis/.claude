@@ -2,15 +2,7 @@
 
 ## Intent
 
-Every component that accepts props exports a named `type <Name>Props = …` alias
-and types itself with `FC<<Name>Props>`. This is the explicit exception to
-TypeScript rule `TYP-TYPE-01`: type aliases compose with React helpers
-(`PropsWithChildren`, `ComponentPropsWithoutRef<'tag'>`) via intersections,
-which `interface` cannot express without contortion. The exception applies to
-React component props regardless of visibility. A component that accepts no
-props needs no artificial empty alias, consistent with `RC-STRUCT-05`. Inline
-anonymous prop types prevent reuse, complicate documentation, and break
-type-only re-exports.
+Every component that accepts props exports a named `type <Name>Props = …` alias and types itself with `FC<<Name>Props>`. This is the explicit exception to TypeScript rule `TYP-TYPE-01`: type aliases compose with React helpers (`PropsWithChildren`, `ComponentPropsWithoutRef<'tag'>`) via intersections, which `interface` cannot express without contortion. The exception applies to React component props regardless of visibility. A component that accepts no props needs no artificial empty alias, consistent with `RC-STRUCT-05`. Inline anonymous prop types prevent reuse, complicate documentation, and break type-only re-exports.
 
 ## Fix
 
@@ -49,8 +41,7 @@ export const Divider: FC = () => <hr />;
 - AST-scan component declarations for inline object-type annotations on the props parameter
 - Flag any `FC<{...}>` literal type instead of a named alias
 - Grep for `^\s*(export\s+)?interface\s+\w+Props\b` — every match outside a documented BAD code block is a violation
-- Confirm each component that accepts props has a matching exported
-  `type XProps = …` in the same file; zero-prop components are exempt
+- Confirm each component that accepts props has a matching exported `type XProps = …` in the same file; zero-prop components are exempt
 
 ## Common Mistakes
 

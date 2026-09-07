@@ -13,9 +13,7 @@ expect(result).toEqual({ ok: true });
 ## Edge Cases
 
 - When existing code matches prior violation patterns such as ❌ `expect(dep).toHaveBeenCalled()`, refactor before adding new behavior.
-- If the wrapper under test adds no validation, transformation, policy, or
-  error mapping, the wrapper itself is a no-value wrapper (`FUNC-ARCH-03`) —
-  remove the wrapper and its test, do not rewrite the test.
+- If the wrapper under test adds no validation, transformation, policy, or error mapping, the wrapper itself is a no-value wrapper (`FUNC-ARCH-03`) — remove the wrapper and its test, do not rewrite the test.
 
 ## Related
 

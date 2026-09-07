@@ -15,6 +15,4 @@ Use only user-selected product, source-contract, and transport context. Existing
 
 ## Standards
 
-Client owns no standards. Follow the selected skill, the declared
-`specification:sync-notion` transport boundary, and
-`essential:references/state.md`; do not import standards from another plugin.
+Client owns no standards. Follow the selected skill, the declared `specification:sync-notion` transport boundary, and `essential:references/state.md`; do not import standards from another plugin.

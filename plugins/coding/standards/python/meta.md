@@ -4,8 +4,7 @@ _Compact Python rules for type-system hygiene, imports, module structure, concur
 
 ## Runtime and Tooling
 
-[Required verification](scan.md#required-verification) owns the runtime target,
-per-commit tool checks, and division between mechanical and semantic review.
+[Required verification](scan.md#required-verification) owns the runtime target, per-commit tool checks, and division between mechanical and semantic review.
 
 ## Dependent Standards
 
