@@ -1,7 +1,7 @@
 ---
 name: design
 version: 5.0.0
-description: "Design or redesign a web interface with coherent visual direction, responsive layout, typography, color, motion, and accessible states. Own the visual contract and orchestration: maintain ranked variant boards, route authorized production edits to Frontend Implementer, and drive independent evaluation with visual-diff confirmation. Use for new pages, component polish, mockups, or facelifts."
+description: "Design or redesign web interfaces, including landing pages, blogs, dashboards, documentation, and onboarding. Select purpose-specific guidance while preserving brand, responsive layout, typography, and accessible interaction. Own the visual contract, ranked variants, authorized implementation handoff, and independent evaluation. Use for page design, component polish, mockups, and facelifts."
 requirements:
   intelligence: high
 argument-hint: "[page/component/site] [--facelift] [--style=<style>] [--variants=<N>] [--skip-directions] [--quick]"
@@ -52,6 +52,20 @@ Create only needed evidence directories: `boards/`, `previews/<preview-slug>/`, 
 `state.md` owns the complete work context and plan; do not create parallel context or decision-log files. When root `.design`, `.design-*`, `DESIGN.md`, `CONTEXT.md`, or `DECISIONS.md` inputs exist, report exact paths and apparent targets, propose a map into the work state, design child, and evidence root, and obtain approval before copying or moving. Preserve provenance, never overwrite an existing child, and never delete legacy paths automatically.
 
 ## Team and design procedure
+
+Before forming the content plan, classify each surface by its user task and load only matching subskills. Resolve supporting paths from this skill root. Mixed projects may use several; a component or general homepage does not inherit every workflow.
+
+| Surface intent | Subskill |
+| --- | --- |
+| Understand one offer and take its primary action; compare its pricing | [Landing page](directions/landing-page.md) |
+| Discover a publication's content and read articles | [Blog](directions/blog.md) |
+| Interpret metrics, explore data, or act on operational records | [Dashboard](directions/dashboard.md) |
+| Find instructions, learn a task, or consult technical reference | [Documentation](directions/documentation.md) |
+| Complete first-use setup and reach a useful outcome | [Onboarding](directions/onboarding.md) |
+
+Subskills add decisions and acceptance checks to the existing design contract; they never replace authorization, shared standards, or role ownership. Content writing, backend reporting, API implementation, and isolated logic fixes do not become design tasks merely because their output appears on one of these surfaces. Worked HTML examples are optional references, not universal templates.
+
+Express the visual thesis through the product's content, typography, imagery, composition, and appropriate density. Distinguish extending an existing system from replacing its direction. Alternatives must change hierarchy or interaction meaningfully, not just color. Use expressive marketing and editorial moments where they explain the subject; preserve reading and task efficiency in documentation, onboarding, and dashboards. Motion must preserve context, respect reduced-motion preferences, and leave usable content when an enhancement is unavailable.
 
 Use three specialist roles. When `frontend-implementer` is unavailable, return a context-complete handoff instead of editing production source in this skill. Only the main agent assigns names and every direct message uses the returned `agent_id`.
 

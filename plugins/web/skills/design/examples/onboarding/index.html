@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Commonplace — set up a knowledge space</title>
+    <style>
+      :root {
+        --ui-bg: #f5f1fa;
+        --ui-surface: #fffdf9;
+        --ui-ink: #242738;
+        --ui-muted: #5d6071;
+        --ui-action: #674396;
+        --ui-action-ink: #fff;
+        --ui-line: #c9bdd8;
+        --ui-paper: #ebe0d1;
+        --ui-error: #9a2837;
+        --space-1: 0.5rem;
+        --space-2: 1rem;
+        --space-3: 1.5rem;
+        --space-4: 2rem;
+        --space-6: 3rem;
+        --radius-card: 1.5rem;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--page-bg, var(--ui-bg, #f5f1fa));
+        color: var(--page-ink, var(--ui-ink, #242738));
+        font:
+          1rem/1.55 system-ui,
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      :focus-visible {
+        outline: 0.2rem solid var(--focus-color, var(--ui-action, #674396));
+        outline-offset: 0.2rem;
+      }
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(18rem, 0.72fr) minmax(0, 1.28fr);
+      }
+      .aside {
+        position: relative;
+        overflow: hidden;
+        padding: var(--space-6);
+        background: var(--aside-bg, var(--ui-action, #674396));
+        color: var(--aside-ink, var(--ui-action-ink, #fff));
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .aside::after {
+        content: "";
+        position: absolute;
+        width: 18rem;
+        height: 24rem;
+        right: -5rem;
+        bottom: -7rem;
+        background: var(--paper-bg, var(--ui-paper, #ebe0d1));
+        transform: rotate(12deg);
+        border-radius: 0.25rem;
+        box-shadow: -1rem -1rem 0 rgba(255, 255, 255, 0.12);
+      }
+      .brand {
+        font:
+          700 1.5rem Georgia,
+          serif;
+      }
+      .aside blockquote {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        max-width: 14ch;
+        font:
+          400 clamp(2.2rem, 4vw, 4.4rem) / 1.05 Georgia,
+          serif;
+        letter-spacing: -0.04em;
+      }
+      .demo {
+        position: relative;
+        z-index: 1;
+        font-size: 0.85rem;
+        max-width: 26rem;
+        color: var(--aside-ink, var(--ui-action-ink, #fff));
+        background: var(--aside-bg, var(--ui-action, #674396));
+        padding: var(--space-1);
+      }
+      .main {
+        display: flex;
+        flex-direction: column;
+        padding: var(--space-4) clamp(1.25rem, 6vw, 6rem);
+      }
+      .progress {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-1);
+        max-width: 38rem;
+        margin-bottom: var(--space-6);
+      }
+      .progress span {
+        height: 0.35rem;
+        background: var(--progress-bg, var(--ui-line, #c9bdd8));
+        border-radius: 999px;
+      }
+      .progress span.active {
+        background: var(--progress-active, var(--ui-action, #674396));
+      }
+      .stage {
+        width: min(100%, 38rem);
+        margin: auto;
+      }
+      .step {
+        display: none;
+      }
+      .step.active {
+        display: block;
+      }
+      .kicker {
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: var(--ui-action);
+      }
+      h1 {
+        font:
+          500 clamp(2.5rem, 6vw, 5.2rem) / 1 Georgia,
+          serif;
+        letter-spacing: -0.045em;
+        margin: var(--space-1) 0 var(--space-2);
+        max-width: 12ch;
+      }
+      h2 {
+        font:
+          500 2.1rem/1.1 Georgia,
+          serif;
+        margin: 0 0 var(--space-2);
+      }
+      p {
+        max-width: 55ch;
+        color: var(--ui-muted);
+      }
+      label {
+        display: block;
+        margin-top: var(--space-3);
+        font-weight: 750;
+      }
+      .hint {
+        font-size: 0.88rem;
+        margin: 0.35rem 0;
+      }
+      .field {
+        width: 100%;
+        min-height: 3.25rem;
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+        border: 0.125rem solid var(--ui-line);
+        border-radius: 0.75rem;
+        background: var(--ui-surface);
+        color: var(--ui-ink);
+      }
+      .field[aria-invalid="true"] {
+        border-color: var(--ui-error);
+      }
+      .error {
+        min-height: 1.6rem;
+        color: var(--ui-error);
+        font-weight: 700;
+        margin: 0.35rem 0;
+      }
+      .choices {
+        display: grid;
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+      }
+      .choice {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--space-2);
+        align-items: start;
+        padding: var(--space-3);
+        background: var(--ui-surface);
+        border: 0.125rem solid var(--ui-line);
+        border-radius: var(--radius-card);
+        cursor: pointer;
+      }
+      .choice:has(input:checked) {
+        border-color: var(--ui-action);
+        box-shadow: 0 0 0 0.15rem rgba(103, 67, 150, 0.13);
+      }
+      .choice input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.2rem;
+      }
+      .choice strong {
+        display: block;
+        font-family: Georgia, serif;
+        font-size: 1.25rem;
+      }
+      .choice span span {
+        color: var(--ui-muted);
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        margin-top: var(--space-4);
+      }
+      button {
+        min-height: 2.75rem;
+        padding: 0.65rem 1.2rem;
+        border: 0.125rem solid var(--button-border, var(--ui-action, #674396));
+        border-radius: 999px;
+        background: var(--button-bg, var(--ui-action, #674396));
+        color: var(--button-ink, var(--ui-action-ink, #fff));
+        font-weight: 800;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(0.92);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button.secondary {
+        --button-bg: transparent;
+        --button-ink: var(--ui-action);
+      }
+      button.ghost {
+        --button-bg: transparent;
+        --button-ink: var(--ui-muted);
+        --button-border: transparent;
+      }
+      .summary {
+        margin-top: var(--space-3);
+        padding: var(--space-3);
+        border: 1px solid var(--ui-line);
+        background: var(--ui-surface);
+        border-radius: var(--radius-card);
+      }
+      .summary dt {
+        font-weight: 800;
+      }
+      .summary dd {
+        margin: 0 0 var(--space-2);
+        color: var(--ui-muted);
+      }
+      @media (max-width: 720px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        .aside {
+          min-height: 13rem;
+          padding: var(--space-3);
+        }
+        .aside blockquote {
+          font-size: 2rem;
+          max-width: 18ch;
+        }
+        .aside .demo {
+          font-size: 0.75rem;
+          max-width: 18rem;
+        }
+        .aside::after {
+          display: none;
+        }
+        .main {
+          padding: var(--space-3);
+        }
+        .progress {
+          margin-bottom: var(--space-4);
+        }
+        h1 {
+          font-size: 2.8rem;
+        }
+        .actions {
+          position: sticky;
+          bottom: 0;
+          background: var(--ui-bg);
+          padding: var(--space-2) 0;
+        }
+        .actions button {
+          min-width: 7rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="aside">
+        <div class="brand">Commonplace</div>
+        <blockquote>Keep the things worth returning to.</blockquote>
+        <p class="demo">
+          Fictional setup demonstration. Your entries stay in this browser tab;
+          no account, workspace, or invitation is created.
+        </p>
+      </aside>
+      <section class="main" aria-label="Workspace setup">
+        <div class="progress" aria-label="Setup progress">
+          <span class="active"></span><span></span><span></span>
+        </div>
+        <div class="stage">
+          <section class="step active" data-step="0">
+            <p class="kicker">Step 1 of 3 · Your space</p>
+            <h1 tabindex="-1">Name your new commonplace.</h1>
+            <p>
+              Choose a name you will recognize. You can change it in this
+              demonstration by returning to this step.
+            </p>
+            <label for="workspace">Workspace name</label
+            ><input
+              class="field"
+              id="workspace"
+              autocomplete="off"
+              aria-describedby="workspace-hint workspace-error"
+              placeholder="e.g. Field notes"
+            />
+            <p class="hint" id="workspace-hint">Required · 2–40 characters</p>
+            <p class="error" id="workspace-error" role="alert"></p>
+            <div class="actions">
+              <span></span
+              ><button type="button" data-next>Choose a purpose</button>
+            </div>
+          </section>
+          <section class="step" data-step="1">
+            <p class="kicker">Step 2 of 3 · Your focus</p>
+            <h1 tabindex="-1">What will you gather here?</h1>
+            <p>
+              This sets the example starting view. It does not restrict what you
+              can add later.
+            </p>
+            <fieldset class="choices">
+              <legend class="hint">Choose one purpose</legend>
+              <label class="choice"
+                ><input
+                  type="radio"
+                  name="purpose"
+                  value="Research notes"
+                /><span
+                  ><strong>Research notes</strong
+                  ><span
+                    >Sources, observations, and developing questions.</span
+                  ></span
+                ></label
+              ><label class="choice"
+                ><input
+                  type="radio"
+                  name="purpose"
+                  value="Reading library"
+                /><span
+                  ><strong>Reading library</strong
+                  ><span
+                    >Books, essays, and ideas you want to revisit.</span
+                  ></span
+                ></label
+              ><label class="choice"
+                ><input
+                  type="radio"
+                  name="purpose"
+                  value="Project journal"
+                /><span
+                  ><strong>Project journal</strong
+                  ><span
+                    >Decisions, progress, and loose ends in one place.</span
+                  ></span
+                ></label
+              >
+            </fieldset>
+            <p class="error" id="purpose-error" role="alert"></p>
+            <div class="actions">
+              <button class="secondary" type="button" data-back>Back</button
+              ><button type="button" data-next>Invite or skip</button>
+            </div>
+          </section>
+          <section class="step" data-step="2">
+            <p class="kicker">Step 3 of 3 · Optional</p>
+            <h1 tabindex="-1">Invite a fellow note-keeper.</h1>
+            <p>
+              You can add one illustrative email or skip this step. Nothing will
+              be sent.
+            </p>
+            <label for="invite"
+              >Email address <span class="hint">(optional)</span></label
+            ><input
+              class="field"
+              id="invite"
+              type="email"
+              autocomplete="off"
+              aria-describedby="invite-hint invite-error"
+              placeholder="reader@example.com"
+            />
+            <p class="hint" id="invite-hint">
+              Used only in the completion summary; no invitation is sent.
+            </p>
+            <p class="error" id="invite-error" role="alert"></p>
+            <div class="actions">
+              <button class="secondary" type="button" data-back>Back</button>
+              <div>
+                <button class="ghost" type="button" id="skip">
+                  Skip invitation
+                </button>
+                <button type="button" id="complete">Review setup</button>
+              </div>
+            </div>
+          </section>
+          <section class="step" data-step="3">
+            <p class="kicker">Demonstration complete</p>
+            <h1 tabindex="-1">Your space is ready to imagine.</h1>
+            <p>
+              No account or workspace was created, and no invitation was sent.
+              Here is the setup held in memory for this page:
+            </p>
+            <dl class="summary">
+              <dt>Workspace</dt>
+              <dd id="summary-workspace"></dd>
+              <dt>Purpose</dt>
+              <dd id="summary-purpose"></dd>
+              <dt>Invitation</dt>
+              <dd id="summary-invite"></dd>
+            </dl>
+            <div class="actions">
+              <span></span
+              ><button type="button" id="restart">Restart demonstration</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script>
+      const steps = [...document.querySelectorAll(".step")],
+        progress = [...document.querySelectorAll(".progress span")];
+      let current = 0;
+      const show = (index) => {
+        current = index;
+        steps.forEach((step, i) =>
+          step.classList.toggle("active", i === index),
+        );
+        progress.forEach((item, i) =>
+          item.classList.toggle("active", i <= Math.min(index, 2)),
+        );
+        steps[index].querySelector("h1").focus();
+      };
+      const validWorkspace = () => {
+        const input = document.getElementById("workspace"),
+          value = input.value.trim(),
+          error = document.getElementById("workspace-error");
+        const valid = value.length >= 2 && value.length <= 40;
+        input.setAttribute("aria-invalid", String(!valid));
+        error.textContent = valid
+          ? ""
+          : "Enter a workspace name between 2 and 40 characters, then continue.";
+        if (!valid) input.focus();
+        return valid;
+      };
+      const validPurpose = () => {
+        const selected = document.querySelector(
+          'input[name="purpose"]:checked',
+        );
+        document.getElementById("purpose-error").textContent = selected
+          ? ""
+          : "Choose the kind of notes you want to begin with, then continue.";
+        if (!selected) document.querySelector('input[name="purpose"]').focus();
+        return Boolean(selected);
+      };
+      const validInvite = () => {
+        const input = document.getElementById("invite"),
+          error = document.getElementById("invite-error");
+        const valid = !input.value || input.validity.valid;
+        input.setAttribute("aria-invalid", String(!valid));
+        error.textContent = valid
+          ? ""
+          : "Enter an email in the form name@example.com, or skip the invitation.";
+        if (!valid) input.focus();
+        return valid;
+      };
+      document.querySelectorAll("[data-next]").forEach((button) =>
+        button.addEventListener("click", () => {
+          if (current === 0 && validWorkspace()) show(1);
+          else if (current === 1 && validPurpose()) show(2);
+        }),
+      );
+      document
+        .querySelectorAll("[data-back]")
+        .forEach((button) =>
+          button.addEventListener("click", () => show(current - 1)),
+        );
+      document.getElementById("skip").addEventListener("click", () => {
+        document.getElementById("invite").value = "";
+        document.getElementById("invite-error").textContent = "";
+        finish();
+      });
+      const finish = () => {
+        document.getElementById("summary-workspace").textContent = document
+          .getElementById("workspace")
+          .value.trim();
+        document.getElementById("summary-purpose").textContent =
+          document.querySelector('input[name="purpose"]:checked').value;
+        document.getElementById("summary-invite").textContent =
+          document.getElementById("invite").value ||
+          "Skipped — no invitation entered";
+        show(3);
+      };
+      document.getElementById("complete").addEventListener("click", () => {
+        if (validInvite()) finish();
+      });
+      document.getElementById("restart").addEventListener("click", () => {
+        document.getElementById("workspace").value = "";
+        document.getElementById("invite").value = "";
+        document.getElementById("workspace").removeAttribute("aria-invalid");
+        document.getElementById("invite").removeAttribute("aria-invalid");
+        document.querySelectorAll('input[name="purpose"]').forEach((input) => {
+          input.checked = false;
+        });
+        document.querySelectorAll(".error").forEach((error) => {
+          error.textContent = "";
+        });
+        show(0);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Margin — a fictional journal of considered work</title>
+    <style>
+      :root {
+        --ui-bg: #faf7ef;
+        --ui-surface: #fffdf8;
+        --ui-ink: #27231f;
+        --ui-muted: #665f57;
+        --ui-action: #923d2d;
+        --ui-action-ink: #fffaf0;
+        --ui-line: #c8bfb0;
+        --ui-wash: #eadfce;
+        --space-1: 0.5rem;
+        --space-2: 1rem;
+        --space-3: 1.5rem;
+        --space-4: 2rem;
+        --space-6: 3rem;
+        --space-8: 4rem;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 5rem;
+      }
+      body {
+        margin: 0;
+        background: var(--page-bg, var(--ui-bg, #faf7ef));
+        color: var(--page-ink, var(--ui-ink, #27231f));
+        font:
+          1rem/1.7 system-ui,
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 0.2rem solid var(--focus-color, var(--ui-action, #923d2d));
+        outline-offset: 0.2rem;
+      }
+      .demo {
+        background: var(--demo-bg, var(--ui-ink, #27231f));
+        color: var(--demo-ink, var(--ui-bg, #faf7ef));
+        padding: 0.45rem var(--space-3);
+        font-size: 0.8rem;
+        text-align: center;
+      }
+      .masthead {
+        max-width: 82rem;
+        margin: auto;
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--ui-ink);
+      }
+      .masthead-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .brand {
+        font:
+          500 clamp(4rem, 12vw, 9.5rem) / 0.9 Georgia,
+          serif;
+        letter-spacing: -0.07em;
+        text-decoration: none;
+      }
+      .edition {
+        max-width: 12rem;
+        text-align: right;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .controls {
+        max-width: 82rem;
+        margin: auto;
+        padding: var(--space-3);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--space-2);
+        align-items: end;
+      }
+      .search label {
+        display: block;
+        font-weight: 800;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .search-row {
+        display: flex;
+        margin-top: 0.4rem;
+      }
+      .search input {
+        width: min(100%, 28rem);
+        min-height: 2.75rem;
+        border: 1px solid var(--ui-ink);
+        border-right: 0;
+        background: var(--ui-surface);
+        padding: 0.6rem 0.8rem;
+        color: var(--ui-ink);
+      }
+      button {
+        min-height: 2.75rem;
+        border: 1px solid var(--button-border, var(--ui-ink, #27231f));
+        background: var(--button-bg, var(--ui-ink, #27231f));
+        color: var(--button-ink, var(--ui-bg, #faf7ef));
+        padding: 0.55rem 1rem;
+        font-weight: 750;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(0.9);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button.secondary {
+        --button-bg: transparent;
+        --button-ink: var(--ui-ink);
+      }
+      .categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .categories button {
+        border-radius: 999px;
+      }
+      .categories button[aria-pressed="true"] {
+        --button-bg: var(--ui-action);
+        --button-border: var(--ui-action);
+      }
+      .index {
+        max-width: 82rem;
+        margin: auto;
+        padding: var(--space-2) var(--space-3) var(--space-8);
+      }
+      .results-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-2);
+        border-top: 1px solid var(--ui-line);
+        padding-top: var(--space-2);
+      }
+      .results-meta p {
+        margin: 0;
+      }
+      .stories {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: var(--space-4);
+        margin-top: var(--space-4);
+      }
+      .feature {
+        padding-right: var(--space-4);
+        border-right: 1px solid var(--ui-line);
+      }
+      .story-button {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        text-align: left;
+        min-height: 0;
+        width: 100%;
+        font-weight: 400;
+      }
+      .story-button:hover h2,
+      .story-button:hover h3 {
+        color: var(--ui-action);
+        text-decoration: underline;
+        text-underline-offset: 0.12em;
+      }
+      .story-art {
+        aspect-ratio: 16/7;
+        background: var(--art-bg, var(--ui-action, #923d2d));
+        position: relative;
+        overflow: hidden;
+        margin: var(--space-3) 0 var(--space-2);
+      }
+      .story-art::before {
+        content: "";
+        position: absolute;
+        width: 70%;
+        height: 140%;
+        left: 18%;
+        top: -30%;
+        border: 0.15rem solid var(--art-line, var(--ui-bg, #faf7ef));
+        border-radius: 50%;
+        transform: rotate(28deg);
+      }
+      .story-art::after {
+        content: "FIELD NOTE 07";
+        position: absolute;
+        left: var(--space-2);
+        bottom: var(--space-2);
+        color: var(--ui-action-ink);
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+      }
+      .topic {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ui-action);
+        font-weight: 850;
+      }
+      .feature h2 {
+        font:
+          500 clamp(2.6rem, 5vw, 5.7rem) / 0.98 Georgia,
+          serif;
+        letter-spacing: -0.055em;
+        margin: 0.5rem 0 var(--space-2);
+      }
+      .feature .summary {
+        font:
+          1.25rem/1.55 Georgia,
+          serif;
+        max-width: 48rem;
+      }
+      .byline {
+        font-size: 0.82rem;
+        color: var(--ui-muted);
+      }
+      .rail {
+        display: grid;
+        align-content: start;
+      }
+      .rail article {
+        padding: 0 0 var(--space-3);
+        margin-bottom: var(--space-3);
+        border-bottom: 1px solid var(--ui-line);
+      }
+      .rail h3 {
+        font:
+          500 1.8rem/1.1 Georgia,
+          serif;
+        margin: 0.5rem 0;
+      }
+      .no-results {
+        grid-column: 1/-1;
+        border: 1px solid var(--ui-line);
+        padding: var(--space-4);
+        background: var(--ui-surface);
+      }
+      .article-view {
+        display: none;
+      }
+      .article-view.active {
+        display: block;
+      }
+      .index.hidden,
+      .controls.hidden {
+        display: none;
+      }
+      .article-header {
+        max-width: 68rem;
+        margin: auto;
+        padding: var(--space-6) var(--space-3) var(--space-4);
+        text-align: center;
+      }
+      .article-header h1 {
+        font:
+          500 clamp(3rem, 7vw, 7rem) / 0.96 Georgia,
+          serif;
+        letter-spacing: -0.06em;
+        margin: var(--space-2) auto;
+        max-width: 14ch;
+      }
+      .article-deck {
+        font:
+          1.35rem/1.5 Georgia,
+          serif;
+        max-width: 42rem;
+        margin: var(--space-2) auto;
+      }
+      .article-layout {
+        max-width: 74rem;
+        margin: auto;
+        padding: 0 var(--space-3) var(--space-8);
+        display: grid;
+        grid-template-columns: 14rem minmax(0, 42rem);
+        justify-content: center;
+        gap: var(--space-6);
+      }
+      .contents {
+        position: sticky;
+        top: var(--space-3);
+        align-self: start;
+        border-top: 1px solid var(--ui-ink);
+        padding-top: var(--space-2);
+      }
+      .contents a {
+        display: block;
+        padding: 0.45rem 0;
+        color: var(--ui-muted);
+      }
+      .article-body {
+        font:
+          1.12rem/1.78 Georgia,
+          serif;
+      }
+      .article-body h2 {
+        font:
+          500 2.4rem/1.1 Georgia,
+          serif;
+        letter-spacing: -0.04em;
+        margin: var(--space-6) 0 var(--space-2);
+      }
+      .article-body > p:first-child::first-letter {
+        float: left;
+        font-size: 5.3rem;
+        line-height: 0.75;
+        padding: 0.4rem 0.6rem 0 0;
+        color: var(--ui-action);
+      }
+      .pullquote {
+        margin: var(--space-6) 0;
+        padding: var(--space-3) 0;
+        border-block: 1px solid var(--ui-action);
+        font:
+          italic 2rem/1.25 Georgia,
+          serif;
+        color: var(--ui-action);
+      }
+      .figure {
+        margin: var(--space-4) 0;
+      }
+      .figure-art {
+        height: 20rem;
+        background: linear-gradient(
+          135deg,
+          var(--ui-action) 0 30%,
+          var(--ui-wash) 30% 65%,
+          var(--ui-ink) 65%
+        );
+      }
+      figcaption {
+        font:
+          0.82rem/1.5 system-ui,
+          sans-serif;
+        color: var(--ui-muted);
+        margin-top: 0.5rem;
+      }
+      .back {
+        display: block;
+        margin: var(--space-3) auto 0;
+        --button-bg: transparent;
+        --button-ink: var(--ui-ink);
+      }
+      .newsletter {
+        background: var(--ui-wash);
+        padding: var(--space-4);
+        margin-top: var(--space-6);
+      }
+      .newsletter h2 {
+        margin-top: 0;
+      }
+      .newsletter form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+      }
+      .newsletter label {
+        grid-column: 1/-1;
+      }
+      .newsletter input {
+        min-height: 2.75rem;
+        min-width: 0;
+        padding: 0.6rem;
+        border: 1px solid var(--ui-ink);
+        background: var(--ui-surface);
+      }
+      .form-status {
+        min-height: 1.6rem;
+        font:
+          0.9rem/1.5 system-ui,
+          sans-serif;
+        color: var(--ui-action);
+      }
+      footer {
+        border-top: 1px solid var(--ui-ink);
+        padding: var(--space-3);
+        text-align: center;
+      }
+      @media (max-width: 760px) {
+        .edition {
+          display: none;
+        }
+        .brand {
+          font-size: 4.5rem;
+        }
+        .controls {
+          grid-template-columns: 1fr;
+        }
+        .categories {
+          order: -1;
+        }
+        .stories {
+          grid-template-columns: 1fr;
+        }
+        .feature {
+          border-right: 0;
+          border-bottom: 1px solid var(--ui-line);
+          padding: 0 0 var(--space-3);
+        }
+        .article-layout {
+          grid-template-columns: 1fr;
+        }
+        .contents {
+          position: static;
+        }
+        .newsletter form {
+          grid-template-columns: 1fr;
+        }
+        .article-header {
+          padding-top: var(--space-4);
+        }
+        .article-body {
+          font-size: 1rem;
+        }
+        .figure-art {
+          height: 13rem;
+        }
+      }
+      @media (max-width: 360px) {
+        .brand {
+          font-size: 3.7rem;
+        }
+        .search-row {
+          flex-direction: column;
+        }
+        .search input {
+          border-right: 1px solid var(--ui-ink);
+          border-bottom: 0;
+        }
+        .results-meta {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      Margin is a fictional journal. Articles, authors, and dates are sample
+      content.
+    </div>
+    <header class="masthead">
+      <div class="masthead-top">
+        <a class="brand" id="brand-link" href="#journal">Margin</a>
+        <p class="edition">Issue 07<br />September 2026<br />London</p>
+      </div>
+    </header>
+    <main>
+      <section class="controls" aria-label="Publication discovery controls">
+        <div class="search">
+          <label for="search">Search the journal</label>
+          <div class="search-row">
+            <input
+              id="search"
+              type="search"
+              placeholder="Try “craft” or “cities”"
+            /><button type="button" id="search-button">Search</button>
+          </div>
+        </div>
+        <div class="categories" aria-label="Categories">
+          <button type="button" data-category="All" aria-pressed="true">
+            All</button
+          ><button
+            type="button"
+            class="secondary"
+            data-category="Craft"
+            aria-pressed="false"
+          >
+            Craft</button
+          ><button
+            type="button"
+            class="secondary"
+            data-category="Places"
+            aria-pressed="false"
+          >
+            Places</button
+          ><button
+            type="button"
+            class="secondary"
+            data-category="Practice"
+            aria-pressed="false"
+          >
+            Practice
+          </button>
+        </div>
+      </section>
+      <section class="index" id="journal">
+        <div class="results-meta">
+          <p id="result-count" aria-live="polite"></p>
+          <button class="secondary" type="button" id="reset">
+            Reset discovery
+          </button>
+        </div>
+        <div class="stories" id="stories"></div>
+      </section>
+      <article class="article-view" id="article">
+        <button class="back secondary" type="button" id="back">
+          ← Back to journal
+        </button>
+        <header class="article-header">
+          <p class="topic" id="article-topic">Craft · Field essay</p>
+          <h1 id="article-title" tabindex="-1">
+            The patient work of making a place
+          </h1>
+          <p class="article-deck" id="article-deck">
+            A visit to a small civic workshop asks what changes when repair
+            becomes a public ritual.
+          </p>
+          <p class="byline" id="article-byline">
+            By Rowan Hale · Published 4 September 2026 · Updated 6 September
+            2026 · 7 min read
+          </p>
+        </header>
+        <div class="article-layout">
+          <nav
+            class="contents"
+            id="article-contents"
+            aria-label="Article contents"
+          >
+            <strong>In this essay</strong
+            ><a href="#threshold">At the threshold</a
+            ><a href="#tools">Tools in common</a
+            ><a href="#measure">A different measure</a>
+          </nav>
+          <div class="article-body" id="article-body">
+            <p>
+              The first sound is not a saw or a drill. It is the soft exchange
+              of names. On Saturday mornings, people bring chairs with loose
+              joints, lamps with uncertain switches, and objects that have
+              outlived the instructions they arrived with. The workshop begins
+              by asking what each thing means to its keeper.
+            </p>
+            <h2 id="threshold">At the threshold</h2>
+            <p>
+              The building sits between a library and a bus stop, ordinary
+              enough to miss. Its largest window has been kept clear. Passers-by
+              can see work benches, careful hands, and the long pauses when a
+              repair resists an easy answer. That visibility changes the room
+              from a private service into a shared invitation.
+            </p>
+            <p>
+              The organizers call this the threshold: the moment a person
+              decides they know enough to enter, even if they do not know enough
+              to fix what they carry. Labels on the door name the day’s
+              materials in plain language. A low bench near the entrance lets a
+              visitor watch before committing.
+            </p>
+            <figure class="figure">
+              <div
+                class="figure-art"
+                role="img"
+                aria-label="Abstract sample illustration in rust, paper, and ink bands"
+              ></div>
+              <figcaption>
+                Sample illustration: the workshop’s long table interpreted as
+                three fields of shared attention.
+              </figcaption>
+            </figure>
+            <h2 id="tools">Tools in common</h2>
+            <p>
+              Tools are arranged by task rather than prestige. Measuring,
+              holding, opening, joining: each station begins with a verb.
+              Experienced volunteers work from the same drawers as first-time
+              visitors, removing the quiet hierarchy created by a locked cabinet
+              or an unexplained machine.
+            </p>
+            <blockquote class="pullquote">
+              The useful object is only half the outcome. The other half is a
+              person who knows where to begin next time.
+            </blockquote>
+            <p>
+              No repaired object leaves without a small handwritten record of
+              what changed. These notes are deliberately incomplete. They name
+              the fault, the choice made, and one thing to watch. They do not
+              pretend that a single successful afternoon creates certainty.
+            </p>
+            <h2 id="measure">A different measure</h2>
+            <p>
+              The workshop counts visits and completed repairs, but those
+              numbers sit beside another ledger: returned tools, introductions
+              made, skills offered, and questions still open. The result is less
+              a score than a portrait of capacity moving through a neighborhood.
+            </p>
+            <p>
+              This is sample editorial content written for the interface
+              demonstration. It does not document a real organization or provide
+              repair advice.
+            </p>
+            <aside class="newsletter">
+              <h2>Letters from the margin</h2>
+              <p>
+                Demonstrate the subscription response without sending or storing
+                an address.
+              </p>
+              <form id="subscribe">
+                <label for="email" class="topic">Email address</label
+                ><input
+                  id="email"
+                  type="email"
+                  required
+                  placeholder="reader@example.com"
+                /><button type="submit">Preview subscription</button>
+              </form>
+              <p
+                class="form-status"
+                id="subscribe-status"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </aside>
+          </div>
+        </div>
+      </article>
+    </main>
+    <footer>Margin · a fictional publication example</footer>
+    <script>
+      const articles = [
+        {
+          title: "The patient work of making a place",
+          category: "Craft",
+          summary:
+            "Inside a civic workshop where repair becomes a public ritual.",
+          author: "Rowan Hale",
+          date: "4 Sep 2026",
+          feature: true,
+        },
+        {
+          title: "A city mapped by its shade",
+          category: "Places",
+          summary:
+            "Following cool routes through streets built for a warmer century.",
+          author: "Mina Cole",
+          date: "29 Aug 2026",
+        },
+        {
+          title: "The useful pause",
+          category: "Practice",
+          summary: "Four makers on letting uncertainty improve the work.",
+          author: "Eli North",
+          date: "22 Aug 2026",
+        },
+        {
+          title: "Clay, memory, repetition",
+          category: "Craft",
+          summary:
+            "What a community kiln preserves beyond the objects it fires.",
+          author: "Samira West",
+          date: "16 Aug 2026",
+        },
+        {
+          title: "Reading the river wall",
+          category: "Places",
+          summary:
+            "How ordinary marks record a town’s changing relationship with water.",
+          author: "Theo Lane",
+          date: "8 Aug 2026",
+        },
+      ];
+      const articleCopy = {
+        "The patient work of making a place": {
+          opening:
+            "The first sound is not a saw or a drill. It is the soft exchange of names. People arrive with objects that have outlived their instructions, and the workshop begins by asking what each thing means to its keeper.",
+          sections: [
+            [
+              "At the threshold",
+              "The building sits between a library and a bus stop, ordinary enough to miss. Its clear front window turns careful work into a shared invitation.",
+              "A low bench lets a visitor watch before committing. The threshold works because it replaces assumed expertise with a visible place to begin.",
+            ],
+            [
+              "Tools in common",
+              "Tools are arranged by task rather than prestige: measuring, holding, opening, and joining. Each station begins with a verb.",
+              "A short handwritten record leaves with every repaired object. It names the fault, the choice made, and one thing to watch next.",
+            ],
+            [
+              "A different measure",
+              "The workshop counts completed repairs beside returned tools, introductions made, skills offered, and questions still open.",
+              "The result is less a score than a portrait of practical capacity moving through a neighborhood.",
+            ],
+          ],
+        },
+        "A city mapped by its shade": {
+          opening:
+            "At noon, the useful map of this fictional city is drawn by awnings, plane trees, arcades, and the long shadow of a railway wall. Distance matters less than exposure.",
+          sections: [
+            [
+              "The cool route",
+              "A shaded journey bends away from the shortest line. It joins small refuges into a route a person can understand before leaving home.",
+              "The map pairs every cool segment with a plain-language landmark, so the path works without relying on color.",
+            ],
+            [
+              "Reading the gaps",
+              "The most revealing spaces are the breaks between shaded streets. A bare crossing can make an otherwise comfortable route unusable.",
+              "Residents annotate those gaps with time of day and places to pause, turning a fixed diagram into a record of lived conditions.",
+            ],
+            [
+              "Planning for change",
+              "Shade shifts by season and hour. The sample map states when observations were made instead of presenting them as permanent truth.",
+              "That modest provenance changes the design question from where shade is to when a route can offer it.",
+            ],
+          ],
+        },
+        "The useful pause": {
+          opening:
+            "Four fictional makers describe the pause as part of practice: a deliberate interval for noticing what the work has begun to ask.",
+          sections: [
+            [
+              "Before the answer",
+              "A pause is useful when it has a question. The ceramicist waits for the form to settle; the editor reads the argument aloud.",
+              "Neither interval is empty. Each creates a different kind of evidence before the next decision.",
+            ],
+            [
+              "Keep the question visible",
+              "The makers leave short prompts beside unfinished work. The prompt holds context without pretending the answer is known.",
+              "This simple record also makes returning easier after an interruption, especially when several people share the work.",
+            ],
+            [
+              "Resume with intent",
+              "A useful pause ends with a named next move. It may be small: compare two edges, reread one paragraph, or ask one person.",
+              "The measure is not speed. It is whether the next action responds to what the work revealed.",
+            ],
+          ],
+        },
+        "Clay, memory, repetition": {
+          opening:
+            "In a fictional community kiln, repeated gestures carry knowledge that no finished vessel can show on its own.",
+          sections: [
+            [
+              "Marks of handling",
+              "Shelves, bats, and aprons collect traces of the sequence: lift, turn, test, and set down.",
+              "New members learn by reading these marks beside spoken guidance, not by imitating a perfect object.",
+            ],
+            [
+              "The shared firing",
+              "A kiln load connects choices made by many hands. Notes beside each piece state the clay body and intended surface without promising the outcome.",
+              "Opening day becomes a comparison between intention and evidence, held without blame.",
+            ],
+            [
+              "What remains",
+              "The useful archive includes failures, test tiles, and changed recipes. Repetition becomes memory when its conditions are recorded.",
+              "This sample story treats craft as collective attention rather than a claim about a real studio.",
+            ],
+          ],
+        },
+        "Reading the river wall": {
+          opening:
+            "A fictional river wall holds dates, faded paint, repaired joints, and small unofficial marks left after high water.",
+          sections: [
+            [
+              "A public record",
+              "The wall makes change visible at walking pace. Its marks invite comparison, but each needs context before it becomes evidence.",
+              "Local notes distinguish measured levels from memories and photographs, keeping different kinds of truth legible.",
+            ],
+            [
+              "Between events",
+              "Most days the river sits well below the marked stones. The quiet interval is when drains are cleared and cracks are noticed.",
+              "Maintenance entries give those ordinary acts a place beside the dramatic flood lines.",
+            ],
+            [
+              "What the wall cannot say",
+              "A fixed mark records a level, not the duration, cause, or uneven effects of the water behind it.",
+              "Reading responsibly means pairing the visible trace with dated sources and the experiences that a single line leaves out.",
+            ],
+          ],
+        },
+      };
+      let category = "All",
+        query = "";
+      const stories = document.getElementById("stories"),
+        count = document.getElementById("result-count");
+      const articleButton = (item, featured) =>
+        `<article class="${featured ? "feature" : ""}"><button class="story-button" type="button" data-article="${item.title}"><span class="topic">${item.category}</span><${featured ? "h2" : "h3"}>${item.title}</${featured ? "h2" : "h3"}><p class="${featured ? "summary" : ""}">${item.summary}</p>${featured ? '<div class="story-art" aria-hidden="true"></div>' : ""}<p class="byline">By ${item.author} · ${item.date}</p></button></article>`;
+      const openArticle = (event) => {
+        const item = articles.find(
+          (article) => article.title === event.currentTarget.dataset.article,
+        );
+        const copy = articleCopy[item.title];
+        document.querySelector(".index").classList.add("hidden");
+        document.querySelector(".controls").classList.add("hidden");
+        document.getElementById("article").classList.add("active");
+        document.getElementById("article-topic").textContent =
+          `${item.category} · Sample essay`;
+        document.getElementById("article-title").textContent = item.title;
+        document.getElementById("article-deck").textContent = item.summary;
+        document.getElementById("article-byline").textContent =
+          `By ${item.author} · Published ${item.date} · Sample editorial content`;
+        document.getElementById("article-contents").innerHTML =
+          `<strong>In this essay</strong>${copy.sections.map((section, index) => `<a href="#section-${index}">${section[0]}</a>`).join("")}`;
+        document.getElementById("article-body").innerHTML =
+          `<p>${copy.opening}</p>${copy.sections.map((section, index) => `<h2 id="section-${index}">${section[0]}</h2><p>${section[1]}</p><p>${section[2]}</p>`).join("")}<p>This is fictional sample editorial content created for the interface demonstration.</p><aside class="newsletter"><h2>Letters from the margin</h2><p>Demonstrate the subscription response without sending or storing an address.</p><form id="subscribe"><label for="email" class="topic">Email address</label><input id="email" type="email" required placeholder="reader@example.com"><button type="submit">Preview subscription</button></form><p class="form-status" id="subscribe-status" role="status" aria-live="polite"></p></aside>`;
+        document
+          .getElementById("subscribe")
+          .addEventListener("submit", previewSubscription);
+        document.getElementById("article-title").focus();
+        window.scrollTo(0, 0);
+      };
+      const render = () => {
+        const filtered = articles.filter(
+          (item) =>
+            (category === "All" || item.category === category) &&
+            `${item.title} ${item.summary} ${item.author}`
+              .toLowerCase()
+              .includes(query),
+        );
+        count.textContent = `${filtered.length} ${filtered.length === 1 ? "story" : "stories"}${category === "All" ? "" : ` in ${category}`}${query ? ` matching “${document.getElementById("search").value.trim()}”` : ""}`;
+        if (!filtered.length) {
+          stories.innerHTML =
+            '<div class="no-results"><h2>No stories found</h2><p>Try another term or reset the journal to see every sample story.</p><button type="button" id="empty-reset">Reset discovery</button></div>';
+          document
+            .getElementById("empty-reset")
+            .addEventListener("click", reset);
+          return;
+        }
+        const featured = filtered.find((item) => item.feature) || filtered[0];
+        stories.innerHTML =
+          articleButton(featured, true) +
+          `<div class="rail">${filtered
+            .filter((item) => item !== featured)
+            .map((item) => articleButton(item, false))
+            .join("")}</div>`;
+        stories
+          .querySelectorAll("[data-article]")
+          .forEach((button) => button.addEventListener("click", openArticle));
+      };
+      const reset = () => {
+        category = "All";
+        query = "";
+        document.getElementById("search").value = "";
+        document.querySelectorAll("[data-category]").forEach((button) => {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.category === "All"),
+          );
+          button.classList.toggle(
+            "secondary",
+            button.dataset.category !== "All",
+          );
+        });
+        render();
+        document.getElementById("search").focus();
+      };
+      document.querySelectorAll("[data-category]").forEach((button) =>
+        button.addEventListener("click", () => {
+          category = button.dataset.category;
+          document.querySelectorAll("[data-category]").forEach((item) => {
+            const active = item === button;
+            item.setAttribute("aria-pressed", String(active));
+            item.classList.toggle("secondary", !active);
+          });
+          render();
+        }),
+      );
+      const search = () => {
+        query = document.getElementById("search").value.trim().toLowerCase();
+        render();
+      };
+      document
+        .getElementById("search-button")
+        .addEventListener("click", search);
+      document.getElementById("search").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") search();
+      });
+      document.getElementById("reset").addEventListener("click", reset);
+      const returnToIndex = () => {
+        document.getElementById("article").classList.remove("active");
+        document.querySelector(".index").classList.remove("hidden");
+        document.querySelector(".controls").classList.remove("hidden");
+        document
+          .querySelector(
+            `[data-article="${CSS.escape(document.getElementById("article-title").textContent)}"]`,
+          )
+          ?.focus();
+      };
+      document.getElementById("back").addEventListener("click", returnToIndex);
+      document
+        .getElementById("brand-link")
+        .addEventListener("click", (event) => {
+          if (document.getElementById("article").classList.contains("active")) {
+            event.preventDefault();
+            returnToIndex();
+          }
+        });
+      function previewSubscription(event) {
+        event.preventDefault();
+        const input = document.getElementById("email");
+        document.getElementById("subscribe-status").textContent = input.validity
+          .valid
+          ? "Preview complete. Nothing was subscribed, stored, or sent."
+          : "Enter an email in the form name@example.com to preview the response.";
+        if (!input.validity.valid) input.focus();
+      }
+      document
+        .getElementById("subscribe")
+        .addEventListener("submit", previewSubscription);
+      render();
+    </script>
+  </body>
+</html>
