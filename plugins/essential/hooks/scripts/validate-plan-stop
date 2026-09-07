@@ -11,10 +11,27 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPTS_DIR/context.sh"
 DIRECTIONS_DIR="$(cd "$SCRIPTS_DIR/../../directions" && pwd)"
 
-stop_with_feedback() {
+plan_feedback_reason() {
   local reason="$1"
+  if [[ "$reason" == *"$DIRECTIONS_DIR/plan.md"* ]]; then
+    printf '%s' "$reason"
+  else
+    printf '%s Read %s/plan.md before correcting the plan.' "$reason" "$DIRECTIONS_DIR"
+  fi
+}
+
+stop_system_message() {
+  local reason
+  reason="$(plan_feedback_reason "$1")"
+  jq -cn --arg reason "$reason" '{systemMessage: $reason}'
+  exit 0
+}
+
+stop_with_feedback() {
+  local reason
   local active="$2"
   local retry_flag="$3"
+  reason="$(plan_feedback_reason "$1")"
   if [[ "$active" == "true" && -e "$retry_flag" ]]; then
     reason="Plan validation still failed after one corrective continuation. ${reason}"
     jq -cn --arg reason "$reason" \
@@ -26,18 +43,23 @@ stop_with_feedback() {
   exit 0
 }
 
-input="$(cat)"
-if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then
-  jq -cn '{systemMessage: "Plan validation is unavailable: expected a JSON Stop event object."}'
-  exit 0
-fi
-
 harness="$(resolve_harness)" || {
   echo "plugin root unset" >&2
   exit 1
 }
 if [[ "$harness" != "codex" ]]; then
   exit 0
+fi
+if ! validation_is_enabled; then
+  jq -cn --arg reason \
+    "Plan and question validation is disabled because ESSENTIAL_VALIDATION_ENABLED=0." \
+    '{systemMessage: $reason}'
+  exit 0
+fi
+
+input="$(cat)"
+if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then
+  stop_system_message "Plan validation is unavailable: expected a JSON Stop event object."
 fi
 
 active="$(jq -r '(.stop_hook_active // .stopHookActive // false) == true' <<<"$input")"
@@ -57,8 +79,7 @@ else
   if [[ -z "$turn_id" || -z "$transcript_path" || ! -f "$transcript_path" || ! -r "$transcript_path" ]] ||
      [[ ! -s "$transcript_path" ]] ||
      ! jq -R 'select(length > 0) | fromjson' "$transcript_path" >/dev/null 2>&1; then
-    jq -cn --arg reason "$unavailable_reason" '{systemMessage: $reason}'
-    exit 0
+    stop_system_message "$unavailable_reason"
   fi
   encoded_message="$(jq -Rr --arg turn_id "$turn_id" '
     fromjson?
@@ -72,8 +93,7 @@ else
     | @base64
   ' "$transcript_path" | tail -n 1)"
   if [[ -z "$encoded_message" ]]; then
-    jq -cn --arg reason "$unavailable_reason" '{systemMessage: $reason}'
-    exit 0
+    stop_system_message "$unavailable_reason"
   fi
   message="$(printf '%s' "$encoded_message" | jq -Rr '@base64d')"
 fi
@@ -127,9 +147,6 @@ fi
 
 decision="$(jq -r '.hookSpecificOutput.permissionDecision // empty' <<<"$validator_output")"
 if [[ "$decision" != "deny" ]]; then
-  if ! jq -e '.hookSpecificOutput | .hookEventName == "PreToolUse" and (.additionalContext | type == "string") and (has("permissionDecision") | not)' <<<"$validator_output" >/dev/null; then
-    stop_with_feedback "$unavailable_reason" "$active" "$retry_flag"
-  fi
   rm -f "$retry_flag"
   exit 0
 fi

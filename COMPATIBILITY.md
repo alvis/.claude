@@ -4,6 +4,14 @@ This manually maintained matrix covers the 53 skills and 22 agents currently shi
 
 Claude Code, Codex, and Grok Build are native targets. OpenCode support targets stable V1 through `scripts/install_opencode.ts`; OpenCode V2 and `opencode2` are unsupported.
 
+## Validation rollout control
+
+Plan and question validation is enabled by default. Setting `ESSENTIAL_VALIDATION_ENABLED=0` in the harness process environment disables both validators; every other value, including an unset variable, keeps them enabled. Claude Code, Codex, and Grok Build pass their environment to native hook commands. The OpenCode V1 adapter passes its process environment to each projected hook child while setting the projected `PLUGIN_ROOT`, so the same setting controls all four harnesses.
+
+Disabled PreToolUse hooks allow the tool call and report that validation is disabled in the harness-specific feedback envelope. The Codex Stop validator reports the disabled state before reading its event and does not create a pending-plan marker. Roll out with the default enabled. To roll back, launch the affected harness with `ESSENTIAL_VALIDATION_ENABLED=0`; no source or projection rollback is required.
+
+Remove the switch after the invalid-input, corrective-feedback, and accepted-correction paths are live-verified in all four harnesses and the following release completes without validation-caused incidents. That release boundary gives installed projections one rollback window. The cleanup change removes the shared predicate, validator branches, rollout regressions, and this section. Current live evidence covers the pre-review Codex plan hook bytes only; these feedback and rollout-control revisions have regression evidence until live acceptance is repeated.
+
 ## Legend
 
 - ✅ Native/full support

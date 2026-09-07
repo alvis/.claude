@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -61,6 +61,8 @@ function createAssistantMessage(
 
 function runHook({
   active = false,
+  eventInput,
+  validationEnabled = "1",
   compatibilityRoot = false,
   environment = "codex",
   lines = [createAssistantMessage(turnId, validPlan)],
@@ -71,6 +73,8 @@ function runHook({
   transcriptPath,
 }: {
   readonly active?: boolean;
+  readonly eventInput?: string;
+  readonly validationEnabled?: string;
   readonly compatibilityRoot?: boolean;
   readonly environment?: "claude" | "codex" | "grok";
   readonly lines?: readonly string[];
@@ -92,6 +96,7 @@ function runHook({
     delete environmentVariables.PLUGIN_ROOT;
     delete environmentVariables.GROK_PLUGIN_ROOT;
     environmentVariables.TMPDIR = root;
+    environmentVariables.ESSENTIAL_VALIDATION_ENABLED = validationEnabled;
     environmentVariables[
       environment === "claude"
         ? "CLAUDE_PLUGIN_ROOT"
@@ -105,7 +110,7 @@ function runHook({
     return spawnSync("/bin/bash", ["-c", stopCommand], {
       encoding: "utf8",
       env: environmentVariables,
-      input: JSON.stringify({
+      input: eventInput ?? JSON.stringify({
         last_assistant_message: lastAssistantMessage,
         hook_event_name: "Stop",
         permission_mode: permissionMode,
@@ -128,6 +133,28 @@ function parseHookOutput(
 }
 
 describe("Codex plan Stop validator", () => {
+  it("should direct malformed Stop events to the resolved plan instructions", () => {
+    expect(parseHookOutput(runHook({ eventInput: "not json" }))).toEqual({
+      systemMessage: expect.stringContaining(resolve(pluginRoot, "directions/plan.md")),
+    });
+  });
+
+  it("should bypass malformed Stop input without leaving a pending correction when disabled", () => {
+    const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-disabled-"));
+    try {
+      for (const options of [{ eventInput: "not json" }, { lastAssistantMessage: "<proposed_plan>" }]) {
+        expect(parseHookOutput(runHook({ ...options, runtimeRoot: root, validationEnabled: "0" }))).toEqual({
+          systemMessage: expect.stringMatching(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i),
+        });
+      }
+      expect(readdirSync(root)).toEqual(["transcript.jsonl"]);
+      const resumed = runHook({ runtimeRoot: root, lastAssistantMessage: "An ordinary acknowledgement." });
+      expect(resumed.stdout).toBe("");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     ["array", "[]"],
     ["string", '"invalid"'],
@@ -144,6 +171,7 @@ describe("Codex plan Stop validator", () => {
         decision: "block",
         reason: expect.stringContaining("Plan validation is unavailable"),
       });
+      expect(decision.reason).toContain(resolve(selectedPluginRoot, "directions/plan.md"));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -212,6 +240,7 @@ describe("Codex plan Stop validator", () => {
     expect(decision.reason).toContain(
       "exactly one complete <proposed_plan> block",
     );
+    expect(decision.reason).toContain(resolve(pluginRoot, "directions/plan.md"));
   });
 
   it("should use the newest plan for the current turn only", () => {
@@ -378,6 +407,7 @@ describe("Codex plan Stop validator", () => {
       systemMessage: expect.stringContaining("Plan validation is unavailable"),
     });
     expect(decision.systemMessage).not.toContain(transcriptPath);
+    expect(decision.systemMessage).toContain(resolve(pluginRoot, "directions/plan.md"));
   });
 
   it("should report malformed transcript JSON as unavailable", () => {

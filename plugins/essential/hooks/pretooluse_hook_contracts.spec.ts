@@ -571,3 +571,23 @@ describe("fail-open behavior", () => {
     },
   );
 });
+
+describe("validation rollout control", () => {
+  it.each(HARNESS_ROOT_VARIABLES)("should bypass malformed plans and questions with disabled feedback under %s", (variable) => {
+    for (const [matcher, toolInput] of [[plans, { plan: "incomplete" }], [questions, { questions: [] }]] as const) {
+      const output = runHookWithVariables(matcher, toolInput, {
+        [variable]: plugin,
+        ESSENTIAL_VALIDATION_ENABLED: "0",
+      });
+      expect(output).toEqual(variable === "GROK_PLUGIN_ROOT" ? {
+        decision: "allow",
+        reason: expect.stringMatching(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i),
+      } : {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          additionalContext: expect.stringMatching(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i),
+        },
+      });
+    }
+  });
+});

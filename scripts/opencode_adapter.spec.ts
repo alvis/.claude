@@ -179,6 +179,22 @@ describe("opencode adapter manifest validation", () => {
     expect({ ...process.env }).toEqual(environmentBefore);
   });
 
+  it.each([
+    ["question", { questions: [] }],
+    ["plan_exit", { plan: "incomplete" }],
+  ])("should deliver disabled validation feedback for malformed OpenCode %s input", async (tool, args) => {
+    vi.stubEnv("ESSENTIAL_VALIDATION_ENABLED", "0");
+    const { AlvisMarketplace } = await loadAdapter();
+    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    const input = { callID: `disabled-${tool}`, sessionID: `disabled-${tool}`, tool };
+
+    await hooks["tool.execute.before"](input, { args });
+    const result = { metadata: {}, output: "original output", title: "Tool" };
+    await hooks["tool.execute.after"]({ ...input, args }, result);
+
+    expect(result.output).toMatch(/disabled.*ESSENTIAL_VALIDATION_ENABLED=0/i);
+  });
+
   it("should reject malformed OpenCode question input before execution", async () => {
     const { AlvisMarketplace } = await loadAdapter();
     const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
@@ -412,7 +428,9 @@ describe("opencode adapter manifest validation", () => {
     await expect(hooks["tool.execute.before"]({ ...input, callID: "still-validate" }, { args: {} })).rejects.toThrow(/missing headings/);
   });
 
-  it("should deliver approval instructions after a successful native plan exit", async () => {
+  it.each(["1", "0"])("should deliver approval instructions after a successful native plan exit with validation %s", async (validation) => {
+    vi.stubEnv("ESSENTIAL_VALIDATION_ENABLED", validation);
+    vi.stubEnv("ESSENTIAL_APPROVED_PLAN_AUTOMATION", "1");
     const directory = join(sandbox.project, ".opencode", "plans");
     mkdirSync(directory, { recursive: true });
     const approvedPlan = "# Goal\nShip.\n## Requirements\nVerify.\n## Boundary\nHooks.\n## Direction\nTest.\n## Context\nCurrent.\n";

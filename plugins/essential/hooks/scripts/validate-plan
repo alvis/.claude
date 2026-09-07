@@ -20,6 +20,11 @@ allow() {
     "Remind you to follow instructions in essential:directions/plan.md"
 }
 
+if ! validation_is_enabled; then
+  output_pretooluse_decision "allow" \
+    "Plan and question validation is disabled because ESSENTIAL_VALIDATION_ENABLED=0."
+fi
+
 input=$(cat)
 
 if ! printf '%s' "$input" | jq -se 'length == 1 and (.[0] | type == "object")' >/dev/null 2>&1; then

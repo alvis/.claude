@@ -557,6 +557,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
   const approvalAutomationEnabled =
     process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === undefined ||
     process.env.ESSENTIAL_APPROVED_PLAN_AUTOMATION === "1"
+  const validationEnabled = process.env.ESSENTIAL_VALIDATION_ENABLED !== "0"
   const pendingAdvice = new Map()
   const pendingPlans = new Map()
 
@@ -678,7 +679,7 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
       const advice = []
       let currentPlan
       for (const { plugin, receipt } of await bindingsForTool("before", input)) {
-        const toolInput = input.tool === "plan_exit"
+        const toolInput = input.tool === "plan_exit" && validationEnabled
           ? {
               ...output.args,
               plan: (currentPlan ??= await readSessionPlan(
@@ -702,6 +703,34 @@ export const AlvisMarketplace = async ({ client, directory, worktree }) => {
       }
       if (advice.length > 0) {
         pendingAdvice.set(adviceKey(input.sessionID, input.callID), advice)
+      }
+      if (
+        !validationEnabled &&
+        approvalAutomationEnabled &&
+        input.tool === "plan_exit" &&
+        currentPlan === undefined &&
+        typeof client.session?.get === "function" &&
+        typeof client.project?.current === "function"
+      ) {
+        try {
+          currentPlan = await readSessionPlan(
+            client,
+            input.sessionID,
+            directory,
+            worktree,
+          )
+        } catch (error) {
+          const exception = /** @type {Error} */ (error)
+          if (!exception.message.startsWith("Plan validation is unavailable:")) {
+            throw error
+          }
+          await logWarning(
+            client,
+            manifest.manager,
+            "could not capture plan approval while validation is disabled",
+            { error: exception.message },
+          )
+        }
       }
       if (
         approvalAutomationEnabled &&
