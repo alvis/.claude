@@ -26,7 +26,7 @@ Do not report branch names, PR titles, draft state, labels, stack position, hist
 - DO NOT mark a breaking change with `!` and omit its `BREAKING CHANGE:` footer [`CMT-HEAD-03`]
 - DO NOT write a past-tense subject, a trailing period, an emoji, or over 72 characters [`CMT-SUBJ-01`]
 - DO NOT write a body without blank-line separation, wrapped past 72 characters, or restating the diff [`CMT-BODY-01`]
-- DO NOT close an issue with anything but `Closes #<number>`, or omit `Reverts <sha>` from a revert [`CMT-BODY-02`]
+- DO NOT include issue-closing directives in commit text, or omit `Reverts <sha>` from a revert [`CMT-BODY-02`]
 
 ## Rule Matrix
 
@@ -37,4 +37,4 @@ Do not report branch names, PR titles, draft state, labels, stack position, hist
 | `CMT-HEAD-03` | `!` without a `BREAKING CHANGE:` footer | `feat(auth)!: drop /v1/login` with no footer |
 | `CMT-SUBJ-01` | Past tense, trailing period, emoji, or over-long | `feat: Added new feature.` |
 | `CMT-BODY-01` | Unseparated, unwrapped, or what-not-why body | Body restating the changed file list |
-| `CMT-BODY-02` | Wrong closure keyword or missing revert sha | `Fixes #482` |
+| `CMT-BODY-02` | Issue-closing directive or missing revert sha | Revert without its target commit |
