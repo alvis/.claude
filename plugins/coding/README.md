@@ -27,6 +27,7 @@ Two mechanisms make saves and publication safe around AI-driven edits:
 | `coding:document` | Source-backed package and architecture docs after meaningful changes. |
 | `coding:commit` | All history mutation: scoped saves, split/absorb, stacking, reordering. |
 | `coding:finalize-commits` | Isolated per-commit QA before publishing a stack. |
+| `coding:issue` | Create, update, find, and triage GitHub issues with repository templates, bounded search, and code-linked evidence. |
 | `coding:pr` | Create or update PRs initially as drafts, promote approved surfaces to ready for review, publish external reviews, and merge linear stacks through explicit subcommands. |
 | `coding:setup-project` | Project/monorepo scaffolding when structure is missing. |
 | `coding:cleanup` | Evidence-based retirement of stale branches, worktrees, and work dirs. |
