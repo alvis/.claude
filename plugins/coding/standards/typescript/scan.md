@@ -6,6 +6,8 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 
 > **Scanner-backed rules**: `TYP-CORE-03`, `TYP-CORE-05`, `TYP-IMPT-03`, `TYP-IMPT-07`, `TYP-IMPT-08`, `TYP-MODL-04`, and `TYP-TYPE-08` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging. A confirmed `TYP-IMPT-08` import path is a hard violation in JavaScript or TypeScript.
 
+`TYP-TYPE-09` requires the package-wide `coding:scripts/analyze-typescript.ts` scan described in `coding:skills/lint/SKILL.md`, outside per-file batches. It uses Bun auto-resolution for `ts-morph@28`; allow registry access on a cold cache. Loading or parse failures leave analysis incomplete. Extraction proposals are advisory and separate from violations; review [the rule](rules/typ-type-09.md) and ask at scan completion before creating a shared type.
+
 ## Quick Scan
 
 - DO NOT use boundary values without explicit domain typing [`TYP-CORE-01`]
@@ -40,6 +42,8 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 - DO NOT cast unknown input without validation [`TYP-TYPE-06`]
 - DO NOT misuse testing-only cast/typing exception patterns in production paths, such as `as unknown as User` or `as never` [`TYP-TYPE-07`]
 - DO NOT defensively narrow caught exceptions with `error instanceof Error ? error.message : String(error)`; cast directly as `Error` or use an existing project helper such as `ensureError(exception)` [`TYP-TYPE-08`]
+
+- DO NOT repeat an available shared contract with matching structure and meaning; at two identical inline object types per package, check for reuse and otherwise propose extraction after the full scan, requiring confirmation before creation [`TYP-TYPE-09`]
 
 ## Rule Matrix
 
@@ -76,3 +80,4 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 | `TYP-TYPE-06` | Unknown input is cast without validation | `const user = payload as User` |
 | `TYP-TYPE-07` | Testing exception pattern is misused in production/runtime paths | `const u = {} as unknown as User`; `fn(partialClient as never)` |
 | `TYP-TYPE-08` | Catch block uses defensive `instanceof Error` narrowing or `String(error)` instead of casting to `Error` | `const m = e instanceof Error ? e.message : String(e)`; `log.error(String(error))` |
+| `TYP-TYPE-09` | Inline type duplicates an available shared contract, or repeated-object extraction bypasses confirmation | `(value: Item) => boolean` when `Predicate<Item>` owns that contract; creating a shared interface before confirmation |

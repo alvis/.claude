@@ -12,6 +12,7 @@ import {
   mkdtempSync,
   openSync,
   readFileSync,
+  readdirSync,
   readlinkSync,
   realpathSync,
   rmSync,
@@ -48,6 +49,14 @@ interface CommandResult {
   exitCode: number;
   stderr: Uint8Array;
   stdout: Uint8Array;
+}
+
+interface RepositoryContext {
+  readonly root: string;
+  readonly identity: JsonObject;
+  readonly resolver: string;
+  state?: JsonObject;
+  snapshot?: JsonObject;
 }
 
 interface Arguments {
@@ -227,9 +236,10 @@ const JJ_STATE_FIELDS = new Set([
 const SUBCOMMAND_OPTIONS: Readonly<
   Record<Arguments["action"], readonly string[]>
 > = {
-  build: ["--repo", "--work-root", "--base-rev", "--scope"],
-  preflight: ["--repo", "--manifest", "--manifest-sha256"],
+  build: ["--state-resolver", "--repo", "--work-root", "--base-rev", "--scope"],
+  preflight: ["--state-resolver", "--repo", "--manifest", "--manifest-sha256"],
   verify: [
+    "--state-resolver",
     "--repo",
     "--manifest",
     "--manifest-sha256",
@@ -238,6 +248,7 @@ const SUBCOMMAND_OPTIONS: Readonly<
     "--saved-rev",
   ],
   recover: [
+    "--state-resolver",
     "--repo",
     "--manifest",
     "--manifest-sha256",
@@ -256,7 +267,7 @@ class ContractError extends Error {}
  */
 export function main(argv = commandLineArguments()): number {
   const args = parseArguments(argv);
-  if (!args) return process.exitCode ?? 0;
+  if (!args) return Number(process.exitCode ?? 0);
   try {
     const output =
       args.action === "build"
@@ -279,7 +290,10 @@ export function main(argv = commandLineArguments()): number {
 }
 
 function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
-  const [repo, identity] = repositoryIdentity(values["--repo"]!);
+  const [repo, identity] = repositoryIdentity(
+    values["--repo"]!,
+    values["--state-resolver"]!,
+  );
   const requestPath = absoluteCliPath(values["--scope"], "--scope");
   const [request] = loadJson(requestPath);
   const workId = request.work_id;
@@ -287,6 +301,7 @@ function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
     throw new ContractError(
       "scope request work_id must match the resolver lowercase-kebab grammar",
     );
+  resolveState(repo, workId);
   const workRoot = validateWorkArtifacts(
     repo,
     values["--work-root"]!,
@@ -299,6 +314,7 @@ function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
   );
   const [publication, selected] = normalizePublicationRequest(repo, request);
   const publicationByPath = objectByPath(publication);
+  const buildState = captureBuildState(repo, identity, selected);
   const dirty = statusInventory(repo);
   const dirtyPublication = [
     ...directPublicationDirty(repo, publicationByPath),
@@ -348,22 +364,24 @@ function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
     schema: SCHEMA,
     work_id: workId,
     repository: identity,
+    state_workspace: repo.state!,
     base_rev: baseRevision,
-    build_state: captureBuildState(repo, identity, selected),
-    publication_paths: publication,
+    build_state: buildState,
+    publication_paths: publication.map((entry) => ({ ...entry })),
     selected_paths: selectedEntries,
-    excluded_dirty_paths: excluded,
+    excluded_dirty_paths: excluded.map((entry) => ({ ...entry })),
     scope_attestation: {
       complete: true,
       generated_file_manifests: sourceBindings,
       excluded_owner: "user",
     },
   };
+  requireStableWorkspace(repo);
   const raw = canonicalJson(manifest);
   const digest = sha256(raw);
   const outputLeaf = `${digest}.json`;
   const output = withSecureDirectory(
-    repo,
+    stateRoot(repo),
     [".state", "works", workId, "artifacts", "history", "save-manifests"],
     true,
     (directory) => {
@@ -384,7 +402,10 @@ function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
 function commandPreflight(
   values: Readonly<Record<string, string>>,
 ): JsonObject {
-  const [repo] = repositoryIdentity(values["--repo"]!);
+  const [repo] = repositoryIdentity(
+    values["--repo"]!,
+    values["--state-resolver"]!,
+  );
   const manifestPath = absoluteCliPath(values["--manifest"], "--manifest");
   const [manifest, digest] = validateManifest(
     repo,
@@ -402,12 +423,21 @@ function commandPreflight(
   const state = validateManifestState(repo, manifest, false);
   const selected = Object.keys(state.selected).sort(comparePythonStrings);
   rejectSelectedCleanFilters(repo, selected);
+  if (repo.identity.vcs === "jj-workspace")
+    return workspacePreflight(
+      repo,
+      manifestPath,
+      digest,
+      selected,
+      state.excluded,
+      buildState,
+    );
   if (
     runGit(repo, ["rev-parse", "-q", "--verify", "MERGE_HEAD"], false)
       .exitCode === 0
   )
     throw new ContractError("a merge in progress cannot be isolated safely");
-  const excludedRaw = canonicalJson(state.excluded);
+  const excludedRaw = canonicalJson(pathInventoryJson(state.excluded));
   const oldHead = currentHead(repo);
   const indexPathRaw = decodeTrimmedPath(
     runGit(repo, ["rev-parse", "--path-format=absolute", "--git-path", "index"])
@@ -415,7 +445,7 @@ function commandPreflight(
   );
   const indexPath = isAbsolute(indexPathRaw)
     ? indexPathRaw
-    : join(repo, indexPathRaw);
+    : join(repo.root, indexPathRaw);
   const indexExisted = existsSync(indexPath);
   const indexBytes = indexExisted ? readFileSync(indexPath) : new Uint8Array();
   const indexDigest = sha256(indexBytes);
@@ -441,7 +471,9 @@ function commandPreflight(
     index_backup_sha256: indexDigest,
     selected_paths: selected,
     excluded_inventory_sha256: sha256(excludedRaw),
-    excluded_dirty_paths: Object.values(state.excluded),
+    excluded_dirty_paths: Object.values(state.excluded).map((entry) => ({
+      ...entry,
+    })),
     literal_pathspec_sha256: pathspecSha,
     jj_preflight_state: buildState.jj,
   };
@@ -450,8 +482,8 @@ function commandPreflight(
   const snapshotLeaf = `${digest}.preflight.${snapshotSha}.json`;
   const snapshotPath = join(directoryPath, snapshotLeaf);
   withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, directoryPath),
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), directoryPath),
     false,
     (directory) => {
       writeOrVerifyImmutable(directory, pathspecLeaf, pathspecRaw, 0o400);
@@ -472,8 +504,71 @@ function commandPreflight(
   };
 }
 
+function workspacePreflightFields(): Set<string> {
+  return new Set([
+    "schema",
+    "manifest_path",
+    "manifest_sha256",
+    "old_head",
+    "selected_paths",
+    "excluded_inventory_sha256",
+    "excluded_dirty_paths",
+    "jj_preflight_state",
+  ]);
+}
+
+function workspacePreflight(
+  repo: RepositoryContext,
+  manifestPath: string,
+  digest: string,
+  selected: string[],
+  excluded: Record<string, PathState>,
+  buildState: JsonObject,
+): JsonObject {
+  const snapshot: JsonObject = {
+    schema: "state-scoped-save-preflight/v1",
+    manifest_path: manifestPath,
+    manifest_sha256: digest,
+    old_head: buildState.head_commit!,
+    selected_paths: selected,
+    excluded_inventory_sha256: sha256(
+      canonicalJson(pathInventoryJson(excluded)),
+    ),
+    excluded_dirty_paths: Object.values(excluded).map((entry) => ({ ...entry })),
+    jj_preflight_state: buildState.jj!,
+  };
+  requireStableWorkspace(repo);
+  const raw = canonicalJson(snapshot);
+  const digestSnapshot = sha256(raw);
+  const leaf = `${digest}.preflight.${digestSnapshot}.json`;
+  const directoryPath = dirname(manifestPath);
+  const output = withSecureDirectory(
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), directoryPath),
+    false,
+    (directory) => {
+      writeOrVerifyImmutable(directory, leaf, raw);
+      return join(directory.path, leaf);
+    },
+  );
+  return {
+    status: "validated",
+    manifest_path: manifestPath,
+    manifest_sha256: digest,
+    selected_paths: selected,
+    snapshot_path: output,
+    snapshot_sha256: digestSnapshot,
+    old_head: buildState.head_commit!,
+    rollback_handle: requireObject(buildState.jj, "jj build state")
+      .operation_id!,
+  };
+}
+
 function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
-  const [repo] = repositoryIdentity(values["--repo"]!);
+  const [repo] = repositoryIdentity(
+    values["--repo"]!,
+    values["--state-resolver"]!,
+  );
   const manifestPath = absoluteCliPath(values["--manifest"], "--manifest");
   const [manifest, digest] = validateManifest(
     repo,
@@ -487,6 +582,14 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
     values["--snapshot"]!,
     values["--snapshot-sha256"]!,
   );
+  if (repo.identity.vcs === "jj-workspace")
+    captureBuildState(
+      repo,
+      repo.identity,
+      requireArray(snapshot.selected_paths, "snapshot selected paths").map(
+        (path) => requireString(path, "selected path"),
+      ),
+    );
   const state = validateManifestState(repo, manifest, true);
   const expectedExcluded = Object.values(state.excluded);
   if (!deepEqual(snapshot.excluded_dirty_paths, expectedExcluded))
@@ -498,38 +601,42 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
     throw new ContractError(
       "preflight snapshot selected paths differ from the manifest",
     );
-  const indexBackupPath = absoluteCliPath(
-    snapshot.index_backup_path,
-    "index backup path",
-  );
-  requireContainedPath(
-    indexBackupPath,
-    dirname(manifestPath),
-    "index backup is outside the manifest artifacts directory",
-  );
-  const artifactsDirectoryPath = dirname(manifestPath);
-  const pathspecSha = snapshot.literal_pathspec_sha256;
-  if (typeof pathspecSha !== "string" || pathspecSha.length !== 64)
-    throw new ContractError("preflight snapshot pathspec checksum is invalid");
-  const pathspecLeaf = `${digest}.paths.${pathspecSha}.nul`;
-  const [indexBackupHash, pathspecHash] = withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, artifactsDirectoryPath),
-    false,
-    (directory) => [
-      sha256(readImmutable(directory, basename(indexBackupPath))),
-      sha256(readImmutable(directory, pathspecLeaf)),
-    ],
-  );
-  if (
-    indexBackupHash !== snapshot.index_backup_sha256 ||
-    indexBackupHash !== snapshot.index_sha256
-  )
-    throw new ContractError("preflight index backup checksum mismatch");
-  if (pathspecHash !== pathspecSha)
-    throw new ContractError(
-      "preflight literal pathspec file checksum mismatch",
+  if (repo.identity.vcs !== "jj-workspace") {
+    const indexBackupPath = absoluteCliPath(
+      snapshot.index_backup_path,
+      "index backup path",
     );
+    requireContainedPath(
+      indexBackupPath,
+      dirname(manifestPath),
+      "index backup is outside the manifest artifacts directory",
+    );
+    const artifactsDirectoryPath = dirname(manifestPath);
+    const pathspecSha = snapshot.literal_pathspec_sha256;
+    if (typeof pathspecSha !== "string" || pathspecSha.length !== 64)
+      throw new ContractError(
+        "preflight snapshot pathspec checksum is invalid",
+      );
+    const pathspecLeaf = `${digest}.paths.${pathspecSha}.nul`;
+    const [indexBackupHash, pathspecHash] = withSecureDirectory(
+      stateRoot(repo),
+      secureRelativeComponents(stateRoot(repo), artifactsDirectoryPath),
+      false,
+      (directory) => [
+        sha256(readImmutable(directory, basename(indexBackupPath))),
+        sha256(readImmutable(directory, pathspecLeaf)),
+      ],
+    );
+    if (
+      indexBackupHash !== snapshot.index_backup_sha256 ||
+      indexBackupHash !== snapshot.index_sha256
+    )
+      throw new ContractError("preflight index backup checksum mismatch");
+    if (pathspecHash !== pathspecSha)
+      throw new ContractError(
+        "preflight literal pathspec file checksum mismatch",
+      );
+  }
   const saved = decodeTrimmedPath(
     runGit(repo, [
       "rev-parse",
@@ -575,7 +682,9 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
         `saved tree content/mode differs from manifest: ${path}`,
       );
   }
-  const excludedDigest = sha256(canonicalJson(state.excluded));
+  const excludedDigest = sha256(
+    canonicalJson(pathInventoryJson(state.excluded)),
+  );
   if (excludedDigest !== snapshot.excluded_inventory_sha256)
     throw new ContractError("non-selected dirty inventory changed after save");
   const savedTreeHashes = Object.fromEntries(
@@ -608,13 +717,14 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
     excluded_inventory_after: excludedDigest,
     non_selected_preserved: true,
   };
+  requireStableWorkspace(repo);
   const raw = canonicalJson(receipt);
   const receiptSha = sha256(raw);
   const outputLeaf = `${digest}.result.${receiptSha}.json`;
   const directoryPath = dirname(manifestPath);
   const output = withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, directoryPath),
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), directoryPath),
     false,
     (directory) => {
       const outputPath = join(directory.path, outputLeaf);
@@ -632,7 +742,10 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
 }
 
 function commandRecover(values: Readonly<Record<string, string>>): JsonObject {
-  const [repo] = repositoryIdentity(values["--repo"]!);
+  const [repo] = repositoryIdentity(
+    values["--repo"]!,
+    values["--state-resolver"]!,
+  );
   const manifestPath = absoluteCliPath(values["--manifest"], "--manifest");
   const [manifest, digest] = validateManifest(
     repo,
@@ -711,8 +824,8 @@ function commandRecover(values: Readonly<Record<string, string>>): JsonObject {
   const outputLeaf = `${digest}.recovery.${receiptSha}.json`;
   const directoryPath = dirname(manifestPath);
   const output = withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, directoryPath),
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), directoryPath),
     false,
     (directory) => {
       const outputPath = join(directory.path, outputLeaf);
@@ -730,115 +843,178 @@ function commandRecover(values: Readonly<Record<string, string>>): JsonObject {
   };
 }
 
-function repositoryIdentity(repoArgument: string): [string, JsonObject] {
+function repositoryIdentity(
+  repoArgument: string,
+  resolver: string,
+): [RepositoryContext, JsonObject] {
   const candidate = realpathSync(repoArgument);
-  const root = realpathSync(
-    decodeTrimmedPath(
-      runGit(candidate, ["rev-parse", "--show-toplevel"]).stdout,
-    ),
-  );
-  const commonRaw = decodeTrimmedPath(
-    runGit(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
-      .stdout,
-  );
-  const common = realpathSync(
-    isAbsolute(commonRaw) ? commonRaw : join(root, commonRaw),
-  );
-  const gitDirectoryRaw = decodeTrimmedPath(
-    runGit(root, ["rev-parse", "--path-format=absolute", "--git-dir"]).stdout,
-  );
-  const gitDirectory = realpathSync(
-    isAbsolute(gitDirectoryRaw) ? gitDirectoryRaw : join(root, gitDirectoryRaw),
-  );
-  const identity: JsonObject = {
-    canonical_root: root,
-    vcs: "git",
-    git_common_dir: common,
+  const resolverPath = absoluteCliPath(resolver, "--state-resolver");
+  ensureNoSymlinkChain(resolverPath, "/");
+  if (!regularFileWithoutSymlink(resolverPath))
+    throw new ContractError("state resolver must be a regular executable file");
+  accessSync(resolverPath, constants.X_OK);
+  const probe: RepositoryContext = {
+    root: candidate,
+    identity: {},
+    resolver: resolverPath,
   };
-  if (!which("jj")) return [root, identity];
-  const jjRootResult = runJj(root, ["root"], {
-    check: false,
-    ignoreWorkingCopy: true,
-  });
-  if (jjRootResult.exitCode && existsSync(join(root, ".jj")))
-    throw new ContractError(
-      "jj workspace detected, but the installed jj cannot perform the required " +
-        `non-snapshotting root capability probe: ${decodeReplacement(jjRootResult.stderr).trim()}`,
-    );
-  if (jjRootResult.exitCode) return [root, identity];
-  const jjRoot = realpathSync(decodeTrimmedPath(jjRootResult.stdout));
-  if (jjRoot !== root)
+  const jjRootResult = which("jj")
+    ? runJj(probe, ["root"], { check: false, ignoreWorkingCopy: true })
+    : null;
+  if (jjRootResult?.exitCode && existsSync(join(candidate, ".jj")))
+    throw new ContractError("jj workspace root capability probe failed");
+  const jjRoot =
+    jjRootResult?.exitCode === 0
+      ? realpathSync(decodeTrimmedPath(jjRootResult.stdout))
+      : null;
+  const gitRootResult = runGit(probe, ["rev-parse", "--show-toplevel"], false);
+  const gitRoot =
+    gitRootResult.exitCode === 0
+      ? realpathSync(decodeTrimmedPath(gitRootResult.stdout))
+      : null;
+  if (!jjRoot && !gitRoot)
+    throw new ContractError("source is not a Git or jj workspace");
+  const root = jjRoot ?? gitRoot!;
+  const local: RepositoryContext = { ...probe, root };
+  if (jjRoot && gitRoot && jjRoot !== gitRoot)
     throw new ContractError(
       "jj workspace root differs from the canonical Git worktree root",
     );
-  const jjGitResult = runJj(root, ["git", "root"], {
-    check: false,
-    ignoreWorkingCopy: true,
-  });
-  if (jjGitResult.exitCode)
-    throw new ContractError(
-      "jj workspace is present but has no structurally provable colocated Git root",
+  const jjGit = jjRoot
+    ? realpathSync(
+        decodeTrimmedPath(
+          runJj(local, ["git", "root"], { ignoreWorkingCopy: true }).stdout,
+        ),
+      )
+    : null;
+  const common = gitRoot
+    ? realpathSync(
+        decodeTrimmedPath(
+          runGit(local, [
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+          ]).stdout,
+        ),
+      )
+    : jjGit!;
+  let vcs = "git";
+  if (jjRoot && gitRoot) {
+    const directory = realpathSync(
+      decodeTrimmedPath(
+        runGit(local, ["rev-parse", "--path-format=absolute", "--git-dir"])
+          .stdout,
+      ),
     );
-  const jjGitDirectory = realpathSync(decodeTrimmedPath(jjGitResult.stdout));
-  const bare = decodeTrimmedPath(
-    runGit(root, ["rev-parse", "--is-bare-repository"]).stdout,
+    if (directory !== common)
+      throw new ContractError(
+        "jj scoped save does not support a linked Git worktree; use a jj workspace",
+      );
+    if (
+      jjGit !== directory ||
+      decodeTrimmedPath(
+        runGit(local, ["rev-parse", "--is-bare-repository"]).stdout,
+      ) !== "false"
+    )
+      throw new ContractError(
+        "jj Git root differs from the non-bare colocated Git repository",
+      );
+    runJj(local, ["git", "colocation", "status"], { ignoreWorkingCopy: true });
+    vcs = "jj-colocated";
+  } else if (jjRoot) vcs = "jj-workspace";
+  const identity: JsonObject = {
+    canonical_root: root,
+    vcs,
+    git_common_dir: common,
+  };
+  return [{ ...local, identity }, identity];
+}
+
+function resolveState(repo: RepositoryContext, workId: string): JsonObject {
+  const result = Bun.spawnSync(
+    [repo.resolver, "--path", repo.root, "--work-id", workId],
+    {
+      stderr: "pipe",
+      stdout: "pipe",
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+    },
   );
-  if (bare !== "false")
+  if (result.exitCode)
     throw new ContractError(
-      "jj scoped save requires a non-bare colocated Git repository",
+      `state resolver failed: ${decodeReplacement(result.stderr).trim()}`,
     );
-  if (gitDirectory !== common)
-    throw new ContractError(
-      "jj scoped save does not support a linked Git worktree; use a jj workspace",
-    );
-  if (jjGitDirectory !== gitDirectory || jjGitDirectory !== common)
-    throw new ContractError(
-      "jj Git root differs from Git --git-dir/--git-common-dir; colocation is not proven",
-    );
+  const state = parseJson(result.stdout, "state resolver output");
   if (
-    runJj(root, ["git", "colocation", "status"], {
-      check: false,
-      ignoreWorkingCopy: true,
-    }).exitCode
+    state.status !== "resolved" ||
+    state.state_ignored !== true ||
+    state.active_workspace !== repo.root ||
+    state.work_id !== workId
   )
-    throw new ContractError("jj cannot confirm Git colocation status");
-  identity.vcs = "jj-colocated";
-  return [root, identity];
+    throw new ContractError(
+      "state resolver did not authenticate the active workspace and ignored work root",
+    );
+  const root = absoluteCliPath(state.state_root, "resolved state root");
+  const work = absoluteCliPath(state.work_dir, "resolved work root");
+  ensureNoSymlinkChain(root, "/");
+  ensureNoSymlinkChain(work, root);
+  if (
+    realpathSync(root) !== root ||
+    work !== join(root, ".state", "works", workId)
+  )
+    throw new ContractError(
+      "resolved work root is not canonical for the selected work",
+    );
+  const binding: JsonObject = {
+    state_root: root,
+    work_dir: work,
+    active_workspace: repo.root,
+  };
+  if (repo.state && !deepEqual(repo.state, binding))
+    throw new ContractError(
+      "resolved state workspace changed during scoped save",
+    );
+  repo.state = binding;
+  return binding;
+}
+
+function stateRoot(repo: RepositoryContext): string {
+  return requireString(repo.state?.state_root, "resolved state root");
+}
+
+function stateRepository(repo: RepositoryContext): RepositoryContext {
+  return repositoryIdentity(stateRoot(repo), repo.resolver)[0];
 }
 
 function captureBuildState(
-  repo: string,
+  repo: RepositoryContext,
   identity: JsonObject,
   selected: string[],
 ): JsonObject {
-  if (identity.vcs === "jj-colocated") {
+  if (identity.vcs !== "git") {
     const jj = jjWorkspaceState(repo, selected);
-    return { head_commit: jj.git_head!, jj };
+    return {
+      head_commit: requireArray(jj.parent_commit_ids, "jj parents")[0]!,
+      jj,
+    };
   }
   return { head_commit: currentHead(repo), jj: null };
 }
 
 function requireUnchangedBuildState(
-  repo: string,
+  repo: RepositoryContext,
   manifest: JsonObject,
   selected: string[],
 ): JsonObject {
   const state = validateBuildStateShape(manifest);
-  if (state.head_commit !== currentHead(repo))
+  const actual = captureBuildState(repo, repo.identity, selected);
+  if (actual.head_commit !== state.head_commit)
     throw new ContractError(
       "repository HEAD changed after scoped manifest sealing",
     );
-  const repository = requireObject(manifest.repository, "manifest repository");
-  if (repository.vcs === "jj-colocated") {
-    const expected = requireObject(
-      state.jj,
-      "manifest sealed jj build identity",
+  if (!deepEqual(actual, state))
+    throw new ContractError(
+      "jj operation/working-copy identity changed after manifest sealing",
     );
-    if (!deepEqual(jjWorkspaceState(repo, selected), expected))
-      throw new ContractError(
-        "jj operation/working-copy identity changed after manifest sealing",
-      );
-  }
   return state;
 }
 
@@ -852,14 +1028,21 @@ function validateBuildStateShape(manifest: JsonObject): JsonObject {
   if (typeof state.head_commit !== "string" || !state.head_commit)
     throw new ContractError("manifest build_state head_commit is invalid");
   const repository = requireObject(manifest.repository, "manifest repository");
-  if (repository.vcs === "jj-colocated") {
+  if (repository.vcs !== "git") {
     const jj = requireObject(state.jj, "manifest sealed jj build identity");
-    requireExactKeys(jj, JJ_STATE_FIELDS, "manifest jj build state");
+    requireExactKeys(
+      jj,
+      jjStateFields(repository.vcs),
+      "manifest jj build state",
+    );
     if (jj.mutable !== true || jj.conflicts !== false || jj.divergent !== false)
       throw new ContractError(
         "manifest jj build state is not mutable/conflict-free/non-divergent",
       );
-    if (jj.git_head !== state.head_commit)
+    if (
+      jj.git_head !==
+      (repository.vcs === "jj-workspace" ? null : state.head_commit)
+    )
       throw new ContractError(
         "manifest jj build state is not bound to its Git HEAD",
       );
@@ -873,20 +1056,27 @@ function validateBuildStateShape(manifest: JsonObject): JsonObject {
   return state;
 }
 
-function jjWorkspaceState(repo: string, selected: string[]): JsonObject {
-  const staged = runGit(
-    repo,
-    ["diff-index", "--cached", "--quiet", "HEAD", "--"],
-    false,
-  );
-  if (staged.exitCode === 1)
-    throw new ContractError(
-      "jj scoped save blocks ambient staged Git index entries",
+function jjWorkspaceState(
+  repo: RepositoryContext,
+  selected: string[],
+): JsonObject {
+  if (repo.identity.vcs === "jj-colocated") {
+    const staged = runGit(
+      repo,
+      ["diff-index", "--cached", "--quiet", "HEAD", "--"],
+      false,
     );
-  if (staged.exitCode)
-    throw new ContractError(
-      `cannot prove a clean ambient Git index for jj: ${decodeReplacement(staged.stderr).trim()}`,
-    );
+    if (staged.exitCode === 1)
+      throw new ContractError(
+        "jj scoped save blocks ambient staged Git index entries",
+      );
+    if (staged.exitCode)
+      throw new ContractError(
+        `cannot prove a clean ambient Git index for jj: ${decodeReplacement(staged.stderr).trim()}`,
+      );
+  }
+  const defaultBefore =
+    repo.identity.vcs === "jj-workspace" ? defaultWorkspaceProof(repo) : null;
   requireJjCapabilities(repo, selected);
   runJj(repo, ["status"]);
   const operationId = decodeTrimmedPath(
@@ -964,8 +1154,9 @@ function jjWorkspaceState(repo: string, selected: string[]): JsonObject {
   );
   if (!commitId || !changeId || parents.length !== 1)
     throw new ContractError("cannot capture complete jj working-copy identity");
-  const gitHead = currentHead(repo);
-  if (!equalArrays(parents, [gitHead]))
+  const gitHead =
+    repo.identity.vcs === "jj-workspace" ? null : currentHead(repo);
+  if (gitHead !== null && !equalArrays(parents, [gitHead]))
     throw new ContractError(
       "jj working-copy change must have Git HEAD as its exact sole parent",
     );
@@ -973,7 +1164,14 @@ function jjWorkspaceState(repo: string, selected: string[]): JsonObject {
     throw new ContractError(
       "jj working-copy commit is not present in the colocated Git object store",
     );
-  const diff = pinned(["diff", "-r", "@", "--git", "--", ...selected]).stdout;
+  const diff = pinned([
+    "diff",
+    "-r",
+    "@",
+    "--git",
+    "--",
+    ...selected.map((path) => `root-file:${jsonString(path)}`),
+  ]).stdout;
   const currentOperation = decodeTrimmedPath(
     runJj(
       repo,
@@ -987,7 +1185,7 @@ function jjWorkspaceState(repo: string, selected: string[]): JsonObject {
     throw new ContractError(
       "jj operation changed while capturing scoped-save identity",
     );
-  return {
+  const snapshot: JsonObject = {
     operation_id: operationId,
     working_copy_commit_id: commitId,
     working_copy_change_id: changeId,
@@ -998,9 +1196,222 @@ function jjWorkspaceState(repo: string, selected: string[]): JsonObject {
     divergent: false,
     selected_diff_sha256: sha256(diff),
   };
+  if (repo.identity.vcs === "jj-workspace") {
+    const defaultAfter = defaultWorkspaceProof(repo);
+    if (!deepEqual(defaultBefore, defaultAfter))
+      throw new ContractError("default workspace changed during jj snapshot");
+    snapshot.default_workspace = defaultAfter;
+  }
+  repo.snapshot = snapshot;
+  return snapshot;
 }
 
-function requireJjCapabilities(repo: string, selected: string[]): void {
+function jjStateFields(vcs: JsonValue | undefined): Set<string> {
+  return new Set([
+    ...JJ_STATE_FIELDS,
+    ...(vcs === "jj-workspace" ? ["default_workspace"] : []),
+  ]);
+}
+
+function workspaceFiles(repo: RepositoryContext): string[] {
+  const paths: string[] = [];
+  const visit = (directory: string): void => {
+    const entries = readdirSync(join(repo.root, directory), {
+      withFileTypes: true,
+    });
+    const ignoredDirectories = ignoredWorkspacePaths(
+      repo,
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${directory ? `${directory}/` : ""}${entry.name}`),
+    );
+    for (const entry of entries) {
+      if (entry.name === ".git" || entry.name === ".jj") continue;
+      const path = directory ? `${directory}/${entry.name}` : entry.name;
+      validateRelativePath(repo, path);
+      if (entry.isDirectory()) {
+        if (!ignoredDirectories.has(path)) visit(path);
+      } else paths.push(path);
+    }
+  };
+  visit("");
+  const excluded = ignoredWorkspacePaths(repo, paths);
+  return paths.filter((path) => !excluded.has(path)).sort(comparePythonStrings);
+}
+
+function ignoredWorkspacePaths(
+  repo: RepositoryContext,
+  paths: string[],
+): Set<string> {
+  if (!paths.length) return new Set();
+  const ignored = runGit(
+    repo,
+    ["check-ignore", "--no-index", "--stdin", "-z"],
+    false,
+    Buffer.from(paths.map((path) => `${path}\0`).join("")),
+  );
+  if (![0, 1].includes(ignored.exitCode))
+    throw new ContractError("cannot evaluate workspace ignore rules");
+  return new Set(
+    splitBytes(ignored.stdout, 0)
+      .filter((path) => path.length)
+      .map(decodePath),
+  );
+}
+
+function treePaths(repo: RepositoryContext, revision: string): string[] {
+  return splitBytes(
+    runGit(repo, ["ls-tree", "-r", "--name-only", "-z", revision]).stdout,
+    0,
+  )
+    .filter((path) => path.length)
+    .map((path) => validateRelativePath(repo, decodePath(path)));
+}
+
+function workspaceInventory(
+  repo: RepositoryContext,
+): Record<string, PathState> {
+  const commit = requireString(
+    repo.snapshot?.working_copy_commit_id,
+    "pinned jj commit",
+  );
+  const parent = currentHead(repo);
+  const paths = [
+    ...new Set([
+      ...workspaceFiles(repo),
+      ...treePaths(repo, parent),
+      ...treePaths(repo, commit),
+    ]),
+  ].sort(comparePythonStrings);
+  const result: Record<string, PathState> = {};
+  for (const path of paths) {
+    const physical = physicalState(repo, path);
+    const snapshot = treeEntry(repo, commit, path);
+    if (!equalArrays(physical, snapshot))
+      throw new ContractError(
+        `physical workspace differs from pinned jj snapshot: ${path}`,
+      );
+    const before = treeEntry(repo, parent, path);
+    if (equalArrays(physical, before)) continue;
+    const status =
+      physical[0] === "deleted"
+        ? "jj D"
+        : before[0] === "deleted"
+          ? "jj A"
+          : "jj M";
+    result[path] = {
+      path,
+      state: physical[0],
+      sha256: physical[1],
+      mode: physical[2],
+      status,
+    };
+  }
+  return result;
+}
+
+function defaultWorkspaceProof(repo: RepositoryContext): JsonObject | null {
+  const root = stateRoot(repo);
+  if (root === repo.root) return null;
+  const primary = stateRepository(repo);
+  const gitDirectory = primary.identity.git_common_dir;
+  if (gitDirectory !== repo.identity.git_common_dir)
+    throw new ContractError(
+      "default workspace does not share the active backing Git store",
+    );
+  const operation = decodeTrimmedPath(
+    runJj(
+      primary,
+      ["op", "log", "-n", "1", "--no-graph", "-T", 'self.id() ++ "\\n"'],
+      { ignoreWorkingCopy: true },
+    ).stdout,
+  );
+  const identity = decodeTrimmedPath(
+    runJj(
+      primary,
+      [
+        "log",
+        "-r",
+        "@",
+        "--no-graph",
+        "-T",
+        'commit_id ++ " " ++ change_id ++ "\\n"',
+      ],
+      { ignoreWorkingCopy: true, atOperation: operation },
+    ).stdout,
+  );
+  const [commit, change] = identity.split(" ");
+  if (!commit || !change)
+    throw new ContractError("default workspace identity is incomplete");
+  const hasIndex = primary.identity.vcs !== "jj-workspace";
+  const head = hasIndex ? currentHead(primary) : null;
+  const index = hasIndex
+    ? decodeTrimmedPath(
+        runGit(primary, [
+          "rev-parse",
+          "--path-format=absolute",
+          "--git-path",
+          "index",
+        ]).stdout,
+      )
+    : null;
+  const existed = index !== null && existsSync(index);
+  const indexHash = existed ? sha256(readFileSync(index!)) : null;
+  const indexMode = existed ? statSync(index!).mode & 0o7777 : null;
+  const indexedPaths = hasIndex
+    ? splitBytes(runGit(primary, ["ls-files", "-z"]).stdout, 0)
+        .filter((path) => path.length)
+        .map(decodePath)
+    : treePaths(primary, commit);
+  const paths = [
+    ...new Set([...workspaceFiles(primary), ...indexedPaths]),
+  ].sort(comparePythonStrings);
+  const physical = paths.map((path) => [
+    path,
+    ...physicalState(primary, validateRelativePath(primary, path)),
+  ]);
+  const afterIndex =
+    index !== null && existsSync(index) ? sha256(readFileSync(index)) : null;
+  if (afterIndex !== indexHash || (hasIndex && currentHead(primary) !== head))
+    throw new ContractError(
+      "default workspace changed while capturing preservation proof",
+    );
+  return {
+    canonical_root: root,
+    git_common_dir: gitDirectory!,
+    head_commit: head,
+    index_existed: existed,
+    index_sha256: indexHash,
+    index_file_mode: indexMode,
+    working_copy_identity: identity,
+    physical_inventory_sha256: sha256(canonicalJson(physical)),
+  };
+}
+
+function requireStableWorkspace(repo: RepositoryContext): void {
+  if (repo.identity.vcs !== "jj-workspace") return;
+  const snapshot = requireObject(repo.snapshot, "pinned jj snapshot");
+  const operation = decodeTrimmedPath(
+    runJj(
+      repo,
+      ["op", "log", "-n", "1", "--no-graph", "-T", 'self.id() ++ "\\n"'],
+      { ignoreWorkingCopy: true },
+    ).stdout,
+  );
+  if (operation !== snapshot.operation_id)
+    throw new ContractError(
+      "jj operation changed during scoped-save validation",
+    );
+  if (!deepEqual(defaultWorkspaceProof(repo), snapshot.default_workspace))
+    throw new ContractError(
+      "default workspace changed during scoped-save validation",
+    );
+}
+
+function requireJjCapabilities(
+  repo: RepositoryContext,
+  selected: string[],
+): void {
   const operationProbe = runJj(
     repo,
     ["op", "log", "-n", "1", "--no-graph", "-T", 'self.id() ++ "\\n"'],
@@ -1053,7 +1464,14 @@ function requireJjCapabilities(repo: string, selected: string[]): void {
     ],
     [
       "Git-format selected diff",
-      ["diff", "-r", "@", "--git", "--", ...selected],
+      [
+        "diff",
+        "-r",
+        "@",
+        "--git",
+        "--",
+        ...selected.map((path) => `root-file:${jsonString(path)}`),
+      ],
     ],
   ];
   for (const [label, command] of probes) {
@@ -1069,31 +1487,88 @@ function requireJjCapabilities(repo: string, selected: string[]): void {
   }
 }
 
-function currentHead(repo: string): string {
+function currentHead(repo: RepositoryContext): string {
+  if (repo.identity.vcs === "jj-workspace")
+    return requireString(
+      requireArray(repo.snapshot?.parent_commit_ids, "pinned jj parent")[0],
+      "pinned jj boundary",
+    );
   return decodeTrimmedPath(
     runGit(repo, ["rev-parse", "--verify", "HEAD^{commit}"]).stdout,
   );
 }
 
-function runGit(repo: string, args: string[], check = true): CommandResult {
-  const result = Bun.spawnSync(["git", "-C", repo, ...args], {
+function runGit(
+  repo: RepositoryContext,
+  args: string[],
+  check = true,
+  input?: Uint8Array,
+): CommandResult {
+  let command = ["git", "-C", repo.root, ...args];
+  if (repo.identity.vcs === "jj-workspace") {
+    const name = args[0];
+    const immutableCommands = new Set([
+      "cat-file",
+      "ls-tree",
+      "diff-tree",
+      "rev-list",
+    ]);
+    const revisionRead =
+      name === "rev-parse" &&
+      args[1] === "--verify" &&
+      /^[0-9a-f]{40,64}(?:\^|\^\{commit\})?$/.test(args[2] ?? "");
+    const ignoreRead = name === "check-ignore" && args.includes("--no-index");
+    const attributeRead =
+      name === "check-attr" &&
+      args.some((arg) => /^--source=[0-9a-f]{40,64}$/.test(arg));
+    const configRead =
+      name === "config" &&
+      args.some((arg) => ["--get", "--bool"].includes(arg));
+    if (!(
+      immutableCommands.has(name ?? "") ||
+      revisionRead ||
+      ignoreRead ||
+      attributeRead ||
+      configRead
+    ))
+      throw new ContractError(
+        `backing Git operation is not an allowed read: ${args.join(" ")}`,
+      );
+    if (
+      immutableCommands.has(name ?? "") &&
+      args.some((arg) => /^(?:HEAD|@|refs\/)/.test(arg))
+    )
+      throw new ContractError(
+        "backing Git object reads require immutable revisions",
+      );
+    command = [
+      "git",
+      "-C",
+      repo.root,
+      `--git-dir=${requireString(repo.identity.git_common_dir, "backing Git directory")}`,
+      `--work-tree=${repo.root}`,
+      ...args,
+    ];
+  }
+  const result = Bun.spawnSync(command, {
     stderr: "pipe",
     stdout: "pipe",
+    stdin: input,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
   });
-  const normalized = {
-    exitCode: result.exitCode,
-    stderr: result.stderr,
-    stdout: result.stdout,
-  };
   if (check && result.exitCode)
     throw new ContractError(
       `git ${args.join(" ")} failed: ${decodeReplacement(result.stderr).trim()}`,
     );
-  return normalized;
+  return {
+    exitCode: result.exitCode,
+    stderr: result.stderr,
+    stdout: result.stdout,
+  };
 }
 
 function runJj(
-  repo: string,
+  repo: RepositoryContext,
   args: string[],
   options: {
     atOperation?: string;
@@ -1105,11 +1580,15 @@ function runJj(
     throw new ContractError(
       "manifest declares jj-colocated but jj is unavailable",
     );
-  const command = ["jj", "-R", repo, "--no-pager", "--color=never"];
+  const command = ["jj", "-R", repo.root, "--no-pager", "--color=never"];
   if (options.ignoreWorkingCopy) command.push("--ignore-working-copy");
   if (options.atOperation) command.push("--at-operation", options.atOperation);
   command.push(...args);
-  const result = Bun.spawnSync(command, { stderr: "pipe", stdout: "pipe" });
+  const result = Bun.spawnSync(command, {
+    cwd: repo.root,
+    stderr: "pipe",
+    stdout: "pipe",
+  });
   const normalized = {
     exitCode: result.exitCode,
     stderr: result.stderr,
@@ -1123,7 +1602,7 @@ function runJj(
 }
 
 function normalizePublicationRequest(
-  repo: string,
+  repo: RepositoryContext,
   request: JsonObject,
 ): [PathState[], string[]] {
   requireExactKeys(
@@ -1196,7 +1675,8 @@ function normalizePublicationRequest(
   return [publication, selected];
 }
 
-function statusInventory(repo: string): Record<string, PathState> {
+function statusInventory(repo: RepositoryContext): Record<string, PathState> {
+  if (repo.identity.vcs === "jj-workspace") return workspaceInventory(repo);
   rejectAmbiguousIndexFlags(repo);
   const chunks = splitBytes(
     runGit(repo, [
@@ -1261,10 +1741,21 @@ function statusInventory(repo: string): Record<string, PathState> {
 }
 
 function directPublicationDirty(
-  repo: string,
+  repo: RepositoryContext,
   publication: Record<string, PathState>,
 ): Set<string> {
   const dirty = new Set<string>();
+  if (repo.identity.vcs === "jj-workspace") {
+    for (const path of Object.keys(publication))
+      if (
+        !equalArrays(
+          physicalState(repo, path),
+          treeEntry(repo, currentHead(repo), path),
+        )
+      )
+        dirty.add(path);
+    return dirty;
+  }
   const coreFilemode = decodeTrimmedPath(
     runGit(repo, ["config", "--bool", "core.filemode"], false).stdout,
   ).toLowerCase();
@@ -1288,7 +1779,7 @@ function directPublicationDirty(
   return dirty;
 }
 
-function rejectAmbiguousIndexFlags(repo: string): void {
+function rejectAmbiguousIndexFlags(repo: RepositoryContext): void {
   const filemode = runGit(repo, ["config", "--bool", "core.filemode"], false);
   if (![0, 1].includes(filemode.exitCode))
     throw new ContractError(
@@ -1314,7 +1805,10 @@ function rejectAmbiguousIndexFlags(repo: string): void {
   }
 }
 
-function rejectSelectedCleanFilters(repo: string, selected: string[]): void {
+function rejectSelectedCleanFilters(
+  repo: RepositoryContext,
+  selected: string[],
+): void {
   const attributes = [
     "filter",
     "text",
@@ -1336,7 +1830,18 @@ function rejectSelectedCleanFilters(repo: string, selected: string[]): void {
     .toLowerCase();
   for (const path of selected) {
     const values = splitBytes(
-      runGit(repo, ["check-attr", "-z", ...attributes, "--", path]).stdout,
+      runGit(repo, [
+        "check-attr",
+        ...(repo.identity.vcs === "jj-workspace"
+          ? [
+              `--source=${requireString(repo.snapshot?.working_copy_commit_id, "pinned jj commit")}`,
+            ]
+          : []),
+        "-z",
+        ...attributes,
+        "--",
+        path,
+      ]).stdout,
       0,
     ).filter((item) => item.length);
     if (values.length !== attributes.length * 3)
@@ -1368,10 +1873,10 @@ function rejectSelectedCleanFilters(repo: string, selected: string[]): void {
 }
 
 function physicalState(
-  repo: string,
+  repo: RepositoryContext,
   path: string,
 ): [string, string | null, string | null] {
-  const absolute = join(repo, path);
+  const absolute = join(repo.root, path);
   if (!existsOrSymlink(absolute)) return ["deleted", null, null];
   const metadata = lstatSync(absolute);
   if (metadata.isSymbolicLink())
@@ -1392,7 +1897,7 @@ function physicalState(
 }
 
 function indexEntry(
-  repo: string,
+  repo: RepositoryContext,
   path: string,
 ): [string, string | null, string | null] {
   const records = splitBytes(
@@ -1428,7 +1933,7 @@ function indexEntry(
 }
 
 function treeEntry(
-  repo: string,
+  repo: RepositoryContext,
   revision: string,
   path: string,
 ): [string, string | null, string | null] {
@@ -1462,7 +1967,7 @@ function treeEntry(
 }
 
 function reconcileProducerReceipts(
-  repo: string,
+  repo: RepositoryContext,
   workRoot: string,
   sources: JsonValue[],
   baseRevision: string,
@@ -1515,7 +2020,7 @@ function reconcileProducerReceipts(
 }
 
 function loadProducerReceipt(
-  repo: string,
+  repo: RepositoryContext,
   workRoot: string,
   value: JsonValue,
   expectedBaseRevision: string,
@@ -1588,7 +2093,7 @@ function loadProducerReceipt(
 }
 
 function validateManifest(
-  repo: string,
+  repo: RepositoryContext,
   manifestPathArgument: string,
   expectedSha: string,
 ): [JsonObject, string] {
@@ -1615,6 +2120,7 @@ function validateManifest(
       "schema",
       "work_id",
       "repository",
+      "state_workspace",
       "base_rev",
       "build_state",
       "publication_paths",
@@ -1629,13 +2135,18 @@ function validateManifest(
     throw new ContractError(
       "manifest work_id must match the resolver lowercase-kebab grammar",
     );
+  const resolvedState = resolveState(repo, workId);
+  if (!deepEqual(manifest.state_workspace, resolvedState))
+    throw new ContractError(
+      "manifest state workspace differs from the canonical resolver",
+    );
   const workRoot = validateWorkArtifacts(
     repo,
-    join(repo, ".state", "works", workId),
+    requireString(resolvedState.work_dir, "resolved work root"),
     workId,
     manifestPath,
   );
-  const [, identity] = repositoryIdentity(repo);
+  const identity = repo.identity;
   const repository = requireObject(manifest.repository, "manifest repository");
   requireExactKeys(
     repository,
@@ -1678,7 +2189,12 @@ function validateManifest(
     const path = validateRelativePath(repo, entry.path);
     if (publicationMap[path])
       throw new ContractError(`duplicate manifest publication path: ${path}`);
-    publicationMap[path] = entry as PathState;
+    publicationMap[path] = {
+      path,
+      state: requireString(entry.state, "publication state"),
+      mode: entry.mode!,
+      sha256: entry.sha256!,
+    };
   }
   const actualBindings = reconcileProducerReceipts(
     repo,
@@ -1695,7 +2211,7 @@ function validateManifest(
 }
 
 function validateManifestState(
-  repo: string,
+  repo: RepositoryContext,
   manifest: JsonObject,
   afterSave: boolean,
   recoveryInspection = false,
@@ -1823,7 +2339,7 @@ function validateManifestState(
 }
 
 function validateStateEntries(
-  repo: string,
+  repo: RepositoryContext,
   values: JsonValue[],
   label: "excluded" | "publication" | "selected",
   requireStatus: boolean,
@@ -1854,7 +2370,10 @@ function validateStateEntries(
       );
     if (requireStatus && typeof value.status !== "string")
       throw new ContractError(`${label} entry lacks canonical status: ${path}`);
-    if (!new Set(["file", "symlink", "deleted"]).has(String(value.state)))
+    if (
+      typeof value.state !== "string" ||
+      !new Set(["file", "symlink", "deleted"]).has(value.state)
+    )
       throw new ContractError(`invalid ${label} state: ${path}`);
     if (value.state === "deleted") {
       if (value.sha256 !== null || value.mode !== null)
@@ -1887,14 +2406,20 @@ function validateStateEntries(
       throw new ContractError(
         `current bytes/deletion/mode differs for ${label} path: ${path}`,
       );
-    result[path] = value as PathState;
+    result[path] = {
+      ...value,
+      path,
+      state: value.state,
+      mode: value.mode!,
+      sha256: value.sha256!,
+    };
     folded.add(foldedPath);
   }
   return result;
 }
 
 function loadBoundSnapshot(
-  repo: string,
+  repo: RepositoryContext,
   manifestPath: string,
   manifestSha: string,
   snapshotArgument: string,
@@ -1907,8 +2432,8 @@ function loadBoundSnapshot(
     "preflight snapshot is outside the manifest artifacts directory",
   );
   const raw = withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, dirname(snapshotPath)),
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), dirname(snapshotPath)),
     false,
     (directory) => readImmutable(directory, basename(snapshotPath)),
   );
@@ -1924,7 +2449,13 @@ function loadBoundSnapshot(
     throw new ContractError(
       "preflight snapshot filename is not checksum-bound",
     );
-  requireExactKeys(snapshot, PREFLIGHT_FIELDS, "preflight snapshot");
+  requireExactKeys(
+    snapshot,
+    repo.identity.vcs === "jj-workspace"
+      ? workspacePreflightFields()
+      : PREFLIGHT_FIELDS,
+    "preflight snapshot",
+  );
   if (snapshot.schema !== "state-scoped-save-preflight/v1")
     throw new ContractError("unknown preflight snapshot schema");
   if (
@@ -1938,7 +2469,7 @@ function loadBoundSnapshot(
 }
 
 function verifyGitSave(
-  repo: string,
+  repo: RepositoryContext,
   saved: string,
   parent: CommandResult,
   snapshot: JsonObject,
@@ -1961,7 +2492,7 @@ function verifyGitSave(
 }
 
 function verifyJjSave(
-  repo: string,
+  repo: RepositoryContext,
   saved: string,
   selected: Record<string, PathState>,
   snapshot: JsonObject,
@@ -1970,15 +2501,29 @@ function verifyJjSave(
     snapshot.jj_preflight_state,
     "jj preflight state",
   );
-  requireExactKeys(preflight, JJ_STATE_FIELDS, "jj preflight state");
+  requireExactKeys(
+    preflight,
+    jjStateFields(repo.identity.vcs),
+    "jj preflight state",
+  );
   const preflightOperation = requireString(
     preflight.operation_id,
     "jj preflight operation id",
   );
-  const current = jjWorkspaceState(
-    repo,
-    Object.keys(selected).sort(comparePythonStrings),
-  );
+  const current =
+    repo.identity.vcs === "jj-workspace"
+      ? requireObject(repo.snapshot, "current jj snapshot")
+      : jjWorkspaceState(
+          repo,
+          Object.keys(selected).sort(comparePythonStrings),
+        );
+  if (
+    repo.identity.vcs === "jj-workspace" &&
+    !deepEqual(current.default_workspace, preflight.default_workspace)
+  )
+    throw new ContractError(
+      "default workspace preservation proof changed after save",
+    );
   const currentOperation = requireString(
     current.operation_id,
     "current jj operation id",
@@ -2029,7 +2574,7 @@ function verifyJjSave(
       "jj saved change identity is missing from the current operation",
     );
   return {
-    vcs: "jj-colocated",
+    vcs: repo.identity.vcs!,
     current_operation_id: currentOperation,
     preflight_operation_id: preflightOperation,
     preflight_working_copy_commit_id: preflight.working_copy_commit_id!,
@@ -2043,14 +2588,17 @@ function verifyJjSave(
   };
 }
 
-function restoreIndexFromBackup(repo: string, snapshot: JsonObject): string {
+function restoreIndexFromBackup(
+  repo: RepositoryContext,
+  snapshot: JsonObject,
+): string {
   const backupPath = absoluteCliPath(
     snapshot.index_backup_path,
     "index backup path",
   );
   const backup = withSecureDirectory(
-    repo,
-    secureRelativeComponents(repo, dirname(backupPath)),
+    stateRoot(repo),
+    secureRelativeComponents(stateRoot(repo), dirname(backupPath)),
     false,
     (directory) => readImmutable(directory, basename(backupPath)),
   );
@@ -2066,7 +2614,7 @@ function restoreIndexFromBackup(repo: string, snapshot: JsonObject): string {
   );
   const indexPath = isAbsolute(rawIndexPath)
     ? rawIndexPath
-    : join(repo, rawIndexPath);
+    : join(repo.root, rawIndexPath);
   const lockPath = `${indexPath}.lock`;
   let descriptor: number;
   try {
@@ -2120,16 +2668,16 @@ function restoreIndexFromBackup(repo: string, snapshot: JsonObject): string {
 }
 
 function validateWorkArtifacts(
-  repo: string,
+  repo: RepositoryContext,
   workRootArgument: string,
   workId: string,
   child: string,
 ): string {
   const workRoot = absoluteCliPath(workRootArgument, "--work-root");
-  const expected = join(repo, ".state", "works", workId);
+  const expected = join(stateRoot(repo), ".state", "works", workId);
   if (workRoot !== expected)
     throw new ContractError(`work root must be ${expected}`);
-  ensureNoSymlinkChain(workRoot, repo);
+  ensureNoSymlinkChain(workRoot, stateRoot(repo));
   if (!existsSync(workRoot) || !statSync(workRoot).isDirectory())
     throw new ContractError(`work root does not exist: ${workRoot}`);
   const childAbsolute = absoluteCliPath(child, "artifacts path");
@@ -2139,19 +2687,19 @@ function validateWorkArtifacts(
     `artifacts path is outside work artifacts: ${childAbsolute}`,
     true,
   );
-  ensureNoSymlinkChain(childAbsolute, repo);
+  ensureNoSymlinkChain(childAbsolute, stateRoot(repo));
   if (!regularFileWithoutSymlink(childAbsolute))
     throw new ContractError(
       `artifacts path is not a regular file: ${childAbsolute}`,
     );
-  const repoRelative = posixPath(relative(repo, childAbsolute));
-  if (!checkIgnored(repo, repoRelative))
+  const repoRelative = posixPath(relative(stateRoot(repo), childAbsolute));
+  if (!checkIgnored(stateRepository(repo), repoRelative))
     throw new ContractError(`work artifacts must be ignored: ${childAbsolute}`);
   return workRoot;
 }
 
 function validateArtifactsPointer(
-  repo: string,
+  repo: RepositoryContext,
   workRoot: string,
   value: JsonValue,
 ): [string, string] {
@@ -2173,7 +2721,7 @@ function validateArtifactsPointer(
       parts.slice(0, 4).join("/") ===
       `.state/works/${basename(workRoot)}/artifacts`
     )
-      candidate = join(repo, ...parts);
+      candidate = join(stateRoot(repo), ...parts);
     else
       throw new ContractError(
         "generated-file artifacts pointer must be absolute, work-root-relative artifacts/, " +
@@ -2186,13 +2734,13 @@ function validateArtifactsPointer(
     "generated-file artifacts pointer escapes work artifacts",
     true,
   );
-  ensureNoSymlinkChain(candidate, repo);
+  ensureNoSymlinkChain(candidate, stateRoot(repo));
   if (!regularFileWithoutSymlink(candidate))
     throw new ContractError(
       `generated-file artifacts pointer is not a regular file: ${candidate}`,
     );
-  const repoRelative = posixPath(relative(repo, candidate));
-  if (!checkIgnored(repo, repoRelative))
+  const repoRelative = posixPath(relative(stateRoot(repo), candidate));
+  if (!checkIgnored(stateRepository(repo), repoRelative))
     throw new ContractError(
       `generated-file artifacts pointer must be ignored: ${candidate}`,
     );
@@ -2200,7 +2748,7 @@ function validateArtifactsPointer(
 }
 
 function validateRelativePath(
-  repo: string,
+  repo: RepositoryContext,
   value: JsonValue,
   leafSymlink = true,
 ): string {
@@ -2216,7 +2764,7 @@ function validateRelativePath(
     );
   const parts = value.split("/");
   for (const [index, component] of parts.entries()) {
-    const cursor = join(repo, ...parts.slice(0, index + 1));
+    const cursor = join(repo.root, ...parts.slice(0, index + 1));
     if (!existsOrSymlink(cursor)) continue;
     const metadata = lstatSync(cursor);
     const isLeaf = index === parts.length - 1;
@@ -2649,7 +3197,7 @@ function subcommandUsage(action: Arguments["action"]): string {
       "                                       --snapshot-sha256 SNAPSHOT_SHA256\n" +
       "                                       --failed-head FAILED_HEAD",
   };
-  return usage[action];
+  return `${usage[action]} --state-resolver STATE_RESOLVER`;
 }
 
 function subcommandHelp(action: Arguments["action"]): string {
@@ -2759,6 +3307,16 @@ function assertNoDuplicateJsonKeys(source: string): void {
   value();
   whitespace();
   if (index !== source.length) throw new SyntaxError("trailing JSON content");
+}
+
+function pathInventoryJson(
+  inventory: Readonly<Record<string, PathState>>,
+): JsonObject {
+  return Object.fromEntries(
+    Object.entries(inventory).map(
+      ([path, entry]): [string, JsonObject] => [path, { ...entry }],
+    ),
+  );
 }
 
 function canonicalJson(value: JsonValue): Uint8Array {
@@ -2902,7 +3460,7 @@ function decodeAscii(raw: Uint8Array): string {
   return new TextDecoder().decode(raw);
 }
 
-function checkIgnored(repo: string, path: string): boolean {
+function checkIgnored(repo: RepositoryContext, path: string): boolean {
   const result = runGit(
     repo,
     ["check-ignore", "-q", "--no-index", "--", path],

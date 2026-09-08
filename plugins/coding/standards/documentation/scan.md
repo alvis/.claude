@@ -4,6 +4,8 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 
 > **Scanner-backed rules**: `DOC-FORM-03`, `DOC-CONT-03`, `DOC-CONT-05`, and `DOC-FORM-06` have advisory mechanical scanner support (`plugins/coding/scripts/scanners/`). The scanner surfaces candidates only — always re-verify each hit against the rule guide before flagging.
 
+For TypeScript error documentation, `DOC-CONT-06` has advisory AST support in `coding:scripts/analyze-typescript.ts`, invoked through `coding:skills/lint/SKILL.md`. Bun resolves `ts-morph@28` into its cache; cold runs need registry access. Loading or parse failure prevents a clean affected check. Confirm every candidate against [the direct-error rule](rules/doc-cont-06.md); unknown error identities require review.
+
 ## Quick Scan
 
 - DO NOT write comments that restate obvious behavior [`DOC-CONT-01`]
@@ -11,6 +13,7 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 - DO NOT leave forbidden comment patterns in source [`DOC-CONT-03`]
 - DO NOT ship exported APIs without required docs [`DOC-CONT-04`]
 - DO NOT reference standard rule IDs (`DOC-FORM-03`) or group prefixes (`TST-STRU`) inside source-code comments [`DOC-CONT-05`]
+- DO NOT document errors merely propagated from callees or awaited operations; each error claim needs an escaping local throw, explicit rethrow, or locally created rejection in the owning function [`DOC-CONT-06`]
 - DO NOT start comments with uppercase (use lowercase), except for code/type references (`UserService`) and section headers (`// --- NAME --- //`), such as `// This validates token` [`DOC-FORM-01`]
 - DO NOT use one-line JSDoc on functions with params or non-void return, or block comments (`/* */`) for section headers, such as `/** one line */ fn(a)` or `/* USER */` [`DOC-FORM-02`]
 - DO NOT write JSDoc prose (function summary, `@returns`, `@throws`, `@example` description, or free `* …` lines) with uppercase first letter or trailing period; must use lowercase third-person verb (`/** validates input */` not `/** Validate input. */`); exception: first word is a code/type/acronym reference [`DOC-FORM-03`]
@@ -32,6 +35,7 @@ Any single violation blocks submission by default. Protocol: `essential:directio
 | `DOC-CONT-03` | Forbidden comment pattern present | `// modified by A on 2025-01-10`; `// modified by John on 2024-01-15` |
 | `DOC-CONT-04` | Exported API lacks docs | `export interface X {}` |
 | `DOC-CONT-05` | Comment references a standard rule ID or group prefix | `// per DOC-FORM-03`; `// ensure TST-STRU-01 compliance`; `/** see RPS-LAYOUT-01 */` |
+| `DOC-CONT-06` | Error documentation lacks direct escaping evidence in its owner | `@throws` copied from an awaited callee; a nested callback throw attributed to its outer function |
 | `DOC-FORM-01` | Comment starts with uppercase (should be lowercase unless code reference or section header) | `// This validates token`; `// This function handles user authentication` |
 | `DOC-FORM-02` | One-line JSDoc on function with params/return, or block comment used for section header | `/** one line */ fn(a)`; `/* USER */` |
 | `DOC-FORM-03` | JSDoc prose (summary, `@returns`, `@throws`, `@example`, free `*` lines) uses uppercase or trailing period instead of lowercase third-person verb (exception: first word is a code/type/acronym reference) | `/** Validate token. */`; `/** validate email format */`; `* @returns The user object.`; `* @throws Error if input is invalid.` |

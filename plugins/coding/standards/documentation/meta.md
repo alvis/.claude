@@ -18,6 +18,7 @@ This standard enforces requirements beyond common documentation practices:
 | Flexible casing in comments       | **Lowercase sentence style by default**                     |
 | TODO/FIXME can linger             | **Temporary tags must not be committed**                    |
 | JSDoc formatting varies by author | **Canonical sentence style and structure required**         |
+| Callee errors repeated in API docs | **Only directly raised errors belong in the owner’s error documentation** |
 
 ## Exception Policy
 

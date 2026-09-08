@@ -22,7 +22,8 @@ export interface CreateBillingProfileRequest {
  * @throws {ValidationError} when email format is invalid
  */
 export function normalizeEmail(email: string): string {
-  // implementation
+  if (!email.includes("@")) throw new ValidationError("invalid email");
+  return email.trim().toLowerCase();
 }
 ```
 

@@ -12,7 +12,7 @@ This remains a greenfield project: breaking changes are accepted and expected. N
 Edit plugin sources here. Never edit `~/.claude/plugins/` — that is a downstream cache that lags this tree and will mislead you. Refresh it with `claude plugin update`.
 </IMPORTANT>
 
-Runtime prerequisites: Bash, `jq`, Git, Bun, and Python 3 — the preserved extensionless `state-doctor` script runs under its `python3` shebang, and the `plugins/governance` authoring instructions still invoke `uv`-pinned Python — plus `gh`, and optionally `jj`, for publishing.
+Runtime prerequisites: Bash, `jq`, Git, Bun, and Python 3 — the preserved extensionless `state-doctor` script runs under its `python3` shebang, and the `plugins/governance` authoring instructions still invoke `uv`-pinned Python — plus `jj` 0.44+ for workspace regression tests and publication, and `gh` for publishing.
 
 ## Where things live
 

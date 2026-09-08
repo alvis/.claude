@@ -136,6 +136,7 @@ describe("approved plan persistence", { timeout: 30_000 }, () => {
     expect(existsSync(resolve(linked, ".state"))).toBe(false);
   }));
 
+  // Four real save subprocesses exceeded 5 seconds on hosted macOS; use the native integration budget.
   it("should reject a superseded approval replay but accept fresh reapproval", () => withSandbox((sandbox) => {
     output(save(sandbox, { source: "event-A" }));
     const revised = "# Plan B\nDeliver B.\n";
@@ -146,7 +147,7 @@ describe("approved plan persistence", { timeout: 30_000 }, () => {
     expect(readFileSync(resolve(sandbox.work, "plan.md"), "utf8")).toBe(revised);
     expect(output(save(sandbox, { source: "event-C" })).status).toBe("saved");
     expect(readFileSync(resolve(sandbox.work, "plan.md"), "utf8")).toBe(originalPlan);
-  }));
+  }), 30_000);
 
   it("should refuse changed bytes under the same approval identity", () => withSandbox((sandbox) => {
     output(save(sandbox));

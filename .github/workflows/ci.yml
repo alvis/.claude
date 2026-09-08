@@ -24,5 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+      - name: Jujutsu
+        run: bun run plugins/coding/skills/sync-tool/scripts/sync.ts --only=jj
       - name: vitest
         run: bunx --bun vitest@^4.0.0 run

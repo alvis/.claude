@@ -1,6 +1,6 @@
 # Lint review cycle
 
-Referenced from `SKILL.md` step 7. Use this cycle only when the Coding workflow requires independent review because the change is consequential, explicitly requested for review, or publication-bound. Tier 0/1 work otherwise ends with the implementing owner's self-review.
+Referenced from `SKILL.md` step 8. Use this cycle only when the Coding workflow requires independent review because the change is consequential, explicitly requested for review, or publication-bound. Tier 0/1 work otherwise ends with the implementing owner's self-review.
 
 ## Ownership
 
