@@ -517,23 +517,26 @@ describe("opencode adapter manifest validation", () => {
   });
 
   it("should retain commit backup advice and post-rewrite diagnostics after a repository rewrite", async () => {
-    writeFileSync(join(sandbox.project, ".gitignore"), ".opencode/\n");
-    writeFileSync(join(sandbox.project, "tracked.txt"), "tracked\n");
-    execFileSync("git", ["init", "--quiet"], { cwd: sandbox.project });
+    // keep backup traversal independent of the installed adapter bundle
+    const repository = join(sandbox.root, "rewrite-repository");
+    mkdirSync(repository);
+    writeFileSync(join(repository, ".gitignore"), ".opencode/\n");
+    writeFileSync(join(repository, "tracked.txt"), "tracked\n");
+    execFileSync("git", ["init", "--quiet"], { cwd: repository });
     execFileSync("git", ["config", "user.email", "test@example.com"], {
-      cwd: sandbox.project,
+      cwd: repository,
     });
     execFileSync("git", ["config", "user.name", "Test User"], {
-      cwd: sandbox.project,
+      cwd: repository,
     });
     execFileSync("git", ["add", ".gitignore", "tracked.txt"], {
-      cwd: sandbox.project,
+      cwd: repository,
     });
     execFileSync("git", ["commit", "--quiet", "-m", "test: initial"], {
-      cwd: sandbox.project,
+      cwd: repository,
     });
     const { AlvisMarketplace } = await loadAdapter();
-    const hooks = await AlvisMarketplace({ client: {}, directory: sandbox.project });
+    const hooks = await AlvisMarketplace({ client: {}, directory: repository });
     const args = { command: "git rebase --onto main base branch" };
     await hooks["tool.execute.before"](
       { callID: "rewrite", sessionID: "session", tool: "bash" },
