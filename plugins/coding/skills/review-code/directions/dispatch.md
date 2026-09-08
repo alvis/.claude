@@ -7,7 +7,7 @@ Dispatch selected areas in one parallel batch, at most seven reviewers. Each rev
 - canonical `plan_source: state.md` and applicable full `task_id` values read directly from `state.md`;
 - discovered source/test/doc paths for the area;
 - advisory mechanical-scan slice;
-- [review.md](../templates/review.md) and [mandates.md](../references/mandates.md);
+- [review.md](templates/review.md) and [mandates.md](references/mandates.md);
 - instruction to modify no file, delegate no further, preserve stable finding IDs/statuses, and return complete proposed area content, counts, `context_level`, evidence, the unchanged plan source, and reviewed full task IDs for main-agent reconciliation.
 
 The capsule is sufficient by default. Give `state.md` to alignment reviewers, or when resume/cross-slice evidence requires it; give `state/working.md` only when navigation is otherwise missing. Do not make every area reread both broad entrypoints.

@@ -1,14 +1,13 @@
 ---
 name: review-code
-description: Review alignment, semantic correctness, security, test intent, documentation, quality, and style after code changes. Use for explicit post-implementation or pre-merge review; return canonical area reports for main-agent reconciliation without editing the reviewed code.
+description: Review alignment, correctness, security, testing, documentation, quality, and style after code changes or within an explicit scope. Persist canonical findings, collect user confirmation by problem pattern through chat or interactive discovery, and suggest GitHub issue handoffs for confirmed problems verified on the remote default branch without editing reviewed code.
 requirements:
   intelligence: high
-argument-hint: "[specifier] [--area=alignment|correctness|security|quality|testing|docs|style|all] [--work-id=<id>] [--plan=<path>] [--explain]"
 ---
 
 # Review Code
 
-Orchestrate a read-only code review. Area reviewers return seven canonical reports; the main agent writes the lowercase review areas beneath the active work root. Remediation belongs to `coding:fix`; mechanical enforcement belongs to `coding:lint`.
+Orchestrate a read-only code review. Area reviewers return seven canonical reports; the main agent writes the lowercase review areas beneath the active work root. Remediation belongs to `coding:fix`; mechanical enforcement belongs to `coding:lint`. `essential:discover` owns interactive presentation; `coding:issue` owns GitHub issue previews and publication.
 
 ## Boundaries
 
@@ -44,7 +43,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
   | `STYL` | `style.md` | repository naming and mechanical-tool results |
 
 - Each area follows [./templates/review.md](templates/review.md) and uses `open|fixed|acknowledged|deferred|skipped` finding status. IDs remain stable across reruns. `fixed` is closed only by verified evidence. `acknowledged` and `skipped` are closed non-fixed risk dispositions only with rationale, accountable owner, and explicit recheck condition; P0/P1 also require explicit risk-acceptance authority and durable evidence. `open`, `deferred`, and malformed risk dispositions remain outstanding and block review closure.
-- The main agent rewrites `review.md` from every existing area file after writers finish. It contains overall status, all five disposition counts, derived `closed` and `outstanding` counts, priority counts for outstanding findings, one-line area headlines, paths, systemic patterns, and main-agent handback—not duplicated findings.
+- The main agent rewrites `review.md` from every existing area file after writers finish. It contains overall status, all five disposition counts, derived `closed` and `outstanding` counts, priority counts for outstanding findings, one-line area headlines, paths, systemic patterns, and main-agent handback. Its pattern confirmation section follows [confirmation.md](templates/confirmation.md): linked finding IDs, one question and initially blank `Answer: ` per pattern, revision-bound responses, and remote eligibility. Area files remain the sole home of detailed findings.
 - With `--explain`, write a lowercase child under `changes/` using [./directions/explainer.md](directions/explainer.md); return it for main-agent reconciliation of `changes.md`.
 
 </report>
@@ -54,9 +53,9 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 1. Resolve the specifier and per-area file lists through [./directions/specifier-resolution.md](directions/specifier-resolution.md). Use root `state.md` as the only plan definition. An explicit `--plan` must resolve to that file. Follow only its explicit implementation-detail link, which may add ID-keyed procedure but cannot redefine IDs, edges, requiredness, targets, or acceptance mappings. Never auto-adopt another planning/design file.
 2. Run the mandatory mechanical candidate scan described in [./directions/dispatch.md](directions/dispatch.md). Candidates are advisory.
 3. Dispatch one read-only reviewer per selected area in one parallel batch, following [./directions/dispatch.md](directions/dispatch.md) and [references/mandates.md](references/mandates.md). Pass the canonical plan source (`state.md`) and applicable full task IDs. Each returns its assigned area's complete proposed content, counts, context level, and evidence. The main agent validates and writes the lowercase area file.
-4. Re-read `state.md` before aggregation and reject plan-definition drift. Validate every expected selected file, then aggregate every existing canonical area so a partial rerun cannot hide unselected findings; reject malformed disposition metadata. For every reused (unselected) area file, compare its `reviewed_task_defs` binding against the current definitions of the same `reviewed_task_ids` in `state.md`; when a task kept its ID but its immutable definition (summary, targets, requiredness, acceptance) changed, treat that area as stale — do not aggregate it as clean, and require its re-review before closure. Derive outstanding findings as `open`, `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is `pass_with_suggestions`; zero outstanding findings is `pass`. Every outstanding finding blocks review closure regardless of displayed verdict. The main agent rewrites `review.md` entirely from the validated areas.
+4. Re-read `state.md` before aggregation and reject plan-definition drift. Validate every expected selected file, then aggregate every existing canonical area so a partial rerun cannot hide unselected findings; reject malformed disposition metadata. For every reused (unselected) area file, compare its `reviewed_task_defs` binding against the current definitions of the same `reviewed_task_ids` in `state.md`; when a task kept its ID but its immutable definition (summary, targets, requiredness, acceptance) changed, treat that area as stale — do not aggregate it as clean, and require its re-review before closure. Derive outstanding findings as `open`, `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is `pass_with_suggestions`; zero outstanding findings is `pass`. Every outstanding finding blocks review closure regardless of displayed verdict. The main agent derives the roll-up from the validated areas and reconciles the confirmation section through [confirmation.md](directions/confirmation.md), preserving response history. Persist all area files and `review.md` before presenting findings or requesting confirmation; failed persistence blocks that presentation.
 5. With `--explain`, generate the evidence-backed change child after review.
-6. Render the final summary through [./templates/output.md](templates/output.md). On malformed output, redispatch only the owning area until valid or blocked.
+6. Follow [confirmation.md](directions/confirmation.md) for pattern grouping, presentation choice, explicit answers, and eligible `coding:issue` handoff. A nested reviewer returns proposed content to the main agent without prompting or publishing. CI/non-interactive runs persist pending questions without prompting or generating HTML. Render the summary through [output.md](templates/output.md); malformed area output returns only to its owner.
 7. Each writer follows `essential:references/output-manifest.md` while writing eligible work Markdown. The main agent returns all changed area, summary, and optional explainer paths in `generated_files`; a delegated reviewer returns no `.state` path as a file it wrote.
 
 ## Verification
@@ -64,8 +63,11 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 - Every selected area file exists, is lowercase, matches the template, and contains only its owned findings.
 - The written `review.md`, or returned roll-up delta, matches every existing area file's disposition/priority counts and paths.
 - Alignment used the identical pinned state/plan/spec contract expected by any follow-up fix; no root fallback was selected. The result binds the exact `plan_source: state.md` and reviewed task IDs.
+- Findings and pattern questions were saved before presentation; each outstanding finding maps to one pattern, and no location gets a duplicate confirmation question.
+- Responses are explicit, evidence-bound, and preserved or marked stale according to the confirmation direction; agreement does not change finding status or authorize writes.
+- Every suggested GitHub issue has a confirmed pattern and current remote-default-branch evidence. Unverified, unpublished, and unconfirmed patterns have no creation suggestion.
 - Reviewed code was not modified.
 
 ## Completion
 
-Report area verdicts, aggregate priorities/dispositions, overall status, `review.md` as `written_by_main` or `reconciliation_returned`, optional explainer child, `plan_source: state.md`, reviewed task IDs, and `generated_files`. Detailed findings remain in area files.
+Report area verdicts, aggregate priorities/dispositions, overall status, `review.md` as `written_by_main` or `reconciliation_returned`, optional explainer child, `plan_source: state.md`, reviewed task IDs, and `generated_files`. Include confirmation progress, the selected presentation surface, and eligible issue handoffs or verification blockers; detailed findings remain in area files.
