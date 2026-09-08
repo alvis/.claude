@@ -202,6 +202,56 @@ function expectStructuralReport(
   expect(report.findings).toContainEqual(expectedFinding);
 }
 
+describe("conditional object spread reports", () => {
+  it("should report guarded object spreads without flagging direct properties or ordinary spreads", async () => {
+    const root = temporaryRoot();
+    writeFileSync(
+      resolve(root, "client.ts"),
+      [
+        "const clientConfig = {",
+        "  ...(credentials?.region && { region: credentials.region }),",
+        "  ...(explicitCredentials && { credentials: explicitCredentials }),",
+        "  ...(credentials?.region &&",
+        "    { region: credentials.region }),",
+        "  ...(enabled ? { region } : {}),",
+        "  ...(disabled ? {} : { region }),",
+        "  region: credentials?.region,",
+        "  credentials: explicitCredentials,",
+        "  ...defaults,",
+        "  ...{ region },",
+        "};",
+      ].join("\n"),
+    );
+
+    const result = await capture([root, "--category", "conditional-spread"]);
+
+    expect(
+      [...result.stdout.matchAll(/^.+client\.ts:(\d+)  /gm)].map(
+        ([, lineNumber]) => Number(lineNumber),
+      ),
+    ).toEqual([2, 3, 4, 6, 7]);
+  });
+
+  it("should link a finding to the installed rule guide outside the scanned project", async () => {
+    const root = temporaryRoot();
+    writeFileSync(
+      resolve(root, "client.ts"),
+      "const config = { ...(enabled ? { region } : {}) };\n",
+    );
+    const previous = process.cwd();
+    process.chdir(root);
+    try {
+      const result = await capture([".", "--category", "conditional-spread"]);
+
+      expect(result.stdout).toContain(
+        resolve(here, "../../standards/function/rules/func-sign-06.md"),
+      );
+    } finally {
+      process.chdir(previous);
+    }
+  });
+});
+
 describe("coding scanner fixture reports", () => {
   it.each(fixtureCases)(
     "should emit a structural report for $category",
