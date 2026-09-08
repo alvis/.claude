@@ -15,6 +15,7 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 ## Pull-request directions
 
 - Format the title as a Conventional Commit subject.
+- Keep issue-closing directives out of newly authored titles and bodies. Use plain references; `directions/issues.md` under `CODING_PR_SKILL_DIR` owns resolving associations and their verification.
 - Open every human-authored PR as a draft. A documented incident may authorize a hotfix exception; automated dependency or generator PRs follow their platform configuration.
 - Use a repository-local PR template when present; otherwise render [message.md](../templates/message.md). Keep labels and size bookkeeping out of the title and body.
 - Before submission, inspect every changed file under `GIT-PR-TYPE-05` for a durable purpose and remove prohibited artifacts through the implementation/history owner. Select and apply every relevant standard through `essential:directions/standards.md`; fix violations and record green revision-bound evidence in Verification before publication.
@@ -110,7 +111,7 @@ Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory archetype
 
 #### Resolve issue coverage
 
-For each selected PR surface, collect issue numbers or URLs explicitly supplied by the user or already established in its PR/work context. Bind each identity to its repository; a PR number, incidental example, or unrelated stack member's issue is not an issue identity for this surface. Preserve valid existing associations. Read a known issue directly to check whether the changes resolve it, partially address it, or merely relate to it; this identifier read is not a discovery search and still obeys any broader user restriction on GitHub access.
+For each selected PR surface, collect issue numbers or URLs explicitly supplied by the user or already established in its PR/work context, including existing closing associations read through `directions/issues.md`. Bind each identity to its repository; a PR number, incidental example, or unrelated stack member's issue is not an issue identity for this surface. Preserve valid existing associations. Read a known issue directly to check whether the changes resolve it, partially address it, or merely relate to it; this identifier read is not a discovery search and still obeys any broader user restriction on GitHub access.
 
 Invoke `coding:issue lookup` only when no issue identity is known for that surface **and** the user has not explicitly forbidden issue search. Pass the receiving repository and a description of that surface's actual changes, symptoms, and affected components. Do not search to supplement a known issue, substitute for an inaccessible known issue, or override an explicit search prohibition. An irrelevant or unavailable supplied issue is reported for correction, not silently replaced through discovery.
 
@@ -233,6 +234,8 @@ git branch --force "$BOOKMARK" "$CHANGE_ID"
 
 The helper's Git push is leased with the caller-bound `--force-with-lease=refs/heads/<bookmark>:<expected-remote-oid>`; `absent` uses an empty expected value to protect missing-ref creation, and its refspec uses the bound full local OID rather than a mutable branch name. Its jj path observes each remote before and after fetch, binds one immutable post-fetch operation, then issues one explicit multi-bookmark push at that operation and relies on jj's post-fetch lease.
 
+Before pushing an existing PR, reconcile selected existing closing links whose disposition becomes partial or related through `directions/issues.md`, against the saved current remote head/base pair and the intended diff. Remove and verify only proven stale manual links; unresolved intent or failed removal blocks that surface and its dependent publication before the push. Preserve other links.
+
 Before creating or editing PRs, publish the complete affected selection through the helper in one call:
 
 ```bash
@@ -264,7 +267,7 @@ PR=$(gh pr create --repo "$HOST/$REPOSITORY" --draft --title "$TITLE" --body-fil
 
 After creation, read back that numeric PR with `--repo "$HOST/$REPOSITORY"` and verify its number, `headRepositoryOwner.login`, `headRefOid`, `baseRefName`, and `baseRefOid` against the bound owner, head, base name, and base OID; require `state: OPEN` and `isDraft: true`. Creation is not complete until this deferred base and draft state become verified.
 
-When the head has one open PR, edit it and retain draft state:
+When the head has one open PR, reread its body and closing associations at the verified published head/base pair. Before removing a valid body-based closing directive, use `directions/issues.md` to establish and verify its manual replacement. A failed or unverified conversion blocks the body edit: leave the existing body untouched, report the pending conversion, and continue CI monitoring for any already-published head. Never restore or newly publish a closing directive. Reconcile concurrent body edits before submitting the revised text. Once this gate passes, edit the PR and retain draft state:
 
 ```bash
 gh pr edit "$PR" --title "$TITLE" --body-file - --base "$PR_BASE" <<<"$BODY"
@@ -272,6 +275,10 @@ gh pr ready "$PR" --undo
 ```
 
 Read back the same metadata after an update and require the bound head/base pair, `state: OPEN`, and `isDraft: true`. A successful mutation command alone does not establish publication or draft state.
+
+#### Verify issue Development links
+
+For every selected issue disposition under [Resolve issue coverage](#resolve-issue-coverage), load `directions/issues.md` from `CODING_PR_SKILL_DIR` after the numeric PR and its head/base pair are verified. Add missing resolving links, preserve valid links, and verify that partial or merely related work has no selected stale closing association. An unresolved stale link or conversion blocks readiness. Read back each resulting relationship, and retain partial failures in the publication report. A link failure does not erase a successfully published PR or authorize a closing keyword fallback.
 
 #### Attach selected repository labels
 
@@ -445,7 +452,7 @@ Scheduled tasks fire only while the session is open and idle. Unexpired tasks re
 Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 passes its base; text-only callers default to the first parent. Never invoke `gh`.
 
 1. Resolve the commit ref, defaulting to `@` after the functional jj check and to `HEAD` otherwise. Resolve an optional base, defaulting to the first parent or, for a root commit, the empty tree from `git hash-object -t tree /dev/null`. Try `jj log -r <ref> --no-graph -T 'description'`, then `git log -1 --format=%B <ref>`. Unknown refs exit 2; neither tool exits 3. Record the resolved head/base OIDs for step 4.
-2. Extract the subject (first non-empty line) and body (everything after the first blank line). Recognize commit trailers (`Refs:`, `Closes:`, `Fixes:`, `BREAKING CHANGE:`, `Testing:`, `Manual-Test:`) for routing in step 5.
+2. Extract the subject (first non-empty line) and body (everything after the first blank line). Recognize reference, breaking-change, and verification trailers for routing in step 6. When historical input contains issue-closing directives, retain the issue identities as plain references in the new PR text; never copy the directives or rewrite the historical commit. Extracting an identity does not establish that the current PR resolves it.
 3. Validate the subject against the canonical regex and type allowlist in the [commit-message standard](../../../standards/commit/write.md), which owns both. Read it at this step rather than restating it here. On mismatch, exit 2 with the failing token, the regex read from the standard, and the offending subject.
 4. For every non-root commit, resolve the review surface from the merge base: use `jj log --no-graph -T 'commit_id' -r "heads(::<head-oid> & ::<base-oid>)"` on the jj path or `git merge-base <base-oid> <head-oid>` on the git path. Use the empty tree only for the root-commit fallback. Calculate the active size zone from that exact surface under `GIT-PR-SIZE-*`. Run the classifier only after binding the exact base and head OIDs; it derives the zone for this authoring step and is not a policy authority:
 
@@ -487,13 +494,13 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
    - `{{risk_body}}` — exact content under `## Risk` / `Risk:`. Required for yellow/red/black; stop when absent rather than inventing it from the diff.
    - `{{test_plan_body}}` — exact content under `## Test plan` / `Test-Plan:`. Required for yellow/red/black; stop when absent.
    - `{{why_this_size_body}}` — exact content under `## Why this size`. Required for red and black. Require specific prose explaining why the surface is indivisible; stop when it is absent or generic. Do not render size counts, zone metadata, or reviewer-time estimates.
-   - `{{related_issues_body}}` — `Refs:` / `Closes:` / `Fixes:` trailers; "None." when absent.
+   - `{{related_issues_body}}` — plain issue references from `Refs:` trailers or normalized historical issue identities; "None." when absent. Publication may additionally supply its resolved issue-coverage context; text-only authoring never searches.
    - `{{verification_body}}` — `Testing:` / `Manual-Test:` trailers, rendered as a checklist of the checks that must pass before sign-off, specific to this change and ticked as each one is confirmed. Keep each check with its result and revision-bound evidence. Name every applicable standard selected through `essential:directions/standards.md`, its green scan/review result, the exact head/base OIDs, and the command or semantic evidence supporting it. Resolve every standards violation before submission; pending reviewer slots do not stand in for standards verification. Change-specific checks remain mandatory. When Additional Notes records deviations from the specification or original request, append `- [ ] Specification deviations approved: <what changed and why>`. Append one assigned/reviewed/approved reviewer triplet per `required_reviewers`, in slot order, using the exact head/base OIDs recorded in step 4 and the template's Verification shape.
    - `{{boundary_body}}` — bullets naming related work the instruction placed outside this change, so its edges are not read as gaps. It records the scope it was given, not the author's own judgment calls. "None." when absent.
    - `{{additional_notes_body}}` — deviations from the specification or original request (what changed and why), known limitations, and follow-ups; empty when absent. Preserve the template's visible separate-review instruction even when this placeholder is empty.
 
    Drop an optional section that resolves to "None." rather than leaving a stub. Never publish a generic or missing always-, zone-, archetype-, or diff-required section; stop and report the missing evidence when it cannot be derived specifically. Strip every author-facing guidance comment and `[ Optional ]` heading marker from the rendered body; keep Summary, Goal, Requirements, Context, Verification, and Additional Notes always.
-7. After rendering and before emission or publication, scan the body against its selected template and active standard conditions. Build repeated `--generated-file` arguments from every generated path in `SIZE_JSON`, then run:
+7. After rendering and before emission or publication, inspect the entire title/body for issue-closing directives, including inflected keywords with qualified references or URLs. Replace directives in authored text with plain references. A repository template that requires forbidden directives conflicts with this contract: report the conflict rather than silently changing the template or publishing its directives. Scan the body against its selected template and active standard conditions. Build repeated `--generated-file` arguments from every generated path in `SIZE_JSON`, then run:
 
    ```bash
    if ! MESSAGE_SCAN=$(bun run "${CODING_PR_SKILL_DIR}/scripts/scan-pr-message.ts" \
@@ -511,7 +518,7 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
 
 ## Verification and Completion
 
-- For each surface, report known issue identities, whether search ran or was skipped and why, lookup failures or coverage limits, selected issue dispositions, and preserved associations. No issue was created implicitly; lookup ran only when identity was unknown and search was permitted.
+- For each surface, report known issue identities, whether search ran or was skipped and why, lookup failures or coverage limits, selected issue dispositions, and added/preserved/removed/failed Development links with read-back evidence. No issue was created implicitly; lookup ran only when identity was unknown and search was permitted. A published PR with unverified required links is partial completion, never a fully successful association.
 - The title matches the Conventional Commits regex and the rendered body passes [scan-pr-message.ts](../scripts/scan-pr-message.ts). Every emitted body has behavioral Goal and Requirements sections and emoji-prefixed headings with no `[ Optional ]` authoring markers; a repo template is verbatim, or the bundled default has no placeholder or dropped-section stub. The same head OID, base/empty-tree OID, template, thresholds, and placeholder map yield byte-identical `title\n\nbody` without timestamps or random IDs.
 - Unless `--no-verify` was explicitly recorded, the applicable `pull_request` test and lint tasks passed through read-only `jj run` first at the exact selected tip and then at every selected PR head bottom-up, with revision-bound sources and results. The sole per-surface exception records the user's explicit approval for that exact revision and the verifier's exact lexically sorted missing-secret names. A `--no-verify` run instead reports every skipped bookmark, PR, head, and base; hosted CI remains mandatory.
 - Every head was pushed under a lease — one explicit affected-bookmark `jj git push` on the jj path, `git push --force-with-lease` on the git path; each new PR started as a draft, uses the authored title/body, and has the intended stack base. The review loop verifies approved surfaces are ready for review.

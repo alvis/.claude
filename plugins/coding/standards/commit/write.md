@@ -102,8 +102,7 @@ A breaking change MUST be documented in the body under a `BREAKING CHANGE:` foot
 - Separate from subject by ONE blank line.
 - Wrap every body line at 72 characters; this is a hard limit.
 - Explain **WHY**, not WHAT. The diff shows what; the body explains the reasoning, trade-offs, alternatives considered.
-- Close issues only with `Closes #<number>, #<number>...` at the bottom. Use commas for multiple issues; never substitute `Fixes` or `Resolves`.
-- Reference non-closing issues or PRs by URL or `#NNN` at the bottom.
+- Commit text never contains issue-closing directives; `coding:pr create|update` owns verified GitHub Development links for resolving PRs.
 - For `revert`, include a `Reverts <sha>` line.
 - For `BREAKING CHANGE`, include a `BREAKING CHANGE:` paragraph describing migration.
 
@@ -119,8 +118,6 @@ self-containment rule.
 
 Image processing uses sharp instead of jimp because sharp's libvips
 backend is ~6x faster on benchmark fixtures.
-
-Closes #482
 ```
 
 ## Core Rules Summary
@@ -132,4 +129,4 @@ Closes #482
 | `CMT-HEAD-03` | `!` is paired with a `BREAKING CHANGE:` body footer |
 | `CMT-SUBJ-01` | Imperative, ≤72 characters, no trailing period, no emoji |
 | `CMT-BODY-01` | Blank-line separated, wrapped at 72, explains why |
-| `CMT-BODY-02` | Issue closure uses `Closes #<number>`; `revert` carries `Reverts <sha>` |
+| `CMT-BODY-02` | Issue references carry no directives; `revert` carries `Reverts <sha>` |
