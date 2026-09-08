@@ -234,6 +234,22 @@ function matches(
 function makeShape(node: ts.Node, context: ShapeContext): Shape {
   if (ts.isParenthesizedTypeNode(node)) return makeShape(node.type, context);
   if (
+    ts.isIdentifier(node) &&
+    ts.isTypePredicateNode(node.parent) &&
+    node.parent.parameterName === node
+  ) {
+    const symbol = context.checker.getSymbolAtLocation(node);
+    const binding = symbol?.declarations?.find(ts.isParameter);
+    const position = binding?.parent.parameters.indexOf(binding);
+    return {
+      node,
+      kind: "predicate-parameter",
+      value: position === undefined ? undefined : String(position),
+      children: [],
+      unresolved: position === undefined,
+    };
+  }
+  if (
     ts.isComputedPropertyName(node) &&
     !ts.isStringLiteralLike(node.expression) &&
     !ts.isNumericLiteral(node.expression)

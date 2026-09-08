@@ -64,14 +64,14 @@ interface Arguments {
   values: Readonly<Record<string, string>>;
 }
 
-type PathState = {
+interface PathState {
   mode: JsonValue;
   path: string;
   sha256: JsonValue;
   state: string;
   status?: string;
   origin?: string;
-};
+}
 
 /**
  * securely opened artifacts directory held by descriptor for the duration of one callback
@@ -367,9 +367,9 @@ function commandBuild(values: Readonly<Record<string, string>>): JsonObject {
     state_workspace: repo.state!,
     base_rev: baseRevision,
     build_state: buildState,
-    publication_paths: publication,
+    publication_paths: publication.map((entry) => ({ ...entry })),
     selected_paths: selectedEntries,
-    excluded_dirty_paths: excluded,
+    excluded_dirty_paths: excluded.map((entry) => ({ ...entry })),
     scope_attestation: {
       complete: true,
       generated_file_manifests: sourceBindings,
@@ -437,7 +437,7 @@ function commandPreflight(
       .exitCode === 0
   )
     throw new ContractError("a merge in progress cannot be isolated safely");
-  const excludedRaw = canonicalJson(state.excluded);
+  const excludedRaw = canonicalJson(pathInventoryJson(state.excluded));
   const oldHead = currentHead(repo);
   const indexPathRaw = decodeTrimmedPath(
     runGit(repo, ["rev-parse", "--path-format=absolute", "--git-path", "index"])
@@ -471,7 +471,9 @@ function commandPreflight(
     index_backup_sha256: indexDigest,
     selected_paths: selected,
     excluded_inventory_sha256: sha256(excludedRaw),
-    excluded_dirty_paths: Object.values(state.excluded),
+    excluded_dirty_paths: Object.values(state.excluded).map((entry) => ({
+      ...entry,
+    })),
     literal_pathspec_sha256: pathspecSha,
     jj_preflight_state: buildState.jj,
   };
@@ -529,8 +531,10 @@ function workspacePreflight(
     manifest_sha256: digest,
     old_head: buildState.head_commit!,
     selected_paths: selected,
-    excluded_inventory_sha256: sha256(canonicalJson(excluded)),
-    excluded_dirty_paths: Object.values(excluded),
+    excluded_inventory_sha256: sha256(
+      canonicalJson(pathInventoryJson(excluded)),
+    ),
+    excluded_dirty_paths: Object.values(excluded).map((entry) => ({ ...entry })),
     jj_preflight_state: buildState.jj!,
   };
   requireStableWorkspace(repo);
@@ -678,7 +682,9 @@ function commandVerify(values: Readonly<Record<string, string>>): JsonObject {
         `saved tree content/mode differs from manifest: ${path}`,
       );
   }
-  const excludedDigest = sha256(canonicalJson(state.excluded));
+  const excludedDigest = sha256(
+    canonicalJson(pathInventoryJson(state.excluded)),
+  );
   if (excludedDigest !== snapshot.excluded_inventory_sha256)
     throw new ContractError("non-selected dirty inventory changed after save");
   const savedTreeHashes = Object.fromEntries(
@@ -2183,7 +2189,12 @@ function validateManifest(
     const path = validateRelativePath(repo, entry.path);
     if (publicationMap[path])
       throw new ContractError(`duplicate manifest publication path: ${path}`);
-    publicationMap[path] = entry as PathState;
+    publicationMap[path] = {
+      path,
+      state: requireString(entry.state, "publication state"),
+      mode: entry.mode!,
+      sha256: entry.sha256!,
+    };
   }
   const actualBindings = reconcileProducerReceipts(
     repo,
@@ -2359,7 +2370,10 @@ function validateStateEntries(
       );
     if (requireStatus && typeof value.status !== "string")
       throw new ContractError(`${label} entry lacks canonical status: ${path}`);
-    if (!new Set(["file", "symlink", "deleted"]).has(String(value.state)))
+    if (
+      typeof value.state !== "string" ||
+      !new Set(["file", "symlink", "deleted"]).has(value.state)
+    )
       throw new ContractError(`invalid ${label} state: ${path}`);
     if (value.state === "deleted") {
       if (value.sha256 !== null || value.mode !== null)
@@ -2392,7 +2406,13 @@ function validateStateEntries(
       throw new ContractError(
         `current bytes/deletion/mode differs for ${label} path: ${path}`,
       );
-    result[path] = value as PathState;
+    result[path] = {
+      ...value,
+      path,
+      state: value.state,
+      mode: value.mode!,
+      sha256: value.sha256!,
+    };
     folded.add(foldedPath);
   }
   return result;
@@ -3287,6 +3307,16 @@ function assertNoDuplicateJsonKeys(source: string): void {
   value();
   whitespace();
   if (index !== source.length) throw new SyntaxError("trailing JSON content");
+}
+
+function pathInventoryJson(
+  inventory: Readonly<Record<string, PathState>>,
+): JsonObject {
+  return Object.fromEntries(
+    Object.entries(inventory).map(
+      ([path, entry]): [string, JsonObject] => [path, { ...entry }],
+    ),
+  );
 }
 
 function canonicalJson(value: JsonValue): Uint8Array {
