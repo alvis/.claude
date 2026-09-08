@@ -96,6 +96,23 @@ function inspectBody(
 ): ErrorEvidence {
   if (isFunction(node)) return emptyEvidence;
   if (isJumpScope(node)) return uncertainEvidence;
+  if (ts.isIfStatement(node) || ts.isConditionalExpression(node)) {
+    const branch = selectedBranch(node);
+    return branch === "uncertain"
+      ? uncertainEvidence
+      : branch === undefined
+        ? emptyEvidence
+        : inspectBody(branch, context, caught);
+  }
+  if (
+    ts.isBinaryExpression(node) &&
+    [
+      ts.SyntaxKind.AmpersandAmpersandToken,
+      ts.SyntaxKind.BarBarToken,
+      ts.SyntaxKind.QuestionQuestionToken,
+    ].includes(node.operatorToken.kind)
+  )
+    return uncertainEvidence;
   if (ts.isBlock(node)) {
     const evidence: ErrorEvidence[] = [];
     for (const statement of node.statements) {
@@ -174,6 +191,14 @@ function catchReachability(
 ): "unreachable" | "reachable" | "uncertain" {
   if (isFunction(node) || ts.isEmptyStatement(node)) return "unreachable";
   if (ts.isThrowStatement(node)) return "reachable";
+  if (ts.isIfStatement(node)) {
+    const branch = selectedBranch(node);
+    return branch === "uncertain"
+      ? "uncertain"
+      : branch === undefined
+        ? "unreachable"
+        : catchReachability(branch, context);
+  }
   if (ts.isBlock(node)) {
     for (const statement of node.statements) {
       const reachability = catchReachability(statement, context);
@@ -210,11 +235,16 @@ function inspectPromise(
   const expression = unwrap(input);
   if (ts.isAwaitExpression(expression))
     return inspectPromise(expression.expression, context, seen);
-  if (ts.isConditionalExpression(expression))
-    return mergeEvidence([
-      inspectPromise(expression.whenTrue, context, seen),
-      inspectPromise(expression.whenFalse, context, seen),
-    ]);
+  if (ts.isConditionalExpression(expression)) {
+    const condition = booleanLiteral(expression.condition);
+    return condition === undefined
+      ? uncertainEvidence
+      : inspectPromise(
+          condition ? expression.whenTrue : expression.whenFalse,
+          context,
+          seen,
+        );
+  }
   if (ts.isIdentifier(expression)) {
     const symbol = context.checker.getSymbolAtLocation(expression);
     if (symbol === undefined || seen.has(symbol)) return emptyEvidence;
@@ -297,6 +327,20 @@ function inspectExecutor(
   const parameterSymbols = executor.parameters
     .slice(0, 2)
     .map((parameter) => context.checker.getSymbolAtLocation(parameter.name));
+  if (
+    ts.isBlock(executor.body) &&
+    executor.body.statements.some(
+      (statement) =>
+        ts.isFunctionDeclaration(statement) &&
+        ts.forEachChild(statement, (child) =>
+          ts.isIdentifier(child) &&
+          executor.parameters.slice(0, 2).some(
+            (parameter) => parameter.name.getText() === child.text,
+          ),
+        ),
+    )
+  )
+    return uncertainEvidence;
   const inspect = (node: ts.Node, flow: ExecutorFlow): ExecutorFlow => {
     if (isFunction(node) || flow.completion !== "normal") return flow;
     if (ts.isTryStatement(node)) {
@@ -326,6 +370,11 @@ function inspectExecutor(
       }
       return result;
     }
+    if (ts.isIfStatement(node) || ts.isConditionalExpression(node)) {
+      const branch = selectedBranch(node);
+      if (branch !== "uncertain")
+        return branch === undefined ? flow : inspect(branch, flow);
+    }
     // branches and loops need path analysis: never accept a later rejection
     // when an earlier settlement or abrupt completion may have occurred.
     if (
@@ -340,6 +389,12 @@ function inspectExecutor(
           ts.SyntaxKind.QuestionQuestionToken,
         ].includes(node.operatorToken.kind))
     )
+      return {
+        settlement: flow.settlement ?? uncertainEvidence,
+        completion: "uncertain",
+        thrown: uncertainEvidence,
+      };
+    if (overwritesCallback(node, parameterSymbols, context.checker))
       return {
         settlement: flow.settlement ?? uncertainEvidence,
         completion: "uncertain",
@@ -393,17 +448,26 @@ function inspectExecutor(
 }
 
 function errorIdentity(
-  expression: ts.Expression,
+  input: ts.Expression,
   checker: ts.TypeChecker,
 ): ErrorEvidence {
+  const expression = unwrap(input);
+  if (ts.isConditionalExpression(expression)) {
+    const condition = booleanLiteral(expression.condition);
+    return condition === undefined
+      ? uncertainEvidence
+      : errorIdentity(
+          condition ? expression.whenTrue : expression.whenFalse,
+          checker,
+        );
+  }
   const type = checker.getTypeAtLocation(expression);
-  const types = type.isUnion() ? type.types : [type];
-  const identities = types.flatMap((member) => {
-    const symbol = member.getSymbol();
-    return symbol === undefined || symbol.declarations === undefined
+  if (type.isUnion()) return uncertainEvidence;
+  const symbol = type.getSymbol();
+  const identities =
+    symbol === undefined || symbol.declarations === undefined
       ? []
       : [canonicalSymbol(symbol, checker)];
-  });
   if (ts.isNewExpression(expression)) {
     const symbol = checker.getSymbolAtLocation(expression.expression);
     const target =
@@ -416,14 +480,9 @@ function errorIdentity(
     identities: new Set(identities),
     unresolved:
       identities.length === 0 ||
-      types.some(
-        (member) =>
-          (member.flags &
-            (ts.TypeFlags.Any |
-              ts.TypeFlags.Unknown |
-              ts.TypeFlags.TypeParameter)) !==
-          0,
-      ),
+      (type.flags &
+        (ts.TypeFlags.Any | ts.TypeFlags.Unknown | ts.TypeFlags.TypeParameter)) !==
+        0,
     raised: true,
   };
 }
@@ -520,6 +579,11 @@ function isJumpScope(node: ts.Node): boolean {
 
 function completionKind(node: ts.Node): "normal" | "abrupt" | "uncertain" {
   if (isFunction(node)) return "normal";
+  if (ts.isIfStatement(node)) {
+    const branch = selectedBranch(node);
+    if (branch !== "uncertain")
+      return branch === undefined ? "normal" : completionKind(branch);
+  }
   if (ts.isThrowStatement(node) || ts.isReturnStatement(node)) return "abrupt";
   if (ts.isBlock(node)) {
     for (const statement of node.statements) {
@@ -535,6 +599,52 @@ function completionKind(node: ts.Node): "normal" | "abrupt" | "uncertain" {
   return children.some((child) => completionKind(child) !== "normal")
     ? "uncertain"
     : "normal";
+}
+
+function selectedBranch(
+  node: ts.IfStatement | ts.ConditionalExpression,
+): ts.Node | "uncertain" | undefined {
+  const condition = booleanLiteral(
+    ts.isIfStatement(node) ? node.expression : node.condition,
+  );
+  if (condition === undefined) return "uncertain";
+  if (ts.isIfStatement(node))
+    return condition ? node.thenStatement : node.elseStatement;
+  return condition ? node.whenTrue : node.whenFalse;
+}
+
+function booleanLiteral(expression: ts.Expression): boolean | undefined {
+  const value = unwrap(expression);
+  if (value.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (value.kind === ts.SyntaxKind.FalseKeyword) return false;
+  return undefined;
+}
+
+function overwritesCallback(
+  node: ts.Node,
+  parameters: readonly (ts.Symbol | undefined)[],
+  checker: ts.TypeChecker,
+): boolean {
+  const target =
+    ts.isBinaryExpression(node) &&
+    node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+    node.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+      ? node.left
+      : (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+          (node.operator === ts.SyntaxKind.PlusPlusToken ||
+            node.operator === ts.SyntaxKind.MinusMinusToken)
+        ? node.operand
+        : ts.isVariableDeclaration(node) && node.initializer !== undefined
+          ? node.name
+          : undefined;
+  const referencesCallback = (child: ts.Node): boolean => {
+    if (ts.isIdentifier(child)) {
+      const symbol = checker.getSymbolAtLocation(child);
+      return symbol !== undefined && parameters.includes(symbol);
+    }
+    return ts.forEachChild(child, referencesCallback) ?? false;
+  };
+  return target !== undefined && referencesCallback(target);
 }
 
 function canonicalSymbol(
