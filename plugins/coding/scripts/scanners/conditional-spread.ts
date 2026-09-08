@@ -3,11 +3,11 @@ import type { Rule } from "../scanlib/rule.ts";
 import { pushTextMatches } from "./_text.ts";
 
 const pattern =
-  /\.\.\.\s*\(\s*[^?()]+\?\s*(?:\{[^{}]*\}\s*:\s*\{\s*\}|\{\s*\}\s*:\s*\{[^{}]*\})\s*\)/gs;
-/** Flags conditional object spreads of the guarded-literal form. */
+  /\.\.\.\s*\(\s*(?:[^?()]+\?\s*(?:\{[^{}]*\}\s*:\s*\{\s*\}|\{\s*\}\s*:\s*\{[^{}]*\})|[^;{}()]+?&&\s*\{[^{}]*\})\s*\)/gs;
+/** flags conditional object spreads guarded by a ternary or logical AND */
 export const RULE: Rule = {
   id: "conditional-spread",
-  label: "Conditional object spread (`...(cond ? {…} : {})`)",
+  label: "Conditional object spread (`...(cond ? {…} : {})` or `...(cond && {…})`)",
   order: 50,
   appliesTo: sourceFiles,
   ruleRefs: ["FUNC-SIGN-06"],

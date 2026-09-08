@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { extname, isAbsolute, join, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { loadRules } from "./loader.ts";
 import {
@@ -295,10 +295,28 @@ export async function run(
   }
   const chunks: string[] = [];
   const summary: string[] = [];
+  const standardsRoot = resolve(import.meta.dirname, "../../standards");
+  const guidePathsById = new Map(
+    readdirSync(standardsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .flatMap((entry) => {
+        const rulesRoot = join(standardsRoot, entry.name, "rules");
+        if (!existsSync(rulesRoot)) return [];
+        return readdirSync(rulesRoot)
+          .filter((name) => name.endsWith(".md"))
+          .map((name): [string, string] => [
+            basename(name, ".md").toUpperCase(),
+            join(rulesRoot, name),
+          ]);
+      }),
+  );
   for (const rule of selected) {
     const matches = results.get(rule.id) ?? [];
     chunks.push(
       render(rule.label, matches, linesByPath, args.before, args.after),
+      ...(matches.length === 0 ? [] : rule.ruleRefs ?? []).map(
+        (id) => `Rule guide: ${id} — ${guidePathsById.get(id) ?? "unavailable"}`,
+      ),
     );
     summary.push(
       `  ${rule.id}: ${matches.length} matches in ${new Set(matches.map((match) => match.path)).size} files`,
