@@ -50,12 +50,9 @@ export function discoverPackages(
     spawnSync("git", ["-C", root, "rev-parse", "--show-toplevel"], {
       encoding: "utf8",
     }).status === 0;
-  const allFiles = walk(root, [], hasGit);
-  const ignored = hasGit ? gitIgnored(root, allFiles) : new Set<string>();
-  const sourceFiles = allFiles.filter(
+  const sourceFiles = walk(root, [], hasGit).filter(
     (file) =>
       sourceExtension.test(file) &&
-      !ignored.has(file) &&
       !/\.(?:generated|gen)\.[^.]+$/.test(file) &&
       !isGenerated(file),
   );
@@ -137,19 +134,24 @@ function walk(
           }))
       : []),
   ];
-  return readdirSync(directory, { withFileTypes: true })
-    .sort((first, second) => first.name.localeCompare(second.name))
-    .flatMap((entry) => {
-      const file = resolve(directory, entry.name);
-      if (
-        entry.isSymbolicLink() ||
-        excludedDirectories.has(entry.name) ||
-        isIgnored(file, rules)
+  const entries = readdirSync(directory, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        !entry.isSymbolicLink() && !excludedDirectories.has(entry.name),
+    )
+    .sort((first, second) => first.name.localeCompare(second.name));
+  const ignored = hasGit
+    ? gitIgnored(
+        directory,
+        entries.map((entry) => resolve(directory, entry.name)),
       )
-        return [];
-      if (entry.isDirectory()) return walk(file, rules, hasGit);
-      return entry.isFile() ? [file] : [];
-    });
+    : new Set<string>();
+  return entries.flatMap((entry) => {
+    const file = resolve(directory, entry.name);
+    if (ignored.has(file) || isIgnored(file, rules)) return [];
+    if (entry.isDirectory()) return walk(file, rules, hasGit);
+    return entry.isFile() ? [file] : [];
+  });
 }
 
 function isIgnored(file: string, rules: readonly IgnoreRule[]): boolean {

@@ -95,6 +95,20 @@ function inspectBody(
   caught: boolean,
 ): ErrorEvidence {
   if (isFunction(node)) return emptyEvidence;
+  if (isJumpScope(node)) return uncertainEvidence;
+  if (ts.isBlock(node)) {
+    const evidence: ErrorEvidence[] = [];
+    for (const statement of node.statements) {
+      evidence.push(inspectBody(statement, context, caught));
+      const completion = completionKind(statement);
+      if (completion === "abrupt") break;
+      if (completion === "uncertain" && statement !== node.statements.at(-1)) {
+        evidence.push(uncertainEvidence);
+        break;
+      }
+    }
+    return mergeEvidence(evidence);
+  }
   if (ts.isThrowStatement(node))
     return caught
       ? emptyEvidence
@@ -188,6 +202,11 @@ function inspectPromise(
     )
       return emptyEvidence;
     if (
+      access.name.text === "finally" &&
+      !preservesSettlement(expression.arguments[0], context.checker)
+    )
+      return uncertainEvidence;
+    if (
       access.name.text === "then" ||
       access.name.text === "finally" ||
       access.name.text === "catch"
@@ -219,6 +238,10 @@ function inspectExecutor(
   executor: ts.ArrowFunction | ts.FunctionExpression,
   context: EvidenceContext,
 ): ErrorEvidence {
+  if (ts.isFunctionExpression(executor) && executor.asteriskToken !== undefined)
+    return emptyEvidence;
+  const isAsync =
+    (ts.getCombinedModifierFlags(executor) & ts.ModifierFlags.Async) !== 0;
   const parameterSymbols = executor.parameters
     .slice(0, 2)
     .map((parameter) => context.checker.getSymbolAtLocation(parameter.name));
@@ -245,13 +268,13 @@ function inspectExecutor(
       }
       return result;
     }
-    // Branches and loops need path analysis: never accept a later rejection
+    // branches and loops need path analysis: never accept a later rejection
     // when an earlier settlement or abrupt completion may have occurred.
     if (
       ts.isIfStatement(node) ||
+      ts.isAwaitExpression(node) ||
       ts.isConditionalExpression(node) ||
-      ts.isSwitchStatement(node) ||
-      ts.isIterationStatement(node, false) ||
+      isJumpScope(node) ||
       (ts.isBinaryExpression(node) &&
         [
           ts.SyntaxKind.AmpersandAmpersandToken,
@@ -285,7 +308,7 @@ function inspectExecutor(
       if (symbol !== undefined && symbol === parameterSymbols[0])
         return {
           ...result,
-          // Resolution adopts thenables; a nonempty argument needs review.
+          // resolution adopts thenables; a nonempty argument needs review
           settlement:
             node.arguments.length === 0 ? emptyEvidence : uncertainEvidence,
         };
@@ -307,7 +330,7 @@ function inspectExecutor(
   });
   return (
     result.settlement ??
-    (result.completion === "throw" ? result.thrown : emptyEvidence)
+    (result.completion === "throw" && !isAsync ? result.thrown : emptyEvidence)
   );
 }
 
@@ -376,6 +399,23 @@ function isAbsentHandler(
   );
 }
 
+function preservesSettlement(
+  input: ts.Expression | undefined,
+  checker: ts.TypeChecker,
+): boolean {
+  if (input === undefined || isAbsentHandler(input, checker)) return true;
+  const handler = unwrap(input);
+  return (
+    (ts.isArrowFunction(handler) || ts.isFunctionExpression(handler)) &&
+    handler.parameters.length === 0 &&
+    ts.isBlock(handler.body) &&
+    handler.body.statements.every(
+      (statement) =>
+        ts.isEmptyStatement(statement) || ts.isFunctionDeclaration(statement),
+    )
+  );
+}
+
 function ownsDeclaration(
   node: ts.Node,
   owner: ts.FunctionLikeDeclaration,
@@ -409,6 +449,14 @@ function isFunction(node: ts.Node): node is ts.FunctionLikeDeclaration {
     ts.isConstructorDeclaration(node) ||
     ts.isGetAccessorDeclaration(node) ||
     ts.isSetAccessorDeclaration(node)
+  );
+}
+
+function isJumpScope(node: ts.Node): boolean {
+  return (
+    ts.isSwitchStatement(node) ||
+    ts.isIterationStatement(node, false) ||
+    ts.isLabeledStatement(node)
   );
 }
 

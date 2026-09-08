@@ -1506,7 +1506,7 @@ process.stdout.write(identities.join("\\n"));
 
 describe("ignored directories in centralized jj workspaces", () => {
   it.each(["active", "default"] as const)(
-    "saves selected files with an unreadable ignored cache in the %s workspace",
+    "should save selected files with an unreadable ignored cache in the %s workspace",
     (workspace: "active" | "default") => {
       const fixture = new Harness("jj");
       const cache = join(
@@ -1560,7 +1560,7 @@ describe("ignore exceptions in centralized jj workspaces", () => {
     ["active", "tracked"],
     ["default", "tracked"],
   ] as const)(
-    "rejects changes to a %s workspace %s file after saving",
+    "should reject changes to a %s workspace %s file after saving",
     (workspace: "active" | "default", kind: "negated" | "tracked") => {
       const fixture = new Harness("jj", kind === "tracked");
       try {

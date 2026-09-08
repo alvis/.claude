@@ -1,3 +1,5 @@
+import { dirname } from "node:path";
+
 import { Project, ts } from "ts-morph@28";
 
 import { nearestFile } from "./discovery.ts";
@@ -30,8 +32,6 @@ export function analyzePackage(request: PackageRequest): PackageAnalysis {
   }
   const projects = [...configurations].map(([configuration, files]) => {
     const project = new Project({
-      tsConfigFilePath: configuration,
-      skipAddingFilesFromTsConfig: true,
       compilerOptions:
         configuration === undefined
           ? {
@@ -41,9 +41,9 @@ export function analyzePackage(request: PackageRequest): PackageAnalysis {
               module: ts.ModuleKind.Preserve,
               moduleResolution: ts.ModuleResolutionKind.Bundler,
             }
-          : { noEmit: true },
+          : readCompilerOptions(configuration, request.files),
     });
-    project.addSourceFilesAtPaths(request.files);
+    for (const file of request.files) project.addSourceFileAtPath(file);
     project.resolveSourceFileDependencies();
     return { project, files };
   });
@@ -127,6 +127,35 @@ export function analyzePackage(request: PackageRequest): PackageAnalysis {
         ),
     ),
   };
+}
+
+function readCompilerOptions(
+  configuration: string,
+  files: readonly string[],
+): ts.CompilerOptions {
+  const source = ts.readConfigFile(configuration, ts.sys.readFile);
+  if (source.error !== undefined)
+    throw new Error(
+      ts.flattenDiagnosticMessageText(source.error.messageText, "\n"),
+    );
+  const data: Record<string, unknown> = source.config;
+  // package discovery owns file eligibility; config contributes settings and extends
+  const parsed = ts.parseJsonConfigFileContent(
+    { ...data, files: [...files], include: [] },
+    ts.sys,
+    dirname(configuration),
+    { noEmit: true },
+    configuration,
+  );
+  if (parsed.errors.length > 0)
+    throw new Error(
+      parsed.errors
+        .map((error) =>
+          ts.flattenDiagnosticMessageText(error.messageText, "\n"),
+        )
+        .join("\n"),
+    );
+  return parsed.options;
 }
 
 if (import.meta.main) {
