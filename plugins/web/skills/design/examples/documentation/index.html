@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Relay docs — fictional job runner</title>
+    <style>
+      :root {
+        --ui-bg: #f8faff;
+        --ui-surface: #fff;
+        --ui-ink: #172a49;
+        --ui-muted: #56657c;
+        --ui-action: #334f92;
+        --ui-action-ink: #fff;
+        --ui-line: #ccd6e8;
+        --ui-wash: #e9eefb;
+        --ui-code: #101b2e;
+        --ui-code-ink: #eaf0ff;
+        --space-1: 0.5rem;
+        --space-2: 1rem;
+        --space-3: 1.5rem;
+        --space-4: 2rem;
+        --space-6: 3rem;
+        --radius-card: 0.75rem;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 5rem;
+      }
+      body {
+        margin: 0;
+        background: var(--page-bg, var(--ui-bg, #f8faff));
+        color: var(--page-ink, var(--ui-ink, #172a49));
+        font:
+          1rem/1.65 system-ui,
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 0.2rem solid var(--focus-color, var(--ui-action, #334f92));
+        outline-offset: 0.2rem;
+      }
+      .demo {
+        padding: 0.4rem var(--space-3);
+        text-align: center;
+        background: var(--demo-bg, var(--ui-ink, #172a49));
+        color: var(--demo-ink, var(--ui-action-ink, #fff));
+        font-size: 0.78rem;
+      }
+      .topbar {
+        min-height: 4.5rem;
+        padding: var(--space-2) var(--space-3);
+        display: grid;
+        grid-template-columns: 14rem minmax(16rem, 36rem) auto;
+        gap: var(--space-3);
+        align-items: center;
+        border-bottom: 1px solid var(--ui-line);
+        background: rgba(255, 255, 255, 0.96);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      .brand {
+        font-weight: 850;
+        font-size: 1.3rem;
+        letter-spacing: -0.03em;
+      }
+      .brand-mark {
+        display: inline-grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        background: var(--ui-action);
+        color: var(--ui-action-ink);
+        margin-right: 0.5rem;
+      }
+      .search {
+        position: relative;
+      }
+      .search label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+      .search input {
+        width: 100%;
+        min-height: 2.75rem;
+        padding: 0.65rem 1rem;
+        border: 1px solid var(--ui-line);
+        border-radius: 0.6rem;
+        background: var(--ui-bg);
+        color: var(--ui-ink);
+      }
+      .search-results {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        right: 0;
+        background: var(--ui-surface);
+        border: 1px solid var(--ui-line);
+        box-shadow: 0 1rem 2rem rgba(23, 42, 73, 0.12);
+        padding: 0.5rem;
+        display: none;
+      }
+      .search-results.show {
+        display: block;
+      }
+      .search-result {
+        width: 100%;
+        min-height: 3.4rem;
+        padding: 0.6rem;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: var(--ui-ink);
+      }
+      .search-result:hover {
+        background: var(--ui-wash);
+      }
+      .search-result strong,
+      .search-result span {
+        display: block;
+      }
+      .search-result span {
+        font-size: 0.78rem;
+        color: var(--ui-muted);
+      }
+      .top-meta {
+        justify-self: end;
+        color: var(--ui-muted);
+        font-size: 0.8rem;
+      }
+      .mobile-nav {
+        display: none;
+        min-height: 2.75rem;
+        padding: 0.55rem 1rem;
+        border: 1px solid var(--ui-line);
+        background: var(--ui-surface);
+        color: var(--ui-ink);
+        border-radius: 0.5rem;
+      }
+      .layout {
+        max-width: 90rem;
+        margin: auto;
+        display: grid;
+        grid-template-columns: 16rem minmax(0, 46rem) 13rem;
+        gap: var(--space-4);
+        padding: var(--space-4) var(--space-3);
+      }
+      .sidebar {
+        position: sticky;
+        top: 6rem;
+        align-self: start;
+      }
+      .nav-group {
+        margin-bottom: var(--space-3);
+      }
+      .nav-group h2 {
+        font-size: 0.73rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--ui-muted);
+        margin: 0 0 0.5rem;
+      }
+      .nav-button {
+        width: 100%;
+        min-height: 2.75rem;
+        text-align: left;
+        border: 0;
+        border-left: 0.2rem solid transparent;
+        padding: 0.55rem 0.75rem;
+        background: transparent;
+        color: var(--ui-muted);
+      }
+      .nav-button:hover {
+        background: var(--ui-wash);
+        color: var(--ui-ink);
+      }
+      .nav-button[aria-current="page"] {
+        border-left-color: var(--ui-action);
+        background: var(--ui-wash);
+        color: var(--ui-ink);
+        font-weight: 800;
+        cursor: default;
+      }
+      .content {
+        min-width: 0;
+      }
+      .breadcrumb {
+        font-size: 0.8rem;
+        color: var(--ui-muted);
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+      .page h1 {
+        font-size: clamp(2.6rem, 6vw, 4.8rem);
+        line-height: 1;
+        letter-spacing: -0.055em;
+        margin: var(--space-2) 0;
+      }
+      .lede {
+        font-size: 1.2rem;
+        color: var(--ui-muted);
+        max-width: 58ch;
+      }
+      .page h2 {
+        margin-top: var(--space-6);
+        font-size: 1.75rem;
+        letter-spacing: -0.03em;
+        /* reserves the sticky desktop header plus focus breathing room */
+        scroll-margin-top: 6rem;
+      }
+      .callout {
+        padding: var(--space-3);
+        border-left: 0.3rem solid var(--ui-action);
+        background: var(--ui-wash);
+        margin: var(--space-3) 0;
+      }
+      .code {
+        margin: var(--space-3) 0;
+        background: var(--ui-code);
+        color: var(--ui-code-ink);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+      }
+      .code-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem var(--space-2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.78rem;
+      }
+      .copy {
+        min-height: 2.75rem;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 0.4rem;
+        background: transparent;
+        color: var(--ui-code-ink);
+        font-weight: 750;
+      }
+      .copy:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      pre {
+        margin: 0;
+        padding: var(--space-2);
+        overflow: auto;
+        font:
+          0.9rem/1.6 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      .copy-status {
+        min-height: 1.5rem;
+        padding: 0 var(--space-2) 0.5rem;
+        color: var(--ui-code-ink);
+        font-size: 0.8rem;
+      }
+      .steps {
+        counter-reset: step;
+        padding: 0;
+        list-style: none;
+      }
+      .steps li {
+        position: relative;
+        padding: 0 0 var(--space-3) 3.5rem;
+      }
+      .steps li::before {
+        counter-increment: step;
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        width: 2.4rem;
+        height: 2.4rem;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--ui-action);
+        color: var(--ui-action-ink);
+        font-weight: 850;
+      }
+      .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        display: block;
+        overflow: auto;
+      }
+      .api-table th,
+      .api-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--ui-line);
+        vertical-align: top;
+      }
+      .api-table code {
+        white-space: nowrap;
+      }
+      .contents {
+        position: sticky;
+        top: 6rem;
+        align-self: start;
+        border-left: 1px solid var(--ui-line);
+        padding-left: var(--space-2);
+      }
+      .contents strong {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .contents a {
+        display: block;
+        color: var(--ui-muted);
+        padding: 0.4rem 0;
+        font-size: 0.88rem;
+      }
+      .contents a:hover {
+        color: var(--ui-action);
+      }
+      .no-search {
+        padding: var(--space-2);
+        color: var(--ui-muted);
+      }
+      footer {
+        border-top: 1px solid var(--ui-line);
+        padding: var(--space-3);
+        text-align: center;
+        color: var(--ui-muted);
+      }
+      @media (max-width: 900px) {
+        .topbar {
+          grid-template-columns: auto 1fr auto;
+        }
+        .top-meta {
+          display: none;
+        }
+        .mobile-nav {
+          display: block;
+        }
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sidebar {
+          display: none;
+          position: fixed;
+          z-index: 4;
+          top: 6.6rem;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          padding: var(--space-3);
+          background: var(--ui-surface);
+          overflow: auto;
+        }
+        .sidebar.open {
+          display: block;
+        }
+        .contents {
+          position: static;
+          grid-row: 2;
+          border-left: 0;
+          border-top: 1px solid var(--ui-line);
+          padding: var(--space-2) 0;
+        }
+        .contents a {
+          display: inline-block;
+          margin-right: var(--space-2);
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          grid-template-columns: 1fr auto;
+        }
+        .search {
+          grid-column: 1/-1;
+          grid-row: 2;
+        }
+        .layout {
+          padding: var(--space-3) var(--space-2);
+        }
+        .sidebar {
+          top: 10.3rem;
+        }
+        .page h1 {
+          font-size: 2.7rem;
+        }
+        .page h2 {
+          /* mobile search wraps the sticky header into two rows */
+          scroll-margin-top: calc(11rem + env(safe-area-inset-top, 0px));
+        }
+        .code {
+          margin-inline: calc(var(--space-2) * -1);
+          border-radius: 0;
+        }
+        .brand-text {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      Relay is a fictional job runner. All documentation and code below are
+      illustrative.
+    </div>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">R</span
+        ><span class="brand-text">Relay docs</span>
+      </div>
+      <div class="search">
+        <label for="docs-search">Search documentation</label
+        ><input
+          id="docs-search"
+          type="search"
+          placeholder="Search tutorials and reference"
+          autocomplete="off"
+          aria-controls="search-results"
+          aria-expanded="false"
+        />
+        <div
+          class="search-results"
+          id="search-results"
+          role="region"
+          aria-label="Search results"
+        ></div>
+      </div>
+      <button
+        class="mobile-nav"
+        id="mobile-nav"
+        type="button"
+        aria-controls="sidebar"
+        aria-expanded="false"
+      >
+        Browse docs</button
+      ><span class="top-meta">Illustrative API · v1 sample</span>
+    </header>
+    <main class="layout">
+      <nav class="sidebar" id="sidebar" aria-label="Documentation navigation">
+        <div class="nav-group">
+          <h2>Learn</h2>
+          <button
+            class="nav-button"
+            type="button"
+            data-page="quickstart"
+            aria-current="page"
+          >
+            Run your first job</button
+          ><button class="nav-button" type="button" data-page="retries">
+            Understand retries
+          </button>
+        </div>
+        <div class="nav-group">
+          <h2>Reference</h2>
+          <button class="nav-button" type="button" data-page="jobs">
+            Jobs API</button
+          ><button class="nav-button" type="button" data-page="events">
+            Event shapes
+          </button>
+        </div>
+      </nav>
+      <article class="content">
+        <section class="page active" data-content="quickstart">
+          <p class="breadcrumb">Tutorial / Getting started</p>
+          <h1 tabindex="-1">Run your first job</h1>
+          <p class="lede">
+            Follow one local, illustrative flow from a job definition to an
+            expected sample result.
+          </p>
+          <div class="callout">
+            <strong>Before you begin</strong><br />This fictional tutorial
+            assumes a JavaScript project and a sample Relay token. The commands
+            do not connect to a real service.
+          </div>
+          <ol class="steps">
+            <li>
+              <h2 id="install">Add the sample client</h2>
+              <p>
+                In a real product, verify the package name and runtime from
+                authoritative documentation.
+              </p>
+              <div class="code">
+                <div class="code-head">
+                  <span>Shell · illustrative</span
+                  ><button class="copy" type="button">Copy code</button>
+                </div>
+                <pre><code>npm install @fictional/relay</code></pre>
+                <div class="copy-status" role="status" aria-live="polite"></div>
+              </div>
+            </li>
+            <li>
+              <h2 id="define">Define a job</h2>
+              <p>
+                Name the work and keep the input explicit. This shape exists
+                only for the example.
+              </p>
+              <div class="code">
+                <div class="code-head">
+                  <span>JavaScript · illustrative</span
+                  ><button class="copy" type="button">Copy code</button>
+                </div>
+                <pre><code>const job = relay.job({ name: "sample-report", run: async (input) =&gt; input });</code></pre>
+                <div class="copy-status" role="status" aria-live="polite"></div>
+              </div>
+            </li>
+            <li>
+              <h2 id="inspect">Inspect the expected result</h2>
+              <p>
+                A successful sample returns a local object. It does not enqueue
+                or execute remote work.
+              </p>
+            </li>
+          </ol>
+        </section>
+        <section class="page" data-content="retries">
+          <p class="breadcrumb">Explanation / Reliability</p>
+          <h1 tabindex="-1">Understand retries</h1>
+          <p class="lede">
+            A conceptual guide to distinguishing a transient interruption from
+            invalid input.
+          </p>
+          <h2 id="retry-boundary">Choose the retry boundary</h2>
+          <p>
+            Retry only work that can safely repeat. Record an idempotency key
+            before a side effect and keep an attempt’s outcome visible.
+          </p>
+          <h2 id="retry-feedback">Explain the outcome</h2>
+          <p>
+            An error should name what failed, why the system believes it failed,
+            and whether retrying is useful. This page defines no real service
+            behavior.
+          </p>
+        </section>
+        <section class="page" data-content="jobs">
+          <p class="breadcrumb">Reference / API</p>
+          <h1 tabindex="-1">Jobs API</h1>
+          <p class="lede">
+            Illustrative lookup material. These names and parameters are not a
+            production contract.
+          </p>
+          <h2 id="job-create"><code>relay.job(options)</code></h2>
+          <p>Returns a sample job definition used by this demonstration.</p>
+          <table class="api-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>name</code></td>
+                <td>string</td>
+                <td>Required illustrative identifier.</td>
+              </tr>
+              <tr>
+                <td><code>run</code></td>
+                <td>function</td>
+                <td>Required illustrative handler.</td>
+              </tr>
+              <tr>
+                <td><code>attempts</code></td>
+                <td>number</td>
+                <td>Optional; defaults are intentionally unspecified.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h2 id="job-result">Result</h2>
+          <p>
+            The sample definition can be displayed locally; it does not execute
+            remote work.
+          </p>
+        </section>
+        <section class="page" data-content="events">
+          <p class="breadcrumb">Reference / Events</p>
+          <h1 tabindex="-1">Event shapes</h1>
+          <p class="lede">
+            Sample payloads for understanding documentation layout, not a real
+            schema.
+          </p>
+          <h2 id="event-ready"><code>job.ready</code></h2>
+          <p>
+            Represents an illustrative job becoming available to a fictional
+            worker.
+          </p>
+          <div class="code">
+            <div class="code-head">
+              <span>JSON · illustrative</span
+              ><button class="copy" type="button">Copy code</button>
+            </div>
+            <pre><code>{ "type": "job.ready", "jobId": "sample-01" }</code></pre>
+            <div class="copy-status" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+      </article>
+      <aside class="contents" aria-label="On this page">
+        <strong>On this page</strong>
+        <div id="contents-links"></div>
+      </aside>
+    </main>
+    <footer>Relay documentation · fictional interface example</footer>
+    <script>
+      const pages = {
+        quickstart: {
+          label: "Run your first job",
+          type: "Tutorial",
+          terms: "install define sample job getting started",
+          contents: [
+            ["install", "Add the sample client"],
+            ["define", "Define a job"],
+            ["inspect", "Inspect the result"],
+          ],
+        },
+        retries: {
+          label: "Understand retries",
+          type: "Explanation",
+          terms: "failure retry idempotency reliability",
+          contents: [
+            ["retry-boundary", "Choose the retry boundary"],
+            ["retry-feedback", "Explain the outcome"],
+          ],
+        },
+        jobs: {
+          label: "Jobs API",
+          type: "Reference",
+          terms: "parameters options attempts function result",
+          contents: [
+            ["job-create", "relay.job(options)"],
+            ["job-result", "Result"],
+          ],
+        },
+        events: {
+          label: "Event shapes",
+          type: "Reference",
+          terms: "event payload json ready schema",
+          contents: [["event-ready", "job.ready"]],
+        },
+      };
+      const search = document.getElementById("docs-search"),
+        results = document.getElementById("search-results"),
+        sidebar = document.getElementById("sidebar"),
+        mobile = document.getElementById("mobile-nav");
+      const closeNav = () => {
+        sidebar.classList.remove("open");
+        mobile.setAttribute("aria-expanded", "false");
+        mobile.textContent = "Browse docs";
+      };
+      const showPage = (id, focus = true) => {
+        document
+          .querySelectorAll(".page")
+          .forEach((page) =>
+            page.classList.toggle("active", page.dataset.content === id),
+          );
+        document.querySelectorAll(".nav-button").forEach((button) => {
+          if (button.dataset.page === id) {
+            button.setAttribute("aria-current", "page");
+            button.disabled = true;
+          } else {
+            button.removeAttribute("aria-current");
+            button.disabled = false;
+          }
+        });
+        document.getElementById("contents-links").innerHTML = pages[id].contents
+          .map(([anchor, label]) => `<a href="#${anchor}">${label}</a>`)
+          .join("");
+        closeNav();
+        results.classList.remove("show");
+        search.setAttribute("aria-expanded", "false");
+        if (focus) document.querySelector(`[data-content="${id}"] h1`).focus();
+      };
+      document.querySelectorAll(".nav-button").forEach((button) =>
+        button.addEventListener("click", () => {
+          history.replaceState(null, "", location.pathname + location.search);
+          showPage(button.dataset.page);
+        }),
+      );
+      mobile.addEventListener("click", () => {
+        const open = sidebar.classList.toggle("open");
+        mobile.setAttribute("aria-expanded", String(open));
+        mobile.textContent = open ? "Close docs" : "Browse docs";
+        if (open) sidebar.querySelector(".nav-button:not(:disabled)")?.focus();
+      });
+      const renderSearch = () => {
+        const query = search.value.trim().toLowerCase();
+        if (!query) {
+          results.classList.remove("show");
+          search.setAttribute("aria-expanded", "false");
+          return;
+        }
+        const matches = Object.entries(pages).filter(([, page]) =>
+          `${page.label} ${page.type} ${page.terms}`
+            .toLowerCase()
+            .includes(query),
+        );
+        results.innerHTML = matches.length
+          ? matches
+              .map(
+                ([id, page]) =>
+                  `<button class="search-result" type="button" data-result="${id}"><strong>${page.label}</strong><span>${page.type}</span></button>`,
+              )
+              .join("")
+          : '<div class="no-search"><strong>No documentation found</strong><br>Try “job”, “retry”, or “event”.</div>';
+        results.classList.add("show");
+        search.setAttribute("aria-expanded", "true");
+        results.querySelectorAll("[data-result]").forEach((button) =>
+          button.addEventListener("click", () => {
+            history.replaceState(null, "", location.pathname + location.search);
+            showPage(button.dataset.result);
+          }),
+        );
+      };
+      search.addEventListener("input", renderSearch);
+      search.addEventListener("focus", renderSearch);
+      document.querySelectorAll(".copy").forEach((button) =>
+        button.addEventListener("click", async () => {
+          const status = button.closest(".code").querySelector(".copy-status");
+          try {
+            if (!navigator.clipboard?.writeText)
+              throw new Error("Clipboard unavailable");
+            await navigator.clipboard.writeText(
+              button.closest(".code").querySelector("code").textContent,
+            );
+            status.textContent = "Illustrative code copied to the clipboard.";
+          } catch {
+            status.textContent =
+              "Clipboard access is unavailable here. Select the code manually to copy it.";
+          }
+        }),
+      );
+      const showHashTarget = () => {
+        const anchor = location.hash.slice(1);
+        const match = Object.entries(pages).find(([, page]) =>
+          page.contents.some(([candidate]) => candidate === anchor),
+        );
+        showPage(match?.[0] ?? "quickstart", false);
+        if (match)
+          requestAnimationFrame(() =>
+            document.getElementById(anchor)?.scrollIntoView(),
+          );
+      };
+      window.addEventListener("hashchange", showHashTarget);
+      showHashTarget();
+    </script>
+  </body>
+</html>

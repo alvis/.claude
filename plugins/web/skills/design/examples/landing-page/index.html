@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stillroom — a quieter weekly plan</title>
+    <style>
+      :root {
+        --ui-bg: #f4f1e7;
+        --ui-surface: #fffdf6;
+        --ui-ink: #202820;
+        --ui-muted: #586158;
+        --ui-action: #315c42;
+        --ui-action-ink: #fffdf6;
+        --ui-line: #bac2b6;
+        --ui-warm: #d8b579;
+        --space-1: 0.5rem;
+        --space-2: 1rem;
+        --space-3: 1.5rem;
+        --space-4: 2rem;
+        --space-6: 3rem;
+        --space-8: 4rem;
+        --radius-card: 1.25rem;
+        --shadow-elevated: 0 1.25rem 3rem rgba(32, 40, 32, 0.12);
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--page-bg, var(--ui-bg, #f4f1e7));
+        color: var(--page-ink, var(--ui-ink, #202820));
+        font:
+          1rem/1.6 system-ui,
+          sans-serif;
+      }
+      button,
+      a,
+      [contenteditable] {
+        font: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 0.2rem solid var(--focus-inner, #fffdf6);
+        outline-offset: 0.1rem;
+        box-shadow: 0 0 0 0.4rem var(--focus-outer, #202820);
+      }
+      .notice {
+        padding: 0.5rem var(--space-3);
+        background: var(--notice-bg, var(--ui-ink, #202820));
+        color: var(--notice-ink, var(--ui-action-ink, #fffdf6));
+        text-align: center;
+        font-size: 0.875rem;
+      }
+      nav {
+        max-width: 76rem;
+        margin: auto;
+        padding: var(--space-3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+      .brand {
+        font:
+          700 1.4rem Georgia,
+          serif;
+        text-decoration: none;
+        letter-spacing: -0.03em;
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+      .button {
+        min-height: 2.75rem;
+        padding: 0.65rem 1.15rem;
+        border: 0.125rem solid var(--button-border, var(--ui-action, #315c42));
+        border-radius: 999px;
+        background: var(--button-bg, var(--ui-action, #315c42));
+        color: var(--button-ink, var(--ui-action-ink, #fffdf6));
+        font-weight: 750;
+        text-decoration: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .button:hover {
+        filter: brightness(0.92);
+        transform: translateY(-1px);
+      }
+      .button:active {
+        transform: translateY(1px);
+      }
+      .button.secondary {
+        --button-bg: transparent;
+        --button-ink: var(--ui-action);
+      }
+      .hero {
+        max-width: 76rem;
+        min-height: 42rem;
+        margin: auto;
+        padding: var(--space-6) var(--space-3) var(--space-8);
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: var(--space-8);
+      }
+      .eyebrow {
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, serif;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+      }
+      h1 {
+        max-width: 12ch;
+        margin: var(--space-2) 0 var(--space-3);
+        font-size: clamp(3.4rem, 8vw, 7.2rem);
+        font-weight: 500;
+      }
+      h2 {
+        font-size: clamp(2.2rem, 5vw, 4.4rem);
+        margin: 0 0 var(--space-2);
+      }
+      .lede {
+        max-width: 35rem;
+        font-size: 1.2rem;
+        color: var(--copy-muted, var(--ui-muted, #586158));
+      }
+      .actions {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        margin-top: var(--space-3);
+      }
+      .planner {
+        background: var(--planner-bg, var(--ui-surface, #fffdf6));
+        border: 0.125rem solid var(--planner-line, var(--ui-ink, #202820));
+        box-shadow: var(--shadow-elevated);
+        transform: rotate(1.5deg);
+        padding: var(--space-3);
+        border-radius: 0.25rem;
+        position: relative;
+      }
+      .planner::before {
+        content: "sample week · edit me";
+        position: absolute;
+        top: -1.2rem;
+        right: 1rem;
+        background: var(--tag-bg, var(--ui-warm, #d8b579));
+        padding: 0.35rem 0.65rem;
+        transform: rotate(-3deg);
+        font-size: 0.75rem;
+        font-weight: 800;
+      }
+      .planner-head {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 0.125rem solid
+          var(--planner-line, var(--ui-ink, #202820));
+        padding-bottom: var(--space-2);
+      }
+      .week {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .day {
+        min-height: 14rem;
+        padding: var(--space-2) 0.6rem;
+        border-right: 1px solid var(--ui-line);
+      }
+      .day:last-child {
+        border: 0;
+      }
+      .day strong {
+        display: block;
+        font-family: Georgia, serif;
+      }
+      .task {
+        margin-top: var(--space-2);
+        padding: 0.5rem;
+        background: rgba(49, 92, 66, 0.1);
+        border-left: 0.2rem solid var(--ui-action);
+        font-size: 0.84rem;
+      }
+      [contenteditable]:hover {
+        background: rgba(216, 181, 121, 0.25);
+      }
+      section {
+        padding: var(--space-8) var(--space-3);
+      }
+      .section-inner {
+        max-width: 70rem;
+        margin: auto;
+      }
+      .principles {
+        background: var(--principles-bg, var(--ui-action, #315c42));
+        color: var(--principles-ink, var(--ui-action-ink, #fffdf6));
+      }
+      .principle-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-4);
+        margin-top: var(--space-4);
+      }
+      .principle b {
+        display: block;
+        font:
+          400 3rem Georgia,
+          serif;
+        color: var(--principle-accent, #f2d89f);
+      }
+      .pricing-head {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-3);
+        align-items: end;
+      }
+      .billing {
+        border: 1px solid var(--ui-line);
+        border-radius: 999px;
+        padding: 0.25rem;
+        display: flex;
+      }
+      .billing button {
+        min-height: 2.75rem;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        color: var(--ui-ink);
+        cursor: pointer;
+      }
+      .billing button[aria-pressed="true"] {
+        background: var(--ui-ink);
+        color: var(--ui-bg);
+      }
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+      }
+      .plan {
+        border: 0.125rem solid var(--ui-line);
+        border-radius: var(--radius-card);
+        padding: var(--space-4);
+        background: var(--ui-surface);
+      }
+      .plan.selected {
+        border-color: var(--ui-action);
+        box-shadow: var(--shadow-elevated);
+      }
+      .price {
+        font:
+          500 3.5rem Georgia,
+          serif;
+      }
+      .plan ul {
+        padding-left: 1.2rem;
+        min-height: 7rem;
+      }
+      .plan button {
+        width: 100%;
+      }
+      .selection {
+        min-height: 1.6rem;
+        font-weight: 700;
+        margin-top: var(--space-2);
+        color: var(--ui-action);
+      }
+      details {
+        border-top: 1px solid var(--ui-line);
+        padding: var(--space-2) 0;
+      }
+      summary {
+        cursor: pointer;
+        font:
+          600 1.2rem Georgia,
+          serif;
+        min-height: 2.75rem;
+      }
+      footer {
+        padding: var(--space-4) var(--space-3);
+        border-top: 1px solid var(--ui-line);
+        text-align: center;
+      }
+      @media (max-width: 760px) {
+        .nav-links a:not(.button) {
+          display: none;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          gap: var(--space-4);
+          padding-top: var(--space-4);
+        }
+        .planner {
+          transform: none;
+          overflow-x: auto;
+        }
+        .week {
+          min-width: 36rem;
+        }
+        .principle-grid,
+        .plans {
+          grid-template-columns: 1fr;
+        }
+        .pricing-head {
+          align-items: start;
+          flex-direction: column;
+        }
+        section {
+          padding-block: var(--space-6);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .button {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="notice">
+      Fictional product demonstration · no account or purchase is created
+    </div>
+    <nav aria-label="Primary navigation">
+      <a class="brand" href="#top">Stillroom</a>
+      <div class="nav-links">
+        <a href="#method">Method</a><a href="#pricing">Pricing</a
+        ><a class="button" href="#planner">Try the sample week</a>
+      </div>
+    </nav>
+    <main id="top">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">A weekly planner for unhurried work</p>
+          <h1>Make room for what matters.</h1>
+          <p class="lede">
+            Stillroom turns a crowded list into a calm, editable week. Plan five
+            days, protect your attention, and begin with what is real.
+          </p>
+          <div class="actions">
+            <a class="button" href="#planner">Try the sample week</a
+            ><a class="button secondary" href="#method">See the method</a>
+          </div>
+        </div>
+        <div
+          class="planner"
+          id="planner"
+          aria-label="Editable sample weekly planner"
+        >
+          <div class="planner-head">
+            <strong>Week of 7 September</strong><span>3 priorities</span>
+          </div>
+          <div class="week">
+            <div class="day">
+              <strong>Mon</strong>
+              <div
+                class="task"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Monday task"
+              >
+                Shape the brief
+              </div>
+            </div>
+            <div class="day">
+              <strong>Tue</strong>
+              <div
+                class="task"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Tuesday task"
+              >
+                Deep work block
+              </div>
+            </div>
+            <div class="day">
+              <strong>Wed</strong>
+              <div
+                class="task"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Wednesday task"
+              >
+                Team review
+              </div>
+            </div>
+            <div class="day">
+              <strong>Thu</strong>
+              <div
+                class="task"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Thursday task"
+              >
+                Open space
+              </div>
+            </div>
+            <div class="day">
+              <strong>Fri</strong>
+              <div
+                class="task"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Friday task"
+              >
+                Close the week
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section class="principles" id="method">
+        <div class="section-inner">
+          <p class="eyebrow">The Stillroom method</p>
+          <h2>A plan with breathing room.</h2>
+          <div class="principle-grid">
+            <div class="principle">
+              <b>01</b>
+              <h3>Name three priorities</h3>
+              <p>Make the week legible before filling the hours.</p>
+            </div>
+            <div class="principle">
+              <b>02</b>
+              <h3>Protect open space</h3>
+              <p>Leave room for the work you cannot predict.</p>
+            </div>
+            <div class="principle">
+              <b>03</b>
+              <h3>Close with care</h3>
+              <p>Carry forward only what still matters.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="pricing">
+        <div class="section-inner">
+          <div class="pricing-head">
+            <div>
+              <p class="eyebrow">Illustrative pricing</p>
+              <h2>Choose your room.</h2>
+              <p>
+                Prices are fictional and shown in USD. Annual billing is charged
+                as one full-year commitment.
+              </p>
+            </div>
+            <div class="billing" aria-label="Billing period">
+              <button type="button" data-period="monthly" aria-pressed="true">
+                Monthly</button
+              ><button type="button" data-period="yearly" aria-pressed="false">
+                Yearly
+              </button>
+            </div>
+          </div>
+          <div class="plans">
+            <article class="plan" data-plan="Quiet">
+              <h3>Quiet</h3>
+              <p>For one person shaping a steadier week.</p>
+              <p>
+                <span class="price" data-monthly="$8" data-yearly="$72"
+                  >$8</span
+                >
+                <span class="period">/ month</span>
+              </p>
+              <ul>
+                <li>Unlimited weekly plans</li>
+                <li>Simple reflection prompts</li>
+                <li>Export to printable PDF</li>
+              </ul>
+              <button class="button secondary choose" type="button">
+                Select Quiet
+              </button>
+            </article>
+            <article class="plan" data-plan="Shared">
+              <p class="eyebrow">Best fit for small teams</p>
+              <h3>Shared</h3>
+              <p>For up to 8 people coordinating without noise.</p>
+              <p>
+                <span class="price" data-monthly="$18" data-yearly="$168"
+                  >$18</span
+                >
+                <span class="period">/ month</span>
+              </p>
+              <ul>
+                <li>Everything in Quiet</li>
+                <li>Shared weekly intentions</li>
+                <li>Team review notes</li>
+              </ul>
+              <button class="button choose" type="button">Select Shared</button>
+            </article>
+          </div>
+          <p
+            class="selection"
+            id="selection"
+            role="status"
+            aria-live="polite"
+          ></p>
+        </div>
+      </section>
+      <section>
+        <div class="section-inner">
+          <p class="eyebrow">Questions</p>
+          <h2>Before you begin.</h2>
+          <details>
+            <summary>Does this example save my edits?</summary>
+            <p>
+              No. This standalone demonstration keeps edits only while the page
+              is open.
+            </p>
+          </details>
+          <details>
+            <summary>Does selecting a plan charge me?</summary>
+            <p>
+              No. It only demonstrates plan selection; no purchase or account is
+              created.
+            </p>
+          </details>
+          <details>
+            <summary>Can I cancel a fictional annual plan monthly?</summary>
+            <p>
+              No commercial terms apply here. A real annual plan would need to
+              state cancellation and refund terms before purchase.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer>
+      Stillroom is a fictional product created to demonstrate landing-page
+      design guidance.
+    </footer>
+    <script>
+      const periodButtons = document.querySelectorAll("[data-period]");
+      const prices = document.querySelectorAll(".price");
+      const periodLabels = document.querySelectorAll(".period");
+      periodButtons.forEach((button) =>
+        button.addEventListener("click", () => {
+          periodButtons.forEach((item) =>
+            item.setAttribute("aria-pressed", String(item === button)),
+          );
+          const yearly = button.dataset.period === "yearly";
+          prices.forEach((price) => {
+            price.textContent = yearly
+              ? price.dataset.yearly
+              : price.dataset.monthly;
+          });
+          periodLabels.forEach((label) => {
+            label.textContent = yearly ? "/ year, billed annually" : "/ month";
+          });
+        }),
+      );
+      document.querySelectorAll(".choose").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll(".plan")
+            .forEach((plan) => plan.classList.remove("selected"));
+          const plan = button.closest(".plan");
+          plan.classList.add("selected");
+          document.getElementById("selection").textContent =
+            `${plan.dataset.plan} selected for illustration. No purchase was made.`;
+        }),
+      );
+    </script>
+  </body>
+</html>

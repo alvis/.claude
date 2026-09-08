@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Northline — sample operations dashboard</title>
+    <style>
+      :root {
+        --ui-bg: #f3f6f7;
+        --ui-surface: #fff;
+        --ui-ink: #172c37;
+        --ui-muted: #5b6970;
+        --ui-action: #24566a;
+        --ui-action-ink: #fff;
+        --ui-line: #cbd6da;
+        --ui-good: #256746;
+        --ui-warn: #8a5b14;
+        --ui-error: #a0343a;
+        --ui-wash: #dce9ed;
+        --space-1: 0.5rem;
+        --space-2: 1rem;
+        --space-3: 1.5rem;
+        --space-4: 2rem;
+        --space-6: 3rem;
+        --radius-card: 0.75rem;
+        --shadow-elevated: 0 0.75rem 2rem rgba(23, 44, 55, 0.08);
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page-bg, var(--ui-bg, #f3f6f7));
+        color: var(--page-ink, var(--ui-ink, #172c37));
+        font:
+          1rem/1.5 system-ui,
+          sans-serif;
+      }
+      button,
+      select {
+        font: inherit;
+      }
+      :focus-visible {
+        outline: 0.2rem solid var(--focus-color, var(--ui-action, #24566a));
+        outline-offset: 0.2rem;
+      }
+      .demo {
+        padding: 0.45rem var(--space-3);
+        background: var(--demo-bg, var(--ui-ink, #172c37));
+        color: var(--demo-ink, var(--ui-action-ink, #fff));
+        text-align: center;
+        font-size: 0.78rem;
+      }
+      .app-header {
+        padding: var(--space-2) var(--space-3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--ui-line);
+        background: var(--ui-surface);
+      }
+      .brand {
+        font-weight: 850;
+        letter-spacing: -0.03em;
+        font-size: 1.35rem;
+      }
+      .brand span {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        background: var(--ui-action);
+        margin-right: 0.5rem;
+        transform: rotate(45deg);
+      }
+      .updated {
+        color: var(--ui-muted);
+        font-size: 0.82rem;
+      }
+      .shell {
+        max-width: 88rem;
+        margin: auto;
+        padding: var(--space-4) var(--space-3) var(--space-6);
+      }
+      .intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: var(--space-3);
+      }
+      h1 {
+        font-size: clamp(2.2rem, 5vw, 4.6rem);
+        line-height: 1;
+        letter-spacing: -0.06em;
+        margin: 0;
+      }
+      .intro p {
+        color: var(--ui-muted);
+        max-width: 34rem;
+      }
+      .state-picker label,
+      .filters label {
+        font-weight: 750;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .state-picker select,
+      .filters select {
+        min-height: 2.75rem;
+        border: 1px solid var(--ui-line);
+        border-radius: 0.5rem;
+        background: var(--ui-surface);
+        color: var(--ui-ink);
+        padding: 0.55rem 2.5rem 0.55rem 0.75rem;
+      }
+      .status-banner {
+        display: none;
+        margin-top: var(--space-3);
+        padding: var(--space-3);
+        border-left: 0.3rem solid var(--banner-accent, var(--ui-warn, #8a5b14));
+        background: var(--banner-bg, #fff4dc);
+      }
+      .status-banner.show {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      button {
+        min-height: 2.75rem;
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--button-border, var(--ui-action, #24566a));
+        border-radius: 0.5rem;
+        background: var(--button-bg, var(--ui-action, #24566a));
+        color: var(--button-ink, var(--ui-action-ink, #fff));
+        font-weight: 750;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(0.9);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button.secondary {
+        --button-bg: transparent;
+        --button-ink: var(--ui-action);
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr;
+        gap: 1px;
+        margin-top: var(--space-4);
+        background: var(--ui-line);
+        border: 1px solid var(--ui-line);
+      }
+      .metric {
+        background: var(--ui-surface);
+        padding: var(--space-3);
+      }
+      .metric strong {
+        display: block;
+        font-size: clamp(2.6rem, 5vw, 5rem);
+        line-height: 1;
+        letter-spacing: -0.07em;
+      }
+      .metric:first-child strong {
+        color: var(--ui-action);
+      }
+      .metric span {
+        color: var(--ui-muted);
+      }
+      .analysis {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: var(--space-3);
+        margin-top: var(--space-3);
+      }
+      .panel {
+        background: var(--ui-surface);
+        border: 1px solid var(--ui-line);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-elevated);
+      }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-2);
+        align-items: start;
+      }
+      .panel h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .panel small {
+        color: var(--ui-muted);
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin-top: var(--space-3);
+      }
+      .axis {
+        stroke: var(--ui-line);
+      }
+      .trend {
+        fill: none;
+        stroke: var(--ui-action);
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .trend-point {
+        fill: var(--ui-surface);
+        stroke: var(--ui-action);
+        stroke-width: 3;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: var(--space-2);
+        font-size: 0.8rem;
+      }
+      .data-table th,
+      .data-table td {
+        text-align: left;
+        padding: 0.45rem;
+        border-bottom: 1px solid var(--ui-line);
+      }
+      .mix {
+        display: grid;
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+      }
+      .mix-row {
+        display: grid;
+        grid-template-columns: 5rem 1fr 2rem;
+        gap: 0.6rem;
+        align-items: center;
+        font-size: 0.85rem;
+      }
+      .bar {
+        height: 0.65rem;
+        background: var(--ui-wash);
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        background: var(--ui-action);
+      }
+      .operations {
+        margin-top: var(--space-3);
+        background: var(--ui-surface);
+        border: 1px solid var(--ui-line);
+      }
+      .operations-head {
+        padding: var(--space-3);
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: var(--space-3);
+        border-bottom: 1px solid var(--ui-line);
+      }
+      .operations-head h2 {
+        margin: 0;
+      }
+      .filters {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+      .filters label {
+        display: grid;
+        gap: 0.3rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .records {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 48rem;
+      }
+      .records th,
+      .records td {
+        text-align: left;
+        padding: var(--space-2);
+        border-bottom: 1px solid var(--ui-line);
+      }
+      .records th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ui-muted);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 750;
+      }
+      .status::before {
+        content: "";
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: var(--status-color, var(--ui-muted));
+      }
+      .status[data-status="Delayed"] {
+        --status-color: var(--ui-error);
+      }
+      .status[data-status="At risk"] {
+        --status-color: var(--ui-warn);
+      }
+      .status[data-status="On time"] {
+        --status-color: var(--ui-good);
+      }
+      .row-action {
+        --button-bg: transparent;
+        --button-ink: var(--ui-action);
+        padding: 0.4rem 0.7rem;
+      }
+      .detail td {
+        background: var(--ui-wash);
+        padding: var(--space-3);
+      }
+      .empty {
+        padding: var(--space-6) var(--space-3);
+        text-align: center;
+      }
+      .empty h2 {
+        font-size: 1.7rem;
+        margin-bottom: 0.5rem;
+      }
+      @media (max-width: 760px) {
+        .intro,
+        .operations-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .metric:first-child {
+          grid-column: 1/-1;
+        }
+        .analysis {
+          grid-template-columns: 1fr;
+        }
+        .filters {
+          width: 100%;
+        }
+        .filters label {
+          flex: 1;
+        }
+        .filters select {
+          width: 100%;
+        }
+        .app-header {
+          align-items: flex-start;
+        }
+        .updated {
+          max-width: 12rem;
+          text-align: right;
+        }
+        .status-banner.show {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .shell {
+          padding-inline: var(--space-2);
+        }
+      }
+      @media (max-width: 360px) {
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+        .metric:first-child {
+          grid-column: auto;
+        }
+        .state-picker select {
+          width: 100%;
+        }
+        .state-picker {
+          width: 100%;
+        }
+        .intro {
+          align-items: stretch;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      Northline is fictional. Every metric and record below is local sample
+      data.
+    </div>
+    <header class="app-header">
+      <div class="brand">
+        <span aria-hidden="true"></span>Northline operations
+      </div>
+      <div class="updated" id="freshness">Sample snapshot · updated 09:30</div>
+    </header>
+    <main class="shell">
+      <div class="intro">
+        <div>
+          <h1>Morning dispatch</h1>
+          <p>
+            See where today’s sample jobs need attention, then inspect the
+            record without losing the active filters.
+          </p>
+        </div>
+        <div class="state-picker">
+          <label for="sample-state">Sample state</label><br /><select
+            id="sample-state"
+          >
+            <option value="populated">Populated</option>
+            <option value="empty">Empty</option>
+            <option value="stale">Stale</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+      </div>
+      <div class="status-banner" id="state-banner" role="status">
+        <span id="state-message"></span
+        ><button type="button" id="recover">Return to current sample</button>
+      </div>
+      <div id="dashboard-content">
+        <section class="metrics" aria-label="Filtered summary">
+          <div class="metric">
+            <span>Jobs in scope</span><strong id="jobs-count">0</strong
+            ><span id="scope-label">This week · all statuses</span>
+          </div>
+          <div class="metric">
+            <span>On-time rate</span><strong id="rate">—</strong
+            ><span>Completed or moving on schedule</span>
+          </div>
+          <div class="metric">
+            <span>Needs attention</span><strong id="attention">0</strong
+            ><span>Delayed or at risk</span>
+          </div>
+        </section>
+        <section class="analysis">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Jobs in scope by sample day</h2>
+                <small>Record count · filtered sample</small>
+              </div>
+              <small>Position shows change over ordered time</small>
+            </div>
+            <svg
+              viewBox="0 0 640 220"
+              role="img"
+              aria-labelledby="chart-title chart-desc"
+            >
+              <title id="chart-title">Filtered jobs by sample day</title>
+              <desc id="chart-desc"></desc>
+              <line class="axis" x1="40" y1="180" x2="610" y2="180" />
+              <line class="axis" x1="40" y1="30" x2="40" y2="180" />
+              <polyline class="trend" id="trend-line" points="" />
+              <g id="trend-points"></g>
+              <g fill="currentColor" font-size="13">
+                <text x="16" y="184">0</text>
+                <text x="16" y="64">3</text>
+                <text x="32" y="204">Mon</text>
+                <text x="170" y="204">Tue</text>
+                <text x="306" y="204">Wed</text>
+                <text x="447" y="204">Thu</text>
+                <text x="578" y="204">Today</text>
+              </g>
+            </svg>
+            <table class="data-table">
+              <caption>
+                Accessible chart data
+              </caption>
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Jobs in scope</th>
+                </tr>
+              </thead>
+              <tbody id="chart-data"></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Current status mix</h2>
+                <small id="mix-scope">Filtered records</small>
+              </div>
+            </div>
+            <div class="mix" id="mix"></div>
+          </div>
+        </section>
+        <section class="operations">
+          <div class="operations-head">
+            <div>
+              <h2>Dispatch records</h2>
+              <small id="record-count" aria-live="polite"></small>
+            </div>
+            <div class="filters">
+              <label for="date-filter"
+                >Date scope<select id="date-filter">
+                  <option value="week">This week</option>
+                  <option value="today">Today</option>
+                </select></label
+              ><label for="status-filter"
+                >Status<select id="status-filter">
+                  <option value="All">All statuses</option>
+                  <option value="On time">On time</option>
+                  <option value="At risk">At risk</option>
+                  <option value="Delayed">Delayed</option>
+                </select></label
+              ><button class="secondary" id="reset-filters" type="button">
+                Reset filters
+              </button>
+            </div>
+          </div>
+          <div
+            class="table-wrap"
+            tabindex="0"
+            aria-label="Scrollable dispatch records"
+          >
+            <table class="records">
+              <thead>
+                <tr>
+                  <th>Job</th>
+                  <th>Route</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Packages</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="records-body"></tbody>
+            </table>
+          </div>
+          <div class="empty" id="filter-empty" hidden>
+            <h2 id="empty-title">No records match</h2>
+            <p id="empty-copy">
+              Change a filter or reset the sample view to see dispatch records.
+            </p>
+            <button type="button" id="empty-reset">Reset filters</button>
+          </div>
+        </section>
+      </div>
+    </main>
+    <script>
+      const records = [
+        {
+          id: "NL-2048",
+          route: "Leeds → York",
+          date: "Today",
+          status: "At risk",
+          packages: 34,
+          note: "Weather buffer is down to 18 minutes. Dispatcher review requested.",
+        },
+        {
+          id: "NL-2051",
+          route: "Bath → Bristol",
+          date: "Today",
+          status: "On time",
+          packages: 21,
+          note: "Departed the Bath hub at 08:42. No action needed.",
+        },
+        {
+          id: "NL-2056",
+          route: "Exeter → Taunton",
+          date: "Today",
+          status: "Delayed",
+          packages: 18,
+          note: "Vehicle inspection added 27 minutes. Recipient window remains open.",
+        },
+        {
+          id: "NL-2039",
+          route: "Derby → Sheffield",
+          date: "Mon",
+          status: "On time",
+          packages: 42,
+          note: "Completed at 16:20 in the sample record.",
+        },
+        {
+          id: "NL-2043",
+          route: "Oxford → Reading",
+          date: "Tue",
+          status: "On time",
+          packages: 26,
+          note: "Completed at 14:05 in the sample record.",
+        },
+        {
+          id: "NL-2046",
+          route: "Norwich → Ely",
+          date: "Wed",
+          status: "At risk",
+          packages: 29,
+          note: "Road closure noted. Alternate route is under review.",
+        },
+      ];
+      const body = document.getElementById("records-body"),
+        content = document.getElementById("dashboard-content"),
+        banner = document.getElementById("state-banner");
+      let openId = "",
+        sampleState = "populated";
+      const filtered = () =>
+        (sampleState === "empty" ? [] : records).filter(
+          (record) =>
+            (document.getElementById("date-filter").value === "week" ||
+              record.date === "Today") &&
+            (document.getElementById("status-filter").value === "All" ||
+              record.status === document.getElementById("status-filter").value),
+        );
+      const render = () => {
+        const data = filtered(),
+          attention = data.filter(
+            (record) => record.status !== "On time",
+          ).length,
+          onTime = data.filter((record) => record.status === "On time").length;
+        document.getElementById("jobs-count").textContent = data.length;
+        document.getElementById("attention").textContent = attention;
+        document.getElementById("rate").textContent = data.length
+          ? `${Math.round((onTime / data.length) * 100)}%`
+          : "—";
+        document.getElementById("scope-label").textContent =
+          `${document.getElementById("date-filter").selectedOptions[0].text} · ${document.getElementById("status-filter").selectedOptions[0].text}`;
+        document.getElementById("record-count").textContent =
+          `${data.length} sample ${data.length === 1 ? "record" : "records"}`;
+        const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Today"],
+          dayCounts = dayLabels.map(
+            (day) => data.filter((record) => record.date === day).length,
+          ),
+          chartPoints = dayCounts.map(
+            (value, index) => `${40 + index * 140},${180 - value * 40}`,
+          );
+        document
+          .getElementById("trend-line")
+          .setAttribute("points", chartPoints.join(" "));
+        document.getElementById("trend-points").innerHTML = chartPoints
+          .map((point) => {
+            const [cx, cy] = point.split(",");
+            return `<circle class="trend-point" cx="${cx}" cy="${cy}" r="6" />`;
+          })
+          .join("");
+        document.getElementById("chart-desc").textContent = dayLabels
+          .map((day, index) => `${day} ${dayCounts[index]}`)
+          .join(", ");
+        document.getElementById("chart-data").innerHTML = dayLabels
+          .map(
+            (day, index) =>
+              `<tr><td>${day}</td><td>${dayCounts[index]}</td></tr>`,
+          )
+          .join("");
+        const counts = ["On time", "At risk", "Delayed"].map((status) => [
+          status,
+          data.filter((record) => record.status === status).length,
+        ]);
+        document.getElementById("mix").innerHTML = counts
+          .map(
+            ([status, count]) =>
+              `<div class="mix-row"><span>${status}</span><span class="bar"><span style="width:${data.length ? (count / data.length) * 100 : 0}%"></span></span><b>${count}</b></div>`,
+          )
+          .join("");
+        body.innerHTML = data
+          .map(
+            (record) =>
+              `<tr><td><strong>${record.id}</strong></td><td>${record.route}</td><td>${record.date}</td><td><span class="status" data-status="${record.status}">${record.status}</span></td><td>${record.packages}</td><td><button class="row-action" type="button" data-id="${record.id}" aria-expanded="${openId === record.id}">${openId === record.id ? "Close" : "Inspect"}</button></td></tr>${openId === record.id ? `<tr class="detail"><td colspan="6"><strong>${record.id} detail:</strong> ${record.note} This demonstration cannot change dispatch data.</td></tr>` : ""}`,
+          )
+          .join("");
+        document.getElementById("filter-empty").hidden = data.length !== 0;
+        document.querySelector(".table-wrap").hidden = data.length === 0;
+        document.getElementById("empty-title").textContent =
+          sampleState === "empty"
+            ? "No jobs in this sample"
+            : "No records match";
+        document.getElementById("empty-copy").textContent =
+          sampleState === "empty"
+            ? "This state represents a current, successful response with no jobs. Return to the populated sample to continue exploring."
+            : "Change a filter or reset the sample view to see dispatch records.";
+        document.getElementById("empty-reset").textContent =
+          sampleState === "empty"
+            ? "Return to populated sample"
+            : "Reset filters";
+        body.querySelectorAll("[data-id]").forEach((button) =>
+          button.addEventListener("click", () => {
+            openId = openId === button.dataset.id ? "" : button.dataset.id;
+            render();
+            body.querySelector(`[data-id="${button.dataset.id}"]`)?.focus();
+          }),
+        );
+      };
+      const setState = (state) => {
+        sampleState = state;
+        const message = document.getElementById("state-message"),
+          freshness = document.getElementById("freshness");
+        banner.classList.toggle("show", state === "stale" || state === "error");
+        content.hidden = state === "error";
+        if (state === "empty") {
+          content.hidden = false;
+          freshness.textContent = "Sample snapshot · current and empty";
+          document.getElementById("date-filter").value = "today";
+          document.getElementById("status-filter").value = "Delayed";
+          render();
+        } else if (state === "stale") {
+          message.textContent =
+            "This sample snapshot is stale: last updated yesterday at 17:10. Values remain visible for context.";
+          freshness.textContent =
+            "Sample snapshot · stale since yesterday 17:10";
+          render();
+        } else if (state === "error") {
+          message.textContent =
+            "Sample data could not be displayed. Return to the current sample to recover this demonstration.";
+          freshness.textContent = "Sample snapshot · unavailable";
+        } else {
+          content.hidden = false;
+          banner.classList.remove("show");
+          freshness.textContent = "Sample snapshot · updated 09:30";
+          render();
+        }
+      };
+      document.getElementById("date-filter").addEventListener("change", render);
+      document
+        .getElementById("status-filter")
+        .addEventListener("change", render);
+      const reset = () => {
+        document.getElementById("date-filter").value = "week";
+        document.getElementById("status-filter").value = "All";
+        openId = "";
+        render();
+      };
+      document.getElementById("reset-filters").addEventListener("click", reset);
+      document.getElementById("empty-reset").addEventListener("click", () => {
+        if (sampleState === "empty") {
+          document.getElementById("sample-state").value = "populated";
+          setState("populated");
+          reset();
+        } else {
+          reset();
+        }
+      });
+      document
+        .getElementById("sample-state")
+        .addEventListener("change", (event) => setState(event.target.value));
+      document.getElementById("recover").addEventListener("click", () => {
+        document.getElementById("sample-state").value = "populated";
+        setState("populated");
+        document.getElementById("sample-state").focus();
+      });
+      render();
+    </script>
+  </body>
+</html>
