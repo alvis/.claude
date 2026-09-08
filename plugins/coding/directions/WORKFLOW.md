@@ -55,6 +55,7 @@ Before delegating, read `essential:directions/delegate.md`; before orchestrating
 | Finalizing un-pushed commits (per-commit QA) | `/coding:finalize-commits` |
 | Creating tests | `/coding:complete-test` |
 | Documenting code | `/coding:document` |
+| Creating, updating, finding, or triaging GitHub issues | `/coding:issue <create\|update\|lookup\|triage>` |
 | Authoring, creating, updating, reviewing, merging PRs | `/coding:pr <author\|create\|update\|review\|merge>` |
 | Pausing work | `/essential:handover` |
 | Resuming work | `/essential:takeover` |

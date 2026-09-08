@@ -1,0 +1,32 @@
+# Triage
+
+## Eligibility and ordering
+
+Read repository priority conventions and label names/descriptions. Retrieve the triage queue with `directions/lookup.md` retrieval mechanics and an explicit `is:open` qualifier, using priority-specific queries before lower-priority queries. This queue filter does not apply to the subsequent duplicate lookup, which searches all states; both operations share the same budgets. Explicit numbers use direct reads, not discovery searches; duplicate checking still searches unless forbidden. Automatic selection cannot operate when search is forbidden: report that constraint and request explicit identifiers.
+
+Apply exclusions to explicit and automatic candidates unless force was requested: closed issues, native Feature/Task types, and labels strongly indicating investigation, confirmation, waiting for information, or rejection. Interpret repository semantics, including equivalents of `investigating`, `confirmed`, `need-info`, and `wontfix`; do not maintain a universal exact-name denylist.
+
+For a waiting issue, compare the last request/analysis with subsequent human comments and report edits. Substantive reproduction details, environment, logs, or changed symptoms restore eligibility despite the waiting label; thanks, bumps, bot activity, and unchanged reports do not. New information does not bypass other exclusions. If available history cannot establish whether an edit is substantive, treat eligibility as unresolved and report it. Force bypasses eligibility only; it never supplies missing evidence or authorizes reopening a closed issue.
+
+Rank eligible candidates by documented priority, then newest substantive evidence, then ascending issue number for deterministic ties. Without a priority convention, all priorities tie. `updated_at` is only a retrieval hint, never proof of substantive recency. Inspect discussion within the shared budgets; disclose that ordering covers the retrieved subset. Unchanged prior analysis awaiting follow-up receives no write and does not count toward picks. Count only issues reaching a substantive disposition; keep selecting until the requested count or shared retrieval budget is reached.
+
+## One issue at a time
+
+1. Read the complete available report and relevant thread; identify whether any new action is justified. Skip redundant analysis. Incomplete discussion cannot justify duplicate closure or a claim that no follow-up exists.
+2. Run duplicate lookup. Prove matching behavior, circumstances, and underlying issue; a closed target needs a regression check against fix/version evidence. For a proven duplicate, post the reference comment first, verify it, then use the native duplicate closure and read-back recipe in `directions/github.md`. If already closed under force, leave it closed. Related or uncertain matches remain open and appear in the substantive response.
+3. Classify against documented intended behavior. Broken intended behavior is Bug; a new capability is Feature; maintenance work without reported malfunction is Task. Apply the supported existing type, or repository-established equivalent label. End Feature/Task processing with the classification comment. If intent is unknown, request the missing contract instead of forcing a type.
+4. For a Bug with insufficient information, request only the missing steps, expected/actual result, versions/environment, or relevant sanitized errors. Apply the existing waiting label, keep open, and stop.
+5. Otherwise delegate code inspection to a read-only code-analysis specialist. Give one issue, exact repository path/revision, report and related candidates, scope, applicable repository standards, and prohibition on source/GitHub writes and reproduction execution. Keep assignment under 4,096 characters and initial file batch about 10 resources to contain context. Require a report under 1,000 tokens: inspected revision, paths/lines, causal evidence, uncertainties, existing reproduction evidence, and missing inputs. Allow at most two targeted attempts to bound retries. If subagents are unavailable, report investigation blocked; do not claim an attempted diagnosis or successful triage.
+6. Add an existing investigation label only once investigation starts. Track whether this invocation added it; remove that addition on completion or failure, preserving pre-existing concurrent human state. Pause additional investigations until a reported failure is reconciled.
+7. Publish one substantive response using `templates/triage.md`. A supported cause names concrete code evidence; code inspection alone yields a hypothesis, not a reproduced claim. An inconclusive investigation requests a minimal repository with versions, sample input, one reproduction command, expected/actual result, and dummy credentials. Apply supported outcome labels; remove obsolete waiting/triage labels only when this outcome actually supersedes them.
+8. Verify comment, metadata, and closure separately. On partial failure, report completed actions and remaining changes; reread before retry so existing comments are not repeated.
+
+## Code evidence
+
+Bind `SHA` to the full inspected commit (`git rev-parse HEAD` in the bound checkout). Verify it remotely with `gh api --hostname "$HOST" "repos/$REPOSITORY/commits/$SHA"`. Read the exact source at that revision using `git show "$SHA:$PATH_IN_REPO"` and validate the cited line numbers. URL-encode path segments. Publish an actual standalone URL in this form, outside fences:
+
+```text
+https://HOST/OWNER/REPO/blob/FULL_COMMIT_SHA/path/to/file.ts#L42-L58
+```
+
+Explain what each location proves immediately beside its URL. Use `#L42` for a single line. Do not substitute a moving branch. If the revision is absent remotely, identify the limitation and withhold a cause-identified publication until evidence can be bound to a verified remote revision; never fabricate a permalink. GitHub renders snippets only where supported and accessible, so verify the link rather than promising a particular renderer.

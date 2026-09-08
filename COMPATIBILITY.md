@@ -1,6 +1,6 @@
 # Harness compatibility
 
-This manually maintained matrix covers the 53 skills and 22 agents currently shipped by this repository. Update it when source manifests or harness documentation change.
+This manually maintained matrix covers the 54 skills and 22 agents currently shipped by this repository. Update it when source manifests or harness documentation change.
 
 Claude Code, Codex, and Grok Build are native targets. OpenCode support targets stable V1 through `scripts/install_opencode.ts`; OpenCode V2 and `opencode2` are unsupported.
 
@@ -56,6 +56,7 @@ Claude Code, Codex, and Grok Build are native targets. OpenCode support targets 
 | `coding:finalize-commits` skill | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode name: `coding-finalize-commits`. Source: [SKILL.md](plugins/coding/skills/finalize-commits/SKILL.md). |
 | `coding:find-unused` skill | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode name: `coding-find-unused`. Source: [SKILL.md](plugins/coding/skills/find-unused/SKILL.md). |
 | `coding:fix` skill | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode name: `coding-fix`. Source: [SKILL.md](plugins/coding/skills/fix/SKILL.md). |
+| `coding:issue` skill | 🔌 Integration | 🔌 Integration | 🔌 Integration | 🔌 Integration | Requires authenticated GitHub tooling; bug investigation also requires a read-only subagent. OpenCode name: `coding-issue`; child-session caveats above apply. Source: [SKILL.md](plugins/coding/skills/issue/SKILL.md). |
 | `coding:lint` skill | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode name: `coding-lint`. Source: [SKILL.md](plugins/coding/skills/lint/SKILL.md). |
 | `coding:modernize` skill | ✅ Native | ✅ Native | 🟡 Adapted | 🟡 Adapted | OpenCode name: `coding-modernize`. Source: [SKILL.md](plugins/coding/skills/modernize/SKILL.md). |
 | `coding:pr` skill | 🔌 Integration | 🔌 Integration | 🔌 Integration | 🔌 Integration | Requires authenticated GitHub tooling. Source: [SKILL.md](plugins/coding/skills/pr/SKILL.md). |

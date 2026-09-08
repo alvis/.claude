@@ -158,7 +158,7 @@ This path avoids Notion and remote publication entirely. It leaves verified code
 |---|---|---|
 | `essential` | The state lifecycle backbone: truth model, work state, lease, journal, doctor, pause/resume, research and decision skills, agent installer. Every other plugin depends on it. | [plugins/essential](plugins/essential/README.md) |
 | `specification` | Specs with provenance: authoring, planning, implementation orchestration, seven-area review, and safe Notion synchronization. | [plugins/specification](plugins/specification/README.md) |
-| `coding` | General code production: TDD write/fix/refactor, scoped saves, stacked PRs, lint, docs, cleanup. | [plugins/coding](plugins/coding/README.md) |
+| `coding` | General code production: TDD write/fix/refactor, GitHub issues, scoped saves, stacked PRs, lint, docs, cleanup. | [plugins/coding](plugins/coding/README.md) |
 | `governance` | The meta-layer: creating and verifying agents, skills, and standards. | [plugins/governance](plugins/governance/README.md) |
 | `client` | Client-facing screen-design contracts with Notion integration. | [plugins/client](plugins/client/README.md) |
 | `react` | React/JSX standards routing over the shared coding workflows. | [plugins/react](plugins/react/README.md) |
