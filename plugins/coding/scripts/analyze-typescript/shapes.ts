@@ -299,8 +299,11 @@ function makeShape(node: ts.Node, context: ShapeContext): Shape {
   const children = nodes
     .filter(
       (child) =>
-        !(ts.isParameter(node) && child === node.name) &&
-        !(ts.isTypeParameterDeclaration(node) && child === node.name),
+        !(
+          ts.isParameter(node) &&
+          child === node.name &&
+          !(ts.isIdentifier(node.name) && node.name.text === "this")
+        ) && !(ts.isTypeParameterDeclaration(node) && child === node.name),
     )
     .map((child) => makeShape(child, context));
   const kind =

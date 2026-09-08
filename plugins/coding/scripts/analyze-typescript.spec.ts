@@ -21,6 +21,250 @@ const analyzer = resolve(import.meta.dirname, "analyze-typescript.ts");
 const processTimeoutMs = 30_000;
 
 describe("cmd:analyze-typescript", () => {
+  it("should respect executor first settlement when later errors cannot reject", () => {
+    const fixture = createFixture({
+      "selected.ts": `/** @throws {RangeError} when rejected */
+export function resolvedThenThrown() { return new Promise<void>((resolve) => { resolve(); throw new RangeError(); }); }
+/** @throws {RangeError} when rejected */
+export function rejectedFirst() { return new Promise<void>((resolve, reject) => { reject(new RangeError()); resolve(); }); }
+/** @throws {RangeError} when rejected */
+export function conditional(flag: boolean) { return new Promise<void>((resolve, reject) => { if (flag) resolve(); reject(new RangeError()); }); }`,
+      "runtime.ts": `import { resolvedThenThrown, rejectedFirst, conditional } from './selected';
+console.log(JSON.stringify(await Promise.all([resolvedThenThrown(), rejectedFirst(), conditional(true), conditional(false)].map(p => p.then(() => 'fulfilled', e => e.constructor.name)))));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({
+        status: runtime.status,
+        outcomes: JSON.parse(runtime.stdout),
+      }).toEqual({
+        status: 0,
+        outcomes: ["fulfilled", "RangeError", "fulfilled", "RangeError"],
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "resolvedThenThrown",
+              reason: expect.stringMatching(/^(unsupported|unresolved)$/),
+            }),
+            expect.objectContaining({
+              function_name: "conditional",
+              reason: "unresolved",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should preserve executor settlement when later rejects or finalizers replace throws", () => {
+    const fixture = createFixture({
+      "selected.ts": `/**
+ * @throws {RangeError} when first rejected
+ * @throws {TypeError} when later rejected
+ */
+export function firstWins() { return new Promise<void>((resolve, reject) => { reject(new RangeError()); reject(new TypeError()); }); }
+/**
+ * @throws {RangeError} when initially thrown
+ * @throws {TypeError} when finally thrown
+ */
+export function replaced() { return new Promise<void>(() => { try { throw new RangeError(); } finally { throw new TypeError(); } }); }
+/** @throws {TypeError} when finally thrown */
+export function resolved() { return new Promise<void>((resolve) => { try { resolve(); } finally { throw new TypeError(); } }); }`,
+      "runtime.ts": `import { firstWins, replaced, resolved } from './selected';
+console.log(JSON.stringify(await Promise.all([firstWins(), replaced(), resolved()].map(p => p.then(() => 'fulfilled', e => e.constructor.name)))));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({
+        status: runtime.status,
+        outcomes: JSON.parse(runtime.stdout),
+      }).toEqual({
+        status: 0,
+        outcomes: ["RangeError", "TypeError", "fulfilled"],
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "firstWins",
+              documented_error: "TypeError",
+              reason: "unsupported",
+            }),
+            expect.objectContaining({
+              function_name: "replaced",
+              documented_error: "RangeError",
+              reason: "unsupported",
+            }),
+            expect.objectContaining({
+              function_name: "resolved",
+              reason: "unsupported",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should review uncertain executor control flow and ignore unreachable rejection", () => {
+    const fixture = createFixture({
+      "selected.ts": `declare function notify(): void;
+/** @throws {RangeError} when rejected */
+export function earlyReturn() { return new Promise<void>((resolve, reject) => { return; reject(new RangeError()); }); }
+/** @throws {RangeError} when rejected */
+export function adopted() { return new Promise<void>((resolve, reject) => { resolve(Promise.reject(new RangeError())); reject(new RangeError()); }); }
+/** @throws {RangeError} when rejected */
+export function logical(flag: boolean) { return new Promise<void>((resolve, reject) => { flag && resolve(); reject(new RangeError()); }); }
+/** @throws {RangeError} when rejected */
+export function arithmetic() { return new Promise<void>((resolve, reject) => { const value = 1 + 2; notify(); reject(new RangeError()); }); }
+/** @throws {unknownSpace.InputError} when invalid */
+export function unknownNamespace() { throw new RangeError(); }`,
+    });
+    try {
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "earlyReturn",
+              reason: "unsupported",
+            }),
+            expect.objectContaining({
+              function_name: "adopted",
+              reason: "unresolved",
+            }),
+            expect.objectContaining({
+              function_name: "logical",
+              reason: "unresolved",
+            }),
+            expect.objectContaining({
+              function_name: "unknownNamespace",
+              reason: "unsupported",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should report errors replaced by an abrupt finally completion", () => {
+    const fixture = createFixture({
+      "selected.ts": `/**
+ * @throws {RangeError} when invalid
+ * @throws {TypeError} when finalization fails
+ */
+export function replaced() { try { throw new RangeError(); } finally { throw new TypeError(); } }
+/** @throws {RangeError} when invalid */
+export function conditional(flag: boolean) { try { throw new RangeError(); } finally { if (flag) throw new TypeError(); } }`,
+      "runtime.ts": `import { replaced } from './selected';
+try { replaced(); } catch (error) { console.log(error.constructor.name); }`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: "TypeError\n",
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "replaced",
+              documented_error: "RangeError",
+              reason: expect.stringMatching(/^(unsupported|unresolved)$/),
+            }),
+            expect.objectContaining({
+              function_name: "conditional",
+              reason: "unresolved",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should compare documented error aliases by symbol after storing an instance", () => {
+    const fixture = createFixture({
+      "errors.ts": "export class InputError extends Error {}",
+      "selected.ts": `import { InputError as ValidationError } from './errors';
+import * as failures from './errors';
+/** @throws {ValidationError} when invalid */
+export function stored() { const error = new ValidationError(); throw error; }
+/** @throws {failures.InputError} when invalid */
+export function qualified() { const error = new failures.InputError(); throw error; }
+/** @throws {ValidationError} when invalid */
+export function unrelated() { class InputError extends Error {} throw new InputError(); }`,
+    });
+    try {
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "unrelated",
+              reason: "unsupported",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should distinguish explicit this parameters from ordinary callable arguments", () => {
+    const fixture = createFixture({
+      "selected.ts": `export type Callback = (this: string, value: number) => void;
+export const ordinary: (receiver: string, value: number) => void = () => {};
+export const matching: (this: string, item: number) => void = () => {};`,
+    });
+    try {
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          reuse_candidates: [
+            expect.objectContaining({
+              occurrences: [expect.objectContaining({ line: 3 })],
+              candidates: [expect.objectContaining({ name: "Callback" })],
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it("should resolve nested parenthesized members and review unresolved computed keys", () => {
     const fixture = createFixture({
       "selected.ts": `export const first: { value: (string) } = null!;
@@ -704,6 +948,16 @@ declare const executor: (resolve: (value: void) => void) => void;
 export function external(): Promise<void> { return new Promise(executor); }`,
     });
     try {
+      const runtimePath = resolve(fixture, "runtime.ts");
+      writeFileSync(
+        runtimePath,
+        "import { rejected } from './selected'; console.log(await rejected().then(() => 'fulfilled', () => 'rejected'));\n",
+      );
+      const runtime = spawnSync("bun", [runtimePath], { encoding: "utf8" });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: "fulfilled\n",
+      });
       const result = runAnalyzer(fixture, ["selected.ts"]);
 
       expect(result.exitCode, result.stderr).toBe(0);
@@ -713,6 +967,10 @@ export function external(): Promise<void> { return new Promise(executor); }`,
             expect.objectContaining({
               function_name: "caught",
               reason: "unsupported",
+            }),
+            expect.objectContaining({
+              function_name: "rejected",
+              reason: expect.stringMatching(/^(unsupported|unresolved)$/),
             }),
             expect.objectContaining({
               function_name: "unknown",
@@ -830,7 +1088,7 @@ export function overridden(): void { try { throw new RangeError(); } finally { c
             }),
             expect.objectContaining({
               function_name: "overridden",
-              reason: "unresolved",
+              reason: "unsupported",
             }),
           ],
         }),

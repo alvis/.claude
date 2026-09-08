@@ -5,7 +5,7 @@ import type { SourceFile } from "ts-morph@28";
 import type { ErrorCandidate, Location } from "./contracts.ts";
 
 interface ErrorEvidence {
-  readonly identities: ReadonlySet<string>;
+  readonly identities: ReadonlySet<ts.Symbol>;
   readonly unresolved: boolean;
   readonly raised: boolean;
 }
@@ -14,6 +14,12 @@ interface EvidenceContext {
   readonly checker: ts.TypeChecker;
   readonly owner: ts.FunctionLikeDeclaration;
 }
+
+const uncertainEvidence: ErrorEvidence = {
+  identities: new Set(),
+  unresolved: true,
+  raised: false,
+};
 
 const emptyEvidence: ErrorEvidence = {
   identities: new Set(),
@@ -57,7 +63,12 @@ export function findErrorDocumentation(
           const supported =
             documented === "unspecified"
               ? evidence.raised && !evidence.unresolved
-              : names.every((name) => evidence.identities.has(name));
+              : names.every((name) => {
+                  const symbol = documentedSymbol(name, node, checker);
+                  return (
+                    symbol !== undefined && evidence.identities.has(symbol)
+                  );
+                });
           if (!supported)
             candidates.push({
               rule_id: "DOC-CONT-06",
@@ -102,8 +113,11 @@ function inspectBody(
       node.finallyBlock === undefined
         ? emptyEvidence
         : inspectBody(node.finallyBlock, context, caught);
-    if (node.finallyBlock !== undefined && hasReturn(node.finallyBlock))
-      return mergeEvidence([finalizer, { ...emptyEvidence, unresolved: true }]);
+    if (node.finallyBlock !== undefined) {
+      const completion = completionKind(node.finallyBlock);
+      if (completion === "abrupt") return finalizer;
+      if (completion === "uncertain") return uncertainEvidence;
+    }
     return mergeEvidence([body, handler, finalizer]);
   }
   if (ts.isReturnStatement(node) && node.expression !== undefined) {
@@ -190,48 +204,111 @@ function inspectPromise(
       (!ts.isArrowFunction(executor) && !ts.isFunctionExpression(executor))
     )
       return { ...emptyEvidence, unresolved: true };
-    const reject = executor.parameters[1];
-    const rejectSymbol =
-      reject === undefined
-        ? undefined
-        : context.checker.getSymbolAtLocation(reject.name);
-    const inspectExecutor = (node: ts.Node, caught: boolean): ErrorEvidence => {
-      if (isFunction(node)) return emptyEvidence;
-      if (ts.isThrowStatement(node))
-        return caught
-          ? emptyEvidence
-          : errorIdentity(node.expression, context.checker);
-      if (
-        ts.isCallExpression(node) &&
-        ts.isIdentifier(node.expression) &&
-        rejectSymbol !== undefined &&
-        context.checker.getSymbolAtLocation(node.expression) === rejectSymbol
-      )
-        return node.arguments[0] === undefined
-          ? { ...emptyEvidence, raised: true, unresolved: true }
-          : errorIdentity(node.arguments[0], context.checker);
-      if (ts.isTryStatement(node))
-        return mergeEvidence([
-          inspectExecutor(
-            node.tryBlock,
-            caught || node.catchClause !== undefined,
-          ),
-          ...(node.catchClause === undefined
-            ? []
-            : [inspectExecutor(node.catchClause.block, caught)]),
-          ...(node.finallyBlock === undefined
-            ? []
-            : [inspectExecutor(node.finallyBlock, caught)]),
-        ]);
-      const children: ErrorEvidence[] = [];
-      ts.forEachChild(node, (child) => {
-        children.push(inspectExecutor(child, caught));
-      });
-      return mergeEvidence(children);
-    };
-    return inspectExecutor(executor.body, false);
+    return inspectExecutor(executor, context);
   }
   return emptyEvidence;
+}
+
+interface ExecutorFlow {
+  readonly settlement: ErrorEvidence | undefined;
+  readonly completion: "normal" | "return" | "throw" | "uncertain";
+  readonly thrown: ErrorEvidence;
+}
+
+function inspectExecutor(
+  executor: ts.ArrowFunction | ts.FunctionExpression,
+  context: EvidenceContext,
+): ErrorEvidence {
+  const parameterSymbols = executor.parameters
+    .slice(0, 2)
+    .map((parameter) => context.checker.getSymbolAtLocation(parameter.name));
+  const inspect = (node: ts.Node, flow: ExecutorFlow): ExecutorFlow => {
+    if (isFunction(node) || flow.completion !== "normal") return flow;
+    if (ts.isTryStatement(node)) {
+      let result = inspect(node.tryBlock, flow);
+      if (node.catchClause !== undefined && result.completion === "throw")
+        result = inspect(node.catchClause.block, {
+          ...result,
+          completion: "normal",
+          thrown: emptyEvidence,
+        });
+      if (node.finallyBlock !== undefined) {
+        const finalized = inspect(node.finallyBlock, {
+          ...result,
+          completion: "normal",
+          thrown: emptyEvidence,
+        });
+        result =
+          finalized.completion === "normal"
+            ? { ...result, settlement: finalized.settlement }
+            : finalized;
+      }
+      return result;
+    }
+    // Branches and loops need path analysis: never accept a later rejection
+    // when an earlier settlement or abrupt completion may have occurred.
+    if (
+      ts.isIfStatement(node) ||
+      ts.isConditionalExpression(node) ||
+      ts.isSwitchStatement(node) ||
+      ts.isIterationStatement(node, false) ||
+      (ts.isBinaryExpression(node) &&
+        [
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(node.operatorToken.kind))
+    )
+      return {
+        settlement: flow.settlement ?? uncertainEvidence,
+        completion: "uncertain",
+        thrown: uncertainEvidence,
+      };
+    let result = flow;
+    ts.forEachChild(node, (child) => {
+      result = inspect(child, result);
+    });
+    if (result.completion !== "normal") return result;
+    if (ts.isThrowStatement(node))
+      return {
+        ...result,
+        completion: "throw",
+        thrown: errorIdentity(node.expression, context.checker),
+      };
+    if (ts.isReturnStatement(node)) return { ...result, completion: "return" };
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      result.settlement === undefined
+    ) {
+      const symbol = context.checker.getSymbolAtLocation(node.expression);
+      if (symbol !== undefined && symbol === parameterSymbols[0])
+        return {
+          ...result,
+          // Resolution adopts thenables; a nonempty argument needs review.
+          settlement:
+            node.arguments.length === 0 ? emptyEvidence : uncertainEvidence,
+        };
+      if (symbol !== undefined && symbol === parameterSymbols[1])
+        return {
+          ...result,
+          settlement:
+            node.arguments[0] === undefined
+              ? { ...uncertainEvidence, raised: true }
+              : errorIdentity(node.arguments[0], context.checker),
+        };
+    }
+    return result;
+  };
+  const result = inspect(executor.body, {
+    settlement: undefined,
+    completion: "normal",
+    thrown: emptyEvidence,
+  });
+  return (
+    result.settlement ??
+    (result.completion === "throw" ? result.thrown : emptyEvidence)
+  );
 }
 
 function errorIdentity(
@@ -244,7 +321,7 @@ function errorIdentity(
     const symbol = member.getSymbol();
     return symbol === undefined || symbol.declarations === undefined
       ? []
-      : [symbol.name];
+      : [canonicalSymbol(symbol, checker)];
   });
   if (ts.isNewExpression(expression)) {
     const symbol = checker.getSymbolAtLocation(expression.expression);
@@ -252,8 +329,7 @@ function errorIdentity(
       symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0
         ? checker.getAliasedSymbol(symbol)
         : symbol;
-    if (target?.declarations !== undefined)
-      identities.push(target.name, expression.expression.getText());
+    if (target?.declarations !== undefined) identities.push(target);
   }
   return {
     identities: new Set(identities),
@@ -336,11 +412,56 @@ function isFunction(node: ts.Node): node is ts.FunctionLikeDeclaration {
   );
 }
 
-function hasReturn(node: ts.Node): boolean {
-  if (isFunction(node)) return false;
-  return (
-    ts.isReturnStatement(node) || (ts.forEachChild(node, hasReturn) ?? false)
-  );
+function completionKind(node: ts.Node): "normal" | "abrupt" | "uncertain" {
+  if (isFunction(node)) return "normal";
+  if (ts.isThrowStatement(node) || ts.isReturnStatement(node)) return "abrupt";
+  if (ts.isBlock(node)) {
+    for (const statement of node.statements) {
+      const completion = completionKind(statement);
+      if (completion !== "normal") return completion;
+    }
+    return "normal";
+  }
+  const children: ts.Node[] = [];
+  ts.forEachChild(node, (child) => {
+    children.push(child);
+  });
+  return children.some((child) => completionKind(child) !== "normal")
+    ? "uncertain"
+    : "normal";
+}
+
+function canonicalSymbol(
+  symbol: ts.Symbol,
+  checker: ts.TypeChecker,
+): ts.Symbol {
+  return (symbol.flags & ts.SymbolFlags.Alias) !== 0
+    ? checker.getAliasedSymbol(symbol)
+    : symbol;
+}
+
+function documentedSymbol(
+  name: string,
+  owner: ts.FunctionLikeDeclaration,
+  checker: ts.TypeChecker,
+): ts.Symbol | undefined {
+  const [first, ...members] = name.split(".");
+  let symbol = checker
+    .getSymbolsInScope(
+      owner,
+      ts.SymbolFlags.Type |
+        ts.SymbolFlags.Value |
+        ts.SymbolFlags.Namespace |
+        ts.SymbolFlags.Alias,
+    )
+    .find((candidate) => candidate.name === first);
+  for (const member of members) {
+    if (symbol === undefined) return undefined;
+    symbol = checker
+      .getExportsOfModule(canonicalSymbol(symbol, checker))
+      .find((candidate) => candidate.name === member);
+  }
+  return symbol === undefined ? undefined : canonicalSymbol(symbol, checker);
 }
 
 function mergeEvidence(evidence: readonly ErrorEvidence[]): ErrorEvidence {

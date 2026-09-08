@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   readlinkSync,
   realpathSync,
   rmSync,
@@ -65,7 +66,10 @@ class Harness {
   readonly workRoot: string;
   baseRev: string;
 
-  constructor(workspace: "primary" | "linked-git" | "jj" = "primary") {
+  constructor(
+    workspace: "primary" | "linked-git" | "jj" = "primary",
+    trackedCache = false,
+  ) {
     const repo = resolve(this.root, "target");
     mkdirSync(repo);
     this.repo = realpathSync(repo);
@@ -84,6 +88,7 @@ class Harness {
       "docs/design/README.md": "design base\n",
       "developer.txt": "developer base\n",
     };
+    if (trackedCache) files["cache/entry.txt"] = "tracked cache base\n";
     for (const [relative, content] of Object.entries(files)) {
       const path = join(this.repo, relative);
       mkdirSync(dirname(path), { recursive: true });
@@ -1497,4 +1502,111 @@ process.stdout.write(identities.join("\\n"));
     expect(readFileSync(scope)).not.toEqual(raw);
     expect(mode).toBe(0o444);
   });
+});
+
+describe("ignored directories in centralized jj workspaces", () => {
+  it.each(["active", "default"] as const)(
+    "saves selected files with an unreadable ignored cache in the %s workspace",
+    (workspace: "active" | "default") => {
+      const fixture = new Harness("jj");
+      const cache = join(
+        workspace === "active" ? fixture.repo : fixture.primaryRepo,
+        "cache",
+      );
+      try {
+        writeFileSync(join(dirname(cache), ".gitignore"), ".state/\ncache/\n");
+        mkdirSync(cache);
+        writeFileSync(join(cache, "entry.txt"), "ignored cache\n");
+        chmodSync(cache, 0o000);
+        expect(() => readdirSync(cache)).toThrow(/EACCES/);
+        writeFileSync(join(fixture.repo, "src.txt"), "selected edit\n");
+        writeFileSync(join(fixture.repo, "developer.txt"), "excluded edit\n");
+        const manifest = fixture.build(
+          fixture.scope([["src.txt", "child-manifest:source"]], ["src.txt"]),
+        );
+        const preflight = fixture.preflight(manifest).output;
+        fixture.jj("split", "-m", "feat: save workspace scope", "src.txt");
+        const saved = fixture
+          .jj(
+            "log",
+            "--ignore-working-copy",
+            "--no-graph",
+            "-r",
+            "@-",
+            "-T",
+            "commit_id",
+          )
+          .stdout.trim();
+        expect(fixture.verify(manifest, preflight, saved).output).toMatchObject(
+          { status: "pass", non_selected_preserved: true },
+        );
+      } finally {
+        try {
+          chmodSync(cache, 0o755);
+        } finally {
+          fixture.close();
+        }
+      }
+    },
+    // Real Git/jj subprocesses need the existing native integration budget.
+    30_000,
+  );
+});
+
+describe("ignore exceptions in centralized jj workspaces", () => {
+  it.each([
+    ["active", "negated"],
+    ["default", "negated"],
+    ["active", "tracked"],
+    ["default", "tracked"],
+  ] as const)(
+    "rejects changes to a %s workspace %s file after saving",
+    (workspace: "active" | "default", kind: "negated" | "tracked") => {
+      const fixture = new Harness("jj", kind === "tracked");
+      try {
+        const root =
+          workspace === "active" ? fixture.repo : fixture.primaryRepo;
+        const retained = join(
+          root,
+          kind === "negated" ? "ignored/keep.txt" : "cache/entry.txt",
+        );
+        mkdirSync(dirname(retained), { recursive: true });
+        writeFileSync(
+          join(root, ".gitignore"),
+          kind === "negated"
+            ? ".state/\nignored/*\n!ignored/keep.txt\n"
+            : ".state/\ncache/\n",
+        );
+        writeFileSync(retained, "protected original\n");
+        writeFileSync(join(fixture.repo, "src.txt"), "selected edit\n");
+        writeFileSync(join(fixture.repo, "tests.txt"), "excluded edit\n");
+        const manifest = fixture.build(
+          fixture.scope([["src.txt", "child-manifest:source"]], ["src.txt"]),
+        );
+        const preflight = fixture.preflight(manifest).output;
+        fixture.jj("split", "-m", "feat: save workspace scope", "src.txt");
+        const saved = fixture
+          .jj(
+            "log",
+            "--ignore-working-copy",
+            "--no-graph",
+            "-r",
+            "@-",
+            "-T",
+            "commit_id",
+          )
+          .stdout.trim();
+        writeFileSync(retained, "changed after save\n");
+        const verification = fixture.verify(manifest, preflight, saved, false);
+        expect(verification.result.status).toBe(2);
+        expect(verification.output.error).toMatch(
+          /non.selected|excluded|preserv|primary|default/i,
+        );
+      } finally {
+        fixture.close();
+      }
+    },
+    // Real Git/jj subprocesses need the existing native integration budget.
+    30_000,
+  );
 });

@@ -1210,18 +1210,34 @@ function jjStateFields(vcs: JsonValue | undefined): Set<string> {
 function workspaceFiles(repo: RepositoryContext): string[] {
   const paths: string[] = [];
   const visit = (directory: string): void => {
-    for (const entry of readdirSync(join(repo.root, directory), {
+    const entries = readdirSync(join(repo.root, directory), {
       withFileTypes: true,
-    })) {
+    });
+    const ignoredDirectories = ignoredWorkspacePaths(
+      repo,
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${directory ? `${directory}/` : ""}${entry.name}`),
+    );
+    for (const entry of entries) {
       if (entry.name === ".git" || entry.name === ".jj") continue;
       const path = directory ? `${directory}/${entry.name}` : entry.name;
       validateRelativePath(repo, path);
-      if (entry.isDirectory()) visit(path);
-      else paths.push(path);
+      if (entry.isDirectory()) {
+        if (!ignoredDirectories.has(path)) visit(path);
+      } else paths.push(path);
     }
   };
   visit("");
-  if (!paths.length) return paths;
+  const excluded = ignoredWorkspacePaths(repo, paths);
+  return paths.filter((path) => !excluded.has(path)).sort(comparePythonStrings);
+}
+
+function ignoredWorkspacePaths(
+  repo: RepositoryContext,
+  paths: string[],
+): Set<string> {
+  if (!paths.length) return new Set();
   const ignored = runGit(
     repo,
     ["check-ignore", "--no-index", "--stdin", "-z"],
@@ -1230,12 +1246,11 @@ function workspaceFiles(repo: RepositoryContext): string[] {
   );
   if (![0, 1].includes(ignored.exitCode))
     throw new ContractError("cannot evaluate workspace ignore rules");
-  const excluded = new Set(
+  return new Set(
     splitBytes(ignored.stdout, 0)
       .filter((path) => path.length)
       .map(decodePath),
   );
-  return paths.filter((path) => !excluded.has(path)).sort(comparePythonStrings);
 }
 
 function treePaths(repo: RepositoryContext, revision: string): string[] {
