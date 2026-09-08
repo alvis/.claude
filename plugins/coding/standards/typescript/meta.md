@@ -22,6 +22,7 @@ This standard enforces requirements beyond typical TypeScript practices:
 | Mixed import styles tolerated    | **Strict import ordering and type/code separation** |
 | Default export is common         | **Only documented external/runtime contracts allow it** |
 | Loose file layout                | **Top-level symbol ordering is mandatory**          |
+| Equivalent inline types tolerated | **Reuse matching shared contracts; repeated objects trigger a confirmed extraction proposal** |
 
 ## Exception Policy
 

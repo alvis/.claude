@@ -22,7 +22,8 @@ This rule covers every prose line inside `/** ... */` except `@param` descriptio
  *   verifyWebhook(request)
  */
 function validateWebhookSignature(input: SignatureInput): boolean {
-  return verifier.matches(input);
+  if (!verifier.matches(input)) throw new SignatureMismatchError();
+  return true;
 }
 
 /** ensures required environment variables exist */

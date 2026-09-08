@@ -58,6 +58,8 @@
 - **TYP-TYPE-07**: Testing partial-cast chains are test-only and forbidden in production/runtime modules.
 - **TYP-TYPE-08**: In catch blocks, cast caught values directly as `Error` (or use an existing project helper); do not defensively narrow with `instanceof Error ? ... : String(...)`.
 
+- **TYP-TYPE-09**: Reuse semantically matching shared contracts at any count. At two identical inline object types in one package, propose a shared contract only when none fits; finish scanning and obtain confirmation before extraction. See [the rule](rules/typ-type-09.md) for scope and matching criteria.
+
 ## Patterns
 
 ### Import Ordering

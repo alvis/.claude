@@ -32,7 +32,7 @@ function buildInvoiceSummary(params: InvoiceParams): InvoiceSummary {
 - Omit hyphens after parameter names in `@param` tags
 - Exclude TypeScript types from JSDoc (they are in the code)
 - No periods at the end of JSDoc comments
-- List all `@throws` with conditions
+- List directly raised errors with conditions, following [DOC-CONT-06](doc-cont-06.md); omit propagated callee errors
 
 ## Example Documentation
 
@@ -65,7 +65,8 @@ Use `@example` blocks with fenced code for usage demonstrations:
  * ```
  */
 function normalizeEmail(email: string): string {
-  // implementation
+  if (!email.includes("@")) throw new ValidationError("invalid email");
+  return email.trim().toLowerCase();
 }
 ````
 
@@ -77,8 +78,7 @@ function normalizeEmail(email: string): string {
  * @param filter optional filter criteria for user search
  * @param pagination pagination parameters with defaults
  * @returns promise resolving to paginated user results
- * @throws {ValidationError} when filter parameters are invalid
- * @throws {DatabaseError} when database query fails
+ * @throws {ValidationError} when the page limit is not positive
  * @example
  * ```typescript
  * const users = await getUsers(
@@ -91,7 +91,8 @@ async function getUsers(
   filter: UserFilter = {},
   pagination: PaginationParams = { page: 1, limit: 50 },
 ): Promise<PaginatedResult<User>> {
-  // implementation
+  if (pagination.limit < 1) throw new ValidationError("limit must be positive");
+  return userRepository.findPage(filter, pagination);
 }
 ````
 

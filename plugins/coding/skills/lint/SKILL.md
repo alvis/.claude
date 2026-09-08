@@ -3,7 +3,6 @@ name: lint
 description: Enforce coding standards mechanically across a selected scope with risk-appropriate ownership and review. Use when source files need lint-error correction, standards enforcement, or consistent formatting, including calls extended by another plugin's portable lint profile; behavior-changing repairs belong to fix.
 requirements:
   intelligence: medium
-argument-hint: "[specifier] [--scope=SCOPE] [--skip-unused] [--profile=ABSOLUTE_PATH] [--test-root=PROJECT_ROOT] [--test-pattern=GLOB ...]"
 ---
 
 # Linting
@@ -15,7 +14,7 @@ Apply generic coding standards mechanically. This skill owns file discovery, sco
 ## Boundaries
 
 - Use for: mechanical standards enforcement, lint-error correction, and consistent formatting on eligible source files, with an optional pre-flight unused-code prune.
-- Do not use for: modifying configuration files, installing or updating lint tooling, authoring lint rules, or processing binary, gitignored, generated, or vendor files. Behavior-changing repairs belong to `coding:fix`; structural cleanup belongs to `coding:refactor`.
+- Do not use for: modifying configuration files, installing or updating lint tooling, authoring lint rules, or processing binary, gitignored, generated, or vendor files. Behavior-changing repairs belong to `coding:fix`; structural cleanup belongs to `coding:refactor`, except the narrowly confirmed shared-type extraction owned by step 7.
 - Eligible source files are `.ts/.tsx/.js/.jsx/.py/.go/.rs/.rb/.java/.kt/.swift/.c/.cpp/.h/.hpp/.cs/.php/.sh/.vue/.svelte/.astro` and similar. Skip text and content files (`.md/.mdx/.json/.yaml/.toml/.html/.svg/.csv`) and throwaway scripts that won't be committed.
 - This skill runs its own scan-and-aggregate cycle internally; never lint by hand in its place.
 
@@ -59,24 +58,26 @@ The implementing owner remains responsible for discovery, standards loading, the
    - Always exclude ignored files, dependencies, generated output, and paths outside the repository.
    - When the selected files include compiler tests, group files by owning project and resolve each project's configured type-test mechanism and discovery patterns before batching. Keep each batch within one project root, pass that absolute root as `--test-root` and every applicable compiler-test glob as a repeated `--test-pattern`, and never combine files owned by different test roots in one runner invocation; do not infer test status from filenames alone.
 3. Apply profile eligibility and exclusions when supplied. Stop cleanly if no files remain.
-4. Select generic standards from [the Coding index](../../standards/INDEX.md) using the discovered artifacts, languages, and configured compiler-test classification. Apply `essential:directions/standards.md`. Resolve profile standards as exact directories in the enabled extension plugin's index; reject missing or unindexed targets. Add them without replacing or duplicating generic standards. Never infer selection from prompt headings, filename-stem matching, or an unrestricted standards-tree search.
-5. Batch related files that share one owning project root, with at most two files per runner invocation. Batching does not authorize delegation.
+4. Select generic standards from `coding:standards/INDEX.md` using the discovered artifacts, languages, and configured compiler-test classification. Apply `essential:directions/standards.md`. Resolve profile standards as exact directories in the enabled extension plugin's index; reject missing or unindexed targets. Add them without replacing or duplicating generic standards. Never infer selection from prompt headings, filename-stem matching, or an unrestricted standards-tree search.
+5. Before edits, run package-wide TypeScript analysis once for the complete selected file set: `bun run "${CODING_LINT_SKILL_DIR}/../../scripts/analyze-typescript.ts" [--profile=<absolute-path>] --repository-root=<absolute-repository-root> -- <selected-files...>`. Forward the same profile unchanged when present. Bun automatically resolves `ts-morph@28` into its cache; cold runs require registry access, never a project dependency install. The analyzer reads eligible package peers for type context, keeps error findings within selected files, and reports advisory `reuse_candidates`, `extraction_proposals`, `error_documentation_candidates`, and `diagnostics`. Exit 1 means analysis failure; exit 2 means invalid invocation. Resolve failures before claiming affected checks are clean. Batch selected files sharing one owning project root, with at most two files per runner invocation. Batching does not authorize delegation.
 6. For each owned batch, the implementing owner:
    - Run `bun run ${CODING_LINT_SKILL_DIR}/../../scripts/lint_profile_runner.ts [--profile=<absolute-path>] [--test-root=<project-root> --test-pattern=<compiler-test-glob> ...] <files>` exactly once. The runner resolves Coding resources from its installed location and forwards compiler-test classification only to the generic scanner.
    - The runner executes the generic scanner exactly once, then each profile scanner exactly once in declared order. Profile resources resolve relative to the absolute profile path.
    - Treat scanner output as advisory. Apply each selected standard as a writer under `essential:directions/standards.md`.
-   - Apply generic and profile standards only within the requested scope.
+   - Apply generic and profile standards only within the requested scope. Collect type-reuse and extraction candidates across all batches; defer their edits and questions until the full scan finishes.
    - Run project lint, type, and focused test commands after edits.
    - Self-review the resulting diff, rerun affected scans after corrections, and record `violations_found`, `status`, files changed, checks run, and remaining issues.
-7. When the independent-review predicate applies, run the changed batches through [cycle.md](directions/cycle.md). The reviewer remains read-only; the same implementing owner fixes findings and reruns affected scans and project checks. Already-compliant batches need no independent review unless the caller explicitly requested one or publication requires it.
-8. Aggregate batch counts and use the worst status: `failure > partial > success > compliant`.
-9. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
+7. After all scan batches finish, reconcile package candidates against `TYP-TYPE-09` and error-documentation candidates against `DOC-CONT-06`. Confirm existing-type matches using domain meaning, generic arguments, and import direction; reuse confirmed contracts without new-type approval. For each repeated-object group lacking a suitable shared contract, present the proposed declaration, owning module, occurrence locations, and affected consumers through the harness question tool. Offer creation or retaining inline definitions; wait for confirmation before extraction, keep unanswered proposals pending, and record declined proposals without counting them as violations. Create only confirmed contracts and change only authorized files; an out-of-scope declaration or consumer needs explicit scope approval. Report proposals separately from confirmed violations and `violations_found_total`. Rerun affected analysis and project checks after approved fixes.
+8. When the independent-review predicate applies, run the changed batches through [cycle.md](directions/cycle.md). The reviewer remains read-only; the same implementing owner fixes findings and reruns affected scans and project checks. Already-compliant batches need no independent review unless the caller explicitly requested one or publication requires it.
+9. Aggregate batch counts and use the worst status: `failure > partial > success > compliant`.
+10. Run the verification below; when a check fails, fix the cause and re-run that check. Repeat until every check passes or a concrete blocker remains, then report the blocker instead of looping.
 
 ## Verification
 
 - Every target was eligible and inside the repository.
 - The generic scanner ran once per batch; every profile scanner ran once per batch.
-- Every edit is justified by a loaded rule or project tool failure.
+- Every edit is justified by a loaded rule, project tool failure, or confirmed extraction proposal.
+- Package analysis completed before type fixes; proposals were aggregated and asked only after the full scan. Unknown candidates and pending decisions are reported explicitly.
 - Relevant project checks pass, or their exact failure is reported.
 - Every changed batch received implementing-owner self-review. Every batch selected by the independent-review predicate also received read-only independent review; any governed team is shut down.
 
@@ -93,4 +94,4 @@ status: compliant # compliant | success | partial | failure
 
 </report>
 
-Then report the command, the unused-code pre-flight (ran/skipped, findings/removed/kept), profile report label when present, scope, files scanned and modified, standards and scanners applied, verification commands, selected topology, self-review and applicable independent-review coverage, any governed agent lifecycle counts, and remaining issues. Use `compliant` only for a clean pass with no edits and `success` when violations were fixed. A caller using a profile receives this same report shape.
+Then report the command, the unused-code pre-flight (ran/skipped, findings/removed/kept), profile report label when present, scope, files scanned and modified, standards and scanners applied, verification commands, selected topology, self-review and applicable independent-review coverage, any governed agent lifecycle counts, remaining issues, and separate extraction decisions (accepted/declined/pending). Unresolved candidates or pending extraction decisions report `partial`; a declined advisory proposal alone does not block compliance. Use `compliant` only for a clean pass with no edits and `success` when violations were fixed. A caller using a profile receives this same report shape.

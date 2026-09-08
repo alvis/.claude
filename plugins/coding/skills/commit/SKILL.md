@@ -72,7 +72,7 @@ Never rewrite a commit already merged into a shared destination. Fix merged work
 | `--dry-run` | Print the plan, don't mutate. |
 | `--allow-rewrite-merged` | Explicit consent to rewrite history already merged on origin (skips the graphical or structured user-input tool corrective-PR prompt). |
 
-- **Prerequisites**: a git repository, jj-colocated or not. The manifest-scoped route additionally requires a checksum-bound manifest under the resolved work root's ignored artifacts directory. Producer receipts must use the strict generated-files schema and reconcile exactly to the publication set. The helper capability-probes the shared guide's required operations and structural colocation; no version string alone authorizes the scoped route. Publication prerequisites are checked by `coding:pr create`. The directions above bind branch naming, earliest-owner fix routing, and public-history safety. Pull-request size and implementation-composition standards are review inputs and informational here.
+- **Prerequisites**: a Git repository or registered jj workspace backed by Git. The manifest-scoped route additionally requires a checksum-bound manifest under the resolved work root's ignored artifacts directory. Producer receipts must use the strict generated-files schema and reconcile exactly to the publication set. The helper capability-probes the shared guide's required operations and structural colocation; no version string alone authorizes the scoped route. Publication prerequisites are checked by `coding:pr create`. The directions above bind branch naming, earliest-owner fix routing, and public-history safety. Pull-request size and implementation-composition standards are review inputs and informational here.
 
 ## Workflow
 
@@ -131,7 +131,7 @@ Before writing any new code, plan the change structure so commits/PRs end up ind
 
 ## Verification
 
-The PostToolUse hook auto-runs `verify.sh` after any successful rewriting op and prints `── Integrity Check ──` to stderr. Read the table:
+For history-rewriting routes that captured a backup, the PostToolUse hook runs `verify.sh` and prints `── Integrity Check ──` to stderr. If it did not fire for that rewrite, run the script manually and read the table:
 
 | `GIT_TREE_MATCH` | `CONTENT_MATCH` | Action |
 |---|---|---|
@@ -140,11 +140,11 @@ The PostToolUse hook auto-runs `verify.sh` after any successful rewriting op and
 | PASS | FAIL | filesystem drift → STOP, show diff, await user |
 | FAIL | FAIL | corruption → STOP, restore the captured VCS operation |
 
-If the hook didn't fire, run manually:
-
 ```bash
 bash "${CODING_COMMIT_SKILL_DIR}/scripts/verify.sh"
 ```
+
+For manifest-scoped saves, the required integrity gate is the manifest workflow's `verify` action and immutable PASS preservation receipt. Do not run the rewrite checker: scoped saves create no rewrite checkpoint, and that checker compares current HEAD against the full-tree backup checkpoint. Ordinary non-rewriting saves use their selected route's verification.
 
 Then run the project's own applicable lint, typecheck/diagnostics, affected-consumer build, test, and build commands (skip if `--no-verify`) and confirm the final chain is linear with each change self-contained. Runtime tests apply only to runtime behavior; focused compile-time tests apply only to allowed compiler-semantic promises under `TST-CORE-10`. For a declaration-only change with neither test kind, run its configured typecheck or equivalent diagnostics and affected-consumer builds, then record runtime and compiler tests as `SKIP (not applicable)` rather than running or inventing a test. Use configured project commands where they exist and the equivalents its language standard mandates otherwise.
 

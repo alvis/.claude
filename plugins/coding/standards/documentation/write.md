@@ -20,6 +20,8 @@
 - **DOC-CONT-04**: Document exported APIs, interfaces, and complex types where behavior/contract is not self-evident.
 - **DOC-CONT-05**: Source-code comments must not name standard rule IDs (`DOC-FORM-03`, `TYP-IMPT-07`) or group prefixes (`TST-STRU`). Comments explain intent in their own terms; rule IDs belong in standards files and lint reports.
 
+- **DOC-CONT-06**: Document only escaping local throws, explicit rethrows, and locally created rejections; omit propagated callee errors. Verify each claim against [the owning function](rules/doc-cont-06.md).
+
 ### Formatting (DOC-FORM)
 
 - **DOC-FORM-01**: Write explanatory comments and JSDoc summaries in lowercase sentence style; uppercase only for section headers (`// --- NAME --- //`) and code/type/acronym references.
