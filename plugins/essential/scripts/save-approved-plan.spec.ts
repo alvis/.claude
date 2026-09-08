@@ -53,7 +53,8 @@ function expectRefused(result: ReturnType<typeof spawnSync>, reason: RegExp): vo
   expect(JSON.parse(String(result.stdout))).toEqual({ status: "error", error: expect.stringMatching(reason) });
 }
 
-describe("approved plan persistence", () => {
+// subprocess integration cases reached 12.63s on macOS CI; 30s allows over 2x headroom
+describe("approved plan persistence", { timeout: 30_000 }, () => {
   it("should save exact bytes with an immutable approval snapshot", () => withSandbox((sandbox) => {
     const result = output(save(sandbox));
     const sha256 = createHash("sha256").update(originalPlan).digest("hex");

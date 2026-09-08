@@ -88,7 +88,8 @@ describe("shared hook contracts", () => {
     existsSync(join(root, source, "hooks/hooks.json")),
   );
 
-  it("should replace every plugin directory placeholder", () => {
+  // serial hook subprocesses exceeded 5s; 30s leaves headroom for runner contention
+  it("should replace every plugin directory placeholder", { timeout: 30_000 }, () => {
     for (const plugin of pluginsWithHooks) {
       const directory = resolve(root, plugin.source);
       const hooks = json<{ hooks: Record<string, readonly HookEntry[]> }>(
