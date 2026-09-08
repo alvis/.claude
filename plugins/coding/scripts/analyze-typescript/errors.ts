@@ -119,10 +119,21 @@ function inspectBody(
       context,
       caught || node.catchClause !== undefined,
     );
-    const handler =
+    const reachability =
       node.catchClause === undefined
+        ? "unreachable"
+        : catchReachability(node.tryBlock, context);
+    const handlerEvidence =
+      node.catchClause === undefined || reachability === "unreachable"
         ? emptyEvidence
         : inspectBody(node.catchClause.block, context, caught);
+    const handler =
+      (reachability === "uncertain" ||
+        (node.catchClause !== undefined &&
+          !hasSafeCatchBinding(node.catchClause))) &&
+      (handlerEvidence.raised || handlerEvidence.unresolved)
+        ? uncertainEvidence
+        : handlerEvidence;
     const finalizer =
       node.finallyBlock === undefined
         ? emptyEvidence
@@ -148,6 +159,47 @@ function inspectBody(
     children.push(inspectBody(child, context, caught));
   });
   return mergeEvidence(children);
+}
+
+function hasSafeCatchBinding(clause: ts.CatchClause): boolean {
+  return (
+    clause.variableDeclaration === undefined ||
+    ts.isIdentifier(clause.variableDeclaration.name)
+  );
+}
+
+function catchReachability(
+  node: ts.Node,
+  context: EvidenceContext,
+): "unreachable" | "reachable" | "uncertain" {
+  if (isFunction(node) || ts.isEmptyStatement(node)) return "unreachable";
+  if (ts.isThrowStatement(node)) return "reachable";
+  if (ts.isBlock(node)) {
+    for (const statement of node.statements) {
+      const reachability = catchReachability(statement, context);
+      if (reachability !== "unreachable") return reachability;
+      if (completionKind(statement) !== "normal") return "unreachable";
+    }
+    return "unreachable";
+  }
+  if (ts.isReturnStatement(node) && node.expression === undefined)
+    return "unreachable";
+  const expression =
+    ts.isExpressionStatement(node) || ts.isReturnStatement(node)
+      ? node.expression
+      : undefined;
+  const value = expression === undefined ? undefined : unwrap(expression);
+  if (value !== undefined && ts.isAwaitExpression(value)) {
+    const awaited = unwrap(value.expression);
+    if (
+      ts.isCallExpression(awaited) &&
+      ts.isPropertyAccessExpression(awaited.expression) &&
+      awaited.expression.name.text === "reject" &&
+      isPromise(awaited.expression.expression, context.checker)
+    )
+      return "reachable";
+  }
+  return "uncertain";
 }
 
 function inspectPromise(
@@ -250,11 +302,17 @@ function inspectExecutor(
     if (ts.isTryStatement(node)) {
       let result = inspect(node.tryBlock, flow);
       if (node.catchClause !== undefined && result.completion === "throw")
-        result = inspect(node.catchClause.block, {
-          ...result,
-          completion: "normal",
-          thrown: emptyEvidence,
-        });
+        result = hasSafeCatchBinding(node.catchClause)
+          ? inspect(node.catchClause.block, {
+              ...result,
+              completion: "normal",
+              thrown: emptyEvidence,
+            })
+          : {
+              settlement: result.settlement ?? uncertainEvidence,
+              completion: "uncertain",
+              thrown: uncertainEvidence,
+            };
       if (node.finallyBlock !== undefined) {
         const finalized = inspect(node.finallyBlock, {
           ...result,

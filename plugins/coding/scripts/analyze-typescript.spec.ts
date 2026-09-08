@@ -21,6 +21,41 @@ const analyzer = resolve(import.meta.dirname, "analyze-typescript.ts");
 const processTimeoutMs = 30_000;
 
 describe("cmd:analyze-typescript", () => {
+  it("should exclude unreachable catch errors while retaining explicit reachable rethrows", () => {
+    const fixture = createFixture({
+      "selected.ts": `/** @throws {RangeError} when invalid */
+export function empty() { try {} catch { throw new RangeError(); } }
+/** @throws {RangeError} when invalid */
+export function rethrow() { try { throw new RangeError(); } catch (error) { if (error instanceof RangeError) throw error; } }`,
+      "runtime.ts": `import { empty, rethrow } from './selected';
+console.log(JSON.stringify([empty, rethrow].map(fn => { try { fn(); return "returned"; } catch (error) { return error.constructor.name; } })));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: '["returned","RangeError"]\n',
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            expect.objectContaining({
+              function_name: "empty",
+              documented_error: "RangeError",
+              reason: expect.stringMatching(/^(unsupported|unresolved)$/),
+            }),
+          ],
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it.each([false, true])(
     "should prune unreadable Git-ignored directories while retaining negated peers with configuration %s",
     (configured: boolean) => {
@@ -71,6 +106,131 @@ describe("cmd:analyze-typescript", () => {
       }
     },
   );
+
+  it("should distinguish uncertain catch reachability from awaited and returned rejections", () => {
+    const fixture = createFixture({
+      "selected.ts": `function dependency() { throw new RangeError(); }
+/** @throws {TypeError} when dependency fails */
+export function indirect() { try { dependency(); } catch { throw new TypeError(); } }
+/** @throws {TypeError} when rejection is caught */
+export async function awaited() { try { await Promise.reject(new RangeError()); } catch { throw new TypeError(); } }
+/** @throws {TypeError} when rejection is caught */
+export function returned() { try { return Promise.reject(new RangeError()); } catch { throw new TypeError(); } }`,
+      "runtime.ts": `import { indirect, awaited, returned } from './selected';
+console.log(JSON.stringify(await Promise.all([indirect, awaited, returned].map(async fn => { try { await fn(); return "returned"; } catch (error) { return error.constructor.name; } }))));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: '["TypeError","TypeError","RangeError"]\n',
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: ["indirect", "returned"].map(
+            (function_name) =>
+              expect.objectContaining({
+                function_name,
+                documented_error: "TypeError",
+                reason: "unresolved",
+              }),
+          ),
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should keep unreachable and uncertain catch paths distinct through no-ops and fulfilled awaits", () => {
+    const fixture = createFixture({
+      "selected.ts": `function dependency() { throw new RangeError(); }
+/** @throws {TypeError} when invalid */
+export function noops() { try { ; function nested() { throw new RangeError(); } return; throw new RangeError(); } catch { throw new TypeError(); } }
+/** @throws {TypeError} when invalid */
+export function declaration() { try { const value = 1; } catch { throw new TypeError(); } }
+/** @throws {TypeError} when invalid */
+export async function fulfilled() { try { await Promise.resolve(); } catch { throw new TypeError(); } }
+/** @throws {TypeError} when invalid */
+export function consumed() { try { dependency(); } catch {} }
+/** @throws {TypeError} when invalid */
+export function uncertainHandler() { try { dependency(); } catch { while (false) {} } }`,
+      "runtime.ts": `import { noops, declaration, fulfilled, consumed, uncertainHandler } from './selected';
+console.log(JSON.stringify(await Promise.all([noops, declaration, fulfilled, consumed, uncertainHandler].map(async fn => { await fn(); return "returned"; }))));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: '["returned","returned","returned","returned","returned"]\n',
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: [
+            ["noops", "unsupported"],
+            ["declaration", "unresolved"],
+            ["fulfilled", "unresolved"],
+            ["consumed", "unsupported"],
+            ["uncertainHandler", "unresolved"],
+          ].map(([function_name, reason]) =>
+            expect.objectContaining({
+              function_name,
+              documented_error: "TypeError",
+              reason,
+            }),
+          ),
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("should require review when catch destructuring throws before the handler body", () => {
+    const fixture = createFixture({
+      "selected.ts": `/** @throws {RangeError} when invalid */
+export function destructured() { try { throw null; } catch ({ message }) { throw new RangeError(); } }
+/** @throws {RangeError} when rejected */
+export function executor() { return new Promise((resolve, reject) => { try { throw null; } catch ({ message }) { reject(new RangeError()); } }); }
+/** @throws {RangeError} when rejected */
+export function settled() { return new Promise((resolve, reject) => { reject(new RangeError()); try { throw null; } catch ({ message }) { reject(new TypeError()); } }); }`,
+      "runtime.ts": `import { destructured, executor, settled } from './selected';
+console.log(JSON.stringify(await Promise.all([destructured, executor, settled].map(async fn => { try { await fn(); return "returned"; } catch (error) { return error.constructor.name; } }))));`,
+    });
+    try {
+      const runtime = spawnSync("bun", [resolve(fixture, "runtime.ts")], {
+        encoding: "utf8",
+      });
+      expect({ status: runtime.status, output: runtime.stdout }).toEqual({
+        status: 0,
+        output: '["TypeError","TypeError","RangeError"]\n',
+      });
+      const result = runAnalyzer(fixture, ["selected.ts"]);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(
+        expect.objectContaining({
+          error_documentation_candidates: ["destructured", "executor"].map(
+            (function_name) =>
+              expect.objectContaining({
+                function_name,
+                documented_error: "RangeError",
+                reason: "unresolved",
+              }),
+          ),
+        }),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
 
   it("should exclude errors after definite returns in bodies and finalizers", () => {
     const fixture = createFixture({
@@ -2237,9 +2397,8 @@ export const reversed: { second: number; first: string } = null!;`,
 
   it("should accept narrowed explicit rethrows and report dynamic throw identities for review", () => {
     const fixture = createFixture({
-      "selected.ts": `declare function dependency(): void;
-/** @throws {TypeError} when invalid */
-export function rethrow(): void { try { dependency(); } catch (error) { if (error instanceof TypeError) throw error; } }
+      "selected.ts": `/** @throws {TypeError} when invalid */
+export function rethrow(): void { try { throw new TypeError(); } catch (error) { if (error instanceof TypeError) throw error; } }
 /** @throws {RangeError} when invalid */
 export function dynamic(error: unknown): never { throw error; }`,
     });
