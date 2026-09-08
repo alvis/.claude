@@ -2,7 +2,7 @@
 
 ## Workflow at a glance
 
-1. Resolve the requested change or linear stack, its GitHub push remote, open PRs, exact heads and bases, and the required PR shape.
+1. Resolve the requested change or linear stack, its GitHub push remote, open PRs, exact heads and bases, required PR shape, and known issue identities; search for issues only when none is known and the user permits search.
 2. Audit submitted files and apply every relevant standard; run applicable pull-request tests and lint through `jj run`: integrated tip first, then every independently publishable surface bottom-up.
 3. Publish saved bookmarks bottom-up, author and scan each PR body, apply its available archetype label, and verify the remote head, base, draft state, body, and labels.
 4. Perform mandatory PR review with a fresh independent subagent, converging findings by repairing the owning change and restarting invalidated discovery and verification gates.
@@ -106,7 +106,19 @@ Record `REMOTE`, receiving `HOST/$REPOSITORY`, and `PUSH_OWNER` in the publicati
 
 Inspect the selected tool's working state — `jj status`, `jj log`, and `jj bookmark list`, or `git status --short`, `git log --oneline`, and `git branch --list` — plus open PRs. Resolve `<commit-ref>` or the current saved change and list changes, bookmarks, PR heads, and bases bottom-up. Resolve each selected head to zero or one open PR: publish a missing head and update an existing one in the same pass. This per-head choice makes retrying a partially published stack idempotent. `ACTION=update` must initially resolve its explicit PR/ref target to an open PR, but may include missing descendants introduced by an accepted stack rewrite. If work must be saved, split, or reordered, invoke `coding:commit`, then restart discovery. Reject an unknown ref, nonlinear chain, merged-history rewrite, missing authentication, multiple open PRs for one head, or remote ambiguity with evidence.
 
-Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory archetype splits. With no explicit shape, also calculate the size zone and suggest a stack when an over-green surface has independent domain-coherent slices. A declined optional suggestion or atomic change proceeds as one PR. With `--dry-run`, print the exact plan and stop.
+Always load [stacked-prs.md](stacked-prs.md) and enforce its mandatory archetype splits. With no explicit shape, also calculate the size zone and suggest a stack when an over-green surface has independent domain-coherent slices. A declined optional suggestion or atomic change proceeds as one PR.
+
+#### Resolve issue coverage
+
+For each selected PR surface, collect issue numbers or URLs explicitly supplied by the user or already established in its PR/work context. Bind each identity to its repository; a PR number, incidental example, or unrelated stack member's issue is not an issue identity for this surface. Preserve valid existing associations. Read a known issue directly to check whether the changes resolve it, partially address it, or merely relate to it; this identifier read is not a discovery search and still obeys any broader user restriction on GitHub access.
+
+Invoke `coding:issue lookup` only when no issue identity is known for that surface **and** the user has not explicitly forbidden issue search. Pass the receiving repository and a description of that surface's actual changes, symptoms, and affected components. Do not search to supplement a known issue, substitute for an inaccessible known issue, or override an explicit search prohibition. An irrelevant or unavailable supplied issue is reported for correction, not silently replaced through discovery.
+
+Use the lookup result's evidence to select relevant issues; a high search rank alone does not establish resolution. With no match, publish without creating an issue. With forbidden search and no known identity, publish without an issue association and report `search skipped: user restriction`. A lookup failure remains a failure, with its cause and incomplete coverage reported; publication may proceed without inventing coverage or treating the failure as no matches. Never invoke `coding:issue create` implicitly from PR publication.
+
+Carry the selected identities and their resolving/partial/related disposition into publication and its final report. Keep issue content and metadata writes owned by `coding:issue`; this PR workflow owns PR references and associations. Text-only `author` never invokes lookup or other GitHub operations. On retries, reuse established identities and recheck their relevance if the selected change surface changed; do not repeat discovery simply because publication is retried.
+
+With `--dry-run`, print the exact plan after this read-only coverage step, including issue identities, lookup/skip decisions, dispositions, proposed association changes, and unresolved coverage. Stop before any write, including link changes.
 
 ### 2. Verify exact local CI parity before publication
 
@@ -499,6 +511,7 @@ Compose deterministic `title\n\nbody` for a commit and optional base. Step 3 pas
 
 ## Verification and Completion
 
+- For each surface, report known issue identities, whether search ran or was skipped and why, lookup failures or coverage limits, selected issue dispositions, and preserved associations. No issue was created implicitly; lookup ran only when identity was unknown and search was permitted.
 - The title matches the Conventional Commits regex and the rendered body passes [scan-pr-message.ts](../scripts/scan-pr-message.ts). Every emitted body has behavioral Goal and Requirements sections and emoji-prefixed headings with no `[ Optional ]` authoring markers; a repo template is verbatim, or the bundled default has no placeholder or dropped-section stub. The same head OID, base/empty-tree OID, template, thresholds, and placeholder map yield byte-identical `title\n\nbody` without timestamps or random IDs.
 - Unless `--no-verify` was explicitly recorded, the applicable `pull_request` test and lint tasks passed through read-only `jj run` first at the exact selected tip and then at every selected PR head bottom-up, with revision-bound sources and results. The sole per-surface exception records the user's explicit approval for that exact revision and the verifier's exact lexically sorted missing-secret names. A `--no-verify` run instead reports every skipped bookmark, PR, head, and base; hosted CI remains mandatory.
 - Every head was pushed under a lease — one explicit affected-bookmark `jj git push` on the jj path, `git push --force-with-lease` on the git path; each new PR started as a draft, uses the authored title/body, and has the intended stack base. The review loop verifies approved surfaces are ready for review.
