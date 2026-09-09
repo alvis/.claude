@@ -1,5 +1,7 @@
 # Review completion formats
 
+A nested reviewer writes its assigned temporary report and returns only the path, verdict, counts, and a short summary. The following combined output belongs to the main agent.
+
 Persist the review first, then render a compact summary. Detailed findings live under the active work root; the user may select an inline pattern summary or interactive discovery. Both interactive and non-interactive modes report:
 
 ```markdown

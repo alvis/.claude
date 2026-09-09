@@ -13,11 +13,8 @@ Use this section inside the work-root `review.md`, after the derived area roll-u
 - Question: <one short question asking whether the user agrees this shared behavior is an issue>
 Answer: 
 - Confirmation: pending
-- Response provenance: none
-- History: none
-- Remote eligibility: unchecked
 ```
 
-Use `pending|confirmed|rejected|stale` for confirmation, independently of finding disposition. A response's provenance names the user, report/chat/generated-prompt source, time, evidence identity, scope, and exceptions. Retain superseded responses with their original bindings in History. Record remote eligibility as `eligible|absent|unverified|unchecked`, with repository, default branch, immutable head SHA, checked time, supporting paths/behavior, and eligible finding IDs when checked. Record any issue URL returned by the issue owner here so a rerun can reuse it.
+Use `pending|confirmed|rejected|stale` independently of finding disposition. Add metadata only when it exists: record an answer's source, time, and evidence binding; scope or exceptions when relevant; prior answers when superseded. After a remote check, record `eligible|absent|unverified` with repository, branch, SHA, checked time, evidence, and eligible finding IDs. Retain returned issue URLs for reuse. Omit empty fields; an absent remote check never means eligible.
 
 When no outstanding findings exist, write `No patterns require confirmation.` Preserve prior response history without presenting closed findings as new issue candidates.

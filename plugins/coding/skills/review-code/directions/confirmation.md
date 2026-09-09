@@ -1,6 +1,6 @@
 # Confirm review patterns
 
-Read after area validation and before reconciling the work-root `review.md`. Only the main agent writes state or asks the user; nested reviewers return proposed content. Follow Essential's state lease, append-first journal, approval-binding, and output-size contracts. Use [confirmation.md](templates/confirmation.md) for the canonical section; neither global state nor HTML is another home for answers.
+Read after area validation and before reconciling the work-root `review.md`. Only the main agent writes state or asks the user; nested reviewers write their assigned temporary reports and return summaries. Follow Essential's state lease, append-first journal, approval-binding, and output-size contracts. Use [confirmation.md](templates/confirmation.md) for the canonical section; neither global state nor HTML is another home for answers.
 
 ## Persist and group
 
@@ -15,7 +15,7 @@ For an interactive review with outstanding patterns, ask whether the user wants 
 
 - **Inline:** present concise pattern summaries with their questions; accept report edits or chat answers identified by pattern. Do not repeat questions for individual locations or reopen unchanged confirmed/rejected answers.
 - **HTML:** invoke `essential:discover` with the persisted review as input, the same work ID, and `--mode=interview` for a guided interview. Load its installed skill contract and let its existing renderer build the board from JSON in a collision-safe OS temporary directory; do not hand-write HTML or change discover. Cover all active patterns and evidence links, showing answered patterns as context without asking again. Collect responses and annotations through its one generated reply prompt. Untouched defaults are suggestions. Ask the user to return that prompt, then reconcile its explicit responses into `review.md` before discarding the temporary surface. If discover is unavailable, report that limitation and offer inline/report confirmation.
-- **Non-interactive:** persist pending pattern questions and return the existing verdict/exit behavior; no questions, HTML generation, or GitHub write. A delegated caller receives proposed content and pending confirmation metadata for main-agent reconciliation, never a false claim that it saved files.
+- **Non-interactive:** persist pending pattern questions and return the existing verdict/exit behavior; no questions, HTML generation, or GitHub write. A delegated reviewer returns its temporary report path and summary; it never claims canonical state was saved.
 
 Treat `Answer: ` as user input, not a field to fill from a recommendation. Read report edits, chat replies, or the returned HTML prompt and record the user's actual words and provenance. An explicit agreement sets `confirmed`; explicit disagreement sets `rejected` and routes the objection to the owning reviewer for reassessment. Free-form notes, blanks, ambiguous responses, and unreturned HTML interaction do not establish confirmation. For partial agreement or exceptions, record the exact scope; clarify only unresolved scope once per affected pattern. Conflicting responses require reconciliation, not an arbitrary winner. Journal the response before reconciling the report under the main-agent lease. If new evidence changes the claim, apply the freshness rule above.
 
