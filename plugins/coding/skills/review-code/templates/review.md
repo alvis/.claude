@@ -2,6 +2,7 @@
 area: <alignment|correctness|security|quality|testing|docs|style>
 prefix: <ALIGN|CORR|SEC|QUAL|TEST|DOCS|STYL>
 reviewed_at: <ISO-8601 timestamp>
+reviewed_revision: <immutable commit SHA; include source-content hashes for uncommitted inputs>
 files_reviewed_count: <N>
 plan_source: state.md
 reviewed_task_ids: [<full task IDs>]
@@ -27,7 +28,7 @@ outstanding_findings: <N>
 - **Status**: <open|fixed|acknowledged|deferred|skipped>
 - **Source**: `<path:line>`
 - **Issue**: <semantic concern and impact>
-- **Evidence**: <representative snippet, command, contract, or runtime result>
+- **Evidence**: <representative snippet, command, contract, or runtime result bound to the exact source revision/content>
 - **Direction**: <actionable correction or disposition direction>
 - **Rationale**: <why this current disposition is justified>
 - **Owner**: <person or durable owning task/team>
@@ -40,6 +41,8 @@ Status requirements:
 - `fixed` is closed only when the correction has been applied and rechecked. Record the closing revision and verification evidence; `Owner` may be `closed` and risk acceptance is not required.
 - `acknowledged` and `skipped` are closed non-fixed risk dispositions only with non-placeholder rationale, accountable owner, and concrete recheck condition. P0/P1 additionally require explicit risk-acceptance authority and durable acceptance evidence. Without these fields they remain outstanding.
 - `deferred` remains outstanding and blocks review closure. Retain its priority, accountable owner, deadline, rationale, and recheck condition.
+
+Pattern-level confirmation questions and `Answer: ` fields live only in the work-root `review.md`; the main agent links these finding IDs there. Area reviewers return evidence, not duplicate user questions.
 
 ## Pending decisions
 
