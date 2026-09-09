@@ -17,7 +17,7 @@ Record the constraints that materially limit architectural choices.
 | Document | Authority | Status |
 |---|---|---|
 | [`<architecture-slug>.md`](<architecture-slug>.md) | <Structural concern owned here> | Current |
-| [`decisions/<nnnn>-<decision-slug>.md`](decisions/<nnnn>-<decision-slug>.md) | <Accepted choice, alternatives, and consequences> | Accepted |
+| [`decisions/adr-<n>-<decision-slug>.md`](decisions/adr-<n>-<decision-slug>.md) | <Accepted choice, alternatives, and consequences> | Accepted |
 
 Architecture documents own current structural truth. An architectural decision record (ADR) records why one choice was accepted; it does not become a second copy of the current architecture.
 
