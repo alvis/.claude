@@ -1,16 +1,16 @@
 # Review checklist and finding schema
 
-Load this from the *Review* step of `coding:pr review`. Evidence rules come from [the shared review mandates](../../review-code/references/mandates.md); this file adds what is specific to reviewing a PR diff.
+Load this from the *Review* step of `coding:pr review`. `coding:standards/code-review/` owns evidence eligibility, settled dispositions, and stopping rules; [the shared review mandates](../../review-code/references/mandates.md) apply them across areas. This file adds what is specific to reviewing a PR diff.
 
-You will be rewarded for substantiated relevant standards violations, work beyond the minimum sufficient solution, and unexplained differences from comparable existing work. Encourage abstraction; do not flag abstraction alone or count callers as proof of unnecessary complexity. Report only findings backed by a rule, concrete consequence, or repository comparison.
+Qualify candidates under `CRV-FDBK-01` before recording findings or assigning priority. Repository comparisons and parser-accepted inputs can prompt investigation but cannot establish a violation or supported production scenario by themselves. Encourage abstraction; do not flag abstraction alone or count callers as proof of unnecessary complexity.
 
 ## Depth
 
-Scale reading depth to the size zone: green reviews line by line, yellow leads with the key areas then goes line by line, and red leads with architecture and goes line-level only where it matters. A black PR first proves that it is one genuinely self-contained unit, such as a large-area edit or rename, then receives a full review whose depth is not capped solely by size. Authorization does not control review depth; it controls whether the final event may be `APPROVE`. The zone shapes how you read, never what you may find — nothing downstream can recover a finding you chose not to make.
+Scale reading depth to the size zone: green reviews line by line, yellow leads with the key areas then goes line by line, and red leads with architecture and goes line-level only where it matters. A black PR first proves that it is one genuinely self-contained unit, such as a large-area edit or rename, then receives a full review whose depth is not capped solely by size. Authorization does not control review depth; it controls whether the final event may be `APPROVE`. Depth controls investigation; the shared evidence threshold controls findings.
 
 Before approving a black-zone PR, require specific Risk, Test plan, and Why this size evidence in its canonical body. Then inspect only the authorization helper's live structured receipt as semantic authorization evidence; do not use an earlier fetched comment or body. The receipt's `authorization_body` and `rationale` must identify an atomic subject, the concrete coupling that prevents a safe split, and the consequence of splitting in the grammar `<atomic subject> because <coupling>; otherwise <consequence>`. A generic or tautological rationale blocks approval even when the helper accepted its structure.
 
-Selectivity belongs to publication, not detection, and it caps only optional polish. Publish every P0 through P3 finding you found, however many that is; ranking decides the order they are read in, never whether they appear. P4 is the sole capped level — [review-tone.md](review-tone.md) publishes the five highest-ranked and counts the rest in the overall body — so a 2,000-line review of trivia teaches nothing, while a long list of real defects is the review doing its job.
+Publish every qualified P0 through P3 finding; ranking decides their order, not their eligibility. P4 is the sole capped level — [review-tone.md](review-tone.md) publishes the five highest-ranked and counts the rest in the overall body. Unsupported speculation is omitted at every priority and comment kind, including questions, thoughts, and chores; it never becomes a test request or approval cap.
 
 One finding per problem, at the highest priority that applies. The same mistake in eight places is one finding on the clearest instance, noting that it applies throughout.
 
@@ -50,7 +50,7 @@ findings:
     kind: question | thought | note | chore | praise | null
     title: <concise raw title without marker or template markup>
     body: <raw explanatory body without marker or title wrapper>
-    evidence: <the rule, failure path, or repository precedent it rests on>
+    evidence: <governing requirement or rule, supported trigger or structural applicability, revision-bound proof, and concrete impact under CRV-FDBK-01>
     alternative: <exact path this change belongs in instead, or null>
 goal_spec_alignment: matches | diverges | skipped_unknown
 spec_deviations: captured | missing | skipped
@@ -76,7 +76,7 @@ not_reviewed:
 - `kind` classifies a comment that makes no priority claim: `chore` for a process step the author owes before merge, `question` where intent is genuinely unclear, `thought` for a non-blocking idea that is explicitly not a request, `note` for a fact the author should know, `praise` where the work is genuinely good.
 - Exactly one of `priority` and `kind` is non-null. A comment that claims a consequence carries a priority; one that does not carries a kind. [review-tone.md](review-tone.md) selects the marker semantics and [inline-review.md](../templates/inline-review.md) renders them, so this field decides the marker and no judgement is left at render time.
 - `chore` is the one kind that blocks merge, because it demands an action even though it grades nothing. An outstanding `chore` drives the verdict exactly as a P0 or P1 does; every other kind leaves the verdict untouched.
-- `evidence` is mandatory. A finding that cannot name the rule it applies or the failure it predicts is an opinion, and opinions are not posted.
+- `evidence` is mandatory and must meet `CRV-FDBK-01`; a predicted failure or repository comparison without applicability proof is not enough. Reopened findings additionally cite new evidence invalidating the prior disposition under `CRV-FDBK-02`.
 - `alternative` carries a real path, not a direction. "Move this to the service layer" is not actionable; `src/orders/order.service.ts` is. Leave it `null` unless a better location was actually found.
 - `goal_spec_alignment` is `skipped_unknown` when no goal or spec can be resolved. Never infer a goal from the diff and then grade the diff against it.
 - `spec_deviations` is `captured` when every deviation observed against the linked specification is recorded under Additional Notes, `missing` when one is not — each missing deviation is published as an unanchored chore — and `skipped` only when the PR links no resolvable specification.

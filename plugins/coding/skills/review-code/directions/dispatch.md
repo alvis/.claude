@@ -22,7 +22,7 @@ bun run plugins/coding/scripts/scanlib/core.ts \
   --test-root <project-root> [--test-pattern <compiler-test-glob> ...]
 ```
 
-Surface a hard Bun runtime failure. Candidate output is not a finding until the assigned reviewer validates it.
+Surface a hard Bun runtime failure. Candidate output is not a finding until the assigned reviewer validates it against `coding:standards/code-review/`'s evidence threshold. Pass prior dispositions and their evidence; a fresh dispatch does not reset them.
 
 ## Areas
 

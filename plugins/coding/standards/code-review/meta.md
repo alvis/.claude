@@ -14,10 +14,11 @@ This standard enforces requirements beyond common review practice:
 
 | Standard Practice | Our Stricter Requirement |
 |---|---|
-| Reviewer discretion on blockers | **Any confirmed rule violation blocks submission unless its owning standard permits an exception** |
+| Reviewer discretion on blockers | **Only demonstrated approved-requirement or applicable-standard violations, or evidenced highly likely defects in supported production use, qualify; confirmed rule violations block unless their owning standard permits an exception** |
 | Informal suppression review | **Every suppression is checked against canonical `GEN-SAFE-01` approval and root-cause requirements** |
-| Unstructured feedback | **Every finding states severity, evidence, impact, and a concrete disposition** |
+| Unstructured feedback | **Every blocker cites its governing requirement or rule, applicability evidence, concrete impact, and disposition** |
 | Equal attention to all comments | **Correctness and security take priority over performance, maintainability, testing, and style** |
+| Fresh review restarts discussion | **Settled findings reopen only with new invalidating evidence; review stops when required checks pass and evidenced defects are resolved** |
 
 ## Exception Policy
 

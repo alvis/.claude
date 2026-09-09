@@ -12,6 +12,7 @@ Orchestrate a read-only code review. Area reviewers write their assigned reports
 ## Boundaries
 
 - Review post-implementation changes, PRs, or explicit scopes across alignment, correctness, security, quality, testing, docs, and style.
+- Apply the evidence, settled-finding, and stopping rules in `coding:standards/code-review/` through [mandates.md](references/mandates.md); only qualified candidates enter reports, counts, and confirmation questions.
 - Do not edit reviewed code, build/deploy infrastructure, review dependencies, or write generic root `reviews/` output.
 - Reject binary-only scopes. Reject `--out` with a migration message directing callers to `--work-id`; review paths are contract-owned.
 
@@ -61,6 +62,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 ## Verification
 
 - Every selected area file exists, is lowercase, matches the template, and contains only its owned findings.
+- Every finding meets the shared evidence threshold; reopened findings identify new evidence invalidating their prior disposition. Required checks and resolved evidenced defects end review without speculative follow-up.
 - The written `review.md`, or returned roll-up delta, matches every existing area file's disposition/priority counts and paths.
 - Alignment used the identical pinned state/plan/spec contract expected by any follow-up fix; no root fallback was selected. The result binds the exact `plan_source: state.md` and reviewed task IDs.
 - Findings and pattern questions were saved before presentation; each outstanding finding maps to one pattern, and no location gets a duplicate confirmation question.

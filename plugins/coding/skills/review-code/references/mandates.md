@@ -1,6 +1,6 @@
 # Core review mandates
 
-These rules apply to all seven areas; area ownership prevents duplicate findings.
+These rules apply to all seven areas; area ownership prevents duplicate findings. Apply `coding:standards/code-review/` before recording or prioritizing a candidate: `CRV-FDBK-01` owns evidence eligibility, `CRV-FDBK-02` owns settled dispositions, and `CRV-PRIO-02` owns the stopping condition. Unsupported speculation is omitted, not recorded as an open or deferred finding or a confirmation question.
 
 ## Contract alignment belongs to alignment
 
@@ -8,7 +8,7 @@ Root `state.md` (`plan_source: state.md`) plus linked approved specification/des
 
 ## Semantic errors belong to correctness
 
-Trace behavior rather than trusting code shape. Wrong control flow/operators, swapped arguments, silent errors, races, unhandled async work, leaks, and boundary validation defects belong in `correctness.md` unless security-specific. No “probably fine” findings: provide evidence and a plausible failure path.
+Trace supported behavior rather than trusting code shape. Wrong control flow/operators, swapped arguments, silent errors, races, unhandled async work, leaks, and boundary validation defects belong in `correctness.md` unless security-specific. Apply the standard's evidence threshold even without a feature-specific requirement; a merely plausible failure path is insufficient.
 
 ## Redundancy and sibling consistency belong to quality
 
@@ -20,4 +20,4 @@ Do not spend semantic-review effort on type errors, unused imports/variables, fo
 
 ## Evidence and dispositions
 
-Every finding cites a source/contract/runtime fact and has one status: `open`, `fixed`, `acknowledged`, `deferred`, or `skipped`. Verified `fixed` and valid `acknowledged`/`skipped` findings are closed. Closed risk dispositions require rationale, owner, and recheck condition; P0/P1 also require explicit risk-acceptance authority/evidence. `open`, `deferred`, and malformed risk dispositions remain outstanding and block closure. Never change status merely to produce a passing verdict.
+Every finding's existing evidence field supplies the governing requirement or rule, applicability proof, and concrete impact required by `CRV-FDBK-01`. It has one status: `open`, `fixed`, `acknowledged`, `deferred`, or `skipped`. Verified `fixed` and valid `acknowledged`/`skipped` findings are closed. Closed risk dispositions require rationale, owner, and recheck condition; P0/P1 also require explicit risk-acceptance authority/evidence. `open`, `deferred`, and malformed risk dispositions remain outstanding and block closure. Never change status merely to produce a passing verdict. On rerun, retain settled dispositions under `CRV-FDBK-02`; cite new invalidating evidence before reopening one. Stop under `CRV-PRIO-02` once required checks pass and evidenced defects are resolved.

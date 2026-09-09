@@ -47,6 +47,7 @@ Never answer a 422 by re-anchoring the comment to a nearby line that happens to 
 
 ## Re-review hygiene
 
+- Apply `coding:standards/code-review/`'s `CRV-FDBK-02` to settled findings: reopen only with new evidence invalidating the prior disposition, and cite that evidence. Current-head checks alone do not reset dispositions.
 - Skip a finding whose path, line, and substance already appear in `gh api --hostname "$HOST" repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments`. The author has seen it.
 - Re-evaluate every existing unresolved P0/P1/P2 thread against the pinned head and return `still_applies`, `fixed`, or `does_not_apply` in completion. Do not repost it.
 - When a previously reported issue's latest verdict differs from its verdict in the immediately preceding review, add one line under `### 🔄 Previous Reports` that links the original report and summarizes the latest verdict and changed evidence. Omit the section when no prior issue changed verdict, and do not repeat unchanged issues. A fixed issue remains an overall-body line rather than a new inline comment.
