@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-from html import unescape
 import json
 import re
 import sys
 import time
+from html import unescape
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -126,9 +126,7 @@ JOURNAL_SEGMENT = re.compile(r"^(\d+)-journal[-.]", re.IGNORECASE)
 # `completed` is terminal and reachable only on merge evidence: a recorded
 # pull request, or the change observed on the default branch. A bare commit
 # hash is neither.
-MERGE_PR_REFERENCE = re.compile(
-    r"(?:\bPR[\s:]*#?\d+\b|(?<![\w/#])#\d+\b|/pull/\d+)"
-)
+MERGE_PR_REFERENCE = re.compile(r"(?:\bPR[\s:]*#?\d+\b|(?<![\w/#])#\d+\b|/pull/\d+)")
 MERGE_BRANCH_EVIDENCE = re.compile(
     r"\bmerge(?:d|s)?\s+(?:into|to)\b|\bmerge[- ]commit\b|"
     r"\bobserved\s+(?:merged|present|on)\b",
@@ -140,9 +138,7 @@ STATE_EVIDENCE_LINE = re.compile(
 )
 # A fallback to state.md is honest only while it says so.
 STATE_FALLBACK_MARK = "(from state.md)"
-COMPLETION_RECEIPT_HEADING = re.compile(
-    r"^#{2,}\s+completion receipt\b", re.IGNORECASE
-)
+COMPLETION_RECEIPT_HEADING = re.compile(r"^#{2,}\s+completion receipt\b", re.IGNORECASE)
 LIST_ITEM = re.compile(r"^(\s*)(?:[-+*]|\d+[.)])\s+(.*)$")
 OUTLIVES_LABEL = re.compile(r"outlives", re.IGNORECASE)
 OWNER_FIELD = re.compile(r"owner\s*:\s*([^|;]*)", re.IGNORECASE)
@@ -218,12 +214,8 @@ MARKDOWN_LINK = re.compile(
     r"\[[^\]]*\]\(\s*((?:<[^<>\s]+>)|(?:[^\s<>)]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
 )
-ADR_REFERENCE_LINK = re.compile(
-    r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]"
-)
-ADR_REFERENCE_SHORTCUT = re.compile(
-    r"(?<![!\]])\[([^\]]+)\](?!\s*(?:\(|\[|:))"
-)
+ADR_REFERENCE_LINK = re.compile(r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]")
+ADR_REFERENCE_SHORTCUT = re.compile(r"(?<![!\]])\[([^\]]+)\](?!\s*(?:\(|\[|:))")
 ADR_REFERENCE_DEFINITION = re.compile(
     r"^[ \t]{0,3}\[([^\]]+)\]:\s*(?:<([^>\n]+)>|([^\s]+))"
     r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$",
@@ -267,16 +259,13 @@ class Report:
     ) -> None:
         self.add("warning", work, check, message, fix)
 
-    def info(
-        self, work: str, check: str, message: str, fix: str | None = None
-    ) -> None:
+    def info(self, work: str, check: str, message: str, fix: str | None = None) -> None:
         self.add("info", work, check, message, fix)
 
 
 def split_row(line: str) -> list[str]:
     text = line.strip()
-    if text.startswith("|"):
-        text = text[1:]
+    text = text.removeprefix("|")
     if text.endswith("|"):
         backslashes = 0
         for character in reversed(text[:-1]):
@@ -344,9 +333,7 @@ def is_escaped_markdown_character(text: str, index: int) -> bool:
     return backslashes % 2 == 1
 
 
-def adr_index_links(
-    text: str, references: dict[str, str] | None = None
-) -> list[str]:
+def adr_index_links(text: str, references: dict[str, str] | None = None) -> list[str]:
     """Return inline and reference-style Markdown targets from visible index text."""
     text = without_inline_images(without_inline_html_tags(without_inline_code(text)))
     if references is None:
@@ -400,7 +387,11 @@ def markdown_link_spans(text: str) -> list[tuple[int, int, str, str]]:
             and text[index - 1] == "!"
             and not is_escaped_markdown_character(text, index - 1)
         )
-        if text[index] != "[" or is_escaped_markdown_character(text, index) or image_opener:
+        if (
+            text[index] != "["
+            or is_escaped_markdown_character(text, index)
+            or image_opener
+        ):
             index += 1
             continue
         depth = 1
@@ -488,7 +479,7 @@ def markdown_link_destination(text: str) -> tuple[str, int] | None:
         return None
 
     title_start = position
-    if text[position] in {"\"", "'"}:
+    if text[position] in {'"', "'"}:
         quote = text[position]
         position += 1
         while position < len(text):
@@ -528,10 +519,7 @@ def markdown_link_destination(text: str) -> tuple[str, int] | None:
 
 def markdown_links_with_labels(text: str) -> list[tuple[str, str]]:
     """Parse inline Markdown links whose labels may contain balanced brackets."""
-    return [
-        (label, target)
-        for _, _, label, target in markdown_link_spans(text)
-    ]
+    return [(label, target) for _, _, label, target in markdown_link_spans(text)]
 
 
 def markdown_reference_links(
@@ -574,10 +562,7 @@ def exact_specification_links(value: str) -> bool:
     for start, end, label, target in spans:
         residual.append(value[cursor:start])
         target = target.strip()
-        if (
-            not label.strip()
-            or not safe_specification_target(target)
-        ):
+        if not label.strip() or not safe_specification_target(target):
             return False
         cursor = end
     residual.append(value[cursor:])
@@ -600,7 +585,7 @@ def safe_specification_target(target: str) -> bool:
         ):
             return False
         try:
-            parsed.port
+            _ = parsed.port
         except ValueError:
             return False
     path = unquote(re.split(r"[?#]", target, maxsplit=1)[0])
@@ -609,10 +594,9 @@ def safe_specification_target(target: str) -> bool:
 
 def safe_external_specification_target(target: str) -> bool:
     """Require a usable HTTP(S) authority for project entry-point links."""
-    return (
-        PROJECT_SPECIFICATION_SCHEME.match(target) is not None
-        and safe_specification_target(target)
-    )
+    return PROJECT_SPECIFICATION_SCHEME.match(
+        target
+    ) is not None and safe_specification_target(target)
 
 
 def safe_repository_specification_target(target: str) -> bool:
@@ -766,13 +750,10 @@ def stream_local_specification_link(
         if identity_match is None:
             continue
         without_identity = (
-            combined[: identity_match.start()]
-            + " "
-            + combined[identity_match.end() :]
+            combined[: identity_match.start()] + " " + combined[identity_match.end() :]
         )
-        if (
-            SPECIFICATION_TOKEN.search(without_identity)
-            or STREAM_DOCUMENT_FILE.search(target_folded)
+        if SPECIFICATION_TOKEN.search(without_identity) or STREAM_DOCUMENT_FILE.search(
+            target_folded
         ):
             return True
     return False
@@ -802,9 +783,7 @@ def stream_specification_targets(state_dir: Path) -> set[str]:
                         continue
                     targets.update(
                         target.strip()
-                        for _, target in markdown_links_with_labels(
-                            match.group(2)
-                        )
+                        for _, target in markdown_links_with_labels(match.group(2))
                     )
     return targets
 
@@ -870,9 +849,10 @@ def check_project_specifications(
             "Replace locators with presence values; goal.md owns anchors.",
         )
         return
-    if observed["version-controlled documentation"] != "configured" or observed[
-        "local operational state"
-    ] != "configured":
+    if (
+        observed["version-controlled documentation"] != "configured"
+        or observed["local operational state"] != "configured"
+    ):
         report.error(
             "overview.md",
             "overview-state-systems",
@@ -962,14 +942,12 @@ def contained_regular_file(path: Path, containment_root: Path) -> str | None:
             current /= component
             current.lstat()
             if current.is_symlink():
-                return (
-                    "materialization receipt path contains a symlink: "
-                    + "/".join(relative.parts[: index + 1])
+                return "materialization receipt path contains a symlink: " + "/".join(
+                    relative.parts[: index + 1]
                 )
             if index < len(relative.parts) - 1 and not current.is_dir():
-                return (
-                    "materialization receipt parent is not a directory: "
-                    + "/".join(relative.parts[: index + 1])
+                return "materialization receipt parent is not a directory: " + "/".join(
+                    relative.parts[: index + 1]
                 )
         resolved = current.resolve(strict=True)
         resolved.relative_to(contained)
@@ -1015,9 +993,11 @@ def external_materialization_error(
     ):
         return "materialization receipt has no complete external revision map"
     created_at = receipt.get("created_at")
-    if not isinstance(created_at, str) or re.fullmatch(
-        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", created_at
-    ) is None:
+    if (
+        not isinstance(created_at, str)
+        or re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", created_at)
+        is None
+    ):
         return "materialization receipt has no UTC ISO-8601 creation time"
     raw_manifest = receipt.get("content_manifest")
     if not isinstance(raw_manifest, list) or not raw_manifest:
@@ -1047,11 +1027,11 @@ def external_materialization_error(
         ):
             return "materialization receipt content manifest has an invalid byte count"
         paths.append(relative)
-        normalized.append(
-            {"path": relative, "sha256": digest, "bytes": byte_count}
-        )
+        normalized.append({"path": relative, "sha256": digest, "bytes": byte_count})
     if paths != sorted(paths) or len(paths) != len(set(paths)):
-        return "materialization receipt content manifest paths are not unique and sorted"
+        return (
+            "materialization receipt content manifest paths are not unique and sorted"
+        )
 
     base_root = work_dir / "artifacts/spec-sync/bases" / accepted
     base_manifest, error = materialization_manifest(base_root, work_dir)
@@ -1098,13 +1078,14 @@ def check_specification_provenance(
             report,
             work,
             phase,
-            "goal.md has duplicate visible `## Specification provenance` "
-            "sections",
+            "goal.md has duplicate visible `## Specification provenance` sections",
             "Keep exactly one visible specification provenance section.",
         )
         return
     body = sections[0]
-    canonical_names = {name.casefold(): name for name in SPECIFICATION_FIELDS}
+    canonical_names: dict[str, str] = {
+        name.casefold(): name for name in SPECIFICATION_FIELDS
+    }
     values: dict[str, str] = {}
     malformed_lines: list[str] = []
     for raw_line in body.splitlines():
@@ -1153,7 +1134,13 @@ def check_specification_provenance(
             "Use external, repo, inline, none, or pending.",
         )
         return
-    if verification not in {"verified", "stale", "missing", "not-applicable", "pending"}:
+    if verification not in {
+        "verified",
+        "stale",
+        "missing",
+        "not-applicable",
+        "pending",
+    }:
         specification_issue(
             report,
             work,
@@ -1204,7 +1191,9 @@ def check_specification_provenance(
     receipt = values["Materialization receipt"]
     verified_at = values["Last verified at"].strip("`")
     if canonical in {"", "None", "Pending user confirmation"} or accepted in {
-        "", "None", "Pending user confirmation"
+        "",
+        "None",
+        "Pending user confirmation",
     }:
         specification_issue(
             report,
@@ -1435,9 +1424,11 @@ def check_specification_provenance(
                     "Write both required inline work-local specification files before verification.",
                 )
                 return
-    if verification == "verified" and re.fullmatch(
-        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", verified_at
-    ) is None:
+    if (
+        verification == "verified"
+        and re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", verified_at)
+        is None
+    ):
         specification_issue(
             report,
             work,
@@ -1533,9 +1524,7 @@ def check_tasks(report: Report, work: str, rows: list[dict]) -> None:
     for parent_id, child_rows in children.items():
         parent = seen.get(parent_id)
         if parent is None:
-            report.error(
-                work, "task-id", f"children of {parent_id} have no parent row"
-            )
+            report.error(work, "task-id", f"children of {parent_id} have no parent row")
             continue
         if parent["status"] == "done":
             unfinished = [
@@ -1582,15 +1571,11 @@ def check_file_references(report: Report, work: str, files: list[Path]) -> None:
                 )
 
 
-ADR_STATUS_HEADER = re.compile(
-    r"^>\s*\*\*Status:\*\*\s*Superseded\s*$", re.IGNORECASE
-)
+ADR_STATUS_HEADER = re.compile(r"^>\s*\*\*Status:\*\*\s*Superseded\s*$", re.IGNORECASE)
 ADR_SUCCESSOR_HEADER = re.compile(
     r"^>\s*\*\*Superseded by:\*\*\s*(.+?)\s*$", re.IGNORECASE
 )
-ADR_CHANGE_HEADER = re.compile(
-    r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGNORECASE
-)
+ADR_CHANGE_HEADER = re.compile(r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGNORECASE)
 ADR_STATUS_LINE = re.compile(
     r"^[ \t]*(?:>[ \t]*)?(?:[-+*][ \t]*|\d+[.)][ \t]+)?\*{0,2}Status:\*{0,2}[ \t]*"
     r"`?([\w-]+)`?[ \t]*$",
@@ -1656,9 +1641,7 @@ ADR_METADATA_LINE = re.compile(
     re.IGNORECASE,
 )
 ADR_TABLE_DELIMITER = re.compile(r"^:?-{3,}:?$")
-ADR_THEMATIC_BREAK = re.compile(
-    r"^(?P<mark>[-*_])(?:\s*(?P=mark)){2,}\s*$"
-)
+ADR_THEMATIC_BREAK = re.compile(r"^(?P<mark>[-*_])(?:\s*(?P=mark)){2,}\s*$")
 ADR_EMPTY_LIST_ITEM = re.compile(r"^(?:[-+*]|\d+[.)])\s*$")
 ADR_REPLACEMENT_REFERENCE = re.compile(
     r"(?:"
@@ -1690,14 +1673,10 @@ def repository_root_for_work_dir(work_dir: Path) -> Path:
     return resolved.parent
 
 
-def is_valid_fence_marker(
-    marker: re.Match[str], fence: tuple[str, int] | None
-) -> bool:
+def is_valid_fence_marker(marker: re.Match[str], fence: tuple[str, int] | None) -> bool:
     """Reject backtick fence openers whose info string contains a backtick."""
     return not (
-        fence is None
-        and marker.group(1).startswith("`")
-        and "`" in marker.group(2)
+        fence is None and marker.group(1).startswith("`") and "`" in marker.group(2)
     )
 
 
@@ -1708,13 +1687,17 @@ def archive_header_lines(text: str) -> list[str]:
     header: list[str] = []
     change_seen = False
     for line in lines:
-        if change_seen and line.strip() and line.strip() != ">":
-            if not (
+        if (
+            change_seen
+            and line.strip()
+            and line.strip() != ">"
+            and not (
                 ADR_STATUS_HEADER.match(line)
                 or ADR_SUCCESSOR_HEADER.match(line)
                 or ADR_CHANGE_HEADER.match(line)
-            ):
-                break
+            )
+        ):
+            break
         header.append(line)
         if ADR_CHANGE_HEADER.match(line):
             change_seen = True
@@ -1743,9 +1726,7 @@ def parse_superseded_header(
     return successor, changed, links, len(successor_lines), len(changed_lines)
 
 
-def archive_repair_advice(
-    file: Path, superseded_dir: Path, problems: list[str]
-) -> str:
+def archive_repair_advice(file: Path, superseded_dir: Path, problems: list[str]) -> str:
     """Offer a convergent repair for the specific archived-ADR defects found."""
     if file.parent != superseded_dir:
         return (
@@ -1764,18 +1745,30 @@ def archive_repair_advice(
             "repair the existing prepended Status, Superseded by, and What changed fields in place"
         )
     if any("original canonical ADR heading" in problem for problem in problems):
-        actions.append("restore the retained canonical ADR heading without changing its body")
+        actions.append(
+            "restore the retained canonical ADR heading without changing its body"
+        )
     if any("original Accepted status" in problem for problem in problems):
-        actions.append("restore exactly one original Accepted status declaration in the retained metadata")
+        actions.append(
+            "restore exactly one original Accepted status declaration in the retained metadata"
+        )
     if any("substantive decision content" in problem for problem in problems):
-        actions.append("restore substantive historical decision content without rewriting it")
-    if any("Superseded by" in problem or "successor" in problem for problem in problems):
-        actions.append("correct the existing successor link, label, target, and chronology")
+        actions.append(
+            "restore substantive historical decision content without rewriting it"
+        )
+    if any(
+        "Superseded by" in problem or "successor" in problem for problem in problems
+    ):
+        actions.append(
+            "correct the existing successor link, label, target, and chronology"
+        )
     if any("What changed" in problem for problem in problems):
         actions.append(
             "replace the existing What changed value with one non-empty partial or complete summary"
         )
-    if any("archive must contain ADR files directly" in problem for problem in problems):
+    if any(
+        "archive must contain ADR files directly" in problem for problem in problems
+    ):
         actions.append("move the file directly into the superseded archive")
     if not actions:
         actions.append("correct the reported archive field in place")
@@ -1909,9 +1902,7 @@ def normalize_adr_title(title: str) -> str:
 
 
 def without_html_comments(text: str) -> str:
-    return ADR_HTML_COMMENT.sub(
-        lambda match: "\n" * match.group(0).count("\n"), text
-    )
+    return ADR_HTML_COMMENT.sub(lambda match: "\n" * match.group(0).count("\n"), text)
 
 
 def without_inline_markup(text: str) -> str:
@@ -1949,10 +1940,11 @@ def without_inline_html_tags(text: str) -> str:
         if position >= len(text) or text[position] not in " \t\r\n/>":
             index += 1
             continue
-        if text[position] == "/":
-            if position + 1 >= len(text) or text[position + 1] != ">":
-                index += 1
-                continue
+        if text[position] == "/" and (
+            position + 1 >= len(text) or text[position + 1] != ">"
+        ):
+            index += 1
+            continue
         quote: str | None = None
         end = position
         while end < len(text):
@@ -2019,7 +2011,9 @@ def without_inline_images(text: str) -> str:
                 end = position
         else:
             reference_position = end
-            while reference_position < len(text) and text[reference_position] in " \t\n":
+            while (
+                reference_position < len(text) and text[reference_position] in " \t\n"
+            ):
                 reference_position += 1
             if reference_position < len(text) and text[reference_position] == "[":
                 position = reference_position + 1
@@ -2139,9 +2133,7 @@ def without_blockquote_prefix(line: str) -> str:
         content = content[marker.end() :]
 
 
-def without_list_container_indent(
-    line: str, list_content_indent: int | None
-) -> str:
+def without_list_container_indent(line: str, list_content_indent: int | None) -> str:
     """Remove the active list item's container indentation from a block line."""
     if list_content_indent is None:
         return line
@@ -2169,9 +2161,7 @@ def without_inactive_markdown_regions(text: str) -> str:
         if not stripped:
             paragraph_active = False
         if fence is not None:
-            fence_line = without_list_container_indent(
-                block_line, list_content_indent
-            )
+            fence_line = without_list_container_indent(block_line, list_content_indent)
             marker = ADR_FENCE.match(fence_line)
             if (
                 marker
@@ -2225,9 +2215,12 @@ def without_inactive_markdown_regions(text: str) -> str:
                 raw_html_non_tag = None
             continue
         raw_html_match = ADR_RAW_HTML_BLOCK.match(block_line)
-        if raw_html_match is None and not paragraph_active:
-            if not ADR_TEMPLATE_PLACEHOLDER.search(block_line):
-                raw_html_match = ADR_GENERIC_HTML_BLOCK.match(block_line)
+        if (
+            raw_html_match is None
+            and not paragraph_active
+            and not ADR_TEMPLATE_PLACEHOLDER.search(block_line)
+        ):
+            raw_html_match = ADR_GENERIC_HTML_BLOCK.match(block_line)
         if raw_html_match:
             lines.append(line_break)
             tag = raw_html_match.group("tag")
@@ -2248,9 +2241,7 @@ def without_inactive_markdown_regions(text: str) -> str:
             paragraph_active = False
             list_content_indent = None
             continue
-        fence_line = without_list_container_indent(
-            block_line, list_content_indent
-        )
+        fence_line = without_list_container_indent(block_line, list_content_indent)
         marker = ADR_FENCE.match(fence_line)
         if marker and is_valid_fence_marker(marker, None):
             fence = (marker.group(1)[0], len(marker.group(1)))
@@ -2301,14 +2292,20 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         return
 
     current_files = sorted(
-        path for path in decisions_dir.iterdir() if path.is_file() and path.suffix == ".md"
+        path
+        for path in decisions_dir.iterdir()
+        if path.is_file() and path.suffix == ".md"
     )
     superseded_dir = decisions_dir / "superseded"
-    archived_files = sorted(
-        path
-        for path in superseded_dir.iterdir()
-        if path.is_file() and path.suffix == ".md"
-    ) if superseded_dir.is_dir() else []
+    archived_files = (
+        sorted(
+            path
+            for path in superseded_dir.iterdir()
+            if path.is_file() and path.suffix == ".md"
+        )
+        if superseded_dir.is_dir()
+        else []
+    )
     adr_candidates = sorted(
         path
         for path in decisions_dir.rglob("*")
@@ -2430,9 +2427,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                 "Keep one effective status declaration, remove stale status metadata, and ask the user to confirm the resulting decision text.",
             )
         placeholder_content = without_inline_html_tags(without_inline_code(content))
-        if ADR_PLACEHOLDER.search(placeholder_content) or ADR_TEMPLATE_PLACEHOLDER.search(
+        if ADR_PLACEHOLDER.search(
             placeholder_content
-        ):
+        ) or ADR_TEMPLATE_PLACEHOLDER.search(placeholder_content):
             report.error(
                 str(relative),
                 "adr-integrity",
@@ -2474,8 +2471,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         header_lines = archive_header_lines(text)
         header_without_comments = "\n".join(header_lines)
         status_values = [
-            value.lower()
-            for value in ADR_STATUS_LINE.findall(header_without_comments)
+            value.lower() for value in ADR_STATUS_LINE.findall(header_without_comments)
         ]
         if status_values != ["superseded"]:
             problems.append(
@@ -2552,11 +2548,12 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                     "archived ADR must retain substantive decision content after the metadata"
                 )
         if file.parent != superseded_dir:
-            problems.append("archive must contain ADR files directly, not in a nested folder")
+            problems.append(
+                "archive must contain ADR files directly, not in a nested folder"
+            )
         if successor_count != 1:
             problems.append(
-                "expected exactly one Superseded by header "
-                f"(found {successor_count})"
+                f"expected exactly one Superseded by header (found {successor_count})"
             )
         changed_for_validation = without_inline_code(changed) if changed else changed
         if (
@@ -2565,11 +2562,11 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             or ADR_PLACEHOLDER.search(changed_for_validation or "")
             or ADR_TEMPLATE_PLACEHOLDER.search(changed_for_validation or "")
         ):
-            problems.append(
-                "expected exactly one non-empty What changed summary"
-            )
+            problems.append("expected exactly one non-empty What changed summary")
         if changed and not ADR_CHANGE_SCOPE.search(changed_for_validation or ""):
-            problems.append("What changed must state whether the change is partial or complete")
+            problems.append(
+                "What changed must state whether the change is partial or complete"
+            )
         if successor_count == 1 and len(links) != 1:
             problems.append(
                 "Superseded by must contain exactly one successor link "
@@ -2578,7 +2575,11 @@ def check_adrs(report: Report, repository_root: Path) -> None:
         valid_successors: list[str] = []
         for label, link in links:
             path_part = link.split("#", 1)[0]
-            if not path_part or EXTERNAL_LINK.match(path_part) or Path(path_part).is_absolute():
+            if (
+                not path_part
+                or EXTERNAL_LINK.match(path_part)
+                or Path(path_part).is_absolute()
+            ):
                 problems.append(
                     f"successor link must be a portable relative path: {link}"
                 )
@@ -2587,7 +2588,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             if target is None:
                 continue
             if target.parent != decisions_dir or not target.is_file():
-                problems.append(f"successor link does not target an effective ADR: {link}")
+                problems.append(
+                    f"successor link does not target an effective ADR: {link}"
+                )
                 continue
             label_match = ADR_SUCCESSOR_LABEL.fullmatch(label.strip())
             target_identity = adr_identity(
@@ -2595,8 +2598,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             )
             if label_match is None:
                 problems.append(
-                    "successor link label must be `ADR-<nnnn> — <title>`: "
-                    + label
+                    "successor link label must be `ADR-<nnnn> — <title>`: " + label
                 )
             elif target_identity is None:
                 problems.append(
@@ -2605,11 +2607,9 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             else:
                 label_number, label_title = label_match.groups()
                 target_number, target_title = target_identity
-                if (
-                    label_number != target_number
-                    or normalize_adr_title(label_title)
-                    != normalize_adr_title(target_title)
-                ):
+                if label_number != target_number or normalize_adr_title(
+                    label_title
+                ) != normalize_adr_title(target_title):
                     problems.append(
                         "successor link label does not match target ADR "
                         f"`ADR-{target_number} — {target_title}`: {label}"
@@ -2706,11 +2706,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                         "ADR index table declares duplicate Status columns",
                         "Keep exactly one `Status` column in the Documents table and remove the duplicate status cells.",
                     )
-                status_column = (
-                    status_columns[0]
-                    if status_columns
-                    else None
-                )
+                status_column = status_columns[0] if status_columns else None
                 table_active = True
                 continue
             if "status" in normalized_cells and not document_table_active:
@@ -2781,14 +2777,19 @@ def check_adrs(report: Report, repository_root: Path) -> None:
                             f"ADR index links to missing effective ADR: {link}",
                             "Remove the stale index row or restore the referenced effective ADR.",
                         )
-                elif target.parent == superseded_dir or superseded_dir in target.parents:
+                elif (
+                    target.parent == superseded_dir or superseded_dir in target.parents
+                ):
                     archived_index_links.add(link)
                     linked_archived_targets.add(target)
             for path in ADR_INDEX_ARCHIVED_PATH.findall(cells[0]):
                 target = resolve_adr_link(index, path)
                 if (
                     target is not None
-                    and (target.parent == superseded_dir or superseded_dir in target.parents)
+                    and (
+                        target.parent == superseded_dir
+                        or superseded_dir in target.parents
+                    )
                     and target not in linked_archived_targets
                 ):
                     archived_index_plain_paths.add(path)
@@ -2835,14 +2836,18 @@ def check_decisions(report: Report, work: str, decisions_dir: Path) -> None:
             superseders.add(Path(match.group(1)).stem)
     for name, text in texts.items():
         status = re.search(r"status:\s*`?(\w+)`?", text, re.IGNORECASE)
-        if status and status.group(1).lower() == "superseded":
-            if name not in superseders and "superseded-by" not in text.lower():
-                report.error(
-                    work,
-                    "decision",
-                    f"decisions/{name}.md is superseded but no successor names it "
-                    "via supersedes: and it has no superseded-by link",
-                )
+        if (
+            status
+            and status.group(1).lower() == "superseded"
+            and name not in superseders
+            and "superseded-by" not in text.lower()
+        ):
+            report.error(
+                work,
+                "decision",
+                f"decisions/{name}.md is superseded but no successor names it "
+                "via supersedes: and it has no superseded-by link",
+            )
 
 
 def check_lease(report: Report, work: str, work_dir: Path, state_text: str) -> None:
@@ -2863,15 +2868,19 @@ def check_lease(report: Report, work: str, work_dir: Path, state_text: str) -> N
         )
     lease_revision = lease.get("state_revision")
     state_revision = metadata_value(state_text, "State revision")
-    if isinstance(lease_revision, int) and state_revision and state_revision.isdigit():
-        if lease_revision > int(state_revision):
-            report.error(
-                work,
-                "lease",
-                f"lease state_revision {lease_revision} is ahead of state.md "
-                f"State revision {state_revision}: a newer write was lost or "
-                "state.md was rewritten by a non-lease holder",
-            )
+    if (
+        isinstance(lease_revision, int)
+        and state_revision
+        and state_revision.isdigit()
+        and lease_revision > int(state_revision)
+    ):
+        report.error(
+            work,
+            "lease",
+            f"lease state_revision {lease_revision} is ahead of state.md "
+            f"State revision {state_revision}: a newer write was lost or "
+            "state.md was rewritten by a non-lease holder",
+        )
 
 
 def check_journal(report: Report, work: str, work_dir: Path, state_text: str) -> None:
@@ -2893,9 +2902,7 @@ def check_written_under(report: Report, work: str, state_text: str) -> None:
     stamped = metadata_value(state_text, "Written under")
     if not stamped:
         return
-    contract = Path(__file__).resolve().parents[3] / (
-        "references/state.md"
-    )
+    contract = Path(__file__).resolve().parents[3] / ("references/state.md")
     if not contract.is_file():
         return
     current = hashlib.sha256(contract.read_bytes()).hexdigest()[:8]
@@ -2993,8 +3000,7 @@ def check_lifecycle(report: Report, work: str, state_text: str) -> None:
             report.warning(
                 work,
                 "lifecycle",
-                f"lifecycle status {lifecycle!r} is not one of "
-                f"{'|'.join(PHASES)}",
+                f"lifecycle status {lifecycle!r} is not one of {'|'.join(PHASES)}",
             )
     phase = metadata_value(state_text, "Phase")
     if phase and phase.strip().casefold() not in PHASES:
@@ -3115,8 +3121,7 @@ def check_blocked_on(
         f"({age}d ago), past the {UNKNOWN_BLOCKER_STALE_DAYS}-day window: a "
         "hold whose question was never recorded cannot be answered by anyone "
         "but its author, and stops being reconstructable",
-        "Name what the stream is waiting on, or unblock it and drop the "
-        "field.",
+        "Name what the stream is waiting on, or unblock it and drop the field.",
     )
 
 
@@ -3241,9 +3246,7 @@ def payload_phase(payload: str) -> int | None:
     return PHASE_ORDER.get(word)
 
 
-def genuine_status_events(
-    work_dir: Path, phase: str | None
-) -> list[tuple[str, str]]:
+def genuine_status_events(work_dir: Path, phase: str | None) -> list[tuple[str, str]]:
     """Return the newest journal's status events, backfill sweeps dropped.
 
     A backfill writes today's date against a transition the stream made weeks
@@ -3278,7 +3281,9 @@ def journal_segments(work_dir: Path) -> list[Path]:
         match = JOURNAL_SEGMENT.match(path.name)
         if match:
             numbered.append((int(match.group(1)), path))
-    return [path for _, path in sorted(numbered, key=lambda item: (item[0], item[1].name))]
+    return [
+        path for _, path in sorted(numbered, key=lambda item: (item[0], item[1].name))
+    ]
 
 
 def last_status_event_date(work_dir: Path, phase: str | None = None) -> str | None:
@@ -3335,9 +3340,7 @@ def check_journal_freshness(
     ]
     raw = status_event_dates(work_dir / "state" / "journal.md")
     newest_raw = max(raw) if raw else None
-    superseding = dropped and max(dropped) > max(
-        journal_date or "", state_date or ""
-    )
+    superseding = dropped and max(dropped) > max(journal_date or "", state_date or "")
     if superseding:
         report.warning(
             work,
@@ -3402,7 +3405,9 @@ def check_merge_evidence(
     """`completed` is reachable only on merge evidence, never on an assertion."""
     if phase != "completed":
         return
-    if MERGE_PR_REFERENCE.search(state_text) or MERGE_BRANCH_EVIDENCE.search(state_text):
+    if MERGE_PR_REFERENCE.search(state_text) or MERGE_BRANCH_EVIDENCE.search(
+        state_text
+    ):
         return
     report.error(
         work,
@@ -3478,9 +3483,7 @@ def outlives_me_items(state_text: str) -> list[str]:
     row at retention shreds it just the same — so both are read.
     """
     lines = state_text.splitlines()
-    has_receipt = any(
-        COMPLETION_RECEIPT_HEADING.match(line.strip()) for line in lines
-    )
+    has_receipt = any(COMPLETION_RECEIPT_HEADING.match(line.strip()) for line in lines)
     if not has_receipt:
         return [
             line.strip()
@@ -3519,7 +3522,9 @@ def outlives_me_items(state_text: str) -> list[str]:
     return items
 
 
-def check_outlives_me(report: Report, work: str, state_text: str, phase: str | None) -> None:
+def check_outlives_me(
+    report: Report, work: str, state_text: str, phase: str | None
+) -> None:
     """A completed stream may not still hold an unowned outlives-me item."""
     if phase != "completed":
         return
@@ -3623,7 +3628,7 @@ def check_overview_layout(report: Report, state_dir: Path) -> None:
             continue
         if seen_section or not stripped:
             continue
-        if stripped.startswith("#") or stripped.startswith("- ") or stripped.startswith("|"):
+        if stripped.startswith(("#", "- ", "|")):
             continue
         narrative.append(stripped)
     if narrative:
@@ -3690,9 +3695,7 @@ def check_overview(report: Report, state_dir: Path) -> None:
         if normalize_index_cell(cells[0]) in {"work id", "id", "stream"}:
             columns = overview_column_map(cells)
             header_seen = True
-            legacy_columns = [
-                name for name in ("spec", "links") if name in columns
-            ]
+            legacy_columns = [name for name in ("spec", "links") if name in columns]
             if legacy_columns:
                 report.warning(
                     "overview.md",
@@ -3928,9 +3931,7 @@ def check_last_progress(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        prog="state-doctor", description=__doc__
-    )
+    parser = argparse.ArgumentParser(prog="state-doctor", description=__doc__)
     scope = parser.add_mutually_exclusive_group(required=True)
     scope.add_argument("--work-dir", type=Path, help="one work stream directory")
     scope.add_argument(
