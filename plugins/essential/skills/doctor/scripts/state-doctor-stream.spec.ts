@@ -227,13 +227,13 @@ function runStateDir(root: string): Run {
 }
 async function writeEffectiveAdr(
   root: string,
-  name = "0001-choice.md",
+  name = "adr-1-choice.md",
   body = "",
 ): Promise<string> {
   const architecture = join(root, "docs/architecture");
   const decisions = join(architecture, "decisions");
   await mkdir(decisions, { recursive: true });
-  const number = /^\d{4}/.exec(name)?.[0] ?? "0001";
+  const number = /^adr-(\d+)-/.exec(name)?.[1] ?? "1";
   const path = join(decisions, name);
   await writeFile(
     path,
@@ -307,7 +307,7 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     await workspace.writeState(row("AAA"));
     await writeFile(
       join(workspace.root, ".state/overview.md"),
-      "# Overview\n\n## Awaiting you\n\n| Question | Stream | Waiting since |\n| --- | --- | --- |\n| Accept ADR-0008? | `demo` | 2026-07-22 |\n\n## Streams\n\n| Work ID | Phase | Headline |\n| --- | --- | --- |\n| demo | completed | Demo. |\n\n## Recently landed\n\n| Work ID | Landed | Locator |\n| --- | --- | --- |\n| gone-for-good | 2026-07-28 | PR #71 |\n",
+      "# Overview\n\n## Awaiting you\n\n| Question | Stream | Waiting since |\n| --- | --- | --- |\n| Accept ADR-8? | `demo` | 2026-07-22 |\n\n## Streams\n\n| Work ID | Phase | Headline |\n| --- | --- | --- |\n| demo | completed | Demo. |\n\n## Recently landed\n\n| Work ID | Landed | Locator |\n| --- | --- | --- |\n| gone-for-good | 2026-07-28 | PR #71 |\n",
     );
     const findings = selected(runStateDir(workspace.root).findings, "overview");
     expect(findings.map(({ work }) => work)).toEqual(["demo"]);
@@ -365,7 +365,7 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     const archived = join(decisions, "superseded");
     await mkdir(archived);
     await writeFile(
-      join(archived, "0001-old-choice.md"),
+      join(archived, "adr-1-old-choice.md"),
       "> **Status:** Superseded\n>\n> **Superseded by:** [ADR](../choice.md)\n>\n> **What changed:** Replaced.\n",
     );
     const findings = runStateDir(workspace.root).findings;
@@ -377,14 +377,14 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     ).toBe(true);
     expect(
       findings.some(({ message }) =>
-        message.includes("ADR numeric identity 0001 is duplicated"),
+        message.includes("ADR numeric identity 1 is duplicated"),
       ),
     ).toBe(true);
   });
   it("ignores ADR-like content inside HTML comments", async () => {
     await writeEffectiveAdr(
       workspace.root,
-      "0001-choice.md",
+      "adr-1-choice.md",
       "<!-- - Status: Superseded; TODO <fill this> -->\n",
     );
     expect(
@@ -396,7 +396,7 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     const nested = join(workspace.root, "docs/architecture/decisions/archive");
     await mkdir(nested);
     await writeFile(
-      join(nested, "0002-nested.md"),
+      join(nested, "adr-2-nested.md"),
       "# Nested\n\n- Status: `Accepted`\n",
     );
     expect(checks(runStateDir(workspace.root).findings)).toContain(
@@ -407,20 +407,20 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     await writeEffectiveAdr(workspace.root);
     await writeFile(
       join(workspace.root, "docs/architecture/README.md"),
-      "See [the choice](decisions/0001-choice.md).\n\n| Document | Status |\n| --- | --- |\n",
+      "See [the choice](decisions/adr-1-choice.md).\n\n| Document | Status |\n| --- | --- |\n",
     );
     expect(checks(runStateDir(workspace.root).findings)).toContain("adr-index");
   });
   it("rejects absolute successor links", async () => {
-    await writeEffectiveAdr(workspace.root, "0002-new-choice.md");
+    await writeEffectiveAdr(workspace.root, "adr-2-new-choice.md");
     const archived = join(
       workspace.root,
       "docs/architecture/decisions/superseded",
     );
     await mkdir(archived);
     await writeFile(
-      join(archived, "0001-old-choice.md"),
-      "> **Status:** Superseded\n>\n> **Superseded by:** [ADR](/docs/architecture/decisions/0002-new-choice.md)\n>\n> **What changed:** Replaced.\n",
+      join(archived, "adr-1-old-choice.md"),
+      "> **Status:** Superseded\n>\n> **Superseded by:** [ADR](/docs/architecture/decisions/adr-2-new-choice.md)\n>\n> **What changed:** Replaced.\n",
     );
     expect(
       selected(runStateDir(workspace.root).findings, "adr-superseded").some(
@@ -429,15 +429,15 @@ describe("state-doctor stream and lifecycle tail parity", () => {
     ).toBe(true);
   });
   it("rejects placeholder archive summaries", async () => {
-    await writeEffectiveAdr(workspace.root, "0002-new-choice.md");
+    await writeEffectiveAdr(workspace.root, "adr-2-new-choice.md");
     const archived = join(
       workspace.root,
       "docs/architecture/decisions/superseded",
     );
     await mkdir(archived);
     await writeFile(
-      join(archived, "0001-old-choice.md"),
-      "> **Status:** Superseded\n>\n> **Superseded by:** [ADR](../0002-new-choice.md)\n>\n> **What changed:** <State whether the decision changed>.\n",
+      join(archived, "adr-1-old-choice.md"),
+      "> **Status:** Superseded\n>\n> **Superseded by:** [ADR](../adr-2-new-choice.md)\n>\n> **What changed:** <State whether the decision changed>.\n",
     );
     expect(
       selected(runStateDir(workspace.root).findings, "adr-superseded").some(

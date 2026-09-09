@@ -6,7 +6,7 @@ Read this when creating, accepting, superseding, indexing, or reviewing an archi
 
 - Effective ADRs live directly under `docs/architecture/decisions/`.
 - Archived ADRs live directly under `docs/architecture/decisions/superseded/`.
-- ADR filenames use the zero-padded numeric prefix from `naming.md`; moving an ADR never renumbers it.
+- ADR filenames and headings use the matching unpadded positive number from [naming.md](naming.md); moving an ADR never renumbers it.
 - `docs/architecture/README.md` is the index. It lists every effective ADR and no archived ADR.
 
 The ADR explains why a choice was accepted. The architecture document explains the current structure. Neither copies the other.
@@ -22,10 +22,12 @@ When a later ADR changes an accepted choice, whether partially or completely:
    ```markdown
    > **Status:** Superseded
    >
-   > **Superseded by:** [ADR-<nnnn> — <title>](../<nnnn>-<slug>.md)
+   > **Superseded by:** [ADR-<n> — <title>](../adr-<n>-<slug>.md)
    >
    > **What changed:** <State whether the change is partial or complete and summarize the changed choice.>
    ```
+
+   When several ADRs replace the choice, list their links on the same `Superseded by` line, separated by commas. Optionally include `> superseded-by: adr-<n>[, adr-<n>...]` in this prepended header; its unique identities must match the linked successors exactly. Omit unused metadata and keep it outside the preserved body. Do not add `superseding-by` metadata to successor ADRs.
 
 4. Update `docs/architecture/README.md` so its ADR table contains only the effective ADRs directly under `decisions/`; remove the moved path.
 
@@ -37,4 +39,4 @@ Scan `decisions/superseded/` when the history is needed. If a current ADR is kno
 
 ## Integrity contract
 
-Every ADR filename uses a zero-padded numeric prefix that matches its first visible canonical `# ADR-<nnnn>: <title>` heading. An effective ADR must not contain supersession or explicit replacement/predecessor language, links into `superseded/`, contradictory status declarations, or unresolved template placeholders; ordinary Markdown autolinks and inline HTML are not placeholders. An archived ADR must retain its original heading and substantive decision body below the prepended header, not just status metadata. The header fields appear in order with exactly one `Status: Superseded`, one successor, and one change-summary field. Its successor link must target an existing effective ADR with a later numeric identity, and its non-empty change summary must explicitly state whether the change is partial or complete. The ADR index table must be a valid Markdown table whose delimiter row has the same number of columns as its header, include a `Status` column, and mark every effective ADR `Accepted`. The doctor reports each violation with a proposed repair; the doctor skill always offers the user an explicit, approved fix during investigation.
+Every ADR filename uses `adr-<n>-<decision-slug>.md` and matches its first visible canonical `# ADR-<n>: <title>` heading; `<n>` is a positive integer without leading zeros. An effective ADR must not contain supersession metadata or explicit replacement/predecessor language, links into `superseded/`, contradictory status declarations, or unresolved template placeholders; ordinary Markdown autolinks and inline HTML are not placeholders. An archived ADR must retain its original heading and substantive decision body below the prepended header, not just status metadata. The required header fields appear in order with exactly one `Status: Superseded`, one `Superseded by` field containing one or more distinct successor links, and one change-summary field. Every successor link must target an existing effective ADR with a later numeric identity. Optional `superseded-by` metadata appears at most once in the prepended header and lists exactly the linked successor identities. The non-empty change summary must explicitly state whether the change is partial or complete. The ADR index table must be a valid Markdown table whose delimiter row has the same number of columns as its header, include a `Status` column, and mark every effective ADR `Accepted`. The doctor reports each violation with a proposed repair; the doctor skill always offers the user an explicit, approved fix during investigation.
