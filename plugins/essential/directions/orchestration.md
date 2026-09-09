@@ -6,7 +6,7 @@ Delegate on signal, not reflex. The Project Manager owns delivery across teams. 
 
 Classify the task and pick the substrate once, up front, then name the success criteria before launch — a run with no stop condition is not ready:
 
-- **Inline** — where the owning domain workflow permits, don't dispatch when dispatching would save no context, add no independence, and only cost latency or a lossy hand-off. Prefer one subagent over several.
+- **Inline** — where the owning domain workflow permits, keep bounded work with one owner. Delegate for needed expertise, context savings, noisy work, or independent review; a workflow phase or another scenario alone is not a reason to dispatch. Group related checks in one assignment when their context and independence requirements match.
 - **Parallel tasks** — independent, dispatch-and-score work whose siblings needn't talk → parallel uses of the subagent-dispatch capability in one request.
 - **Agent Team** — ongoing, high-signal multi-role coordination where warm context avoids repeated setup → persistent teammates around a warm core. A need to relay reasoning or evidence is not sufficient; put durable detail in artifacts. Form one only where delegation carries signal — large or high-output work; stay inline for trivial, conversational, or small tasks.
 - **Deterministic scripted execution** — high-volume structured iteration toward a measurable target: fan-out plus adversarial verification plus a bounded, resumable correction loop. A subagent composes the complete launch input and asks the main agent to run it.
@@ -32,7 +32,7 @@ The main session owns the authoritative uncertainty ledger and user decisions. A
 
 ## Review responsibility
 
-Never spawn a subagent to re-confirm work you just did. Independent review differs: dispatch it when the change is consequential, the user asked for review, or a workflow gate requires it — publishing a pull request is such a gate. Small, bounded work rides its own mechanical gates.
+Never spawn a subagent to re-confirm work you just did. Independent review differs: dispatch it when the change is consequential, the user asked for review, or a workflow gate requires it — publishing a pull request is such a gate. Reuse an applicable review across overlapping gates unless changed inputs or an explicit fresh-review requirement invalidate it. `coding:directions/WORKFLOW.md` owns review timing for coding work.
 
 Whoever spawns an agent owns the quality of its output. Choose the best independent domain critic on the roster; give it only the artifact, constraints, and acceptance criteria — never the producer's reasoning. During that review, apply the [minimum-work need test](../references/working-attitude.md) to the actual diff: identify removable additions, duplicated instructions, and evidence outside its proper home. Report concrete findings; require no separate checklist or report when none exist. The reviewer returns `ok` or `blocked` plus at most two lines. Detailed findings go to the producer in a bounded review artifact; the lead receives only the verdict and path.
 
