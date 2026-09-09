@@ -1,8 +1,8 @@
 # Review checklist and finding schema
 
-Load this from the *Review* step of `coding:pr review`. `coding:standards/code-review/` owns evidence eligibility, settled dispositions, and stopping rules; [the shared review mandates](../../review-code/references/mandates.md) apply them across areas. This file adds what is specific to reviewing a PR diff.
+Load this from the *Review* step of `coding:pr review`. `coding:standards/code-review/` owns evidence eligibility, settled dispositions, and stopping rules; `coding:directions/review.md` applies them across areas. This file adds what is specific to reviewing a PR diff.
 
-Qualify candidates under `CRV-FDBK-01` before recording findings or assigning priority. Repository comparisons and parser-accepted inputs can prompt investigation but cannot establish a violation or supported production scenario by themselves. Encourage abstraction; do not flag abstraction alone or count callers as proof of unnecessary complexity.
+Qualify blockers under the standard's evidence-based feedback rule (`CRV-FDBK-01`) before recording them or assigning blocking priority. Work beyond the minimum sufficient solution and unexplained differences from comparable existing work remain reviewable standard violations: identify the removable work or comparable artifacts, establish applicability, and explain the concrete cost. Parser acceptance alone does not establish supported input. Encourage abstraction; do not flag abstraction alone or count callers as proof of unnecessary complexity.
 
 ## Depth
 
@@ -10,7 +10,7 @@ Scale reading depth to the size zone: green reviews line by line, yellow leads w
 
 Before approving a black-zone PR, require specific Risk, Test plan, and Why this size evidence in its canonical body. Then inspect only the authorization helper's live structured receipt as semantic authorization evidence; do not use an earlier fetched comment or body. The receipt's `authorization_body` and `rationale` must identify an atomic subject, the concrete coupling that prevents a safe split, and the consequence of splitting in the grammar `<atomic subject> because <coupling>; otherwise <consequence>`. A generic or tautological rationale blocks approval even when the helper accepted its structure.
 
-Publish every qualified P0 through P3 finding; ranking decides their order, not their eligibility. P4 is the sole capped level — [review-tone.md](review-tone.md) publishes the five highest-ranked and counts the rest in the overall body. Unsupported speculation is omitted at every priority and comment kind, including questions, thoughts, and chores; it never becomes a test request or approval cap.
+Publish every qualified P0 through P3 finding; ranking decides their order, not their eligibility. P4 is the sole capped level — [review-tone.md](review-tone.md) publishes the five highest-ranked and counts the rest in the overall body. Specific speculation may be a non-blocking `thought`: label the uncertainty and state that it is not a request. Questions, notes, praise, and optional suggestions remain available with context appropriate to their claims. Unsupported hypotheticals never become blocking priorities, chores, required tests, or approval caps.
 
 One finding per problem, at the highest priority that applies. The same mistake in eight places is one finding on the clearest instance, noting that it applies throughout.
 
@@ -50,7 +50,7 @@ findings:
     kind: question | thought | note | chore | praise | null
     title: <concise raw title without marker or template markup>
     body: <raw explanatory body without marker or title wrapper>
-    evidence: <governing requirement or rule, supported trigger or structural applicability, revision-bound proof, and concrete impact under CRV-FDBK-01>
+    evidence: <context supporting the comment's claims; for a blocker, governing source with a brief explanation, supported trigger or structural applicability, revision-bound proof, and concrete impact>
     alternative: <exact path this change belongs in instead, or null>
 goal_spec_alignment: matches | diverges | skipped_unknown
 spec_deviations: captured | missing | skipped
@@ -76,7 +76,7 @@ not_reviewed:
 - `kind` classifies a comment that makes no priority claim: `chore` for a process step the author owes before merge, `question` where intent is genuinely unclear, `thought` for a non-blocking idea that is explicitly not a request, `note` for a fact the author should know, `praise` where the work is genuinely good.
 - Exactly one of `priority` and `kind` is non-null. A comment that claims a consequence carries a priority; one that does not carries a kind. [review-tone.md](review-tone.md) selects the marker semantics and [inline-review.md](../templates/inline-review.md) renders them, so this field decides the marker and no judgement is left at render time.
 - `chore` is the one kind that blocks merge, because it demands an action even though it grades nothing. An outstanding `chore` drives the verdict exactly as a P0 or P1 does; every other kind leaves the verdict untouched.
-- `evidence` is mandatory and must meet `CRV-FDBK-01`; a predicted failure or repository comparison without applicability proof is not enough. Reopened findings additionally cite new evidence invalidating the prior disposition under `CRV-FDBK-02`.
+- `evidence` is mandatory and follows the evidence-based feedback rule (`CRV-FDBK-01`): blockers need governing source, applicability proof, and concrete impact; non-blocking feedback needs specific context, support for factual claims, and explicit uncertainty where relevant. A question or praise needs no invented violation or failure impact. Briefly explain any cited rule ID. Reopened findings also cite the new evidence invalidating the prior disposition, as required by the settled-finding rule (`CRV-FDBK-02`).
 - `alternative` carries a real path, not a direction. "Move this to the service layer" is not actionable; `src/orders/order.service.ts` is. Leave it `null` unless a better location was actually found.
 - `goal_spec_alignment` is `skipped_unknown` when no goal or spec can be resolved. Never infer a goal from the diff and then grade the diff against it.
 - `spec_deviations` is `captured` when every deviation observed against the linked specification is recorded under Additional Notes, `missing` when one is not — each missing deviation is published as an unanchored chore — and `skipped` only when the PR links no resolvable specification.

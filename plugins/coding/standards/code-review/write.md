@@ -5,8 +5,8 @@
 - Verify correctness and security before lower-impact concerns.
 - Treat every correction as evidence that improves the result, not as personal criticism.
 - Separate code quality from personal worth while holding the quality bar.
-- Qualify findings against approved requirements, applicable standards, or evidenced likely production failures; omit speculation.
-- State the governing source, applicability evidence, impact, and practical next action.
+- Qualify blockers against approved requirements, applicable standards, or evidenced likely production failures; label speculation as non-blocking.
+- Support each claim with appropriate evidence; blockers need a governing source, applicability proof, impact, and practical next action.
 - Match review depth to change size and risk; stop when required checks pass and evidenced defects are resolved.
 - Apply `GEN-SAFE-01` exactly when a suppression appears.
 
@@ -25,7 +25,7 @@
 
 ### Feedback and Collaboration (CRV-FDBK)
 
-- **CRV-FDBK-01**: Qualify findings under the evidence threshold below; make feedback specific, respectful, and actionable.
+- **CRV-FDBK-01**: Qualify blockers under the evidence threshold below; make all feedback specific, respectful, and clear about its evidence and uncertainty.
 - **CRV-FDBK-02**: Incorporate contrary evidence and reopen a settled finding only when new evidence invalidates its disposition.
 
 ## Patterns
@@ -33,15 +33,19 @@
 ### Evidence Threshold
 
 <IMPORTANT>
-Qualify candidates before recording findings, assigning priority, or requesting work. A blocker requires a demonstrated violation of an approved requirement or applicable standard, or an overlooked defect evidenced as highly likely in supported production use. For a logic defect without a feature-specific requirement, cite `CRV-CORR-01` and the actual caller, producer, or production evidence establishing the failure. An applicable standard violation needs no separate likelihood estimate.
+Qualify a blocker before recording it, assigning blocking priority, or requiring work. A blocker requires a demonstrated violation of an approved requirement or applicable standard, or an overlooked defect evidenced as highly likely in supported production use. For a logic defect without a feature-specific requirement, cite the supported-behavior correctness rule (`CRV-CORR-01`) and the actual caller, producer, or production evidence establishing the failure. An applicable standard violation needs no separate likelihood estimate.
+
+Work beyond the minimum sufficient solution under `essential:references/working-attitude.md` and unexplained differences from comparable existing work under the established-pattern rule (`GEN-CONS-01` in `universal/`) remain reviewable violations. Identify removable work that adds no required behavior or readability, or comparable artifacts whose relevant constraints match and whose divergence lacks justification. Cite the affected artifact and concrete unnecessary maintenance burden or convention violation; no runtime failure is required. Abstraction or caller count alone proves neither violation.
 
 Every blocker carries all three:
 
-1. **Governing source:** the exact approved requirement or applicable rule, with its source reference.
+1. **Governing source:** the exact approved requirement or applicable rule, with its source reference and a brief explanation of what it requires; a bare rule ID is insufficient.
 2. **Applicability and proof:** the supported trigger and a source trace, failing check, reproduction, or production evidence bound to the reviewed inputs. For structural standards, cite the affected artifact and rule trigger instead of inventing a runtime scenario.
 3. **Concrete impact:** what fails, who or what is affected, and why it matters; for an overlooked production defect, explain why the supported path makes occurrence highly likely without inventing a numerical threshold.
 
-Support comes from the approved contract, actual callers or producers, or established production use. Parser permissiveness and a reproduction using an invented input establish possible behavior, not support. Malicious inputs at a real trust boundary remain reviewable under applicable security standards. Omit unsupported speculation; never expand scope or demand tests for unsupported hypothetical inputs. A conclusive source trace is sufficient evidence; a runtime reproduction is not mandatory for every finding.
+Support comes from the approved contract, actual callers or producers, or established production use. Parser permissiveness and a reproduction using an invented input establish possible behavior, not support. Malicious inputs at a real trust boundary remain reviewable under applicable security standards. Never expand scope or demand tests for unsupported hypothetical inputs. A conclusive source trace is sufficient evidence; a runtime reproduction is not mandatory for every finding.
+
+Specific speculation may appear as an explicitly non-blocking thought, with its assumptions stated and no request attached. Questions, thoughts, notes, praise, and optional suggestions need context and evidence appropriate to their claims, not proof of a violation or failure impact. They never become blockers, mandatory chores, required tests, or approval caps merely because uncertainty remains. Whenever feedback cites a rule ID, briefly explain the rule.
 </IMPORTANT>
 
 ### Review Focus
@@ -108,7 +112,7 @@ Stop when required checks pass and evidenced defects are resolved. Revalidate on
 
 ## Quick Decision Tree
 
-1. Does the candidate meet the evidence threshold? Omit unsupported candidates; block demonstrated correctness or security defects with a concrete remedy (`CRV-FDBK-01`, `CRV-CORR-01`, `CRV-CORR-02`).
+1. Does a proposed blocker meet the evidence threshold? Block demonstrated violations with a concrete remedy; otherwise omit it or give specific, explicitly non-blocking feedback without requiring work (`CRV-FDBK-01`, evidence-based feedback; `CRV-CORR-01` and `CRV-CORR-02`, correctness and security).
 2. Is there a suppression? Apply `GEN-SAFE-01` before proceeding (`CRV-CORR-03`).
 3. How large and risky is the change? Select the corresponding review depth (`CRV-PRIO-02`).
 4. Are important concerns resolved? Then cover maintainability, testing, and optional style (`CRV-PRIO-01`).

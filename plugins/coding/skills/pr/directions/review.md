@@ -208,7 +208,7 @@ Take standard paths from the "Plugin Constitution > Standards" sections of the s
 
 The diff is the subject of the review, not the limit of the reading.
 
-Apply `coding:standards/code-review/`'s evidence threshold before recording a finding, requesting a test, or withholding approval. The checklist below carries that requirement into the finding schema; a fresh review preserves settled dispositions under `CRV-FDBK-02`.
+Apply `coding:standards/code-review/`'s evidence threshold before recording a blocker, requiring a test, or withholding approval. The checklist below distinguishes blocker proof from context for non-blocking feedback; a fresh review preserves settled dispositions under the standard's settled-finding rule (`CRV-FDBK-02`).
 
 - **Read whatever it takes.** Follow callers of a changed function, open the siblings a new file should resemble, read the module the change plugs into, the goal, and the spec. Understanding the change is the job; explore the checkout.
 - **Judge only the diff.** Every finding is about something this PR changed. Read unchanged code to understand the change, not to grade it. Being about the diff and hanging off a line in it are different things: a deleted file and a chore the PR owes are squarely about the diff and anchor to nothing.
@@ -270,7 +270,7 @@ These two rows are exhaustive — every review lands on exactly one, and nothing
 
 **2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI, a head/base value no longer equal to its pinned value, a linked specification that could not be read, or a blocker prevented a full review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing with it. A P0 raised against a revision that is no longer the head is not a blocker you can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a certainty the review does not have.
 
-An unconvincing-tests cap requires an evidenced unmet testing requirement or supported failure path whose protection is missing, under `CRV-FDBK-01`. A desire for hypothetical coverage is not a trust cap. Identify the required check that could not complete when reporting an incomplete-review cap.
+An unconvincing-tests cap requires an evidenced unmet testing requirement or supported failure path whose protection is missing, under the evidence-based feedback rule (`CRV-FDBK-01`). A desire for hypothetical coverage is not a trust cap. Identify the required check that could not complete when reporting an incomplete-review cap.
 
 `chore` is the only kind that reaches step 1; `question`, `thought`, `note`, and `praise` never hold a verdict on their own. A review carrying nothing but those is a substantive `APPROVE`; unconvincing tests then cap the event in step 2 rather than unsettling what step 1 concluded.
 
