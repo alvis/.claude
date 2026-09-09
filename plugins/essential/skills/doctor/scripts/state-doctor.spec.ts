@@ -921,6 +921,38 @@ describe("references, decisions, and ADR archival foundations", () => {
     expect(checks(workspace.run().findings).has("adr-superseded")).toBe(invalid);
   });
 
+  it.each([
+    "- **superseded-by:** adr-99",
+    "- **superseding-by:** adr-2",
+    "- *superseded-by:* adr-99",
+    "- *superseding-by:* adr-2",
+  ])("should reject formatted relationship metadata in archived body: %s", async (metadata) => {
+    await writeArchivedAdr(
+      workspace.root,
+      `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n${metadata}\n\nThe original choice.\n`,
+    );
+    expectFixes(
+      matchingFindings(
+        workspace,
+        "adr-superseded",
+        "metadata belongs only in the prepended archive header",
+      ),
+    );
+  });
+
+  it.each(["superseded-by", "superseding-by"])(
+    "should preserve inline-code relationship examples in archived body: %s",
+    async (key) => {
+      await writeArchivedAdr(
+        workspace.root,
+        `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n- \`${key}: adr-2\`\n\nThe original choice.\n`,
+      );
+      expect(
+        workspace.run().findings.filter(({ check }) => check.startsWith("adr-")),
+      ).toEqual([]);
+    },
+  );
+
   it("should accept matching single-successor metadata", async () => {
     await writeArchivedAdr(
       workspace.root,

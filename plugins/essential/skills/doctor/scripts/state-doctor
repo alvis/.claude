@@ -2536,7 +2536,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             visible_lines = visible_text.splitlines()
             body_lines = visible_lines[heading[0] + 1 :]
             if ADR_RELATIONSHIP_METADATA.search(
-                without_inline_code("\n".join(body_lines))
+                without_inline_markup(without_inline_code("\n".join(body_lines)))
             ):
                 problems.append(
                     "superseded-by metadata belongs only in the prepended archive header; superseding-by is not supported"
