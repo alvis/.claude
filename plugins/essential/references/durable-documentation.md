@@ -12,8 +12,8 @@ Read this before creating or materially rewriting versioned project documentatio
     │   ├── <architecture-concern>.md
     │   ├── <architecture-concern>/*.md
     │   └── decisions/
-    │       ├── <nnnn>-<decision>.md
-    │       └── superseded/<nnnn>-<decision>.md
+    │       ├── adr-<n>-<decision>.md
+    │       └── superseded/adr-<n>-<decision>.md
     ├── design/
     │   ├── README.md
     │   ├── system.md
