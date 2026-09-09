@@ -68,7 +68,7 @@ Select applicable standards from `coding:standards/INDEX.md`; apply them under `
 
 Before writing code, apply the lean-work ladder, minimum-change rules, and non-negotiable exceptions in `essential:references/working-attitude.md`.
 
-- Prefer **READ**, **WRITE**, **UPDATE**, **LS**, **GREP** over **BASH**.
+- Use native read/edit tools and existing commands for bounded file changes and checks. Write a custom script only when computation, repetition, or error prevention justifies it.
 - **Prepared scripts** — **[IMPORTANT]** every agent and subagent MUST prefer scripts declared in the project config (e.g. `package.json`) to running tools directly (`npm run lint -- <path>`, not `npx eslint <path>`); invoke a tool directly only when no project script serves that purpose.
 - **Diagnostics per change** — you MUST run `lsp_get_diagnostics` or `ide__getDiagnostics` before and after code changes (skip only if `get_project_overview` has just run).
 - **Check documentation** — before using an external library, consult **context7** for the correct import or call signature and **grep** for real-world GitHub usage.
@@ -84,7 +84,7 @@ edit code → verify delivery → (fail ⇒ back to code) → affected gates →
 
 **[IMPORTANT]** Before the loop, after modifying public types, interfaces, signatures, schemas, exports, functions, or classes, run each affected consumer project's own build in its own root (`npm run build`, `cargo build`, …). Cross-project breakage is invisible from the changed project alone; lint and type stages cover the rest. Never substitute a declaration-shape test.
 
-**1. Verify delivery.** Confirm every requirement shipped: walk an executed plan task by task against code, tests, and docs; otherwise verify the stated requirements. Fix anything unmet, then restart the loop here. At Tier 0–1 without a review trigger the implementing owner verifies — never spawn a reviewer to re-read a bounded, non-consequential edit. At Tier 2, Tier 3, an explicit review request, or publication, dispatch an independent reviewer, adding a coordinator only when several genuinely independent review areas need consolidation, and have that reviewer load `coding:review-code` through the harness's skill mechanism.
+**1. Verify delivery.** Confirm every requirement shipped: walk an executed plan task by task against code, tests, and docs; otherwise verify the stated requirements. Fix anything unmet, then restart the loop here. At Tier 0–1 the implementing owner verifies. When publication is the only review trigger for a bounded, non-consequential change, self-review before commit and let `coding:pr`'s required fresh PR review supply the independent pass; do not add a separate local reviewer. Consequential changes, Tier 2–3, and explicit local review requests require independent pre-commit review through `coding:review-code`. Add a coordinator only when several independent review areas need consolidation.
 
 **2. Mechanical gates.** For Tier 1–3 source changes, invoke `coding:lint` on touched source, which owns its own file scope; Tier 0 runs only the focused checks its artifact needs. The implementing owner invokes lint for a bounded slice, delegating only when scope or output warrants isolation. On any violation, fix it, then re-run verification and lint.
 

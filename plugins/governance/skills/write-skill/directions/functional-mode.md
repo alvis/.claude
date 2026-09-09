@@ -44,7 +44,9 @@ Fix a discovered blindspot in the owning instruction, rerun the affected cases, 
 Cold-start is required for every create, operational update, and verification claiming behavioral self-sufficiency. Paper reasoning, structural validators, and optional harness activation checks cannot replace it.
 </IMPORTANT>
 
-Use the representative tasks from [authoring.md](../references/authoring.md#reusable-knowledge-target). For each task, launch a fresh agent or isolated session with only the complete skill directory and the raw prompt or disposable fixtures an ordinary caller would provide. Do not supply authoring notes, expected answers, evaluation criteria, or the diagnosis that motivated the change.
+Use the smallest representative task set covering the promises identified in [authoring.md](../references/authoring.md#reusable-knowledge-target). Group related scenarios into one task and fresh session when an ordinary caller could supply them together and observing one does not reveal another's expected answer. Split only for distinct context or independence needs, not one agent per assertion. Preserve each skill's coverage and each scenario's observed result.
+
+For each task, launch a fresh agent or isolated session with only the complete skill directory and the raw prompt or disposable fixtures an ordinary caller would provide. Do not supply authoring notes, expected answers, evaluation criteria, or the diagnosis that motivated the change.
 
 Record one compact evidence row per task:
 
