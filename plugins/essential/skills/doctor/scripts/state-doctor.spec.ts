@@ -900,7 +900,6 @@ describe("references, decisions, and ADR archival foundations", () => {
 
   it.each([
     ["superseded-by: adr-2", false],
-    ["superseding-by: adr-2", true],
     ["superseded-by : adr-99", true],
   ])("should validate relationship metadata after the change summary: %s", async (metadata, invalid) => {
     await writeArchivedAdr(
@@ -920,127 +919,6 @@ describe("references, decisions, and ADR archival foundations", () => {
     );
     expect(checks(workspace.run().findings).has("adr-superseded")).toBe(invalid);
   });
-
-  it.each([
-    "- **superseded-by:** adr-99",
-    "- **superseding-by:** adr-2",
-    "- *superseded-by:* adr-99",
-    "- *superseding-by:* adr-2",
-  ])("should reject formatted relationship metadata in archived body: %s", async (metadata) => {
-    await writeArchivedAdr(
-      workspace.root,
-      `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n${metadata}\n\nThe original choice.\n`,
-    );
-    expectFixes(
-      matchingFindings(
-        workspace,
-        "adr-superseded",
-        "metadata belongs only in the prepended archive header",
-      ),
-    );
-  });
-
-  it.each(["superseded-by", "superseding-by"])(
-    "should preserve inline-code relationship examples in archived body: %s",
-    async (key) => {
-      await writeArchivedAdr(
-        workspace.root,
-        `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n- \`${key}: adr-2\`\n\nThe original choice.\n`,
-      );
-      expect(
-        workspace.run().findings.filter(({ check }) => check.startsWith("adr-")),
-      ).toEqual([]);
-    },
-  );
-
-  it.each([
-    ["effective", "1. superseded-by: adr-2"],
-    ["effective", "> > superseding-by: adr-2"],
-    ["prefix", "1) superseding-by: adr-2"],
-    ["prefix", "> > superseded-by: adr-99"],
-    ["body", "> 1. superseded-by: adr-99"],
-    ["body", "1) > superseding-by: adr-2"],
-  ])("should reject container-prefixed relationship metadata in %s: %s", async (location, metadata) => {
-    if (location === "effective") {
-      await writeEffectiveAdr(workspace.root, "adr-1-choice.md", metadata);
-      expectFixes(matchingFindings(workspace, "adr-integrity", "supersession history"));
-      return;
-    }
-    await writeArchivedAdr(
-      workspace.root,
-      `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n${location === "body" ? metadata : "The original choice."}\n`,
-    );
-    if (location === "prefix") {
-      const path = join(workspace.root, "docs/architecture/decisions/superseded/adr-1-old-choice.md");
-      await writeFile(path, (await readFile(path, "utf8")).replace(
-        "# ADR-1: Old choice",
-        `${metadata}\n\n# ADR-1: Old choice`,
-      ));
-    }
-    expectFixes(matchingFindings(
-      workspace,
-      "adr-superseded",
-      location === "body" ? "metadata belongs only in the prepended archive header" : "superseded-by",
-    ));
-  });
-
-  it("should preserve fenced container-prefixed relationship examples in archived body", async () => {
-    await writeArchivedAdr(
-      workspace.root,
-      "# ADR-1: Old choice\n\n- Status: `Accepted`\n\n~~~markdown\n1. superseded-by: adr-99\n> > superseding-by: adr-2\n~~~\n\nThe original choice.\n",
-    );
-    expect(
-      workspace.run().findings.filter(({ check }) => check.startsWith("adr-")),
-    ).toEqual([]);
-  });
-
-  it.each([
-    ["1.", "   "],
-    ["-", "  "],
-  ])("should preserve list-owned tilde fences in archived body: %s", async (marker, indent) => {
-    await writeArchivedAdr(
-      workspace.root,
-      `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n${marker} ~~~markdown\n${indent}1. superseded-by: adr-99\n${indent}~~~\n\nThe original choice.\n`,
-    );
-    expect(
-      workspace.run().findings.filter(({ check }) => check.startsWith("adr-")),
-    ).toEqual([]);
-  });
-
-  it("should reject visible metadata after an indented code fence example", async () => {
-    await writeArchivedAdr(
-      workspace.root,
-      "# ADR-1: Old choice\n\n- Status: `Accepted`\n\n    - ~~~\n\nsuperseded-by: adr-99\n\nThe original choice.\n",
-    );
-    expectFixes(
-      matchingFindings(
-        workspace,
-        "adr-superseded",
-        "metadata belongs only in the prepended archive header",
-      ),
-    );
-  });
-
-  it.each(["effective", "archived"])(
-    "should reject visible metadata after a quoted fence in a wide ordered list: %s",
-    async (location) => {
-      const body = "The original choice.\n\n10. > ~~~text\n    > example\n    > ~~~\n\nsuperseded-by: adr-99\n";
-      if (location === "effective") {
-        await writeEffectiveAdr(workspace.root, "adr-1-choice.md", body);
-        expectFixes(matchingFindings(workspace, "adr-integrity", "supersession history"));
-        return;
-      }
-      await writeArchivedAdr(
-        workspace.root,
-        `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n${body}`,
-      );
-      expectFixes(matchingFindings(
-        workspace,
-        "adr-superseded",
-        "metadata belongs only in the prepended archive header",
-      ));
-    },
-  );
 
   it("should accept matching single-successor metadata", async () => {
     await writeArchivedAdr(

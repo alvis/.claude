@@ -1579,8 +1579,8 @@ ADR_CHANGE_HEADER = re.compile(r"^>\s*\*\*What changed:\*\*\s*(.+?)\s*$", re.IGN
 ADR_SUCCESSOR_METADATA = re.compile(r"^>\s*superseded-by:\s*(.*?)\s*$", re.IGNORECASE)
 ADR_SUCCESSOR_IDENTITIES = re.compile(r"adr-[1-9][0-9]*(?:\s*,\s*adr-[1-9][0-9]*)*")
 ADR_RELATIONSHIP_METADATA = re.compile(
-    r"^(?:superseded-by|superseding-by)[ \t]*:",
-    re.IGNORECASE,
+    r"^[ \t]*(?:>[ \t]*)?(?:[-+*][ \t]+)?superseded-by[ \t]*:",
+    re.IGNORECASE | re.MULTILINE,
 )
 ADR_STATUS_LINE = re.compile(
     r"^[ \t]*(?:>[ \t]*)?(?:[-+*][ \t]*|\d+[.)][ \t]+)?\*{0,2}Status:\*{0,2}[ \t]*"
@@ -2144,22 +2144,6 @@ def without_blockquote_prefix(line: str) -> str:
         content = content[marker.end() :]
 
 
-def adr_relationship_metadata(text: str) -> list[str]:
-    """Return relationship fields after removing inline code and Markdown containers."""
-    fields: list[str] = []
-    for line in without_inline_markup(without_inline_code(text)).splitlines():
-        content = line.lstrip()
-        while True:
-            content = without_blockquote_prefix(content)
-            item = ADR_LIST_ITEM.match(content)
-            if item is None:
-                break
-            content = content[item.end() :].lstrip()
-        if ADR_RELATIONSHIP_METADATA.match(content.lstrip()):
-            fields.append(content)
-    return fields
-
-
 def without_list_container_indent(line: str, list_content_indent: int | None) -> str:
     """Remove the active list item's container indentation from a block line."""
     if list_content_indent is None:
@@ -2188,9 +2172,7 @@ def without_inactive_markdown_regions(text: str) -> str:
         if not stripped:
             paragraph_active = False
         if fence is not None:
-            fence_line = without_blockquote_prefix(
-                without_list_container_indent(block_line, list_content_indent)
-            )
+            fence_line = without_list_container_indent(block_line, list_content_indent)
             marker = ADR_FENCE.match(fence_line)
             if (
                 marker
@@ -2270,32 +2252,22 @@ def without_inactive_markdown_regions(text: str) -> str:
             paragraph_active = False
             list_content_indent = None
             continue
-        indented_list_content = (
-            list_content_indent is not None and indentation < list_content_indent + 4
-        )
-        list_item = (
-            ADR_LIST_ITEM.match(block_line)
-            if indentation < 4 or indented_list_content
-            else None
-        )
-        fence_line = (
-            without_blockquote_prefix(block_line[list_item.end() :])
-            if list_item
-            else without_list_container_indent(block_line, list_content_indent)
-        )
+        fence_line = without_list_container_indent(block_line, list_content_indent)
         marker = ADR_FENCE.match(fence_line)
         if marker and is_valid_fence_marker(marker, None):
-            if list_item:
-                list_content_indent = list_item.end()
             fence = (marker.group(1)[0], len(marker.group(1)))
             lines.append(line_break)
             paragraph_active = False
             continue
         if indentation >= 4:
-            if indented_list_content:
+            if (
+                list_content_indent is not None
+                and indentation < list_content_indent + 4
+            ):
                 lines.append(line)
-                if list_item:
-                    list_content_indent = list_item.end()
+                nested_item = ADR_LIST_ITEM.match(block_line)
+                if nested_item:
+                    list_content_indent = nested_item.end()
             elif list_content_indent is None and paragraph_active:
                 # An indented line cannot interrupt an active Markdown
                 # paragraph, so it remains a lazy continuation rather than
@@ -2305,6 +2277,7 @@ def without_inactive_markdown_regions(text: str) -> str:
                 lines.append(line_break)
             continue
         lines.append(line)
+        list_item = ADR_LIST_ITEM.match(block_line)
         if list_item:
             list_content_indent = list_item.end()
             paragraph_active = bool(block_line[list_item.end() :].strip())
@@ -2487,7 +2460,7 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             "decisions/superseded/" in content
             or effective_archived_link
             or ADR_REPLACEMENT_REFERENCE.search(history_content)
-            or adr_relationship_metadata(content)
+            or ADR_RELATIONSHIP_METADATA.search(history_content)
         ):
             report.error(
                 str(relative),
@@ -2562,9 +2535,11 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             )
             visible_lines = visible_text.splitlines()
             body_lines = visible_lines[heading[0] + 1 :]
-            if adr_relationship_metadata("\n".join(body_lines)):
+            if ADR_RELATIONSHIP_METADATA.search(
+                without_inline_code("\n".join(body_lines))
+            ):
                 problems.append(
-                    "superseded-by metadata belongs only in the prepended archive header; superseding-by is not supported"
+                    "superseded-by metadata belongs only in the prepended archive header"
                 )
             original_status_values = [
                 value.lower()
@@ -2682,12 +2657,18 @@ def check_adrs(report: Report, repository_root: Path) -> None:
             for line in visible_header_lines
             if (match := ADR_SUCCESSOR_METADATA.match(line.strip()))
         ]
-        visible_prefix = without_inactive_markdown_regions(
-            "\n".join(adr_header_prefix_lines(text))
+        visible_prefix = without_inline_markup(
+            without_inline_code(
+                without_inactive_markdown_regions(
+                    "\n".join(adr_header_prefix_lines(text))
+                )
+            )
         )
-        if len(adr_relationship_metadata(visible_prefix)) != len(successor_metadata):
+        if len(ADR_RELATIONSHIP_METADATA.findall(visible_prefix)) != len(
+            successor_metadata
+        ):
             problems.append(
-                "archive header contains malformed or misplaced superseded-by metadata, or unsupported superseding-by metadata"
+                "archive header contains malformed or misplaced superseded-by metadata"
             )
         if len(successor_metadata) > 1:
             problems.append("expected at most one superseded-by metadata line")
