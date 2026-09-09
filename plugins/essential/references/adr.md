@@ -27,7 +27,7 @@ When a later ADR changes an accepted choice, whether partially or completely:
    > **What changed:** <State whether the change is partial or complete and summarize the changed choice.>
    ```
 
-   When several ADRs replace the choice, list their links on the same `Superseded by` line, separated by commas. Optionally include `> superseded-by: adr-<n>[, adr-<n>...]` in this prepended header; its unique identities must match the linked successors exactly. Omit unused metadata and keep it outside the preserved body. Do not add `superseding-by` metadata to successor ADRs.
+   When several ADRs replace the choice, list their links on the same `Superseded by` line, separated by commas. Optionally include `> superseded-by: adr-<n>[, adr-<n>...]` in this prepended header; its unique identities must match the linked successors exactly.
 
 4. Update `docs/architecture/README.md` so its ADR table contains only the effective ADRs directly under `decisions/`; remove the moved path.
 

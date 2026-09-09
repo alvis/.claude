@@ -23,7 +23,7 @@
 
 <!-- OPTIONAL SUPERSEDED HEADER
 
-Use only after moving this file to docs/architecture/decisions/superseded/. Prepend it above this document, preserve the document body unchanged, and do not add the header to a new successor ADR:
+After moving this file to docs/architecture/decisions/superseded/, prepend this header and preserve the document body unchanged:
 
 > **Status:** Superseded
 >
@@ -33,6 +33,4 @@ Use only after moving this file to docs/architecture/decisions/superseded/. Prep
 
 List multiple successor links on the same Superseded by line, separated by commas. Optionally add this metadata line to the prepended header, listing exactly those successors with no duplicates:
 
-> superseded-by: adr-<n>[, adr-<n>...]
-
-Omit unused optional metadata. Keep it outside the preserved body; never add superseding-by metadata to a successor ADR. -->
+> superseded-by: adr-<n>[, adr-<n>...] -->
