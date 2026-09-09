@@ -2188,7 +2188,9 @@ def without_inactive_markdown_regions(text: str) -> str:
         if not stripped:
             paragraph_active = False
         if fence is not None:
-            fence_line = without_list_container_indent(block_line, list_content_indent)
+            fence_line = without_blockquote_prefix(
+                without_list_container_indent(block_line, list_content_indent)
+            )
             marker = ADR_FENCE.match(fence_line)
             if (
                 marker

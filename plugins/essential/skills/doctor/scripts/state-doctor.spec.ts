@@ -1021,6 +1021,27 @@ describe("references, decisions, and ADR archival foundations", () => {
     );
   });
 
+  it.each(["effective", "archived"])(
+    "should reject visible metadata after a quoted fence in a wide ordered list: %s",
+    async (location) => {
+      const body = "The original choice.\n\n10. > ~~~text\n    > example\n    > ~~~\n\nsuperseded-by: adr-99\n";
+      if (location === "effective") {
+        await writeEffectiveAdr(workspace.root, "adr-1-choice.md", body);
+        expectFixes(matchingFindings(workspace, "adr-integrity", "supersession history"));
+        return;
+      }
+      await writeArchivedAdr(
+        workspace.root,
+        `# ADR-1: Old choice\n\n- Status: \`Accepted\`\n\n${body}`,
+      );
+      expectFixes(matchingFindings(
+        workspace,
+        "adr-superseded",
+        "metadata belongs only in the prepended archive header",
+      ));
+    },
+  );
+
   it("should accept matching single-successor metadata", async () => {
     await writeArchivedAdr(
       workspace.root,
