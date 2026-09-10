@@ -208,6 +208,8 @@ Take standard paths from the "Plugin Constitution > Standards" sections of the s
 
 The diff is the subject of the review, not the limit of the reading.
 
+Apply `coding:standards/code-review/`'s evidence threshold before recording a blocker, requiring a test, or withholding approval. The checklist below distinguishes blocker proof from context for non-blocking feedback; a fresh review preserves settled dispositions under the standard's settled-finding rule (`CRV-FDBK-02`).
+
 - **Read whatever it takes.** Follow callers of a changed function, open the siblings a new file should resemble, read the module the change plugs into, the goal, and the spec. Understanding the change is the job; explore the checkout.
 - **Judge only the diff.** Every finding is about something this PR changed. Read unchanged code to understand the change, not to grade it. Being about the diff and hanging off a line in it are different things: a deleted file and a chore the PR owes are squarely about the diff and anchor to nothing.
 - **Ask whether the diff is the best solution**, not only whether it works: walk the lean ladder in [WORKFLOW.md](../../../directions/WORKFLOW.md) — need, foundational modules, nearby code, platform, installed dependency, then minimum new code. Search code, content, tests, helpers, and fixtures; reinventing an available equivalent is a finding.
@@ -219,7 +221,7 @@ The diff is the subject of the review, not the limit of the reading.
 
 Cover the concerns in consequence order — correctness and security, then alignment, testing, quality, docs, style — in one pass. Record the goal/spec, intended behavior, standards, reuse, and minimality verdicts from the checklist even when they produce no finding. [review-checklist.md](review-checklist.md) carries the per-concern checklist, the depth ladder, and the finding schema; [review-tone.md](review-tone.md) governs every word that gets posted, and [inline-review.md](../templates/inline-review.md) owns the inline rendering.
 
-`testing` answers one question above coverage: **would these tests fail if the implementation regressed?** Assertions that restate the implementation, tests with no meaningful assertion, mocks that verify only themselves, and new behavior with no test at all are findings. Say what to test and why it matters, never a bare "add tests".
+`testing` answers one question above coverage: **would these tests fail if supported behavior regressed?** Confirm assertion, mock, or coverage defects against applicable testing requirements and the shared evidence threshold. Cite the supported behavior and missing protection when requesting a test; never require coverage for an unsupported hypothetical input.
 
 ### Anchor and de-duplicate
 
@@ -231,7 +233,7 @@ gh api --hostname "$HOST" \
   --jq '.[] | {path, line, body}'
 ```
 
-A re-review after a push adds only what is new.
+A re-review after a push adds only newly evidenced findings. Revalidate affected evidence and required checks at the current revision; a new SHA or reviewer alone does not reopen settled findings. Stop under `CRV-PRIO-02` once required checks pass and evidenced defects are resolved.
 
 ### Publish the review
 
@@ -267,6 +269,8 @@ Derive `event` in three ordered steps; never choose it freely.
 These two rows are exhaustive — every review lands on exactly one, and nothing else qualifies the grade. Whether the tests convince belongs to step 2, not here: it caps what may be submitted without changing what the findings concluded, and folding it in as a third condition would leave a review with weak tests and only P3 findings matching no row at all while the body still needs a substantive verdict to key off.
 
 **2. Cap the event where the review cannot be trusted.** Tests unconvincing, red CI, a head/base value no longer equal to its pinned value, a linked specification that could not be read, or a blocker prevented a full review: the event is capped at `COMMENT`. The cap beats step 1 rather than competing with it. A P0 raised against a revision that is no longer the head is not a blocker you can stand behind, and `REQUEST_CHANGES` on evidence that moved underneath you claims a certainty the review does not have.
+
+An unconvincing-tests cap requires an evidenced unmet testing requirement or supported failure path whose protection is missing, under the evidence-based feedback rule (`CRV-FDBK-01`). A desire for hypothetical coverage is not a trust cap. Identify the required check that could not complete when reporting an incomplete-review cap.
 
 `chore` is the only kind that reaches step 1; `question`, `thought`, `note`, and `praise` never hold a verdict on their own. A review carrying nothing but those is a substantive `APPROVE`; unconvincing tests then cap the event in step 2 rather than unsettling what step 1 concluded.
 

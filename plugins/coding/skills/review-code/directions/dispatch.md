@@ -9,7 +9,7 @@ Dispatch selected areas in one parallel batch, at most seven reviewers. Each rev
 - canonical `plan_source: state.md` and applicable full `task_id` values read directly from `state.md`;
 - discovered source/test/doc paths for the area;
 - advisory mechanical-scan slice;
-- [review.md](templates/review.md) and [mandates.md](references/mandates.md);
+- [review.md](templates/review.md) and `coding:directions/review.md`;
 - instruction to write only its assigned report, leave reviewed code and `.state` untouched, delegate no further, and preserve stable finding IDs/statuses. Keep evidence, plan binding, and reviewed task IDs in the report; return only its path, verdict, counts, and a short summary for the main agent.
 
 The capsule is sufficient by default. Give `state.md` to alignment reviewers, or when resume/cross-slice evidence requires it; give `state/working.md` only when navigation is otherwise missing. Do not make every area reread both broad entrypoints.
@@ -22,7 +22,7 @@ bun run plugins/coding/scripts/scanlib/core.ts \
   --test-root <project-root> [--test-pattern <compiler-test-glob> ...]
 ```
 
-Surface a hard Bun runtime failure. Candidate output is not a finding until the assigned reviewer validates it.
+Surface a hard Bun runtime failure. Candidate output enters the local finding registry only after the assigned reviewer validates it against `coding:standards/code-review/`'s blocker evidence threshold. Optional feedback stays outside that registry. Pass prior dispositions and their evidence; a fresh dispatch does not reset them.
 
 ## Areas
 

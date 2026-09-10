@@ -28,11 +28,11 @@ outstanding_findings: <N>
 - **Status**: <open|fixed|acknowledged|deferred|skipped>
 - **Source**: `<path:line>`
 - **Issue**: <semantic concern and impact>
-- **Evidence**: <representative snippet, command, contract, or runtime result bound to the exact source revision/content>
+- **Evidence**: <governing source with a brief explanation; supported trigger or structural applicability; source trace, check, or runtime proof and concrete impact, bound to the exact reviewed inputs under the evidence-based feedback rule (CRV-FDBK-01)>
 - **Direction**: <actionable correction or disposition direction>
 - **Rationale**: <why this current disposition is justified>
 - **Owner**: <person or durable owning task/team>
-- **Recheck condition**: <specific event, date, revision, or evidence that requires this finding to be reviewed again>
+- **Recheck condition**: <specific relevant change or new evidence requiring revalidation; reopening requires evidence invalidating the prior disposition under the settled-finding rule (CRV-FDBK-02)>
 - **Risk acceptance**: <P0/P1 acknowledged/skipped authority and durable evidence; otherwise `not required`>
 
 Status requirements:
@@ -48,4 +48,8 @@ Pattern-level confirmation questions and `Answer: ` fields live only in the work
 
 Include only open or deferred findings whose direction cannot be chosen from the contract. For each, repeat its stable ID, options/tradeoffs, recommendation, owner, and decision deadline. Remove the entry when decided and update the finding status.
 
-On rerun, retain stable IDs for matching findings, update status rather than duplicating them, recompute the verdict from all outstanding findings, and preserve fixed/acknowledged/skipped entries as concise history. Reject a malformed closed risk disposition and redispatch it to the owning reviewer; until repaired, count it as outstanding. Deferred findings keep their priority, owner, deadline, and recheck condition and remain outstanding in the roll-up.
+Register only findings meeting `coding:standards/code-review/`'s blocker evidence threshold. On rerun, retain stable IDs for matching findings, update status rather than duplicating them, recompute the verdict from all outstanding findings, and preserve fixed/acknowledged/skipped entries as concise history. Reopening an entry cites the new evidence and why its prior disposition no longer holds. Reject a malformed closed risk disposition and redispatch it to the owning reviewer; until repaired, count it as outstanding. Deferred findings keep their priority, owner, deadline, and recheck condition and remain outstanding in the roll-up.
+
+## Non-blocking feedback
+
+Include only useful, specific optional feedback. State the context, support factual claims, and label speculation and assumptions explicitly. This section requires no violation or failure impact; entries have no finding IDs, statuses, counts, or confirmation questions and cannot require work or prevent closure. Omit the section when empty.
