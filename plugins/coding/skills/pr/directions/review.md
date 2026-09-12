@@ -15,7 +15,7 @@ Apply `coding:directions/review-evidence.md` to supplied independent source evid
 Render anchored findings and chores through [inline-review.md](../templates/inline-review.md), and render the review map and verdict through [overall-review.md](../templates/overall-review.md). Use the size standard to choose reading order and reviewer slots, never to suppress a finding.
 
 <IMPORTANT>
-Without valid independent source evidence, the first pass is exhaustive discovery over the complete pinned review unit: identify every independently actionable issue it can reveal. Do not stage a known concern for a later pass; later passes verify published fixes and catch regressions or newly introduced issues.
+Without valid independent source evidence, the first pass is exhaustive discovery over the complete pinned review unit: identify every independently actionable issue it can reveal. Do not stage a known concern for a later pass; later passes follow the impact mission in `coding:directions/review-evidence.md`, verifying affected fixes, dispositions, and regressions. Reuse the original independent reviewer; start fresh broad analysis only for recorded risk or unbounded impact.
 </IMPORTANT>
 
 ## Execution
@@ -191,7 +191,7 @@ A black-zone review first judges whether the surface is genuinely one self-conta
 
 ### Run the mechanical candidate scan
 
-Group changed files by owning project before scanning. Resolve each project's configured compiler-test mechanism and discovery patterns, then invoke the scanner once per group with that absolute project root and every applicable compiler-test glob. Never combine files owned by different test roots in one invocation:
+Reuse exact-input candidate evidence for retained source coverage. A discussion-only check does not rescan unchanged source. For missing or affected source coverage, group changed files by owning project before scanning. Resolve each project's configured compiler-test mechanism and discovery patterns, then invoke the scanner once per group with that absolute project root and every applicable compiler-test glob. Never combine files owned by different test roots in one invocation:
 
 ```bash
 bun run "${CODING_PR_SKILL_DIR}/../../scripts/scanlib/core.ts" \
@@ -207,9 +207,9 @@ Take standard paths from the "Plugin Constitution > Standards" sections of the s
 
 ### Review
 
-The diff is the subject of the review, not the limit of the reading.
+Apply the assigned impact mission to follow-ups and retain verified baseline coverage. The relevant diff is the subject of source analysis, not the limit of dependency reading. A discussion-only mission verifies dispositions and their evidence without repeating source discovery.
 
-Apply `coding:standards/code-review/`'s evidence threshold before recording a blocker, requiring a test, or withholding approval. The checklist below distinguishes blocker proof from context for non-blocking feedback; a fresh review preserves settled dispositions under the standard's settled-finding rule (`CRV-FDBK-02`).
+Apply `coding:standards/code-review/`'s evidence threshold before recording a blocker, requiring a test, or withholding approval. The checklist below distinguishes blocker proof from context for non-blocking feedback; every review preserves settled dispositions under the standard's settled-finding rule (`CRV-FDBK-02`).
 
 - **Read whatever it takes.** Follow callers of a changed function, open the siblings a new file should resemble, read the module the change plugs into, the goal, and the spec. Understanding the change is the job; explore the checkout.
 - **Judge only the diff.** Every finding is about something this PR changed. Read unchanged code to understand the change, not to grade it. Being about the diff and hanging off a line in it are different things: a deleted file and a chore the PR owes are squarely about the diff and anchor to nothing.
@@ -220,7 +220,7 @@ Apply `coding:standards/code-review/`'s evidence threshold before recording a bl
 - **Remove anything that earns no place.** Flag code, content, tests, helpers, or repetition whose deletion preserves required behavior and readability.
 - **Say so when the change belongs somewhere else.** A guard repeated at each call site that belongs in the callee, validation in a controller that belongs in the domain, a symptom patched downstream of the function that produced the bad value — propose the better location and name the exact path. Never relocate it yourself.
 
-Cover the concerns in consequence order — correctness and security, then alignment, testing, quality, docs, style — in one pass. Record the goal/spec, intended behavior, standards, reuse, and minimality verdicts from the checklist even when they produce no finding. [review-checklist.md](review-checklist.md) carries the per-concern checklist, the depth ladder, and the finding schema; [review-tone.md](review-tone.md) governs every word that gets posted, and [inline-review.md](../templates/inline-review.md) owns the inline rendering.
+For source coverage that is missing or invalidated, cover the concerns in consequence order — correctness and security, then alignment, testing, quality, docs, style — in one pass. Record the goal/spec, intended behavior, standards, reuse, and minimality verdicts, identifying carried-forward evidence and newly verified scope even when they produce no finding. [review-checklist.md](review-checklist.md) carries the per-concern checklist, the depth ladder, and the finding schema; [review-tone.md](review-tone.md) governs every word that gets posted, and [inline-review.md](../templates/inline-review.md) owns the inline rendering.
 
 `testing` answers one question above coverage: **would these tests fail if supported behavior regressed?** Confirm assertion, mock, or coverage defects against applicable testing requirements and the shared evidence threshold. Cite the supported behavior and missing protection when requesting a test; never require coverage for an unsupported hypothetical input.
 
