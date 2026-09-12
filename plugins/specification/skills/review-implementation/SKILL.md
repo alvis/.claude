@@ -8,7 +8,7 @@ argument-hint: "[specifier] [--work-id=<id>] [--plan-source=<path>] [--transport
 
 # Review Implementation
 
-Review specification alignment and Coding concerns in one independent holistic session without duplicating their detection protocols. The reviewer returns canonical area reports; the main agent owns preparation, specialist handbacks, work-local persistence, and the disposition summary.
+Review specification alignment and Coding concerns in one independent holistic session without duplicating their detection protocols. Accept the integrated review assignment from the single delivery owner under `coding:directions/review-evidence.md`. The reviewer returns canonical area reports; the main agent owns preparation, specialist handbacks, work-local persistence, and the disposition summary.
 
 ## Boundaries
 
@@ -16,7 +16,7 @@ Review specification alignment and Coding concerns in one independent holistic s
 - `alignment.md` owns contract conformance. `correctness.md` owns semantic bugs that are wrong independently of the specification. The other areas are `security.md`, `quality.md`, `testing.md`, `docs.md`, and `style.md`.
 - Do not create `audit.md`, `deviations.md`, review `readme.md`, root review files, or duplicate a finding across areas. Contract/completeness audit gaps route to alignment; plan departures stay in work state/changes.
 - Review remains read-only with respect to implementation and MDC.
-- One independent holistic reviewer returns complete proposed `reviews/<area>.md` content and its deltas without writing `.state`. It executes both this skill and `coding:review-code` directly, never dispatching another reviewer. The main agent writes the areas and reconciles `review.md`.
+- One independent holistic reviewer returns complete proposed `reviews/<area>.md` content and its deltas without writing `.state`. It executes both this skill and `coding:review-code` directly, never dispatching another reviewer. The main agent writes the areas, reconciles `review.md`, and persists the companion input-binding receipt for publication reuse.
 
 ## Inputs and outputs
 

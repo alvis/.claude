@@ -5,7 +5,7 @@
 1. Resolve the requested change or linear stack, its GitHub push remote, open PRs, exact heads and bases, required PR shape, and known issue identities; search for issues only when none is known and the user permits search.
 2. Audit submitted files and apply every relevant standard; run applicable pull-request tests and lint through `jj run`: integrated tip first, then every independently publishable surface bottom-up.
 3. Publish saved bookmarks bottom-up, author and scan each PR body, apply its available archetype label, and verify the remote head, base, draft state, body, and labels.
-4. Perform mandatory PR review with a fresh independent subagent, converging findings by repairing the owning change and restarting invalidated discovery and verification gates.
+4. Perform mandatory PR review with the independent delivery reviewer or a fresh independent replacement, consuming valid source evidence under `coding:directions/review-evidence.md`, converging findings by repairing the owning change and restarting invalidated discovery and verification gates.
 5. Poll every published PR until hosted CI is green; diagnose the first red surface, fix its root cause, republish, and repeat without hiding blockers.
 
 Load the complete workflow from `coding:pr create` or `coding:pr update`; `coding:pr author` loads only [Author the PR text](#author-the-pr-text). Turn one saved change or stack into live PRs, initially draft and ready after review approval, then green through CI. This workflow composes deterministic Conventional Commits PR text, publishes bottom-up, and owns hosted CI until green or blocked. Repair obeys the **Coherence Mandate**: produce one continuous work; rewrite over restructure, restructure over integrate, never append. Dissolve new content into the existing structure. Visible seams, parallel paths, addenda, vestigial helpers, and tack-ons are forbidden.
@@ -19,7 +19,7 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 - Open every human-authored PR as a draft. A documented incident may authorize a hotfix exception; automated dependency or generator PRs follow their platform configuration.
 - Use a repository-local PR template when present; otherwise render [message.md](../templates/message.md). Keep labels and size bookkeeping out of the title and body.
 - Before submission, inspect every changed file under `GIT-PR-TYPE-05` for a durable purpose and remove prohibited artifacts through the implementation/history owner. Select and apply every relevant standard through `essential:directions/standards.md`; fix violations and record green revision-bound evidence in Verification before publication.
-- Bind authoring and review evidence to the exact head and base OIDs. Reset reviewer evidence when either OID changes; preserve it on a no-op retry.
+- Bind authoring and review evidence to the exact head and base OIDs. Verify reusable source evidence and any content-equivalent mapping under `coding:directions/review-evidence.md`; always bind publication checks to the actual head/base pair.
 - Make each PR independently valid and reviewable. Keep its tests and package lockfiles with the implementation that needs them.
 - Keep each PR draft through publication and review authoring. After the review loop's exit gate reports substantive `APPROVE`, it promotes that surface to ready for review and verifies the transition. A materially expanded surface returns to draft; notify reviewers when they need the changed context.
 
@@ -28,6 +28,8 @@ Reviewers own size-standard findings and reviewability judgments. This workflow 
 Select `feature-flag` only when the target project has implemented flag support and this change implements or modifies a flag. A template section or PR size does not establish project support or authorize adding it.
 
 For each head, choose the `--archetype` value accepted by `scripts/scan-pr-message.ts` that best describes its implementation surface. This controls conditional body evidence and scanner behavior only; repository labels come only from the receiving repository's live inventory below.
+
+Accept the delivery owner's companion review receipt as internal context, not a public option. It can satisfy source-analysis coverage after independent validation; it never waives publication, authorization, discussion, or CI checks.
 
 ## Boundaries
 

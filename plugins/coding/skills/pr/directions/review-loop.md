@@ -1,14 +1,14 @@
 # Converge Pull Request Reviews
 
-Load this reference after `coding:pr create` or `coding:pr update` has pushed every selected head and verified each PR's draft state and head/base pair. Local pre-commit source review remains owned by `coding:review-code`; PR review starts only after the hosted draft exists.
+Load this reference after `coding:pr create` or `coding:pr update` has pushed every selected head and verified each PR's draft state and head/base pair. Independent source evidence may come from the integrated delivery owner through `coding:directions/review-evidence.md`; PR publication review starts only after the hosted draft exists.
 
 Dispatch review without a prior authorization receipt, including for a self-contained black-zone draft. The review workflow performs the full review and owns the fail-closed authorization check only when its substantive verdict would submit `APPROVE`. Missing authorization caps that event at `COMMENT` and returns `authorization_required`; it never suppresses findings or prevents a `REQUEST_CHANGES` verdict. The reviewer parses the helper's live structured receipt and uses its `authorization_body` and `rationale` as the sole semantic authorization-review input; stale earlier bodies cannot authorize approval.
 
-Follow the repository delegation contract at `governance:standards/delegation/`. Partition independent stacks into sequential bottom-to-top batches of at most ten stack review units. A singleton PR is a one-PR stack. One fresh reviewer handles one batch per pass; never reuse its context for another batch or later pass.
+Follow the repository delegation contract at `governance:standards/delegation/`. Partition independent stacks into sequential bottom-to-top batches of at most ten stack review units. A singleton PR is a one-PR stack. One independent reviewer handles each batch. For the initial pass, prefer its already assigned delivery reviewer with verified source evidence; otherwise start a fresh critic. Do not share a session across unrelated batches.
 
 Read `MAX_ITERATION` and `REVIEW_ITERATION` from the owning main agent's working context. Before each attempted exhaustive whole-stack review, return `action: review_exhausted` when the current iteration already equals the maximum; otherwise increment it exactly once. A failed or cancelled dispatch still counts as an attempt, and every batch in that pass shares the incremented value. Stop early when the exit gate approves every current head.
 
-## Dispatch a fresh review
+## Assign publication review
 
 Before provisioning or dispatching a reviewer, bind `EXPECTED_HEAD_OID`, `EXPECTED_BASE_REF`, and `EXPECTED_BASE_OID` from the publication owner's saved surface map. Verify every selected PR exists as an open draft at that surface:
 
@@ -29,10 +29,10 @@ A failure stops the batch before dispatch; the publication owner reconciles it. 
 
 Record the current iteration, stack PR URLs, and expected head/base refs and OIDs. For each stack, the parent performs the resolve and tree/artifact provisioning steps in [review.md](review.md), retains its one tree lease, and builds one bounded capsule containing `STACK_BASE_OID`, `STACK_HEAD_OID`, the `PR_SURFACES` map, `REVIEW_DIR`, `REVIEW_LEDGER`, and `REVIEW_PAYLOAD`. Use a distinct artifact directory for each stack, never one checkout or lease per PR.
 
-Spawn a fresh `code-quality-critic` subagent with no inherited implementation context for each batch. Give it only the repository path, that batch's bottom-to-top capsules, and this mission:
+For each batch, assign its independent `code-quality-critic`, starting a fresh session without inherited implementation context when none is assigned. Include any companion evidence receipt from `coding:directions/review-evidence.md`. Give it the repository path, that batch's bottom-to-top capsules, and this mission:
 
 ```text
-Run `coding:pr review` directly for each preprovisioned stack capsule in bottom-to-top order as one holistic review from its pinned top-tip checkout; do not create a checkout or lease per PR; write the required ledger and return the stack-to-ledger-path map; do not invoke another router or delegate, and do not redispatch.
+Run `coding:pr review` directly for each preprovisioned stack capsule in bottom-to-top order as one holistic review from its pinned top-tip checkout, consuming independently validated source evidence where applicable and always checking the current publication surface; do not create a checkout or lease per PR; write the required ledger and return the stack-to-ledger-path map; do not invoke another router or delegate, and do not redispatch.
 ```
 
 The review subcommand and its references own review evidence, priorities, anchoring, review publication, and independently confirmed thread resolution. The parent owns implementation, publication, and the reply that records each published action; it never resolves that thread.
@@ -103,7 +103,7 @@ When the only remaining cap is `authorization_required`, do not spend another re
 Review convergence passes only when all of these hold for every current head:
 
 - each stack was reviewed once from its bottom base to its top tip in one clean checkout, with findings attributed to the owning PR surfaces;
-- the latest fresh review reports a substantive `APPROVE` verdict;
+- the latest independent publication review reports a substantive `APPROVE` verdict;
 - the latest review is complete, has no blocker, and has no trust cap; a separately reported self-review event downgrade remains allowed. A red-CI-only cap exits through `repair_ci_then_review` rather than failing this gate;
 - no live P0/P1 or mandatory-chore review thread is unresolved;
 - the latest review reports no live P0/P1 or mandatory-chore finding in the overall body, including findings with no inline anchor;
@@ -112,7 +112,7 @@ Review convergence passes only when all of these hold for every current head:
 - every acted-on comment has a reply tied to remote evidence;
 - each PR head/base target and OID still equal the reviewed surface.
 
-After the exit gate passes, end review convergence without another speculative pass and promote each approved draft surface to ready for review. Publication's required CI checks still apply. Bind `SUBSTANTIVE_VERDICT` and `REVIEWED_HEAD_OID`, `REVIEWED_BASE_REF`, and `REVIEWED_BASE_OID` from that surface's latest fresh review evidence, not its submitted GitHub event. Retain the expected surface map from publication; never replace it with observed values to clear a mismatch.
+After the exit gate passes, end review convergence without another speculative pass and promote each approved draft surface to ready for review. Publication's required CI checks still apply. Bind `SUBSTANTIVE_VERDICT` and `REVIEWED_HEAD_OID`, `REVIEWED_BASE_REF`, and `REVIEWED_BASE_OID` from that surface's latest independent publication review evidence, not its submitted GitHub event. Retain the expected surface map from publication; never replace it with observed values to clear a mismatch.
 
 ```bash
 [ "$SUBSTANTIVE_VERDICT" = APPROVE ] &&
