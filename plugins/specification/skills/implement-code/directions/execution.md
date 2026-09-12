@@ -4,13 +4,13 @@ The parent selects deterministic scripted execution for independent code-produci
 
 ## Shared dispatch contract
 
-Each child receives absolute repository/work paths, exact specification refs and headings, one full executable `task_id`, canonical `plan_source`, acceptance criteria, deviation policy, and the Essential output-manifest rule. Coding agents treat work-spec transport bodies as read-only. Architectural uncertainty returns `pending_decision`; only the orchestrator may ask and route the answer through the selected source owner. For a Notion-backed path, use only the exact `body_author` explicitly bound by the parent. Every code-producing child receives `--defer-publication`. It may create a slice-local commit through `coding:commit`, but must not pass `--create-pr`, run `coding:pr create`, restack, or otherwise publish before the parent review/sync gate.
+Each child receives absolute repository/work paths, exact specification refs and headings, one full executable `task_id`, canonical `plan_source`, acceptance criteria, deviation policy, and the Essential output-manifest rule. Coding agents treat work-spec transport bodies as read-only. Architectural uncertainty returns `pending_decision`; only the orchestrator may ask and route the answer through the selected source owner. For a Notion-backed path, use only the exact `body_author` explicitly bound by the parent. Every code-producing child receives `--defer-publication` and the explicit `review_ownership` capsule from `coding:directions/review-evidence.md`. It may create a slice-local commit through `coding:commit`, but must not pass `--create-pr`, run `coding:pr create`, restack, or otherwise publish before the parent review/sync gate.
 
 ## Parallel-execution mechanism
 
 1. Read root `state.md` (and any `state/*.md` children) directly and determine `runnable_leaf_task_ids` from the task table. Parent tasks are roll-ups. All parent predecessors and sibling dependencies must be done; table order is never scheduling authority.
-2. Fan out ready leaves whose write scopes do not conflict. Each runs its mode-appropriate Coding writer with deferred publication, its bounded slice review/fix loop (maximum three), then local-only `coding:commit` on success.
-3. Give each landed task to an independent adversarial verifier. Accept only when no verifier can refute its cited requirement/criterion.
+2. Fan out ready leaves whose write scopes do not conflict. Each runs its mode-appropriate Coding writer with deferred publication, self-checks, focused validation, and evidence/risk handback, then local-only `coding:commit` on success.
+3. Check each landed task's requirement/criterion against its exact implementation and focused validation evidence. Return missing or failing evidence to the child. Independent scrutiny belongs to the named delivery owner's integrated review; add leaf verification only for a specific risk-required check or an explicit child review boundary, recording its reason and scope.
 4. Reconcile child results by exact task ID, never completion order. Require the unchanged task definitions, `pass|fail|partial` attempt outcome, evidence, generated files, and requested status delta. Requeue a refuted task with evidence. For a failed leaf, the main agent marks every downstream executable leaf `! blocked` with an `unblock:` action tied to that failure's retry/disposition; independent branches retain their current/runnable state. Re-read root state directly before each dispatch wave. Stop on a decision or iteration/token guard; never silently downgrade or continue stale work.
 
 ```yaml
@@ -28,8 +28,8 @@ unresolved: []
 
 On a pending decision, record the answer through the selected source owner (the bound `body_author` for a Notion-backed path), update the work receipt hash, and resume the same run so completed tasks remain cached when both the specification and task definitions are unchanged.
 
-The parent owns the full alignment/general/security review, usage trace, Notion completion/revalidation loop, and only then final history/publication.
+The named delivery owner performs one integrated alignment/general/security review; inner parents forward that owner and their evidence. It retains usage trace, Notion completion/revalidation loop, and only then final history/publication.
 
 ## Sequential mechanism
 
-Run the selected chain from `modes.md` in the live session. Apply the same decision stop, deferred-publication rule, deviation reporting, three-pass slice review bound, and manifest collection. Do not write main-agent-owned overview/state files or invoke a publication path.
+Run the selected chain from `modes.md` in the live session. Apply the same decision stop, deferred-publication rule, deviation reporting, parent-owned independent-review boundary, and manifest collection. Do not write main-agent-owned overview/state files or invoke a publication path.

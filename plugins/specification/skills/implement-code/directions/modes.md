@@ -4,15 +4,15 @@ Load only the selected mode. All code-writing children receive exact work/spec p
 
 ## Child chains
 
-- **COMMIT_PLAN**: per runnable leaf task ID read from `state.md`, `coding:write-code` → `coding:commit`. `write-code` owns its applicable pre-commit review; do not append a duplicate pass.
-- **PI_ITERATE**: `coding:complete-code` → `coding:complete-test` → `coding:fix` → review at the timing required by `coding:directions/WORKFLOW.md` → `coding:commit`. Reuse matching current local review evidence; publication-only independence for bounded changes belongs to fresh PR review. Unmarked missing work routes to `coding:write-code`.
+- **COMMIT_PLAN**: per runnable leaf task ID read from `state.md`, `coding:write-code` → `coding:commit`. Pass the parent-owned review capsule; the child returns self-checks, focused validation, and risks. The named owner reviews the integrated delivery.
+- **PI_ITERATE**: `coding:complete-code` → `coding:complete-test` → `coding:fix` → self-checks and focused validation under the parent-owned review capsule → `coding:commit`. Return implementation evidence and outstanding risks to the named review owner. Unmarked missing work routes to `coding:write-code`.
 - **DRAFT_THEN_ASK**: no coding; point to `specification:plan-code`. If the user requests a lightweight draft, route to `coding:draft-code` then hand over.
 - **AUDIT_AND_COMPLETE**: baseline review → complete/write/fix gaps → final review → commit.
 - **VERIFY_ONLY**: review only, no commit.
 - **FLAG_MISMATCH**: report stage/flag mismatch and ask for resolution.
 - **REFUSE**: report the matched stage rule; dispatch nothing.
 
-These child chains do not replace `implement-code`'s required specification review and freshness gates. Pass existing local review bindings to that owner; changed scope, source, or contract invalidates reuse. `specification:review-implementation` owns its one-session alignment and Coding coverage.
+These chains return to the single delivery owner established through `coding:directions/review-evidence.md`. After integration and documentation, that owner uses `specification:review-implementation` for alignment and Coding coverage in one session; nested parents forward the obligation. Specification freshness and completion gates remain required. Pass current evidence to publication rather than adding another source-analysis pass.
 
 ## Deviation policy block
 

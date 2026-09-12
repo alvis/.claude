@@ -10,19 +10,19 @@ Review a remote GitHub pull request and publish the result where the author will
 
 ## Review directions
 
-Read the implementation and every applicable standard. A standard violation or predicted defect is an implementation finding and requires a fix. An unmet operation, such as a stale base or pending rebase, is a process chore rather than a code-priority claim.
+Apply `coding:directions/review-evidence.md` to supplied independent source evidence before analysis. Read uncovered or invalidated implementation and every applicable standard; verified coverage may be reused. Always check the current publication surface, discussion, authorization, and CI. A standard violation or predicted defect is an implementation finding and requires a fix. An unmet operation, such as a stale base or pending rebase, is a process chore rather than a code-priority claim.
 
 Render anchored findings and chores through [inline-review.md](../templates/inline-review.md), and render the review map and verdict through [overall-review.md](../templates/overall-review.md). Use the size standard to choose reading order and reviewer slots, never to suppress a finding.
 
 <IMPORTANT>
-The first pass is exhaustive discovery over the complete pinned review unit: identify every independently actionable issue it can reveal. Do not stage a known concern for a later pass; later passes verify published fixes and catch regressions or newly introduced issues.
+Without valid independent source evidence, the first pass is exhaustive discovery over the complete pinned review unit: identify every independently actionable issue it can reveal. Do not stage a known concern for a later pass; later passes verify published fixes and catch regressions or newly introduced issues.
 </IMPORTANT>
 
 ## Execution
 
-The context-owning router resolves one review unit before it reaches *Locate or create the review tree*, then dispatches the remaining review steps to a fresh `code-quality-critic` subagent with no inherited implementation context. A single PR is one review unit. When a source tree carries a linear stack, the unit is the whole stack: record its bottom base and top head, provision exactly one clean `REVIEW_DIR` at the top head, and include a `PR_SURFACES` array with each PR's number, URL, head/base refs and OIDs, and per-PR merge-base map. Do not create one checkout per PR. The capsule contains the stack metadata, `REVIEW_DIR`, and the requested areas/dry-run state; the reviewer checks out only the top tip, reviews the complete stack diff against the bottom base holistically, then attributes each finding to the earliest PR surface that owns it and publishes only to that PR. The reviewer must not rediscover or silently replace pinned inputs. The parent closes the one lease after success, failure, or cancellation. Review as an external party who knows only that capsule, repository, standards, and pinned review tree.
+The context-owning router resolves one review unit before it reaches *Locate or create the review tree*, then assigns the remaining review steps to the existing independent `code-quality-critic`, or a fresh critic without inherited implementation context when none is available. A single PR is one review unit. When a source tree carries a linear stack, the unit is the whole stack: record its bottom base and top head, provision exactly one clean `REVIEW_DIR` at the top head, and include a `PR_SURFACES` array with each PR's number, URL, head/base refs and OIDs, and per-PR merge-base map. Do not create one checkout per PR. The capsule contains the stack metadata, `REVIEW_DIR`, and the requested areas/dry-run state; the reviewer checks out only the top tip, establishes complete source coverage against the bottom base through verified evidence or holistic analysis, then attributes each finding to the earliest PR surface that owns it and publishes only to that PR. The reviewer must not rediscover or silently replace pinned inputs. The parent closes the one lease after success, failure, or cancellation. Review as an external party who knows only that capsule, repository, standards, and pinned review tree.
 
-When the caller is the fresh critic dispatched by [review-loop.md](review-loop.md), its preprovisioned stack capsule, clean top-tip `REVIEW_DIR`, ledger path, and payload path prove it is already the dedicated reviewer. It executes the remaining read-only review phase directly and does not dispatch another agent.
+When the caller is the independent critic assigned by [review-loop.md](review-loop.md), its preprovisioned stack capsule, clean top-tip `REVIEW_DIR`, ledger path, and payload path prove it is already the dedicated reviewer. It executes the remaining read-only review phase directly and does not dispatch another agent.
 
 <IMPORTANT>
 - Read-only against reviewed code. Confine filesystem mutation to the separately created `REVIEW_LEDGER` and `REVIEW_PAYLOAD`; remote mutation is the review.
@@ -36,6 +36,7 @@ When the caller is the fresh critic dispatched by [review-loop.md](review-loop.m
 
 - **Required**: one PR number, PR URL, or source tree path. When omitted, resolve from the current tree. On ambiguity, ask.
 - **Optional**: `--repo <owner/name>` to target another repository; `--area=<list>` to restrict the review to a subset of `alignment`, `correctness`, `security`, `quality`, `testing`, `docs`, `style` (default all); `--dry-run` to print the payload and post nothing. The `process` concern is not selectable and is never filtered out — a `chore` blocks merge whichever areas were asked for, and a flag that could drop one would report a blocked PR as clean.
+- **Internal context**: the delivery owner may supply a companion source-review receipt and report paths under `coding:directions/review-evidence.md`. Verify bindings and record which analysis is reused rather than claiming it ran again.
 - **Prerequisites**: authenticated `gh` with write access, and network access to reach the PR.
 
 ## Workflow

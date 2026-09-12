@@ -23,8 +23,8 @@ The main-agent caller allocates one collision-safe OS temporary directory with a
 Give the holistic reviewer these inputs, with file paths rather than source contents:
 
 - resolved work ID/root, all assigned temporary area paths, and previous area reports when present;
-- exact relevant spec/design/review paths from the mission capsule;
-- canonical `plan_source: state.md`, applicable full `task_id` values and task definitions read directly from `state.md`, and exact reviewed revision/content identities;
+- parent review ownership and existing companion evidence from `coding:directions/review-evidence.md`, plus exact relevant spec/design/review paths from the mission capsule;
+- immutable base revision, reviewed content/dependency inventory and hashes, applicable standard identities, and canonical `plan_source: state.md`, applicable full `task_id` values and task definitions read directly from `state.md`, and exact reviewed revision/content identities;
 - resolved areas and their discovered source/test/doc paths;
 - advisory mechanical-scan results and applicable deterministic-check evidence, bound to the checked revision and inputs;
 - specialist scopes and evidence, or the caller's pending handback that must arrive before finalization;
