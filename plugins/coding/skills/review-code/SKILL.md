@@ -7,7 +7,7 @@ requirements:
 
 # Review Code
 
-Orchestrate a read-only code review. Area reviewers write their assigned reports and return summaries; the main agent persists them beneath the active work root and presents the combined summary. Remediation belongs to `coding:fix`; mechanical enforcement belongs to `coding:lint`. `essential:discover` owns interactive presentation; `coding:issue` owns GitHub issue previews and publication.
+Perform a read-only code review with one independent holistic reviewer covering every selected area. Risk-specific specialists supply supplemental evidence; the holistic reviewer owns the area reports. The main agent persists them beneath the active work root and presents the combined summary. Remediation belongs to `coding:fix`; mechanical enforcement belongs to `coding:lint`. `essential:discover` owns interactive presentation; `coding:issue` owns GitHub issue previews and publication.
 
 ## Boundaries
 
@@ -19,8 +19,9 @@ Orchestrate a read-only code review. Area reviewers write their assigned reports
 ## Inputs
 
 - Optional specifier: file, directory, glob, package, PR, or git range.
-- Optional `--area` canonical area list (default `all`), `--work-id`, `--plan=<path>` only as an assertion of the active root `state.md`, and `--explain` for a work-local change-comprehension child.
+- Optional `--area` canonical area list (default `all`, with file-based defaults in [specifier-resolution.md](directions/specifier-resolution.md)), `--work-id`, `--plan=<path>` only as an assertion of the active root `state.md`, and `--explain` for a work-local change-comprehension child. Area selection controls coverage, never reviewer count.
 - Require a repository checkout and an active or explicit work ID.
+- A delegated review receives its independent-review assignment, resolved coverage, temporary area paths, pinned contract/revision, mechanical evidence, and any specialist evidence or pending handback. An already assigned independent reviewer executes directly without redispatch; an implementing worker returns a main-agent dispatch request instead of reviewing its own work as independent.
 
 ## State gate
 
@@ -52,8 +53,8 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 ## Workflow
 
 1. Resolve the specifier and per-area file lists through [./directions/specifier-resolution.md](directions/specifier-resolution.md). Use root `state.md` as the only plan definition. An explicit `--plan` must resolve to that file. Follow only its explicit implementation-detail link, which may add ID-keyed procedure but cannot redefine IDs, edges, requiredness, targets, or acceptance mappings. Never auto-adopt another planning/design file.
-2. Run the mandatory mechanical candidate scan described in [./directions/dispatch.md](directions/dispatch.md). Candidates are advisory.
-3. Dispatch one read-only reviewer per selected area in one parallel batch, following [./directions/dispatch.md](directions/dispatch.md) and `coding:directions/review.md`. Pass the canonical plan source (`state.md`) and applicable full task IDs. Each writes its assigned report and returns only its path, verdict, counts, and short summary. The main agent validates and persists the report as the lowercase area file.
+2. The main-agent caller runs the mandatory mechanical candidate scan and supplies applicable check evidence as described in [./directions/dispatch.md](directions/dispatch.md). Candidates are advisory. A delegated reviewer consumes that evidence; missing or stale required evidence returns a bounded request to the caller and prevents a clean verdict.
+3. Apply [./directions/dispatch.md](directions/dispatch.md) after coverage is resolved: use one fresh independent holistic reviewer, or execute in the already assigned independent review session. The caller owns risk-specific specialist dispatch and hands their evidence to the holistic reviewer before finalization. Follow `coding:directions/review.md` against the canonical plan source (`state.md`) and applicable full task IDs. The holistic reviewer writes every selected temporary area report and returns its path, verdict, counts, and short summary. A delegated run returns these reports and reconciliation deltas without running main-agent persistence or presentation steps below; the main agent validates and persists the lowercase area files.
 4. Re-read `state.md` before aggregation and reject plan-definition drift. Validate every expected selected file, then aggregate every existing canonical area so a partial rerun cannot hide unselected findings; reject malformed disposition metadata. For every reused (unselected) area file, compare its `reviewed_task_defs` binding against the current definitions of the same `reviewed_task_ids` in `state.md`; when a task kept its ID but its immutable definition (summary, targets, requiredness, acceptance) changed, treat that area as stale — do not aggregate it as clean, and require its re-review before closure. Derive outstanding findings as `open`, `deferred`, or malformed `acknowledged`/`skipped`; derive closed findings as verified `fixed` plus valid `acknowledged`/`skipped`. Any outstanding P0 is `fail`; outstanding P1 is `requires_changes`; only outstanding P2/P3 is `pass_with_suggestions`; zero outstanding findings is `pass`. Every outstanding finding blocks review closure regardless of displayed verdict. The main agent derives the roll-up from the validated areas and reconciles the confirmation section through [confirmation.md](directions/confirmation.md), preserving response history. Persist all area files and `review.md` before presenting findings or requesting confirmation; failed persistence blocks that presentation.
 5. With `--explain`, generate the evidence-backed change child after review.
 6. Follow [confirmation.md](directions/confirmation.md) for pattern grouping, presentation choice, explicit answers, and eligible `coding:issue` handoff. A nested reviewer returns its report path and summary without prompting or publishing. CI/non-interactive runs persist pending questions without prompting or generating HTML. Render the summary through [output.md](templates/output.md); malformed area output returns only to its owner.
@@ -62,6 +63,7 @@ Before creating or materially rewriting a project artifact, read the absolute `s
 ## Verification
 
 - Every selected area file exists, is lowercase, matches the template, and contains only its owned findings.
+- Coverage was resolved before staffing and remained intact; one independent holistic reviewer authored the selected area reports, with any required specialist evidence incorporated. No dedicated reviewer delegated again or substituted self-review for independence.
 - Every registered finding meets the shared blocker evidence threshold; optional feedback never affects counts, closure, or confirmation questions. Reopened findings identify new evidence invalidating their prior disposition. Required checks and resolved evidenced defects end review.
 - The written `review.md`, or returned roll-up delta, matches every existing area file's disposition/priority counts and paths.
 - Alignment used the identical pinned state/plan/spec contract expected by any follow-up fix; no root fallback was selected. The result binds the exact `plan_source: state.md` and reviewed task IDs.
