@@ -16,6 +16,7 @@ Read this when creating, locating, or migrating ignored local state. `state-syst
     ├── lease.json                      # main-agent ownership and expiry record
     ├── state                           # focused execution views and append-only history
     │   ├── working.md                  # narrow current focus and handback point
+    │   ├── checkpoints/*.json          # owned material generations and completed persistence bindings
     │   ├── journal.md                  # append-only state transition record
     │   ├── revisions.md                # approved plan and charter revision history
     │   ├── unresolved.md               # unresolved questions and blocking unknowns

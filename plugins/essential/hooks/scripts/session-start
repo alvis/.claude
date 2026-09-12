@@ -51,6 +51,11 @@ run_session_start_hook() {
     CONTEXT+=$'\n\n'
   fi
 
+  local checkpoint_session
+  checkpoint_session=$(jq -c '(.session_id // .sessionId) | select(type == "string" and length > 0)' <<<"$input")
+  if [[ -n "$checkpoint_session" ]]; then
+    CONTEXT+="Runtime session ID (JSON): $checkpoint_session"$'\n\n'
+  fi
   CONTEXT+=$(get_plugin_context session)
 
   output_hook_context "SessionStart" "$CONTEXT"

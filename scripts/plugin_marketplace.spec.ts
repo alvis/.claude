@@ -183,60 +183,29 @@ describe("shared hook contracts", () => {
   });
 
   it.each(HARNESS_ROOT_VARIABLES)(
-    "should remind once per session at Stop under %s",
+    "should allow Stop without owned work under %s",
     async (variable) => {
-      // A one-shot Stop reminder must fire on the session's first stop only: a
-      // later stop stays silent, the re-fire a block itself triggers — arriving
-      // with stop_hook_active set — stays silent without spending the session's
-      // one shot, and every session keeps its own shot. Malformed input
-      // identifies neither a session nor its turn state, so it stays silent.
-      const temporary = await createTemporaryDirectory("stop-once-");
+      const temporary = await createTemporaryDirectory("stop-unowned-");
       try {
         const environment = cleanHarnessEnvironment(
           variable,
           essentialPluginDirectory,
         );
         environment.TMPDIR = temporary;
-        const stop = (payload: Record<string, unknown>) =>
-          runStopHook(environment, JSON.stringify(payload));
-
-        const first = stop({
-          hook_event_name: "Stop",
-          session_id: "essential-s1",
-          stop_hook_active: false,
-        });
-        const firstDecision = JSON.parse(first.stdout!);
-        expect(first.status).toBe(0);
-        expect(firstDecision.decision).toBe("block");
-        expect(firstDecision.reason).toContain(".state");
-
-        const second = stop({
-          hook_event_name: "Stop",
-          session_id: "essential-s1",
-          stop_hook_active: false,
-        });
-        expect(second.status).toBe(0);
-        expect(second.stdout).toBe("");
-
-        const interrupted = stop({
-          hook_event_name: "Stop",
-          session_id: "essential-s2",
-          stop_hook_active: true,
-        });
-        expect(interrupted.status).toBe(0);
-        expect(interrupted.stdout).toBe("");
-
-        const afterInterrupted = stop({
-          hook_event_name: "Stop",
-          session_id: "essential-s2",
-          stop_hook_active: false,
-        });
-        expect(afterInterrupted.status).toBe(0);
-        expect(JSON.parse(afterInterrupted.stdout!).decision).toBe("block");
-
-        const malformed = runStopHook(environment, "not json");
-        expect(malformed.status).toBe(0);
-        expect(malformed.stdout).toBe("");
+        for (const input of [
+          JSON.stringify({
+            hook_event_name: "Stop",
+            session_id: "essential-unregistered",
+            cwd: temporary,
+            stop_hook_active: false,
+          }),
+          "not json",
+        ]) {
+          expect(runStopHook(environment, input)).toMatchObject({
+            status: 0,
+            stdout: "",
+          });
+        }
       } finally {
         await removeTemporaryDirectory(temporary);
       }

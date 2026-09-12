@@ -332,33 +332,9 @@ describe("Codex plan Stop validator", () => {
     }
   });
 
-  it("should not spend its retry on the stop-first continuation", () => {
+  it("should not spend its retry on another Stop hook continuation", () => {
     const root = mkdtempSync(resolve(tmpdir(), "validate-plan-stop-shared-"));
     try {
-      const environmentVariables = {
-        ...process.env,
-        PLUGIN_ROOT: pluginRoot,
-        TMPDIR: root,
-      };
-      delete environmentVariables.CLAUDE_PLUGIN_ROOT;
-      delete environmentVariables.GROK_PLUGIN_ROOT;
-      const reminder = spawnSync(
-        "/bin/bash",
-        [resolve(here, "stop-first"), resolve(pluginRoot, "hooks/STOP.md")],
-        {
-          encoding: "utf8",
-          env: environmentVariables,
-          input: JSON.stringify({
-            hook_event_name: "Stop",
-            permission_mode: "plan",
-            session_id: sessionId,
-            stop_hook_active: false,
-            turn_id: turnId,
-          }),
-        },
-      );
-      expect(parseHookOutput(reminder).decision).toBe("block");
-
       const firstPlanDecision = parseHookOutput(
         runHook({
           active: true,
