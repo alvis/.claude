@@ -8,24 +8,24 @@ Resolve coverage through [specifier-resolution.md](directions/specifier-resoluti
 
 | Reviewed change | Staffing |
 |---|---|
-| Bounded scope, including a consequential feature or public API | One fresh independent `code-quality-critic` covering every selected area |
+| Bounded scope, including a consequential feature or public API | One independent `code-quality-critic` covering every selected area; fresh for initial analysis, retained for follow-ups |
 | Authentication, permissions, sensitive-data handling, or migration behavior | Holistic reviewer plus the relevant specialist |
 | Large cross-domain architecture | Holistic reviewer plus explicitly budgeted specialists for named risks |
 
 Before any dispatch, record the risk, reviewer roles/count, specialist scopes, and their reason in the caller's working context and mission capsules. Route specialists through `coding:references/ROUTING.md`; routine security coverage alone does not request deep security review. Request a scoped `security-champion` pass for sensitive security behavior, or a `data-architect` pass for migration/data-integrity risk. A required specialist who is unavailable remains an explicit review blocker. Apply the existing Governance batching limits; neither area count nor file count alone adds reviewers or a coordinator.
 
-Launch the holistic reviewer without inherited implementation context. An already assigned independent reviewer, including one running `specification:review-implementation`, performs this skill in the same session. Reviewers never redispatch or add specialists themselves; they return a bounded request to the main agent when additional expertise is needed. The main agent dispatches independent specialist scopes together, supplies their revision-bound evidence to the holistic reviewer, and waits for that reviewer to incorporate it before finalization. Specialists do not write canonical area reports; the holistic reviewer assigns each finding to its single owning area and preserves stable IDs.
+Launch an initial holistic reviewer without inherited implementation context; retain that reviewer for evidence-driven follow-ups under `coding:directions/review-evidence.md`. An already assigned independent reviewer, including one running `specification:review-implementation`, performs this skill in the same session. Reviewers never redispatch or add specialists themselves; they return a bounded request to the main agent when additional expertise is needed. The main agent dispatches independent specialist scopes together, supplies their revision-bound evidence to the holistic reviewer, and waits for that reviewer to incorporate it before finalization. Specialists do not write canonical area reports; the holistic reviewer assigns each finding to its single owning area and preserves stable IDs.
 
 ## Preparation and capsule
 
-The main-agent caller allocates one collision-safe OS temporary directory with a distinct `<area>.md` path per selected area, all assigned to the holistic reviewer. Keep these files until the main agent has validated and persisted them under `reviews/`; then remove the temporary directory. A failed write or import blocks presentation.
+The main-agent caller allocates one collision-safe OS temporary directory with a distinct `<area>.md` path per missing or affected selected area, all assigned to the holistic reviewer. Preserve valid selected-area reports without assigning another writer. Keep these files until the main agent has validated and persisted them under `reviews/`; then remove the temporary directory. A failed write or import blocks presentation.
 
 Give the holistic reviewer these inputs, with file paths rather than source contents:
 
 - resolved work ID/root, all assigned temporary area paths, and previous area reports when present;
 - parent review ownership and existing companion evidence from `coding:directions/review-evidence.md`, plus exact relevant spec/design/review paths from the mission capsule;
 - immutable base revision, reviewed content/dependency inventory and hashes, applicable standard identities, and canonical `plan_source: state.md`, applicable full `task_id` values and task definitions read directly from `state.md`, and exact reviewed revision/content identities;
-- resolved areas and their discovered source/test/doc paths;
+- full resolved coverage, retained reports, and the bounded recheck mission: changed inputs, affected findings/areas, and discovered source/test/doc dependency paths;
 - advisory mechanical-scan results and applicable deterministic-check evidence, bound to the checked revision and inputs;
 - specialist scopes and evidence, or the caller's pending handback that must arrive before finalization;
 - [review.md](templates/review.md) and `coding:directions/review.md`;
@@ -33,7 +33,7 @@ Give the holistic reviewer these inputs, with file paths rather than source cont
 
 The capsule is sufficient by default. Give `state.md` when alignment is selected or resume/cross-slice evidence requires it; give `state/working.md` only when navigation is otherwise missing. Review each shared input once rather than reopening it for each area.
 
-Before dispatch, the main-agent caller runs applicable repository lint/format/naming checks, or reuses their exact-input evidence, and captures diagnostics for style review. It also groups discovered files by owning project, resolves every configured compiler-test discovery glob that applies to each group, then runs the mandatory scanner once per group with that project's root and one repeated pattern argument per resolved compiler glob. Never combine files owned by different test roots in one invocation:
+Before dispatch, classify affected scope through `coding:directions/review-evidence.md`. The main-agent caller runs applicable repository lint/format/naming checks, or reuses their exact-input evidence, and captures diagnostics for style review. It also groups discovered files by owning project, resolves every configured compiler-test discovery glob that applies to each group, then runs the mandatory scanner once per missing/affected project group with that project's root and one repeated pattern argument per resolved compiler glob. Never combine files owned by different test roots in one invocation:
 
 ```bash
 bun run plugins/coding/scripts/scanlib/core.ts \

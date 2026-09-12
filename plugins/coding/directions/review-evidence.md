@@ -38,6 +38,24 @@ Record:
 
 Use content identities for governing documents and task definitions, not a hash of the whole work-state tree. Journal entries, task owners, progress/status, timestamps, and derived views do not invalidate semantic review. A changed task definition or approved specification does, even when its ID or implementation stayed the same. Specification transport still performs its mandatory freshness probes; a newer content-preserving transport receipt does not itself require new source analysis.
 
+## Select the next mission
+
+Perform one complete independent source review, then compare the current inputs with its receipt before assigning further analysis. The caller records old/new bindings, changed paths/contracts, affected findings and areas, relevant dependencies, and the proposed verification scope. The independent reviewer confirms that impact boundary; uncertainty expands it rather than granting reuse.
+
+| Change since valid review | Next mission |
+|---|---|
+| Reply explaining an existing decision | Verify that disposition and its cited evidence against the current discussion |
+| Bounded bug fix | Review the patch, affected callers/paths, regression-check evidence, and related findings |
+| Documentation clarification | Recheck the affected documentation and governing contract |
+| API, trust boundary, base revision, or architecture | Assess affected dependencies and expand source review to the demonstrated impact; use a fresh broad review when that risk warrants it |
+| No relevant change | Reuse valid source coverage; refresh only publication observations that can change remotely |
+
+Retain the original independent reviewer for ordinary follow-ups. Independence is from the author, not from previous review context. When that reviewer is unavailable, give one replacement the receipt, prior reports, dispositions, and bounded mission. A replacement session alone does not justify exhaustive rediscovery. Named risk, unverifiable bindings, or an impact boundary that cannot be established may require broader review and specialist escalation.
+
+Invalidate only evidence that depends on changed code, base relationships, specification content, semantic task definitions, scope, or standards. Include relevant read dependencies and regressions, not merely edited lines. Retain unaffected area reports and findings; a successful partial recheck combines with valid baseline coverage to cover the full resolved scope. Record the new verification's own inputs and the carried-forward reports it validates. Never overwrite original execution identities or present stale, missing, or uncovered evidence as current.
+
+Applicable mechanical checks follow the same input-bound rule: reuse only exact-input receipts; run missing/affected checks and the mandatory candidate scan for the affected project groups. A discussion-only disposition check does not rescan unchanged source. Existing finding identities, dispositions, blocker thresholds, partial-report retry rules, and closure requirements remain unchanged. Settled findings reopen only on cited new invalidating evidence.
+
 ## Consume evidence at publication
 
 The publication owner supplies this receipt, its reports/ledger, and the intended head/base map. The independent publication reviewer verifies reviewer identity, report integrity, complete coverage, closure, and every binding against the actual published surface. A receipt is evidence, never permission to approve itself. Missing, unverifiable, stale, or uncovered evidence requires source review of the affected scope.
