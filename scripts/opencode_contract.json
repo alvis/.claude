@@ -66,6 +66,13 @@
         "matcher": null,
         "supporting_resource": "hooks/scripts/context.sh"
       },
+      "state-turn": {
+        "audiences": ["root", "child"],
+        "enforcement_mode": "prompt",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "supporting_resource": "scripts/state-checkpoint.ts"
+      },
       "stop-first": {
         "audiences": ["root", "child"],
         "enforcement_mode": "advisory",

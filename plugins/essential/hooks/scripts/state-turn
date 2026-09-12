@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Record a prompt boundary without creating work state or requesting a turn.
+set -euo pipefail
+root="${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}"
+if [ -z "$root" ]; then
+  echo "plugin root unset" >&2
+  exit 1
+fi
+exec "$root/scripts/state-checkpoint.ts" turn

@@ -109,6 +109,23 @@ else
   cat >"$temp"
 fi
 
+# Capture the prior bytes before publication; only an actual canonical change
+# marks the registered owner's checkpoint pending. Checkpoint writes recurse
+# through this helper but are excluded by the checkpoint recorder.
+previous_hash=""
+changed=true
+if [[ -f "$target_path" ]]; then
+  # Only journal advancement consumes a prior-content hash.
+  if [[ "$target" == state/journal.md || "$target" =~ ^state/[0-9]+-[Jj][Oo][Uu][Rr][Nn][Aa][Ll][.-].* && "$target" == *.md ]]; then
+    if command -v sha256sum >/dev/null 2>&1; then
+      previous_hash="$(sha256sum "$target_path" | awk '{print $1}')"
+    else
+      previous_hash="$(shasum -a 256 "$target_path" | awk '{print $1}')"
+    fi
+  fi
+  cmp -s "$temp" "$target_path" && changed=false
+fi
+
 # Heartbeat (refresh expiry, preserve acquisition and ownership), then apply
 # the write atomically.
 now="$(date +%s)"
@@ -118,6 +135,11 @@ mkdir_target="$(dirname "$target_path")"
 [[ -d "$mkdir_target" ]] || mkdir -p -- "$mkdir_target"
 mv -f "$temp" "$target_path"
 trap - EXIT
+
+if [[ "$changed" == true && "$target" != state/checkpoints/* && "$target" != artifacts/* && "$target" != lease.json ]]; then
+  "$(dirname "$0")/state-checkpoint.ts" record-write --work-dir "$work_dir" \
+    --token "$token" --target "$target" --previous-hash "$previous_hash" --ttl "$ttl" >/dev/null
+fi
 
 jq -n --arg status written --arg target "$target_path" \
   --argjson bytes "$(wc -c <"$target_path" | tr -d ' ')" \

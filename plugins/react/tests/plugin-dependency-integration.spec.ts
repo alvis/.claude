@@ -4,9 +4,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { PLUGIN_ROOT_ANCHOR } from "../../../scripts/harness_contract.ts";
+import { HARNESS_ROOT_VARIABLES } from "../../../scripts/harness_contract.ts";
 
 import type { SpawnSyncReturns } from "node:child_process";
 
@@ -72,12 +72,16 @@ describe.skipIf(claude === undefined)(
       event: string,
       inputJson: string,
     ): SpawnSyncReturns<string>[] {
+      const environment: NodeJS.ProcessEnv = {
+        ...process.env,
+        CLAUDE_CONFIG_DIR: config,
+      };
+      for (const variable of HARNESS_ROOT_VARIABLES) delete environment[variable];
+      environment.CLAUDE_PLUGIN_ROOT = pluginRoot;
       const document = JSON.parse(
         readFileSync(join(pluginRoot, "hooks/hooks.json"), "utf8"),
       ) as HooksDocument;
       const substitutions: readonly (readonly [string, string])[] = [
-        ["${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}", pluginRoot],
-        [PLUGIN_ROOT_ANCHOR, pluginRoot],
         ["${HOME}", process.env.HOME!],
       ];
       const completed: SpawnSyncReturns<string>[] = [];
@@ -95,7 +99,7 @@ describe.skipIf(claude === undefined)(
             spawnSync(invocation[0]!, invocation.slice(1), {
               cwd: "/tmp",
               encoding: "utf8",
-              env: { ...process.env, CLAUDE_CONFIG_DIR: config },
+              env: environment,
               input: inputJson,
             }),
           );
@@ -111,6 +115,8 @@ describe.skipIf(claude === undefined)(
     }
 
     it("should install react and gate disabling on its dependencies", async () => {
+      for (const variable of HARNESS_ROOT_VARIABLES)
+        vi.stubEnv(variable, "/inherited/plugin/root");
       const config = await mkdtemp(
         join(tmpdir(), "claude-plugin-integration-"),
       );

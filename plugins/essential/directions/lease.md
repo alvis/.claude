@@ -6,6 +6,8 @@ Read this before performing main-agent state writes — the core contract carrie
 
 The lease lives at `works/<work-id>/lease.json` and is operated by `"$ESSENTIAL_ROOT/scripts/state-lease"` (see `--help` for verbs and defaults). Before the first main-agent state write in a session, run the idempotent `ensure` verb: it acquires when the lease is free, heartbeats when this session already holds it, and revives an expired lease this session still owns. `contended` means a live foreign main agent owns the stream — stop and report, never write. `takeover_required` means the lease expired under another owner: claim it only with the explicit `takeover` verb and journal the returned payload as a `lease` event; never silently replace it. Keep the returned plaintext token in session context — the file stores only its digest, so reading `lease.json` never confers the lease.
 
+After acquisition and any required bootstrap, register the exact runtime session through [checkpoint.md](checkpoint.md) before material work. Registration does not mark unchanged work pending.
+
 ## First-use work-memory bootstrap
 
 After the main agent completes [establish-work-stream.md](establish-work-stream.md) and the resolver returns `resolved` with `state_ignored: true`, it invokes the resolver once more with the selected ID and `--bootstrap`, before delegating or creating any other work artifact:
@@ -21,4 +23,4 @@ Identity selection remains separate and contextual: `--bootstrap` never derives 
 
 Perform every main-agent state write through `"$ESSENTIAL_ROOT/scripts/state-write"`: it verifies the presented token against the lease, refuses when the lease is free, expired, or foreign, heartbeats the lease, and applies the content by temp-file write and atomic rename in one call — so a working main agent cannot expire its own lease by working, and a main agent that lost the lease gets a hard error before the write instead of a doctor finding after it. On each `state.md` write, bump the monotonic `State revision: N` in the content and carry `rev:<N>` on the journal line.
 
-Release the lease at handover, retirement, and session end. TTL default is 30 minutes; long-running work that writes through the state-write helper stays fresh without explicit heartbeats.
+Acknowledge the current checkpoint through [checkpoint.md](checkpoint.md) after journal/table/overview reconciliation, then release the lease at handover, retirement, and session end. TTL default is 30 minutes; long-running work that writes through the state-write helper stays fresh without explicit heartbeats.

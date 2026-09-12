@@ -124,6 +124,14 @@
             "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/approve-plan\""
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\" ] || { echo \"plugin root unset\" >&2; exit 1; }; \"${PLUGIN_ROOT:-${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}/hooks/scripts/state-turn\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
