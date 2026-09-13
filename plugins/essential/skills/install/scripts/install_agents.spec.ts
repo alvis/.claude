@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -103,7 +104,10 @@ function grokDiscoveryStub(directory: string): string {
   writeFileSync(stub, `#!/bin/sh
 case "$*" in
   'inspect --json') cat "$GROK_INSPECT_FIXTURE" ;;
-  'plugin list --json') cat "$GROK_LIST_FIXTURE" ;;
+  'plugin list --json')
+    if [ "\${GROK_LIST_EXIT:-0}" -ne 0 ]; then exit "$GROK_LIST_EXIT"; fi
+    if [ -n "\${GROK_LIST_LAUNCHER:-}" ]; then exec "$GROK_LIST_LAUNCHER"; fi
+    cat "$GROK_LIST_FIXTURE" ;;
   *) exit 64 ;;
 esac
 `);
@@ -163,11 +167,11 @@ describe("agent discovery and installation", () => {
     expect(
       readFileSync(resolve(destination, `first-agent${suffix}`), "utf8"),
     ).toContain(
-      `@${resolve(destination, ".essential/directions/lead.md")}`,
+      `@${realpathSync(resolve(destination, ".essential/directions/lead.md"))}`,
     );
     expect(
       readFileSync(resolve(destination, `second-agent${suffix}`), "utf8"),
-    ).toContain(`@${resolve(destination, ".essential/references/state-systems.md")}`);
+    ).toContain(`@${realpathSync(resolve(destination, ".essential/references/state-systems.md"))}`);
     expect(
       readFileSync(resolve(destination, ".essential/references/state-systems.md"), "utf8"),
     ).toBe("State systems.\n");
@@ -356,6 +360,66 @@ describe("agent discovery and installation", () => {
     expect(readdirSync(resolve(root, "agents")).sort()).toEqual([
       ".essential", "first-agent.md", "resolved-agent.md",
     ]);
+  });
+
+  it.each([
+    ["nonzero exit", "exit"],
+    ["malformed JSON", "malformed"],
+    ["launch error", "launch"],
+  ] as const)("aborts a Grok refresh when plugin list discovery has a %s", (_label, failure) => {
+    const root = temporaryRoot();
+    const essential = resolve(root, "installed/essential");
+    const coding = resolve(root, "resolved/coding");
+    writeTemplate(essential, "essential-agent");
+    writeTemplate(coding, "coding-agent");
+    mkdirSync(resolve(essential, "references"), { recursive: true });
+    writeFileSync(resolve(essential, "references/state-systems.md"), "State systems.\n");
+    mkdirSync(resolve(essential, "directions"), { recursive: true });
+    writeFileSync(resolve(essential, "directions/GROK.md"), "Bootstrap fixture.\n");
+    const destination = resolve(root, "agents");
+    const inspect = resolve(root, "inspect.json");
+    const list = resolve(root, "list.json");
+    const bin = grokDiscoveryStub(root);
+    const environment = {
+      PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
+      HOME: resolve(root, "home"),
+      GROK_HOME: resolve(root, "home/grok"),
+      GROK_INSPECT_FIXTURE: inspect,
+      GROK_LIST_FIXTURE: list,
+      GROK_LIST_EXIT: "0",
+      GROK_LIST_LAUNCHER: "",
+    };
+    writeFileSync(inspect, JSON.stringify({ plugins: [
+      { name: "essential", path: essential, enabled: true, scope: "user" },
+      { name: "coding", path: coding, enabled: true, scope: "user" },
+    ] }));
+    writeFileSync(list, JSON.stringify([
+      { name: "essential", path: essential, status: "enabled", marketplace: "fixture" },
+      { name: "coding", path: coding, status: "enabled", marketplace: "fixture" },
+    ]));
+
+    const first = spawnSync("bun", [script, "--plugin-root", essential, "--destination", destination, "--harness", "grok"], {
+      encoding: "utf8",
+      env: environment,
+    });
+    expect(first.status, first.stderr).toBe(0);
+    const receiptPath = resolve(destination, ".essential/installation.json");
+    const receiptBefore = readFileSync(receiptPath, "utf8");
+    const codingAgent = resolve(destination, "coding-agent.md");
+    expect(existsSync(codingAgent)).toBe(true);
+
+    if (failure === "malformed") writeFileSync(list, "[not json");
+    else if (failure === "launch") environment.GROK_LIST_LAUNCHER = resolve(root, "missing-list-command");
+    else environment.GROK_LIST_EXIT = "42";
+    const refreshed = spawnSync("bun", [script, "--plugin-root", essential, "--destination", destination, "--harness", "grok"], {
+      encoding: "utf8",
+      env: environment,
+    });
+
+    expect(existsSync(codingAgent)).toBe(true);
+    expect(readFileSync(receiptPath, "utf8")).toBe(receiptBefore);
+    expect(refreshed.status).not.toBe(0);
+    expect(`${refreshed.stdout}${refreshed.stderr}`).toMatch(/plugin list|discovery|JSON|failed|cannot/i);
   });
 
   it.each(["[]", "[not json"])("should reject malformed Grok inspect input %s before writing agents", (payload) => {

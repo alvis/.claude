@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 
@@ -62,7 +62,7 @@ describe("Essential installation ownership", () => {
     try {
       expect(runInstaller(sandbox, "install", "grok").status).toBe(0);
       const firstInstall = readFileSync(attachment, "utf8");
-      expect(firstInstall).toContain(`@${join(sandbox.essential, "directions/GROK.md")}`);
+      expect(firstInstall).toContain(`@${realpathSync(join(sandbox.essential, "directions/GROK.md"))}`);
       expect(firstInstall.startsWith(userText)).toBe(true);
       expect(runInstaller(sandbox, "install", "grok").status).toBe(0);
       expect(readFileSync(attachment, "utf8")).toBe(firstInstall);
@@ -74,8 +74,8 @@ describe("Essential installation ownership", () => {
 
       expect(refreshed.status, refreshed.stderr).toBe(0);
       const updated = readFileSync(attachment, "utf8");
-      expect(updated).toContain(`@${join(relocated, "directions/GROK.md")}`);
-      expect(updated).not.toContain(`@${join(sandbox.essential, "directions/GROK.md")}`);
+      expect(updated).toContain(`@${realpathSync(join(relocated, "directions/GROK.md"))}`);
+      expect(updated).not.toContain(`@${realpathSync(join(sandbox.essential, "directions/GROK.md"))}`);
       expect(runInstaller(sandbox, "uninstall", "grok").status).toBe(0);
       expect(readFileSync(attachment, "utf8")).toBe(`${userText}${laterText}`);
     } finally {
@@ -273,7 +273,7 @@ describe("Essential installation ownership", () => {
       expect(runInstaller({ ...sandbox, destination: alias }, "install", "codex").status).toBe(0);
       const receiptPath = join(sandbox.destination, ".essential/installation.json");
       const receipt = JSON.parse(readFileSync(receiptPath, "utf8")) as { destination: string };
-      expect(receipt.destination).toBe(sandbox.destination);
+      expect(receipt.destination).toBe(realpathSync(sandbox.destination));
       const agent = join(sandbox.destination, "first-agent.toml");
       const external = join(sandbox.home, "outside.toml");
       writeFileSync(external, readFileSync(agent));
@@ -374,7 +374,7 @@ describe("Essential installation ownership", () => {
       expect(readFileSync(workingContext, "utf8")).toBe("Working-directory instructions\n");
       expect(readdirSync(workingAgents)).toEqual(["personal.md"]);
       if (harness === "grok") {
-        expect(readFileSync(configuration, "utf8")).toContain(`@${join(sandbox.essential, "directions/GROK.md")}`);
+        expect(readFileSync(configuration, "utf8")).toContain(`@${realpathSync(join(sandbox.essential, "directions/GROK.md"))}`);
       }
 
       expect(runInstaller(sandbox, "uninstall", harness, { useDefaultDestination: true, homeOverride: "" }).status).toBe(0);
@@ -398,7 +398,7 @@ describe("Essential installation ownership", () => {
       expect(result.status, result.stderr).toBe(0);
       const receipt = JSON.parse(readFileSync(join(sandbox.destination, ".essential/installation.json"), "utf8")) as { files: unknown[] };
       expect(receipt.files).toEqual([]);
-      expect(readFileSync(join(sandbox.grokHome, "AGENTS.md"), "utf8")).toContain(`@${join(sandbox.essential, "directions/GROK.md")}`);
+      expect(readFileSync(join(sandbox.grokHome, "AGENTS.md"), "utf8")).toContain(`@${realpathSync(join(sandbox.essential, "directions/GROK.md"))}`);
       expect(runInstaller(sandbox, "uninstall", "grok").status).toBe(0);
       expect(existsSync(join(sandbox.grokHome, "AGENTS.md"))).toBe(false);
       expect(existsSync(join(sandbox.destination, ".essential/installation.json"))).toBe(false);

@@ -165,20 +165,40 @@ function lastUpdated(record: PluginRecord): string {
 
 function readGrokPluginRecords(): PluginRecord[] {
   const plugins = readGrokPlugins();
-  let metadata: PluginRecord[] = [];
   // installation metadata only supplies trust labels; inspection owns paths and enablement
+  let listed: Bun.SyncSubprocess<"pipe", "pipe">;
   try {
-    const listed = Bun.spawnSync(["grok", "plugin", "list", "--json"], {
+    listed = Bun.spawnSync(["grok", "plugin", "list", "--json"], {
       stdout: "pipe",
       stderr: "pipe",
     });
-    if (listed.exitCode === 0) {
-      const parsed: unknown = JSON.parse(listed.stdout.toString());
-      if (Array.isArray(parsed)) metadata = parsed.filter(isRecord);
-    }
-  } catch {
-    // absent supplemental metadata leaves only the bounded local-source group trusted
+  } catch (error) {
+    throw new AgentTemplateError(
+      `cannot list Grok plugins: ${(error as Error).message}`,
+      { cause: error },
+    );
   }
+  if (listed.exitCode !== 0) {
+    const detail =
+      listed.stderr.toString().trim() || listed.stdout.toString().trim();
+    throw new AgentTemplateError(
+      `cannot list Grok plugins: ${detail || `exit ${listed.exitCode}`}`,
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(listed.stdout.toString());
+  } catch (error) {
+    throw new AgentTemplateError(
+      `invalid JSON from grok plugin list: ${(error as Error).message}`,
+      { cause: error },
+    );
+  }
+  if (!Array.isArray(parsed))
+    throw new AgentTemplateError(
+      "grok plugin list --json did not return a list",
+    );
+  const metadata = parsed.filter(isRecord);
   return plugins.map((plugin) => {
     const matches = metadata.filter(
       (record) =>

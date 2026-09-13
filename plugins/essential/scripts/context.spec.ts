@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 
@@ -208,7 +208,7 @@ function runContext(sandbox: Sandbox, args: readonly string[]): CommandResult {
       HOME: sandbox.home,
       PATH: `${sandbox.bin}${delimiter}${process.env.PATH ?? ""}`,
       GROK_CONTEXT_INSPECTION: sandbox.inspection,
-      GROK_CONTEXT_CWD: sandbox.workingDirectory,
+      GROK_CONTEXT_CWD: realpathSync(sandbox.workingDirectory),
     },
   });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
