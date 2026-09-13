@@ -366,7 +366,7 @@ describe("agent discovery and installation", () => {
     ["nonzero exit", "exit"],
     ["malformed JSON", "malformed"],
     ["launch error", "launch"],
-  ] as const)("aborts a Grok refresh when plugin list discovery has a %s", (_label, failure) => {
+  ] as const)("should abort a Grok refresh when plugin list discovery has a %s", (_label, failure) => {
     const root = temporaryRoot();
     const essential = resolve(root, "installed/essential");
     const coding = resolve(root, "resolved/coding");
